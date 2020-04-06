@@ -1220,27 +1220,32 @@ def start_stream_encryption(client, stream_name, encryption_type='', key_id='',
         find_stream(client, stream_name, check_mode=check_mode)
     )
     if stream_found:
-        success, err_msg = (
-            stream_encryption_action(
-                client, stream_name, action='start_encryption', encryption_type=encryption_type, key_id=key_id, check_mode=check_mode
+        if ( current_stream.get("EncryptionType") == encryption_type and current_stream.get("KeyId") == key_id):
+            changed = False
+            success = True
+            err_msg = 'Kinesis Stream {0} encryption already configured.'.format(stream_name)
+        else:
+            success, err_msg = (
+                stream_encryption_action(
+                    client, stream_name, action='start_encryption', encryption_type=encryption_type, key_id=key_id, check_mode=check_mode
+                )
             )
-        )
-        if success:
-            changed = True
-            if wait:
-                success, err_msg, results = (
-                    wait_for_status(
-                        client, stream_name, 'ACTIVE', wait_timeout,
-                        check_mode=check_mode
+            if success:
+                changed = True
+                if wait:
+                    success, err_msg, results = (
+                        wait_for_status(
+                            client, stream_name, 'ACTIVE', wait_timeout,
+                            check_mode=check_mode
+                        )
                     )
-                )
-                err_msg = 'Kinesis Stream {0} encryption started successfully.'.format(stream_name)
-                if not success:
-                    return success, True, err_msg, results
-            else:
-                err_msg = (
-                    'Kinesis Stream {0} is in the process of starting encryption.'.format(stream_name)
-                )
+                    err_msg = 'Kinesis Stream {0} encryption started successfully.'.format(stream_name)
+                    if not success:
+                        return success, True, err_msg, results
+                else:
+                    err_msg = (
+                        'Kinesis Stream {0} is in the process of starting encryption.'.format(stream_name)
+                    )
     else:
         success = True
         changed = False
@@ -1292,11 +1297,7 @@ def stop_stream_encryption(client, stream_name, encryption_type='', key_id='',
                     client, stream_name, action='stop_encryption', key_id=key_id, encryption_type=encryption_type, check_mode=check_mode
                 )
             )
-        elif current_stream.get('EncryptionType') == 'NONE':
-            success = True
-
-        if success:
-            changed = True
+            changed = success
             if wait:
                 success, err_msg, results = (
                     wait_for_status(
@@ -1304,13 +1305,16 @@ def stop_stream_encryption(client, stream_name, encryption_type='', key_id='',
                         check_mode=check_mode
                     )
                 )
-                err_msg = 'Kinesis Stream {0} encryption stopped successfully.'.format(stream_name)
                 if not success:
                     return success, True, err_msg, results
+                err_msg = 'Kinesis Stream {0} encryption stopped successfully.'.format(stream_name)
             else:
                 err_msg = (
                     'Stream {0} is in the process of stopping encryption.'.format(stream_name)
                 )
+        elif current_stream.get('EncryptionType') == 'NONE':
+            success = True
+            err_msg = 'Kinesis Stream {0} encryption already stopped.'.format(stream_name)
     else:
         success = True
         changed = False
