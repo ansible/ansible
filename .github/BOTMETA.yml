@@ -500,7 +500,9 @@ files:
     ignored: andyhky
     migrated_to: community.general
   $modules/cloud/opennebula/: ilicmilan xorel rsmontero meerkampdvv
-  $modules/cloud/openstack/: $team_openstack
+  $modules/cloud/openstack/:
+    ignored: Shrews
+    maintainers: $team_openstack
   $modules/cloud/openstack/os_auth.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_client_config.py:
