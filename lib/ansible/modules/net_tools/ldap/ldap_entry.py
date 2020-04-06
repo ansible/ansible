@@ -212,7 +212,7 @@ def main():
         # However, the bind_pw parameter contains a password so it **must** go through the normal
         # argument parsing even though removing it breaks backwards compat.
         if 'bind_pw' in module.params['params']:
-            module.fail_json("Using `bind_pw` with the `params` option has been disallowed since"
+            module.fail_json(msg="Using `bind_pw` with the `params` option has been disallowed since"
                              " it is insecure.  Use the `bind_pw` option directly.  The `params`"
                              " option will be removed in Ansible-2.10")
 
@@ -223,7 +223,7 @@ def main():
     else:
         # For Ansible 2.10 and above
         if module.params['params']:
-            module.fail_json("The `params` option to ldap_attr was removed in Ansible-2.10 since"
+            module.fail_json(msg="The `params` option to ldap_attr was removed in Ansible-2.10 since"
                              " it circumvents Ansible's option handling")
 
     state = module.params['state']
