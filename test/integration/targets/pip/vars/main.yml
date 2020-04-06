@@ -3,7 +3,7 @@ pip_test_packages:
   - sampleproject
   - jiphy
 pip_test_pkg_ver:
-  - sampleproject<=100, !=9.0.0,>=0.0.1 
+  - sampleproject<=100, !=9.0.0,>=0.0.1
   - jiphy<100 ,!=9,>=0.0.1
 pip_test_pkg_ver_unsatisfied:
   - sampleproject>= 999.0.0
