@@ -631,6 +631,7 @@ lib/ansible/modules/net_tools/infinity/infinity.py E326
 lib/ansible/modules/net_tools/ipify_facts.py E324
 lib/ansible/modules/net_tools/ipify_facts.py E325
 lib/ansible/modules/net_tools/ldap/ldap_attr.py E322
+lib/ansible/modules/net_tools/ldap/ldap_entry.py E322
 lib/ansible/modules/net_tools/nmcli.py E324
 lib/ansible/modules/net_tools/omapi_host.py E317
 lib/ansible/modules/net_tools/omapi_host.py E322
