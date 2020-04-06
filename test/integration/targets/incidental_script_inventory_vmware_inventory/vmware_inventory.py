@@ -512,31 +512,31 @@ class VMWareInventory(object):
                 if k not in inventory[v]['hosts']:
                     inventory[v]['hosts'].append(k)
 
-        if self.config.get('vmware', 'groupby_custom_field'):
-            for k, v in inventory['_meta']['hostvars'].items():
-                if 'customvalue' in v:
-                    for tv in v['customvalue']:
-                        newkey = None
-                        field_name = self.custom_fields[tv['key']] if tv['key'] in self.custom_fields else tv['key']
-                        if field_name in self.groupby_custom_field_excludes:
+    def groupy_by_custom_field(self, inventory):                
+        for k, v in inventory['_meta']['hostvars'].items():
+            if 'customvalue' in v:
+                for tv in v['customvalue']:
+                    newkey = None
+                    field_name = self.custom_fields[tv['key']] if tv['key'] in self.custom_fields else tv['key']
+                    if field_name in self.groupby_custom_field_excludes:
+                        continue
+                    values = []
+                    keylist = map(lambda x: x.strip(), tv['value'].split(','))
+                    for kl in keylist:
+                        try:
+                            newkey = "%s%s_%s" % (self.config.get('vmware', 'custom_field_group_prefix'), str(field_name), kl)
+                            newkey = newkey.strip()
+                        except Exception as e:
+                            self.debugl(e)
+                        values.append(newkey)
+                    for tag in values:
+                        if not tag:
                             continue
-                        values = []
-                        keylist = map(lambda x: x.strip(), tv['value'].split(','))
-                        for kl in keylist:
-                            try:
-                                newkey = "%s%s_%s" % (self.config.get('vmware', 'custom_field_group_prefix'), str(field_name), kl)
-                                newkey = newkey.strip()
-                            except Exception as e:
-                                self.debugl(e)
-                            values.append(newkey)
-                        for tag in values:
-                            if not tag:
-                                continue
-                            if tag not in inventory:
-                                inventory[tag] = {}
-                                inventory[tag]['hosts'] = []
-                            if k not in inventory[tag]['hosts']:
-                                inventory[tag]['hosts'].append(k)
+                        if tag not in inventory:
+                            inventory[tag] = {}
+                            inventory[tag]['hosts'] = []
+                        if k not in inventory[tag]['hosts']:
+                            inventory[tag]['hosts'].append(k)
 
 
     def instances_to_inventory(self, instances):
@@ -547,6 +547,9 @@ class VMWareInventory(object):
         self.create_inventory(inventory, instances)
         self.map_hosts_and_users(inventory)
         self.create_groups(inventory)
+
+        if self.config.get('vmware', 'groupby_custom_field'):
+            group_by_custom_field(inventory)
 
         return inventory
 
