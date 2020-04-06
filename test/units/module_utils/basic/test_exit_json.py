@@ -56,10 +56,22 @@ class TestAnsibleModuleExitJson:
         assert return_val == expected
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_fail_json_msg_positional(self, am, capfd):
+        with pytest.raises(SystemExit) as ctx:
+            am.fail_json('This is the msg')
+        assert ctx.value.code == 1
+
+        out, err = capfd.readouterr()
+        return_val = json.loads(out)
+        # Fail_json should add failed=True
+        assert return_val == {'msg': 'This is the msg', 'failed': True,
+                              'invocation': EMPTY_INVOCATION}
+
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_fail_json_no_msg(self, am):
-        with pytest.raises(AssertionError) as ctx:
+        with pytest.raises(TypeError) as ctx:
             am.fail_json()
-        assert ctx.value.args[0] == "implementation error -- msg to explain the error is required"
+        assert ctx.value.args[0] == "fail_json() missing 1 required positional argument: 'msg'"
 
 
 class TestAnsibleModuleExitValuesRemoved:
