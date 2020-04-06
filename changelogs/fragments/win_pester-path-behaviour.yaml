@@ -1,0 +1,2 @@
+minor_changes:
+- win_pester - Only execute ``*.tests.ps1`` in ``path`` to match the default behaviour in Pester - https://github.com/ansible/ansible/issues/55736

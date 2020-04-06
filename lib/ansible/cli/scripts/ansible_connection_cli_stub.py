@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 
 __metaclass__ = type
-__requires__ = ['ansible']
+__requires__ = ['ansible_base']
 
 
 import fcntl
@@ -71,10 +71,11 @@ class ConnectionProcess(object):
     The connection process wraps around a Connection object that manages
     the connection to a remote device that persists over the playbook
     '''
-    def __init__(self, fd, play_context, socket_path, original_path, ansible_playbook_pid=None):
+    def __init__(self, fd, play_context, socket_path, original_path, task_uuid=None, ansible_playbook_pid=None):
         self.play_context = play_context
         self.socket_path = socket_path
         self.original_path = original_path
+        self._task_uuid = task_uuid
 
         self.fd = fd
         self.exception = None
@@ -98,15 +99,12 @@ class ConnectionProcess(object):
             if self.play_context.private_key_file and self.play_context.private_key_file[0] not in '~/':
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
-                                                    ansible_playbook_pid=self._ansible_playbook_pid)
+                                                    task_uuid=self._task_uuid, ansible_playbook_pid=self._ansible_playbook_pid)
             self.connection.set_options(var_options=variables)
-
-            self.connection._connect()
 
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
             messages.extend([('vvvv', msg) for msg in sys.stdout.getvalue().splitlines()])
-            messages.append(('vvvv', 'connection to remote device started successfully'))
 
             self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.sock.bind(self.socket_path)
@@ -123,7 +121,7 @@ class ConnectionProcess(object):
 
     def run(self):
         try:
-            while self.connection.connected:
+            while not self.connection._conn_closed:
                 signal.signal(signal.SIGALRM, self.connect_timeout)
                 signal.signal(signal.SIGTERM, self.handler)
                 signal.alarm(self.connection.get_option('persistent_connect_timeout'))
@@ -141,9 +139,16 @@ class ConnectionProcess(object):
                     if log_messages:
                         display.display("jsonrpc request: %s" % data, log_only=True)
 
+                    request = json.loads(to_text(data, errors='surrogate_or_strict'))
+                    if request.get('method') == "exec_command" and not self.connection.connected:
+                        self.connection._connect()
+
                     signal.alarm(self.connection.get_option('persistent_command_timeout'))
+
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
+
+                    display_messages(self.connection)
 
                     if log_messages:
                         display.display("jsonrpc response: %s" % resp, log_only=True)
@@ -194,6 +199,7 @@ class ConnectionProcess(object):
                     self.sock.close()
                 if self.connection:
                     self.connection.close()
+                    display_messages(self.connection)
             except Exception:
                 pass
             finally:
@@ -252,8 +258,8 @@ def main():
     if rc == 0:
         ssh = connection_loader.get('ssh', class_only=True)
         ansible_playbook_pid = sys.argv[1]
+        task_uuid = sys.argv[2]
         cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user, play_context.connection, ansible_playbook_pid)
-
         # create the persistent connection dir if need be and create the paths
         # which we will be using later
         tmp_path = unfrackpath(C.PERSISTENT_CONTROL_PATH_DIR)
@@ -273,7 +279,7 @@ def main():
                     try:
                         os.close(r)
                         wfd = os.fdopen(w, 'w')
-                        process = ConnectionProcess(wfd, play_context, socket_path, original_path, ansible_playbook_pid)
+                        process = ConnectionProcess(wfd, play_context, socket_path, original_path, task_uuid, ansible_playbook_pid)
                         process.start(variables)
                     except Exception:
                         messages.append(('error', traceback.format_exc()))
@@ -300,8 +306,9 @@ def main():
                 pc_data = to_text(init_data)
                 try:
                     conn.update_play_context(pc_data)
+                    conn.set_check_prompt(task_uuid)
                 except Exception as exc:
-                    # Only network_cli has update_play context, so missing this is
+                    # Only network_cli has update_play context and set_check_prompt, so missing this is
                     # not fatal e.g. netconf
                     if isinstance(exc, ConnectionError) and getattr(exc, 'code', None) == -32601:
                         pass
@@ -328,6 +335,24 @@ def main():
         sys.stdout.write(json.dumps(result, cls=AnsibleJSONEncoder))
 
     sys.exit(rc)
+
+
+def display_messages(connection):
+    # This should be handled elsewhere, but if this is the last task, nothing will
+    # come back to collect the messages. So now each task will dump its own messages
+    # to stdout before logging the response message. This may make some other
+    # pop_messages calls redundant.
+    for level, message in connection.pop_messages():
+        if connection.get_option('persistent_log_messages') and level == "log":
+            display.display(message, log_only=True)
+        else:
+            # These should be keyed by valid method names, but
+            # fail gracefully just in case.
+            display_method = getattr(display, level, None)
+            if display_method:
+                display_method(message)
+            else:
+                display.display((level, message))
 
 
 if __name__ == '__main__':

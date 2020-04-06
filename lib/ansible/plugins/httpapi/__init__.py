@@ -68,11 +68,15 @@ class HttpApiBase(AnsiblePlugin):
             server without making another request. In many cases, this can just
             be the original exception.
             """
-        if exc.code == 401 and self.connection._auth:
-            # Stored auth appears to be invalid, clear and retry
-            self.connection._auth = None
-            self.login(self.connection.get_option('remote_user'), self.connection.get_option('password'))
-            return True
+        if exc.code == 401:
+            if self.connection._auth:
+                # Stored auth appears to be invalid, clear and retry
+                self.connection._auth = None
+                self.login(self.connection.get_option('remote_user'), self.connection.get_option('password'))
+                return True
+            else:
+                # Unauthorized and there's no token. Return an error
+                return False
 
         return exc
 

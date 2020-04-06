@@ -24,7 +24,7 @@ DOCUMENTATION = """
 EXAMPLES = """
 - name: "loop through list"
   debug:
-    msg: "An item: {{item}}"
+    msg: "An item: {{ item }}"
   with_items:
     - 1
     - 2
@@ -41,7 +41,7 @@ EXAMPLES = """
 
 - name: "loop through list from a variable"
   debug:
-    msg: "An item: {{item}}"
+    msg: "An item: {{ item }}"
   with_items: "{{ somelist }}"
 
 - name: more complex items to add several users

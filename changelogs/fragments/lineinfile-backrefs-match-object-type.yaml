@@ -1,0 +1,2 @@
+bugfixes:
+  - lineinfile - properly handle inserting a line when backrefs are enabled and the line already exists in the file (https://github.com/ansible/ansible/issues/63756)

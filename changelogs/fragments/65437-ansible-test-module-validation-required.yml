@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - the module validation code now checks whether ``requirement`` for options is documented correctly."

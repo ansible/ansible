@@ -1,0 +1,4 @@
+bugfixes:
+  - yum - performance bugfix, the YumBase object was being  instantiated
+    multiple times unnecessarily, which lead to considerable overhead when
+    operating against large sets of packages.

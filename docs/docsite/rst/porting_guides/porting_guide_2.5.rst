@@ -169,17 +169,17 @@ Modules removed
 
 The following modules no longer exist:
 
-* nxos_mtu use :ref:`nxos_system <nxos_system_module>`'s ``system_mtu`` option or :ref:`nxos_interface <nxos_interface_module>` instead
-* cl_interface_policy use :ref:`nclu <nclu_module>` instead
-* cl_bridge use :ref:`nclu <nclu_module>` instead
-* cl_img_install use :ref:`nclu <nclu_module>` instead
-* cl_ports use :ref:`nclu <nclu_module>` instead
-* cl_license use :ref:`nclu <nclu_module>` instead
-* cl_interface use :ref:`nclu <nclu_module>` instead
-* cl_bond use :ref:`nclu <nclu_module>` instead
-* ec2_vpc use :ref:`ec2_vpc_net <ec2_vpc_net_module>` along with supporting modules :ref:`ec2_vpc_igw <ec2_vpc_igw_module>`, :ref:`ec2_vpc_route_table <ec2_vpc_route_table_module>`, :ref:`ec2_vpc_subnet <ec2_vpc_subnet_module>`, :ref:`ec2_vpc_dhcp_option <ec2_vpc_dhcp_option_module>`, :ref:`ec2_vpc_nat_gateway <ec2_vpc_nat_gateway_module>`, :ref:`ec2_vpc_nacl <ec2_vpc_nacl_module>` instead.
-* ec2_ami_search use :ref:`ec2_ami_facts <ec2_ami_facts_module>` instead
-* docker use :ref:`docker_container <docker_container_module>` and :ref:`docker_image <docker_image_module>` instead
+* nxos_mtu use :ref:`nxos_system <ansible_2_5:nxos_system_module>`'s ``system_mtu`` option or :ref:`nxos_interface <ansible_2_5:nxos_interface_module>` instead
+* cl_interface_policy use :ref:`nclu <ansible_2_5:nclu_module>` instead
+* cl_bridge use :ref:`nclu <ansible_2_5:nclu_module>` instead
+* cl_img_install use :ref:`nclu <ansible_2_5:nclu_module>` instead
+* cl_ports use :ref:`nclu <ansible_2_5:nclu_module>` instead
+* cl_license use :ref:`nclu <ansible_2_5:nclu_module>` instead
+* cl_interface use :ref:`nclu <ansible_2_5:nclu_module>` instead
+* cl_bond use :ref:`nclu <ansible_2_5:nclu_module>` instead
+* ec2_vpc use :ref:`ec2_vpc_net <ansible_2_5:ec2_vpc_net_module>` along with supporting modules :ref:`ec2_vpc_igw <ansible_2_5:ec2_vpc_igw_module>`, :ref:`ec2_vpc_route_table <ansible_2_5:ec2_vpc_route_table_module>`, :ref:`ec2_vpc_subnet <ansible_2_5:ec2_vpc_subnet_module>`, :ref:`ec2_vpc_dhcp_option <ansible_2_5:ec2_vpc_dhcp_option_module>`, :ref:`ec2_vpc_nat_gateway <ansible_2_5:ec2_vpc_nat_gateway_module>`, :ref:`ec2_vpc_nacl <ansible_2_5:ec2_vpc_nacl_module>` instead.
+* ec2_ami_search use :ref:`ec2_ami_facts <ansible_2_5:ec2_ami_facts_module>` instead
+* docker use :ref:`docker_container <ansible_2_5:docker_container_module>` and :ref:`docker_image <ansible_2_5:docker_image_module>` instead
 
 .. note::
 
@@ -196,37 +196,37 @@ Deprecation notices
 The following modules will be removed in Ansible 2.9. Please update your playbooks accordingly.
 
 * Apstra's ``aos_*`` modules are deprecated as they do not work with AOS 2.1 or higher. See new modules at `https://github.com/apstra <https://github.com/apstra>`_.
-* nxos_ip_interface use :ref:`nxos_l3_interface <nxos_l3_interface_module>` instead.
-* nxos_portchannel use :ref:`nxos_linkagg <nxos_linkagg_module>` instead.
-* nxos_switchport use :ref:`nxos_l2_interface <nxos_l2_interface_module>` instead.
-* panos_security_policy use :ref:`panos_security_rule <panos_security_rule_module>` instead.
-* panos_nat_policy use :ref:`panos_nat_rule <panos_nat_rule_module>` instead.
-* vsphere_guest use :ref:`vmware_guest <vmware_guest_module>` instead.
+* nxos_ip_interface use :ref:`nxos_l3_interface <ansible_2_5:nxos_l3_interface_module>` instead.
+* nxos_portchannel use :ref:`nxos_linkagg <ansible_2_5:nxos_linkagg_module>` instead.
+* nxos_switchport use :ref:`nxos_l2_interface <ansible_2_5:nxos_l2_interface_module>` instead.
+* panos_security_policy use :ref:`panos_security_rule <ansible_2_5:panos_security_rule_module>` instead.
+* panos_nat_policy use :ref:`panos_nat_rule <ansible_2_5:panos_nat_rule_module>` instead.
+* vsphere_guest use :ref:`vmware_guest <ansible_2_5:vmware_guest_module>` instead.
 
 Noteworthy module changes
 -------------------------
 
-* The :ref:`stat <stat_module>` and :ref:`win_stat <win_stat_module>` modules have changed the default of the option ``get_md5`` from ``true`` to ``false``.
+* The :ref:`stat <ansible_2_5:stat_module>` and :ref:`win_stat <ansible_2_5:win_stat_module>` modules have changed the default of the option ``get_md5`` from ``true`` to ``false``.
 
 This option will be removed starting with Ansible version 2.9. The options ``get_checksum: True``
 and ``checksum_algorithm: md5`` can still be used if an MD5 checksum is
 desired.
 
-* ``osx_say`` module was renamed into :ref:`say <say_module>`.
+* ``osx_say`` module was renamed into :ref:`say <ansible_2_5:say_module>`.
 * Several modules which could deal with symlinks had the default value of their ``follow`` option
   changed as part of a feature to `standardize the behavior of follow
   <https://github.com/ansible/proposals/issues/69>`_:
 
-  * The :ref:`file module <file_module>` changed from ``follow=False`` to ``follow=True`` because
+  * The :ref:`file module <ansible_2_5:file_module>` changed from ``follow=False`` to ``follow=True`` because
     its purpose is to modify the attributes of a file and most systems do not allow attributes to be
     applied to symlinks, only to real files.
-  * The :ref:`replace module <replace_module>` had its ``follow`` parameter removed because it
+  * The :ref:`replace module <ansible_2_5:replace_module>` had its ``follow`` parameter removed because it
     inherently modifies the content of an existing file so it makes no sense to operate on the link
     itself.
-  * The :ref:`blockinfile module <blockinfile_module>` had its ``follow`` parameter removed because
+  * The :ref:`blockinfile module <ansible_2_5:blockinfile_module>` had its ``follow`` parameter removed because
     it inherently modifies the content of an existing file so it makes no sense to operate on the
     link itself.
-  * In Ansible-2.5.3, the :ref:`template module <template_module>` became more strict about its
+  * In Ansible-2.5.3, the :ref:`template module <ansible_2_5:template_module>` became more strict about its
     ``src`` file being proper utf-8.  Previously, non-utf8 contents in a template module src file
     would result in a mangled output file (the non-utf8 characters would be replaced with a unicode
     replacement character).  Now, on Python2, the module will error out with the message, "Template
@@ -254,7 +254,7 @@ Inventory plugins have been fine tuned, and we have started to add some common f
 Shell
 -----
 
-Shell plugins have been migrated to the new plugin configuration framework. It is now possible to customize more settings, and settings which were previously 'global' can now also be overriden using host specific variables.
+Shell plugins have been migrated to the new plugin configuration framework. It is now possible to customize more settings, and settings which were previously 'global' can now also be overridden using host specific variables.
 
 For example, ``system_temps`` is a new setting that allows you to control what Ansible will consider a 'system temporary dir'. This is used when escalating privileges for a non-administrative user. Previously this was hardcoded to '/tmp', which some systems cannot use for privilege escalation. This setting now defaults to ``[ '/var/tmp', '/tmp']``.
 

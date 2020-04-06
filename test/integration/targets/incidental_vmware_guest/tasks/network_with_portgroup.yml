@@ -1,0 +1,47 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>, Tim Steinbach <tim@nequissimus.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Add portgroup
+  vmware_dvs_portgroup:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    portgroup_name: "portgroup_network"
+    switch_name: "{{ dvswitch1 }}"
+    vlan_id: "1"
+    num_ports: 2
+    portgroup_type: earlyBinding
+    state: present
+  register: dvsportgroup
+- debug: var=dvsportgroup
+- name: create new VMs with portgroup
+  vmware_guest:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: test_vm1
+    guest_id: centos64Guest
+    datacenter: "{{ dc1 }}"
+    disk:
+      - size: 3mb
+        type: thin
+        datastore: "{{ rw_datastore }}"
+    networks:
+      - name: portgroup_network
+        switch_name: "{{ dvswitch1 }}"
+    hardware:
+        num_cpus: 1
+        memory_mb: 128
+    state: poweredoff
+    folder: "{{ f0 }}"
+  register: vm_with_portgroup
+  ignore_errors: no
+
+- debug: var=vm_with_portgroup
+
+- assert:
+    that:
+      - vm_with_portgroup is changed

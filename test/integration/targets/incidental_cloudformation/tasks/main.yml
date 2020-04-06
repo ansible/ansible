@@ -1,0 +1,463 @@
+---
+
+- module_defaults:
+    group/aws:
+      aws_access_key: '{{ aws_access_key | default(omit) }}'
+      aws_secret_key: '{{ aws_secret_key | default(omit) }}'
+      security_token: '{{ security_token | default(omit) }}'
+      region: '{{ aws_region | default(omit) }}'
+
+  block:
+
+    # ==== Env setup ==========================================================
+    - name: list available AZs
+      aws_az_info:
+      register: region_azs
+
+    - name: pick an AZ for testing
+      set_fact:
+        availability_zone: "{{ region_azs.availability_zones[0].zone_name }}"
+
+    - name: Create a test VPC
+      ec2_vpc_net:
+        name: "{{ vpc_name }}"
+        cidr_block: "{{ vpc_cidr }}"
+        tags:
+          Name: Cloudformation testing
+      register: testing_vpc
+
+    - name: Create a test subnet
+      ec2_vpc_subnet:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: "{{ subnet_cidr }}"
+        az: "{{ availability_zone }}"
+      register: testing_subnet
+
+    - name: Find AMI to use
+      ec2_ami_info:
+        owners: 'amazon'
+        filters:
+          name: '{{ ec2_ami_name }}'
+      register: ec2_amis
+
+    - name: Set fact with latest AMI
+      vars:
+        latest_ami: '{{ ec2_amis.images | sort(attribute="creation_date") | last }}'
+      set_fact:
+        ec2_ami_image: '{{ latest_ami.image_id }}'
+
+    # ==== Cloudformation tests ===============================================
+
+    # 1. Basic stack creation (check mode, actual run and idempotency)
+    # 2. Tags
+    # 3. cloudformation_info tests (basic + all_facts)
+    # 4. termination_protection
+    # 5. create_changeset + changeset_name
+
+    # There is still scope to add tests for -
+    # 1. capabilities
+    # 2. stack_policy
+    # 3. on_create_failure (covered in unit tests)
+    # 4. Passing in a role
+    # 5. nested stacks?
+
+
+    - name: create a cloudformation stack (check mode)
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        template_body: "{{ lookup('file','cf_template.json') }}"
+        template_parameters:
+          InstanceType: "t3.nano"
+          ImageId: "{{ ec2_ami_image }}"
+          SubnetId: "{{ testing_subnet.subnet.id }}"
+        tags:
+          Stack: "{{ stack_name }}"
+          test: "{{ resource_prefix }}"
+      register: cf_stack
+      check_mode: yes
+
+    - name: check task return attributes
+      assert:
+        that:
+          - cf_stack.changed
+          - "'msg' in cf_stack and 'New stack would be created' in cf_stack.msg"
+
+    - name: create a cloudformation stack
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        template_body: "{{ lookup('file','cf_template.json') }}"
+        template_parameters:
+          InstanceType: "t3.nano"
+          ImageId: "{{ ec2_ami_image }}"
+          SubnetId: "{{ testing_subnet.subnet.id }}"
+        tags:
+          Stack: "{{ stack_name }}"
+          test: "{{ resource_prefix }}"
+      register: cf_stack
+
+    - name: check task return attributes
+      assert:
+        that:
+          - cf_stack.changed
+          - "'events' in cf_stack"
+          - "'output' in cf_stack and 'Stack CREATE complete' in cf_stack.output"
+          - "'stack_outputs' in cf_stack and 'InstanceId' in cf_stack.stack_outputs"
+          - "'stack_resources' in cf_stack"
+
+    - name: create a cloudformation stack (check mode) (idempotent)
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        template_body: "{{ lookup('file','cf_template.json') }}"
+        template_parameters:
+          InstanceType: "t3.nano"
+          ImageId: "{{ ec2_ami_image }}"
+          SubnetId: "{{ testing_subnet.subnet.id }}"
+        tags:
+          Stack: "{{ stack_name }}"
+          test: "{{ resource_prefix }}"
+      register: cf_stack
+      check_mode: yes
+
+    - name: check task return attributes
+      assert:
+        that:
+          - not cf_stack.changed
+
+    - name: create a cloudformation stack (idempotent)
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        template_body: "{{ lookup('file','cf_template.json') }}"
+        template_parameters:
+          InstanceType: "t3.nano"
+          ImageId: "{{ ec2_ami_image }}"
+          SubnetId: "{{ testing_subnet.subnet.id }}"
+        tags:
+          Stack: "{{ stack_name }}"
+          test: "{{ resource_prefix }}"
+      register: cf_stack
+
+    - name: check task return attributes
+      assert:
+        that:
+          - not cf_stack.changed
+          - "'output' in cf_stack and 'Stack is already up-to-date.' in cf_stack.output"
+          - "'stack_outputs' in cf_stack and 'InstanceId' in cf_stack.stack_outputs"
+          - "'stack_resources' in cf_stack"
+
+    - name: get stack details
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+
+    - name: assert stack info
+      assert:
+        that:
+          - "'cloudformation' in stack_info"
+          - "stack_info.cloudformation | length == 1"
+          - "stack_name in stack_info.cloudformation"
+          - "'stack_description' in stack_info.cloudformation[stack_name]"
+          - "'stack_outputs' in stack_info.cloudformation[stack_name]"
+          - "'stack_parameters' in stack_info.cloudformation[stack_name]"
+          - "'stack_tags' in stack_info.cloudformation[stack_name]"
+          - "stack_info.cloudformation[stack_name].stack_tags.Stack == stack_name"
+
+    - name: get stack details (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+      check_mode: yes
+
+    - name: assert stack info
+      assert:
+        that:
+          - "'cloudformation' in stack_info"
+          - "stack_info.cloudformation | length == 1"
+          - "stack_name in stack_info.cloudformation"
+          - "'stack_description' in stack_info.cloudformation[stack_name]"
+          - "'stack_outputs' in stack_info.cloudformation[stack_name]"
+          - "'stack_parameters' in stack_info.cloudformation[stack_name]"
+          - "'stack_tags' in stack_info.cloudformation[stack_name]"
+          - "stack_info.cloudformation[stack_name].stack_tags.Stack == stack_name"
+
+    - name: get stack details (all_facts)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        all_facts: yes
+      register: stack_info
+
+    - name: assert stack info
+      assert:
+        that:
+          - "'stack_events' in stack_info.cloudformation[stack_name]"
+          - "'stack_policy' in stack_info.cloudformation[stack_name]"
+          - "'stack_resource_list' in stack_info.cloudformation[stack_name]"
+          - "'stack_resources' in stack_info.cloudformation[stack_name]"
+          - "'stack_template' in stack_info.cloudformation[stack_name]"
+
+    - name: get stack details (all_facts) (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        all_facts: yes
+      register: stack_info
+      check_mode: yes
+
+    - name: assert stack info
+      assert:
+        that:
+          - "'stack_events' in stack_info.cloudformation[stack_name]"
+          - "'stack_policy' in stack_info.cloudformation[stack_name]"
+          - "'stack_resource_list' in stack_info.cloudformation[stack_name]"
+          - "'stack_resources' in stack_info.cloudformation[stack_name]"
+          - "'stack_template' in stack_info.cloudformation[stack_name]"
+
+    # ==== Cloudformation tests (create changeset) ============================
+
+    # try to create a changeset by changing instance type
+    - name: create a changeset
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        create_changeset: yes
+        changeset_name: "test-changeset"
+        template_body: "{{ lookup('file','cf_template.json') }}"
+        template_parameters:
+          InstanceType: "t3.micro"
+          ImageId: "{{ ec2_ami_image }}"
+          SubnetId: "{{ testing_subnet.subnet.id }}"
+        tags:
+          Stack: "{{ stack_name }}"
+          test: "{{ resource_prefix }}"
+      register: create_changeset_result
+
+    - name: assert changeset created
+      assert:
+        that:
+          - "create_changeset_result.changed"
+          - "'change_set_id' in create_changeset_result"
+          - "'Stack CREATE_CHANGESET complete' in create_changeset_result.output"
+
+    - name: get stack details with changesets
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        stack_change_sets: True
+      register: stack_info
+
+    - name: assert changesets in info
+      assert:
+        that:
+          - "'stack_change_sets' in stack_info.cloudformation[stack_name]"
+
+    - name: get stack details with changesets (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+        stack_change_sets: True
+      register: stack_info
+      check_mode: yes
+
+    - name: assert changesets in info
+      assert:
+        that:
+          - "'stack_change_sets' in stack_info.cloudformation[stack_name]"
+
+    # try to create an empty changeset by passing in unchanged template
+    - name: create a changeset
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        create_changeset: yes
+        template_body: "{{ lookup('file','cf_template.json') }}"
+        template_parameters:
+          InstanceType: "t3.nano"
+          ImageId: "{{ ec2_ami_image }}"
+          SubnetId: "{{ testing_subnet.subnet.id }}"
+        tags:
+          Stack: "{{ stack_name }}"
+          test: "{{ resource_prefix }}"
+      register: create_changeset_result
+
+    - name: assert changeset created
+      assert:
+        that:
+          - "not create_changeset_result.changed"
+          - "'The created Change Set did not contain any changes to this stack and was deleted.' in create_changeset_result.output"
+
+    # ==== Cloudformation tests (termination_protection) ======================
+
+    - name: set termination protection to true
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        termination_protection: yes
+        template_body: "{{ lookup('file','cf_template.json') }}"
+        template_parameters:
+          InstanceType: "t3.nano"
+          ImageId: "{{ ec2_ami_image }}"
+          SubnetId: "{{ testing_subnet.subnet.id }}"
+        tags:
+          Stack: "{{ stack_name }}"
+          test: "{{ resource_prefix }}"
+      register: cf_stack
+
+#    This fails - #65592
+#    - name: check task return attributes
+#      assert:
+#        that:
+#          - cf_stack.changed
+
+    - name: get stack details
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+
+    - name: assert stack info
+      assert:
+        that:
+          - "stack_info.cloudformation[stack_name].stack_description.enable_termination_protection"
+
+    - name: get stack details (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+      check_mode: yes
+
+    - name: assert stack info
+      assert:
+        that:
+          - "stack_info.cloudformation[stack_name].stack_description.enable_termination_protection"
+
+    - name: set termination protection to false
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        termination_protection: no
+        template_body: "{{ lookup('file','cf_template.json') }}"
+        template_parameters:
+          InstanceType: "t3.nano"
+          ImageId: "{{ ec2_ami_image }}"
+          SubnetId: "{{ testing_subnet.subnet.id }}"
+        tags:
+          Stack: "{{ stack_name }}"
+          test: "{{ resource_prefix }}"
+      register: cf_stack
+
+#    This fails - #65592
+#    - name: check task return attributes
+#      assert:
+#        that:
+#          - cf_stack.changed
+
+    - name: get stack details
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+
+    - name: assert stack info
+      assert:
+        that:
+          - "not stack_info.cloudformation[stack_name].stack_description.enable_termination_protection"
+
+    - name: get stack details (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+      check_mode: yes
+
+    - name: assert stack info
+      assert:
+        that:
+          - "not stack_info.cloudformation[stack_name].stack_description.enable_termination_protection"
+
+    # ==== Cloudformation tests (delete stack tests) ==========================
+
+    - name: delete cloudformation stack (check mode)
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        state: absent
+      check_mode: yes
+      register: cf_stack
+
+    - name: check task return attributes
+      assert:
+        that:
+          - cf_stack.changed
+          - "'msg' in cf_stack and 'Stack would be deleted' in cf_stack.msg"
+
+    - name: delete cloudformation stack
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        state: absent
+      register: cf_stack
+
+    - name: check task return attributes
+      assert:
+        that:
+          - cf_stack.changed
+          - "'output' in cf_stack and 'Stack Deleted' in cf_stack.output"
+
+    - name: delete cloudformation stack (check mode) (idempotent)
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        state: absent
+      check_mode: yes
+      register: cf_stack
+
+    - name: check task return attributes
+      assert:
+        that:
+          - not cf_stack.changed
+          - "'msg' in cf_stack"
+          - >-
+            "Stack doesn't exist" in cf_stack.msg
+
+    - name: delete cloudformation stack (idempotent)
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        state: absent
+      register: cf_stack
+
+    - name: check task return attributes
+      assert:
+        that:
+          - not cf_stack.changed
+          - "'output' in cf_stack and 'Stack not found.' in cf_stack.output"
+
+    - name: get stack details
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+
+    - name: assert stack info
+      assert:
+        that:
+          - "not stack_info.cloudformation"
+
+    - name: get stack details (checkmode)
+      cloudformation_info:
+        stack_name: "{{ stack_name }}"
+      register: stack_info
+      check_mode: yes
+
+    - name: assert stack info
+      assert:
+        that:
+          - "not stack_info.cloudformation"
+
+    # ==== Cleanup ============================================================
+
+  always:
+
+    - name: delete stack
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: Delete test subnet
+      ec2_vpc_subnet:
+        vpc_id: "{{ testing_vpc.vpc.id }}"
+        cidr: "{{ subnet_cidr }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: Delete test VPC
+      ec2_vpc_net:
+        name: "{{ vpc_name }}"
+        cidr_block: "{{ vpc_cidr }}"
+        state: absent
+      ignore_errors: yes

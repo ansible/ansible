@@ -365,8 +365,12 @@ class CliconfBase(AnsiblePlugin):
         if proto == 'scp':
             if not HAS_SCP:
                 raise AnsibleError("Required library scp is not installed.  Please install it using `pip install scp`")
-            with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
-                scp.get(source, destination)
+            try:
+                with SCPClient(ssh.get_transport(), socket_timeout=timeout) as scp:
+                    scp.get(source, destination)
+            except EOFError:
+                # This appears to be benign.
+                pass
         elif proto == 'sftp':
             with ssh.open_sftp() as sftp:
                 sftp.get(source, destination)
@@ -443,3 +447,31 @@ class CliconfBase(AnsiblePlugin):
 
         if replace and not operations.get('supports_replace', False):
             raise ValueError("configuration replace is not supported")
+
+    def set_cli_prompt_context(self):
+        """
+        Ensure the command prompt on device is in right mode
+        :return: None
+        """
+        pass
+
+    def _update_cli_prompt_context(self, config_context=None, exit_command='exit'):
+        """
+        Update the cli prompt context to ensure it is in operational mode
+        :param config_context: It is string value to identify if the current cli prompt ends with config mode prompt
+        :param exit_command: Command to execute to exit the config mode
+        :return: None
+        """
+        out = self._connection.get_prompt()
+        if out is None:
+            raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
+                                                   u' response window: %s' % self._connection._last_recv_window)
+
+        while True:
+            out = to_text(out, errors='surrogate_then_replace').strip()
+            if config_context and out.endswith(config_context):
+                self._connection.queue_message('vvvv', 'wrong context, sending exit to device')
+                self.send_command(exit_command)
+                out = self._connection.get_prompt()
+            else:
+                break

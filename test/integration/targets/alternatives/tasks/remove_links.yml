@@ -1,7 +1,0 @@
-- name: remove links
-  file:
-    path: '{{ item }}'
-    state: absent
-  with_items:
-    - /etc/alternatives/dummy
-    - /usr/bin/dummy

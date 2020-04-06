@@ -1,0 +1,3 @@
+bugfixes:
+- psexec - Fix issue where the Kerberos package was not detected as being available.
+- psexec - Fix issue where the ``interactive`` option was not being passed down to the library.

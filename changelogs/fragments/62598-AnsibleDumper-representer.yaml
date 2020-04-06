@@ -1,0 +1,2 @@
+bugfixes:
+  - AnsibleDumper - Add a representer for AnsibleUnsafeBytes (https://github.com/ansible/ansible/issues/62562).

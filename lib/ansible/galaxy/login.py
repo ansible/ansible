@@ -27,6 +27,7 @@ import json
 
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.six.moves import input
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from ansible.module_utils.urls import open_url
@@ -80,7 +81,7 @@ class GalaxyLogin(object):
         try:
             tokens = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
                                         url_password=self.github_password, force_basic_auth=True,
-                                        validate_certs=self._validate_certs))
+                                        validate_certs=self._validate_certs, http_agent=user_agent()))
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['message'])
@@ -91,7 +92,7 @@ class GalaxyLogin(object):
                 try:
                     open_url('https://api.github.com/authorizations/%d' % token['id'],
                              url_username=self.github_username, url_password=self.github_password, method='DELETE',
-                             force_basic_auth=True, validate_certs=self._validate_certs)
+                             force_basic_auth=True, validate_certs=self._validate_certs, http_agent=user_agent())
                 except HTTPError as e:
                     res = json.load(e)
                     raise AnsibleError(res['message'])
@@ -105,7 +106,7 @@ class GalaxyLogin(object):
         try:
             data = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
                                       url_password=self.github_password, force_basic_auth=True, data=args,
-                                      validate_certs=self._validate_certs))
+                                      validate_certs=self._validate_certs, http_agent=user_agent()))
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['message'])

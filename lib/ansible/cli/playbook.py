@@ -16,7 +16,7 @@ from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.block import Block
 from ansible.utils.display import Display
-from ansible.utils.collection_loader import set_collection_playbook_paths
+from ansible.utils.collection_loader import AnsibleCollectionLoader, get_collection_name_from_path, set_collection_playbook_paths
 from ansible.plugins.loader import add_all_plugin_dirs
 
 
@@ -91,6 +91,12 @@ class PlaybookCLI(CLI):
             b_playbook_dirs.append(b_playbook_dir)
 
         set_collection_playbook_paths(b_playbook_dirs)
+
+        playbook_collection = get_collection_name_from_path(b_playbook_dirs[0])
+
+        if playbook_collection:
+            display.warning("running playbook inside collection {0}".format(playbook_collection))
+            AnsibleCollectionLoader().set_default_collection(playbook_collection)
 
         # don't deal with privilege escalation or passwords when we don't need to
         if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or

@@ -319,13 +319,13 @@ Testing ACI library functions
 =============================
 You can test your ``construct_url()`` and ``payload()`` arguments without accessing APIC hardware by using the following python script:
 
-.. code-block:: guess
+.. code-block:: text
 
     #!/usr/bin/python
     import json
     from ansible.module_utils.network.aci.aci import ACIModule
 
-    # Just another class mimicking a bare AnsibleModule class for construct_url() and payload() methods
+    # Just another class mimicing a bare AnsibleModule class for construct_url() and payload() methods
     class AltModule():
         params = dict(
             host='dummy',

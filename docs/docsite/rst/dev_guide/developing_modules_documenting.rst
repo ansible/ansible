@@ -119,7 +119,8 @@ After the shebang, the UTF-8 coding, the copyright line, the license, and the ``
 Module documentation should briefly and accurately define what each module and option does, and how it works with others in the underlying system. Documentation should be written for broad audience--readable both by experts and non-experts.
     * Descriptions should always start with a capital letter and end with a full stop. Consistency always helps.
     * Verify that arguments in doc and module spec dict are identical.
-    * For password / secret arguments no_log=True should be set.
+    * For password / secret arguments ``no_log=True`` should be set.
+    * For arguments that seem to contain sensitive information but **do not** contain secrets, such as "password_length", set ``no_log=False`` to disable the warning message.
     * If an option is only sometimes required, describe the conditions. For example, "Required when I(state=present)."
     * If your module allows ``check_mode``, reflect this fact in the documentation.
 
@@ -210,6 +211,11 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
     * Specifies the data type that option accepts, must match the ``argspec``.
     * If an argument is ``type='bool'``, this field should be set to ``type: bool`` and no ``choices`` should be specified.
+    * If an argument is ``type='list'``, ``elements`` should be specified.
+
+  :elements:
+
+    * Specifies the data type for list elements in case ``type='list'``.
 
   :aliases:
     * List of optional name aliases.
@@ -222,8 +228,8 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
   :suboptions:
 
-    * If this option takes a dict, you can define its structure here.
-    * See :ref:`azure_rm_securitygroup_module`, :ref:`os_ironic_node_module` for examples.
+    * If this option takes a dict or list of dicts, you can define the structure here.
+    * See :ref:`azure_rm_securitygroup_module`, :ref:`azure_rm_azurefirewall_module` and :ref:`os_ironic_node_module` for examples.
 
 :requirements:
 
@@ -275,7 +281,11 @@ You can link from your module documentation to other module docs, other resource
 
 .. note::
 
-    - To refer a collection of modules, use ``C(..)``, e.g. ``Refer to the C(win_*) modules.``
+  For modules in a collection, you can only use ``L()`` and ``M()`` for content within that collection. Use ``U()`` to refer to content in a different collection.
+
+.. note::
+
+    - To refer a group of modules, use ``C(..)``, e.g. ``Refer to the C(win_*) modules.``
     - Because it stands out better, using ``seealso`` is preferred for general references over the use of notes or adding links to the description.
 
 .. _module_docs_fragments:
@@ -284,6 +294,42 @@ Documentation fragments
 -----------------------
 
 If you're writing multiple related modules, they may share common documentation, such as authentication details, file mode settings, ``notes:`` or ``seealso:`` entries. Rather than duplicate that information in each module's ``DOCUMENTATION`` block, you can save it once as a doc_fragment plugin and use it in each module's documentation. In Ansible, shared documentation fragments are contained in a ``ModuleDocFragment`` class in `lib/ansible/plugins/doc_fragments/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/doc_fragments>`_. To include a documentation fragment, add ``extends_documentation_fragment: FRAGMENT_NAME`` in your module's documentation.
+
+Modules should only use items from a doc fragment if the module will implement all of the interface documented there in a manner that behaves the same as the existing modules which import that fragment. The goal is that items imported from the doc fragment will behave identically when used in another module that imports the doc fragment.
+
+By default, only the ``DOCUMENTATION`` property from a doc fragment is inserted into the module documentation. It is possible to define additional properties in the doc fragment in order to import only certain parts of a doc fragment or mix and match as appropriate. If a property is defined in both the doc fragment and the module, the module value overrides the doc fragment.
+
+Here is an example doc fragment named ``example_fragment.py``:
+
+.. code-block:: python
+
+    class ModuleDocFragment(object):
+        # Standard documentation
+        DOCUMENTATION = r'''
+        options:
+          # options here
+        '''
+
+        # Additional section
+        OTHER = r'''
+        options:
+          # other options here
+        '''
+
+
+To insert the contents of ``OTHER`` in a module:
+
+.. code-block:: yaml+jinja
+
+    extends_documentation_fragment: example_fragment.other
+
+Or use both :
+
+.. code-block:: yaml+jinja
+
+    extends_documentation_fragment:
+      - example_fragment
+      - example_fragment.other
 
 .. _note:
   * Prior to Ansible 2.8, documentation fragments were kept in ``lib/ansible/utils/module_docs_fragments``.
@@ -300,8 +346,7 @@ For example, all AWS modules should include:
     - aws
     - ec2
 
-
-You can find more examples by searching for ``extends_documentation_fragment`` under the Ansible source tree.
+:ref:`docfragments_collections` describes how to incorporate documentation fragments in a collection.
 
 .. _examples_block:
 
@@ -341,16 +386,18 @@ Otherwise, for each value returned, provide the following fields. All fields are
   :description:
     Detailed description of what this value represents. Capitalized and with trailing dot.
   :returned:
-    When this value is returned, such as ``always``, or ``on success``.
+    When this value is returned, such as ``always``, ``changed`` or ``success``. This is a string and can contain any human-readable content.
   :type:
     Data type.
+  :elements:
+    If ``type='list'``, specifies the data type of the list's elements.
   :sample:
     One or more examples.
   :version_added:
     Only needed if this return was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
     This is a string, and not a float, i.e. ``version_added: '2.3'``.
   :contains:
-    Optional. To describe nested return values, set ``type: complex`` and repeat the elements above for each sub-field.
+    Optional. To describe nested return values, set ``type: complex``, ``type: dict``, or ``type: list``/``elements: dict`` and repeat the elements above for each sub-field.
 
 Here are two example ``RETURN`` sections, one with three simple fields and one with a complex nested field::
 
@@ -375,7 +422,7 @@ Here are two example ``RETURN`` sections, one with three simple fields and one w
     RETURN = r'''
     packages:
         description: Information about package requirements
-        returned: On success
+        returned: success
         type: complex
         contains:
             missing:
@@ -407,3 +454,10 @@ After the shebang, the UTF-8 coding, the copyright line, the license, and the se
    from module_utils.basic import AnsibleModule
 
 The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
+
+.. _dev_testing_module_documentation:
+
+Testing module documentation
+============================
+
+To test Ansible documentation locally please :ref:`follow instruction<testing_module_documentation>`.

@@ -153,6 +153,18 @@ or:
        if not HAS_BOTO3:
            module.fail_json(msg='boto3 and botocore are required for this module')
 
+Supporting Module Defaults
+--------------------------
+
+The existing AWS modules support using :ref:`module_defaults <module_defaults>` for common 
+authentication parameters.  To do the same for your new module, add an entry for it in
+``lib/ansible/config/module_defaults.yml``.  These entries take the form of:
+
+.. code-block:: yaml
+
+  aws_module_name:
+  - aws
+
 Connecting to AWS
 =================
 
@@ -347,7 +359,7 @@ API throttling (rate limiting) and pagination
 =============================================
 
 For methods that return a lot of results, boto3 often provides
-`paginators <http://boto3.readthedocs.io/en/latest/guide/paginators.html>`_. If the method
+`paginators <https://boto3.readthedocs.io/en/latest/guide/paginators.html>`_. If the method
 you're calling has ``NextToken`` or ``Marker`` parameters, you should probably
 check whether a paginator exists (the top of each boto3 service reference page has a link
 to Paginators, if the service has any). To use paginators, obtain a paginator object,
@@ -639,29 +651,28 @@ to your test in the following variables:
 * `aws_secret_key`
 * `security_token`
 
-So all invocations of AWS modules in the test should set these parameters. To avoid duplication these
-for every call, it's preferable to use `YAML Anchors <http://blog.daemonl.com/2016/02/yaml.html>`_. For example:
+So all invocations of AWS modules in the test should set these parameters. To avoid duplicating these
+for every call, it's preferable to use :ref:`module_defaults <module_defaults>`. For example:
 
 .. code-block:: yaml
 
-   - name: set connection information for all tasks
-     set_fact:
-       aws_connection_info: &aws_connection_info
+   - name: set connection information for aws modules and run tasks
+     module_defaults:
+       group/aws:
          aws_access_key: "{{ aws_access_key }}"
          aws_secret_key: "{{ aws_secret_key }}"
-         security_token: "{{ security_token }}"
+         security_token: "{{ security_token | default(omit) }}"
          region: "{{ aws_region }}"
-     no_log: yes
 
-   - name: Do Something
-     ec2_instance:
-       ... params ...
-       <<: *aws_connection_info
+     block:
 
-   - name: Do Something Else
-     ec2_instance:
-       ... params ...
-       <<: *aws_connection_info
+     - name: Do Something
+       ec2_instance:
+         ... params ...
+
+     - name: Do Something Else
+       ec2_instance:
+         ... params ...
 
 AWS Permissions for Integration Tests
 -------------------------------------
@@ -694,7 +705,7 @@ To start with the most permissive IAM policy:
 3) Modify your policy to allow only the actions your tests use. Restrict account, region, and prefix where possible. Wait a few minutes for your policy to update.
 4) Run the tests again with a user or role that allows only the new policy.
 5) If the tests fail, troubleshoot (see tips below), modify the policy, run the tests again, and repeat the process until the tests pass with a restrictive policy.
-6) Share the minimum policy in a comment on your PR.
+6) Open a pull request proposing the minimum required policy to the `testing policies <https://github.com/mattclay/aws-terminator/tree/master/aws/policy>`_.
 
 To start from the least permissive IAM policy:
 
@@ -711,7 +722,7 @@ To start from the least permissive IAM policy:
 3) Add the action or resource that caused the failure to `an IAM policy <https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html#access_policies_create-start>`_. Wait a few minutes for your policy to update.
 4) Run the tests again with this policy attached to your user or role.
 5) If the tests still fail at the same place with the same error you will need to troubleshoot (see tips below). If the first test passes, repeat steps 2 and 3 for the next error. Repeat the process until the tests pass with a restrictive policy.
-6) Share the minimum policy in a comment on your PR.
+6) Open a pull request proposing the minimum required policy to the `testing policies <https://github.com/mattclay/aws-terminator/tree/master/aws/policy>`_.
 
 Troubleshooting IAM policies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

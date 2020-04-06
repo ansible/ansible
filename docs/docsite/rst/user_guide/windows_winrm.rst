@@ -27,6 +27,14 @@ with the Ansible package, but can be installed by running the following:
 .. Note:: on distributions with multiple python versions, use pip2 or pip2.x,
     where x matches the python minor version Ansible is running under.
 
+.. Warning::
+     Using the ``winrm`` or ``psrp`` connection plugins in Ansible on MacOS in
+     the latest releases typically fail. This is a known problem that occurs
+     deep within the Python stack and cannot be changed by Ansible. The only
+     workaround today is to set the environment variable ``no_proxy=*`` and
+     avoid using Kerberos auth.
+
+
 Authentication Options
 ``````````````````````
 When connecting to a Windows host, there are several different options that can be used
@@ -324,6 +332,16 @@ be install using ``pip``:
     pip install pywinrm[kerberos]
 
 
+.. note::
+     While Ansible has supported Kerberos auth through ``pywinrm`` for some
+     time, optional features or more secure options may only be available in
+     newer versions of the ``pywinrm`` and/or ``pykerberos`` libraries. It is
+     recommended you upgrade each version to the latest available to resolve
+     any warnings or errors. This can be done through tools like ``pip`` or a
+     system package manager like ``dnf``, ``yum``, ``apt`` but the package
+     names and versions available may differ between tools.
+
+
 Configuring Host Kerberos
 +++++++++++++++++++++++++
 Once the dependencies have been installed, Kerberos needs to be configured so
@@ -547,6 +565,8 @@ server. The message-level encryption is not used when running over HTTPS because
 encryption uses the more secure TLS protocol instead. If both transport and
 message encryption is required, set ``ansible_winrm_message_encryption=always``
 in the host vars.
+
+.. Note:: Message encryption over HTTP requires pywinrm>=0.3.0.
 
 A last resort is to disable the encryption requirement on the Windows host. This
 should only be used for development and debugging purposes, as anything sent
@@ -818,7 +838,7 @@ The below Ansible tasks can also be used to enable TLS v1.2:
         data: '{{ item.value }}'
         type: dword
         state: present
-        register: enable_tls12
+      register: enable_tls12
       loop:
       - type: Server
         property: Enabled

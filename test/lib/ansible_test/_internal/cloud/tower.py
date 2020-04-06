@@ -75,6 +75,7 @@ class TowerCloudProvider(CloudProvider):
             '3.2.3': '3.3.0',
             '3.3.5': '3.3.3',
             '3.4.3': '3.3.3',
+            '3.6.3': '3.3.8',
         }
 
         cli_version = tower_cli_version_map.get(self.version, fallback)
@@ -103,7 +104,7 @@ class TowerCloudProvider(CloudProvider):
         display.info('Provisioning %s cloud environment.' % self.platform, verbosity=1)
 
         # temporary solution to allow version selection
-        self.version = os.environ.get('TOWER_VERSION', '3.2.3')
+        self.version = os.environ.get('TOWER_VERSION', '3.6.3')
         self.check_tower_version(os.environ.get('TOWER_CLI_VERSION'))
 
         aci = get_tower_aci(self.args, self.version)
@@ -123,6 +124,8 @@ class TowerCloudProvider(CloudProvider):
                 USERNAME=connection.username,
                 PASSWORD=connection.password,
             )
+
+            display.sensitive.add(values['PASSWORD'])
 
             config = self._populate_config_template(config, values)
 
@@ -145,6 +148,9 @@ class TowerCloudEnvironment(CloudEnvironment):
         cmd = self.args.pip_command + ['install', '--disable-pip-version-check', 'ansible-tower-cli==%s' % tower_cli_version]
 
         run_command(self.args, cmd)
+
+        cmd = ['tower-cli', 'config', 'verify_ssl', 'false']
+        run_command(self.args, cmd, capture=True)
 
     def disable_pendo(self):
         """Disable Pendo tracking."""

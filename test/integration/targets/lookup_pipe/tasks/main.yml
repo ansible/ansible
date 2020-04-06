@@ -1,0 +1,9 @@
+# https://github.com/ansible/ansible/issues/6550
+- name: confirm pipe lookup works with a single positional arg
+  set_fact:
+    result: "{{ lookup('pipe', 'echo $OUTPUT_DIR') }}"
+
+- name: verify the expected output was received
+  assert:
+    that:
+      - "result == output_dir"

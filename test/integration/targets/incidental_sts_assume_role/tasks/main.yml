@@ -1,0 +1,384 @@
+---
+# tasks file for sts_assume_role
+
+- block:
+
+    # ============================================================
+    # TODO create simple ansible sts_get_caller_identity module
+    - blockinfile:
+        path: "{{ output_dir }}/sts.py"
+        create: yes
+        block: |
+          #!/usr/bin/env python
+          import boto3
+          sts = boto3.client('sts')
+          response = sts.get_caller_identity()
+          print(response['Account'])
+
+    - name: get the aws account id
+      command: "{{ ansible_python.executable }} '{{ output_dir }}/sts.py'"
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_SESSION_TOKEN: "{{ security_token }}"
+      register: result
+
+    - name: register account id
+      set_fact:
+        aws_account: "{{ result.stdout | replace('\n', '') }}"
+
+    # ============================================================
+    - name: create test iam role
+      iam_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        name: "ansible-test-sts-{{ resource_prefix }}"
+        assume_role_policy_document:  "{{ lookup('template','policy.json.j2') }}"
+        create_instance_profile: False
+        managed_policy:
+          - arn:aws:iam::aws:policy/IAMReadOnlyAccess
+        state: present
+      register: test_role
+
+    # ============================================================
+    - name: pause to ensure role exists before using
+      pause:
+        seconds: 30
+
+    # ============================================================
+    - name: test with no parameters
+      sts_assume_role:
+      register: result
+      ignore_errors: true
+
+    - name: assert with no parameters
+      assert:
+        that:
+           - 'result.failed'
+           - "'missing required arguments:' in result.msg"
+
+    # ============================================================
+    - name: test with empty parameters
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region}}"
+        role_arn:
+        role_session_name:
+        policy:
+        duration_seconds:
+        external_id:
+        mfa_token:
+        mfa_serial_number:
+      register: result
+      ignore_errors: true
+
+    - name: assert with empty parameters
+      assert:
+        that:
+           - 'result.failed'
+           - "'Missing required parameter in input:' in result.msg"
+      when: result.module_stderr is not defined
+
+    - name: assert with empty parameters
+      assert:
+        that:
+          - 'result.failed'
+          - "'Member must have length greater than or equal to 20' in result.module_stderr"
+      when: result.module_stderr is defined
+
+    # ============================================================
+    - name: test with only 'role_arn' parameter
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        role_arn: "{{ test_role.iam_role.arn }}"
+      register: result
+      ignore_errors: true
+
+    - name: assert with only 'role_arn' parameter
+      assert:
+        that:
+           - 'result.failed'
+           - "'missing required arguments: role_session_name' in result.msg"
+
+    # ============================================================
+    - name: test with only 'role_session_name' parameter
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        role_session_name: "AnsibleTest"
+      register: result
+      ignore_errors: true
+
+    - name: assert with only 'role_session_name' parameter
+      assert:
+        that:
+           - 'result.failed'
+           - "'missing required arguments: role_arn' in result.msg"
+
+    # ============================================================
+    - name: test assume role with invalid policy
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+        role_arn: "{{ test_role.iam_role.arn }}"
+        role_session_name: "AnsibleTest"
+        policy: "invalid policy"
+      register: result
+      ignore_errors: true
+
+    - name: assert assume role with invalid policy
+      assert:
+        that:
+          - 'result.failed'
+          - "'The policy is not in the valid JSON format.' in result.msg"
+      when: result.module_stderr is not defined
+
+    - name: assert assume role with invalid policy
+      assert:
+        that:
+          - 'result.failed'
+          - "'The policy is not in the valid JSON format.' in result.module_stderr"
+      when: result.module_stderr is defined
+
+    # ============================================================
+    - name: test assume role with invalid duration seconds
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region}}"
+        role_arn: "{{ test_role.iam_role.arn }}"
+        role_session_name: AnsibleTest
+        duration_seconds: invalid duration
+      register: result
+      ignore_errors: true
+
+    - name: assert assume role with invalid duration seconds
+      assert:
+        that:
+          - result is failed
+          - 'result.msg is search("argument \w+ is of type <.*> and we were unable to convert to int: <.*> cannot be converted to an int")'
+
+    # ============================================================
+    - name: test assume role with invalid external id
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region}}"
+        role_arn: "{{ test_role.iam_role.arn }}"
+        role_session_name: AnsibleTest
+        external_id: invalid external id
+      register: result
+      ignore_errors: true
+
+    - name: assert assume role with invalid external id
+      assert:
+        that:
+          - 'result.failed'
+          - "'Member must satisfy regular expression pattern:' in result.msg"
+      when: result.module_stderr is not defined
+
+    - name: assert assume role with invalid external id
+      assert:
+        that:
+          - 'result.failed'
+          - "'Member must satisfy regular expression pattern:' in result.module_stderr"
+      when: result.module_stderr is defined
+
+    # ============================================================
+    - name: test assume role with invalid mfa serial number
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region}}"
+        role_arn: "{{ test_role.iam_role.arn }}"
+        role_session_name: AnsibleTest
+        mfa_serial_number: invalid serial number
+      register: result
+      ignore_errors: true
+
+    - name: assert assume role with invalid mfa serial number
+      assert:
+        that:
+          - 'result.failed'
+          - "'Member must satisfy regular expression pattern:' in result.msg"
+      when: result.module_stderr is not defined
+
+    - name: assert assume role with invalid mfa serial number
+      assert:
+        that:
+          - 'result.failed'
+          - "'Member must satisfy regular expression pattern:' in result.module_stderr"
+      when: result.module_stderr is defined
+
+    # ============================================================
+    - name: test assume role with invalid mfa token code
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region}}"
+        role_arn: "{{ test_role.iam_role.arn }}"
+        role_session_name: AnsibleTest
+        mfa_token: invalid token code
+      register: result
+      ignore_errors: true
+
+    - name: assert assume role with invalid mfa token code
+      assert:
+        that:
+          - 'result.failed'
+          - "'Member must satisfy regular expression pattern:' in result.msg"
+      when: result.module_stderr is not defined
+
+    - name: assert assume role with invalid mfa token code
+      assert:
+        that:
+          - 'result.failed'
+          - "'Member must satisfy regular expression pattern:' in result.module_stderr"
+      when: result.module_stderr is defined
+
+    # ============================================================
+    - name: test assume role with invalid role_arn
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region}}"
+        role_arn: invalid role arn
+        role_session_name: AnsibleTest
+      register: result
+      ignore_errors: true
+
+    - name: assert assume role with invalid role_arn
+      assert:
+        that:
+          - result.failed
+          - "'Invalid length for parameter RoleArn' in result.msg"
+      when: result.module_stderr is not defined
+
+    - name: assert assume role with invalid role_arn
+      assert:
+        that:
+          - 'result.failed'
+          - "'Member must have length greater than or equal to 20' in result.module_stderr"
+      when: result.module_stderr is defined
+
+    # ============================================================
+    - name: test assume not existing sts role
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region}}"
+        role_arn: "arn:aws:iam::123456789:role/non-existing-role"
+        role_session_name: "AnsibleTest"
+      register: result
+      ignore_errors: true
+
+    - name: assert assume not existing sts role
+      assert:
+        that:
+          - 'result.failed'
+          - "'is not authorized to perform: sts:AssumeRole' in result.msg"
+      when: result.module_stderr is not defined
+
+    - name: assert assume not existing sts role
+      assert:
+        that:
+          - 'result.failed'
+          - "'is not authorized to perform: sts:AssumeRole' in result.msg"
+      when: result.module_stderr is defined
+
+    # ============================================================
+    - name: test assume role
+      sts_assume_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+        role_arn: "{{ test_role.iam_role.arn }}"
+        role_session_name: AnsibleTest
+      register: assumed_role
+
+    - name: assert assume role
+      assert:
+        that:
+           - 'not assumed_role.failed'
+           - "'sts_creds' in assumed_role"
+           - "'access_key' in assumed_role.sts_creds"
+           - "'secret_key' in assumed_role.sts_creds"
+           - "'session_token' in assumed_role.sts_creds"
+
+    # ============================================================
+    - name: test that assumed credentials have IAM read-only access
+      iam_role:
+        aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
+        aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
+        security_token: "{{ assumed_role.sts_creds.session_token }}"
+        region: "{{ aws_region}}"
+        name: "ansible-test-sts-{{ resource_prefix }}"
+        assume_role_policy_document: "{{ lookup('template','policy.json.j2') }}"
+        create_instance_profile: False
+        state: present
+      register: result
+
+    - name: assert assumed role with privileged action (expect changed=false)
+      assert:
+        that:
+          - 'not result.failed'
+          - 'not result.changed'
+          - "'iam_role' in result"
+
+    # ============================================================
+    - name: test assumed role with unprivileged action
+      iam_role:
+        aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
+        aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
+        security_token: "{{ assumed_role.sts_creds.session_token }}"
+        region: "{{ aws_region}}"
+        name: "ansible-test-sts-{{ resource_prefix }}-new"
+        assume_role_policy_document: "{{ lookup('template','policy.json.j2') }}"
+        state: present
+      register: result
+      ignore_errors: true
+
+    - name: assert assumed role with unprivileged action (expect changed=false)
+      assert:
+        that:
+          - 'result.failed'
+          - "'is not authorized to perform: iam:CreateRole' in result.msg"
+      # runs on Python2
+      when: result.module_stderr is not defined
+
+    - name: assert assumed role with unprivileged action (expect changed=false)
+      assert:
+        that:
+          - 'result.failed'
+          - "'is not authorized to perform: iam:CreateRole' in result.module_stderr"
+      # runs on Python3
+      when: result.module_stderr is defined
+
+    # ============================================================
+  always:
+
+    - name: delete test iam role
+      iam_role:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        name: "ansible-test-sts-{{ resource_prefix }}"
+        assume_role_policy_document:  "{{ lookup('template','policy.json.j2') }}"
+        managed_policy:
+          - arn:aws:iam::aws:policy/IAMReadOnlyAccess
+        state: absent

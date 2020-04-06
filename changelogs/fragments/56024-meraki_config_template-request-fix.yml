@@ -1,2 +1,0 @@
-bugfixes:
-  - meraki_config_template - Don't query all networks unless needed.

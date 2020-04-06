@@ -10,7 +10,9 @@ Often the result of a play may depend on the value of a variable, fact (somethin
 In some cases, the values of variables may depend on other variables.
 Additional groups can be created to manage hosts based on whether the hosts match other criteria. This topic covers how conditionals are used in playbooks.
 
-.. note:: There are many options to control execution flow in Ansible. More examples of supported conditionals can be located here: http://jinja.pocoo.org/docs/dev/templates/#comparisons.
+.. note::
+
+  There are many options to control execution flow in Ansible. More examples of supported conditionals can be located here: https://jinja.palletsprojects.com/en/master/templates/#comparisons.
 
 
 .. _the_when_statement:
@@ -22,7 +24,10 @@ Sometimes you will want to skip a particular step on a particular host.
 This could be something as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
-This is easy to do in Ansible with the `when` clause, which contains a raw Jinja2 expression without double curly braces (see :ref:`group_by_module`).
+This is easy to do in Ansible with the ``when`` clause, which contains a raw `Jinja2 expression <https://jinja.palletsprojects.com/en/master/templates/#expressions>`_ without double curly braces (see :ref:`group_by_module`).
+
+.. note:: Jinja2 expressions are built up from comparisons, filters, tests, and logical combinations thereof. The below examples will give you an impression how to use them. However, for a more complete overview over all operators to use, please refer to the official `Jinja2 documentation <https://jinja.palletsprojects.com/en/master/templates/#expressions>`_ .
+
 It's actually pretty simple::
 
     tasks:
@@ -31,7 +36,7 @@ It's actually pretty simple::
         when: ansible_facts['os_family'] == "Debian"
         # note that all variables can be used directly in conditionals without double curly braces
 
-You can also use parentheses to group conditions::
+You can also use `parentheses to group and logical operators <https://jinja.palletsprojects.com/en/master/templates/#logic>`_ to combine conditions::
 
     tasks:
       - name: "shut down CentOS 6 and Debian 7 systems"
@@ -39,7 +44,7 @@ You can also use parentheses to group conditions::
         when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "6") or
               (ansible_facts['distribution'] == "Debian" and ansible_facts['distribution_major_version'] == "7")
 
-Multiple conditions that all need to be true (a logical 'and') can also be specified as a list::
+Multiple conditions that all need to be true (that is, a logical ``and``) can also be specified as a list::
 
     tasks:
       - name: "shut down CentOS 6 systems"
@@ -48,9 +53,8 @@ Multiple conditions that all need to be true (a logical 'and') can also be speci
           - ansible_facts['distribution'] == "CentOS"
           - ansible_facts['distribution_major_version'] == "6"
 
-A number of Jinja2 "tests" and "filters" can also be used in when statements, some of which are unique
-and provided by Ansible.  Suppose we want to ignore the error of one statement and then
-decide to do something conditionally based on success or failure::
+A number of Jinja2 `"tests" and "filters" <https://jinja.palletsprojects.com/en/master/templates/#other-operators>`_ can also be used in when statements, some of which are unique and provided by Ansible.
+Suppose we want to ignore the error of one statement and then decide to do something conditionally based on success or failure::
 
     tasks:
       - command: /bin/false
@@ -60,7 +64,7 @@ decide to do something conditionally based on success or failure::
       - command: /bin/something
         when: result is failed
 
-      # In older versions of ansible use ``success``, now both are valid but succeeded uses the correct tense.
+      # Both `succeeded` and `success` both work. The former, however, is newer and uses the correct tense, while the latter is mainly used in older versions of Ansible.
       - command: /bin/something_else
         when: result is succeeded
 
@@ -68,7 +72,8 @@ decide to do something conditionally based on success or failure::
         when: result is skipped
 
 
-.. note:: both `success` and `succeeded` work (`fail`/`failed`, etc).
+.. note:: both `success` and `succeeded` work (`similarly for fail`/`failed`, etc).
+.. warning:: You might expect a variable of a skipped task to be undefined and use `defined` or `default` to check that. **This is incorrect**! Even when a task is failed or skipped the variable is still registered with a failed or skipped status. See :ref:`registered_variables`.
 
 
 To see what facts are available on a particular system, you can do the following in a playbook::
@@ -76,15 +81,17 @@ To see what facts are available on a particular system, you can do the following
     - debug: var=ansible_facts
 
 
-Tip: Sometimes you'll get back a variable that's a string and you'll want to do a math operation comparison on it.  You can do this like so::
+Tip: Sometimes you'll get back a variable that's a string and you'll want to do a math operation comparison on it.
+You can do this like so::
 
     tasks:
       - shell: echo "only on Red Hat 6, derivatives, and later"
         when: ansible_facts['os_family'] == "RedHat" and ansible_facts['lsb']['major_release']|int >= 6
 
-.. note:: the above example requires the lsb_release package on the target host in order to return the 'lsb major_release' fact.
+.. note:: the above example requires the lsb_release package on the target host in order to return the `lsb major_release` fact.
 
-Variables defined in the playbooks or inventory can also be used, just make sure to apply the `|bool` filter to non boolean variables (ex: string variables with content like 'yes', 'on', '1', 'true').  An example may be the execution of a task based on a variable's boolean value::
+Variables defined in the playbooks or inventory can also be used, just make sure to apply the ``|bool`` filter to non-boolean variables (e.g., `string` variables with content like ``yes``, ``on``, ``1``, ``true``).
+An example may be the execution of a task based on a variable's boolean value::
 
     vars:
       epic: true
@@ -102,7 +109,8 @@ or::
         - shell: echo "This certainly isn't epic!"
           when: not epic
 
-If a required variable has not been set, you can skip or fail using Jinja2's `defined` test. For example::
+If a required variable has not been set, you can skip or fail using Jinja2's ``defined`` test.
+For example::
 
     tasks:
         - shell: echo "I've got '{{ foo }}' and am not afraid to use it!"
@@ -112,20 +120,20 @@ If a required variable has not been set, you can skip or fail using Jinja2's `de
           when: bar is undefined
 
 This is especially useful in combination with the conditional import of vars files (see below).
-As the examples show, you don't need to use `{{ }}` to use variables inside conditionals, as these are already implied.
+As the examples show, you don't need to use ``{{ }}`` to use variables inside conditionals, as these are already implied.
 
 .. _loops_and_conditionals:
 
 Loops and Conditionals
 ``````````````````````
-Combining `when` with loops (see :ref:`playbooks_loops`), be aware that the `when` statement is processed separately for each item. This is by design::
+Combining ``when`` with loops (see :ref:`playbooks_loops`), be aware that the ``when`` statement is processed separately for each item. This is by design::
 
     tasks:
         - command: echo {{ item }}
           loop: [ 0, 2, 4, 6, 8, 10 ]
           when: item > 5
 
-If you need to skip the whole task depending on the loop variable being defined, used the `|default` filter to provide an empty iterator::
+If you need to skip the whole task depending on the loop variable being defined, used the ``|default`` filter to provide an empty iterator::
 
         - command: echo {{ item }}
           loop: "{{ mylist|default([]) }}"
@@ -164,7 +172,7 @@ to a task include statement as below.  All the tasks get evaluated, but the cond
     - import_tasks: tasks/sometasks.yml
       when: "'reticulating splines' in output"
 
-.. note:: In versions prior to 2.0 this worked with task includes but not playbook includes.  2.0 allows it to work with both.
+.. note:: In versions prior to 2.0 this worked with task includes but not playbook includes. 2.0 allows it to work with both.
 
 Or with a role::
 
@@ -173,7 +181,7 @@ Or with a role::
          - role: debian_stock_config
            when: ansible_facts['os_family'] == 'Debian'
 
-You will note a lot of 'skipped' output by default in Ansible when using this approach on systems that don't match the criteria.
+You will note a lot of ``skipped`` output by default in Ansible when using this approach on systems that don't match the criteria.
 In many cases the :ref:`group_by module <group_by_module>` can be a more streamlined way to accomplish the same thing; see
 :ref:`os_variance`.
 
@@ -281,23 +289,22 @@ instance, you could test for the existence of a particular program.
 
 .. note:: Registration happens even when a task is skipped due to the conditional. This way you can query the variable for `` is skipped`` to know if task was attempted or not.
 
-The 'register' keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or *when* statements.  It looks like this (in an obviously trivial example)::
+The ``register`` keyword decides what variable to save a result in.  The resulting variables can be used in templates, action lines, or *when* statements.  It looks like this (in an obviously trivial example)::
 
     - name: test play
       hosts: all
 
       tasks:
-
           - shell: cat /etc/motd
             register: motd_contents
 
           - shell: echo "motd contains the word hi"
             when: motd_contents.stdout.find('hi') != -1
 
-As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
+As shown previously, the registered variable's string contents are accessible with the ``stdout`` value.
 The registered result can be used in the loop of a task if it is converted into
-a list (or already is a list) as shown below.  "stdout_lines" is already available on the object as
-well though you could also call "home_dirs.stdout.split()" if you wanted, and could split by other
+a list (or already is a list) as shown below.  ``stdout_lines`` is already available on the object as
+well though you could also call ``home_dirs.stdout.split()`` if you wanted, and could split by other
 fields::
 
     - name: registered variable usage as a loop list
@@ -317,7 +324,7 @@ fields::
           # same as loop: "{{ home_dirs.stdout.split() }}"
 
 
-As shown previously, the registered variable's string contents are accessible with the 'stdout' value.
+As shown previously, the registered variable's string contents are accessible with the ``stdout`` value.
 You may check the registered variable's string contents for emptiness::
 
     - name: check registered variable for emptiness
@@ -352,6 +359,7 @@ Possible values (sample, not complete list)::
     Archlinux
     ClearLinux
     Coreos
+    CentOS
     Debian
     Fedora
     Gentoo
@@ -363,6 +371,7 @@ Possible values (sample, not complete list)::
     Slackware
     SMGL
     SUSE
+    Ubuntu
     VMwareESX
 
 .. See `OSDIST_LIST`

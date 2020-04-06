@@ -39,6 +39,8 @@ from ansible.plugins.loader import inventory_loader
 from ansible.utils.helpers import deduplicate_list
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars
+from ansible.vars.plugins import get_vars_from_inventory_sources
 
 display = Display()
 
@@ -130,7 +132,7 @@ def split_host_pattern(pattern):
                 '''), pattern, re.X
             )
 
-    return [p.strip() for p in patterns]
+    return [p.strip() for p in patterns if p.strip()]
 
 
 class InventoryManager(object):
@@ -229,6 +231,11 @@ class InventoryManager(object):
                 raise AnsibleError("No inventory was parsed, please check your configuration and options.")
             else:
                 display.warning("No inventory was parsed, only implicit localhost is available")
+
+        for group in self.groups.values():
+            group.vars = combine_vars(group.vars, get_vars_from_inventory_sources(self._loader, self._sources, [group], 'inventory'))
+        for host in self.hosts.values():
+            host.vars = combine_vars(host.vars, get_vars_from_inventory_sources(self._loader, self._sources, [host], 'inventory'))
 
     def parse_source(self, source, cache=False):
         ''' Generate or update inventory for the source provided '''
@@ -611,10 +618,15 @@ class InventoryManager(object):
             results = []
             # allow Unix style @filename data
             for x in subset_patterns:
+                if not x:
+                    continue
+
                 if x[0] == "@":
-                    fd = open(x[1:])
-                    results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
-                    fd.close()
+                    b_limit_file = to_bytes(x[1:])
+                    if not os.path.exists(b_limit_file):
+                        raise AnsibleError(u'Unable to find limit file %s' % b_limit_file)
+                    with open(b_limit_file) as fd:
+                        results.extend([to_text(l.strip()) for l in fd.read().split("\n")])
                 else:
                     results.append(to_text(x))
             self._subset = results

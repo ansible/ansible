@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import multiprocessing
 import os
 import sys
 import traceback
@@ -41,13 +40,14 @@ from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
 from ansible.utils.display import Display
+from ansible.utils.multiprocessing import context as multiprocessing_context
 
 __all__ = ['WorkerProcess']
 
 display = Display()
 
 
-class WorkerProcess(multiprocessing.Process):
+class WorkerProcess(multiprocessing_context.Process):
     '''
     The worker thread class, which uses TaskExecutor to run tasks
     read from a job queue and pushes results into a results queue
@@ -66,6 +66,10 @@ class WorkerProcess(multiprocessing.Process):
         self._loader = loader
         self._variable_manager = variable_manager
         self._shared_loader_obj = shared_loader_obj
+
+        # NOTE: this works due to fork, if switching to threads this should change to per thread storage of temp files
+        # clear var to ensure we only delete files for this child
+        self._loader._tempfiles = set()
 
     def _save_stdin(self):
         self._new_stdin = os.devnull
@@ -200,6 +204,8 @@ class WorkerProcess(multiprocessing.Process):
                 except Exception:
                     display.debug(u"WORKER EXCEPTION: %s" % to_text(e))
                     display.debug(u"WORKER TRACEBACK: %s" % to_text(traceback.format_exc()))
+                finally:
+                    self._clean_up()
 
         display.debug("WORKER PROCESS EXITING")
 
@@ -210,3 +216,8 @@ class WorkerProcess(multiprocessing.Process):
         # ps.print_stats()
         # with open('worker_%06d.stats' % os.getpid(), 'w') as f:
         #     f.write(s.getvalue())
+
+    def _clean_up(self):
+        # NOTE: see note in init about forks
+        # ensure we cleanup all temp files for this worker
+        self._loader.cleanup_all_tmp_files()

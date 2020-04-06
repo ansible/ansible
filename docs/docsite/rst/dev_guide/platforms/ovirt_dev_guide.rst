@@ -15,7 +15,7 @@ Naming
 -  All modules should start with an ``ovirt_`` prefix.
 -  All modules should be named after the resource it manages in singular
    form.
--  All modules that gather facts should have a ``_facts``
+-  All modules that gather information should have a ``_info``
    suffix.
 
 Interface
@@ -38,13 +38,13 @@ Libraries
 ---------
 
 -  All modules should use ``ovirt_full_argument_spec`` or
-   ``ovirt_facts_full_argument_spec`` to pick up the standard input (such
+   ``ovirt_info_full_argument_spec`` to pick up the standard input (such
    as auth and ``fetch_nested``).
 -  All modules should use ``extends_documentation_fragment``: ovirt to go
    along with ``ovirt_full_argument_spec``.
--  All facts modules should use ``extends_documentation_fragment``:
-   ``ovirt_facts`` to go along with ``ovirt_facts_full_argument_spec``.
--  Functions that are common to all modules should be implemeneted in the
+-  All info modules should use ``extends_documentation_fragment``:
+   ``ovirt_info`` to go along with ``ovirt_info_full_argument_spec``.
+-  Functions that are common to all modules should be implemented in the
    ``module_utils/ovirt.py`` file, so they can be reused.
 -  Python SDK version 4 must be used.
 
@@ -214,7 +214,7 @@ Testing
 -------
 
 -  Integration testing is currently done in oVirt's CI system
-   `on Jenkins <http://jenkins.ovirt.org/view/All/job/ovirt-system-tests_ansible-suite-master/>`__
+   `on Jenkins <https://jenkins.ovirt.org/view/All/job/ovirt-system-tests_ansible-suite-master/>`__
    and
    `on GitHub <https://github.com/oVirt/ovirt-system-tests/tree/master/ansible-suite-master/>`__.
 -  Please consider using these integration tests if you create a new module or add a new feature to an existing

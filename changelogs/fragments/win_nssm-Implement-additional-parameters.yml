@@ -1,0 +1,2 @@
+minor_changes:
+  - "win_nssm - Implement additional parameters - (https://github.com/ansible/ansible/issues/62620)"

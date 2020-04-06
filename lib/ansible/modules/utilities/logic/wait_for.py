@@ -157,7 +157,7 @@ EXAMPLES = r'''
     search_regex: completed (?P<task>\w+)
   register: waitfor
 - debug:
-    msg: Completed {{ waitfor['groupdict']['task'] }}
+    msg: Completed {{ waitfor['match_groupdict']['task'] }}
 
 - name: Wait until the lock file is removed
   wait_for:
@@ -225,11 +225,11 @@ import os
 import re
 import select
 import socket
-import sys
 import time
 import traceback
 
-from ansible.module_utils.basic import AnsibleModule, load_platform_subclass, missing_required_lib
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
+from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils._text import to_native
 
 
@@ -268,7 +268,8 @@ class TCPConnectionInfo(object):
     }
 
     def __new__(cls, *args, **kwargs):
-        return load_platform_subclass(TCPConnectionInfo, args, kwargs)
+        new_cls = get_platform_subclass(TCPConnectionInfo)
+        return super(cls, new_cls).__new__(new_cls)
 
     def __init__(self, module):
         self.module = module
@@ -437,26 +438,6 @@ def _convert_host_to_hex(host):
     return ips
 
 
-def _create_connection(host, port, connect_timeout):
-    """
-    Connect to a 2-tuple (host, port) and return
-    the socket object.
-
-    Args:
-        2-tuple (host, port) and connection timeout
-    Returns:
-        Socket object
-    """
-    if sys.version_info < (2, 6):
-        (family, _) = (_convert_host_to_ip(host))[0]
-        connect_socket = socket.socket(family, socket.SOCK_STREAM)
-        connect_socket.settimeout(connect_timeout)
-        connect_socket.connect((host, port))
-    else:
-        connect_socket = socket.create_connection((host, port), connect_timeout)
-    return connect_socket
-
-
 def _timedelta_total_seconds(timedelta):
     return (
         timedelta.microseconds + 0.0 +
@@ -546,7 +527,7 @@ def main():
                     break
             elif port:
                 try:
-                    s = _create_connection(host, port, connect_timeout)
+                    s = socket.create_connection((host, port), connect_timeout)
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                 except Exception:
@@ -596,7 +577,7 @@ def main():
             elif port:
                 alt_connect_timeout = math.ceil(_timedelta_total_seconds(end - datetime.datetime.utcnow()))
                 try:
-                    s = _create_connection(host, port, min(connect_timeout, alt_connect_timeout))
+                    s = socket.create_connection((host, port), min(connect_timeout, alt_connect_timeout))
                 except Exception:
                     # Failed to connect by connect_timeout. wait and try again
                     pass

@@ -10,7 +10,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 
 DOCUMENTATION = r'''
@@ -211,7 +211,7 @@ def main():
         # This should catch all insufficient versions of pexpect
         # We deem them insufficient for their lack of ability to specify
         # to not echo responses via the run/runu functions, which would
-        # potentially leak sensentive information
+        # potentially leak sensitive information
         module.fail_json(msg='Insufficient version of pexpect installed '
                              '(%s), this module requires pexpect>=3.3. '
                              'Error was %s' % (pexpect.__version__, to_native(e)))

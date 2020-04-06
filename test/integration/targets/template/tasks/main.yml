@@ -16,6 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+- set_fact:
+    output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
+
 - name: show python interpreter
   debug:
      msg: "{{ ansible_python['executable'] }}"
@@ -395,7 +398,7 @@
   assert:
     that:
       - "template_result is not changed"
-      - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser}}/short.templated')"
+      - "'templated_var_loaded' in lookup('file', output_dir + '/short.templated')"
 
 - name: change var for the template
   set_fact:
@@ -409,7 +412,7 @@
 - name: verify that the file was marked as changed in check mode but the content was not changed
   assert:
     that:
-      - "'templated_var_loaded' in lookup('file', '{{output_dir | expanduser }}/short.templated')"
+      - "'templated_var_loaded' in lookup('file', output_dir + '/short.templated')"
       - "template_result is changed"
 
 # Create a template using a child template, to ensure that variables

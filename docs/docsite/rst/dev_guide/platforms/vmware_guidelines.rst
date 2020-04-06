@@ -89,7 +89,7 @@ Configure your installation
 
 Prepare a configuration file that describes your set-up. The file
 should be called :file:`test/integration/cloud-config-vcenter.ini` and based on
-:file:`test/integration/cloud-config-vcenter.ini.template`. For instance, if you've deployed your lab with
+:file:`test/lib/ansible_test/config/cloud-config-vcenter.ini.template`. For instance, if you've deployed your lab with
 `vmware-on-libvirt <https://github.com/goneri/vmware-on-libvirt>`:
 
 .. code-block:: ini
@@ -149,7 +149,7 @@ following commands:
 .. code-block:: shell
 
     source hacking/env-setup
-    ansible-test units --tox --python 3.7 '.*vmware.*'
+    ansible-test units --venv --python 3.7 '.*vmware.*'
 
 Code style and best practice
 ============================
@@ -210,6 +210,41 @@ VM names should be predictable
 
 If you need to create a new VM during your test, you can use ``test_vm1``, ``test_vm2`` or ``test_vm3``. This
 way it will be automatically clean up for you.
+
+Avoid the common boiler plate code in your test playbook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+From Ansible 2.10, the test suite uses `modules_defaults`. This module
+allow us to preinitialize the following default keys of the VMware modules:
+
+- hostname
+- username
+- password
+- validate_certs
+
+For example, the following block:
+
+.. code-block:: yaml
+
+    - name: Add a VMware vSwitch
+      vmware_vswitch:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: 'no'
+        esxi_hostname: 'esxi1'
+        switch_name: "boby"
+        state: present
+
+should be simplified to just:
+
+.. code-block:: yaml
+
+    - name: Add a VMware vSwitch
+      vmware_vswitch:
+        esxi_hostname: 'esxi1'
+        switch_name: "boby"
+        state: present
 
 
 Typographic convention

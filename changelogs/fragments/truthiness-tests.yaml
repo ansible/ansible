@@ -1,0 +1,2 @@
+minor_changes:
+- tests - Add new ``truthy`` and ``falsy`` jinja2 tests to evaluate the truthiness or falsiness of a value

@@ -1,2 +1,0 @@
-bugfixes:
-  - re allow empty plays for now, but add deprecation msg.

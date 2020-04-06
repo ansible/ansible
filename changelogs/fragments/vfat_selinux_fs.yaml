@@ -1,7 +1,0 @@
----
-bugfixes:
-- vfat - changed default value of selinux_special_filesystems to include vfat,
-  the filesystem of ``/boot/efi`` on UEFI systems
-minor_changes:
-- selinux_special_filesystems config can be specified via environment variable
-  ``ANSIBLE_SELINUX_SPECIAL_FS``

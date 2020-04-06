@@ -62,8 +62,12 @@ def test_wrap_var_set_None():
 def test_wrap_var_tuple():
     assert isinstance(wrap_var(('foo',)), tuple)
     assert not isinstance(wrap_var(('foo',)), AnsibleUnsafe)
-    assert isinstance(wrap_var(('foo',))[0], type(''))
-    assert not isinstance(wrap_var(('foo',))[0], AnsibleUnsafe)
+    assert isinstance(wrap_var(('foo',))[0], AnsibleUnsafe)
+
+
+def test_wrap_var_tuple_None():
+    assert wrap_var((None,))[0] is None
+    assert not isinstance(wrap_var((None,))[0], AnsibleUnsafe)
 
 
 def test_wrap_var_None():
@@ -77,6 +81,25 @@ def test_wrap_var_unsafe_text():
 
 def test_wrap_var_unsafe_bytes():
     assert isinstance(wrap_var(AnsibleUnsafeBytes(b'foo')), AnsibleUnsafeBytes)
+
+
+def test_wrap_var_no_ref():
+    thing = {
+        'foo': {
+            'bar': 'baz'
+        },
+        'bar': ['baz', 'qux'],
+        'baz': ('qux',),
+        'none': None,
+        'text': 'text',
+    }
+    wrapped_thing = wrap_var(thing)
+    thing is not wrapped_thing
+    thing['foo'] is not wrapped_thing['foo']
+    thing['bar'][0] is not wrapped_thing['bar'][0]
+    thing['baz'][0] is not wrapped_thing['baz'][0]
+    thing['none'] is not wrapped_thing['none']
+    thing['text'] is not wrapped_thing['text']
 
 
 def test_AnsibleUnsafeText():

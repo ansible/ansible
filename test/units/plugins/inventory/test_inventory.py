@@ -49,6 +49,10 @@ class TestInventory(unittest.TestCase):
         'a:b': ['a', 'b'],
         ' a : b ': ['a', 'b'],
         'foo:bar:baz[1:2]': ['foo', 'bar', 'baz[1:2]'],
+        'a,,b': ['a', 'b'],
+        'a,  ,b,,c, ,': ['a', 'b', 'c'],
+        ',': [],
+        '': [],
     }
 
     pattern_lists = [

@@ -1,0 +1,2 @@
+deprecated_features:
+- hash_behaviour - Deprecate ``hash_behaviour`` for future removal.

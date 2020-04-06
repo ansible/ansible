@@ -46,7 +46,7 @@ Libraries
   standard input such as auth and ssl support.
 * All modules should include ``extends_documentation_fragment: openstack``.
 * All complex cloud interaction or interoperability code should be housed in
-  the `openstacksdk <http://git.openstack.org/cgit/openstack/openstacksdk>`_
+  the `openstacksdk <https://git.openstack.org/cgit/openstack/openstacksdk>`_
   library.
 * All OpenStack API interactions should happen via the openstacksdk and not via
   OpenStack Client libraries. The OpenStack Client libraries do no have end

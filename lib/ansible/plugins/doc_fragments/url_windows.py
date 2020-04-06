@@ -7,16 +7,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-class ModuleDocFragment(object):
+class ModuleDocFragment:
 
-    # Standard files documentation fragment
+    # Common options for Ansible.ModuleUtils.WebRequest
     DOCUMENTATION = r'''
 options:
-  url:
-    description:
-    - The URL to make the request with.
-    required: yes
-    type: str
   method:
     description:
     - The HTTP Method of the request.
@@ -47,7 +42,6 @@ options:
     - This is set to the C(User-Agent) header on a HTTP request.
     default: ansible-httpget
     type: str
-    version_added: "2.9"
   maximum_redirection:
     description:
     - Specify how many times the module will redirect a connection to an
@@ -63,7 +57,6 @@ options:
     - Set to C(0) to specify an infinite timeout.
     default: 30
     type: int
-    version_added: "2.4"
   validate_certs:
     description:
     - If C(no), SSL certificates will not be validated.
@@ -71,7 +64,6 @@ options:
       certificates.
     default: yes
     type: bool
-    version_added: "2.4"
   client_cert:
     description:
     - The path to the client certificate (.pfx) that is used for X509
@@ -96,20 +88,14 @@ options:
       the original request.
     default: no
     type: bool
-    version_added: "2.5"
   url_username:
     description:
     - The username to use for authentication.
     type: str
-    aliases:
-    - user
-    - username
   url_password:
     description:
     - The password for I(url_username).
     type: str
-    aliases:
-    - password
   use_default_credential:
     description:
     - Uses the current user's credentials when authenticating with a server
@@ -124,7 +110,6 @@ options:
       authentication will occur.
     default: no
     type: bool
-    version_added: "2.9"
   use_proxy:
     description:
     - If C(no), it will not use the proxy defined in IE for the current user.
@@ -158,7 +143,6 @@ options:
       authentication will occur.
     default: no
     type: bool
-    version_added: "2.9"
 seealso:
-- module: win_inet_proxy
+- module: community.windows.win_inet_proxy
 '''

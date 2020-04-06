@@ -33,7 +33,8 @@ options:
   state:
     description:
     - If C(absent), directories will be recursively deleted, and files or symlinks will
-      be unlinked. Note that C(absent) will not cause C(file) to fail if the C(path) does
+      be unlinked. In the case of a directory, if C(diff) is declared, you will see the files and folders deleted listed
+      under C(path_contents). Note that C(absent) will not cause C(file) to fail if the C(path) does
       not exist as the state did not change.
     - If C(directory), all intermediate subdirectories will be created if they
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
@@ -125,7 +126,7 @@ EXAMPLES = r'''
     group: foo
     mode: '0644'
 
-- name: Create an insecure file
+- name: Give insecure permissions to an existing file
   file:
     path: /work
     owner: root
@@ -290,15 +291,10 @@ def additional_parameter_handling(params):
         raise ParameterError(results={"msg": "recurse option requires state to be 'directory'",
                                       "path": params["path"]})
 
-    # Make sure that src makes sense with the state
+    # Fail if 'src' but no 'state' is specified
     if params['src'] and params['state'] not in ('link', 'hard'):
-        params['src'] = None
-        module.warn("The src option requires state to be 'link' or 'hard'.  This will become an"
-                    " error in Ansible 2.10")
-
-        # In 2.10, switch to this
-        # raise ParameterError(results={"msg": "src option requires state to be 'link' or 'hard'",
-        #                               "path": params["path"]})
+        raise ParameterError(results={'msg': "src option requires state to be 'link' or 'hard'",
+                                      'path': params['path']})
 
 
 def get_state(path):
@@ -377,7 +373,7 @@ def initial_diff(path, state, prev_state):
     if prev_state != state:
         diff['before']['state'] = prev_state
         diff['after']['state'] = state
-        if state == 'absent':
+        if state == 'absent' and prev_state == 'directory':
             walklist = {
                 'directories': [],
                 'files': [],
@@ -711,7 +707,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     diff = initial_diff(path, 'link', prev_state)
     changed = False
 
-    if prev_state == 'absent':
+    if prev_state in ('hard', 'file', 'directory', 'absent'):
         changed = True
     elif prev_state == 'link':
         b_old_src = os.readlink(b_path)
@@ -719,22 +715,6 @@ def ensure_symlink(path, src, follow, force, timestamps):
             diff['before']['src'] = to_native(b_old_src, errors='strict')
             diff['after']['src'] = src
             changed = True
-    elif prev_state == 'hard':
-        changed = True
-        if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link because a hard link exists at destination',
-                                              'dest': path, 'src': src})
-    elif prev_state == 'file':
-        changed = True
-        if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
-                                              'dest': path, 'src': src})
-    elif prev_state == 'directory':
-        changed = True
-        if os.path.exists(b_path):
-            if not force:
-                raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
-                                                  'dest': path, 'src': src})
     else:
         raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
 
@@ -769,7 +749,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     # Now that we might have created the symlink, get the arguments.
     # We need to do it now so we can properly follow the symlink if needed
     # because load_file_common_arguments sets 'path' according
-    # the value of follow and the symlink existance.
+    # the value of follow and the symlink existence.
     file_args = module.load_file_common_arguments(module.params)
 
     # Whenever we create a link to a nonexistent target we know that the nonexistent target
@@ -885,7 +865,7 @@ def main():
             recurse=dict(type='bool', default=False),
             force=dict(type='bool', default=False),  # Note: Should not be in file_common_args in future
             follow=dict(type='bool', default=True),  # Note: Different default than file_common_args
-            _diff_peek=dict(type='str'),  # Internal use only, for internal checks in the action plugins
+            _diff_peek=dict(type='bool'),  # Internal use only, for internal checks in the action plugins
             src=dict(type='path'),  # Note: Should not be in file_common_args in future
             modification_time=dict(type='str'),
             modification_time_format=dict(type='str', default='%Y%m%d%H%M.%S'),

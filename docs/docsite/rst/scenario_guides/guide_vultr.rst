@@ -55,18 +55,10 @@ To check that everything is working properly run the following command:
 
 .. code-block:: console
 
-  #> VULTR_API_KEY=XXX ansible -m vultr_account_facts localhost
+  #> VULTR_API_KEY=XXX ansible -m vultr_account_info localhost
   localhost | SUCCESS => {
-    "ansible_facts": {
-        "vultr_account_facts": {
-            "balance": -8.9,
-            "last_payment_amount": -10.0,
-            "last_payment_date": "2018-07-21 11:34:46",
-            "pending_charges": 6.0
-        }
-    },
     "changed": false,
-    "vultr_account_facts": {
+    "vultr_account_info": {
         "balance": -8.9,
         "last_payment_amount": -10.0,
         "last_payment_date": "2018-07-21 11:34:46",
@@ -172,8 +164,8 @@ Run all Vultr tests:
   $ ansible-test integration cloud/vultr/ -v --diff --allow-unsupported
 
 
-To run a specific test, e.g. vultr_account_facts:
+To run a specific test, e.g. vultr_account_info:
 
 .. code-block:: shell
 
-  $ ansible-test integration cloud/vultr/vultr_account_facts -v --diff --allow-unsupported
+  $ ansible-test integration cloud/vultr/vultr_account_info -v --diff --allow-unsupported

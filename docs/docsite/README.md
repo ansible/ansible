@@ -1,51 +1,26 @@
-Homepage and Documentation Source for Ansible
-=============================================
+Ansible documentation
+=====================
 
-This project hosts the source behind [docs.ansible.com](https://docs.ansible.com/)
+This project hosts the source behind [docs.ansible.com](https://docs.ansible.com/).
 
-Contributions to the documentation are welcome. To make changes, submit a pull request that changes the reStructuredText files in the `rst/` directory only, and the core team can do a docs build and push the static files.
+To create clear, concise, and consistent contributions to Ansible documentation, please refer to the following information.
 
-If you wish to verify output from the markup such as link references, you may install sphinx and build the documentation by running `make webdocs` from the `ansible/docs/docsite` directory.
+Contributions
+=============
+Contributions to the documentation are welcome.
 
-To include module documentation you'll need to run `make webdocs` at the top level of the repository. The generated html files are in `docsite/htmlout/`.
+The Ansible community produces guidance on contributions, building documentation, and submitting pull requests, which you can find in [Contributing to the Ansible Documentation](https://docs.ansible.com/ansible/latest/community/documentation_contributions.html).
 
-To limit module documentation building to a specific module, run `MODULES=NAME make webdocs` instead. This should make testing module documentation syntax much faster. Instead of a single module, you can also specify a comma-separated list of modules. In order to skip building documentation for all modules, specify non-existing module name, for example `MODULES=none make webdocs`.
+You can also join the [Docs Working Group](https://github.com/ansible/community/wiki/Docs).
 
-If you do not want to learn the reStructuredText format, you can also [file issues] about documentation problems on the Ansible GitHub project.
+Ansible style guide
+===================
+Ansible documentation is written in ReStructuredText(RST). The [Ansible style guide](https://docs.ansible.com/ansible/latest/dev_guide/style_guide/index.html#linguistic-guidelines) provides linguistic direction and technical guidelines for working with reStructuredText, in addition to other resources.
 
-Note that module documentation can actually be [generated from a DOCUMENTATION docstring][module-docs] in the modules directory, so corrections to modules written as such need to be made in the module source, rather than in docsite source.
+Tools
+=====
+The Ansible community uses a range of tools and programs for working with Ansible documentation. Learn more about [Other Tools and Programs](https://docs.ansible.com/ansible/latest/community/other_tools_and_programs.html#popular-editors) in the Ansible Community Guide.
 
-To install sphinx and the required theme, install ``pip`` and then ``pip install sphinx sphinx_rtd_theme``
-
-[file issues]: https://github.com/ansible/ansible/issues
-[module-docs]: https://docs.ansible.com/developing_modules.html#documenting-your-module
-
-HEADERS
-=======
-
-RST allows for arbitrary hierarchy for the headers, it will 'learn on the fly'. We also want a standard that all our documents can follow:
-
-```
-##########################
-# with overline, for parts
-##########################
-
-*****************************
-* with overline, for chapters
-*****************************
-
-=, for sections
-===============
-
--, for subsections
-------------------
-
-^, for sub-subsections
-^^^^^^^^^^^^^^^^^^^^^
-
-", for paragraphs
-"""""""""""""""""
-
-```
-
-We do have pages littered with ```````` headers, but those should be removed for one of the above.
+GitHub
+======
+[Ansible documentation](https://github.com/ansible/ansible/tree/devel/docs/docsite) is hosted on the Ansible GitHub project. For GitHub workflows and other information, see the [GitHub Guides](https://guides.github.com/).

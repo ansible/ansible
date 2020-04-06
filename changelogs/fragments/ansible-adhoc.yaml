@@ -1,2 +1,0 @@
-bugfixes:
-  - allow include_role to work with ansible command

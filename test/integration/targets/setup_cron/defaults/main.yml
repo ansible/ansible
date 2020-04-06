@@ -1,0 +1,1 @@
+remote_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"

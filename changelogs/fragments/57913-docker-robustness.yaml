@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_* modules - improve robustness when not handled Docker errors occur."

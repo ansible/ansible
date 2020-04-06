@@ -221,7 +221,7 @@
       - result is changed
       - "stat_result.stat.mode == '0707'"
 
-- name: Test that setting file modes on an already downlaoded file work
+- name: Test that setting file modes on an already downloaded file work
   get_url:
     url: 'https://{{ httpbin_host }}/'
     dest: '{{ remote_tmp_dir }}/test'
@@ -237,6 +237,19 @@
     that:
       - result is changed
       - "stat_result.stat.mode == '0070'"
+
+# https://github.com/ansible/ansible/pull/65307/
+- name: Test that on http status 304, we get a status_code field.
+  get_url:
+    url: 'https://{{ httpbin_host }}/status/304'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we get the appropriate status_code
+  assert:
+    that:
+      - "'status_code' in result"
+      - "result.status_code == 304"
 
 # https://github.com/ansible/ansible/issues/29614
 - name: Change mode on an already downloaded file and specify checksum
@@ -257,17 +270,6 @@
       - result is changed
       - "stat_result.stat.mode == '0775'"
 
-- name: Get a file that already exists
-  get_url:
-    url: 'https://{{ httpbin_host }}/get'
-    dest: '{{ remote_tmp_dir }}/test'
-  register: result
-
-- name: Assert that we didn't re-download unnecessarily
-  assert:
-    that:
-      - result is not changed
-
 - name: test checksum match in check mode
   get_url:
     url: 'https://{{ httpbin_host }}/get'
@@ -280,6 +282,41 @@
   assert:
     that:
       - result is not changed
+
+- name: Get a file that already exists with a checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/cache'
+    dest: '{{ remote_tmp_dir }}/test'
+    checksum: 'sha1:{{ stat_result.stat.checksum }}'
+  register: result
+
+- name: Assert that the file was not downloaded
+  assert:
+    that:
+      - result.msg == 'file already exists'
+
+- name: Get a file that already exists
+  get_url:
+    url: 'https://{{ httpbin_host }}/cache'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we didn't re-download unnecessarily
+  assert:
+    that:
+      - result is not changed
+      - "'304' in result.msg"
+
+- name: get a file that doesn't respond to If-Modified-Since without checksum
+  get_url:
+    url: 'https://{{ httpbin_host }}/get'
+    dest: '{{ remote_tmp_dir }}/test'
+  register: result
+
+- name: Assert that we downloaded the file
+  assert:
+    that:
+      - result is changed
 
 # https://github.com/ansible/ansible/issues/27617
 
@@ -380,33 +417,6 @@
     url: https://{{ httpbin_host }}
     dest: "{{ remote_tmp_dir }}"
 
-- name: Test headers string
-  get_url:
-    url: https://{{ httpbin_host }}/headers
-    headers: Foo:bar,Baz:qux
-    dest: "{{ remote_tmp_dir }}/headers_string.json"
-
-- name: Get downloaded file
-  slurp:
-    src: "{{ remote_tmp_dir }}/headers_string.json"
-  register: result
-
-- name: Test headers string
-  assert:
-    that:
-      - (result.content | b64decode | from_json).headers.get('Foo') == 'bar'
-      - (result.content | b64decode | from_json).headers.get('Baz') == 'qux'
-
-- name: Test headers string invalid format
-  get_url:
-    url: https://{{ httpbin_host }}/headers
-    headers: Foo
-    dest: "{{ remote_tmp_dir }}/headers_string_invalid.json"
-  register: invalid_string_headers
-  failed_when:
-    - invalid_string_headers is successful
-    - invalid_string_headers.msg != "The string representation for the `headers` parameter requires a key:value,key:value syntax to be properly parsed."
-
 - name: Test headers dict
   get_url:
     url: https://{{ httpbin_host }}/headers
@@ -438,6 +448,7 @@
   slurp:
     src: "{{ remote_tmp_dir }}/ssl_client_verify"
   register: result
+  when: has_httptester
 
 - name: Assert that the ssl_client_verify file contains the correct content
   assert:

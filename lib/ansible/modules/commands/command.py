@@ -23,25 +23,28 @@ description:
      - The given command will be executed on all selected nodes.
      - The command(s) will not be
        processed through the shell, so variables like C($HOME) and operations
-       like C("<"), C(">"), C("|"), C(";") and C("&") will not work.
+       like C("*"), C("<"), C(">"), C("|"), C(";") and C("&") will not work.
        Use the M(shell) module if you need these features.
-     - To create C(command) tasks that are easier to read,
-       pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task).
+     - To create C(command) tasks that are easier to read than the ones using space-delimited
+       arguments, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task)
+       or use C(cmd) parameter.
+     - Either a free form command or C(cmd) parameter is required, see the examples.
      - For Windows targets, use the M(win_command) module instead.
 options:
   free_form:
     description:
-      - The command module takes a free form command to run.
+      - The command module takes a free form string as a command to run.
       - There is no actual parameter named 'free form'.
-      - See the examples on how to use this module.
-    required: yes
+  cmd:
+    type: str
+    description:
+      - The command to run.
   argv:
     type: list
     description:
       - Passes the command as a list rather than a string.
       - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
-      - Only the string or the list form can be
-        provided, not both.  One or the other must be provided.
+      - Only the string (free form) or the list (argv) form can be provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
     type: path
@@ -105,13 +108,21 @@ EXAMPLES = r'''
   command: cat /etc/motd
   register: mymotd
 
+# free-form (string) arguments, all arguments on one line
 - name: Run command if /path/to/database does not exist (without 'args').
   command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
 
+# free-form (string) arguments, some arguments on separate lines with the 'args' keyword
 # 'args' is a task keyword, passed at the same level as the module
-- name: Run command if /path/to/database does not exist (with 'args').
+- name: Run command if /path/to/database does not exist (with 'args' keyword).
   command: /usr/bin/make_database.sh db_user db_name
   args:
+    creates: /path/to/database
+
+# 'cmd' is module parameter
+- name: Run command if /path/to/database does not exist (with 'cmd' parameter).
+  command:
+    cmd: /usr/bin/make_database.sh db_user db_name
     creates: /path/to/database
 
 - name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist.
@@ -122,6 +133,7 @@ EXAMPLES = r'''
     chdir: somedir/
     creates: /path/to/database
 
+# argv (list) arguments, each argument on a separate line, 'args' keyword not necessary
 # 'argv' is a parameter, indented one level from the module
 - name: Use 'argv' to send a command as a list - leave 'command' empty
   command:
@@ -129,6 +141,7 @@ EXAMPLES = r'''
       - /usr/bin/make_database.sh
       - Username with whitespace
       - dbname with whitespace
+    creates: /path/to/database
 
 - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
   command: cat {{ myfile|quote }}
@@ -136,28 +149,58 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
+msg:
+  description: changed
+  returned: always
+  type: bool
+  sample: True
+start:
+  description: The command execution start time
+  returned: always
+  type: str
+  sample: '2017-09-29 22:03:48.083128'
+end:
+  description: The command execution end time
+  returned: always
+  type: str
+  sample: '2017-09-29 22:03:48.084657'
+delta:
+  description: The command execution delta time
+  returned: always
+  type: str
+  sample: '0:00:00.001529'
+stdout:
+  description: The command standard output
+  returned: always
+  type: str
+  sample: 'Clustering node rabbit@slave1 with rabbit@master …'
+stderr:
+  description: The command standard error
+  returned: always
+  type: str
+  sample: 'ls cannot access foo: No such file or directory'
 cmd:
-  description: the cmd that was run on the remote machine
+  description: The command executed by the task
   returned: always
   type: list
   sample:
   - echo
   - hello
-delta:
-  description: cmd end time - cmd start time
+rc:
+  description: The command return code (0 means success)
   returned: always
-  type: str
-  sample: 0:00:00.001529
-end:
-  description: cmd end time
+  type: int
+  sample: 0
+stdout_lines:
+  description: The command standard output split in lines
   returned: always
-  type: str
-  sample: '2017-09-29 22:03:48.084657'
-start:
-  description: cmd start time
+  type: list
+  sample: [u'Clustering node rabbit@slave1 with rabbit@master …']
+stderr_lines:
+  description: The command standard error split in lines
   returned: always
-  type: str
-  sample: '2017-09-29 22:03:48.083128'
+  type: list
+  sample: [u'ls cannot access foo: No such file or directory', u'ls …']
 '''
 
 import datetime

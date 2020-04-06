@@ -37,3 +37,5 @@ env python -c \
     'import sys, re; sys.stdout.write(re.sub("\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]", "", sys.stdin.read()))' \
     <block_test.out >block_test_wo_colors.out
 [ "$(grep -c 'TEST COMPLETE' block_test.out)" = "$(grep -E '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
+
+ansible-playbook -vv block_rescue_vars.yml

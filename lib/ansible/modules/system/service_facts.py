@@ -11,7 +11,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
@@ -67,7 +67,7 @@ ansible_facts:
         status:
           description: State of the service. Either C(enabled), C(disabled), or C(unknown).
           returned: systemd systems or RedHat/SUSE flavored sysvinit/upstart
-          type: string
+          type: str
           sample: enabled
         name:
           description: Name of the service.

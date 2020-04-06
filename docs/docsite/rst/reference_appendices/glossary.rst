@@ -51,7 +51,7 @@ when a term comes up on the mailing list.
 
     Connection Plugin
         By default, Ansible talks to remote machines through pluggable
-        libraries.  Ansible supports native OpenSSH (:term:`SSH (Native)`) or
+        libraries.  Ansible uses native OpenSSH (:term:`SSH (Native)`) or
         a Python implementation called :term:`paramiko`.  OpenSSH is preferred
         if you are using a recent version, and also enables some features like
         Kerberos and jump hosts.  This is covered in the :ref:`getting
@@ -319,7 +319,7 @@ when a term comes up on the mailing list.
         By default, Ansible manages machines over SSH.   The library that
         Ansible uses by default to do this is a Python-powered library called
         paramiko.  The paramiko library is generally fast and easy to manage,
-        though users desiring Kerberos or Jump Host support may wish to switch
+        though users who want to use Kerberos or Jump Hosts may wish to switch
         to a native SSH binary such as OpenSSH by specifying the connection
         type in their :term:`playbooks`, or using the ``-c ssh`` flag.
 
@@ -499,4 +499,3 @@ when a term comes up on the mailing list.
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
