@@ -230,6 +230,7 @@ def delegate_docker(args, exclude, require, integration_targets):
 
     httptester_id = None
     test_id = None
+    success = False
 
     options = {
         '--docker': 1,
@@ -264,8 +265,6 @@ def delegate_docker(args, exclude, require, integration_targets):
 
     if isinstance(args, ShellConfig) or (isinstance(args, IntegrationConfig) and args.debug_strategy):
         cmd_options.append('-it')
-
-    success = False
 
     with tempfile.NamedTemporaryFile(prefix='ansible-source-', suffix='.tgz') as local_source_fd:
         try:
