@@ -241,6 +241,14 @@ class Group:
             host.remove_group(self)
             self.clear_hosts_cache()
 
+    def remove_host(self, host):
+        """Completely remove the host in all inventory object states."""
+        host.remove_group(self)
+        self.hosts.remove(host)
+        # All hosts need to rebuild their groups vars to remove this host
+        # from them
+        self.clear_hosts_cache()
+
     def set_variable(self, key, value):
 
         if key == 'ansible_group_priority':

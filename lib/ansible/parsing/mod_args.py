@@ -40,6 +40,7 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
     'import_tasks',
     'import_role',
     'add_host',
+    'remove_host',
     'group_by',
     'set_fact',
     'meta',

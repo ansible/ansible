@@ -178,6 +178,9 @@ class InventoryManager(object):
     def add_host(self, host, group=None, port=None):
         return self._inventory.add_host(host, group, port)
 
+    def remove_host(self, host):
+        return self._inventory.remove_host(host)
+
     def add_group(self, group):
         return self._inventory.add_group(group)
 

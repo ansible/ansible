@@ -605,8 +605,12 @@ class StrategyBase:
                         # this task added a new group (group_by module)
                         self._add_group(original_host, result_item)
 
-                    if 'ansible_facts' in result_item:
+                    elif 'remove_host' in result_item:
+                        # this task removed a host (remove_host module)
+                        old_host_info = result_item.get('remove_host', dict())
+                        self._remove_host(old_host_info, iterator, result_item)
 
+                    if 'ansible_facts' in result_item:
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
                             host_list = self.get_delegated_hosts(result_item, original_task)
@@ -734,6 +738,18 @@ class StrategyBase:
 
         return ret_results
 
+    def _remove_host(self, host_info, iterator, result_item):
+        host_name = host_info.get('host_name')
+        host = self._inventory.get_host(host_name)
+        if host:
+            self._inventory.remove_host(host)
+            self._hosts_cache_all.remove(host_name)
+            display.debug("Host removed")
+        else:
+            display.debug("Host to remove not found")
+
+        self._clear_cache(iterator)
+
     def _add_host(self, host_info, iterator):
         '''
         Helper function to add a new host to inventory based on a task result.
@@ -758,8 +774,15 @@ class StrategyBase:
                 new_group = self._inventory.groups[group_name]
                 new_group.add_host(self._inventory.hosts[host_name])
 
-            # reconcile inventory, ensures inventory rules are followed
-            self._inventory.reconcile_inventory()
+        self._clear_cache(iterator)
+
+    def _clear_cache(self, iterator):
+        # clear pattern caching completely since it's unpredictable what
+        # patterns may have referenced the group
+        self._inventory.clear_pattern_cache()
+
+        # reconcile inventory, ensures inventory rules are followed
+        self._inventory.reconcile_inventory()
 
     def _add_group(self, host, result_item):
         '''

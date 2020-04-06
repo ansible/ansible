@@ -1,0 +1,40 @@
+# test code for the remove_host action
+# (c) 2016, James Pic <jpic@yourlabs.org>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: removing an unknown host should not fail
+  remove_host: name=remove_host_unknown_host
+
+- name: add a host to the runtime inventory
+  add_host:
+    name: removedhost
+    groups: removedhostgroup, hello
+
+- name: remove host from the runtime inventory
+  remove_host:
+    name: removedhost
+
+- name: removedhost should not be in any group anymore
+  assert:
+    that:
+    - groups['removedhostgroup']|length == 0
+    - groups['hello']|length == 0
+    - hostvars['removedhost'] is not defined
+
+- name: remove host again should not fail
+  remove_host:
+    name: removedhost
