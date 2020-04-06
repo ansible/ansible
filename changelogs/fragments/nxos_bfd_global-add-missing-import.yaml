@@ -1,2 +1,0 @@
-bugfixes:
-  - nxos_bfd_global - add missing import of re

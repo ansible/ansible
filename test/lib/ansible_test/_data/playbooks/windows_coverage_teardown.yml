@@ -10,7 +10,7 @@
       - remote_temp_path is defined
 
   - name: zip up all coverage files in the
-    win_shell: |
+    ansible.windows.win_shell: |
       $coverage_dir = '{{ remote_temp_path }}'
       $zip_file = Join-Path -Path $coverage_dir -ChildPath 'coverage.zip'
       if (Test-Path -LiteralPath $zip_file) {
@@ -72,6 +72,6 @@
       flat: yes
 
   - name: remove the temporary coverage directory
-    win_file:
+    ansible.windows.win_file:
       path: '{{ remote_temp_path }}'
       state: absent

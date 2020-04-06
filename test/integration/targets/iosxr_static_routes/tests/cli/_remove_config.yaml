@@ -1,8 +1,0 @@
----
-- name: Remove Static Routes
-  cli_config:
-    config: "{{ lines }}"
-  vars:
-    lines: |
-      no router static
-  ignore_errors: yes

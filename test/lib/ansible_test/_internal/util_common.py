@@ -168,11 +168,6 @@ def get_python_path(args, interpreter):
     :type interpreter: str
     :rtype: str
     """
-    # When the python interpreter is already named "python" its directory can simply be added to the path.
-    # Using another level of indirection is only required when the interpreter has a different name.
-    if os.path.basename(interpreter) == 'python':
-        return os.path.dirname(interpreter)
-
     python_path = PYTHON_PATHS.get(interpreter)
 
     if python_path:
@@ -356,6 +351,27 @@ def intercept_command(args, cmd, target_name, env, capture=False, data=None, cwd
                                             remote_temp_path=remote_temp_path))
 
     return run_command(args, cmd, capture=capture, env=env, data=data, cwd=cwd)
+
+
+def resolve_csharp_ps_util(import_name, path):
+    """
+    :type import_name: str
+    :type path: str
+    """
+    if data_context().content.is_ansible or not import_name.startswith('.'):
+        # We don't support relative paths for builtin utils, there's no point.
+        return import_name
+
+    packages = import_name.split('.')
+    module_packages = path.split(os.path.sep)
+
+    for package in packages:
+        if not module_packages or package:
+            break
+        del module_packages[-1]
+
+    return 'ansible_collections.%s%s' % (data_context().content.prefix,
+                                         '.'.join(module_packages + [p for p in packages if p]))
 
 
 def run_command(args, cmd, capture=False, env=None, data=None, cwd=None, always=False, stdin=None, stdout=None,

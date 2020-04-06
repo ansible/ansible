@@ -1,2 +1,0 @@
-minor_changes:
-- Return additional information about hosts inside the cluster using vmware_cluster_info.

@@ -1,1 +1,0 @@
-azure_rm_webapp_info.py

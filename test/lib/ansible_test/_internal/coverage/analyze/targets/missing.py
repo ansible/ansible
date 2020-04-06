@@ -21,9 +21,21 @@ from . import (
 if t.TYPE_CHECKING:
     from . import (
         TargetIndexes,
+        IndexedPoints,
     )
 
-    TargetKey = t.TypeVar('TargetKey', int, t.Tuple[int, int])
+
+class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
+    """Configuration for the `coverage analyze targets missing` command."""
+    def __init__(self, args):  # type: (t.Any) -> None
+        super(CoverageAnalyzeTargetsMissingConfig, self).__init__(args)
+
+        self.from_file = args.from_file  # type: str
+        self.to_file = args.to_file  # type: str
+        self.output_file = args.output_file  # type: str
+
+        self.only_gaps = args.only_gaps  # type: bool
+        self.only_exists = args.only_exists  # type: bool
 
 
 def command_coverage_analyze_targets_missing(args):  # type: (CoverageAnalyzeTargetsMissingConfig) -> None
@@ -44,12 +56,12 @@ def command_coverage_analyze_targets_missing(args):  # type: (CoverageAnalyzeTar
 
 
 def find_gaps(
-        from_data,  # type: t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
+        from_data,  # type: IndexedPoints
         from_index,  # type: t.List[str]
-        to_data,  # type: t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
-        target_indexes,  # type: TargetIndexes,
+        to_data,  # type: IndexedPoints
+        target_indexes,  # type: TargetIndexes
         only_exists,  # type: bool
-):  # type: (...) -> t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
+):  # type: (...) -> IndexedPoints
     """Find gaps in coverage between the from and to data sets."""
     target_data = {}
 
@@ -69,13 +81,13 @@ def find_gaps(
 
 
 def find_missing(
-        from_data,  # type: t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
+        from_data,  # type: IndexedPoints
         from_index,  # type: t.List[str]
-        to_data,  # type: t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
+        to_data,  # type: IndexedPoints
         to_index,  # type: t.List[str]
-        target_indexes,  # type: TargetIndexes,
+        target_indexes,  # type: TargetIndexes
         only_exists,  # type: bool
-):  # type: (...) -> t.Dict[str, t.Dict[TargetKey, t.Set[int]]]
+):  # type: (...) -> IndexedPoints
     """Find coverage in from_data not present in to_data (arcs or lines)."""
     target_data = {}
 
@@ -95,16 +107,3 @@ def find_missing(
                 target_index.update(get_target_index(name, target_indexes) for name in remaining_targets)
 
     return target_data
-
-
-class CoverageAnalyzeTargetsMissingConfig(CoverageAnalyzeTargetsConfig):
-    """Configuration for the `coverage analyze targets missing` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsMissingConfig, self).__init__(args)
-
-        self.from_file = args.from_file  # type: str
-        self.to_file = args.to_file  # type: str
-        self.output_file = args.output_file  # type: str
-
-        self.only_gaps = args.only_gaps  # type: bool
-        self.only_exists = args.only_exists  # type: bool

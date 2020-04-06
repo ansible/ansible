@@ -6,21 +6,15 @@ __metaclass__ = type
 
 import os
 import os.path
-import pkgutil
 import re
 import sys
 
 from types import ModuleType
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
 from ansible.utils.singleton import Singleton
-
-# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
-try:
-    from importlib import import_module
-except ImportError:
-    import_module = __import__
 
 _SYNTHETIC_PACKAGES = {
     # these provide fallback package definitions when there are no on-disk paths
@@ -38,17 +32,33 @@ _SYNTHETIC_PACKAGES = {
 class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
     def __init__(self, config=None):
         if config:
-            self._n_configured_paths = config.get_config_value('COLLECTIONS_PATHS')
+            paths = config.get_config_value('COLLECTIONS_PATHS')
         else:
-            self._n_configured_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATHS', '').split(os.pathsep)
+            paths = os.environ.get('ANSIBLE_COLLECTIONS_PATHS', '').split(os.pathsep)
 
-        if isinstance(self._n_configured_paths, string_types):
-            self._n_configured_paths = [self._n_configured_paths]
-        elif self._n_configured_paths is None:
-            self._n_configured_paths = []
+        if isinstance(paths, string_types):
+            paths = [paths]
+        elif paths is None:
+            paths = []
 
         # expand any placeholders in configured paths
-        self._n_configured_paths = [to_native(os.path.expanduser(p), errors='surrogate_or_strict') for p in self._n_configured_paths]
+        paths = [
+            to_native(os.path.expanduser(p), errors='surrogate_or_strict')
+            for p in paths
+        ]
+
+        # Append all ``ansible_collections`` dirs from sys.path to the end
+        for path in sys.path:
+            if (
+                    path not in paths and
+                    os.path.isdir(to_bytes(
+                        os.path.join(path, 'ansible_collections'),
+                        errors='surrogate_or_strict',
+                    ))
+            ):
+                paths.append(path)
+
+        self._n_configured_paths = paths
 
         self._n_playbook_paths = []
         self._default_collection = None
@@ -498,7 +508,6 @@ def get_collection_role_path(role_name, collection_list=None):
 
     if acr:
         # looks like a valid qualified collection ref; skip the collection_list
-        role = acr.resource
         collection_list = [acr.collection]
         subdirs = acr.subdirs
         resource = acr.resource

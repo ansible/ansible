@@ -13,6 +13,10 @@ from .util import (
     display,
 )
 
+from .util_common import (
+    resolve_csharp_ps_util,
+)
+
 from .data import (
     data_context,
 )
@@ -82,7 +86,7 @@ def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
     if is_pure_csharp:
         pattern = re.compile(r'(?i)^using\s((?:Ansible|AnsibleCollections)\..+);$')
     else:
-        pattern = re.compile(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((?:Ansible|ansible.collections)\..+)')
+        pattern = re.compile(r'(?i)^#\s*ansiblerequires\s+-csharputil\s+((?:Ansible|ansible.collections|\.)\..+)')
 
     with open_text_file(path) as module_file:
         for line_number, line in enumerate(module_file, 1):
@@ -91,11 +95,12 @@ def extract_csharp_module_utils_imports(path, module_utils, is_pure_csharp):
             if not match:
                 continue
 
-            import_name = match.group(1)
-            if import_name not in module_utils:
-                display.warning('%s:%d Invalid module_utils import: %s' % (path, line_number, import_name))
-                continue
+            import_name = resolve_csharp_ps_util(match.group(1), path)
 
-            imports.add(import_name)
+            if import_name in module_utils:
+                imports.add(import_name)
+            elif data_context().content.is_ansible or \
+                    import_name.startswith('ansible_collections.%s' % data_context().content.prefix):
+                display.warning('%s:%d Invalid module_utils import: %s' % (path, line_number, import_name))
 
     return imports

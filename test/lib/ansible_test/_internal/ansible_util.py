@@ -77,6 +77,11 @@ def ansible_environment(args, color=True, ansible_config=None):
         PYTHONPATH=get_ansible_python_path(),
         PAGER='/bin/cat',
         PATH=path,
+        # give TQM worker processes time to report code coverage results
+        # without this the last task in a play may write no coverage file, an empty file, or an incomplete file
+        # enabled even when not using code coverage to surface warnings when worker processes do not exit cleanly
+        ANSIBLE_WORKER_SHUTDOWN_POLL_COUNT='100',
+        ANSIBLE_WORKER_SHUTDOWN_POLL_DELAY='0.1',
     )
 
     if isinstance(args, IntegrationConfig) and args.coverage:
@@ -113,9 +118,7 @@ def ansible_environment(args, color=True, ansible_config=None):
 
 def configure_plugin_paths(args):  # type: (CommonConfig) -> t.Dict[str, str]
     """Return environment variables with paths to plugins relevant for the current command."""
-    # temporarily require opt-in to this feature
-    # once collection migration has occurred this feature should always be enabled
-    if not isinstance(args, IntegrationConfig) or not args.enable_test_support:
+    if not isinstance(args, IntegrationConfig):
         return {}
 
     support_path = os.path.join(ANSIBLE_SOURCE_ROOT, 'test', 'support', args.command)

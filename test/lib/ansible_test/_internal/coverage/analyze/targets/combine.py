@@ -15,9 +15,19 @@ from . import (
 if t.TYPE_CHECKING:
     from . import (
         Arcs,
+        IndexedPoints,
         Lines,
         TargetIndexes,
     )
+
+
+class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):
+    """Configuration for the `coverage analyze targets combine` command."""
+    def __init__(self, args):  # type: (t.Any) -> None
+        super(CoverageAnalyzeTargetsCombineConfig, self).__init__(args)
+
+        self.input_files = args.input_file  # type: t.List[str]
+        self.output_file = args.output_file  # type: str
 
 
 def command_coverage_analyze_targets_combine(args):  # type: (CoverageAnalyzeTargetsCombineConfig) -> None
@@ -38,9 +48,9 @@ def command_coverage_analyze_targets_combine(args):  # type: (CoverageAnalyzeTar
 
 
 def merge_indexes(
-        source_data,  # type: t.Dict[str, t.Dict[t.Any, t.Set[int]]]
+        source_data,  # type: IndexedPoints
         source_index,  # type: t.List[str]
-        combined_data,  # type: t.Dict[str, t.Dict[t.Any, t.Set[int]]]
+        combined_data,  # type: IndexedPoints
         combined_index,  # type: TargetIndexes
 ):  # type: (...) -> None
     """Merge indexes from the source into the combined data set (arcs or lines)."""
@@ -52,12 +62,3 @@ def merge_indexes(
 
             for covered_target_index in covered_target_indexes:
                 combined_point.add(get_target_index(source_index[covered_target_index], combined_index))
-
-
-class CoverageAnalyzeTargetsCombineConfig(CoverageAnalyzeTargetsConfig):
-    """Configuration for the `coverage analyze targets combine` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsCombineConfig, self).__init__(args)
-
-        self.input_files = args.input_file  # type: t.List[str]
-        self.output_file = args.output_file  # type: str

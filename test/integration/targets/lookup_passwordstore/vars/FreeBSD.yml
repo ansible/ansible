@@ -1,3 +1,0 @@
-passwordstore_packages:
-  - gnupg
-  - password-store

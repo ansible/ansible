@@ -14,7 +14,6 @@ pycrypto >= 2.6 # Need features found in 2.6 and greater
 ncclient >= 0.5.2 # Need features added in 0.5.2 and greater
 idna < 2.6, >= 2.5 # linode requires idna < 2.9, >= 2.5, requests requires idna < 2.6, but cryptography will cause the latest version to be installed instead
 paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6
-paramiko < 2.5.0 ; python_version >= '2.7' # paramiko 2.5.0 requires cryptography 2.5.0+
 pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 2.6
 pytest < 5.0.0 ; python_version == '2.7' # pytest 5.0.0 and later will no longer support python 2.7
 pytest-forked < 1.0.2 ; python_version < '2.7' # pytest-forked 1.0.2 and later require python 2.7 or later
@@ -40,7 +39,8 @@ pyone == 1.1.9 # newer versions do not pass current integration tests
 boto3 < 1.11 ; python_version < '2.7' # boto3 1.11 drops Python 2.6 support
 botocore >= 1.10.0, < 1.14 ; python_version < '2.7' # adds support for the following AWS services: secretsmanager, fms, and acm-pca; botocore 1.14 drops Python 2.6 support
 botocore >= 1.10.0 ; python_version >= '2.7' # adds support for the following AWS services: secretsmanager, fms, and acm-pca
-setuptools < 45 ; python_version <= '2.7' # setuptools 45 and later require python 3.5 or later
+setuptools < 37 ; python_version == '2.6' # setuptools 37 and later require python 2.7 or later
+setuptools < 45 ; python_version == '2.7' # setuptools 45 and later require python 3.5 or later
 
 # freeze pylint and its requirements for consistent test results
 astroid == 2.2.5
@@ -50,4 +50,3 @@ mccabe == 0.6.1
 pylint == 2.3.1
 typed-ast == 1.4.0  # 1.4.0 is required to compile on Python 3.8
 wrapt == 1.11.1
-semantic_version == 2.6.0 # newer versions are not supported on Python 2.6

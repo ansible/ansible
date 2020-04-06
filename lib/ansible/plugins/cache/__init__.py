@@ -59,7 +59,10 @@ class BaseCacheModule(AnsiblePlugin):
     _display = display
 
     def __init__(self, *args, **kwargs):
-        self._load_name = self.__module__.split('.')[-1]
+        # Third party code is not using cache_loader to load plugin - fall back to previous behavior
+        if not hasattr(self, '_load_name'):
+            display.deprecated('Rather than importing custom CacheModules directly, use ansible.plugins.loader.cache_loader', version='2.14')
+            self._load_name = self.__module__.split('.')[-1]
         super(BaseCacheModule, self).__init__()
         self.set_options(var_options=args, direct=kwargs)
 

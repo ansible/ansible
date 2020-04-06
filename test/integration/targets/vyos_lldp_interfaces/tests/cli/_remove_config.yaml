@@ -1,8 +1,0 @@
----
-- name: Remove Config
-  cli_config:
-    config: "{{ lines }}"
-  vars:
-    lines: |
-      delete service lldp interface
-      delete service lldp

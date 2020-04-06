@@ -45,6 +45,7 @@ from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Sequence, Mapping, MutableMapping
 from ansible.module_utils.common.collections import is_sequence
+from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
@@ -52,12 +53,6 @@ from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import wrap_var
-
-# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
-try:
-    from importlib import import_module
-except ImportError:
-    import_module = __import__
 
 display = Display()
 
@@ -337,9 +332,10 @@ class JinjaPluginIntercept(MutableMapping):
         if not acr:
             raise KeyError('invalid plugin name: {0}'.format(key))
 
-        # FIXME: error handling for bogus plugin name, bogus impl, bogus filter/test
-
-        pkg = import_module(acr.n_python_package_name)
+        try:
+            pkg = import_module(acr.n_python_package_name)
+        except ImportError:
+            raise KeyError()
 
         parent_prefix = acr.collection
 
@@ -350,7 +346,10 @@ class JinjaPluginIntercept(MutableMapping):
             if ispkg:
                 continue
 
-            plugin_impl = self._pluginloader.get(module_name)
+            try:
+                plugin_impl = self._pluginloader.get(module_name)
+            except Exception as e:
+                raise TemplateSyntaxError(to_native(e), 0)
 
             method_map = getattr(plugin_impl, self._method_map_name)
 

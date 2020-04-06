@@ -1,9 +1,0 @@
-- name: Send a magic Wake-on-LAN packet to 00:00:5E:00:53:66
-  win_wakeonlan:
-    mac: 00:00:5E:00:53:66
-    broadcast: 192.0.2.255
-
-- name: Send a magic Wake-On-LAN packet on port 9 to 00-00-5E-00-53-66
-  win_wakeonlan:
-    mac: 00-00-5E-00-53-66
-    port: 9

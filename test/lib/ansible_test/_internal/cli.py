@@ -125,6 +125,11 @@ from .coverage.analyze.targets.expand import (
     CoverageAnalyzeTargetsExpandConfig,
 )
 
+from .coverage.analyze.targets.filter import (
+    command_coverage_analyze_targets_filter,
+    CoverageAnalyzeTargetsFilterConfig,
+)
+
 from .coverage.analyze.targets.combine import (
     command_coverage_analyze_targets_combine,
     CoverageAnalyzeTargetsCombineConfig,
@@ -197,7 +202,10 @@ def parse_args():
     except ImportError:
         if '--requirements' not in sys.argv:
             raise
-        raw_command(generate_pip_install(generate_pip_command(sys.executable), 'ansible-test'))
+        # install argparse without using constraints since pip may be too old to support them
+        # not using the ansible-test requirements file since this install is for sys.executable rather than the delegated python (which may be different)
+        # argparse has no special requirements, so upgrading pip is not required here
+        raw_command(generate_pip_install(generate_pip_command(sys.executable), 'argparse', packages=['argparse'], use_constraints=False))
         import argparse
 
     try:
@@ -388,10 +396,6 @@ def parse_args():
     integration.add_argument('--no-temp-unicode',
                              action='store_true',
                              help='avoid unicode characters in temporary directory (use only for verifying broken tests)')
-
-    integration.add_argument('--enable-test-support',
-                             action='store_true',
-                             help=argparse.SUPPRESS)  # temporary option for side-by-side testing -- remove after collection migration
 
     subparsers = parser.add_subparsers(metavar='COMMAND')
     subparsers.required = True  # work-around for python 3 bug which makes subparsers optional
@@ -726,6 +730,51 @@ def add_coverage_analyze(coverage_subparsers, coverage_common):  # type: (argpar
     targets_expand.add_argument(
         'output_file',
         help='output file to write expanded coverage to',
+    )
+
+    targets_filter = targets_subparsers.add_parser(
+        'filter',
+        parents=[coverage_common],
+        help='filter aggregated coverage data',
+    )
+
+    targets_filter.set_defaults(
+        func=command_coverage_analyze_targets_filter,
+        config=CoverageAnalyzeTargetsFilterConfig,
+    )
+
+    targets_filter.add_argument(
+        'input_file',
+        help='input file to read aggregated coverage from',
+    )
+
+    targets_filter.add_argument(
+        'output_file',
+        help='output file to write expanded coverage to',
+    )
+
+    targets_filter.add_argument(
+        '--include-target',
+        dest='include_targets',
+        action='append',
+        help='include the specified targets',
+    )
+
+    targets_filter.add_argument(
+        '--exclude-target',
+        dest='exclude_targets',
+        action='append',
+        help='exclude the specified targets',
+    )
+
+    targets_filter.add_argument(
+        '--include-path',
+        help='include paths matching the given regex',
+    )
+
+    targets_filter.add_argument(
+        '--exclude-path',
+        help='exclude paths matching the given regex',
     )
 
     targets_combine = targets_subparsers.add_parser(

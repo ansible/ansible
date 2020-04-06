@@ -1,1 +1,0 @@
-azure_rm_mariadbserver_info.py

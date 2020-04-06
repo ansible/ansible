@@ -1,3 +1,0 @@
----
-bugfixes:
-  - terraform - adding support for absolute paths additionally to the relative path within project_path (https://github.com/ansible/ansible/issues/58578)

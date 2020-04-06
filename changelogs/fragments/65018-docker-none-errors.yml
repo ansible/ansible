@@ -1,3 +1,0 @@
-bugfixes:
-- "docker_container - fix network idempotence comparison error."
-- "docker_network - fix idempotence comparison error."

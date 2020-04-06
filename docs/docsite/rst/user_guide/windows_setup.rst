@@ -436,6 +436,20 @@ Sometimes an installer may restart the WinRM or HTTP service and cause this erro
 best way to deal with this is to use ``win_psexec`` from another
 Windows host.
 
+Failure to Load Builtin Modules
++++++++++++++++++++++++++++++++
+If powershell fails with an error message similar to ``The 'Out-String' command was found in the module 'Microsoft.PowerShell.Utility', but the module could not be loaded.``
+then there could be a problem trying to access all the paths specified by the ``PSModulePath`` environment variable.
+A common cause of this issue is that the ``PSModulePath`` environment variable contains a UNC path to a file share and
+because of the double hop/credential delegation issue the Ansible process cannot access these folders. The way around
+this problems is to either:
+
+* Remove the UNC path from the ``PSModulePath`` environment variable, or
+* Use an authentication option that supports credential delegation like ``credssp`` or ``kerberos`` with credential delegation enabled
+
+See `KB4076842 <https://support.microsoft.com/en-us/help/4076842>`_ for more information on this problem.
+
+
 Windows SSH Setup
 `````````````````
 Ansible 2.8 has added an experimental SSH connection for Windows managed nodes.
@@ -456,6 +470,10 @@ Ansible, select one of these three installation options:
 
 * Manually install the service, following the `install instructions <https://github.com/PowerShell/Win32-OpenSSH/wiki/Install-Win32-OpenSSH>`_
   from Microsoft.
+
+* Install the `openssh <https://chocolatey.org/packages/openssh>`_ package using Chocolatey::
+
+    choco install --package-parameters=/SSHServerFeature openssh
 
 * Use ``win_chocolatey`` to install the service::
 

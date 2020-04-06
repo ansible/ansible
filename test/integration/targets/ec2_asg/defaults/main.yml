@@ -1,4 +1,0 @@
----
-# defaults file for ec2_asg
-# Amazon Linux 2 AMI 2019.06.12 (HVM), GP2 Volume Type
-ec2_ami_name: 'amzn2-ami-hvm-2.0.20190612-x86_64-gp2'

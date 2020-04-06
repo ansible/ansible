@@ -94,7 +94,7 @@ class AnsibleCoreCI:
             azure=(
                 'azure',
             ),
-            ibmcloud=(
+            ibmps=(
                 'aix',
                 'ibmi',
             ),
@@ -123,7 +123,7 @@ class AnsibleCoreCI:
 
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
-        if self.provider in ('aws', 'azure', 'ibmcloud'):
+        if self.provider in ('aws', 'azure', 'ibmps'):
             if self.provider != 'aws':
                 self.resource = self.provider
 
@@ -151,7 +151,7 @@ class AnsibleCoreCI:
             else:
                 self.port = 22
 
-            if self.provider == 'ibmcloud':
+            if self.provider == 'ibmps':
                 # Additional retries are neededed to accommodate images transitioning
                 # to the active state in the IBM cloud. This operation can take up to
                 # 90 seconds

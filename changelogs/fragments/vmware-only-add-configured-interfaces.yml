@@ -1,2 +1,0 @@
-minor_changes:
-    - vmware.py - Only add configured network interfaces to facts.

@@ -110,8 +110,11 @@ def _command_coverage_combine_python(args):
 
         if not args.explain:
             output_file = coverage_file + group
-            updated.write_file(output_file)
-            output_files.append(output_file)
+            updated.write_file(output_file)  # always write files to make sure stale files do not exist
+
+            if updated:
+                # only report files which are non-empty to prevent coverage from reporting errors
+                output_files.append(output_file)
 
     path_checker.report()
 

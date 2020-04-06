@@ -1,2 +1,0 @@
-minor_changes:
-- "openssl_privatekey - add ``format`` and ``format_mismatch`` options."
