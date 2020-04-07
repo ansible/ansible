@@ -329,6 +329,7 @@ class UnitsConfig(TestConfig):
 
         self.collect_only = args.collect_only  # type: bool
         self.num_workers = args.num_workers  # type: int
+        self.disable_strict_markers = args.disable_strict_markers  # type: bool
 
         self.requirements_mode = args.requirements_mode if 'requirements_mode' in args else ''
 

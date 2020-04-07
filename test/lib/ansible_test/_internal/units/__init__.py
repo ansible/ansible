@@ -108,8 +108,8 @@ def command_units(args):
         if not data_context().content.collection:
             cmd.append('--durations=25')
 
-        if version != '2.6':
-            # added in pytest 4.5.0, which requires python 2.7+
+        # added in pytest 4.5.0, which requires python 2.7+
+        if version != '2.6' and not args.disable_strict_markers:
             cmd.append('--strict-markers')
 
         plugins = []

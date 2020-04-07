@@ -492,6 +492,10 @@ def parse_args():
                        choices=('only', 'skip'),
                        help=argparse.SUPPRESS)
 
+    units.add_argument('--disable-strict-markers',
+                       action='store_true',
+                       help='do not pass --strict-markers in calls to pytest')
+
     add_extra_docker_options(units, integration=False)
 
     sanity = subparsers.add_parser('sanity',
