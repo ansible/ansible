@@ -53,6 +53,9 @@ class GitSource(SourceProvider):
         for submodule_path in submodule_paths:
             paths.extend(os.path.join(submodule_path, p) for p in self.__get_paths(os.path.join(path, submodule_path)))
 
+        # git reports submodule directories as regular files
+        paths = [p for p in paths if p not in submodule_paths]
+
         return paths
 
     @staticmethod
