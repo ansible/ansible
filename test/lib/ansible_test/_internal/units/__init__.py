@@ -2,12 +2,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import json
 import os
 import sys
+
+from packaging.version import Version
 
 from ..util import (
     ANSIBLE_TEST_DATA_ROOT,
     display,
+    find_python,
     get_available_python_versions,
     is_subdir,
     SubprocessError,
@@ -18,6 +22,7 @@ from ..util_common import (
     intercept_command,
     ResultType,
     handle_layout_messages,
+    run_command,
 )
 
 from ..ansible_util import (
@@ -49,6 +54,29 @@ from ..executor import (
     install_command_requirements,
     SUPPORTED_PYTHON_VERSIONS,
 )
+
+
+def check_pytest(args, version):
+    """
+    Returns information about the pytest we are running.
+    Returns a dict with information, in case more information is added in the
+    future for other purposes.
+
+    :type args: EnvironmentConfig
+    :type version: str
+    """
+
+    python = find_python(version)
+
+    stdout, _dummy = run_command(
+        args,
+        [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'pytestcheck.py')],
+        capture=True,
+        always=True)
+
+    result = json.loads(stdout)
+
+    return result
 
 
 def command_units(args):
@@ -108,9 +136,12 @@ def command_units(args):
         if not data_context().content.collection:
             cmd.append('--durations=25')
 
+        # added in pytest 4.5.0, which requires python 2.7+
         if version != '2.6':
-            # added in pytest 4.5.0, which requires python 2.7+
-            cmd.append('--strict-markers')
+            pytest_info = check_pytest(args, version)
+            pytest_version = pytest_info.get('pytest_version')
+            if pytest_version and Version(pytest_version) >= Version('4.5.0'):
+                cmd.append('--strict-markers')
 
         plugins = []
 
