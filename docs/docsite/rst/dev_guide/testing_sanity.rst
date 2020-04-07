@@ -18,6 +18,10 @@ All available tests are run unless the ``--test`` option is used.
 How to run
 ==========
 
+.. note::
+   To run sanity tests using docker, always use the default docker image
+   by passing the ``--docker`` or ``--docker default`` argument.
+
 .. code:: shell
 
    source hacking/env-setup
