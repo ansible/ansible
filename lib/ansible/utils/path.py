@@ -149,7 +149,7 @@ def is_subpath(child, parent):
     p = abs_parent.split(os.path.sep)
 
     try:
-        test = c[:len(p)] == p[:]
+        test = c[:len(p)] == p
     except IndexError:
         pass # child is shorter than parent so cannot be subpath
 
