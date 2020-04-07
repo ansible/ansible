@@ -19,21 +19,20 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.playbook.collectionsearch import CollectionSearch
-from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.utils.display import Display
-from units.compat.mock import MagicMock
+
+import pytest
 
 
-def test_collection_static_warning(monkeypatch):
-    mock_display = MagicMock()
-    monkeypatch.setattr(Display, 'display', mock_display)
+def test_collection_static_warning(capsys):
+    """Test that collection name is not templated.
+
+    Also, make sure that users see the warning message for the referenced name.
+    """
 
     collection_name = 'foo.{{bar}}'
     cs = CollectionSearch()
     assert collection_name in cs._load_collections(None, [collection_name])
 
-    assert mock_display.call_count == 1
-    actual_warn = ' '.join(mock_display.mock_calls[0][1][0].split('\n'))
-    expected_warn = '"collections" is not templatable, but we found: %s' \
-        % to_text(collection_name)
-    assert expected_warn in actual_warn
+    std_out, std_err = capsys.readouterr()
+    assert '[WARNING]: "collections" is not templatable, but we found: %s' % collection_name in std_err
+    assert '' == std_out
