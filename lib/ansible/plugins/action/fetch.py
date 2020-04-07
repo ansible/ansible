@@ -17,8 +17,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
 import binascii
+import io
+import os
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
@@ -122,6 +123,13 @@ class ActionModule(ActionBase):
                     return result
                 else:
                     remote_checksum = slurpres.get('checksum')
+                    if remote_checksum is None:
+                        # Backwards compat for any slurp override that doesn't
+                        # include a checksum in return data
+                        with io.BytesIO() as f:
+                            b64decode(slurpres['content'], f)
+                            remote_checksum = checksum_s(f.getvalue())
+
                     # the source path may have been expanded on the
                     # target system, so we compare it here and use the
                     # expanded version if it's different
