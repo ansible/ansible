@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Show pyyaml version."""
+"""Show pytest version."""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 

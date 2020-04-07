@@ -5,8 +5,7 @@ __metaclass__ = type
 import json
 import os
 import sys
-
-from packaging.version import Version
+from .. import types as t
 
 from ..util import (
     ANSIBLE_TEST_DATA_ROOT,
@@ -14,6 +13,7 @@ from ..util import (
     find_python,
     get_available_python_versions,
     is_subdir,
+    str_to_version,
     SubprocessError,
     REMOTE_ONLY_PYTHON_VERSIONS,
 )
@@ -56,17 +56,12 @@ from ..executor import (
 )
 
 
-def check_pytest(args, version):
+def get_pytest_version(args, python_version):  # type: (EnvironmentConfig, str) -> t.Optional[t.Tuple[int]]
     """
-    Returns information about the pytest we are running.
-    Returns a dict with information, in case more information is added in the
-    future for other purposes.
-
-    :type args: EnvironmentConfig
-    :type version: str
+    Returns the version of pytest if available, otherwise returns None.
     """
 
-    python = find_python(version)
+    python = find_python(python_version)
 
     stdout, _dummy = run_command(
         args,
@@ -75,8 +70,12 @@ def check_pytest(args, version):
         always=True)
 
     result = json.loads(stdout)
+    version = result.get('pytest_version')
 
-    return result
+    if version:
+        return str_to_version(version)
+
+    return None
 
 
 def command_units(args):
@@ -138,9 +137,8 @@ def command_units(args):
 
         # added in pytest 4.5.0, which requires python 2.7+
         if version != '2.6':
-            pytest_info = check_pytest(args, version)
-            pytest_version = pytest_info.get('pytest_version')
-            if pytest_version and Version(pytest_version) >= Version('4.5.0'):
+            pytest_version = get_pytest_version(args, version)
+            if pytest_version and pytest_version >= (4, 5, 0):
                 cmd.append('--strict-markers')
 
         plugins = []
