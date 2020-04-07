@@ -19,3 +19,6 @@ ansible-playbook corner_cases.yml -v "$@"
 
 # Test for #57351
 ansible-playbook filter_plugins.yml -v "$@"
+
+# https://github.com/ansible/ansible/issues/68699
+ansible-playbook unused_vars_include.yml -v "$@"
