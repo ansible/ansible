@@ -73,7 +73,7 @@ A collection can contain one or more roles in the :file:`roles/` directory and t
 Migrating a role to a collection
 ================================
 
-In order to migrate from a standalone role to a collection role, create a collection with the ``ansible-galaxy collection`` CLI command. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
+To migrate from a standalone role to a collection role, create a collection with the ``ansible-galaxy collection`` CLI command. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
 
 .. code-block:: bash
 
@@ -116,7 +116,7 @@ Migrating plugins and modules from a standalone role to a collection requires a 
 Custom module_utils
 ^^^^^^^^^^^^^^^^^^^
 
-If you have a module that uses a custom ``module_utils``, you could previously address it in the top level ``ansible.module_utils`` Python namespace. This is no longer the case. The top level Python namespace no longer merges the Ansible internal Python namespace with external content and merging external content from collections into the Ansible internal Python namespace is not supported. This is explained below but see :ref:`collection_module_utils` for more details.
+If any of your custom modules use a custom module utility, once you migrate to a collection you cannot address the module utility in the top level ``ansible.module_utils`` Python namespace. Ansible does not merge content from collections into the the Ansible internal Python namespace. You must update any Python import statements that refer to custom module utilities when you migrate your custom content to collections. See :ref:`collection_module_utils` for more details.
 
 When coding with ``module_utils`` in a collection, the Python import statement needs to take into account the :abbr:`FQCN (Fully Qualified Collection Name)` along with the ``ansible_collections`` convention. The resulting Python import looks similar to the following example:
 
