@@ -151,6 +151,6 @@ def is_subpath(child, parent):
     try:
         test = c[:len(p)] == p
     except IndexError:
-        pass # child is shorter than parent so cannot be subpath
+        pass  # child is shorter than parent so cannot be subpath
 
     return test
