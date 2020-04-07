@@ -170,16 +170,26 @@ class FreeBSDHardware(Hardware):
 
         # Fall back to using dmidecode, if available
         dmi_bin = self.module.get_bin_path('dmidecode')
-        DMI_DICT = dict(
-            bios_date='bios-release-date',
-            bios_version='bios-version',
-            form_factor='chassis-type',
-            product_name='system-product-name',
-            product_serial='system-serial-number',
-            product_uuid='system-uuid',
-            product_version='system-version',
-            system_vendor='system-manufacturer'
-        )
+        DMI_DICT = {
+            'bios_date': 'bios-release-date',
+            'bios_vendor': 'bios-vendor',
+            'bios_version': 'bios-version',
+            'board_asset_tag': 'baseboard-asset-tag',
+            'board_name': 'baseboard-product-name',
+            'board_serial': 'baseboard-serial-number',
+            'board_vendor': 'baseboard-manufacturer',
+            'board_version': 'baseboard-version',
+            'chassis_asset_tag': 'chassis-asset-tag',
+            'chassis_serial': 'chassis-serial-number',
+            'chassis_vendor': 'chassis-manufacturer',
+            'chassis_version': 'chassis-version',
+            'form_factor': 'chassis-type',
+            'product_name': 'system-product-name',
+            'product_serial': 'system-serial-number',
+            'product_uuid': 'system-uuid',
+            'product_version': 'system-version',
+            'system_vendor': 'system-manufacturer',
+        }
         for (k, v) in DMI_DICT.items():
             if dmi_bin is not None:
                 (rc, out, err) = self.module.run_command('%s -s %s' % (dmi_bin, v))
