@@ -55,5 +55,4 @@ class CollectionSearch:
                 display.warning('"collections" is not templatable, but we found: %s, '
                                 'it will not be templated and will be used "as is".' % (collection_name))
 
-
         return ds
