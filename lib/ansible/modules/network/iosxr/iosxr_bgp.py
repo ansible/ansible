@@ -29,8 +29,6 @@ notes:
 options:
   config:
     description: Specifies the BGP related configuration.
-    type: list
-    elements: dict
     suboptions:
       bgp_as:
         description:
