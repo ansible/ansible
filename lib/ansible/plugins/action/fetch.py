@@ -27,7 +27,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
-from ansible.utils.path import makedirs_safe
+from ansible.utils.path import makedirs_safe, is_subpath
 
 display = Display()
 
@@ -101,11 +101,9 @@ class ActionModule(ActionBase):
                 source_local = source
 
             # ensure we only use file name, avoid relative paths
-            abs_dest = os.path.abspath(dest)
-            abs_orig = os.path.abspath(original_dest)
-            if not abs_dest.startswith(abs_orig):
+            if not is_subpath(dest, original_dest):
                 # TODO: ? dest = os.path.expanduser(dest.replace(('../','')))
-                raise AnsibleActionFail("Detected directory traversal, expected to be contained in '%s' but got '%s'" % (abs_dest, abs_orig))
+                raise AnsibleActionFail("Detected directory traversal, expected to be contained in '%s' but got '%s'" % (original_dest, dest))
 
             if flat:
                 if os.path.isdir(to_bytes(dest, errors='surrogate_or_strict')) and not dest.endswith(os.sep):
