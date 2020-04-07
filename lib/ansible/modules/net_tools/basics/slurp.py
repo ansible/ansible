@@ -77,13 +77,23 @@ MAXBINSIZE = (MAXLINESIZE//4)*3
 
 
 def b64encode_and_checksum(filename, output):
+    '''Read and base64 encode small blocks of a file,
+    while also calculating the sha1 sum of the data
+
+    This code is inspired by ``base64.encode``
+
+    :arg filename: Filename to be read, encoded, and hashed
+    :arg output: File handle to stream base64 encoded data to
+    :return: sha1 checksum
+    '''
+
     digest = hashlib.sha1()
-    with open(filename, 'rb') as f:
-        for block in iter(partial(f.read, MAXBINSIZE), b''):
+    with open(to_bytes(filename, errors='surrogate_or_strict'), 'rb') as f:
+        for b_block in iter(partial(f.read, MAXBINSIZE), b''):
             output.write(
-                binascii.b2a_base64(block)
+                binascii.b2a_base64(b_block)
             )
-            digest.update(block)
+            digest.update(b_block)
     return digest.hexdigest()
 
 

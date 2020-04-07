@@ -36,6 +36,18 @@ MAXLINESIZE = 76  # Excluding the CRLF
 
 
 def b64decode(data, output):
+    '''Read a string in 76 character max blocks, and decode
+    to prevent decoding the full string from base64 and then
+    writing to a file. This will stream smaller blocks directly
+    to a file
+
+    This code is inspired by ``base64.decode``
+
+    :arg data: ascii base64 string
+    :arg output: File handle to write base64 decoded data to
+    :returns: None
+    '''
+
     # Determine if the base64 data is CRLF separated
     # The matched version of slurp will, but do this to be
     # careful
