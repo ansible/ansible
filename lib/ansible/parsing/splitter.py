@@ -68,33 +68,7 @@ def parse_kv(args, check_raw=False):
             else:
                 raise
 
-        raw_params = []
-        for orig_x in vargs:
-            x = _decode_escapes(orig_x)
-            if "=" in x:
-                pos = 0
-                try:
-                    while True:
-                        pos = x.index('=', pos + 1)
-                        if pos > 0 and x[pos - 1] != '\\':
-                            break
-                except ValueError:
-                    # ran out of string, but we must have some escaped equals,
-                    # so replace those and append this to the list of raw params
-                    raw_params.append(x.replace('\\=', '='))
-                    continue
-
-                k = x[:pos]
-                v = x[pos + 1:]
-
-                # FIXME: make the retrieval of this list of shell/command
-                #        options a function, so the list is centralized
-                if check_raw and k not in ('creates', 'removes', 'chdir', 'executable', 'warn'):
-                    raw_params.append(orig_x)
-                else:
-                    options[k.strip()] = unquote(v.strip())
-            else:
-                raw_params.append(orig_x)
+        raw_params = get_raw_params(check_raw, options, vargs)
 
         # recombine the free-form params, if any were found, and assign
         # them to a special option for use later by the shell/command module
@@ -102,6 +76,38 @@ def parse_kv(args, check_raw=False):
             options[u'_raw_params'] = join_args(raw_params)
 
     return options
+
+
+def get_raw_params(check_raw, options, vargs):
+    """
+    retrieves and returns a list of shell/command options
+    """
+    raw_params = []
+    for orig_x in vargs:
+        x = _decode_escapes(orig_x)
+        if "=" in x:
+            pos = 0
+            try:
+                while True:
+                    pos = x.index('=', pos + 1)
+                    if pos > 0 and x[pos - 1] != '\\':
+                        break
+            except ValueError:
+                # ran out of string, but we must have some escaped equals,
+                # so replace those and append this to the list of raw params
+                raw_params.append(x.replace('\\=', '='))
+                continue
+
+            k = x[:pos]
+            v = x[pos + 1:]
+
+            if check_raw and k not in ('creates', 'removes', 'chdir', 'executable', 'warn'):
+                raw_params.append(orig_x)
+            else:
+                options[k.strip()] = unquote(v.strip())
+        else:
+            raw_params.append(orig_x)
+    return raw_params
 
 
 def _get_quote_state(token, quote_char):
