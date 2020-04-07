@@ -18,7 +18,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import base64
+import binascii
 
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes
@@ -30,6 +30,26 @@ from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
 
 display = Display()
+
+MAXLINESIZE = 76  # Excluding the CRLF
+
+
+
+def b64decode(data, output):
+    # Determine if the base64 data is CRLF separated
+    # The matched version of slurp will, but do this to be
+    # careful
+    if data[MAXLINESIZE:MAXLINESIZE + 1] == '\n':
+        step = MAXLINESIZE + 1
+    else:
+        step = MAXLINESIZE
+
+    for i in range(0, len(data), step):
+        output.write(
+            binascii.a2b_base64(
+                data[i:i + step]
+            )
+        )
 
 
 class ActionModule(ActionBase):
@@ -71,12 +91,14 @@ class ActionModule(ActionBase):
             source = self._connection._shell.join_path(source)
             source = self._remote_expand_user(source)
 
-            # calculate checksum for the remote file
-            remote_checksum = self._remote_checksum(source, all_vars=task_vars, follow=True)
+            # Calculate checksum for the remote file
+            # Don't use become, this will tell us if we need to use slurp
+            remote_checksum = self._remote_checksum(source, all_vars=task_vars, follow=True, sudoable=False)
 
             # use slurp if permissions are lacking or privilege escalation is needed
-            remote_data = None
-            if remote_checksum in ('1', '2'):
+            used_slurp = False
+            if remote_checksum in ('1', '2', '', None):
+                used_slurp = True
                 slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars)
                 if slurpres.get('failed'):
                     if not fail_on_missing and (slurpres.get('msg').startswith('file not found') or remote_checksum == '1'):
@@ -87,10 +109,7 @@ class ActionModule(ActionBase):
                         result.update(slurpres)
                     return result
                 else:
-                    if slurpres['encoding'] == 'base64':
-                        remote_data = base64.b64decode(slurpres['content'])
-                    if remote_data is not None:
-                        remote_checksum = checksum_s(remote_data)
+                    remote_checksum = slurpres.get('checksum')
                     # the source path may have been expanded on the
                     # target system, so we compare it here and use the
                     # expanded version if it's different
@@ -165,12 +184,12 @@ class ActionModule(ActionBase):
                 makedirs_safe(os.path.dirname(dest))
 
                 # fetch the file and check for changes
-                if remote_data is None:
+                if not used_slurp:
                     self._connection.fetch_file(source, dest)
                 else:
                     try:
                         with open(to_bytes(dest, errors='surrogate_or_strict'), 'wb') as f:
-                            f.write(remote_data)
+                            b64decode(slurpres.get('content'), f)
                     except (IOError, OSError) as e:
                         raise AnsibleError("Failed to fetch the file: %s" % e)
                 new_checksum = secure_hash(dest)

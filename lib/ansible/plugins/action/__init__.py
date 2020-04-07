@@ -573,7 +573,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
-    def _execute_remote_stat(self, path, all_vars, follow, tmp=None, checksum=True):
+    def _execute_remote_stat(self, path, all_vars, follow, tmp=None, checksum=True, sudoable=True):
         '''
         Get information from remote file.
         '''
@@ -590,7 +590,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             checksum_algorithm='sha1',
         )
         mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars,
-                                      wrap_async=False)
+                                      wrap_async=False, sudoable=sudoable)
 
         if mystat.get('failed'):
             msg = mystat.get('module_stderr')
@@ -612,7 +612,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return mystat['stat']
 
-    def _remote_checksum(self, path, all_vars, follow=False):
+    def _remote_checksum(self, path, all_vars, follow=False, sudoable=True):
         '''
         Produces a remote checksum given a path,
         Returns a number 0-4 for specific errors instead of checksum, also ensures it is different
@@ -625,7 +625,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
         x = "0"  # unknown error has occurred
         try:
-            remote_stat = self._execute_remote_stat(path, all_vars, follow=follow)
+            remote_stat = self._execute_remote_stat(path, all_vars, follow=follow, sudoable=sudoable)
             if remote_stat['exists'] and remote_stat['isdir']:
                 x = "3"  # its a directory not a file
             else:
@@ -760,7 +760,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure the remote_tmp value is sent through in case modules needs to create their own
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False,
+                        sudoable=True):
         '''
         Transfer and run a module along with its arguments.
         '''
@@ -873,7 +874,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if args_file_path:
             remote_files.append(args_file_path)
 
-        sudoable = True
         in_data = None
         cmd = ""
 

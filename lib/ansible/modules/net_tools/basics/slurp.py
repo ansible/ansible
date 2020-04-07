@@ -61,6 +61,7 @@ EXAMPLES = r'''
 '''
 
 import binascii
+import hashlib
 import io
 import os
 
@@ -75,12 +76,15 @@ MAXLINESIZE = 76  # Excluding the CRLF
 MAXBINSIZE = (MAXLINESIZE//4)*3
 
 
-def b64encode(filename, output):
+def b64encode_and_checksum(filename, output):
+    digest = hashlib.sha1()
     with open(filename, 'rb') as f:
         for block in iter(partial(f.read, MAXBINSIZE), b''):
             output.write(
                 binascii.b2a_base64(block)
             )
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def main():
@@ -94,14 +98,16 @@ def main():
 
     if not os.path.exists(source):
         module.fail_json(msg="file not found: %s" % source)
+    if os.path.isdir(source):
+        module.fail_json(msg="path is a directory: %s" % source)
     if not os.access(source, os.R_OK):
         module.fail_json(msg="file is not readable: %s" % source)
 
     with io.BytesIO() as f:
-        b64encode(source, f)
-        data = to_native(f.getvalue())
+        checksum = b64encode_and_checksum(source, f)
+        data = to_native(f.getvalue()).strip()
 
-    module.exit_json(content=data, source=source, encoding='base64')
+    module.exit_json(content=data, source=source, encoding='base64', checksum=checksum)
 
 
 if __name__ == '__main__':
