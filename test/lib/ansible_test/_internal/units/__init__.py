@@ -140,6 +140,8 @@ def command_units(args):
             pytest_version = get_pytest_version(args, version)
             if pytest_version and pytest_version >= (4, 5, 0):
                 cmd.append('--strict-markers')
+            else:
+                display.warning("Unable to check pytest markers with '--strict-markers' because pytest version is less than 4.5.0. Consider upgrading pytest.")
 
         plugins = []
 
