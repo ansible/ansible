@@ -5,6 +5,7 @@ __metaclass__ = type
 import json
 import os
 import sys
+
 from .. import types as t
 
 from ..util import (
@@ -60,7 +61,6 @@ def get_pytest_version(args, python_version):  # type: (EnvironmentConfig, str) 
     """
     Returns the version of pytest if available, otherwise returns None.
     """
-
     python = find_python(python_version)
 
     stdout, _dummy = run_command(
