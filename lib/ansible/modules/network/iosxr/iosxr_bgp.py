@@ -28,8 +28,9 @@ notes:
   - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 options:
   config:
-    description:
-      - Specifies the BGP related configuration.
+    description: Specifies the BGP related configuration.
+    type: list
+    elements: dict
     suboptions:
       bgp_as:
         description:
