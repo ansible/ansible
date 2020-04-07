@@ -18,25 +18,22 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from units.compat import unittest
 from ansible.playbook.collectionsearch import CollectionSearch
-from units.compat.mock import patch
+from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.utils.display import Display
+from units.compat.mock import MagicMock
 
 
-class TestCollectionSearch(unittest.TestCase):
+def test_collection_static_warning(monkeypatch):
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
 
-    @patch('ansible.utils.display.Display.display')
-    def test_collection_static_warning(self, mock_display):
-        '''
-        Test that collection name is not templated and a warning message is
-        generated for the referenced name.
-        '''
-        cs = CollectionSearch()
-        self.assertIn(
-            'foo.{{bar}}',
-            cs._load_collections(None, ['foo.{{bar}}'])
-        )
-        self.assertEqual(mock_display.call_count, 1)
-        self.assertIn(
-            '[WARNING]: "collections" is not templatable, but we found: foo.{{bar}}',
-            mock_display.call_args[0][0])
+    collection_name = 'foo.{{bar}}'
+    cs = CollectionSearch()
+    assert collection_name in cs._load_collections(None, [collection_name])
+
+    assert mock_display.call_count == 1
+    actual_warn = ' '.join(mock_display.mock_calls[0][1][0].split('\n'))
+    expected_warn = '"collections" is not templatable, but we found: %s' \
+        % to_text(collection_name)
+    assert expected_warn in actual_warn
