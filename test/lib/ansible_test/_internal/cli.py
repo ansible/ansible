@@ -636,6 +636,10 @@ def parse_args():
                      action='store_true',
                      help='dump environment to disk')
 
+    env.add_argument('--list-files',
+                     action='store_true',
+                     help='list files on stdout')
+
     # noinspection PyTypeChecker
     env.add_argument('--timeout',
                      type=int,
