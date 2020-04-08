@@ -81,6 +81,15 @@ def get_text_width(text):
 
     width = 0
     for c in text:
+        if c in ('\x08', '\x7f', '\x94', '\x1b'):
+            # A few characters result in a subtraction of length:
+            # BS, DEL, CCH, ESC
+            # ESC is slightly different in that it's part of an escape sequence, and
+            # while ESC is non printable, it's part of an escape sequence, which results
+            # in a single non printable length
+            width -= 1
+            continue
+
         try:
             w = _LIBC.wcwidth(c)
         except ctypes.ArgumentError:
@@ -90,7 +99,8 @@ def get_text_width(text):
             # use 0 here as a best effort
             w = 0
         width += w
-    return width
+    # It doesn't make sense to have a negative printable width
+    return width if width >= 0 else 0
 
 
 class FilterBlackList(logging.Filter):
