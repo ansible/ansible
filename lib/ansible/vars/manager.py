@@ -457,9 +457,9 @@ class VariableManager:
 
         if play:
             # This is a list of all role names of all dependencies for all roles for this play
-            dependency_role_names = list(set([d._role_name for r in play.roles for d in r.get_all_dependencies()]))
+            dependency_role_names = list(set([d.get_name() for r in play.roles for d in r.get_all_dependencies()]))
             # This is a list of all role names of all roles for this play
-            play_role_names = [r._role_name for r in play.roles]
+            play_role_names = [r.get_name() for r in play.roles]
 
             # ansible_role_names includes all role names, dependent or directly referenced by the play
             variables['ansible_role_names'] = list(set(dependency_role_names + play_role_names))
@@ -477,9 +477,11 @@ class VariableManager:
 
         if task:
             if task._role:
-                variables['role_name'] = task._role.get_name()
+                variables['role_name'] = task._role.get_name(include_role_fqcn=False)
                 variables['role_path'] = task._role._role_path
                 variables['role_uuid'] = text_type(task._role._uuid)
+                variables['ansible_collection_name'] = task._role._role_collection
+                variables['ansible_role_name'] = task._role.get_name()
 
         if self._inventory is not None:
             variables['groups'] = self._inventory.get_groups_dict()

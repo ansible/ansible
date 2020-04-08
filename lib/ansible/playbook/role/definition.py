@@ -231,3 +231,8 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     def get_role_path(self):
         return self._role_path
+
+    def get_name(self, include_role_fqcn=True):
+        if include_role_fqcn:
+            return '.'.join(x for x in (self._role_collection, self.role) if x)
+        return self.role
