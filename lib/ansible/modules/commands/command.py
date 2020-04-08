@@ -216,7 +216,7 @@ from ansible.module_utils.common.collections import is_iterable
 def check_command(module, commandline):
     arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
                  'ln': 'state=link', 'mkdir': 'state=directory',
-                 'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch','uname: 'version=kernel'}
+                 'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch','uname': 'kernel=version'}
     commands = {'curl': 'get_url or uri', 'wget': 'get_url or uri',
                 'svn': 'subversion', 'service': 'service',
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
