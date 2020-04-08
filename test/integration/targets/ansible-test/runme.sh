@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux -o pipefail
+set -eu -o pipefail
 
 # tests must be executed outside of the ansible source tree
 # otherwise ansible-test will test the ansible source instead of the test collection
@@ -9,16 +9,16 @@ tmp_dir=$(mktemp -d)
 
 trap 'rm -rf "${tmp_dir}"' EXIT
 
-cp -a ansible_collections "${tmp_dir}"
-cd "${tmp_dir}/ansible_collections/ns/col"
+export TEST_DIR
+export WORK_DIR
 
-# common args for all tests
-common=(--venv --python "${ANSIBLE_TEST_PYTHON_VERSION}" --color --truncate 0 "${@}")
+TEST_DIR="$PWD"
 
-# prime the venv to work around issue with PyYAML detection in ansible-test
-ansible-test sanity "${common[@]}" --test ignores
-
-# tests
-ansible-test sanity "${common[@]}"
-ansible-test units "${common[@]}"
-ansible-test integration "${common[@]}"
+for test in collection-tests/*.sh; do
+  WORK_DIR="${tmp_dir}/$(basename "${test}" ".sh")"
+  mkdir "${WORK_DIR}"
+  echo "**********************************************************************"
+  echo "TEST: ${test}: STARTING"
+  "${test}" "${@}" || (echo "TEST: ${test}: FAILED" && exit 1)
+  echo "TEST: ${test}: PASSED"
+done
