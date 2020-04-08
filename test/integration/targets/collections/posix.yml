@@ -394,3 +394,10 @@
       that:
       - hostvars['dynamic_host_a'] is defined
       - hostvars['dynamic_host_a'].connection_out.stdout == "localconn ran echo 'hello world'"
+
+- name: Test FQCN handlers
+  hosts: testhost
+  vars:
+    handler_counter: 0
+  roles:
+    - testns.testcoll.test_fqcn_handlers

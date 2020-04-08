@@ -1,0 +1,6 @@
+# This handler should only be called 1 time, if it's called more than once
+# this task should fail on subsequent executions
+- name: test_fqcn_handler
+  set_fact:
+    handler_counter: '{{ handler_counter|int + 1 }}'
+  failed_when: handler_counter|int > 1
