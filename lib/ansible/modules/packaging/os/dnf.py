@@ -306,6 +306,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
 
+
 class DnfModule(YumDnf):
     """
     DNF Ansible module back-end implementation
