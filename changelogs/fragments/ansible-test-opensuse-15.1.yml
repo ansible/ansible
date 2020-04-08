@@ -1,2 +1,2 @@
 minor_changes:
-  - Upgrade OpenSUSE container to Leap 15.1
+  - ansible-test - Upgrade OpenSUSE containers to use Leap 15.1.
