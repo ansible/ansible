@@ -5,12 +5,16 @@
 Migrating Roles to Roles in Collections
 ***************************************
 
-Collections can contain roles, modules, plugins, and playbooks. See :ref:`developing_collections` for details.
-You can migrate an existing standalone role into a collection-based role.
+You can migrate an existing standalone role into a collection-based role. With Ansible collections, you can create and distribute Ansible content that can contain one or many roles, modules or plugins (see :ref:`developing_collections` for details on collections).
+
+.. note::
+
+	Roles in collections cannot have hyphens in the role name. Rename any such roles to use underscores instead.
+
 
 .. contents::
    :local:
-   :depth: 2
+   :depth: 1
 
 .. _roles_in_collections:
 
@@ -20,7 +24,7 @@ Comparing standalone roles to collection roles
 :ref:`Standalone roles <playbooks_reuse_roles>` have the following directory structure:
 
 .. code-block:: bash
-  :emphasize-lines: 5,7
+  :emphasize-lines: 5,7,8
 
     role/
     ├── defaults
@@ -28,6 +32,7 @@ Comparing standalone roles to collection roles
     ├── handlers
     ├── library
     ├── meta
+    ├── module_utils
     ├── [*_plugins]
     ├── tasks
     ├── templates
@@ -62,9 +67,20 @@ The highlighted directories above will change when you migrate to a collection-b
 
 A collection can contain one or more roles in the :file:`roles/` directory and these are almost identical to standalone roles with the following exceptions:
 
-- Collection roles cannot contain a :file:`library/` directory with custom modules. Move modules to the :file:`plugins/modules/` directory of the collection. You can reference these collection modules in any of the roles contained within a collection, or externally using the fully qualified collection name (:abbr:`FQCN (Fully Qualified Collection Name)`).
-- Modules inside a collection need :abbr:`FQCN (Fully Qualified Collection Name)` paths for their Python imports. See :ref:`migrating_plugins_collection`.
-- Standalone roles can optionally encapsulate any plugin in a :file:`PLUGINTYPE_plugins/` directory (such as :file:`filters_plugin/`). For roles in a collection, these plugins go into their respective :file:`plugins/PLUGINTYPE/` directory (such as :file:`plugins/filter/`) in an collection. You reference these plugins with their :abbr:`FQCN (Fully Qualified Collection Name)`.
++----------------------------------------+------------------------------------------------------------------------------+
+| standalone role                        | collection role                                                              |
++========================================+==============================================================================+
+| :file:`library/` with custom modules   | - Move to :file:`plugins/modules/`                                           |
+|                                        | - Use :abbr:`FQCN (Fully Qualified Collection Name)` external to collection  |
++----------------------------------------+------------------------------------------------------------------------------+
+|``ansible.module_utils`` in Python      + Use :abbr:`FQCN (Fully Qualified Collection Name)` for Python imports        |
++----------------------------------------+------------------------------------------------------------------------------+
+| Plugins in :file:`PLUGINTYPE_plugins/` + - Move to :file:`plugins/PLUGINTYPE/`  (such as :file:`plugins/filter/`)     |
+|                                        | - Use :abbr:`FQCN (Fully Qualified Collection Name)` external to collection  |
++----------------------------------------+------------------------------------------------------------------------------+
+| :file:`module_utils/`                  + - Move to :file:`plugins/module_utils/`                                      |
+|                                        | - Use :abbr:`FQCN (Fully Qualified Collection Name)` external to collection  |
++----------------------------------------+------------------------------------------------------------------------------+
 
 .. note::
 
@@ -73,25 +89,38 @@ A collection can contain one or more roles in the :file:`roles/` directory and t
 Migrating a role to a collection
 ================================
 
-To migrate from a standalone role to a collection role, create a collection with the ``ansible-galaxy collection`` CLI command. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
+To migrate from a standalone role to a collection role:
+
+
+1. Create a collection. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
 
 .. code-block:: bash
 
   $ ansible-galaxy collection init mynamespace.mycollection
 
-This creates the collection directory structure. The :file:`mynamespace/mycollection/plugins/` directory contains a :file:`README.md` file that explains the various types of plugins that the collection can contain within optionally created subdirectories.
+This creates the collection directory structure.
 
-Migrating a standalone role without plugins or modules
-------------------------------------------------------
-
-If you have a standalone role that does not contain any custom modules or plugins, copy the entire standalone role directory into the :file:`roles/` subdirectory of the collection. You can then reference the role with the :abbr:`FQCN (Fully Qualified Collection Name)`.
+2. Copy the standalone role directory into the :file:`roles/` subdirectory of the collection.
 
 .. code-block:: bash
 
   $ mkdir mynamespace/mycollection/roles/my_role/
   $ cp -r /path/to/standalone/role/mynamespace/my_role/\* mynamespace/mycollection/roles/my_role/
 
-The following example uses this collection role in a playbook:
+
+4. Move any modules to the :file:`plugins/modules/` directory.
+
+.. code-block:: bash
+
+  $ mv -r mynamespace/mycollection/roles/my_role/library/\* mynamespace/mycollection/plugins/modules/
+
+4. Move any other plugins to the appropriate :file:`plugins/PLUGINTYPE/` directory. The :file:`mynamespace/mycollection/plugins/README.md` file explains the types of plugins that the collection can contain within optionally created subdirectories.
+
+.. code-block:: bash
+
+  $ mv -r mynamespace/mycollection/roles/my_role/filter_plugins/\* mynamespace/mycollection/plugins/filter/
+
+5. Change any references to the role, modules, or plugins with the :abbr:`FQCN (Fully Qualified Collection Name)`.
 
 .. code-block:: yaml
 
@@ -108,15 +137,19 @@ Note in this example that the type of content from inside a collection is inferr
 
 .. _migrating_plugins_collection:
 
-Migrating plugins and modules
------------------------------
+Migrating ``module_utils`` and __init__.py
+------------------------------------------
 
-Migrating plugins and modules from a standalone role to a collection requires a few more steps.
+If you have a custom ``module_utils`` or import from ``__init__.py``, you must also:
 
-Custom module_utils
-^^^^^^^^^^^^^^^^^^^
+#. Change the Python namespace for custom ``module_utils``.  to use the :abbr:`FQCN (Fully Qualified Collection Name)` along with the ``ansible_collections`` convention.
+#. Change how you import from __init__.py.
 
-If any of your custom modules use a custom module utility, once you migrate to a collection you cannot address the module utility in the top level ``ansible.module_utils`` Python namespace. Ansible does not merge content from collections into the the Ansible internal Python namespace. You must update any Python import statements that refer to custom module utilities when you migrate your custom content to collections. See :ref:`collection_module_utils` for more details.
+
+Updating ``module_utils``
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If any of your custom modules use a custom module utility, once you migrate to a collection you cannot address the module utility in the top level ``ansible.module_utils`` Python namespace. Ansible does not merge content from collections into the the Ansible internal Python namespace. Update any Python import statements that refer to custom module utilities when you migrate your custom content to collections. See :ref:`collection_module_utils` for more details.
 
 When coding with ``module_utils`` in a collection, the Python import statement needs to take into account the :abbr:`FQCN (Fully Qualified Collection Name)` along with the ``ansible_collections`` convention. The resulting Python import looks similar to the following example:
 
@@ -198,7 +231,7 @@ In this example we have a standalone role called ``my-standalone-role.webapp`` t
   ├── tests
   └── vars
 
-1. Create a new collection, for example,``acme.webserver``:
+1. Create a new collection, for example, ``acme.webserver``:
 
 .. code-block:: bash
 
