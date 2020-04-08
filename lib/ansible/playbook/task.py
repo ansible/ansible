@@ -85,8 +85,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     _retries = FieldAttribute(isa='int', default=3)
     _until = FieldAttribute(isa='list', default=list)
 
-    # deprecated, used to be loop and loop_args but loop has been repurposed
-    _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
