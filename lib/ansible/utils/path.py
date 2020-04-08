@@ -132,3 +132,26 @@ def cleanup_tmp_file(path, warn=False):
                     display.display(u'Unable to remove temporary file {0}'.format(to_text(e)))
     except Exception:
         pass
+
+
+def is_subpath(child, parent):
+    """
+    Compares paths to check if one is contained in the other
+    :arg: child: Path to test
+    :arg parent; Path to test against
+     """
+    test = False
+
+    abs_child = unfrackpath(child, follow=False)
+    abs_parent = unfrackpath(parent, follow=False)
+
+    c = abs_child.split(os.path.sep)
+    p = abs_parent.split(os.path.sep)
+
+    try:
+        test = c[:len(p)] == p
+    except IndexError:
+        # child is shorter than parent so cannot be subpath
+        pass
+
+    return test
