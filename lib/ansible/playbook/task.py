@@ -111,16 +111,19 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
         return path
 
-    def get_name(self):
+    def get_name(self, include_role_fqcn=True):
         ''' return the name of the task '''
 
-        if self._role and self.name and ("%s : " % self._role._role_name) not in self.name:
-            return "%s : %s" % (self._role.get_name(), self.name)
+        if self._role:
+            role_name = self._role.get_name(include_role_fqcn=include_role_fqcn)
+
+        if self._role and self.name and role_name not in self.name:
+            return "%s : %s" % (role_name, self.name)
         elif self.name:
             return self.name
         else:
             if self._role:
-                return "%s : %s" % (self._role.get_name(), self.action)
+                return "%s : %s" % (role_name, self.action)
             else:
                 return "%s" % (self.action,)
 

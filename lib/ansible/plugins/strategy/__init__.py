@@ -460,11 +460,14 @@ class StrategyBase:
                             # include the role name (if the handler is from a role). If that
                             # is not found, we resort to the simple name field, which doesn't
                             # have anything extra added to it.
-                            if handler_task.name == handler_name:
+                            candidates = (
+                                handler_task.name,
+                                handler_task.get_name(include_role_fqcn=False),
+                                handler_task.get_name(include_role_fqcn=True),
+                            )
+
+                            if handler_name in candidates:
                                 return handler_task
-                            else:
-                                if handler_task.get_name() == handler_name:
-                                    return handler_task
                         except (UndefinedError, AnsibleUndefinedVariable):
                             # We skip this handler due to the fact that it may be using
                             # a variable in the name that was conditionally included via
@@ -705,7 +708,7 @@ class StrategyBase:
             if original_task._role is not None and role_ran:  # TODO:  and original_task.action != 'include_role':?
                 # lookup the role in the ROLE_CACHE to make sure we're dealing
                 # with the correct object and mark it as executed
-                for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role._role_name]):
+                for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role.get_name()]):
                     if role_obj._uuid == original_task._role._uuid:
                         role_obj._had_task_run[original_host.name] = True
 

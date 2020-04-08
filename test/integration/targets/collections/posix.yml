@@ -399,3 +399,10 @@
   hosts: testhost
   roles:
     - testns.testcoll.call_standalone
+
+- name: Test FQCN handlers
+  hosts: testhost
+  vars:
+    handler_counter: 0
+  roles:
+    - testns.testcoll.test_fqcn_handlers
