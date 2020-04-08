@@ -1,3 +1,0 @@
----
-bugfixes:
-  - yarn - handle no version when installing module by name (https://github.com/ansible/ansible/issues/55097)

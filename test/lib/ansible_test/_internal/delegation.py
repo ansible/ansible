@@ -230,6 +230,7 @@ def delegate_docker(args, exclude, require, integration_targets):
 
     httptester_id = None
     test_id = None
+    success = False
 
     options = {
         '--docker': 1,
@@ -352,6 +353,9 @@ def delegate_docker(args, exclude, require, integration_targets):
 
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
+                # docker_exec will throw SubprocessError if not successful
+                # If we make it here, all the prep work earlier and the docker_exec line above were all successful.
+                success = True
             finally:
                 local_test_root = os.path.dirname(os.path.join(data_context().content.root, data_context().content.results_path))
 
@@ -368,7 +372,8 @@ def delegate_docker(args, exclude, require, integration_targets):
                 docker_rm(args, httptester_id)
 
             if test_id:
-                docker_rm(args, test_id)
+                if args.docker_terminate == 'always' or (args.docker_terminate == 'success' and success):
+                    docker_rm(args, test_id)
 
 
 def delegate_remote(args, exclude, require, integration_targets):

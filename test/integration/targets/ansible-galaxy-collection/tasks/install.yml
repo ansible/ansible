@@ -153,6 +153,26 @@
     - '"Installing ''namespace3.name:1.0.0'' to" in install_tarball.stdout'
     - (install_tarball_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
 
+- name: setup bad tarball - {{ test_name }}
+  script: build_bad_tar.py {{ galaxy_dir | quote }}
+
+- name: fail to install a collection from a bad tarball - {{ test_name }}
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/suspicious-test-1.0.0.tar.gz'
+  register: fail_bad_tar
+  failed_when: fail_bad_tar.rc != 1 and "Cannot extract tar entry '../../outside.sh' as it will be placed outside the collection directory" not in fail_bad_tar.stderr
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+
+- name: get result of failed collection install - {{ test_name }}
+  stat:
+    path: '{{ galaxy_dir }}/ansible_collections\suspicious'
+  register: fail_bad_tar_actual
+
+- name: assert result of failed collection install - {{ test_name }}
+  assert:
+    that:
+    - not fail_bad_tar_actual.stat.exists
+
 - name: install a collection from a URI - {{ test_name }}
   command: ansible-galaxy collection install '{{ test_server }}custom/collections/namespace4-name-1.0.0.tar.gz'
   register: install_uri

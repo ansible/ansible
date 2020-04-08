@@ -13,6 +13,10 @@ from .util import (
     display,
 )
 
+from .util_common import (
+    resolve_csharp_ps_util,
+)
+
 from .data import (
     data_context,
 )
@@ -85,12 +89,12 @@ def extract_powershell_module_utils_imports(path, module_utils):
 
     for line in lines:
         line_number += 1
-        match = re.search(r'(?i)^#\s*(?:requires\s+-module(?:s?)|ansiblerequires\s+-powershell)\s*((?:Ansible|ansible_collections)\..+)', line)
+        match = re.search(r'(?i)^#\s*(?:requires\s+-module(?:s?)|ansiblerequires\s+-powershell)\s*((?:Ansible|ansible_collections|\.)\..+)', line)
 
         if not match:
             continue
 
-        import_name = match.group(1)
+        import_name = resolve_csharp_ps_util(match.group(1), path)
 
         if import_name in module_utils:
             imports.add(import_name)

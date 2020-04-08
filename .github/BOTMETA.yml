@@ -500,7 +500,9 @@ files:
     ignored: andyhky
     migrated_to: community.general
   $modules/cloud/opennebula/: ilicmilan xorel rsmontero meerkampdvv
-  $modules/cloud/openstack/: $team_openstack
+  $modules/cloud/openstack/:
+    ignored: Shrews
+    maintainers: $team_openstack
   $modules/cloud/openstack/os_auth.py:
     migrated_to: openstack.cloud
   $modules/cloud/openstack/os_client_config.py:
@@ -923,7 +925,7 @@ files:
     ignored: andyhky
     migrated_to: community.general
   $modules/net_tools/nios/:
-    maintainers: $team_networking sganesh-infoblox
+    maintainers: sganesh-infoblox
     labels:
     - networking
     - infoblox
@@ -2680,7 +2682,7 @@ files:
   $modules/network/sros/: privateip
   $modules/network/system/: $team_networking
   $modules/network/voss/: $team_extreme
-  $modules/network/vyos/: Qalthos NilashishC
+  $modules/network/vyos/: rohitthakur2590
   $modules/notification/_osx_say.py:
     maintainers: $team_ansible
     migrated_to: community.general
@@ -3431,7 +3433,7 @@ files:
     labels:
     - networking
     - infoblox
-    maintainers: $team_networking sganesh-infoblox
+    maintainers: sganesh-infoblox
   $module_utils/netapp:
     maintainers: $team_netapp
     support: community
@@ -4008,6 +4010,10 @@ files:
     migrated_to: f5networks.f5_modules
   $plugins/doc_fragments/tower.py:
     migrated_to: awx.awx
+  $plugins/doc_fragments/url_windows.py:
+    labels: windows
+    maintainers: $team_windows_core
+    support: core
   $plugins/filter/:
     support: community
   $plugins/filter/__init__.py:
@@ -4188,7 +4194,7 @@ files:
     migrated_to: community.kubernetes
   $plugins/lookup/nios:
     support: core
-    maintainers: $team_networking sganesh-infoblox
+    maintainers: sganesh-infoblox
     labels:
     - networking
     - infoblox
@@ -4306,6 +4312,8 @@ files:
   $plugins/vars:
     support: core
   lib/ansible/release.py:
+    notified: mattclay nitzmahone
+  lib/ansible/utils/collection_loader.py:
     notified: mattclay nitzmahone
   lib/ansible/cli/scripts/ansible_connection_cli_stub.py:
     keywords:
@@ -17727,25 +17735,25 @@ files:
   lib/ansible/modules/windows/win_certificate_info.py:
     migrated_to: community.windows
   lib/ansible/modules/windows/win_chocolatey.ps1:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey.py:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_config.ps1:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_config.py:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_facts.ps1:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_facts.py:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_feature.ps1:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_feature.py:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_source.ps1:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_chocolatey_source.py:
-    migrated_to: community.windows
+    migrated_to: chocolatey.chocolatey
   lib/ansible/modules/windows/win_computer_description.ps1:
     migrated_to: community.windows
   lib/ansible/modules/windows/win_computer_description.py:
@@ -19609,8 +19617,6 @@ files:
   lib/ansible/plugins/action/win_template.py:
     migrated_to: ansible.windows
   lib/ansible/plugins/action/win_updates.py:
-    migrated_to: ansible.windows
-  lib/ansible/plugins/doc_fragments/url_windows.py:
     migrated_to: ansible.windows
   test/integration/targets/win_setup/aliases:
     migrated_to: ansible.windows
@@ -30145,7 +30151,7 @@ macros:
   team_aci: aciguru brunocalogero devarshishah3 fadallar jmcgill298 koladiya mtorelli rsmeyers schunduri smnmtzgr
   team_aix: bcoca d-little flynn1973 gforster kairoaraujo marvin-sinister mator molekuul MorrisA ramooncamacho wtcross
   team_aruba: karthikeyan-dhandapani
-  team_asa: NilashishC ogenstad
+  team_asa: justjais ogenstad
   team_ansible: []
   team_avi: ericsysmin grastogi23 khaltore
   team_aws: jillr s-hertel tremble
@@ -30172,7 +30178,7 @@ macros:
   team_imc: []
   team_intersight: dsoper2 movinalot
   team_ios: justjais
-  team_iosxr: justjais NilashishC
+  team_iosxr: NilashishC
   team_ipa: Nosmoht Akasurde fxfitz
   team_jboss: jairojunior wbrefvem Wolfant
   team_kubevirt: machacekondra mmazur pkliczewski
@@ -30185,11 +30191,11 @@ macros:
   team_netbox: sieben anthony25 FragmentedPacket nikkytub pilou-
   team_netscaler: chiradeep giorgos-nikolopoulos
   team_netvisor: Qalthos amitsi pdam preetiparasar csharpe-pn
-  team_networking: Qalthos ganeshrn trishnaguha justjais NilashishC danielmellado
+  team_networking: Qalthos ganeshrn trishnaguha justjais NilashishC danielmellado rohitthakur2590 GomathiselviS
   team_nso: cmoberg cnasten tbjurman
-  team_nxos: mikewiebe rahushen trishnaguha chrisvanheuveln
+  team_nxos: mikewiebe NilashishC mmudigon kharicha naellini praveenramoorthy srbharadwaj
   team_onyx: anasbadaha samerd
-  team_openstack: emonty juliakreger rcarrillocruz Shrews dagnello mnaser odyssey4me cloudnull gtema
+  team_openstack: emonty juliakreger rcarrillocruz dagnello mnaser odyssey4me cloudnull gtema
   team_openswitch: Qalthos danielmellado
   team_oracle: nalsaber manojmeda mross22
   team_ovirt: machacekondra mwperina mnecas

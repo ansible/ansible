@@ -272,9 +272,9 @@ Function Get-AnsibleWebRequest {
         } else {
             $proxy.Credentials = $null
         }
-
-        $web_request.Proxy = $proxy
     }
+
+    $web_request.Proxy = $proxy
 
     # Some parameters only apply when dealing with a HttpWebRequest
     if ($web_request -is [System.Net.HttpWebRequest]) {
@@ -518,6 +518,7 @@ Function Merge-WebRequestSpec {
     $ModuleSpec
 }
 
+# See lib/ansible/plugins/doc_fragments/url_windows.py
 $ansible_web_request_options = @{
     method = @{ type="str" }
     follow_redirects = @{ type="str"; choices=@("all","none","safe"); default="safe" }

@@ -150,7 +150,6 @@ lib/ansible/modules/packaging/os/apt.py validate-modules:undocumented-parameter
 lib/ansible/modules/packaging/os/apt_key.py validate-modules:mutually_exclusive-unknown
 lib/ansible/modules/packaging/os/apt_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/packaging/os/apt_key.py validate-modules:undocumented-parameter
-lib/ansible/modules/packaging/os/apt_repo.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/packaging/os/apt_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/packaging/os/apt_repository.py validate-modules:parameter-invalid
 lib/ansible/modules/packaging/os/apt_repository.py validate-modules:parameter-type-not-in-doc
@@ -256,6 +255,9 @@ test/integration/targets/ansible-runner/files/adhoc_example1.py future-import-bo
 test/integration/targets/ansible-runner/files/adhoc_example1.py metaclass-boilerplate
 test/integration/targets/ansible-runner/files/playbook_example1.py future-import-boilerplate
 test/integration/targets/ansible-runner/files/playbook_example1.py metaclass-boilerplate
+test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
 test/integration/targets/async/library/async_test.py future-import-boilerplate
 test/integration/targets/async/library/async_test.py metaclass-boilerplate
 test/integration/targets/async_fail/library/async_test.py future-import-boilerplate

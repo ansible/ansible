@@ -1,2 +1,0 @@
-bugfixes:
-- "nxos_facts: Don't throw an error if faninfo is not reported."

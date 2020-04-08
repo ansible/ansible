@@ -1316,6 +1316,7 @@ ERROR_ON_MISSING_HANDLER:
 CONNECTION_FACTS_MODULES:
   name: Map of connections to fact modules
   default:
+    asa: asa_facts
     eos: eos_facts
     frr: frr_facts
     ios: ios_facts
@@ -1828,6 +1829,25 @@ TAGS_SKIP:
   ini:
   - {key: skip, section: tags}
   version_added: "2.5"
+WORKER_SHUTDOWN_POLL_COUNT:
+  name: Worker Shutdown Poll Count
+  default: 0
+  description:
+    - The maximum number of times to check Task Queue Manager worker processes to verify they have exited cleanly.
+    - After this limit is reached any worker processes still running will be terminated.
+    - This is for internal use only.
+  env: [{name: ANSIBLE_WORKER_SHUTDOWN_POLL_COUNT}]
+  type: integer
+  version_added: '2.10'
+WORKER_SHUTDOWN_POLL_DELAY:
+  name: Worker Shutdown Poll Delay
+  default: 0.1
+  description:
+    - The number of seconds to sleep between polling loops when checking Task Queue Manager worker processes to verify they have exited cleanly.
+    - This is for internal use only.
+  env: [{name: ANSIBLE_WORKER_SHUTDOWN_POLL_DELAY}]
+  type: float
+  version_added: '2.10'
 USE_PERSISTENT_CONNECTIONS:
   name: Persistence
   default: False

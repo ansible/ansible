@@ -1,2 +1,0 @@
-bugfixes:
-- mysql_user - fix support privileges with underscore (https://github.com/ansible/ansible/issues/66974).

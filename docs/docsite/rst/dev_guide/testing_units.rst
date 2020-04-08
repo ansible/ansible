@@ -23,6 +23,10 @@ structure of the tests matches that of ``lib/ansible/``.
 Running Tests
 =============
 
+.. note::
+   To run unit tests using docker, always use the default docker image
+   by passing the ``--docker`` or ``--docker default`` argument.
+
 The Ansible unit tests can be run across the whole code base by doing:
 
 .. code:: shell

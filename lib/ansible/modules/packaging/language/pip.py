@@ -555,7 +555,7 @@ class Package:
         if not self._plain_package:
             return False
         try:
-            return self._requirement.specifier.contains(version_to_test)
+            return self._requirement.specifier.contains(version_to_test, prereleases=True)
         except AttributeError:
             # old setuptools has no specifier, do fallback
             version_to_test = LooseVersion(version_to_test)

@@ -31,6 +31,7 @@ from .util import (
 )
 
 from .util_common import (
+    data_context,
     write_json_test_results,
     ResultType,
 )
@@ -72,8 +73,9 @@ class EnvConfig(CommonConfig):
         self.show = args.show
         self.dump = args.dump
         self.timeout = args.timeout
+        self.list_files = args.list_files
 
-        if not self.show and not self.dump and self.timeout is None:
+        if not self.show and not self.dump and self.timeout is None and not self.list_files:
             # default to --show if no options were given
             self.show = True
 
@@ -83,6 +85,7 @@ def command_env(args):
     :type args: EnvConfig
     """
     show_dump_env(args)
+    list_files_env(args)
     set_timeout(args)
 
 
@@ -128,6 +131,15 @@ def show_dump_env(args):
 
     if args.dump and not args.explain:
         write_json_test_results(ResultType.BOT, 'data-environment.json', data)
+
+
+def list_files_env(args):  # type: (EnvConfig) -> None
+    """List files on stdout."""
+    if not args.list_files:
+        return
+
+    for path in data_context().content.all_files():
+        display.info(path)
 
 
 def set_timeout(args):
