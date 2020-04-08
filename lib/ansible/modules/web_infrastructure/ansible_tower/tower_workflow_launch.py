@@ -60,7 +60,7 @@ job_info:
 EXAMPLES = '''
 - name: Launch a workflow
   tower_workflow_launch:
-    name: "Test Workflow"
+    workflow_template: "Test Workflow"
   delegate_to: localhost
   run_once: true
   register: workflow_results
