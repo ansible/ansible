@@ -1,0 +1,2 @@
+bugfixes:
+- Fix race condition with ``~/.ansible_async`` folder generation when running async tasks with local connection (https://github.com/ansible/ansible/issues/59394).
