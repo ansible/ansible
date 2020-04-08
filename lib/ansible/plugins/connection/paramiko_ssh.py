@@ -125,6 +125,17 @@ DOCUMENTATION = """
         ini:
           - section: defaults
             key: use_persistent_connections
+      auth_timeout:
+        type: float
+        default: 5.0
+        description:
+          - Configures, in seconds, the amount of time to wait for the authentication
+            to be successful.
+        ini:
+          - section: paramiko_connection
+            key: auth_timeout
+        env:
+          - name: ANSIBLE_PARAMIKO_AUTH_TIMEOUT
 # TODO:
 #timeout=self._play_context.timeout,
 """
@@ -347,6 +358,7 @@ class Connection(ConnectionBase):
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
                 port=port,
+                auth_timeout=self.get_option('auth_timeout'),
                 **ssh_connect_kwargs
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
