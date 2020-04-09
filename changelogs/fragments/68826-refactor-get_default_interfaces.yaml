@@ -1,0 +1,2 @@
+bugfixes:
+  - linux - Refactored get_default_interfaces and introduced get_default_interfaces helper
