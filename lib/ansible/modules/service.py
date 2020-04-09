@@ -135,7 +135,6 @@ import platform
 import re
 import select
 import shlex
-import string
 import subprocess
 import tempfile
 import time
