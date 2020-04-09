@@ -1596,45 +1596,45 @@ plugin_routing:
     uptimerobot:
       redirect: community.general.uptimerobot
     zabbix_group_facts:
-      redirect: community.general.zabbix_group_facts
+      redirect: community.zabbix.zabbix_group_facts
     zabbix_host_facts:
-      redirect: community.general.zabbix_host_facts
+      redirect: community.zabbix.zabbix_host_facts
     zabbix_action:
-      redirect: community.general.zabbix_action
+      redirect: community.zabbix.zabbix_action
     zabbix_group:
-      redirect: community.general.zabbix_group
+      redirect: community.zabbix.zabbix_group
     zabbix_group_info:
-      redirect: community.general.zabbix_group_info
+      redirect: community.zabbix.zabbix_group_info
     zabbix_host:
-      redirect: community.general.zabbix_host
+      redirect: community.zabbix.zabbix_host
     zabbix_host_events_info:
-      redirect: community.general.zabbix_host_events_info
+      redirect: community.zabbix.zabbix_host_events_info
     zabbix_host_info:
-      redirect: community.general.zabbix_host_info
+      redirect: community.zabbix.zabbix_host_info
     zabbix_hostmacro:
-      redirect: community.general.zabbix_hostmacro
+      redirect: community.zabbix.zabbix_hostmacro
     zabbix_maintenance:
-      redirect: community.general.zabbix_maintenance
+      redirect: community.zabbix.zabbix_maintenance
     zabbix_map:
-      redirect: community.general.zabbix_map
+      redirect: community.zabbix.zabbix_map
     zabbix_mediatype:
-      redirect: community.general.zabbix_mediatype
+      redirect: community.zabbix.zabbix_mediatype
     zabbix_proxy:
-      redirect: community.general.zabbix_proxy
+      redirect: community.zabbix.zabbix_proxy
     zabbix_screen:
-      redirect: community.general.zabbix_screen
+      redirect: community.zabbix.zabbix_screen
     zabbix_service:
-      redirect: community.general.zabbix_service
+      redirect: community.zabbix.zabbix_service
     zabbix_template:
-      redirect: community.general.zabbix_template
+      redirect: community.zabbix.zabbix_template
     zabbix_template_info:
-      redirect: community.general.zabbix_template_info
+      redirect: community.zabbix.zabbix_template_info
     zabbix_user:
-      redirect: community.general.zabbix_user
+      redirect: community.zabbix.zabbix_user
     zabbix_user_info:
-      redirect: community.general.zabbix_user_info
+      redirect: community.zabbix.zabbix_user_info
     zabbix_valuemap:
-      redirect: community.general.zabbix_valuemap
+      redirect: community.zabbix.zabbix_valuemap
     cloudflare_dns:
       redirect: community.general.cloudflare_dns
     dnsimple:
@@ -8392,7 +8392,7 @@ plugin_routing:
     xenserver:
       redirect: community.general.xenserver
     zabbix:
-      redirect: community.general.zabbix
+      redirect: community.zabbix.zabbix
     k8s_auth_options:
       redirect: community.kubernetes.k8s_auth_options
     k8s_name_options:
