@@ -156,3 +156,53 @@ def is_mac(mac_address):
     """
     mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
     return bool(mac_addr_regex.match(mac_address.lower()))
+
+
+def is_in_noproxy(server, no_proxy):
+    """
+    Check if given url is included in given no_proxy list
+    No DNS lookup is carried out
+    Args:
+        server: domain name, hostname or IP. Protocol and port are supported
+        no_proxy: list of comma separated URL. Support domain name, IP, subnet range, wildcard *, trailing and leading dot(.)
+            example no_proxy=example.com, .example.com, 192.168.56., 192.168.0.*, 127.0.0.0/8
+    Returns: (Boolean) True if no_proxy contains server, or no_proxy isn't set
+    """
+    if no_proxy is None:
+        return False
+    import re
+    # remove trailing ports, example keyserver.ubuntu.com:80
+    s = re.sub(r':\d+$', '', server, re.UNICODE)
+    # remove leading protocol, example: hkp://keyserver.ubuntu.com
+    s = re.sub(r'^\w+://', '', s, re.UNICODE)
+    urls = no_proxy.split(',')
+    for url in urls:
+        u = url.strip()
+        if s == u:
+            return True
+        # leading dot in no_proxy, example '.example.com'
+        elif u.startswith('.') and s.endswith(u):
+            return True
+        # trailing dot in no_proxy, example '192.168.56.'
+        elif u.endswith('.') and s.startswith(u):
+            return True
+        # subnet range, example 127.0.0.0/8
+        elif re.match(r'\d+.\d+.\d+.\d+/\d+', u) and re.match(r'\d+.\d+.\d+.\d+', s):
+            try:
+                import ipaddress
+                from ansible.module_utils._text import to_text
+                if ipaddress.ip_address(to_text(s)) in ipaddress.ip_network(to_text(u)):
+                    return True
+            except ImportError:
+                pass
+            except ValueError:
+                pass
+        # wildcard in no_proxy, example *.example.com, 192.168.0.*
+        elif '*' in u:
+            try:
+                prog = re.compile(u.replace('*', '.*'))
+                if prog.match(s):
+                    return True
+            except re.error as err:
+                pass
+    return False
