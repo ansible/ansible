@@ -63,6 +63,13 @@
   when: ansible_pkg_mgr == 'apt'
   notify: cleanup mysql
 
+- name: install mysqldb_test opensuse dependencies
+  zypper:
+    name: "{{ mysql_packages }}"
+    state: latest
+  when: ansible_pkg_mgr == 'zypper'
+  notify: cleanup mysql
+
 - name: install mysqldb_test FreeBSD dependencies
   pkgng:
     name: "{{ mysql_packages }}"
