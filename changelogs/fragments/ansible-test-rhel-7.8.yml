@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test now supports testing against RHEL 7.8 when using the ``--remote`` option.
