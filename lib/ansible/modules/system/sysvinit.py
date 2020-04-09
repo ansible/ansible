@@ -149,6 +149,7 @@ def main():
         'changed': False,
         'status': {}
     }
+    UPDATE_RC = 'update-rc.d'
 
     # ensure service exists, get script name
     fail_if_missing(module, sysv_exists(name), name)
@@ -156,7 +157,7 @@ def main():
 
     # locate binaries for service management
     paths = ['/sbin', '/usr/sbin', '/bin', '/usr/bin']
-    binaries = ['chkconfig', 'update-rc.d', 'insserv', 'service']
+    binaries = ['chkconfig', UPDATE_RC, 'insserv', 'service']
 
     # Keeps track of the service status for various runlevels because we can
     # operate on multiple runlevels at once
@@ -250,13 +251,13 @@ def main():
         if not module.check_mode and result['changed']:
             # Perform enable/disable here
             if enabled:
-                if location.get('update-rc.d'):
-                    (rc, out, err) = module.run_command("%s %s enable %s" % (location['update-rc.d'], name, ' '.join(runlevels)))
+                if location.get(UPDATE_RC):
+                    (rc, out, err) = module.run_command("%s %s enable %s" % (location[UPDATE_RC], name, ' '.join(runlevels)))
                 elif location.get('chkconfig'):
                     (rc, out, err) = module.run_command("%s --level %s %s on" % (location['chkconfig'], ''.join(runlevels), name))
             else:
-                if location.get('update-rc.d'):
-                    (rc, out, err) = module.run_command("%s %s disable %s" % (location['update-rc.d'], name, ' '.join(runlevels)))
+                if location.get(UPDATE_RC):
+                    (rc, out, err) = module.run_command("%s %s disable %s" % (location[UPDATE_RC], name, ' '.join(runlevels)))
                 elif location.get('chkconfig'):
                     (rc, out, err) = module.run_command("%s --level %s %s off" % (location['chkconfig'], ''.join(runlevels), name))
     else:
@@ -267,13 +268,13 @@ def main():
         if not module.check_mode and result['changed']:
             # Perform enable/disable here
             if enabled:
-                if location.get('update-rc.d'):
-                    (rc, out, err) = module.run_command("%s %s defaults" % (location['update-rc.d'], name))
+                if location.get(UPDATE_RC):
+                    (rc, out, err) = module.run_command("%s %s defaults" % (location[UPDATE_RC], name))
                 elif location.get('chkconfig'):
                     (rc, out, err) = module.run_command("%s %s on" % (location['chkconfig'], name))
             else:
-                if location.get('update-rc.d'):
-                    (rc, out, err) = module.run_command("%s %s disable" % (location['update-rc.d'], name))
+                if location.get(UPDATE_RC):
+                    (rc, out, err) = module.run_command("%s %s disable" % (location[UPDATE_RC], name))
                 elif location.get('chkconfig'):
                     (rc, out, err) = module.run_command("%s %s off" % (location['chkconfig'], name))
 
@@ -327,13 +328,7 @@ def main():
                     if sleep_for:
                         sleep(sleep_for)
 
-        elif is_started != (action == 'start'):
-            result['changed'] = True
-            result['status'][module.params['state']]['changed'] = True
-            if not module.check_mode:
-                rc, out, err = runme(action)
-
-        elif is_started == (action == 'stop'):
+        elif is_started != (action == 'start') or is_started == (action == 'stop'):
             result['changed'] = True
             result['status'][module.params['state']]['changed'] = True
             if not module.check_mode:

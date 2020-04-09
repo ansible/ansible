@@ -299,16 +299,14 @@ def parse_systemctl_show(lines):
     multival = []
     k = None
     for line in lines:
-        if k is None:
-            if '=' in line:
-                k, v = line.split('=', 1)
-                if k.startswith('Exec') and v.lstrip().startswith('{'):
-                    if not v.rstrip().endswith('}'):
-                        multival.append(v)
-                        continue
-                parsed[k] = v.strip()
-                k = None
-        else:
+        if k is None and '=' in line:
+            k, v = line.split('=', 1)
+            if k.startswith('Exec') and v.lstrip().startswith('{') and not v.rstrip().endswith('}'):
+                multival.append(v)
+                continue
+            parsed[k] = v.strip()
+            k = None
+        elif k is not None:
             multival.append(line)
             if line.rstrip().endswith('}'):
                 parsed[k] = '\n'.join(multival).strip()
@@ -316,6 +314,50 @@ def parse_systemctl_show(lines):
                 k = None
     return parsed
 
+def globpattern_check(unit, module):
+  if unit is not None:
+        for globpattern in (r"*", r"?", r"["):
+            if globpattern in unit:
+                module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
+
+def set_cli_options(module, systemctl):
+    if module.params['user'] is not None:
+        # handle user deprecation, mutually exclusive with scope
+        module.deprecate("The 'user' option is being replaced by 'scope'", version='2.11')
+        if module.params['user']:
+            scope = 'user'
+        else:
+            scope = 'system'
+
+    # if scope is 'system' or None, we can ignore as there is no extra switch.
+    # The other choices match the corresponding switch
+    if module.params['scope'] not in (None, 'system'):
+        systemctl += " --%s" % module.params['scope']
+
+    if module.params['no_block']:
+        systemctl += " --no-block"
+
+    if module.params['force']:
+        systemctl += " --force"
+
+    return systemctl, scope
+
+def set_action(module, result):
+    action = None
+    if module.params['state'] == 'started':
+        if not is_running_service(result['status']):
+            action = 'start'
+    elif module.params['state'] == 'stopped':
+        if is_running_service(result['status']) or is_deactivating_service(result['status']):
+            action = 'stop'
+    else:
+        if not is_running_service(result['status']):
+            action = 'start'
+        else:
+            action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
+        result['state'] = 'started'
+
+    return action, result
 
 # ===========================================
 # Main control flow
@@ -346,35 +388,14 @@ def main():
     )
 
     unit = module.params['name']
-    if unit is not None:
-        for globpattern in (r"*", r"?", r"["):
-            if globpattern in unit:
-                module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
-
-    systemctl = module.get_bin_path('systemctl', True)
+    
+    globpattern_check(unit, module)
 
     if os.getenv('XDG_RUNTIME_DIR') is None:
         os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
 
-    ''' Set CLI options depending on params '''
-    if module.params['user'] is not None:
-        # handle user deprecation, mutually exclusive with scope
-        module.deprecate("The 'user' option is being replaced by 'scope'", version='2.11')
-        if module.params['user']:
-            module.params['scope'] = 'user'
-        else:
-            module.params['scope'] = 'system'
-
-    # if scope is 'system' or None, we can ignore as there is no extra switch.
-    # The other choices match the corresponding switch
-    if module.params['scope'] not in (None, 'system'):
-        systemctl += " --%s" % module.params['scope']
-
-    if module.params['no_block']:
-        systemctl += " --no-block"
-
-    if module.params['force']:
-        systemctl += " --force"
+    # Set CLI options
+    systemctl, module.params['scope'] = set_cli_options(module, module.get_bin_path('systemctl', True))
 
     rc = 0
     out = err = ''
@@ -516,26 +537,14 @@ def main():
 
             # What is current service state?
             if 'ActiveState' in result['status']:
-                action = None
-                if module.params['state'] == 'started':
-                    if not is_running_service(result['status']):
-                        action = 'start'
-                elif module.params['state'] == 'stopped':
-                    if is_running_service(result['status']) or is_deactivating_service(result['status']):
-                        action = 'stop'
-                else:
-                    if not is_running_service(result['status']):
-                        action = 'start'
-                    else:
-                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
-                    result['state'] = 'started'
-
+                action, result = set_action(module, result)
                 if action:
                     result['changed'] = True
                     if not module.check_mode:
                         (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                         if rc != 0:
                             module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, err))
+
             # check for chroot
             elif is_chroot(module):
                 module.warn("Target is a chroot. This can lead to false positives or prevent the init system tools from working.")
