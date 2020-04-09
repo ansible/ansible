@@ -297,23 +297,22 @@ def parse_systemctl_show(lines):
     # span multiple lines.
     parsed = {}
     multival = []
-    k = None
+    key = None
     for line in lines:
-        if k is None:
-            if '=' in line:
-                k, v = line.split('=', 1)
-                if k.startswith('Exec') and v.lstrip().startswith('{'):
-                    if not v.rstrip().endswith('}'):
-                        multival.append(v)
-                        continue
-                parsed[k] = v.strip()
-                k = None
+        if key is None and '=' in line:
+            key, val = line.split('=', 1)
+            val = val.strip()
+            if key.startswith('Exec') and val.startswith('{') and not val.endswith('}'):
+                multival.append(val)
+                continue
+            parsed[key] = val
+            key = None
         else:
             multival.append(line)
             if line.rstrip().endswith('}'):
-                parsed[k] = '\n'.join(multival).strip()
+                parsed[key] = '\n'.join(multival).strip()
                 multival = []
-                k = None
+                key = None
     return parsed
 
 
