@@ -57,6 +57,10 @@
         - name: Rescue task
           command: echo rescued
 
+    - include_tasks: include_me.yml
+      loop:
+        - 1
+
   handlers:
     - name: Test handler 1
       command: echo foo
