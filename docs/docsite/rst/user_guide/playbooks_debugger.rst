@@ -42,7 +42,7 @@ On a task
 ::
 
     - name: Execute a command
-      command: false
+      command: "false"
       debugger: on_failed
 
 On a play
@@ -55,7 +55,7 @@ On a play
       debugger: on_skipped
       tasks:
         - name: Execute a command
-          command: true
+          command: "true"
           when: False
 
 When provided at a generic level and a more specific level, the more specific wins::
@@ -65,7 +65,7 @@ When provided at a generic level and a more specific level, the more specific wi
       debugger: never
       tasks:
         - name: Execute a command
-          command: false
+          command: "false"
           debugger: on_failed
 
 
