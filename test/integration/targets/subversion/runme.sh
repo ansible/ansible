@@ -21,27 +21,12 @@ ansible-playbook runme.yml "$@" -v --tags tests
 # Test a warning is displayed for versions < 1.10.0 when a password is provided
 ansible-playbook runme.yml "$@" --tags warnings 2>&1 | tee out.txt
 
-version_info="$(svn --version -q)"
-version=( ${version_info//./ } )
-expected_min='1.10.0'
-min_secure_version=( ${expected_min//./ })
-secure=1
+version="$(svn --version -q)"
+secure=$(python -c "from distutils.version import LooseVersion; print(LooseVersion('$version') >= LooseVersion('1.10.0'))")
 
-if [[ ${version[0]} -lt ${min_secure_version[0]} ]]; then
-    secure=0
-elif [[ ${version[0]} -eq ${min_secure_version[0]} ]]; then
-    if [[ ${version[1]} -lt ${min_secure_version[1]} ]]; then
-        secure=0
-    elif [[ ${version[1]} -eq ${min_secure_version[1]} ]]; then
-        if [[ ${version[2]} -lt ${min_secure_version[2]} ]]; then
-	    secure=0
-	fi
-    fi
-fi
-
-if [[ "$secure" -eq 0 ]] && [[ "$(grep -c 'To securely pass credentials, upgrade svn to version 1.10.0' out.txt)" -eq 1 ]]; then
+if [[ "${secure}" = "False" ]] && [[ "$(grep -c 'To securely pass credentials, upgrade svn to version 1.10.0' out.txt)" -eq 1 ]]; then
     echo "Found the expected warning"
-elif [[ "$secure" -eq 0 ]]; then
+elif [[ "${secure}" = "False" ]]; then
     echo "Expected a warning"
     exit 1
 fi
