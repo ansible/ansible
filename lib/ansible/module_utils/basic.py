@@ -1558,50 +1558,42 @@ class AnsibleModule(object):
             choices = v.get('choices', None)
             if choices is None:
                 continue
-            if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
-                if k in param:
-                    # Allow one or more when type='list' param with choices
-                    if isinstance(param[k], list):
-                        def diff_list_method(param, choices):
-                             return ", ".join([item for item in param[k] if item not in choices])
+            if k not in param:
+                continue
+            if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):    
+                if isinstance(param[k], list):
+                    diff_list = ", ".join([item for item in param[k] if item not in choices])                 
+                    if diff_list:
+                        choices_str = ", ".join([to_native(c) for c in choices])
+                        msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
+                        if self._options_context:
+                            msg += " found in %s" % " -> ".join(self._options_context)
+                        self.fail_json(msg=msg)
+            
+                elif param[k] not in choices:
+                    # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
+                    # the value.  If we can't figure this out, module author is responsible.
+                    lowered_choices = None
+                    if param[k] == 'False':
+                        lowered_choices = lenient_lowercase(choices)
+                        overlap = BOOLEANS_FALSE.intersection(choices)
+                        if len(overlap) == 1:
+                            # Extract from a set
+                            (param[k],) = overlap
 
-                        def choices_method(choices): 
-                            return ", ".join([to_native(c) for c in choices])
-                            
-                        diff_list = diff_list_method(param, choices)
-                        if diff_list is None:
-                            continue
-                        if diff_list:
-                            choices_str = choices_method(choices)
-                            msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
-                            if self._options_context:
-                                msg += " found in %s" % " -> ".join(self._options_context)
-                            self.fail_json(msg=msg)
-                
-                    elif param[k] not in choices:
-                        # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
-                        # the value.  If we can't figure this out, module author is responsible.
-                        lowered_choices = None
-                        if param[k] == 'False':
+                    if param[k] == 'True':
+                        if lowered_choices is None:
                             lowered_choices = lenient_lowercase(choices)
-                            overlap = BOOLEANS_FALSE.intersection(choices)
-                            if len(overlap) == 1:
-                                # Extract from a set
-                                (param[k],) = overlap
+                        overlap = BOOLEANS_TRUE.intersection(choices)
+                        if len(overlap) == 1:
+                            (param[k],) = overlap
 
-                        if param[k] == 'True':
-                            if lowered_choices is None:
-                                lowered_choices = lenient_lowercase(choices)
-                            overlap = BOOLEANS_TRUE.intersection(choices)
-                            if len(overlap) == 1:
-                                (param[k],) = overlap
-
-                        if param[k] not in choices:
-                            choices_str = ", ".join([to_native(c) for c in choices])
-                            msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
-                            if self._options_context:
-                                msg += " found in %s" % " -> ".join(self._options_context)
-                            self.fail_json(msg=msg)
+                    if param[k] not in choices:
+                        choices_str = ", ".join([to_native(c) for c in choices])
+                        msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
+                        if self._options_context:
+                            msg += " found in %s" % " -> ".join(self._options_context)
+                        self.fail_json(msg=msg)
             else:
                 msg = "internal error: choices for argument %s are not iterable: %s" % (k, choices)
                 if self._options_context:
@@ -1674,10 +1666,11 @@ class AnsibleModule(object):
             wanted = v.get('type', None)
             if wanted == 'dict' or (wanted == 'list' and v.get('elements', '') == 'dict'):
                 spec = v.get('options', None)
+                
                 if v.get('apply_defaults', False):
-                    if spec is not None:
-                        if params.get(k) is None:
-                            params[k] = {}
+                    if spec is not None and params.get(k) is None:
+                        params[k] = {}
+
                     else:
                         continue
                 elif spec is None or k not in params or params[k] is None:
