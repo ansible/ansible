@@ -14621,53 +14621,53 @@ files:
   test/integration/targets/sensu_handler/tasks/tcp.yml:
     migrated_to: community.general
   test/integration/targets/zabbix_host/aliases:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/tasks/zabbix_host_tests.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/tasks/zabbix_host_doc.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/tasks/zabbix_host_setup.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/tasks/zabbix_host_teardown.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/aliases:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/tasks/setup.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/templates/zabbix_server.conf.j2:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/templates/zabbix.conf.php.j2:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/handlers/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_template/aliases:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_template/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_template/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_template/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_user/aliases:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_user/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_user/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_user/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/ipify_facts/aliases:
     migrated_to: community.general
   test/integration/targets/ipify_facts/vars/main.yml:
