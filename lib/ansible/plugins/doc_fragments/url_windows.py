@@ -24,6 +24,8 @@ options:
     - C(safe) will follow only "safe" redirects, where "safe" means that the
       client is only doing a C(GET) or C(HEAD) on the URI to which it is being
       redirected.
+    - When following a redirected URL, the C(Authorization) header and any
+      credentials set will be dropped and not redirected.
     choices:
     - all
     - none
