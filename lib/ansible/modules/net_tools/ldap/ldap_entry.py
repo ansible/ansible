@@ -209,17 +209,17 @@ def main():
             module.deprecate("The `params` option to ldap_attr will be removed in Ansible 2.10"
                              " since it circumvents Ansible's option handling", version='2.10')
 
-        # However, the bind_pw parameter contains a password so it **must** go through the normal
-        # argument parsing even though removing it breaks backwards compat.
-        if 'bind_pw' in module.params['params']:
-            module.fail_json(msg="Using `bind_pw` with the `params` option has been disallowed since"
-                             " it is insecure.  Use the `bind_pw` option directly.  The `params`"
-                             " option will be removed in Ansible-2.10")
+            # However, the bind_pw parameter contains a password so it **must** go through the normal
+            # argument parsing even though removing it breaks backwards compat.
+            if 'bind_pw' in module.params['params']:
+                module.fail_json(msg="Using `bind_pw` with the `params` option has been disallowed since"
+                                 " it is insecure.  Use the `bind_pw` option directly.  The `params`"
+                                 " option will be removed in Ansible-2.10")
 
-        # Update module parameters with user's parameters if defined
-        module.params.update(module.params['params'])
-        # Remove params itself
-        module.params.pop('params', None)
+            # Update module parameters with user's parameters if defined
+            module.params.update(module.params['params'])
+            # Remove params itself
+            module.params.pop('params', None)
     else:
         # For Ansible 2.10 and above
         if module.params['params']:
