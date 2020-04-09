@@ -641,6 +641,14 @@ class PathMapper:
         if result is not None:
             return result
 
+        minimal = {}
+
+        if path.startswith('changelogs/'):
+            return minimal
+
+        if path.startswith('docs/'):
+            return minimal
+
         return None
 
     def _classify_ansible(self, path):  # type: (str) -> t.Optional[t.Dict[str, str]]
