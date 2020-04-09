@@ -1,0 +1,2 @@
+minor_changes:
+  - systemd.py - Removed extra if statements in parse_systemctl_show() for clarity
