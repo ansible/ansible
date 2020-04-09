@@ -383,8 +383,9 @@ class GalaxyRole(object):
                         self._requirements = yaml.safe_load(f)
                     except Exception:
                         display.vvvvv("Unable to load requirements for %s" % self.name)
-                        return False
                     finally:
                         f.close()
+
+                    break
 
         return self._requirements
