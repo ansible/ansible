@@ -1116,7 +1116,7 @@ class DragonFlyBsdService(FreeBsdService):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
+        self.rcconf_key = "%s" % self.name.replace("-", "_")
 
         return self.service_enable_rcconf()
 
@@ -1274,7 +1274,7 @@ class NetBsdService(Service):
     """
     This is the NetBSD Service manipulation class - it uses the /etc/rc.conf
     file for controlling services started at boot, check status and perform
-    direct service manipulation. Init scripts in /etc/rcd are used for
+    direct service manipulation. Init scripts in /etc/rc.d are used for
     controlling services (start/stop) as well as for controlling the current
     state.
     """
@@ -1304,7 +1304,7 @@ class NetBsdService(Service):
             if os.path.isfile(rcfile):
                 self.rcconf_file = rcfile
 
-        self.rcconf_key = "%s" % string.replace(self.name, "-", "_")
+        self.rcconf_key = "%s" % self.name.replace("-", "_")
 
         return self.service_enable_rcconf()
 
