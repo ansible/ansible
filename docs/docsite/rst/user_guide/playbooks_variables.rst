@@ -1004,7 +1004,7 @@ it complicated.
 However, let's go ahead and get precedence out of the way!  It exists.  It's a real thing, and you might have
 a use for it.
 
-If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
+If multiple variables of the same name are defined in different places, they get overridden in a certain order.
 
 Here is the order of precedence from least to greatest (the last listed variables winning prioritization):
 
@@ -1031,7 +1031,7 @@ Here is the order of precedence from least to greatest (the last listed variable
   #. include params
   #. extra vars (always win precedence)
 
-Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
+Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes, with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
 
 .. rubric:: Footnotes
 
@@ -1041,10 +1041,10 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
 .. [4] When created with set_facts's cacheable option, variables will have the high precedence in the play,
        but will be the same as a host facts precedence when they come from the cache.
 
-.. note:: Within any section, redefining a var will overwrite the previous instance.
+.. note:: Within any section, redefining a var will override the previous instance.
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's ``vars:`` section, the second one wins.
-.. note:: The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially overwrite.
+.. note:: The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially override.
 .. note:: Group loading follows parent/child relationships. Groups of the same 'parent/child' level are then merged following alphabetical order.
           This last one can be superseded by the user via ``ansible_group_priority``, which defaults to ``1`` for all groups.
           This variable, ``ansible_group_priority``, can only be set in the inventory source and not in group_vars/ as the variable is used in the loading of group_vars/.
@@ -1062,7 +1062,7 @@ For plays/tasks this is also true for ``remote_user``. Assuming the same invento
     - command: I'll connect as ramon still
       remote_user: lola
 
-will have the value of ``remote_user`` overwritten by ``ansible_user`` in the inventory.
+will have the value of ``remote_user`` overridden by ``ansible_user`` in the inventory.
 
 This is done so host-specific settings can override the general settings. These variables are normally defined per host or group in inventory,
 but they behave like other variables.
