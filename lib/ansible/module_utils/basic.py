@@ -1546,6 +1546,8 @@ class AnsibleModule(object):
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
 
+    
+
     def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
         if spec is None:
@@ -1556,17 +1558,40 @@ class AnsibleModule(object):
             choices = v.get('choices', None)
             if choices is None:
                 continue
+    
             if isinstance(choices, SEQUENCETYPE) and not isinstance(choices, (binary_type, text_type)):
+                
+
                 if k in param:
                     # Allow one or more when type='list' param with choices
+                    
                     if isinstance(param[k], list):
-                        diff_list = ", ".join([item for item in param[k] if item not in choices])
+
+                        def diff_list_method(param, choices):
+                             return ", ".join([item for item in param[k] if item not in choices])
+
+                        def choices_method(choices): 
+                            return ", ".join([to_native(c) for c in choices])
+
+                        diff_list = diff_list_method(param, choices)
+                        
+                        if diff_list is None:
+                            continue
+
+                        
                         if diff_list:
-                            choices_str = ", ".join([to_native(c) for c in choices])
+                            
+                            choices_str = choices_method(choices)
                             msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
+                                  
+                        
                             if self._options_context:
                                 msg += " found in %s" % " -> ".join(self._options_context)
+
                             self.fail_json(msg=msg)
+                    
+                    
+                    
                     elif param[k] not in choices:
                         # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
                         # the value.  If we can't figure this out, module author is responsible.
