@@ -9,6 +9,10 @@ import tempfile
 
 from . import types as t
 
+from .io import (
+    make_dirs,
+)
+
 from .executor import (
     SUPPORTED_PYTHON_VERSIONS,
     HTTPTESTER_HOSTS,
@@ -362,6 +366,8 @@ def delegate_docker(args, exclude, require, integration_targets):
                 remote_test_root = os.path.dirname(remote_results_root)
                 remote_results_name = os.path.basename(remote_results_root)
                 remote_temp_file = os.path.join('/root', remote_results_name + '.tgz')
+
+                make_dirs(local_test_root)  # make sure directory exists for collections which have no tests
 
                 with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
                     docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '--exclude', ResultType.TMP.name, '-C', remote_test_root, remote_results_name])
