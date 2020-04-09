@@ -7195,7 +7195,7 @@ files:
   lib/ansible/plugins/doc_fragments/vexata.py:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/zabbix.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/plugins/filter/gcp_kms_filters.py:
     migrated_to: community.general
   lib/ansible/plugins/filter/json_query.py:
@@ -7393,9 +7393,9 @@ files:
   contrib/inventory/vbox.py:
     migrated_to: community.general
   contrib/inventory/zabbix.ini:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   contrib/inventory/zabbix.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   contrib/inventory/zone.py:
     migrated_to: community.general
   lib/ansible/plugins/lookup/avi.py:
@@ -8833,45 +8833,45 @@ files:
   lib/ansible/modules/monitoring/uptimerobot.py:
     migrated_to: community.general
   lib/ansible/modules/monitoring/zabbix/_zabbix_group_facts.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/_zabbix_host_facts.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_action.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_group.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_group_info.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_host.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_host_events_info.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_host_info.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_hostmacro.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_maintenance.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_map.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_mediatype.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_proxy.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_screen.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_service.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_template.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_template_info.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_user.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_user_info.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/monitoring/zabbix/zabbix_valuemap.py:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   lib/ansible/modules/net_tools/dnsimple.py:
     migrated_to: community.general
   lib/ansible/modules/net_tools/dnsmadeeasy.py:
@@ -14621,53 +14621,53 @@ files:
   test/integration/targets/sensu_handler/tasks/tcp.yml:
     migrated_to: community.general
   test/integration/targets/zabbix_host/aliases:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/tasks/zabbix_host_tests.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/tasks/zabbix_host_doc.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/tasks/zabbix_host_setup.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/tasks/zabbix_host_teardown.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_host/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/aliases:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/tasks/setup.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/templates/zabbix_server.conf.j2:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/templates/zabbix.conf.php.j2:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/setup_zabbix/handlers/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_template/aliases:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_template/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_template/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_template/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_user/aliases:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_user/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_user/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/zabbix_user/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.zabbix
   test/integration/targets/ipify_facts/aliases:
     migrated_to: community.general
   test/integration/targets/ipify_facts/vars/main.yml:
