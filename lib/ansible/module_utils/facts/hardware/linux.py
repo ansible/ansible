@@ -302,13 +302,23 @@ class LinuxHardware(Hardware):
 
             DMI_DICT = {
                 'bios_date': '/sys/devices/virtual/dmi/id/bios_date',
+                'bios_vendor': '/sys/devices/virtual/dmi/id/bios_vendor',
                 'bios_version': '/sys/devices/virtual/dmi/id/bios_version',
+                'board_asset_tag': '/sys/devices/virtual/dmi/id/board_asset_tag',
+                'board_name': '/sys/devices/virtual/dmi/id/board_name',
+                'board_serial': '/sys/devices/virtual/dmi/id/board_serial',
+                'board_vendor': '/sys/devices/virtual/dmi/id/board_vendor',
+                'board_version': '/sys/devices/virtual/dmi/id/board_version',
+                'chassis_asset_tag': '/sys/devices/virtual/dmi/id/chassis_asset_tag',
+                'chassis_serial': '/sys/devices/virtual/dmi/id/chassis_serial',
+                'chassis_vendor': '/sys/devices/virtual/dmi/id/chassis_vendor',
+                'chassis_version': '/sys/devices/virtual/dmi/id/chassis_version',
                 'form_factor': '/sys/devices/virtual/dmi/id/chassis_type',
                 'product_name': '/sys/devices/virtual/dmi/id/product_name',
                 'product_serial': '/sys/devices/virtual/dmi/id/product_serial',
                 'product_uuid': '/sys/devices/virtual/dmi/id/product_uuid',
                 'product_version': '/sys/devices/virtual/dmi/id/product_version',
-                'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor'
+                'system_vendor': '/sys/devices/virtual/dmi/id/sys_vendor',
             }
 
             for (key, path) in DMI_DICT.items():
@@ -329,13 +339,23 @@ class LinuxHardware(Hardware):
             dmi_bin = self.module.get_bin_path('dmidecode')
             DMI_DICT = {
                 'bios_date': 'bios-release-date',
+                'bios_vendor': 'bios-vendor',
                 'bios_version': 'bios-version',
+                'board_asset_tag': 'baseboard-asset-tag',
+                'board_name': 'baseboard-product-name',
+                'board_serial': 'baseboard-serial-number',
+                'board_vendor': 'baseboard-manufacturer',
+                'board_version': 'baseboard-version',
+                'chassis_asset_tag': 'chassis-asset-tag',
+                'chassis_serial': 'chassis-serial-number',
+                'chassis_vendor': 'chassis-manufacturer',
+                'chassis_version': 'chassis-version',
                 'form_factor': 'chassis-type',
                 'product_name': 'system-product-name',
                 'product_serial': 'system-serial-number',
                 'product_uuid': 'system-uuid',
                 'product_version': 'system-version',
-                'system_vendor': 'system-manufacturer'
+                'system_vendor': 'system-manufacturer',
             }
             for (k, v) in DMI_DICT.items():
                 if dmi_bin is not None:
