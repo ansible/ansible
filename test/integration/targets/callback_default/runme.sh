@@ -23,6 +23,7 @@ run_test() {
 		2> >(set +x; tee "${OUTFILE}.${testname}.stderr" >&2)
 	# Scrub deprication warning that shows up in Python 2.6 on CentOS 6
 	sed -i -e '/RandomPool_DeprecationWarning/d' "${OUTFILE}.${testname}.stderr"
+    sed -i -e 's/included: .*\/test\/integration/included: ...\/test\/integration/g' "${OUTFILE}.${testname}.stdout"
 
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
@@ -143,6 +144,7 @@ run_test failed_to_stderr
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
+export ANSIBLE_TIMEOUT=1
 
 # Check if UNREACHBLE is available in stderr
 set +e
