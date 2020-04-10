@@ -1547,11 +1547,11 @@ class AnsibleModule(object):
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
 
-    def get_message(self, msg):
-        msg += " found in %s" % " -> ".join(self._options_context)
-        return msg
-  
     def _check_argument_values(self, spec=None, param=None):
+
+        def get_message(msg):
+                msg += " found in %s" % " -> ".join(self._options_context)
+                return msg
 
         def fail_json_msg():
             if self._options_context:
