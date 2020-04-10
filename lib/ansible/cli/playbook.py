@@ -27,7 +27,7 @@ def _process_block(b, all_tags, mytags):
     taskmsg = ''
     for task in b.block:
         if isinstance(task, Block):
-            taskmsg += _process_block(task)
+            taskmsg += _process_block(task, all_tags, mytags)
         else:
             if task.action == 'meta':
                 continue
