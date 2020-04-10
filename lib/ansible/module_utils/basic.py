@@ -1550,9 +1550,22 @@ class AnsibleModule(object):
     def get_message(msg):
         msg += " found in %s" % " -> ".join(self._options_context)
         return msg
-        
 
+  
     def _check_argument_values(self, spec=None, param=None):
+
+        def fail_json_msg():
+            if self._options_context:
+                get_message(msg)
+            self.fail_json(msg=msg)
+        
+        def set_true_false(param):
+            if param[k] == 'False':
+                val = BOOLEANS_FALSE
+            if param[k] == 'True':
+                val = BOOLEANS_TRUE
+            return val
+
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
         if spec is None:
             spec = self.argument_spec
@@ -1570,39 +1583,23 @@ class AnsibleModule(object):
                     if diff_list:
                         choices_str = ", ".join([to_native(c) for c in choices])
                         msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
-                        if self._options_context:
-                            get_message(msg)
-                        self.fail_json(msg=msg)
+                        fail_json_msg()
             
                 elif param[k] not in choices:
-                    # PyYaml converts certain strings to bools.  If we can unambiguously convert back, do so before checking
-                    # the value.  If we can't figure this out, module author is responsible.
+                    val = set_true_false(param[k])
                     lowered_choices = None
-                    if param[k] == 'False':
-                        lowered_choices = lenient_lowercase(choices)
-                        overlap = BOOLEANS_FALSE.intersection(choices)
-                        if len(overlap) == 1:
-                            # Extract from a set
-                            (param[k],) = overlap
+                    lowered_choices = lenient_lowercase(choices)
+                    overlap = val.intersection(choices)
+                    if len(overlap) == 1:
+                        (param[k],) = overlap
 
-                    if param[k] == 'True':
-                        if lowered_choices is None:
-                            lowered_choices = lenient_lowercase(choices)
-                        overlap = BOOLEANS_TRUE.intersection(choices)
-                        if len(overlap) == 1:
-                            (param[k],) = overlap
 
-                    if param[k] not in choices:
-                        choices_str = ", ".join([to_native(c) for c in choices])
-                        msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
-                        if self._options_context:
-                            get_message(msg)
-                        self.fail_json(msg=msg)
+                    choices_str = ", ".join([to_native(c) for c in choices])
+                    msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
+                    fail_json_msg()
             else:
                 msg = "internal error: choices for argument %s are not iterable: %s" % (k, choices)
-                if self._options_context:
-                    get_message(msg)
-                self.fail_json(msg=msg)
+                fail_json_msg()
 
     
 
