@@ -79,23 +79,7 @@ class AdHocCLI(CLI):
             gather_facts='no',
             tasks=[mytask])
 
-    def run(self):
-        ''' create and execute the single task playbook '''
-
-        super(AdHocCLI, self).run()
-
-        # only thing left should be host pattern
-        pattern = to_text(context.CLIARGS['args'], errors='surrogate_or_strict')
-
-        sshpass = None
-        becomepass = None
-
-        (sshpass, becomepass) = self.ask_passwords()
-        passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
-
-        # get basic objects
-        loader, inventory, variable_manager = self._play_prereqs()
-
+    def run_assertions(self, inventory, pattern):
         try:
             hosts = self.get_host_list(inventory, context.CLIARGS['subset'], pattern)
         except AnsibleError:
@@ -121,6 +105,27 @@ class AdHocCLI(CLI):
         if context.CLIARGS['module_name'] in ('import_playbook',):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands"
                                       % context.CLIARGS['module_name'])
+        return 1
+
+    def run(self):
+        ''' create and execute the single task playbook '''
+
+        super(AdHocCLI, self).run()
+
+        # only thing left should be host pattern
+        pattern = to_text(context.CLIARGS['args'], errors='surrogate_or_strict')
+
+        sshpass = None
+        becomepass = None
+
+        (sshpass, becomepass) = self.ask_passwords()
+        passwords = {'conn_pass': sshpass, 'become_pass': becomepass}
+
+        # get basic objects
+        loader, inventory, variable_manager = self._play_prereqs()
+
+        if self.run_assertions(inventory, pattern) == 0:
+            return 0
 
         play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'])
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)

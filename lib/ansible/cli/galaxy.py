@@ -94,6 +94,36 @@ def _get_collection_widths(collections):
     return fqcn_length, version_length
 
 
+def parse_role_req(requirement, galaxy, api, requirements_file):
+    if "include" not in requirement:
+        role = RoleRequirement.role_yaml_parse(requirement)
+        display.vvv("found role %s in yaml file" % to_text(role))
+        if "name" not in role and "src" not in role:
+            raise AnsibleError("Must specify name or src for role")
+        return [GalaxyRole(galaxy, api, **role)]
+    else:
+        b_include_path = to_bytes(requirement["include"], errors="surrogate_or_strict")
+        if not os.path.isfile(b_include_path):
+            raise AnsibleError("Failed to find include requirements file '%s' in '%s'"
+                               % (to_native(b_include_path), to_native(requirements_file)))
+        with open(b_include_path, 'rb') as f_include:
+            try:
+                return [GalaxyRole(galaxy, api, **r) for r in
+                        (RoleRequirement.role_yaml_parse(i) for i in yaml.safe_load(f_include))]
+            except Exception as e:
+                raise AnsibleError("Unable to load data from include requirements file: %s %s"
+                                   % (to_native(requirements_file), to_native(e)))
+
+
+def server_config_def(section, key, required):
+    return {
+        'description': 'The %s of the %s Galaxy server' % (key, section),
+        'ini': [{'section': 'galaxy_server.%s' % section,
+                'key': key}],
+        'env': [{'name': 'ANSIBLE_GALAXY_SERVER_%s_%s' % (section.upper(), key.upper())}],
+        'required': required}
+
+
 class GalaxyCLI(CLI):
     '''command to manage Ansible roles in shared repositories, the default of which is Ansible Galaxy *https://galaxy.ansible.com*.'''
 
@@ -109,6 +139,8 @@ class GalaxyCLI(CLI):
 
         self.api_servers = []
         self.galaxy = None
+        self.name = '{0}_name'
+        self.github_uname = 'GitHub username'
         super(GalaxyCLI, self).__init__(args)
 
     def init_parser(self):
@@ -134,7 +166,7 @@ class GalaxyCLI(CLI):
                            help='Force overwriting an existing role or collection')
 
         github = opt_help.argparse.ArgumentParser(add_help=False)
-        github.add_argument('github_user', help='GitHub username')
+        github.add_argument('github_user', help=self.github_uname)
         github.add_argument('github_repo', help='GitHub repository')
 
         offline = opt_help.argparse.ArgumentParser(add_help=False)
@@ -224,7 +256,7 @@ class GalaxyCLI(CLI):
         obj_name_kwargs = {}
         if galaxy_type == 'collection':
             obj_name_kwargs['type'] = validate_collection_name
-        init_parser.add_argument('{0}_name'.format(galaxy_type), help='{0} name'.format(galaxy_type.capitalize()),
+        init_parser.add_argument(self.name.format(galaxy_type), help='{0} name'.format(galaxy_type.capitalize()),
                                  **obj_name_kwargs)
 
         if galaxy_type == 'role':
@@ -264,7 +296,7 @@ class GalaxyCLI(CLI):
 
         search_parser.add_argument('--platforms', dest='platforms', help='list of OS platforms to filter by')
         search_parser.add_argument('--galaxy-tags', dest='galaxy_tags', help='list of galaxy tags to filter by')
-        search_parser.add_argument('--author', dest='author', help='GitHub username')
+        search_parser.add_argument('--author', dest='author', help=self.github_uname)
         search_parser.add_argument('args', help='Search terms', metavar='searchterm', nargs='*')
 
     def add_import_options(self, parser, parents=None):
@@ -293,7 +325,7 @@ class GalaxyCLI(CLI):
         setup_parser.add_argument('--list', dest="setup_list", action='store_true', default=False,
                                   help='List all of your integrations.')
         setup_parser.add_argument('source', help='Source')
-        setup_parser.add_argument('github_user', help='GitHub username')
+        setup_parser.add_argument('github_user', help=self.github_uname)
         setup_parser.add_argument('github_repo', help='GitHub repository')
         setup_parser.add_argument('secret', help='Secret')
 
@@ -318,7 +350,7 @@ class GalaxyCLI(CLI):
                                           'found on the server and the installed copy. This does not verify dependencies.')
         verify_parser.set_defaults(func=self.execute_verify)
 
-        verify_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', help='The collection(s) name or '
+        verify_parser.add_argument('args', metavar=self.name.format(galaxy_type), nargs='*', help='The collection(s) name or '
                                    'path/url to a tar.gz collection artifact. This is mutually exclusive with --requirements-file.')
         verify_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                                    help='Ignore errors during verification and continue with the next specified collection.')
@@ -343,7 +375,7 @@ class GalaxyCLI(CLI):
                                                 'Galaxy'.format(galaxy_type))
         install_parser.set_defaults(func=self.execute_install)
 
-        install_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', **args_kwargs)
+        install_parser.add_argument('args', metavar=self.name.format(galaxy_type), nargs='*', **args_kwargs)
         install_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
                                     help=ignore_errors_help)
 
@@ -405,24 +437,8 @@ class GalaxyCLI(CLI):
         super(GalaxyCLI, self).run()
 
         self.galaxy = Galaxy()
-
-        def server_config_def(section, key, required):
-            return {
-                'description': 'The %s of the %s Galaxy server' % (key, section),
-                'ini': [
-                    {
-                        'section': 'galaxy_server.%s' % section,
-                        'key': key,
-                    }
-                ],
-                'env': [
-                    {'name': 'ANSIBLE_GALAXY_SERVER_%s_%s' % (section.upper(), key.upper())},
-                ],
-                'required': required,
-            }
         server_def = [('url', True), ('username', False), ('password', False), ('token', False),
                       ('auth_url', False)]
-
         config_servers = []
 
         # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
@@ -447,15 +463,13 @@ class GalaxyCLI(CLI):
             if username:
                 server_options['token'] = BasicAuthToken(username,
                                                          server_options['password'])
-            else:
-                if token_val:
-                    if auth_url:
-                        server_options['token'] = KeycloakToken(access_token=token_val,
-                                                                auth_url=auth_url,
-                                                                validate_certs=not context.CLIARGS['ignore_certs'])
-                    else:
-                        # The galaxy v1 / github / django / 'Token'
-                        server_options['token'] = GalaxyToken(token=token_val)
+            elif token_val and auth_url:
+                server_options['token'] = KeycloakToken(access_token=token_val,
+                                                        auth_url=auth_url,
+                                                        validate_certs=not context.CLIARGS['ignore_certs'])
+            elif token_val:
+                # The galaxy v1 / github / django / 'Token'
+                server_options['token'] = GalaxyToken(token=token_val)
 
             config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
 
@@ -530,27 +544,6 @@ class GalaxyCLI(CLI):
         if file_requirements is None:
             raise AnsibleError("No requirements found in file '%s'" % to_native(requirements_file))
 
-        def parse_role_req(requirement):
-            if "include" not in requirement:
-                role = RoleRequirement.role_yaml_parse(requirement)
-                display.vvv("found role %s in yaml file" % to_text(role))
-                if "name" not in role and "src" not in role:
-                    raise AnsibleError("Must specify name or src for role")
-                return [GalaxyRole(self.galaxy, self.api, **role)]
-            else:
-                b_include_path = to_bytes(requirement["include"], errors="surrogate_or_strict")
-                if not os.path.isfile(b_include_path):
-                    raise AnsibleError("Failed to find include requirements file '%s' in '%s'"
-                                       % (to_native(b_include_path), to_native(requirements_file)))
-
-                with open(b_include_path, 'rb') as f_include:
-                    try:
-                        return [GalaxyRole(self.galaxy, self.api, **r) for r in
-                                (RoleRequirement.role_yaml_parse(i) for i in yaml.safe_load(f_include))]
-                    except Exception as e:
-                        raise AnsibleError("Unable to load data from include requirements file: %s %s"
-                                           % (to_native(requirements_file), to_native(e)))
-
         if isinstance(file_requirements, list):
             # Older format that contains only roles
             if not allow_old_format:
@@ -558,37 +551,39 @@ class GalaxyCLI(CLI):
                                    "a list of collections to install")
 
             for role_req in file_requirements:
-                requirements['roles'] += parse_role_req(role_req)
-
+                requirements['roles'] += parse_role_req(role_req, self.galaxy, self.api, requirements_file)
         else:
-            # Newer format with a collections and/or roles key
-            extra_keys = set(file_requirements.keys()).difference(set(['roles', 'collections']))
-            if extra_keys:
-                raise AnsibleError("Expecting only 'roles' and/or 'collections' as base keys in the requirements "
-                                   "file. Found: %s" % (to_native(", ".join(extra_keys))))
-
-            for role_req in file_requirements.get('roles', []):
-                requirements['roles'] += parse_role_req(role_req)
-
-            for collection_req in file_requirements.get('collections', []):
-                if isinstance(collection_req, dict):
-                    req_name = collection_req.get('name', None)
-                    if req_name is None:
-                        raise AnsibleError("Collections requirement entry should contain the key name.")
-
-                    req_version = collection_req.get('version', '*')
-                    req_source = collection_req.get('source', None)
-                    if req_source:
-                        # Try and match up the requirement source with our list of Galaxy API servers defined in the
-                        # config, otherwise create a server with that URL without any auth.
-                        req_source = next(iter([a for a in self.api_servers if req_source in [a.name, a.api_server]]),
-                                          GalaxyAPI(self.galaxy, "explicit_requirement_%s" % req_name, req_source))
-
-                    requirements['collections'].append((req_name, req_version, req_source))
-                else:
-                    requirements['collections'].append((collection_req, '*', None))
+            self.roles_and_collection_reqs(requirements, file_requirements, requirements_file)
 
         return requirements
+
+    def roles_and_collection_reqs(self, requirements, file_requirements, requirements_file):
+        # Newer format with a collections and/or roles key
+        extra_keys = set(file_requirements.keys()).difference(set(['roles', 'collections']))
+        if extra_keys:
+            raise AnsibleError("Expecting only 'roles' and/or 'collections' as base keys in the requirements "
+                               "file. Found: %s" % (to_native(", ".join(extra_keys))))
+
+        for role_req in file_requirements.get('roles', []):
+            requirements['roles'] += parse_role_req(role_req, self.galaxy, self.api, requirements_file)
+
+        for collection_req in file_requirements.get('collections', []):
+            if isinstance(collection_req, dict):
+                req_name = collection_req.get('name', None)
+                if req_name is None:
+                    raise AnsibleError("Collections requirement entry should contain the key name.")
+
+                req_version = collection_req.get('version', '*')
+                req_source = collection_req.get('source', None)
+                if req_source:
+                    # Try and match up the requirement source with our list of Galaxy API servers defined in the
+                    # config, otherwise create a server with that URL without any auth.
+                    req_source = next(iter([a for a in self.api_servers if req_source in [a.name, a.api_server]]),
+                                      GalaxyAPI(self.galaxy, "explicit_requirement_%s" % req_name, req_source))
+
+                requirements['collections'].append((req_name, req_version, req_source))
+            else:
+                requirements['collections'].append((collection_req, '*', None))
 
     @staticmethod
     def exit_without_ignore(rc=1):
@@ -768,7 +763,7 @@ class GalaxyCLI(CLI):
         force = context.CLIARGS['force']
         obj_skeleton = context.CLIARGS['{0}_skeleton'.format(galaxy_type)]
 
-        obj_name = context.CLIARGS['{0}_name'.format(galaxy_type)]
+        obj_name = context.CLIARGS[self.name.format(galaxy_type)]
 
         inject_data = dict(
             description='your {0} description'.format(galaxy_type),
@@ -835,7 +830,7 @@ class GalaxyCLI(CLI):
                 to_native(obj_skeleton), galaxy_type)
             )
 
-        template_env = Environment(loader=FileSystemLoader(obj_skeleton))
+        template_env = Environment(autoescape=True, loader=FileSystemLoader(obj_skeleton))
 
         # create role directory
         if not os.path.exists(b_obj_path):
@@ -901,10 +896,9 @@ class GalaxyCLI(CLI):
             gr = GalaxyRole(self.galaxy, self.api, role)
 
             install_info = gr.install_info
-            if install_info:
-                if 'version' in install_info:
-                    install_info['installed_version'] = install_info['version']
-                    del install_info['version']
+            if install_info and 'version' in install_info:
+                install_info['installed_version'] = install_info['version']
+                del install_info['version']
                 role_info.update(install_info)
 
             remote_data = False
@@ -989,7 +983,7 @@ class GalaxyCLI(CLI):
             install_collections(requirements, output_path, self.api_servers, (not ignore_certs), ignore_errors,
                                 no_deps, force, force_deps, context.CLIARGS['allow_pre_release'])
 
-            return 0
+            return
 
         role_file = context.CLIARGS['role_file']
 
@@ -1003,10 +997,9 @@ class GalaxyCLI(CLI):
         force = context.CLIARGS['force'] or force_deps
 
         roles_left = []
-        if role_file:
-            if not (role_file.endswith('.yaml') or role_file.endswith('.yml')):
-                raise AnsibleError("Invalid role requirements file, it must end with a .yml or .yaml extension")
-
+        if role_file and not (role_file.endswith('.yaml') or role_file.endswith('.yml')):
+            raise AnsibleError("Invalid role requirements file, it must end with a .yml or .yaml extension")
+        elif role_file:
             roles_left = self._parse_requirements_file(role_file)['roles']
         else:
             # roles were specified directly, so we'll just go out grab them
@@ -1026,19 +1019,17 @@ class GalaxyCLI(CLI):
             # query the galaxy API for the role data
 
             if role.install_info is not None:
-                if role.install_info['version'] != role.version or force:
-                    if force:
-                        display.display('- changing role %s from %s to %s' %
-                                        (role.name, role.install_info['version'], role.version or "unspecified"))
-                        role.remove()
-                    else:
-                        display.warning('- %s (%s) is already installed - use --force to change version to %s' %
-                                        (role.name, role.install_info['version'], role.version or "unspecified"))
-                        continue
-                else:
-                    if not force:
-                        display.display('- %s is already installed, skipping.' % str(role))
-                        continue
+                if force:
+                    display.display('- changing role %s from %s to %s' %
+                                    (role.name, role.install_info['version'], role.version or "unspecified"))
+                    role.remove()
+                elif role.install_info['version'] != role.version:
+                    display.warning('- %s (%s) is already installed - use --force to change version to %s' %
+                                    (role.name, role.install_info['version'], role.version or "unspecified"))
+                    continue
+                elif not force:
+                    display.display('- %s is already installed, skipping.' % str(role))
+                    continue
 
             try:
                 installed = role.install()
@@ -1088,7 +1079,7 @@ class GalaxyCLI(CLI):
                 display.warning("- %s was NOT installed successfully." % role.name)
                 self.exit_without_ignore()
 
-        return 0
+        return
 
     def execute_remove(self):
         """
@@ -1108,7 +1099,7 @@ class GalaxyCLI(CLI):
             except Exception as e:
                 raise AnsibleError("Failed to remove role %s: %s" % (role_name, to_native(e)))
 
-        return 0
+        return
 
     def execute_list(self):
         """
@@ -1148,15 +1139,14 @@ class GalaxyCLI(CLI):
                     _display_role(gr)
                     break
                 warnings.append("- the role %s was not found" % role_name)
+            elif role_name and not os.path.exists(role_path):
+                warnings.append("- the configured path %s does not exist." % role_path)
+                continue
+
+            elif role_name and not os.path.isdir(role_path):
+                warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
+                continue
             else:
-                if not os.path.exists(role_path):
-                    warnings.append("- the configured path %s does not exist." % role_path)
-                    continue
-
-                if not os.path.isdir(role_path):
-                    warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
-                    continue
-
                 display.display('# %s' % role_path)
                 path_files = os.listdir(role_path)
                 for path_file in path_files:

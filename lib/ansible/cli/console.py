@@ -233,6 +233,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
             display.error(to_text(e))
             # FIXME: add traceback in very very verbose mode
             return False
+        return True
 
     def emptyline(self):
         return
