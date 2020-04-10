@@ -1079,7 +1079,6 @@ class GalaxyCLI(CLI):
                 display.warning("- %s was NOT installed successfully." % role.name)
                 self.exit_without_ignore()
 
-        return
 
     def execute_remove(self):
         """
@@ -1098,8 +1097,6 @@ class GalaxyCLI(CLI):
                     display.display('- %s is not installed, skipping.' % role_name)
             except Exception as e:
                 raise AnsibleError("Failed to remove role %s: %s" % (role_name, to_native(e)))
-
-        return
 
     def execute_list(self):
         """
@@ -1141,11 +1138,8 @@ class GalaxyCLI(CLI):
                 warnings.append("- the role %s was not found" % role_name)
             elif role_name and not os.path.exists(role_path):
                 warnings.append("- the configured path %s does not exist." % role_path)
-                continue
-
             elif role_name and not os.path.isdir(role_path):
                 warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
-                continue
             else:
                 display.display('# %s' % role_path)
                 path_files = os.listdir(role_path)
