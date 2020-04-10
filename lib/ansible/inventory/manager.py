@@ -237,7 +237,7 @@ class InventoryManager(object):
         for host in self.hosts.values():
             host.vars = combine_vars(host.vars, get_vars_from_inventory_sources(self._loader, self._sources, [host], 'inventory'))
 
-    def try_source_with_each_plugin(self, source, inventory_plugins, parsed):
+    def try_source_with_each_plugin(self, source, inventory_plugins, parsed, cache):
 
         failures = []
         for plugin in inventory_plugins:
@@ -316,7 +316,7 @@ class InventoryManager(object):
             # set so new hosts can use for inventory_file/dir vars
             self._inventory.current_source = source
 
-            parsed = self.try_source_with_each_plugin(source, self._fetch_inventory_plugins(), parsed)
+            parsed = self.try_source_with_each_plugin(source, self._fetch_inventory_plugins(), parsed, cache)
 
             # try source with each plugin
             #failures = []
