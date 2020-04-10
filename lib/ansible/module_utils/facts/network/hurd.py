@@ -76,11 +76,9 @@ class HurdPfinetNetwork(Network):
                                 'address': address,
                                 'prefix': prefix,
                             })
-                
             return network_facts
 
         return get_network_facts(network_facts, fsysopts_path, socket_path)
-
 
 
 class HurdNetworkCollector(NetworkCollector):
