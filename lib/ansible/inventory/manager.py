@@ -237,6 +237,54 @@ class InventoryManager(object):
         for host in self.hosts.values():
             host.vars = combine_vars(host.vars, get_vars_from_inventory_sources(self._loader, self._sources, [host], 'inventory'))
 
+    def try_source_with_each_plugin(self, source, inventory_plugins, parsed):
+
+        failures = []
+        for plugin in inventory_plugins:
+
+            plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
+            display.debug(u'Attempting to use plugin %s (%s)' % (plugin_name, plugin._original_path))
+
+            # initialize and figure out if plugin wants to attempt parsing this file
+            try:
+                plugin_wants = bool(plugin.verify_file(source))
+            except Exception:
+                plugin_wants = False
+
+            if plugin_wants:
+                try:
+                    # FIXME in case plugin fails 1/2 way we have partial inventory
+                    plugin.parse(self._inventory, self._loader, source, cache=cache)
+                    try:
+                        plugin.update_cache_if_changed()
+                    except AttributeError:
+                        # some plugins might not implement caching
+                        pass
+                    parsed = True
+                    display.vvv('Parsed %s inventory source with %s plugin' % (source, plugin_name))
+                    break
+                except AnsibleParserError as e:
+                    display.debug('%s was not parsable by %s' % (source, plugin_name))
+                    tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
+                    failures.append({'src': source, 'plugin': plugin_name, 'exc': e, 'tb': tb})
+                except Exception as e:
+                    display.debug('%s failed while attempting to parse %s' % (plugin_name, source))
+                    tb = ''.join(traceback.format_tb(sys.exc_info()[2]))
+                    failures.append({'src': source, 'plugin': plugin_name, 'exc': AnsibleError(e), 'tb': tb})
+            else:
+                display.vvv("%s declined parsing %s as it did not pass its verify_file() method" % (plugin_name, source))
+        else:
+            if not parsed and failures:
+                # only if no plugin processed files should we show errors.
+                for fail in failures:
+                    display.warning(u'\n* Failed to parse %s with %s plugin: %s' % (to_text(fail['src']), fail['plugin'], to_text(fail['exc'])))
+                    if 'tb' in fail:
+                        display.vvv(to_text(fail['tb']))
+                if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
+                    raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
+
+        return parsed
+
     def parse_source(self, source, cache=False):
         ''' Generate or update inventory for the source provided '''
 
@@ -268,8 +316,11 @@ class InventoryManager(object):
             # set so new hosts can use for inventory_file/dir vars
             self._inventory.current_source = source
 
+            parsed = self.try_source_with_each_plugin(source, self._fetch_inventory_plugins(), parsed)
+
             # try source with each plugin
-            failures = []
+            #failures = []
+            """
             for plugin in self._fetch_inventory_plugins():
 
                 plugin_name = to_text(getattr(plugin, '_load_name', getattr(plugin, '_original_path', '')))
@@ -312,6 +363,7 @@ class InventoryManager(object):
                             display.vvv(to_text(fail['tb']))
                     if C.INVENTORY_ANY_UNPARSED_IS_FAILED:
                         raise AnsibleError(u'Completely failed to parse inventory source %s' % (source))
+            """
         if not parsed:
             if source != '/etc/ansible/hosts' or os.path.exists(source):
                 # only warn if NOT using the default and if using it, only if the file is present

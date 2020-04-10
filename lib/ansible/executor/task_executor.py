@@ -135,7 +135,7 @@ class TaskExecutor:
                                     item[array] = [item[array]]
                                 res[array] = res[array] + item[array]
                                 del item[array]
-                    
+
                     if not res.get('Failed', False):
                         res['msg'] = 'All items completed'
                 else:
