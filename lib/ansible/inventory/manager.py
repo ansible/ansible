@@ -319,7 +319,7 @@ class InventoryManager(object):
             parsed = self.try_source_with_each_plugin(source, self._fetch_inventory_plugins(), parsed, cache)
 
             # try source with each plugin
-            #failures = []
+            # failures = []
             """
             for plugin in self._fetch_inventory_plugins():
 
