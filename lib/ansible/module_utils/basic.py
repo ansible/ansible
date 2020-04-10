@@ -1547,10 +1547,9 @@ class AnsibleModule(object):
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
 
-    def get_message(msg):
+    def get_message(self, msg):
         msg += " found in %s" % " -> ".join(self._options_context)
         return msg
-
   
     def _check_argument_values(self, spec=None, param=None):
 
@@ -1584,7 +1583,6 @@ class AnsibleModule(object):
                         choices_str = ", ".join([to_native(c) for c in choices])
                         msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
                         fail_json_msg()
-            
                 elif param[k] not in choices:
                     val = set_true_false(param[k])
                     lowered_choices = None
@@ -1592,16 +1590,12 @@ class AnsibleModule(object):
                     overlap = val.intersection(choices)
                     if len(overlap) == 1:
                         (param[k],) = overlap
-
-
                     choices_str = ", ".join([to_native(c) for c in choices])
                     msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
                     fail_json_msg()
             else:
                 msg = "internal error: choices for argument %s are not iterable: %s" % (k, choices)
-                fail_json_msg()
-
-    
+                fail_json_msg() 
 
     def safe_eval(self, value, locals=None, include_exceptions=False):
         return safe_eval(value, locals, include_exceptions)
