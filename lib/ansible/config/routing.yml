@@ -8495,9 +8495,9 @@ plugin_routing:
       redirect: vyos.vyos.vyos
   filter:
     gcp_kms_encrypt:
-      redirect: community.general.gcp_kms_encrypt
+      redirect: google.cloud.gcp_kms_encrypt
     gcp_kms_decrypt:
-      redirect: community.general.gcp_kms_decrypt
+      redirect: google.cloud.gcp_kms_decrypt
     json_query:
       redirect: community.general.json_query
     random_mac:
