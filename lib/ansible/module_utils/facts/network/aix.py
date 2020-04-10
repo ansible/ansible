@@ -39,13 +39,15 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
         lines = out.splitlines()
         for line in lines:
             words = line.split()
-            if len(words) > 1 and words[0] == 'default':
-                if '.' in words[1]:
-                    interface['v4']['gateway'] = words[1]
-                    interface['v4']['interface'] = words[5]
-                elif ':' in words[1]:
-                    interface['v6']['gateway'] = words[1]
-                    interface['v6']['interface'] = words[5]
+            if len(words) <= 1 or words[0] != 'default':
+                continue
+
+            if '.' in words[1]:
+                interface['v4']['gateway'] = words[1]
+                interface['v4']['interface'] = words[5]
+            elif ':' in words[1]:
+                interface['v6']['gateway'] = words[1]
+                interface['v6']['interface'] = words[5]
 
         return interface['v4'], interface['v6']
 

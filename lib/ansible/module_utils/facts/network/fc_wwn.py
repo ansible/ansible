@@ -55,11 +55,14 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
             # fcinfo hba-port  | grep "Port WWN"
             HBA Port WWN: 10000090fa1658de
             """
-            if fcinfo_out:
-                for line in fcinfo_out.splitlines():
-                    if 'Port WWN' in line:
-                        data = line.split(' ')
-                        fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
+            if not fcinfo_out:
+                return fc_facts
+            
+            for line in fcinfo_out.splitlines():
+                if 'Port WWN' in line:
+                    data = line.split(' ')
+                    fc_facts['fibre_channel_wwn'].append(data[-1].rstrip())
+
         elif sys.platform.startswith('aix'):
             # get list of available fibre-channel devices (fcs)
             cmd = module.get_bin_path('lsdev')
