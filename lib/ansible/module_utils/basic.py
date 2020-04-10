@@ -1477,6 +1477,7 @@ class AnsibleModule(object):
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
 
+
     def _check_required_one_of(self, spec, param=None):
         if spec is None:
             return
@@ -1546,7 +1547,10 @@ class AnsibleModule(object):
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
 
-    
+    def get_message(msg):
+        msg += " found in %s" % " -> ".join(self._options_context)
+        return msg
+        
 
     def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
@@ -1567,7 +1571,7 @@ class AnsibleModule(object):
                         choices_str = ", ".join([to_native(c) for c in choices])
                         msg = "value of %s must be one or more of: %s. Got no match for: %s" % (k, choices_str, diff_list)
                         if self._options_context:
-                            msg += " found in %s" % " -> ".join(self._options_context)
+                            get_message(msg)
                         self.fail_json(msg=msg)
             
                 elif param[k] not in choices:
@@ -1592,13 +1596,15 @@ class AnsibleModule(object):
                         choices_str = ", ".join([to_native(c) for c in choices])
                         msg = "value of %s must be one of: %s, got: %s" % (k, choices_str, param[k])
                         if self._options_context:
-                            msg += " found in %s" % " -> ".join(self._options_context)
+                            get_message(msg)
                         self.fail_json(msg=msg)
             else:
                 msg = "internal error: choices for argument %s are not iterable: %s" % (k, choices)
                 if self._options_context:
-                    msg += " found in %s" % " -> ".join(self._options_context)
+                    get_message(msg)
                 self.fail_json(msg=msg)
+
+    
 
     def safe_eval(self, value, locals=None, include_exceptions=False):
         return safe_eval(value, locals, include_exceptions)
