@@ -89,6 +89,37 @@ class TaskExecutor:
 
         self._task.squash()
 
+    def set_global_result_flags(self, items):
+        item_results = self._run_loop(items)
+        # create the overall result item
+        res = dict(results=item_results)
+
+        # loop through the item results, and set the global changed/failed result flags based on any item.
+        for item in item_results:
+            if 'changed' in item and item['changed'] and not res.get('changed'):
+                res['changed'] = True
+            if 'failed' in item and item['failed']:
+                item_ignore = item.pop('_ansible_ignore_errors')
+                if not res.get('failed'):
+                    res['failed'] = True
+                    res['msg'] = 'One or more items failed'
+                    self._task.ignore_errors = item_ignore
+                elif self._task.ignore_errors and not item_ignore:
+                    self._task.ignore_errors = item_ignore
+
+            # ensure to accumulate these
+            for array in ['warnings', 'deprecations']:
+                if array in item and item[array]:
+                    if array not in res:
+                        res[array] = []
+                    if not isinstance(item[array], list):
+                        item[array] = [item[array]]
+                    res[array] = res[array] + item[array]
+                    del item[array]
+
+        if not res.get('Failed', False):
+            res['msg'] = 'All items completed'
+
     def run(self):
         '''
         The main executor entrypoint, where we determine if the specified
@@ -109,7 +140,7 @@ class TaskExecutor:
 
             if items is not None:
                 if len(items) > 0:
-                    res = set_global_result_flags(items)
+                    res = self.set_global_result_flags(items)
                     """
                     item_results = self._run_loop(items)
                     # create the overall result item
@@ -137,9 +168,10 @@ class TaskExecutor:
                                     item[array] = [item[array]]
                                 res[array] = res[array] + item[array]
                                 del item[array]
-                    """
+                    
                     if not res.get('Failed', False):
                         res['msg'] = 'All items completed'
+                    """
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
@@ -188,35 +220,7 @@ class TaskExecutor:
                 pass
             except Exception as e:
                 display.debug(u"error closing connection: %s" % to_text(e))
-    def set_global_result_flags(self, items):
-        item_results = self._run_loop(items)
-        # create the overall result item
-        res = dict(results=item_results)
 
-        # loop through the item results, and set the global changed/failed result flags based on any item.
-        for item in item_results:
-            if 'changed' in item and item['changed'] and not res.get('changed'):
-                res['changed'] = True
-            if 'failed' in item and item['failed']:
-                item_ignore = item.pop('_ansible_ignore_errors')
-                if not res.get('failed'):
-                    res['failed'] = True
-                    res['msg'] = 'One or more items failed'
-                    self._task.ignore_errors = item_ignore
-                elif self._task.ignore_errors and not item_ignore:
-                    self._task.ignore_errors = item_ignore
-
-                # ensure to accumulate these
-                for array in ['warnings', 'deprecations']:
-                    if array in item and item[array]:
-                        if array not in res:
-                            res[array] = []
-                        if not isinstance(item[array], list):
-                            item[array] = [item[array]]
-                        res[array] = res[array] + item[array]
-                        del item[array]
-        
-        return res
     def _get_loop_items(self):
         '''
         Loads a lookup plugin to handle the with_* portion of a task (if specified),
