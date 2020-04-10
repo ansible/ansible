@@ -7202,7 +7202,7 @@ files:
   lib/ansible/plugins/doc_fragments/zabbix.py:
     migrated_to: community.zabbix
   lib/ansible/plugins/filter/gcp_kms_filters.py:
-    migrated_to: community.general
+    migrated_to: google.cloud
   lib/ansible/plugins/filter/json_query.py:
     migrated_to: community.general
   lib/ansible/plugins/filter/random_mac.py:
