@@ -911,6 +911,7 @@ files:
   $modules/monitoring/zabbix/:
     maintainers: $team_zabbix
     ignored: cove
+    migrated_to: community.zabbix
   $modules/net_tools/basics/get_url.py: ptux
   $modules/net_tools/basics/slurp.py: $team_ansible
   $modules/net_tools/basics/uri.py:
@@ -4416,8 +4417,12 @@ files:
   test/integration/targets/setup_docker: *id011
   test/integration/targets/setup_openssl: *id012
   test/integration/targets/setup_mysql_db: *id004
-  test/integration/targets/setup_zabbix: $team_zabbix
-  test/integration/targets/zabbix_: $team_zabbix
+  test/integration/targets/setup_zabbix:
+    maintainers: $team_zabbix
+    migrated_to: community.zabbix
+  test/integration/targets/zabbix_:
+    maintainers: $team_zabbix
+    migrated_to: community.zabbix
   test/integration/targets/ucs_: *id031
   test/integration/targets/vultr: *id035
   test/lib/:
