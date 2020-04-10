@@ -107,8 +107,17 @@ EXAMPLES = '''
     id: 9FED2BCBDCD29CDF762678CBAED4B06F473041FA
     file: /tmp/apt.gpg
     state: present
+
+- name: Working behind a proxy
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: 41BD8711B1F0EC2B0D85B91CF59CE3A8323293EE
+  environment:
+    http_proxy: http://proxy.example.com:8080
+    https_proxy: http://proxy.example.com:8080
 '''
 
+from os import environ
 
 # FIXME: standardize into module_common
 from traceback import format_exc
@@ -116,7 +125,7 @@ from traceback import format_exc
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
-
+from ansible.module_utils.common.network import is_in_noproxy
 
 apt_key_bin = None
 
@@ -201,7 +210,7 @@ def shorten_key_ids(key_id_list):
 
 
 def download_key(module, url):
-    # FIXME: move get_url code to common, allow for in-memory D/L, support proxies
+    # FIXME: move get_url code to common, allow for in-memory D/L
     # and reuse here
     if url is None:
         module.fail_json(msg="needed a URL but was not specified")
@@ -217,10 +226,16 @@ def download_key(module, url):
 
 
 def import_key(module, keyring, keyserver, key_id):
-    if keyring:
-        cmd = "%s --keyring %s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyring, keyserver, key_id)
+    if environ.get('http_proxy') and not is_in_noproxy(keyserver, environ.get('no_proxy')):
+        cmd = "adv --no-tty --keyserver-options 'http-proxy=%s' --keyserver %s --recv %s" % (environ.get('http_proxy'), keyserver, key_id)
     else:
-        cmd = "%s adv --no-tty --keyserver %s --recv %s" % (apt_key_bin, keyserver, key_id)
+        cmd = "adv --no-tty --keyserver %s --recv %s" % (keyserver, key_id)
+
+    if keyring:
+        cmd = "%s --keyring %s %s" % (apt_key_bin, keyring, cmd)
+    else:
+        cmd = "%s %s" % (apt_key_bin, cmd)
+
     for retry in range(5):
         lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
         (rc, out, err) = module.run_command(cmd, environ_update=lang_env)
