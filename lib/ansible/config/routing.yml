@@ -17,7 +17,7 @@ plugin_routing:
     jail:
       redirect: community.general.jail
     kubectl:
-      redirect: community.general.kubectl
+      redirect: community.kubernetes.kubectl
     libvirt_lxc:
       redirect: community.general.libvirt_lxc
     lxc:
