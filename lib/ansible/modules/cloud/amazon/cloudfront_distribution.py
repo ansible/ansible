@@ -1405,11 +1405,11 @@ class CloudFrontValidationManager(object):
             return None
 
         if origin['s3_origin_access_identity_enabled']:
-          if existing_config.get('s3_origin_config', {}).get('origin_access_identity'):
-            return existing_config['s3_origin_config']['origin_access_identity']
+            if existing_config.get('s3_origin_config', {}).get('origin_access_identity'):
+                return existing_config['s3_origin_config']['origin_access_identity']
 
-          if origin.get('s3_origin_config', {}).get('origin_access_identity'):
-            return origin['s3_origin_config']['origin_access_identity']
+            if origin.get('s3_origin_config', {}).get('origin_access_identity'):
+                return origin['s3_origin_config']['origin_access_identity']
 
         try:
             comment = "access-identity-by-ansible-%s-%s" % (origin.get('domain_name'), self.__default_datetime_string)
