@@ -112,6 +112,14 @@ EXAMPLES = '''
 - apt_repository:
     repo: 'ppa:nginx/stable'
     codename: trusty
+
+# Working behind a proxy
+- apt_repository:
+    repo: 'ppa:nginx/stable'
+    codename: trusty
+  environment:
+    http_proxy: http://proxy.example.com:8080
+    https_proxy: http://proxy.example.com:8080
 '''
 
 import glob
@@ -137,6 +145,7 @@ except ImportError:
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_native
 from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.common.network import is_in_noproxy
 
 
 if sys.version_info[0] < 3:
@@ -403,6 +412,7 @@ class SourcesList(object):
 class UbuntuSourcesList(SourcesList):
 
     LP_API = 'https://launchpad.net/api/1.0/~%s/+archive/%s'
+    KEY_SERVER = 'hkp://keyserver.ubuntu.com:80'
 
     def __init__(self, module, add_ppa_signing_keys_callback=None):
         self.module = module
@@ -445,7 +455,12 @@ class UbuntuSourcesList(SourcesList):
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
                 if not self._key_already_exists(info['signing_key_fingerprint']):
-                    command = ['apt-key', 'adv', '--recv-keys', '--no-tty', '--keyserver', 'hkp://keyserver.ubuntu.com:80', info['signing_key_fingerprint']]
+                    if os.environ.get('http_proxy') and not is_in_noproxy(self.KEY_SERVER, os.environ.get('no_proxy')):
+                        command = ['apt-key', 'adv', '--keyserver-options', 'http-proxy=%s' % os.environ.get('http_proxy'),
+                                   '--recv-keys', '--no-tty', '--keyserver', self.KEY_SERVER, info['signing_key_fingerprint']]
+                    else:
+                        command = ['apt-key', 'adv', '--recv-keys', '--no-tty', '--keyserver', self.KEY_SERVER,
+                                   info['signing_key_fingerprint']]
                     self.add_ppa_signing_keys_callback(command)
 
             file = file or self._suggest_filename('%s_%s' % (line, self.codename))
