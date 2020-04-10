@@ -30,6 +30,7 @@ from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
+from lib.ansible.cli.GetManText import GetManText
 display = Display()
 
 
@@ -363,7 +364,9 @@ class DocCLI(CLI):
         if context.CLIARGS['show_snippet'] and plugin_type == 'module':
             text = DocCLI.get_snippet_text(doc)
         else:
-            text = DocCLI.get_man_text(doc)
+            getmantext = GetManText(doc, display, DocCLI)
+            text = getmantext.generate
+            #text = DocCLI.get_man_text(doc)
 
         return text
 
