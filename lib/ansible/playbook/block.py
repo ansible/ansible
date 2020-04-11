@@ -392,8 +392,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
     def get_include_params(self):
         if self._parent:
             return self._parent.get_include_params()
-        else:
-            return dict()
+        return dict()
 
     def all_parents_static(self):
         '''
