@@ -1447,3 +1447,4 @@ class GalaxyCLI(CLI):
         display.display(resp['status'])
 
         return True
+# hi
