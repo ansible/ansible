@@ -1,6 +1,7 @@
 # Copyright: (c) 2014, James Tanner <tanner.jc@gmail.com>
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+#
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
@@ -30,6 +31,7 @@ from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
+from lib.ansible.cli.GetManText import GetManText
 display = Display()
 
 
@@ -363,7 +365,8 @@ class DocCLI(CLI):
         if context.CLIARGS['show_snippet'] and plugin_type == 'module':
             text = DocCLI.get_snippet_text(doc)
         else:
-            text = DocCLI.get_man_text(doc)
+            getmantext = GetManText(doc, display, DocCLI)
+            text = getmantext.generate()
 
         return text
 
@@ -616,130 +619,3 @@ class DocCLI(CLI):
                 text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
         return text
 
-    @staticmethod
-    def get_man_text(doc):
-
-        DocCLI.IGNORE = DocCLI.IGNORE + (context.CLIARGS['type'],)
-        opt_indent = "        "
-        text = []
-        pad = display.columns * 0.20
-        limit = max(display.columns - int(pad), 70)
-
-        text.append("> %s    (%s)\n" % (doc.get(context.CLIARGS['type'], doc.get('plugin_type')).upper(), doc.pop('filename')))
-
-        if isinstance(doc['description'], list):
-            desc = " ".join(doc.pop('description'))
-        else:
-            desc = doc.pop('description')
-
-        text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent,
-                                           subsequent_indent=opt_indent))
-
-        if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
-            text.append("DEPRECATED: \n")
-            if isinstance(doc['deprecated'], dict):
-                if 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
-                    doc['deprecated']['removed_in'] = doc['deprecated']['version']
-                text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
-            else:
-                text.append("%s" % doc.pop('deprecated'))
-            text.append("\n")
-
-        try:
-            support_block = DocCLI.get_support_block(doc)
-            if support_block:
-                text.extend(support_block)
-        except Exception:
-            pass  # FIXME: not suported by plugins
-
-        if doc.pop('action', False):
-            text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
-
-        if 'options' in doc and doc['options']:
-            text.append("OPTIONS (= is mandatory):\n")
-            DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
-            text.append('')
-
-        if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
-            text.append("NOTES:")
-            for note in doc['notes']:
-                text.append(textwrap.fill(DocCLI.tty_ify(note), limit - 6,
-                                          initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-            text.append('')
-            text.append('')
-            del doc['notes']
-
-        if 'seealso' in doc and doc['seealso']:
-            text.append("SEE ALSO:")
-            for item in doc['seealso']:
-                if 'module' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
-                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    description = item.get('description', 'The official documentation on the %s module.' % item['module'])
-                    text.append(textwrap.fill(DocCLI.tty_ify(description), limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink('modules/%s_module.html' % item['module'])),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
-                elif 'name' in item and 'link' in item and 'description' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['name']),
-                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['link']),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                elif 'ref' in item and 'description' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify('Ansible documentation [%s]' % item['ref']),
-                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(DocCLI.tty_ify(item['description']),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-
-            text.append('')
-            text.append('')
-            del doc['seealso']
-
-        if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
-            req = ", ".join(doc.pop('requirements'))
-            text.append("REQUIREMENTS:%s\n" % textwrap.fill(DocCLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
-
-        # Generic handler
-        for k in sorted(doc):
-            if k in DocCLI.IGNORE or not doc[k]:
-                continue
-            if isinstance(doc[k], string_types):
-                text.append('%s: %s' % (k.upper(), textwrap.fill(DocCLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
-            elif isinstance(doc[k], (list, tuple)):
-                text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
-            else:
-                text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, opt_indent))
-            del doc[k]
-        text.append('')
-
-        if 'plainexamples' in doc and doc['plainexamples'] is not None:
-            text.append("EXAMPLES:")
-            text.append('')
-            if isinstance(doc['plainexamples'], string_types):
-                text.append(doc.pop('plainexamples').strip())
-            else:
-                text.append(yaml.dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
-            text.append('')
-            text.append('')
-
-        if 'returndocs' in doc and doc['returndocs'] is not None:
-            text.append("RETURN VALUES:")
-            if isinstance(doc['returndocs'], string_types):
-                text.append(doc.pop('returndocs'))
-            else:
-                text.append(yaml.dump(doc.pop('returndocs'), indent=2, default_flow_style=False))
-        text.append('')
-
-        try:
-            metadata_block = DocCLI.get_metadata_block(doc)
-            if metadata_block:
-                text.extend(metadata_block)
-                text.append('')
-        except Exception:
-            pass  # metadata is optional
-
-        return "\n".join(text)
-        #
