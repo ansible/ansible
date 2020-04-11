@@ -235,10 +235,8 @@ class TaskExecutor:
                 # get lookup
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with, loader=self._loader, templar=templar)
 
-                # give lookup task 'context' for subdir (mostly needed for first_found)
-                for subdir in ['template', 'var', 'file']:  # TODO: move this to constants?
-                    if subdir in self._task.action:
-                        break
+                # get subdir
+                subdir = self._find_subdir()
                 setattr(mylookup, '_subdir', subdir + 's')
 
                 # run lookup
@@ -246,18 +244,42 @@ class TaskExecutor:
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop_with)
 
-        elif self._task.loop is not None:
-            items = templar.template(self._task.loop)
-            if not isinstance(items, list):
-                raise AnsibleError(
-                    "Invalid data passed to 'loop', it requires a list, got this instead: %s."
-                    " Hint: If you passed a list/dict of just one element,"
-                    " try adding wantlist=True to your lookup invocation or use q/query instead of lookup." % items
-                )
+        self._check_loop_data(templar)
+        self._restore_job_vars(old_vars, play_context_vars)
 
-        # now we restore any old job variables that may have been modified,
-        # and delete them if they were in the play context vars but not in
-        # the old variables dictionary
+        return items
+
+    def _find_subdir(self):
+        '''
+        Gives lookup task 'context' for subdir (mostly needed for first_found)
+        '''
+
+        for subdir in ['template', 'var', 'file']:  # TODO: move this to constants?
+            if subdir in self._task.action:
+                break
+        return subdir
+
+    def _check_loop_data(self, templar):
+        '''
+        Checks if the data passed to 'loop' is a list. Raises an error if not a list.
+        '''
+        if self._task.loop is None:
+            return
+        items = templar.template(self._task.loop)
+        if not isinstance(items, list):
+            raise AnsibleError(
+                "Invalid data passed to 'loop', it requires a list, got this instead: %s."
+                " Hint: If you passed a list/dict of just one element,"
+                " try adding wantlist=True to your lookup invocation or use q/query instead of lookup." % items
+            )
+
+    def _restore_job_vars(self, old_vars, play_context_vars):
+        '''
+        Restore any old job variables that may have been modified,
+        and delete them if they were in the play context vars but not in
+        the old variables dictionary
+        '''
+
         for k in play_context_vars:
             if k in old_vars:
                 self._job_vars[k] = old_vars[k]
