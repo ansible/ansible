@@ -26,9 +26,8 @@ from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
-
 class GetManText:
-   
+
     def __init__(self, doc, display, DocCLI):
         self.doc = doc
         self.DocCLI = DocCLI
@@ -46,7 +45,7 @@ class GetManText:
 
         text.append("%s\n" % textwrap.fill(self.DocCLI.tty_ify(desc), self.limit, initial_indent=opt_indent,
                                            subsequent_indent=opt_indent))
-    
+
     def isDeprecated(self):
         if 'deprecated' in self.doc and self.doc['deprecated'] is not None and len(self.doc['deprecated']) > 0:
             text.append("DEPRECATED: \n")
@@ -68,7 +67,7 @@ class GetManText:
     def isPop(self):
         if self.doc.pop('action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
-    
+
     def isOptions(self):
         if 'options' in self.doc and self.doc['options']:
             text.append("OPTIONS (= is mandatory):\n")
@@ -84,7 +83,7 @@ class GetManText:
             text.append('')
             text.append('')
             del self.doc['notes']
-    
+
     def isSeeAlso(self):
         if 'seealso' in self.doc and self.doc['seealso']:
             text.append("SEE ALSO:")
