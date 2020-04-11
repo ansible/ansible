@@ -104,7 +104,7 @@ def get_connector(*args, **kwargs):
             if env in os.environ:
                 kwargs[key] = os.environ.get(env)
 
-    if 'validate_certs' in kwargs.keys():
+    if 'validate_certs' in kwargs:
         kwargs['ssl_verify'] = kwargs['validate_certs']
         kwargs.pop('validate_certs', None)
 

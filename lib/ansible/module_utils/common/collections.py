@@ -23,7 +23,7 @@ class ImmutableDict(Hashable, Mapping):
         return self._store.__iter__()
 
     def __len__(self):
-        return self._store.__len__()
+        return len(self._store)
 
     def __hash__(self):
         return hash(frozenset(self.items()))

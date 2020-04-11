@@ -349,7 +349,7 @@ class ActionModule(ActionBase):
             # change it to point to the source of the link.
             if follow:
                 dest_status_nofollow = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=False)
-                if dest_status_nofollow['islnk'] and 'lnk_source' in dest_status_nofollow.keys():
+                if dest_status_nofollow['islnk'] and 'lnk_source' in dest_status_nofollow:
                     dest = dest_status_nofollow['lnk_source']
 
             # Build temporary module_args.

@@ -117,7 +117,7 @@ def main():
     data = None
     try:
         with open(log_path) as f:
-            data = json.loads(f.read())
+            data = json.loads(f.read().decode('utf8'))
     except Exception:
         if not data:
             # file not written yet?  That means it is running

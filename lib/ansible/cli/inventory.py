@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import argparse
+import sys
 from operator import attrgetter
 
 from ansible import constants as C
@@ -161,9 +162,9 @@ class InventoryCLI(CLI):
                         f.write(results)
                 except (OSError, IOError) as e:
                     raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
-            exit(0)
+            sys.exit(0)
 
-        exit(1)
+        sys.exit(1)
 
     @staticmethod
     def dump(stuff):

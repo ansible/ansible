@@ -196,7 +196,7 @@ class VMWareInventory(object):
         jdata = None
         with open(self.cache_path_cache, 'r') as f:
             jdata = f.read()
-        return json.loads(jdata)
+        return json.loads(jdata.decode('utf8'))
 
     def read_settings(self):
         ''' Reads the settings from the vmware_inventory.ini file '''
@@ -518,7 +518,7 @@ class VMWareInventory(object):
                         if field_name in self.groupby_custom_field_excludes:
                             continue
                         values = []
-                        keylist = map(lambda x: x.strip(), tv['value'].split(','))
+                        keylist = [x.strip() for x in tv['value'].split(',')]
                         for kl in keylist:
                             try:
                                 newkey = "%s%s_%s" % (self.config.get('vmware', 'custom_field_group_prefix'), str(field_name), kl)

@@ -516,6 +516,7 @@ class UnixHTTPConnection(httplib.HTTPConnection):
         self._unix_socket = unix_socket
 
     def connect(self):
+        # deepcode ignore missing~close~socket.socket: <please specify a reason of ignoring this>
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         try:
             self.sock.connect(self._unix_socket)

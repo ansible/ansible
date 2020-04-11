@@ -138,7 +138,7 @@ class PSModuleDepFinder(object):
         # scans lib/ansible/executor/powershell for scripts used in the module
         # exec side. It also scans these scripts for any dependencies
         name = to_text(name)
-        if name in self.exec_scripts.keys():
+        if name in self.exec_scripts:
             return
 
         data = pkgutil.get_data("ansible.executor.powershell", name + ".ps1")
@@ -350,7 +350,7 @@ def _create_powershell_wrapper(b_module_data, module_path, module_args,
     # exec_wrapper is only required to be part of the payload if using
     # become or async, to save on payload space we check if exec_wrapper has
     # already been added, and remove it manually if it hasn't later
-    exec_required = "exec_wrapper" in finder.exec_scripts.keys()
+    exec_required = "exec_wrapper" in finder.exec_scripts
     finder.scan_exec_script("exec_wrapper")
     # must contain an empty newline so it runs the begin/process/end block
     finder.exec_scripts["exec_wrapper"] += b"\n\n"

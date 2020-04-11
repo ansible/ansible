@@ -896,7 +896,7 @@ def main():
             if 'type' not in interface:
                 module.fail_json(msg="(interface) type needs to be specified for interface '%s'." % interface)
             interfacetypes = {'agent': 1, 'snmp': 2, 'ipmi': 3, 'jmx': 4}
-            if interface['type'] in interfacetypes.keys():
+            if interface['type'] in interfacetypes:
                 interface['type'] = interfacetypes[interface['type']]
             if interface['type'] < 1 or interface['type'] > 4:
                 module.fail_json(msg="Interface type can only be 1-4 for interface '%s'." % interface)
@@ -1003,7 +1003,7 @@ def main():
                         group_ids.append(group_id)
 
                 # Macros not present in host.update will be removed if we dont copy them when force=no
-                if macros is not None and 'macros' in zabbix_host_obj.keys():
+                if macros is not None and 'macros' in zabbix_host_obj:
                     provided_macros = [m['macro'] for m in macros]
                     existing_macros = zabbix_host_obj['macros']
                     for macro in existing_macros:
@@ -1011,7 +1011,7 @@ def main():
                             macros.append(macro)
 
                 # Tags not present in host.update will be removed if we dont copy them when force=no
-                if tags is not None and 'tags' in zabbix_host_obj.keys():
+                if tags is not None and 'tags' in zabbix_host_obj:
                     provided_tags = [t['tag'] for t in tags]
                     existing_tags = zabbix_host_obj['tags']
                     for tag in existing_tags:

@@ -2,7 +2,7 @@ angular.module('ansibleApp', []).filter('moduleVersion', function() {
   return function(modules, version) {
 
     var parseVersionString = function (str) {
-        if (typeof(str) != 'string') { return false; }
+        if (typeof(str) !== 'string') { return false; }
         var x = str.split('.');
         // parse from string or default to 0 if can't parse
         var maj = parseInt(x[0]) || 0;
@@ -18,13 +18,13 @@ angular.module('ansibleApp', []).filter('moduleVersion', function() {
     var vMinMet = function(vmin, vcurrent) {
         minimum = parseVersionString(vmin);
         running = parseVersionString(vcurrent);
-        if (running.major != minimum.major)
+        if (running.major !== minimum.major)
             return (running.major > minimum.major);
         else {
-            if (running.minor != minimum.minor)
+            if (running.minor !== minimum.minor)
                 return (running.minor > minimum.minor);
             else {
-                if (running.patch != minimum.patch)
+                if (running.patch !== minimum.patch)
                     return (running.patch > minimum.patch);
                 else
                     return true;
@@ -56,7 +56,7 @@ angular.module('ansibleApp', []).filter('moduleVersion', function() {
     }
 
     var parseVersionString = function (str) {
-        if (typeof(str) != 'string') { return false; }
+        if (typeof(str) !== 'string') { return false; }
         var x = str.split('.');
         // parse from string or default to 0 if can't parse
         var maj = parseInt(x[0]) || 0;
@@ -79,12 +79,12 @@ angular.module('ansibleApp', []).filter('moduleVersion', function() {
     }
 
     result.sort(
-      function (a, b) {
+      (a, b) => {
         ao = parseVersionString(a);
         bo = parseVersionString(b);
-        if (ao.major == bo.major) {
-          if (ao.minor == bo.minor) {
-            if (ao.patch == bo.patch) {
+        if (ao.major === bo.major) {
+          if (ao.minor === bo.minor) {
+            if (ao.patch === bo.patch) {
               return 0;
             }
             else {

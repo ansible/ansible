@@ -512,7 +512,9 @@ def ensure_subnet_association(connection=None, module=None, vpc_id=None, route_t
         for a in route_table['Associations']:
             if a['Main']:
                 continue
+            # deepcode ignore change_to_is%2Ftest: need equality, not is
             if a['SubnetId'] == subnet_id:
+                # deepcode ignore change_to_is%2Ftest: need equality, not is
                 if route_table['RouteTableId'] == route_table_id:
                     return {'changed': False, 'association_id': a['RouteTableAssociationId']}
                 else:

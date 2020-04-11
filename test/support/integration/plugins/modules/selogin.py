@@ -192,7 +192,7 @@ def semanage_login_del(module, login, seuser, do_reload, sestore=''):
         change = False
         all_logins = selogin.get_all()
         # module.fail_json(msg="%s: %s %s" % (all_logins, login, sestore))
-        if login in all_logins.keys():
+        if login in all_logins:
             change = True
             if not module.check_mode:
                 selogin.delete(login)

@@ -167,13 +167,14 @@ class Static_routesFacts(object):
                             element["forward_router_address"]
                             == nh_info["forward_router_address"]
                         ):
-                            if "interface" in nh_info.keys():
+                            if "interface" in nh_info:
                                 element["interface"] = nh_info["interface"]
-                            if "admin_distance" in nh_info.keys():
+                            # deepcode ignore change_to_is%2Ftest: need equality, not is
+                            if "admin_distance" in nh_info:
                                 element["admin_distance"] = nh_info[
                                     "admin_distance"
                                 ]
-                            if "enabled" in nh_info.keys():
+                            if "enabled" in nh_info:
                                 element["enabled"] = nh_info["enabled"]
                             nh_info = None
                     if nh_info is not None:

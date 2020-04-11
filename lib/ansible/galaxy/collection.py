@@ -1130,6 +1130,7 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
         with tempfile.NamedTemporaryFile(dir=b_temp_path, delete=False) as tmpfile_obj:
             actual_hash = _consume_file(tar_obj, tmpfile_obj)
 
+        # deepcode ignore change_to_is: <please specify a reason of ignoring this>
         if expected_hash and actual_hash != expected_hash:
             raise AnsibleError("Checksum mismatch for '%s' inside collection at '%s'"
                                % (to_native(filename, errors='surrogate_or_strict'), to_native(tar.name)))

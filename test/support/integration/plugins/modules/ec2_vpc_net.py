@@ -432,7 +432,7 @@ def main():
                 except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
                     module.fail_json_aws(e, "Unable to associate CIDR {0}.".format(ipv6_cidr))
         if ipv6_cidr:
-            if 'Ipv6CidrBlockAssociationSet' in vpc_obj.keys():
+            if 'Ipv6CidrBlockAssociationSet' in vpc_obj:
                 module.warn("Only one IPv6 CIDR is permitted per VPC, {0} already has CIDR {1}".format(
                     vpc_id,
                     vpc_obj['Ipv6CidrBlockAssociationSet'][0]['Ipv6CidrBlock']))

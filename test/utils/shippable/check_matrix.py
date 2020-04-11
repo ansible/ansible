@@ -47,7 +47,7 @@ def main():  # type: () -> None
 
     for attempts_remaining in range(4, -1, -1):
         try:
-            jobs = json.loads(urlopen('https://api.shippable.com/jobs?runIds=%s' % run_id).read())
+            jobs = json.loads(urlopen('https://api.shippable.com/jobs?runIds=%s' % run_id).read().decode('utf8'))
 
             if not isinstance(jobs, list):
                 raise Exception('Shippable run %s data is not a list.' % run_id)

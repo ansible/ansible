@@ -288,7 +288,7 @@ class LookupModule(LookupBase):
                 raise AnsibleError("hashi_vault lookup plugin needs key=value pairs, but received %s" % terms)
             vault_dict[key] = value
 
-        if 'ca_cert' in vault_dict.keys():
+        if 'ca_cert' in vault_dict:
             vault_dict['cacert'] = vault_dict['ca_cert']
             vault_dict.pop('ca_cert', None)
 

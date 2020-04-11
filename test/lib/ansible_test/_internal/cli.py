@@ -183,15 +183,15 @@ def main():
         display.review_warnings()
     except ApplicationWarning as ex:
         display.warning(u'%s' % ex)
-        exit(0)
+        sys.exit(0)
     except ApplicationError as ex:
         display.error(u'%s' % ex)
-        exit(1)
+        sys.exit(1)
     except KeyboardInterrupt:
-        exit(2)
+        sys.exit(2)
     except IOError as ex:
         if ex.errno == errno.EPIPE:
-            exit(3)
+            sys.exit(3)
         raise
 
 

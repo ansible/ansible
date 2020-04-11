@@ -71,7 +71,7 @@ class HttpApi(HttpApiBase):
 
 def handle_response(response, response_data):
     try:
-        response_data = json.loads(response_data.read())
+        response_data = json.loads(response_data.read().decode('utf8'))
     except ValueError:
         response_data = response_data.read()
 

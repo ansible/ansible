@@ -295,6 +295,7 @@ def main():
                 else:
                     os.close(w)
                     rfd = os.fdopen(r, 'r')
+                    # deepcode ignore replace~read~decode~json.loads: Custom decoder is supplied to json.loads function
                     data = json.loads(rfd.read(), cls=AnsibleJSONDecoder)
                     messages.extend(data.pop('messages'))
                     result.update(data)

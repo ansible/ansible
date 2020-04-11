@@ -174,6 +174,7 @@ class LookupModule(LookupBase):
                 ret.append(msg_details)
                 conn_channel.basic_ack(method_frame.delivery_tag)
                 idx += 1
+                # deepcode ignore change_to_is%2Ftest: count may be assigned to, need equality not is
                 if method_frame.message_count == 0 or idx == count:
                     break
             # If we didn't get a method_frame, exit.

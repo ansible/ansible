@@ -403,6 +403,7 @@ class CronTab(object):
         # failing that, attempt to find job by exact match
         if job:
             for i, l in enumerate(self.lines):
+                # deepcode ignore change_to_is: job is defined, need equality not is
                 if l == job:
                     # if no leading ansible header, insert one
                     if not re.match(r'%s' % self.ansible, self.lines[i - 1]):

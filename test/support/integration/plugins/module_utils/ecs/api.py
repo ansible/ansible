@@ -174,7 +174,7 @@ class RestOperation(object):
         # Raise an exception if there was a failure.
         try:
             result_code = response.getcode()
-            result = json.loads(response.read())
+            result = json.loads(response.read().decode('utf8'))
         except ValueError:
             result = {}
 

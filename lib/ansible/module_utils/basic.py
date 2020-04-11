@@ -1395,12 +1395,12 @@ class AnsibleModule(object):
 
         deprecated_aliases = []
         for i in spec.keys():
-            if 'deprecated_aliases' in spec[i].keys():
+            if 'deprecated_aliases' in spec[i]:
                 for alias in spec[i]['deprecated_aliases']:
                     deprecated_aliases.append(alias)
 
         for deprecation in deprecated_aliases:
-            if deprecation['name'] in param.keys():
+            if deprecation['name'] in param:
                 deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'], deprecation['version'])
         return alias_results
 

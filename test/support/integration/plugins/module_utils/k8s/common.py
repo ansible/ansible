@@ -194,7 +194,7 @@ class K8sAnsibleMixin(object):
         # Override any values in the default configuration with Ansible parameters
         configuration = kubernetes.client.Configuration()
         for key, value in iteritems(auth):
-            if key in AUTH_ARG_MAP.keys() and value is not None:
+            if key in AUTH_ARG_MAP and value is not None:
                 if key == 'api_key':
                     setattr(configuration, key, {'authorization': "Bearer {0}".format(value)})
                 else:

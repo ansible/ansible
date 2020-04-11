@@ -129,6 +129,7 @@ def categorize_changes(args, paths, verbose_command=None):
 
                 # identify targeted integration tests (those which only target a single integration command)
                 if 'integration' in verbose_command and tests.get(verbose_command):
+                    # deepcode ignore change_to_is%2Ftest: need equality not is
                     if not any('integration' in command for command in tests if command != verbose_command):
                         if focused_target:
                             result += ' (focused)'
