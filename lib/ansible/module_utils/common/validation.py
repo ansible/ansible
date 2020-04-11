@@ -129,9 +129,7 @@ def check_required_together(terms, module_parameters):
     return results
 
 def process_key_value(requirements, module_parameters):
-    
     result = {}
-
     for (key, value) in requirements.items():
         if key not in module_parameters or module_parameters[key] is None:
             continue
@@ -203,6 +201,7 @@ def check_required_arguments(argument_spec, module_parameters):
 
 def process_requirements(requirements, module_parameters):
 
+    results = []
     for req in requirements:
         missing = {}
         missing['missing'] = []
@@ -232,7 +231,7 @@ def process_requirements(requirements, module_parameters):
             missing['requirements'] = requirements
             results.append(missing)
 
-    return requirements, missing
+    return requirements, missing, results
 
 def check_required_if(requirements, module_parameters):
     """Check parameters that are conditionally required
@@ -278,7 +277,7 @@ def check_required_if(requirements, module_parameters):
     if requirements is None:
         return results
 
-    requirements, missing = process_requirements(requirements, module_parameters)
+    requirements, missing, results = process_requirements(requirements, module_parameters)
 
     if results:
         for missing in results:
