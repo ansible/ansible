@@ -112,8 +112,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         if not Block.is_block(ds):
             if isinstance(ds, list):
                 return super(Block, self).preprocess_data(dict(block=ds))
-            else:
-                return super(Block, self).preprocess_data(dict(block=[ds]))
+            return super(Block, self).preprocess_data(dict(block=[ds]))
 
         return super(Block, self).preprocess_data(ds)
 
