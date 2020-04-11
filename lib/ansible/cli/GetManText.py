@@ -9,6 +9,7 @@ import os
 import textwrap
 import traceback
 import yaml
+import sys
 
 from ansible import constants as C
 from ansible import context
@@ -26,6 +27,7 @@ from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
+sys.path.append('/lib/ansible/cli/GetManText.py')
 class GetManText:
 
     def __init__(self, doc, display, DocCLI):
@@ -169,4 +171,3 @@ class GetManText:
         GetManText.isPlainText
         GetManText.isReturnDocs
         return "\n".join(self.text)
-    
