@@ -884,8 +884,6 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
     for py_module_name in finder.submodules.difference(py_module_names):
 
         module_info = ModuleInfoFactory.build_module_info(py_module_name, module_utils_paths)
-
-        #py_module_name = module_info.py_module_name
         normalized_modules, py_module_cache = module_info.aggregate_normalized_modules(normalized_modules, py_module_cache)
 
     # FIXME: Currently the AnsiBallZ wrapper monkeypatches module args into a global
