@@ -314,11 +314,13 @@ def parse_systemctl_show(lines):
                 k = None
     return parsed
 
+
 def globpattern_check(unit, module):
-  if unit is not None:
+    if unit is not None:
         for globpattern in (r"*", r"?", r"["):
             if globpattern in unit:
                 module.fail_json(msg="This module does not currently support using glob patterns, found '%s' in service name: %s" % (globpattern, unit))
+
 
 def set_cli_options(module, systemctl):
     if module.params['user'] is not None:
@@ -342,6 +344,7 @@ def set_cli_options(module, systemctl):
 
     return systemctl, scope
 
+
 def set_action(module, result):
     action = None
     if module.params['state'] == 'started':
@@ -359,9 +362,9 @@ def set_action(module, result):
 
     return action, result
 
+
 # ===========================================
 # Main control flow
-
 def main():
     # initialize
     module = AnsibleModule(
@@ -388,7 +391,6 @@ def main():
     )
 
     unit = module.params['name']
-    
     globpattern_check(unit, module)
 
     if os.getenv('XDG_RUNTIME_DIR') is None:
