@@ -467,7 +467,7 @@ class GalaxyCLI(CLI):
                 server_options['token'] = KeycloakToken(access_token=token_val,
                                                         auth_url=auth_url,
                                                         validate_certs=not context.CLIARGS['ignore_certs'])
-            elif token_val:
+            elif token_val and not auth_url:
                 # The galaxy v1 / github / django / 'Token'
                 server_options['token'] = GalaxyToken(token=token_val)
 
@@ -896,9 +896,10 @@ class GalaxyCLI(CLI):
             gr = GalaxyRole(self.galaxy, self.api, role)
 
             install_info = gr.install_info
-            if install_info and 'version' in install_info:
-                install_info['installed_version'] = install_info['version']
-                del install_info['version']
+            if install_info:
+                if 'version' in install_info:
+                    install_info['installed_version'] = install_info['version']
+                    del install_info['version']
                 role_info.update(install_info)
 
             remote_data = False
@@ -997,9 +998,10 @@ class GalaxyCLI(CLI):
         force = context.CLIARGS['force'] or force_deps
 
         roles_left = []
-        if role_file and not (role_file.endswith('.yaml') or role_file.endswith('.yml')):
-            raise AnsibleError("Invalid role requirements file, it must end with a .yml or .yaml extension")
-        elif role_file:
+        if role_file:
+            if not (role_file.endswith('.yaml') or role_file.endswith('.yml')):
+                raise AnsibleError("Invalid role requirements file, it must end with a .yml or .yaml extension")
+
             roles_left = self._parse_requirements_file(role_file)['roles']
         else:
             # roles were specified directly, so we'll just go out grab them
@@ -1027,7 +1029,7 @@ class GalaxyCLI(CLI):
                     display.warning('- %s (%s) is already installed - use --force to change version to %s' %
                                     (role.name, role.install_info['version'], role.version or "unspecified"))
                     continue
-                elif not force:
+                else:
                     display.display('- %s is already installed, skipping.' % str(role))
                     continue
 
@@ -1136,9 +1138,9 @@ class GalaxyCLI(CLI):
                     _display_role(gr)
                     break
                 warnings.append("- the role %s was not found" % role_name)
-            elif role_name and not os.path.exists(role_path):
+            elif not os.path.exists(role_path):
                 warnings.append("- the configured path %s does not exist." % role_path)
-            elif role_name and not os.path.isdir(role_path):
+            elif not os.path.isdir(role_path):
                 warnings.append("- the configured path %s, exists, but it is not a directory." % role_path)
             else:
                 display.display('# %s' % role_path)
