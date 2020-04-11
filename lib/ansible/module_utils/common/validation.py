@@ -129,7 +129,8 @@ def check_required_together(terms, module_parameters):
     return results
 
 def process_key_value(requirements, module_parameters):
-	result = {}
+    
+    result = {}
 
     for (key, value) in requirements.items():
         if key not in module_parameters or module_parameters[key] is None:
@@ -203,35 +204,35 @@ def check_required_arguments(argument_spec, module_parameters):
 def process_requirements(requirements, module_parameters):
 
     for req in requirements:
-		missing = {}
-		missing['missing'] = []
-		max_missing_count = 0
-		is_one_of = False
-		if len(req) == 4:
-		    key, val, requirements, is_one_of = req
-		else:
-		    key, val, requirements = req
+        missing = {}
+        missing['missing'] = []
+        max_missing_count = 0
+        is_one_of = False
+        if len(req) == 4:
+            key, val, requirements, is_one_of = req
+        else:
+            key, val, requirements = req
 
-		# is_one_of is True at least one requirement should be
-		# present, else all requirements should be present.
-		if is_one_of:
-		    max_missing_count = len(requirements)
-		    missing['requires'] = 'any'
-		else:
-		    missing['requires'] = 'all'
+        # is_one_of is True at least one requirement should be
+        # present, else all requirements should be present.
+        if is_one_of:
+            max_missing_count = len(requirements)
+            missing['requires'] = 'any'
+        else:
+            missing['requires'] = 'all'
 
-		if key in module_parameters and module_parameters[key] == val:
-		    for check in requirements:
-		        count = count_terms(check, module_parameters)
-		        if count == 0:
-		            missing['missing'].append(check)
-		if len(missing['missing']) and len(missing['missing']) >= max_missing_count:
-		    missing['parameter'] = key
-		    missing['value'] = val
-		    missing['requirements'] = requirements
-		    results.append(missing)
+        if key in module_parameters and module_parameters[key] == val:
+            for check in requirements:
+                count = count_terms(check, module_parameters)
+                if count == 0:
+                    missing['missing'].append(check)
+        if len(missing['missing']) and len(missing['missing']) >= max_missing_count:
+            missing['parameter'] = key
+            missing['value'] = val
+            missing['requirements'] = requirements
+            results.append(missing)
 
-	return requirements, missing
+    return requirements, missing
 
 def check_required_if(requirements, module_parameters):
     """Check parameters that are conditionally required
