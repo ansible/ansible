@@ -363,13 +363,13 @@ def _check_if_task_static(action, t, templar, use_handlers):
         return True
     elif t.static is not None:
         display.deprecated("The use of 'static' has been deprecated. "
-                        "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion",
-                        version='2.12')
+                           "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion",
+                           version='2.12')
         return t.static
     else:
         return C.DEFAULT_TASK_INCLUDES_STATIC or \
-                    (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-                    (not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
+               (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
+               (not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
 
 
 def _check_for_loops(task_ds, t, action):
@@ -400,8 +400,8 @@ def _evaluate_parent_path(task_ds, parent_include, templar):
 
 def _evaluate_target_path(task_ds, t, templar):
     try:
-         include_target = templar.template(t.args['_raw_params'])
-         return include_target
+        include_target = templar.template(t.args['_raw_params'])
+        return include_target
     except AnsibleUndefinedVariable as e:
         raise AnsibleParserError(
             "Error when evaluating variable in import path: %s.\n\n"
@@ -467,7 +467,8 @@ def _check_for_static_role(action, ir):
         return ir.static
 
 
-def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None, collection_search_list=None):
+def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None,
+                       collection_search_list=None):
     """
     Loads and returns a list of RoleInclude objects from the ds list of role definitions
     :param ds: list of roles to load
@@ -486,7 +487,8 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
 
     roles = []
     for role_def in ds:
-        i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager,
+        i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path,
+                             variable_manager=variable_manager,
                              loader=loader, collection_list=collection_search_list)
         roles.append(i)
 
