@@ -57,16 +57,6 @@ class ConfigCLI(CLI):
         view_parser = subparsers.add_parser('view', help='View configuration file', parents=[common])
         view_parser.set_defaults(func=self.execute_view)
 
-        # update_parser = subparsers.add_parser('update', help='Update configuration option')
-        # update_parser.set_defaults(func=self.execute_update)
-        # update_parser.add_argument('-s', '--setting', dest='setting',
-        #                            help="config setting, the section defaults to 'defaults'",
-        #                            metavar='[section.]setting=value')
-
-        # search_parser = subparsers.add_parser('search', help='Search configuration')
-        # search_parser.set_defaults(func=self.execute_search)
-        # search_parser.add_argument('args', help='Search term', metavar='<search term>')
-
     def post_process_args(self, options):
         options = super(ConfigCLI, self).post_process_args(options)
         display.verbosity = options.verbosity

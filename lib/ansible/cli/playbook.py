@@ -23,6 +23,28 @@ from ansible.plugins.loader import add_all_plugin_dirs
 display = Display()
 
 
+def _process_block(b, all_tags, mytags):
+    taskmsg = ''
+    for task in b.block:
+        if isinstance(task, Block):
+            taskmsg += _process_block(task, all_tags, mytags)
+        else:
+            if task.action == 'meta':
+                continue
+
+            all_tags.update(task.tags)
+            if context.CLIARGS['listtasks']:
+                cur_tags = list(mytags.union(set(task.tags)))
+                cur_tags.sort()
+                if task.name:
+                    taskmsg += "      %s" % task.get_name()
+                else:
+                    taskmsg += "      %s" % task.action
+                taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
+
+    return taskmsg
+
+
 class PlaybookCLI(CLI):
     ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
         See the project home page (https://docs.ansible.com) for more information. '''
@@ -155,33 +177,12 @@ class PlaybookCLI(CLI):
                         if context.CLIARGS['listtasks']:
                             taskmsg = '    tasks:\n'
 
-                        def _process_block(b):
-                            taskmsg = ''
-                            for task in b.block:
-                                if isinstance(task, Block):
-                                    taskmsg += _process_block(task)
-                                else:
-                                    if task.action == 'meta':
-                                        continue
-
-                                    all_tags.update(task.tags)
-                                    if context.CLIARGS['listtasks']:
-                                        cur_tags = list(mytags.union(set(task.tags)))
-                                        cur_tags.sort()
-                                        if task.name:
-                                            taskmsg += "      %s" % task.get_name()
-                                        else:
-                                            taskmsg += "      %s" % task.action
-                                        taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
-
-                            return taskmsg
-
                         all_vars = variable_manager.get_vars(play=play)
                         for block in play.compile():
                             block = block.filter_tagged_tasks(all_vars)
                             if not block.has_tasks():
                                 continue
-                            taskmsg += _process_block(block)
+                            taskmsg += _process_block(block, all_tags, mytags)
 
                         if context.CLIARGS['listtags']:
                             cur_tags = list(mytags.union(all_tags))
