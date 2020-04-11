@@ -329,7 +329,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
                     if firstmatch:
                         break
 
-    msg = ''
+    msg = 'line added'
     changed = False
     b_linesep = to_bytes(os.linesep, errors='surrogate_or_strict')
     # Exact line or Regexp matched a line in the file
@@ -346,7 +346,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         # If no regexp was given and no line match is found anywhere in the file,
         # insert the line appropriately if using insertbefore or insertafter
         if regexp is None and match is None and not exact_line_match:
-
+            changed = True
             # Insert lines
             if insertafter and insertafter != 'EOF':
                 # Ensure there is a line separator after the found string
@@ -356,29 +356,16 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
 
                 # If the line to insert after is at the end of the file
                 # use the appropriate index value.
-                if len(b_lines) == index[1]:
-                    if b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
-                        b_lines.append(b_line + b_linesep)
-                        msg = 'line added'
-                        changed = True
+                if len(b_lines) == index[1] and b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
+                    b_lines.append(b_line + b_linesep)
                 elif b_lines[index[1]].rstrip(b'\r\n') != b_line:
                     b_lines.insert(index[1], b_line + b_linesep)
-                    msg = 'line added'
-                    changed = True
 
             elif insertbefore and insertbefore != 'BOF':
                 # If the line to insert before is at the beginning of the file
                 # use the appropriate index value.
-                if index[1] <= 0:
-                    if b_lines[index[1]].rstrip(b'\r\n') != b_line:
-                        b_lines.insert(index[1], b_line + b_linesep)
-                        msg = 'line added'
-                        changed = True
-
-                elif b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
+                if index[1] <= 0 and b_lines[index[1]].rstrip(b'\r\n') != b_line or b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
                     b_lines.insert(index[1], b_line + b_linesep)
-                    msg = 'line added'
-                    changed = True
 
         elif b_lines[index[0]] != b_new_line:
             b_lines[index[0]] = b_new_line
@@ -392,7 +379,6 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     # Add it to the beginning of the file
     elif insertbefore == 'BOF' or insertafter == 'BOF':
         b_lines.insert(0, b_line + b_linesep)
-        msg = 'line added'
         changed = True
     # Add it to the end of the file if requested or
     # if insertafter/insertbefore didn't match anything
@@ -404,27 +390,22 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             b_lines.append(b_linesep)
 
         b_lines.append(b_line + b_linesep)
-        msg = 'line added'
         changed = True
 
     elif insertafter and index[1] != -1:
 
+        changed = True
         # Don't insert the line if it already matches at the index.
         # If the line to insert after is at the end of the file use the appropriate index value.
-        if len(b_lines) == index[1]:
-            if b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
-                b_lines.append(b_line + b_linesep)
-                msg = 'line added'
-                changed = True
+        if len(b_lines) == index[1] and b_lines[index[1] - 1].rstrip(b'\r\n') != b_line:
+            b_lines.append(b_line + b_linesep)
+
         elif b_line != b_lines[index[1]].rstrip(b'\n\r'):
             b_lines.insert(index[1], b_line + b_linesep)
-            msg = 'line added'
-            changed = True
 
     # insert matched, but not the regexp
     else:
         b_lines.insert(index[1], b_line + b_linesep)
-        msg = 'line added'
         changed = True
 
     if module._diff:
