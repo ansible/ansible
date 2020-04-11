@@ -124,7 +124,6 @@ class GenericBsdIfconfigNetwork(Network):
 
             if not line:
                 continue
-            
             words = line.split()
 
             if words[0] == 'pass':

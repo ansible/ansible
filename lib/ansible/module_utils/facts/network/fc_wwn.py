@@ -57,7 +57,6 @@ class FcWwnInitiatorFactCollector(BaseFactCollector):
             """
             if not fcinfo_out:
                 return fc_facts
-            
             for line in fcinfo_out.splitlines():
                 if 'Port WWN' in line:
                     data = line.split(' ')
