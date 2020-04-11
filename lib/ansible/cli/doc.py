@@ -33,6 +33,7 @@ from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
 from GetManText import *
+sys.path.append('/lib/ansible/cli/GetManText.py')
 
 display = Display()
 

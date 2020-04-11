@@ -31,6 +31,7 @@ from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 from ansible.utils.unsafe_proxy import to_unsafe_text
 from ansible.vars.manager import VariableManager
+sys.path.append('/lib/ansible/cli/GetManText.py')
 
 try:
     import argcomplete
