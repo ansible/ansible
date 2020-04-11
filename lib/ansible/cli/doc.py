@@ -742,3 +742,4 @@ class DocCLI(CLI):
             pass  # metadata is optional
 
         return "\n".join(text)
+        #
