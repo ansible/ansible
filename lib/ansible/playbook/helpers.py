@@ -179,7 +179,7 @@ def _list_action_in_task(task_ds, play, action, task_list, block, role, use_hand
 
 def _get_static_task_list(task_ds, t, play, action, task_list, templar, block, role, use_handlers, variable_manager, loader):
 
-    _check_for_loops(task_ds, t, play)
+    _check_for_loops(task_ds, t, action)
 
     # we set a flag to indicate this include was static
     t.statically_loaded = True
@@ -378,6 +378,10 @@ def _check_for_loops(task_ds, t, action):
             raise AnsibleParserError(
                 "You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.",
                 obj=task_ds)
+        elif action == 'import_role':
+            raise AnsibleParserError(
+                "You cannot use loops on 'import_role' statements. You should use 'include_role' instead.",
+                obj=task_ds)
         else:
             raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
 
@@ -431,13 +435,7 @@ def _list_action_in_role(task_ds, play, action, task_list, block, role, variable
     is_static = _check_for_static_role(action, ir)
 
     if is_static:
-        if ir.loop is not None:
-            if action == 'import_role':
-                raise AnsibleParserError(
-                    "You cannot use loops on 'import_role' statements. You should use 'include_role' instead.",
-                    obj=task_ds)
-            else:
-                raise AnsibleParserError("You cannot use 'static' on an include_role with a loop", obj=task_ds)
+        _check_for_loops(task_ds, ir, action)
 
         # we set a flag to indicate this include was static
         ir.statically_loaded = True
