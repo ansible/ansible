@@ -596,6 +596,7 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
 
 class ModuleInfo:
     def __init__(self, name, paths):
+        self.name = name
         self.py_src = False
         self.pkg_dir = False
         path = None
@@ -630,6 +631,58 @@ class ModuleInfo:
     def __repr__(self):
         return 'ModuleInfo: py_src=%s, pkg_dir=%s, path=%s' % (self.py_src, self.pkg_dir, self.path)
 
+    def aggregate_normalized_modules(self, normalized_modules, py_module_cache):
+        # Found a byte compiled file rather than source.  We cannot send byte
+        # compiled over the wire as the python version might be different.
+        # imp.find_module seems to prefer to return source packages so we just
+        # error out if imp.find_module returns byte compiled files (This is
+        # fragile as it depends on undocumented imp.find_module behaviour)
+        module_info = self
+        if not module_info.pkg_dir and not module_info.py_src:
+            msg = ['Could not find python source for imported module support code for %s.  Looked for' % self.name]
+            if idx == 2:
+                msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
+            else:
+                msg.append(py_module_name[-1])
+            raise AnsibleError(' '.join(msg))
+        py_module_name = self.py_module_name
+        py_module_names = self.py_module_names
+        module_utils_paths = self.module_utils_paths
+        if self.idx == 2:
+            # We've determined that the last portion was an identifier and
+            # thus, not part of the module name
+            py_module_name = py_module_name[:-1]
+
+        # If not already processed then we've got work to do
+        # If not in the cache, then read the file into the cache
+        # We already have a file handle for the module open so it makes
+        # sense to read it now
+        if py_module_name not in py_module_cache:
+            normalized_name = py_module_name
+            if module_info.pkg_dir:
+                # Read the __init__.py instead of the module file as this is
+                # a python package
+                normalized_name = py_module_name + ('__init__',)
+
+            if normalized_name not in py_module_names:
+                normalized_data = module_info.get_source()
+                py_module_cache[normalized_name] = (normalized_data, module_info.path)
+                normalized_modules.add(normalized_name)
+            #
+            # Make sure that all the packages that this module is a part of
+            # are also added
+            #
+            for i in range(1, len(py_module_name)):
+                py_pkg_name = py_module_name[:-i] + ('__init__',)
+                if py_pkg_name not in py_module_names:
+                    # Need to remove ansible.module_utils because PluginLoader may find
+                    # different paths for us to look in
+                    relative_module_utils = py_pkg_name[2:]
+                    pkg_dir_info = ModuleInfo(relative_module_utils[-1],
+                                                [os.path.join(p, *relative_module_utils[:-1]) for p in module_utils_paths])
+                    normalized_modules.add(py_pkg_name)
+                    py_module_cache[py_pkg_name] = (pkg_dir_info.get_source(), pkg_dir_info.path)
+        return normalized_modules, py_module_cache
 
 class CollectionModuleInfo(ModuleInfo):
     def __init__(self, name, paths):
@@ -660,6 +713,127 @@ class CollectionModuleInfo(ModuleInfo):
         data = pkgutil.get_data(to_native(self._package_name), to_native(self._mod_name + '.py'))
         return data
 
+    def aggregate_normalized_modules(self, normalized_modules, py_module_cache):
+        if self.idx == 2:
+            # We've determined that the last portion was an identifier and
+            # thus, not part of the module name
+            py_module_name = py_module_name[:-1]
+
+        # HACK: maybe surface collection dirs in here and use existing find_module code?
+        normalized_name = py_module_name
+        normalized_data = self.get_source()
+        normalized_path = os.path.join(*py_module_name)
+        py_module_cache[normalized_name] = (normalized_data, normalized_path)
+        normalized_modules.add(normalized_name)
+
+        # HACK: walk back up the package hierarchy to pick up package inits; this won't do the right thing
+        # for actual packages yet...
+        accumulated_pkg_name = []
+        for pkg in py_module_name[:-1]:
+            accumulated_pkg_name.append(pkg)  # we're accumulating this across iterations
+            normalized_name = tuple(accumulated_pkg_name[:] + ['__init__'])  # extra machinations to get a hashable type (list is not)
+            if normalized_name not in py_module_cache:
+                normalized_path = os.path.join(*accumulated_pkg_name)
+                # HACK: possibly preserve some of the actual package file contents; problematic for extend_paths and others though?
+                normalized_data = ''
+                py_module_cache[normalized_name] = (normalized_data, normalized_path)
+                normalized_modules.add(normalized_name)
+        return normalized_modules
+
+
+class ModuleSixInfo(ModuleInfo):
+    def __init__(self, py_module_name, module_utils_paths):
+        name = self._parse_name(py_module_name)
+        paths = self._get_paths(module_utils_paths)
+        super().__init__(name, paths)
+        self.py_module_name = self._get_truncated_name()
+
+    def _parse_name(self, py_module_name):
+        return py_module_name[2]
+
+    def _get_paths(self, module_utils_paths):
+        return module_utils_paths
+
+    def _get_truncated_name():
+        return ("ansible", "module_utils", "six")
+
+
+class ModuleUnderScoreSixInfo(ModuleSixInfo):
+    def _get_truncated_name():
+        return super().get_truncated_name().extend("_six")
+    
+    def _get_paths(self, module_utils_paths):
+        return [os.path.join(p, 'six') for p in module_utils_paths]
+
+
+class ModuleInfoFactory:
+    ERROR_KEY = "non_module_utils_import"
+    @staticmethod
+    def build_module_info(py_module_name, module_utils_paths):
+        builder_info_map = {
+            "six": lambda py_module_name: ModuleSixInfo(py_module_name, module_utils_paths), 0,
+            "_six": lambda py_module_name: ModuleUnderScoreSixInfo(py_module_name, module_utils_paths), 0,
+            "ansible_collections": ModuleInfoFactory.build_collection_info,
+            str(("ansible", "module_utils")): lambda py_module_name: build_relative_module_info(py_module_name, module_utils_paths),
+            ERROR_KEY: lambda py_module_name: ModuleInfoFactory.display_error(py_module_name)
+        }
+        module_info_builder = builder_info_map.get(py_module_name[2], 
+            builder_info_map.get(py_module_name[0], 
+                builder_info_map.get(str(py_module_name[0:2]), 
+                    builder_info_map[ERROR_KEY])))
+        module_info, idx = module_info_builder(py_module_name)
+        module_info.idx = idx
+        module_info.module_utils_paths = module_utils_paths
+        return module_info
+
+    @staticmethod
+    def display_error(py_module_name):
+        # If we get here, it's because of a bug in ModuleDepFinder.  If we get a reproducer we
+        # should then fix ModuleDepFinder
+        display.warning('ModuleDepFinder improperly found a non-module_utils import %s'
+                        % [py_module_name])
+        # Could not find the module.  Construct a helpful error message.
+        msg = ['Could not find imported module support code for %s.  Looked for' % (name,)]
+        if idx == 2:
+            msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
+        else:
+            msg.append(py_module_name[-1])
+        raise AnsibleError(' '.join(msg))
+
+    @staticmethod
+    def build_collection_info(py_module_name):
+        # FIXME (nitz): replicate module name resolution like below for granular imports
+        for idx in (1, 2):
+            if len(py_module_name) < idx:
+                break
+            try:
+                # this is a collection-hosted MU; look it up with pkgutil.get_data()
+                module_info = CollectionModuleInfo(py_module_name[-idx],
+                                                    [os.path.join(*py_module_name[:-idx])])
+                module_info.py_module_name = py_module_name
+                break
+            except ImportError:
+                continue
+        return module_info, idx
+
+    @staticmethod
+    def build_relative_module_info(py_module_name, module_utils_paths):
+        # Need to remove ansible.module_utils because PluginLoader may find different paths
+        # for us to look in
+        relative_module_utils_dir = py_module_name[2:]
+        # Check whether either the last or the second to last identifier is
+        # a module name
+        for idx in (1, 2):
+            if len(relative_module_utils_dir) < idx:
+                break
+            try:
+                module_info = ModuleInfo(py_module_name[-idx],
+                                            [os.path.join(p, *relative_module_utils_dir[:-idx]) for p in module_utils_paths])
+                module_info.py_module_name = py_module_name
+                break
+            except ImportError:
+                continue
+        return module_info, idx
 
 def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, zf):
     """
@@ -700,142 +874,11 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
     # (Have to exclude them a second time once the paths are processed)
 
     for py_module_name in finder.submodules.difference(py_module_names):
-        module_info = None
 
-        if py_module_name[0:3] == ('ansible', 'module_utils', 'six'):
-            # Special case the python six library because it messes with the
-            # import process in an incompatible way
-            module_info = ModuleInfo('six', module_utils_paths)
-            py_module_name = ('ansible', 'module_utils', 'six')
-            idx = 0
-        elif py_module_name[0:3] == ('ansible', 'module_utils', '_six'):
-            # Special case the python six library because it messes with the
-            # import process in an incompatible way
-            module_info = ModuleInfo('_six', [os.path.join(p, 'six') for p in module_utils_paths])
-            py_module_name = ('ansible', 'module_utils', 'six', '_six')
-            idx = 0
-        elif py_module_name[0] == 'ansible_collections':
-            # FIXME (nitz): replicate module name resolution like below for granular imports
-            for idx in (1, 2):
-                if len(py_module_name) < idx:
-                    break
-                try:
-                    # this is a collection-hosted MU; look it up with pkgutil.get_data()
-                    module_info = CollectionModuleInfo(py_module_name[-idx],
-                                                       [os.path.join(*py_module_name[:-idx])])
-                    break
-                except ImportError:
-                    continue
-        elif py_module_name[0:2] == ('ansible', 'module_utils'):
-            # Need to remove ansible.module_utils because PluginLoader may find different paths
-            # for us to look in
-            relative_module_utils_dir = py_module_name[2:]
-            # Check whether either the last or the second to last identifier is
-            # a module name
-            for idx in (1, 2):
-                if len(relative_module_utils_dir) < idx:
-                    break
-                try:
-                    module_info = ModuleInfo(py_module_name[-idx],
-                                             [os.path.join(p, *relative_module_utils_dir[:-idx]) for p in module_utils_paths])
-                    break
-                except ImportError:
-                    continue
-        else:
-            # If we get here, it's because of a bug in ModuleDepFinder.  If we get a reproducer we
-            # should then fix ModuleDepFinder
-            display.warning('ModuleDepFinder improperly found a non-module_utils import %s'
-                            % [py_module_name])
-            continue
+        module_info = ModuleInfoFactory.build_module_info(py_module_name, module_utils_paths)
 
-        # Could not find the module.  Construct a helpful error message.
-        if module_info is None:
-            msg = ['Could not find imported module support code for %s.  Looked for' % (name,)]
-            if idx == 2:
-                msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
-            else:
-                msg.append(py_module_name[-1])
-            raise AnsibleError(' '.join(msg))
-
-        if isinstance(module_info, CollectionModuleInfo):
-            if idx == 2:
-                # We've determined that the last portion was an identifier and
-                # thus, not part of the module name
-                py_module_name = py_module_name[:-1]
-
-            # HACK: maybe surface collection dirs in here and use existing find_module code?
-            normalized_name = py_module_name
-            normalized_data = module_info.get_source()
-            normalized_path = os.path.join(*py_module_name)
-            py_module_cache[normalized_name] = (normalized_data, normalized_path)
-            normalized_modules.add(normalized_name)
-
-            # HACK: walk back up the package hierarchy to pick up package inits; this won't do the right thing
-            # for actual packages yet...
-            accumulated_pkg_name = []
-            for pkg in py_module_name[:-1]:
-                accumulated_pkg_name.append(pkg)  # we're accumulating this across iterations
-                normalized_name = tuple(accumulated_pkg_name[:] + ['__init__'])  # extra machinations to get a hashable type (list is not)
-                if normalized_name not in py_module_cache:
-                    normalized_path = os.path.join(*accumulated_pkg_name)
-                    # HACK: possibly preserve some of the actual package file contents; problematic for extend_paths and others though?
-                    normalized_data = ''
-                    py_module_cache[normalized_name] = (normalized_data, normalized_path)
-                    normalized_modules.add(normalized_name)
-
-        else:
-            # Found a byte compiled file rather than source.  We cannot send byte
-            # compiled over the wire as the python version might be different.
-            # imp.find_module seems to prefer to return source packages so we just
-            # error out if imp.find_module returns byte compiled files (This is
-            # fragile as it depends on undocumented imp.find_module behaviour)
-            if not module_info.pkg_dir and not module_info.py_src:
-                msg = ['Could not find python source for imported module support code for %s.  Looked for' % name]
-                if idx == 2:
-                    msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
-                else:
-                    msg.append(py_module_name[-1])
-                raise AnsibleError(' '.join(msg))
-
-            if idx == 2:
-                # We've determined that the last portion was an identifier and
-                # thus, not part of the module name
-                py_module_name = py_module_name[:-1]
-
-            # If not already processed then we've got work to do
-            # If not in the cache, then read the file into the cache
-            # We already have a file handle for the module open so it makes
-            # sense to read it now
-            if py_module_name not in py_module_cache:
-                if module_info.pkg_dir:
-                    # Read the __init__.py instead of the module file as this is
-                    # a python package
-                    normalized_name = py_module_name + ('__init__',)
-                    if normalized_name not in py_module_names:
-                        normalized_data = module_info.get_source()
-                        py_module_cache[normalized_name] = (normalized_data, module_info.path)
-                        normalized_modules.add(normalized_name)
-                else:
-                    normalized_name = py_module_name
-                    if normalized_name not in py_module_names:
-                        normalized_data = module_info.get_source()
-                        py_module_cache[normalized_name] = (normalized_data, module_info.path)
-                        normalized_modules.add(normalized_name)
-
-                #
-                # Make sure that all the packages that this module is a part of
-                # are also added
-                #
-                for i in range(1, len(py_module_name)):
-                    py_pkg_name = py_module_name[:-i] + ('__init__',)
-                    if py_pkg_name not in py_module_names:
-                        # Need to remove ansible.module_utils because PluginLoader may find
-                        # different paths for us to look in
-                        relative_module_utils = py_pkg_name[2:]
-                        pkg_dir_info = ModuleInfo(relative_module_utils[-1],
-                                                  [os.path.join(p, *relative_module_utils[:-1]) for p in module_utils_paths])
-                        normalized_modules.add(py_pkg_name)
-                        py_module_cache[py_pkg_name] = (pkg_dir_info.get_source(), pkg_dir_info.path)
+        #py_module_name = module_info.py_module_name
+        normalized_modules, py_module_cache = module_info.aggregate_normalized_modules(normalized_modules, py_module_cache)
 
     # FIXME: Currently the AnsiBallZ wrapper monkeypatches module args into a global
     # variable in basic.py.  If a module doesn't import basic.py, then the AnsiBallZ wrapper will
