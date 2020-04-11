@@ -30,6 +30,7 @@ from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_do
 sys.path.append('/ansible/cli/GetManText.py')
 class GetManText:
 
+
     def __init__(self, doc, display, DocCLI):
         self.doc = doc
         self.DocCLI = DocCLI
@@ -44,7 +45,6 @@ class GetManText:
             desc = " ".join(self.doc.pop('description'))
         else:
             desc = self.doc.pop('description')
-
         self.text.append("%s\n" % textwrap.fill(self.DocCLI.tty_ify(desc), self.limit, initial_indent=self.opt_indent,
                                            subsequent_indent=self.opt_indent))
 
@@ -54,7 +54,8 @@ class GetManText:
             if isinstance(self.doc['deprecated'], dict):
                 if 'version' in self.doc['deprecated'] and 'removed_in' not in self.doc['deprecated']:
                     self.doc['deprecated']['removed_in'] = self.doc['deprecated']['version']
-                self.text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % self.doc.pop('deprecated'))
+                self.text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % 
+                            self.doc.pop('deprecated'))
             else:
                 self.text.append("%s" % self.doc.pop('deprecated'))
             self.text.append("\n")
@@ -94,7 +95,8 @@ class GetManText:
                     self.text.append(textwrap.fill(self.DocCLI.tty_ify('Module %s' % item['module']),
                                 self.limit - 6, initial_indent=self.opt_indent[:-2] + "* ", subsequent_indent=self.opt_indent))
                     description = item.get('description', 'The official documentation on the %s module.' % item['module'])
-                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(description), self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(description), self.limit - 6, initial_indent=self.opt_indent + '   ', 
+                                subsequent_indent=self.opt_indent + '   '))
                     self.text.append(textwrap.fill(self.DocCLI.tty_ify(get_versioned_doclink('modules/%s_module.html' % item['module'])),
                                 self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent))
                 elif 'name' in item and 'link' in item and 'description' in item:
@@ -115,7 +117,7 @@ class GetManText:
             self.text.append('')
             self.text.append('')
             del self.doc['seealso']
-    
+
     def isRequirements(self):
         if 'requirements' in self.doc and self.doc['requirements'] is not None and len(self.doc['requirements']) > 0:
             req = ", ".join(self.doc.pop('requirements'))
@@ -132,6 +134,7 @@ class GetManText:
                 self.text.append(self.DocCLI._dump_yaml({k.upper(): self.doc[k]}, self.opt_indent))
             del self.doc[k]
         self.text.append('')
+
     def isPlainText(self):
         if 'plainexamples' in self.doc and self.doc['plainexamples'] is not None:
             self.text.append("EXAMPLES:")
@@ -142,7 +145,7 @@ class GetManText:
                 self.text.append(yaml.dump(self.doc.pop('plainexamples'), indent=2, default_flow_style=False))
             self.text.append('')
             self.text.append('')
-    
+
     def isReturnDocs(self):
         if 'returndocs' in self.doc and self.doc['returndocs'] is not None:
             self.text.append("RETURN VALUES:")

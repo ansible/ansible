@@ -31,8 +31,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
-from ansible.cli import GetManText 
+from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink 
 sys.path.append('/lib/ansible/cli/GetManText.py')
 
 display = Display()
@@ -348,6 +347,7 @@ class DocCLI(CLI):
 
     @staticmethod
     def format_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
+        from ansible.cli import GetManText
         # assign from other sections
         doc['plainexamples'] = plainexamples
         doc['returndocs'] = returndocs
@@ -621,4 +621,3 @@ class DocCLI(CLI):
             else:
                 text.append("\t%s: %s" % (k.capitalize(), doc['metadata'][k]))
         return text
-
