@@ -427,6 +427,31 @@ class GalaxyCLI(CLI):
 
         # Need to filter out empty strings or non truthy values as an empty server list env var is equal to [''].
         server_list = [s for s in C.GALAXY_SERVER_LIST or [] if s]
+        
+        # Look up the configuration definitions dynamically
+        config_lookup(server_list, server_config_def, server_def, config_servers)
+
+        cmd_server = context.CLIARGS['api_server']
+        cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
+        if cmd_server:
+            # Cmd args take precedence over the config entry but fist check if the arg was a name and use that config
+            # entry, otherwise create a new API entry for the server specified.
+            config_server = next((s for s in config_servers if s.name == cmd_server), None)
+            if config_server:
+                self.api_servers.append(config_server)
+            else:
+                self.api_servers.append(GalaxyAPI(self.galaxy, 'cmd_arg', cmd_server, token=cmd_token))
+        else:
+            self.api_servers = config_servers
+
+        # Default to C.GALAXY_SERVER if no servers were defined
+        if len(self.api_servers) == 0:
+            self.api_servers.append(GalaxyAPI(self.galaxy, 'default', C.GALAXY_SERVER, token=cmd_token))
+
+        context.CLIARGS['func']()
+
+
+    def config_lookup(self, server_list, server_config_def, server_def, config_servers):
         for server_key in server_list:
             # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
             # section [galaxy_server.<server>] for the values url, username, password, and token.
@@ -458,25 +483,6 @@ class GalaxyCLI(CLI):
                         server_options['token'] = GalaxyToken(token=token_val)
 
             config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
-
-        cmd_server = context.CLIARGS['api_server']
-        cmd_token = GalaxyToken(token=context.CLIARGS['api_key'])
-        if cmd_server:
-            # Cmd args take precedence over the config entry but fist check if the arg was a name and use that config
-            # entry, otherwise create a new API entry for the server specified.
-            config_server = next((s for s in config_servers if s.name == cmd_server), None)
-            if config_server:
-                self.api_servers.append(config_server)
-            else:
-                self.api_servers.append(GalaxyAPI(self.galaxy, 'cmd_arg', cmd_server, token=cmd_token))
-        else:
-            self.api_servers = config_servers
-
-        # Default to C.GALAXY_SERVER if no servers were defined
-        if len(self.api_servers) == 0:
-            self.api_servers.append(GalaxyAPI(self.galaxy, 'default', C.GALAXY_SERVER, token=cmd_token))
-
-        context.CLIARGS['func']()
 
     @property
     def api(self):
