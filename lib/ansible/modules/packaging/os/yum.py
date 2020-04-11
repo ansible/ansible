@@ -752,7 +752,7 @@ class YumModule(YumDnf):
         fd = os.open(path, os.O_RDONLY)
         try:
             header = ts.hdrFromFdno(fd)
-        except rpm.error as e:
+        except rpm.error:
             return None
         finally:
             os.close(fd)
@@ -794,8 +794,6 @@ class YumModule(YumDnf):
                     for item in scheme:
                         os.environ[item + "_proxy"] = self.yum_base.conf.proxy
             yield
-        except yum.Errors.YumBaseError:
-            raise
         finally:
             # revert back to previously system configuration
             for item in scheme:
@@ -1058,7 +1056,7 @@ class YumModule(YumDnf):
                         # Get the NEVRA of the requested package using pkglist instead of spec because pkglist
                         #  contains consistently-formatted package names returned by yum, rather than user input
                         #  that is often not parsed correctly by splitFilename().
-                        (name, ver, rel, epoch, arch) = splitFilename(package)
+                        (name, ver, rel, epoch) = splitFilename(package)
 
                         # Check if any version of the requested package is installed
                         inst_pkgs = self.is_installed(repoq, name, is_pkg=True)
@@ -1499,7 +1497,6 @@ class YumModule(YumDnf):
                         for i in new_repos:
                             if i not in current_repos:
                                 rid = self.yum_base.repos.getRepo(i)
-                                a = rid.repoXML.repoid  # nopep8 - https://github.com/ansible/ansible/pull/21475#pullrequestreview-22404868
                         current_repos = new_repos
                     except yum.Errors.YumBaseError as e:
                         self.module.fail_json(msg="Error setting/accessing repos: %s" % to_native(e))

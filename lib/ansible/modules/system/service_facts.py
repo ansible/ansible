@@ -124,16 +124,11 @@ class ServiceScanService(BaseService):
                 service_name = m.group('name')
                 service_goal = m.group('goal')
                 service_state = m.group('state')
-                if m.group('pid'):
-                    pid = m.group('pid')
-                else:
-                    pid = None  # NOQA
                 payload = {"name": service_name, "state": service_state, "goal": service_goal, "source": "upstart"}
                 services[service_name] = payload
 
         # RH sysvinit
         elif chkconfig_path is not None:
-            # print '%s --status-all | grep -E "is (running|stopped)"' % service_path
             p = re.compile(
                 r'(?P<service>.*?)\s+[0-9]:(?P<rl0>on|off)\s+[0-9]:(?P<rl1>on|off)\s+[0-9]:(?P<rl2>on|off)\s+'
                 r'[0-9]:(?P<rl3>on|off)\s+[0-9]:(?P<rl4>on|off)\s+[0-9]:(?P<rl5>on|off)\s+[0-9]:(?P<rl6>on|off)')
@@ -159,7 +154,6 @@ class ServiceScanService(BaseService):
                 m = p.match(line)
                 if m:
                     service_name = m.group('service')
-                    service_state = 'stopped'
                     service_status = "disabled"
                     if m.group('rl3') == 'on':
                         service_status = "enabled"
@@ -167,13 +161,10 @@ class ServiceScanService(BaseService):
                     service_state = rc
                     if rc in (0,):
                         service_state = 'running'
-                    # elif rc in (1,3):
                     else:
                         if 'root' in stderr or 'permission' in stderr.lower() or 'not in sudoers' in stderr.lower():
                             self.incomplete_warning = True
                             continue
-                        else:
-                            service_state = 'stopped'
                     service_data = {"name": service_name, "state": service_state, "status": service_status, "source": "sysv"}
                     services[service_name] = service_data
         return services

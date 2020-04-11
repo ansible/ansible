@@ -398,7 +398,6 @@ class Connection(ConnectionBase):
         cmd = to_bytes(cmd, errors='surrogate_or_strict')
 
         no_prompt_out = b''
-        no_prompt_err = b''
         become_output = b''
 
         try:
@@ -418,7 +417,6 @@ class Connection(ConnectionBase):
                             raise AnsibleError('user %s does not exist' % n_become_user)
                         else:
                             break
-                            # raise AnsibleError('ssh connection closed waiting for password prompt')
                     become_output += chunk
 
                     # need to check every line because we might get lectured
@@ -439,7 +437,6 @@ class Connection(ConnectionBase):
                         raise AnsibleError("A password is required but none was supplied")
                 else:
                     no_prompt_out += become_output
-                    no_prompt_err += become_output
         except socket.timeout:
             raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
 

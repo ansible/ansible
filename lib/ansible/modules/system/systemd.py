@@ -431,13 +431,13 @@ def main():
                 "generated",
                 "transient"]
 
-            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            (rc, out) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
             if out.strip() in valid_enabled_states:
                 is_systemd = True
             else:
                 # fallback list-unit-files as show does not work on some systems (chroot)
                 # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
-                (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
+                (rc) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
                 if rc == 0:
                     is_systemd = True
                 else:
@@ -452,7 +452,7 @@ def main():
         # mask/unmask the service, if requested, can operate on services before they are installed
         if module.params['masked'] is not None:
             # state is not masked unless systemd affirms otherwise
-            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            (rc) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
             masked = out.strip() == "masked"
 
             if masked != module.params['masked']:
@@ -463,7 +463,7 @@ def main():
                     action = 'unmask'
 
                 if not module.check_mode:
-                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
+                    (rc) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
                     if rc != 0:
                         # some versions of system CAN mask/unmask non existing services, we only fail on missing if they don't
                         fail_if_missing(module, found, unit, msg='host')
@@ -480,7 +480,7 @@ def main():
 
             # do we need to enable the service?
             enabled = False
-            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
+            (rc, out) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
 
             # check systemctl result or if it is a init script
             if rc == 0:

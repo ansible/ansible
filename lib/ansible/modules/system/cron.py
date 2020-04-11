@@ -603,7 +603,6 @@ def main():
     do_install = state == 'present'
 
     changed = False
-    res_args = dict()
     warnings = list()
 
     if cron_file:

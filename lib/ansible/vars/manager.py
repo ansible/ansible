@@ -228,24 +228,6 @@ class VariableManager:
             all_group = self._inventory.groups.get('all')
             host_groups = sort_groups([g for g in host.get_groups() if g.name not in ['all']])
 
-            def _get_plugin_vars(plugin, path, entities):
-                data = {}
-                try:
-                    data = plugin.get_vars(self._loader, path, entities)
-                except AttributeError:
-                    try:
-                        for entity in entities:
-                            if isinstance(entity, Host):
-                                data.update(plugin.get_host_vars(entity.name))
-                            else:
-                                data.update(plugin.get_group_vars(entity.name))
-                    except AttributeError:
-                        if hasattr(plugin, 'run'):
-                            raise AnsibleError("Cannot use v1 type vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-                        else:
-                            raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
-                return data
-
             # internal functions that actually do the work
             def _plugins_inventory(entities):
                 ''' merges all entities by inventory source '''
@@ -256,39 +238,6 @@ class VariableManager:
                 data = {}
                 for path in basedirs:
                     data = _combine_and_track(data, get_vars_from_path(self._loader, path, entities, stage), "path '%s'" % path)
-                return data
-
-            # configurable functions that are sortable via config, remember to add to _ALLOWED if expanding this list
-            def all_inventory():
-                return all_group.get_vars()
-
-            def all_plugins_inventory():
-                return _plugins_inventory([all_group])
-
-            def all_plugins_play():
-                return _plugins_play([all_group])
-
-            def groups_inventory():
-                ''' gets group vars from inventory '''
-                return get_group_vars(host_groups)
-
-            def groups_plugins_inventory():
-                ''' gets plugin sources from inventory for groups '''
-                return _plugins_inventory(host_groups)
-
-            def groups_plugins_play():
-                ''' gets plugin sources from play for groups '''
-                return _plugins_play(host_groups)
-
-            def plugins_by_groups():
-                '''
-                    merges all plugin sources by group,
-                    This should be used instead, NOT in combination with the other groups_plugins* functions
-                '''
-                data = {}
-                for group in host_groups:
-                    data[group] = _combine_and_track(data[group], _plugins_inventory(group), "inventory group_vars for '%s'" % group)
-                    data[group] = _combine_and_track(data[group], _plugins_play(group), "playbook group_vars for '%s'" % group)
                 return data
 
             # Merge groups as per precedence config

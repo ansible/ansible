@@ -421,8 +421,6 @@ class Connection(ConnectionBase):
                 # on packages not available on Windows, once fixed we can enable
                 # this path
                 interpreter = to_native(in_data.splitlines()[0][2:])
-                # script = "$input | &'%s' -" % interpreter
-                # in_data = to_text(in_data)
                 raise AnsibleError("cannot run the interpreter '%s' on the psrp "
                                    "connection plugin" % interpreter)
 

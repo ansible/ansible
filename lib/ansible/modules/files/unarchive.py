@@ -171,7 +171,6 @@ OWNER_DIFF_RE = re.compile(r': Uid differs$')
 GROUP_DIFF_RE = re.compile(r': Gid differs$')
 MODE_DIFF_RE = re.compile(r': Mode differs$')
 MOD_TIME_DIFF_RE = re.compile(r': Mod time differs$')
-# NEWER_DIFF_RE = re.compile(r' is newer or same age.$')
 EMPTY_FILE_RE = re.compile(r': : Warning: Cannot stat: No such file or directory$')
 MISSING_FILE_RE = re.compile(r': Warning: Cannot stat: No such file or directory$')
 ZIP_FILE_MODE_RE = re.compile(r'([r-][w-][SsTtx-]){3}')
@@ -388,8 +387,6 @@ class ZipArchive(object):
 
             ztype = pcs[0][0]
             permstr = pcs[0][1:]
-            version = pcs[1]
-            ostype = pcs[2]
             size = int(pcs[3])
             path = to_text(pcs[7], errors='surrogate_or_strict')
 
@@ -612,7 +609,7 @@ class ZipArchive(object):
         if not self.cmd_path:
             return False, 'Command "unzip" not found.'
         cmd = [self.cmd_path, '-l', self.src]
-        rc, out, err = self.module.run_command(cmd)
+        rc = self.module.run_command(cmd)
         if rc == 0:
             return True, None
         return False, 'Command "%s" could not handle archive.' % self.cmd_path
@@ -665,7 +662,7 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
-        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        rc, out = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
 
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
@@ -869,9 +866,6 @@ def main():
 
     # do we need to do unpack?
     check_results = handler.is_unarchived()
-
-    # DEBUG
-    # res_args['check_results'] = check_results
 
     if module.check_mode:
         res_args['changed'] = not check_results['unarchived']

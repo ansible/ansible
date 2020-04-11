@@ -1552,7 +1552,7 @@ class OpenBSDUser(User):
             # find current login class
             user_login_class = None
             userinfo_cmd = [self.module.get_bin_path('userinfo', True), self.name]
-            (rc, out, err) = self.execute_command(userinfo_cmd, obey_checkmode=False)
+            (rc, out) = self.execute_command(userinfo_cmd, obey_checkmode=False)
 
             for line in out.splitlines():
                 tokens = line.split()
@@ -2081,7 +2081,7 @@ class DarwinUser(User):
     def _list_user_groups(self):
         cmd = self._get_dscl()
         cmd += ['-search', '/Groups', 'GroupMembership', self.name]
-        (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
+        (rc, out) = self.execute_command(cmd, obey_checkmode=False)
         groups = []
         for line in out.splitlines():
             if line.startswith(' ') or line.startswith(')'):
@@ -2093,7 +2093,7 @@ class DarwinUser(User):
         '''Return user PROPERTY as given my dscl(1) read or None if not found.'''
         cmd = self._get_dscl()
         cmd += ['-read', '/Users/%s' % self.name, property]
-        (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
+        (rc, out) = self.execute_command(cmd, obey_checkmode=False)
         if rc != 0:
             return None
         # from dscl(1)
@@ -2265,7 +2265,7 @@ class DarwinUser(User):
         '''Check is SELF.NAME is a known user on the system.'''
         cmd = self._get_dscl()
         cmd += ['-list', '/Users/%s' % self.name]
-        (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
+        (rc) = self.execute_command(cmd, obey_checkmode=False)
         return rc == 0
 
     def remove_user(self):
@@ -2333,7 +2333,7 @@ class DarwinUser(User):
         # here we don't care about change status since it is a creation,
         # thus changed is always true.
         if self.groups:
-            (rc, _out, _err, changed) = self._modify_group()
+            (rc, _out, _err) = self._modify_group()
             out += _out
             err += _err
         return (rc, err, out)
