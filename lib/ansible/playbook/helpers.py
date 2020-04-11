@@ -126,7 +126,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 raise AnsibleParserError(to_native(e), obj=task_ds, orig_exc=e)
 
             if action in ('include', 'import_tasks', 'include_tasks'):
-                task_list = _list_action_in_task(task_ds, play, action, task_list, block=block, role=role, use_handlers=use_handlers, variable_manager=variable_manager, loader=loader)
+                task_list = _list_action_in_task(task_ds, play, action, task_list, block=block, role=role,
+                                                 use_handlers=use_handlers, variable_manager=variable_manager, loader=loader)
 
             elif action in ('include_role', 'import_role'):
                 task_list = _list_action_in_role(task_ds, play, action, task_list, block=block, role=role, variable_manager=variable_manager, loader=loader)
@@ -140,6 +141,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 task_list.append(t)
 
     return task_list
+
 
 def _list_action_in_task(task_ds, play, action, task_list, block, role, use_handlers, variable_manager, loader):
     from ansible.playbook.task_include import TaskInclude
@@ -213,6 +215,7 @@ def _get_static_task_list(task_ds, t, play, action, task_list, templar, block, r
 
     return task_list
 
+
 def _get_include_file_path(task_ds, t, templar, block, use_handlers, loader):
     from ansible.playbook.task_include import TaskInclude
 
@@ -257,9 +260,8 @@ def _get_include_file_path(task_ds, t, templar, block, use_handlers, loader):
 
     return include_file
 
+
 def _get_file_data(task_list, t, action, include_file, use_handlers, loader):
-
-
     try:
         data = loader.load_from_file(include_file)
         if data is None:
@@ -289,6 +291,7 @@ def _get_file_data(task_list, t, action, include_file, use_handlers, loader):
         task_list.append(t)
     return data, task_list
 
+
 def _extend_block_tag(task_list, tags, included_blocks, use_handlers):
     # now we extend the tags on each of the included blocks
     for b in included_blocks:
@@ -303,6 +306,7 @@ def _extend_block_tag(task_list, tags, included_blocks, use_handlers):
         task_list.extend(included_blocks)
 
     return task_list
+
 
 def _pop_tags(task_ds, action, ti_copy):
     # FIXME: remove once 'include' is removed
@@ -359,8 +363,8 @@ def _check_if_task_static(action, t, templar, use_handlers):
         return True
     elif t.static is not None:
         display.deprecated("The use of 'static' has been deprecated. "
-                           "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion",
-                           version='2.12')
+                        "Use 'import_tasks' for static inclusion, or 'include_tasks' for dynamic inclusion",
+                        version='2.12')
         return t.static
     else:
         return C.DEFAULT_TASK_INCLUDES_STATIC or \
@@ -390,8 +394,7 @@ def _evaluate_parent_path(task_ds, parent_include, templar):
                 "or variables from inventory" % parent_include.args.get('_raw_params'),
                 obj=task_ds,
                 suppress_extended_error=True,
-                orig_exc=e
-            )
+                orig_exc=e)
         raise
 
 
