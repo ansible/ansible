@@ -28,6 +28,8 @@ from ansible.utils.collection_loader import set_collection_playbook_paths
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
 sys.path.append('/ansible/cli/GetManText.py')
+
+
 class GetManText:
 
 
@@ -111,8 +113,9 @@ class GetManText:
                                 self.limit - 6, initial_indent=self.opt_indent[:-2] + "* ", subsequent_indent=self.opt_indent))
                     self.text.append(textwrap.fill(self.DocCLI.tty_ify(item['description']),
                                 self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
-                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])),
-                                self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])), 
+                    self.limit - 6,
+                    initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
 
             self.text.append('')
             self.text.append('')
@@ -121,13 +124,15 @@ class GetManText:
     def isRequirements(self):
         if 'requirements' in self.doc and self.doc['requirements'] is not None and len(self.doc['requirements']) > 0:
             req = ", ".join(self.doc.pop('requirements'))
-            self.text.append("REQUIREMENTS:%s\n" % textwrap.fill(self.DocCLI.tty_ify(req), self.limit - 16, initial_indent="  ", subsequent_indent=self.opt_indent))
-         # Generic handler
+            self.text.append("REQUIREMENTS:%s\n" % textwrap.fill(self.DocCLI.tty_ify(req), self.limit - 16, initial_indent="  ",
+                        subsequent_indent=self.opt_indent))
+        # Generic handler
         for k in sorted(self.doc):
             if k in self.DocCLI.IGNORE or not self.doc[k]:
                 continue
             if isinstance(self.doc[k], string_types):
-                self.text.append('%s: %s' % (k.upper(), textwrap.fill(self.DocCLI.tty_ify(self.doc[k]), self.limit - (len(k) + 2), subsequent_indent=self.opt_indent)))
+                self.text.append('%s: %s' % (k.upper(), textwrap.fill(self.DocCLI.tty_ify(self.doc[k]), self.limit - (len(k) + 2),
+                            subsequent_indent=self.opt_indent)))
             elif isinstance(self.doc[k], (list, tuple)):
                 self.text.append('%s: %s' % (k.upper(), ', '.join(self.doc[k])))
             else:
