@@ -1260,6 +1260,7 @@ class Request:
         opener = urllib_request.build_opener(*handlers)
         urllib_request.install_opener(opener)
 
+
         data = to_bytes(data, nonstring='passthru')
         request = RequestWithMethod(url, method, data)
 
