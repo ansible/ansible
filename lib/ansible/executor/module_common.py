@@ -771,8 +771,8 @@ class ModuleInfoFactory:
     @staticmethod
     def build_module_info(py_module_name, module_utils_paths):
         builder_info_map = {
-            "six": lambda py_module_name: ModuleSixInfo(py_module_name, module_utils_paths), 0,
-            "_six": lambda py_module_name: ModuleUnderScoreSixInfo(py_module_name, module_utils_paths), 0,
+            "six": lambda py_module_name: ModuleInfoFactory.build_module_six(ModuleSixInfo(py_module_name, module_utils_paths)),
+            "_six": lambda py_module_name: ModuleInfoFactory.build_module_six(ModuleUnderScoreSixInfo(py_module_name, module_utils_paths)),
             "ansible_collections": ModuleInfoFactory.build_collection_info,
             str(("ansible", "module_utils")): lambda py_module_name: build_relative_module_info(py_module_name, module_utils_paths),
             ERROR_KEY: lambda py_module_name: ModuleInfoFactory.display_error(py_module_name)
@@ -784,7 +784,19 @@ class ModuleInfoFactory:
         module_info, idx = module_info_builder(py_module_name)
         module_info.idx = idx
         module_info.module_utils_paths = module_utils_paths
+        if (module_info is None):
+            # Could not find the module.  Construct a helpful error message.
+            msg = ['Could not find imported module support code for %s.  Looked for' % (name,)]
+            if idx == 2:
+                msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
+            else:
+                msg.append(py_module_name[-1])
+            raise AnsibleError(' '.join(msg))
         return module_info
+
+    @staticmethod
+    def build_module_six(module_six_instance):
+        return module_six_instance, 0
 
     @staticmethod
     def display_error(py_module_name):
@@ -792,13 +804,7 @@ class ModuleInfoFactory:
         # should then fix ModuleDepFinder
         display.warning('ModuleDepFinder improperly found a non-module_utils import %s'
                         % [py_module_name])
-        # Could not find the module.  Construct a helpful error message.
-        msg = ['Could not find imported module support code for %s.  Looked for' % (name,)]
-        if idx == 2:
-            msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
-        else:
-            msg.append(py_module_name[-1])
-        raise AnsibleError(' '.join(msg))
+        return None, 0
 
     @staticmethod
     def build_collection_info(py_module_name):
