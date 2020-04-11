@@ -36,8 +36,8 @@ class GetManText:
         self.pad = display.columns * 0.20
         self.limit = max(self.display.columns - int(self.pad), 70)
         self.DocCLI.IGNORE = self.DocCLI.IGNORE + (context.CLIARGS['type'],)
-    opt_indent = "        "
-    text = []
+        self.text = []
+        self.opt_indent = "        "
 
     def isInstance(self):
         if isinstance(self.doc['description'], list):
@@ -45,118 +45,118 @@ class GetManText:
         else:
             desc = self.doc.pop('description')
 
-        text.append("%s\n" % textwrap.fill(self.DocCLI.tty_ify(desc), self.limit, initial_indent=opt_indent,
-                                           subsequent_indent=opt_indent))
+        self.text.append("%s\n" % textwrap.fill(self.DocCLI.tty_ify(desc), self.limit, initial_indent=self.opt_indent,
+                                           subsequent_indent=self.opt_indent))
 
     def isDeprecated(self):
         if 'deprecated' in self.doc and self.doc['deprecated'] is not None and len(self.doc['deprecated']) > 0:
-            text.append("DEPRECATED: \n")
+            self.text.append("DEPRECATED: \n")
             if isinstance(self.doc['deprecated'], dict):
                 if 'version' in self.doc['deprecated'] and 'removed_in' not in self.doc['deprecated']:
                     self.doc['deprecated']['removed_in'] = self.doc['deprecated']['version']
-                text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % self.doc.pop('deprecated'))
+                self.text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % self.doc.pop('deprecated'))
             else:
-                text.append("%s" % self.doc.pop('deprecated'))
-            text.append("\n")
+                self.text.append("%s" % self.doc.pop('deprecated'))
+            self.text.append("\n")
 
         try:
             support_block = self.DocCLI.get_support_block(self.doc)
             if support_block:
-                text.extend(support_block)
+                self.text.extend(support_block)
         except Exception:
             pass  # FIXME: not suported by plugins
 
     def isPop(self):
         if self.doc.pop('action', False):
-            text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
+            self.text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
 
     def isOptions(self):
         if 'options' in self.doc and self.doc['options']:
-            text.append("OPTIONS (= is mandatory):\n")
-            self.DocCLI.add_fields(text, self.doc.pop('options'), self.limit, opt_indent)
-            text.append('')
+            self.text.append("OPTIONS (= is mandatory):\n")
+            self.DocCLI.add_fields(self.text, self.doc.pop('options'), self.limit, self.opt_indent)
+            self.text.append('')
 
     def isNotes(self):
         if 'notes' in self.doc and self.doc['notes'] and len(self.doc['notes']) > 0:
-            text.append("NOTES:")
+            self.text.append("NOTES:")
             for note in self.doc['notes']:
-                text.append(textwrap.fill(self.DocCLI.tty_ify(note), self.limit - 6,
-                                          initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-            text.append('')
-            text.append('')
+                self.text.append(textwrap.fill(self.DocCLI.tty_ify(note), self.limit - 6,
+                                          initial_indent=self.opt_indent[:-2] + "* ", subsequent_indent=self.opt_indent))
+            self.text.append('')
+            self.text.append('')
             del self.doc['notes']
 
     def isSeeAlso(self):
         if 'seealso' in self.doc and self.doc['seealso']:
-            text.append("SEE ALSO:")
+            self.text.append("SEE ALSO:")
             for item in self.doc['seealso']:
                 if 'module' in item:
-                    text.append(textwrap.fill(self.DocCLI.tty_ify('Module %s' % item['module']),
-                                self.limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify('Module %s' % item['module']),
+                                self.limit - 6, initial_indent=self.opt_indent[:-2] + "* ", subsequent_indent=self.opt_indent))
                     description = item.get('description', 'The official documentation on the %s module.' % item['module'])
-                    text.append(textwrap.fill(self.DocCLI.tty_ify(description), self.limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(self.DocCLI.tty_ify(get_versioned_doclink('modules/%s_module.html' % item['module'])),
-                                self.limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(description), self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(get_versioned_doclink('modules/%s_module.html' % item['module'])),
+                                self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent))
                 elif 'name' in item and 'link' in item and 'description' in item:
-                    text.append(textwrap.fill(self.DocCLI.tty_ify(item['name']),
-                                self.limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(self.DocCLI.tty_ify(item['description']),
-                                self.limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(self.DocCLI.tty_ify(item['link']),
-                                self.limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(item['name']),
+                                self.limit - 6, initial_indent=self.opt_indent[:-2] + "* ", subsequent_indent=self.opt_indent))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(item['description']),
+                                self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(item['link']),
+                                self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
                 elif 'ref' in item and 'description' in item:
-                    text.append(textwrap.fill(self.DocCLI.tty_ify('Ansible documentation [%s]' % item['ref']),
-                                self.limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
-                    text.append(textwrap.fill(self.DocCLI.tty_ify(item['description']),
-                                self.limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(self.DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])),
-                                self.limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify('Ansible documentation [%s]' % item['ref']),
+                                self.limit - 6, initial_indent=self.opt_indent[:-2] + "* ", subsequent_indent=self.opt_indent))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(item['description']),
+                                self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])),
+                                self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
 
-            text.append('')
-            text.append('')
+            self.text.append('')
+            self.text.append('')
             del self.doc['seealso']
     
     def isRequirements(self):
         if 'requirements' in self.doc and self.doc['requirements'] is not None and len(self.doc['requirements']) > 0:
             req = ", ".join(self.doc.pop('requirements'))
-            text.append("REQUIREMENTS:%s\n" % textwrap.fill(self.DocCLI.tty_ify(req), self.limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
+            self.text.append("REQUIREMENTS:%s\n" % textwrap.fill(self.DocCLI.tty_ify(req), self.limit - 16, initial_indent="  ", subsequent_indent=self.opt_indent))
          # Generic handler
         for k in sorted(self.doc):
             if k in self.DocCLI.IGNORE or not self.doc[k]:
                 continue
             if isinstance(self.doc[k], string_types):
-                text.append('%s: %s' % (k.upper(), textwrap.fill(self.DocCLI.tty_ify(self.doc[k]), self.limit - (len(k) + 2), subsequent_indent=opt_indent)))
+                self.text.append('%s: %s' % (k.upper(), textwrap.fill(self.DocCLI.tty_ify(self.doc[k]), self.limit - (len(k) + 2), subsequent_indent=self.opt_indent)))
             elif isinstance(self.doc[k], (list, tuple)):
-                text.append('%s: %s' % (k.upper(), ', '.join(self.doc[k])))
+                self.text.append('%s: %s' % (k.upper(), ', '.join(self.doc[k])))
             else:
-                text.append(self.DocCLI._dump_yaml({k.upper(): self.doc[k]}, opt_indent))
+                self.text.append(self.DocCLI._dump_yaml({k.upper(): self.doc[k]}, self.opt_indent))
             del self.doc[k]
-        text.append('')
+        self.text.append('')
     def isPlainText(self):
         if 'plainexamples' in self.doc and self.doc['plainexamples'] is not None:
-            text.append("EXAMPLES:")
-            text.append('')
+            self.text.append("EXAMPLES:")
+            self.text.append('')
             if isinstance(self.doc['plainexamples'], string_types):
-                text.append(self.doc.pop('plainexamples').strip())
+                self.text.append(self.doc.pop('plainexamples').strip())
             else:
-                text.append(yaml.dump(self.doc.pop('plainexamples'), indent=2, default_flow_style=False))
-            text.append('')
-            text.append('')
+                self.text.append(yaml.dump(self.doc.pop('plainexamples'), indent=2, default_flow_style=False))
+            self.text.append('')
+            self.text.append('')
     
     def isReturnDocs(self):
         if 'returndocs' in self.doc and self.doc['returndocs'] is not None:
-            text.append("RETURN VALUES:")
+            self.text.append("RETURN VALUES:")
             if isinstance(self.doc['returndocs'], string_types):
-                text.append(self.doc.pop('returndocs'))
+                self.text.append(self.doc.pop('returndocs'))
             else:
-                text.append(yaml.dump(self.doc.pop('returndocs'), indent=2, default_flow_style=False))
-        text.append('')
+                self.text.append(yaml.dump(self.doc.pop('returndocs'), indent=2, default_flow_style=False))
+        self.text.append('')
 
         try:
             metadata_block = self.DocCLI.get_metadata_block(self.doc)
             if metadata_block:
-                text.extend(metadata_block)
-                text.append('')
+                self.text.extend(metadata_block)
+                self.text.append('')
         except Exception:
             pass  # metadata is optional
 
