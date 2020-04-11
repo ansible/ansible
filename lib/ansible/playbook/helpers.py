@@ -368,8 +368,8 @@ def _check_if_task_static(action, t, templar, use_handlers):
         return t.static
     else:
         return C.DEFAULT_TASK_INCLUDES_STATIC or \
-               (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
-               (not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
+            (use_handlers and C.DEFAULT_HANDLER_INCLUDES_STATIC) or \
+            (not templar.is_template(t.args['_raw_params']) and t.all_parents_static() and not t.loop)
 
 
 def _check_for_loops(task_ds, t, action):
