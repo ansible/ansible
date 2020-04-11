@@ -640,7 +640,7 @@ class ModuleInfo:
         module_info = self
         if not module_info.pkg_dir and not module_info.py_src:
             msg = ['Could not find python source for imported module support code for %s.  Looked for' % self.name]
-            if idx == 2:
+            if self.idx == 2:
                 msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
             else:
                 msg.append(py_module_name[-1])
@@ -683,6 +683,7 @@ class ModuleInfo:
                     normalized_modules.add(py_pkg_name)
                     py_module_cache[py_pkg_name] = (pkg_dir_info.get_source(), pkg_dir_info.path)
         return normalized_modules, py_module_cache
+
 
 class CollectionModuleInfo(ModuleInfo):
     def __init__(self, name, paths):
@@ -754,12 +755,12 @@ class ModuleSixInfo(ModuleInfo):
     def _get_paths(self, module_utils_paths):
         return module_utils_paths
 
-    def _get_truncated_name():
+    def _get_truncated_name(self):
         return ("ansible", "module_utils", "six")
 
 
 class ModuleUnderScoreSixInfo(ModuleSixInfo):
-    def _get_truncated_name():
+    def _get_truncated_name(self):
         return super().get_truncated_name().extend("_six")
     
     def _get_paths(self, module_utils_paths):
@@ -774,19 +775,19 @@ class ModuleInfoFactory:
             "six": lambda py_module_name: ModuleInfoFactory.build_module_six(ModuleSixInfo(py_module_name, module_utils_paths)),
             "_six": lambda py_module_name: ModuleInfoFactory.build_module_six(ModuleUnderScoreSixInfo(py_module_name, module_utils_paths)),
             "ansible_collections": ModuleInfoFactory.build_collection_info,
-            str(("ansible", "module_utils")): lambda py_module_name: build_relative_module_info(py_module_name, module_utils_paths),
-            ERROR_KEY: lambda py_module_name: ModuleInfoFactory.display_error(py_module_name)
+            str(("ansible", "module_utils")): lambda py_module_name: ModuleInfoFactory.build_relative_module_info(py_module_name, module_utils_paths),
+            ModuleInfoFactory.ERROR_KEY: ModuleInfoFactory.display_error
         }
-        module_info_builder = builder_info_map.get(py_module_name[2], 
-            builder_info_map.get(py_module_name[0], 
-                builder_info_map.get(str(py_module_name[0:2]), 
-                    builder_info_map[ERROR_KEY])))
+        module_info_builder = builder_info_map.get(py_module_name[2],
+            builder_info_map.get(py_module_name[0],
+                builder_info_map.get(str(py_module_name[0:2]),
+                    builder_info_map[ModuleInfoFactory.ERROR_KEY])))
         module_info, idx = module_info_builder(py_module_name)
         module_info.idx = idx
         module_info.module_utils_paths = module_utils_paths
         if (module_info is None):
             # Could not find the module.  Construct a helpful error message.
-            msg = ['Could not find imported module support code for %s.  Looked for' % (name,)]
+            msg = ['Could not find imported module support code for %s.  Looked for' % (py_module_name,)]
             if idx == 2:
                 msg.append('either %s.py or %s.py' % (py_module_name[-1], py_module_name[-2]))
             else:
@@ -840,6 +841,7 @@ class ModuleInfoFactory:
             except ImportError:
                 continue
         return module_info, idx
+
 
 def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, zf):
     """
