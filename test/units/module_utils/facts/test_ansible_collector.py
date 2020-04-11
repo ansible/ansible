@@ -117,7 +117,7 @@ def _collectors(module,
     return collectors
 
 
-ns = namespace.PrefixFactNamespace('ansible_facts', 'ansible_')
+ns = namespace.FactNamespace('ansible_facts', 'ansible_')
 
 
 # FIXME: this is brute force, but hopefully enough to get some refactoring to make facts testable

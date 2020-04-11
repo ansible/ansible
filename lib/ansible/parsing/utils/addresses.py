@@ -191,6 +191,7 @@ def parse_address(address, allow_ranges=False):
         if m:
             (address, port) = m.groups()
             port = int(port)
+            continue
 
     # What we're left with now must be an IPv4 or IPv6 address, possibly with
     # numeric ranges, or a hostname with alphanumeric ranges.
@@ -200,6 +201,7 @@ def parse_address(address, allow_ranges=False):
         m = patterns[matching].match(address)
         if m:
             host = address
+            continue
 
     # If it isn't any of the above, we don't understand it.
     if not host:

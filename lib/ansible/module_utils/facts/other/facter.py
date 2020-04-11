@@ -18,7 +18,7 @@ __metaclass__ = type
 
 import json
 
-from ansible.module_utils.facts.namespace import PrefixFactNamespace
+from ansible.module_utils.facts.namespace import FactNamespace
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -28,7 +28,7 @@ class FacterFactCollector(BaseFactCollector):
     _fact_ids = set(['facter'])
 
     def __init__(self, collectors=None, namespace=None):
-        namespace = PrefixFactNamespace(namespace_name='facter',
+        namespace = FactNamespace(namespace_name='facter',
                                         prefix='facter_')
         super(FacterFactCollector, self).__init__(collectors=collectors,
                                                   namespace=namespace)
