@@ -168,8 +168,7 @@ def main():
     all_collector_classes = default_collectors.collectors
 
     # rename namespace_name to root_key?
-    namespace = FactNamespace(namespace_name='ansible',
-                                    prefix='ansible_')
+    namespace = FactNamespace(namespace_name='ansible', prefix='ansible_')
 
     fact_collector = \
         ansible_collector.get_ansible_collector(all_collector_classes=all_collector_classes,

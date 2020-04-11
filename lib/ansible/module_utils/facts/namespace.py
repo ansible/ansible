@@ -32,7 +32,6 @@ __metaclass__ = type
 class FactNamespace:
     def __init__(self, namespace_name, prefix=None):
         self.namespace_name = namespace_name
-        super(FactNamespace, self).__init__(namespace_name)
         self.prefix = prefix
 
     def transform(self, name):

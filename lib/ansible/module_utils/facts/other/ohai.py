@@ -29,8 +29,7 @@ class OhaiFactCollector(BaseFactCollector):
     _fact_ids = set()
 
     def __init__(self, collectors=None, namespace=None):
-        namespace = FactNamespace(namespace_name='ohai',
-                                        prefix='ohai_')
+        namespace = FactNamespace(namespace_name='ohai', prefix='ohai_')
         super(OhaiFactCollector, self).__init__(collectors=collectors,
                                                 namespace=namespace)
 

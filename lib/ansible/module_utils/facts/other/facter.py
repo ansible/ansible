@@ -28,8 +28,7 @@ class FacterFactCollector(BaseFactCollector):
     _fact_ids = set(['facter'])
 
     def __init__(self, collectors=None, namespace=None):
-        namespace = FactNamespace(namespace_name='facter',
-                                        prefix='facter_')
+        namespace = FactNamespace(namespace_name='facter', prefix='facter_')
         super(FacterFactCollector, self).__init__(collectors=collectors,
                                                   namespace=namespace)
 
