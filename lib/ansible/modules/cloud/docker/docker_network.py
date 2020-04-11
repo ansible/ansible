@@ -434,6 +434,55 @@ class DockerNetworkManager(object):
     def get_existing_network(self):
         return self.client.get_network(name=self.parameters.name)
 
+
+
+    def driver_options_dffs():
+        for key, value in self.parameters.driver_options.items():
+            if not (key in net['Options']) or value != net['Options'][key]:
+                differences.add('driver_options.%s' % key,
+                        parameter=value,
+                        active=net['Options'].get(key))
+
+    def update_format_ipam_config(net_ipam_configs):
+
+        config = dict()
+        # Put network's IPAM config into the same format as module's IPAM config
+
+        for k, v in net_ipam_config.items():
+            config[normalize_ipam_config_key(k)] = v
+
+        net_ipam_configs.append(config)
+
+        return net_ipam_configs
+
+    def check_if_dicts_equal():
+        net_config = dict()
+        for net_ipam_config in net_ipam_configs:
+            if dicts_are_essentially_equal(ipam_config, net_ipam_config):
+                net_config = net_ipam_config
+                break
+        return net_config
+
+    def diff_ipam_config():
+        for key, value in ipam_config.items():
+            if value is None:
+                # due to recursive argument_spec, all keys are always present
+                # (but have default value None if not specified)
+                continue
+            if value != net_config.get(key):
+                differences.add('ipam_config[%s].%s' % (idx, key),
+                                parameter=value,
+                                active=net_config.get(key))
+
+    def label_differences():
+        for key, value in self.parameters.labels.items():
+            if not (key in net['Labels']) or value != net['Labels'][key]:
+                differences.add('labels.%s' % key,
+                                parameter=value,
+                                active=net['Labels'].get(key))
+        return differences
+
+
     def has_different_config(self, net):
         '''
         Evaluates an existing network and returns a tuple containing a boolean
@@ -442,65 +491,53 @@ class DockerNetworkManager(object):
         :param net: the inspection output for an existing network
         :return: (bool, list)
         '''
+
         differences = DifferenceTracker()
         if self.parameters.driver and self.parameters.driver != net['Driver']:
             differences.add('driver',
                             parameter=self.parameters.driver,
                             active=net['Driver'])
-        if self.parameters.driver_options:
-            if not net.get('Options'):
-                differences.add('driver_options',
+
+        if self.parameters.driver_options and not net.get('Options'):
+            differences.add('driver_options',
                                 parameter=self.parameters.driver_options,
                                 active=net.get('Options'))
-            else:
-                for key, value in self.parameters.driver_options.items():
-                    if not (key in net['Options']) or value != net['Options'][key]:
-                        differences.add('driver_options.%s' % key,
-                                        parameter=value,
-                                        active=net['Options'].get(key))
 
-        if self.parameters.ipam_driver:
-            if not net.get('IPAM') or net['IPAM']['Driver'] != self.parameters.ipam_driver:
-                differences.add('ipam_driver',
-                                parameter=self.parameters.ipam_driver,
-                                active=net.get('IPAM'))
+        # replaces else
+        if self.parameters.driver_options and net.get('Options'):
+            differences = driver_options_dffs()
+
+        if self.parameters.ipam_driver and (not net.get('IPAM') or net['IPAM']['Driver'] != self.parameters.ipam_driver):
+            differences.add('ipam_driver',
+                            parameter=self.parameters.ipam_driver,
+                            active=net.get('IPAM'))
 
         if self.parameters.ipam_driver_options is not None:
-            ipam_driver_options = net['IPAM'].get('Options') or {}
-            if ipam_driver_options != self.parameters.ipam_driver_options:
-                differences.add('ipam_driver_options',
+           ipam_driver_options = net['IPAM'].get('Options') or {}
+
+        if self.parameters.ipam_driver_options is not None and ipam_driver_options != self.parameters.ipam_driver_options:
+            differences.add('ipam_driver_options',
                                 parameter=self.parameters.ipam_driver_options,
                                 active=ipam_driver_options)
 
-        if self.parameters.ipam_config is not None and self.parameters.ipam_config:
-            if not net.get('IPAM') or not net['IPAM']['Config']:
-                differences.add('ipam_config',
-                                parameter=self.parameters.ipam_config,
-                                active=net.get('IPAM', {}).get('Config'))
-            else:
-                # Put network's IPAM config into the same format as module's IPAM config
-                net_ipam_configs = []
-                for net_ipam_config in net['IPAM']['Config']:
-                    config = dict()
-                    for k, v in net_ipam_config.items():
-                        config[normalize_ipam_config_key(k)] = v
-                    net_ipam_configs.append(config)
+        if self.parameters.ipam_config is not None and self.parameters.ipam_config and (not net.get('IPAM') or not net['IPAM']['Config']) :
+            differences.add('ipam_config',
+                            parameter=self.parameters.ipam_config,
+                            active=net.get('IPAM', {}).get('Config'))
+
+
+
+        if self.parameters.ipam_config is not None and self.parameters.ipam_config and not (not net.get('IPAM') or not net['IPAM']['Config']) :
+            # Put network's IPAM config into the same format as module's IPAM config
+            net_ipam_configs = []
+
+            for net_ipam_config in net['IPAM']['Config']:
+                net_ipam_configs.append(update_format_ipam_config(net_ipam_configs))
+
                 # Compare lists of dicts as sets of dicts
-                for idx, ipam_config in enumerate(self.parameters.ipam_config):
-                    net_config = dict()
-                    for net_ipam_config in net_ipam_configs:
-                        if dicts_are_essentially_equal(ipam_config, net_ipam_config):
-                            net_config = net_ipam_config
-                            break
-                    for key, value in ipam_config.items():
-                        if value is None:
-                            # due to recursive argument_spec, all keys are always present
-                            # (but have default value None if not specified)
-                            continue
-                        if value != net_config.get(key):
-                            differences.add('ipam_config[%s].%s' % (idx, key),
-                                            parameter=value,
-                                            active=net_config.get(key))
+                net_config = check_if_dicts_equal()
+                differences = diff_ipam_config()
+
 
         if self.parameters.enable_ipv6 is not None and self.parameters.enable_ipv6 != net.get('EnableIPv6', False):
             differences.add('enable_ipv6',
@@ -521,17 +558,15 @@ class DockerNetworkManager(object):
             differences.add('attachable',
                             parameter=self.parameters.attachable,
                             active=net.get('Attachable'))
-        if self.parameters.labels:
-            if not net.get('Labels'):
-                differences.add('labels',
-                                parameter=self.parameters.labels,
-                                active=net.get('Labels'))
-            else:
-                for key, value in self.parameters.labels.items():
-                    if not (key in net['Labels']) or value != net['Labels'][key]:
-                        differences.add('labels.%s' % key,
-                                        parameter=value,
-                                        active=net['Labels'].get(key))
+        if self.parameters.labels and not net.get('Labels') :
+            differences.add('labels',
+                            parameter=self.parameters.labels,
+                            active=net.get('Labels'))
+
+        if self.parameters.labels and net.get('Labels') :
+
+            differences = label_differences()
+
 
         return not differences.empty, differences
 
