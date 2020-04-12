@@ -52,7 +52,7 @@ class DistributionFiles:
     #  - have a function get_distribution_DISTNAME implemented
     # keep names in sync with Conditionals page of docs
 
-    SMGL_name = SMGL_name
+    SMGL_name = 'Source Mage GNU/Linux'
 
     OSDIST_LIST = (
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
