@@ -106,9 +106,7 @@ class TaskResult:
             return flag
 
     def __preserve_subset(self):
-    
         subset = {}
-        # preserve subset for later
         for sub in _SUB_PRESERVE:
             if sub in self._result:
                 subset[sub] = {}
@@ -116,13 +114,8 @@ class TaskResult:
                     if key in self._result[sub]:
                         subset[sub][key] = self._result[sub][key]
         return subset
-    
 
     def clean_copy(self):
-
-        ''' returns 'clean' taskresult object '''
-
-        # FIXME: clean task_fields, _task and _host copies
         result = TaskResult(self._host, self._task, {}, self._task_fields)
         subset = self.__preserve_subset()
 
