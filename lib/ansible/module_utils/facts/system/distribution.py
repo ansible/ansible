@@ -437,6 +437,8 @@ class Distribution(object):
     #  - allowempty == True
     #  - be listed in SEARCH_STRING
     #  - have a function get_distribution_DISTNAME implemented
+    SMGL_name = 'Source Mage GNU/Linux'
+    
     OSDIST_LIST = (
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},
