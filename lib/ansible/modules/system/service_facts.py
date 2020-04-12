@@ -99,7 +99,7 @@ class ServiceScanService(BaseService):
         chkconfig_path = self.module.get_bin_path("chkconfig")
 
         # sysvinit
-        if service_path is not None and chkconfig_path is None:
+        if chkconfig_path is None: # we know service_path is not None from the earlier check
             rc, stdout, stderr = self.module.run_command("%s --status-all 2>&1 | grep -E \"\\[ (\\+|\\-) \\]\"" % service_path, use_unsafe_shell=True)
             for line in stdout.split("\n"):
                 line_data = line.split()
@@ -112,27 +112,26 @@ class ServiceScanService(BaseService):
                     service_state = "stopped"
                 services[service_name] = {"name": service_name, "state": service_state, "source": "sysv"}
 
-        # Upstart
-        if initctl_path is not None and chkconfig_path is None:
-            p = re.compile(r'^\s?(?P<name>.*)\s(?P<goal>\w+)\/(?P<state>\w+)(\,\sprocess\s(?P<pid>[0-9]+))?\s*$')
-            rc, stdout, stderr = self.module.run_command("%s list" % initctl_path)
-            real_stdout = stdout.replace("\r", "")
-            for line in real_stdout.split("\n"):
-                m = p.match(line)
-                if not m:
-                    continue
-                service_name = m.group('name')
-                service_goal = m.group('goal')
-                service_state = m.group('state')
-                if m.group('pid'):
-                    pid = m.group('pid')
-                else:
-                    pid = None  # NOQA
-                payload = {"name": service_name, "state": service_state, "goal": service_goal, "source": "upstart"}
-                services[service_name] = payload
-
+            # Upstart
+            if initctl_path is not None: # if we put this "if" inside the previous if no need to check chkconfig_path
+                p = re.compile(r'^\s?(?P<name>.*)\s(?P<goal>\w+)\/(?P<state>\w+)(\,\sprocess\s(?P<pid>[0-9]+))?\s*$')
+                rc, stdout, stderr = self.module.run_command("%s list" % initctl_path)
+                real_stdout = stdout.replace("\r", "")
+                for line in real_stdout.split("\n"):
+                    m = p.match(line)
+                    if not m:
+                        continue
+                    service_name = m.group('name')
+                    service_goal = m.group('goal')
+                    service_state = m.group('state')
+                    if m.group('pid'):
+                        pid = m.group('pid')
+                    else:
+                        pid = None  # NOQA
+                    payload = {"name": service_name, "state": service_state, "goal": service_goal, "source": "upstart"}
+                    services[service_name] = payload
         # RH sysvinit
-        elif chkconfig_path is not None:
+        else: #something is either None or not None (if, else rather than if, elif)
             # print '%s --status-all | grep -E "is (running|stopped)"' % service_path
             p = re.compile(
                 r'(?P<service>.*?)\s+[0-9]:(?P<rl0>on|off)\s+[0-9]:(?P<rl1>on|off)\s+[0-9]:(?P<rl2>on|off)\s+'
