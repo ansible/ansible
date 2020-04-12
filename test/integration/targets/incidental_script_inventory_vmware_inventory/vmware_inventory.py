@@ -75,6 +75,137 @@ def select_chain_match(inlist, key, pattern):
 class VMwareMissingHostException(Exception):
     pass
 
+class objectTypes():
+
+    _object = None
+    data = {}
+    objTpye = {
+    			'none' : False,
+                'inVimTable' : False,
+                'string' : False,
+                'boolean': False,
+                'integer' : False,
+                'float' : False,
+                'listOrTuple' : False,
+                'dict' : False,
+                'object' : False,
+                'noType' : False
+               }
+
+
+    def getObject(self, obj):
+        self._object = obj
+        self.checkObjectType()
+
+        return self.objType
+
+    def checkObjectType(self):
+        if _object is None:
+             objType["none"] = True
+        elif type(_object) in self.vimTable:
+            objType["inVimTable"] = True
+        elif issubclass(type(_object), str) or isinstance(_object, str):
+            objType["string"] = True
+        elif issubclass(type(_object), bool) or isinstance(_object, bool):
+            objType["boolean"] = True
+        elif issubclass(type(_object), integer_types) or isinstance(_object, integer_types):
+            objType["integer"] = True
+        elif issubclass(type(_object), float) or isinstance(_object, float):
+            objType["float"] = True
+        elif issubclass(type(_object), list) or issubclass(type(_object), tuple):
+            objType["list"] = True
+        elif issubclass(type(_object), dict):
+            objType["dict"] = True
+        elif issubclass(type(_object), object):
+            objType["object"] = True
+        else:
+            objType["noType"] = True
+
+
+    def typeIsNone(self):
+    	return None
+
+    def typeIsInVimTable(self, vimTable):
+    	for key in vimTable[type(_object)]:
+    		try:
+                    self.data[key] = getattr(_object, key)
+                except Exception as e:
+                    self.debugl(e)
+        return self.data
+
+    def typeIsString(self):
+    	if self._object.isalnum():
+                self.data = self._object
+            else:
+                self.data = self._object.encode('utf-8').decode('utf-8')
+        return self.data
+
+    def typeIsBoolean(self):
+    	return self._object
+
+    def typeIsinterger(self):
+    	return self._object
+    
+    def typeIsFloat(self):
+    	return self._object
+
+    def typeIsList(self):
+    	self.data = []
+    	try:
+                self._object = sorted(self._object)
+        except Exception:
+            pass
+
+        for idv, vii in enumerate(self._object):
+            if level + 1 <= self.maxlevel:
+                vid = VMWareInventory._process_object_types(
+                    vii,
+                    thisvm=thisvm,
+                    inkey=inkey + '[' + str(idv) + ']',
+                    level=(level + 1)
+                )
+
+                if vid:
+                    self.data.append(vid)
+    	return self.data
+
+    def typeIsDict(self):
+    	return self.data
+
+    def typeIsObject(self):
+    	methods = dir(self._object)
+        methods = [str(x) for x in methods if not x.startswith('_')]
+        methods = [x for x in methods if x not in self.bad_types]
+        methods = [x for x in methods if not inkey + '.' + x.lower() in self.skip_keys]
+        methods = sorted(methods)
+
+        for method in methods:
+            # Attempt to get the method, skip on fail
+            try:
+                methodToCall = getattr(self._object, method)
+            except Exception as e:
+                continue
+
+            if callable(methodToCall):
+                continue
+
+            if self.lowerkeys:
+                method = method.lower()
+            if level + 1 <= self.maxlevel:
+                try:
+                    self.data[method] = VMWareInventory._process_object_types(
+                        methodToCall,
+                        thisvm=thisvm,
+                        inkey=inkey + '.' + method,
+                        level=(level + 1)
+                    )
+                except vim.fault.NoPermission:
+                    self.debugl("Skipping method %s (NoPermission)" % method)
+    	return self.data
+
+    def typeIsNoType(self):
+    	return self.data
+
 
 class VMWareInventory(object):
     __name__ = 'VMWareInventory'
@@ -480,7 +611,7 @@ class VMWareInventory(object):
             inventory['_meta']['hostvars'].pop(k, None)
 
 
-    def apply_host_filters(self, inventory):
+    def filter_inventory(self, inventory):
 
         self.debugl('pre-filtered hosts:')
         for i in inventory['all']['hosts']:
@@ -497,10 +628,6 @@ class VMWareInventory(object):
                     inventory['all']['hosts'].remove(k)
                     inventory['_meta']['hostvars'].pop(k, None)
 
-        self.debugl('post-filter hosts:')
-        for i in inventory['all']['hosts']:
-            self.debugl('  * %s' % i)
-
     def create_groups(self, inventory):
         # Create groups
         for gbp in self.groupby_patterns:
@@ -513,6 +640,10 @@ class VMWareInventory(object):
                     inventory[v]['hosts'].append(k)
 
     def groupy_by_custom_field(self, inventory):                
+        self.debugl('post-filter hosts:')
+        for i in inventory['all']['hosts']:
+            self.debugl('  * %s' % i)
+
         for k, v in inventory['_meta']['hostvars'].items():
             if 'customvalue' in v:
                 for tv in v['customvalue']:
@@ -546,6 +677,7 @@ class VMWareInventory(object):
         
         self.create_inventory(inventory, instances)
         self.map_hosts_and_users(inventory)
+        self.filter_inventroy(inventory)
         self.create_groups(inventory)
 
         if self.config.get('vmware', 'groupby_custom_field'):
@@ -702,88 +834,28 @@ class VMWareInventory(object):
         return rdata
 
     def _process_object_types(self, vobj, thisvm=None, inkey='', level=0):
-        ''' Serialize an object '''
-        rdata = {}
 
         if type(vobj).__name__ in self.vimTableMaxDepth and level >= self.vimTableMaxDepth[type(vobj).__name__]:
-            return rdata
+            return {}
 
-        if vobj is None:
-            rdata = None
-        elif type(vobj) in self.vimTable:
-            rdata = {}
-            for key in self.vimTable[type(vobj)]:
-                try:
-                    rdata[key] = getattr(vobj, key)
-                except Exception as e:
-                    self.debugl(e)
-
-        elif issubclass(type(vobj), str) or isinstance(vobj, str):
-            if vobj.isalnum():
-                rdata = vobj
-            else:
-                rdata = vobj.encode('utf-8').decode('utf-8')
-        elif issubclass(type(vobj), bool) or isinstance(vobj, bool):
-            rdata = vobj
-        elif issubclass(type(vobj), integer_types) or isinstance(vobj, integer_types):
-            rdata = vobj
-        elif issubclass(type(vobj), float) or isinstance(vobj, float):
-            rdata = vobj
-        elif issubclass(type(vobj), list) or issubclass(type(vobj), tuple):
-            rdata = []
-            try:
-                vobj = sorted(vobj)
-            except Exception:
-                pass
-
-            for idv, vii in enumerate(vobj):
-                if level + 1 <= self.maxlevel:
-                    vid = self._process_object_types(
-                        vii,
-                        thisvm=thisvm,
-                        inkey=inkey + '[' + str(idv) + ']',
-                        level=(level + 1)
-                    )
-
-                    if vid:
-                        rdata.append(vid)
-
-        elif issubclass(type(vobj), dict):
-            pass
-
-        elif issubclass(type(vobj), object):
-            methods = dir(vobj)
-            methods = [str(x) for x in methods if not x.startswith('_')]
-            methods = [x for x in methods if x not in self.bad_types]
-            methods = [x for x in methods if not inkey + '.' + x.lower() in self.skip_keys]
-            methods = sorted(methods)
-
-            for method in methods:
-                # Attempt to get the method, skip on fail
-                try:
-                    methodToCall = getattr(vobj, method)
-                except Exception as e:
-                    continue
-
-                if callable(methodToCall):
-                    continue
-
-                if self.lowerkeys:
-                    method = method.lower()
-                if level + 1 <= self.maxlevel:
-                    try:
-                        rdata[method] = self._process_object_types(
-                            methodToCall,
-                            thisvm=thisvm,
-                            inkey=inkey + '.' + method,
-                            level=(level + 1)
-                        )
-                    except vim.fault.NoPermission:
-                        self.debugl("Skipping method %s (NoPermission)" % method)
-        else:
-            pass
-
-        return rdata
+   		Types = objectTypes.getType(vobj)
+   		
+   		if Types["none"] is True:
+   			return Types.typeIsNone()
+   		elif Types["none"] is True:
+   			return Types.typeIsNone()
+   		elif Types["none"] is True:
+   			return Types.typeIsNone()
+   		elif Types["none"] is True:
+   			return Types.typeIsNone()
+   		elif Types["none"] is True:
+   			return Types.typeIsNone()
+   		elif Types["none"] is True:
+   			return Types.typeIsNone()
+		elif Types["none"] is True:
+			return Types.typeIsNone()
+   		elif Types["none"] is True:
+   			return Types.typeIsNone()
 
     def get_host_info(self, host):
         ''' Return hostvars for a single host '''
