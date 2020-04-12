@@ -154,8 +154,7 @@ def get_collector_names(valid_subsets=None,
     # subsets we mention in gather_subset explicitly, except for 'all'/'min'
     explicitly_added = set()
 
-    for subset in gather_subset_with_min:
-        subset_id = subset
+    for subset_id in gather_subset_with_min:
         if subset_id == 'min':
             additional_subsets.update(minimal_gather_subset)
             continue
@@ -163,30 +162,25 @@ def get_collector_names(valid_subsets=None,
             additional_subsets.update(valid_subsets)
             continue
         if subset_id.startswith('!'):
-            subset = subset[1:]
-            if subset == 'min':
+            subset_id = subset_id[1:]
+            if subset_id == 'min':
                 exclude_subsets.update(minimal_gather_subset)
                 continue
-            if subset == 'all':
+            if subset_id == 'all':
                 exclude_subsets.update(valid_subsets - minimal_gather_subset)
+                # include 'devices', 'dmi' etc for '!hardware'
+	            exclude_subsets.update(aliases_map.get(subset_id, set()))
+	            exclude_subsets.add(subset_id)
                 continue
-            exclude = True
-        else:
-            exclude = False
 
-        if exclude:
-            # include 'devices', 'dmi' etc for '!hardware'
-            exclude_subsets.update(aliases_map.get(subset, set()))
-            exclude_subsets.add(subset)
-        else:
-            # NOTE: this only considers adding an unknown gather subsetup an error. Asking to
-            #       exclude an unknown gather subset is ignored.
-            if subset_id not in valid_subsets:
-                raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: all, %s" %
-                                (subset, ", ".join(sorted(valid_subsets))))
+        # NOTE: this only considers adding an unknown gather subsetup an error. Asking to
+        #       exclude an unknown gather subset is ignored.
+        if subset_id not in valid_subsets:
+            raise TypeError("Bad subset '%s' given to Ansible. gather_subset options allowed: all, %s" %
+                            (subset_id, ", ".join(sorted(valid_subsets))))
 
-            explicitly_added.add(subset)
-            additional_subsets.add(subset)
+            explicitly_added.add(subset_id)
+            additional_subsets.add(subset_id)
 
     if not additional_subsets:
         additional_subsets.update(valid_subsets)
@@ -364,10 +358,6 @@ def collector_classes_from_gather_subset(all_collector_classes=None,
     timeout.GATHER_TIMEOUT = gather_timeout
 
     valid_subsets = valid_subsets or frozenset()
-
-    # maps alias names like 'hardware' to the list of names that are part of hardware
-    # like 'devices' and 'dmi'
-    aliases_map = defaultdict(set)
 
     compat_platforms = [platform_info, {'system': 'Generic'}]
 
