@@ -1,11 +1,15 @@
 # -*- Mode: Python; python-indent-offset: 4 -*-
 #
-# Time-stamp: <2020-04-11 21:28:09 alex>
+# Time-stamp: <2020-04-12 12:08:42 alex>
+#
 
 """
  EfficientIP inventory for ansible
  SOLIDserver Device Manager connection to gather devices filtered
 """
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import ipaddress
 # import pprint
@@ -244,7 +248,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                     self.set_filter_metadata(params[param])
 
                 else:
-                    DISPLAY.error('unknwn param {}'.format(param))
+                    DISPLAY.error('unknwn param', str(param))
+                    return False
 
         return True
 
@@ -279,7 +284,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             # check if group
             for _group in self.group_metadata:
                 if _group in dev and dev[_group] != '':
-                    _group_val = '{}_{}'.format(_group, dev[_group])
+                    _group_val = "{1}_{2}".format(_group, dev[_group])
                     if _group_val not in self.group_metadata_val:
                         self.inventory.add_group(_group_val)
                         self.inventory.add_child(_group, _group_val)
@@ -303,7 +308,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 if filt['type'] == 'metadata':
                     self.inventory.set_variable(dev['name'],
                                                 'eip_metadata_'
-                                                '{}'.format(filt['name']),
+                                                '{1}'.format(filt['name']),
                                                 filt['val'])
             # self.inventory.add_group('g1')
 
@@ -349,3 +354,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self._cache[cache_key] = adevs
 
         self._populate(adevs)
+
+#
+# ansible-test sanity --test pylint lib/ansible/plugins/inventory/efficientip.py
+# ansible-test sanity --test future-import-boilerplate lib/ansible/plugins/inventory/efficientip.py
+# ansible-test sanity --test metaclass-boilerplate lib/ansible/plugins/inventory/efficientip.py
