@@ -60,42 +60,6 @@ STRATS = {'generic': 'Generic', 'debian': 'Debian', 'sles': 'SLES', 'redhat': 'R
           'systemd': 'Systemd', 'openrc': 'OpenRC', 'openbsd': 'OpenBSD', 'solaris': 'Solaris', 'freebsd': 'FreeBSD'}
 
 
-class UnimplementedStrategy(object):
-    def __init__(self, module):
-        self.module = module
-
-    def update_current_and_permanent_hostname(self):
-        self.unimplemented_error()
-
-    def update_current_hostname(self):
-        self.unimplemented_error()
-
-    def update_permanent_hostname(self):
-        self.unimplemented_error()
-
-    def get_current_hostname(self):
-        self.unimplemented_error()
-
-    def set_current_hostname(self, name):
-        self.unimplemented_error()
-
-    def get_permanent_hostname(self):
-        self.unimplemented_error()
-
-    def set_permanent_hostname(self, name):
-        self.unimplemented_error()
-
-    def unimplemented_error(self):
-        system = platform.system()
-        distribution = get_distribution()
-        if distribution is not None:
-            msg_platform = '%s (%s)' % (system, distribution)
-        else:
-            msg_platform = system
-        self.module.fail_json(
-            msg='hostname module cannot be used on platform %s' % msg_platform)
-
-
 class Hostname(object):
     """
     This is a generic Hostname manipulation class that is subclassed
@@ -595,7 +559,7 @@ class SLESHostname(Hostname):
         else:
             raise ValueError()
     except ValueError:
-        strategy_class = UnimplementedStrategy
+        strategy_class = GenericStrategy
 
 
 class OpenSUSEHostname(Hostname):
