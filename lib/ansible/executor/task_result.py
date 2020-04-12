@@ -105,20 +105,8 @@ class TaskResult:
                     flag |= res.get(key, False)
             return flag
 
-    def clean_copy(self):
-
-        ''' returns 'clean' taskresult object '''
-
-        # FIXME: clean task_fields, _task and _host copies
-        result = TaskResult(self._host, self._task, {}, self._task_fields)
-
-        # statuses are already reflected on the event type
-        if result._task and result._task.action in ['debug']:
-            # debug is verbose by default to display vars, no need to add invocation
-            ignore = _IGNORE + ('invocation',)
-        else:
-            ignore = _IGNORE
-
+    def __preserve_subset(self):
+    
         subset = {}
         # preserve subset for later
         for sub in _SUB_PRESERVE:
@@ -127,6 +115,23 @@ class TaskResult:
                 for key in _SUB_PRESERVE[sub]:
                     if key in self._result[sub]:
                         subset[sub][key] = self._result[sub][key]
+        return subset
+    
+
+    def clean_copy(self):
+
+        ''' returns 'clean' taskresult object '''
+
+        # FIXME: clean task_fields, _task and _host copies
+        result = TaskResult(self._host, self._task, {}, self._task_fields)
+        subset = self.__preserve_subset()
+
+        # statuses are already reflected on the event type
+        if result._task and result._task.action in ['debug']:
+            # debug is verbose by default to display vars, no need to add invocation
+            ignore = _IGNORE + ('invocation',)
+        else:
+            ignore = _IGNORE
 
         if isinstance(self._task.no_log, bool) and self._task.no_log or self._result.get('_ansible_no_log', False):
             x = {"censored": "the output has been hidden due to the fact that 'no_log: true' was specified for this result"}
