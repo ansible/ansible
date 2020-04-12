@@ -75,7 +75,7 @@ def select_chain_match(inlist, key, pattern):
 class VMwareMissingHostException(Exception):
     pass
 
-class objectTypes():
+class ObjectTypes:
 
     _object = None
     data = {}
@@ -93,7 +93,7 @@ class objectTypes():
                }
 
 
-    def getObject(self, obj):
+    def getType(self, obj):
         self._object = obj
         self.checkObjectType()
 
@@ -126,33 +126,34 @@ class objectTypes():
     	return None
 
     def typeIsInVimTable(self, vimTable):
-    	for key in vimTable[type(_object)]:
-    		try:
-                    self.data[key] = getattr(_object, key)
-                except Exception as e:
-                    self.debugl(e)
+        for key in VMWareInventory.vimTable[type(_object)]:
+            try:
+                self.data[key] = getattr(_object, key)
+            except Exception as e:
+                VMWareInventory.debugl(e)
+        
         return self.data
 
     def typeIsString(self):
-    	if self._object.isalnum():
+        if self._object.isalnum():
                 self.data = self._object
-            else:
-                self.data = self._object.encode('utf-8').decode('utf-8')
+        else:
+            self.data = self._object.encode('utf-8').decode('utf-8')
         return self.data
 
     def typeIsBoolean(self):
-    	return self._object
+        return self._object
 
-    def typeIsinterger(self):
-    	return self._object
+    def typeIsInterger(self):
+        return self._object
     
     def typeIsFloat(self):
-    	return self._object
+        return self._object
 
     def typeIsList(self):
-    	self.data = []
-    	try:
-                self._object = sorted(self._object)
+        self.data = []
+        try:
+            self._object = sorted(self._object)
         except Exception:
             pass
 
@@ -165,15 +166,15 @@ class objectTypes():
                     level=(level + 1)
                 )
 
-                if vid:
-                    self.data.append(vid)
-    	return self.data
+            if vid:
+                self.data.append(vid)
+        return self.data
 
     def typeIsDict(self):
     	return self.data
 
     def typeIsObject(self):
-    	methods = dir(self._object)
+        methods = dir(self._object)
         methods = [str(x) for x in methods if not x.startswith('_')]
         methods = [x for x in methods if x not in self.bad_types]
         methods = [x for x in methods if not inkey + '.' + x.lower() in self.skip_keys]
@@ -201,10 +202,10 @@ class objectTypes():
                     )
                 except vim.fault.NoPermission:
                     self.debugl("Skipping method %s (NoPermission)" % method)
-    	return self.data
+        return self.data
 
     def typeIsNoType(self):
-    	return self.data
+        return self.data
 
 
 class VMWareInventory(object):
@@ -838,24 +839,29 @@ class VMWareInventory(object):
         if type(vobj).__name__ in self.vimTableMaxDepth and level >= self.vimTableMaxDepth[type(vobj).__name__]:
             return {}
 
-   		Types = objectTypes.getType(vobj)
-   		
-   		if Types["none"] is True:
-   			return Types.typeIsNone()
-   		elif Types["none"] is True:
-   			return Types.typeIsNone()
-   		elif Types["none"] is True:
-   			return Types.typeIsNone()
-   		elif Types["none"] is True:
-   			return Types.typeIsNone()
-   		elif Types["none"] is True:
-   			return Types.typeIsNone()
-   		elif Types["none"] is True:
-   			return Types.typeIsNone()
-		elif Types["none"] is True:
-			return Types.typeIsNone()
-   		elif Types["none"] is True:
-   			return Types.typeIsNone()
+        Types = ObjectTypes
+        typeList = Types.getTypeList(vobj)
+
+        if typeList['none'] == True:
+            return Types.typeIsNone()
+        elif typeList['inVimTable'] == True:
+            return Types.typeIsInVimTable()
+        elif typeList['string'] == True:
+            return Types.typeIsString()
+        elif typeList['boolean'] == True:
+            return Types.typeIsBoolean()
+        elif typeList['integer'] == True:
+            return Types.typeIsInterger()
+        elif typeList['float'] == True:
+            return Types.typeIsNone()
+        elif typeList['listOrTuple'] == True:
+            return Types.typeIsNone()
+        elif typeList['dict'] == True:
+            return Types.typeIsNone()
+        elif typeList['object'] == True:
+            return Types.typeIsNone()
+        elif typeList['noType'] == True:
+            return Types.typeIsNone()
 
     def get_host_info(self, host):
         ''' Return hostvars for a single host '''
