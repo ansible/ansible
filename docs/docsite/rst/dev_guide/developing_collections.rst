@@ -171,6 +171,8 @@ playbooks directory
 
 TBD.
 
+.. _developing_collections_tests_directory:
+
 tests directory
 ----------------
 
@@ -179,6 +181,9 @@ Ansible Collections are tested much like Ansible itself, by using the
 newer. Because Ansible Collections are tested using the same tooling as Ansible
 itself, via `ansible-test`, all Ansible developer documentation for testing is
 applicable for authoring Collections Tests with one key concept to keep in mind.
+
+See :ref:`testing_collections` for specific information on how to test collections
+with ``ansible-test``.
 
 When reading the :ref:`developing_testing` documentation, there will be content
 that applies to running Ansible from source code via a git clone, which is
@@ -504,6 +509,69 @@ The build process for docs.ansible.com will know where to find the module docs.
   * Integration tests
   * ReStructured Text docs (anything under ``docs/docsite/rst/``)
   * Files that never existed in ``ansible/ansible:devel``
+
+.. _testing_collections:
+
+Testing Collections
+===================
+
+The main tool for testing collections is ``ansible-test``, Ansible's testing tool described in :ref:`developing_testing`. This tool provides several compile and sanity checks, and allows to run unit and integration tests for plugins.
+
+``ansible-test`` must always be executed in the root directory of a collection. In the following, we will describe how to run ``ansible-test`` with Docker containers. This is the easiest way to use ``ansible-test`` as no special requirements have to be installed, and this is also the way it is run in Shippable both in Ansible's main repository and in the large community collections such as `community.general <https://github.com/ansible-collections/community.general/>`_ and `community.network <https://github.com/ansible-collections/community.network/>`_.
+
+Compile and Sanity Tests
+------------------------
+
+To run all compile and sanity tests, execute::
+
+    ansible-test sanity --docker default --color -v
+
+See :ref:`testing_compile` and :ref:`testing_sanity` for more information on the tests run. See the :ref:`full list of sanity tests <all_sanity_tests>` for details on he sanity tests and how to fix identified issues.
+
+Unit Tests
+----------
+
+Unit tests must be located in the ``tests/unit/plugins/`` directory. The tests for ``plugins/module_utils/foo/bar.py`` must be in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_.
+
+All unit tests can be run as follows::
+
+    ansible-test units --docker default --color -v
+
+This will run all unit tests for all supported Python versions. To run them only for a specific Python version::
+
+    ansible-test units --docker default --color -v --python 3.6
+
+To run only a specific unit test::
+
+    ansible-test units --docker default --color -v --python 3.6 tests/unit/plugins/module_utils/foo/test_bar.py
+
+Python requirements can be specified in the ``tests/unit/requirements.txt`` file. See :ref:`testing_units` for more information, especially on fixture files.
+
+Integration Tests
+-----------------
+
+Integration tests must be located in the ``tests/integration/targets``` directory. For every module ``foo``, a directory of name ``foo`` will contain the tests for that module. For lookup plugins, the directory must be called ``lookup_foo``; for connection plugins, ``connection_foo``; for inventory plugins, ``inventory_foo``.
+
+There are two types of integration tests:
+
+* Ansible roles: they will be run with ``ansible-playbook`` and expect to validate various aspects of the module. They can depend on other integration tests (usually named ``prepare_bar`` or ``setup_bar``) to set-up required resources, such as installing required libraries or setting up server services.
+* ``runme.sh`` tests: if the directory contains an executable shell script ``runme.sh``, it will be run directly. These can for example setup inventory files, and execute ``ansible-playbook`` or ``ansible-inventory`` with various settings.
+
+For examples, see the `integration tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/integration/targets/>`_. See also :ref:`testing_integration` for more details.
+
+Since integration tests can install requirements, and set-up, start and stop services, it is recommended to run them in docker containers or otherwise restricted environments whenever possible. By default, ``ansible-test`` supports Docker images for several operating systems. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for all options. The ``default`` image is used mainly for platform independent integration tests, such as those for cloud modules. The following examples show ``centos8``.
+
+All integration tests for a collection can be executed as follows::
+
+    ansible-test integration --docker centos8 --color -v
+
+If you want more detailed output, run the command with ``-vvv`` instead of ``-v``. Alternatively, specify ``--retry-on-error`` to automatically re-run failed tests with higher verbosity levels.
+
+The integration tests for a specific target can be executed as follows::
+
+    ansible-test integration --docker centos8 --color -v target_name
+
+Multiple target names can be specified. A target name is the name of a directory in ``tests/integration/targets/``.
 
 
 .. seealso::
