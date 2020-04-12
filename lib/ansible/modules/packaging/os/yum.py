@@ -1056,7 +1056,7 @@ class YumModule(YumDnf):
                         # Get the NEVRA of the requested package using pkglist instead of spec because pkglist
                         #  contains consistently-formatted package names returned by yum, rather than user input
                         #  that is often not parsed correctly by splitFilename().
-                        (name, ver, rel, epoch) = splitFilename(package)
+                        (name, ver, rel, epoch, arch) = splitFilename(package)
 
                         # Check if any version of the requested package is installed
                         inst_pkgs = self.is_installed(repoq, name, is_pkg=True)

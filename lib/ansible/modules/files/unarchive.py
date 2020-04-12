@@ -609,7 +609,7 @@ class ZipArchive(object):
         if not self.cmd_path:
             return False, 'Command "unzip" not found.'
         cmd = [self.cmd_path, '-l', self.src]
-        rc = self.module.run_command(cmd)
+        rc, out, err = self.module.run_command(cmd)
         if rc == 0:
             return True, None
         return False, 'Command "%s" could not handle archive.' % self.cmd_path
