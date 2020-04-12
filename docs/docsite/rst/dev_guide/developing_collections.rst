@@ -463,7 +463,8 @@ See the `content_collector README <https://github.com/ansible/content_collector>
 BOTMETA.yml
 -----------
 
-The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ is the source of truth for:
+The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ in the Ansible main repository is the source of truth for:
+
 * ansibullbot
 * the docs build for collections-based modules
 
