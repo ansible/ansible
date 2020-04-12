@@ -1,6 +1,6 @@
 # -*- Mode: Python; python-indent-offset: 4 -*-
 #
-# Time-stamp: <2020-04-12 12:08:42 alex>
+# Time-stamp: <2020-04-12 12:19:00 alex>
 #
 
 """
@@ -284,7 +284,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             # check if group
             for _group in self.group_metadata:
                 if _group in dev and dev[_group] != '':
-                    _group_val = "{1}_{2}".format(_group, dev[_group])
+                    _group_val = "{0}_{1}".format(_group, dev[_group])
                     if _group_val not in self.group_metadata_val:
                         self.inventory.add_group(_group_val)
                         self.inventory.add_child(_group, _group_val)
@@ -308,9 +308,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 if filt['type'] == 'metadata':
                     self.inventory.set_variable(dev['name'],
                                                 'eip_metadata_'
-                                                '{1}'.format(filt['name']),
+                                                '{0}'.format(filt['name']),
                                                 filt['val'])
-            # self.inventory.add_group('g1')
 
     def parse(self, inventory, loader, path, cache=True):
         super(InventoryModule, self).parse(inventory, loader, path, cache)
