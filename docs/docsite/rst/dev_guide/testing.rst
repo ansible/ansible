@@ -91,7 +91,8 @@ Occasionally you may find your PR fails due to a reason unrelated to your change
 
 If either of these issues appear to be the case, you can rerun the Shippable test by:
 
-* closing and re-opening the PR
+* adding a comment with ``/rebuild`` (full rebuild) or ``/rebuild_failed`` (rebuild only failed CI nodes) to the PR
+* closing and re-opening the PR (full rebuild)
 * making another change to the PR and pushing to GitHub
 
 If the issue persists, please contact us in ``#ansible-devel`` on Freenode IRC.
