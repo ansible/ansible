@@ -437,7 +437,7 @@ def main():
             else:
                 # fallback list-unit-files as show does not work on some systems (chroot)
                 # not used as primary as it skips some services (like those using init.d) and requires .service/etc notation
-                (rc) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
+                (rc, out, err) = module.run_command("%s list-unit-files '%s'" % (systemctl, unit))
                 if rc == 0:
                     is_systemd = True
                 else:

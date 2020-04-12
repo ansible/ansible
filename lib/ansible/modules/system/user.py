@@ -2093,7 +2093,7 @@ class DarwinUser(User):
         '''Return user PROPERTY as given my dscl(1) read or None if not found.'''
         cmd = self._get_dscl()
         cmd += ['-read', '/Users/%s' % self.name, property]
-        (rc, out) = self.execute_command(cmd, obey_checkmode=False)
+        (rc, out, err) = self.execute_command(cmd, obey_checkmode=False)
         if rc != 0:
             return None
         # from dscl(1)

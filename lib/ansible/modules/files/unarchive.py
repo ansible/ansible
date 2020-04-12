@@ -662,7 +662,7 @@ class TgzArchive(object):
         if self.excludes:
             cmd.extend(['--exclude=' + f for f in self.excludes])
         cmd.extend(['-f', self.src])
-        rc, out = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
+        rc, out, err = self.module.run_command(cmd, cwd=self.b_dest, environ_update=dict(LANG='C', LC_ALL='C', LC_MESSAGES='C'))
 
         if rc != 0:
             raise UnarchiveError('Unable to list files in the archive')
