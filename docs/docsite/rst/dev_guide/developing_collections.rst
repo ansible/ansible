@@ -573,6 +573,32 @@ The integration tests for a specific target can be executed as follows::
 
 Multiple target names can be specified. A target name is the name of a directory in ``tests/integration/targets/``.
 
+.. _hacking_collections:
+
+Hacking Collections
+===================
+
+This section describes how to work on a collection cloned from a Git repository. This is useful for example if you want to contribute to an existing collection, or if you want to modify a collection you are using to find a bug, change a module's behavior, etc.
+
+This can be combined with a local checkout of Ansible (``source hacking/env-setup``).
+
+In the following, we will describe the process for `community.general <https://github.com/ansible-collections/community.general/>`_. You can simply adjust this by replacing the appropriate folder names ``community`` and ``general`` with the namespace and collection name of the collection you are interested in.
+
+We assume that you have included ``~/dev/ansible/collections/`` in :ref:`COLLECTIONS_PATHS`, and if that path mentiones multiple directories, that you made sure that no other directory earlier in the search path contains a copy of ``community.general``. Make sure that the directory ``~/dev/ansible/collections/ansible_collections/community`` exists, and in it clone `the community.general Git repository <https://github.com/ansible-collections/community.general/>`_ or a fork of it into the folder ``general``::
+
+    mkdir -p ~/dev/ansible/collections/ansible_collections/community
+    cd ~/dev/ansible/collections/ansible_collections/community
+    git clone git@github.com:ansible-collections/community.general.git general
+
+If you clone a fork, it is suggested to add the original repository as a remote ``upstream``::
+
+    cd ~/dev/ansible/collections/ansible_collections/community/general
+    git remote add upstream git@github.com:ansible-collections/community.general.git
+
+This allows you to use this checkout of ``community.general`` in playbooks and roles with the installed version of Ansible, respectively with the active hacking version of Ansible.
+
+For many collections, it is recommended to create a branch and add your changes to that one. When you are done (don't forget testing: :ref:`testing_collections`), push your changes to your fork of the collection and create a Pull Request. If the repository is not hosted on GitHub, the details might differ. Check out the ``README.md`` of the collection for information on contributing to it.
+
 
 .. seealso::
 
