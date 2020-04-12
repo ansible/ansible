@@ -52,7 +52,7 @@ class DistributionFiles:
     #  - have a function get_distribution_DISTNAME implemented
     # keep names in sync with Conditionals page of docs
 
-    SMGL_name = 'Source Mage GNU/Linux'
+    'Source Mage GNU/Linux' = 'Source Mage GNU/Linux'
 
     OSDIST_LIST = (
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
@@ -81,7 +81,7 @@ class DistributionFiles:
         'OracleLinux': 'Oracle Linux',
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT',
-        'SMGL': SMGL_name,
+        'SMGL': 'Source Mage GNU/Linux',
     }
 
     # We can't include this in SEARCH_STRING because a name match on its keys
@@ -437,7 +437,7 @@ class Distribution(object):
     #  - allowempty == True
     #  - be listed in SEARCH_STRING
     #  - have a function get_distribution_DISTNAME implemented
-    SMGL_name = 'Source Mage GNU/Linux'
+    'Source Mage GNU/Linux' = 'Source Mage GNU/Linux'
     
     OSDIST_LIST = (
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
@@ -465,7 +465,7 @@ class Distribution(object):
         'RedHat': 'Red Hat',
         'Altlinux': 'ALT Linux',
         'ClearLinux': 'Clear Linux Software for Intel Architecture',
-        'SMGL': SMGL_name,
+        'SMGL': 'Source Mage GNU/Linux',
     }
 
     # keep keys in sync with Conditionals page of docs
@@ -597,7 +597,7 @@ class Distribution(object):
 
     def get_distribution_SMGL(self):
         smgl_facts = {}
-        smgl_facts['distribution'] = SMGL_name
+        smgl_facts['distribution'] = 'Source Mage GNU/Linux'
         return smgl_facts
 
     def get_distribution_SunOS(self):
