@@ -110,7 +110,9 @@ class GetManText:
                                 self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
                 elif 'ref' in item and 'description' in item:
                     self.text.append(textwrap.fill(self.DocCLI.tty_ify('Ansible documentation [%s]' % item['ref']),
-                                self.limit - 6, initial_indent=self.opt_indent[:-2] + "* ", subsequent_indent=self.opt_indent))
+                                self.limit - 6, 
+                                initial_indent=self.opt_indent[:-2] + "* ", 
+                                subsequent_indent=self.opt_indent))
                     self.text.append(textwrap.fill(self.DocCLI.tty_ify(item['description']),
                                 self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent + '   '))
                     self.text.append(textwrap.fill(self.DocCLI.tty_ify(get_versioned_doclink('/#stq=%s&stp=1' % item['ref'])), 
