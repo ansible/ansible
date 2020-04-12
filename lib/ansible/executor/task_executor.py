@@ -194,17 +194,7 @@ class TaskExecutor:
         and returns the items result.
         '''
 
-        # save the play context variables to a temporary dictionary,
-        # so that we can modify the job vars without doing a full copy
-        # and later restore them to avoid modifying things too early
-        play_context_vars = dict()
-        self._play_context.update_vars(play_context_vars)
-
-        old_vars = dict()
-        for k in play_context_vars:
-            if k in self._job_vars:
-                old_vars[k] = self._job_vars[k]
-            self._job_vars[k] = play_context_vars[k]
+        old_vars, play_context_vars = self._temp_context_vars()
 
         # get search path for this task to pass to lookup plugins
         self._job_vars['ansible_search_path'] = self._task.get_search_path()
@@ -286,7 +276,21 @@ class TaskExecutor:
             else:
                 del self._job_vars[k]
 
-        return items
+    def _temp_context_vars(self):
+        '''
+        Save the play context variables to a temporary dictionary,
+        so that we can modify the job vars without doing a full copy
+        and later restore them to avoid modifying things too early
+        '''
+
+        play_context_vars = dict()
+        self._play_context.update_vars(play_context_vars)
+        old_vars = dict()
+        for k in play_context_vars:
+            if k in self._job_vars:
+                old_vars[k] = self._job_vars[k]
+            self._job_vars[k] = play_context_vars[k]
+        return old_vars, play_context_vars
 
     def _run_loop(self, items):
         '''
