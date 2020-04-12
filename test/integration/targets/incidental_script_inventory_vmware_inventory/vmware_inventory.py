@@ -76,62 +76,60 @@ class VMwareMissingHostException(Exception):
     pass
 
 class ObjectTypes:
-
     _object = None
+    vimTable = None
     data = {}
     objTpye = {
-    			'none' : False,
-                'inVimTable' : False,
-                'string' : False,
-                'boolean': False,
-                'integer' : False,
-                'float' : False,
-                'listOrTuple' : False,
-                'dict' : False,
-                'object' : False,
-                'noType' : False
-               }
+        'none':False,
+        'inVimTable':False,
+        'string':False,
+        'boolean':False,
+        'integer':False,
+        'float':False,
+        'listOrTuple':False,
+        'dict':False,
+        'object':False,
+        'noType':False
+        }
 
-
-    def getType(self, obj):
+    def getType(self,obj,vt):
         self._object = obj
+        self.vimTable = vt
         self.checkObjectType()
 
         return self.objType
 
     def checkObjectType(self):
-        if _object is None:
-             objType["none"] = True
-        elif type(_object) in self.vimTable:
-            objType["inVimTable"] = True
-        elif issubclass(type(_object), str) or isinstance(_object, str):
-            objType["string"] = True
-        elif issubclass(type(_object), bool) or isinstance(_object, bool):
-            objType["boolean"] = True
-        elif issubclass(type(_object), integer_types) or isinstance(_object, integer_types):
-            objType["integer"] = True
-        elif issubclass(type(_object), float) or isinstance(_object, float):
-            objType["float"] = True
-        elif issubclass(type(_object), list) or issubclass(type(_object), tuple):
-            objType["list"] = True
-        elif issubclass(type(_object), dict):
-            objType["dict"] = True
-        elif issubclass(type(_object), object):
-            objType["object"] = True
+        if self._object is None:
+            self.objType["none"] = True
+        elif type(self._object) in self.vimTable:
+            self.objType["inVimTable"] = True
+        elif issubclass(type(self._object), str) or isinstance(self._object, str):
+            self.objType["string"] = True
+        elif issubclass(type(self._object), bool) or isinstance(self._object, bool):
+            self.objType["boolean"] = True
+        elif issubclass(type(self._object), integer_types) or isinstance(self._object, integer_types):
+            self.objType["integer"] = True
+        elif issubclass(type(self._object), float) or isinstance(self._object, float):
+            self.objType["float"] = True
+        elif issubclass(type(self._object), list) or issubclass(type(self._object), tuple):
+            self.objType["list"] = True
+        elif issubclass(type(self._object), dict):
+            self.objType["dict"] = True
+        elif issubclass(type(self._object), object):
+            self.objType["object"] = True
         else:
-            objType["noType"] = True
-
+            self.objType["noType"] = True
 
     def typeIsNone(self):
-    	return None
+        return None
 
-    def typeIsInVimTable(self, vimTable):
-        for key in VMWareInventory.vimTable[type(_object)]:
+    def typeIsInVimTable(self):
+        for key in VMWareInventory.vimTable[type(self._object)]:
             try:
-                self.data[key] = getattr(_object, key)
+                self.data[key] = getattr(self._object, key)
             except Exception as e:
                 VMWareInventory.debugl(e)
-        
         return self.data
 
     def typeIsString(self):
@@ -150,13 +148,12 @@ class ObjectTypes:
     def typeIsFloat(self):
         return self._object
 
-    def typeIsList(self):
+    def typeIsList(self,level,thisvm,inkey):
         self.data = []
         try:
             self._object = sorted(self._object)
         except Exception:
             pass
-
         for idv, vii in enumerate(self._object):
             if level + 1 <= self.maxlevel:
                 vid = VMWareInventory._process_object_types(
@@ -171,9 +168,9 @@ class ObjectTypes:
         return self.data
 
     def typeIsDict(self):
-    	return self.data
+        return self.data
 
-    def typeIsObject(self):
+    def typeIsObject(self,level,thisvm,inkey):
         methods = dir(self._object)
         methods = [str(x) for x in methods if not x.startswith('_')]
         methods = [x for x in methods if x not in self.bad_types]
@@ -560,18 +557,15 @@ class VMWareInventory(object):
 
     def create_inventory(self, inventory, instances):
         self.debugl('re-indexing instances based on ini settings')
-        
         for idx, instance in enumerate(instances):
             # make a unique id for this object to avoid vmware's
             # numerous uuid's which aren't all unique.
             thisid = str(uuid.uuid4())
             idata = instance[1]
-
             # Put it in the inventory
             inventory['all']['hosts'].append(thisid)
             inventory['_meta']['hostvars'][thisid] = idata.copy()
             inventory['_meta']['hostvars'][thisid]['ansible_uuid'] = thisid
-
 
     def map_hosts_and_users(self, inventory):
         # Make a map of the uuid to the alias the user wants
@@ -640,11 +634,10 @@ class VMWareInventory(object):
                 if k not in inventory[v]['hosts']:
                     inventory[v]['hosts'].append(k)
 
-    def groupy_by_custom_field(self, inventory):                
+    def group_by_custom_field(self, inventory):                
         self.debugl('post-filter hosts:')
         for i in inventory['all']['hosts']:
             self.debugl('  * %s' % i)
-
         for k, v in inventory['_meta']['hostvars'].items():
             if 'customvalue' in v:
                 for tv in v['customvalue']:
@@ -675,15 +668,12 @@ class VMWareInventory(object):
         inventory = VMWareInventory._empty_inventory()
         inventory['all'] = {}
         inventory['all']['hosts'] = []
-        
         self.create_inventory(inventory, instances)
         self.map_hosts_and_users(inventory)
         self.filter_inventroy(inventory)
         self.create_groups(inventory)
-
         if self.config.get('vmware', 'groupby_custom_field'):
             group_by_custom_field(inventory)
-
         return inventory
 
     def create_template_mapping(self, inventory, pattern, dtype='string'):
@@ -840,28 +830,28 @@ class VMWareInventory(object):
             return {}
 
         Types = ObjectTypes
-        typeList = Types.getTypeList(vobj)
+        typeList = Types.getTypeList(vobj,self.vimTable)
 
-        if typeList['none'] == True:
+        if typeList['none']:
             return Types.typeIsNone()
-        elif typeList['inVimTable'] == True:
+        elif typeList['inVimTable']:
             return Types.typeIsInVimTable()
-        elif typeList['string'] == True:
+        elif typeList['string']:
             return Types.typeIsString()
-        elif typeList['boolean'] == True:
+        elif typeList['boolean']:
             return Types.typeIsBoolean()
-        elif typeList['integer'] == True:
-            return Types.typeIsInterger()
-        elif typeList['float'] == True:
-            return Types.typeIsNone()
-        elif typeList['listOrTuple'] == True:
-            return Types.typeIsNone()
-        elif typeList['dict'] == True:
-            return Types.typeIsNone()
-        elif typeList['object'] == True:
-            return Types.typeIsNone()
-        elif typeList['noType'] == True:
-            return Types.typeIsNone()
+        elif typeList['integer']:
+            return Types.typeIsInteger()
+        elif typeList['float']:
+            return Types.typeIsFloat()
+        elif typeList['listOrTuple']:
+            return Types.typeIsList(level,thisvm,inkey)
+        elif typeList['dict']:
+            return Types.typeIsDict()
+        elif typeList['object']:
+            return Types.typeIsObject(level,thisvm,inkey)
+        elif typeList['noType']:
+            return Types.typeIsNoType()
 
     def get_host_info(self, host):
         ''' Return hostvars for a single host '''
