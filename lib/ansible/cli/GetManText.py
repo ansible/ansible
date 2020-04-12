@@ -94,12 +94,13 @@ class GetManText:
             self.text.append("SEE ALSO:")
             for item in self.doc['seealso']:
                 if 'module' in item:
-                    text.append(textwrap.fill(DocCLI.tty_ify('Module %s' % item['module']),
-                                limit - 6, initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify('Module %s' % item['module']),
+                                self.limit - 6, initial_indent=self.opt_indent[:-2] + "* ", subsequent_indent=self.opt_indent))
                     description = item.get('description', 'The official documentation on the %s module.' % item['module'])
-                    text.append(textwrap.fill(DocCLI.tty_ify(description), limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent + '   '))
-                    text.append(textwrap.fill(DocCLI.tty_ify(get_versioned_doclink('modules/%s_module.html' % item['module'])),
-                                limit - 6, initial_indent=opt_indent + '   ', subsequent_indent=opt_indent))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(description), self.limit - 6, initial_indent=self.opt_indent + '   ', 
+                                subsequent_indent=self.opt_indent + '   '))
+                    self.text.append(textwrap.fill(self.DocCLI.tty_ify(get_versioned_doclink('modules/%s_module.html' % item['module'])),
+                                self.limit - 6, initial_indent=self.opt_indent + '   ', subsequent_indent=self.opt_indent))
                 elif 'name' in item and 'link' in item and 'description' in item:
                     self.text.append(textwrap.fill(self.DocCLI.tty_ify(item['name']),
                                 self.limit - 6, initial_indent=self.opt_indent[:-2] + "* ", subsequent_indent=self.opt_indent))
