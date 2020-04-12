@@ -51,6 +51,7 @@ class DistributionFiles:
     #  - be listed in SEARCH_STRING
     #  - have a function get_distribution_DISTNAME implemented
     # keep names in sync with Conditionals page of docs
+
     OSDIST_LIST = (
         {'path': '/etc/altlinux-release', 'name': 'Altlinux'},
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
@@ -434,6 +435,7 @@ class Distribution(object):
     #  - allowempty == True
     #  - be listed in SEARCH_STRING
     #  - have a function get_distribution_DISTNAME implemented
+
     OSDIST_LIST = (
         {'path': '/etc/oracle-release', 'name': 'OracleLinux'},
         {'path': '/etc/slackware-version', 'name': 'Slackware'},

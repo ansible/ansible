@@ -119,8 +119,7 @@ def check_required_together(terms, module_parameters):
     for term in terms:
         counts = [count_terms(field, module_parameters) for field in term]
         non_zero = [c for c in counts if c > 0]
-        if len(non_zero) > 0:
-            if 0 in counts:
+        if len(non_zero) > 0 and 0 in counts:
                 results.append(term)
     if results:
         for term in results:
@@ -129,6 +128,20 @@ def check_required_together(terms, module_parameters):
 
     return results
 
+def process_key_value(requirements, module_parameters):
+    result = {}
+    for (key, value) in requirements.items():
+        if key not in module_parameters or module_parameters[key] is None:
+            continue
+        result[key] = []
+        # Support strings (single-item lists)
+        if isinstance(value, string_types):
+            value = [value]
+        for required in value:
+            if required not in module_parameters or module_parameters[required] is None:
+                result[key].append(required)
+
+    return result
 
 def check_required_by(requirements, module_parameters):
     """For each key in requirements, check the corresponding list to see if they
@@ -146,16 +159,7 @@ def check_required_by(requirements, module_parameters):
     if requirements is None:
         return result
 
-    for (key, value) in requirements.items():
-        if key not in module_parameters or module_parameters[key] is None:
-            continue
-        result[key] = []
-        # Support strings (single-item lists)
-        if isinstance(value, string_types):
-            value = [value]
-        for required in value:
-            if required not in module_parameters or module_parameters[required] is None:
-                result[key].append(required)
+    result = process_key_value(requirements, module_parameters)
 
     if result:
         for key, missing in result.items():
@@ -194,6 +198,40 @@ def check_required_arguments(argument_spec, module_parameters):
 
     return missing
 
+
+def process_requirements(requirements, module_parameters):
+
+    results = []
+    for req in requirements:
+        missing = {}
+        missing['missing'] = []
+        max_missing_count = 0
+        is_one_of = False
+        if len(req) == 4:
+            key, val, requirements, is_one_of = req
+        else:
+            key, val, requirements = req
+
+        # is_one_of is True at least one requirement should be
+        # present, else all requirements should be present.
+        if is_one_of:
+            max_missing_count = len(requirements)
+            missing['requires'] = 'any'
+        else:
+            missing['requires'] = 'all'
+
+        if key in module_parameters and module_parameters[key] == val:
+            for check in requirements:
+                count = count_terms(check, module_parameters)
+                if count == 0:
+                    missing['missing'].append(check)
+        if len(missing['missing']) and len(missing['missing']) >= max_missing_count:
+            missing['parameter'] = key
+            missing['value'] = val
+            missing['requirements'] = requirements
+            results.append(missing)
+
+    return requirements, missing, results
 
 def check_required_if(requirements, module_parameters):
     """Check parameters that are conditionally required
@@ -239,34 +277,7 @@ def check_required_if(requirements, module_parameters):
     if requirements is None:
         return results
 
-    for req in requirements:
-        missing = {}
-        missing['missing'] = []
-        max_missing_count = 0
-        is_one_of = False
-        if len(req) == 4:
-            key, val, requirements, is_one_of = req
-        else:
-            key, val, requirements = req
-
-        # is_one_of is True at least one requirement should be
-        # present, else all requirements should be present.
-        if is_one_of:
-            max_missing_count = len(requirements)
-            missing['requires'] = 'any'
-        else:
-            missing['requires'] = 'all'
-
-        if key in module_parameters and module_parameters[key] == val:
-            for check in requirements:
-                count = count_terms(check, module_parameters)
-                if count == 0:
-                    missing['missing'].append(check)
-        if len(missing['missing']) and len(missing['missing']) >= max_missing_count:
-            missing['parameter'] = key
-            missing['value'] = val
-            missing['requirements'] = requirements
-            results.append(missing)
+    requirements, missing, results = process_requirements(requirements, module_parameters)
 
     if results:
         for missing in results:
