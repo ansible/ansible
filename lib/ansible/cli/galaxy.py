@@ -583,7 +583,7 @@ class GalaxyCLI(CLI):
 
         # Get description from galaxy_info['galaxy_info']['description'] first, falling back to top-level 'description'.
         galaxy_info = role_info.get('galaxy_info', {})
-        description = galaxy_info.get('description', role_info.get('description', ''))
+        description = role_info.get('description', galaxy_info.get('description', ''))
         text.append(u"\tdescription: %s" % description)
 
         for k in sorted(role_info.keys()):

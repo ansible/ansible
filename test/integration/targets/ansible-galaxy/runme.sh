@@ -175,10 +175,10 @@ f_ansible_galaxy_status \
         cat - ./testroles/testdesc/meta/main.yml > tmp.yml && \
         mv tmp.yml ./testroles/testdesc/meta/main.yml
     ansible-galaxy role info -p ./testroles --offline testdesc | tee out.txt
-    grep 'description: Description in galaxy_info' out.txt
+    grep 'description: Top level' out.txt
 
-    # Only top level 'description'exists in file
-    sed -i -e '/^[[:space:]]\+description: Description in galaxy_info/d' ./testroles/testdesc/meta/main.yml
+    # Only top level 'description' exists in file
+    sed -i.bak '/^[[:space:]]\{1,\}description: Description in galaxy_info/d' ./testroles/testdesc/meta/main.yml
     ansible-galaxy role info -p ./testroles --offline testdesc | tee out.txt
     grep 'description: Top level' out.txt
 
