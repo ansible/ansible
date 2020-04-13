@@ -1,11 +1,7 @@
-- name: Install docutils
-  pip:
-    name: docutils
-
 - name: Install ansible-runner
   pip:
     name: ansible-runner
-    version: 1.2.0
+    version: 1.4.6
 
 - name: Find location of ansible-runner installation
   command: "'{{ ansible_python_interpreter }}' -c 'import os, ansible_runner; print(os.path.dirname(ansible_runner.__file__))'"
