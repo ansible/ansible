@@ -1,0 +1,2 @@
+minor_changes:
+- Openstack inventory script is moved to openstack.cloud from community.general.
