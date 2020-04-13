@@ -55,6 +55,7 @@ from ansible.utils.color import colorize, hostcolor
 # TODO: Change the default of check_mode_markers to True in a future release (2.13)
 COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
                   ('display_ok_hosts', True),
+                  ('display_changed_hosts', True),
                   ('show_custom_stats', C.SHOW_CUSTOM_STATS),
                   ('display_failed_stderr', False),
                   ('check_mode_markers', False),)
@@ -124,6 +125,9 @@ class CallbackModule(CallbackBase):
         if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
+            if not self.display_changed_hosts:
+                return
+
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 
@@ -293,6 +297,9 @@ class CallbackModule(CallbackBase):
         if isinstance(result._task, TaskInclude):
             return
         elif result._result.get('changed', False):
+            if not self.display_changed_hosts:
+                return
+
             if self._last_task_banner != result._task._uuid:
                 self._print_task_banner(result._task)
 

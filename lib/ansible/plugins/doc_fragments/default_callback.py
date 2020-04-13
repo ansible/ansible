@@ -34,6 +34,17 @@ class ModuleDocFragment(object):
           - key: display_ok_hosts
             section: defaults
         version_added: '2.7'
+      display_changed_hosts:
+        name: Show 'changed' hosts
+        description: "Toggle to control displaying 'changed' task/host results in a task"
+        type: bool
+        default: yes
+        env:
+          - name: ANSIBLE_DISPLAY_CHANGED_HOSTS
+        ini:
+          - key: display_changed_hosts
+            section: defaults
+        version_added: '2.10'
       display_failed_stderr:
         name: Use STDERR for failed and unreachable tasks
         description: "Toggle to control whether failed and unreachable tasks are displayed to STDERR (vs. STDOUT)"
