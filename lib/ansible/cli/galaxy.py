@@ -1221,7 +1221,7 @@ class GalaxyCLI(CLI):
                     continue
 
                 collection_found = True
-                collection = CollectionRequirement.from_path(b_collection_path, False)
+                collection = CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=True)
                 fqcn_width, version_width = _get_collection_widths(collection)
 
                 _display_header(collection_path, 'Collection', 'Version', fqcn_width, version_width)
@@ -1232,7 +1232,7 @@ class GalaxyCLI(CLI):
                 collection_path = validate_collection_path(path)
                 if os.path.isdir(collection_path):
                     display.vvv("Searching {0} for collections".format(collection_path))
-                    collections = find_existing_collections(collection_path)
+                    collections = find_existing_collections(collection_path, fallback_metadata=True)
                 else:
                     # There was no 'ansible_collections/' directory in the path, so there
                     # or no collections here.
