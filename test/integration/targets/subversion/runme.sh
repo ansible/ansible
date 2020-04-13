@@ -2,7 +2,7 @@
 
 set -eu
 
-export OUTPUT_DIR=$(mktemp -d)
+OUTPUT_DIR=$(mktemp -d)
 
 cleanup() {
     set +e  # Ensure cleanup completes
