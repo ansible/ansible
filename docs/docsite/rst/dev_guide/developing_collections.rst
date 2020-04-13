@@ -524,7 +524,7 @@ Compile and Sanity Tests
 
 To run all compile and sanity tests, execute::
 
-    ansible-test sanity --docker default --color -v
+    ansible-test sanity --docker default -v
 
 See :ref:`testing_compile` and :ref:`testing_sanity` for more information on the tests run. See the :ref:`full list of sanity tests <all_sanity_tests>` for details on he sanity tests and how to fix identified issues.
 
@@ -535,15 +535,15 @@ Unit tests must be located in the ``tests/unit/plugins/`` directory. The tests f
 
 All unit tests can be run as follows::
 
-    ansible-test units --docker default --color -v
+    ansible-test units --docker default -v
 
 This will run all unit tests for all supported Python versions. To run them only for a specific Python version::
 
-    ansible-test units --docker default --color -v --python 3.6
+    ansible-test units --docker default -v --python 3.6
 
 To run only a specific unit test::
 
-    ansible-test units --docker default --color -v --python 3.6 tests/unit/plugins/module_utils/foo/test_bar.py
+    ansible-test units --docker default -v --python 3.6 tests/unit/plugins/module_utils/foo/test_bar.py
 
 Python requirements can be specified in the ``tests/unit/requirements.txt`` file. See :ref:`testing_units` for more information, especially on fixture files.
 
@@ -563,13 +563,13 @@ Since integration tests can install requirements, and set-up, start and stop ser
 
 All integration tests for a collection can be executed as follows::
 
-    ansible-test integration --docker centos8 --color -v
+    ansible-test integration --docker centos8 -v
 
 If you want more detailed output, run the command with ``-vvv`` instead of ``-v``. Alternatively, specify ``--retry-on-error`` to automatically re-run failed tests with higher verbosity levels.
 
 The integration tests for a specific target can be executed as follows::
 
-    ansible-test integration --docker centos8 --color -v target_name
+    ansible-test integration --docker centos8 -v target_name
 
 Multiple target names can be specified. A target name is the name of a directory in ``tests/integration/targets/``.
 
