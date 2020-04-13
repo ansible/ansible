@@ -1,3 +1,4 @@
+setup/always/setup_passlib
 shippable/posix/group2
 skip/osx
 destructive

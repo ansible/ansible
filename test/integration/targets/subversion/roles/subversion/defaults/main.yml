@@ -1,5 +1,6 @@
 ---
 apache_port: 11386  # cannot use 80 as httptester overrides this
+output_dir: "{{ lookup('env', 'OUTPUT_DIR') }}"
 subversion_test_dir: '{{ output_dir }}/svn-test'
 subversion_server_dir: /tmp/ansible-svn  # cannot use a path in the home dir without userdir or granting exec permission to the apache user
 subversion_repo_name: ansible-test-repo
