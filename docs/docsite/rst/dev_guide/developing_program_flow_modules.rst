@@ -610,7 +610,7 @@ choices
 required
 """"""""
 
-``required`` accepts a boolean, either ``True`` or ``False`` that indicates that the argument is required. This should not be used in combination with ``default``.
+``required`` accepts a boolean, either ``True`` or ``False`` that indicates that the argument is required. When not specified, ``required`` defaults to ``False``. This should not be used in combination with ``default``.
 
 no_log
 """"""

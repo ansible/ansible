@@ -3,7 +3,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
-import json
 import functools
 import os
 import platform
@@ -17,6 +16,11 @@ from .config import (
     TestConfig,
 )
 
+from .io import (
+    write_json_file,
+    read_json_file,
+)
+
 from .util import (
     display,
     find_executable,
@@ -27,8 +31,8 @@ from .util import (
 )
 
 from .util_common import (
+    data_context,
     write_json_test_results,
-    write_json_file,
     ResultType,
 )
 
@@ -69,8 +73,9 @@ class EnvConfig(CommonConfig):
         self.show = args.show
         self.dump = args.dump
         self.timeout = args.timeout
+        self.list_files = args.list_files
 
-        if not self.show and not self.dump and self.timeout is None:
+        if not self.show and not self.dump and self.timeout is None and not self.list_files:
             # default to --show if no options were given
             self.show = True
 
@@ -80,6 +85,7 @@ def command_env(args):
     :type args: EnvConfig
     """
     show_dump_env(args)
+    list_files_env(args)
     set_timeout(args)
 
 
@@ -127,6 +133,15 @@ def show_dump_env(args):
         write_json_test_results(ResultType.BOT, 'data-environment.json', data)
 
 
+def list_files_env(args):  # type: (EnvConfig) -> None
+    """List files on stdout."""
+    if not args.list_files:
+        return
+
+    for path in data_context().content.all_files():
+        display.info(path)
+
+
 def set_timeout(args):
     """
     :type args: EnvConfig
@@ -164,9 +179,7 @@ def get_timeout():
     if not os.path.exists(TIMEOUT_PATH):
         return None
 
-    with open(TIMEOUT_PATH, 'r') as timeout_fd:
-        data = json.load(timeout_fd)
-
+    data = read_json_file(TIMEOUT_PATH)
     data['deadline'] = datetime.datetime.strptime(data['deadline'], '%Y-%m-%dT%H:%M:%SZ')
 
     return data

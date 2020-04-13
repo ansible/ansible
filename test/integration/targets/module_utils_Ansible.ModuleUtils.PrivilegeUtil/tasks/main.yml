@@ -1,0 +1,8 @@
+---
+- name: call module with PrivilegeUtil tests
+  privilege_util_test:
+  register: privilege_util_test
+
+- assert:
+    that:
+    - privilege_util_test.data == 'success'

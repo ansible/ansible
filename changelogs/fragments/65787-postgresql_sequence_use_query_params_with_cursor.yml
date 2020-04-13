@@ -1,2 +1,0 @@
-bugfixes:
-- postgresql_sequence - use query parameters with cursor object (https://github.com/ansible/ansible/pull/65787).

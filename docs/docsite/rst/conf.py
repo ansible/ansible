@@ -142,6 +142,8 @@ html_context = {
     'github_repo': 'ansible',
     'github_version': 'devel/docs/docsite/rst/',
     'github_module_version': 'devel/lib/ansible/modules/',
+    'github_root_dir': 'devel/lib/ansible',
+    'github_cli_version': 'devel/lib/ansible/cli/',
     'current_version': version,
     'latest_version': '2.9',
     # list specifically out of order to make latest work
@@ -274,4 +276,10 @@ autoclass_content = 'both'
 # location for the mappning to live) will confuse it.
 intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2.inv')),
                        'python3': ('https://docs.python.org/3/', (None, '../python3.inv')),
-                       'jinja2': ('http://jinja.pocoo.org/docs/', (None, '../jinja.inv'))}
+                       'jinja2': ('http://jinja.palletsprojects.com/', (None, '../jinja2.inv')),
+                       'ansible_2_9': ('https://docs.ansible.com/ansible/2.9/', (None, '../ansible_2_9.inv')),
+                       'ansible_2_8': ('https://docs.ansible.com/ansible/2.8/', (None, '../ansible_2_8.inv')),
+                       'ansible_2_7': ('https://docs.ansible.com/ansible/2.7/', (None, '../ansible_2_7.inv')),
+                       'ansible_2_6': ('https://docs.ansible.com/ansible/2.6/', (None, '../ansible_2_6.inv')),
+                       'ansible_2_5': ('https://docs.ansible.com/ansible/2.5/', (None, '../ansible_2_5.inv')),
+                       }

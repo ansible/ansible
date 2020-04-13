@@ -1,2 +1,0 @@
-minor_changes:
-  - meraki_content_filtering.py - Fixed to use net_id veraible instead static value of None.

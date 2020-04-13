@@ -13,6 +13,7 @@ from .util import (
     find_python,
     generate_pip_command,
     get_docker_completion,
+    get_remote_completion,
     ApplicationError,
 )
 
@@ -58,6 +59,7 @@ class EnvironmentConfig(CommonConfig):
         self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
         self.docker_seccomp = args.docker_seccomp if 'docker_seccomp' in args else None  # type: str
         self.docker_memory = args.docker_memory if 'docker_memory' in args else None
+        self.docker_terminate = args.docker_terminate if 'docker_terminate' in args else None  # type: str
 
         if self.docker_seccomp is None:
             self.docker_seccomp = get_docker_completion().get(self.docker_raw, {}).get('seccomp', 'default')
@@ -80,6 +82,8 @@ class EnvironmentConfig(CommonConfig):
         self.python_version = self.python or actual_major_minor
         self.python_interpreter = args.python_interpreter
 
+        self.pip_check = args.pip_check
+
         self.delegate = self.docker or self.remote or self.venv
         self.delegate_args = []  # type: t.List[str]
 
@@ -88,6 +92,12 @@ class EnvironmentConfig(CommonConfig):
 
         self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
         self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
+
+        if self.get_delegated_completion().get('httptester', 'enabled') == 'disabled':
+            self.httptester = False
+
+        if self.get_delegated_completion().get('pip-check', 'enabled') == 'disabled':
+            self.pip_check = False
 
         if args.check_python and args.check_python != actual_major_minor:
             raise ApplicationError('Running under Python %s instead of Python %s as expected.' % (actual_major_minor, args.check_python))
@@ -114,6 +124,18 @@ class EnvironmentConfig(CommonConfig):
         :rtype: list[str]
         """
         return generate_pip_command(self.python_executable)
+
+    def get_delegated_completion(self):
+        """Returns a dictionary of settings specific to the selected delegation system, if any. Otherwise returns an empty dictionary.
+        :rtype: dict[str, str]
+        """
+        if self.docker:
+            return get_docker_completion().get(self.docker_raw, {})
+
+        if self.remote:
+            return get_remote_completion().get(self.remote, {})
+
+        return {}
 
 
 class TestConfig(EnvironmentConfig):
@@ -204,6 +226,8 @@ class SanityConfig(TestConfig):
         else:
             self.base_branch = ''
 
+        self.info_stderr = self.lint
+
 
 class IntegrationConfig(TestConfig):
     """Configuration for the integration command."""
@@ -234,8 +258,12 @@ class IntegrationConfig(TestConfig):
         self.no_temp_workdir = args.no_temp_workdir
         self.no_temp_unicode = args.no_temp_unicode
 
+        if self.get_delegated_completion().get('temp-unicode', 'enabled') == 'disabled':
+            self.no_temp_unicode = True
+
         if self.list_targets:
             self.explain = True
+            self.info_stderr = True
 
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""
@@ -285,6 +313,8 @@ class NetworkIntegrationConfig(IntegrationConfig):
         super(NetworkIntegrationConfig, self).__init__(args, 'network-integration')
 
         self.platform = args.platform  # type: t.List[str]
+        self.platform_collection = dict(args.platform_collection or [])  # type: t.Dict[str, str]
+        self.platform_connection = dict(args.platform_connection or [])  # type: t.Dict[str, str]
         self.inventory = args.inventory  # type: str
         self.testcase = args.testcase  # type: str
 
@@ -306,30 +336,3 @@ class UnitsConfig(TestConfig):
             self.requirements = True
         elif self.requirements_mode == 'skip':
             self.requirements = False
-
-
-class CoverageConfig(EnvironmentConfig):
-    """Configuration for the coverage command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageConfig, self).__init__(args, 'coverage')
-
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool
-        self.coverage = False  # temporary work-around to support intercept_command in cover.py
-
-
-class CoverageReportConfig(CoverageConfig):
-    """Configuration for the coverage report command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageReportConfig, self).__init__(args)
-
-        self.show_missing = args.show_missing  # type: bool
-        self.include = args.include  # type: str
-        self.omit = args.omit  # type: str

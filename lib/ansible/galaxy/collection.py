@@ -9,6 +9,7 @@ import json
 import operator
 import os
 import shutil
+import stat
 import sys
 import tarfile
 import tempfile
@@ -16,8 +17,9 @@ import threading
 import time
 import yaml
 
+from collections import namedtuple
 from contextlib import contextmanager
-from distutils.version import LooseVersion, StrictVersion
+from distutils.version import LooseVersion
 from hashlib import sha256
 from io import BytesIO
 from yaml.error import YAMLError
@@ -37,6 +39,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
+from ansible.utils.version import SemanticVersion
 from ansible.module_utils.urls import open_url
 
 urlparse = six.moves.urllib.parse.urlparse
@@ -47,13 +50,15 @@ display = Display()
 
 MANIFEST_FORMAT = 1
 
+ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
+
 
 class CollectionRequirement:
 
     _FILE_MAPPING = [(b'MANIFEST.json', 'manifest_file'), (b'FILES.json', 'files_file')]
 
     def __init__(self, namespace, name, b_path, api, versions, requirement, force, parent=None, metadata=None,
-                 files=None, skip=False):
+                 files=None, skip=False, allow_pre_releases=False):
         """
         Represents a collection requirement, the versions that are available to be installed as well as any
         dependencies the collection has.
@@ -72,15 +77,17 @@ class CollectionRequirement:
             collection artifact.
         :param skip: Whether to skip installing the collection. Should be set if the collection is already installed
             and force is not set.
+        :param allow_pre_releases: Whether to skip pre-release versions of collections.
         """
         self.namespace = namespace
         self.name = name
         self.b_path = b_path
         self.api = api
-        self.versions = set(versions)
+        self._versions = set(versions)
         self.force = force
         self.skip = skip
         self.required_by = []
+        self.allow_pre_releases = allow_pre_releases
 
         self._metadata = metadata
         self._files = files
@@ -99,21 +106,39 @@ class CollectionRequirement:
         return self._metadata
 
     @property
+    def versions(self):
+        if self.allow_pre_releases:
+            return self._versions
+        return set(v for v in self._versions if v == '*' or not SemanticVersion(v).is_prerelease)
+
+    @versions.setter
+    def versions(self, value):
+        self._versions = set(value)
+
+    @property
+    def pre_releases(self):
+        return set(v for v in self._versions if SemanticVersion(v).is_prerelease)
+
+    @property
     def latest_version(self):
         try:
-            return max([v for v in self.versions if v != '*'], key=LooseVersion)
+            return max([v for v in self.versions if v != '*'], key=SemanticVersion)
         except ValueError:  # ValueError: max() arg is an empty sequence
             return '*'
 
     @property
     def dependencies(self):
-        if self._metadata:
-            return self._metadata.dependencies
-        elif len(self.versions) > 1:
-            return None
+        if not self._metadata:
+            if len(self.versions) > 1:
+                return {}
+            self._get_metadata()
 
-        self._get_metadata()
-        return self._metadata.dependencies
+        dependencies = self._metadata.dependencies
+
+        if dependencies is None:
+            return {}
+
+        return dependencies
 
     def add_requirement(self, parent, requirement):
         self.required_by.append((parent, requirement))
@@ -137,13 +162,32 @@ class CollectionRequirement:
                 for p, r in self.required_by
             )
 
-            versions = ", ".join(sorted(self.versions, key=LooseVersion))
+            versions = ", ".join(sorted(self.versions, key=SemanticVersion))
+            if not self.versions and self.pre_releases:
+                pre_release_msg = (
+                    '\nThis collection only contains pre-releases. Utilize `--pre` to install pre-releases, or '
+                    'explicitly provide the pre-release version.'
+                )
+            else:
+                pre_release_msg = ''
+
             raise AnsibleError(
-                "%s from source '%s'. Available versions before last requirement added: %s\nRequirements from:\n%s"
-                % (msg, collection_source, versions, req_by)
+                "%s from source '%s'. Available versions before last requirement added: %s\nRequirements from:\n%s%s"
+                % (msg, collection_source, versions, req_by, pre_release_msg)
             )
 
         self.versions = new_versions
+
+    def download(self, b_path):
+        download_url = self._metadata.download_url
+        artifact_hash = self._metadata.artifact_sha256
+        headers = {}
+        self.api._add_auth_token(headers, download_url, required=False)
+
+        b_collection_path = _download_file(download_url, b_path, artifact_hash, self.api.validate_certs,
+                                           headers=headers)
+
+        return to_text(b_collection_path, errors='surrogate_or_strict')
 
     def install(self, path, b_temp_path):
         if self.skip:
@@ -156,40 +200,106 @@ class CollectionRequirement:
         display.display("Installing '%s:%s' to '%s'" % (to_text(self), self.latest_version, collection_path))
 
         if self.b_path is None:
-            download_url = self._metadata.download_url
-            artifact_hash = self._metadata.artifact_sha256
-            headers = {}
-            self.api._add_auth_token(headers, download_url, required=False)
-
-            self.b_path = _download_file(download_url, b_temp_path, artifact_hash, self.api.validate_certs,
-                                         headers=headers)
+            self.b_path = self.download(b_temp_path)
 
         if os.path.exists(b_collection_path):
             shutil.rmtree(b_collection_path)
         os.makedirs(b_collection_path)
 
-        with tarfile.open(self.b_path, mode='r') as collection_tar:
-            files_member_obj = collection_tar.getmember('FILES.json')
-            with _tarfile_extract(collection_tar, files_member_obj) as files_obj:
-                files = json.loads(to_text(files_obj.read(), errors='surrogate_or_strict'))
+        try:
+            with tarfile.open(self.b_path, mode='r') as collection_tar:
+                files_member_obj = collection_tar.getmember('FILES.json')
+                with _tarfile_extract(collection_tar, files_member_obj) as files_obj:
+                    files = json.loads(to_text(files_obj.read(), errors='surrogate_or_strict'))
 
-            _extract_tar_file(collection_tar, 'MANIFEST.json', b_collection_path, b_temp_path)
-            _extract_tar_file(collection_tar, 'FILES.json', b_collection_path, b_temp_path)
+                _extract_tar_file(collection_tar, 'MANIFEST.json', b_collection_path, b_temp_path)
+                _extract_tar_file(collection_tar, 'FILES.json', b_collection_path, b_temp_path)
 
-            for file_info in files['files']:
-                file_name = file_info['name']
-                if file_name == '.':
-                    continue
+                for file_info in files['files']:
+                    file_name = file_info['name']
+                    if file_name == '.':
+                        continue
 
-                if file_info['ftype'] == 'file':
-                    _extract_tar_file(collection_tar, file_name, b_collection_path, b_temp_path,
-                                      expected_hash=file_info['chksum_sha256'])
-                else:
-                    os.makedirs(os.path.join(b_collection_path, to_bytes(file_name, errors='surrogate_or_strict')))
+                    if file_info['ftype'] == 'file':
+                        _extract_tar_file(collection_tar, file_name, b_collection_path, b_temp_path,
+                                          expected_hash=file_info['chksum_sha256'])
+                    else:
+                        os.makedirs(os.path.join(b_collection_path, to_bytes(file_name, errors='surrogate_or_strict')))
+        except Exception:
+            # Ensure we don't leave the dir behind in case of a failure.
+            shutil.rmtree(b_collection_path)
+
+            b_namespace_path = os.path.dirname(b_collection_path)
+            if not os.listdir(b_namespace_path):
+                os.rmdir(b_namespace_path)
+
+            raise
 
     def set_latest_version(self):
         self.versions = set([self.latest_version])
         self._get_metadata()
+
+    def verify(self, remote_collection, path, b_temp_tar_path):
+        if not self.skip:
+            display.display("'%s' has not been installed, nothing to verify" % (to_text(self)))
+            return
+
+        collection_path = os.path.join(path, self.namespace, self.name)
+        b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')
+
+        display.vvv("Verifying '%s:%s'." % (to_text(self), self.latest_version))
+        display.vvv("Installed collection found at '%s'" % collection_path)
+        display.vvv("Remote collection found at '%s'" % remote_collection.metadata.download_url)
+
+        # Compare installed version versus requirement version
+        if self.latest_version != remote_collection.latest_version:
+            err = "%s has the version '%s' but is being compared to '%s'" % (to_text(self), self.latest_version, remote_collection.latest_version)
+            display.display(err)
+            return
+
+        modified_content = []
+
+        # Verify the manifest hash matches before verifying the file manifest
+        expected_hash = _get_tar_file_hash(b_temp_tar_path, 'MANIFEST.json')
+        self._verify_file_hash(b_collection_path, 'MANIFEST.json', expected_hash, modified_content)
+        manifest = _get_json_from_tar_file(b_temp_tar_path, 'MANIFEST.json')
+
+        # Use the manifest to verify the file manifest checksum
+        file_manifest_data = manifest['file_manifest_file']
+        file_manifest_filename = file_manifest_data['name']
+        expected_hash = file_manifest_data['chksum_%s' % file_manifest_data['chksum_type']]
+
+        # Verify the file manifest before using it to verify individual files
+        self._verify_file_hash(b_collection_path, file_manifest_filename, expected_hash, modified_content)
+        file_manifest = _get_json_from_tar_file(b_temp_tar_path, file_manifest_filename)
+
+        # Use the file manifest to verify individual file checksums
+        for manifest_data in file_manifest['files']:
+            if manifest_data['ftype'] == 'file':
+                expected_hash = manifest_data['chksum_%s' % manifest_data['chksum_type']]
+                self._verify_file_hash(b_collection_path, manifest_data['name'], expected_hash, modified_content)
+
+        if modified_content:
+            display.display("Collection %s contains modified content in the following files:" % to_text(self))
+            display.display(to_text(self))
+            display.vvv(to_text(self.b_path))
+            for content_change in modified_content:
+                display.display('    %s' % content_change.filename)
+                display.vvv("    Expected: %s\n    Found: %s" % (content_change.expected, content_change.installed))
+        else:
+            display.vvv("Successfully verified that checksums for '%s:%s' match the remote collection" % (to_text(self), self.latest_version))
+
+    def _verify_file_hash(self, b_path, filename, expected_hash, error_queue):
+        b_file_path = to_bytes(os.path.join(to_text(b_path), filename), errors='surrogate_or_strict')
+
+        if not os.path.isfile(b_file_path):
+            actual_hash = None
+        else:
+            with open(b_file_path, mode='rb') as file_object:
+                actual_hash = _consume_file(file_object)
+
+        if expected_hash != actual_hash:
+            error_queue.append(ModifiedContent(filename=filename, expected=expected_hash, installed=actual_hash))
 
     def _get_metadata(self):
         if self._metadata:
@@ -219,14 +329,17 @@ class CollectionRequirement:
                 requirement = req
                 op = operator.eq
 
-                # In the case we are checking a new requirement on a base requirement (parent != None) we can't accept
-                # version as '*' (unknown version) unless the requirement is also '*'.
-                if parent and version == '*' and requirement != '*':
-                    break
-                elif requirement == '*' or version == '*':
-                    continue
+            # In the case we are checking a new requirement on a base requirement (parent != None) we can't accept
+            # version as '*' (unknown version) unless the requirement is also '*'.
+            if parent and version == '*' and requirement != '*':
+                display.warning("Failed to validate the collection requirement '%s:%s' for %s when the existing "
+                                "install does not have a version set, the collection may not work."
+                                % (to_text(self), req, parent))
+                continue
+            elif requirement == '*' or version == '*':
+                continue
 
-            if not op(LooseVersion(version), LooseVersion(requirement)):
+            if not op(SemanticVersion(version), SemanticVersion.from_loose_version(LooseVersion(requirement))):
                 break
         else:
             return True
@@ -264,8 +377,13 @@ class CollectionRequirement:
         version = meta['version']
         meta = CollectionVersionMetadata(namespace, name, version, None, None, meta['dependencies'])
 
+        if SemanticVersion(version).is_prerelease:
+            allow_pre_release = True
+        else:
+            allow_pre_release = False
+
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
-                                     metadata=meta, files=files)
+                                     metadata=meta, files=files, allow_pre_releases=allow_pre_release)
 
     @staticmethod
     def from_path(b_path, force, parent=None):
@@ -282,11 +400,23 @@ class CollectionRequirement:
                     raise AnsibleError("Collection file at '%s' does not contain a valid json string."
                                        % to_native(b_file_path))
 
+        allow_pre_release = False
         if 'manifest_file' in info:
             manifest = info['manifest_file']['collection_info']
             namespace = manifest['namespace']
             name = manifest['name']
-            version = manifest['version']
+            version = to_text(manifest['version'], errors='surrogate_or_strict')
+
+            try:
+                _v = SemanticVersion()
+                _v.parse(version)
+                if _v.is_prerelease:
+                    allow_pre_release = True
+            except ValueError:
+                display.warning("Collection at '%s' does not have a valid version set, falling back to '*'. Found "
+                                "version: '%s'" % (to_text(b_path), version))
+                version = '*'
+
             dependencies = manifest['dependencies']
         else:
             display.warning("Collection at '%s' does not have a MANIFEST.json file, cannot detect version."
@@ -302,10 +432,10 @@ class CollectionRequirement:
         files = info.get('files_file', {}).get('files', {})
 
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
-                                     metadata=meta, files=files, skip=True)
+                                     metadata=meta, files=files, skip=True, allow_pre_releases=allow_pre_release)
 
     @staticmethod
-    def from_name(collection, apis, requirement, force, parent=None):
+    def from_name(collection, apis, requirement, force, parent=None, allow_pre_release=False):
         namespace, name = collection.split('.', 1)
         galaxy_meta = None
 
@@ -313,6 +443,9 @@ class CollectionRequirement:
             try:
                 if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or
                         requirement.startswith('!=')):
+                    # Exact requirement
+                    allow_pre_release = True
+
                     if requirement.startswith('='):
                         requirement = requirement.lstrip('=')
 
@@ -321,11 +454,7 @@ class CollectionRequirement:
                     galaxy_meta = resp
                     versions = [resp.version]
                 else:
-                    resp = api.get_collection_versions(namespace, name)
-
-                    # Galaxy supports semver but ansible-galaxy does not. We ignore any versions that don't match
-                    # StrictVersion (x.y.z) and only support pre-releases if an explicit version was set (done above).
-                    versions = [v for v in resp if StrictVersion.version_re.match(v)]
+                    versions = api.get_collection_versions(namespace, name)
             except GalaxyError as err:
                 if err.http_code == 404:
                     display.vvv("Collection '%s' is not available from server %s %s"
@@ -339,7 +468,7 @@ class CollectionRequirement:
             raise AnsibleError("Failed to find collection %s:%s" % (collection, requirement))
 
         req = CollectionRequirement(namespace, name, None, api, versions, requirement, force, parent=parent,
-                                    metadata=galaxy_meta)
+                                    metadata=galaxy_meta, allow_pre_releases=allow_pre_release)
         return req
 
 
@@ -379,6 +508,43 @@ def build_collection(collection_path, output_path, force):
     _build_collection_tar(b_collection_path, b_collection_output, collection_manifest, file_manifest)
 
 
+def download_collections(collections, output_path, apis, validate_certs, no_deps, allow_pre_release):
+    """
+    Download Ansible collections as their tarball from a Galaxy server to the path specified and creates a requirements
+    file of the downloaded requirements to be used for an install.
+
+    :param collections: The collections to download, should be a list of tuples with (name, requirement, Galaxy Server).
+    :param output_path: The path to download the collections to.
+    :param apis: A list of GalaxyAPIs to query when search for a collection.
+    :param validate_certs: Whether to validate the certificate if downloading a tarball from a non-Galaxy host.
+    :param no_deps: Ignore any collection dependencies and only download the base requirements.
+    :param allow_pre_release: Do not ignore pre-release versions when selecting the latest.
+    """
+    with _tempdir() as b_temp_path:
+        display.display("Process install dependency map")
+        with _display_progress():
+            dep_map = _build_dependency_map(collections, [], b_temp_path, apis, validate_certs, True, True, no_deps,
+                                            allow_pre_release=allow_pre_release)
+
+        requirements = []
+        display.display("Starting collection download process to '%s'" % output_path)
+        with _display_progress():
+            for name, requirement in dep_map.items():
+                collection_filename = "%s-%s-%s.tar.gz" % (requirement.namespace, requirement.name,
+                                                           requirement.latest_version)
+                dest_path = os.path.join(output_path, collection_filename)
+                requirements.append({'name': collection_filename, 'version': requirement.latest_version})
+
+                display.display("Downloading collection '%s' to '%s'" % (name, dest_path))
+                b_temp_download_path = requirement.download(b_temp_path)
+                shutil.move(b_temp_download_path, to_bytes(dest_path, errors='surrogate_or_strict'))
+
+            requirements_path = os.path.join(output_path, 'requirements.yml')
+            display.display("Writing requirements.yml file of downloaded collections to '%s'" % requirements_path)
+            with open(to_bytes(requirements_path, errors='surrogate_or_strict'), mode='wb') as req_fd:
+                req_fd.write(to_bytes(yaml.safe_dump({'collections': requirements}), errors='surrogate_or_strict'))
+
+
 def publish_collection(collection_path, api, wait, timeout):
     """
     Publish an Ansible collection tarball into an Ansible Galaxy server.
@@ -415,7 +581,8 @@ def publish_collection(collection_path, api, wait, timeout):
                         % (api.name, api.api_server, import_uri))
 
 
-def install_collections(collections, output_path, apis, validate_certs, ignore_errors, no_deps, force, force_deps):
+def install_collections(collections, output_path, apis, validate_certs, ignore_errors, no_deps, force, force_deps,
+                        allow_pre_release=False):
     """
     Install Ansible collections to the path specified.
 
@@ -434,7 +601,8 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
         display.display("Process install dependency map")
         with _display_progress():
             dependency_map = _build_dependency_map(collections, existing_collections, b_temp_path, apis,
-                                                   validate_certs, force, force_deps, no_deps)
+                                                   validate_certs, force, force_deps, no_deps,
+                                                   allow_pre_release=allow_pre_release)
 
         display.display("Starting collection install process")
         with _display_progress():
@@ -461,7 +629,7 @@ def validate_collection_name(name):
         return name
 
     raise AnsibleError("Invalid collection name '%s', "
-                       "name must be in the format <namespace>.<collection>. "
+                       "name must be in the format <namespace>.<collection>. \n"
                        "Please make sure namespace and collection name contains "
                        "characters from [a-zA-Z0-9_] only." % name)
 
@@ -477,6 +645,56 @@ def validate_collection_path(collection_path):
         return os.path.join(collection_path, 'ansible_collections')
 
     return collection_path
+
+
+def verify_collections(collections, search_paths, apis, validate_certs, ignore_errors, allow_pre_release=False):
+
+    with _display_progress():
+        with _tempdir() as b_temp_path:
+            for collection in collections:
+                try:
+
+                    local_collection = None
+                    b_collection = to_bytes(collection[0], errors='surrogate_or_strict')
+
+                    if os.path.isfile(b_collection) or urlparse(collection[0]).scheme.lower() in ['http', 'https'] or len(collection[0].split('.')) != 2:
+                        raise AnsibleError(message="'%s' is not a valid collection name. The format namespace.name is expected." % collection[0])
+
+                    collection_name = collection[0]
+                    namespace, name = collection_name.split('.')
+                    collection_version = collection[1]
+
+                    # Verify local collection exists before downloading it from a galaxy server
+                    for search_path in search_paths:
+                        b_search_path = to_bytes(os.path.join(search_path, namespace, name), errors='surrogate_or_strict')
+                        if os.path.isdir(b_search_path):
+                            local_collection = CollectionRequirement.from_path(b_search_path, False)
+                            break
+                    if local_collection is None:
+                        raise AnsibleError(message='Collection %s is not installed in any of the collection paths.' % collection_name)
+
+                    # Download collection on a galaxy server for comparison
+                    try:
+                        remote_collection = CollectionRequirement.from_name(collection_name, apis, collection_version, False, parent=None,
+                                                                            allow_pre_release=allow_pre_release)
+                    except AnsibleError as e:
+                        if e.message == 'Failed to find collection %s:%s' % (collection[0], collection[1]):
+                            raise AnsibleError('Failed to find remote collection %s:%s on any of the galaxy servers' % (collection[0], collection[1]))
+                        raise
+
+                    download_url = remote_collection.metadata.download_url
+                    headers = {}
+                    remote_collection.api._add_auth_token(headers, download_url, required=False)
+                    b_temp_tar_path = _download_file(download_url, b_temp_path, None, validate_certs, headers=headers)
+
+                    local_collection.verify(remote_collection, search_path, b_temp_tar_path)
+
+                except AnsibleError as err:
+                    if ignore_errors:
+                        display.warning("Failed to verify collection %s but skipping due to --ignore-errors being set. "
+                                        "Error: %s" % (collection[0], to_text(err)))
+                    else:
+                        raise
 
 
 @contextmanager
@@ -760,7 +978,8 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
                 b_src_path = os.path.join(b_collection_path, to_bytes(filename, errors='surrogate_or_strict'))
 
                 def reset_stat(tarinfo):
-                    tarinfo.mode = 0o0755 if tarinfo.isdir() else 0o0644
+                    existing_is_exec = tarinfo.mode & stat.S_IXUSR
+                    tarinfo.mode = 0o0755 if existing_is_exec or tarinfo.isdir() else 0o0644
                     tarinfo.uid = tarinfo.gid = 0
                     tarinfo.uname = tarinfo.gname = ''
                     return tarinfo
@@ -794,13 +1013,13 @@ def find_existing_collections(path):
 
 
 def _build_dependency_map(collections, existing_collections, b_temp_path, apis, validate_certs, force, force_deps,
-                          no_deps):
+                          no_deps, allow_pre_release=False):
     dependency_map = {}
 
     # First build the dependency map on the actual requirements
     for name, version, source in collections:
         _get_collection_info(dependency_map, existing_collections, name, version, source, b_temp_path, apis,
-                             validate_certs, (force or force_deps))
+                             validate_certs, (force or force_deps), allow_pre_release=allow_pre_release)
 
     checked_parents = set([to_text(c) for c in dependency_map.values() if c.skip])
     while len(dependency_map) != len(checked_parents):
@@ -816,7 +1035,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
                     for dep_name, dep_requirement in parent_info.dependencies.items():
                         _get_collection_info(dependency_map, existing_collections, dep_name, dep_requirement,
                                              parent_info.api, b_temp_path, apis, validate_certs, force_deps,
-                                             parent=parent)
+                                             parent=parent, allow_pre_release=allow_pre_release)
 
                     checked_parents.add(parent)
 
@@ -836,7 +1055,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
 
 
 def _get_collection_info(dep_map, existing_collections, collection, requirement, source, b_temp_path, apis,
-                         validate_certs, force, parent=None):
+                         validate_certs, force, parent=None, allow_pre_release=False):
     dep_msg = ""
     if parent:
         dep_msg = " - as dependency of %s" % parent
@@ -872,21 +1091,19 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
             collection_info.add_requirement(parent, requirement)
         else:
             apis = [source] if source else apis
-            collection_info = CollectionRequirement.from_name(collection, apis, requirement, force, parent=parent)
+            collection_info = CollectionRequirement.from_name(collection, apis, requirement, force, parent=parent,
+                                                              allow_pre_release=allow_pre_release)
 
     existing = [c for c in existing_collections if to_text(c) == to_text(collection_info)]
     if existing and not collection_info.force:
         # Test that the installed collection fits the requirement
-        existing[0].add_requirement(to_text(collection_info), requirement)
+        existing[0].add_requirement(parent, requirement)
         collection_info = existing[0]
 
     dep_map[to_text(collection_info)] = collection_info
 
 
 def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
-    bufsize = 65536
-    digest = sha256()
-
     urlsplit = os.path.splitext(to_text(url.rsplit('/', 1)[1]))
     b_file_name = to_bytes(urlsplit[0], errors='surrogate_or_strict')
     b_file_ext = to_bytes(urlsplit[1], errors='surrogate_or_strict')
@@ -898,14 +1115,9 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
                     unredirected_headers=['Authorization'], http_agent=user_agent())
 
     with open(b_file_path, 'wb') as download_file:
-        data = resp.read(bufsize)
-        while data:
-            digest.update(data)
-            download_file.write(data)
-            data = resp.read(bufsize)
+        actual_hash = _consume_file(resp, download_file)
 
     if expected_hash:
-        actual_hash = digest.hexdigest()
         display.vvvv("Validating downloaded file hash %s with expected hash %s" % (actual_hash, expected_hash))
         if expected_hash != actual_hash:
             raise AnsibleError("Mismatch artifact hash with downloaded file")
@@ -914,35 +1126,77 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
 
 
 def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
+    with _get_tar_file_member(tar, filename) as tar_obj:
+        with tempfile.NamedTemporaryFile(dir=b_temp_path, delete=False) as tmpfile_obj:
+            actual_hash = _consume_file(tar_obj, tmpfile_obj)
+
+        if expected_hash and actual_hash != expected_hash:
+            raise AnsibleError("Checksum mismatch for '%s' inside collection at '%s'"
+                               % (to_native(filename, errors='surrogate_or_strict'), to_native(tar.name)))
+
+        b_dest_filepath = os.path.abspath(os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict')))
+        b_parent_dir = os.path.dirname(b_dest_filepath)
+        if b_parent_dir != b_dest and not b_parent_dir.startswith(b_dest + to_bytes(os.path.sep)):
+            raise AnsibleError("Cannot extract tar entry '%s' as it will be placed outside the collection directory"
+                               % to_native(filename, errors='surrogate_or_strict'))
+
+        if not os.path.exists(b_parent_dir):
+            # Seems like Galaxy does not validate if all file entries have a corresponding dir ftype entry. This check
+            # makes sure we create the parent directory even if it wasn't set in the metadata.
+            os.makedirs(b_parent_dir, mode=0o0755)
+
+        shutil.move(to_bytes(tmpfile_obj.name, errors='surrogate_or_strict'), b_dest_filepath)
+
+        # Default to rw-r--r-- and only add execute if the tar file has execute.
+        tar_member = tar.getmember(to_native(filename, errors='surrogate_or_strict'))
+        new_mode = 0o644
+        if stat.S_IMODE(tar_member.mode) & stat.S_IXUSR:
+            new_mode |= 0o0111
+
+        os.chmod(b_dest_filepath, new_mode)
+
+
+def _get_tar_file_member(tar, filename):
     n_filename = to_native(filename, errors='surrogate_or_strict')
     try:
         member = tar.getmember(n_filename)
     except KeyError:
-        raise AnsibleError("Collection tar at '%s' does not contain the expected file '%s'." % (to_native(tar.name),
-                                                                                                n_filename))
+        raise AnsibleError("Collection tar at '%s' does not contain the expected file '%s'." % (
+            to_native(tar.name),
+            n_filename))
 
-    with tempfile.NamedTemporaryFile(dir=b_temp_path, delete=False) as tmpfile_obj:
-        bufsize = 65536
-        sha256_digest = sha256()
-        with _tarfile_extract(tar, member) as tar_obj:
+    return _tarfile_extract(tar, member)
+
+
+def _get_json_from_tar_file(b_path, filename):
+    file_contents = ''
+
+    with tarfile.open(b_path, mode='r') as collection_tar:
+        with _get_tar_file_member(collection_tar, filename) as tar_obj:
+            bufsize = 65536
             data = tar_obj.read(bufsize)
             while data:
-                tmpfile_obj.write(data)
-                tmpfile_obj.flush()
-                sha256_digest.update(data)
+                file_contents += to_text(data)
                 data = tar_obj.read(bufsize)
 
-        actual_hash = sha256_digest.hexdigest()
+    return json.loads(file_contents)
 
-        if expected_hash and actual_hash != expected_hash:
-            raise AnsibleError("Checksum mismatch for '%s' inside collection at '%s'"
-                               % (n_filename, to_native(tar.name)))
 
-        b_dest_filepath = os.path.join(b_dest, to_bytes(filename, errors='surrogate_or_strict'))
-        b_parent_dir = os.path.split(b_dest_filepath)[0]
-        if not os.path.exists(b_parent_dir):
-            # Seems like Galaxy does not validate if all file entries have a corresponding dir ftype entry. This check
-            # makes sure we create the parent directory even if it wasn't set in the metadata.
-            os.makedirs(b_parent_dir)
+def _get_tar_file_hash(b_path, filename):
+    with tarfile.open(b_path, mode='r') as collection_tar:
+        with _get_tar_file_member(collection_tar, filename) as tar_obj:
+            return _consume_file(tar_obj)
 
-        shutil.move(to_bytes(tmpfile_obj.name, errors='surrogate_or_strict'), b_dest_filepath)
+
+def _consume_file(read_from, write_to=None):
+    bufsize = 65536
+    sha256_digest = sha256()
+    data = read_from.read(bufsize)
+    while data:
+        if write_to is not None:
+            write_to.write(data)
+            write_to.flush()
+        sha256_digest.update(data)
+        data = read_from.read(bufsize)
+
+    return sha256_digest.hexdigest()

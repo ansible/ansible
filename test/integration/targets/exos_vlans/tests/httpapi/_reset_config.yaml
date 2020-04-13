@@ -1,6 +1,0 @@
----
-- name: Restore initial config
-  exos_config:
-    lines:
-      - delete vlan 2-4094
-  ignore_errors: yes

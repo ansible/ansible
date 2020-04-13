@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_swarm_service - ``source`` must no longer be specified for ``tmpfs`` mounts."

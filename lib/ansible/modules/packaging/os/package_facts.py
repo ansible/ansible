@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 module: package_facts
@@ -23,7 +23,7 @@ options:
       - Since 2.8 this is a list and can support multiple package managers per system.
       - The 'portage' and 'pkg' options were added in version 2.8.
     default: ['auto']
-    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg']
+    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman']
     required: False
     type: list
   strategy:
@@ -206,6 +206,8 @@ ansible_facts:
         }
 '''
 
+import re
+
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.common.process import get_bin_path
@@ -229,8 +231,14 @@ class RPM(LibMgr):
     def is_available(self):
         ''' we expect the python bindings installed, but this gives warning if they are missing and we have rpm cli'''
         we_have_lib = super(RPM, self).is_available()
-        if not we_have_lib and get_bin_path('rpm'):
-            module.warn('Found "rpm" but %s' % (missing_required_lib('rpm')))
+
+        try:
+            get_bin_path('rpm')
+            if not we_have_lib:
+                module.warn('Found "rpm" but %s' % (missing_required_lib('rpm')))
+        except ValueError:
+            pass
+
         return we_have_lib
 
 
@@ -255,7 +263,11 @@ class APT(LibMgr):
         we_have_lib = super(APT, self).is_available()
         if not we_have_lib:
             for exe in ('apt', 'apt-get', 'aptitude'):
-                if get_bin_path(exe):
+                try:
+                    get_bin_path(exe)
+                except ValueError:
+                    continue
+                else:
                     module.warn('Found "%s" but %s' % (exe, missing_required_lib('apt')))
                     break
         return we_have_lib
@@ -268,6 +280,44 @@ class APT(LibMgr):
     def get_package_details(self, package):
         ac_pkg = self.pkg_cache[package].installed
         return dict(name=package, version=ac_pkg.version, arch=ac_pkg.architecture, category=ac_pkg.section, origin=ac_pkg.origins[0].origin)
+
+
+class PACMAN(CLIMgr):
+
+    CLI = 'pacman'
+
+    def list_installed(self):
+        rc, out, err = module.run_command([self._cli, '-Qi'], environ_update=dict(LC_ALL='C'))
+        if rc != 0 or err:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+        return out.split("\n\n")[:-1]
+
+    def get_package_details(self, package):
+        # parse values of details that might extend over several lines
+        raw_pkg_details = {}
+        last_detail = None
+        for line in package.splitlines():
+            m = re.match(r"([\w ]*[\w]) +: (.*)", line)
+            if m:
+                last_detail = m.group(1)
+                raw_pkg_details[last_detail] = m.group(2)
+            else:
+                # append value to previous detail
+                raw_pkg_details[last_detail] = raw_pkg_details[last_detail] + "  " + line.lstrip()
+
+        provides = None
+        if raw_pkg_details['Provides'] != 'None':
+            provides = [
+                p.split('=')[0]
+                for p in raw_pkg_details['Provides'].split('  ')
+            ]
+
+        return {
+            'name': raw_pkg_details['Name'],
+            'version': raw_pkg_details['Version'],
+            'arch': raw_pkg_details['Architecture'],
+            'provides': provides,
+        }
 
 
 class PKG(CLIMgr):

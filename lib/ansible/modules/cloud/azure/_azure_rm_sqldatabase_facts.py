@@ -1,1 +1,0 @@
-azure_rm_sqldatabase_info.py

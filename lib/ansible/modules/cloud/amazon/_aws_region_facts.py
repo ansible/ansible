@@ -1,1 +1,0 @@
-aws_region_info.py

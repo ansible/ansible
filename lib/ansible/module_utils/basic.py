@@ -193,6 +193,12 @@ from ansible.module_utils.common.validation import (
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.common.warnings import (
+    deprecate,
+    get_deprecation_messages,
+    get_warning_messages,
+    warn,
+)
 
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
@@ -231,29 +237,14 @@ FILE_COMMON_ARGUMENTS = dict(
     # created files (these are used by set_fs_attributes_if_different and included in
     # load_file_common_arguments)
     mode=dict(type='raw'),
-    owner=dict(),
-    group=dict(),
-    seuser=dict(),
-    serole=dict(),
-    selevel=dict(),
-    setype=dict(),
-    attributes=dict(aliases=['attr']),
-
-    # The following are not about perms and should not be in a rewritten file_common_args
-    src=dict(),  # Maybe dest or path would be appropriate but src is not
-    follow=dict(type='bool', default=False),  # Maybe follow is appropriate because it determines whether to follow symlinks for permission purposes too
-    force=dict(type='bool'),
-
-    # not taken by the file module, but other action plugins call the file module so this ignores
-    # them for now. In the future, the caller should take care of removing these from the module
-    # arguments before calling the file module.
-    content=dict(no_log=True),  # used by copy
-    backup=dict(),  # Used by a few modules to create a remote backup before updating the file
-    remote_src=dict(),  # used by assemble
-    regexp=dict(),  # used by assemble
-    delimiter=dict(),  # used by assemble
-    directory_mode=dict(),  # used by copy
-    unsafe_writes=dict(type='bool'),  # should be available to any module using atomic_move
+    owner=dict(type='str'),
+    group=dict(type='str'),
+    seuser=dict(type='str'),
+    serole=dict(type='str'),
+    selevel=dict(type='str'),
+    setype=dict(type='str'),
+    attributes=dict(type='str', aliases=['attr']),
+    unsafe_writes=dict(type='bool', default=False),  # should be available to any module using atomic_move
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
@@ -567,7 +558,7 @@ def missing_required_lib(library, reason=None, url=None):
     if url:
         msg += " See %s for more info." % url
 
-    msg += (" Please read module documentation and install in the appropriate location."
+    msg += (" Please read the module documentation and install it in the appropriate location."
             " If the required library is installed, but Ansible is using the wrong Python interpreter,"
             " please consult the documentation on ansible_python_interpreter")
     return msg
@@ -612,8 +603,6 @@ class AnsibleModule(object):
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
-        self._warnings = []
-        self._deprecations = []
         self._clean = {}
         self._string_conversion_action = ''
 
@@ -728,31 +717,24 @@ class AnsibleModule(object):
         return self._tmpdir
 
     def warn(self, warning):
-
-        if isinstance(warning, string_types):
-            self._warnings.append(warning)
-            self.log('[WARNING] %s' % warning)
-        else:
-            raise TypeError("warn requires a string not a %s" % type(warning))
+        warn(warning)
+        self.log('[WARNING] %s' % warning)
 
     def deprecate(self, msg, version=None):
-        if isinstance(msg, string_types):
-            self._deprecations.append({
-                'msg': msg,
-                'version': version
-            })
-            self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
-        else:
-            raise TypeError("deprecate requires a string not a %s" % type(msg))
+        deprecate(msg, version)
+        self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
 
-    def load_file_common_arguments(self, params):
+    def load_file_common_arguments(self, params, path=None):
         '''
         many modules deal with files, this encapsulates common
         options that the file module accepts such that it is directly
         available to all modules and they can share code.
+
+        Allows to overwrite the path/dest module argument by providing path.
         '''
 
-        path = params.get('path', params.get('dest', None))
+        if path is None:
+            path = params.get('path', params.get('dest', None))
         if path is None:
             return {}
         else:
@@ -1409,7 +1391,7 @@ class AnsibleModule(object):
         alias_warnings = []
         alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
         for option, alias in alias_warnings:
-            self._warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
+            warn('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
 
         deprecated_aliases = []
         for i in spec.keys():
@@ -1419,9 +1401,7 @@ class AnsibleModule(object):
 
         for deprecation in deprecated_aliases:
             if deprecation['name'] in param.keys():
-                self._deprecations.append(
-                    {'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
-                     'version': deprecation['version']})
+                deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'], deprecation['version'])
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
@@ -1435,7 +1415,9 @@ class AnsibleModule(object):
         except TypeError as te:
             self.fail_json(msg="Failure when processing no_log parameters. Module invocation will be hidden. "
                                "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
-        self._deprecations.extend(list_deprecations(spec, param))
+
+        for message in list_deprecations(spec, param):
+            deprecate(message['msg'], message['version'])
 
     def _check_arguments(self, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
@@ -1979,9 +1961,12 @@ class AnsibleModule(object):
 
         bin_path = None
         try:
-            bin_path = get_bin_path(arg, required, opt_dirs)
+            bin_path = get_bin_path(arg=arg, opt_dirs=opt_dirs)
         except ValueError as e:
-            self.fail_json(msg=to_text(e))
+            if required:
+                self.fail_json(msg=to_text(e))
+            else:
+                return bin_path
 
         return bin_path
 
@@ -2026,8 +2011,9 @@ class AnsibleModule(object):
             else:
                 self.warn(kwargs['warnings'])
 
-        if self._warnings:
-            kwargs['warnings'] = self._warnings
+        warnings = get_warning_messages()
+        if warnings:
+            kwargs['warnings'] = warnings
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
@@ -2041,8 +2027,9 @@ class AnsibleModule(object):
             else:
                 self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
 
-        if self._deprecations:
-            kwargs['deprecations'] = self._deprecations
+        deprecations = get_deprecation_messages()
+        if deprecations:
+            kwargs['deprecations'] = deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
@@ -2054,12 +2041,11 @@ class AnsibleModule(object):
         self._return_formatted(kwargs)
         sys.exit(0)
 
-    def fail_json(self, **kwargs):
+    def fail_json(self, msg, **kwargs):
         ''' return from the module, with an error message '''
 
-        if 'msg' not in kwargs:
-            raise AssertionError("implementation error -- msg to explain the error is required")
         kwargs['failed'] = True
+        kwargs['msg'] = msg
 
         # Add traceback if debug or high verbosity and it is missing
         # NOTE: Badly named as exception, it really always has been a traceback

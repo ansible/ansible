@@ -1,6 +1,0 @@
-1 := alpha
-2 := bravo
-3 := charlie
-4 := x-ray
-5 := yankee
-6 := zulu

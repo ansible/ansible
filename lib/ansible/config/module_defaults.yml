@@ -13,6 +13,8 @@ groupings:
   - acme
   acme_inspect:
   - acme
+  aws_acm:
+  - aws
   aws_acm_facts:
   - aws
   aws_acm_info:
@@ -116,6 +118,8 @@ groupings:
   aws_waf_web_acl:
   - aws
   cloudformation:
+  - aws
+  cloudformation_exports_info:
   - aws
   cloudformation_facts:
   - aws
@@ -297,6 +301,8 @@ groupings:
   - aws
   ec2_tag:
   - aws
+  ec2_tag_info:
+  - aws
   ec2_transit_gateway:
   - aws
   ec2_transit_gateway_info:
@@ -388,6 +394,8 @@ groupings:
   ecs_service_facts:
   - aws
   ecs_service_info:
+  - aws
+  ecs_tag:
   - aws
   ecs_task:
   - aws
@@ -1279,6 +1287,8 @@ groupings:
   - ovirt
   ovirt_vnic_profile:
   - ovirt
+  test_module_defaults:
+  - test
   vcenter_extension:
   - vmware
   vcenter_extension_info:
@@ -1359,6 +1369,8 @@ groupings:
   - vmware
   vmware_guest_boot_manager:
   - vmware
+  vmware_guest_controller:
+  - vmware
   vmware_guest_custom_attribute_defs:
   - vmware
   vmware_guest_custom_attributes:
@@ -1381,13 +1393,19 @@ groupings:
   - vmware
   vmware_guest_powerstate:
   - vmware
+  vmware_guest_register_operation:
+  - vmware
   vmware_guest_screenshot:
   - vmware
   vmware_guest_sendkey:
   - vmware
+  vmware_guest_serial_port:
+  - vmware
   vmware_guest_snapshot:
   - vmware
   vmware_guest_snapshot_info:
+  - vmware
+  vmware_guest_tools_info:
   - vmware
   vmware_guest_tools_upgrade:
   - vmware
@@ -1403,6 +1421,8 @@ groupings:
   - vmware
   vmware_host_active_directory:
   - vmware
+  vmware_host_auto_start:
+  - vmware
   vmware_host_capability_info:
   - vmware
   vmware_host_config_info:
@@ -1410,6 +1430,8 @@ groupings:
   vmware_host_config_manager:
   - vmware
   vmware_host_datastore:
+  - vmware
+  vmware_host_dns:
   - vmware
   vmware_host_dns_info:
   - vmware
@@ -1520,10 +1542,4 @@ groupings:
   vsphere_copy:
   - vmware
   vsphere_file:
-  - vmware
-  vmware_guest_register_operation:
-  - vmware
-  vmware_guest_serial_port:
-  - vmware
-  vmware_guest_tools_info:
   - vmware

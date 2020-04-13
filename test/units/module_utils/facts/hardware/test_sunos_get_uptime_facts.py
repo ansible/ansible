@@ -11,7 +11,7 @@ def test_sunos_get_uptime_facts(mocker):
 
     inst = sunos.SunOSHardware(module)
 
-    with mocker.patch('time.time', return_value=1567052602.5089788):
-        expected = int(time.time()) - 1548249689
-        result = inst.get_uptime_facts()
-        assert expected == result['uptime_seconds']
+    mocker.patch('time.time', return_value=1567052602.5089788)
+    expected = int(time.time()) - 1548249689
+    result = inst.get_uptime_facts()
+    assert expected == result['uptime_seconds']

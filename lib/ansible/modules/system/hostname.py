@@ -9,7 +9,7 @@ __metaclass__ = type
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
-                    'supported_by': 'community'}
+                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
@@ -656,6 +656,12 @@ class ClearLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Clear-linux-os'
     strategy_class = SystemdStrategy
+
+
+class CloudlinuxserverHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Cloudlinuxserver'
+    strategy_class = RedHatStrategy
 
 
 class CloudlinuxHostname(Hostname):

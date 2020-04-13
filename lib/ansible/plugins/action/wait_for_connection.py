@@ -79,17 +79,16 @@ class ActionModule(ActionBase):
         def ping_module_test(connect_timeout):
             ''' Test ping module, if available '''
             display.vvv("wait_for_connection: attempting ping module test")
+            # re-run interpreter discovery if we ran it in the first iteration
+            if self._discovered_interpreter_key:
+                task_vars['ansible_facts'].pop(self._discovered_interpreter_key, None)
             # call connection reset between runs if it's there
             try:
                 self._connection.reset()
             except AttributeError:
                 pass
 
-            # Use win_ping on winrm/powershell, else use ping
-            if getattr(self._connection._shell, "_IS_WINDOWS", False):
-                ping_result = self._execute_module(module_name='win_ping', module_args=dict(), task_vars=task_vars)
-            else:
-                ping_result = self._execute_module(module_name='ping', module_args=dict(), task_vars=task_vars)
+            ping_result = self._execute_module(module_name='ping', module_args=dict(), task_vars=task_vars)
 
             # Test module output
             if ping_result['ping'] != 'pong':

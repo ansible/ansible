@@ -197,13 +197,12 @@ Then review the log file and find the relevant error message in the rest of this
 
 .. _socket_path_issue:
 
-Category "socket_path issue"
-============================
+Troubleshooting socket path issues
+==================================
 
 **Platforms:** Any
 
-The ``socket_path does not exist or cannot be found``  and ``unable to connect to socket`` messages are new in Ansible 2.5. These messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist.
-
+The ``Socket path does not exist or cannot be found``  and ``Unable to connect to socket`` messages are new in Ansible 2.5. These messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist.
 
 For example:
 
@@ -212,7 +211,7 @@ For example:
    fatal: [spine02]: FAILED! => {
        "changed": false,
        "failed": true,
-       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: socket_path does not exist or cannot be found\n",
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 115, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: Socket path XX does not exist or cannot be found. See Troubleshooting socket path issues in the Network Debug and Troubleshooting Guide\n",
        "module_stdout": "",
        "msg": "MODULE FAILURE",
        "rc": 1
@@ -225,7 +224,7 @@ or
    fatal: [spine02]: FAILED! => {
        "changed": false,
        "failed": true,
-       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: unable to connect to socket\n",
+       "module_stderr": "Traceback (most recent call last):\n  File \"/tmp/ansible_TSqk5J/ansible_modlib.zip/ansible/module_utils/connection.py\", line 123, in _exec_jsonrpc\nansible.module_utils.connection.ConnectionError: Unable to connect to socket XX. See Troubleshooting socket path issues in Network Debug and Troubleshooting Guide\n",
        "module_stdout": "",
        "msg": "MODULE FAILURE",
        "rc": 1
@@ -233,7 +232,9 @@ or
 
 Suggestions to resolve:
 
-Follow the steps detailed in :ref:`enable network logging <enable_network_logging>`.
+#. Verify that you have write access to the socket path described in the error message.
+
+#. Follow the steps detailed in :ref:`enable network logging <enable_network_logging>`.
 
 If the identified error message from the log file is:
 

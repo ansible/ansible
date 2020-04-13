@@ -1,7 +1,0 @@
----
-# Use block to ensure that both cli and nxapi tests
-# will run even if there are failures or errors.
-- block:
-  - { include: cli.yaml, tags: ['cli'] }
-  always:
-  - { include: nxapi.yaml, tags: ['nxapi'] }

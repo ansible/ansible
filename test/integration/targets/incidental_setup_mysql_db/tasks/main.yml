@@ -1,0 +1,112 @@
+# setup code for the mysql_db module
+# (c) 2014,  Wayne Rosario <wrosario@ansible.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+# ============================================================
+- name: python 2
+  set_fact:
+    python_suffix: ""
+  when: ansible_python_version is version('3', '<')
+
+- name: python 3
+  set_fact:
+    python_suffix: "-py3"
+  when: ansible_python_version is version('3', '>=')
+
+- name: Include distribution specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - '{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml'
+        - '{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_facts.os_family }}-{{ ansible_facts.distribution_major_version }}.yml'
+        - '{{ ansible_facts.distribution }}{{ python_suffix }}.yml'
+        - '{{ ansible_facts.os_family }}{{ python_suffix }}.yml'
+        - 'default{{ python_suffix }}.yml'
+      paths: "{{ role_path }}/vars"
+
+- name: install mysqldb_test rpm dependencies
+  yum:
+    name: "{{ mysql_packages }}"
+    state: latest
+  when: ansible_pkg_mgr == 'yum'
+  notify: cleanup mysql
+
+- name: install mysqldb_test rpm dependencies
+  dnf:
+    name: '{{ mysql_packages }}'
+    state: latest
+    install_weak_deps: False  # mariadb-server has a weak dep on python2 which break Python 3 test environments
+  when: ansible_pkg_mgr == 'dnf'
+  notify: cleanup mysql
+
+- name: install mysqldb_test debian dependencies
+  apt:
+    name: "{{ mysql_packages }}"
+    state: latest
+  when: ansible_pkg_mgr == 'apt'
+  notify: cleanup mysql
+
+- name: install mysqldb_test opensuse dependencies
+  zypper:
+    name: "{{ mysql_packages }}"
+    state: latest
+  when: ansible_pkg_mgr == 'zypper'
+  notify: cleanup mysql
+
+- name: install mysqldb_test FreeBSD dependencies
+  package:
+    name: "{{ mysql_packages }}"
+    state: present
+  when: ansible_os_family == "FreeBSD"
+  notify: cleanup mysql
+
+- name: install mysql-python package via pip (FreeBSD)
+  pip:
+    name: mysql-python
+    state: present
+  when: ansible_os_family == "FreeBSD"
+  notify:
+    - cleanup mysql
+    - remove pip packages
+
+- name: enable mysql-server service (FreeBSD)
+  lineinfile:
+    path: /etc/rc.conf
+    line: 'mysql_server_enable="YES"'
+  when: ansible_os_family == "FreeBSD"
+
+- name: apply work-around for OverlayFS issue
+  # https://github.com/docker/for-linux/issues/72#issuecomment-319904698
+  command: find {{ mysql_data_dirs[0] }} -type f -exec touch {} ;
+  # find will fail if mysql has never been started, as the directory won't exist
+  ignore_errors: yes
+
+- name: restart mysql_db service
+  service:
+    name: "{{ mysql_service }}"
+    state: restarted
+
+- name: Detect socket path
+  shell: 'echo "show variables like ''socket''\G" | mysql | grep ''Value: '' | sed ''s/[ ]\+Value: //'''
+  register: _socket_path
+
+- name: Set socket path
+  set_fact:
+    mysql_socket: '{{ _socket_path["stdout"] }}'

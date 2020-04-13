@@ -137,7 +137,7 @@ def ensure_type(value, value_type, origin=None):
 
         elif value_type == 'pathlist':
             if isinstance(value, string_types):
-                value = value.split(',')
+                value = [x.strip() for x in value.split(',')]
 
             if isinstance(value, Sequence):
                 value = [resolve_path(x, basedir=basedir) for x in value]
@@ -145,13 +145,13 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'pathlist'
 
         elif value_type in ('str', 'string'):
-            if isinstance(value, string_types):
+            if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
                 value = unquote(to_text(value, errors='surrogate_or_strict'))
             else:
                 errmsg = 'string'
 
         # defaults to string type
-        elif isinstance(value, string_types):
+        elif isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
             value = unquote(to_text(value, errors='surrogate_or_strict'))
 
         if errmsg:

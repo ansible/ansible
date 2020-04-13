@@ -10,6 +10,9 @@ These variables cannot be set directly by the user; Ansible will always override
 ansible_check_mode
     Boolean that indicates if we are in check mode or not
 
+ansible_config_file
+    The full path of used Ansible configuration file
+
 ansible_dependent_role_names
     The names of the roles currently imported into the current play as dependencies of other plays
 
@@ -64,6 +67,12 @@ ansible_role_names
     The names of the roles currently imported into the current play, or roles referenced as dependencies of the roles
     imported into the current play.
 
+ansible_role_name
+    The fully qualified collection role name, in the format of ``namespace.collection.role_name``
+
+ansible_collection_name
+    The name of the collection the task that is executing is a part of. In the format of ``namespace.collection``
+
 ansible_run_tags
     Contents of the ``--tags`` CLI option, which specifies which tags will be included for the current run.
 
@@ -71,7 +80,7 @@ ansible_search_path
     Current search path for action plugins and lookups, i.e where we search for relative paths when you do ``template: src=myfile``
 
 ansible_skip_tags
-    Contents of the ``--skip_tags`` CLI option, which specifies which tags will be skipped for the current run.
+    Contents of the ``--skip-tags`` CLI option, which specifies which tags will be skipped for the current run.
 
 ansible_verbosity
     Current verbosity setting for Ansible

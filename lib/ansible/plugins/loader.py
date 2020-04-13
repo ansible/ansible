@@ -18,6 +18,7 @@ from collections import defaultdict
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import string_types
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.loader import AnsibleLoader
@@ -31,12 +32,6 @@ try:
     imp = None
 except ImportError:
     import imp
-
-# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
-try:
-    from importlib import import_module
-except ImportError:
-    import_module = __import__
 
 display = Display()
 
@@ -575,7 +570,12 @@ class PluginLoader:
 
         if not class_only:
             try:
-                obj = obj(*args, **kwargs)
+                # A plugin may need to use its _load_name in __init__ (for example, to set
+                # or get options from config), so update the object before using the constructor
+                instance = object.__new__(obj)
+                self._update_object(instance, name, path)
+                obj.__init__(instance, *args, **kwargs)
+                obj = instance
             except TypeError as e:
                 if "abstract" in e.args[0]:
                     # Abstract Base Class.  The found plugin file does not

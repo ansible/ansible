@@ -12,6 +12,7 @@ import os
 import pytest
 import re
 import shutil
+import stat
 import tarfile
 import yaml
 
@@ -139,6 +140,12 @@ def collection_artifact(request, tmp_path_factory):
             galaxy_obj.write(to_bytes(yaml.safe_dump(existing_yaml)))
             galaxy_obj.truncate()
 
+    # Create a file with +x in the collection so we can test the permissions
+    execute_path = os.path.join(collection_path, 'runme.sh')
+    with open(execute_path, mode='wb') as fd:
+        fd.write(b"echo hi")
+    os.chmod(execute_path, os.stat(execute_path).st_mode | stat.S_IEXEC)
+
     call_galaxy_cli(['build', collection_path, '--output-path', test_dir])
 
     collection_tar = os.path.join(test_dir, '%s-%s-0.1.0.tar.gz' % (namespace, collection))
@@ -165,13 +172,14 @@ def test_build_requirement_from_path(collection_artifact):
     assert actual.dependencies == {}
 
 
-def test_build_requirement_from_path_with_manifest(collection_artifact):
+@pytest.mark.parametrize('version', ['1.1.1', '1.1.0', '1.0.0'])
+def test_build_requirement_from_path_with_manifest(version, collection_artifact):
     manifest_path = os.path.join(collection_artifact[0], b'MANIFEST.json')
     manifest_value = json.dumps({
         'collection_info': {
             'namespace': 'namespace',
             'name': 'name',
-            'version': '1.1.1',
+            'version': version,
             'dependencies': {
                 'ansible_namespace.collection': '*'
             }
@@ -188,8 +196,8 @@ def test_build_requirement_from_path_with_manifest(collection_artifact):
     assert actual.b_path == collection_artifact[0]
     assert actual.api is None
     assert actual.skip is True
-    assert actual.versions == set([u'1.1.1'])
-    assert actual.latest_version == u'1.1.1'
+    assert actual.versions == set([to_text(version)])
+    assert actual.latest_version == to_text(version)
     assert actual.dependencies == {'ansible_namespace.collection': '*'}
 
 
@@ -201,6 +209,42 @@ def test_build_requirement_from_path_invalid_manifest(collection_artifact):
     expected = "Collection file at '%s' does not contain a valid json string." % to_native(manifest_path)
     with pytest.raises(AnsibleError, match=expected):
         collection.CollectionRequirement.from_path(collection_artifact[0], True)
+
+
+def test_build_requirement_from_path_no_version(collection_artifact, monkeypatch):
+    manifest_path = os.path.join(collection_artifact[0], b'MANIFEST.json')
+    manifest_value = json.dumps({
+        'collection_info': {
+            'namespace': 'namespace',
+            'name': 'name',
+            'version': '',
+            'dependencies': {}
+        }
+    })
+    with open(manifest_path, 'wb') as manifest_obj:
+        manifest_obj.write(to_bytes(manifest_value))
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    actual = collection.CollectionRequirement.from_path(collection_artifact[0], True)
+
+    # While the folder name suggests a different collection, we treat MANIFEST.json as the source of truth.
+    assert actual.namespace == u'namespace'
+    assert actual.name == u'name'
+    assert actual.b_path == collection_artifact[0]
+    assert actual.api is None
+    assert actual.skip is True
+    assert actual.versions == set(['*'])
+    assert actual.latest_version == u'*'
+    assert actual.dependencies == {}
+
+    assert mock_display.call_count == 1
+
+    actual_warn = ' '.join(mock_display.mock_calls[0][1][0].split('\n'))
+    expected_warn = "Collection at '%s' does not have a valid version set, falling back to '*'. Found version: ''" \
+        % to_text(collection_artifact[0])
+    assert expected_warn in actual_warn
 
 
 def test_build_requirement_from_tar(collection_artifact):
@@ -304,7 +348,7 @@ def test_build_requirement_from_name(galaxy_server, monkeypatch):
     assert actual.skip is False
     assert actual.versions == set([u'2.1.9', u'2.1.10'])
     assert actual.latest_version == u'2.1.10'
-    assert actual.dependencies is None
+    assert actual.dependencies == {}
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
@@ -324,7 +368,7 @@ def test_build_requirement_from_name_with_prerelease(galaxy_server, monkeypatch)
     assert actual.skip is False
     assert actual.versions == set([u'1.0.1', u'2.0.1'])
     assert actual.latest_version == u'2.0.1'
-    assert actual.dependencies is None
+    assert actual.dependencies == {}
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
@@ -374,7 +418,7 @@ def test_build_requirement_from_name_second_server(galaxy_server, monkeypatch):
     assert actual.skip is False
     assert actual.versions == set([u'1.0.2', u'1.0.3'])
     assert actual.latest_version == u'1.0.3'
-    assert actual.dependencies is None
+    assert actual.dependencies == {}
 
     assert mock_404.call_count == 1
     assert mock_404.mock_calls[0][1] == ('namespace', 'collection')
@@ -474,7 +518,7 @@ def test_build_requirement_from_name_multiple_version_results(galaxy_server, mon
     assert actual.skip is False
     assert actual.versions == set([u'2.0.0', u'2.0.1', u'2.0.3', u'2.0.4', u'2.0.5'])
     assert actual.latest_version == u'2.0.5'
-    assert actual.dependencies is None
+    assert actual.dependencies == {}
 
     assert mock_get_versions.call_count == 1
     assert mock_get_versions.mock_calls[0][1] == ('namespace', 'collection')
@@ -497,13 +541,20 @@ def test_add_collection_requirements(versions, requirement, expected_filter, exp
     assert req.latest_version == expected_latest
 
 
-def test_add_collection_requirement_to_unknown_installed_version():
+def test_add_collection_requirement_to_unknown_installed_version(monkeypatch):
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
     req = collection.CollectionRequirement('namespace', 'name', None, 'https://galaxy.com', ['*'], '*', False,
                                            skip=True)
 
-    expected = "Cannot meet requirement namespace.name:1.0.0 as it is already installed at version 'unknown'."
-    with pytest.raises(AnsibleError, match=expected):
-        req.add_requirement(str(req), '1.0.0')
+    req.add_requirement('parent.collection', '1.0.0')
+    assert req.latest_version == '*'
+
+    assert mock_display.call_count == 1
+
+    actual_warn = ' '.join(mock_display.mock_calls[0][1][0].split('\n'))
+    assert "Failed to validate the collection requirement 'namespace.name:1.0.0' for parent.collection" in actual_warn
 
 
 def test_add_collection_wildcard_requirement_to_unknown_installed_version():
@@ -590,7 +641,12 @@ def test_install_collection(collection_artifact, monkeypatch):
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+                            b'runme.sh']
+
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'plugins')).st_mode) == 0o0755
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'README.md')).st_mode) == 0o0644
+    assert stat.S_IMODE(os.stat(os.path.join(collection_path, b'runme.sh')).st_mode) == 0o0755
 
     assert mock_display.call_count == 1
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
@@ -624,7 +680,8 @@ def test_install_collection_with_download(galaxy_server, collection_artifact, mo
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+                            b'runme.sh']
 
     assert mock_display.call_count == 1
     assert mock_display.mock_calls[0][1][0] == "Installing 'ansible_namespace.collection:0.1.0' to '%s'" \
@@ -652,7 +709,8 @@ def test_install_collections_from_tar(collection_artifact, monkeypatch):
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+                            b'runme.sh']
 
     with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
         actual_manifest = json.loads(to_text(manifest_obj.read()))
@@ -684,7 +742,7 @@ def test_install_collections_existing_without_force(collection_artifact, monkeyp
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'README.md', b'docs', b'galaxy.yml', b'playbooks', b'plugins', b'roles']
+    assert actual_files == [b'README.md', b'docs', b'galaxy.yml', b'playbooks', b'plugins', b'roles', b'runme.sh']
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
@@ -715,7 +773,8 @@ def test_install_collection_with_circular_dependency(collection_artifact, monkey
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles']
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles',
+                            b'runme.sh']
 
     with open(os.path.join(collection_path, b'MANIFEST.json'), 'rb') as manifest_obj:
         actual_manifest = json.loads(to_text(manifest_obj.read()))

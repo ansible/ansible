@@ -165,14 +165,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Check to determine if PowerShell modules are supported, and apply
             # some fixes (hacks) to module name + args.
             if mod_type == '.ps1':
-                # win_stat, win_file, and win_copy are not just like their
+                # FIXME: This should be temporary and moved to an exec subsystem plugin where we can define the mapping
+                # for each subsystem.
+                win_collection = 'ansible.windows'
+
+                # async_status, win_stat, win_file, win_copy, and win_ping are not just like their
                 # python counterparts but they are compatible enough for our
                 # internal usage
-                if module_name in ('stat', 'file', 'copy') and self._task.action != module_name:
-                    module_name = 'win_%s' % module_name
+                if module_name in ('stat', 'file', 'copy', 'ping') and self._task.action != module_name:
+                    module_name = '%s.win_%s' % (win_collection, module_name)
+                elif module_name in ['async_status']:
+                    module_name = '%s.%s' % (win_collection, module_name)
 
                 # Remove extra quotes surrounding path parameters before sending to module.
-                if module_name in ('win_stat', 'win_file', 'win_copy', 'slurp') and module_args and hasattr(self._connection._shell, '_unquote'):
+                if module_name.split('.')[-1] in ['win_stat', 'win_file', 'win_copy', 'slurp'] and module_args and \
+                        hasattr(self._connection._shell, '_unquote'):
                     for key in ('src', 'dest', 'path'):
                         if key in module_args:
                             module_args[key] = self._connection._shell._unquote(module_args[key])
@@ -1048,7 +1055,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         ruser = self._get_remote_user()
         buser = self.get_become_option('become_user')
         if (sudoable and self._connection.become and  # if sudoable and have become
-                self._connection.transport != 'network_cli' and  # if not using network_cli
+                self._connection.transport.split('.')[-1] != 'network_cli' and  # if not using network_cli
                 (C.BECOME_ALLOW_SAME_USER or (buser != ruser or not any((ruser, buser))))):  # if we allow same user PE or users are different and either is set
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)

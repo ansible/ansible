@@ -1,0 +1,19 @@
+# ref #18526
+- name: Test that we have a proper jinja search path in template lookup
+  set_fact:
+    hello_world: "{{ lookup('template', 'hello.txt') }}"
+
+- assert:
+    that:
+      - "hello_world|trim == 'Hello world!'"
+
+
+- name: Test that we have a proper jinja search path in template lookup with different variable start and end string
+  vars:
+    my_var: world
+  set_fact:
+    hello_world_string: "{{ lookup('template', 'hello_string.txt', variable_start_string='[%', variable_end_string='%]') }}"
+
+- assert:
+    that:
+      - "hello_world_string|trim == 'Hello world!'"

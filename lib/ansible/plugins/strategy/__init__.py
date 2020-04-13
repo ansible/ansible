@@ -55,6 +55,12 @@ display = Display()
 
 __all__ = ['StrategyBase']
 
+# This list can be an exact match, or start of string bound
+# does not accept regex
+ALWAYS_DELEGATE_FACT_PREFIXES = frozenset((
+    'discovered_interpreter_',
+))
+
 
 class StrategySentinel:
     pass
@@ -325,9 +331,26 @@ class StrategyBase:
 
         # and then queue the new task
         try:
+            # Determine the "rewind point" of the worker list. This means we start
+            # iterating over the list of workers until the end of the list is found.
+            # Normally, that is simply the length of the workers list (as determined
+            # by the forks or serial setting), however a task/block/play may "throttle"
+            # that limit down.
+            rewind_point = len(self._workers)
+            if throttle > 0 and self.ALLOW_BASE_THROTTLING:
+                if task.run_once:
+                    display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
+                else:
+                    if throttle <= rewind_point:
+                        display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
+                        rewind_point = throttle
+
             queued = False
             starting_worker = self._cur_worker
             while True:
+                if self._cur_worker >= rewind_point:
+                    self._cur_worker = 0
+
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     self._queued_task_cache[(host.name, task._uuid)] = {
@@ -346,19 +369,6 @@ class StrategyBase:
 
                 self._cur_worker += 1
 
-                # Determine the "rewind point" of the worker list. This means we start
-                # iterating over the list of workers until the end of the list is found.
-                # Normally, that is simply the length of the workers list (as determined
-                # by the forks or serial setting), however a task/block/play may "throttle"
-                # that limit down.
-                rewind_point = len(self._workers)
-                if throttle > 0 and self.ALLOW_BASE_THROTTLING:
-                    if task.run_once:
-                        display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
-                    else:
-                        if throttle <= rewind_point:
-                            display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
-                            rewind_point = throttle
                 if self._cur_worker >= rewind_point:
                     self._cur_worker = 0
 
@@ -384,6 +394,34 @@ class StrategyBase:
     def get_delegated_hosts(self, result, task):
         host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
         return [host_name or task.delegate_to]
+
+    def _set_always_delegated_facts(self, result, task):
+        """Sets host facts for ``delegate_to`` hosts for facts that should
+        always be delegated
+
+        This operation mutates ``result`` to remove the always delegated facts
+
+        See ``ALWAYS_DELEGATE_FACT_PREFIXES``
+        """
+        if task.delegate_to is None:
+            return
+
+        facts = result['ansible_facts']
+        always_keys = set()
+        _add = always_keys.add
+        for fact_key in facts:
+            for always_key in ALWAYS_DELEGATE_FACT_PREFIXES:
+                if fact_key.startswith(always_key):
+                    _add(fact_key)
+        if always_keys:
+            _pop = facts.pop
+            always_facts = {
+                'ansible_facts': dict((k, _pop(k)) for k in list(facts) if k in always_keys)
+            }
+            host_list = self.get_delegated_hosts(result, task)
+            _set_host_facts = self._variable_manager.set_host_facts
+            for target_host in host_list:
+                _set_host_facts(target_host, always_facts)
 
     @debug_closure
     def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
@@ -422,11 +460,14 @@ class StrategyBase:
                             # include the role name (if the handler is from a role). If that
                             # is not found, we resort to the simple name field, which doesn't
                             # have anything extra added to it.
-                            if handler_task.name == handler_name:
+                            candidates = (
+                                handler_task.name,
+                                handler_task.get_name(include_role_fqcn=False),
+                                handler_task.get_name(include_role_fqcn=True),
+                            )
+
+                            if handler_name in candidates:
                                 return handler_task
-                            else:
-                                if handler_task.get_name() == handler_name:
-                                    return handler_task
                         except (UndefinedError, AnsibleUndefinedVariable):
                             # We skip this handler due to the fact that it may be using
                             # a variable in the name that was conditionally included via
@@ -602,11 +643,13 @@ class StrategyBase:
                         self._add_group(original_host, result_item)
 
                     if 'ansible_facts' in result_item:
-
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
                             host_list = self.get_delegated_hosts(result_item, original_task)
                         else:
+                            # Set facts that should always be on the delegated hosts
+                            self._set_always_delegated_facts(result_item, original_task)
+
                             host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                         if original_task.action == 'include_vars':
@@ -665,7 +708,7 @@ class StrategyBase:
             if original_task._role is not None and role_ran:  # TODO:  and original_task.action != 'include_role':?
                 # lookup the role in the ROLE_CACHE to make sure we're dealing
                 # with the correct object and mark it as executed
-                for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role._role_name]):
+                for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role.get_name()]):
                     if role_obj._uuid == original_task._role._uuid:
                         role_obj._had_task_run[original_host.name] = True
 
@@ -1090,6 +1133,7 @@ class StrategyBase:
         elif meta_action == 'end_host':
             if _evaluate_conditional(target_host):
                 iterator._host_states[target_host.name].run_state = iterator.ITERATING_COMPLETE
+                iterator._play._removed_hosts.append(target_host.name)
                 msg = "ending play for %s" % target_host.name
             else:
                 skipped = True

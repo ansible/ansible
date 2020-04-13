@@ -4,7 +4,7 @@
 Filters
 *******
 
-Filters let you transform data inside template expressions. This page documents mainly Ansible-specific filters, but you can use any of the standard filters shipped with Jinja2 - see `builtin filters`_ in the official Jinja2 template documentation. You can also use `Python methods`_ to manipulate variables. A few useful filters are typically added with each new Ansible release. The development documentation shows
+Filters let you transform data inside template expressions. This page documents mainly Ansible-specific filters, but you can use any of the standard filters shipped with Jinja2 - see the list of :ref:`builtin filters <jinja2:builtin-filters>` in the official Jinja2 template documentation. You can also use :ref:`Python methods <jinja2:python-methods>` to manipulate variables. A few useful filters are typically added with each new Ansible release. The development documentation shows
 how to create custom Ansible filters as plugins, though we generally welcome new filters into the core code so everyone can use them.
 
 Templating happens on the Ansible controller, **not** on the target host, so filters execute on the controller and manipulate data locally.
@@ -345,12 +345,13 @@ You can use the transformed data with ``loop`` to iterate over the same subeleme
 
 .. _combine_filter:
 
-Combining hashes
-----------------
+Combining hashes/dictionaries
+-----------------------------
 
 .. versionadded:: 2.0
 
-The `combine` filter allows hashes to be merged. For example, the following would override keys in one hash::
+The ``combine`` filter allows hashes to be merged.
+For example, the following would override keys in one hash::
 
     {{ {'a':1, 'b':2} | combine({'b':3}) }}
 
@@ -358,25 +359,208 @@ The resulting hash would be::
 
     {'a':1, 'b':3}
 
-The filter also accepts an optional `recursive=True` parameter to not
-only override keys in the first hash, but also recurse into nested
-hashes and merge their keys too:
-
-.. code-block:: jinja
-
-    {{ {'a':{'foo':1, 'bar':2}, 'b':2} | combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
-
-This would result in::
-
-    {'a':{'foo':1, 'bar':3, 'baz':4}, 'b':2}
-
 The filter can also take multiple arguments to merge::
 
     {{ a | combine(b, c, d) }}
+    {{ [a, b, c, d] | combine }}
 
-In this case, keys in `d` would override those in `c`, which would override those in `b`, and so on.
+In this case, keys in ``d`` would override those in ``c``, which would
+override those in ``b``, and so on.
 
-This behavior does not depend on the value of the `hash_behavior` setting in `ansible.cfg`.
+The filter also accepts two optional parameters: ``recursive`` and ``list_merge``.
+
+recursive
+  Is a boolean, default to ``False``.
+  Should the ``combine`` recursively merge nested hashes.
+  Note: It does **not** depend on the value of the ``hash_behaviour`` setting in ``ansible.cfg``.
+
+list_merge
+  Is a string, its possible values are ``replace`` (default), ``keep``, ``append``, ``prepend``, ``append_rp`` or ``prepend_rp``.
+  It modifies the behaviour of ``combine`` when the hashes to merge contain arrays/lists.
+
+.. code-block:: yaml
+
+    default:
+      a:
+        x: default
+        y: default
+      b: default
+      c: default
+    patch:
+      a:
+        y: patch
+        z: patch
+      b: patch
+
+If ``recursive=False`` (the default), nested hash aren't merged::
+
+    {{ default | combine(patch) }}
+
+This would result in::
+
+    a:
+      y: patch
+      z: patch
+    b: patch
+    c: default
+
+If ``recursive=True``, recurse into nested hash and merge their keys::
+
+    {{ default | combine(patch, recursive=True) }}
+
+This would result in::
+
+    a:
+      x: default
+      y: patch
+      z: patch
+    b: patch
+    c: default
+
+If ``list_merge='replace'`` (the default), arrays from the right hash will "replace" the ones in the left hash::
+
+    default:
+      a:
+        - default
+    patch:
+      a:
+        - patch
+
+.. code-block:: jinja
+
+    {{ default | combine(patch) }}
+
+This would result in::
+
+    a:
+      - patch
+
+If ``list_merge='keep'``, arrays from the left hash will be kept::
+
+    {{ default | combine(patch, list_merge='keep') }}
+
+This would result in::
+
+    a:
+      - default
+
+If ``list_merge='append'``, arrays from the right hash will be appended to the ones in the left hash::
+
+    {{ default | combine(patch, list_merge='append') }}
+
+This would result in::
+
+    a:
+      - default
+      - patch
+
+If ``list_merge='prepend'``, arrays from the right hash will be prepended to the ones in the left hash::
+
+    {{ default | combine(patch, list_merge='prepend') }}
+
+This would result in::
+
+    a:
+      - patch
+      - default
+
+If ``list_merge='append_rp'``, arrays from the right hash will be appended to the ones in the left hash.
+Elements of arrays in the left hash that are also in the corresponding array of the right hash will be removed ("rp" stands for "remove present").
+Duplicate elements that aren't in both hashes are kept::
+
+    default:
+      a:
+        - 1
+        - 1
+        - 2
+        - 3
+    patch:
+      a:
+        - 3
+        - 4
+        - 5
+        - 5
+
+.. code-block:: jinja
+
+    {{ default | combine(patch, list_merge='append_rp') }}
+
+This would result in::
+
+    a:
+      - 1
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 5
+
+If ``list_merge='prepend_rp'``, the behavior is similar to the one for ``append_rp``, but elements of arrays in the right hash are prepended::
+
+    {{ default | combine(patch, list_merge='prepend_rp') }}
+
+This would result in::
+
+    a:
+      - 3
+      - 4
+      - 5
+      - 5
+      - 1
+      - 1
+      - 2
+
+``recursive`` and ``list_merge`` can be used together::
+
+    default:
+      a:
+        a':
+          x: default_value
+          y: default_value
+          list:
+            - default_value
+      b:
+        - 1
+        - 1
+        - 2
+        - 3
+    patch:
+      a:
+        a':
+          y: patch_value
+          z: patch_value
+          list:
+            - patch_value
+      b:
+        - 3
+        - 4
+        - 4
+        - key: value
+
+.. code-block:: jinja
+
+    {{ default | combine(patch, recursive=True, list_merge='append_rp') }}
+
+This would result in::
+
+    a:
+      a':
+        x: default_value
+        y: patch_value
+        z: patch_value
+        list:
+          - default_value
+          - patch_value
+    b:
+      - 1
+      - 1
+      - 2
+      - 3
+      - 4
+      - 4
+      - key: value
+
 
 .. _extract_filter:
 
@@ -1212,6 +1396,9 @@ To replace text in a string with regex, use the "regex_replace" filter::
     # convert "localhost:80" to "localhost"
     {{ 'localhost:80' | regex_replace(':80') }}
 
+    # change a multiline string
+    {{ var | regex_replace('^', '#CommentThis#', multiline=True) }}
+
 .. note:: If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors.
    For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the
    end, which means it will make two replacements::
@@ -1328,12 +1515,15 @@ To concatenate a list into a string::
 To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
-    {{ decoded | b64encode }}
+    {{ decoded | string | b64encode }}
 
 As of version 2.6, you can define the type of encoding to use, the default is ``utf-8``::
 
     {{ encoded | b64decode(encoding='utf-16-le') }}
-    {{ decoded | b64encode(encoding='utf-16-le') }}
+    {{ decoded | string | b64encode(encoding='utf-16-le') }}
+
+.. note:: The ``string`` filter is only required for Python 2 and ensures that text to encode is a unicode string.
+    Without that filter before b64encode the wrong value will be encoded.
 
 .. versionadded:: 2.6
 
@@ -1352,7 +1542,7 @@ To create a namespaced UUIDv5 using the default Ansible namespace '361E6D51-FAEC
 
 .. versionadded:: 1.9
 
-To make use of one attribute from each item in a list of complex variables, use the "map" filter (see the `Jinja2 map() docs`_ for more)::
+To make use of one attribute from each item in a list of complex variables, use the :func:`Jinja2 map filter <jinja2:map>`::
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts | map(attribute='mount') | join(',') }}
@@ -1416,13 +1606,6 @@ This can then be used to reference hashes in Pod specifications::
                     name: {{ my_secret | k8s_config_resource_name }}
 
 .. versionadded:: 2.8
-
-
-.. _Jinja2 map() docs: https://jinja.palletsprojects.com/templates/#map
-
-.. _builtin filters: https://jinja.palletsprojects.com/templates/#builtin-filters
-
-.. _Python methods: https://jinja.palletsprojects.com/templates/#python-methods
 
 .. _PyYAML library: https://pyyaml.org/
 

@@ -309,7 +309,7 @@ For example:
        debug: msg="{{ showmevar }}"
        tags: [ never, debug ]
 
-The rarely-used debug task in the example above only runs when you specifically request the the ``debug`` or ``never`` tags.
+The rarely-used debug task in the example above only runs when you specifically request the ``debug`` or ``never`` tags.
 
 .. _using_tags:
 

@@ -56,7 +56,7 @@ can be run in the bash terminal:
 
     sudo apt-get update
     sudo apt-get install python-pip git libffi-dev libssl-dev -y
-    pip install ansible pywinrm
+    pip install --user ansible pywinrm
 
 To run Ansible from source instead of a release on the WSL, simply uninstall the pip
 installed version and then clone the git repo.

@@ -417,33 +417,6 @@
     url: https://{{ httpbin_host }}
     dest: "{{ remote_tmp_dir }}"
 
-- name: Test headers string
-  get_url:
-    url: https://{{ httpbin_host }}/headers
-    headers: Foo:bar,Baz:qux
-    dest: "{{ remote_tmp_dir }}/headers_string.json"
-
-- name: Get downloaded file
-  slurp:
-    src: "{{ remote_tmp_dir }}/headers_string.json"
-  register: result
-
-- name: Test headers string
-  assert:
-    that:
-      - (result.content | b64decode | from_json).headers.get('Foo') == 'bar'
-      - (result.content | b64decode | from_json).headers.get('Baz') == 'qux'
-
-- name: Test headers string invalid format
-  get_url:
-    url: https://{{ httpbin_host }}/headers
-    headers: Foo
-    dest: "{{ remote_tmp_dir }}/headers_string_invalid.json"
-  register: invalid_string_headers
-  failed_when:
-    - invalid_string_headers is successful
-    - invalid_string_headers.msg != "The string representation for the `headers` parameter requires a key:value,key:value syntax to be properly parsed."
-
 - name: Test headers dict
   get_url:
     url: https://{{ httpbin_host }}/headers

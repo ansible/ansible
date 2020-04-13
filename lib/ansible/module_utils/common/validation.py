@@ -189,7 +189,7 @@ def check_required_arguments(argument_spec, module_parameters):
             missing.append(k)
 
     if missing:
-        msg = "missing required arguments: %s" % ", ".join(missing)
+        msg = "missing required arguments: %s" % ", ".join(sorted(missing))
         raise TypeError(to_native(msg))
 
     return missing

@@ -236,22 +236,6 @@ def substitute_crypto_to_req(req):
     return [r for r in req if is_not_crypto(r)] + [crypto_backend]
 
 
-def read_extras():
-    """Specify any extra requirements for installation."""
-    extras = dict()
-    extra_requirements_dir = 'packaging/requirements'
-    for extra_requirements_filename in os.listdir(extra_requirements_dir):
-        filename_match = re.search(r'^requirements-(\w*).txt$', extra_requirements_filename)
-        if not filename_match:
-            continue
-        extra_req_file_path = os.path.join(extra_requirements_dir, extra_requirements_filename)
-        try:
-            extras[filename_match.group(1)] = read_file(extra_req_file_path).splitlines()
-        except RuntimeError:
-            pass
-    return extras
-
-
 def get_dynamic_setup_params():
     """Add dynamically calculated setup params to static ones."""
     return {
@@ -260,7 +244,6 @@ def get_dynamic_setup_params():
         'install_requires': substitute_crypto_to_req(
             read_requirements('requirements.txt'),
         ),
-        'extras_require': read_extras(),
     }
 
 
@@ -274,7 +257,7 @@ static_setup_params = dict(
         'install_scripts': InstallScriptsCommand,
         'sdist': SDistCommand,
     },
-    name='ansible',
+    name='ansible-base',
     version=__version__,
     description='Radically simple IT automation',
     author=__author__,

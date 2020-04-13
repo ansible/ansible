@@ -1,2 +1,0 @@
-minor_changes:
-- ec2_placement_group - make `name` a required field.

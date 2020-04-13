@@ -1,2 +1,0 @@
-instance_name: "{{ resource_prefix }}_instance"
-zone: "{{ aws_region }}a"

@@ -281,7 +281,7 @@ You can link from your module documentation to other module docs, other resource
 
 .. note::
 
-	For modules in a collection, you can only use ``L()`` and ``M()`` for content within that collection. Use ``U()`` to refer to content in a different collection.
+  For modules in a collection, you can only use ``L()`` and ``M()`` for content within that collection. Use ``U()`` to refer to content in a different collection.
 
 .. note::
 
@@ -346,6 +346,7 @@ For example, all AWS modules should include:
     - aws
     - ec2
 
+:ref:`docfragments_collections` describes how to incorporate documentation fragments in a collection.
 
 .. _examples_block:
 
@@ -453,3 +454,10 @@ After the shebang, the UTF-8 coding, the copyright line, the license, and the se
    from module_utils.basic import AnsibleModule
 
 The use of "wildcard" imports such as ``from module_utils.basic import *`` is no longer allowed.
+
+.. _dev_testing_module_documentation:
+
+Testing module documentation
+============================
+
+To test Ansible documentation locally please :ref:`follow instruction<testing_module_documentation>`.

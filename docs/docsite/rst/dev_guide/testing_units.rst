@@ -23,6 +23,10 @@ structure of the tests matches that of ``lib/ansible/``.
 Running Tests
 =============
 
+.. note::
+   To run unit tests using docker, always use the default docker image
+   by passing the ``--docker`` or ``--docker default`` argument.
+
 The Ansible unit tests can be run across the whole code base by doing:
 
 .. code:: shell
@@ -161,7 +165,7 @@ files that aren't themselves tests.
 Fixtures files
 ``````````````
 
-To mock out fetching results from devices, or provide other complex datastructures that
+To mock out fetching results from devices, or provide other complex data structures that
 come from external libraries, you can use ``fixtures`` to read in pre-generated data.
 
 Text files live in ``test/units/modules/network/PLATFORM/fixtures/``

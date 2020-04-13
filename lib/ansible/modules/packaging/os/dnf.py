@@ -286,7 +286,6 @@ EXAMPLES = '''
 import os
 import re
 import sys
-import tempfile
 
 try:
     import dnf
@@ -300,15 +299,12 @@ except ImportError:
     HAS_DNF = False
 
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.urls import fetch_url
+from ansible.module_utils.urls import fetch_file
 from ansible.module_utils.six import PY2, text_type
 from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.yumdnf import YumDnf, yumdnf_argument_spec
-
-# 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
-BUFSIZE = 65536
 
 
 class DnfModule(YumDnf):
@@ -464,34 +460,6 @@ class DnfModule(YumDnf):
         rc = dnf.rpm.rpm.labelCompare((e1, v1, r1), (e2, v2, r2))
         # print '%s, %s, %s vs %s, %s, %s = %s' % (e1, v1, r1, e2, v2, r2, rc)
         return rc
-
-    def fetch_rpm_from_url(self, spec):
-        # FIXME: Remove this once this PR is merged:
-        #   https://github.com/ansible/ansible/pull/19172
-
-        # download package so that we can query it
-        package_name, dummy = os.path.splitext(str(spec.rsplit('/', 1)[1]))
-        package_file = tempfile.NamedTemporaryFile(dir=self.module.tmpdir, prefix=package_name, suffix='.rpm', delete=False)
-        self.module.add_cleanup_file(package_file.name)
-        try:
-            rsp, info = fetch_url(self.module, spec)
-            if not rsp:
-                self.module.fail_json(
-                    msg="Failure downloading %s, %s" % (spec, info['msg']),
-                    results=[],
-                )
-            data = rsp.read(BUFSIZE)
-            while data:
-                package_file.write(data)
-                data = rsp.read(BUFSIZE)
-            package_file.close()
-        except Exception as e:
-            self.module.fail_json(
-                msg="Failure downloading %s, %s" % (spec, to_native(e)),
-                results=[],
-            )
-
-        return package_file.name
 
     def _ensure_dnf(self):
         if not HAS_DNF:
@@ -792,7 +760,7 @@ class DnfModule(YumDnf):
 
         for name in self.names:
             if '://' in name:
-                name = self.fetch_rpm_from_url(name)
+                name = fetch_file(self.module, name)
                 filenames.append(name)
             elif name.endswith(".rpm"):
                 filenames.append(name)

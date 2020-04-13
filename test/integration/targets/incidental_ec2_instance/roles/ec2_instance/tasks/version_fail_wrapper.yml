@@ -1,0 +1,30 @@
+---
+- include_role:
+    name: 'setup_remote_tmp_dir'
+
+- set_fact:
+    virtualenv: "{{ remote_tmp_dir }}/virtualenv"
+    virtualenv_command: "{{ ansible_python_interpreter }} -m virtualenv"
+
+- set_fact:
+    virtualenv_interpreter: "{{ virtualenv }}/bin/python"
+
+- pip:
+    name: "virtualenv"
+
+- pip:
+    name:
+      - 'botocore<1.10.16'
+      - boto3
+      - coverage<5
+    virtualenv: "{{ virtualenv }}"
+    virtualenv_command: "{{ virtualenv_command }}"
+    virtualenv_site_packages: no
+
+- include_tasks: version_fail.yml
+  vars:
+    ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+
+- file:
+    state: absent
+    path: "{{ virtualenv }}"

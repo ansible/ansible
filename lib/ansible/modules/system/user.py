@@ -59,14 +59,12 @@ options:
             - List of groups user will be added to. When set to an empty string C(''),
               the user is removed from all groups except the primary group.
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
-            - Mutually exclusive with C(local)
         type: list
     append:
         description:
             - If C(yes), add the user to the groups specified in C(groups).
             - If C(no), user will only be added to the groups specified in C(groups),
               removing them from all other groups.
-            - Mutually exclusive with C(local)
         type: bool
         default: no
     shell:
@@ -211,7 +209,6 @@ options:
             - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
               exists somewhere other than C(/etc/passwd), this setting will not work properly.
             - This requires that the above commands as well as C(/etc/passwd) must exist on the target host, otherwise it will be a fatal error.
-            - Mutually exclusive with C(groups) and C(append)
         type: bool
         default: no
         version_added: "2.4"
@@ -511,6 +508,12 @@ class User(object):
         else:
             self.ssh_file = os.path.join('.ssh', 'id_%s' % self.ssh_type)
 
+        if self.groups is None and self.append:
+            # Change the argument_spec in 2.14 and remove this warning
+            # required_by={'append': ['groups']}
+            module.warn("'append' is set, but no 'groups' are specified. Use 'groups' for appending new groups."
+                        "This will change to an error in Ansible 2.14.")
+
     def check_password_encrypted(self):
         # Darwin needs cleartext password, so skip validation
         if self.module.params['password'] and self.platform != 'Darwin':
@@ -567,7 +570,7 @@ class User(object):
             command_name = 'userdel'
 
         cmd = [self.module.get_bin_path(command_name, True)]
-        if self.force:
+        if self.force and not self.local:
             cmd.append('-f')
         if self.remove:
             cmd.append('-r')
@@ -579,6 +582,7 @@ class User(object):
 
         if self.local:
             command_name = 'luseradd'
+            lgroupmod_cmd = self.module.get_bin_path('lgroupmod', True)
         else:
             command_name = 'useradd'
 
@@ -607,7 +611,7 @@ class User(object):
             if os.path.exists('/etc/redhat-release'):
                 dist = distro.linux_distribution(full_distribution_name=False)
                 major_release = int(dist[1].split('.')[0])
-                if major_release <= 5:
+                if major_release <= 5 or self.local:
                     cmd.append('-n')
                 else:
                     cmd.append('-N')
@@ -621,10 +625,11 @@ class User(object):
             else:
                 cmd.append('-N')
 
-        if self.groups is not None and not self.local and len(self.groups):
+        if self.groups is not None and len(self.groups):
             groups = self.get_groups_set()
-            cmd.append('-G')
-            cmd.append(','.join(groups))
+            if not self.local:
+                cmd.append('-G')
+                cmd.append(','.join(groups))
 
         if self.comment is not None:
             cmd.append('-c')
@@ -669,7 +674,17 @@ class User(object):
             cmd.append('-r')
 
         cmd.append(self.name)
-        return self.execute_command(cmd)
+        (rc, err, out) = self.execute_command(cmd)
+        if not self.local or rc != 0 or self.groups is None or len(self.groups) == 0:
+            return (rc, err, out)
+
+        for add_group in groups:
+            (rc, _err, _out) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
+            out += _out
+            err += _err
+            if rc != 0:
+                return (rc, out, err)
+        return (rc, out, err)
 
     def _check_usermod_append(self):
         # check if this version of usermod can append groups
@@ -702,6 +717,9 @@ class User(object):
 
         if self.local:
             command_name = 'lusermod'
+            lgroupmod_cmd = self.module.get_bin_path('lgroupmod', True)
+            lgroupmod_add = set()
+            lgroupmod_del = set()
         else:
             command_name = 'usermod'
 
@@ -748,13 +766,21 @@ class User(object):
                     else:
                         groups_need_mod = True
 
-            if groups_need_mod and not self.local:
-                if self.append and not has_append:
-                    cmd.append('-A')
-                    cmd.append(','.join(group_diff))
+            if groups_need_mod:
+                if self.local:
+                    if self.append:
+                        lgroupmod_add = set(groups).difference(current_groups)
+                        lgroupmod_del = set()
+                    else:
+                        lgroupmod_add = set(groups).difference(current_groups)
+                        lgroupmod_del = set(current_groups).difference(groups)
                 else:
-                    cmd.append('-G')
-                    cmd.append(','.join(groups))
+                    if self.append and not has_append:
+                        cmd.append('-A')
+                        cmd.append(','.join(group_diff))
+                    else:
+                        cmd.append('-G')
+                        cmd.append(','.join(groups))
 
         if self.comment is not None and info[4] != self.comment:
             cmd.append('-c')
@@ -798,12 +824,30 @@ class User(object):
             cmd.append('-p')
             cmd.append(self.password)
 
-        # skip if no changes to be made
-        if len(cmd) == 1:
-            return (None, '', '')
+        (rc, err, out) = (None, '', '')
 
-        cmd.append(self.name)
-        return self.execute_command(cmd)
+        # skip if no usermod changes to be made
+        if len(cmd) > 1:
+            cmd.append(self.name)
+            (rc, err, out) = self.execute_command(cmd)
+
+        if not self.local or not (rc is None or rc == 0) or (len(lgroupmod_add) == 0 and len(lgroupmod_del) == 0):
+            return (rc, err, out)
+
+        for add_group in lgroupmod_add:
+            (rc, _err, _out) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
+            out += _out
+            err += _err
+            if rc != 0:
+                return (rc, out, err)
+
+        for del_group in lgroupmod_del:
+            (rc, _err, _out) = self.execute_command([lgroupmod_cmd, '-m', self.name, del_group])
+            out += _out
+            err += _err
+            if rc != 0:
+                return (rc, out, err)
+        return (rc, out, err)
 
     def group_exists(self, group):
         try:
@@ -2867,10 +2911,6 @@ def main():
             role=dict(type='str'),
         ),
         supports_check_mode=True,
-        mutually_exclusive=[
-            ('local', 'groups'),
-            ('local', 'append')
-        ]
     )
 
     user = User(module)

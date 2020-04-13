@@ -246,7 +246,15 @@ EXAMPLES = '''
     name: httpd
     state: latest
 
-- name: ensure a list of packages installed
+- name: install a list of packages (suitable replacement for 2.11 loop deprecation warning)
+  yum:
+    name:
+      - nginx
+      - postgresql
+      - postgresql-server
+    state: present
+
+- name: install a list of packages with a list variable
   yum:
     name: "{{ packages }}"
   vars:
@@ -315,14 +323,6 @@ EXAMPLES = '''
   yum:
     name: sos
     disablerepo: "epel,ol7_latest"
-
-- name: Install a list of packages
-  yum:
-    name:
-      - nginx
-      - postgresql
-      - postgresql-server
-    state: present
 
 - name: Download the nginx package but do not install it
   yum:
@@ -807,7 +807,7 @@ class YumModule(YumDnf):
                 os.environ["https_proxy"] = old_proxy_env[1]
 
     def pkg_to_dict(self, pkgstr):
-        if pkgstr.strip():
+        if pkgstr.strip() and pkgstr.count('|') == 5:
             n, e, v, r, a, repo = pkgstr.split('|')
         else:
             return {'error_parsing': pkgstr}

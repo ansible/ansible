@@ -9,6 +9,10 @@ import tempfile
 
 from . import types as t
 
+from .io import (
+    make_dirs,
+)
+
 from .executor import (
     SUPPORTED_PYTHON_VERSIONS,
     HTTPTESTER_HOSTS,
@@ -44,14 +48,12 @@ from .manage_ci import (
 from .util import (
     ApplicationError,
     common_environment,
-    pass_vars,
     display,
     ANSIBLE_BIN_PATH,
     ANSIBLE_TEST_DATA_ROOT,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_ROOT,
     tempdir,
-    make_dirs,
 )
 
 from .util_common import (
@@ -203,7 +205,7 @@ def delegate_venv(args,  # type: EnvironmentConfig
             os.symlink(ANSIBLE_TEST_ROOT, os.path.join(library_path, 'ansible_test'))
 
             env.update(
-                PATH=inject_path + os.pathsep + env['PATH'],
+                PATH=inject_path + os.path.pathsep + env['PATH'],
                 PYTHONPATH=library_path,
             )
 
@@ -232,6 +234,7 @@ def delegate_docker(args, exclude, require, integration_targets):
 
     httptester_id = None
     test_id = None
+    success = False
 
     options = {
         '--docker': 1,
@@ -354,12 +357,17 @@ def delegate_docker(args, exclude, require, integration_targets):
 
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
+                # docker_exec will throw SubprocessError if not successful
+                # If we make it here, all the prep work earlier and the docker_exec line above were all successful.
+                success = True
             finally:
                 local_test_root = os.path.dirname(os.path.join(data_context().content.root, data_context().content.results_path))
 
                 remote_test_root = os.path.dirname(remote_results_root)
                 remote_results_name = os.path.basename(remote_results_root)
                 remote_temp_file = os.path.join('/root', remote_results_name + '.tgz')
+
+                make_dirs(local_test_root)  # make sure directory exists for collections which have no tests
 
                 with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
                     docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '--exclude', ResultType.TMP.name, '-C', remote_test_root, remote_results_name])
@@ -370,7 +378,8 @@ def delegate_docker(args, exclude, require, integration_targets):
                 docker_rm(args, httptester_id)
 
             if test_id:
-                docker_rm(args, test_id)
+                if args.docker_terminate == 'always' or (args.docker_terminate == 'success' and success):
+                    docker_rm(args, test_id)
 
 
 def delegate_remote(args, exclude, require, integration_targets):
@@ -484,7 +493,11 @@ def delegate_remote(args, exclude, require, integration_targets):
                 remote_results_name = os.path.basename(remote_results_root)
                 remote_temp_path = os.path.join('/tmp', remote_results_name)
 
-                manage.ssh('rm -rf {0} && mkdir {0} && cp -a {1}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, remote_results_root))
+                # AIX cp and GNU cp provide different options, no way could be found to have a common
+                # pattern and achieve the same goal
+                cp_opts = '-hr' if platform in ['aix', 'ibmi'] else '-a'
+
+                manage.ssh('rm -rf {0} && mkdir {0} && cp {1} {2}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, cp_opts, remote_results_root))
                 manage.download(remote_temp_path, local_test_root)
     finally:
         if args.remote_terminate == 'always' or (args.remote_terminate == 'success' and success):
@@ -575,6 +588,12 @@ def filter_options(args, argv, options, exclude, require):
             '--base-branch': 1,
         })
 
+    if isinstance(args, IntegrationConfig):
+        options.update({
+            '--no-temp-unicode': 0,
+            '--no-pip-check': 0,
+        })
+
     if isinstance(args, (NetworkIntegrationConfig, WindowsIntegrationConfig)):
         options.update({
             '--inventory': 1,
@@ -621,3 +640,10 @@ def filter_options(args, argv, options, exclude, require):
         yield '--redact'
     else:
         yield '--no-redact'
+
+    if isinstance(args, IntegrationConfig):
+        if args.no_temp_unicode:
+            yield '--no-temp-unicode'
+
+        if not args.pip_check:
+            yield '--no-pip-check'

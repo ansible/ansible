@@ -1,4 +1,0 @@
----
-vultr_resource_prefix: "vultr_test_prefix"
-ssh_key_name: "{{ vultr_resource_prefix }}-sshkey"
-ssh_key_content: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+ZFQv3MyjtL1BMpSA0o0gIkzLVVC711rthT29hBNeORdNowQ7FSvVWUdAbTq00U7Xzak1ANIYLJyn+0r7olsdG4XEiUR0dqgC99kbT/QhY5mLe5lpl7JUjW9ctn00hNmt+TswpatCKWPNwdeAJT2ERynZaqPobENgvIq7jfOFWQIVew7qrewtqwerqwrewUr2Cdq7Nb7U0XFXh3x1p0v0+MbL4tiJwPlMAGvFTKIMt+EaA+AsRIxiOo9CMk5ZuOl9pT8h5vNuEOcvS0qx4v44EAD2VOsCVCcrPNMcpuSzZP8dRTGU9wRREAWXngD0Zq9YJMH38VTxHiskoBw1NnPz ansibletest-{{ vultr_resource_prefix }}@sshkey
