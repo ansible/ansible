@@ -2,6 +2,8 @@
 
 set -eux
 
+OUTPUT_DIR=${OUTPUT_DIR:-$(mktemp -d)}
+
 # setup required roles
 ln -s ../../prepare_tests roles/prepare_tests
 
