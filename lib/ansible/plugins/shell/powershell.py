@@ -1574,6 +1574,8 @@ class ShellModule(ShellBase):
     def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
         # Windows does not have an equivalent for the system temp files, so
         # the param is ignored
+        if not basefile:
+            basefile = self.__class__._generate_temp_dir_name()
         basefile = self._escape(self._unquote(basefile))
         basetmpdir = tmpdir if tmpdir else self.get_option('remote_tmp')
 
