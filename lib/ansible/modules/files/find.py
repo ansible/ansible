@@ -219,6 +219,7 @@ import stat
 import time
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils._text import to_text
 
 
 def pfilter(f, patterns=None, excludes=None, use_regex=False):
@@ -425,8 +426,8 @@ def main():
 
                     try:
                         st = os.lstat(fsname)
-                    except Exception:
-                        msg += "%s was skipped as it does not seem to be a valid file or it cannot be accessed\n" % fsname
+                    except Exception as e:
+                        msg += "%s was skipped because: %s\n" % (fsname, to_text(e))
                         continue
 
                     r = {'path': fsname}
