@@ -2,9 +2,14 @@
 
 set -eu
 
+export OUTPUT_DIR=$(mktemp -d)
+
 cleanup() {
+    set +e  # Ensure cleanup completes
     echo "Cleanup"
     ansible-playbook runme.yml -e "output_dir=${OUTPUT_DIR}" "$@" --tags cleanup
+    echo "Removing the temporary test output directory"
+    rm -rf "${OUTPUT_DIR}"
     echo "Done"
 }
 
