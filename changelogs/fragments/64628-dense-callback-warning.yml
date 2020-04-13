@@ -1,0 +1,2 @@
+bugfixes:
+- dense callback - fix plugin access to its configuration variables and remove a warning message (https://github.com/ansible/ansible/issues/64628).
