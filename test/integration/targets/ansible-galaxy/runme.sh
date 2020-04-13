@@ -179,6 +179,10 @@ sed -i -e 's#^version:.*#version: 2.5.0#' ansible_test/zoo/galaxy.yml
 ansible-galaxy collection build ansible_test/zoo
 ansible-galaxy collection install ansible_test-zoo-2.5.0.tar.gz -p ./local
 
+# Test listing a collection that contains a galaxy.yml
+ansible-galaxy collection init "ansible_test.development"
+mv ./ansible_test/development "${galaxy_testdir}/local/ansible_collections/ansible_test/"
+
 export ANSIBLE_COLLECTIONS_PATHS=~/.ansible/collections:${galaxy_testdir}/local
 
 f_ansible_galaxy_status \
@@ -186,7 +190,7 @@ f_ansible_galaxy_status \
 
     ansible-galaxy collection list -p ./install | tee out.txt
 
-    [[ $(grep -c ansible_test out.txt) -eq 4 ]]
+    [[ $(grep -c ansible_test out.txt) -eq 5 ]]
 
 f_ansible_galaxy_status \
     "collection list specific collection"
@@ -194,6 +198,13 @@ f_ansible_galaxy_status \
     ansible-galaxy collection list -p ./install ansible_test.airport | tee out.txt
 
     [[ $(grep -c 'ansible_test\.airport' out.txt) -eq 1 ]]
+
+f_ansible_galaxy_status \
+    "collection list specific collection which contains galaxy.yml"
+
+    ansible-galaxy collection list -p ./install ansible_test.development | tee out.txt
+
+    [[ $(grep -c 'ansible_test\.development' out.txt) -eq 1 ]]
 
 f_ansible_galaxy_status \
     "collection list specific collection found in multiple places"
