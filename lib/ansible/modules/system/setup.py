@@ -135,7 +135,7 @@ EXAMPLES = """
 # import module snippets
 from ...module_utils.basic import AnsibleModule
 
-from ansible.module_utils.facts.namespace import PrefixFactNamespace
+from ansible.module_utils.facts.namespace import FactNamespace
 from ansible.module_utils.facts import ansible_collector
 
 from ansible.module_utils.facts import default_collectors
@@ -168,8 +168,7 @@ def main():
     all_collector_classes = default_collectors.collectors
 
     # rename namespace_name to root_key?
-    namespace = PrefixFactNamespace(namespace_name='ansible',
-                                    prefix='ansible_')
+    namespace = FactNamespace(namespace_name='ansible', prefix='ansible_')
 
     fact_collector = \
         ansible_collector.get_ansible_collector(all_collector_classes=all_collector_classes,

@@ -29,7 +29,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils.facts.namespace import PrefixFactNamespace
+from ansible.module_utils.facts.namespace import FactNamespace
 from ansible.module_utils.facts import default_collectors
 from ansible.module_utils.facts import ansible_collector
 
@@ -72,7 +72,7 @@ def ansible_facts(module, gather_subset=None):
     all_collector_classes = default_collectors.collectors
 
     # don't add a prefix
-    namespace = PrefixFactNamespace(namespace_name='ansible', prefix='')
+    namespace = FactNamespace(namespace_name='ansible', prefix='')
 
     fact_collector = \
         ansible_collector.get_ansible_collector(all_collector_classes=all_collector_classes,
