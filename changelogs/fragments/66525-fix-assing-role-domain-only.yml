@@ -1,0 +1,2 @@
+bugfixes:
+  - os_user_role - Fix os_user_role issue to grant a role in a domain.
