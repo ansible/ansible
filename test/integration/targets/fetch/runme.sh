@@ -4,6 +4,8 @@ set -eux
 
 OUTPUT_DIR=${OUTPUT_DIR:-$(mktemp -d)}
 
+trap 'rm -rf "${OUTPUT_DIR}"' EXIT
+
 # setup required roles
 ln -s ../../prepare_tests roles/prepare_tests
 
