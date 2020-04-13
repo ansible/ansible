@@ -946,7 +946,7 @@ def add_environments(parser, isolated_delegation=True):
     remote.add_argument('--remote-provider',
                         metavar='PROVIDER',
                         help='remote provider to use: %(choices)s',
-                        choices=['default', 'aws', 'azure', 'parallels', 'power', 'ibmps'],
+                        choices=['default', 'aws', 'azure', 'parallels', 'ibmvpc', 'ibmps'],
                         default='default')
 
     remote.add_argument('--remote-aws-region',

@@ -41,7 +41,7 @@ if [ "${platform}" = "freebsd" ]; then
         sed -i '' 's/^# *PermitRootLogin.*$/PermitRootLogin yes/;' /etc/ssh/sshd_config
         service sshd restart
     fi
-elif [ "${platform}" = "rhel" ] || [ "${platform}" = "centos" ]; then
+elif [ "${platform}" = "rhel" ]; then
     if grep '8\.' /etc/redhat-release; then
         while true; do
             yum module install -q -y python36 && \
@@ -63,8 +63,6 @@ elif [ "${platform}" = "rhel" ] || [ "${platform}" = "centos" ]; then
                 python-devel \
                 python-virtualenv \
                 python2-cryptography \
-                libffi-devel \
-                openssl-devel \
             && break
             echo "Failed to install packages. Sleeping before trying again..."
             sleep 10
@@ -72,6 +70,21 @@ elif [ "${platform}" = "rhel" ] || [ "${platform}" = "centos" ]; then
 
         install_pip
     fi
+elif [ "${platform}" = "centos" ]; then
+    while true; do
+        yum install -q -y \
+            gcc \
+            python-devel \
+            python-virtualenv \
+            python2-cryptography \
+            libffi-devel \
+            openssl-devel \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
+
+    install_pip
 elif [ "${platform}" = "osx" ]; then
     while true; do
         pip install --disable-pip-version-check --quiet \
