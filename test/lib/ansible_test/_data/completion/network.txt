@@ -1,3 +1,2 @@
 ios/csr1000v collection=cisco.ios connection=ansible.netcommon.network_cli
 vyos/1.1.8 collection=vyos.vyos connection=ansible.netcommon.network_cli
-vyos/1.1.7-R2 collection=vyos.vyos connection=ansible.netcommon.network_cli
