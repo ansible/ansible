@@ -276,10 +276,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         become_unprivileged = self._is_become_unprivileged()
-        try:
-            remote_tmp = self._connection._shell.get_option('remote_tmp')
-        except AnsibleError:
-            remote_tmp = '~/.ansible/tmp'
 
         # deal with tmpdir creation
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
@@ -291,9 +287,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             # NOTE: shell plugins should populate this setting anyways, but they dont do remote expansion, which
             # we need for 'non posix' systems like cloud-init and solaris
-            tmpdir = self._remote_expand_user(self.get_shell_option('remote_tmp', default='~/.ansible/tmp'), sudoable=False)
+            try:
+                tmpdir = self._connection._shell.get_option('remote_tmp')
+            except AnsibleError:
+                tmpdir = '~/.ansible/tmp'
+            tmpdir = self._remote_expand_user(tmpdir, sudoable=False)
 
-        become_unprivileged = self._is_become_unprivileged()
         basefile = self._connection._shell._generate_temp_dir_name()
         cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
