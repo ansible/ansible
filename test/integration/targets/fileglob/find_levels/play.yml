@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    expected:
+        play_adj: ajectent to play
+        play_adj_subdir: in files subdir adjacent to play
+        somepath/play_adj_subsubdir: in play adjacent subdir of files/
+        in_role: file in role
+        otherpath/in_role_subdir: file in role subdir
+  tasks:
+    - name: Import role lookup
+      import_role:
+        name: get_file
