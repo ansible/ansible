@@ -132,8 +132,8 @@ matrix:
     - env: T=i/windows/2019
 
     - env: T=i/ios/csr1000v//1
-    - env: T=i/vyos/1.1.7-R2/2.7/1
-    - env: T=i/vyos/1.1.7-R2/3.6/1
+    - env: T=i/vyos/1.1.8/2.7/1
+    - env: T=i/vyos/1.1.8/3.6/1
 
     - env: T=i/aws/2.7/1
     - env: T=i/aws/3.6/1
