@@ -74,6 +74,7 @@ from ansible.module_utils._text import to_text
 from ansible.errors import AnsibleError
 import ipaddress
 
+
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
@@ -84,7 +85,6 @@ class LookupModule(LookupBase):
 
         provider = kwargs.pop('provider', {})
         wapi = WapiLookup(provider)
-       
         if type(ipaddress.ip_network(network)) == ipaddress.IPv6Network:
             network_obj = wapi.get_object('ipv6network', {'network': network})
         else:
