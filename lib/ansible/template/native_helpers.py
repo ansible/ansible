@@ -48,10 +48,6 @@ def ansible_native_concat(nodes):
             # See https://github.com/ansible/ansible/issues/52158
             # We do that only here because it is taken care of by to_text() in the else block below already.
             str(out)
-
-        # short circuit literal_eval when possible
-        if not isinstance(out, list):
-            return out
     else:
         if isinstance(nodes, types.GeneratorType):
             nodes = chain(head, nodes)
