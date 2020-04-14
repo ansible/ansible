@@ -554,7 +554,7 @@ Integration tests must be located in the ``tests/integration/targets``` director
 
 There are two types of integration tests:
 
-* Ansible roles: they will be run with ``ansible-playbook`` and expect to validate various aspects of the module. They can depend on other integration tests (usually named ``prepare_bar`` or ``setup_bar``) to set-up required resources, such as installing required libraries or setting up server services.
+* Ansible roles: they will be run with ``ansible-playbook`` and expect to validate various aspects of the module. They can depend on other integration tests (usually named ``prepare_bar`` or ``setup_bar``, which prepare a service or install a requirement named ``bar`` in order to test module ``foo``) to set-up required resources, such as installing required libraries or setting up server services.
 * ``runme.sh`` tests: if the directory contains an executable shell script ``runme.sh``, it will be run directly. These can for example setup inventory files, and execute ``ansible-playbook`` or ``ansible-inventory`` with various settings.
 
 For examples, see the `integration tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/integration/targets/>`_. See also :ref:`testing_integration` for more details.
