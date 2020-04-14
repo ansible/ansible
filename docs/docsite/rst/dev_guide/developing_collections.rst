@@ -512,14 +512,14 @@ The build process for docs.ansible.com will know where to find the module docs.
 
 .. _testing_collections:
 
-Testing Collections
+Testing collections
 ===================
 
 The main tool for testing collections is ``ansible-test``, Ansible's testing tool described in :ref:`developing_testing`. This tool provides several compile and sanity checks, and allows to run unit and integration tests for plugins.
 
 ``ansible-test`` must always be executed in the root directory of a collection. In the following, we will describe how to run ``ansible-test`` with Docker containers. This is the easiest way to use ``ansible-test`` as no special requirements have to be installed, and this is also the way it is run in Shippable both in Ansible's main repository and in the large community collections such as `community.general <https://github.com/ansible-collections/community.general/>`_ and `community.network <https://github.com/ansible-collections/community.network/>`_.
 
-Compile and Sanity Tests
+Compile and sanity tests
 ------------------------
 
 To run all compile and sanity tests, execute::
@@ -528,7 +528,7 @@ To run all compile and sanity tests, execute::
 
 See :ref:`testing_compile` and :ref:`testing_sanity` for more information on the tests run. See the :ref:`full list of sanity tests <all_sanity_tests>` for details on he sanity tests and how to fix identified issues.
 
-Unit Tests
+Unit tests
 ----------
 
 Unit tests must be located in the ``tests/unit/plugins/`` directory. The tests for ``plugins/module_utils/foo/bar.py`` must be in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_.
@@ -547,7 +547,7 @@ To run only a specific unit test::
 
 Python requirements can be specified in the ``tests/unit/requirements.txt`` file. See :ref:`testing_units` for more information, especially on fixture files.
 
-Integration Tests
+Integration tests
 -----------------
 
 Integration tests must be located in the ``tests/integration/targets``` directory. For every module ``foo``, a directory of name ``foo`` will contain the tests for that module. For lookup plugins, the directory must be called ``lookup_foo``; for connection plugins, ``connection_foo``; for inventory plugins, ``inventory_foo``.
@@ -575,7 +575,7 @@ Multiple target names can be specified. A target name is the name of a directory
 
 .. _hacking_collections:
 
-Hacking Collections
+Hacking collections
 ===================
 
 This section describes how to work on a collection cloned from a Git repository. This is useful for example if you want to contribute to an existing collection, or if you want to modify a collection you are using to find a bug, change a module's behavior, etc.
