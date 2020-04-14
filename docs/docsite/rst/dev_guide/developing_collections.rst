@@ -515,29 +515,29 @@ The build process for docs.ansible.com will know where to find the module docs.
 Testing collections
 ===================
 
-The main tool for testing collections is ``ansible-test``, Ansible's testing tool described in :ref:`developing_testing`. This tool provides several compile and sanity checks, and allows to run unit and integration tests for plugins.
+The main tool for testing collections is ``ansible-test``, Ansible's testing tool described in :ref:`developing_testing`. You can run several compile and sanity checks, as well as run unit and integration tests for plugins using ``ansible-test``.
 
-``ansible-test`` must always be executed in the root directory of a collection. In the following, we will describe how to run ``ansible-test`` with Docker containers. This is the easiest way to use ``ansible-test`` as no special requirements have to be installed, and this is also the way it is run in Shippable both in Ansible's main repository and in the large community collections such as `community.general <https://github.com/ansible-collections/community.general/>`_ and `community.network <https://github.com/ansible-collections/community.network/>`_.
+You must always execute ``ansible-test`` from the root directory of a collection. You can run ``ansible-test`` in Docker containers without installing any special requirements. The Ansible team uses this approach in Shippable both in Ansible's main repository and in the large community collections such as `community.general <https://github.com/ansible-collections/community.general/>`_ and `community.network <https://github.com/ansible-collections/community.network/>`_. The examples below demonstrate running tests in Docker containers.
 
 Compile and sanity tests
 ------------------------
 
-To run all compile and sanity tests, execute::
+To run all compile and sanity tests::
 
     ansible-test sanity --docker default -v
 
-See :ref:`testing_compile` and :ref:`testing_sanity` for more information on the tests run. See the :ref:`full list of sanity tests <all_sanity_tests>` for details on he sanity tests and how to fix identified issues.
+See :ref:`testing_compile` and :ref:`testing_sanity` for more information. See the :ref:`full list of sanity tests <all_sanity_tests>` for details on the sanity tests and how to fix identified issues.
 
 Unit tests
 ----------
 
-Unit tests must be located in the ``tests/unit/plugins/`` directory. The tests for ``plugins/module_utils/foo/bar.py`` must be in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_.
+You must place unit tests in the appropriate``tests/unit/plugins/`` directory. For example, you would place tests for ``plugins/module_utils/foo/bar.py`` in ``tests/unit/plugins/module_utils/foo/test_bar.py`` or ``tests/unit/plugins/module_utils/foo/bar/test_bar.py``. For examples, see the `unit tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/unit/>`_.
 
-All unit tests can be run as follows::
+To run all unit tests for all supported Python versions::
 
     ansible-test units --docker default -v
 
-This will run all unit tests for all supported Python versions. To run them only for a specific Python version::
+To run all unit tests only for a specific Python version::
 
     ansible-test units --docker default -v --python 3.6
 
@@ -545,59 +545,57 @@ To run only a specific unit test::
 
     ansible-test units --docker default -v --python 3.6 tests/unit/plugins/module_utils/foo/test_bar.py
 
-Python requirements can be specified in the ``tests/unit/requirements.txt`` file. See :ref:`testing_units` for more information, especially on fixture files.
+You can specify Python requirements in the ``tests/unit/requirements.txt`` file. See :ref:`testing_units` for more information, especially on fixture files.
 
 Integration tests
 -----------------
 
-Integration tests must be located in the ``tests/integration/targets``` directory. For every module ``foo``, a directory of name ``foo`` will contain the tests for that module. For lookup plugins, the directory must be called ``lookup_foo``; for connection plugins, ``connection_foo``; for inventory plugins, ``inventory_foo``.
+You must place integration tests in the appropriate ``tests/integration/targets/`` directory. For module integration tests, you can use the module name alone. For example, you would place integration tests for ``plugins/modules/foo.py`` in a directory called ``tests/integration/targets/foo/``. For non-module plugin integration tests, you must add the plugin type to the directory name. For example, you would place integration tests for ``plugins/connections/bar.py`` in a directory called ``tests/integration/targets/connection_bar/``. For lookup plugins, the directory must be called ``lookup_foo``, for inventory plugins, ``inventory_foo``, and so on.
 
-There are two types of integration tests:
+You can write two different kinds of integration tests:
 
-* Ansible roles: they will be run with ``ansible-playbook`` and expect to validate various aspects of the module. They can depend on other integration tests (usually named ``prepare_bar`` or ``setup_bar``, which prepare a service or install a requirement named ``bar`` in order to test module ``foo``) to set-up required resources, such as installing required libraries or setting up server services.
-* ``runme.sh`` tests: if the directory contains an executable shell script ``runme.sh``, it will be run directly. These can for example setup inventory files, and execute ``ansible-playbook`` or ``ansible-inventory`` with various settings.
+* Ansible role tests run with ``ansible-playbook`` and validate various aspects of the module. They can depend on other integration tests (usually named ``prepare_bar`` or ``setup_bar``, which prepare a service or install a requirement named ``bar`` in order to test module ``foo``) to set-up required resources, such as installing required libraries or setting up server services.
+* ``runme.sh`` tests run directly as scripts. They can set up inventory files, and execute ``ansible-playbook`` or ``ansible-inventory`` with various settings.
 
 For examples, see the `integration tests in community.general <https://github.com/ansible-collections/community.general/tree/master/tests/integration/targets/>`_. See also :ref:`testing_integration` for more details.
 
-Since integration tests can install requirements, and set-up, start and stop services, it is recommended to run them in docker containers or otherwise restricted environments whenever possible. By default, ``ansible-test`` supports Docker images for several operating systems. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for all options. The ``default`` image is used mainly for platform independent integration tests, such as those for cloud modules. The following examples show ``centos8``.
+Since integration tests can install requirements, and set-up, start and stop services, we recommended running them in docker containers or otherwise restricted environments whenever possible. By default, ``ansible-test`` supports Docker images for several operating systems. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for all options. Use the ``default`` image mainly for platform-independent integration tests, such as those for cloud modules. The following examples use the ``centos8`` image.
 
-All integration tests for a collection can be executed as follows::
+To execute all integration tests for a collection::
 
     ansible-test integration --docker centos8 -v
 
 If you want more detailed output, run the command with ``-vvv`` instead of ``-v``. Alternatively, specify ``--retry-on-error`` to automatically re-run failed tests with higher verbosity levels.
 
-The integration tests for a specific target can be executed as follows::
+To execute only the integration tests in a specific directory::
 
-    ansible-test integration --docker centos8 -v target_name
+    ansible-test integration --docker centos8 -v tests/integration/targets/connection_bar/
 
-Multiple target names can be specified. A target name is the name of a directory in ``tests/integration/targets/``.
+You can specify multiple target names. Each target name is the name of a directory in ``tests/integration/targets/``.
 
 .. _hacking_collections:
 
-Hacking collections
-===================
+Contributing to collections
+===========================
 
-This section describes how to work on a collection cloned from a Git repository. This is useful for example if you want to contribute to an existing collection, or if you want to modify a collection you are using to find a bug, change a module's behavior, etc.
+If you want to add functionality to an existing collection, modify a collection you are using to fix a bug, or change the behavior of a module in a collection, clone the git repository for that collection and make changes on a branch. You can combine changes to a collection with a local checkout of Ansible (``source hacking/env-setup``).
 
-This can be combined with a local checkout of Ansible (``source hacking/env-setup``).
+This section describes the process for `community.general <https://github.com/ansible-collections/community.general/>`_. To contribute to other collections, replace the folder names ``community`` and ``general`` with the namespace and collection name of a different collection1.
 
-In the following, we will describe the process for `community.general <https://github.com/ansible-collections/community.general/>`_. You can simply adjust this by replacing the appropriate folder names ``community`` and ``general`` with the namespace and collection name of the collection you are interested in.
-
-We assume that you have included ``~/dev/ansible/collections/`` in :ref:`COLLECTIONS_PATHS`, and if that path mentions multiple directories, that you made sure that no other directory earlier in the search path contains a copy of ``community.general``. Make sure that the directory ``~/dev/ansible/collections/ansible_collections/community`` exists, and in it clone `the community.general Git repository <https://github.com/ansible-collections/community.general/>`_ or a fork of it into the folder ``general``::
+We assume that you have included ``~/dev/ansible/collections/`` in :ref:`COLLECTIONS_PATHS`, and if that path mentions multiple directories, that you made sure that no other directory earlier in the search path contains a copy of ``community.general``. Create the directory ``~/dev/ansible/collections/ansible_collections/community``, and in it clone `the community.general Git repository <https://github.com/ansible-collections/community.general/>`_ or a fork of it into the folder ``general``::
 
     mkdir -p ~/dev/ansible/collections/ansible_collections/community
     cd ~/dev/ansible/collections/ansible_collections/community
     git clone git@github.com:ansible-collections/community.general.git general
 
-If you clone a fork, it is suggested to add the original repository as a remote ``upstream``::
+If you clone a fork, add the original repository as a remote ``upstream``::
 
     cd ~/dev/ansible/collections/ansible_collections/community/general
     git remote add upstream git@github.com:ansible-collections/community.general.git
 
-This allows you to use this checkout of ``community.general`` in playbooks and roles with the installed version of Ansible, respectively with the active hacking version of Ansible.
+Now you can use this checkout of ``community.general`` in playbooks and roles with whichever version of Ansible you have installed locally, including a local checkout of the ``devel`` branch.
 
-For many collections, it is recommended to create a branch and add your changes to that one. When you are done (don't forget testing: :ref:`testing_collections`), push your changes to your fork of the collection and create a Pull Request. If the repository is not hosted on GitHub, the details might differ. Check out the ``README.md`` of the collection for information on contributing to it.
+For collections in the ``ansible_collections`` namespace, create a branch and commit your changes on the branch. When you are done (remember to add tests, see :ref:`testing_collections`), push your changes to your fork of the collection and create a Pull Request. For other collections, especially for collections not hosted on GitHub, check the ``README.md`` of the collection for information on contributing to it.
 
 
 .. seealso::
