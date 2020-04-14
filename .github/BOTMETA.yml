@@ -1,4 +1,5 @@
 automerge: false
+collection_redirect: false
 notifications: false
 files:
   .github/BOTMETA.yml:
