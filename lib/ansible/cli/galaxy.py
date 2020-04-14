@@ -268,7 +268,7 @@ class GalaxyCLI(CLI):
         search_parser.add_argument('args', help='Search terms', metavar='searchterm', nargs='*')
 
     def add_import_options(self, parser, parents=None):
-        import_parser = parser.add_parser('import', parents=parents, help='Import a role')
+        import_parser = parser.add_parser('import', parents=parents, help='Import a role into a galaxy server')
         import_parser.set_defaults(func=self.execute_import)
 
         import_parser.add_argument('--no-wait', dest='wait', action='store_false', default=True,
