@@ -28,6 +28,7 @@ import re
 import time
 
 from contextlib import contextmanager
+from distutils.version import LooseVersion
 from numbers import Number
 
 try:
@@ -67,6 +68,8 @@ NON_TEMPLATED_TYPES = (bool, Number)
 
 JINJA2_OVERRIDE = '#jinja2:'
 
+from jinja2 import __version__ as j2_version
+
 USE_JINJA2_NATIVE = False
 if C.DEFAULT_JINJA2_NATIVE:
     try:
@@ -76,7 +79,6 @@ if C.DEFAULT_JINJA2_NATIVE:
     except ImportError:
         from jinja2 import Environment
         from jinja2.utils import concat as j2_concat
-        from jinja2 import __version__ as j2_version
         display.warning(
             'jinja2_native requires Jinja 2.10 and above. '
             'Version detected: %s. Falling back to default.' % j2_version
@@ -294,6 +296,40 @@ class AnsibleContext(Context):
         val = super(AnsibleContext, self).resolve_or_missing(key)
         self._update_unsafe(val)
         return val
+
+    def get_all(self):
+        """Return the complete context as a dict including the exported
+        variables. For optimizations reasons this might not return an
+        actual copy so be careful with using it.
+
+        This is to prevent from running ``AnsibleJ2Vars`` through dict():
+
+            ``dict(self.parent, **self.vars)``
+
+        In Ansible this means that ALL variables would be templated in the
+        process of re-creating the parent because ``AnsibleJ2Vars`` templates
+        each variable in its ``__getitem__`` method. Instead we re-create the
+        parent via ``AnsibleJ2Vars.add_locals`` that creates a new
+        ``AnsibleJ2Vars`` copy without templating each variable.
+
+        This will prevent unnecessarily templating unused variables in cases
+        like setting a local variable and passing it to {% include %}
+        in a template.
+
+        Also see ``AnsibleJ2Template``and
+        https://github.com/pallets/jinja/commit/d67f0fd4cc2a4af08f51f4466150d49da7798729
+        """
+        if LooseVersion(j2_version) >= LooseVersion('2.9'):
+            if not self.vars:
+                return self.parent
+            if not self.parent:
+                return self.vars
+
+        if isinstance(self.parent, AnsibleJ2Vars):
+            return self.parent.add_locals(self.vars)
+        else:
+            # can this happen in Ansible?
+            return dict(self.parent, **self.vars)
 
 
 class JinjaPluginIntercept(MutableMapping):

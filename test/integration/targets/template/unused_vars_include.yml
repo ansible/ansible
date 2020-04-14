@@ -1,0 +1,8 @@
+- hosts: localhost
+  gather_facts: no
+  vars:
+    test_var: foo
+    unused_var: "{{ undefined_var }}"
+  tasks:
+    - debug:
+        msg: "{{ lookup('template', 'unused_vars_template.j2') }}"

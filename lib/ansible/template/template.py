@@ -26,9 +26,9 @@ __all__ = ['AnsibleJ2Template']
 
 class AnsibleJ2Template(jinja2.environment.Template):
     '''
-    A helper class, which prevents Jinja2 from running _jinja2_vars through dict().
+    A helper class, which prevents Jinja2 from running AnsibleJ2Vars through dict().
     Without this, {% include %} and similar will create new contexts unlike the special
-    one created in template_from_file. This ensures they are all alike, except for
+    one created in Templar.template. This ensures they are all alike, except for
     potential locals.
     '''
 
