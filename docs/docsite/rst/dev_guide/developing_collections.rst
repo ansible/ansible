@@ -584,7 +584,7 @@ This can be combined with a local checkout of Ansible (``source hacking/env-setu
 
 In the following, we will describe the process for `community.general <https://github.com/ansible-collections/community.general/>`_. You can simply adjust this by replacing the appropriate folder names ``community`` and ``general`` with the namespace and collection name of the collection you are interested in.
 
-We assume that you have included ``~/dev/ansible/collections/`` in :ref:`COLLECTIONS_PATHS`, and if that path mentiones multiple directories, that you made sure that no other directory earlier in the search path contains a copy of ``community.general``. Make sure that the directory ``~/dev/ansible/collections/ansible_collections/community`` exists, and in it clone `the community.general Git repository <https://github.com/ansible-collections/community.general/>`_ or a fork of it into the folder ``general``::
+We assume that you have included ``~/dev/ansible/collections/`` in :ref:`COLLECTIONS_PATHS`, and if that path mentions multiple directories, that you made sure that no other directory earlier in the search path contains a copy of ``community.general``. Make sure that the directory ``~/dev/ansible/collections/ansible_collections/community`` exists, and in it clone `the community.general Git repository <https://github.com/ansible-collections/community.general/>`_ or a fork of it into the folder ``general``::
 
     mkdir -p ~/dev/ansible/collections/ansible_collections/community
     cd ~/dev/ansible/collections/ansible_collections/community
