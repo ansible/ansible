@@ -506,19 +506,11 @@ class YumRepo(object):
         if len(self.repofile.sections()):
             # Write data into the file
             try:
-                fd = open(self.params['dest'], 'w')
+                with open(self.params['dest'], 'w') as fd:
+                    self.repofile.write(fd)
             except IOError as e:
                 self.module.fail_json(
-                    msg="Cannot open repo file %s." % self.params['dest'],
-                    details=to_native(e))
-
-            self.repofile.write(fd)
-
-            try:
-                fd.close()
-            except IOError as e:
-                self.module.fail_json(
-                    msg="Cannot write repo file %s." % self.params['dest'],
+                    msg="Problems handling file %s." % self.params['dest'],
                     details=to_native(e))
         else:
             # Remove the file if there are not repos
