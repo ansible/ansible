@@ -30,14 +30,14 @@ if [ -s /tmp/network.txt ]; then
     echo "Running network integration tests for multiple platforms concurrently."
 
     platforms=(
-        --platform vyos/1.1.8
+        --platform vyos/1.1.7-R2
     )
 else
     echo "No changes requiring integration tests specific to networking were detected."
     echo "Running network integration tests for a single platform only."
 
     platforms=(
-        --platform vyos/1.1.8
+        --platform vyos/1.1.7-R2
     )
 fi
 
