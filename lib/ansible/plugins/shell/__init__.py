@@ -23,6 +23,7 @@ import random
 import re
 import time
 
+from ansilbe import constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.six import text_type
 from ansible.module_utils.six.moves import shlex_quote
