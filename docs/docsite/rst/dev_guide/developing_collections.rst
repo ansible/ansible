@@ -569,7 +569,7 @@ If you want more detailed output, run the command with ``-vvv`` instead of ``-v`
 
 To execute only the integration tests in a specific directory::
 
-    ansible-test integration --docker centos8 -v tests/integration/targets/connection_bar/
+    ansible-test integration --docker centos8 -v connection_bar
 
 You can specify multiple target names. Each target name is the name of a directory in ``tests/integration/targets/``.
 
