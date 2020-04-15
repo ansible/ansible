@@ -2,4 +2,4 @@
 
 set -ux
 
-ansible-playbook playbook.yml -vvv --start-at-task 'task 2' "$@"
+ansible-playbook playbook.yml --start-at-task 'task 2' "$@"
