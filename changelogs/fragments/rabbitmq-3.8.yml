@@ -1,0 +1,2 @@
+bugfixes:
+- rabbitmq_policy - Fix version parsing for RabbitMQ 3.8.
