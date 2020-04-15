@@ -368,6 +368,9 @@ When dependencies are encountered by ``ansible-galaxy``, it will automatically i
 
 There are two ways to define the dependencies of a role:
 
+* using ``meta/requirements.yml``
+* using ``meta/main.yml``
+
 Using ``meta/requirements.yml``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -380,7 +383,7 @@ From there, you can import or include the specified roles in your tasks.
 Using ``meta/main.yml``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Alternatively, you can also specify role dependencies in the ``meta/main.yml`` file by providing a list of roles under the ``dependencies`` section. If the source of a role is Galaxy, you can simply specify the role in
+Alternatively, you can specify role dependencies in the ``meta/main.yml`` file by providing a list of roles under the ``dependencies`` section. If the source of a role is Galaxy, you can simply specify the role in
 the format ``namespace.role_name``. You can also use the more complex format in :file:`requirements.yml`, allowing you to provide ``src``, ``scm``, ``version``, and ``name``.
 
 Dependencies installed that way, depending on other factors described below, will also be executed **before** this role is executed during play execution.
