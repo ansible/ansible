@@ -17,6 +17,8 @@ Ansible users who understand how to write playbooks and roles should be able to 
 
 Read on to learn how Ansible is tested, how to test your contributions locally, and how to extend testing capabilities.
 
+If you want to learn on how testing collections, you should read :ref:`testing_collections`
+
 
 
 Types of tests
@@ -91,7 +93,8 @@ Occasionally you may find your PR fails due to a reason unrelated to your change
 
 If either of these issues appear to be the case, you can rerun the Shippable test by:
 
-* closing and re-opening the PR
+* adding a comment with ``/rebuild`` (full rebuild) or ``/rebuild_failed`` (rebuild only failed CI nodes) to the PR
+* closing and re-opening the PR (full rebuild)
 * making another change to the PR and pushing to GitHub
 
 If the issue persists, please contact us in ``#ansible-devel`` on Freenode IRC.
