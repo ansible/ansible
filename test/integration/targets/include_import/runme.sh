@@ -42,6 +42,9 @@ ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_include_tasks_tags.yml -i in
 ANSIBLE_STRATEGY='linear' ansible-playbook role/test_include_role.yml -i inventory "$@"
 ANSIBLE_STRATEGY='free' ansible-playbook role/test_include_role.yml -i inventory "$@"
 
+# https://github.com/ansible/ansible/issues/68515
+ansible-playbook -v role/test_include_role_vars_from.yml 2>&1 | tee test_include_role_vars_from.out
+test "$(grep -E -c 'Expected a string for vars_from but got' test_include_role_vars_from.out)" = 1
 
 ## Max Recursion Depth
 # https://github.com/ansible/ansible/issues/23609
