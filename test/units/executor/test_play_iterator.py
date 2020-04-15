@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import pytest
-
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 
@@ -458,53 +456,3 @@ class TestPlayIterator(unittest.TestCase):
         # test a regular insertion
         s_copy = s.copy()
         res_state = itr._insert_tasks_into_state(s_copy, task_list=[MagicMock()])
-
-
-def test_play_iterator_skip_blank_name():
-    """Skipping over a task with no name should not fail."""
-    fake_loader = DictDataLoader({
-        "test_play.yml": """
-        - hosts: all
-          gather_facts: false
-          tasks:
-            - name:
-              debug:
-                msg: foo
-            - name: task 2
-              debug:
-                msg: bar
-        """,
-    })
-
-    mock_var_manager = MagicMock()
-    mock_var_manager._fact_cache = dict()
-    mock_var_manager.get_vars.return_value = dict()
-
-    p = Playbook.load('test_play.yml', loader=fake_loader, variable_manager=mock_var_manager)
-
-    hosts = []
-    host = MagicMock()
-    host.name = host.get_name.return_value = 'host01'
-    hosts.append(host)
-
-    inventory = MagicMock()
-    inventory.get_hosts.return_value = hosts
-    inventory.filter_hosts.return_value = hosts
-
-    play_context = PlayContext(play=p._entries[0])
-    play_context.start_at_task = 'task 2'
-
-    itr = PlayIterator(
-        inventory=inventory,
-        play=p._entries[0],
-        play_context=play_context,
-        variable_manager=mock_var_manager,
-        all_vars=dict(),
-    )
-
-    # First task should be 'task 2'
-    (host_state, task) = itr.get_next_task_for_host(hosts[0])
-    assert task is not None
-    assert task.name == 'task 2'
-    assert task.action == 'debug'
-    assert task.args == dict(msg='bar')
