@@ -21,8 +21,7 @@ You can publish and use collections through `Ansible Galaxy <https://galaxy.ansi
 Collection structure
 ====================
 
-Collections follow a simple data structure. None of the directories are required unless you have specific content that belongs in one of them. A collection does require a ``galaxy.yml`` file at the root level of the collection. This file contains all of the metadata that Galaxy
-and other tools need in order to package, build and publish the collection::
+Collections follow a simple data structure. None of the directories are required unless you have specific content that belongs in one of them. A collection does require a ``galaxy.yml`` file at the root level of the collection. This file contains all of the metadata that Galaxy and other tools need in order to package, build and publish the collection::
 
     collection/
     ├── docs/
@@ -71,9 +70,9 @@ Use ``ansible-doc`` to view documentation for plugins inside a collection:
 
     ansible-doc -t lookup my_namespace.my_collection.lookup1
 
-The ``ansible-doc`` command requires the fully qualified collection name (FQCN) to display specific plugin documentation. In this example, ``my_namespace`` is the namespace and ``my_collection`` is the collection name within that namespace.
+The ``ansible-doc`` command requires the fully qualified collection name (FQCN) to display specific plugin documentation. In this example, ``my_namespace`` is the Galaxy namespace and ``my_collection`` is the collection name within that namespace.
 
-.. note:: The Ansible collection namespace is defined in the ``galaxy.yml`` file and is not equivalent to the GitHub repository name.
+.. note:: The Galaxy namespace of an Ansible collection is defined in the ``galaxy.yml`` file. It can be different from the GitHub organization or repository name.
 
 .. _collections_plugin_dir:
 
@@ -162,9 +161,7 @@ You can migrate 'traditional roles' into a collection but they must follow the r
 
 .. note::
 
-    For roles imported into Galaxy directly from a GitHub repository, setting the ``role_name`` value in the role's
-    metadata overrides the role name used by Galaxy. For collections, that value is ignored. When importing a
-    collection, Galaxy uses the role directory as the name of the role and ignores the ``role_name`` metadata value.
+    For roles imported into Galaxy directly from a GitHub repository, setting the ``role_name`` value in the role's metadata overrides the role name used by Galaxy. For collections, that value is ignored. When importing a collection, Galaxy uses the role directory as the name of the role and ignores the ``role_name`` metadata value.
 
 playbooks directory
 --------------------
@@ -468,7 +465,7 @@ See the `content_collector README <https://github.com/ansible/content_collector>
 BOTMETA.yml
 -----------
 
-The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ in the Ansible main repository is the source of truth for:
+The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ in the ansible/ansible GitHub repository is the source of truth for:
 
 * ansibullbot
 * the docs build for collections-based modules
@@ -517,7 +514,7 @@ Testing collections
 
 The main tool for testing collections is ``ansible-test``, Ansible's testing tool described in :ref:`developing_testing`. You can run several compile and sanity checks, as well as run unit and integration tests for plugins using ``ansible-test``.
 
-You must always execute ``ansible-test`` from the root directory of a collection. You can run ``ansible-test`` in Docker containers without installing any special requirements. The Ansible team uses this approach in Shippable both in Ansible's main repository and in the large community collections such as `community.general <https://github.com/ansible-collections/community.general/>`_ and `community.network <https://github.com/ansible-collections/community.network/>`_. The examples below demonstrate running tests in Docker containers.
+You must always execute ``ansible-test`` from the root directory of a collection. You can run ``ansible-test`` in Docker containers without installing any special requirements. The Ansible team uses this approach in Shippable both in the ansible/ansible GitHub repository and in the large community collections such as `community.general <https://github.com/ansible-collections/community.general/>`_ and `community.network <https://github.com/ansible-collections/community.network/>`_. The examples below demonstrate running tests in Docker containers.
 
 Compile and sanity tests
 ------------------------
@@ -580,7 +577,7 @@ Contributing to collections
 
 If you want to add functionality to an existing collection, modify a collection you are using to fix a bug, or change the behavior of a module in a collection, clone the git repository for that collection and make changes on a branch. You can combine changes to a collection with a local checkout of Ansible (``source hacking/env-setup``).
 
-This section describes the process for `community.general <https://github.com/ansible-collections/community.general/>`_. To contribute to other collections, replace the folder names ``community`` and ``general`` with the namespace and collection name of a different collection1.
+This section describes the process for `community.general <https://github.com/ansible-collections/community.general/>`_. To contribute to other collections, replace the folder names ``community`` and ``general`` with the namespace and collection name of a different collection.
 
 We assume that you have included ``~/dev/ansible/collections/`` in :ref:`COLLECTIONS_PATHS`, and if that path mentions multiple directories, that you made sure that no other directory earlier in the search path contains a copy of ``community.general``. Create the directory ``~/dev/ansible/collections/ansible_collections/community``, and in it clone `the community.general Git repository <https://github.com/ansible-collections/community.general/>`_ or a fork of it into the folder ``general``::
 
@@ -595,7 +592,7 @@ If you clone a fork, add the original repository as a remote ``upstream``::
 
 Now you can use this checkout of ``community.general`` in playbooks and roles with whichever version of Ansible you have installed locally, including a local checkout of the ``devel`` branch.
 
-For collections in the ``ansible_collections`` namespace, create a branch and commit your changes on the branch. When you are done (remember to add tests, see :ref:`testing_collections`), push your changes to your fork of the collection and create a Pull Request. For other collections, especially for collections not hosted on GitHub, check the ``README.md`` of the collection for information on contributing to it.
+For collections hosted in the ``ansible_collections`` GitHub org, create a branch and commit your changes on the branch. When you are done (remember to add tests, see :ref:`testing_collections`), push your changes to your fork of the collection and create a Pull Request. For other collections, especially for collections not hosted on GitHub, check the ``README.md`` of the collection for information on contributing to it.
 
 
 .. seealso::
