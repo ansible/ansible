@@ -13,6 +13,8 @@ import types
 from jinja2.runtime import StrictUndefined
 
 from ansible.module_utils._text import to_text
+from ansible.module_utils.common.text.converters import container_to_text
+from ansible.module_utils.six import binary_type, PY2
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 
@@ -56,6 +58,10 @@ def ansible_native_concat(nodes):
         out = u''.join([to_text(v) for v in nodes])
 
     try:
-        return literal_eval(out)
+        out = literal_eval(out)
+        if PY2:
+            # ensure bytes are not returned back into Ansible from templating
+            out = container_to_text(out)
+        return out
     except (ValueError, SyntaxError, MemoryError):
         return out
