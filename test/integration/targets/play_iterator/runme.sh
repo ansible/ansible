@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-set -ux
+set -eux
 
 ansible-playbook playbook.yml --start-at-task 'task 2' "$@"
