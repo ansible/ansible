@@ -29,7 +29,7 @@ f_ansible_galaxy_create_role_repo_pre()
         pushd "${repo_name}"
             git init .
 
-            # Prep git, becuase it doesn't work inside a docker container without it
+            # Prep git, because it doesn't work inside a docker container without it
             git config user.email "tester@ansible.com"
             git config user.name "Ansible Tester"
 
