@@ -53,7 +53,7 @@ AWS_ENDPOINTS = {
 
 class AnsibleCoreCI:
     """Client for Ansible Core CI services."""
-    def __init__(self, args, platform, version, stage='prod', persist=True, load=True, name=None, provider=None):
+    def __init__(self, args, platform, version, stage='prod', persist=True, load=True, provider=None, arch=None):
         """
         :type args: EnvironmentConfig
         :type platform: str
@@ -61,9 +61,11 @@ class AnsibleCoreCI:
         :type stage: str
         :type persist: bool
         :type load: bool
-        :type name: str
+        :type provider: str | None
+        :type arch: str | None
         """
         self.args = args
+        self.arch = arch
         self.platform = platform
         self.version = version
         self.stage = stage
@@ -73,7 +75,12 @@ class AnsibleCoreCI:
         self.endpoint = None
         self.max_threshold = 1
         self.retries = 3
-        self.name = name if name else '%s-%s' % (self.platform, self.version)
+
+        if self.arch:
+            self.name = '%s-%s-%s' % (self.arch, self.platform, self.version)
+        else:
+            self.name = '%s-%s' % (self.platform, self.version)
+
         self.ci_key = os.path.expanduser('~/.ansible-core-ci.key')
         self.resource = 'jobs'
 
@@ -98,32 +105,56 @@ class AnsibleCoreCI:
                 'aix',
                 'ibmi',
             ),
+            ibmvpc=(
+                'centos arch=power',  # avoid ibmvpc as default for no-arch centos to avoid making centos default to power
+            ),
             parallels=(
                 'osx',
             ),
             vmware=(
-                'vmware'
+                'vmware',
             ),
+        )
+
+        # Currently ansible-core-ci has no concept of arch selection. This effectively means each provider only supports one arch.
+        # The list below identifies which platforms accept an arch, and which one. These platforms can only be used with the specified arch.
+        provider_arches = dict(
+            ibmvpc='power',
         )
 
         if provider:
             # override default provider selection (not all combinations are valid)
             self.provider = provider
         else:
+            self.provider = None
+
             for candidate in providers:
-                if platform in providers[candidate]:
+                choices = [
+                    platform,
+                    '%s arch=%s' % (platform, arch),
+                ]
+
+                if any(choice in providers[candidate] for choice in choices):
                     # assign default provider based on platform
                     self.provider = candidate
                     break
-            for candidate in providers:
-                if '%s/%s' % (platform, version) in providers[candidate]:
-                    # assign default provider based on platform and version
-                    self.provider = candidate
-                    break
+
+        # If a provider has been selected, make sure the correct arch (or none) has been selected.
+        if self.provider:
+            required_arch = provider_arches.get(self.provider)
+
+            if self.arch != required_arch:
+                if required_arch:
+                    if self.arch:
+                        raise ApplicationError('Provider "%s" requires the "%s" arch instead of "%s".' % (self.provider, required_arch, self.arch))
+
+                    raise ApplicationError('Provider "%s" requires the "%s" arch.' % (self.provider, required_arch))
+
+                raise ApplicationError('Provider "%s" does not support specification of an arch.' % self.provider)
 
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
-        if self.provider in ('aws', 'azure', 'ibmps'):
+        if self.provider in ('aws', 'azure', 'ibmps', 'ibmvpc'):
             if self.provider != 'aws':
                 self.resource = self.provider
 
@@ -167,7 +198,10 @@ class AnsibleCoreCI:
             self.endpoints = ['https://access.ws.testing.ansible.com']
             self.max_threshold = 1
         else:
-            raise ApplicationError('Unsupported platform: %s' % platform)
+            if self.arch:
+                raise ApplicationError('Provider not detected for platform "%s" on arch "%s".' % (self.platform, self.arch))
+
+            raise ApplicationError('Provider not detected for platform "%s" with no arch specified.' % self.platform)
 
         if persist and load and self._load():
             try:

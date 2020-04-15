@@ -70,6 +70,21 @@ elif [ "${platform}" = "rhel" ]; then
 
         install_pip
     fi
+elif [ "${platform}" = "centos" ]; then
+    while true; do
+        yum install -q -y \
+            gcc \
+            python-devel \
+            python-virtualenv \
+            python2-cryptography \
+            libffi-devel \
+            openssl-devel \
+        && break
+        echo "Failed to install packages. Sleeping before trying again..."
+        sleep 10
+    done
+
+    install_pip
 elif [ "${platform}" = "osx" ]; then
     while true; do
         pip install --disable-pip-version-check --quiet \

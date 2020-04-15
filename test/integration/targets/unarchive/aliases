@@ -2,3 +2,4 @@ needs/root
 shippable/posix/group2
 destructive
 skip/aix
+skip/power/centos

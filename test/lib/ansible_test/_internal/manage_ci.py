@@ -213,7 +213,7 @@ class ManagePosixCI:
                 raise NotImplementedError('provider %s has not been implemented' % self.core_ci.provider)
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
-        elif self.core_ci.platform == 'rhel':
+        elif self.core_ci.platform == 'rhel' or self.core_ci.platform == 'centos':
             self.become = ['sudo', '-in', 'bash', '-c']
         elif self.core_ci.platform in ['aix', 'ibmi']:
             self.become = []
