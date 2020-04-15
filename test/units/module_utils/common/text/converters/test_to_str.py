@@ -13,9 +13,7 @@ import pytest
 
 from ansible.module_utils.six import PY3
 
-# Internal API while this is still being developed.  Eventually move to
-# module_utils.common.text
-from ansible.module_utils._text import to_text, to_bytes, to_native
+from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
 
