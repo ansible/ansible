@@ -103,6 +103,15 @@ hashing algorithm being used with this filter.
 Deprecated
 ==========
 
+Expedited Deprecation: Removal of the params module option in ``ldap_attr`` and ``ldap_entry``
+----------------------------------------------------------------------------------------------
+
+The ``params`` module option in ``ldap_attr`` and ``ldap_entry`` are deprecated on a short cycle (to
+be removed in Ansible-2.10) due to circumventing Ansible's normal option handling.  In particular,
+if the ``bind_pw`` option is set with ``params``, the value of the option could end up being placed
+in a logfile or displayed on stdout.
+
+
 Expedited Deprecation: Use of ``__file__`` in ``AnsibleModule``
 ---------------------------------------------------------------
 
@@ -191,6 +200,11 @@ The following modules will be removed in Ansible 2.11. Please update your playbo
 
 Noteworthy module changes
 -------------------------
+
+* **Security Issue** Setting ``bind_pw`` with the ``params`` option for the ``ldap_entry`` and
+  ``ldap_attr`` modules has been disallowed.  If ``bind_pw`` was set with ``params``, the value
+  could have ended up in a logfile or displayed on stdout.  Set ``bind_pw`` directly, with the
+  modules' options instead.
 
 * Check mode is now supported in the ``command`` and ``shell`` modules. However, only when ``creates`` or ``removes`` is
   specified. If either of these are specified, the module will check for existence of the file and report the correct
