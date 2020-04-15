@@ -1,6 +1,7 @@
 setup/always/setup_passlib
 shippable/posix/group2
 skip/aix
+skip/power/centos
 skip/osx
 destructive
 needs/root

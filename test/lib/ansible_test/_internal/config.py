@@ -35,6 +35,29 @@ except AttributeError:
     TIntegrationConfig = None  # pylint: disable=invalid-name
 
 
+class ParsedRemote:
+    """A parsed version of a "remote" string."""
+    def __init__(self, arch, platform, version):  # type: (t.Optional[str], str, str) -> None
+        self.arch = arch
+        self.platform = platform
+        self.version = version
+
+    @staticmethod
+    def parse(value):  # type: (str) -> t.Optional['ParsedRemote']
+        """Return a ParsedRemote from the given value or None if the syntax is invalid."""
+        parts = value.split('/')
+
+        if len(parts) == 2:
+            arch = None
+            platform, version = parts
+        elif len(parts) == 3:
+            arch, platform, version = parts
+        else:
+            return None
+
+        return ParsedRemote(arch, platform, version)
+
+
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""
     def __init__(self, args, command):
@@ -53,6 +76,14 @@ class EnvironmentConfig(CommonConfig):
         self.docker = docker_qualify_image(args.docker)  # type: str
         self.docker_raw = args.docker  # type: str
         self.remote = args.remote  # type: str
+
+        if self.remote:
+            self.parsed_remote = ParsedRemote.parse(self.remote)
+
+            if not self.parsed_remote or not self.parsed_remote.platform or not self.parsed_remote.version:
+                raise ApplicationError('Unrecognized remote "%s" syntax. Use "platform/version" or "arch/platform/version".' % self.remote)
+        else:
+            self.parsed_remote = None
 
         self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool

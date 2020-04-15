@@ -638,6 +638,9 @@ class IntegrationTarget(CompletionTarget):
 
         targets_relative_path = data_context().content.integration_targets_path
 
+        # Collect skip entries before group expansion to avoid registering more specific skip entries as less specific versions.
+        self.skips = tuple(g for g in groups if g.startswith('skip/'))
+
         # Collect file paths before group expansion to avoid including the directories.
         # Ignore references to test targets, as those must be defined using `needs/target/*` or other target references.
         self.needs_file = tuple(sorted(set('/'.join(g.split('/')[2:]) for g in groups if

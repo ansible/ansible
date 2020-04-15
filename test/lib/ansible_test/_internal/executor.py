@@ -1834,27 +1834,29 @@ def get_integration_remote_filter(args, targets):
     :type targets: tuple[IntegrationTarget]
     :rtype: list[str]
     """
-    parts = args.remote.split('/', 1)
-
-    platform = parts[0]
+    remote = args.parsed_remote
 
     exclude = []
 
     common_integration_filter(args, targets, exclude)
 
-    skip = 'skip/%s/' % platform
-    skipped = [target.name for target in targets if skip in target.aliases]
-    if skipped:
-        exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
-                        % (skip.rstrip('/'), platform, ', '.join(skipped)))
+    skips = {
+        'skip/%s' % remote.platform: remote.platform,
+        'skip/%s/%s' % (remote.platform, remote.version): '%s %s' % (remote.platform, remote.version),
+        'skip/%s%s' % (remote.platform, remote.version): '%s %s' % (remote.platform, remote.version),  # legacy syntax, use above format
+    }
 
-    skip = 'skip/%s/' % args.remote.replace('/', '')
-    skipped = [target.name for target in targets if skip in target.aliases]
-    if skipped:
-        exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
-                        % (skip.rstrip('/'), args.remote.replace('/', ' '), ', '.join(skipped)))
+    if remote.arch:
+        skips.update({
+            'skip/%s/%s' % (remote.arch, remote.platform): '%s on %s' % (remote.platform, remote.arch),
+            'skip/%s/%s/%s' % (remote.arch, remote.platform, remote.version): '%s %s on %s' % (remote.platform, remote.version, remote.arch),
+        })
+
+    for skip, description in skips.items():
+        skipped = [target.name for target in targets if skip in target.skips]
+        if skipped:
+            exclude.append(skip + '/')
+            display.warning('Excluding tests marked "%s" which are not supported on %s: %s' % (skip, description, ', '.join(skipped)))
 
     python_version = get_python_version(args, get_remote_completion(), args.remote)
 
