@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_container - wait for removal of container if docker API returns early (https://github.com/ansible/ansible/issues/65811)."

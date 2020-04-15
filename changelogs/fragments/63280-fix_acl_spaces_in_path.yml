@@ -1,2 +1,0 @@
-bugfixes:
-  - "acl - fixed module failure if there are spaces in a path"

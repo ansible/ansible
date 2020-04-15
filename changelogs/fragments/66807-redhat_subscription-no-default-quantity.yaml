@@ -1,2 +1,0 @@
-bugfixes:
-  - redhat_subscription - do not set the default quantity to ``1`` when no quantity is provided (https://github.com/ansible/ansible/issues/66478)

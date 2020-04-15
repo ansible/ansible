@@ -53,6 +53,8 @@ def main():
 
     schema = Schema({
         Required('automerge'): bool,
+        Required('collection_redirect'): bool,
+        Required('notifications'): bool,
         Required('files'): Any(None, *list_dict_file_schema),
         Required('macros'): dict,  # Any(*list_macros_schema),
     })

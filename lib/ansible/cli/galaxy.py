@@ -25,6 +25,7 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import (
     build_collection,
     CollectionRequirement,
+    download_collections,
     find_existing_collections,
     install_collections,
     publish_collection,
@@ -162,6 +163,7 @@ class GalaxyCLI(CLI):
         collection = type_parser.add_parser('collection', help='Manage an Ansible Galaxy collection.')
         collection_parser = collection.add_subparsers(metavar='COLLECTION_ACTION', dest='action')
         collection_parser.required = True
+        self.add_download_options(collection_parser, parents=[common])
         self.add_init_options(collection_parser, parents=[common, force])
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
@@ -183,6 +185,25 @@ class GalaxyCLI(CLI):
         self.add_login_options(role_parser, parents=[common])
         self.add_info_options(role_parser, parents=[common, roles_path, offline])
         self.add_install_options(role_parser, parents=[common, force, roles_path])
+
+    def add_download_options(self, parser, parents=None):
+        download_parser = parser.add_parser('download', parents=parents,
+                                            help='Download collections and their dependencies as a tarball for an '
+                                                 'offline install.')
+        download_parser.set_defaults(func=self.execute_download)
+
+        download_parser.add_argument('args', help='Collection(s)', metavar='collection', nargs='*')
+
+        download_parser.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
+                                     help="Don't download collection(s) listed as dependencies.")
+
+        download_parser.add_argument('-p', '--download-path', dest='download_path',
+                                     default='./collections',
+                                     help='The directory to download the collections to.')
+        download_parser.add_argument('-r', '--requirements-file', dest='requirements',
+                                     help='A file containing a list of collections to be downloaded.')
+        download_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
+                                     help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
 
     def add_init_options(self, parser, parents=None):
         galaxy_type = 'collection' if parser.metavar == 'COLLECTION_ACTION' else 'role'
@@ -339,6 +360,8 @@ class GalaxyCLI(CLI):
                                         help='The path to the directory containing your collections.')
             install_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                         help='A file containing a list of collections to be installed.')
+            install_parser.add_argument('--pre', dest='allow_pre_release', action='store_true',
+                                        help='Include pre-release versions. Semantic versioning pre-releases are ignored by default')
         else:
             install_parser.add_argument('-r', '--role-file', dest='role_file',
                                         help='A file containing a list of roles to be imported.')
@@ -580,7 +603,11 @@ class GalaxyCLI(CLI):
     def _display_role_info(role_info):
 
         text = [u"", u"Role: %s" % to_text(role_info['name'])]
-        text.append(u"\tdescription: %s" % role_info.get('description', ''))
+
+        # Get the top-level 'description' first, falling back to galaxy_info['galaxy_info']['description'].
+        galaxy_info = role_info.get('galaxy_info', {})
+        description = role_info.get('description', galaxy_info.get('description', ''))
+        text.append(u"\tdescription: %s" % description)
 
         for k in sorted(role_info.keys()):
 
@@ -711,6 +738,28 @@ class GalaxyCLI(CLI):
         for collection_path in context.CLIARGS['args']:
             collection_path = GalaxyCLI._resolve_path(collection_path)
             build_collection(collection_path, output_path, force)
+
+    def execute_download(self):
+        collections = context.CLIARGS['args']
+        no_deps = context.CLIARGS['no_deps']
+        download_path = context.CLIARGS['download_path']
+        ignore_certs = context.CLIARGS['ignore_certs']
+
+        requirements_file = context.CLIARGS['requirements']
+        if requirements_file:
+            requirements_file = GalaxyCLI._resolve_path(requirements_file)
+
+        requirements = self._require_one_of_collections_requirements(collections, requirements_file)
+
+        download_path = GalaxyCLI._resolve_path(download_path)
+        b_download_path = to_bytes(download_path, errors='surrogate_or_strict')
+        if not os.path.exists(b_download_path):
+            os.makedirs(b_download_path)
+
+        download_collections(requirements, download_path, self.api_servers, (not ignore_certs), no_deps,
+                             context.CLIARGS['allow_pre_release'])
+
+        return 0
 
     def execute_init(self):
         """
@@ -854,6 +903,9 @@ class GalaxyCLI(CLI):
 
             role_info = {'path': roles_path}
             gr = GalaxyRole(self.galaxy, self.api, role)
+            if not gr._exists:
+                data = u"- the role %s was not found" % role
+                break
 
             install_info = gr.install_info
             if install_info:
@@ -878,10 +930,6 @@ class GalaxyCLI(CLI):
                 role_info.update(role_spec)
 
             data = self._display_role_info(role_info)
-            # FIXME: This is broken in both 1.9 and 2.0 as
-            # _display_role_info() always returns something
-            if not data:
-                data = u"\n- the role %s was not found" % role
 
         self.pager(data)
 
@@ -897,7 +945,8 @@ class GalaxyCLI(CLI):
 
         resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
 
-        verify_collections(requirements, resolved_paths, self.api_servers, (not ignore_certs), ignore_errors)
+        verify_collections(requirements, resolved_paths, self.api_servers, (not ignore_certs), ignore_errors,
+                           allow_pre_release=True)
 
         return 0
 
@@ -941,7 +990,7 @@ class GalaxyCLI(CLI):
                 os.makedirs(b_output_path)
 
             install_collections(requirements, output_path, self.api_servers, (not ignore_certs), ignore_errors,
-                                no_deps, force, force_deps)
+                                no_deps, force, force_deps, context.CLIARGS['allow_pre_release'])
 
             return 0
 

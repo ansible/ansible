@@ -31,7 +31,7 @@
     server: '{{ fallaxy_ah_server }}'
 
 # We use a module for this so we can speed up the test time.
-- name: setup test collections for install test
+- name: setup test collections for install and download test
   setup_collections:
     server: '{{ fallaxy_galaxy_server }}'
     token: '{{ fallaxy_token }}'
@@ -148,3 +148,6 @@
     server: '{{ fallaxy_galaxy_server }}'
   - name: automation_hub
     server: '{{ fallaxy_ah_server }}'
+
+- name: run ansible-galaxy collection download tests
+  include_tasks: download.yml

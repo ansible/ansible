@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_compose - fix issue where docker deprecation warning results in ansible erroneously reporting a failure"

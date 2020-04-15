@@ -7,9 +7,6 @@ docs/docsite/_themes/sphinx_rtd_theme/__init__.py metaclass-boilerplate
 docs/docsite/rst/conf.py future-import-boilerplate
 docs/docsite/rst/conf.py metaclass-boilerplate
 docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
-docs/docsite/rst/plugins/cliconf.rst docs-build
-docs/docsite/rst/plugins/httpapi.rst docs-build
-docs/docsite/rst/plugins/netconf.rst docs-build
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
@@ -153,7 +150,6 @@ lib/ansible/modules/packaging/os/apt.py validate-modules:undocumented-parameter
 lib/ansible/modules/packaging/os/apt_key.py validate-modules:mutually_exclusive-unknown
 lib/ansible/modules/packaging/os/apt_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/packaging/os/apt_key.py validate-modules:undocumented-parameter
-lib/ansible/modules/packaging/os/apt_repo.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/packaging/os/apt_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/packaging/os/apt_repository.py validate-modules:parameter-invalid
 lib/ansible/modules/packaging/os/apt_repository.py validate-modules:parameter-type-not-in-doc
@@ -259,6 +255,9 @@ test/integration/targets/ansible-runner/files/adhoc_example1.py future-import-bo
 test/integration/targets/ansible-runner/files/adhoc_example1.py metaclass-boilerplate
 test/integration/targets/ansible-runner/files/playbook_example1.py future-import-boilerplate
 test/integration/targets/ansible-runner/files/playbook_example1.py metaclass-boilerplate
+test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
 test/integration/targets/async/library/async_test.py future-import-boilerplate
 test/integration/targets/async/library/async_test.py metaclass-boilerplate
 test/integration/targets/async_fail/library/async_test.py future-import-boilerplate
@@ -269,6 +268,7 @@ test/integration/targets/collections_relative_imports/collection_root/ansible_co
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
 test/integration/targets/expect/files/test_command.py future-import-boilerplate
 test/integration/targets/expect/files/test_command.py metaclass-boilerplate
+test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/get_url/files/testserver.py future-import-boilerplate
 test/integration/targets/get_url/files/testserver.py metaclass-boilerplate
 test/integration/targets/group/files/gidget.py future-import-boilerplate

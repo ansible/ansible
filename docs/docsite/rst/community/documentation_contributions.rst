@@ -6,7 +6,7 @@ Contributing to the Ansible Documentation
 
 Ansible has a lot of documentation and a small team of writers. Community support helps us keep up with new features, fixes, and changes.
 
-Improving the documentation is an easy way to make your first contribution to the Ansible project. You don't have to be a programmer, since our documentation is written in YAML (module documentation) or `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ (rST). If you're using Ansible, you already use YAML in your playbooks. And rST is mostly just text. You don't even need git experience, if you use the ``Edit on GitHub`` option.
+Improving the documentation is an easy way to make your first contribution to the Ansible project. You don't have to be a programmer, since most of our documentation is written in YAML (module documentation) or `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ (rST). Some collection-level documentation is written in a subset of `Markdown <https://github.com/ansible/ansible/issues/68119#issuecomment-596723053>`_. If you're using Ansible, you already use YAML in your playbooks. rST and Markdown are mostly just text. You don't even need git experience, if you use the ``Edit on GitHub`` option.
 
 If you find a typo, a broken example, a missing topic, or any other error or omission on this documentation website, let us know. Here are some ways to support Ansible documentation:
 
@@ -16,7 +16,11 @@ If you find a typo, a broken example, a missing topic, or any other error or omi
 Editing docs directly on GitHub
 ===============================
 
-For typos and other quick fixes, you can edit the documentation right from the site. Look at the top right corner of this page. That ``Edit on GitHub`` link is available on every page in the documentation. If you have a GitHub account, you can submit a quick and easy pull request this way.
+For typos and other quick fixes, you can edit most of the documentation right from the site. Look at the top right corner of this page. That ``Edit on GitHub`` link is available on all the guide pages in the documentation. If you have a GitHub account, you can submit a quick and easy pull request this way.
+
+.. note::
+
+	The source files for individual collection plugins exist in their respective repositories. Follow the link to the collection on Galaxy to find where the repository is located and any guidelines on how to contribute to that collection.
 
 To submit a documentation PR from docs.ansible.com with ``Edit on GitHub``:
 
@@ -43,7 +47,7 @@ You can also contribute by reviewing open documentation `issues <https://github.
 Opening a new issue and/or PR
 =============================
 
-If the problem you've noticed is too complex to fix with the ``Edit on GitHub`` option, and no open issue or PR already documents the problem, please open an issue and/or a PR on the ``ansible/ansible`` repo.
+If the problem you've noticed is too complex to fix with the ``Edit on GitHub`` option, and no open issue or PR already documents the problem, please open an issue and/or a PR on the ``ansible/ansible`` repo. If the documentation page has no ``Edit on GitHub`` option, check if the page is for a module within a collection. If so, follow the link to the collection on Galaxy and select the ``repo`` button in the upper right corner to find the source repository for that collection and module. The Collection README file should contain information on how to contribute to that collection, or report issues.
 
 A great documentation GitHub issue or PR includes:
 
@@ -55,12 +59,15 @@ A great documentation GitHub issue or PR includes:
 Verifying your documentation PR
 ================================
 
-If you make multiple changes to the documentation, or add more than a line to it, before you open a pull request, please:
+If you make multiple changes to the documentation on ``ansible/ansible``, or add more than a line to it, before you open a pull request, please:
 
 #. Check that your text follows our :ref:`style_guide`.
 #. Test your changes for rST errors.
 #. Build the page, and preferably the entire documentation site, locally.
 
+.. note::
+
+	The following sections apply to documentation sourced from the ``ansible/ansible`` repo and does not apply to documentation from an individual collection. See the collection README file for details on how to contribute to that collection.
 
 Setting up your environment to build documentation locally
 ----------------------------------------------------------
@@ -148,7 +155,7 @@ To build all the rST files without any module documentation:
 Building module docs and rST pages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To build documentation for a few modules plus all the rST files, use a comma-separated list:
+To build documentation for a few modules included in ``ansible/ansible`` plus all the rST files, use a comma-separated list:
 
 .. code-block:: bash
 

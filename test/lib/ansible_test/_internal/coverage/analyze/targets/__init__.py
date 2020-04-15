@@ -30,6 +30,14 @@ if t.TYPE_CHECKING:
     TargetSetIndexes = t.Dict[t.FrozenSet[int], int]
 
 
+class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
+    """Configuration for the `coverage analyze targets` command."""
+    def __init__(self, args):  # type: (t.Any) -> None
+        super(CoverageAnalyzeTargetsConfig, self).__init__(args)
+
+        self.info_stderr = True
+
+
 def make_report(target_indexes, arcs, lines):  # type: (TargetIndexes, Arcs, Lines) -> t.Dict[str, t.Any]
     """Condense target indexes, arcs and lines into a compact report."""
     set_indexes = {}
@@ -144,11 +152,3 @@ def generate_indexes(target_indexes, data):  # type: (TargetIndexes, NamedPoints
                 result_point.add(get_target_index(target_name, target_indexes))
 
     return results
-
-
-class CoverageAnalyzeTargetsConfig(CoverageAnalyzeConfig):
-    """Configuration for the `coverage analyze targets` command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageAnalyzeTargetsConfig, self).__init__(args)
-
-        self.info_stderr = True

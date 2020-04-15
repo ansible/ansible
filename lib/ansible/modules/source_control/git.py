@@ -749,7 +749,7 @@ def set_remote_url(git_path, module, repo, dest, remote):
     return remote_url is not None
 
 
-def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used):
+def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used, force=False):
     ''' updates repo from remote sources '''
     set_remote_url(git_path, module, repo, dest, remote)
     commands = []
@@ -797,6 +797,10 @@ def fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, g
                 refspecs = ['+refs/tags/*:refs/tags/*']
         if refspec:
             refspecs.append(refspec)
+
+    if force:
+        fetch_cmd.append('--force')
+
     fetch_cmd.extend([remote])
 
     commands.append((fetch_str, fetch_cmd + refspecs))
@@ -1230,7 +1234,7 @@ def main():
                     result['diff'] = diff
             module.exit_json(**result)
         else:
-            fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used)
+            fetch(git_path, module, repo, dest, version, remote, depth, bare, refspec, git_version_used, force=force)
 
         result['after'] = get_version(module, git_path, dest)
 

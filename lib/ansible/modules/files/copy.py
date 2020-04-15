@@ -76,6 +76,7 @@ options:
     - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
     - As of Ansible 2.3, the mode may also be the special string C(preserve).
     - C(preserve) means that the file will be given the same permissions as the source file.
+    - When doing a recursive copy, see also C(directory_mode).
     type: path
   directory_mode:
     description:

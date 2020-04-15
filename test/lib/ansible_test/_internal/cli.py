@@ -202,7 +202,10 @@ def parse_args():
     except ImportError:
         if '--requirements' not in sys.argv:
             raise
-        raw_command(generate_pip_install(generate_pip_command(sys.executable), 'ansible-test'))
+        # install argparse without using constraints since pip may be too old to support them
+        # not using the ansible-test requirements file since this install is for sys.executable rather than the delegated python (which may be different)
+        # argparse has no special requirements, so upgrading pip is not required here
+        raw_command(generate_pip_install(generate_pip_command(sys.executable), 'argparse', packages=['argparse'], use_constraints=False))
         import argparse
 
     try:
@@ -633,6 +636,10 @@ def parse_args():
                      action='store_true',
                      help='dump environment to disk')
 
+    env.add_argument('--list-files',
+                     action='store_true',
+                     help='list files on stdout')
+
     # noinspection PyTypeChecker
     env.add_argument('--timeout',
                      type=int,
@@ -1027,6 +1034,12 @@ def add_extra_docker_options(parser, integration=True):
                         choices=('default', 'unconfined'),
                         default=None,
                         help='set seccomp confinement for the test container: %(choices)s')
+
+    docker.add_argument('--docker-terminate',
+                        metavar='WHEN',
+                        help='terminate docker container: %(choices)s (default: %(default)s)',
+                        choices=['never', 'always', 'success'],
+                        default='always')
 
     if not integration:
         return

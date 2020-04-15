@@ -18,7 +18,7 @@
     } else if (current_url.search("devel") > -1) {
       document.write('<div id="banner_id" class="admonition caution">');
       para = document.createElement('p');
-      banner_text=document.createTextNode("You are reading the *devel* version of the Ansible documentation - this version is not guaranteed stable. Use the version selection to the left if you want the latest stable released version.");
+      banner_text=document.createTextNode("You are reading the *devel* version of the Ansible documentation - most module documentation is currently missing as the modules have moved to collections. Until docs catches up to this change, use the version selection to the left if you want module documentation or the latest stable release version. The *devel* version is not guaranteed stable.");
       para.appendChild(banner_text);
       element = document.getElementById('banner_id');
       element.appendChild(para);

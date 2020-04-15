@@ -707,7 +707,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     diff = initial_diff(path, 'link', prev_state)
     changed = False
 
-    if prev_state == 'absent':
+    if prev_state in ('hard', 'file', 'directory', 'absent'):
         changed = True
     elif prev_state == 'link':
         b_old_src = os.readlink(b_path)
@@ -715,22 +715,6 @@ def ensure_symlink(path, src, follow, force, timestamps):
             diff['before']['src'] = to_native(b_old_src, errors='strict')
             diff['after']['src'] = src
             changed = True
-    elif prev_state == 'hard':
-        changed = True
-        if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link because a hard link exists at destination',
-                                              'dest': path, 'src': src})
-    elif prev_state == 'file':
-        changed = True
-        if not force:
-            raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
-                                              'dest': path, 'src': src})
-    elif prev_state == 'directory':
-        changed = True
-        if os.path.exists(b_path):
-            if not force:
-                raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
-                                                  'dest': path, 'src': src})
     else:
         raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
 

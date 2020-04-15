@@ -37,7 +37,7 @@ Reducing incidental test coverage, and eventually removing incidental tests invo
    ```shell
    hacking/shippable/get_recent_coverage_runs.py <optional branch name>
    ```
-   For now the branch name defaults to `temp-2.10-devel`.
+   The branch name defaults to `devel`.
 2. Download code coverage data from Shippable for local analysis. 
    Example:
    ```shell

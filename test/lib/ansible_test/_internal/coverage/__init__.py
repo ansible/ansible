@@ -12,6 +12,7 @@ from ..encoding import (
 )
 
 from ..io import (
+    open_binary_file,
     read_json_file,
 )
 
@@ -52,6 +53,17 @@ COVERAGE_CONFIG_PATH = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'coveragerc')
 COVERAGE_OUTPUT_FILE_NAME = 'coverage'
 
 
+class CoverageConfig(EnvironmentConfig):
+    """Configuration for the coverage command."""
+    def __init__(self, args):  # type: (t.Any) -> None
+        super(CoverageConfig, self).__init__(args, 'coverage')
+
+        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
+        self.all = args.all if 'all' in args else False  # type: bool
+        self.stub = args.stub if 'stub' in args else False  # type: bool
+        self.coverage = False  # temporary work-around to support intercept_command in cover.py
+
+
 def initialize_coverage(args):  # type: (CoverageConfig) -> coverage_module
     """Delegate execution if requested, install requirements, then import and return the coverage module. Raises an exception if coverage is not available."""
     if args.delegate:
@@ -68,6 +80,22 @@ def initialize_coverage(args):  # type: (CoverageConfig) -> coverage_module
     if not coverage:
         raise ApplicationError('You must install the "coverage" python module to use this command.')
 
+    coverage_version_string = coverage.__version__
+    coverage_version = tuple(int(v) for v in coverage_version_string.split('.'))
+
+    min_version = (4, 2)
+    max_version = (5, 0)
+
+    supported_version = True
+    recommended_version = '4.5.4'
+
+    if coverage_version < min_version or coverage_version >= max_version:
+        supported_version = False
+
+    if not supported_version:
+        raise ApplicationError('Version %s of "coverage" is not supported. Version %s is known to work and is recommended.' % (
+            coverage_version_string, recommended_version))
+
     return coverage
 
 
@@ -81,19 +109,19 @@ def run_coverage(args, output_file, command, cmd):  # type: (CoverageConfig, str
     intercept_command(args, target_name='coverage', env=env, cmd=cmd, disable_coverage=True)
 
 
-def get_python_coverage_files():  # type: () -> t.List[str]
+def get_python_coverage_files(path=None):  # type: (t.Optional[str]) -> t.List[str]
     """Return the list of Python coverage file paths."""
-    return get_coverage_files('python')
+    return get_coverage_files('python', path)
 
 
-def get_powershell_coverage_files():  # type: () -> t.List[str]
+def get_powershell_coverage_files(path=None):  # type: (t.Optional[str]) -> t.List[str]
     """Return the list of PowerShell coverage file paths."""
-    return get_coverage_files('powershell')
+    return get_coverage_files('powershell', path)
 
 
-def get_coverage_files(language):  # type: (str) -> t.List[str]
+def get_coverage_files(language, path=None):  # type: (str, t.Optional[str]) -> t.List[str]
     """Return the list of coverage file paths for the given language."""
-    coverage_dir = ResultType.COVERAGE.path
+    coverage_dir = path or ResultType.COVERAGE.path
     coverage_files = [os.path.join(coverage_dir, f) for f in os.listdir(coverage_dir)
                       if '=coverage.' in f and '=%s' % language in f]
 
@@ -134,7 +162,14 @@ def enumerate_python_arcs(
     try:
         original.read_file(path)
     except Exception as ex:  # pylint: disable=locally-disabled, broad-except
-        display.error(u'%s' % ex)
+        with open_binary_file(path) as file:
+            header = file.read(6)
+
+        if header == b'SQLite':
+            display.error('File created by "coverage" 5.0+: %s' % os.path.relpath(path))
+        else:
+            display.error(u'%s' % ex)
+
         return
 
     for filename in original.measured_files():
@@ -245,17 +280,6 @@ def sanitize_filename(
         filename = new_name
 
     return filename
-
-
-class CoverageConfig(EnvironmentConfig):
-    """Configuration for the coverage command."""
-    def __init__(self, args):  # type: (t.Any) -> None
-        super(CoverageConfig, self).__init__(args, 'coverage')
-
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool
-        self.coverage = False  # temporary work-around to support intercept_command in cover.py
 
 
 class PathChecker:

@@ -558,7 +558,7 @@ def missing_required_lib(library, reason=None, url=None):
     if url:
         msg += " See %s for more info." % url
 
-    msg += (" Please read module documentation and install in the appropriate location."
+    msg += (" Please read the module documentation and install it in the appropriate location."
             " If the required library is installed, but Ansible is using the wrong Python interpreter,"
             " please consult the documentation on ansible_python_interpreter")
     return msg
@@ -2041,12 +2041,11 @@ class AnsibleModule(object):
         self._return_formatted(kwargs)
         sys.exit(0)
 
-    def fail_json(self, **kwargs):
+    def fail_json(self, msg, **kwargs):
         ''' return from the module, with an error message '''
 
-        if 'msg' not in kwargs:
-            raise AssertionError("implementation error -- msg to explain the error is required")
         kwargs['failed'] = True
+        kwargs['msg'] = msg
 
         # Add traceback if debug or high verbosity and it is missing
         # NOTE: Badly named as exception, it really always has been a traceback
