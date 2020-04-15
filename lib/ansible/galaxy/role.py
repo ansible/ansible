@@ -64,6 +64,7 @@ class GalaxyRole(object):
         self.version = version
         self.src = src or name
         self.scm = scm
+        self.paths = [os.path.join(x, self.name) for x in galaxy.roles_paths]
 
         if path is not None:
             if not path.endswith(os.path.join(os.path.sep, self.name)):
@@ -82,9 +83,6 @@ class GalaxyRole(object):
         else:
             # use the first path by default
             self.path = os.path.join(galaxy.roles_paths[0], self.name)
-            # create list of possible paths
-            self.paths = [x for x in galaxy.roles_paths]
-            self.paths = [os.path.join(x, self.name) for x in self.paths]
 
     def __repr__(self):
         """
@@ -105,17 +103,17 @@ class GalaxyRole(object):
         Returns role metadata
         """
         if self._metadata is None:
-            for meta_main in self.META_MAIN:
-                meta_path = os.path.join(self.path, meta_main)
-                if os.path.isfile(meta_path):
-                    try:
-                        f = open(meta_path, 'r')
-                        self._metadata = yaml.safe_load(f)
-                    except Exception:
-                        display.vvvvv("Unable to load metadata for %s" % self.name)
-                        return False
-                    finally:
-                        f.close()
+            for path in self.paths:
+                for meta_main in self.META_MAIN:
+                    meta_path = os.path.join(path, meta_main)
+                    if os.path.isfile(meta_path):
+                        try:
+                            with open(meta_path, 'r') as f:
+                                self._metadata = yaml.safe_load(f)
+                        except Exception:
+                            display.vvvvv("Unable to load metadata for %s" % self.name)
+                            return False
+                        break
 
         return self._metadata
 
@@ -137,6 +135,14 @@ class GalaxyRole(object):
                 finally:
                     f.close()
         return self._install_info
+
+    @property
+    def _exists(self):
+        for path in self.paths:
+            if os.path.isdir(path):
+                return True
+
+        return False
 
     def _write_galaxy_install_info(self):
         """
