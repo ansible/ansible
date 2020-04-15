@@ -120,6 +120,71 @@ f_ansible_galaxy_status \
 
     [[ $(grep -c '^- test-role' out.txt ) -eq 2 ]]
 
+# Galaxy role test case
+#
+# Test listing a specific role that is not in the first path in ANSIBLE_ROLES_PATH.
+# https://github.com/ansible/ansible/issues/60167#issuecomment-585460706
+
+f_ansible_galaxy_status \
+    "list specific role not in the first path in ANSIBLE_ROLES_PATHS"
+
+role_testdir=$(mktemp -d)
+pushd "${role_testdir}"
+
+    mkdir testroles
+    ansible-galaxy role init --init-path ./local-roles quark
+    ANSIBLE_ROLES_PATH=./local-roles:${HOME}/.ansible/roles ansible-galaxy role list quark | tee out.txt
+
+    [[ $(grep -c 'not found' out.txt) -eq 0 ]]
+
+    ANSIBLE_ROLES_PATH=${HOME}/.ansible/roles:./local-roles ansible-galaxy role list quark | tee out.txt
+
+    [[ $(grep -c 'not found' out.txt) -eq 0 ]]
+
+popd # ${role_testdir}
+rm -fr "${role_testdir}"
+
+
+# Galaxy role info tests
+
+f_ansible_galaxy_status \
+    "role info non-existant role"
+
+role_testdir=$(mktemp -d)
+pushd "${role_testdir}"
+
+    ansible-galaxy role info notaroll | tee out.txt
+
+    grep -- '- the role notaroll was not found' out.txt
+
+f_ansible_galaxy_status \
+    "role info description offline"
+
+    mkdir testroles
+    ansible-galaxy role init testdesc --init-path ./testroles
+
+    # Only galaxy_info['description'] exists in file
+    sed -i -e 's#[[:space:]]\{1,\}description:.*$#  description: Description in galaxy_info#' ./testroles/testdesc/meta/main.yml
+    ansible-galaxy role info -p ./testroles --offline testdesc | tee out.txt
+    grep 'description: Description in galaxy_info' out.txt
+
+    # Both top level 'description' and galaxy_info['description'] exist in file
+    # Use shell-fu instead of sed to prepend a line to a file because BSD
+    # and macOS sed don't work the same as GNU sed.
+    echo 'description: Top level' | \
+        cat - ./testroles/testdesc/meta/main.yml > tmp.yml && \
+        mv tmp.yml ./testroles/testdesc/meta/main.yml
+    ansible-galaxy role info -p ./testroles --offline testdesc | tee out.txt
+    grep 'description: Top level' out.txt
+
+    # Only top level 'description' exists in file
+    sed -i.bak '/^[[:space:]]\{1,\}description: Description in galaxy_info/d' ./testroles/testdesc/meta/main.yml
+    ansible-galaxy role info -p ./testroles --offline testdesc | tee out.txt
+    grep 'description: Top level' out.txt
+
+popd # ${role_testdir}
+rm -fr "${role_testdir}"
+
 
 # Properly list roles when the role name is a subset of the path, or the role
 # name is the same name as the parent directory of the role. Issue #67365

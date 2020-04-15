@@ -603,7 +603,11 @@ class GalaxyCLI(CLI):
     def _display_role_info(role_info):
 
         text = [u"", u"Role: %s" % to_text(role_info['name'])]
-        text.append(u"\tdescription: %s" % role_info.get('description', ''))
+
+        # Get the top-level 'description' first, falling back to galaxy_info['galaxy_info']['description'].
+        galaxy_info = role_info.get('galaxy_info', {})
+        description = role_info.get('description', galaxy_info.get('description', ''))
+        text.append(u"\tdescription: %s" % description)
 
         for k in sorted(role_info.keys()):
 
@@ -899,6 +903,9 @@ class GalaxyCLI(CLI):
 
             role_info = {'path': roles_path}
             gr = GalaxyRole(self.galaxy, self.api, role)
+            if not gr._exists:
+                data = u"- the role %s was not found" % role
+                break
 
             install_info = gr.install_info
             if install_info:
@@ -923,10 +930,6 @@ class GalaxyCLI(CLI):
                 role_info.update(role_spec)
 
             data = self._display_role_info(role_info)
-            # FIXME: This is broken in both 1.9 and 2.0 as
-            # _display_role_info() always returns something
-            if not data:
-                data = u"\n- the role %s was not found" % role
 
         self.pager(data)
 
