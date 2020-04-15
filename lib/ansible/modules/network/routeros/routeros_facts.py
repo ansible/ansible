@@ -290,6 +290,8 @@ class Interfaces(FactsBase):
 
     def populate_ipv6_interfaces(self, data):
         for key, value in iteritems(data):
+            if key is None:
+                break
             if 'ipv6' not in self.facts['interfaces'][key]:
                 self.facts['interfaces'][key]['ipv6'] = list()
             addr, subnet = value['address'].split("/")

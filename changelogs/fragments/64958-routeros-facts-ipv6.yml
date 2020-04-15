@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - routeros_facts - Prevent crash of module when ``ipv6`` package is not installed
