@@ -341,6 +341,10 @@ options:
         the program from running concurrently.
     type: str
     version_added: "2.10"
+  to:
+    description:
+      - Network address to map to. For use with C(jump): NETMAP
+    type: str
 '''
 
 EXAMPLES = r'''
@@ -460,6 +464,16 @@ EXAMPLES = r'''
     limit_burst: 20
     log_prefix: "IPTABLES:INFO: "
     log_level: info
+
+- name: IPv6-to-IPv6 Network Prefix Translation
+  iptables:
+    ip_version: ipv6
+    table: nat
+    chain: PREROUTING
+    destination: 2001:DB8::/64
+    in_interface: eth0
+    jump: NETMAP
+    to: fd::/64
 '''
 
 import re
@@ -592,6 +606,8 @@ def construct_rule(params):
         params['icmp_type'],
         ICMP_TYPE_OPTIONS[params['ip_version']],
         False)
+    if params.get('jump') and params['jump'].lower() == 'netmap':
+        append_param(rule, params['to'], '--to', False)
     return rule
 
 
@@ -708,6 +724,7 @@ def main():
             syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
             flush=dict(type='bool', default=False),
             policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
+            to=dict(type='str'),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],
@@ -716,6 +733,8 @@ def main():
         required_if=[
             ['jump', 'TEE', ['gateway']],
             ['jump', 'tee', ['gateway']],
+            ['jump', 'NETMAP', ['to']],
+            ['jump', 'netmap', ['to']],
         ]
     )
     args = dict(
