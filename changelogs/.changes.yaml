@@ -1633,6 +1633,23 @@ releases:
     - openstack-regression.yml
     - v2.8.10_summary.yaml
     release_date: '2020-03-05'
+  2.8.11:
+    codename: How Many More Times
+    fragments:
+    - 63280-fix_acl_spaces_in_path.yml
+    - 64906-always-delegate-fact-prefixes.yml
+    - af_clean.yml
+    - ansible-test-opensuse-15.1.yml
+    - ansible-test-rhel-7.8.yml
+    - fetch_no_slurp.yml
+    - ldap-params-removal.yml
+    - remote_mkdir_fix.yml
+    - subversion_password.yaml
+    - v2.8.11_summary.yaml
+    - vault_tmp_file.yml
+    - vault_tmp_race_fix.yml
+    - win-unzip-check-extraction-path.yml
+    release_date: '2020-04-16'
   2.8.2:
     codename: How Many More Times
     fragments:

@@ -5,6 +5,42 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.11
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-04-16
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Upgrade OpenSUSE containers to use Leap 15.1.
+- ansible-test now supports testing against RHEL 7.8 when using the ``--remote`` option.
+
+Removed Features (previously deprecated)
+----------------------------------------
+
+- ldap_attr, ldap_entry - The ``params`` option has been removed in Ansible-2.10 as it circumvents Ansible's option handling.  Setting ``bind_pw`` with the ``params`` option was disallowed in Ansible-2.7, 2.8, and 2.9 as it was insecure.  For information about this policy, see the discussion at: https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html This fixes CVE-2020-1746
+
+Bugfixes
+--------
+
+- **security issue** - The ``subversion`` module provided the password via the svn command line option ``--password`` and can be retrieved from the host's /proc/<pid>/cmdline file. Update the module to use the secure ``--password-from-stdin`` option instead, and add a warning in the module and in the documentation if svn version is too old to support it. (CVE-2020-1739)
+
+- **security issue** win_unzip - normalize paths in archive to ensure extracted files do not escape from the target directory (CVE-2020-1737)
+
+- **security_issue** - create temporary vault file with strict permissions when editing and prevent race condition (CVE-2020-1740)
+- Ensure DataLoader temp files are removed at appropriate times and that we observe the LOCAL_TMP setting.
+- Ensure we don't allow ansible_facts subkey of ansible_facts to override top level, also fix 'deprefixing' to prevent key transforms.
+- Ensure we get an error when creating a remote tmp if it already exists. CVE-2020-1733
+- Fact Delegation - Add ability to indicate which facts must always be delegated. Primarily for ``discovered_interpreter_python`` right now, but extensible later. (https://github.com/ansible/ansible/issues/61002)
+- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2019-3828.
+- acl - fixed module failure if there are spaces in a path
+
 v2.8.10
 =======
 
