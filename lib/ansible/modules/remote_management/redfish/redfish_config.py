@@ -54,6 +54,7 @@ options:
     description:
       - value of BIOS attribute to update
     default: 'null'
+    type: raw
     version_added: "2.8"
   timeout:
     description:
@@ -135,7 +136,7 @@ def main():
             username=dict(required=True),
             password=dict(required=True, no_log=True),
             bios_attribute_name=dict(default='null'),
-            bios_attribute_value=dict(default='null'),
+            bios_attribute_value=dict(default='null', type='raw'),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=False
