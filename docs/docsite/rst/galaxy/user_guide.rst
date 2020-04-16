@@ -363,8 +363,7 @@ command line, as follows:
 Dependencies
 ------------
 
-Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependencies will automatically be installed.
-When dependencies are encountered by ``ansible-galaxy``, it will automatically install each dependency to the ``roles_path``.
+Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependencies will automatically be installed to the ``roles_path``.
 
 There are two ways to define the dependencies of a role:
 
