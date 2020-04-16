@@ -5,6 +5,67 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.7
+======
+
+Release Summary
+---------------
+
+| Release Date: 2020-04-16
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- 'Edit on GitHub' link for plugin, cli documentation fixed to navigate to correct plugin, cli source.
+- Handle get_tags_for_object API correctly in vmware_rest_client.
+- Remove redundant encoding in json.load call in ipa module_utils (https://github.com/ansible/ansible/issues/66592).
+- ansible-test - Upgrade OpenSUSE containers to use Leap 15.1.
+- ansible-test now supports testing against RHEL 7.8 when using the ``--remote`` option.
+- vmware_cluster - Document alternatives for deprecated parameters
+
+Removed Features (previously deprecated)
+----------------------------------------
+
+- ldap_attr, ldap_entry - The ``params`` option has been removed in Ansible-2.10 as it circumvents Ansible's option handling.  Setting ``bind_pw`` with the ``params`` option was disallowed in Ansible-2.7, 2.8, and 2.9 as it was insecure.  For information about this policy, see the discussion at: https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html This fixes CVE-2020-1746
+
+Bugfixes
+--------
+
+- **security issue** - The ``subversion`` module provided the password via the svn command line option ``--password`` and can be retrieved from the host's /proc/<pid>/cmdline file. Update the module to use the secure ``--password-from-stdin`` option instead, and add a warning in the module and in the documentation if svn version is too old to support it. (CVE-2020-1739)
+
+- **security issue** win_unzip - normalize paths in archive to ensure extracted files do not escape from the target directory (CVE-2020-1737)
+
+- **security_issue** - create temporary vault file with strict permissions when editing and prevent race condition (CVE-2020-1740)
+- Alter task_executor's start_connection to support newer modules from collections which expect to send task UUID.
+- Ansible.ModuleUtils.WebRequest - actually set no proxy when ``use_proxy: no`` is set on a Windows module - https://github.com/ansible/ansible/issues/68528
+- Ensure DataLoader temp files are removed at appropriate times and that we observe the LOCAL_TMP setting.
+- Ensure we don't allow ansible_facts subkey of ansible_facts to override top level, also fix 'deprefixing' to prevent key transforms.
+- Ensure we get an error when creating a remote tmp if it already exists. CVE-2020-1733
+- Fact Delegation - Add ability to indicate which facts must always be delegated. Primarily for ``discovered_interpreter_python`` right now, but extensible later. (https://github.com/ansible/ansible/issues/61002)
+- Fix nxos_lacp replace operation (https://github.com/ansible/ansible/pull/64074).
+- Handle equal sign in password while using passwordstore lookup plugin.
+- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2019-3828.
+- In vmware_guest_network module use appropriate network while creating or reconfiguring (https://github.com/ansible/ansible/issues/65968).
+- Log additional messages from persistent connection modules that may be missed if the module fails or returns early.
+- `vmware_content_deploy_template`'s `cluster` argument no longer fails with an error message about resource pools.
+- ansible command now correctly sends v2_playbook_on_start to callbacks
+- ansible-galaxy - Error when install finds a tar with a file that will be extracted outside the collection install directory - CVE-2020-10691
+- ansible-galaxy collection - Preserve executable bit on build and preserve mode on install from what tar member is set to - https://github.com/ansible/ansible/issues/68415
+- dense callback - fix plugin access to its configuration variables and remove a warning message (https://github.com/ansible/ansible/issues/64628).
+- display - Improve method of removing extra new line after warnings so it does not break Tower/Runner (https://github.com/ansible/ansible/pull/68517)
+- docker connection plugin - do not prefix remote path if running on Windows containers.
+- for those running uids for invalid users (containers), fallback to uid=<uid> when logging fixes #68007
+- get_url pass incorrect If-Modified-Since header (https://github.com/ansible/ansible/issues/67417)
+- mysql_user - Fix idempotence when long grant lists are used (https://github.com/ansible/ansible/issues/68044)
+- os_user_role - Fix os_user_role issue to grant a role in a domain.
+- ovirt_storage_domain: fix update_check for warning_low_space
+- purefa_snmp - Fix error when deleting a manager and when creating a v2c manager (https://github.com/ansible/ansible/pull/68180)
+- rabbitmq_policy - Fix version parsing for RabbitMQ 3.8.
+- routeros_facts - Prevent crash of module when ``ipv6`` package is not installed
+- setup.ps1 - Fix ``ansible_fqdn`` using the wrong values to build the actual DNS FQDN.
+
 v2.9.6
 ======
 

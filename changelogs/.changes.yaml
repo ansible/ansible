@@ -1636,3 +1636,45 @@ releases:
     - win_credential-wildcard.yaml
     - win_unzip-paths.yaml
     release_date: '2020-03-04'
+  2.9.7:
+    codename: Immigrant Song
+    fragments:
+    - 64074_update_nxos_lacp.yaml
+    - 64628-dense-callback-warning.yml
+    - 64906-always-delegate-fact-prefixes.yml
+    - 64958-routeros-facts-ipv6.yml
+    - 65715-vmware-content-deploy-template-fix-cluster.yml
+    - 65968-vmware_guest_network.yml
+    - 66525-fix-assing-role-domain-only.yml
+    - 66592_ipa_encoding_fix.yml
+    - 67417-get_url-incorrect-if-modified-since.yaml
+    - 68044-mysql_user_idempotency.yml
+    - 68175-vmware_cluster-document_alternatives_for_deprecated_parameters.yml
+    - 68180-purefa_smnp_fixes.yaml
+    - 68496-persistent-logging.yaml
+    - 68505-ovirt_storage_domain-fix-update_check-warning_low_space.yml
+    - 68556-start_conn-forward-compat.yaml
+    - af_clean.yml
+    - ansible-adhoc-cb-playbook_start.yaml
+    - ansible-test-opensuse-15.1.yml
+    - ansible-test-rhel-7.8.yml
+    - collection-install-mode.yaml
+    - community.general-80-update_docker_connection_plugin.yml
+    - fallback_uid.yml
+    - fetch_no_slurp.yml
+    - galaxy-install-tar-path-traversal.yaml
+    - ldap-params-removal.yml
+    - passwordstore_fix.yml
+    - plugin_doc_link_fix.yml
+    - rabbitmq-3.8.yml
+    - remote_mkdir_fix.yml
+    - subversion_password.yaml
+    - v2.9.7_summary.yaml
+    - vault_tmp_file.yml
+    - vault_tmp_race_fix.yml
+    - vmware_rest_client_tag_fix.yml
+    - warnings-remove-extra-newline-better.yaml
+    - win-unzip-check-extraction-path.yml
+    - win-web-request-no_proxy.yaml
+    - win_setup-fqdn.yaml
+    release_date: '2020-04-16'
