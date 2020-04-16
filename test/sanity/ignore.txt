@@ -493,7 +493,6 @@ test/units/module_utils/json_utils/test_filter_non_json_lines.py future-import-b
 test/units/module_utils/parsing/test_convert_bool.py future-import-boilerplate
 test/units/module_utils/test_distro.py future-import-boilerplate
 test/units/module_utils/test_distro.py metaclass-boilerplate
-test/units/module_utils/test_text.py future-import-boilerplate
 test/units/module_utils/urls/test_Request.py replace-urlopen
 test/units/module_utils/urls/test_fetch_url.py replace-urlopen
 test/units/modules/conftest.py future-import-boilerplate
