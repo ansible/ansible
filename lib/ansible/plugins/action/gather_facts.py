@@ -10,7 +10,7 @@ import time
 from ansible import constants as C
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.plugins.action import ActionBase
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import merge_hash
 
 
 class ActionModule(ActionBase):
@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
             'deprecations': task_result.get('deprecations', []),
         }
 
-        return combine_vars(result, filtered_res)
+        return merge_hash(result, filtered_res)
 
     def run(self, tmp=None, task_vars=None):
 
