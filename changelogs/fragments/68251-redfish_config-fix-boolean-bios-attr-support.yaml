@@ -1,0 +1,3 @@
+---
+bugfixes:
+- redfish_config - fix support for boolean bios attrs (https://github.com/ansible/ansible/pull/68251)

@@ -853,9 +853,9 @@ class RedfishUtils(object):
 
         set_bios_attr_uri = data["@Redfish.Settings"]["SettingsObject"]["@odata.id"]
 
-        # Example: bios_attr = {\"name\":\"value\"}
-        bios_attr = "{\"" + attr['bios_attr_name'] + "\":\"" + attr['bios_attr_value'] + "\"}"
-        payload = {"Attributes": json.loads(bios_attr)}
+        # patch_request() will use json.dumps() on the payload, we can pass a
+        # python dict as our payload.
+        payload = {"Attributes": {attr['bios_attr_name']: attr['bios_attr_value']}}
         response = self.patch_request(self.root_uri + set_bios_attr_uri, payload)
         if response['ret'] is False:
             return response
