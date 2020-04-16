@@ -897,10 +897,15 @@ DEFAULT_NO_LOG:
 DEFAULT_NO_TARGET_SYSLOG:
   name: No syslog on target
   default: False
-  description: Toggle Ansible logging to syslog on the target when it executes tasks.
+  description:
+  - Toggle Ansible logging to syslog on the target when it executes tasks. On Windows hosts this will disable a newer
+    style PowerShell modules from writting to the event log.
   env: [{name: ANSIBLE_NO_TARGET_SYSLOG}]
   ini:
   - {key: no_target_syslog, section: defaults}
+  vars:
+  - name: ansible_no_target_syslog
+    version_added: '2.10'
   type: boolean
   yaml: {key: defaults.no_target_syslog}
 DEFAULT_NULL_REPRESENTATION:
