@@ -368,6 +368,12 @@
   async: 90
   poll: 0
 
+- name: Wait for SimpleHTTPServer to come up online
+  wait_for:
+    host: 'localhost'
+    port: '{{ http_port }}'
+    state: started
+
 - name: download src with sha1 checksum url
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
