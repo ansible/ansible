@@ -343,8 +343,9 @@ options:
     version_added: "2.10"
   to:
     description:
-      - Network address to map to. For use with C(jump): NETMAP
+      - Network address to map to. For use with C(jump) NETMAP
     type: str
+    version_added: "2.10"
 '''
 
 EXAMPLES = r'''
