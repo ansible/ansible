@@ -41,7 +41,6 @@
   apt_repository:
     repo: "{{ test_repo_spec }}"
     state: present
-    mode: 0644
   register: no_mode_results
 
 - name: Gather no mode stat
