@@ -3,8 +3,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-# Make coding more python3-ish
-from __future__ import (absolute_import, division)
+from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import itertools
@@ -13,9 +12,7 @@ import pytest
 
 from ansible.module_utils.six import PY3
 
-# Internal API while this is still being developed.  Eventually move to
-# module_utils.common.text
-from ansible.module_utils._text import to_text, to_bytes, to_native
+from ansible.module_utils.common.text.converters import to_text, to_bytes, to_native
 from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
 
