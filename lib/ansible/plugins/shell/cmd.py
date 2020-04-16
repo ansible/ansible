@@ -52,6 +52,7 @@ class ShellModule(PSShellModule):
         # https://stackoverflow.com/questions/3411771/multiple-character-replace-with-python
         for c in '^()%!"<>&|':  # '^' must be the first char that we scan and replace
             if c in s:
-                s = s.replace(c, "^" + c)
+                # I can't find any docs that explicitly say this but to escape ", it needs to be prefixed with \^.
+                s = s.replace(c, ("\\^" if c == '"' else "^") + c)
 
         return '^"' + s + '^"'
