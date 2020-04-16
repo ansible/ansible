@@ -67,13 +67,14 @@ foreach ($variable in $Variables) {
 
 # set the environment vars
 if ($Environment) {
-    foreach ($env_kv in $Environment.GetEnumerator()) {
-        Write-AnsibleLog "INFO - setting environment '$($env_kv.Key)' for $ModuleName" "module_wrapper"
-        $env_key = $env_kv.Key.Replace("'", "''")
-        $env_value = $env_kv.Value.ToString().Replace("'", "''")
-        $escaped_env_set = "[System.Environment]::SetEnvironmentVariable('$env_key', '$env_value')"
-        $ps.AddScript($escaped_env_set).AddStatement() > $null
-    }
+    # Escaping quotes can be problematic, instead just pass the string to the runspace and set it directly.
+    Write-AnsibleLog "INFO - setting environment vars for $ModuleName" "module_wrapper"
+    $ps.Runspace.SessionStateProxy.SetVariable("_AnsibleEnvironment", $Environment)
+    $ps.AddScript(@'
+foreach ($env_kv in $_AnsibleEnvironment.GetEnumerator()) {
+    [System.Environment]::SetEnvironmentVariable($env_kv.Key, $env_kv.Value)
+}
+'@).AddStatement() > $null
 }
 
 # import the PS modules
