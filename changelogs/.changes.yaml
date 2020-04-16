@@ -682,6 +682,23 @@ releases:
     - solaris_zone_name_fix.yml
     - v2.7.16_summary.yaml
     release_date: '2020-01-15'
+  2.7.17:
+    codename: In the Light
+    fragments:
+    - af_clean.yml
+    - ansible-test-constraints-virtualenv.yml
+    - ansible-test-jinja2-python-2.6.yml
+    - ansible-test-opensuse-15.1.yml
+    - ansible-test-rhel-7.8.yml
+    - fetch_no_slurp.yml
+    - ldap-params-removal.yml
+    - remote_mkdir_fix.yml
+    - subversion_password.yaml
+    - v2.7.17_summary.yaml
+    - vault_tmp_file.yml
+    - vault_tmp_race_fix.yml
+    - win-unzip-check-extraction-path.yml
+    release_date: '2020-04-16'
   2.7.2:
     codename: In the Light
     fragments:
