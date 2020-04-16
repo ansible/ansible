@@ -24,7 +24,6 @@ import pkgutil
 import xml.etree.ElementTree as ET
 import ntpath
 
-from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.shell import ShellBase
 
@@ -68,26 +67,7 @@ class ShellModule(ShellBase):
     # Used by various parts of Ansible to do Windows specific changes
     _IS_WINDOWS = True
 
-    env = dict()
-
-    # We're being overly cautious about which keys to accept (more so than
-    # the Windows environment is capable of doing), since the powershell
-    # env provider's limitations don't appear to be documented.
-    safe_envkey = re.compile(r'^[\d\w_]{1,255}$')
-
     # TODO: add binary module support
-
-    def assert_safe_env_key(self, key):
-        if not self.safe_envkey.match(key):
-            raise AnsibleError("Invalid PowerShell environment key: %s" % key)
-        return key
-
-    def safe_env_value(self, key, value):
-        if len(value) > 32767:
-            raise AnsibleError("PowerShell environment value for key '%s' exceeds 32767 characters in length" % key)
-        # powershell single quoted literals need single-quote doubling as their only escaping
-        value = value.replace("'", "''")
-        return to_text(value, errors='surrogate_or_strict')
 
     def env_prefix(self, **kwargs):
         # powershell/winrm env handling is handled in the exec wrapper
