@@ -1,0 +1,2 @@
+bugfixes:
+    - stricter permissions when atomic_move creates a file due to target not existing yet CVE-2020-1736
