@@ -1,0 +1,2 @@
+minor_changes:
+- Fix a typo in remove_signature flag in podman_image module (https://github.com/ansible/ansible/issues/67965).

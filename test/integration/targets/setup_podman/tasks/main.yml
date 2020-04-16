@@ -1,4 +1,7 @@
 - block:
+    - name: Include distribution specific variables
+      include_vars: "{{ ansible_facts.distribution }}-{{ ansible_facts.distribution_major_version }}.yml"
+
     - name: Enable extras repo
       command: "{{ repo_command[ansible_facts.distribution ~ ansible_facts.distribution_major_version]['enable'] | default('echo') }}"
       notify: cleanup podman
