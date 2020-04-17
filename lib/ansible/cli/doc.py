@@ -18,16 +18,16 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.collections.list import list_collection_dirs, get_collection_name_from_path
+from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.six import string_types
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
-from ansible.utils.collection_loader import set_collection_playbook_paths
+from ansible.utils.collection_loader import set_collection_playbook_paths, get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
 display = Display()
@@ -39,12 +39,16 @@ def jdump(text):
 
 def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
 
+    import q
     # TODO: take into account routing.yml once implemented
     colldirs = list_collection_dirs(coll_filter=coll_filter)
-    for path in colldirs:
-        collname = get_collection_name_from_path(path)
+    for b_path in colldirs:
+        q(b_path)
+        path = to_text(b_path, errors='surrogate_or_strict')
+        collname = get_collection_name_from_path(b_path)
+        q(collname)
         ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
-        plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), plugin_type, collname))
+        plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), plugin_type, collection=collname))
 
 
 class RemovedPlugin(Exception):

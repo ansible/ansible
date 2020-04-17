@@ -550,9 +550,9 @@ def get_collection_name_from_path(path):
     :param n_path: native-string path to evaluate for collection containment
     :return: collection name or None
     """
-    n_collection_paths = [to_native(os.path.realpath(to_bytes(p))) for p in AnsibleCollectionLoader().n_collection_paths]
+    n_collection_paths = [to_native(os.path.abspath(to_bytes(p))) for p in AnsibleCollectionLoader().n_collection_paths]
 
-    b_path = os.path.realpath(to_bytes(path))
+    b_path = os.path.abspath(to_bytes(path))
     n_path = to_native(b_path)
 
     for coll_path in n_collection_paths:
@@ -575,7 +575,7 @@ def get_collection_name_from_path(path):
                 return None
 
             # ensure we're using the canonical real path, with the bogus __synthetic__ stripped off
-            b_loaded_collection_path = os.path.dirname(os.path.realpath(to_bytes(loaded_collection_path)))
+            b_loaded_collection_path = os.path.dirname(os.path.abspath(to_bytes(loaded_collection_path)))
 
             # if the collection path prefix matches the path prefix we were passed, it's the same collection that's loaded
             if os.path.commonprefix([b_path, b_loaded_collection_path]) == b_loaded_collection_path:

@@ -6,8 +6,9 @@ __metaclass__ = type
 
 import os
 
+from ansible.module_utils._text import to_bytes
 
-FLAG_FILES = frozenset(['MANIFEST.json', 'galaxy.yml'])
+FLAG_FILES = frozenset([b'MANIFEST.json', b'galaxy.yml'])
 
 
 def is_collection_path(path):
@@ -18,9 +19,10 @@ def is_collection_path(path):
     """
 
     is_coll = False
-    if os.path.isdir(path):
+    b_path = to_bytes(path)
+    if os.path.isdir(b_path):
         for flag in FLAG_FILES:
-            if os.path.exists(os.path.join(path, flag)):
+            if os.path.exists(os.path.join(b_path, flag)):
                 is_coll = True
                 break
 
