@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
             'deprecations': task_result.get('deprecations', []),
         }
 
-        return merge_hash(result, filtered_res)
+        return merge_hash(result, filtered_res, list_merge='append_rp')
 
     def run(self, tmp=None, task_vars=None):
 
