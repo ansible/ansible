@@ -467,7 +467,7 @@ def flatten(mylist, levels=None):
     for element in mylist:
         if element in (None, 'None', 'null'):
             # ignore undefined items
-            break
+            continue
         elif is_sequence(element):
             if levels is None:
                 ret.extend(flatten(element))
