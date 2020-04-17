@@ -1,0 +1,10 @@
+- name: Test include_role vars_from
+  hosts: testhost
+  vars:
+    role_name: role1
+  tasks:
+    - name: Test vars_from
+      include_role:
+        name: role1
+        vars_from:
+        - vars_1.yml
