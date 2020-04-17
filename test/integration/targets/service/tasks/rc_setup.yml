@@ -12,7 +12,7 @@
 
 # FreeBSD (likely others as well)  require the command_interpreter to match the
 # shebang the script was started with as an extra caution against killing the
-# wrong thing. We add the line ehre.
+# wrong thing. We add the line here.
 - name: add command_interpreter in rc init file
   lineinfile:
     path: /etc/rc.d/ansible_test
