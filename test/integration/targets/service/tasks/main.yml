@@ -30,6 +30,12 @@
       when:
         - ansible_distribution == 'Ubuntu'
         - ansible_distribution_version is version('15.04', '<')
+    - name: detect rc init system
+      set_fact:
+        service_type: rc
+      when:
+        - ansible_distribution.lower().endswith('bsd')
+
 
     - name: display value of ansible_service_mgr
       debug:
