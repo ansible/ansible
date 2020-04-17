@@ -13,6 +13,9 @@ import types
 from jinja2._compat import text_type
 
 from jinja2.runtime import StrictUndefined
+
+from ansible.module_utils.common.text.converters import container_to_text
+from ansible.module_utils.six import PY2
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
 
 
@@ -48,10 +51,6 @@ def ansible_native_concat(nodes):
             # See https://github.com/ansible/ansible/issues/52158
             # We do that only here because it is taken care of by text_type() in the else block below already.
             str(out)
-
-        # short circuit literal_eval when possible
-        if not isinstance(out, list):
-            return out
     else:
         if isinstance(nodes, types.GeneratorType):
             nodes = chain(head, nodes)
@@ -60,6 +59,10 @@ def ansible_native_concat(nodes):
         out = u''.join([text_type(v) for v in nodes])
 
     try:
-        return literal_eval(out)
+        out = literal_eval(out)
+        if PY2:
+            # ensure bytes are not returned back into Ansible from templating
+            out = container_to_text(out)
+        return out
     except (ValueError, SyntaxError, MemoryError):
         return out
