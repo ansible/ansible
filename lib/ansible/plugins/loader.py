@@ -433,9 +433,8 @@ class PluginLoader:
         # TODO: Instead of using the self._paths cache (PATH_CACHE) and
         #       self._searched_paths we could use an iterator.  Before enabling that
         #       we need to make sure we don't want to add additional directories
-        #       (add_directory()) once we start using the iterator.  Currently, it
-        #       looks like _get_paths() never forces a cache refresh so if we expect
-        #       additional directories to be added later, it is buggy.
+        #       (add_directory()) once we start using the iterator.
+        #       We can use _get_paths() since add_directory() forces a cache refresh.
         for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
             display.debug('trying %s' % path)
             try:
