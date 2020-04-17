@@ -20,7 +20,7 @@ from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs, get_collection_name_from_path
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.six import string_types
 from ansible.parsing.metadata import extract_metadata
@@ -474,6 +474,7 @@ class DocCLI(CLI):
         # Uses a list to get the order right
         ret = []
         for i in finder._get_paths(subdirs=False):
+            i = to_text(i, errors='surrogate_or_strict')
             if i not in ret:
                 ret.append(i)
         return os.pathsep.join(ret)
