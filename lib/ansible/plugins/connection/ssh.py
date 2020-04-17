@@ -351,7 +351,8 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
             else:
                 details = to_native(return_tuple[2]).rstrip()
                 if "sshpass: invalid option -- 'P'" in details:
-                    details = 'Installed sshpass version does not support customized password prompts. Upgrade sshpass to use sshpass_prompt, or otherwise switch to ssh keys.'
+                    details = 'Installed sshpass version does not support customized password prompts. ' \
+                              'Upgrade sshpass to use sshpass_prompt, or otherwise switch to ssh keys.'
                     raise AnsibleError('{0} {1}'.format(msg, details))
                 msg = '{0} {1}'.format(msg, details)
 
