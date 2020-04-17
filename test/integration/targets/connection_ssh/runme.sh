@@ -4,6 +4,8 @@ set -ux
 
 # We skip this whole section if the test node doesn't have sshpass on it.
 if command -v sshpass > /dev/null; then
+    # Save this off to make ansible-test happy
+    cp ~/.ssh/known_hosts ~
     # Check if our sshpass supports -P
     sshpass -P foo > /dev/null
     sshpass_supports_prompt=$?
@@ -19,10 +21,10 @@ if command -v sshpass > /dev/null; then
         # that the flag gets passed to sshpass.
         timeout 5 ansible -m ping \
             -e ansible_connection=ssh \
-     	-e ansible_sshpass_prompt=notThis: \
-     	-e ansible_password=foo \
-     	-e ansible_user=definitelynotroot \
-     	localhost
+            -e ansible_sshpass_prompt=notThis: \
+            -e ansible_password=foo \
+            -e ansible_user=definitelynotroot \
+            localhost
         ret=$?
         if [[ $ret -ne 124 ]]; then
             echo "Expected to time out and we did not. Exiting with failure."
@@ -31,13 +33,15 @@ if command -v sshpass > /dev/null; then
     else
         ansible -m ping \
             -e ansible_connection=ssh \
-     	-e ansible_sshpass_prompt=notThis: \
-     	-e ansible_password=foo \
-     	-e ansible_user=definitelynotroot \
-     	localhost
+            -e ansible_sshpass_prompt=notThis: \
+            -e ansible_password=foo \
+            -e ansible_user=definitelynotroot \
+            localhost | grep 'customized password prompts'
         ret=$?
         [[ $ret -eq 0 ]] || exit $ret
     fi
+    # Restore this for ansible-test to remain happy. Wouldn't want it to get sad.
+    mv -f ~/known_hosts ~/.ssh/known_hosts
 fi
 
 set -e
