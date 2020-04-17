@@ -22,7 +22,7 @@ author:
 - Joseph Callen (@jcpowermac)
 - Russell Teague (@mtnbikenc)
 notes:
-    - Tested on vSphere 5.5
+    - Tested on vSphere 6.7
 requirements:
     - "python >= 2.6"
     - PyVmomi
@@ -118,8 +118,33 @@ class VMwareMigrateVmk(object):
     def state_exit_unchanged(self):
         self.module.exit_json(changed=False)
 
+    def create_host_vnic_config_vds_vss(self):
+        host_vnic_config = vim.host.VirtualNic.Config()
+        host_vnic_config.spec = vim.host.VirtualNic.Specification()
+        host_vnic_config.changeOperation = "edit"
+        host_vnic_config.device = self.device
+        host_vnic_config.spec.portgroup = self.migrate_portgroup_name
+        return host_vnic_config
+
+    def create_port_group_config_vds_vss(self):
+        port_group_config = vim.host.PortGroup.Config()
+        port_group_config.spec = vim.host.PortGroup.Specification()
+        port_group_config.changeOperation = "add"
+        port_group_config.spec.name = self.migrate_portgroup_name
+        port_group_config.spec.vlanId = 0
+        port_group_config.spec.vswitchName = self.migrate_switch_name
+        port_group_config.spec.policy = vim.host.NetworkPolicy()
+        return port_group_config
+
     def state_migrate_vds_vss(self):
-        self.module.exit_json(changed=False, msg="Currently Not Implemented")
+        host_network_system = self.host_system.configManager.networkSystem
+        config = vim.host.NetworkConfig()
+        config.portgroup =  [self.create_port_group_config_vds_vss()]
+        host_network_system.UpdateNetworkConfig(config, "modify")
+        config = vim.host.NetworkConfig()
+        config.vnic = [self.create_host_vnic_config_vds_vss()]
+        host_network_system.UpdateNetworkConfig(config, "modify")
+        self.module.exit_json(changed=True)
 
     def create_host_vnic_config(self, dv_switch_uuid, portgroup_key):
         host_vnic_config = vim.host.VirtualNic.Config()
