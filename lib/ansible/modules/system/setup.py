@@ -103,6 +103,15 @@ EXAMPLES = """
 # Collect only facts returned by facter.
 # ansible all -m setup -a 'gather_subset=!all,!any,facter'
 
+- name: Collect all default facts and add them to variable setupvar
+  setup:
+  register: setupvar
+ 
+ - name: Store facts indexed by I(hostname) at C(/tmp/facts)
+  copy:
+    content: '{{ setupvar }}'
+    dest: /tmp/facts/{{ ansible_hostname }}
+
 - name: Collect only facts returned by facter
   setup:
     gather_subset:
