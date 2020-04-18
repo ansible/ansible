@@ -106,7 +106,7 @@ EXAMPLES = """
 - name: Collect default facts and add them to variable setupvar
   setup:
   register: setupvar
- 
+
 - name: Store facts indexed by hostname in /tmp/facts
   copy:
     content: '{{ setupvar }}'
