@@ -107,10 +107,10 @@ EXAMPLES = """
   setup:
   register: setupvar
  
- - name: Store facts indexed by I(hostname) at C(/tmp/facts)
+- name: Store facts indexed by I(hostname) at C(/tmp/facts)
   copy:
     content: '{{ setupvar }}'
-    dest: /tmp/facts/{{ ansible_hostname }}
+    dest: /tmp/facts/{{ ansible_hostname }}.yaml
 
 - name: Collect only facts returned by facter
   setup:
