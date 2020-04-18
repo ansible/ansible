@@ -531,7 +531,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         # way only if the user opted in in the config file
                         display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user. '
                                         'This may be insecure. For information on securing this, see '
-                                        'https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
+                                        'https://docs.ansible.com/ansible/user_guide/become.html#risks-of-becoming-an-unprivileged-user')
                         res = self._remote_chmod(remote_paths, 'a+%s' % chmod_mode)
                         if res['rc'] != 0:
                             raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
