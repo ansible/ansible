@@ -1,0 +1,2 @@
+bugfixes:
+    - "Add example setting for ``collections_paths`` parameter to ``examples/ansible.cfg``"
