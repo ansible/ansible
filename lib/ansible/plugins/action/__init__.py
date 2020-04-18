@@ -588,8 +588,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     # ALLOW_WORLD_READABLE_TMPFILES logic below from ever
                     # getting called. We leave this up to the user to rectify
                     # if they have both of these features enabled.
-                    group = C.COMMON_REMOTE_GROUP
-                    if group:
+                    group = self.get_shell_option('common_remote_group')
+                    if group is not None:
                         res = self._remote_chgrp(remote_paths, group)
                         if res['rc'] == 0:
                             # If ALLOW_WORLD_READABLE_TMPFILES is set, we should warn the user
