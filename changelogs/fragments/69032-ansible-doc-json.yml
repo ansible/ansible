@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-doc - when using JSON export, do not crash when docs contain ``datetime`` or other non-JSON objects, or when dictionary keys are not strings (https://github.com/ansible/ansible/issues/69031)."

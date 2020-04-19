@@ -21,7 +21,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Container, Sequence
+from ansible.module_utils.common._collections_compat import Container, Sequence, Set, Mapping
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import string_types
 from ansible.parsing.metadata import extract_metadata
@@ -35,9 +35,22 @@ from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_do
 display = Display()
 
 
+def _json_fix_keys(obj):
+    '''Make sure that the data does not contain mappings with non-string keys which break JSON encoding.'''
+    if isinstance(obj, (Sequence, Set)) and not isinstance(obj, string_types):
+        return [_json_fix_keys(x) for x in obj]
+    elif isinstance(obj, Mapping):
+        result = dict()
+        for k, v in obj.items():
+            result[to_native(k)] = _json_fix_keys(v)
+        return result
+    else:
+        return obj
+
+
 def jdump(text):
     try:
-        display.display(json.dumps(text, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
+        display.display(json.dumps(_json_fix_keys(text), cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
     except TypeError as e:
         raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue: %s' % to_native(e))
 
