@@ -347,8 +347,10 @@ class PluginLoader:
             return full_name, to_text(n_resource_path)
 
         # look for any matching extension in the package location (sans filter)
-        ext_blacklist = ['.pyc', '.pyo']
-        found_files = [f for f in glob.iglob(os.path.join(pkg_path, n_resource) + '.*') if os.path.isfile(f) and os.path.splitext(f)[1] not in ext_blacklist]
+        ext_blacklist = C.BLACKLIST_EXTS
+        found_files = [f
+                       for f in glob.iglob(os.path.join(pkg_path, n_resource) + '.*')
+                       if os.path.isfile(f) and not os.path.splitext(f)[1].endswith(ext_blacklist)]
 
         if not found_files:
             return None, None
