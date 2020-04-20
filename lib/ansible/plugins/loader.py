@@ -349,7 +349,7 @@ class PluginLoader:
         # look for any matching extension in the package location (sans filter)
         found_files = [f
                        for f in glob.iglob(os.path.join(pkg_path, n_resource) + '.*')
-                       if os.path.isfile(f) and f.endswith(C.MODULE_IGNORE_EXTS)]
+                       if os.path.isfile(f) and not f.endswith(C.MODULE_IGNORE_EXTS)]
 
         if not found_files:
             return None, None
