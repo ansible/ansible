@@ -1,14 +1,5 @@
 - hosts: testhost
   tasks:
-    # If you change these, change them in the role too.
-    - name: Make our architecture and OS match binary filenames
-      set_fact:
-        filename: "helloworld_{{ system }}_{{ ansible_architecture }}{{ suffix }}"
-      vars:
-        system: "{{ ansible_system|lower }}"
-        suffix: "{{ '.exe' if system == 'win32nt' else '' }}"
-
-
     - name: download binary module
       tags: test_binary_modules
       get_url:

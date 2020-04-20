@@ -8,14 +8,6 @@
   action: win_ping
   when: ansible_system == 'Win32NT'
 
-# If you change these, change them in the download playbook in the target root too.
-- name: Make our architecture and OS match binary filenames
-  set_fact:
-    filename: "helloworld_{{ system }}_{{ ansible_architecture }}{{ suffix }}"
-  vars:
-    system: "{{ ansible_system|lower }}"
-    suffix: "{{ '.exe' if system == 'win32nt' else '' }}"
-
 - name: Hello, World!
   action: "{{ filename }}"
   register: hello_world
