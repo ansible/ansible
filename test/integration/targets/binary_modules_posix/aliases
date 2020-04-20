@@ -1,4 +1,2 @@
 shippable/posix/group3
 needs/target/binary_modules
-skip/aix
-skip/power/centos

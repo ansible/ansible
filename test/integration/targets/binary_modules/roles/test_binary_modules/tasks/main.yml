@@ -8,8 +8,16 @@
   action: win_ping
   when: ansible_system == 'Win32NT'
 
+# If you change these, change them in the download playbook in the target root too.
+- name: Make our architecture and OS match binary filenames
+  set_fact:
+    filename: "helloworld_{{ system }}_{{ ansible_architecture }}{{ suffix }}"
+  vars:
+    system: "{{ ansible_system|lower }}"
+    suffix: "{{ '.exe' if system == 'win32nt' else '' }}"
+
 - name: Hello, World!
-  action: "helloworld_{{ ansible_system|lower }}"
+  action: "{{ filename }}"
   register: hello_world
 
 - assert:
@@ -17,7 +25,7 @@
       - 'hello_world.msg == "Hello, World!"'
 
 - name: Hello, Ansible!
-  action: "helloworld_{{ ansible_system|lower }}"
+  action: "{{ filename }}"
   args:
     name: Ansible
   register: hello_ansible
@@ -27,7 +35,7 @@
       - 'hello_ansible.msg == "Hello, Ansible!"'
 
 - name: Async Hello, World!
-  action: "helloworld_{{ ansible_system|lower }}"
+  action: "{{ filename }}"
   async: 10
   poll: 1
   when: ansible_system != 'Win32NT'
@@ -39,7 +47,7 @@
   when: async_hello_world is not skipped
 
 - name: Async Hello, Ansible!
-  action: "helloworld_{{ ansible_system|lower }}"
+  action: "{{ filename }}"
   args:
     name: Ansible
   async: 10
