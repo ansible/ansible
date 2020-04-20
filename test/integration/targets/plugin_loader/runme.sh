@@ -22,3 +22,6 @@ do
 		exit 1
 	fi
 done
+
+
+ansible-playbook ignore_exts/ignore_exts.yml -i ../../inventory -vvv "$@"
