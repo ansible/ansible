@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ansible.constants as C
+from ansible import context
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -365,6 +366,13 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
         def evaluate_and_append_task(target):
             tmp_list = []
+
+            # handle listing for tag filtering
+            skip_tags = context.CLIARGS['skip_tags']
+            tags = context.CLIARGS['tags']
+            if not (set(['all',]).difference(tags) or skip_tags) and (context.CLIARGS['listtasks'] or context.CLIARGS['listtags']):
+                tags = frozenset(['all', 'never'])
+
             for task in target:
                 if isinstance(task, Block):
                     filtered_block = evaluate_block(task)

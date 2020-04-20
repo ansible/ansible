@@ -55,8 +55,7 @@ class PlaybookExecutor:
         self.passwords = passwords
         self._unreachable_hosts = dict()
 
-        if context.CLIARGS.get('listhosts') or context.CLIARGS.get('listtasks') or \
-                context.CLIARGS.get('listtags') or context.CLIARGS.get('syntax'):
+        if context.CLIARGS.get('listhosts') or context.CLIARGS.get('syntax'):
             self._tqm = None
         else:
             self._tqm = TaskQueueManager(
@@ -164,7 +163,11 @@ class PlaybookExecutor:
                     play.post_validate(templar)
 
                     if context.CLIARGS['syntax']:
+                        # todo, syntax strategy!!!
                         continue
+                    elif context.CLIARGS.get('listtasks') or context.CLIARGS.get('listtags'):
+                        # force list strategy if cli asks
+                       play.strategy = 'list'
 
                     if self._tqm is None:
                         # we are just doing a listing

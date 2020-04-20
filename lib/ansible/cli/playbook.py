@@ -134,6 +134,7 @@ class PlaybookCLI(CLI):
                                 variable_manager=variable_manager, loader=loader,
                                 passwords=passwords)
 
+
         results = pbex.run()
 
         if isinstance(results, list):
@@ -158,48 +159,6 @@ class PlaybookCLI(CLI):
                             msg += "\n      %s" % host
 
                     display.display(msg)
-
-                    all_tags = set()
-                    if context.CLIARGS['listtags'] or context.CLIARGS['listtasks']:
-                        taskmsg = ''
-                        if context.CLIARGS['listtasks']:
-                            taskmsg = '    tasks:\n'
-
-                        def _process_block(b):
-                            taskmsg = ''
-                            for task in b.block:
-                                if isinstance(task, Block):
-                                    taskmsg += _process_block(task)
-                                else:
-                                    if task.action in C._ACTION_META and task.implicit:
-                                        continue
-
-                                    all_tags.update(task.tags)
-                                    if context.CLIARGS['listtasks']:
-                                        cur_tags = list(mytags.union(set(task.tags)))
-                                        cur_tags.sort()
-                                        if task.name:
-                                            taskmsg += "      %s" % task.get_name()
-                                        else:
-                                            taskmsg += "      %s" % task.action
-                                        taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
-
-                            return taskmsg
-
-                        all_vars = variable_manager.get_vars(play=play)
-                        for block in play.compile():
-                            block = block.filter_tagged_tasks(all_vars)
-                            if not block.has_tasks():
-                                continue
-                            taskmsg += _process_block(block)
-
-                        if context.CLIARGS['listtags']:
-                            cur_tags = list(mytags.union(all_tags))
-                            cur_tags.sort()
-                            taskmsg += "      TASK TAGS: [%s]\n" % ', '.join(cur_tags)
-
-                        display.display(taskmsg)
-
             return 0
         else:
             return results
