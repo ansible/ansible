@@ -315,8 +315,9 @@ test/integration/targets/pip/files/ansible_test_pip_chdir/__init__.py future-imp
 test/integration/targets/pip/files/ansible_test_pip_chdir/__init__.py metaclass-boilerplate
 test/integration/targets/pip/files/setup.py future-import-boilerplate
 test/integration/targets/pip/files/setup.py metaclass-boilerplate
-test/integration/targets/plugin_loader/ignore_exts/library/demo.py
-test/integration/targets/plugin_loader/ignore_exts/library/demoignore.ini
+test/integration/targets/plugin_loader/ignore_exts/library/demo.py future-import-boilerplate
+test/integration/targets/plugin_loader/ignore_exts/library/demo.py metaclass-boilerplate
+test/integration/targets/plugin_loader/ignore_exts/library/demoignore.ini shebang
 test/integration/targets/run_modules/library/test.py future-import-boilerplate
 test/integration/targets/run_modules/library/test.py metaclass-boilerplate
 test/integration/targets/script/files/no_shebang.py future-import-boilerplate

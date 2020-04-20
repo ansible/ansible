@@ -2,6 +2,7 @@
 
 from ansible.module_utils.basic import AnsibleModule
 
+
 def main():
     module_args = dict(
         name=dict(type='str', required=True),
@@ -17,6 +18,7 @@ def main():
     result['changed'] = False
 
     module.exit_json(**result)
+
 
 if __name__ == '__main__':
     main()
