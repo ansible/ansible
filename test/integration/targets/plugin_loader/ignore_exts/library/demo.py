@@ -14,7 +14,7 @@ def main():
     )
 
     result = {}
-    result['message'] = 'ping, {}'.format(module.params['name'])
+    result['message'] = 'ping, {0}'.format(module.params['name'])
     result['changed'] = False
 
     module.exit_json(**result)
