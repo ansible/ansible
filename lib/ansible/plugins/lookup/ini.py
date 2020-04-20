@@ -31,6 +31,12 @@ DOCUMENTATION = """
         default: False
         type: boolean
         description: Flag to indicate if the key supplied is a regexp.
+      re_section:
+        default: False
+        type: boolean
+        description:
+          - Flag to indicate if the section name supplied is a regexp.
+          - Requires the C(re) flag to be set to C(True).
       encoding:
         default: utf-8
         description:  Text encoding to use.
@@ -71,7 +77,8 @@ from ansible.plugins.lookup import LookupBase
 def _parse_params(term):
     '''Safely split parameter term to preserve spaces'''
 
-    keys = ['key', 'type', 'section', 'file', 're', 'default', 'encoding']
+    keys = ['key', 'type', 'section', 'file', 're', 're_section', 'default',
+            'encoding']
     params = {}
     for k in keys:
         params[k] = ''
@@ -92,9 +99,12 @@ def _parse_params(term):
 
 class LookupModule(LookupBase):
 
-    def get_value(self, key, section, dflt, is_regexp):
+    def get_value(self, key, section, dflt, is_regexp, is_regexp_section):
         # Retrieve all values from a section using a regexp
         if is_regexp:
+            if is_regexp_section:
+                return [v for s in self.cp.sections() if re.match(section, s)
+                        for k, v in self.cp.items(s) if re.match(key, k)]
             return [v for k, v in self.cp.items(section) if re.match(key, k)]
         value = None
         # Retrieve a single value
@@ -116,6 +126,7 @@ class LookupModule(LookupBase):
             paramvals = {
                 'file': 'ansible.ini',
                 're': False,
+                're_section': False,
                 'default': None,
                 'section': "global",
                 'type': "ini",
@@ -153,7 +164,8 @@ class LookupModule(LookupBase):
 
             self.cp.readfp(config)
             var = self.get_value(key, paramvals['section'],
-                                 paramvals['default'], paramvals['re'])
+                                 paramvals['default'],
+                                 paramvals['re'], paramvals['re_section'])
             if var is not None:
                 if isinstance(var, MutableSequence):
                     for v in var:
