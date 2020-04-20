@@ -20,7 +20,9 @@ Additional groups can be created to manage hosts based on whether the hosts matc
 The When Statement
 ``````````````````
 
-Sometimes you will want to skip a particular step on a particular host.
+The When Statement checks against a conditional, if the conditional is true, the task is ran, if false, the task is skipped.
+
+For example, sometimes you will want to skip a particular step on a particular host.
 This could be something as simple as not installing a certain package if the operating system is a particular version,
 or it could be something like performing some cleanup steps if a filesystem is getting full.
 
