@@ -128,14 +128,15 @@ and finally executing it there.
 
 Everything is fine if the module file is executed without using ``become``,
 when the ``become_user`` is root, or when the connection to the remote machine
-is made as root.  In these cases Ansible creates the module file with permissions
-that only allow reading by the user and root, or only allow reading by the unprivileged
-user being switched to.
+is made as root. In these cases Ansible creates the module file with
+permissions that only allow reading by the user and root, or only allow reading
+by the unprivileged user being switched to.
 
 However, when both the connection user and the ``become_user`` are unprivileged,
 the module file is written as the user that Ansible connects as (the
 ``remote_user``), but the file needs to be readable by the user Ansible is set
-to ``become``. Ansible solves this problem in the following way:
+to ``become``. The details of how Ansible solves this can vary based on platform.
+However, on POSIX systems, Ansible solves this problem in the following way:
 
 First, if :command:`setfacl` is installed and available in the remote ``PATH``,
 and the temporary directory on the remote host is mounted with POSIX.1e
@@ -146,14 +147,15 @@ Next, if POSIX ACLs are **not** available or :command:`setfacl` could not be
 run, Ansible will attempt to change ownership of the module file using
 :command:`chown` for systems which support doing so as an unprivileged user.
 
-If the :command:`chown` fails, Ansible will then check the value of the
-configuration setting ``ansible_common_remote_group``. Many systems will allow a
-given user to change the group ownership of a file to a group the user is in. As
-a result, if the second unprivileged user (the ``become_user``) has a UNIX group
-in common with the user Ansible is connected as (the ``remote_user``), and if
-``ansible_common_remote_group`` is defined to be that group, Ansible can try to
-change the group ownership of the module file to that group by using
-:command:`chgrp`, thereby likely making it readable to the ``become_user``.
+New in Ansible 2.10, if the :command:`chown` fails, Ansible will then check the
+value of the configuration setting ``ansible_common_remote_group``. Many
+systems will allow a given user to change the group ownership of a file to a
+group the user is in. As a result, if the second unprivileged user (the
+``become_user``) has a UNIX group in common with the user Ansible is connected
+as (the ``remote_user``), and if ``ansible_common_remote_group`` is defined to
+be that group, Ansible can try to change the group ownership of the module file
+to that group by using :command:`chgrp`, thereby likely making it readable to
+the ``become_user``.
 
 At this point, if ``ansible_common_remote_group`` was defined and a
 :command:`chgrp` was attempted and returned successfully, Ansible assumes (but,
