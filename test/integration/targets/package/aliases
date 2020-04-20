@@ -1,4 +1,3 @@
 shippable/posix/group1
 destructive
 skip/aix
-skip/power/centos
