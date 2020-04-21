@@ -67,18 +67,22 @@
 #
 # This test case is based on a reproducer originally reported on Reddit:
 #   https://www.reddit.com/r/ansible/comments/g2ps32/ansible_yum_module_throws_up_an_error_when/
+#
+# NOTE: For the Ansible upstream CI we can only run this for RHEL7 because the
+#       containerized runtimes in shippable don't allow the nested mounting of
+#       buildah container volumes.
 - name: perform yuminstallroot in a buildah mount with releasever
-  when: ansible_facts["distribution_major_version"] == "7"
+  when:
+    - ansible_facts["distribution_major_version"] == "7"
+    - ansible_facts["distribution"] == "RedHat"
   block:
     # Need to enable this RHUI repo for RHEL7 testing in AWS, CentOS has Extras
     # enabled by default and this is not needed there.
     - name: enable rhui-rhel-7-server-rhui-extras-rpms repo for RHEL7
       command: yum-config-manager --enable rhui-rhel-7-server-rhui-extras-rpms
-      when: ansible_facts["distribution"] == "RedHat"
     - name: update cache to pull repodata
       yum:
         update_cache: yes
-      when: ansible_facts["distribution"] == "RedHat"
     - name: install required packages for buildah test
       yum:
         state: present
@@ -116,4 +120,3 @@
           - buildah
     - name: disable rhui-rhel-7-server-rhui-extras-rpms repo for RHEL7
       command: yum-config-manager --disable rhui-rhel-7-server-rhui-extras-rpms
-      when: ansible_facts["distribution"] == "RedHat"
