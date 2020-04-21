@@ -348,6 +348,16 @@ class Connection(ConnectionBase):
             # paramiko 2.2 introduced auth_timeout parameter
             if LooseVersion(paramiko.__version__) >= LooseVersion('2.2.0'):
                 ssh_connect_kwargs['auth_timeout'] = self._play_context.timeout
+            else:
+                display.warning('auth_timeout ignored.'
+                                ' Please upgrade to Paramiko 2.2.0 or newer.')
+
+            # paramiko 1.15 introduced banner timeout parameter
+            if LooseVersion(paramiko.__version__) >= LooseVersion('1.15.0'):
+                ssh_connect_kwargs['banner_timeout'] = self.get_option('banner_timeout')
+            else:
+                display.warning('banner_timeout ignored.'
+                                ' Please upgrade to Paramiko 1.15.0 or newer.')
 
             ssh.connect(
                 self._play_context.remote_addr.lower(),
@@ -358,7 +368,6 @@ class Connection(ConnectionBase):
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
                 port=port,
-                banner_timeout=self.get_option('banner_timeout'),
                 **ssh_connect_kwargs
             )
         except paramiko.ssh_exception.BadHostKeyException as e:
