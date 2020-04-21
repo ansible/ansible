@@ -19,12 +19,14 @@ def _ensure_default_collection(collection_list=None):
     if collection_list is None:
         collection_list = []
 
-    if default_collection:  # FIXME: exclude role tasks?
-        if isinstance(collection_list, string_types):
-            collection_list = [collection_list]
+    # We allow collections to be either a string or a list, so make sure
+    # we have a list going forward.
+    if isinstance(collection_list, string_types):
+        collection_list = [collection_list]
 
-        if default_collection not in collection_list:
-            collection_list.insert(0, default_collection)
+    # FIXME: exclude role tasks?
+    if default_collection and default_collection not in collection_list:
+        collection_list.insert(0, default_collection)
 
     # if there's something in the list, ensure that builtin or legacy is always there too
     if collection_list and 'ansible.builtin' not in collection_list and 'ansible.legacy' not in collection_list:
@@ -47,8 +49,9 @@ class CollectionSearch:
             return None
 
         # This duplicates static attr checking logic from post_validate()
-        # because if the user attempts to template a collection name, it will
-        # error before it ever gets to the post_validate() warning.
+        # because if the user attempts to template a collection name, it may
+        # error before it ever gets to the post_validate() warning (e.g. trying
+        # to import a role from the collection).
         env = Environment()
         for collection_name in ds:
             if is_template(collection_name, env):

@@ -1,0 +1,2 @@
+bugfixes:
+- Make sure if a collection is supplied as a string that we transform it into a list.

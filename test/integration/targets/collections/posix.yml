@@ -406,3 +406,10 @@
   hosts: testhost
   roles:
     - testns.testcoll.call_standalone
+
+# Issue https://github.com/ansible/ansible/issues/69054
+- name: Test collection as string
+  hosts: testhost
+  collections: foo
+  tasks:
+    - debug: msg="Test"
