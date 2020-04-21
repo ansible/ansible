@@ -658,7 +658,6 @@ class YumModule(YumDnf):
 
         return set()
 
-
     def what_provides(self, repoq, req_spec, qf=def_qf):
         if not repoq:
 
@@ -1216,15 +1215,15 @@ class YumModule(YumDnf):
 
             if '*' in line or len(line) not in [3, 6] or '.' not in line[0]:
                 continue
-            else:
-                pkg, version, repo = line[0], line[1], line[2]
-                name, dist = pkg.rsplit('.', 1)
-                updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
 
-                if len(line) == 6:
-                    obsolete_pkg, obsolete_version, obsolete_repo = line[3], line[4], line[5]
-                    obsolete_name, obsolete_dist = obsolete_pkg.rsplit('.', 1)
-                    obsoletes.update({obsolete_name: {'version': obsolete_version, 'dist': obsolete_dist, 'repo': obsolete_repo}})
+            pkg, version, repo = line[0], line[1], line[2]
+            name, dist = pkg.rsplit('.', 1)
+            updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
+
+            if len(line) == 6:
+                obsolete_pkg, obsolete_version, obsolete_repo = line[3], line[4], line[5]
+                obsolete_name, obsolete_dist = obsolete_pkg.rsplit('.', 1)
+                obsoletes.update({obsolete_name: {'version': obsolete_version, 'dist': obsolete_dist, 'repo': obsolete_repo}})
 
         return updates, obsoletes
 
@@ -1275,7 +1274,7 @@ class YumModule(YumDnf):
 
                 # check if pkgspec is installed (if possible for idempotence)
                 # localpkg
-                elif spec.endswith('.rpm') and '://' not in spec:
+                if spec.endswith('.rpm') and '://' not in spec:
                     if not os.path.exists(spec):
                         res['msg'] += "No RPM file matching '%s' found on system" % spec
                         res['results'].append("No RPM file matching '%s' found on system" % spec)
@@ -1296,7 +1295,7 @@ class YumModule(YumDnf):
                     continue
 
                 # URL
-                elif '://' in spec:
+                if '://' in spec:
                     # download package so that we can check if it's already installed
                     with self.set_env_proxy():
                         package = fetch_file(self.module, spec)
@@ -1313,11 +1312,10 @@ class YumModule(YumDnf):
                     continue
 
                 # dep/pkgname  - find it
+                if self.is_installed(repoq, spec):
+                    pkgs['update'].append(spec)
                 else:
-                    if self.is_installed(repoq, spec):
-                        pkgs['update'].append(spec)
-                    else:
-                        pkgs['install'].append(spec)
+                    pkgs['install'].append(spec)
                 pkglist = self.what_provides(repoq, spec)
                 # FIXME..? may not be desirable to throw an exception here if a single package is missing
                 if not pkglist:
