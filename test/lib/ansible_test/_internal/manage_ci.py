@@ -277,7 +277,7 @@ class ManagePosixCI:
             # being different and -z not being recognized. This pattern works
             # with both versions of tar.
             self.ssh(
-                'rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && gunzip --stdout %s | tar oxf - && rm %s' %
+                'rm -rf ~/ansible ~/ansible_collections && cd ~/ && gunzip --stdout %s | tar oxf - && rm %s' %
                 (remote_source_path, remote_source_path)
             )
 

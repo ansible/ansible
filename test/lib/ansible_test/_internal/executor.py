@@ -972,12 +972,7 @@ def command_integration_filter(args,  # type: TIntegrationConfig
             Add the integration config vars file to the payload file list.
             This will preserve the file during delegation even if the file is ignored by source control.
             """
-            if data_context().content.collection:
-                working_path = data_context().content.collection.directory
-            else:
-                working_path = ''
-
-            files.append((vars_file_src, os.path.join(working_path, data_context().content.integration_vars_path)))
+            files.append((vars_file_src, data_context().content.integration_vars_path))
 
         data_context().register_payload_callback(integration_config_callback)
 
