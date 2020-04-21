@@ -511,6 +511,14 @@ class VariableManager:
         for option, option_value in iteritems(self._options_vars):
             variables[option] = option_value
 
+            # override to current modes
+            if task:
+                variables['ansible_check_mode'] = task.check_mode
+                variables['ansible_diff_mode'] = task.diff
+            elif play:
+                variables['ansible_check_mode'] = play.check_mode
+                variables['ansible_diff_mode'] = play.diff
+
         if self._hostvars is not None and include_hostvars:
             variables['hostvars'] = self._hostvars
 

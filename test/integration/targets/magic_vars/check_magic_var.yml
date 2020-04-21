@@ -1,0 +1,42 @@
+- name: handle cli
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: verify expect
+      assert:
+        that:
+            - expect is defined
+      tags: ['check', 'diff']
+
+    - name: check check mode cli
+      assert:
+        that:
+            - ansible_check_mode == expect
+      tags: ['check']
+
+    - name: check diff mode cli
+      assert:
+        that:
+            - ansible_diff_mode == expect
+      tags: ['diff']
+
+
+- name: play has diff and check
+  hosts: localhost
+  gather_facts: false
+  check_mode: True
+  diff: True
+  tasks:
+    - name: check check mode
+      assert:
+        that:
+            - ansible_check_mode is True
+            - ansible_diff_mode is True
+
+    - name: Task makes false
+      assert:
+        that:
+            - ansible_check_mode is False
+            - ansible_diff_mode is False
+      check_mode: False
+      diff: False
