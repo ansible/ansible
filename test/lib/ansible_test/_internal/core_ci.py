@@ -617,13 +617,8 @@ class SshKey:
             Add the SSH keys to the payload file list.
             They are either outside the source tree or in the cache dir which is ignored by default.
             """
-            if data_context().content.collection:
-                working_path = data_context().content.collection.directory
-            else:
-                working_path = ''
-
-            files.append((key, os.path.join(working_path, os.path.relpath(key_dst, data_context().content.root))))
-            files.append((pub, os.path.join(working_path, os.path.relpath(pub_dst, data_context().content.root))))
+            files.append((key, os.path.relpath(key_dst, data_context().content.root)))
+            files.append((pub, os.path.relpath(pub_dst, data_context().content.root)))
 
         data_context().register_payload_callback(ssh_key_callback)
 

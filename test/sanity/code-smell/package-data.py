@@ -27,7 +27,6 @@ def assemble_files_to_ship(complete_file_list):
         'hacking/shippable/*',
         'hacking/tests/*',
         'hacking/ticket_stubs/*',
-        'metadata-*.json',  # ansible-test with --docker produces this tmp file.
         'test/sanity/code-smell/botmeta.*',
         'test/utils/*',
         'test/utils/*/*',

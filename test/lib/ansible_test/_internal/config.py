@@ -209,13 +209,8 @@ class TestConfig(EnvironmentConfig):
             """Add the metadata file to the payload file list."""
             config = self
 
-            if data_context().content.collection:
-                working_path = data_context().content.collection.directory
-            else:
-                working_path = ''
-
             if self.metadata_path:
-                files.append((os.path.abspath(config.metadata_path), os.path.join(working_path, config.metadata_path)))
+                files.append((os.path.abspath(config.metadata_path), config.metadata_path))
 
         data_context().register_payload_callback(metadata_callback)
 
