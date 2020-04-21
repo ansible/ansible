@@ -10,7 +10,7 @@ Working With Dynamic Inventory
 
 If your Ansible inventory fluctuates over time, with hosts spinning up and shutting down in response to business demands, the static inventory solutions described in :ref:`inventory` will not serve your needs. You may need to track hosts from multiple sources: cloud providers, LDAP, `Cobbler <https://cobbler.github.io>`_, and/or enterprise CMDB systems.
 
-Ansible integrates all of these options via a dynamic external inventory system. Ansible supports two ways to connect with external inventory:  :ref:`inventory_plugins` and `inventory scripts <https://github.com/ansible/ansible/tree/devel/contrib/inventory>`_.
+Ansible integrates all of these options via a dynamic external inventory system. Ansible supports two ways to connect with external inventory:  :ref:`inventory_plugins` and `inventory scripts <https://github.com/ansible/ansible/tree/stable-2.8/contrib/inventory>`_.
 
 Inventory plugins take advantage of the most recent updates to Ansible's core code. We recommend plugins over scripts for dynamic inventory. You can :ref:`write your own plugin <developing_inventory>` to connect to additional dynamic inventory sources.
 
@@ -28,7 +28,7 @@ Ansible integrates seamlessly with `Cobbler <https://cobbler.github.io>`_, a Lin
 While primarily used to kickoff OS installations and manage DHCP and DNS, Cobbler has a generic
 layer that can represent data for multiple configuration management systems (even at the same time) and serve as a 'lightweight CMDB'.
 
-To tie Ansible's inventory to Cobbler, copy `this script <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file. Run ``cobblerd`` any time you use Ansible and use the ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``) to communicate with Cobbler using Cobbler's XMLRPC API.
+To tie Ansible's inventory to Cobbler, copy `this script <https://raw.githubusercontent.com/ansible/ansible/stable-2.8/contrib/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file. Run ``cobblerd`` any time you use Ansible and use the ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``) to communicate with Cobbler using Cobbler's XMLRPC API.
 
 Add a ``cobbler.ini`` file in ``/etc/ansible`` so Ansible knows where the Cobbler server is and some cache improvements can be used. For example::
 
@@ -98,14 +98,14 @@ So in other words, you can use those variables in arguments/actions as well.
 Inventory Script Example: AWS EC2
 =================================
 
-If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/ec2.py>`_ script.
+If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.githubusercontent.com/ansible/ansible/stable-2.8/contrib/inventory/ec2.py>`_ script.
 
 You can use this script in one of two ways. The easiest is to use Ansible's ``-i`` command line option and specify the path to the script after
 marking it executable::
 
     ansible -i ec2.py -u ubuntu us-east-1d -m ping
 
-The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You will also need to copy the `ec2.ini  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/ec2.ini>`_ file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
+The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You will also need to copy the `ec2.ini  <https://raw.githubusercontent.com/ansible/ansible/stable-2.8/contrib/inventory/ec2.ini>`_ file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
 
 To successfully make an API call to AWS, you will need to configure Boto (the Python interface to AWS). There are a `variety of methods <http://docs.pythonboto.org/en/latest/boto_config_tut.html>`_ available, but the simplest is just to export two environment variables::
 
@@ -243,7 +243,7 @@ Inventory Script Example: OpenStack
 
 If you use an OpenStack-based cloud, instead of manually maintaining your own inventory file, you can use the ``openstack_inventory.py`` dynamic inventory to pull information about your compute instances directly from OpenStack.
 
-You can download the latest version of the OpenStack inventory script `here <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py>`_.
+You can download the latest version of the OpenStack inventory script `here <https://raw.githubusercontent.com/ansible/ansible/stable-2.8/contrib/inventory/openstack_inventory.py>`_.
 
 You can use the inventory script explicitly (by passing the `-i openstack_inventory.py` argument to Ansible) or implicitly (by placing the script at `/etc/ansible/hosts`).
 
@@ -252,7 +252,7 @@ Explicit use of OpenStack inventory script
 
 Download the latest version of the OpenStack dynamic inventory script and make it executable::
 
-    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py
+    wget https://raw.githubusercontent.com/ansible/ansible/stable-2.8/contrib/inventory/openstack_inventory.py
     chmod +x openstack_inventory.py
 
 .. note::
@@ -287,13 +287,13 @@ Implicit use of OpenStack inventory script
 
 Download the latest version of the OpenStack dynamic inventory script, make it executable and copy it to `/etc/ansible/hosts`::
 
-    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack_inventory.py
+    wget https://raw.githubusercontent.com/ansible/ansible/stable-2.8/contrib/inventory/openstack_inventory.py
     chmod +x openstack_inventory.py
     sudo cp openstack_inventory.py /etc/ansible/hosts
 
 Download the sample configuration file, modify it to suit your needs and copy it to `/etc/ansible/openstack.yml`::
 
-    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.yml
+    wget https://raw.githubusercontent.com/ansible/ansible/stable-2.8/contrib/inventory/openstack.yml
     vi openstack.yml
     sudo cp openstack.yml /etc/ansible/
 
@@ -315,7 +315,7 @@ Note that the OpenStack dynamic inventory script will cache results to avoid rep
 Other inventory scripts
 =======================
 
-You can find all included inventory scripts in the `contrib/inventory directory <https://github.com/ansible/ansible/tree/devel/contrib/inventory>`_. General usage is similar across all inventory scripts. You can also :ref:`write your own inventory script <developing_inventory>`.
+You can find all included inventory scripts in the `contrib/inventory directory <https://github.com/ansible/ansible/tree/stable-2.8/contrib/inventory>`_. General usage is similar across all inventory scripts. You can also :ref:`write your own inventory script <developing_inventory>`.
 
 .. _using_multiple_sources:
 
