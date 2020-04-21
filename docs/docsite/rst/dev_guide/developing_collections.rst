@@ -339,6 +339,19 @@ installs the collection in the first path defined in :ref:`COLLECTIONS_PATHS`, w
 
 Next, try using the local collection inside a playbook. For examples and more details see :ref:`Using collections <using_collections>`
 
+.. _collections_scm_install:
+
+Installing collections from a git repository
+--------------------------------------------
+
+You can also test a version of your collection in development by installing it from a git repository.
+
+.. code-block:: bash
+
+   ansible-galaxy collection install git+https://github.com/org/repo.git,devel
+
+.. include:: ../shared_snippets/installing_collections_git_repo.txt
+
 .. _publishing_collections:
 
 Publishing collections

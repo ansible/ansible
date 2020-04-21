@@ -40,6 +40,13 @@ Install multiple collections with a requirements file
 
 .. include:: ../shared_snippets/installing_multiple_collections.txt
 
+.. _collections_scm_install:
+
+Installing collections from a git repository
+--------------------------------------------
+
+.. include:: ../shared_snippets/installing_collections_git_repo.txt
+
 .. _collection_offline_download:
 
 Downloading a collection for offline use

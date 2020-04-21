@@ -38,6 +38,8 @@ Installing a collection from Galaxy
 
 .. include:: ../shared_snippets/installing_collections.txt
 
+.. include:: ../shared_snippets/installing_collections_git_repo.txt
+
 .. _installing_ah_collection:
 
 Downloading a collection from Automation Hub
