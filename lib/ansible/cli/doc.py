@@ -20,9 +20,10 @@ from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.six import string_types
+from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -30,11 +31,12 @@ from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import set_collection_playbook_paths, get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
+
 display = Display()
 
 
 def jdump(text):
-    display.display(json.dumps(text, sort_keys=True, indent=4))
+    display.display(json.dumps(text, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
 
 
 def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
