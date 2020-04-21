@@ -590,6 +590,10 @@ class GalaxyCLI(CLI):
                     if req_name is None:
                         raise AnsibleError("Collections requirement entry should contain the key name.")
 
+                    req_scm = collection_req.get('scm')
+                    if req_scm and not req_name.startswith(req_scm + '+'):
+                        req_name = req_scm + '+' + req_name
+
                     req_version = collection_req.get('version', '*')
                     req_source = collection_req.get('source', None)
                     if req_source:
@@ -705,7 +709,8 @@ class GalaxyCLI(CLI):
             for collection_input in collections:
                 requirement = None
                 if os.path.isfile(to_bytes(collection_input, errors='surrogate_or_strict')) or \
-                        urlparse(collection_input).scheme.lower() in ['http', 'https']:
+                        urlparse(collection_input).scheme.lower() in ['http', 'https'] or \
+                        collection_input.startswith('git+'):
                     # Arg is a file path or URL to a collection
                     name = collection_input
                 else:
