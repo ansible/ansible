@@ -68,7 +68,7 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
     if not ANSIBLE_SOURCE_ROOT:
         # reconstruct the bin directory which is not available when running from an ansible install
         files.extend(create_temporary_bin_files(args))
-        filters.update(dict((path[3:], make_executable) for path in ANSIBLE_BIN_SYMLINK_MAP.values() if path.startswith('../')))
+        filters.update(dict((os.path.join('ansible', path[3:]), make_executable) for path in ANSIBLE_BIN_SYMLINK_MAP.values() if path.startswith('../')))
 
     if not data_context().content.is_ansible:
         # exclude unnecessary files when not testing ansible itself
