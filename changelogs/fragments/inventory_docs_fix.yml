@@ -1,0 +1,2 @@
+minor_changes:
+- Point inventory script location to their respective version rather than devel version in documentation.
