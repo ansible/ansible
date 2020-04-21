@@ -24,7 +24,7 @@
 - name: Install pyOpenSSL (Darwin)
   become: True
   pip:
-    name: pyOpenSSL
+    name: pyOpenSSL<2.9.1
   when: ansible_os_family == 'Darwin'
 
 - name: register pyOpenSSL version
