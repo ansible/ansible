@@ -1,0 +1,2 @@
+bugfixes:
+  - Prevent rewriting nested Block's data in filter_tagged_tasks

@@ -379,7 +379,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             return tmp_list
 
         def evaluate_block(block):
-            new_block = self.copy(exclude_tasks=True)
+            new_block = block.copy(exclude_parent=True, exclude_tasks=True)
+            new_block._parent = block._parent
             new_block.block = evaluate_and_append_task(block.block)
             new_block.rescue = evaluate_and_append_task(block.rescue)
             new_block.always = evaluate_and_append_task(block.always)
