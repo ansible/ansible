@@ -1,0 +1,6 @@
+- include_role:
+    name: standalone
+
+- assert:
+    that:
+      - standalone_role_var is defined

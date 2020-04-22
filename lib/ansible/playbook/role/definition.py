@@ -162,9 +162,9 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             self._role_collection = role_tuple[2]
             return role_tuple[0:2]
 
-        # FUTURE: refactor this to be callable from internal so we can properly order ansible.legacy searches with the collections keyword
-        if self._collection_list and 'ansible.legacy' not in self._collection_list:
-            raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(self._collection_list)), obj=self._ds)
+        # We didn't find a collection role, look in defined role paths
+        # FUTURE: refactor this to be callable from internal so we can properly order
+        # ansible.legacy searches with the collections keyword
 
         # we always start the search for roles in the base directory of the playbook
         role_search_paths = [
@@ -198,7 +198,8 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
 
-        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(role_search_paths)), obj=self._ds)
+        searches = (self._collection_list or []) + role_search_paths
+        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(searches)), obj=self._ds)
 
     def _split_role_params(self, ds):
         '''
