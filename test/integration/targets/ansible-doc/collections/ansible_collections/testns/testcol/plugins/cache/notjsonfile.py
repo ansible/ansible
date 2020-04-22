@@ -39,6 +39,8 @@ DOCUMENTATION = '''
         type: integer
 '''
 
+from ansible.plugins.cache import BaseFileCacheModule
+
 
 class CacheModule(BaseFileCacheModule):
     """
