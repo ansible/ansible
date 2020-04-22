@@ -1,18 +1,21 @@
 
 .. _migrating_roles:
 
-***************************************
-Migrating Roles to Roles in Collections
-***************************************
+*************************************************
+Migrating Roles to Roles in Collections on Galaxy
+*************************************************
 
-You can migrate an existing standalone role into a collection-based role. With Ansible collections, you can create and distribute Ansible content that can contain one or many roles, modules or plugins (see :ref:`developing_collections` for details on collections).
+You can migrate an existing standalone role into a collection-based role that you can host on Galaxy. This offers you more flexibility and resources to have your role within a collection. With Ansible collections on Galaxy, you can use a single collection as a delivery mechanism for many roles, releasing them as a single cohesive unit of re-usable automation. Inside a collection, custom plugins that used to be shipped in the role's :file:`library/`` directory can now be shared across all roles within a
+collection without duplicating them in each role's :file:`library/`` directory.
+
+You also need to migrate roles to collections if you them as part of certified Ansible content.
+
+See :ref:`developing_collections` for details on collections).
 
 
 .. contents::
    :local:
    :depth: 1
-
-.. _roles_in_collections:
 
 Comparing standalone roles to collection roles
 ===============================================
@@ -76,19 +79,35 @@ A collection can contain one or more roles in the :file:`roles/` directory and t
 
 	 In standalone roles, some of the plugin directories referenced their plugin types in the plural sense; this is not the case in collections.
 
+.. _simple_roles_in_collections:
+
 Migrating a role to a collection
-================================
+=================================
 
-The high-level steps to migrate a role to a collection are:
+To migrate from a standalone role (with no plugins) to a collection role:
 
-#. Create the collection.
-#. Copy the role into the collection :file:`/roles` directory.
-#. Move any modules to the collection :file:`plugins/modules` directory.
-#. Move any plugins to the appropriate collection :file:`plugins` directory.
-#. Change references to the roles, plugins, and modules to use the :abbr:`FQCN (Fully Qualified Collection Name)` or ``collection`` keyword.
+1. Create a collection. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
+
+.. code-block:: bash
+
+  $ ansible-galaxy collection init mynamespace.mycollection
+
+This creates the collection directory structure.
+
+2. Copy the standalone role directory into the :file:`roles/` subdirectory of the collection. Roles in collections cannot have hyphens in the role name. Rename any such roles to use underscores instead.
+
+.. code-block:: bash
+
+  $ mkdir mynamespace/mycollection/roles/my_role/
+  $ cp -r /path/to/standalone/role/mynamespace/my_role/\* mynamespace/mycollection/roles/my_role/
 
 
-In detail, to migrate from a standalone role to a collection role:
+.. _complex_roles_in_collections:
+
+Migrating a role with plugins to a collection
+==============================================
+
+To migrate from a standalone role that has plugins to a collection role:
 
 1. Create a collection. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
 
@@ -114,7 +133,7 @@ This creates the collection directory structure.
 
 5. Move any other plugins to the appropriate :file:`plugins/PLUGINTYPE/` directory.  See :ref:`migrating_plugins_collection` for details.
 
-6. Change any references to the role, modules, or plugins to use the :abbr:`FQCN (Fully Qualified Collection Name)`.
+6. Change any references to the role to use the :abbr:`FQCN (Fully Qualified Collection Name)`.
 
 .. code-block:: yaml
 
@@ -230,8 +249,8 @@ Because of the way that the CPython interpreter does imports, combined with the 
   from ansible_collections.ansible_example.community.plugins.callback.__init__ import CustomBaseClass
 
 
-Example: Migrating a standalone role with modules to a collection
-=================================================================
+Example: Migrating a standalone role with plugins to a collection
+-----------------------------------------------------------------
 
 In this example we have a standalone role called ``my-standalone-role.webapp`` to emulate a standalone role that contains dashes in the name (which is not valid in collections). This standalone role contains a custom module in the ``library/`` directory called ``manage_webserver``.
 
@@ -286,7 +305,7 @@ In this example we have a standalone role called ``my-standalone-role.webapp`` t
 
 
 Example: Supporting standalone roles and migrated collection roles in a downstream RPM
-=======================================================================================
+---------------------------------------------------------------------------------------
 
 A standalone role can co-exist with its collection role counterpart (for example, as part of a support lifecycle of a product). This should only be done for a transition period, but these two can exist in downstream in packages such as RPMs. For example, the RHEL system roles could coexist with an `example of a RHEL system roles collection <https://github.com/maxamillion/collection-rhel-system-roles>`_ and provide existing backwards compatibility with the downstream RPM.
 
