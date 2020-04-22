@@ -295,7 +295,7 @@ test/integration/targets/module_precedence/multiple_roles/bar/library/ping.py fu
 test/integration/targets/module_precedence/multiple_roles/bar/library/ping.py metaclass-boilerplate
 test/integration/targets/module_precedence/multiple_roles/foo/library/ping.py future-import-boilerplate
 test/integration/targets/module_precedence/multiple_roles/foo/library/ping.py metaclass-boilerplate
-/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
+test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.py future-import-boilerplate
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.py metaclass-boilerplate
