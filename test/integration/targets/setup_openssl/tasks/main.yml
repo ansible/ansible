@@ -18,8 +18,8 @@
 - name: Install pyOpenSSL
   become: True
   pip:
-    name: pyOpenSSL
-  when:  ansible_os_family == 'Darwin'
+    name: pyOpenSSL<2.9.1
+  when: ansible_os_family == 'Darwin'
 
 - name: register pyOpenSSL version
   command: "{{ ansible_python.executable }} -c 'import OpenSSL; print(OpenSSL.__version__)'"
