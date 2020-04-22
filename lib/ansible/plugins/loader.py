@@ -347,8 +347,9 @@ class PluginLoader:
             return full_name, to_text(n_resource_path)
 
         # look for any matching extension in the package location (sans filter)
-        ext_blacklist = ['.pyc', '.pyo']
-        found_files = [f for f in glob.iglob(os.path.join(pkg_path, n_resource) + '.*') if os.path.isfile(f) and os.path.splitext(f)[1] not in ext_blacklist]
+        found_files = [f
+                       for f in glob.iglob(os.path.join(pkg_path, n_resource) + '.*')
+                       if os.path.isfile(f) and not f.endswith(C.MODULE_IGNORE_EXTS)]
 
         if not found_files:
             return None, None
@@ -448,7 +449,7 @@ class PluginLoader:
                 # HACK: We have no way of executing python byte compiled files as ansible modules so specifically exclude them
                 # FIXME: I believe this is only correct for modules and module_utils.
                 # For all other plugins we want .pyc and .pyo should be valid
-                if any(full_path.endswith(x) for x in C.BLACKLIST_EXTS):
+                if any(full_path.endswith(x) for x in C.MODULE_IGNORE_EXTS):
                     continue
 
                 splitname = os.path.splitext(full_name)

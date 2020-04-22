@@ -1588,7 +1588,7 @@ INVENTORY_EXPORT:
   type: bool
 INVENTORY_IGNORE_EXTS:
   name: Inventory ignore extensions
-  default: "{{(BLACKLIST_EXTS + ( '.orig', '.ini', '.cfg', '.retry'))}}"
+  default: "{{(BLACKLIST_EXTS + ('.orig', '.ini', '.cfg', '.retry'))}}"
   description: List of extensions to ignore when using a directory as an inventory source
   env: [{name: ANSIBLE_INVENTORY_IGNORE}]
   ini:
@@ -1648,6 +1648,16 @@ INJECT_FACTS_AS_VARS:
   - {key: inject_facts_as_vars, section: defaults}
   type: boolean
   version_added: "2.5"
+MODULE_IGNORE_EXTS:
+  name: Module ignore extensions
+  default: "{{(BLACKLIST_EXTS + ('.yaml', '.yml', '.ini'))}}"
+  description:
+    - List of extensions to ignore when looking for modules to load
+    - This is for blacklisting script and binary module fallback extensions
+  env: [{name: ANSIBLE_MODULE_IGNORE_EXTS}]
+  ini:
+  - {key: module_ignore_exts, section: defaults}
+  type: list
 OLD_PLUGIN_CACHE_CLEARING:
   description: Previouslly Ansible would only clear some of the plugin loading caches when loading new roles, this led to some behaviours in which a plugin loaded in prevoius plays would be unexpectedly 'sticky'. This setting allows to return to that behaviour.
   env: [{name: ANSIBLE_OLD_PLUGIN_CACHE_CLEAR}]
