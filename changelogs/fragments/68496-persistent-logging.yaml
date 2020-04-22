@@ -1,3 +1,0 @@
-bugfixes:
-- Log additional messages from persistent connection modules that may be
-  missed if the module fails or returns early.
