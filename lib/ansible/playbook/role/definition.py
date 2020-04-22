@@ -198,7 +198,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
 
-        searches = self._collection_list + role_search_paths
+        searches = (self._collection_list or []) + role_search_paths
         raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(searches)), obj=self._ds)
 
     def _split_role_params(self, ds):
