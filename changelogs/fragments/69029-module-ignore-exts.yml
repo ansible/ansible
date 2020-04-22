@@ -1,0 +1,2 @@
+minor_changes:
+  - plugin loader - Add MODULE_IGNORE_EXTS config option to skip over certain extensions when looking for script and binary modules.
