@@ -90,7 +90,14 @@ or if the inventory plugin accepts a YAML configuration source, in the configura
 
 To cache inventory with a custom plugin in your plugin path, follow the :ref:`developer guide on cache plugins<developing_cache_plugins>`.
 
-You can use any cache plugin shipped with Ansible to cache inventory, but you cannot use a cache plugin inside a collection. If you enable caching for inventory plugins without selecting an inventory-specific cache plugin, Ansible falls back to caching inventory with the fact cache plugin you configured. Consult the individual inventory plugin documentation or the Ansible :ref:`configuration <ansible_configuration_settings>` for more details.
+To cache inventory with a cache plugin in a collection, use the FQCN:
+
+.. code-block:: ini
+
+   [inventory]
+   cache_plugin=collection_namespace.collection_name.cache_plugin
+
+If you enable caching for inventory plugins without selecting an inventory-specific cache plugin, Ansible falls back to caching inventory with the fact cache plugin you configured. Consult the individual inventory plugin documentation or the Ansible :ref:`configuration <ansible_configuration_settings>` for more details.
 
 .. Note: In Ansible 2.7 and earlier, inventory plugins can only use file-based cache plugins, such as jsonfile, pickle, and yaml.
 
