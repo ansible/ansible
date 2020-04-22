@@ -401,3 +401,8 @@
     handler_counter: 0
   roles:
     - testns.testcoll.test_fqcn_handlers
+
+- name: Ensure a collection role can call a standalone role
+  hosts: testhost
+  roles:
+    - testns.testcoll.call_standalone
