@@ -375,3 +375,8 @@
       that:
       - hostvars['dynamic_host_a'] is defined
       - hostvars['dynamic_host_a'].connection_out.stdout == "localconn ran echo 'hello world'"
+
+- name: Ensure a collection role can call a standalone role
+  hosts: testhost
+  roles:
+    - testns.testcoll.call_standalone
