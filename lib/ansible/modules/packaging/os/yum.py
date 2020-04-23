@@ -605,6 +605,9 @@ class YumModule(YumDnf):
             r_cmd = ['--enablerepo', ','.join(self.enablerepo)]
             myrepoq.extend(r_cmd)
 
+            if self.releasever:
+                myrepoq.extend('--releasever=%s' % self.releasever)
+
             cmd = myrepoq + ["--qf", qf, pkgspec]
             rc, out, err = self.module.run_command(cmd)
             if rc == 0:
@@ -642,6 +645,9 @@ class YumModule(YumDnf):
             r_cmd = ['--enablerepo', ','.join(self.enablerepo)]
             myrepoq.extend(r_cmd)
 
+            if self.releasever:
+                myrepoq.extend('--releasever=%s' % self.releasever)
+
             cmd = myrepoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
             rc, out, err = self.module.run_command(cmd)
 
@@ -667,7 +673,10 @@ class YumModule(YumDnf):
                     # situation we need to run `yum -y makecache` which will accept
                     # the key and try again.
                     if 'repomd.xml signature could not be verified' in to_native(e):
-                        self.module.run_command(self.yum_basecmd + ['makecache'])
+                        if self.releasever:
+                            self.module.run_command(self.yum_basecmd + ['makecache'] + ['--releasever=%s' % self.releasever])
+                        else:
+                            self.module.run_command(self.yum_basecmd + ['makecache'])
                         pkgs = self.yum_base.returnPackagesByDep(req_spec) + \
                             self.yum_base.returnInstalledPackagesByDep(req_spec)
                     else:
@@ -691,6 +700,9 @@ class YumModule(YumDnf):
 
             r_cmd = ['--enablerepo', ','.join(self.enablerepo)]
             myrepoq.extend(r_cmd)
+
+            if self.releasever:
+                myrepoq.extend('--releasever=%s' % self.releasever)
 
             cmd = myrepoq + ["--qf", qf, "--whatprovides", req_spec]
             rc, out, err = self.module.run_command(cmd)
@@ -831,6 +843,8 @@ class YumModule(YumDnf):
 
     def repolist(self, repoq, qf="%{repoid}"):
         cmd = repoq + ["--qf", qf, "-a"]
+        if self.releasever:
+            cmd.extend(['--releasever=%s' % self.releasever])
         rc, out, _ = self.module.run_command(cmd)
         if rc == 0:
             return set(p for p in out.split('\n') if p.strip())
@@ -872,6 +886,8 @@ class YumModule(YumDnf):
 
     def exec_install(self, items, action, pkgs, res):
         cmd = self.yum_basecmd + [action] + pkgs
+        if self.releasever:
+            cmd.extend(['--releasever=%s' % self.releasever])
 
         if self.module.check_mode:
             self.module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
@@ -1120,7 +1136,6 @@ class YumModule(YumDnf):
                 cmd = self.yum_basecmd + ["autoremove"] + pkgs
             else:
                 cmd = self.yum_basecmd + ["remove"] + pkgs
-
             rc, out, err = self.module.run_command(cmd)
 
             res['rc'] = rc
@@ -1159,7 +1174,10 @@ class YumModule(YumDnf):
 
     def run_check_update(self):
         # run check-update to see if we have packages pending
-        rc, out, err = self.module.run_command(self.yum_basecmd + ['check-update'])
+        if self.releasever:
+            rc, out, err = self.module.run_command(self.yum_basecmd + ['check-update'] + ['--releasever=%s' % self.releasever])
+        else:
+            rc, out, err = self.module.run_command(self.yum_basecmd + ['check-update'])
         return rc, out, err
 
     @staticmethod
@@ -1197,15 +1215,15 @@ class YumModule(YumDnf):
 
             if '*' in line or len(line) not in [3, 6] or '.' not in line[0]:
                 continue
-            else:
-                pkg, version, repo = line[0], line[1], line[2]
-                name, dist = pkg.rsplit('.', 1)
-                updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
 
-                if len(line) == 6:
-                    obsolete_pkg, obsolete_version, obsolete_repo = line[3], line[4], line[5]
-                    obsolete_name, obsolete_dist = obsolete_pkg.rsplit('.', 1)
-                    obsoletes.update({obsolete_name: {'version': obsolete_version, 'dist': obsolete_dist, 'repo': obsolete_repo}})
+            pkg, version, repo = line[0], line[1], line[2]
+            name, dist = pkg.rsplit('.', 1)
+            updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
+
+            if len(line) == 6:
+                obsolete_pkg, obsolete_version, obsolete_repo = line[3], line[4], line[5]
+                obsolete_name, obsolete_dist = obsolete_pkg.rsplit('.', 1)
+                obsoletes.update({obsolete_name: {'version': obsolete_version, 'dist': obsolete_dist, 'repo': obsolete_repo}})
 
         return updates, obsoletes
 
@@ -1256,7 +1274,7 @@ class YumModule(YumDnf):
 
                 # check if pkgspec is installed (if possible for idempotence)
                 # localpkg
-                elif spec.endswith('.rpm') and '://' not in spec:
+                if spec.endswith('.rpm') and '://' not in spec:
                     if not os.path.exists(spec):
                         res['msg'] += "No RPM file matching '%s' found on system" % spec
                         res['results'].append("No RPM file matching '%s' found on system" % spec)
@@ -1277,7 +1295,7 @@ class YumModule(YumDnf):
                     continue
 
                 # URL
-                elif '://' in spec:
+                if '://' in spec:
                     # download package so that we can check if it's already installed
                     with self.set_env_proxy():
                         package = fetch_file(self.module, spec)
@@ -1294,11 +1312,10 @@ class YumModule(YumDnf):
                     continue
 
                 # dep/pkgname  - find it
+                if self.is_installed(repoq, spec):
+                    pkgs['update'].append(spec)
                 else:
-                    if self.is_installed(repoq, spec):
-                        pkgs['update'].append(spec)
-                    else:
-                        pkgs['install'].append(spec)
+                    pkgs['install'].append(spec)
                 pkglist = self.what_provides(repoq, spec)
                 # FIXME..? may not be desirable to throw an exception here if a single package is missing
                 if not pkglist:
@@ -1378,6 +1395,9 @@ class YumModule(YumDnf):
                 res['changed'] = True
             return res
 
+        if self.releasever:
+            cmd.extend(['--releasever=%s' % self.releasever])
+
         # run commands
         if cmd:     # update all
             rc, out, err = self.module.run_command(cmd)
@@ -1454,6 +1474,9 @@ class YumModule(YumDnf):
 
             if self.download_dir:
                 self.yum_basecmd.extend(['--downloaddir=%s' % self.download_dir])
+
+        if self.releasever:
+            self.yum_basecmd.extend(['--releasever=%s' % self.releasever])
 
         if self.installroot != '/':
             # do not setup installroot by default, because of error
@@ -1582,7 +1605,10 @@ class YumModule(YumDnf):
         if self.install_repoquery and not repoquerybin and not self.module.check_mode:
             yum_path = self.module.get_bin_path('yum')
             if yum_path:
-                self.module.run_command('%s -y install yum-utils' % yum_path)
+                if self.releasever:
+                    self.module.run_command('%s -y install yum-utils --releasever %s' % (yum_path, self.releasever))
+                else:
+                    self.module.run_command('%s -y install yum-utils' % yum_path)
             repoquerybin = self.module.get_bin_path('repoquery', required=False)
 
         if self.list:
