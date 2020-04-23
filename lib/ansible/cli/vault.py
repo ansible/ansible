@@ -424,7 +424,7 @@ class VaultCLI(CLI):
     def execute_create(self):
         ''' create and open a file in an editor that will be encrypted with the provided vault secret when closed'''
 
-        if len(context.CLIARGS['args']) > 1:
+        if len(context.CLIARGS['args']) != 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
 
         self.editor.create_file(context.CLIARGS['args'][0], self.encrypt_secret,

@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-vault create - Fix exception on no arguments given
