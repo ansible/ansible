@@ -83,7 +83,7 @@
       async: "{{ ansible_timeout }}"
       poll: 0
       vars:
-        ansible_timeout: 10
+        ansible_timeout: 100
 
   rescue:
     - name: "[IPTABLES_STATE 0104] explain expected failure"
