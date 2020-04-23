@@ -3251,7 +3251,7 @@ files:
     maintainers: $team_openstack
     labels:
     - cloud
-    migrated_to: community.general
+    migrated_to: openstack.cloud
   contrib/inventory/ovirt4.py: *id003
   contrib/inventory/infoblox.py:
     keywords:
