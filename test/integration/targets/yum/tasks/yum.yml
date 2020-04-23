@@ -576,18 +576,39 @@
       - "not yum_result is changed"
       - "'Packages providing httpd not installed due to update_only specified' in yum_result.results"
 
-- name: try to install not compatible arch rpm, should fail
+- name: try to install uncompatible arch rpm on non-ppc64le, should fail
   yum:
     name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/banner-1.3.4-3.el7.ppc64le.rpm
     state: present
   register: yum_result
   ignore_errors: True
+  when:
+    - ansible_architecture not in ['ppc64le']
 
-- name: verify that yum failed
+- name: verify that yum failed on non-ppc64le
   assert:
     that:
         - "not yum_result is changed"
         - "yum_result is failed"
+  when:
+    - ansible_architecture not in ['ppc64le']
+
+- name: try to install uncompatible arch rpm on ppc64le, should fail
+  yum:
+    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/tinyproxy-1.10.0-3.el7.x86_64.rpm
+    state: present
+  register: yum_result
+  ignore_errors: True
+  when:
+    - ansible_architecture in ['ppc64le']
+
+- name: verify that yum failed on ppc64le
+  assert:
+    that:
+        - "not yum_result is changed"
+        - "yum_result is failed"
+  when:
+    - ansible_architecture in ['ppc64le']
 
 # setup for testing installing an RPM from url
 
