@@ -13,8 +13,12 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def _ensure_default_collection(collection_list):
+def _ensure_default_collection(collection_list=None):
     default_collection = AnsibleCollectionLoader().default_collection
+
+    # Will be None when used as the default
+    if collection_list is None:
+        collection_list = []
 
     # FIXME: exclude role tasks?
     if default_collection and default_collection not in collection_list:
@@ -30,7 +34,7 @@ def _ensure_default_collection(collection_list):
 class CollectionSearch:
 
     # this needs to be populated before we can resolve tasks/roles/etc
-    _collections = FieldAttribute(isa='list', listof=string_types, priority=100,
+    _collections = FieldAttribute(isa='list', listof=string_types, priority=100, default=_ensure_default_collection,
                                   always_post_validate=True, static=True)
 
     def _load_collections(self, attr, ds):

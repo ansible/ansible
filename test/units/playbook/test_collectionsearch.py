@@ -45,6 +45,7 @@ def test_collection_static_warning(capsys):
     assert '[WARNING]: "collections" is not templatable, but we found: %s' % collection_name in std_err
     assert '' == std_out
 
+
 def test_collection_invalid_data_play():
     """Test that collection as a dict at the play level fails with parser error"""
     collection_name = {'name': 'foo'}
@@ -57,6 +58,7 @@ def test_collection_invalid_data_play():
             collections=collection_name,
         ))
 
+
 def test_collection_invalid_data_task():
     """Test that collection as a dict at the task level fails with parser error"""
     collection_name = {'name': 'foo'}
@@ -65,6 +67,7 @@ def test_collection_invalid_data_task():
             name="test task",
             collections=collection_name,
         ))
+
 
 def test_collection_invalid_data_block():
     """Test that collection as a dict at the block level fails with parser error"""
