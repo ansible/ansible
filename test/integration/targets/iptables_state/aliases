@@ -1,6 +1,7 @@
 needs/ssh
 destructive
 shippable/posix/group1
+skip/docker             # iptables not installed
 skip/freebsd            # no iptables/netfilter (Linux specific)
 skip/osx                # no iptables/netfilter (Linux specific)
 skip/aix                # no iptables/netfilter (Linux specific)
