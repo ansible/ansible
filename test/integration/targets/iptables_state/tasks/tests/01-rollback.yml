@@ -1,0 +1,118 @@
+---
+- name: "[IPTABLES_STATE 0101] save state into a test file"
+  iptables_state:
+    path: /tmp/iptables.tests
+    state: saved
+
+- name: "[IPTABLES_STATE 01--] replace all policies to DROP in the test file"
+  replace:
+    path: /tmp/iptables.tests
+    regexp: '^(:.*)ACCEPT(.*)'
+    replace: '\1DROP\2'
+
+- name: "[IPTABLES_STATE 01--] flush all rules in the test file"
+  lineinfile:
+    path: /tmp/iptables.tests
+    regexp: '^-A'
+    state: absent
+
+
+
+- name: "[IPTABLES_STATE 0102] restore state (check_mode=yes, must report a change)"
+  iptables_state:
+    path: /tmp/iptables.tests
+    state: restored
+  register: iptables_state
+  check_mode: yes
+
+- name: "[IPTABLES_STATE 0102] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is changed
+
+
+
+- name: "[IPTABLES_STATE 0103] fail to restore iptables state from the test file"
+  block:
+    - name: "[IPTABLES_STATE 0103] restore state (expected error -> rollback)"
+      iptables_state:
+        path: /tmp/iptables.tests
+        state: restored
+      register: iptables_state
+      async: "{{ ansible_timeout }}"
+      poll: 0
+
+  rescue:
+    - name: "[IPTABLES_STATE 0103] explain expected failure"
+      assert:
+        that:
+          - iptables_state is not changed
+          - iptables_state.rollback_complete
+          - not iptables_state.applied
+        success_msg: >-
+          The previous error has been triggered to test the rollback. If you
+          are there, it means that 1) connection has been lost right after the
+          bad rules have been restored; 2) a rollback happened, so the bad
+          rules are not applied, finally; 3) module failed because it didn't
+          reach the wanted state, but at least host is not lost !!!
+        fail_msg: >-
+          The previous error has been triggered but its results are not as
+          expected.
+
+  always:
+    - name: "[IPTABLES_STATE 0103] check that the expected failure happened"
+      assert:
+        that:
+          - iptables_state is failed
+
+
+
+- name: "[IPTABLES_STATE 0104] fail to restore iptables state from the test file (again)"
+  block:
+    - name: "[IPTABLES_STATE 0104] try again, with a higher timeout (same expected error)"
+      iptables_state:
+        path: /tmp/iptables.tests
+        state: restored
+      register: iptables_state
+      async: "{{ ansible_timeout }}"
+      poll: 0
+      vars:
+        ansible_timeout: 10
+
+  rescue:
+    - name: "[IPTABLES_STATE 0104] explain expected failure"
+      assert:
+        that:
+          - iptables_state is not changed
+          - iptables_state.rollback_complete
+          - not iptables_state.applied
+        success_msg: >-
+          The previous error has been triggered to test the rollback. If you
+          are there, it means that 1) connection has been lost right after the
+          bad rules have been restored; 2) a rollback happened, so the bad
+          rules are not applied, finally; 3) module failed because it didn't
+          reach the wanted state, but at least host is not lost !!!
+        fail_msg: >-
+          The previous error has been triggered but its results are not as
+          expected.
+
+  always:
+    - name: "[IPTABLES_STATE 0104] check that the expected failure happened"
+      assert:
+        that:
+          - iptables_state is failed
+
+
+
+- name: "[IPTABLES_STATE 0105] restore state from backup (must NOT report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: restored
+  register: iptables_state
+  async: "{{ ansible_timeout }}"
+  poll: 0
+
+- name: "[IPTABLES_STATE 0105] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is not changed
