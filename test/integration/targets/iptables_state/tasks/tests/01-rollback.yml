@@ -3,18 +3,21 @@
   iptables_state:
     path: /tmp/iptables.tests
     state: saved
+  become: yes
 
 - name: "[IPTABLES_STATE 01--] replace all policies to DROP in the test file"
   replace:
     path: /tmp/iptables.tests
     regexp: '^(:.*)ACCEPT(.*)'
     replace: '\1DROP\2'
+  become: yes
 
 - name: "[IPTABLES_STATE 01--] flush all rules in the test file"
   lineinfile:
     path: /tmp/iptables.tests
     regexp: '^-A'
     state: absent
+  become: yes
 
 
 
@@ -22,6 +25,7 @@
   iptables_state:
     path: /tmp/iptables.tests
     state: restored
+  become: yes
   register: iptables_state
   check_mode: yes
 
@@ -38,6 +42,7 @@
       iptables_state:
         path: /tmp/iptables.tests
         state: restored
+      become: yes
       register: iptables_state
       async: "{{ ansible_timeout }}"
       poll: 0
@@ -73,6 +78,7 @@
       iptables_state:
         path: /tmp/iptables.tests
         state: restored
+      become: yes
       register: iptables_state
       async: "{{ ansible_timeout }}"
       poll: 0
@@ -108,6 +114,7 @@
   iptables_state:
     path: /tmp/iptables.saved
     state: restored
+  become: yes
   register: iptables_state
   async: "{{ ansible_timeout }}"
   poll: 0

@@ -1,3 +1,4 @@
+needs/ssh
 destructive
 shippable/posix/group1
 skip/freebsd            # no iptables/netfilter (Linux specific)
