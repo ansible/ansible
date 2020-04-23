@@ -13,6 +13,7 @@ from ansible.utils.display import Display
 
 display = Display()
 
+
 class ActionModule(ActionBase):
 
     # Keep internal params away from user interactions
@@ -20,18 +21,17 @@ class ActionModule(ActionBase):
     DEFAULT_SUDOABLE = True
 
     MSG_ERROR__ASYNC_AND_POLL_NOT_ZERO = (
-            "This module doesn't support async>0 and poll>0 when its 'state' param "
-            "is set to 'restored'. To enable its rollback feature (that needs the "
-            "module to run asynchronously on the remote), please set task attribute "
-            "'poll' to 0, and 'async' to a value not greater than 'ansible_timeout' "
-            "(recommended).")
+        "This module doesn't support async>0 and poll>0 when its 'state' param "
+        "is set to 'restored'. To enable its rollback feature (that needs the "
+        "module to run asynchronously on the remote), please set task attribute "
+        "'poll' to 0, and 'async' to a value not greater than 'ansible_timeout' "
+        "(recommended).")
     MSG_WARNING__NO_ASYNC_IS_NO_ROLLBACK = (
-            "Attempts to restore iptables state without rollback in case of mistake "
-            "may lead the ansible controller to loose access to the hosts and never "
-            "regain it before fixing firewall rules through a serial console, or any "
-            "other way except SSH. Please set task attribute 'poll' to 0, and 'async' "
-            "to a value not greater than 'ansible_timeout' (recommended).")
-
+        "Attempts to restore iptables state without rollback in case of mistake "
+        "may lead the ansible controller to loose access to the hosts and never "
+        "regain it before fixing firewall rules through a serial console, or any "
+        "other way except SSH. Please set task attribute 'poll' to 0, and 'async' "
+        "to a value not greater than 'ansible_timeout' (recommended).")
 
     def _async_result(self, module_args, task_vars, timeout):
         '''
@@ -40,10 +40,10 @@ class ActionModule(ActionBase):
         '''
         for i in range(timeout):
             async_result = self._execute_module(
-                    module_name='async_status',
-                    module_args=module_args,
-                    task_vars=task_vars,
-                    wrap_async=False)
+                module_name='async_status',
+                module_args=module_args,
+                task_vars=task_vars,
+                wrap_async=False)
             if async_result['finished'] == 1:
                 break
             time.sleep(1)
@@ -55,7 +55,6 @@ class ActionModule(ActionBase):
             async_result['changed'] = False
 
         return async_result
-
 
     def run(self, tmp=None, task_vars=None):
 
@@ -70,7 +69,6 @@ class ActionModule(ActionBase):
         task_poll = self._task.poll
         module_name = self._task.action
         module_args = self._task.args
-
 
         if not result.get('skipped'):
 
@@ -105,13 +103,12 @@ class ActionModule(ActionBase):
                         # inject the async directory based on the shell option into the
                         # module args
                         async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
-                    ### END snippet from async_status action plugin
+                    # END snippet from async_status action plugin
 
                     # Bind the loop max duration to the same value on both
                     # remote and local sides, and set a backup file path.
                     module_args['_timeout'] = task_async
                     module_args['_back'] = '%s/iptables.state' % async_dir
-
 
             # do work!
             result = merge_hash(result, self._execute_module(module_args=module_args, task_vars=task_vars, wrap_async=wrap_async))
@@ -157,10 +154,10 @@ class ActionModule(ActionBase):
 
                 async_status_args['mode'] = 'cleanup'
                 garbage = self._execute_module(
-                        module_name='async_status',
-                        module_args=async_status_args,
-                        task_vars=task_vars,
-                        wrap_async=False)
+                    module_name='async_status',
+                    module_args=async_status_args,
+                    task_vars=task_vars,
+                    wrap_async=False)
 
         # remove a temporary path we created
         self._remove_tmp_path(self._connection._shell.tmpdir)
