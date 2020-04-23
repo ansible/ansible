@@ -3,8 +3,13 @@
 # Copyright: (c) 2020, quidame <quidame@poivron.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
-- name: include tasks to test iptables_state module
-  include_tasks: "{{ item }}"
-  loop:
-    - tests/00-basic.yml
-    - tests/01-rollback.yml
+- name: include tasks to test basic behaviour
+  include_tasks: tests/00-basic.yml
+  when:
+    - ansible_system in ['Linux']
+
+- name: include tasks to test rollback feature
+  include_tasks: tests/01-rollback.yml
+  when:
+    - ansible_system in ['Linux']
+    - ansible_connection in ['ssh', 'paramiko']
