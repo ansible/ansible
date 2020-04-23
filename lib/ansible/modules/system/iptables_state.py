@@ -203,7 +203,7 @@ TABLES = dict(
 )
 
 
-def write_state(b_path, b_lines, validator, changed=False):
+def write_state(b_path, b_lines, validator, changed):
     '''
     Write given contents to the given path, and return changed status.
     '''
@@ -342,7 +342,7 @@ def main():
         b_path = to_bytes(path, errors='surrogate_or_strict')
 
     if state == 'saved':
-        changed = write_state(b_path, initial_state, bin_iptables_restore, changed=changed)
+        changed = write_state(b_path, initial_state, bin_iptables_restore, changed)
 
     if state != 'restored':
         cmd = ' '.join(INITCOMMAND)
@@ -363,7 +363,7 @@ def main():
 
     if _back is not None:
         b_back = to_bytes(_back, errors='surrogate_or_strict')
-        garbage = write_state(b_back, initial_state, bin_iptables_restore)
+        garbage = write_state(b_back, initial_state, bin_iptables_restore, changed)
         BACKCOMMAND = list(MAINCOMMAND)
         BACKCOMMAND.append(_back)
 
