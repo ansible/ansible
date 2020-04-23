@@ -1,2 +1,2 @@
 bugfixes:
-  - "ovirt_storage_domain: allow to remove vlan_tag"
+  - "ovirt_network: allow to remove vlan_tag"
