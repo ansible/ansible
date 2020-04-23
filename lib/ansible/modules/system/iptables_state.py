@@ -225,7 +225,9 @@ def write_state(b_path, b_lines, validator, changed):
             try:
                 os.makedirs(b_destdir)
             except Exception as e:
-                module.fail_json(msg='Error creating %s. Error code: %s. Error description: %s' % (destdir, e[0], e[1]))
+                module.fail_json(
+                    msg='Error creating %s. Error code: %s. Error description: %s' % (destdir, e[0], e[1]),
+                    initial_state=b_lines)
         changed = True
 
     elif not filecmp.cmp(tmpfile, b_path):
@@ -352,11 +354,11 @@ def main():
     # All remaining code is for state=restored
     #
     if not os.path.exists(b_path):
-        module.fail_json(msg="Source %s not found" % (path))
+        module.fail_json(msg="Source %s not found" % (path), initial_state=initial_state)
     if not os.path.isfile(b_path):
-        module.fail_json(msg="Source %s not a file" % (path))
+        module.fail_json(msg="Source %s not a file" % (path), initial_state=initial_state)
     if not os.access(b_path, os.R_OK):
-        module.fail_json(msg="Source %s not readable" % (path))
+        module.fail_json(msg="Source %s not readable" % (path), initial_state=initial_state)
 
     MAINCOMMAND = list(COMMANDARGS)
     MAINCOMMAND.insert(0, bin_iptables_restore)
@@ -382,7 +384,8 @@ def main():
             msg="Source %s is not suitable for input to %s" % (path, os.path.basename(bin_iptables_restore)),
             rc=rc,
             stdout=stdout,
-            stderr=stderr)
+            stderr=stderr,
+            initial_state=initial_state)
 
     if module.check_mode:
         tmpfd, tmpfile = tempfile.mkstemp()
