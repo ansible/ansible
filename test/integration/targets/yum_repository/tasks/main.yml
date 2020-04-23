@@ -205,6 +205,11 @@
         name: "{{ yum_repository_test_repo.name }}"
         state: absent
 
+    - name: CLEANUP | Install GPG key
+      rpm_key:
+          state: present
+          key: "{{ yum_repository_epel.gpgkey }}"
+
     - name: CLEANUP | Enable EPEL
       yum_repository:
         name: epel
