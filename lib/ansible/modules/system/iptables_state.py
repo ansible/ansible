@@ -211,7 +211,7 @@ def write_state(b_path, b_lines, validator, changed):
     tmpfd, tmpfile = tempfile.mkstemp()
     with os.fdopen(tmpfd, 'wb') as f:
         for b_line in b_lines:
-            f.write('%s\n' % b_line)
+            f.write(b'%s\n' % b_line)
 
     # Test it, i.e. ensure it is in good shape (not a oneliner, no litteral '\n'
     # at EOL, and so on).
