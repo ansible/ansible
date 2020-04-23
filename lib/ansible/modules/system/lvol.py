@@ -477,6 +477,10 @@ def main():
                 size_requested = size_percent * this_vg['size'] / 100
             else:  # size_whole == 'FREE':
                 size_requested = size_percent * this_vg['free'] / 100
+
+            # Round down to the next lowest whole physical extent
+            size_requested -= (size_requested % this_vg['ext_size'])
+
             if '+' in size:
                 size_requested += this_lv['size']
             if this_lv['size'] < size_requested:
