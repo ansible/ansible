@@ -13,16 +13,8 @@ from ansible.utils.display import Display
 display = Display()
 
 
-def _ensure_default_collection(collection_list=None):
+def _ensure_default_collection(collection_list):
     default_collection = AnsibleCollectionLoader().default_collection
-
-    if collection_list is None:
-        collection_list = []
-
-    # We allow collections to be either a string or a list, so make sure
-    # we have a list going forward.
-    if isinstance(collection_list, string_types):
-        collection_list = [collection_list]
 
     # FIXME: exclude role tasks?
     if default_collection and default_collection not in collection_list:
@@ -38,10 +30,14 @@ def _ensure_default_collection(collection_list=None):
 class CollectionSearch:
 
     # this needs to be populated before we can resolve tasks/roles/etc
-    _collections = FieldAttribute(isa='list', listof=string_types, priority=100, default=_ensure_default_collection,
+    _collections = FieldAttribute(isa='list', listof=string_types, priority=100,
                                   always_post_validate=True, static=True)
 
     def _load_collections(self, attr, ds):
+        # We are always a mixin with Base, so we can validate this untemplated
+        # field early on to guarantee we are dealing with a list.
+        ds = self.get_validated_value('collections', self._collections, ds, None)
+
         # this will only be called if someone specified a value; call the shared value
         _ensure_default_collection(collection_list=ds)
 
