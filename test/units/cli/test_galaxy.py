@@ -728,7 +728,7 @@ def test_collection_build(collection_artifact):
             elif file_entry['name'] == 'README.md':
                 assert file_entry['ftype'] == 'file'
                 assert file_entry['chksum_type'] == 'sha256'
-                assert file_entry['chksum_sha256'] == '45923ca2ece0e8ce31d29e5df9d8b649fe55e2f5b5b61c9724d7cc187bd6ad4a'
+                assert file_entry['chksum_sha256'] == '6d8b5f9b5d53d346a8cd7638a0ec26e75e8d9773d952162779a49d25da6ef4f5'
             else:
                 assert file_entry['ftype'] == 'dir'
                 assert file_entry['chksum_type'] is None
