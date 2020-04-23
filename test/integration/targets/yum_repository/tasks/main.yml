@@ -62,6 +62,7 @@
         name: "{{ yum_repository_test_repo.name }}"
         description: "{{ yum_repository_test_repo.description }}"
         baseurl: "{{ yum_repository_test_repo.baseurl }}"
+        gpgcheck: no
         state: present
       register: test_repo_add
 
