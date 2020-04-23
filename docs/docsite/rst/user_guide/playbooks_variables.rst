@@ -1074,7 +1074,7 @@ If you want to override the remote user globally (even over inventory) you can u
 the ``lola`` value is still ignored, but ``ansible_user=maria`` takes precedence over all other places where ``ansible_user`` (or ``remote_user``) might be set.
 
 A connection-specific version of a variable takes precedence over more generic
-versions.  For example, ``ansible_ssh_user`` specified as a group_var would have
+versions.  For example, ``ansible_user`` specified as a group_var would have
 a higher precedence than ``ansible_user`` specified as a host_var.
 
 You can also override as a normal variable in a play::
