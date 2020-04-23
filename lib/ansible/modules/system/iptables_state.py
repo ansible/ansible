@@ -266,9 +266,9 @@ def string_to_filtered_b_lines(string, counters):
     by default. And return the result as a list of bytes.
     '''
     b_string = to_bytes(string, errors='surrogate_or_strict')
-    b_string = re.sub('((^|\n)# (Generated|Completed)[^\n]*) on [^\n]*', '\\1', b_string)
+    b_string = re.sub(b'((^|\n)# (Generated|Completed)[^\n]*) on [^\n]*', b'\\1', b_string)
     if not counters:
-        b_string = re.sub('[[][0-9]+:[0-9]+[]]', '[0:0]', b_string)
+        b_string = re.sub(b'[[][0-9]+:[0-9]+[]]', b'[0:0]', b_string)
     b_lines = b_string.splitlines()
     while '' in b_lines:
         b_lines.remove('')
