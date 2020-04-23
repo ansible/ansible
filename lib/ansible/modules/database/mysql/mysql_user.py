@@ -386,7 +386,7 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                         # Replacing empty root password with new authentication mechanisms fails with error 1396
                         if e.args[0] == 1396:
                             cursor.execute(
-                                "UPDATE user SET plugin = %s, authentication_string = %s, Password = '' WHERE User = %s AND Host = %s",
+                                "UPDATE mysql.user SET plugin = %s, authentication_string = %s, Password = '' WHERE User = %s AND Host = %s",
                                 ('mysql_native_password', encrypted_password, user, host)
                             )
                             cursor.execute("FLUSH PRIVILEGES")
