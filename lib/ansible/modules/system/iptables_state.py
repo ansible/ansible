@@ -384,13 +384,30 @@ def main():
             stdout=stdout,
             stderr=stderr)
 
-    (rc, stdout, stderr) = module.run_command(MAINCOMMAND, check_rc=True)
-    (rc, stdout, stderr) = module.run_command(INITCOMMAND, check_rc=True)
-    restored_state = string_to_filtered_b_lines(stdout, counters)
+    if module.check_mode:
+        tmpfd, tmpfile = tempfile.mkstemp()
+        with os.fdopen(tmpfd, 'wb') as f:
+            for b_line in initial_state:
+                f.write('%s\n' % b_line)
+
+        if filecmp.cmp(tmpfile, b_path):
+            restored_state = initial_state
+        else:
+            def file_read(filename):
+                with open(filename, "r") as f:
+                    lines = f.readlines()
+                return (lines)
+            restored_state = [x.replace('\n', '') for x in file_read(path)]
+
+    else:
+        (rc, stdout, stderr) = module.run_command(MAINCOMMAND, check_rc=True)
+        (rc, stdout, stderr) = module.run_command(INITCOMMAND, check_rc=True)
+        restored_state = string_to_filtered_b_lines(stdout, counters)
+
     if restored_state != initial_state:
         changed = True
 
-    if _back is None:
+    if _back is None or module.check_mode:
         module.exit_json(
             applied=True,
             changed=changed,
