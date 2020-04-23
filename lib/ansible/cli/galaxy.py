@@ -12,7 +12,6 @@ import textwrap
 import time
 import yaml
 
-from jinja2 import BaseLoader, Environment, FileSystemLoader
 from yaml.error import YAMLError
 
 import ansible.constants as C
@@ -40,8 +39,10 @@ from ansible.module_utils.ansible_release import __version__ as ansible_version
 from ansible.module_utils.common.collections import is_iterable
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils import six
+from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.playbook.role.requirement import RoleRequirement
+from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
 
@@ -667,15 +668,11 @@ class GalaxyCLI(CLI):
 
             return textwrap.fill(v, width=117, initial_indent="# ", subsequent_indent="# ", break_on_hyphens=False)
 
-        def to_yaml(v):
-            return yaml.safe_dump(v, default_flow_style=False).rstrip()
+        loader = DataLoader()
+        templar = Templar(loader, variables={'required_config': required_config, 'optional_config': optional_config})
+        templar.environment.filters['comment_ify'] = comment_ify
 
-        env = Environment(loader=BaseLoader)
-        env.filters['comment_ify'] = comment_ify
-        env.filters['to_yaml'] = to_yaml
-
-        template = env.from_string(meta_template)
-        meta_value = template.render({'required_config': required_config, 'optional_config': optional_config})
+        meta_value = templar.template(meta_template)
 
         return meta_value
 
@@ -790,6 +787,7 @@ class GalaxyCLI(CLI):
                 documentation_url='http://docs.example.com',
                 homepage_url='http://example.com',
                 min_ansible_version=ansible_version[:3],  # x.y
+                dependencies=[],
             ))
 
             obj_path = os.path.join(init_path, obj_name)
@@ -839,7 +837,8 @@ class GalaxyCLI(CLI):
                 to_native(obj_skeleton), galaxy_type)
             )
 
-        template_env = Environment(loader=FileSystemLoader(obj_skeleton))
+        loader = DataLoader()
+        templar = Templar(loader, variables=inject_data)
 
         # create role directory
         if not os.path.exists(b_obj_path):
@@ -877,9 +876,12 @@ class GalaxyCLI(CLI):
                     with open(b_dest_file, 'wb') as galaxy_obj:
                         galaxy_obj.write(to_bytes(meta_value, errors='surrogate_or_strict'))
                 elif ext == ".j2" and not in_templates_dir:
-                    src_template = os.path.join(rel_root, f)
+                    src_template = os.path.join(root, f)
                     dest_file = os.path.join(obj_path, rel_root, filename)
-                    template_env.get_template(src_template).stream(inject_data).dump(dest_file, encoding='utf-8')
+                    template_data = to_text(loader._get_file_contents(src_template)[0], errors='surrogate_or_strict')
+                    b_rendered = to_bytes(templar.template(template_data), errors='surrogate_or_strict')
+                    with open(dest_file, 'wb') as df:
+                        df.write(b_rendered)
                 else:
                     f_rel_path = os.path.relpath(os.path.join(root, f), obj_skeleton)
                     shutil.copyfile(os.path.join(root, f), os.path.join(obj_path, f_rel_path))
