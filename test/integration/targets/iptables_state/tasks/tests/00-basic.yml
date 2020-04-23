@@ -18,6 +18,13 @@
     state: absent
   become: yes
 
+- name: "[IPTABLES_STATE 00--] ensure our next rule is not there"
+  iptables:
+    chain: OUTPUT
+    jump: ACCEPT
+    state: absent
+  become: yes
+
 
 #
 # Play with the current state first. We will create a file to store it in, but
