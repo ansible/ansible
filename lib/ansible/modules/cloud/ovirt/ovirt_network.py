@@ -229,7 +229,6 @@ class NetworksModule(BaseModule):
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('description'), entity.description) and
-            equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None)) and
             equal(self._module.params.get('vm_network'), True if entity.usages else False) and
             equal(self._module.params.get('mtu'), entity.mtu)
         )
