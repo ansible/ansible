@@ -4,8 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 ---
 - name: include tasks to test iptables_state module
-  block:
-    - include_tasks: "{{ item }}"
-      with_fileglob:
-        - "tests/*.yml"
-  become: yes
+  - include_tasks: "{{ item }}"
+    loop:
+      - tests/00-basic.yml
+      - tests/01-rollback.yml
