@@ -391,7 +391,7 @@ def main():
         tmpfd, tmpfile = tempfile.mkstemp()
         with os.fdopen(tmpfd, 'wb') as f:
             for b_line in initial_state:
-                f.write('%s\n' % b_line)
+                f.write(b'%s\n' % b_line)
 
         if filecmp.cmp(tmpfile, b_path):
             restored_state = initial_state
