@@ -10,6 +10,8 @@ import codecs
 import datetime
 import json
 
+from functools import partial
+
 from ansible.module_utils.common._collections_compat import Set
 from ansible.module_utils.six import (
     PY3,
@@ -283,40 +285,51 @@ def jsonify(data, **kwargs):
     raise UnicodeError('Invalid unicode encoding encountered')
 
 
-def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
-    ''' Recursively convert dict keys and values to byte str
+def _container_to_string(to_func, obj, **kwargs):
+    r"""Ensure objects in a nested data structure are forced to
+    be a text/byte/native string depedending on given fuction:
 
-        Specialized for json return because this only handles, lists, tuples,
-        and dict container types (the containers that the json module returns)
-    '''
+        :func:`ansible.module_utils.common.text.to_text` or
+        :func:`ansible.module_utils.common.text.to_bytes` or
+        :func:`ansible.module_utils.common.text.to_native`.
 
-    if isinstance(d, text_type):
-        return to_bytes(d, encoding=encoding, errors=errors)
-    elif isinstance(d, dict):
-        return dict(container_to_bytes(o, encoding, errors) for o in iteritems(d))
-    elif isinstance(d, list):
-        return [container_to_bytes(o, encoding, errors) for o in d]
-    elif isinstance(d, tuple):
-        return tuple(container_to_bytes(o, encoding, errors) for o in d)
-    else:
-        return d
+    This is a private function and should not be used outside of the three
+    partial functions: container_to_text, container_to_bytes, container_to_native; which
+    are defined below in this file.
 
+    :arg to_func: The wrapping function to use to transform the object.
+    :arg obj: An object to make sure is wrapped by `to_func` function.
+    :kwarg \*\*kwargs: Optional arguments that function passed in ``to_func`` takes.
 
-def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
-    """Recursively convert dict keys and values to text str
+    :returns: This returns given `obj` object and its nested objects wrapped in
+        `to_func` function.
 
-    Specialized for json return because this only handles, lists, tuples,
-    and dict container types (the containers that the json module returns)
+    .. version_added:: 2.10
     """
+    if obj is None:
+        return obj
 
-    if isinstance(d, binary_type):
-        # Warning, can traceback
-        return to_text(d, encoding=encoding, errors=errors)
-    elif isinstance(d, dict):
-        return dict(container_to_text(o, encoding, errors) for o in iteritems(d))
-    elif isinstance(d, list):
-        return [container_to_text(o, encoding, errors) for o in d]
-    elif isinstance(d, tuple):
-        return tuple(container_to_text(o, encoding, errors) for o in d)
-    else:
-        return d
+    if isinstance(obj, (text_type, binary_type)):
+        obj = to_func(obj, **kwargs)
+    elif isinstance(obj, dict):
+        obj = dict((_container_to_string(to_func, o, **kwargs)) for o in iteritems(obj))
+    elif isinstance(obj, set):
+        obj = set(_container_to_string(to_func, o, **kwargs) for o in obj)
+    elif isinstance(obj, (list, tuple)):
+        obj_type = type(obj)
+        obj = obj_type(_container_to_string(to_func, o, **kwargs) for o in obj)
+
+    return obj
+
+
+container_to_text = partial(_container_to_string, to_text)
+container_to_text.__doc__ = ("Ensure strings in a nested data structure are forced "
+                             "to be text strings.")
+
+container_to_bytes = partial(_container_to_string, to_bytes)
+container_to_bytes.__doc__ = ("Ensure strings in a nested data structure are forced "
+                              "to be byte strings.")
+
+container_to_native = partial(_container_to_string, to_native)
+container_to_native.__doc__ = ("Ensure strings in a nested data structure are forced "
+                               "to be native strings.")
