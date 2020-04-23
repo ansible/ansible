@@ -1,0 +1,172 @@
+---
+# Start with no param at all, i.e. only get current state without doing anything
+- name: "[IPTABLES_STATE 0001] test module without param (must NOT report a change)"
+  iptables_state:
+  register: iptables_state
+
+- name: "[IPTABLES_STATE 0001] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is not changed
+      - iptables_state.initial_state | length > 6
+
+
+- name: "[IPTABLES_STATE 00--] ensure our next backup is not there"
+  file:
+    path: /tmp/iptables.saved
+    state: absent
+
+
+#
+# Play with the current state first. We will create a file to store it in, but
+# no more. These tests are for:
+# - idempotence
+# - check_mode
+#
+- name: "[IPTABLES_STATE 0002] save state (check_mode=yes, must report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: saved
+  register: iptables_state
+  check_mode: yes
+
+- name: "[IPTABLES_STATE 0002] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is changed
+
+
+
+- name: "[IPTABLES_STATE 0003] save state (must report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: saved
+  register: iptables_state
+
+- name: "[IPTABLES_STATE 0003] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is changed
+
+
+
+- name: "[IPTABLES_STATE 0004] save state (idempotence, must NOT report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: saved
+  register: iptables_state
+
+- name: "[IPTABLES_STATE 0004] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is not changed
+
+
+
+- name: "[IPTABLES_STATE 0005] save state (check_mode=yes, must NOT report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: saved
+  register: iptables_state
+  check_mode: yes
+
+- name: "[IPTABLES_STATE 0005] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is not changed
+
+
+
+# We begin with 'state=restored' by restoring the current state on itself.
+
+- name: "[IPTABLES_STATE 0006] restore state (check_mode=yes, must NOT report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: restored
+  register: iptables_state
+  check_mode: yes
+
+- name: "[IPTABLES_STATE 0006] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is not changed
+
+
+
+- name: "[IPTABLES_STATE 0007] restore state (must NOT report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: restored
+  register: iptables_state
+  async: "{{ ansible_timeout }}"
+  poll: 0
+
+- name: "[IPTABLES_STATE 0007] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is not changed
+
+
+
+- name: "[IPTABLES_STATE 00--] change iptables state (with iptables)"
+  iptables:
+    chain: OUTPUT
+    jump: ACCEPT
+
+
+
+- name: "[IPTABLES_STATE 0008] restore state (check_mode=yes, must report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: restored
+  register: iptables_state
+  check_mode: yes
+
+- name: "[IPTABLES_STATE 0008] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is changed
+
+
+
+- name: "[IPTABLES_STATE 0009] restore state (must report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: restored
+  register: iptables_state
+  async: "{{ ansible_timeout }}"
+  poll: 0
+
+- name: "[IPTABLES_STATE 0009] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is changed
+
+
+
+- name: "[IPTABLES_STATE 0010] restore state (must NOT report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: restored
+  register: iptables_state
+  async: "{{ ansible_timeout }}"
+  poll: 0
+
+- name: "[IPTABLES_STATE 0010] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is not changed
+
+
+
+- name: "[IPTABLES_STATE 0011] restore state (check_mode=yes, must NOT report a change)"
+  iptables_state:
+    path: /tmp/iptables.saved
+    state: restored
+  register: iptables_state
+  check_mode: yes
+
+- name: "[IPTABLES_STATE 0011] assert that results are as expected"
+  assert:
+    that:
+      - iptables_state is not changed
