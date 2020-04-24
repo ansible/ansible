@@ -184,15 +184,7 @@ class DataLoader:
         '''
 
         given = unquote(given)
-        given = to_text(given, errors='surrogate_or_strict')
-
-        if given.startswith(to_text(os.path.sep)) or given.startswith(u'~'):
-            path = given
-        else:
-            basedir = to_text(self._basedir, errors='surrogate_or_strict')
-            path = os.path.join(basedir, given)
-
-        return unfrackpath(path, follow=False)
+        return unfrackpath(given, follow=False, basedir=self._basedir)
 
     def _is_role(self, path):
         ''' imperfect role detection, roles are still valid w/o tasks|meta/main.yml|yaml|etc '''
