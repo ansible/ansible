@@ -8,7 +8,7 @@ import os
 
 from ansible.module_utils._text import to_bytes
 
-FLAG_FILES = frozenset([b'MANIFEST.json', b'galaxy.yml'])
+B_FLAG_FILES = frozenset([b'MANIFEST.json', b'galaxy.yml'])
 
 
 def is_collection_path(path):
