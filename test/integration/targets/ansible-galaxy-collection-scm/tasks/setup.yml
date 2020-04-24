@@ -4,6 +4,12 @@
   when: ansible_distribution != "MacOSX"
   register: git_install
 
+- name: set git global user.email if not already set
+  shell: git config --global user.email || git config --global user.email "noreply@example.com"
+
+- name: set git global user.name if not already set
+  shell: git config --global user.name  || git config --global user.name  "Ansible Test Runner"
+
 - name: Create a directory for installing collections and creating git repositories
   file:
     path: '{{ item }}'
