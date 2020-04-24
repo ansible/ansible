@@ -8,9 +8,9 @@ Migrating Roles to Roles in Collections on Galaxy
 You can migrate an existing standalone role into a collection-based role that you can host on Galaxy. This offers you more flexibility and resources to have your role within a collection. With Ansible collections on Galaxy, you can use a single collection as a delivery mechanism for many roles, releasing them as a single cohesive unit of re-usable automation. Inside a collection, custom plugins that used to be shipped in the role's :file:`library/`` directory can now be shared across all roles within a
 collection without duplicating them in each role's :file:`library/`` directory.
 
-You also need to migrate roles to collections if you them as part of certified Ansible content.
+You also need to migrate roles to collections if you want them as part of certified Ansible content.
 
-See :ref:`developing_collections` for details on collections).
+See :ref:`developing_collections` for details on collections.
 
 
 .. contents::
@@ -100,6 +100,8 @@ This creates the collection directory structure.
 
   $ mkdir mynamespace/mycollection/roles/my_role/
   $ cp -r /path/to/standalone/role/mynamespace/my_role/\* mynamespace/mycollection/roles/my_role/
+
+3. Update the collection README.md file to add links to any role README.md files. 
 
 
 .. _complex_roles_in_collections:
