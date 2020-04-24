@@ -7,11 +7,9 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
-
 
 DOCUMENTATION = '''
 ---
@@ -185,15 +183,15 @@ def _needs_update(subnet, module, cloud, filters=None):
     no_gateway_ip = module.params['no_gateway_ip']
     dns = module.params['dns_nameservers']
     host_routes = module.params['host_routes']
-    curr_pool = subnet['allocation_pools'][0]
+    curr_pool = dict(start=pool_start, end=pool_end)
 
     if subnet['enable_dhcp'] != enable_dhcp:
         return True
     if subnet_name and subnet['name'] != subnet_name:
         return True
-    if pool_start and curr_pool['start'] != pool_start:
+    if not subnet['allocation_pools'] and pool_start and pool_end:
         return True
-    if pool_end and curr_pool['end'] != pool_end:
+    if subnet['allocation_pools'] and curr_pool not in subnet['allocation_pools']:
         return True
     if gateway_ip and subnet['gateway_ip'] != gateway_ip:
         return True
@@ -329,6 +327,8 @@ def main():
                 changed = True
             else:
                 if _needs_update(subnet, module, cloud, filters):
+                    if subnet['allocation_pools'] and pool is not None:
+                        pool = pool + subnet['allocation_pools']
                     cloud.update_subnet(subnet['id'],
                                         subnet_name=subnet_name,
                                         enable_dhcp=enable_dhcp,
