@@ -48,6 +48,15 @@ DOCUMENTATION = '''
           - section: yaml_valid_extensions
             key: defaults
         type: list
+      skip_hidden_files:
+        description: This toggles skipping or reading hidden files (prefixed with `.`) are skipped when processing directories.
+        type: bool
+        default: True
+        env:
+          - name: ANSIBLE_HOST_GROUP_VARS_SKIP_HIDDEN
+        ini:
+          - section: vars_host_group_vars
+            key: skip_hidden_files
     extends_documentation_fragment:
       - vars_plugin_staging
 '''
@@ -100,7 +109,7 @@ class VarsModule(BaseVarsPlugin):
                         if os.path.exists(b_opath):
                             if os.path.isdir(b_opath):
                                 self._display.debug("\tprocessing dir %s" % opath)
-                                found_files = loader.find_vars_files(opath, entity.name)
+                                found_files = loader.find_vars_files(opath, entity.name, skip_hidden=self.get_option('skip_hidden_files'))
                                 FOUND[key] = found_files
                             else:
                                 self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))

@@ -403,7 +403,7 @@ class DataLoader:
             except Exception as e:
                 display.warning("Unable to cleanup temp files: %s" % to_text(e))
 
-    def find_vars_files(self, path, name, extensions=None, allow_dir=True):
+    def find_vars_files(self, path, name, extensions=None, allow_dir=True, skip_hidden=True):
         """
         Find vars files in a given path with specified name. This will find
         files in a dir named <name>/ or a file called <name> ending in known
@@ -440,7 +440,7 @@ class DataLoader:
     def _get_dir_vars_files(self, path, extensions):
         found = []
         for spath in sorted(self.list_directory(path)):
-            if not spath.startswith(u'.') and not spath.endswith(u'~'):  # skip hidden and backups
+            if (skip_hidden and not spath.startswith(u'.')) and not spath.endswith(u'~'):  # skip hidden and backups
 
                 ext = os.path.splitext(spath)[-1]
                 full_spath = os.path.join(path, spath)
