@@ -7,6 +7,7 @@ docs/docsite/_themes/sphinx_rtd_theme/__init__.py metaclass-boilerplate
 docs/docsite/rst/conf.py future-import-boilerplate
 docs/docsite/rst/conf.py metaclass-boilerplate
 docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
+examples/play.yaml shebang
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
