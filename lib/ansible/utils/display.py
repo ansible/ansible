@@ -405,6 +405,8 @@ class Display(with_metaclass(Singleton, object)):
         '''
         Prints a header-looking line with cowsay or stars with length depending on terminal width (3 minimum)
         '''
+        msg = to_text(msg)
+
         if self.b_cowsay and cows:
             try:
                 self.banner_cowsay(msg)
