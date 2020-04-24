@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-test - Updated Python constraints for installing ``coverage`` to resolve issues on multiple Python versions when using the ``--coverage`` option.
