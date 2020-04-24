@@ -49,6 +49,7 @@ DOCUMENTATION = '''
             key: defaults
         type: list
       skip_hidden_files:
+        version_added: '2.10'
         description: This toggles skipping or reading hidden files (prefixed with `.`) are skipped when processing directories.
         type: bool
         default: True
