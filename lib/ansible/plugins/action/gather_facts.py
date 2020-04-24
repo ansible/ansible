@@ -52,6 +52,7 @@ class ActionModule(ActionBase):
             'deprecations': task_result.get('deprecations', []),
         }
 
+        # on conflict the last plugin processed wins, but try to do deep merge and append to lists.
         return merge_hash(result, filtered_res, list_merge='append_rp')
 
     def run(self, tmp=None, task_vars=None):
