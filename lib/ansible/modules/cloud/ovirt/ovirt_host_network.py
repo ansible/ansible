@@ -467,7 +467,7 @@ def main():
                     ) for network in networks
                 ] if networks else None,
             )
-            if engine_supported(connection, '4.3'):
+            if engine_supported(connection, '4.4'):
                 setup_params['commit_on_success'] = module.params['save']
             elif module.params['save']:
                 setup_params['post_action'] = host_networks_module._action_save_configuration
