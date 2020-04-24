@@ -13,13 +13,13 @@ echo '{
 			"one",
 			"three",
 			"five"
-		]
+		],
 		"common_list_fact2": [
 			"one",
 			"two",
 			"three",
 			"five",
-			"five",
+			"five"
 		]
     }
 }'

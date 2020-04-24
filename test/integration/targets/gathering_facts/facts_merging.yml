@@ -1,0 +1,32 @@
+- name: gather one and two facts
+  hosts: localhost
+  gather_facts: true
+  vars_files:
+    - vars/one_two.json
+  vars:
+   ansible_facts_modules:
+     - facts_one
+     - facts_two
+  tasks:
+    - name: check expected merge
+      assert:
+        that:
+            - onetwo[item] == ansible_facts[item]
+      loop: '{{onetwo.keys()|list}}'
+
+- name: gather two and one facts
+  hosts: localhost
+  gather_facts: true
+  vars_files:
+    - vars/two_one.json
+  vars:
+   ansible_facts_modules:
+     - facts_two
+     - facts_one
+  tasks:
+    - name: check expected merge
+      assert:
+        that:
+            - twoone[item] == ansible_facts[item]
+      loop: '{{twoone.keys()|list}}'
+

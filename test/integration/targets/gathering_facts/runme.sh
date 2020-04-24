@@ -10,3 +10,5 @@ ANSIBLE_GATHERING=smart ansible-playbook test_run_once.yml -i inventory -v "$@"
 
 # ensure clean_facts is working properly
 ansible-playbook test_prevent_injection.yml -i inventory -v "$@"
+
+ANSIBLE_GATHERING=explicit ansible-playbook facts_merging.yml "$@"
