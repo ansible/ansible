@@ -127,6 +127,7 @@ def update_package_db(module, xbps_path):
 
 def upgrade(module, xbps_path):
     """Returns true is full upgrade succeeds"""
+    cmdxbpsupgrade = "%s -uy xbps" % (xbps_path['install'])
     cmdupgrade = "%s -uy" % (xbps_path['install'])
     cmdneedupgrade = "%s -un" % (xbps_path['install'])
 
@@ -135,6 +136,9 @@ def upgrade(module, xbps_path):
         if(len(stdout.splitlines()) == 0):
             module.exit_json(changed=False, msg='Nothing to upgrade')
         else:
+            rc, stdout, stderr = module.run_command(cmdxbpsupgrade, check_rc=False)
+            if rc != 0:
+                module.fail_json(msg="Could not upgrade")
             rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
             if rc == 0:
                 module.exit_json(changed=True, msg='System upgraded')
