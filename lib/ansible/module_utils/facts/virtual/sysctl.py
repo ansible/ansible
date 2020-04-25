@@ -27,7 +27,7 @@ class VirtualSysctlDetectionMixin(object):
         virtual_product_facts = {}
         self.detect_sysctl()
 
-        if self.sysctl_path is None:
+        if not self.sysctl_path:
             return virtual_product_facts
 
         rc, out, err = self.module.run_command("%s -n %s" % (self.sysctl_path, key))
@@ -60,7 +60,7 @@ class VirtualSysctlDetectionMixin(object):
         virtual_vendor_facts = {}
         self.detect_sysctl()
 
-        if self.sysctl_path is None:
+        if not self.sysctl_path:
             return virtual_vendor_facts
 
         rc, out, err = self.module.run_command("%s -n %s" % (self.sysctl_path, key))
