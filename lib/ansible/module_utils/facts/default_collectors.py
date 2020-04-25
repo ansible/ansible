@@ -87,6 +87,7 @@ from ansible.module_utils.facts.virtual.linux import LinuxVirtualCollector
 from ansible.module_utils.facts.virtual.netbsd import NetBSDVirtualCollector
 from ansible.module_utils.facts.virtual.openbsd import OpenBSDVirtualCollector
 from ansible.module_utils.facts.virtual.sunos import SunOSVirtualCollector
+from ansible.module_utils.facts.virtual.ibmi import IBMiVirtualCollector
 
 # these should always be first due to most other facts depending on them
 _base = [
@@ -126,7 +127,8 @@ _virtual = [
     OpenBSDVirtualCollector,
     NetBSDVirtualCollector,
     SunOSVirtualCollector,
-    HPUXVirtualCollector
+    HPUXVirtualCollector,
+    IBMiVirtualCollector
 ]
 
 _hardware = [
