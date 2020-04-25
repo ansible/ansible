@@ -255,7 +255,7 @@ class Connection(ConnectionBase):
             getattr(self._play_context, 'ssh_common_args', '') or '',
             getattr(self._play_context, 'ssh_args', '') or '',
         ]
-        
+
         args = self._split_ssh_args(' '.join(ssh_args))
         for i, arg in enumerate(args):
             if arg.lower() == 'proxycommand':
