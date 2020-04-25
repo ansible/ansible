@@ -270,7 +270,7 @@ vgw_telemetry:
     vgw_telemetry: [{
                      'outside_ip_address': 'string',
                      'status': 'up',
-                     'last_status_change': datetime(2015, 1, 1),
+                     'last_status_change': 'datetime(2015, 1, 1)',
                      'status_message': 'string',
                      'accepted_route_count': 123
                     }]

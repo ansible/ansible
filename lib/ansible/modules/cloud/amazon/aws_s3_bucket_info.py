@@ -47,7 +47,7 @@ buckets:
   description: "List of buckets"
   returned: always
   sample:
-    - creation_date: 2017-07-06 15:05:12 +00:00
+    - creation_date: '2017-07-06 15:05:12 +00:00'
       name: my_bucket
   type: list
 '''
