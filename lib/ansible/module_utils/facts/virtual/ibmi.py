@@ -43,6 +43,31 @@ try:
 except ImportError:
     HAS_IBM_DB = False
 
+
+IBMi_COMMAND_RC_SUCCESS = 0
+IBMi_COMMAND_RC_UNEXPECTED = 999
+IBMi_COMMAND_RC_ERROR = 255
+IBMi_COMMAND_RC_ITOOLKIT_NO_KEY_JOBLOG = 256
+IBMi_COMMAND_RC_ITOOLKIT_NO_KEY_ERROR = 257
+IBMi_COMMAND_RC_UNEXPECTED_ROW_COUNT = 258
+IBMi_COMMAND_RC_INVALID_EXPECTED_ROW_COUNT = 259
+
+
+def interpret_return_code(rc):
+    if rc == IBMi_COMMAND_RC_SUCCESS:
+        return 'Success'
+    elif rc == IBMi_COMMAND_RC_ERROR:
+        return 'Generic failure'
+    elif rc == IBMi_COMMAND_RC_UNEXPECTED:
+        return 'Unexpected error'
+    elif rc == IBMi_COMMAND_RC_ITOOLKIT_NO_KEY_JOBLOG:
+        return "iToolKit result dict does not have key 'joblog'"
+    elif rc == IBMi_COMMAND_RC_ITOOLKIT_NO_KEY_ERROR:
+        return "iToolKit result dict does not have key 'error'"
+    else:
+        return "Unknown error"
+
+
 def itoolkit_run_sql(conn, sql):
     out_list = []
     rc = ''
@@ -78,7 +103,6 @@ def itoolkit_run_sql(conn, sql):
     return rc, interpret_return_code(rc), out_list, error
 
 
-
 class IBMiVirtual(Virtual):
     """
     This is a IBMi-specific subclass of Virtual.
@@ -89,18 +113,19 @@ class IBMiVirtual(Virtual):
         if HAS_ITOOLKIT:
             virtual_facts = {}
             connection = dbi.connect()
-            rc, rc_msg, out, error = itoolkit_run_sql(connection, "SELECT SYSTEM_VALUE_NAME,CURRENT_NUMERIC_VALUE,CURRENT_CHARACTER_VALUE FROM QSYS2.SYSTEM_VALUE_INFO;")
-            system_values={}
+            sql = "SELECT SYSTEM_VALUE_NAME,CURRENT_NUMERIC_VALUE,CURRENT_CHARACTER_VALUE FROM QSYS2.SYSTEM_VALUE_INFO"
+            rc, rc_msg, out, error = itoolkit_run_sql(connection, sql)
+            system_values = {}
             for item in out:
                 system_values[item["SYSTEM_VALUE_NAME"]] = item["CURRENT_CHARACTER_VALUE"] if item["CURRENT_CHARACTER_VALUE"] else item["CURRENT_NUMERIC_VALUE"]
-            virtual_facts["OS400_SYSTEM_VALUES"] =  system_values
-            rc, rc_msg, out, error = itoolkit_run_sql(connection, "SELECT * FROM QSYS2.SYSCATALOGS;")
+            virtual_facts["OS400_SYSTEM_VALUES"] = system_values
+            rc, rc_msg, out, error = itoolkit_run_sql(connection, "SELECT * FROM QSYS2.SYSCATALOGS")
             virtual_facts['OS400_RDBDIRE'] = out
-            rc, rc_msg, out, error = itoolkit_run_sql(connection, "SELECT * FROM QSYS2.SYSTEM_STATUS_INFO;")
+            rc, rc_msg, out, error = itoolkit_run_sql(connection, "SELECT * FROM QSYS2.SYSTEM_STATUS_INFO")
             virtual_facts['OS400_SYSTEM_STATUS_INFO'] = out
-            rc, rc_msg, out, error = itoolkit_run_sql(connection, "SELECT * FROM QSYS2.TCPIP_INFO;")
-            virtual_facts['OS400_TCPIP_INFO'] = out
-            rc, rc_msg, out, error = itoolkit_run_sql(connection, "SELECT * FROM QSYS2.GROUP_PTF_INFO;")
+            rc, rc_msg, out, error = itoolkit_run_sql(connection, "SELECT * FROM QSYS2.NETSTAT_INTERFACE_INFO")
+            virtual_facts['OS400_NETSTAT_INTERFACE_INFO'] = out
+            rc, rc_msg, out, error = itoolkit_run_sql(connection, "SELECT * FROM QSYS2.GROUP_PTF_INFO")
             virtual_facts['OS400_GROUP_PTF_INFO'] = out
 
             connection.close()
