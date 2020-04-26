@@ -101,7 +101,7 @@ elbs:
         backend_server_description: []
         canonical_hosted_zone_name: test-lb-XXXXXXXXXXXX.us-east-1.elb.amazonaws.com
         canonical_hosted_zone_name_id: XXXXXXXXXXXXXX
-        created_time: 2017-08-23T18:25:03.280000+00:00
+        created_time: '2017-08-23T18:25:03.280000+00:00'
         dns_name: test-lb-XXXXXXXXXXXX.us-east-1.elb.amazonaws.com
         health_check:
           healthy_threshold: 10
