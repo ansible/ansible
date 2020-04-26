@@ -22,7 +22,6 @@ from .util import (
     ApplicationError,
     make_dirs,
     display,
-    is_shippable,
     to_text,
     ANSIBLE_TEST_DATA_ROOT,
 )
@@ -35,6 +34,11 @@ from .util_common import (
 
 from .config import (
     EnvironmentConfig,
+)
+
+from .ci import (
+    AuthContext,
+    get_ci_provider,
 )
 
 from .data import (
@@ -68,8 +72,9 @@ class AnsibleCoreCI:
         self.instance_id = None
         self.endpoint = None
         self.max_threshold = 1
+        self.ci_provider = get_ci_provider()
+        self.auth_context = AuthContext()
         self.name = name if name else '%s-%s' % (self.platform, self.version)
-        self.ci_key = os.path.expanduser('~/.ansible-core-ci.key')
         self.resource = 'jobs'
 
         # Assign each supported platform to one provider.
@@ -119,7 +124,7 @@ class AnsibleCoreCI:
                 # permit command-line override of region selection
                 region = args.remote_aws_region
                 # use a dedicated CI key when overriding the region selection
-                self.ci_key += '.%s' % args.remote_aws_region
+                self.auth_context.region = args.remote_aws_region
             else:
                 region = 'us-east-1'
 
@@ -195,6 +200,11 @@ class AnsibleCoreCI:
 
         raise ApplicationError('Unable to get available endpoints.')
 
+    @property
+    def available(self):
+        """Return True if Ansible Core CI is supported."""
+        return self.ci_provider.supports_core_ci_auth(self.auth_context)
+
     def start(self):
         """Start instance."""
         if self.started:
@@ -202,31 +212,7 @@ class AnsibleCoreCI:
                          verbosity=1)
             return None
 
-        if is_shippable():
-            return self.start_shippable()
-
-        return self.start_remote()
-
-    def start_remote(self):
-        """Start instance for remote development/testing."""
-        with open(self.ci_key, 'r') as key_fd:
-            auth_key = key_fd.read().strip()
-
-        return self._start(dict(
-            remote=dict(
-                key=auth_key,
-                nonce=None,
-            ),
-        ))
-
-    def start_shippable(self):
-        """Start instance on Shippable."""
-        return self._start(dict(
-            shippable=dict(
-                run_id=os.environ['SHIPPABLE_BUILD_ID'],
-                job_number=int(os.environ['SHIPPABLE_JOB_NUMBER']),
-            ),
-        ))
+        return self._start(self.ci_provider.prepare_core_ci_auth(self.auth_context))
 
     def stop(self):
         """Stop instance."""

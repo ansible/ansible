@@ -37,6 +37,10 @@ from ..config import (
     SanityConfig,
 )
 
+from ..ci import (
+    get_ci_provider,
+)
+
 from ..data import (
     data_context,
 )
@@ -76,12 +80,14 @@ class ValidateModulesTest(SanitySingleVersion):
         if data_context().content.collection:
             cmd.extend(['--collection', data_context().content.collection.directory])
         else:
-            if args.base_branch:
+            base_branch = args.base_branch or get_ci_provider().get_base_branch()
+
+            if base_branch:
                 cmd.extend([
-                    '--base-branch', args.base_branch,
+                    '--base-branch', base_branch,
                 ])
             else:
-                display.warning('Cannot perform module comparison against the base branch. Base branch not detected when running locally.')
+                display.warning('Cannot perform module comparison against the base branch because the base branch was not detected.')
 
         try:
             stdout, stderr = run_command(args, cmd, env=env, capture=True)
