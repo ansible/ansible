@@ -191,7 +191,7 @@ One or more of the following situations may be responsible:
 
         timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
 
-        # hack to avoid requiring junit-xml, which isn't pre-installed on Shippable outside our test containers
+        # hack to avoid requiring junit-xml, which may not be pre-installed outside our test containers
         xml = '''
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites disabled="0" errors="1" failures="0" tests="1" time="0.0">

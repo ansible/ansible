@@ -6,7 +6,6 @@ from . import types as t
 
 from .util import (
     display,
-    is_shippable,
 )
 
 from .io import (
@@ -28,11 +27,7 @@ class Metadata:
         self.cloud_config = None  # type: t.Optional[t.Dict[str, str]]
         self.instance_config = None  # type: t.Optional[t.List[t.Dict[str, str]]]
         self.change_description = None  # type: t.Optional[ChangeDescription]
-
-        if is_shippable():
-            self.ci_provider = 'shippable'
-        else:
-            self.ci_provider = ''
+        self.ci_provider = None  # type: t.Optional[str]
 
     def populate_changes(self, diff):
         """

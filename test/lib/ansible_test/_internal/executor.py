@@ -54,8 +54,6 @@ from .util import (
     SubprocessError,
     display,
     remove_tree,
-    is_shippable,
-    is_binary_file,
     find_executable,
     raw_command,
     get_available_port,
@@ -108,13 +106,8 @@ from .target import (
     TIntegrationTarget,
 )
 
-from .changes import (
-    ShippableChanges,
-    LocalChanges,
-)
-
-from .git import (
-    Git,
+from .ci import (
+    get_ci_provider,
 )
 
 from .classification import (
@@ -1364,7 +1357,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     integration = dict(
         JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
         ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
-        ANSIBLE_TEST_CI=args.metadata.ci_provider,
+        ANSIBLE_TEST_CI=args.metadata.ci_provider or get_ci_provider().code,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
@@ -1564,15 +1557,12 @@ def detect_changes(args):
     :type args: TestConfig
     :rtype: list[str] | None
     """
-    if args.changed and is_shippable():
-        display.info('Shippable detected, collecting parameters from environment.')
-        paths = detect_changes_shippable(args)
+    if args.changed:
+        paths = get_ci_provider().detect_changes(args)
     elif args.changed_from or args.changed_path:
         paths = args.changed_path or []
         if args.changed_from:
             paths += read_text_file(args.changed_from).splitlines()
-    elif args.changed:
-        paths = detect_changes_local(args)
     else:
         return None  # change detection not enabled
 
@@ -1585,84 +1575,6 @@ def detect_changes(args):
         display.info(path, verbosity=1)
 
     return paths
-
-
-def detect_changes_shippable(args):
-    """Initialize change detection on Shippable.
-    :type args: TestConfig
-    :rtype: list[str] | None
-    """
-    git = Git()
-    result = ShippableChanges(args, git)
-
-    if result.is_pr:
-        job_type = 'pull request'
-    elif result.is_tag:
-        job_type = 'tag'
-    else:
-        job_type = 'merge commit'
-
-    display.info('Processing %s for branch %s commit %s' % (job_type, result.branch, result.commit))
-
-    if not args.metadata.changes:
-        args.metadata.populate_changes(result.diff)
-
-    return result.paths
-
-
-def detect_changes_local(args):
-    """
-    :type args: TestConfig
-    :rtype: list[str]
-    """
-    git = Git()
-    result = LocalChanges(args, git)
-
-    display.info('Detected branch %s forked from %s at commit %s' % (
-        result.current_branch, result.fork_branch, result.fork_point))
-
-    if result.untracked and not args.untracked:
-        display.warning('Ignored %s untracked file(s). Use --untracked to include them.' %
-                        len(result.untracked))
-
-    if result.committed and not args.committed:
-        display.warning('Ignored %s committed change(s). Omit --ignore-committed to include them.' %
-                        len(result.committed))
-
-    if result.staged and not args.staged:
-        display.warning('Ignored %s staged change(s). Omit --ignore-staged to include them.' %
-                        len(result.staged))
-
-    if result.unstaged and not args.unstaged:
-        display.warning('Ignored %s unstaged change(s). Omit --ignore-unstaged to include them.' %
-                        len(result.unstaged))
-
-    names = set()
-
-    if args.tracked:
-        names |= set(result.tracked)
-    if args.untracked:
-        names |= set(result.untracked)
-    if args.committed:
-        names |= set(result.committed)
-    if args.staged:
-        names |= set(result.staged)
-    if args.unstaged:
-        names |= set(result.unstaged)
-
-    if not args.metadata.changes:
-        args.metadata.populate_changes(result.diff)
-
-        for path in result.untracked:
-            if is_binary_file(path):
-                args.metadata.changes[path] = ((0, 0),)
-                continue
-
-            line_count = len(read_text_file(path).splitlines())
-
-            args.metadata.changes[path] = ((1, line_count),)
-
-    return sorted(names)
 
 
 def get_integration_filter(args, targets):
