@@ -7,8 +7,6 @@ import atexit
 import datetime
 import time
 import os
-import platform
-import random
 import re
 import tempfile
 
@@ -25,7 +23,6 @@ from ..io import (
 from ..util import (
     ApplicationError,
     display,
-    is_shippable,
     import_plugins,
     load_plugins,
     ABC,
@@ -43,6 +40,10 @@ from ..target import (
 
 from ..config import (
     IntegrationConfig,
+)
+
+from ..ci import (
+    get_ci_provider,
 )
 
 from ..data import (
@@ -289,6 +290,7 @@ class CloudProvider(CloudBase):
         """
         super(CloudProvider, self).__init__(args)
 
+        self.ci_provider = get_ci_provider()
         self.remove_config = False
         self.config_static_name = 'cloud-config-%s%s' % (self.platform, config_extension)
         self.config_static_path = os.path.join(data_context().content.integration_path, self.config_static_name)
@@ -310,7 +312,7 @@ class CloudProvider(CloudBase):
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        self.resource_prefix = self._generate_resource_prefix()
+        self.resource_prefix = self.ci_provider.generate_resource_prefix()
 
         atexit.register(self.cleanup)
 
@@ -384,21 +386,6 @@ class CloudProvider(CloudBase):
             template = template.replace('@%s' % key, value)
 
         return template
-
-    @staticmethod
-    def _generate_resource_prefix():
-        """
-        :rtype: str
-        """
-        if is_shippable():
-            return 'shippable-%s-%s' % (
-                os.environ['SHIPPABLE_BUILD_NUMBER'],
-                os.environ['SHIPPABLE_JOB_NUMBER'],
-            )
-
-        node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0]).lower()
-
-        return 'ansible-test-%s-%d' % (node, random.randint(10000000, 99999999))
 
 
 class CloudEnvironment(CloudBase):

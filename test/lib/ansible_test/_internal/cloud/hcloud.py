@@ -6,7 +6,6 @@ import os
 
 from ..util import (
     display,
-    is_shippable,
     ConfigParser,
 )
 
@@ -42,10 +41,7 @@ class HcloudCloudProvider(CloudProvider):
 
         aci = self._create_ansible_core_ci()
 
-        if os.path.isfile(aci.ci_key):
-            return
-
-        if is_shippable():
+        if aci.available:
             return
 
         super(HcloudCloudProvider, self).filter(targets, exclude)

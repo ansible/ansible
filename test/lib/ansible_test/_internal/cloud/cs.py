@@ -18,7 +18,6 @@ from ..util import (
     ApplicationError,
     display,
     SubprocessError,
-    is_shippable,
     ConfigParser,
 )
 
@@ -107,7 +106,7 @@ class CsCloudProvider(CloudProvider):
     def cleanup(self):
         """Clean up the cloud resource and any temporary configuration files after tests complete."""
         if self.container_name:
-            if is_shippable():
+            if self.ci_provider.code:
                 docker_rm(self.args, self.container_name)
             elif not self.args.explain:
                 display.notice('Remember to run `docker rm -f %s` when finished testing.' % self.container_name)
