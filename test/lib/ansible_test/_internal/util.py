@@ -173,13 +173,6 @@ def parse_parameterized_completion(value):
     return name, data
 
 
-def is_shippable():
-    """
-    :rtype: bool
-    """
-    return os.environ.get('SHIPPABLE') == 'true'
-
-
 def remove_file(path):
     """
     :type path: str
