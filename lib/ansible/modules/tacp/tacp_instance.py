@@ -324,10 +324,8 @@ def run_module():
     def create_instance(instance_params):
         api_instance = tacp.ApplicationsApi(tacp.ApiClient(configuration))
 
-
         # Need to create boot disk ahead of time and provide it in the
         # ApiCreateApplicationPayload parameters
-
 
         body = tacp.ApiCreateApplicationPayload(
             name=instance_params['instance_name'],
