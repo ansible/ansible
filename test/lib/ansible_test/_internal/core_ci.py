@@ -92,9 +92,6 @@ class AnsibleCoreCI:
             parallels=(
                 'osx',
             ),
-            vmware=(
-                'vmware'
-            ),
         )
 
         if provider:
@@ -147,10 +144,6 @@ class AnsibleCoreCI:
 
             self.ssh_key = SshKey(args)
             self.port = None
-        elif self.provider == 'vmware':
-            self.ssh_key = SshKey(args)
-            self.endpoints = ['https://access.ws.testing.ansible.com']
-            self.max_threshold = 1
 
         else:
             raise ApplicationError('Unsupported platform: %s' % platform)
@@ -321,7 +314,7 @@ class AnsibleCoreCI:
                     password=con.get('password'),
                     response_json=response_json,
                 )
-            else:  # 'vcenter' resp does not have a 'connection' key
+            else:
                 self.connection = InstanceConnection(
                     running=status == 'running',
                     response_json=response_json,
