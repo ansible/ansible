@@ -115,13 +115,13 @@ def get_text_width(text):
     for c in text:
         counter += 1
         if c in (u'\x08', u'\x7f', u'\x94', u'\x1b'):
-            counter -= 1
             # A few characters result in a subtraction of length:
             # BS, DEL, CCH, ESC
             # ESC is slightly different in that it's part of an escape sequence, and
             # while ESC is non printable, it's part of an escape sequence, which results
             # in a single non printable length
             width -= 1
+            counter -= 1
             continue
 
         try:
