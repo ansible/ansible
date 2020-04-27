@@ -111,9 +111,6 @@ class AnsibleCoreCI:
             parallels=(
                 'osx',
             ),
-            vmware=(
-                'vmware',
-            ),
         )
 
         # Currently ansible-core-ci has no concept of arch selection. This effectively means each provider only supports one arch.
@@ -193,10 +190,6 @@ class AnsibleCoreCI:
 
             self.ssh_key = SshKey(args)
             self.port = None
-        elif self.provider == 'vmware':
-            self.ssh_key = SshKey(args)
-            self.endpoints = ['https://access.ws.testing.ansible.com']
-            self.max_threshold = 1
         else:
             if self.arch:
                 raise ApplicationError('Provider not detected for platform "%s" on arch "%s".' % (self.platform, self.arch))
@@ -368,7 +361,7 @@ class AnsibleCoreCI:
                     password=con.get('password'),
                     response_json=response_json,
                 )
-            else:  # 'vcenter' resp does not have a 'connection' key
+            else:
                 self.connection = InstanceConnection(
                     running=status == 'running',
                     response_json=response_json,
