@@ -1932,7 +1932,7 @@ class AnsibleModule(object):
     def _set_cwd(self):
         try:
             cwd = os.getcwd()
-            if not os.access(cwd, os.F_OK | os.R_OK):
+            if not os.access(cwd, os.F_OK | os.R_OK | os.X_OK):
                 raise Exception()
             return cwd
         except Exception:
@@ -1940,7 +1940,7 @@ class AnsibleModule(object):
             # Try and move to a neutral location to prevent errors
             for cwd in [self.tmpdir, os.path.expandvars('$HOME'), tempfile.gettempdir()]:
                 try:
-                    if os.access(cwd, os.F_OK | os.R_OK):
+                    if os.access(cwd, os.F_OK | os.R_OK | os.X_OK):
                         os.chdir(cwd)
                         return cwd
                 except Exception:
