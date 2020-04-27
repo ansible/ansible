@@ -429,7 +429,7 @@ class DataLoader:
             if self.path_exists(full_path):
                 if self.is_directory(full_path):
                     if allow_dir:
-                        found.extend(self._get_dir_vars_files(to_text(full_path), extensions))
+                        found.extend(self._get_dir_vars_files(to_text(full_path), extensions, skip_hidden=skip_hidden))
                     else:
                         continue
                 else:
@@ -437,7 +437,7 @@ class DataLoader:
                 break
         return found
 
-    def _get_dir_vars_files(self, path, extensions):
+    def _get_dir_vars_files(self, path, extensions, skip_hidden=True):
         found = []
         for spath in sorted(self.list_directory(path)):
             if (skip_hidden and not spath.startswith(u'.')) and not spath.endswith(u'~'):  # skip hidden and backups
@@ -446,7 +446,7 @@ class DataLoader:
                 full_spath = os.path.join(path, spath)
 
                 if self.is_directory(full_spath) and not ext:  # recursive search if dir
-                    found.extend(self._get_dir_vars_files(full_spath, extensions))
+                    found.extend(self._get_dir_vars_files(full_spath, extensions, skip_hidden=skip_hidden))
                 elif self.is_file(full_spath) and (not ext or to_text(ext) in extensions):
                     # only consider files with valid extensions or no extension
                     found.append(full_spath)
