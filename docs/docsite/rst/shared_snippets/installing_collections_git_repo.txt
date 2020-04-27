@@ -1,7 +1,7 @@
 Installing a collection from a git repository
 ---------------------------------------------
 
-You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma separated version (e.g. a commit or tag).
+You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma separated version (for example, a commit or tag).
 
 .. code-block:: bash
 

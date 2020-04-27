@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-galaxy - Allow installing collections from git repositories.
