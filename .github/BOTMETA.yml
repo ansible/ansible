@@ -8,7 +8,7 @@ files:
   changelogs/fragments/:
     support: community
   $modules:
-    ignored: ryansb
+    ignored: ryansb tomaszkiewicz
   $modules/cloud/amazon/:
     ignored: erydo seiffert simplesteph nadirollo tedder joshsouza defionscode
     maintainers: $team_aws
