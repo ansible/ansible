@@ -148,8 +148,6 @@ class ConnectionProcess(object):
                     resp = self.srv.handle_request(data)
                     signal.alarm(0)
 
-                    display_messages(self.connection)
-
                     if log_messages:
                         display.display("jsonrpc response: %s" % resp, log_only=True)
 
@@ -199,7 +197,9 @@ class ConnectionProcess(object):
                     self.sock.close()
                 if self.connection:
                     self.connection.close()
-                    display_messages(self.connection)
+                    if self.connection.get_option("persistent_log_messages"):
+                        for _level, message in self.connection.pop_messages():
+                            display.display(message, log_only=True)
             except Exception:
                 pass
             finally:
@@ -335,24 +335,6 @@ def main():
         sys.stdout.write(json.dumps(result, cls=AnsibleJSONEncoder))
 
     sys.exit(rc)
-
-
-def display_messages(connection):
-    # This should be handled elsewhere, but if this is the last task, nothing will
-    # come back to collect the messages. So now each task will dump its own messages
-    # to stdout before logging the response message. This may make some other
-    # pop_messages calls redundant.
-    for level, message in connection.pop_messages():
-        if connection.get_option('persistent_log_messages') and level == "log":
-            display.display(message, log_only=True)
-        else:
-            # These should be keyed by valid method names, but
-            # fail gracefully just in case.
-            display_method = getattr(display, level, None)
-            if display_method:
-                display_method(message)
-            else:
-                display.display((level, message))
 
 
 if __name__ == '__main__':
