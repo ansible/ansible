@@ -1252,11 +1252,8 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
         # If the requirement was the only place version was set, requirement == version at this point
         if requirement not in ("*", "",) and requirement != version:
             display.warning(
-                "The collection {0} appears to be a git repository and the version {1} is being disregarded. To use "
-                "a specific version (any Git tree-ish), append the version with a comma to the URI. The version being "
-                "used now is {2}. To resolve this, omit the version key (which should follow semantic versioning unlike "
-                "git tree-ish objects) or set the version to '*' for dependencies, which are limited in syntax to "
-                "collection identifier keys and version values".format(collection, requirement, version)
+                "The collection {0} appears to be a git repository and two versions were provided: '{1}', and '{2}'. "
+                "The version {2} is being disregarded.".format(collection, version, requirement)
             )
         requirement = "*"
 
