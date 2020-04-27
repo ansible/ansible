@@ -58,6 +58,7 @@ _LIBC.wcswidth.argtypes = (ctypes.c_wchar_p, ctypes.c_int)
 _MAX_INT = 2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
 
 _LOCALE_INITIALIZED = False
+_LOCALE_INITIALIZATION_ERR = None
 
 
 def initialize_locale():
@@ -65,10 +66,14 @@ def initialize_locale():
     and set ``_LOCALE_INITIALIZED`` to indicate whether
     ``get_text_width`` may run into trouble
     """
-    global _LOCALE_INITIALIZED
+    global _LOCALE_INITIALIZED, _LOCALE_INITIALIZATION_ERR
     if _LOCALE_INITIALIZED is False:
-        locale.setlocale(locale.LC_ALL, '')
-        _LOCALE_INITIALIZED = True
+        try:
+            locale.setlocale(locale.LC_ALL, '')
+        except locale.Error as e:
+            _LOCALE_INITIALIZATION_ERR = e
+        else:
+            _LOCALE_INITIALIZED = True
 
 
 def get_text_width(text):
@@ -85,7 +90,13 @@ def get_text_width(text):
     if not isinstance(text, text_type):
         raise TypeError('get_text_width requires text, not %s' % type(text))
 
-    if not _LOCALE_INITIALIZED:
+    if _LOCALE_INITIALIZATION_ERR:
+        Display().warning(
+            'An error occurred while calling ansible.utils.display.initialize_locale '
+            '(%s). This may result in incorrectly calculated text widths that can '
+            'cause Display to print incorrect line lengths' % _LOCALE_INITIALIZATION_ERR
+        )
+    elif not _LOCALE_INITIALIZED:
         Display().warning(
             'ansible.utils.display.initialize_locale has not been called, '
             'this may result in incorrectly calculated text widths that can '
