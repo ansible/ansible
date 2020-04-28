@@ -52,7 +52,7 @@ class LookupModule(LookupBase):
             display.vvvv(u"Unvault lookup found %s" % lookupfile)
             if lookupfile:
                 actual_file = self._loader.get_real_file(lookupfile, decrypt=True)
-                with opeen(actual_file, 'rb' as f:
+                with open(actual_file, 'rb' as f:
                     b_contents = f.read()
                 ret.append(b_contents)
             else:
