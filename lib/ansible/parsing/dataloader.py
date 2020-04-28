@@ -412,6 +412,7 @@ class DataLoader:
 
         b_path = to_bytes(os.path.join(path, name))
         found = []
+        found_path = None
 
         if extensions is None:
             # Look for file with no extension first to find dir before file
@@ -429,12 +430,21 @@ class DataLoader:
             if self.path_exists(full_path):
                 if self.is_directory(full_path):
                     if allow_dir:
-                        found.extend(self._get_dir_vars_files(to_text(full_path), extensions))
-                    else:
-                        continue
+                        contents = self._get_dir_vars_files(to_text(full_path), extensions)
+                        if contents:
+                            if found_path:
+                                display.warning("Found more than one vars file for %s, ignoring %s, using previously found %s" %
+                                                (name, to_text(full_path), to_text(found_path)))
+                            else:
+                                found_path = full_path
+                                found.extend(contents)
                 else:
-                    found.append(full_path)
-                break
+                    if found_path:
+                        display.warning("Found more than one vars source for %s, ignoring %s, using previously found %s):" %
+                                        (name, to_text(full_path), to_text(found_path)))
+                    else:
+                        found.append(full_path)
+                        found_path = full_path
         return found
 
     def _get_dir_vars_files(self, path, extensions):
