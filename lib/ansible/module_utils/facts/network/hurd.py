@@ -29,26 +29,6 @@ class HurdPfinetNetwork(Network):
     platform = 'GNU'
     _socket_dir = '/servers/socket/'
 
-    def populate(self, collected_facts=None):
-        network_facts = {}
-
-        fsysopts_path = self.module.get_bin_path('fsysopts')
-        if fsysopts_path is None:
-            return network_facts
-
-        socket_path = None
-
-        for l in ('inet', 'inet6'):
-            link = os.path.join(self._socket_dir, l)
-            if os.path.exists(link):
-                socket_path = link
-                break
-
-        if not socket_path:
-            return network_facts
-
-        return assign_network_facts(network_facts, fsysopts_path, socket_path)
-
     def assign_network_facts(self, network_facts, fsysopts_path, socket_path):
         rc, out, err = self.module.run_command([fsysopts_path, '-L', socket_path])
         # FIXME: build up a interfaces datastructure, then assign into network_facts
@@ -80,6 +60,26 @@ class HurdPfinetNetwork(Network):
                         'prefix': prefix,
                     })
         return network_facts
+
+    def populate(self, collected_facts=None):
+        network_facts = {}
+
+        fsysopts_path = self.module.get_bin_path('fsysopts')
+        if fsysopts_path is None:
+            return network_facts
+
+        socket_path = None
+
+        for l in ('inet', 'inet6'):
+            link = os.path.join(self._socket_dir, l)
+            if os.path.exists(link):
+                socket_path = link
+                break
+
+        if not socket_path:
+            return network_facts
+
+        return assign_network_facts(network_facts, fsysopts_path, socket_path)
 
 
 class HurdNetworkCollector(NetworkCollector):
