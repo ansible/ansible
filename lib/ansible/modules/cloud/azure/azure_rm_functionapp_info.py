@@ -87,7 +87,7 @@ azure_functionapps:
             host_type: Repository
         server_farm_id: /subscriptions/.../resourceGroups/ansible-rg/providers/Microsoft.Web/serverfarms/EastUSPlan
         reserved: false
-        last_modified_time_utc: 2017-08-22T18:54:01.190Z
+        last_modified_time_utc: '2017-08-22T18:54:01.190Z'
         scm_site_also_stopped: false
         client_affinity_enabled: true
         client_cert_enabled: false
