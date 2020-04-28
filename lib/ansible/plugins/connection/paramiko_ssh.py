@@ -130,7 +130,8 @@ DOCUMENTATION = """
         default: 30
         description:
           - Configures, in seconds, the amount of time to wait for the SSH
-            banner to be presented.
+            banner to be presented. This option is supported by paramiko
+            version 1.15.0 or newer.
         ini:
           - section: paramiko_connection
             key: banner_timeout
@@ -348,16 +349,10 @@ class Connection(ConnectionBase):
             # paramiko 2.2 introduced auth_timeout parameter
             if LooseVersion(paramiko.__version__) >= LooseVersion('2.2.0'):
                 ssh_connect_kwargs['auth_timeout'] = self._play_context.timeout
-            else:
-                display.warning('auth_timeout ignored.'
-                                ' Please upgrade to Paramiko 2.2.0 or newer.')
 
             # paramiko 1.15 introduced banner timeout parameter
             if LooseVersion(paramiko.__version__) >= LooseVersion('1.15.0'):
                 ssh_connect_kwargs['banner_timeout'] = self.get_option('banner_timeout')
-            else:
-                display.warning('banner_timeout ignored.'
-                                ' Please upgrade to Paramiko 1.15.0 or newer.')
 
             ssh.connect(
                 self._play_context.remote_addr.lower(),
