@@ -343,7 +343,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         elif attribute.isa == 'float':
             value = float(value)
         elif attribute.isa == 'bool':
-            value = boolean(value, strict=False)
+            value = boolean(value, strict=True)
         elif attribute.isa == 'percent':
             # special value, which may be an integer or float
             # with an optional '%' at the end
