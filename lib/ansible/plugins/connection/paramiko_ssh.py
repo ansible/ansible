@@ -255,21 +255,21 @@ class Connection(ConnectionBase):
             getattr(self._play_context, 'ssh_common_args', '') or '',
             getattr(self._play_context, 'ssh_args', '') or '',
         ]
-        if ssh_args is not None:
-            args = self._split_ssh_args(' '.join(ssh_args))
-            for i, arg in enumerate(args):
-                if arg.lower() == 'proxycommand':
-                    # _split_ssh_args split ProxyCommand from the command itself
-                    proxy_command = args[i + 1]
-                else:
-                    # ProxyCommand and the command itself are a single string
-                    match = SETTINGS_REGEX.match(arg)
-                    if match:
-                        if match.group(1).lower() == 'proxycommand':
-                            proxy_command = match.group(2)
 
-                if proxy_command:
-                    break
+        args = self._split_ssh_args(' '.join(ssh_args))
+        for i, arg in enumerate(args):
+            if arg.lower() == 'proxycommand':
+                # _split_ssh_args split ProxyCommand from the command itself
+                proxy_command = args[i + 1]
+            else:
+                # ProxyCommand and the command itself are a single string
+                match = SETTINGS_REGEX.match(arg)
+                if match:
+                    if match.group(1).lower() == 'proxycommand':
+                        proxy_command = match.group(2)
+
+            if proxy_command:
+                break
 
         proxy_command = proxy_command or self.get_option('proxy_command')
 
