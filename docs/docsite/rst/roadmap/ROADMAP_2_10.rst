@@ -1,6 +1,6 @@
-============
-Ansible 2.10
-============
+=================
+Ansible-base 2.10
+=================
 
 .. contents::
    :local:
@@ -11,7 +11,7 @@ Release Schedule
 Expected
 ========
 
-PRs must be raised well in advance of the dates below to have a chance of being included in this Ansible release.
+PRs must be raised well in advance of the dates below to have a chance of being included in this ansible-base release.
 
 .. note:: There is no Alpha phase in 2.10.
 .. note:: Dates subject to change.
