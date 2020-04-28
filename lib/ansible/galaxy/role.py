@@ -327,13 +327,15 @@ class GalaxyRole(object):
                             # bits that might be in the file for security purposes
                             # and drop any containing directory, as mentioned above
                             if member.isreg() or member.issym():
-                                parts = member.name.replace(archive_parent_dir, "", 1).split(os.sep)
-                                final_parts = []
-                                for part in parts:
-                                    if part != '..' and '~' not in part and '$' not in part:
-                                        final_parts.append(part)
-                                member.name = os.path.join(*final_parts)
-                                role_tar_file.extract(member, self.path)
+                                n_member_name = to_native(member.name)
+                                n_archive_parent_dir = to_native(archive_parent_dir)
+                                n_parts = n_member_name.replace(n_archive_parent_dir, "", 1).split(os.sep)
+                                n_final_parts = []
+                                for n_part in n_parts:
+                                    if n_part != '..' and '~' not in n_part and '$' not in n_part:
+                                        n_final_parts.append(n_part)
+                                member.name = os.path.join(*n_final_parts)
+                                role_tar_file.extract(member, to_native(self.path))
 
                         # write out the install info file for later use
                         self._write_galaxy_install_info()
