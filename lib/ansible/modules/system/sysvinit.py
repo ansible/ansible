@@ -306,7 +306,7 @@ def main():
 
             # how to run
             if module.params['daemonize']:
-                (rc, out, err) = daemonize(cmd)
+                (rc, out, err) = daemonize(module, cmd)
             else:
                 (rc, out, err) = module.run_command(cmd)
             # FIXME: ERRORS
