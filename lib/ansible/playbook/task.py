@@ -184,14 +184,14 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         # since this affects the task action parsing, we have to resolve in preprocess instead of in typical validator
         default_collection = AnsibleCollectionLoader().default_collection
 
-        # use the parent value if our ds doesn't define it
-        collections_list = ds.get('collections', self.collections)
-
+        collections_list = ds.get('collections')
         if collections_list is None:
-            collections_list = []
-
-        if isinstance(collections_list, string_types):
-            collections_list = [collections_list]
+            # use the parent value if our ds doesn't define it
+            collections_list = self.collections
+        else:
+            # Validate this untemplated field early on to guarantee we are dealing with a list.
+            # This is also done in CollectionSearch._load_collections() but this runs before that call.
+            collections_list = self.get_validated_value('collections', self._collections, collections_list, None)
 
         if default_collection and not self._role:  # FIXME: and not a collections role
             if collections_list:
