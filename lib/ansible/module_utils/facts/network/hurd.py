@@ -76,7 +76,7 @@ class HurdPfinetNetwork(Network):
                 socket_path = link
                 break
 
-        if not socket_path:
+        if socket_path is None:
             return network_facts
 
         return self.assign_network_facts(network_facts, fsysopts_path, socket_path)
