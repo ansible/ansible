@@ -19,7 +19,7 @@
       src: results/test-add-children-elements.xml
       dest: /tmp/ansible-xml-beers.xml
     check_mode: yes
-    diff: yes·
+    diff: yes
     register: comparison
 
   - name: Test expected result
