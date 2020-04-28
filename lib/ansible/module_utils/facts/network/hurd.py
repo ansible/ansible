@@ -79,7 +79,7 @@ class HurdPfinetNetwork(Network):
         if not socket_path:
             return network_facts
 
-        return assign_network_facts(network_facts, fsysopts_path, socket_path)
+        return self.assign_network_facts(network_facts, fsysopts_path, socket_path)
 
 
 class HurdNetworkCollector(NetworkCollector):
