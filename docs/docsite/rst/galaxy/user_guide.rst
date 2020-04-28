@@ -363,10 +363,30 @@ command line, as follows:
 Dependencies
 ------------
 
-Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependencies will automatically be installed.
+Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependencies will automatically be installed to the ``roles_path``.
 
-You specify role dependencies in the ``meta/main.yml`` file by providing a list of roles. If the source of a role is Galaxy, you can simply specify the role in
-the format ``namespace.role_name``. You can also use the more complex format in ``requirements.yml``, allowing you to provide ``src``, ``scm``, ``version``, and ``name``.
+There are two ways to define the dependencies of a role:
+
+* using ``meta/requirements.yml``
+* using ``meta/main.yml``
+
+Using ``meta/requirements.yml``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`.. versionadded:: 2.10`
+
+You can create the file ``meta/requirements.yml`` and define dependencies in the same format used for :file:`requirements.yml` described in the `Installing multiple roles from a file`_ section.
+
+From there, you can import or include the specified roles in your tasks.
+
+Using ``meta/main.yml``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Alternatively, you can specify role dependencies in the ``meta/main.yml`` file by providing a list of roles under the ``dependencies`` section. If the source of a role is Galaxy, you can simply specify the role in
+the format ``namespace.role_name``. You can also use the more complex format in :file:`requirements.yml`, allowing you to provide ``src``, ``scm``, ``version``, and ``name``.
+
+Dependencies installed that way, depending on other factors described below, will also be executed **before** this role is executed during play execution.
+To better understand how dependencies are handled during play execution, see :ref:`playbooks_reuse_roles`.
 
 The following shows an example ``meta/main.yml`` file with dependent roles:
 
@@ -424,8 +444,6 @@ Alternately, you can specify the role dependencies in the complex form used in  
       - name: composer
         src: git+https://github.com/geerlingguy/ansible-role-composer.git
         version: 775396299f2da1f519f0d8885022ca2d6ee80ee8
-
-When dependencies are encountered by ``ansible-galaxy``, it will automatically install each dependency to the ``roles_path``. To understand how dependencies are handled during play execution, see :ref:`playbooks_reuse_roles`.
 
 .. note::
 

@@ -1057,7 +1057,7 @@ class GalaxyCLI(CLI):
                 if not role.metadata:
                     display.warning("Meta file %s is empty. Skipping dependencies." % role.path)
                 else:
-                    role_dependencies = role.metadata.get('dependencies') or []
+                    role_dependencies = (role.metadata.get('dependencies') or []) + role.requirements
                     for dep in role_dependencies:
                         display.debug('Installing dep %s' % dep)
                         dep_req = RoleRequirement()
