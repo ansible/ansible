@@ -490,7 +490,11 @@
     that:
         - "dnf_result is failed"
         - "'non-existent-rpm' in dnf_result['failures'][0]"
-        - "'No package non-existent-rpm available' in dnf_result['failures'][0]"
+        # DNF >=4.2.17 no longer throws MarkingError when the pkg is not found.
+        # This means the module's exception handling no longer kicks in.
+        # Generally this is fine, because DNF now gives a nicer error than it
+        # used to, but it means we have to look for both possibilities here.
+        - "'No package non-existent-rpm available' in dnf_result['failures'][0] or 'No match for argument' in dnf_result['failures'][0]"
         - "'Failed to install some of the specified packages' in dnf_result['msg']"
 
 - name: use latest to install httpd
