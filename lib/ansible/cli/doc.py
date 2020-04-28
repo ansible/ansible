@@ -36,7 +36,10 @@ display = Display()
 
 
 def jdump(text):
-    display.display(json.dumps(text, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
+    try:
+        display.display(json.dumps(text, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
+    except TypeError as e:
+        raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue: %s' % to_native(e))
 
 
 def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
