@@ -5,8 +5,10 @@
 
 from uuid import UUID
 from ansible.module_utils.basic import AnsibleModule
-
+import re
+import json
 import tacp
+import sys
 from tacp.rest import ApiException
 from pprint import pprint
 
@@ -86,7 +88,7 @@ def run_module():
         storage_pool=dict(type='str', required=True),
         template=dict(type='str', required=True),
         vcpu_cores=dict(type='int', required=True),
-        memory_mb=dict(type='int', required=True),
+        memory=dict(type='str', required=True),
         disks=dict(type='list', required=True),
         nics=dict(type='list', required=True)
     )
@@ -135,6 +137,31 @@ def run_module():
         module.exit_json(**result)
         return
 
+    def convert_memory_abbreviation_to_bytes(value):
+        """Validate memory argument. Returns the memory value in bytes."""
+        MEMORY_RE = re.compile(
+            r"^(?P<amount>[0-9]+)(?P<unit>t|tb|g|gb|m|mb|k|kb)?$")
+
+        matches = MEMORY_RE.match(value.lower())
+        if matches is None:
+            raise ValueError(
+                '%s is not a valid value for memory amount' % value)
+        amount_str, unit = matches.groups()
+        amount = int(amount_str)
+        amount_in_bytes = amount
+        if unit is None:
+            amount_in_bytes = amount
+        elif unit in ['k', 'kb']:
+            amount_in_bytes = amount * 1024
+        elif unit in ['m', 'mb']:
+            amount_in_bytes = amount * 1024 * 1024
+        elif unit in ['g', 'gb']:
+            amount_in_bytes = amount * 1024 * 1024 * 1024
+        elif unit in ['t', 'tb']:
+            amount_in_bytes = amount * 1024 * 1024 * 1024 * 1024
+
+        return amount_in_bytes
+
     def is_valid_uuid(uuid_to_test, version=4):
         """
         Check if uuid_to_test is a valid UUID.
@@ -162,7 +189,7 @@ def run_module():
 
         return str(uuid_obj) == uuid_to_test
 
-    def get_component_uuid_by_name(name, component, api_client):
+    def get_component_fields_by_name(name, component, api_client, fields=['uuid']):
         """
         Returns the UUID of a named component if it exists in a given 
         ThinkAgile CP cloud, otherwise return None.
@@ -171,10 +198,10 @@ def run_module():
         :type name str
         :param component The type of component in question, must be one of 
         """
-        fields = ['uuid']
 
         valid_components = ["storage_pool", "application",
-                            "template", "datacenter", "migration_zone"]
+                            "template", "datacenter", "migration_zone",
+                            "vnet", "vlan"]
 
         if component not in valid_components:
             return "Invalid component"
@@ -185,7 +212,7 @@ def run_module():
                 api_response = api_instance.get_flash_pools_using_get(
                     fields=fields)
             except ApiException as e:
-                return "Exception when calling get_component_uuid_by_name: %s\n" % e
+                return "Exception when calling get_component_fields_by_name: %s\n" % e
         elif component == "application":
             api_instance = tacp.ApplicationsApi(api_client)
             try:
@@ -193,7 +220,7 @@ def run_module():
                 api_response = api_instance.get_applications_using_get(
                     fields=fields)
             except ApiException as e:
-                return "Exception when calling get_component_uuid_by_name: %s\n" % e
+                return "Exception when calling get_component_fields_by_name: %s\n" % e
         elif component == "template":
             api_instance = tacp.TemplatesApi(api_client)
             try:
@@ -201,7 +228,7 @@ def run_module():
                 api_response = api_instance.get_templates_using_get(
                     fields=fields)
             except ApiException as e:
-                return "Exception when calling get_component_uuid_by_name: %s\n" % e
+                return "Exception when calling get_component_fields_by_name: %s\n" % e
         elif component == "datacenter":
             api_instance = tacp.DatacentersApi(api_client)
             try:
@@ -209,7 +236,7 @@ def run_module():
                 api_response = api_instance.get_datacenters_using_get(
                     fields=fields)
             except ApiException as e:
-                return "Exception when calling get_component_uuid_by_name: %s\n" % e
+                return "Exception when calling get_component_fields_by_name: %s\n" % e
         elif component == "migration_zone":
             api_instance = tacp.MigrationZonesApi(api_client)
             try:
@@ -217,7 +244,7 @@ def run_module():
                 api_response = api_instance.get_migration_zones_using_get(
                     fields=fields)
             except ApiException as e:
-                return "Exception when calling get_component_uuid_by_name: %s\n" % e
+                return "Exception when calling get_component_fields_by_name: %s\n" % e
         elif component == "vlan":
             api_instance = tacp.VlansApi(api_client)
             try:
@@ -225,7 +252,7 @@ def run_module():
                 api_response = api_instance.get_vlans_using_get(
                     fields=fields)
             except ApiException as e:
-                return "Exception when calling get_component_uuid_by_name: %s\n" % e
+                return "Exception when calling get_component_fields_by_name: %s\n" % e
         elif component == "vnet":
             api_instance = tacp.VnetsApi(api_client)
             try:
@@ -233,17 +260,38 @@ def run_module():
                 api_response = api_instance.get_vnets_using_get(
                     fields=fields)
             except ApiException as e:
-                return "Exception when calling get_component_uuid_by_name: %s\n" % e
+                return "Exception when calling get_component_fields_by_name: %s\n" % e
 
         if (api_response):
-            if hasattr(api_response[0], 'uuid'):
-                return api_response[0].uuid
+            if fields == ['uuid']:
+                if hasattr(api_response[0], 'uuid'):
+                    return api_response[0].uuid
+            if fields == ['bootOrder']:
+                boot_order = []
+                for order_item in api_response[0].boot_order:
+                    str_dict = str(order_item).replace(
+                        "\n", "").replace("'", '"').replace("None", '""')
+                    
+                    json_dict = json.loads(str_dict)
+
+                    disk_uuid = json_dict['disk_uuid'] if json_dict['disk_uuid'] else None
+                    name = json_dict['name'] if json_dict['name'] else None
+                    order = json_dict['order'] if json_dict['order'] else None
+                    vnic_uuid = json_dict['vnic_uuid'] if json_dict['vnic_uuid'] else None
+                    boot_order_payload = tacp.ApiBootOrderPayload(disk_uuid=disk_uuid,
+                                                                  name=name,
+                                                                  order=order,
+                                                                  vnic_uuid=vnic_uuid)
+
+                    #sys.stdout.write(str(boot_order_payload) + '\n')
+                    boot_order.append(boot_order_payload)
+                return boot_order
         return None
 
     instance_params = {}
 
     # Check if VM instance with this name exists already
-    instance_uuid = get_component_uuid_by_name(
+    instance_uuid = get_component_fields_by_name(
         module.params['name'], 'application', api_client)
     # if is_valid_uuid(instance_uuid):
     #     # VM does exist - so for now we need to just break without changing anything,
@@ -255,7 +303,7 @@ def run_module():
     instance_params['instance_name'] = module.params['name']
 
     # Check if storage pool exists, it must in order to continue
-    storage_pool_uuid = get_component_uuid_by_name(
+    storage_pool_uuid = get_component_fields_by_name(
         module.params['storage_pool'], 'storage_pool', api_client)
     if is_valid_uuid(storage_pool_uuid):
         instance_params['storage_pool_uuid'] = storage_pool_uuid
@@ -264,7 +312,7 @@ def run_module():
         pass
 
     # Check if datacenter exists, it must in order to continue
-    datacenter_uuid = get_component_uuid_by_name(
+    datacenter_uuid = get_component_fields_by_name(
         module.params['datacenter'], 'datacenter', api_client)
     if is_valid_uuid(datacenter_uuid):
         instance_params['datacenter_uuid'] = datacenter_uuid
@@ -273,7 +321,7 @@ def run_module():
         pass
 
     # Check if migration_zone exists, it must in order to continue
-    migration_zone_uuid = get_component_uuid_by_name(
+    migration_zone_uuid = get_component_fields_by_name(
         module.params['mz'], 'migration_zone', api_client)
     if is_valid_uuid(migration_zone_uuid):
         instance_params['migration_zone_uuid'] = migration_zone_uuid
@@ -282,10 +330,13 @@ def run_module():
         pass
 
     # Check if migration_zone exists, it must in order to continue
-    template_uuid = get_component_uuid_by_name(
+    template_uuid = get_component_fields_by_name(
         module.params['template'], 'template', api_client)
     if is_valid_uuid(template_uuid):
         instance_params['template_uuid'] = template_uuid
+        boot_order = get_component_fields_by_name(
+            module.params['template'], 'template', api_client, fields=['bootOrder'])
+        #result['boot_order'] = boot_order
     else:
         # Migration zone does not exist - must fail the task
         pass
@@ -294,11 +345,13 @@ def run_module():
     vnic_payloads = []
     for nic in module.params['nics']:
         if nic['type'].lower() == "vnet":
-            network_uuid = get_component_uuid_by_name(
+            network_uuid = get_component_fields_by_name(
                 nic['network'], 'vnet', api_client)
         elif nic['type'].lower() == "vlan":
-            network_uuid = get_component_uuid_by_name(
+            network_uuid = get_component_fields_by_name(
                 nic['network'], 'vlan', api_client)
+        # sys.stdout.write(network_uuid + "\n")
+        # for boot_order_item in boot_order:
 
         network_payload = tacp.ApiCreateOrEditApplicationNetworkOptionsPayload(
             name=nic['network'],
@@ -313,12 +366,12 @@ def run_module():
         )
         vnic_payloads.append(vnic_payload)
 
+    instance_params['boot_order'] = boot_order
     instance_params['networks'] = network_payloads
     instance_params['vnics'] = vnic_payloads
     instance_params['vcpus'] = module.params['vcpu_cores']
-    # We will want to parse out the units on the memory provided to convert it to bytes,
-    # which this parameter requires
-    instance_params['memory'] = module.params['memory_mb'] * 1024 * 1024
+    instance_params['memory'] = convert_memory_abbreviation_to_bytes(
+        module.params['memory'])
     instance_params['vm_mode'] = "Enhanced"
 
     def create_instance(instance_params):
@@ -338,8 +391,9 @@ def run_module():
             vm_mode=instance_params['vm_mode'],
             networks=instance_params['networks'],
             vnics=instance_params['vnics'],
+            boot_order=instance_params['boot_order'],
             hardware_assisted_virtualization_enabled=True)
-
+        #result['api_request_body'] = body
         try:
             # Create an application from a template
             api_response = api_instance.create_application_from_template_using_post(

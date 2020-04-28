@@ -12,11 +12,11 @@
       template: CentOS 7 - Jenkins - Lenovo Template
       storage_pool: Pool 1
       vcpu_cores: 1
-      memory_mb: 2048
+      memory: 2g
       disks:
         - size_gb: 20
       nics:
-        - name: NIC 1
+        - name: vNIC 0
           type: VNET
           network: OTA_VNET
     register: testout
