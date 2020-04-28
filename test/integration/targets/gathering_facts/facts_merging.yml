@@ -29,4 +29,3 @@
         that:
             - twoone[item] == ansible_facts[item]
       loop: '{{twoone.keys()|list}}'
-
