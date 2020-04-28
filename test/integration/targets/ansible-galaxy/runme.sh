@@ -148,6 +148,20 @@ pushd "${role_testdir}"
 popd # ${role_testdir}
 rm -rf "${role_testdir}"
 
+f_ansible_galaxy_status \
+    "Test role with non-ascii characters"
+
+role_testdir=$(mktemp -d)
+pushd "${role_testdir}"
+
+    mkdir nonascii
+    ansible-galaxy role init --init-path ./nonascii nonascii
+    touch nonascii/ÅÑŚÌβŁÈ.txt
+    tar czvf nonascii.tar.gz nonascii
+    ansible-galaxy role install -p ./roles nonascii.tar.gz
+
+popd # ${role_testdir}
+rm -rf "${role_testdir}"
 
 #################################
 # ansible-galaxy collection tests
