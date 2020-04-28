@@ -16,15 +16,13 @@ display = Display()
 def _ensure_default_collection(collection_list=None):
     default_collection = AnsibleCollectionLoader().default_collection
 
+    # Will be None when used as the default
     if collection_list is None:
         collection_list = []
 
-    if default_collection:  # FIXME: exclude role tasks?
-        if isinstance(collection_list, string_types):
-            collection_list = [collection_list]
-
-        if default_collection not in collection_list:
-            collection_list.insert(0, default_collection)
+    # FIXME: exclude role tasks?
+    if default_collection and default_collection not in collection_list:
+        collection_list.insert(0, default_collection)
 
     # if there's something in the list, ensure that builtin or legacy is always there too
     if collection_list and 'ansible.builtin' not in collection_list and 'ansible.legacy' not in collection_list:
@@ -40,6 +38,10 @@ class CollectionSearch:
                                   always_post_validate=True, static=True)
 
     def _load_collections(self, attr, ds):
+        # We are always a mixin with Base, so we can validate this untemplated
+        # field early on to guarantee we are dealing with a list.
+        ds = self.get_validated_value('collections', self._collections, ds, None)
+
         # this will only be called if someone specified a value; call the shared value
         _ensure_default_collection(collection_list=ds)
 
@@ -47,8 +49,9 @@ class CollectionSearch:
             return None
 
         # This duplicates static attr checking logic from post_validate()
-        # because if the user attempts to template a collection name, it will
-        # error before it ever gets to the post_validate() warning.
+        # because if the user attempts to template a collection name, it may
+        # error before it ever gets to the post_validate() warning (e.g. trying
+        # to import a role from the collection).
         env = Environment()
         for collection_name in ds:
             if is_template(collection_name, env):
