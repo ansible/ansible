@@ -8,11 +8,27 @@
      - facts_one
      - facts_two
   tasks:
-    - name: check expected merge
+    - name: check expected merge strings
       assert:
         that:
             - onetwo[item] == ansible_facts[item]
       loop: '{{onetwo.keys()|list}}'
+      when: onetwo[item] is string
+
+    - name: check expected merge sequences
+      assert:
+        that:
+            - onetwo[item]|sort == ansible_facts[item]|sort
+      loop: '{{onetwo.keys()|list}}'
+      when: onetwo[item] is not string and onetwo[item] is not mapping
+
+    - name: check expected merge dicts
+      assert:
+        that:
+            - onetwo[item]|dictsort == ansible_facts[item]|dictsort
+      loop: '{{onetwo.keys()|list}}'
+      when: onetwo[item] is mapping
+
 
 - name: gather two and one facts
   hosts: localhost
@@ -24,8 +40,25 @@
      - facts_two
      - facts_one
   tasks:
-    - name: check expected merge
+
+    - name: check expected merge strings
       assert:
         that:
             - twoone[item] == ansible_facts[item]
       loop: '{{twoone.keys()|list}}'
+      when: twoone[item] is string
+
+    - name: check expected merge sequences
+      assert:
+        that:
+            - twoone[item]|sort == ansible_facts[item]|sort
+      loop: '{{twoone.keys()|list}}'
+      when: twoone[item] is not string and twoone[item] is not mapping
+
+    - name: check expected merge dicts
+      assert:
+        that:
+            - twoone[item]|dictsort == ansible_facts[item]|dictsort
+      loop: '{{twoone.keys()|list}}'
+      when: twoone[item] is mapping
+
