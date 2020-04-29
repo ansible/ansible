@@ -932,11 +932,6 @@ files:
   $modules/net_tools/lldp.py:
     ignored: andyhky
     migrated_to: community.general
-  $modules/net_tools/nios/:
-    maintainers: sganesh-infoblox
-    labels:
-    - networking
-    - infoblox
   $modules/net_tools/netbox:
     maintainers: FragmentedPacket
   $modules/net_tools/netbox/netbox_device.py:
@@ -3258,15 +3253,6 @@ files:
     - cloud
     migrated_to: openstack.cloud
   contrib/inventory/ovirt4.py: *id003
-  contrib/inventory/infoblox.py:
-    keywords:
-    - infoblox dynamic inventory script
-    labels:
-    - ipam
-    - nios
-    - networking
-    maintainers: $team_networking
-    migrated_to: community.general
   contrib/inventory/azure_rm.py:
     keywords:
     - azure inventory
@@ -3434,6 +3420,7 @@ files:
     maintainers: glitchcrab
     labels: cloud
     migrated_to: community.general
+<<<<<<< HEAD
   $module_utils/mysql.py:
     migrated_to: community.mysql
   $module_utils/net_tools/nios/:
@@ -3442,6 +3429,9 @@ files:
     - networking
     - infoblox
     maintainers: sganesh-infoblox
+=======
+  $module_utils/mysql.py: *id004
+>>>>>>> PR1 removed Infoblox contents
   $module_utils/netapp:
     maintainers: $team_netapp
     support: community
@@ -4202,13 +4192,6 @@ files:
     maintainers: chouseknecht maxamillion fabianvf flaper87 willthames
     labels: k8s
     migrated_to: community.kubernetes
-  $plugins/lookup/nios:
-    support: core
-    maintainers: sganesh-infoblox
-    labels:
-    - networking
-    - infoblox
-    migrated_to: community.general
   $plugins/lookup/onepassword:
     maintainers: samdoran
     ignored: azenk
@@ -7166,8 +7149,6 @@ files:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/netscaler.py:
     migrated_to: community.general
-  lib/ansible/plugins/doc_fragments/nios.py:
-    migrated_to: community.general
   lib/ansible/plugins/doc_fragments/nso.py:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/oneview.py:
@@ -7442,10 +7423,6 @@ files:
     migrated_to: community.general
   lib/ansible/plugins/lookup/lmdb_kv.py:
     migrated_to: community.general
-  lib/ansible/plugins/lookup/nios_next_ip.py:
-    migrated_to: community.general
-  lib/ansible/plugins/lookup/nios_next_network.py:
-    migrated_to: community.general
   lib/ansible/plugins/lookup/onepassword_raw.py:
     migrated_to: community.general
   lib/ansible/plugins/lookup/passwordstore.py:
@@ -7507,10 +7484,6 @@ files:
   lib/ansible/module_utils/net_tools/__init__.py:
     migrated_to: community.general
   lib/ansible/module_utils/net_tools/netbox/__init__.py:
-    migrated_to: community.general
-  lib/ansible/module_utils/net_tools/nios/__init__.py:
-    migrated_to: community.general
-  lib/ansible/module_utils/net_tools/nios/api.py:
     migrated_to: community.general
   lib/ansible/module_utils/network/__init__.py:
     migrated_to: community.general
@@ -8925,38 +8898,6 @@ files:
   lib/ansible/modules/net_tools/ldap/ldap_passwd.py:
     migrated_to: community.general
   lib/ansible/modules/net_tools/netcup_dns.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_a_record.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_aaaa_record.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_cname_record.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_dns_view.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_fixed_address.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_host_record.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_member.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_mx_record.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_naptr_record.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_network.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_network_view.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_nsgroup.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_ptr_record.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_srv_record.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_txt_record.py:
-    migrated_to: community.general
-  lib/ansible/modules/net_tools/nios/nios_zone.py:
     migrated_to: community.general
   lib/ansible/modules/net_tools/nmcli.py:
     migrated_to: community.general
@@ -10492,10 +10433,6 @@ files:
     migrated_to: netbox.netbox
   test/units/module_utils/net_tools/netbox/test_netbox_utils.py:
     migrated_to: netbox.netbox
-  test/units/module_utils/net_tools/nios/test_api.py:
-    migrated_to: community.general
-  test/units/module_utils/net_tools/nios/__init__.py:
-    migrated_to: community.general
   test/units/module_utils/network/__init__.py:
     migrated_to: community.general
   test/units/module_utils/network/netscaler/test_netscaler.py:
@@ -10665,42 +10602,6 @@ files:
   test/units/modules/net_tools/test_hetzner_firewall.py:
     migrated_to: community.general
   test/units/modules/net_tools/__init__.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_ptr_record.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_srv_record.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_zone.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_cname_record.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_mx_record.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/__init__.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_a_record.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_fixed_address.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_host_record.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_aaaa_record.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/fixtures/nios_result.txt:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_member.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_dns_view.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_network.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_nsgroup.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_naptr_record.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_module.py:
-    migrated_to: community.general
-  test/units/modules/net_tools/nios/test_nios_network_view.py:
     migrated_to: community.general
   test/units/modules/net_tools/test_hetzner_firewall_info.py:
     migrated_to: community.general
@@ -14693,138 +14594,6 @@ files:
   test/integration/targets/ipwcli_dns/aliases:
     migrated_to: community.general
   test/integration/targets/ipwcli_dns/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_a_record/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_a_record/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_a_record/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_a_record/tasks/nios_a_record_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_a_record/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/prepare_nios_tests/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_aaaa_record/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_aaaa_record/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_aaaa_record/tasks/nios_aaaa_record_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_aaaa_record/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_aaaa_record/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_cname_record/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_cname_record/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_cname_record/tasks/nios_cname_record_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_cname_record/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_cname_record/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_dns_view/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_dns_view/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_dns_view/tasks/nios_dns_view_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_dns_view/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_dns_view/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_host_record/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_host_record/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_host_record/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_host_record/tasks/nios_host_record_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_host_record/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_mx_record/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_mx_record/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_mx_record/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_mx_record/tasks/nios_mx_record_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_mx_record/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_naptr_record/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_naptr_record/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_naptr_record/tasks/nios_naptr_record_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_naptr_record/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_naptr_record/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_network/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_network/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_network/tasks/nios_network_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_network/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_network/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_network_view/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_network_view/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_network_view/tasks/nios_network_view_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_network_view/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_network_view/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_ptr_record/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_ptr_record/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_ptr_record/tasks/nios_ptr_record_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_ptr_record/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_ptr_record/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_srv_record/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_srv_record/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_srv_record/tasks/nios_srv_record_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_srv_record/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_srv_record/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_txt_record/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_txt_record/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_txt_record/tasks/nios_txt_record_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_txt_record/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_txt_record/meta/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_zone/aliases:
-    migrated_to: community.general
-  test/integration/targets/nios_zone/defaults/main.yaml:
-    migrated_to: community.general
-  test/integration/targets/nios_zone/tasks/nios_zone_idempotence.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_zone/tasks/main.yml:
-    migrated_to: community.general
-  test/integration/targets/nios_zone/meta/main.yaml:
     migrated_to: community.general
   test/integration/targets/ce_is_is_instance/defaults/main.yaml:
     migrated_to: community.general
