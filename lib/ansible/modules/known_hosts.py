@@ -101,6 +101,7 @@ def enforce_state(module, params):
     host = params["name"].lower()
     key = params.get("key", None)
     path = params.get("path")
+
     hash_host = params.get("hash_host")
     state = params.get("state")
     # Find the ssh-keygen binary
@@ -115,6 +116,15 @@ def enforce_state(module, params):
     # Trailing newline in files gets lost, so re-add if necessary
     if key and not key.endswith('\n'):
         key += '\n'
+
+    # Preserve file permission for path since they are lost due to issue in
+    # ssh-keygen command
+    # Remove this once ssh-keygen behaves normally
+    prev_mode = None
+    try:
+        prev_mode = os.stat(path).st_mode
+    except OSError as err:
+        module.fail_json(msg="Failed to stat file %s : %s" % (path, to_native(err)))
 
     sanity_check(module, host, key, sshkeygen)
 
@@ -161,6 +171,7 @@ def enforce_state(module, params):
             module.fail_json(msg="Failed to write to file %s: %s" % (path, to_native(e)))
         else:
             module.atomic_move(outf.name, path)
+            os.chmod(path, prev_mode)
 
         params['changed'] = True
 

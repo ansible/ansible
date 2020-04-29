@@ -1,20 +1,6 @@
 # test code for the known_hosts module
-# (c) 2017, Marius Gedminas <marius@gedmin.as>
-
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2017, Marius Gedminas <marius@gedmin.as>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 - name: copy an existing file in place
   copy:
@@ -98,6 +84,20 @@
 
 # test removal
 
+- name: Try to delete host from a non-existing file
+  known_hosts:
+    path: "{{ output_dir }}/no_such_file"
+    name: github.com
+    state: absent
+  ignore_errors: yes
+  register: file_not_found
+
+- name: Check if no changes are made and module fail with error
+  assert:
+    that:
+        - not file_not_found.changed
+        - "'Failed to find file' in file_not_found.msg"
+
 - name: remove the host in check mode
   check_mode: yes
   known_hosts:
@@ -114,6 +114,11 @@
     - 'diff.diff.before.splitlines()[-1] == example_org_rsa_key.strip()'
     - 'diff.diff.after.splitlines() == diff.diff.before.splitlines()[:-1]'
 
+- name: Get mode for known_hosts
+  stat:
+    path: "{{output_dir}}/known_hosts"
+  register: prev_st
+
 - name: remove the host
   known_hosts:
     name: example.org
@@ -121,6 +126,11 @@
     state: absent
     path: "{{output_dir}}/known_hosts"
   register: result
+
+- name: Get mode for known_hosts after removal operation
+  stat:
+    path: "{{output_dir}}/known_hosts"
+  register: next_st
 
 - name: get the file content
   command: "cat {{output_dir}}/known_hosts"
@@ -133,6 +143,7 @@
     - '"example.org" not in known_hosts_v3.stdout'
     - 'known_hosts_v3.stdout_lines[0].startswith("example.com")'
     - 'known_hosts_v3.stdout_lines[-1].startswith("# example.net")'
+    - prev_st.stat.mode == next_st.stat.mode
 
 # test idempotence of removal
 
