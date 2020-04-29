@@ -383,7 +383,7 @@ class JinjaPluginIntercept(MutableMapping):
                 continue
 
             try:
-                plugin_impl = self._pluginloader.get(module_name)
+                plugin_impl = self._pluginloader.get(module_name)()
             except Exception as e:
                 raise TemplateSyntaxError(to_native(e), 0)
 
@@ -494,7 +494,7 @@ class Templar:
         self._filters = dict()
 
         for fp in self._filter_loader.all():
-            self._filters.update(fp.filters())
+            self._filters.update(fp().filters())
 
         return self._filters.copy()
 
@@ -508,7 +508,7 @@ class Templar:
 
         self._tests = dict()
         for fp in self._test_loader.all():
-            self._tests.update(fp.tests())
+            self._tests.update(fp().tests())
 
         return self._tests.copy()
 
@@ -784,7 +784,7 @@ class Templar:
         return self._lookup(name, *args, **kwargs)
 
     def _lookup(self, name, *args, **kwargs):
-        instance = self._lookup_loader.get(name, loader=self._loader, templar=self)
+        instance = self._lookup_loader.get(name)(loader=self._loader, templar=self)
 
         if instance is not None:
             wantlist = kwargs.pop('wantlist', False)

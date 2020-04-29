@@ -534,7 +534,7 @@ class VariableManager:
                 try:
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop, templar=templar,
                                                              loader=self._loader, fail_on_undefined=True, convert_bare=False)
-                    items = wrap_var(lookup_loader.get(task.loop_with, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy))
+                    items = wrap_var(lookup_loader.get(task.loop_with)(loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy))
                 except AnsibleTemplateError:
                     # This task will be skipped later due to this, so we just setup
                     # a dummy array for the later code so it doesn't fail

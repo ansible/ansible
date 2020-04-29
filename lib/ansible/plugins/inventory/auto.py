@@ -47,7 +47,7 @@ class InventoryModule(BaseInventoryPlugin):
         if not plugin_name:
             raise AnsibleParserError("no root 'plugin' key found, '{0}' is not a valid YAML inventory plugin config file".format(path))
 
-        plugin = inventory_loader.get(plugin_name)
+        plugin = inventory_loader.get(plugin_name)()
 
         if not plugin:
             raise AnsibleParserError("inventory config '{0}' specifies unknown plugin '{1}'".format(path, plugin_name))

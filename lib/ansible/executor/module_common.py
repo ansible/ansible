@@ -689,7 +689,7 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
     # Determine what imports that we've found are modules (vs class, function.
     # variable names) for packages
     #
-    module_utils_paths = [p for p in module_utils_loader._get_paths(subdirs=False) if os.path.isdir(p)]
+    module_utils_paths = [p for p in module_utils_loader._scanned_paths.keys() if os.path.isdir(p)]
     # FIXME: Do we still need this?  It feels like module-utils_loader should include
     # _MODULE_UTILS_PATH
     module_utils_paths.append(_MODULE_UTILS_PATH)

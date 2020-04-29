@@ -967,7 +967,7 @@ class StrategyBase:
 
         bypass_host_loop = False
         try:
-            action = plugin_loader.action_loader.get(handler.action, class_only=True)
+            action = plugin_loader.action_loader.get(handler.action)
             if getattr(action, 'BYPASS_HOST_LOOP', False):
                 bypass_host_loop = True
         except KeyError:
@@ -1168,7 +1168,7 @@ class StrategyBase:
                 connection = Connection(self._active_connections[target_host])
                 del self._active_connections[target_host]
             else:
-                connection = plugin_loader.connection_loader.get(play_context.connection, play_context, os.devnull)
+                connection = plugin_loader.connection_loader.get(play_context.connection)(play_context, os.devnull)
                 play_context.set_attributes_from_plugin(connection)
 
             if connection:
