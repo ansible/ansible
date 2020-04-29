@@ -1,2 +1,2 @@
 bugfixes:
-- sysctl - Addressed FIXME's, returned early on falsey ``sysctl_path`` and unindented code blocks.
+- sysctl - Remove FIXME comments to avoid confusion
