@@ -11,7 +11,8 @@
 
 - name: Populate directory
   copy:
-    content: "{{ ansible_distribution_version }}\n"
+    # We need '8' for CentOS, but '8.x' for RHEL.
+    content: "{{ ansible_distribution_version|int if ansible_distribution != 'RedHat' else ansible_distribution_version }}\n"
     dest: "/{{ dnfroot.stdout }}/etc/dnf/vars/releasever"
 
 # This will drag in > 200 MB.
