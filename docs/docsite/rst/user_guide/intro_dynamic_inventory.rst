@@ -114,7 +114,8 @@ To successfully make an API call to AWS, you will need to configure Boto (the Py
 
 You can test the script by itself to make sure your config is correct::
 
-    cd contrib/inventory
+    cd /etc/ansible/
+    wget https://raw.githubusercontent.com/ansible-collections/community.aws/master/scripts/inventory/ec2.py
     ./ec2.py --list
 
 After a few moments, you should see your entire EC2 inventory across all regions in JSON.
@@ -228,7 +229,8 @@ Both ``ec2_security_group_ids`` and ``ec2_security_group_names`` are comma-separ
 
 To see the complete list of variables available for an instance, run the script by itself::
 
-    cd contrib/inventory
+    cd /etc/ansible
+    wget https://raw.githubusercontent.com/ansible-collections/community.aws/master/scripts/inventory/ec2.py
     ./ec2.py --host ec2-12-12-12-12.compute-1.amazonaws.com
 
 Note that the AWS inventory script will cache results to avoid repeated API calls, and this cache setting is configurable in ec2.ini.  To
