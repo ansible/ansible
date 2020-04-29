@@ -701,3 +701,14 @@
           - "'vim-minimal' in rpm_output.stdout"
   when:
     - ansible_distribution == 'Fedora'
+
+- name: Remove wildcard package that isn't installed
+  dnf:
+    name: firefox*
+    state: absent
+  register: wildcard_absent
+
+- assert:
+    that:
+      - wildcard_absent is successful
+      - wildcard_absent is not changed
