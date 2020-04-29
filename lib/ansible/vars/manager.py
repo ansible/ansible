@@ -552,6 +552,7 @@ class VariableManager:
             has_loop = False
             items = [None]
 
+        # since host can change per loop, we keep dict per host name resolved
         delegated_host_vars = dict()
         item_var = getattr(task.loop_control, 'loop_var', 'item')
         cache_items = False
@@ -568,27 +569,12 @@ class VariableManager:
                 raise AnsibleError(message="Undefined delegate_to host for task:", obj=task._ds)
             if not isinstance(delegated_host_name, string_types):
                 raise AnsibleError(message="the field 'delegate_to' has an invalid type (%s), and could not be"
-                                           " converted to a string type." % type(delegated_host_name),
-                                   obj=task._ds)
+                                           " converted to a string type." % type(delegated_host_name), obj=task._ds)
+
             if delegated_host_name in delegated_host_vars:
                 # no need to repeat ourselves, as the delegate_to value
                 # does not appear to be tied to the loop item variable
                 continue
-
-            # a dictionary of variables to use if we have to create a new host below
-            # we set the default port based on the default transport here, to make sure
-            # we use the proper default for windows
-            new_port = C.DEFAULT_REMOTE_PORT
-            if C.DEFAULT_TRANSPORT == 'winrm':
-                new_port = 5986
-
-            new_delegated_host_vars = dict(
-                ansible_delegated_host=delegated_host_name,
-                ansible_host=delegated_host_name,  # not redundant as other sources can change ansible_host
-                ansible_port=new_port,
-                ansible_user=C.DEFAULT_REMOTE_USER,
-                ansible_connection=C.DEFAULT_TRANSPORT,
-            )
 
             # now try to find the delegated-to host in inventory, or failing that,
             # create a new host on the fly so we can fetch variables for it
@@ -598,21 +584,16 @@ class VariableManager:
                 # try looking it up based on the address field, and finally
                 # fall back to creating a host on the fly to use for the var lookup
                 if delegated_host is None:
-                    if delegated_host_name in C.LOCALHOST:
-                        delegated_host = self._inventory.localhost
+                    for h in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
+                        # check if the address matches, or if both the delegated_to host
+                        # and the current host are in the list of localhost aliases
+                        if h.address == delegated_host_name:
+                            delegated_host = h
+                            break
                     else:
-                        for h in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
-                            # check if the address matches, or if both the delegated_to host
-                            # and the current host are in the list of localhost aliases
-                            if h.address == delegated_host_name:
-                                delegated_host = h
-                                break
-                        else:
-                            delegated_host = Host(name=delegated_host_name)
-                            delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars)
+                        delegated_host = Host(name=delegated_host_name)
             else:
                 delegated_host = Host(name=delegated_host_name)
-                delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars)
 
             # now we go fetch the vars for the delegated-to host and save them in our
             # master dictionary of variables to be used later in the TaskExecutor/PlayContext
