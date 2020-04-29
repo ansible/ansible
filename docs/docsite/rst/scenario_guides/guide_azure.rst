@@ -286,14 +286,15 @@ Dynamic Inventory Script
 
 If you are not familiar with Ansible's dynamic inventory scripts, check out :ref:`Intro to Dynamic Inventory <intro_dynamic_inventory>`.
 
-The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the
+The Azure Resource Manager inventory script is called  `azure_rm.py  <https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/azure_rm.py>`_. It authenticates with the Azure API exactly the same as the
 Azure modules, which means you will either define the same environment variables described above in `Using Environment Variables`_,
 create a ``$HOME/.azure/credentials`` file (also described above in `Storing in a File`_), or pass command line parameters. To see available command
 line options execute the following:
 
 .. code-block:: bash
 
-    $ ./ansible/contrib/inventory/azure_rm.py --help
+    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/azure_rm.py
+    $ ./azure_rm.py --help
 
 As with all dynamic inventory scripts, the script can be executed directly, passed as a parameter to the ansible command,
 or passed directly to ansible-playbook using the -i option. No matter how it is executed the script produces JSON representing
@@ -395,8 +396,9 @@ If you don't need the powerstate, you can improve performance by turning off pow
 
 * AZURE_INCLUDE_POWERSTATE=no
 
-A sample azure_rm.ini file is included along with the inventory script in contrib/inventory. An .ini
-file will contain the following:
+A sample azure_rm.ini file is included along with the inventory script in
+`here <https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/azure_rm.ini>`_.
+An .ini file will contain the following:
 
 .. code-block:: ini
 
@@ -429,6 +431,9 @@ Here are some examples using the inventory script:
 
 .. code-block:: bash
 
+    # Download inventory script
+    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/azure_rm.py
+
     # Execute /bin/uname on all instances in the Testing resource group
     $ ansible -i azure_rm.py Testing -m shell -a "/bin/uname -a"
 
@@ -439,10 +444,10 @@ Here are some examples using the inventory script:
     $ ansible -i azure_rm.py linux -m ping
 
     # Use the inventory script to print instance specific information
-    $ ./ansible/contrib/inventory/azure_rm.py --host my_instance_host_name --resource-groups=Testing --pretty
+    $ ./azure_rm.py --host my_instance_host_name --resource-groups=Testing --pretty
 
     # Use the inventory script with ansible-playbook
-    $ ansible-playbook -i ./ansible/contrib/inventory/azure_rm.py test_playbook.yml
+    $ ansible-playbook -i ./azure_rm.py test_playbook.yml
 
 Here is a simple playbook to exercise the Azure inventory script:
 
@@ -453,13 +458,14 @@ Here is a simple playbook to exercise the Azure inventory script:
       connection: local
       gather_facts: no
       tasks:
-        - debug: msg="{{ inventory_hostname }} has powerstate {{ powerstate }}"
+        - debug:
+            msg: "{{ inventory_hostname }} has powerstate {{ powerstate }}"
 
 You can execute the playbook with something like:
 
 .. code-block:: bash
 
-    $ ansible-playbook -i ./ansible/contrib/inventory/azure_rm.py test_azure_inventory.yml
+    $ ansible-playbook -i ./azure_rm.py test_azure_inventory.yml
 
 
 Disabling certificate validation on Azure endpoints

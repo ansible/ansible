@@ -190,7 +190,7 @@ examples to get you started:
     DOCKER_DEFAULT_IP=192.0.2.5 ./docker.py --pretty
 
     # Run as input to a playbook:
-    ansible-playbook -i ~/projects/ansible/contrib/inventory/docker.py docker_inventory_test.yml
+    ansible-playbook -i ./docker.py docker_inventory_test.yml
 
     # Simple playbook to invoke with the above example:
 
@@ -198,12 +198,13 @@ examples to get you started:
           hosts: all
           gather_facts: no
           tasks:
-            - debug: msg="Container - {{ inventory_hostname }}"
+            - debug:
+                msg: "Container - {{ inventory_hostname }}"
 
 Configuration
 .............
 You can control the behavior of the inventory script by defining environment variables, or
-creating a docker.yml file (sample provided in ansible/contrib/inventory). The order of precedence is the docker.yml
+creating a docker.yml file (sample provided in https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/docker.py). The order of precedence is the docker.yml
 file and then environment variables.
 
 

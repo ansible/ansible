@@ -126,7 +126,7 @@ More Complex Playbooks
 In this example, we'll create a CoreOS cluster with `user data <https://support.packet.com/kb/articles/user-data>`_.
 
 
-The CoreOS cluster will use `etcd <https://coreos.com/etcd/>`_ for discovery of other servers in the cluster. Before provisioning your servers, you'll need to generate a discovery token for your cluster:
+The CoreOS cluster will use `etcd <https://etcd.io/>`_ for discovery of other servers in the cluster. Before provisioning your servers, you'll need to generate a discovery token for your cluster:
 
 .. code-block:: bash
 
@@ -206,9 +206,11 @@ Once you create a couple of devices, you might appreciate the dynamic inventory 
 Dynamic Inventory Script
 ========================
 
-The dynamic inventory script queries the Packet API for a list of hosts, and exposes it to Ansible so you can easily identify and act on Packet devices. You can find it in Ansible's git repo at `contrib/inventory/packet_net.py <https://github.com/ansible/ansible/blob/devel/contrib/inventory/packet_net.py>`_.
+The dynamic inventory script queries the Packet API for a list of hosts, and exposes it to Ansible so you can easily identify and act on Packet devices.
 
-The inventory script is configurable via a `ini file <https://github.com/ansible/ansible/blob/devel/contrib/inventory/packet_net.ini>`_.
+You can find it in Ansible Community General Collection's git repo at `scripts/inventory/packet_net.py <https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/packet_net.py>`_.
+
+The inventory script is configurable via a `ini file <https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/packet_net.ini>`_.
 
 If you want to use the inventory script, you must first export your Packet API token to a PACKET_API_TOKEN environment variable.
 
@@ -216,9 +218,9 @@ You can either copy the inventory and ini config out from the cloned git repo, o
 
 .. code-block:: bash
 
-    $ wget https://github.com/ansible/ansible/raw/devel/contrib/inventory/packet_net.py
+    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/packet_net.py
     $ chmod +x packet_net.py
-    $ wget https://github.com/ansible/ansible/raw/devel/contrib/inventory/packet_net.ini
+    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/packet_net.ini
 
 In order to understand what the inventory script gives to Ansible you can run:
 
