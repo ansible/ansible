@@ -238,7 +238,7 @@ class ModuleValidator(Validator):
 
     WHITELIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
-    def __init__(self, path, analyze_arg_spec=False, collection=None, base_branch=None, git_cache=None, reporter=None):
+    def __init__(self, path, analyze_arg_spec=False, collection=None, base_branch=None, git_cache=None, reporter=None, routing=None):
         super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
@@ -248,13 +248,12 @@ class ModuleValidator(Validator):
         self.analyze_arg_spec = analyze_arg_spec
 
         self.collection = collection
+        self.routing = routing
 
         self.base_branch = base_branch
         self.git_cache = git_cache or GitCache()
 
         self._python_module_override = False
-
-        self.routing = {}
 
         with open(path) as f:
             self.text = f.read()
@@ -269,17 +268,6 @@ class ModuleValidator(Validator):
         else:
             self.base_module = None
 
-        if self.collection:
-            routing_file = 'meta/routing.yml'
-            # Load meta/routing.yml if it exists, as it may contain deprecation information
-            if os.path.isfile(routing_file):
-                try:
-                    with open(routing_file) as f:
-                        self.routing = yaml.safe_load(f)
-                except yaml.error.MarkedYAMLError as ex:
-                    print('%s:%d:%d: YAML load failed: %s' % (routing_file, ex.context_mark.line + 1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
-                except Exception as ex:  # pylint: disable=broad-except
-                    print('%s:%d:%d: YAML load failed: %s' % (routing_file, 0, 0, re.sub(r'\s+', ' ', str(ex))))
 
     def __enter__(self):
         return self
@@ -2155,8 +2143,19 @@ def run():
 
     check_dirs = set()
 
+    routing = None
     if args.collection:
         setup_collection_loader()
+        routing_file = 'meta/routing.yml'
+        # Load meta/routing.yml if it exists, as it may contain deprecation information
+        if os.path.isfile(routing_file):
+            try:
+                with open(routing_file) as f:
+                    routing = yaml.safe_load(f)
+            except yaml.error.MarkedYAMLError as ex:
+                print('%s:%d:%d: YAML load failed: %s' % (routing_file, ex.context_mark.line + 1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
+            except Exception as ex:  # pylint: disable=broad-except
+                print('%s:%d:%d: YAML load failed: %s' % (routing_file, 0, 0, re.sub(r'\s+', ' ', str(ex))))
 
     for module in args.modules:
         if os.path.isfile(module):
@@ -2166,7 +2165,7 @@ def run():
             if ModuleValidator.is_blacklisted(path):
                 continue
             with ModuleValidator(path, collection=args.collection, analyze_arg_spec=args.arg_spec,
-                                 base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv1:
+                                 base_branch=args.base_branch, git_cache=git_cache, reporter=reporter, routing=routing) as mv1:
                 mv1.validate()
                 check_dirs.add(os.path.dirname(path))
 
@@ -2189,7 +2188,7 @@ def run():
                 if ModuleValidator.is_blacklisted(path):
                     continue
                 with ModuleValidator(path, collection=args.collection, analyze_arg_spec=args.arg_spec,
-                                     base_branch=args.base_branch, git_cache=git_cache, reporter=reporter) as mv2:
+                                     base_branch=args.base_branch, git_cache=git_cache, reporter=reporter, routing=routing) as mv2:
                     mv2.validate()
 
     if not args.collection:
