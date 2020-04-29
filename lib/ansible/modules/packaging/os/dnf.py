@@ -335,7 +335,10 @@ class DnfModule(YumDnf):
         For unhandled dnf.exceptions.Error scenarios, there are certain error
         messages we want to filter in an install scenario. Do that here.
         """
-        if to_text("no package matched") in to_text(error):
+        if (
+            to_text("no package matched") in to_text(error) or
+            to_text("No match for argument:") in to_text(error)
+        ):
             return "No package {0} available.".format(spec)
 
         return error
@@ -346,7 +349,10 @@ class DnfModule(YumDnf):
         messages we want to ignore in a removal scenario as known benign
         failures. Do that here.
         """
-        if 'no package matched' in to_native(error):
+        if (
+            'no package matched' in to_native(error) or
+            'No match for argument:' in to_native(error)
+        ):
             return (False, "{0} is not installed".format(spec))
 
         # Return value is tuple of:
