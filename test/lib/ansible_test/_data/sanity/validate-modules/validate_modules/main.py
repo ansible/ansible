@@ -268,7 +268,6 @@ class ModuleValidator(Validator):
         else:
             self.base_module = None
 
-
     def __enter__(self):
         return self
 
