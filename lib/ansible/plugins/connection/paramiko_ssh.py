@@ -135,8 +135,10 @@ DOCUMENTATION = """
         ini:
           - section: paramiko_connection
             key: banner_timeout
+            version_added: '2.10'
         env:
           - name: ANSIBLE_PARAMIKO_BANNER_TIMEOUT
+            version_added: '2.10'
 # TODO:
 #timeout=self._play_context.timeout,
 """
