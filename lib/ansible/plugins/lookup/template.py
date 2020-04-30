@@ -45,6 +45,16 @@ DOCUMENTATION = """
         default: {}
         version_added: '2.3'
         type: dict
+      comment_start_string:
+        description: The string marking the beginning of a comment statement.
+        default: '{#'
+        version_added: '2.9'
+        type: str
+      variable_end_string:
+        description: The string marking the end of a comment statement.
+        default: '#}'
+        version_added: '2.9'
+        type: str
 """
 
 EXAMPLES = """
@@ -55,6 +65,10 @@ EXAMPLES = """
 - name: show templating results with different variable start and end string
   debug:
     msg: "{{ lookup('template', './some_template.j2', variable_start_string='[%', variable_end_string='%]') }}"
+
+- name: show templating results with different comment start and end string
+  debug:
+    msg: "{{ lookup('template', './some_template.j2', comment_start_string='[#', comment_end_string='#]') }}"
 """
 
 RETURN = """
@@ -94,6 +108,8 @@ class LookupModule(LookupBase):
         jinja2_native = self.get_option('jinja2_native')
         variable_start_string = self.get_option('variable_start_string')
         variable_end_string = self.get_option('variable_end_string')
+        comment_start_string = self.get_option('comment_start_string')
+        comment_end_string = self.get_option('comment_end_string')
 
         if USE_JINJA2_NATIVE and not jinja2_native:
             templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
@@ -132,6 +148,8 @@ class LookupModule(LookupBase):
 
                 with templar.set_temporary_context(variable_start_string=variable_start_string,
                                                    variable_end_string=variable_end_string,
+                                                   comment_start_string=comment_start_string,
+                                                   comment_end_string=comment_end_string,
                                                    available_variables=vars, searchpath=searchpath):
                     res = templar.template(template_data, preserve_trailing_newlines=True,
                                            convert_data=convert_data_p, escape_backslashes=False)
