@@ -61,4 +61,3 @@
             - twoone[item]|dictsort == ansible_facts[item]|dictsort
       loop: '{{twoone.keys()|list}}'
       when: twoone[item] is mapping
-
