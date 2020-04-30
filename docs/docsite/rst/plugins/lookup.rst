@@ -82,7 +82,7 @@ To get a warning instead of a failure::
 
     [WARNING]: Unable to find '/nosuchfile' in expected paths (use -vvvvv to see paths)
 
-    [WARNING]: An unhandled exception occurred while running the lookup plugin 'file'. Error was a <class 'ansible.errors.AnsibleError'>, original message: could not locate file in lookup: /sosuchfile
+    [WARNING]: An unhandled exception occurred while running the lookup plugin 'file'. Error was a <class 'ansible.errors.AnsibleError'>, original message: could not locate file in lookup: /nosuchfile
 
     ok: [localhost] => {
         "msg": ""
