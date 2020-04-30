@@ -1,0 +1,2 @@
+minor_changes:
+    - Require the `toml` python library as the toml inventory plugin is now a supported offering.
