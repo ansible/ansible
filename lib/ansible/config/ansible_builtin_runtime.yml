@@ -1688,6 +1688,38 @@ plugin_routing:
       redirect: community.general.lldp
     netcup_dns:
       redirect: community.general.netcup_dns
+    nios_a_record:
+      redirect: community.general.nios_a_record
+    nios_aaaa_record:
+      redirect: community.general.nios_aaaa_record
+    nios_cname_record:
+      redirect: community.general.nios_cname_record
+    nios_dns_view:
+      redirect: community.general.nios_dns_view
+    nios_fixed_address:
+      redirect: community.general.nios_fixed_address
+    nios_host_record:
+      redirect: community.general.nios_host_record
+    nios_member:
+      redirect: community.general.nios_member
+    nios_mx_record:
+      redirect: community.general.nios_mx_record
+    nios_naptr_record:
+      redirect: community.general.nios_naptr_record
+    nios_network:
+      redirect: community.general.nios_network
+    nios_network_view:
+      redirect: community.general.nios_network_view
+    nios_nsgroup:
+      redirect: community.general.nios_nsgroup
+    nios_ptr_record:
+      redirect: community.general.nios_ptr_record
+    nios_srv_record:
+      redirect: community.general.nios_srv_record
+    nios_txt_record:
+      redirect: community.general.nios_txt_record
+    nios_zone:
+      redirect: community.general.nios_zone
     nmcli:
       redirect: community.general.nmcli
     nsupdate:
@@ -9236,7 +9268,12 @@ plugin_routing:
       redirect: community.general.nios
 =======
       redirect: community.general.netscaler
+<<<<<<< HEAD:lib/ansible/config/ansible_builtin_runtime.yml
 >>>>>>> PR1 removed Infoblox contents:lib/ansible/config/routing.yml
+=======
+    nios:
+      redirect: community.general.nios
+>>>>>>> reverting the changes of routing.yml file:lib/ansible/config/routing.yml
     nso:
       redirect: community.network.nso
     oneview:
@@ -9568,6 +9605,12 @@ plugin_routing:
       redirect: community.general.lmdb_kv
     manifold:
       redirect: community.general.manifold
+    nios:
+      redirect: community.general.nios
+    nios_next_ip:
+      redirect: community.general.nios_next_ip
+    nios_next_network:
+      redirect: community.general.nios_next_network
     onepassword:
       redirect: community.general.onepassword
     onepassword_raw:
