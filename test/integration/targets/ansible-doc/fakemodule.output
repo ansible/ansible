@@ -1,0 +1,20 @@
+> FAKEMODULE    (./collections/ansible_collections/testns/testcol/plugins/modules/fakemodule.py)
+
+        this is a fake module
+
+  * This module is maintained by The Ansible Community
+OPTIONS (= is mandatory):
+
+- _notreal
+        really not a real option
+        [Default: (null)]
+
+
+AUTHOR: me
+        METADATA:
+          status:
+          - preview
+          supported_by: community
+        
+SHORT_DESCIPTOIN: fake module
+
