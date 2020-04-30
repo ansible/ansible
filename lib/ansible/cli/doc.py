@@ -18,33 +18,39 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.collections.list import list_collection_dirs, get_collection_name_from_path
+from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Container, Sequence
+from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import string_types
 from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
-from ansible.utils.collection_loader import set_collection_playbook_paths
+from ansible.utils.collection_loader import set_collection_playbook_paths, get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
+
 display = Display()
 
 
 def jdump(text):
-    display.display(json.dumps(text, sort_keys=True, indent=4))
+    try:
+        display.display(json.dumps(text, cls=AnsibleJSONEncoder, sort_keys=True, indent=4))
+    except TypeError as e:
+        raise AnsibleError('We could not convert all the documentation into JSON as there was a conversion issue: %s' % to_native(e))
 
 
 def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
 
     # TODO: take into account routing.yml once implemented
-    colldirs = list_collection_dirs(coll_filter=coll_filter)
-    for path in colldirs:
-        collname = get_collection_name_from_path(path)
+    b_colldirs = list_collection_dirs(coll_filter=coll_filter)
+    for b_path in b_colldirs:
+        path = to_text(b_path, errors='surrogate_or_strict')
+        collname = get_collection_name_from_path(b_path)
         ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
-        plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), plugin_type, collname))
+        plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), plugin_type, collection=collname))
 
 
 class RemovedPlugin(Exception):
@@ -235,7 +241,7 @@ class DocCLI(CLI):
                 # Some changes to how json docs are formatted
                 for plugin, doc_data in plugin_docs.items():
                     try:
-                        doc_data['return'] = yaml.load(doc_data['return'])
+                        doc_data['return'] = yaml.safe_load(doc_data['return'])
                     except Exception:
                         pass
 
@@ -474,6 +480,7 @@ class DocCLI(CLI):
         # Uses a list to get the order right
         ret = []
         for i in finder._get_paths(subdirs=False):
+            i = to_text(i, errors='surrogate_or_strict')
             if i not in ret:
                 ret.append(i)
         return os.pathsep.join(ret)
