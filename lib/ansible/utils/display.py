@@ -27,11 +27,7 @@ import os
 import random
 import subprocess
 import sys
-import textwrap
 import time
-
-from struct import unpack, pack
-from termios import TIOCGWINSZ
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
@@ -264,22 +260,12 @@ class Display(with_metaclass(Singleton, object)):
         else:
             raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
 
-        wrapped = textwrap.wrap(new_msg, self.columns, drop_whitespace=False)
-        new_msg = "\n".join(wrapped) + "\n"
-
         if new_msg not in self._deprecations:
             self.display(new_msg.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[new_msg] = 1
 
-    def warning(self, msg, formatted=False):
-
-        if not formatted:
-            new_msg = "[WARNING]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
-            new_msg = "\n".join(wrapped) + "\n"
-        else:
-            new_msg = "\n[WARNING]: \n%s" % msg
-
+    def warning(self, msg):
+        new_msg = "\n[WARNING]: \n%s" % msg
         if new_msg not in self._warns:
             self.display(new_msg, color=C.COLOR_WARN, stderr=True)
             self._warns[new_msg] = 1
@@ -323,13 +309,8 @@ class Display(with_metaclass(Singleton, object)):
         (out, err) = cmd.communicate()
         self.display(u"%s\n" % to_text(out), color=color)
 
-    def error(self, msg, wrap_text=True):
-        if wrap_text:
-            new_msg = u"\n[ERROR]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, self.columns)
-            new_msg = u"\n".join(wrapped) + u"\n"
-        else:
-            new_msg = u"ERROR! %s" % msg
+    def error(self, msg):
+        new_msg = u"ERROR! %s" % msg
         if new_msg not in self._errors:
             self.display(new_msg, color=C.COLOR_ERROR, stderr=True)
             self._errors[new_msg] = 1
@@ -400,9 +381,3 @@ class Display(with_metaclass(Singleton, object)):
             encoding = 'utf-8'
         return encoding
 
-    def _set_column_width(self):
-        if os.isatty(0):
-            tty_size = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
-        else:
-            tty_size = 0
-        self.columns = max(79, tty_size - 1)
