@@ -273,7 +273,7 @@ class Display(with_metaclass(Singleton, object)):
 
     def warning(self, msg, formatted=False):
 
-        if not formatted:
+        if formatted:
             new_msg = "[WARNING]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
             new_msg = "\n".join(wrapped) + "\n"
@@ -323,7 +323,7 @@ class Display(with_metaclass(Singleton, object)):
         (out, err) = cmd.communicate()
         self.display(u"%s\n" % to_text(out), color=color)
 
-    def error(self, msg, wrap_text=True):
+    def error(self, msg, wrap_text=False):
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
