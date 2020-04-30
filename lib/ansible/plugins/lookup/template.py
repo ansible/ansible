@@ -50,7 +50,7 @@ DOCUMENTATION = """
         default: '{#'
         version_added: '2.9'
         type: str
-      variable_end_string:
+      comment_end_string:
         description: The string marking the end of a comment statement.
         default: '#}'
         version_added: '2.9'
