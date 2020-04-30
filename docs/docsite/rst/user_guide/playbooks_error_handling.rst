@@ -164,7 +164,7 @@ Sometimes you want a failure on a single host, or failures on a certain percenta
 Aborting on the first error: any_errors_fatal
 ---------------------------------------------
 
-If you set ``any_errors_fatal`` and a task returns an error, Ansible finishes the fatal task on all hosts in the current batch, then stops executing the play on all hosts. Subsequent tasks and plays are not executed. You can recover from fatal errors by adding a :ref:`rescue section <:ref:`block_error_handling`>` to the block. You can set ``any_errors_fatal`` at the play or block level::
+If you set ``any_errors_fatal`` and a task returns an error, Ansible finishes the fatal task on all hosts in the current batch, then stops executing the play on all hosts. Subsequent tasks and plays are not executed. You can recover from fatal errors by adding a :ref:`rescue section <block_error_handling>` to the block. You can set ``any_errors_fatal`` at the play or block level::
 
      - hosts: somehosts
        any_errors_fatal: true

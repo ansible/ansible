@@ -43,7 +43,7 @@ In addition to strategies, several :ref:`keywords<playbook_keywords>` also affec
 Setting the batch size with ``serial``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, Ansible runs in parallel against all the hosts in the :ref:`pattern <playbooks_patterns>` you set in the ``hosts:`` field of each play. If you want to manage only a few machines at a time, for example during a rolling update, you can define how many hosts Ansible should manage at a single time using the ``serial`` keyword::
+By default, Ansible runs in parallel against all the hosts in the :ref:`pattern <intro_patterns>` you set in the ``hosts:`` field of each play. If you want to manage only a few machines at a time, for example during a rolling update, you can define how many hosts Ansible should manage at a single time using the ``serial`` keyword::
 
     ---
     - name: test play

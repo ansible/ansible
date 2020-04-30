@@ -516,7 +516,7 @@ By default, Ansible gathers facts at the beginning of each play. If you do not n
 Adding custom facts
 -------------------
 
-The setup module in Ansible automatically discovers a standard set of facts about each host. If you want to add custom values to your facts, you can write a custom facts module, set temporary facts with a ``set_fact`` task (see :ref:`<set_fact_module>`), or provide permanent custom facts using the facts.d directory.
+The setup module in Ansible automatically discovers a standard set of facts about each host. If you want to add custom values to your facts, you can write a custom facts module, set temporary facts with a ``set_fact`` task, or provide permanent custom facts using the facts.d directory.
 
 .. _local_facts:
 

@@ -10,7 +10,7 @@ Ansible uses Jinja2 :ref:`tests <playbooks_tests>` and :ref:`filters <playbooks_
 
 .. note::
 
-  There are many options to control execution flow in Ansible. You can find more examples of supported conditionals at `https://jinja.palletsprojects.com/en/master/templates/#comparisons`_.
+  There are many options to control execution flow in Ansible. You can find more examples of supported conditionals at `<https://jinja.palletsprojects.com/en/master/templates/#comparisons>`_.
 
 .. contents::
    :local:

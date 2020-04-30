@@ -37,6 +37,8 @@ The ``debugger`` keyword can be used on any block where you provide a ``name`` a
 
    on_skipped                Only invoke the debugger if the task is skipped
 
+   ========================= ======================================================
+
 When you use the ``debugger`` keyword, the setting you use overrides any global configuration to enable or disable the debugger. If you define ``debugger`` at two different levels, for example in a role and in a task, the more specific definition wins: the definition on a task overrides the definition on a block, which overrides the definition on a role or play.
 
 Here are examples of invoking the debugger with the ``debugger`` keyword::

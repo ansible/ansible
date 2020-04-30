@@ -4,7 +4,7 @@
 Using Variables
 ***************
 
-Ansible uses variables to manage differences between systems. With Ansible, you can execute tasks and playbooks on multiple different systems with a single command. To represent the variations among those different systems, you can create variables with standard YAML syntax, including lists and dictionaries. You can set these variables in your playbooks, in your :ref:`inventory <intro_inventory>`, in re-usable :ref:`files <playbooks_reuse>` or :ref:`roles <playbooks_roles>`, or at the command line. You can also create variables during a playbook run by registering the return value or values of a task as a new variable.
+Ansible uses variables to manage differences between systems. With Ansible, you can execute tasks and playbooks on multiple different systems with a single command. To represent the variations among those different systems, you can create variables with standard YAML syntax, including lists and dictionaries. You can set these variables in your playbooks, in your :ref:`inventory <intro_inventory>`, in re-usable :ref:`files <playbooks_reuse>` or :ref:`roles <playbooks_reuse_roles>`, or at the command line. You can also create variables during a playbook run by registering the return value or values of a task as a new variable.
 
 You can use the variables you created in module arguments, in :ref:`conditional "when" statements <playbooks_conditionals>`, in :ref:`templates <playbooks_templating>`, and in :ref:`loops <playbooks_loops>`. The `ansible-examples github repository <https://github.com/ansible/ansible-examples>`_ contains many examples of using variables in Ansible.
 
@@ -254,7 +254,7 @@ Values passed in using the ``key=value`` syntax are interpreted as strings. Use 
 JSON string format
 ^^^^^^^^^^^^^^^^^^
 
-.. code-block:: json
+.. code-block:: text
 
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
@@ -309,7 +309,7 @@ Ansible does apply variable precedence, and you might have a use for it. Here is
   #. set_facts / registered vars
   #. role (and include_role) params
   #. include params
-  #. extra vars (for example, ``-e "user=my_user")(always win precedence)
+  #. extra vars (for example, ``-e "user=my_user"``)(always win precedence)
 
 In general, Ansible gives higher precedence to variables that were defined more recently, more actively, and with more explicit scope. Variables in the the defaults folder inside a role are easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in the namespace. Host and/or inventory variables override role defaults, but do not override explicit includes like the vars directory or an ``include_vars`` task.
 

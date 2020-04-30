@@ -15,8 +15,7 @@ To start executing your playbook at a particular task (usually the task that fai
 
     ansible-playbook playbook.yml --start-at-task="install packages"
 
-In this example, Ansible starts executing your playbook at a task named "install packages". This feature does not work with tasks inside dynamically re-used roles or tasks (``include_*), see :ref:`dynamic_vs_static`.
-
+In this example, Ansible starts executing your playbook at a task named "install packages". This feature does not work with tasks inside dynamically re-used roles or tasks (``include_*``), see :ref:`dynamic_vs_static`.
 
 .. _step:
 
