@@ -112,8 +112,8 @@ options:
         description:
           - A dictionary of threshold windows by status
           - These options only apply to anomaly monitors which are of the "query alert" type; Use elsewhere will be ignored.
-          - recovery_window: Describes how long an anomalous metric must be normal before the alert recovers
-          - trigger_window: Describes how long a metric must be anomalous before an alert triggers
+          - "recovery_window: Describes how long an anomalous metric must be normal before the alert recovers"
+          - "trigger_window: Describes how long a metric must be anomalous before an alert triggers"
         type: dict
     locked:
         description:
