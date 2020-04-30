@@ -84,8 +84,8 @@ Conditions based on registered variables
 
 Often in a playbook you want to execute or skip a task based on the outcome of an earlier task. For example, you might want to configure a service after it is upgraded by an earlier task. To create a conditional based on a registered variable:
 
-  # register the outcome of the earlier task as a variable
-  # create a conditional test based on the registered variable
+  #. register the outcome of the earlier task as a variable
+  #. create a conditional test based on the registered variable
 
 You create the name of the registered variable using the ``register`` keyword. A registered variable always contains the status of the task that created it as well as any output that task generated. You can use registered variables in templates and action lines as well as in conditional ``when`` statements. You can access the string contents of the registered variable using ``variable.stdout``. For example::
 
