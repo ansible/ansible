@@ -1338,6 +1338,26 @@
     that:
       - "dir_attrs.stat.mode == '0755'"
 
+# Test that recursive copy of a directory containing a symlink to another
+# directory, with mode=preserve and local_follow=no works.
+# See: https://github.com/ansible/ansible/issues/68471
+
+- name: Test recursive copy of dir with symlinks, mode=preserve, local_follow=False
+  copy:
+    src: '{{ role_path }}/files/subdir/'
+    dest: '{{ local_temp_dir }}/preserve_symlink/'
+    mode: preserve
+    local_follow: no
+
+- name: check that we actually used and still have a symlink
+  stat: path={{ local_temp_dir }}/preserve_symlink/subdir1/bar.txt
+  register: symlink_path
+
+- assert:
+    that:
+      - symlink_path.stat.exists
+      - symlink_path.stat.islnk
+
 #
 # I believe the below section is now covered in the recursive copying section.
 # Hold on for now as an original test case but delete once confirmed that

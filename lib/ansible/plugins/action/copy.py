@@ -572,6 +572,11 @@ class ActionModule(ActionBase):
             if source_files['directories']:
                 new_module_args['follow'] = False
 
+            # file module cannot deal with 'preserve' mode and is meaningless
+            # for symlinks anyway, so just don't pass it.
+            if new_module_args.get('mode', None) == 'preserve':
+                new_module_args.pop('mode')
+
             module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
             module_executed = True
 
