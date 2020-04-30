@@ -369,6 +369,7 @@ Possible values (sample, not complete list)::
     OracleLinux
     RedHat
     Slackware
+    SLES
     SMGL
     SUSE
     Ubuntu
