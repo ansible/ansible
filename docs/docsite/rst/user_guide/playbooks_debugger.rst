@@ -1,56 +1,53 @@
 .. _playbook_debugger:
 
-Playbook Debugger
-=================
+***************
+Debugging tasks
+***************
 
-.. contents:: Topics
+Ansible offers a task debugger so you can try to fix errors during execution instead of fixing them in the playbook and then running it again. You have access to all of the features of the debugger in the context of the task. You can check or set the value of variables, update module arguments, and re-run the task with the new variables and arguments. The debugger lets you resolve the cause of the failure and continue with playbook execution.
 
-Ansible includes a debugger as part of the strategy plugins. This debugger enables you to debug a task.
-You have access to all of the features of the debugger in the context of the task.  You can then, for example, check or set the value of variables, update module arguments, and re-run the task with the new variables and arguments to help resolve the cause of the failure.
+.. contents::
+   :local:
+
+Invoking the debugger
+=====================
 
 There are multiple ways to invoke the debugger.
 
 Using the debugger keyword
-++++++++++++++++++++++++++
+--------------------------
 
 .. versionadded:: 2.5
 
-The ``debugger`` keyword can be used on any block where you provide a ``name`` attribute, such as a play, role, block or task.
+The ``debugger`` keyword can be used on any block where you provide a ``name`` attribute, such as a play, role, block or task. The ``debugger`` keyword accepts five values:
 
-The ``debugger`` keyword accepts several values:
+.. table::
+   :class: documentation-table
 
-always
-  Always invoke the debugger, regardless of the outcome
+   ========================= ======================================================
+   Value                     Result
+   ========================= ======================================================
+   always                    Always invoke the debugger, regardless of the outcome
 
-never
-  Never invoke the debugger, regardless of the outcome
+   never                     Never invoke the debugger, regardless of the outcome
 
-on_failed
-  Only invoke the debugger if a task fails
+   on_failed                 Only invoke the debugger if a task fails
 
-on_unreachable
-  Only invoke the debugger if the a host was unreachable
+   on_unreachable            Only invoke the debugger if the a host was unreachable
 
-on_skipped
-  Only invoke the debugger if the task is skipped
+   on_skipped                Only invoke the debugger if the task is skipped
 
-These options override any global configuration to enable or disable the debugger.
+When you use the ``debugger`` keyword, the setting you use overrides any global configuration to enable or disable the debugger. If you define ``debugger`` at two different levels, for example in a role and in a task, the more specific definition wins: the definition on a task overrides the definition on a block, which overrides the definition on a role or play.
 
-On a task
-`````````
+Here are examples of invoking the debugger with the ``debugger`` keyword::
 
-::
-
+    # on a task
     - name: Execute a command
       command: "false"
       debugger: on_failed
 
-On a play
-`````````
-
-::
-
-    - name: Play
+    # on a play
+    - name: My play
       hosts: all
       debugger: on_skipped
       tasks:
@@ -58,7 +55,7 @@ On a play
           command: "true"
           when: False
 
-When provided at a generic level and a more specific level, the more specific wins::
+In this example, the task will open the debugger when it fails, because the task-level definition overrides the play-level definition::
 
     - name: Play
       hosts: all
@@ -68,26 +65,26 @@ When provided at a generic level and a more specific level, the more specific wi
           command: "false"
           debugger: on_failed
 
-
-Configuration or environment variable
-+++++++++++++++++++++++++++++++++++++
+In configuration or an environment variable
+-------------------------------------------
 
 .. versionadded:: 2.5
 
-In ansible.cfg::
+You can turn the task debugger on or off globally with a setting in ansible.cfg or with an environment variable. The only options are ``True`` or ``False``. If you set the configuration option or environment variable to ``True``, Ansible runs the debugger on failed tasks by default.
+
+To invoke task debugger from ansible.cfg::
 
     [defaults]
     enable_task_debugger = True
 
-As an environment variable::
+To use an an environment variable to invoke the task debugger::
 
     ANSIBLE_ENABLE_TASK_DEBUGGER=True ansible-playbook -i hosts site.yml
 
-When using this method, any failed or unreachable task will invoke the debugger,
-unless otherwise explicitly disabled.
+When you invoke the debugger using this method, any failed task will invoke the debugger, unless it is explicitly disabled for that role, play, block, or task. If you need more granular control what conditions trigger the debugger, use the ``debugger`` keyword.
 
-As a Strategy
-+++++++++++++
+As a strategy
+-------------
 
 .. note::
      This is a backwards compatible method, to match Ansible versions before 2.5,
@@ -100,17 +97,16 @@ To use the ``debug`` strategy, change the ``strategy`` attribute like this::
       tasks:
       ...
 
-If you don't want change the code, you can define ``ANSIBLE_STRATEGY=debug``
-environment variable in order to enable the debugger, or modify ``ansible.cfg`` such as::
+You can also set the strategy to ``debug`` with the environment variable ``ANSIBLE_STRATEGY=debug``, or by modifying ``ansible.cfg``::
 
     [defaults]
     strategy = debug
 
 
-Examples
-++++++++
+Using the debugger
+==================
 
-For example, run the playbook below::
+Once you invoke the debugger, you can use the seven :ref:`available_commands` to work through the error Ansible encountered. For example, if you run the playbook below, Ansible invokes the debugger because the variable *wrong_var* is undefined::
 
     - hosts: test
       debugger: on_failed
@@ -121,9 +117,7 @@ For example, run the playbook below::
         - name: wrong variable
           ping: data={{ wrong_var }}
 
-The debugger is invoked since the *wrong_var* variable is undefined.
-
-Let's change the module's arguments and run the task again
+From the debug prompt, you can change the module arguments and run the task again.
 
 .. code-block:: none
 
@@ -158,17 +152,19 @@ Let's change the module's arguments and run the task again
     PLAY RECAP *********************************************************************
     192.0.2.10               : ok=1    changed=0    unreachable=0    failed=0
 
-This time, the task runs successfully!
+With correctly defined variables, the task runs successfully.
 
 .. _available_commands:
 
-Available Commands
-++++++++++++++++++
+Available debug commands
+========================
+
+You can use these seven commands at the debug prompt:
 
 .. _pprint_command:
 
 p(print) *task/task_vars/host/result*
-`````````````````````````````````````
+-------------------------------------
 
 Print values used to execute a module::
 
@@ -195,11 +191,9 @@ Print values used to execute a module::
 .. _update_args_command:
 
 task.args[*key*] = *value*
-``````````````````````````
+--------------------------
 
-Update module's argument.
-
-If you run a playbook like this::
+Update a module argument. This sample playbook has an invalid package name::
 
     - hosts: test
       strategy: debug
@@ -210,7 +204,7 @@ If you run a playbook like this::
         - name: install package
           apt: name={{ pkg_name }}
 
-Debugger is invoked due to wrong package name, so let's fix the module's args::
+When you run the playbook, the invalid package name triggers an error, and Ansible invokes the debugger. You can fix the package name by viewing, then updating the module argument::
 
     [192.0.2.10] TASK: install package (debug)> p task.args
     {u'name': u'{{ pkg_name }}'}
@@ -219,16 +213,14 @@ Debugger is invoked due to wrong package name, so let's fix the module's args::
     {u'name': 'bash'}
     [192.0.2.10] TASK: install package (debug)> redo
 
-Then the task runs again with new args.
+When the module argument is correct, use ``redo`` to run the task again with new args.
 
 .. _update_vars_command:
 
 task_vars[*key*] = *value*
-``````````````````````````
+--------------------------
 
-Update ``task_vars``.
-
-Let's use the same playbook above, but fix ``task_vars`` instead of args::
+Update ``task_vars``. You could fix the same playbook above by viewing, then updating the task variables instead of the module args::
 
     [192.0.2.10] TASK: install package (debug)> p task_vars['pkg_name']
     u'not_exist'
@@ -238,53 +230,51 @@ Let's use the same playbook above, but fix ``task_vars`` instead of args::
     [192.0.2.10] TASK: install package (debug)> update_task
     [192.0.2.10] TASK: install package (debug)> redo
 
-Then the task runs again with new ``task_vars``.
+When you update task variables, you must use ``update_task`` to load the new variables before using ``redo`` to run the task again.
 
 .. note::
-    In 2.5 this was updated from ``vars`` to ``task_vars`` to not conflict with the ``vars()`` python function.
+    In 2.5 this was updated from ``vars`` to ``task_vars`` to avoid conflicts with the ``vars()`` python function.
 
 .. _update_task_command:
 
 u(pdate_task)
-`````````````
+-------------
 
 .. versionadded:: 2.8
 
-This command re-creates the task from the original task data structure, and templates with updated ``task_vars``
-
-See the above documentation for :ref:`update_vars_command` for an example of use.
+Re-create the task from the original task data structure and templates with updated task variables. See the entry :ref:`update_vars_command` for an example of use.
 
 .. _redo_command:
 
 r(edo)
-``````
+------
 
 Run the task again.
 
 .. _continue_command:
 
 c(ontinue)
-``````````
+----------
 
-Just continue.
+Continue executing.
 
 .. _quit_command:
 
 q(uit)
-``````
+------
 
-Quit from the debugger. The playbook execution is aborted.
+Quit the debugger. The playbook execution is aborted.
 
-Use with the free strategy
-++++++++++++++++++++++++++
+Debugging and the free strategy
+===============================
 
-Using the debugger on the ``free`` strategy will cause no further tasks to be queued or executed
-while the debugger is active. Additionally, using ``redo`` on a task to schedule it for re-execution
-may cause the rescheduled task to execute after subsequent tasks listed in your playbook.
+If you use the debugger with the ``free`` strategy, Ansible will not queue or execute any further tasks while the debugger is active. Additionally, using ``redo`` on a task to schedule it for re-execution may cause the rescheduled task to execute after subsequent tasks listed in your playbook.
 
 
 .. seealso::
 
+   :ref:`playbooks_start_and_step`
+       Running playbooks while debugging or testing
    :ref:`playbooks_intro`
        An introduction to playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
