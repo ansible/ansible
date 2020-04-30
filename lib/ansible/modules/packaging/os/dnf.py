@@ -196,6 +196,13 @@ options:
       - Has an effect only if I(download_only) is specified.
     type: str
     version_added: "2.8"
+  allowerasing:
+    description:
+      - If C(yes) it allows  erasing  of  installed  packages to resolve dependencies.
+    required: false
+    type: bool
+    default: "no"
+    version_added: "2.10"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -324,6 +331,9 @@ class DnfModule(YumDnf):
             self.with_modules = dnf.base.WITH_MODULES
         except AttributeError:
             self.with_modules = False
+
+        # DNF specific args that are not part of YumDnf
+        self.allowerasing = self.module.params['allowerasing']
 
     def is_lockfile_pid_valid(self):
         # FIXME? it looks like DNF takes care of invalid lock files itself?
@@ -866,7 +876,6 @@ class DnfModule(YumDnf):
         return False  # seems like a sane default
 
     def ensure(self):
-        allow_erasing = False
 
         response = {
             'msg': "",
@@ -1119,13 +1128,13 @@ class DnfModule(YumDnf):
 
                 # Like the dnf CLI we want to allow recursive removal of dependent
                 # packages
-                allow_erasing = True
+                self.allowerasing = True
 
                 if self.autoremove:
                     self.base.autoremove()
 
         try:
-            if not self.base.resolve(allow_erasing=allow_erasing):
+            if not self.base.resolve(allow_erasing=self.allowerasing):
                 if failure_response['failures']:
                     failure_response['msg'] = 'Failed to install some of the specified packages'
                     self.module.fail_json(**failure_response)
@@ -1257,6 +1266,10 @@ def main():
     #   list=available
     #   list=repos
     #   list=pkgspec
+
+    # Extend yumdnf_argument_spec with dnf-specific features that will never be
+    # backported to yum because yum is now in "maintenance mode" upstream
+    yumdnf_argument_spec['argument_spec']['allowerasing'] = dict(default=False, type='bool')
 
     module = AnsibleModule(
         **yumdnf_argument_spec
