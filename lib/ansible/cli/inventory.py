@@ -173,11 +173,7 @@ class InventoryCLI(CLI):
             from ansible.parsing.yaml.dumper import AnsibleDumper
             results = yaml.dump(stuff, Dumper=AnsibleDumper, default_flow_style=False)
         elif context.CLIARGS['toml']:
-            from ansible.plugins.inventory.toml import toml_dumps, HAS_TOML
-            if not HAS_TOML:
-                raise AnsibleError(
-                    'The python "toml" library is required when using the TOML output format'
-                )
+            from ansible.plugins.inventory.toml import toml_dumps
             results = toml_dumps(stuff)
         else:
             import json

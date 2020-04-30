@@ -15,8 +15,6 @@ DOCUMENTATION = '''
     description:
         - TOML based inventory format
         - File MUST have a valid '.toml' file extension
-    notes:
-        - Requires the 'toml' python library
 '''
 
 EXAMPLES = '''
@@ -94,6 +92,8 @@ import os
 
 from functools import partial
 
+import toml
+
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
@@ -102,11 +102,6 @@ from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 from ansible.utils.display import Display
 
-try:
-    import toml
-    HAS_TOML = True
-except ImportError:
-    HAS_TOML = False
 
 display = Display()
 
@@ -231,11 +226,6 @@ class InventoryModule(BaseFileInventoryPlugin):
 
     def parse(self, inventory, loader, path, cache=True):
         ''' parses the inventory file '''
-        if not HAS_TOML:
-            raise AnsibleParserError(
-                'The TOML inventory plugin requires the python "toml" library'
-            )
-
         display.warning(WARNING_MSG)
 
         super(InventoryModule, self).parse(inventory, loader, path)
