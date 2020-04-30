@@ -160,14 +160,7 @@ class AnsibleCoreCI:
                 region = args.remote_aws_region
                 # use a dedicated CI key when overriding the region selection
                 self.ci_key += '.%s' % args.remote_aws_region
-            elif is_shippable():
-                # split Shippable jobs across multiple regions to maximize use of launch credits
-                if self.platform == 'windows':
-                    region = 'us-east-2'
-                else:
-                    region = 'us-east-1'
             else:
-                # send all non-Shippable jobs to us-east-1 to reduce api key maintenance
                 region = 'us-east-1'
 
             self.path = "%s-%s" % (self.path, region)
