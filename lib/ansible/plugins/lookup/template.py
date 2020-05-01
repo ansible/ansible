@@ -48,12 +48,12 @@ DOCUMENTATION = """
       comment_start_string:
         description: The string marking the beginning of a comment statement.
         default: '{#'
-        version_added: '2.9'
+        version_added: '2.10'
         type: str
       comment_end_string:
         description: The string marking the end of a comment statement.
         default: '#}'
-        version_added: '2.9'
+        version_added: '2.10'
         type: str
 """
 
