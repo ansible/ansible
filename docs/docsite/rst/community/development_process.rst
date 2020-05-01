@@ -163,9 +163,6 @@ an existing one, so we can trace the change back to the PR that introduced it.
 
 To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
 
-Each changelog entry must contain a link to its issue between parentheses at the end.
-If there is no corresponding issue, the entry must contain a link to the PR itself.
-
 A single changelog fragment may contain multiple sections but most will only contain one section.
 The toplevel keys (bugfixes, major_changes, and so on) are defined in the
 `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our release note tool. Here are the valid sections and a description of each:
@@ -183,12 +180,15 @@ The toplevel keys (bugfixes, major_changes, and so on) are defined in the
   Features that were previously deprecated and are now removed.
 
 **bugfixes**
-  Fixes that resolve issues. If there is a specific issue related to this bugfix, add a link in the changelog entry.
+  Fixes that resolve issues.
 
 **known_issues**
   Known issues that are currently not fixed or will not be fixed.
 
-Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and include a link to the related issue if one exists.
+Each changelog entry must contain a link to its issue between parentheses at the end.
+If there is no corresponding issue, the entry must contain a link to the PR itself.
+
+Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -``.
 
 Here are some examples:
 
