@@ -210,7 +210,7 @@ Here are some examples:
       remote_src=True even if mode was not set as a parameter.  This failed on
       filesystems which do not have permission bits (https://github.com/ansible/ansible/issues/29444).
 
-You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.6/changelogs/fragments>`_ for the 2.6 release. You can also find documentation of the format, including hints on embedding rst in the yaml, in the `reno documentation <https://docs.openstack.org/reno/latest/user/usage.html#editing-a-release-note>`_.
+You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.9/changelogs/fragments>`_ for the 2.9 release.
 
 Once you've written the changelog fragment for your PR, commit the file and include it with the pull request.
 
