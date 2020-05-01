@@ -621,7 +621,7 @@ def _get_galaxy_yml(b_galaxy_yml_path):
 
 def _build_files_manifest(b_collection_path, namespace, name):
     # Contains tuple of (b_filename, only root) where 'only root' means to only ignore the file in the root dir
-    b_ignore_files = frozenset([(b'*.pyc', False), (b'*.retry', False),
+    b_ignore_files = frozenset([(b'*.pyc', False), (b'*.retry', False), (b'.git', True),
                                 (to_bytes('{0}-{1}-*.tar.gz'.format(namespace, name)), True)])
     b_ignore_dirs = frozenset([(b'CVS', False), (b'.bzr', False), (b'.hg', False), (b'.git', False), (b'.svn', False),
                                (b'__pycache__', False), (b'.tox', False)])

@@ -1,0 +1,4 @@
+bugfixes:
+  - ansible-galaxy collection build - Command did not ignore .git files, which
+    had the potential to cause troubles later on (for example, when importing
+    into Automation Hub) (https://github.com/ansible/ansible/issues/68731).
