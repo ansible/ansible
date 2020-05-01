@@ -90,7 +90,10 @@ def run_module():
         vcpu_cores=dict(type='int', required=True),
         memory=dict(type='str', required=True),
         disks=dict(type='list', required=True),
-        nics=dict(type='list', required=True)
+        nics=dict(type='list', required=True),
+        vtx_enabled=dict(type='bool', default=True, required=False),
+        auto_recovery_enabled=dict(type='bool', default=True, required=False),
+        description=dict(type='str', required=False)
     )
 
     # seed the result dict in the object
@@ -242,6 +245,9 @@ def run_module():
     instance_params['memory'] = convert_memory_abbreviation_to_bytes(
         module.params['memory'])
     instance_params['vm_mode'] = "Enhanced"
+    instance_params['vtx_enabled'] = module.params['vtx_enabled']
+    instance_params['auto_recovery_enabled'] = module.params['auto_recovery_enabled']
+    instance_params['description'] = module.params['description']
 
     def create_instance(instance_params):
         api_instance = tacp.ApplicationsApi(tacp.ApiClient(configuration))
@@ -261,7 +267,10 @@ def run_module():
             networks=instance_params['networks'],
             vnics=instance_params['vnics'],
             boot_order=instance_params['boot_order'],
-            hardware_assisted_virtualization_enabled=True)
+            hardware_assisted_virtualization_enabled=instance_params['vtx_enabled'],
+            enable_automatic_recovery=instance_params['auto_recovery_enabled'],
+            description=instance_params['description'])
+
         result['api_request_body'] = str(body)
         try:
             # Create an application from a template
