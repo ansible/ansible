@@ -12,7 +12,7 @@ Ansible provides two modes of execution that validate tasks: check mode and diff
 Using check mode
 ================
 
-Check mode is just a simulation. It will not generate output for tasks that use :ref:`conditionals based on registered variables <conditionals_registered_vars>` (results of prior tasks). However, it is great for one-node-at-time basic configuration management use cases. To run a playbook in check mode::
+Check mode is just a simulation. It will not generate output for tasks that use :ref:`conditionals based on registered variables <conditionals_registered_vars>` (results of prior tasks). However, it is great for validating configuration management playbooks that run on one node at a time. To run a playbook in check mode::
 
     ansible-playbook foo.yml --check
 
