@@ -26,9 +26,9 @@
         that:
             - onetwo[item]|dictsort == ansible_facts[item]|dictsort
       when: onetwo[item] is mapping
-  loop: '{{onetwo.keys()|list}}'
-  loop_control:
-    label: "{{item}}: {{onewto[item]}} <=> {{ansible_facts[item]}}"
+    loop: '{{onetwo.keys()|list}}'
+    loop_control:
+      label: "{{item}}: {{onewto[item]}} <=> {{ansible_facts[item]}}"
 
 
 - name: gather two and one facts
@@ -60,6 +60,6 @@
             - twoone[item]|dictsort == ansible_facts[item]|dictsort
       when: twoone[item] is mapping
 
-  loop: '{{twoone.keys()|list}}'
-  loop_control:
-    label: "{{item}}: {{twoone[item]}} <=> {{ansible_facts[item]}}"
+    loop: '{{twoone.keys()|list}}'
+    loop_control:
+      label: "{{item}}: {{twoone[item]}} <=> {{ansible_facts[item]}}"
