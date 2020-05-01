@@ -163,12 +163,15 @@ an existing one, so we can trace the change back to the PR that introduced it.
 
 To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
 
+Each changelog entry must contain a link to its issue between parentheses at the end.
+If there is no corresponding issue, the entry must contain a link to the PR itself.
+
 A single changelog fragment may contain multiple sections but most will only contain one section.
 The toplevel keys (bugfixes, major_changes, and so on) are defined in the
 `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our release note tool. Here are the valid sections and a description of each:
 
 **major_changes**
-    Major changes to Ansible itself. Generally does not include module or plugin changes.
+  Major changes to Ansible itself. Generally does not include module or plugin changes.
 
 **minor_changes**
   Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters.
@@ -192,19 +195,20 @@ Here are some examples:
 .. code-block:: yaml
 
   bugfixes:
-    - win_updates - fixed issue where running win_updates on async fails without any error
+    - win_updates - fixed issue where running win_updates on async fails
+      without any error (https://github.com/ansible/ansible/issues/29442).
 
 .. code-block:: yaml
 
   minor_changes:
-    - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)
+    - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443).
 
 .. code-block:: yaml
 
   bugfixes:
     - copy module - The copy module was attempting to change the mode of files for
-   remote_src=True even if mode was not set as a parameter.  This failed on
-   filesystems which do not have permission bits.
+      remote_src=True even if mode was not set as a parameter.  This failed on
+      filesystems which do not have permission bits (https://github.com/ansible/ansible/issues/29444).
 
 You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.6/changelogs/fragments>`_ for the 2.6 release. You can also find documentation of the format, including hints on embedding rst in the yaml, in the `reno documentation <https://docs.openstack.org/reno/latest/user/usage.html#editing-a-release-note>`_.
 
