@@ -159,7 +159,7 @@ GCP resources with the full support of the entire GCP API.
 
 The following playbook creates a GCE Instance. This instance relies on other GCP
 resources like Disk. By creating other resources separately, we can give as
-much detail as necessary about how we want to configure the other resources, e.g. 
+much detail as necessary about how we want to configure the other resources, for example
 formatting of the Disk. By registering it to a variable, we can simply insert the 
 variable into the instance task. The gcp_compute_instance module will figure out the
 rest.
