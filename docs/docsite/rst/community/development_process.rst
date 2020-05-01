@@ -188,7 +188,7 @@ The toplevel keys (bugfixes, major_changes, and so on) are defined in the
 Each changelog entry must contain a link to its issue between parentheses at the end.
 If there is no corresponding issue, the entry must contain a link to the PR itself.
 
-Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -``.
+Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and the following sentence with a lowercase letter.
 
 Here are some examples:
 
