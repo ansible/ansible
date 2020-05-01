@@ -141,7 +141,7 @@
         - 'import_as_with_context_diff_result.stdout == ""'
         - "import_as_with_context_diff_result.rc == 0"
 
-# VERIFY comment_start_string
+# VERIFY comment_start_string and comment_end_string
 
 - name: Render a template with "comment_start_string" set to [#
   template:
