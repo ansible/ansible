@@ -1953,4 +1953,15 @@ VERBOSE_TO_STDERR:
     - section: defaults
       key: verbose_to_stderr
   type: bool
+CHECK_CONDITIONAL_TEMPLATING:
+  name: Controls whether conditional statements are checked for jinja2 templating
+  default: True
+  description: If 'false', conditional statements including jinja2 templating will not generate a warning
+  type: boolean
+  env:
+    - name: ANSIBLE_CHECK_CONDITIONAL_TEMPLATING
+  ini:
+    - key: check_conditional_templating
+      section: defaults
+  version_added: "2.11"
 ...

@@ -114,7 +114,7 @@ class Conditional:
         if isinstance(conditional, bool):
             return conditional
 
-        if templar.is_template(conditional):
+        if C.CHECK_CONDITIONAL_TEMPLATING and templar.is_template(conditional):
             display.warning('conditional statements should not include jinja2 '
                             'templating delimiters such as {{ }} or {%% %%}. '
                             'Found: %s' % conditional)
