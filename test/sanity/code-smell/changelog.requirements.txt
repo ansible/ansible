@@ -1,5 +1,2 @@
-docutils
-jinja2  # ansible-base requirement
-packaging
-pyyaml
-rstcheck
+# changelog build requires python 3.6+
+antsibull-changelog==0.2.0 ; python_version >= '3.6'

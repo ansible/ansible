@@ -1,0 +1,3 @@
+# Ancestor is the first release after stable-2.9 was branched
+ancestor: 2.9.0b1
+releases: {}
