@@ -1092,14 +1092,13 @@ class ModuleValidator(Validator):
                     mismatched_deprecation = False
 
             if mismatched_deprecation:
-                if not self.collection:
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='deprecation-mismatch',
-                        msg='Module deprecation/removed must agree in Metadata, by prepending filename with'
-                            ' "_", and setting DOCUMENTATION.deprecated for deprecation or by removing all'
-                            ' documentation for removed'
-                    )
+                self.reporter.error(
+                    path=self.object_path,
+                    code='deprecation-mismatch',
+                    msg='Module deprecation/removed must agree in Metadata, by prepending filename with'
+                        ' "_", and setting DOCUMENTATION.deprecated for deprecation or by removing all'
+                        ' documentation for removed'
+                )
         else:
             # We are testing a collection
             if self.object_name.startswith('_'):
