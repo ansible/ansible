@@ -1,0 +1,2 @@
+bugfixes:
+- parse_cli - Fix error parsing Cisco IOS interface using ``start_block`` and ``end_block`` parameters.
