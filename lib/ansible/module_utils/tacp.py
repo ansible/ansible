@@ -37,7 +37,7 @@ def get_component_fields_by_name(name, component,
     elif component == "application":
         api_instance = tacp.ApplicationsApi(api_client)
         try:
-            # View flash pools for an organization
+            # View applications for an organization
             api_response = api_instance.get_applications_using_get(
                 fields=fields)
         except ApiException as e:
@@ -45,7 +45,7 @@ def get_component_fields_by_name(name, component,
     elif component == "template":
         api_instance = tacp.TemplatesApi(api_client)
         try:
-            # View flash pools for an organization
+            # View templates for an organization
             api_response = api_instance.get_templates_using_get(
                 fields=fields)
         except ApiException as e:
@@ -53,7 +53,7 @@ def get_component_fields_by_name(name, component,
     elif component == "datacenter":
         api_instance = tacp.DatacentersApi(api_client)
         try:
-            # View flash pools for an organization
+            # View datacenters for an organization
             api_response = api_instance.get_datacenters_using_get(
                 fields=fields)
         except ApiException as e:
@@ -61,7 +61,7 @@ def get_component_fields_by_name(name, component,
     elif component == "migration_zone":
         api_instance = tacp.MigrationZonesApi(api_client)
         try:
-            # View flash pools for an organization
+            # View migration zones for an organization
             api_response = api_instance.get_migration_zones_using_get(
                 fields=fields)
         except ApiException as e:
@@ -69,7 +69,7 @@ def get_component_fields_by_name(name, component,
     elif component == "vlan":
         api_instance = tacp.VlansApi(api_client)
         try:
-            # View flash pools for an organization
+            # View VLAN networks for an organization
             api_response = api_instance.get_vlans_using_get(
                 fields=fields)
         except ApiException as e:
@@ -77,7 +77,7 @@ def get_component_fields_by_name(name, component,
     elif component == "vnet":
         api_instance = tacp.VnetsApi(api_client)
         try:
-            # View flash pools for an organization
+            # View VNET networks for an organization
             api_response = api_instance.get_vnets_using_get(
                 fields=fields)
         except ApiException as e:
@@ -132,13 +132,13 @@ def convert_memory_abbreviation_to_bytes(value):
     amount_in_bytes = amount
     if unit is None:
         amount_in_bytes = amount
-    elif unit in ['k', 'kb']:
+    elif unit in ['k', 'kb', 'K', 'KB']:
         amount_in_bytes = amount * 1024
-    elif unit in ['m', 'mb']:
+    elif unit in ['m', 'mb', 'M', 'MB']:
         amount_in_bytes = amount * 1024 * 1024
-    elif unit in ['g', 'gb']:
+    elif unit in ['g', 'gb', 'G', 'GB']:
         amount_in_bytes = amount * 1024 * 1024 * 1024
-    elif unit in ['t', 'tb']:
+    elif unit in ['t', 'tb', 'T', 'TB']:
         amount_in_bytes = amount * 1024 * 1024 * 1024 * 1024
 
     return amount_in_bytes
