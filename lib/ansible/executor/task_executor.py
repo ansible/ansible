@@ -9,13 +9,14 @@ import re
 import pty
 import time
 import json
+import signal
 import subprocess
 import sys
 import termios
 import traceback
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip, AnsibleActionTimeout
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.six import iteritems, string_types, binary_type
@@ -37,6 +38,10 @@ display = Display()
 
 
 __all__ = ['TaskExecutor']
+
+
+def task_timeout(signum, frame):
+    raise AnsibleActionTimeout
 
 
 def remove_omit(task_args, omit_token):
@@ -642,14 +647,20 @@ class TaskExecutor:
         for attempt in xrange(1, retries + 1):
             display.debug("running the handler")
             try:
+                if self._task.timeout:
+                    old_sig = signal.signal(signal.SIGALRM, task_timeout)
+                    signal.alarm(self._task.timeout)
                 result = self._handler.run(task_vars=variables)
             except AnsibleActionSkip as e:
                 return dict(skipped=True, msg=to_text(e))
-            except AnsibleActionFail as e:
+            except (AnsibleActionFail, AnsibleActionTimeout) as e:
                 return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
             finally:
+                if self._task.timeout:
+                    signal.alarm(0)
+                    old_sig = signal.signal(signal.SIGALRM, old_sig)
                 self._handler.cleanup()
             display.debug("handler run complete")
 

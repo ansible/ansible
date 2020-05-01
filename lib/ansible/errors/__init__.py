@@ -312,3 +312,11 @@ class AnsibleActionFail(AnsibleAction):
 class _AnsibleActionDone(AnsibleAction):
     ''' an action runtime early exit'''
     pass
+
+class AnsibleActionTimeout(AnsibleActionFail):
+    ''' an action runtime failure'''
+    def __init__(self, message="The action failed to execute in the expected time frame",
+                 obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
+
+        super(AnsibleActionTimeout, self).__init__(message=message, obj=obj, show_content=show_content,
+                                                suppress_extended_error=suppress_extended_error, orig_exc=orig_exc, result=result)
