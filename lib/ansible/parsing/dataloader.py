@@ -75,11 +75,11 @@ class DataLoader:
     def set_vault_secrets(self, vault_secrets):
         self._vault.secrets = vault_secrets
 
-    def load(self, data, file_name='<string>', show_content=True):
+    def load(self, data, file_name='<string>', show_content=True, json_only=False):
         '''Backwards compat for now'''
-        return from_yaml(data, file_name, show_content, self._vault.secrets)
+        return from_yaml(data, file_name, show_content, self._vault.secrets, json_only=json_only)
 
-    def load_from_file(self, file_name, cache=True, unsafe=False):
+    def load_from_file(self, file_name, cache=True, unsafe=False, json_only=False):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
 
         file_name = self.path_dwim(file_name)
@@ -94,7 +94,7 @@ class DataLoader:
             (b_file_data, show_content) = self._get_file_contents(file_name)
 
             file_data = to_text(b_file_data, errors='surrogate_or_strict')
-            parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content)
+            parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content, json_only=json_only)
 
             # cache the file contents for next time
             self._FILE_CACHE[file_name] = parsed_data
