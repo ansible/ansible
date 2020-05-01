@@ -1005,7 +1005,7 @@ class ModuleValidator(Validator):
                             doc_schema(
                                 os.readlink(self.object_path).split('.')[0],
                                 version_added=not bool(self.collection),
-                                deprecated_module=deprecated
+                                deprecated_module=deprecated,
                             ),
                             'DOCUMENTATION',
                             'invalid-documentation',
@@ -1017,7 +1017,7 @@ class ModuleValidator(Validator):
                             doc_schema(
                                 self.object_name.split('.')[0],
                                 version_added=not bool(self.collection),
-                                deprecated_module=deprecated
+                                deprecated_module=deprecated,
                             ),
                             'DOCUMENTATION',
                             'invalid-documentation',
