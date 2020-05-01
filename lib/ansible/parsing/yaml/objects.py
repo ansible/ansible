@@ -22,7 +22,6 @@ __metaclass__ = type
 import sys
 import yaml
 
-from ansible import constants as C
 from ansible.module_utils.six import text_type, PY2
 from ansible.module_utils._text import to_bytes, to_text, to_native
 
