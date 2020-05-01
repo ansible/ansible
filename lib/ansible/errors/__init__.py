@@ -314,7 +314,7 @@ class _AnsibleActionDone(AnsibleAction):
     pass
 
 class AnsibleActionTimeout(AnsibleActionFail):
-    ''' an action runtime failure'''
+    ''' an action timed out, so we force a failure'''
     def __init__(self, message="The action failed to execute in the expected time frame",
                  obj=None, show_content=True, suppress_extended_error=False, orig_exc=None, result=None):
 
