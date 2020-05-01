@@ -131,6 +131,7 @@ def parse_cli(output, tmpl):
                     if lines:
                         lines.append(line)
                         blocks.append("\n".join(lines))
+                        lines = None
                     block_started = False
 
                 elif block_started:
