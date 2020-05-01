@@ -42,3 +42,34 @@
     - (init_custom_path_actual.files | map(attribute='path') | list)[0] | basename in ['docs', 'plugins', 'roles']
     - (init_custom_path_actual.files | map(attribute='path') | list)[1] | basename in ['docs', 'plugins', 'roles']
     - (init_custom_path_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles']
+
+- name: create collection for ignored files and folders
+  command: ansible-galaxy collection init ansible_test.ignore
+  args:
+    chdir: '{{ galaxy_dir }}/scratch'
+
+- name: create list of ignored files
+  set_fact:
+    collection_ignored_files:
+    - plugins/compiled.pyc
+    - something.retry
+    - .git
+
+- name: plant ignored files into the ansible_test.ignore collection
+  copy:
+    dest: '{{ galaxy_dir }}/scratch/ansible_test/ignore/{{ item }}'
+    content: '{{ item }}'
+  loop: '{{ collection_ignored_files }}'
+
+- name: create list of ignored directories
+  set_fact:
+    collection_ignored_directories:
+    - docs/.git
+    - plugins/doc_fragments/__pycache__
+    - .svn
+
+- name: plant ignored folders into the ansible_test.ignore collection
+  file:
+    path: '{{ galaxy_dir }}/scratch/ansible_test/ignore/{{ item }}'
+    state: directory
+  loop: '{{ collection_ignored_directories }}'
