@@ -147,6 +147,16 @@ def ansible_module_kwargs_schema():
     return Schema(schema)
 
 
+json_value = Schema(Any(
+    None,
+    int,
+    float,
+    [Self],
+    *list({str_type: Self} for str_type in string_types),
+    *string_types
+))
+
+
 suboption_schema = Schema(
     {
         Required('description'): Any(list_string_types, *string_types),
@@ -154,7 +164,7 @@ suboption_schema = Schema(
         'choices': list,
         'aliases': Any(list_string_types),
         'version_added': Any(float, *string_types),
-        'default': Any(None, float, int, bool, list, dict, *string_types),
+        'default': json_value,
         # Note: Types are strings, not literal bools, such as True or False
         'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
         # in case of type='list' elements define type of individual item in list
@@ -176,7 +186,7 @@ option_schema = Schema(
         'choices': list,
         'aliases': Any(list_string_types),
         'version_added': Any(float, *string_types),
-        'default': Any(None, float, int, bool, list, dict, *string_types),
+        'default': json_value,
         'suboptions': Any(None, *list_dict_suboption_schema),
         # Note: Types are strings, not literal bools, such as True or False
         'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
@@ -211,8 +221,8 @@ return_contains_schema = Any(
                 'returned': Any(*string_types),  # only returned on top level
                 Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
                 'version_added': Any(float, *string_types),
-                'sample': Any(None, list, dict, int, float, *string_types),
-                'example': Any(None, list, dict, int, float, *string_types),
+                'sample': json_value,
+                'example': json_value,
                 'contains': Any(None, *list({str_type: Self} for str_type in string_types)),
                 # in case of type='list' elements define type of individual item in list
                 'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
@@ -236,8 +246,8 @@ return_schema = Any(
                     Required('returned'): Any(*string_types),
                     Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
                     'version_added': Any(float, *string_types),
-                    'sample': Any(None, list, dict, int, float, *string_types),
-                    'example': Any(None, list, dict, int, float, *string_types),
+                    'sample': json_value,
+                    'example': json_value,
                     'contains': Any(None, *list_dict_return_contains_schema),
                     # in case of type='list' elements define type of individual item in list
                     'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
