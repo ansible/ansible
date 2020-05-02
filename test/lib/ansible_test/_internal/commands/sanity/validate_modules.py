@@ -117,19 +117,31 @@ class ValidateModulesTest(SanitySingleVersion):
             '--arg-spec',
         ]
 
+        needs_base_branch = False
         if data_context().content.collection:
             cmd.extend(['--collection', data_context().content.collection.directory])
+            if args.collection_version_added and args.collection_version_added != 'auto':
+                cmd.extend(['--collection-version_added', args.collection_version_added])
+                needs_base_branch = True
 
             try:
                 collection_detail = get_collection_detail(args, python)
 
                 if collection_detail.version:
                     cmd.extend(['--collection-version', collection_detail.version])
+                    if args.collection_version_added == 'auto':
+                        cmd.extend(['--collection-version_added', collection_detail.version])
+                        needs_base_branch = True
                 else:
                     display.warning('Skipping validate-modules collection version checks since no collection version was found.')
+                    if args.collection_version_added == 'auto':
+                        display.warning('Skipping validate-modules collection version_added checks since no collection version was found.')
             except CollectionDetailError as ex:
                 display.warning('Skipping validate-modules collection version checks since collection detail loading failed: %s' % ex.reason)
         else:
+            needs_base_branch = True
+
+        if needs_base_branch:
             base_branch = args.base_branch or get_ci_provider().get_base_branch()
 
             if base_branch:
