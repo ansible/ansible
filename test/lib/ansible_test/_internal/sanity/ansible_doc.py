@@ -103,10 +103,10 @@ class AnsibleDocTest(SanitySingleVersion):
         error_messages = []
 
         for doc_type in sorted(doc_targets):
-            for format in [None, '--json']:
+            for format_option in [None, '--json']:
                 cmd = ['ansible-doc', '-t', doc_type]
-                if format is not None:
-                    cmd.append(format)
+                if format_option is not None:
+                    cmd.append(format_option)
                 cmd.extend(sorted(doc_targets[doc_type]))
 
                 try:
