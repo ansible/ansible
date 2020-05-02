@@ -152,8 +152,7 @@ json_value = Schema(Any(
     int,
     float,
     [Self],
-    *list({str_type: Self} for str_type in string_types),
-    *string_types
+    *(list({str_type: Self} for str_type in string_types) + list(string_types))
 ))
 
 
