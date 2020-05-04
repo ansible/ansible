@@ -89,9 +89,9 @@ There are various ways to find existing issues and pull requests (PRs)
 Tools for Validating Playbooks
 ******************************
 
-- `Ansible Lint <https://github.com/ansible/ansible-lint>`_ - the official, highly configurable best-practices linter for Ansible playbooks, by Ansible.
+- `Ansible Lint <https://docs.ansible.com/ansible-lint/index.html>`_ - a highly configurable linter for Ansible playbooks.
 - `Ansible Review <https://github.com/willthames/ansible-review>`_ - an extension of Ansible Lint designed for code review.
-- `Molecule <https://github.com/ansible/molecule>`_ is a testing framework for Ansible plays and roles, by Ansible
+- `Molecule <https://molecule.readthedocs.io/en/latest/>`_ is a testing framework for Ansible plays and roles.
 - `yamllint <https://yamllint.readthedocs.io/en/stable/>`__ is a command-line utility to check syntax validity including key repetition and indentation issues.
 
 
