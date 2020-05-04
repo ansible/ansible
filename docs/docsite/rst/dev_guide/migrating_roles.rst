@@ -10,6 +10,10 @@ collection without duplicating them in each role's :file:`library/`` directory.
 
 You also need to migrate roles to collections if you want them as part of certified Ansible content.
 
+.. note::
+
+	If you want to import your collection to Galaxy, you need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_.
+
 See :ref:`developing_collections` for details on collections.
 
 
@@ -64,7 +68,7 @@ The highlighted directories above will change when you migrate to a collection-b
       │   └── tasks/
       └── tests/
 
-You will need to use the Fully Qualified Collection Name (FQCN)` when you migrate your role into a collection. The FQCN is the combination of the collection ``namespace``, collection ``name``, and the content item you are referring to.
+You will need to use the Fully Qualified Collection Name (FQCN) to use the roles and plugins when you migrate your role into a collection. The FQCN is the combination of the collection ``namespace``, collection ``name``, and the content item you are referring to.
 
 So for example, in the above collection, the FQCN to access  ``role1`` would be:
 
@@ -88,7 +92,7 @@ To migrate from a standalone role (with no plugins) to a collection role:
 
 1. Create a local :file:`ansible_collections` directory and ``cd`` to this new directory.
 
-2. Create a collection. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
+2. Create a collection. If you want to import this collection to Ansible Galaxy, you need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_.
 
 .. code-block:: bash
 
@@ -117,7 +121,7 @@ To migrate from a standalone role that has plugins to a collection role:
 
 1. Create a local :file:`ansible_collections directory` and ``cd`` to this new directory.
 
-2. Create a collection. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
+2. Create a collection. If you want to import this collection to Ansible Galaxy, you need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_.
 
 .. code-block:: bash
 
