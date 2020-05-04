@@ -83,6 +83,8 @@ Add a 'per plugin type' specific subdirectory here, including ``module_utils`` w
 
 Vars plugins are unsupported in collections. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
 
+.. _collection_module_utils:
+
 module_utils
 ^^^^^^^^^^^^
 
