@@ -1,0 +1,2 @@
+bugfixes:
+  - fixed json patching in k8s module

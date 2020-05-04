@@ -1,14 +1,40 @@
-# TODO: This is the only way I could get the kubeconfig, I don't know why. Running the lookup outside of debug seems to return an empty string
-#- debug: msg={{ lookup('env', 'K8S_AUTH_KUBECONFIG') }}
-#  register: kubeconfig
-
 # Kubernetes resources
 
 - block:
     - name: Create a namespace
       k8s:
-        name: crd
+        name: merge-type
         kind: Namespace
+
+    - name: Create a config map
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: test
+            namespace: merge-type
+          data:
+            foo: bar
+
+    - name: patch the config map
+      k8s:
+        api_version: v1
+        kind: ConfigMap
+        name: test
+        namespace: merge-type
+        merge_type: json
+        definition:
+        - op: replace
+          path: /data/foo
+          value: foo
+      register: patch_config_map
+
+    - name: check config map changed
+      assert:
+        that:
+          - patch_config_map is changed
+          - patch_config_map.resource.data.foo == "foo"
 
     - name: install custom resource definitions
       k8s:
@@ -21,14 +47,14 @@
     - name: create custom resource definition
       k8s:
         definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: crd
+        namespace: merge-type
         apply: "{{ create_crd_with_apply | default(omit) }}"
       register: create_crd
 
     - name: patch custom resource definition
       k8s:
         definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: crd
+        namespace: merge-type
       register: recreate_crd
       ignore_errors: yes
 
@@ -38,11 +64,11 @@
           - recreate_crd_default_merge_expectation
 
     - block:
-        - name: recreate custom resource definition with merge_type
+        - name: recreate custom resource definition with merge-type
           k8s:
             definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
             merge_type: merge
-            namespace: crd
+            namespace: merge-type
           register: recreate_crd_with_merge
 
         - name: recreate custom resource definition with merge_type list
@@ -51,7 +77,7 @@
             merge_type:
               - strategic-merge
               - merge
-            namespace: crd
+            namespace: merge-type
           register: recreate_crd_with_merge_list
       when: recreate_crd is successful
 
@@ -59,13 +85,14 @@
     - name: remove crd
       k8s:
         definition: "{{ lookup('file', role_path + '/files/crd-resource.yml') }}"
-        namespace: crd
+        namespace: merge-type
         state: absent
 
+
   always:
-    - name: remove crd namespace
+    - name: remove merge-type namespace
       k8s:
         kind: Namespace
-        name: crd
+        name: merge-type
         state: absent
       ignore_errors: yes
