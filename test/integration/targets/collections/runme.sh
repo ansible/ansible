@@ -17,6 +17,10 @@ ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m pin
 
 # test documentation
 ansible-doc testns.testcoll.testmodule -vvv | grep -- "- normal_doc_frag"
+# same with symlink
+ansible-doc testns.testcoll2.testmodule2 -vvv | grep "Test module"
+# now test we can list with symlink
+ansible-doc -l -vvv| grep "testns.testcoll2.testmodule2"
 
 # test adhoc default collection resolution (use unqualified collection module with playbook dir under its collection)
 echo "testing adhoc default collection support with explicit playbook dir"
