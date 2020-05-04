@@ -5,10 +5,9 @@
 Migrating Roles to Roles in Collections on Galaxy
 *************************************************
 
-You can migrate an existing standalone role into a collection-based role that you can host on Galaxy. This offers you more flexibility and resources to have your role within a collection. With Ansible collections on Galaxy, you can use a single collection as a delivery mechanism for many roles, releasing them as a single cohesive unit of re-usable automation. Inside a collection, custom plugins that used to be shipped in the role's :file:`library/`` directory can now be shared across all roles within a
-collection without duplicating them in each role's :file:`library/`` directory.
+You can migrate any existing standalone role into a collection and host the collection on Galaxy. With Ansible collections, you can distribute many roles in a single cohesive unit of re-usable automation. Inside a collection, you can share custom plugins across all roles in the collection instead of duplicating them in each role's :file:`library/`` directory.
 
-You also need to migrate roles to collections if you want them as part of certified Ansible content.
+You must migrate roles to collections if you want to distribute them as certified Ansible content.
 
 .. note::
 
@@ -88,7 +87,7 @@ A collection can contain one or more roles in the :file:`roles/` directory and t
 Migrating a role to a collection
 =================================
 
-To migrate from a standalone role (with no plugins) to a collection role:
+To migrate from a standalone role that contains no plugins to a collection role:
 
 1. Create a local :file:`ansible_collections` directory and ``cd`` to this new directory.
 
@@ -185,7 +184,7 @@ Migrating other role plugins to a collection
 To migrate other role plugins to a collection:
 
 
-1. Move any nonmodule plugins to the appropriate :file:`plugins/PLUGINTYPE/` directory. The :file:`mynamespace/mycollection/plugins/README.md` file explains the types of plugins that the collection can contain within optionally created subdirectories.
+1. Move each nonmodule plugins to the appropriate :file:`plugins/PLUGINTYPE/` directory. The :file:`mynamespace/mycollection/plugins/README.md` file explains the types of plugins that the collection can contain within optionally created subdirectories.
 
 .. code-block:: bash
 
