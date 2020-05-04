@@ -1,0 +1,25 @@
+{
+    "name": "SmartOS Zone",
+    "uname_v": "joyent_20160330T234717Z",
+    "result": {
+        "distribution_release": "SmartOS x86_64",
+        "distribution": "SmartOS",
+        "os_family": "Solaris",
+        "distribution_version": "14.3.0"
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "",
+        "name": "",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/release": "                                SmartOS x86_64\n              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n              Copyright 2010-2013 Joyent, Inc.  All Rights Reserved.\n                        Use is subject to license terms.\n                   See joyent_20141002T182809Z for assembly date and time.\n",
+        "/etc/product": "Name: Joyent Instance\nImage: base64 14.3.0\nDocumentation: http://wiki.joyent.com/jpc2/Base+Instance\n"
+    },
+    "platform.system": "SunOS"
+}
