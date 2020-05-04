@@ -189,7 +189,7 @@ options:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
             - Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
-            - Since Ansible 2.6 you can remove the expiry time specify a negative value.
+            - Since Ansible 2.6 you can remove the expiry time by specifying a negative value.
               Currently supported on GNU/Linux and FreeBSD.
         type: float
         version_added: "1.9"
