@@ -14,6 +14,10 @@ the input data to extract requested information. ``ipaddr()`` works with both
 IPv4 and IPv6 addresses in various forms. There are also additional functions
 available to manipulate IP subnets and MAC addresses.
 
+.. note::
+
+	The ``ipaddr()`` filter migrated to the `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ collection. Follow the installation instructions to install that collection.
+
 To use this filter in Ansible, you need to install the `netaddr`_ Python library on
 a computer on which you use Ansible (it is not required on remote hosts).
 It can usually be installed with either your system package manager or using
@@ -37,11 +41,11 @@ filters. To use the filter, pass a string to it:
 
 .. code-block:: none
 
-    {{ '192.0.2.0' | ipaddr }}
+    {{ '192.0.2.0' | ansible.netcommon.ipaddr }}
 
 You can also pass the values as variables::
 
-    {{ myvar | ipaddr }}
+    {{ myvar | ansible.netcommon.ipaddr }}
 
 Here are some example test results of various input strings::
 
@@ -66,11 +70,11 @@ type, ``ipaddr()`` filter has two "aliases", ``ipv4()`` and ``ipv6()``.
 
 Example use of an IPv4 filter::
 
-    {{ myvar | ipv4 }}
+    {{ myvar | ansible.netcommon.ipv4 }}
 
 A similar example of an IPv6 filter::
 
-    {{ myvar | ipv6 }}
+    {{ myvar | ansible.netcommon.ipv6 }}
 
 Here's some example test results to look for IPv4 addresses::
 
@@ -98,13 +102,13 @@ valid for a particular query::
     # Example list of values
     test_list = ['192.24.2.1', 'host.fqdn', '::1', '192.168.32.0/24', 'fe80::100/10', True, '', '42540766412265424405338506004571095040/64']
 
-    # {{ test_list | ipaddr }}
+    # {{ test_list | ansible.netcommon.ipaddr }}
     ['192.24.2.1', '::1', '192.168.32.0/24', 'fe80::100/10', '2001:db8:32c:faad::/64']
 
-    # {{ test_list | ipv4 }}
+    # {{ test_list | ansible.netcommon.ipv4 }}
     ['192.24.2.1', '192.168.32.0/24']
 
-    # {{ test_list | ipv6 }}
+    # {{ test_list | ansible.netcommon.ipv6 }}
     ['::1', 'fe80::100/10', '2001:db8:32c:faad::/64']
 
 
@@ -115,7 +119,7 @@ Some configuration files require IPv6 addresses to be "wrapped" in square
 brackets (``[ ]``). To accomplish that, you can use the ``ipwrap()`` filter. It
 will wrap all IPv6 addresses and leave any other strings intact::
 
-    # {{ test_list | ipwrap }}
+    # {{ test_list | ansible.netcommon.ipwrap }}
     ['192.24.2.1', 'host.fqdn', '[::1]', '192.168.32.0/24', '[fe80::100]/10', True, '', '[2001:db8:32c:faad::]/64']
 
 As you can see, ``ipwrap()`` did not filter out non-IP address values, which is
@@ -123,7 +127,7 @@ usually what you want when for example you are mixing IP addresses with
 hostnames. If you still want to filter out all non-IP address values, you can
 chain both filters together::
 
-    # {{ test_list | ipaddr | ipwrap }}
+    # {{ test_list | ansible.netcommon.ipaddr | ansible.netcommon.ipwrap }}
     ['192.24.2.1', '[::1]', '192.168.32.0/24', '[fe80::100]/10', '[2001:db8:32c:faad::]/64']
 
 
@@ -136,9 +140,9 @@ contain only values that you are querying for.
 
 Types of queries include:
 
-- query by name: ``ipaddr('address')``, ``ipv4('network')``;
-- query by CIDR range: ``ipaddr('192.168.0.0/24')``, ``ipv6('2001:db8::/32')``;
-- query by index number: ``ipaddr('1')``, ``ipaddr('-1')``;
+- query by name: ``ansible.netcommon.ipaddr('address')``, ``ansible.netcommon.ipv4('network')``;
+- query by CIDR range: ``ansible.netcommon.ipaddr('192.168.0.0/24')``, ``ansible.netcommon.ipv6('2001:db8::/32')``;
+- query by index number: ``ansible.netcommon.ipaddr('1')``, ``ansible.netcommon.ipaddr('-1')``;
 
 If a query type is not recognized, Ansible will raise an error.
 
@@ -154,7 +158,7 @@ Here's our test list again::
 Let's take the list above and get only those elements that are host IP addresses
 and not network ranges::
 
-    # {{ test_list | ipaddr('address') }}
+    # {{ test_list | ansible.netcommon.ipaddr('address') }}
     ['192.24.2.1', '::1', 'fe80::100']
 
 As you can see, even though some values had a host address with a CIDR prefix,
@@ -162,40 +166,40 @@ they were dropped by the filter. If you want host IP addresses with their correc
 CIDR prefixes (as is common with IPv6 addressing), you can use the
 ``ipaddr('host')`` filter::
 
-    # {{ test_list | ipaddr('host') }}
+    # {{ test_list | ansible.netcommon.ipaddr('host') }}
     ['192.24.2.1/32', '::1/128', 'fe80::100/10']
 
 Filtering by IP address type also works::
 
-    # {{ test_list | ipv4('address') }}
+    # {{ test_list | ansible.netcommon.ipv4('address') }}
     ['192.24.2.1']
 
-    # {{ test_list | ipv6('address') }}
+    # {{ test_list | ansible.netcommon.ipv6('address') }}
     ['::1', 'fe80::100']
 
 You can check if IP addresses or network ranges are accessible on a public
 Internet, or if they are in private networks::
 
-    # {{ test_list | ipaddr('public') }}
+    # {{ test_list | ansible.netcommon.ipaddr('public') }}
     ['192.24.2.1', '2001:db8:32c:faad::/64']
 
-    # {{ test_list | ipaddr('private') }}
+    # {{ test_list | ansible.netcommon.ipaddr('private') }}
     ['192.168.32.0/24', 'fe80::100/10']
 
 You can check which values are specifically network ranges::
 
-    # {{ test_list | ipaddr('net') }}
+    # {{ test_list | ansible.netcommon.ipaddr('net') }}
     ['192.168.32.0/24', '2001:db8:32c:faad::/64']
 
 You can also check how many IP addresses can be in a certain range::
 
-    # {{ test_list | ipaddr('net') | ipaddr('size') }}
+    # {{ test_list | ansible.netcommon.ipaddr('net') | ansible.netcommon.ipaddr('size') }}
     [256, 18446744073709551616L]
 
 By specifying a network range as a query, you can check if a given value is in
 that range::
 
-    # {{ test_list | ipaddr('192.0.0.0/8') }}
+    # {{ test_list | ansible.netcommon.ipaddr('192.0.0.0/8') }}
     ['192.24.2.1', '192.168.32.0/24']
 
 If you specify a positive or negative integer as a query, ``ipaddr()`` will
@@ -203,29 +207,29 @@ treat this as an index and will return the specific IP address from a network
 range, in the 'host/prefix' format::
 
     # First IP address (network address)
-    # {{ test_list | ipaddr('net') | ipaddr('0') }}
+    # {{ test_list | ansible.netcommon.ipaddr('net') | ansible.netcommon.ipaddr('0') }}
     ['192.168.32.0/24', '2001:db8:32c:faad::/64']
 
     # Second IP address (usually the gateway host)
-    # {{ test_list | ipaddr('net') | ipaddr('1') }}
+    # {{ test_list | ansible.netcommon.ipaddr('net') | ansible.netcommon.ipaddr('1') }}
     ['192.168.32.1/24', '2001:db8:32c:faad::1/64']
 
     # Last IP address (the broadcast address in IPv4 networks)
-    # {{ test_list | ipaddr('net') | ipaddr('-1') }}
+    # {{ test_list | ansible.netcommon.ipaddr('net') | ansible.netcommon.ipaddr('-1') }}
     ['192.168.32.255/24', '2001:db8:32c:faad:ffff:ffff:ffff:ffff/64']
 
 You can also select IP addresses from a range by their index, from the start or
 end of the range::
 
     # Returns from the start of the range
-    # {{ test_list | ipaddr('net') | ipaddr('200') }}
+    # {{ test_list | ansible.netcommon.ipaddr('net') | ansible.netcommon.ipaddr('200') }}
     ['192.168.32.200/24', '2001:db8:32c:faad::c8/64']
 
     # Returns from the end of the range
-    # {{ test_list | ipaddr('net') | ipaddr('-200') }}
+    # {{ test_list | ansible.netcommon.ipaddr('net') | ansible.netcommon.ipaddr('-200') }}
     ['192.168.32.56/24', '2001:db8:32c:faad:ffff:ffff:ffff:ff38/64']
 
-    # {{ test_list | ipaddr('net') | ipaddr('400') }}
+    # {{ test_list | ansible.netcommon.ipaddr('net') | ansible.netcommon.ipaddr('400') }}
     ['2001:db8:32c:faad::190/64']
 
 
@@ -233,7 +237,7 @@ Getting information from host/prefix values
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You frequently use a combination of IP addresses and subnet prefixes
-("CIDR"), this is even more common with IPv6. The ``ipaddr()`` filter can extract
+("CIDR"), this is even more common with IPv6. The ``ansible.netcommon.ipaddr()`` filter can extract
 useful data from these prefixes.
 
 Here's an example set of two host prefixes (with some "control" values)::
@@ -243,7 +247,7 @@ Here's an example set of two host prefixes (with some "control" values)::
 First, let's make sure that we only work with correct host/prefix values, not
 just subnets or single IP addresses::
 
-    # {{ host_prefix | ipaddr('host/prefix') }}
+    # {{ host_prefix | ansible.netcommon.ipaddr('host/prefix') }}
     ['2001:db8:deaf:be11::ef3/64', '192.0.2.48/24']
 
 In Debian-based systems, the network configuration stored in the ``/etc/network/interfaces`` file uses a combination of IP address, network address, netmask and broadcast address to configure an IPv4 network interface. We can get these values from a single 'host/prefix' combination:
@@ -251,12 +255,12 @@ In Debian-based systems, the network configuration stored in the ``/etc/network/
 .. code-block:: jinja
 
     # Jinja2 template
-    {% set ipv4_host = host_prefix | unique | ipv4('host/prefix') | first %}
+    {% set ipv4_host = host_prefix | unique | ansible.netcommon.ipv4('host/prefix') | first %}
     iface eth0 inet static
-        address   {{ ipv4_host | ipaddr('address') }}
-        network   {{ ipv4_host | ipaddr('network') }}
-        netmask   {{ ipv4_host | ipaddr('netmask') }}
-        broadcast {{ ipv4_host | ipaddr('broadcast') }}
+        address   {{ ipv4_host | ansible.netcommon.ipaddr('address') }}
+        network   {{ ipv4_host | ansible.netcommon.ipaddr('network') }}
+        netmask   {{ ipv4_host | ansible.netcommon.ipaddr('netmask') }}
+        broadcast {{ ipv4_host | ansible.netcommon.ipaddr('broadcast') }}
 
     # Generated configuration file
     iface eth0 inet static
@@ -274,7 +278,7 @@ on an interface:
 
     # Jinja2 template
     iface eth0 inet6 static
-        {% set ipv6_list = host_prefix | unique | ipv6('host/prefix') %}
+        {% set ipv6_list = host_prefix | unique | ansible.netcommon.ipv6('host/prefix') %}
         address {{ ipv6_list[0] }}
         {% if ipv6_list | length > 1 %}
         {% for subnet in ipv6_list[1:] %}
@@ -289,10 +293,10 @@ on an interface:
 
 If needed, you can extract subnet and prefix information from the 'host/prefix' value::
 
-    # {{ host_prefix | ipaddr('host/prefix') | ipaddr('subnet') }}
+    # {{ host_prefix | ansible.netcommon.ipaddr('host/prefix') | ansible.netcommon.ipaddr('subnet') }}
     ['2001:db8:deaf:be11::/64', '192.0.2.0/24']
 
-    # {{ host_prefix | ipaddr('host/prefix') | ipaddr('prefix') }}
+    # {{ host_prefix | ansible.netcommon.ipaddr('host/prefix') | ansible.netcommon.ipaddr('prefix') }}
     [64, 24]
 
 Converting subnet masks to CIDR notation
@@ -320,10 +324,10 @@ First concatenate the network and netmask::
 
 This result can be converted to canonical form with ``ipaddr()`` to produce a subnet in CIDR format::
 
-    # {{ net_mask | ipaddr('prefix') }}
+    # {{ net_mask | ansible.netcommon.ipaddr('prefix') }}
     '24'
 
-    # {{ net_mask | ipaddr('net') }}
+    # {{ net_mask | ansible.netcommon.ipaddr('net') }}
     '192.168.0.0/24'
 
 Getting information about the network in CIDR notation
@@ -339,7 +343,7 @@ Here's an example of IP address::
 
 This can be used to obtain the network address in CIDR notation format::
 
-    # {{ ip_address | ipaddr('network/prefix') }}
+    # {{ ip_address | ansible.netcommon.ipaddr('network/prefix') }}
     '192.168.0.0/24'
 
 IP address conversion
@@ -352,36 +356,36 @@ Here's our test list again::
 
 You can convert IPv4 addresses into IPv6 addresses::
 
-    # {{ test_list | ipv4('ipv6') }}
+    # {{ test_list | ansible.netcommon.ipv4('ipv6') }}
     ['::ffff:192.24.2.1/128', '::ffff:192.168.32.0/120']
 
 Converting from IPv6 to IPv4 works very rarely::
 
-    # {{ test_list | ipv6('ipv4') }}
+    # {{ test_list | ansible.netcommon.ipv6('ipv4') }}
     ['0.0.0.1/32']
 
 But we can make a double conversion if needed::
 
-    # {{ test_list | ipaddr('ipv6') | ipaddr('ipv4') }}
+    # {{ test_list | ansible.netcommon.ipaddr('ipv6') | ansible.netcommon.ipaddr('ipv4') }}
     ['192.24.2.1/32', '0.0.0.1/32', '192.168.32.0/24']
 
 You can convert IP addresses to integers, the same way that you can convert
 integers into IP addresses::
 
-    # {{ test_list | ipaddr('address') | ipaddr('int') }}
+    # {{ test_list | ansible.netcommon.ipaddr('address') | ansible.netcommon.ipaddr('int') }}
     [3222798849, 1, '3232243712/24', '338288524927261089654018896841347694848/10', '42540766412265424405338506004571095040/64']
 
 You can convert IPv4 address to `Hexadecimal notation <https://en.wikipedia.org/wiki/Hexadecimal>`_ with optional delimiter::
 
-    # {{ '192.168.1.5' | ip4_hex }}
+    # {{ '192.168.1.5' | ansible.netcommon.ip4_hex }}
     c0a80105
-    # {{ '192.168.1.5' | ip4_hex(':') }}
+    # {{ '192.168.1.5' | ansible.netcommon.ip4_hex(':') }}
     c0:a8:01:05
 
 You can convert IP addresses to PTR records::
 
-    # {% for address in test_list | ipaddr %}
-    # {{ address | ipaddr('revdns') }}
+    # {% for address in test_list | ansible.netcommon.ipaddr %}
+    # {{ address | ansible.netcommon.ipaddr('revdns') }}
     # {% endfor %}
     1.2.24.192.in-addr.arpa.
     1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa.
@@ -402,7 +406,7 @@ access to a ``2002:xxxx:xxxx::/48`` subnet which could be split into 65535
 To convert your IPv4 address, just send it through the ``'6to4'`` filter. It will
 be automatically converted to a router address (with a ``::1/48`` host address)::
 
-    # {{ '193.0.2.0' | ipaddr('6to4') }}
+    # {{ '193.0.2.0' | ansible.netcommon.ipaddr('6to4') }}
     2002:c100:0200::1/48
 
 .. _6to4: https://en.wikipedia.org/wiki/6to4
@@ -414,31 +418,31 @@ To find usable IP addresses within an IP range, try these ``ipaddr`` filters:
 
 To find the next usable IP address in a range, use ``next_usable`` ::
 
-    # {{ '192.168.122.1/24' | ipaddr('next_usable') }}
+    # {{ '192.168.122.1/24' | ansible.netcommon.ipaddr('next_usable') }}
     192.168.122.2
 
 To find the last usable IP address from a range, use ``last_usable``::
 
-    # {{ '192.168.122.1/24' | ipaddr('last_usable') }}
+    # {{ '192.168.122.1/24' | ansible.netcommon.ipaddr('last_usable') }}
     192.168.122.254
 
 To find the available range of IP addresses from the given network address, use ``range_usable``::
 
-    # {{ '192.168.122.1/24' | ipaddr('range_usable') }}
+    # {{ '192.168.122.1/24' | ansible.netcommon.ipaddr('range_usable') }}
     192.168.122.1-192.168.122.254
 
 To find the next nth usable IP address within a range, use ``next_nth_usable``::
 
-    # {{ '192.168.122.1/24' | next_nth_usable(2) }}
+    # {{ '192.168.122.1/24' | ansible.netcommon.next_nth_usable(2) }}
     192.168.122.3
 
 In this example, ``next_nth_usable`` returns the second usable IP address for the given IP range.
 
 To find the peer IP address for a point to point link, use ``peer``::
 
-    # {{ '192.168.122.1/31' | ipaddr('peer') }}
+    # {{ '192.168.122.1/31' | ansible.netcommon.ipaddr('peer') }}
     192.168.122.0
-    # {{ '192.168.122.1/30' | ipaddr('peer') }}
+    # {{ '192.168.122.1/30' | ansible.netcommon.ipaddr('peer') }}
     192.168.122.2
 
 
@@ -451,25 +455,25 @@ The ``ipmath()`` filter can be used to do simple IP math/arithmetic.
 
 Here are a few simple examples::
 
-    # {{ '192.168.1.5' | ipmath(5) }}
+    # {{ '192.168.1.5' | ansible.netcommon.ipmath(5) }}
     192.168.1.10
 
-    # {{ '192.168.0.5' | ipmath(-10) }}
+    # {{ '192.168.0.5' | ansible.netcommon.ipmath(-10) }}
     192.167.255.251
 
-    # {{ '192.168.1.1/24' | ipmath(5) }}
+    # {{ '192.168.1.1/24' | ansible.netcommon.ipmath(5) }}
     192.168.1.6
 
-    # {{ '192.168.1.6/24' | ipmath(-5) }}
+    # {{ '192.168.1.6/24' | ansible.netcommon.ipmath(-5) }}
     192.168.1.1
 
-    # {{ '192.168.2.6/24' | ipmath(-10) }}
+    # {{ '192.168.2.6/24' | ansible.netcommon.ipmath(-10) }}
     192.168.1.252
 
-    # {{ '2001::1' | ipmath(10) }}
+    # {{ '2001::1' | ansible.netcommon.ipmath(10) }}
     2001::b
 
-    # {{ '2001::5' | ipmath(-10) }}
+    # {{ '2001::5' | ansible.netcommon.ipmath(-10) }}
     2000:ffff:ffff:ffff:ffff:ffff:ffff:fffb
 
 
@@ -488,81 +492,81 @@ To check if a given string is a subnet, pass it through the filter without any
 arguments. If the given string is an IP address, it will be converted into
 a subnet::
 
-    # {{ address | ipsubnet }}
+    # {{ address | ansible.netcommon.ipsubnet }}
     192.168.144.5/32
 
-    # {{ subnet | ipsubnet }}
+    # {{ subnet | ansible.netcommon.ipsubnet }}
     192.168.0.0/16
 
 If you specify a subnet size as the first parameter of the  ``ipsubnet()`` filter, and
 the subnet size is **smaller than the current one**, you will get the number of subnets
 a given subnet can be split into::
 
-    # {{ subnet | ipsubnet(20) }}
+    # {{ subnet | ansible.netcommon.ipsubnet(20) }}
     16
 
 The second argument of the ``ipsubnet()`` filter is an index number; by specifying it
 you can get a new subnet with the specified size::
 
     # First subnet
-    # {{ subnet | ipsubnet(20, 0) }}
+    # {{ subnet | ansible.netcommon.ipsubnet(20, 0) }}
     192.168.0.0/20
 
     # Last subnet
-    # {{ subnet | ipsubnet(20, -1) }}
+    # {{ subnet | ansible.netcommon.ipsubnet(20, -1) }}
     192.168.240.0/20
 
     # Fifth subnet
-    # {{ subnet | ipsubnet(20, 5) }}
+    # {{ subnet | ansible.netcommon.ipsubnet(20, 5) }}
     192.168.80.0/20
 
     # Fifth to last subnet
-    # {{ subnet | ipsubnet(20, -5) }}
+    # {{ subnet | ansible.netcommon.ipsubnet(20, -5) }}
     192.168.176.0/20
 
 If you specify an IP address instead of a subnet, and give a subnet size as
 the first argument, the ``ipsubnet()`` filter will instead return the biggest subnet that
 contains that given IP address::
 
-    # {{ address | ipsubnet(20) }}
+    # {{ address | ansible.netcommon.ipsubnet(20) }}
     192.168.144.0/20
 
 By specifying an index number as a second argument, you can select smaller and
 smaller subnets::
 
     # First subnet
-    # {{ address | ipsubnet(18, 0) }}
+    # {{ address | ansible.netcommon.ipsubnet(18, 0) }}
     192.168.128.0/18
 
     # Last subnet
-    # {{ address | ipsubnet(18, -1) }}
+    # {{ address | ansible.netcommon.ipsubnet(18, -1) }}
     192.168.144.4/31
 
     # Fifth subnet
-    # {{ address | ipsubnet(18, 5) }}
+    # {{ address | ansible.netcommon.ipsubnet(18, 5) }}
     192.168.144.0/23
 
     # Fifth to last subnet
-    # {{ address | ipsubnet(18, -5) }}
+    # {{ address | ansible.netcommon.ipsubnet(18, -5) }}
     192.168.144.0/27
 
 By specifying another subnet as a second argument, if the second subnet includes
 the first, you can determine the rank of the first subnet in the second ::
 
     # The rank of the IP in the subnet (the IP is the 36870nth /32 of the subnet)
-    # {{ address | ipsubnet(subnet) }}
+    # {{ address | ansible.netcommon.ipsubnet(subnet) }}
     36870
 
     # The rank in the /24 that contain the address
-    # {{ address | ipsubnet('192.168.144.0/24') }}
+    # {{ address | ansible.netcommon.ipsubnet('192.168.144.0/24') }}
     6
 
     # An IP with the subnet in the first /30 in a /24
-    # {{ '192.168.144.1/30' | ipsubnet('192.168.144.0/24') }}
+    # {{ '192.168.144.1/30' | ansible.netcommon.ipsubnet('192.168.144.0/24') }}
     1
 
     # The fifth subnet /30 in a /24
-    # {{ '192.168.144.16/30' | ipsubnet('192.168.144.0/24') }}
+    # {{ '192.168.144.16/30' | ansible.netcommon.ipsubnet('192.168.144.0/24') }}
     5
 
 If the second subnet doesn't include the first subnet, the ``ipsubnet()`` filter raises an error.
@@ -571,7 +575,7 @@ If the second subnet doesn't include the first subnet, the ``ipsubnet()`` filter
 You can use the ``ipsubnet()`` filter with the ``ipaddr()`` filter to, for example, split
 a given ``/48`` prefix into smaller ``/64`` subnets::
 
-    # {{ '193.0.2.0' | ipaddr('6to4') | ipsubnet(64, 58820) | ipaddr('1') }}
+    # {{ '193.0.2.0' | ansible.netcommon.ipaddr('6to4') | ipsubnet(64, 58820) | ansible.netcommon.ipaddr('1') }}
     2002:c100:200:e5c4::1/64
 
 Because of the size of IPv6 subnets, iteration over all of them to find the
@@ -596,10 +600,10 @@ adjacent ones wherever possible::
 Changing the action from 'merge' to 'span' will instead return the smallest
 subnet which contains all of the inputs::
 
-    {{ ['192.168.0.0/24', '192.168.3.0/24'] | cidr_merge('span') }}
+    {{ ['192.168.0.0/24', '192.168.3.0/24'] | ansible.netcommon.cidr_merge('span') }}
     # => '192.168.0.0/22'
 
-    {{ ['192.168.1.42', '192.168.42.1'] | cidr_merge('span') }}
+    {{ ['192.168.1.42', '192.168.42.1'] | ansible.netcommon.cidr_merge('span') }}
     # => '192.168.0.0/18'
 
 MAC address filter
@@ -612,15 +616,15 @@ convert it between various formats. Examples::
     macaddress = '1a:2b:3c:4d:5e:6f'
 
     # Check if given string is a MAC address
-    # {{ macaddress | hwaddr }}
+    # {{ macaddress | ansible.netcommon.hwaddr }}
     1a:2b:3c:4d:5e:6f
 
     # Convert MAC address to PostgreSQL format
-    # {{ macaddress | hwaddr('pgsql') }}
+    # {{ macaddress | ansible.netcommon.hwaddr('pgsql') }}
     1a2b3c:4d5e6f
 
     # Convert MAC address to Cisco format
-    # {{ macaddress | hwaddr('cisco') }}
+    # {{ macaddress | ansible.netcommon.hwaddr('cisco') }}
     1a2b.3c4d.5e6f
 
 The supported formats result in the following conversions for the ``1a:2b:3c:4d:5e:6f`` MAC address::
@@ -635,6 +639,9 @@ The supported formats result in the following conversions for the ``1a:2b:3c:4d:
 
 .. seealso::
 
+
+   `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_
+       Ansible network collection for common code 
    :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`playbooks_filters`
