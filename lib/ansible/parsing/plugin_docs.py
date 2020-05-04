@@ -67,9 +67,16 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
 
         if data['metadata']:
             # remove version
-            for x in ('version', 'metadata_version'):
-                if x in data['metadata']:
-                    del data['metadata'][x]
+            for field in ('version', 'metadata_version'):
+                if field in data['metadata']:
+                    del data['metadata'][field]
+
+            if 'supported_by' not in data['metadata']:
+                data['metadata']['supported_by'] = 'community'
+
+            if 'status' not in data['metadata']:
+                data['metadata']['status'] = ['preview']
+
         else:
             # Add default metadata
             data['metadata'] = {'supported_by': 'community',

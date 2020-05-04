@@ -85,8 +85,8 @@
       register: result
     - assert:
         that:
-          - 'result is failed'
-          - '"ERROR! module test_no_docs_no_status missing documentation (or could not parse documentation): test_no_docs_no_status did not contain a DOCUMENTATION attribute" in result.stderr'
+          - 'result.stdout == ""'
+          - 'result.stderr == ""'
 
     - name: module with no documentation and non-iterable status in metadata
       command: ansible-doc test_no_docs_non_iterable_status
