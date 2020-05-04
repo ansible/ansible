@@ -9,6 +9,7 @@ import tacp
 from tacp.rest import ApiException
 from uuid import UUID, uuid4
 
+
 def get_component_fields_by_name(name, component,
                                  api_client, fields=['name', 'uuid']):
     """
@@ -87,7 +88,7 @@ def get_component_fields_by_name(name, component,
         if fields == ['name', 'uuid']:
             for result in api_response:
                 if result.name == name:
-                     return result.uuid
+                    return result.uuid
         if 'bootOrder' in fields:
             for result in api_response:
                 if result.name == name:
@@ -110,13 +111,7 @@ def get_component_fields_by_name(name, component,
                         boot_order.append(boot_order_payload)
                     return boot_order
     return None
-
-
-def fail_with_reason(reason):
-        result['failed'] = True
-        result['failure_reason'] = reason
-        module.exit_json(**result)
-        return
+    
 
 def convert_memory_abbreviation_to_bytes(value):
     """Validate memory argument. Returns the memory value in bytes."""
@@ -142,6 +137,7 @@ def convert_memory_abbreviation_to_bytes(value):
         amount_in_bytes = amount * 1024 * 1024 * 1024 * 1024
 
     return amount_in_bytes
+
 
 def is_valid_uuid(uuid_to_test, version=4):
     """

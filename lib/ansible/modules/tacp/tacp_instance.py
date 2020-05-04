@@ -123,6 +123,11 @@ def run_module():
     if module.check_mode:
         module.exit_json(**result)
 
+    def fail_with_reason(reason):
+        result['failure_reason'] = reason
+        result['failed'] = True
+        module.exit_json(**result)
+
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
 
@@ -157,40 +162,49 @@ def run_module():
     # Check if storage pool exists, it must in order to continue
     storage_pool_uuid = get_component_fields_by_name(
         module.params['storage_pool'], 'storage_pool', api_client)
-    if is_valid_uuid(storage_pool_uuid):
+    if storage_pool_uuid:
         instance_params['storage_pool_uuid'] = storage_pool_uuid
     else:
         # Pool does not exist - must fail the task
-        pass
+        reason = "Storage pool %s does not exist, cannot continue." % module.params[
+            'storage_pool']
+        fail_with_reason(reason)
+        
 
     # Check if datacenter exists, it must in order to continue
     datacenter_uuid = get_component_fields_by_name(
         module.params['datacenter'], 'datacenter', api_client)
-    if is_valid_uuid(datacenter_uuid):
+    if datacenter_uuid:
         instance_params['datacenter_uuid'] = datacenter_uuid
     else:
         # Datacenter does not exist - must fail the task
-        pass
+        reason = "Datacenter %s does not exist, cannot continue." % module.params[
+            'datacenter']
+        fail_with_reason(reason)
 
     # Check if migration_zone exists, it must in order to continue
     migration_zone_uuid = get_component_fields_by_name(
         module.params['mz'], 'migration_zone', api_client)
-    if is_valid_uuid(migration_zone_uuid):
+    if migration_zone_uuid:
         instance_params['migration_zone_uuid'] = migration_zone_uuid
     else:
         # Migration zone does not exist - must fail the task
-        pass
+        reason = "Migration Zone %s does not exist, cannot continue." % module.params[
+            'mz']
+        fail_with_reason(reason)
 
-    # Check if migration_zone exists, it must in order to continue
+    # Check if template exists, it must in order to continue
     template_uuid = get_component_fields_by_name(
         module.params['template'], 'template', api_client)
-    if is_valid_uuid(template_uuid):
+    if template_uuid:
         instance_params['template_uuid'] = template_uuid
         boot_order = get_component_fields_by_name(
             module.params['template'], 'template', api_client, fields=['name', 'uuid', 'bootOrder'])
     else:
-        # Migration zone does not exist - must fail the task
-        pass
+        # Template does not exist - must fail the task
+        reason = "Template %s does not exist, cannot continue." % module.params[
+            'template']
+        fail_with_reason(reason)
 
     network_payloads = []
 
