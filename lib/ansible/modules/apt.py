@@ -1057,7 +1057,9 @@ def main():
                 module.warn("Updating cache and auto-installing missing dependency: %s" % PYTHON_APT)
                 module.run_command(['apt-get', 'update'], check_rc=True)
 
-            module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
+            options = [expand_dpkg_options(module.params.get('dpkg_options')), '--no-install-recommends', '--yes', '--quiet']
+            module.run_command(['apt-get', 'install', PYTHON_APT] + options, check_rc=True)
+
             global apt, apt_pkg
             import apt
             import apt.debfile
