@@ -647,6 +647,11 @@ Selecting JSON data: JSON queries
 
 Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a loop structure.
 
+.. note::
+
+	This filter has migrated to the `community.general <https://galaxy.ansible.com/community/general>`_ collection. Follow the installation instructions to install that collection.
+
+
 .. note:: This filter is built upon **jmespath**, and you can use the same syntax. For examples, see `jmespath examples <http://jmespath.org/examples.html>`_.
 
 Consider this data structure::
@@ -703,21 +708,21 @@ To extract all clusters from this structure, you can use the following query::
     - name: "Display all cluster names"
       debug:
         var: item
-      loop: "{{ domain_definition | json_query('domain.cluster[*].name') }}"
+      loop: "{{ domain_definition | community.general.json_query('domain.cluster[*].name') }}"
 
 Same thing for all server names::
 
     - name: "Display all server names"
       debug:
         var: item
-      loop: "{{ domain_definition | json_query('domain.server[*].name') }}"
+      loop: "{{ domain_definition | community.general.json_query('domain.server[*].name') }}"
 
 This example shows ports from cluster1::
 
     - name: "Display all ports from cluster1"
       debug:
         var: item
-      loop: "{{ domain_definition | json_query(server_name_cluster1_query) }}"
+      loop: "{{ domain_definition | community.general.json_query(server_name_cluster1_query) }}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster1'].port"
 
@@ -727,7 +732,7 @@ Or, alternatively print out the ports in a comma separated string::
 
     - name: "Display all ports from cluster1 as a string"
       debug:
-        msg: "{{ domain_definition | json_query('domain.server[?cluster==`cluster1`].port') | join(', ') }}"
+        msg: "{{ domain_definition | community.general.json_query('domain.server[?cluster==`cluster1`].port') | join(', ') }}"
 
 .. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
 
@@ -736,7 +741,7 @@ Or, using YAML `single quote escaping <https://yaml.org/spec/current.html#id2534
     - name: "Display all ports from cluster1"
       debug:
         var: item
-      loop: "{{ domain_definition | json_query('domain.server[?cluster==''cluster1''].port') }}"
+      loop: "{{ domain_definition | community.general.json_query('domain.server[?cluster==''cluster1''].port') }}"
 
 .. note:: Escaping single quotes within single quotes in YAML is done by doubling the single quote.
 
@@ -745,7 +750,7 @@ In this example, we get a hash map with all ports and names of a cluster::
     - name: "Display all server ports and names from cluster1"
       debug:
         var: item
-      loop: "{{ domain_definition | json_query(server_name_cluster1_query) }}"
+      loop: "{{ domain_definition | community.general.json_query(server_name_cluster1_query) }}"
       vars:
         server_name_cluster1_query: "domain.server[?cluster=='cluster2'].{name: name, port: port}"
 
@@ -754,6 +759,7 @@ Randomizing data
 ================
 
 When you need a randomly generated value, use one of these filters.
+
 
 .. _random_mac_filter:
 
@@ -764,9 +770,13 @@ Random MAC addresses
 
 This filter can be used to generate a random MAC address from a string prefix.
 
+.. note::
+
+	This filter has migrated to the `community.general <https://galaxy.ansible.com/community/general>`_ collection. Follow the installation instructions to install that collection.
+
 To get a random MAC address from a string prefix starting with '52:54:00'::
 
-    "{{ '52:54:00' | random_mac }}"
+    "{{ '52:54:00' | community.general.random_mac }}"
     # => '52:54:00:ef:1c:03'
 
 Note that if anything is wrong with the prefix string, the filter will issue an error.
@@ -775,7 +785,7 @@ Note that if anything is wrong with the prefix string, the filter will issue an 
 
 As of Ansible version 2.9, you can also initialize the random number generator from a seed. This way, you can create random-but-idempotent MAC addresses::
 
-    "{{ '52:54:00' | random_mac(seed=inventory_hostname) }}"
+    "{{ '52:54:00' | community.general.random_mac(seed=inventory_hostname) }}"
 
 
 .. _random_filter:
@@ -923,6 +933,10 @@ Network filters
 
 These filters help you with common network tasks.
 
+.. note::
+
+	These filters have migrated to the `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ collection. Follow the installation instructions to install that collection.
+
 .. _ipaddr_filter:
 
 IP address filters
@@ -932,17 +946,17 @@ IP address filters
 
 To test if a string is a valid IP address::
 
-  {{ myvar | ipaddr }}
+  {{ myvar | ansible.netcommon.ipaddr }}
 
 You can also require a specific IP protocol version::
 
-  {{ myvar | ipv4 }}
-  {{ myvar | ipv6 }}
+  {{ myvar | ansible.netcommon.ipv4 }}
+  {{ myvar | ansible.netcommon.ipv6 }}
 
 IP address filter can also be used to extract specific information from an IP
 address. For example, to get the IP address itself from a CIDR, you can use::
 
-  {{ '192.0.2.1/24' | ipaddr('address') }}
+  {{ '192.0.2.1/24' | ansible.netcommon.ipaddr('address') }}
 
 More information about ``ipaddr`` filter and complete usage guide can be found
 in :ref:`playbooks_filters_ipaddr`.
@@ -957,7 +971,7 @@ Network CLI filters
 To convert the output of a network device CLI command into structured JSON
 output, use the ``parse_cli`` filter::
 
-    {{ output | parse_cli('path/to/spec') }}
+    {{ output | ansible.netcommon.parse_cli('path/to/spec') }}
 
 The ``parse_cli`` filter will load the spec file and pass the command output
 through it, returning JSON output. The YAML spec file defines how to parse the CLI output.
@@ -1041,7 +1055,7 @@ The network filters also support parsing the output of a CLI command using the
 TextFSM library.  To parse the CLI output with TextFSM use the following
 filter::
 
-  {{ output.stdout[0] | parse_cli_textfsm('path/to/fsm') }}
+  {{ output.stdout[0] | ansible.netcommon.parse_cli_textfsm('path/to/fsm') }}
 
 Use of the TextFSM filter requires the TextFSM library to be installed.
 
@@ -1053,7 +1067,7 @@ Network XML filters
 To convert the XML output of a network device command into structured JSON
 output, use the ``parse_xml`` filter::
 
-  {{ output | parse_xml('path/to/spec') }}
+  {{ output | ansible.netcommon.parse_xml('path/to/spec') }}
 
 The ``parse_xml`` filter will load the spec file and pass the command output
 through formatted as JSON.
@@ -1143,7 +1157,8 @@ is an XPath expression used to get the attributes of the ``vlan`` tag in output 
       </configuration>
     </rpc-reply>
 
-.. note:: For more information on supported XPath expressions, see `<https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
+.. note::
+  For more information on supported XPath expressions, see `XPath Support <https://docs.python.org/2/library/xml.etree.elementtree.html#xpath-support>`_.
 
 Network VLAN filters
 --------------------
@@ -1160,7 +1175,7 @@ sorted string list of integers according to IOS-like VLAN list rules. This list 
 
 To sort a VLAN list::
 
-    {{ [3003, 3004, 3005, 100, 1688, 3002, 3999] | vlan_parser }}
+    {{ [3003, 3004, 3005, 100, 1688, 3002, 3999] | ansible.netcommon.vlan_parser }}
 
 This example renders the following sorted list::
 
@@ -1169,7 +1184,7 @@ This example renders the following sorted list::
 
 Another example Jinja template::
 
-    {% set parsed_vlans = vlans | vlan_parser %}
+    {% set parsed_vlans = vlans | ansible.netcommon.vlan_parser %}
     switchport trunk allowed vlan {{ parsed_vlans[0] }}
     {% for i in range (1, parsed_vlans | count) %}
     switchport trunk allowed vlan add {{ parsed_vlans[i] }}
@@ -1584,10 +1599,14 @@ To format a date using a string (like with the shell date command), use the "str
 Kubernetes filters
 ==================
 
+.. note::
+
+	These filters have migrated to the `community.kubernetes <https://galaxy.ansible.com/community/kubernetes>`_ collection. Follow the installation instructions to install that collection.
+
 Use the "k8s_config_resource_name" filter to obtain the name of a Kubernetes ConfigMap or Secret,
 including its hash::
 
-    {{ configmap_resource_definition | k8s_config_resource_name }}
+    {{ configmap_resource_definition | community.kubernetes.k8s_config_resource_name }}
 
 This can then be used to reference hashes in Pod specifications::
 
@@ -1603,7 +1622,7 @@ This can then be used to reference hashes in Pod specifications::
             containers:
             - envFrom:
                 - secretRef:
-                    name: {{ my_secret | k8s_config_resource_name }}
+                    name: {{ my_secret | community.kubernetes.k8s_config_resource_name }}
 
 .. versionadded:: 2.8
 
