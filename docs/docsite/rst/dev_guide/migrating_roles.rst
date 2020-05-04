@@ -43,8 +43,8 @@ The highlighted directories above will change when you migrate to a collection-b
 
 .. code-block:: bash
 
-    namespace/
-    └── name/
+    mynamespace/
+    └── mycollection/
       ├── docs/
       ├── galaxy.yml
       ├── plugins/
@@ -70,7 +70,7 @@ So for example, in the above collection, the FQCN to access  ``role1`` would be:
 
 .. code-block:: Python
 
-	namespace.name.role1
+	mynamespace.mycollection.role1
 
 
 A collection can contain one or more roles in the :file:`roles/` directory and these are almost identical to standalone roles, except you need to move plugins out of the individual roles, and use the :abbr:`FQCN (Fully Qualified Collection Name)` in some places, as detailed in the next section.
@@ -86,7 +86,9 @@ Migrating a role to a collection
 
 To migrate from a standalone role (with no plugins) to a collection role:
 
-1. Create a collection. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
+1. Create a local :file:`ansible_collections` directory and ``cd`` to this new directory.
+
+2. Create a collection. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
 
 .. code-block:: bash
 
@@ -94,14 +96,16 @@ To migrate from a standalone role (with no plugins) to a collection role:
 
 This creates the collection directory structure.
 
-2. Copy the standalone role directory into the :file:`roles/` subdirectory of the collection. Roles in collections cannot have hyphens in the role name. Rename any such roles to use underscores instead.
+3. Copy the standalone role directory into the :file:`roles/` subdirectory of the collection. Roles in collections cannot have hyphens in the role name. Rename any such roles to use underscores instead.
 
 .. code-block:: bash
 
   $ mkdir mynamespace/mycollection/roles/my_role/
   $ cp -r /path/to/standalone/role/mynamespace/my_role/\* mynamespace/mycollection/roles/my_role/
 
-3. Update the collection README.md file to add links to any role README.md files. 
+4. Update ``galaxy.yml`` to include any role dependencies.
+
+5. Update the collection README.md file to add links to any role README.md files.
 
 
 .. _complex_roles_in_collections:
@@ -111,7 +115,9 @@ Migrating a role with plugins to a collection
 
 To migrate from a standalone role that has plugins to a collection role:
 
-1. Create a collection. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
+1. Create a local :file:`ansible_collections directory` and ``cd`` to this new directory.
+
+2. Create a collection. You need a `Galaxy namespace <https://galaxy.ansible.com/docs/contributing/namespaces.html>`_ to import this collection to Galaxy.
 
 .. code-block:: bash
 
@@ -119,7 +125,7 @@ To migrate from a standalone role that has plugins to a collection role:
 
 This creates the collection directory structure.
 
-2. Copy the standalone role directory into the :file:`roles/` subdirectory of the collection. Roles in collections cannot have hyphens in the role name. Rename any such roles to use underscores instead.
+3. Copy the standalone role directory into the :file:`roles/` subdirectory of the collection. Roles in collections cannot have hyphens in the role name. Rename any such roles to use underscores instead.
 
 .. code-block:: bash
 
@@ -133,9 +139,13 @@ This creates the collection directory structure.
 
   $ mv -r mynamespace/mycollection/roles/my_role/library/\* mynamespace/mycollection/plugins/modules/
 
-5. Move any other plugins to the appropriate :file:`plugins/PLUGINTYPE/` directory.  See :ref:`migrating_plugins_collection` for details.
+5. Move any other plugins to the appropriate :file:`plugins/PLUGINTYPE/` directory.  See :ref:`migrating_plugins_collection` for additional steps that may be required.
 
-6. Change any references to the role to use the :abbr:`FQCN (Fully Qualified Collection Name)`.
+6. Update ``galaxy.yml`` to include any role dependencies.
+
+7. Update the collection README.md file to add links to any role README.md files.
+
+8. Change any references to the role to use the :abbr:`FQCN (Fully Qualified Collection Name)`.
 
 .. code-block:: yaml
 
@@ -168,16 +178,26 @@ You can alternately use the ``collections`` keyword to simplify this:
 Migrating other role plugins to a collection
 ---------------------------------------------
 
-Move any nonmodule plugins to the appropriate :file:`plugins/PLUGINTYPE/` directory. The :file:`mynamespace/mycollection/plugins/README.md` file explains the types of plugins that the collection can contain within optionally created subdirectories.
+To migrate other role plugins to a collection:
+
+
+1. Move any nonmodule plugins to the appropriate :file:`plugins/PLUGINTYPE/` directory. The :file:`mynamespace/mycollection/plugins/README.md` file explains the types of plugins that the collection can contain within optionally created subdirectories.
 
 .. code-block:: bash
 
   $ mv -r mynamespace/mycollection/roles/my_role/filter_plugins/\* mynamespace/mycollection/plugins/filter/
 
+2. Update documentation to use the FQCN. Plugins that use ``doc_fragments`` need to use FQCN (for example, ``mydocfrag`` becomes ``mynamespace.mycollection.mydocfrag``).
+
+3. Update relative imports work in collections to start with a period.  For example, :file:`./filename` and :file:`../asdfu/filestuff` works but :file:`filename` in same directory must be updated to :file:`./filename`.
+
+
 If you have a custom ``module_utils`` or import from ``__init__.py``, you must also:
 
 #. Change the Python namespace for custom ``module_utils`` to use the :abbr:`FQCN (Fully Qualified Collection Name)` along with the ``ansible_collections`` convention. See :ref:`update_module_utils_role`.
+
 #. Change how you import from ``__init__.py``. See :ref:`update_init_role`.
+
 
 .. _update_module_utils_role:
 
@@ -191,6 +211,10 @@ When coding with ``module_utils`` in a collection, the Python import statement n
 .. code-block:: python
 
   from ansible_collections.{namespace}.{collectionname}.plugins.module_utils.{util} import {something}
+
+.. note::
+
+	You need to follow the same rules in changing paths and using namespaced names for subclassed plugins.
 
 The following example code snippets show a Python and a PowerShell module using both default Ansible ``module_utils`` and those provided by a collection. In this example the namespace is ``ansible_example`` and the collection is ``community``.
 
