@@ -7828,8 +7828,6 @@ plugin_routing:
       redirect: ansible.netcommon.restconf
     ismount:
       redirect: ansible.posix.ismount
-    Ansible.Service:
-      redirect: ansible.windows.Ansible.Service
     fortimanager:
       redirect: fortinet.fortios.fortimanager
     system:
