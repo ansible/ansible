@@ -1,2 +1,2 @@
 bugfixes:
-    - fix issue in which symnlinked collection cannot be listed, though the docs/plugins can be loaded if referenced directly.
+    - fix issue in which symlinked collection cannot be listed, though the docs/plugins can be loaded if referenced directly.
