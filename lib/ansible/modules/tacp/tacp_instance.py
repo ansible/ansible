@@ -93,7 +93,9 @@ def run_module():
         nics=dict(type='list', required=True),
         vtx_enabled=dict(type='bool', default=True, required=False),
         auto_recovery_enabled=dict(type='bool', default=True, required=False),
-        description=dict(type='str', required=False)
+        description=dict(type='str', required=False),
+        vm_mode=dict(type='str', default='Enhanced', choices=['enhanced', 'Enhanced',
+                                                              'compatibility', 'Compatibility'])
     )
 
     # seed the result dict in the object
@@ -219,7 +221,7 @@ def run_module():
 
             vnic_uuid = str(uuid4())
             vnic_boot_order = len(boot_order) + i
-            
+
             vnic_payload = tacp.ApiAddVnicPayload(
                 automatic_mac_address=automatic_mac_address,
                 name=nic['name'],
@@ -244,7 +246,7 @@ def run_module():
     instance_params['vcpus'] = module.params['vcpu_cores']
     instance_params['memory'] = convert_memory_abbreviation_to_bytes(
         module.params['memory'])
-    instance_params['vm_mode'] = "Enhanced"
+    instance_params['vm_mode'] = module.params['vm_mode'].capitalize()
     instance_params['vtx_enabled'] = module.params['vtx_enabled']
     instance_params['auto_recovery_enabled'] = module.params['auto_recovery_enabled']
     instance_params['description'] = module.params['description']
