@@ -36,6 +36,7 @@ The most common formats are INI and YAML. A basic INI ``/etc/ansible/hosts`` mig
 
 The headings in brackets are group names, which are used in classifying hosts
 and deciding what hosts you are controlling at what times and for what purpose.
+Group names should follow the same guidelines as :ref:`valid_variable_names`.
 
 Here's that same basic inventory file in YAML format:
 
