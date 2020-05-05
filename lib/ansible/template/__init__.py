@@ -92,7 +92,7 @@ JINJA2_BEGIN_TOKENS = frozenset(('variable_begin', 'block_begin', 'comment_begin
 JINJA2_END_TOKENS = frozenset(('variable_end', 'block_end', 'comment_end', 'raw_end'))
 
 
-def generate_ansible_template_vars(path, dest_path=None):
+def generate_ansible_template_vars(path, dest_path=None, base_path=None):
     b_path = to_bytes(path)
     try:
         template_uid = pwd.getpwuid(os.stat(b_path).st_uid).pw_name
@@ -109,11 +109,19 @@ def generate_ansible_template_vars(path, dest_path=None):
         'template_destpath': to_native(dest_path) if dest_path else None,
     }
 
+    rel_file = temp_vars['template_path']
+    if base_path is not None:
+        if not base_path.endswith('/'):
+            base_path += '/'
+        if rel_file.startswith(base_path):
+            rel_file = rel_file[len(base_path):]
+
     managed_default = C.DEFAULT_MANAGED_STR
     managed_str = managed_default.format(
         host=temp_vars['template_host'],
         uid=temp_vars['template_uid'],
         file=temp_vars['template_path'],
+        rel_file=rel_file,
     )
     temp_vars['ansible_managed'] = to_text(time.strftime(to_native(managed_str), time.localtime(os.path.getmtime(b_path))))
 
