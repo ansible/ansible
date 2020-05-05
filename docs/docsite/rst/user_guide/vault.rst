@@ -13,7 +13,7 @@ For best practices advice, refer to :ref:`best_practices_for_variables_and_vault
 
 .. note::
     By default, vault uses your ``$EDITOR`` when creating, editing and viewing a file. Be aware that certain editors will keep copies of the data either in swap, backup or clipboard files.
-    It is up to the user to secure their editor while using vaults, we have added some common sense settings below.
+    While you are responsible for  securing your editor while using vaults, we have added some common sense settings below.
 
 
 .. _what_can_be_encrypted_with_vault:
@@ -594,4 +594,3 @@ hexlify()'ed result of:
 
       - the original plaintext
       - padding up to the AES256 blocksize. (The data used for padding is based on `RFC5652 <https://tools.ietf.org/html/rfc5652#section-6.3>`_)
-
