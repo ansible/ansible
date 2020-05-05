@@ -7016,8 +7016,6 @@ files:
     migrated_to: community.general
   lib/ansible/plugins/become/sesu.py:
     migrated_to: community.general
-  lib/ansible/plugins/cache/jsonfile.py:
-    migrated_to: community.general
   lib/ansible/plugins/cache/memcached.py:
     migrated_to: community.general
   lib/ansible/plugins/cache/pickle.py:

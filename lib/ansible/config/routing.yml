@@ -8183,8 +8183,6 @@ plugin_routing:
     enable:
       redirect: ansible.netcommon.enable
   cache:
-    jsonfile:
-      redirect: community.general.jsonfile
     memcached:
       redirect: community.general.memcached
     pickle:
