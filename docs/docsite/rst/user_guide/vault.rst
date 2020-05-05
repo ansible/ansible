@@ -467,7 +467,7 @@ Most of these you can also set in ``.vimrc`` for all files or just specific path
 Emacs
 ^^^^^
 
-These options can be used to avoid common known cases of disclosure, this list is by now way complete, specially when you consider plugins and extensions.
+Use these options to avoid common known cases of disclosure,  but be aware that this list is note complete, especially when you consider plugins and extensions. 
 
 Don't copy data to the system clipboard::
 
