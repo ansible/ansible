@@ -547,7 +547,7 @@ def get_ec2_security_group_ids_from_names(sec_group_list, ec2_connection, vpc_id
     if len(unmatched) > 0:
         # If we have unmatched names that look like an ID, assume they are
         import re
-        sec_group_id_list[:] = [sg for sg in unmatched if re.match('sg-[a-fA-F0-9]+$', sg)]
+        sec_group_id_list = [sg for sg in unmatched if re.match('sg-[a-fA-F0-9]+$', sg)]
         still_unmatched = [sg for sg in unmatched if not re.match('sg-[a-fA-F0-9]+$', sg)]
         if len(still_unmatched) > 0:
             raise ValueError("The following group names are not valid: %s" % ', '.join(still_unmatched))

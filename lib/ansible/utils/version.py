@@ -172,7 +172,7 @@ class SemanticVersion(Version):
             else:
                 if idx < extra_idx:
                     extra_idx = idx
-        version[:] = version[:extra_idx]
+        version = version[:extra_idx]
 
         if version and set(type(v) for v in version) != set((int,)):
             raise ValueError("Non integer values in %r" % loose_version)
@@ -180,7 +180,7 @@ class SemanticVersion(Version):
         # Extra is everything to the right of the core version
         extra = re.search('[+-].+$', loose_version.vstring)
 
-        version[:] = version + [0] * (3 - len(version))
+        version = version + [0] * (3 - len(version))
         return SemanticVersion(
             '%s%s' % (
                 '.'.join(str(v) for v in version),
