@@ -29,6 +29,7 @@ def find_path_provider(provider_type,  # type: t.Type[TPathProvider],
                        provider_classes,  # type:  t.List[t.Type[TPathProvider]]
                        path,  # type: str
                        walk,  # type: bool
+                       check_paths=False,  # type: bool
                        ):  # type: (...) -> TPathProvider
     """Return the first found path provider of the given type for the given path."""
     sequences = sorted(set(pc.sequence for pc in provider_classes if pc.sequence > 0))
@@ -40,7 +41,12 @@ def find_path_provider(provider_type,  # type: t.Type[TPathProvider],
         while True:
             for provider_class in tier_classes:
                 if provider_class.is_content_root(candidate_path):
-                    return provider_class(candidate_path)
+                    provider = provider_class(candidate_path)
+                    if check_paths:
+                        if provider.get_paths(path):
+                            return provider
+                    else:
+                        return provider
 
             if not walk:
                 break

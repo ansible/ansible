@@ -109,14 +109,14 @@ class DataContext:
                                 walk,  # type: bool
                                 ):  # type: (...) -> ContentLayout
         """Create a content layout using the given providers and root path."""
-        layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
+        layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk=walk)
 
         try:
             # Begin the search for the source provider at the layout provider root.
             # This intentionally ignores version control within subdirectories of the layout root, a condition which was previously an error.
             # Doing so allows support for older git versions for which it is difficult to distinguish between a super project and a sub project.
             # It also provides a better user experience, since the solution for the user would effectively be the same -- to remove the nested version control.
-            source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
+            source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk=walk, check_paths=True)
         except ProviderNotFoundForPath:
             source_provider = UnversionedSource(layout_provider.root)
 
@@ -143,7 +143,7 @@ class DataContext:
             return tuple((os.path.join(self.content.root, path), path) for path in self.content.all_files())
 
         try:
-            source_provider = find_path_provider(SourceProvider, self.__source_providers, ANSIBLE_SOURCE_ROOT, False)
+            source_provider = find_path_provider(SourceProvider, self.__source_providers, ANSIBLE_SOURCE_ROOT, walk=False)
         except ProviderNotFoundForPath:
             source_provider = UnversionedSource(ANSIBLE_SOURCE_ROOT)
 
