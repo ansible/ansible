@@ -4,7 +4,7 @@
     path: '{{ galaxy_dir }}/download'
     state: directory
 
-- name: download collection with multiple dependencides
+- name: download collection with multiple dependencies
   command: ansible-galaxy collection download parent_dep.parent_collection -s {{ fallaxy_galaxy_server }}
   register: download_collection
   args:
@@ -86,3 +86,22 @@
     - download_req_custom_path_actual.matched == 2
     - (download_req_custom_path_actual.files[0].path | basename) in ['requirements.yml', 'namespace1-name1-1.1.0-beta.1.tar.gz']
     - (download_req_custom_path_actual.files[1].path | basename) in ['requirements.yml', 'namespace1-name1-1.1.0-beta.1.tar.gz']
+
+# https://github.com/ansible/ansible/issues/68186
+- name: create test requirements file without roles and collections
+  copy:
+    content: |
+      collections:
+      roles:
+
+    dest: '{{ galaxy_dir }}/download/no_roles_no_collections.yml'
+
+- name: install collection with requirements
+  command: ansible-galaxy collection install -r '{{ galaxy_dir }}/download/no_roles_no_collections.yml'
+  register: install_no_requirements
+
+- name: assert install collection with no roles and no collections in requirements
+  assert:
+    that:
+      - '"Process install" in install_no_requirements.stdout'
+      - '"Starting collection" in install_no_requirements.stdout'
