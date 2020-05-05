@@ -320,7 +320,8 @@ class DistributionFiles:
         elif 'SteamOS' in data:
             debian_facts['distribution'] = 'SteamOS'
             # nothing else to do, SteamOS gets correct info from python functions
-        elif path == '/etc/lsb-release' and 'Kali' in data:
+        elif path in ('/etc/lsb-release', '/etc/os-release') and 'Kali' in data:
+            # Kali does not provide /etc/lsb-release anymore
             debian_facts['distribution'] = 'Kali'
             release = re.search('DISTRIB_RELEASE=(.*)', data)
             if release:
