@@ -452,7 +452,7 @@ Prevent creating backup files::
     set nobackup
     set nowritebackup
 
-The viminfo file copies data from your session, sometimes even secrets, but you can disable this for the current session like this::
+The viminfo file copies data from your session, sometimes even secrets, but you can disable this for the current session as follows::
 
     set viminfo=
 
