@@ -430,6 +430,7 @@ only one vault-id can be used.
 
 
 .. _vault_securing_editor:
+
 Securing your editor
 ````````````````````
 
