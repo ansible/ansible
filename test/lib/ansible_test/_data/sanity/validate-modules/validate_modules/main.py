@@ -2104,7 +2104,7 @@ def run():
 
     args = parser.parse_args()
 
-    args.modules[:] = [m.rstrip('/') for m in args.modules]
+    args.modules = [m.rstrip('/') for m in args.modules]
 
     reporter = Reporter()
     git_cache = GitCache(args.base_branch)
