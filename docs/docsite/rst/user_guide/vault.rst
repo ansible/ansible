@@ -443,7 +443,7 @@ vim
 
 These are some well known options you can set in command mode to avoid cases of disclosure, be aware that there are probably more settings you'll need to modify to ensure security, specially when using plugins.
 
-The swapfiles are a kind of autosave in case of crash/interruption, you can disable this via::
+The swapfiles are a kind of autosave in case of crash/interruption. Disable them as follows::
 
     set noswapfile
 
