@@ -464,7 +464,7 @@ Disable copying to the system clipboard::
 Most of these you can also set in ``.vimrc`` for all files or just specific paths/extensions. See the vim manual for specifics.
 
 
-emacs
+Emacs
 ^^^^^
 
 These options can be used to avoid common known cases of disclosure, this list is by now way complete, specially when you consider plugins and extensions.
