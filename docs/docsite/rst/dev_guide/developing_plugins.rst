@@ -150,7 +150,7 @@ see the source code for the `action plugins included with Ansible Core <https://
 Cache plugins
 -------------
 
-Cache plugins store gathered facts and data retrieved by inventory plugins. Only fact caching is currently supported by cache plugins in collections.
+Cache plugins store gathered facts and data retrieved by inventory plugins.
 
 Import cache plugins using the cache_loader so you can use ``self.set_options()`` and ``self.get_option(<option_name>)``. If you import a cache plugin directly in the code base, you can only access options via ``ansible.constants``, and you break the cache plugin's ability to be used by an inventory plugin.
 
