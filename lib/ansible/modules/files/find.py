@@ -414,7 +414,6 @@ def main():
                     if files or dirs:
                         depth += 1
                     if depth > params['depth']:
-                        del(dirs[:])
                         continue
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
