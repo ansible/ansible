@@ -66,7 +66,7 @@ sts_creds:
     type: dict
     sample:
       access_key: XXXXXXXXXXXXXXXXXXXX
-      expiration: 2017-11-11T11:11:11+00:00
+      expiration: '2017-11-11T11:11:11+00:00'
       secret_key: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       session_token: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 sts_user:
