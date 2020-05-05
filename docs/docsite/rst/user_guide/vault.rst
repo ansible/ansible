@@ -441,7 +441,7 @@ on extra plain text files that can have a clear text copy of your secrets. To pr
 vim
 ^^^
 
-These are some well known options you can set in command mode to avoid cases of disclosure, be aware that there are probably more settings you'll need to modify to ensure security, specially when using plugins.
+These are some well known options you can set in command mode to avoid cases of disclosure. Be aware that there are probably more settings you'll need to modify to ensure security, especially when using plugins.
 
 The swapfiles are a kind of autosave in case of crash/interruption. Disable them as follows::
 
