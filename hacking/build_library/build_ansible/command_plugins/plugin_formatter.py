@@ -678,9 +678,9 @@ def validate_options(options):
     ''' validate option parser options '''
 
     if not options.module_dir:
-        sys.exit("--module-dir is required", file=sys.stderr)
+        sys.exit("--module-dir is required")
     if not os.path.exists(options.module_dir):
-        sys.exit("--module-dir does not exist: %s" % options.module_dir, file=sys.stderr)
+        sys.exit("--module-dir does not exist: %s" % options.module_dir)
     if not options.template_dir:
         sys.exit("--template-dir must be specified")
 
