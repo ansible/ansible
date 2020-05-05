@@ -11,6 +11,11 @@ To enable this feature, a command line tool - :ref:`ansible-vault` - is used to 
 
 For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults`.
 
+.. note::
+    By default vault uses your ``$EDITOR`` when creating, editing and viewing a file, be aware that certain editors will keep copies of the data either in swap, backup or clipboard files.
+    It is up to the user to secure their editor while using vaults, we have added some common sense settings below.
+
+
 .. _what_can_be_encrypted_with_vault:
 
 What Can Be Encrypted With Vault
@@ -422,6 +427,58 @@ or it can be used in combination with them.
 
 When using :ref:`ansible-vault` commands that encrypt content (:ref:`ansible-vault encrypt <ansible_vault_encrypt>`, :ref:`ansible-vault encrypt_string <ansible_vault_encrypt_string>`, etc)
 only one vault-id can be used.
+
+
+.. _vault_securing_editor:
+Securing your editor
+````````````````````
+
+As noted above, the vault system relies on your configured ``$EDITOR`` which can be a source of disclosures, most editors have conviniences to prevent loss of data, but this normaly relies
+on extra plain text files that can have a clear text copy of your secrets. To prevent this you should consult your editor's manual to ensure you configure it to avoid disclosing secure data.
+
+
+vim
+^^^
+
+These are some well known options you can set in command mode to avoid cases of disclosure, be aware that there are probably more settings you'll need to modify to ensure security, specially when using plugins.
+
+The swapfiles are a kind of autosave in case of crash/interruption, you can disable this via::
+
+    set noswapfile
+
+Prevent creating backup files::
+
+    set nobackup
+    set nowritebackup
+
+The viminfo file copies data from your session, sometimes even secrets, but you can disable this for the current session like this::
+
+    set viminfo=
+
+Disable copying to the system clipboard::
+
+    set clipboard=
+
+
+Most of these you can also set in ``.vimrc`` for all files or just specific paths/extensions, see the vim manual for specifics.
+
+
+emacs
+^^^^^
+
+These options can be used to avoid common known cases of disclosure, this list is by now way complete, specially when you consider plugins and extensions.
+
+Don't copy data to the system clipboard::
+
+    (setq x-select-enable-clipboard nil)
+
+Prevent creating backup files::
+
+    (setq make-backup-files nil)
+
+Disable autosave files::
+
+    (setq auto-save-default nil)
 
 
 .. _vault_password_client_scripts:
