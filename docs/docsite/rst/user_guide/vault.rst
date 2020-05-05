@@ -461,7 +461,7 @@ Disable copying to the system clipboard::
     set clipboard=
 
 
-Most of these you can also set in ``.vimrc`` for all files or just specific paths/extensions, see the vim manual for specifics.
+Most of these you can also set in ``.vimrc`` for all files or just specific paths/extensions. See the vim manual for specifics.
 
 
 emacs
