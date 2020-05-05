@@ -12,7 +12,7 @@ To enable this feature, a command line tool - :ref:`ansible-vault` - is used to 
 For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults`.
 
 .. note::
-    By default vault uses your ``$EDITOR`` when creating, editing and viewing a file, be aware that certain editors will keep copies of the data either in swap, backup or clipboard files.
+    By default, vault uses your ``$EDITOR`` when creating, editing and viewing a file. Be aware that certain editors will keep copies of the data either in swap, backup or clipboard files.
     It is up to the user to secure their editor while using vaults, we have added some common sense settings below.
 
 
@@ -594,5 +594,4 @@ hexlify()'ed result of:
 
       - the original plaintext
       - padding up to the AES256 blocksize. (The data used for padding is based on `RFC5652 <https://tools.ietf.org/html/rfc5652#section-6.3>`_)
-
 
