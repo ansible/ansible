@@ -991,6 +991,40 @@ TESTSETS = [
         }
     },
     {
+        'name': 'Kali 2020.2',
+        'input': {
+            '/etc/os-release': ("PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nID=kali\nVERSION=\"2020.2\"\n"
+                                "VERSION_ID=\"2020.2\"\nVERSION_CODENAME=\"kali-rolling\"\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\n"
+                                "HOME_URL=\"https://www.kali.org/\"\nSUPPORT_URL=\"https://forums.kali.org/\"\n"
+                                "BUG_REPORT_URL=\"https://bugs.kali.org/\""),
+            '/usr/lib/os-release': ("PRETTY_NAME=\"Kali GNU/Linux Rolling\"\nNAME=\"Kali GNU/Linux\"\nID=kali\nVERSION=\"2020.2\"\n"
+                                "VERSION_ID=\"2020.2\"\nVERSION_CODENAME=\"kali-rolling\"\nID_LIKE=debian\nANSI_COLOR=\"1;31\"\n"
+                                "HOME_URL=\"https://www.kali.org/\"\nSUPPORT_URL=\"https://forums.kali.org/\"\n"
+                                "BUG_REPORT_URL=\"https://bugs.kali.org/\"")
+        },
+        'platform.dist': [
+            'kali',
+            '2020.2',
+            ''
+        ],
+        'distro': {
+            'codename': 'kali-rolling',
+            'id': 'kali',
+            'name': 'Kali GNU/Linux Rolling',
+            'version': '2020.2',
+            'version_best': '2020.2',
+            'os_release_info': {},
+            'lsb_release_info': {},
+        },
+        'result': {
+            'distribution': 'Kali',
+            'distribution_version': '2020.2',
+            'distribution_release': 'kali-rolling',
+            'distribution_major_version': '2020',
+            'os_family': 'Debian'
+        }
+    },
+    {
         "platform.dist": [
             "neon",
             "16.04",
