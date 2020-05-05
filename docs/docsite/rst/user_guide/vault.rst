@@ -434,7 +434,7 @@ only one vault-id can be used.
 Securing your editor
 ````````````````````
 
-As noted above, the vault system relies on your configured ``$EDITOR`` which can be a source of disclosures, most editors have conviniences to prevent loss of data, but this normaly relies
+As noted above, the vault system relies on your configured ``$EDITOR`` which can be a source of disclosures. Most editors have ways to prevent loss of data, but these normally rely
 on extra plain text files that can have a clear text copy of your secrets. To prevent this you should consult your editor's manual to ensure you configure it to avoid disclosing secure data.
 
 
