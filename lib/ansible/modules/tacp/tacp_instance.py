@@ -169,7 +169,6 @@ def run_module():
         reason = "Storage pool %s does not exist, cannot continue." % module.params[
             'storage_pool']
         fail_with_reason(reason)
-        
 
     # Check if datacenter exists, it must in order to continue
     datacenter_uuid = get_component_fields_by_name(
@@ -216,9 +215,10 @@ def run_module():
             network_uuid = get_component_fields_by_name(
                 nic['network'], 'vlan', api_client)
 
-        if nic['mac_address']:
-            automatic_mac_address = False
-            mac_address = nic['mac_address']
+        if 'mac_address' in nic.keys():
+            if nic['mac_address']:
+                automatic_mac_address = False
+                mac_address = nic['mac_address']
         else:
             automatic_mac_address = True
             mac_address = None
