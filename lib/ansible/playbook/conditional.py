@@ -77,8 +77,8 @@ class Conditional:
 
     def evaluate_conditional(self, templar, all_vars):
         '''
-        Loops through the conditionals set on this object, returning
-        False if any of them evaluate as such.
+        Loops through the list of conditionals set on this object,
+        returning False if any of them evaluate as such (implicit AND).
         '''
 
         # since this is a mix-in, it may not have an underlying datastructure associated with it,
