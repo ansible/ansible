@@ -1,0 +1,2 @@
+bugfixes:
+- zabbix_template - no longer fails with KeyError when there are no macros present in existing template (see https://github.com/ansible-collections/community.zabbix/issues/19)
