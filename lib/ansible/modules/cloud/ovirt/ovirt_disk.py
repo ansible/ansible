@@ -51,6 +51,7 @@ options:
     upload_image_path:
         description:
             - "Path to disk image, which should be uploaded."
+            - "Note if C(size) is not specified the size of the disk will be determined by the size of the specified image."
             - "Note that currently we support only compatibility version 0.10 of the qcow disk."
             - "Note that you must have an valid oVirt/RHV engine CA in your system trust store
                or you must provide it in C(ca_file) parameter."
@@ -488,6 +489,9 @@ class DisksModule(BaseModule):
     def build_entity(self):
         hosts_service = self._connection.system_service().hosts_service()
         logical_unit = self._module.params.get('logical_unit')
+        size = convert_to_bytes(self._module.params.get('size'))
+        if not size and self._module.params.get('upload_image_path'):
+            size = os.path.getsize(self._module.params.get('upload_image_path'))
         disk = otypes.Disk(
             id=self._module.params.get('id'),
             name=self._module.params.get('name'),
@@ -506,9 +510,7 @@ class DisksModule(BaseModule):
             openstack_volume_type=otypes.OpenStackVolumeType(
                 name=self.param('openstack_volume_type')
             ) if self.param('openstack_volume_type') else None,
-            provisioned_size=convert_to_bytes(
-                self._module.params.get('size')
-            ),
+            provisioned_size=size,
             storage_domains=[
                 otypes.StorageDomain(
                     name=self._module.params.get('storage_domain'),
@@ -537,9 +539,7 @@ class DisksModule(BaseModule):
             ) if logical_unit else None,
         )
         if hasattr(disk, 'initial_size') and self._module.params['upload_image_path']:
-            disk.initial_size = convert_to_bytes(
-                self._module.params.get('size')
-            )
+            disk.initial_size = size
 
         return disk
 
