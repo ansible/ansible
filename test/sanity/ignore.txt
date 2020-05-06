@@ -248,7 +248,6 @@ lib/ansible/plugins/doc_fragments/validate.py metaclass-boilerplate
 lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
-lib/ansible/vars/hostvars.py pylint:blacklisted-name
 setup.py future-import-boilerplate
 setup.py metaclass-boilerplate
 test/integration/targets/ansible-runner/files/adhoc_example1.py future-import-boilerplate
