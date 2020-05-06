@@ -24,6 +24,7 @@ def assemble_files_to_ship(complete_file_list):
         '.github/*',
         '.github/*/*',
         'changelogs/fragments/*',
+        'hacking/backport/*',
         'hacking/shippable/*',
         'hacking/tests/*',
         'hacking/ticket_stubs/*',
