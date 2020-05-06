@@ -58,6 +58,8 @@ options:
     vlan_tag:
         description:
             - "Specify VLAN tag."
+            - "NOTE - To remove the vlan_tag use -1."
+        type: int
     external_provider:
         description:
             - "Name of external network provider."
@@ -113,7 +115,7 @@ EXAMPLES = '''
 - ovirt_network:
     data_center: mydatacenter
     name: mynetwork
-    vlan_tag: 1
+    vlan_tag: 10
     vm_network: true
 
 # Remove network
@@ -132,6 +134,12 @@ EXAMPLES = '''
     data_center: mydatacenter
     name: mynetwork
     external_provider: ovirt-provider-ovn
+
+# Remove vlan_tag
+- ovirt_network:
+    data_center: mydatacenter
+    name: mynetwork
+    vlan_tag: -1
 '''
 
 RETURN = '''
@@ -183,8 +191,8 @@ class NetworksModule(BaseModule):
                 name=self._module.params['data_center'],
             ) if self._module.params['data_center'] else None,
             vlan=otypes.Vlan(
-                self._module.params['vlan_tag'],
-            ) if self._module.params['vlan_tag'] else None,
+                self._module.params['vlan_tag'] if self._module.params['vlan_tag'] != -1 else None,
+            ) if self._module.params['vlan_tag'] is not None else None,
             usages=[
                 otypes.NetworkUsage.VM if self._module.params['vm_network'] else None
             ] if self._module.params['vm_network'] is not None else None,
@@ -213,11 +221,14 @@ class NetworksModule(BaseModule):
 
     def update_check(self, entity):
         self._update_label_assignments(entity)
+        vlan_tag_changed = equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None))
+        if self._module.params.get('vlan_tag') == -1:
+            vlan_tag_changed = getattr(entity.vlan, 'id', None) is None
         return (
+            vlan_tag_changed and
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('name'), entity.name) and
             equal(self._module.params.get('description'), entity.description) and
-            equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None)) and
             equal(self._module.params.get('vm_network'), True if entity.usages else False) and
             equal(self._module.params.get('mtu'), entity.mtu)
         )
