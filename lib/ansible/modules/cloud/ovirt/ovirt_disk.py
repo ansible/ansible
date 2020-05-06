@@ -58,6 +58,7 @@ options:
                if you want to upload the disk even if the disk with C(id) or C(name) exists,
                then please use C(force) I(true). If you will use C(force) I(false), which
                is default, then the disk image won't be uploaded."
+            - "Note that to upload iso the C(format) should be 'raw'"
         version_added: "2.3"
     size:
         description:
@@ -73,6 +74,7 @@ options:
         description:
             - Specify format of the disk.
             - Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
+        default: 'cow'
         choices: ['raw', 'cow']
     content_type:
         description:
@@ -740,6 +742,8 @@ def main():
 
             # Upload disk image in case it's new disk or force parameter is passed:
             if module.params['upload_image_path'] and (is_new_disk or module.params['force']):
+                if module.params['format'] == 'cow' and module.params['content_type'] == 'iso':
+                    module.warn("To upload an ISO image 'format' parameter needs to be set to 'raw'.")
                 uploaded = upload_disk_image(connection, module)
                 ret['changed'] = ret['changed'] or uploaded
             # Download disk image in case it's file don't exist or force parameter is passed:
