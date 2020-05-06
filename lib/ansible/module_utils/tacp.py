@@ -111,7 +111,7 @@ def get_component_fields_by_name(name, component,
                         boot_order.append(boot_order_payload)
                     return boot_order
     return None
-    
+
 
 def convert_memory_abbreviation_to_bytes(value):
     """Validate memory argument. Returns the memory value in bytes."""
@@ -165,3 +165,19 @@ def is_valid_uuid(uuid_to_test, version=4):
         return False
 
     return str(uuid_obj) == uuid_to_test
+
+
+def api_response_to_dict(api_response):
+    if type(api_response) != ApiException:
+        message_str = api_response.message
+    else:
+        message_str = str(api_response)
+    message_str = message_str.replace('\n', '').replace('null', 'None')
+
+    http_text = 'HTTP response body: '
+    http_index = message_str.find(http_text)
+
+    message_str = message_str[http_index + len(http_text):]
+
+    message_dict = dict(json.loads(message_str))
+    return message_dict
