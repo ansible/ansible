@@ -87,12 +87,12 @@ class Conditional:
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
 
+        # its always a list at this point
         if not self.when:
             # empty list
             return False
 
         try:
-            # its always a list at this point
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
