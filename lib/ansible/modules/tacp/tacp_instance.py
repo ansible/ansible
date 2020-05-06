@@ -226,7 +226,7 @@ def run_module():
         if i == 0:
             vnic_payloads = []
             for boot_order_item in boot_order:
-                if boot_order_item.name == nic['name'] and boot_order_item.vnic_uuid:
+                if boot_order_item.vnic_uuid:
                     vnic_uuid = boot_order_item.vnic_uuid
 
         else:
