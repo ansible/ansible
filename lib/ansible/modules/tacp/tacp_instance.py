@@ -228,6 +228,7 @@ def run_module():
             for boot_order_item in boot_order:
                 if boot_order_item.vnic_uuid:
                     vnic_uuid = boot_order_item.vnic_uuid
+                    vnic_name = boot_order_item.name
 
         else:
             # TODO - his will eventually need to be modified so that any
@@ -238,7 +239,7 @@ def run_module():
 
             vnic_payload = tacp.ApiAddVnicPayload(
                 automatic_mac_address=automatic_mac_address,
-                name=nic['name'],
+                name=vnic_name,
                 network_uuid=network_uuid,
                 boot_order=vnic_boot_order,
                 mac_address=mac_address
@@ -246,7 +247,7 @@ def run_module():
             vnic_payloads.append(vnic_payload)
 
         network_payload = tacp.ApiCreateOrEditApplicationNetworkOptionsPayload(
-            name=nic['name'],
+            name=vnic_name,
             automatic_mac_assignment=automatic_mac_address,
             network_uuid=network_uuid,
             vnic_uuid=vnic_uuid,
