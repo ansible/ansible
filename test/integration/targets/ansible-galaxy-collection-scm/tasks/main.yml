@@ -20,6 +20,8 @@
       cleanup: False
   - include_tasks: ./reinstalling.yml
   - include_tasks: ./multi_collection_repo_individual.yml
+  - include_tasks: ./setup_recursive_scm_dependency.yml
+  - include_tasks: ./scm_dependency_deduplication.yml
 
   always:
 
