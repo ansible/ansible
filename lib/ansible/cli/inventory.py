@@ -187,6 +187,8 @@ class InventoryCLI(CLI):
         return results
 
     def _get_group_variables(self, group):
+        if context.CLIARGS['graph'] and not context.CLIARGS['show_vars']:
+            return {}
 
         # get info from inventory source
         res = group.get_vars()
@@ -202,6 +204,8 @@ class InventoryCLI(CLI):
         return self._remove_internal(res)
 
     def _get_host_variables(self, host):
+        if context.CLIARGS['graph'] and not context.CLIARGS['show_vars']:
+            return {}
 
         if context.CLIARGS['export']:
             # only get vars defined directly host
