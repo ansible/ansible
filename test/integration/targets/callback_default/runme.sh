@@ -133,10 +133,18 @@ export ANSIBLE_DISPLAY_OK_HOSTS=0
 
 run_test hide_ok
 
+# Hide skipped/ok/changed
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=0
+export ANSIBLE_DISPLAY_OK_HOSTS=0
+export ANSIBLE_DISPLAY_CHANGED_HOSTS=0
+
+run_test hide_skipped_ok_changed
+
 # Failed to stderr
 export ANSIBLE_DISPLAY_SKIPPED_HOSTS=1
 export ANSIBLE_DISPLAY_OK_HOSTS=1
 export ANSIBLE_DISPLAY_FAILED_STDERR=1
+export ANSIBLE_DISPLAY_CHANGED_HOSTS=1
 
 run_test failed_to_stderr
 
