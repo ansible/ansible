@@ -5974,8 +5974,6 @@ test/integration/targets/inventory_kubevirt_conformance/inventory_diff.py future
 test/integration/targets/inventory_kubevirt_conformance/inventory_diff.py metaclass-boilerplate
 test/integration/targets/inventory_kubevirt_conformance/server.py future-import-boilerplate
 test/integration/targets/inventory_kubevirt_conformance/server.py metaclass-boilerplate
-test/integration/targets/jinja2_native_types/filter_plugins/native_plugins.py future-import-boilerplate
-test/integration/targets/jinja2_native_types/filter_plugins/native_plugins.py metaclass-boilerplate
 test/integration/targets/lambda_policy/files/mini_http_lambda.py future-import-boilerplate
 test/integration/targets/lambda_policy/files/mini_http_lambda.py metaclass-boilerplate
 test/integration/targets/lookup_properties/lookup-8859-15.ini no-smart-quotes
