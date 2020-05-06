@@ -95,7 +95,7 @@ string into some python files that you can work with:
 
 When you look into the debug_dir you'll see a directory structure like this::
 
-    ├── ansible_module_ping.py
+    ├── AnsiballZ_ping.py
     ├── args
     └── ansible
         ├── __init__.py
@@ -103,7 +103,7 @@ When you look into the debug_dir you'll see a directory structure like this::
             ├── basic.py
             └── __init__.py
 
-* :file:`ansible_module_ping.py` is the code for the module itself.  The name
+* :file:`AnsiballZ_ping.py` is the code for the module itself.  The name
   is based on the name of the module with a prefix so that we don't clash with
   any other python module names.  You can modify this code to see what effect
   it would have on your module.
@@ -138,17 +138,3 @@ the arguments in the :file:`args` file.  You can continue to run it like this
 until you understand the problem.  Then you can copy it back into your real
 module file and test that the real module works via :command:`ansible` or
 :command:`ansible-playbook`.
-
-.. note::
-
-    The wrapper provides one more subcommand, ``excommunicate``.  This
-    subcommand is very similar to ``execute`` in that it invokes the exploded
-    module on the arguments in the :file:`args`.  The way it does this is
-    different, however.  ``excommunicate`` imports the ``main``
-    function from the module and then calls that.  This makes excommunicate
-    execute the module in the wrapper's process.  This may be useful for
-    running the module under some graphical debuggers but it is very different
-    from the way the module is executed by Ansible itself.  Some modules may
-    not work with ``excommunicate`` or may behave differently than when used
-    with Ansible normally.  Those are not bugs in the module; they're
-    limitations of ``excommunicate``.  Use at your own risk.
