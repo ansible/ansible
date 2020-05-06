@@ -148,6 +148,7 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
         return self.data.encode(encoding, errors)
 
 
+# TODO: figure out how,when to pass in template object, can we pull from caller?
 class AnsibleTemplate(yaml.YAMLObject, AnsibleUnicode):
 
     yaml_tag = u'!jinja'
@@ -160,7 +161,6 @@ class AnsibleTemplate(yaml.YAMLObject, AnsibleUnicode):
         self._static = static
         self._cached = None
 
-        # TODO: figure out how to pass in template object
         self._templator = None
 
     def _templated(self, templator=None):
@@ -169,8 +169,10 @@ class AnsibleTemplate(yaml.YAMLObject, AnsibleUnicode):
         if not templar:
             self._cached = u'{{%s}}' % to_text(self._template_string, errors='surrogate_or_strict')
         else:
-            if not self._static or self._cached is None or u'{{' in self._cached:
-                self._cached = templar(self._template_string)
+            env = templar.environment
+            if not self._static or self._cached is None or env['variable_start_string'] in self._cached:
+                # TODO: should we handle exception or just let it blow 'upwards'?
+                self._cached = templar(u''.join(env['variable_start_string'], self._template_string, env['variable_end_string']))
 
         return self._cached
 
