@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-inventory --graph - don't query for variables unless --vars is provided
