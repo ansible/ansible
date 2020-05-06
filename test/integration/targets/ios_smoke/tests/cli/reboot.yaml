@@ -1,0 +1,19 @@
+---
+- block:
+  - cli_command:
+      command: reload
+      prompt:
+        - "yes/no"
+        - "confirm"
+      answer:
+        - "no"
+        - "y"
+      check_all: yes
+
+  - wait_for_connection:
+      delay: 20
+      sleep: 10
+
+  - cli_command:
+      command: show version
+  when: ansible_connection.endswith("network_cli")

@@ -10,8 +10,6 @@ import sys
 import copy
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.cloudengine.ce import ce_provider_spec
 from ansible.module_utils.network.common.utils import load_provider
@@ -62,7 +60,7 @@ class ActionModule(ActionNetworkModule):
                 if module_name in ['ce_netconf'] or module_name not in CLI_SUPPORTED_MODULES:
                     pc.connection = 'netconf'
                 display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+                connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
                 connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
                 socket_path = connection.run()
@@ -86,23 +84,6 @@ class ActionModule(ActionNetworkModule):
                     (persistent_connection == 'netconf' and module_name in CLI_SUPPORTED_MODULES):
                 return {'failed': True, 'msg': "Connection type '%s' is not valid for '%s' module."
                         % (self._play_context.connection, self._task.action)}
-
-        if (self._play_context.connection == 'local' and transport == 'cli' and self._task.action in CLI_SUPPORTED_MODULES) \
-                or self._play_context.connection == 'network_cli':
-            # make sure we are in the right cli context which should be
-            # enable mode and not config module
-            if socket_path is None:
-                socket_path = self._connection.socket_path
-            conn = Connection(socket_path)
-            out = conn.get_prompt()
-            prompt = to_text(out, errors='surrogate_then_replace').strip()
-            while prompt.endswith(']'):
-                display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-                if prompt.startswith('[*'):
-                    conn.exec_command('clear configuration candidate')
-                conn.exec_command('return')
-                out = conn.get_prompt()
-                prompt = to_text(out, errors='surrogate_then_replace').strip()
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

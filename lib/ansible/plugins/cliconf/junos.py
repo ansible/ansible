@@ -246,6 +246,14 @@ class Cliconf(CliconfBase):
         result.update(self.get_option_values())
         return json.dumps(result)
 
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context='#')
+
     def _get_command_with_output(self, command, output):
         options_values = self.get_option_values()
         if output not in options_values['output']:
