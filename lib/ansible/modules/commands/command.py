@@ -49,11 +49,11 @@ options:
   creates:
     type: path
     description:
-      - A filename or (since 2.0) glob pattern. If it already exists, this step B(won't) be run.
+      - A filename or (since 2.0) glob pattern. If a matching file already exists, this step B(won't) be run.
   removes:
     type: path
     description:
-      - A filename or (since 2.0) glob pattern. If it already exists, this step B(will) be run.
+      - A filename or (since 2.0) glob pattern. If a matching file exists, this step B(will) be run.
     version_added: "0.8"
   chdir:
     type: path
