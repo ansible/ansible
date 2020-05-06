@@ -24,8 +24,7 @@ from yaml.nodes import MappingNode
 
 from ansible import constants as C
 from ansible.module_utils._text import to_bytes, to_native, to_text
-from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode
-from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+from ansible.parsing.yaml.objects import AnsibleMapping, AnsibleSequence, AnsibleUnicode, AnsibleVaultEncryptedUnicode, AnsibleTemplate
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.parsing.vault import VaultLib
 from ansible.utils.display import Display
@@ -125,9 +124,14 @@ class AnsibleConstructor(SafeConstructor):
 
     def construct_jinja2_expression(self, node):
         value = self.construct_scalar(node)
-        ret = AnsibleUnicode(u''.join([u'{{', to_text(value), u'}}']))
+        ret = AnsibleTemplate(to_text(value, errors='surrogate_or_strict'))
         ret.ansible_pos = self._node_position_info(node)
         return ret
+
+    def construct_static_expression(self, node):
+        value = self.construct_scalar(node)
+        ret = AnsibleTemplate(to_text(value, errors='surrogate_or_strict'), static=True)
+        ret.ansible_pos = self._node_position_info(node)
 
     def _node_position_info(self, node):
         # the line number where the previous token has ended (plus empty lines)
@@ -155,4 +159,5 @@ AnsibleConstructor.add_constructor(u'!unsafe', AnsibleConstructor.construct_yaml
 AnsibleConstructor.add_constructor(u'!vault', AnsibleConstructor.construct_vault_encrypted_unicode)
 AnsibleConstructor.add_constructor(u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)
 
-AnsibleConstructor.add_constructor( u'!jinja', AnsibleConstructor.construct_jinja2_experssion)
+AnsibleConstructor.add_constructor( u'!jinja', AnsibleConstructor.construct_jinja2_expression)
+AnsibleConstructor.add_constructor( u'!jinja2_static', AnsibleConstructor.construct_static_expression)

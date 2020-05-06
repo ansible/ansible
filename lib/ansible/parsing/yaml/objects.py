@@ -146,3 +146,53 @@ class AnsibleVaultEncryptedUnicode(yaml.YAMLObject, AnsibleBaseYAMLObject):
 
     def encode(self, encoding=None, errors=None):
         return self.data.encode(encoding, errors)
+
+
+class AnsibleTemplate(yaml.YAMLObject, AnsibleUnicode):
+
+    yaml_tag = u'!jinja'
+
+    def __init__(self, template, static=False):
+
+        super(AnsibleTemplate, self).__init__()
+
+        self._template_string = template
+        self._static = static
+        self._cached = None
+
+        # TODO: figure out how to pass in template object
+        self._templator = None
+
+    def _templated(self, templator=None):
+
+        templar = templator or self._templator
+        if not templar:
+            self._cached = u'{{%s}}' % to_text(self._template_string, errors='surrogate_or_strict')
+        else:
+            if not self._static or self._cached is None or u'{{' in self._cached:
+                self._cached = templar(self._template_string)
+
+        return self._cached
+
+    # Compare a regular str/text_type with the decrypted hypertext
+    def __eq__(self, other):
+        if self._template_string:
+            return other == self._template_string
+        return False
+
+    def __hash__(self):
+        return id(self._template_string)
+
+    def __ne__(self, other):
+        if self._template_string:
+            return other != self._template_string
+        return True
+
+    def __str__(self):
+        return self._templated()
+
+    def __unicode__(self):
+        return self._templated()
+
+    def encode(self, encoding=None, errors=None):
+        return self._templated().encode(encoding, errors)
