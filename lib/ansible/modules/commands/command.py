@@ -22,7 +22,7 @@ description:
      - The C(command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes.
      - The command(s) will not be
-       processed through the shell, so variables like C($HOME) and operations
+       processed through the shell, so variables like C($HOSTNAME) and operations
        like C("*"), C("<"), C(">"), C("|"), C(";") and C("&") will not work.
        Use the M(shell) module if you need these features.
      - To create C(command) tasks that are easier to read than the ones using space-delimited
