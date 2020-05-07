@@ -1435,7 +1435,7 @@ def prepare_multipart(fields):
             main_type, sep, sub_type = mime.partition('/')
         else:
             raise TypeError(
-                'value must be a string, or mapping, cannot be type %s' % fields.__class__.__name__
+                'value must be a string, or mapping, cannot be type %s' % value.__class__.__name__
             )
 
         part = email.mime.nonmultipart.MIMENonMultipart(main_type, sub_type)
