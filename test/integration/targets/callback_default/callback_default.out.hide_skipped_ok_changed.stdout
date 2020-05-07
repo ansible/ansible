@@ -14,9 +14,10 @@ fatal: [testhost]: FAILED! => {"msg": "All items completed"}
 
 TASK [EXPECTED FAILURE Failed task to be rescued] ******************************
 fatal: [testhost]: FAILED! => {"changed": false, "msg": "Failed as requested from task"}
+included: .../test/integration/targets/callback_default/include_me.yml for testhost => (item=1)
 
 PLAY [testhost] ****************************************************************
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=12   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
+testhost                   : ok=14   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2
 
