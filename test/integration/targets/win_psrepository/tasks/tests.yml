@@ -161,7 +161,7 @@
   register: removing_repository_check
 
 - name: get result of remove repository - check mode
-  win_shell: '(Get-PSRepository -Name {{ repository_name | quote }} -ErrorAction Ignore | Measure-Object).Count'
+  win_shell: '(Get-PSRepository -Name {{ repository_name | quote }} -ErrorAction SilentlyContinue | Measure-Object).Count'
   changed_when: false
   register: result_removing_repository_check
 
@@ -178,7 +178,7 @@
   register: removing_repository
 
 - name: get result of remove repository
-  win_shell: '(Get-PSRepository -Name {{ repository_name | quote }} -ErrorAction Ignore | Measure-Object).Count'
+  win_shell: '(Get-PSRepository -Name {{ repository_name | quote }} -ErrorAction SilentlyContinue | Measure-Object).Count'
   changed_when: false
   register: result_removing_repository
 
