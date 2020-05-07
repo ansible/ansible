@@ -104,7 +104,9 @@ def split_host_pattern(pattern):
     """
 
     if isinstance(pattern, list):
-        return list(itertools.chain(*map(split_host_pattern, pattern)))
+        results = (split_host_pattern(p) for p in pattern)
+        # flatten the results
+        return list(itertools.chain.from_iterable(results))
     elif not isinstance(pattern, string_types):
         pattern = to_text(pattern, errors='surrogate_or_strict')
 
@@ -580,7 +582,7 @@ class InventoryManager(object):
     def list_hosts(self, pattern="all"):
         """ return a list of hostnames for a pattern """
         # FIXME: cache?
-        result = [h for h in self.get_hosts(pattern)]
+        result = self.get_hosts(pattern)
 
         # allow implicit localhost if pattern matches and no other results
         if len(result) == 0 and pattern in C.LOCALHOST:
@@ -590,7 +592,7 @@ class InventoryManager(object):
 
     def list_groups(self):
         # FIXME: cache?
-        return sorted(self._inventory.groups.keys(), key=lambda x: x)
+        return sorted(self._inventory.groups.keys())
 
     def restrict_to_hosts(self, restriction):
         """
