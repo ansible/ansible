@@ -83,7 +83,7 @@ compose:
   ec2_kernel: kernel_id | default("")
   ec2_monitored:  monitoring['state'] in ['enabled', 'pending']
   ec2_monitoring_state: monitoring['state']
-  ec2_account_id: owner_id | string | regex_replace('^(.*)$', '"\\1"')  # work around the fact that the string filter is not reliable on native jinja
+  ec2_account_id: owner_id
   ec2_placement: placement['availability_zone']
   ec2_ramdisk: ramdisk_id | default("")
   ec2_reason: state_transition_reason
@@ -95,7 +95,7 @@ compose:
   ec2_sourceDestCheck: source_dest_check | lower | string  # butchered snake_case case not a typo.
 
   # vars that just need ec2_ prefix
-  ec2_ami_launch_index: ami_launch_index | string | regex_replace('^(.*)$', '"\\1"')  # see ec2_account_id for why this needs to be quoted
+  ec2_ami_launch_index: ami_launch_index | string
   ec2_architecture: architecture
   ec2_client_token: client_token
   ec2_ebs_optimized: ebs_optimized
