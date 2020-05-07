@@ -41,7 +41,6 @@ class InventoryData(object):
 
     def __init__(self):
 
-        # the inventory object holds a list of groups
         self.groups = {}
         self.hosts = {}
 
