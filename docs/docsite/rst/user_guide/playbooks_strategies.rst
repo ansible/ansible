@@ -134,11 +134,13 @@ You can also mix and match the values::
 Restricting execution with ``throttle``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``throttle`` keyword limits the number of workers up to the maximum set with the forks setting or ``serial``. It can be set at the block and task level. Use ``throttle`` to restrict tasks that may be CPU-intensive or interact with a rate-limiting API::
+The ``throttle`` keyword limits the number of workers for a particular task. It can be set at the block and task level. Use ``throttle`` to restrict tasks that may be CPU-intensive or interact with a rate-limiting API::
 
     tasks:
     - command: /path/to/cpu_intensive_command
       throttle: 1
+
+If you have already restricted the number of forks or the number of machines to execute against in parallel, you can reduce the number of workers with ``throttle``, but you cannot increase it. In other words, to have an effect, your ``throttle`` setting must be lower than your ``forks`` or ``serial`` setting if you are using them together.
 
 Ordering execution based on inventory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

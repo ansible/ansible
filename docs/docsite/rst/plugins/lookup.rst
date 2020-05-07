@@ -23,7 +23,7 @@ Lookup plugins are an Ansible-specific extension to the Jinja2 templating langua
 Enabling lookup plugins
 -----------------------
 
-Ansible enables all lookup plugins it can find. You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play, inside a role, or by putting it in one of the lookup directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
+Ansible enables all lookup plugins it can find. You can activate a custom lookup by either dropping it into a ``lookup_plugins`` directory adjacent to your play, inside the ``plugins/lookup/`` directory of a collection you have installed, inside a standalone role, or in one of the lookup directory sources configured in :ref:`ansible.cfg <ansible_configuration_settings>`.
 
 
 .. _using_lookup:
@@ -61,7 +61,7 @@ You can control how errors behave in all lookup plugins by setting ``errors`` to
 
 To ignore lookup errors::
 
-    - name: if this file does not exist, I do not care .. file plugin itself warns anyways ...
+    - name: if this file does not exist, I do not care .. file plugin itself warns anyway ...
       debug: msg="{{ lookup('file', '/nosuchfile', errors='ignore') }}"
 
 .. code-block:: ansible-output
@@ -89,7 +89,7 @@ To get a warning instead of a failure::
     }
 
 
-Fatal error (the default)::
+To get a fatal error (the default)::
 
     - name: if this file does not exist, FAIL (this is the default)
       debug: msg="{{ lookup('file', '/nosuchfile', errors='strict') }}"

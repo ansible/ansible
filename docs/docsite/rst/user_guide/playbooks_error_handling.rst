@@ -159,7 +159,7 @@ The :ref:`command <command_module>` and :ref:`shell <shell_module>` modules care
 Aborting a play on all hosts
 ============================
 
-Sometimes you want a failure on a single host, or failures on a certain percentage of hosts, to abort the entire play on all hosts.
+Sometimes you want a failure on a single host, or failures on a certain percentage of hosts, to abort the entire play on all hosts. You can stop play execution after the first failure happens with ``any_errors_fatal``. For finer-grained control, you can use ``max_fail_percentage`` to abort the run after a given percentage of hosts has failed.
 
 Aborting on the first error: any_errors_fatal
 ---------------------------------------------
@@ -177,14 +177,7 @@ If you set ``any_errors_fatal`` and a task returns an error, Ansible finishes th
              - include_tasks: mytasks.yml
            any_errors_fatal: true
 
-You can use this feature when all tasks must be 100% successful to continue playbook execution. For example, if you run a service on machines in multiple data centers with load balancers to pass traffic from users to the service, your playbook to upgrade deb-packages would have four stages:
-
-- disable traffic on load balancers (must be turned off simultaneously)
-- gracefully stop the service
-- upgrade software (this step includes tests and starting the service)
-- enable traffic on the load balancers (which should be turned on simultaneously)
-
-The load balancers must be disabled before you stop the service, so you want your playbook to stop if any host fails in the first stage. For datacenter "A", the playbook can be written this way::
+You can use this feature when all tasks must be 100% successful to continue playbook execution. For example, if you run a service on machines in multiple data centers with load balancers to pass traffic from users to the service, you want all load balancers to be disabled before you stop the service for maintenance. To ensure that any failure in the task that disables the load balancers will stop all other tasks::
 
     ---
     - hosts: load_balancers_dc_a
@@ -208,21 +201,21 @@ The load balancers must be disabled before you stop the service, so you want you
         - name: 'Starting datacenter [ A ]'
           command: /usr/bin/enable-dc
 
-In this example Ansible starts the software upgrade on the front ends only if all of the load balancers are successfully disabled. For finer-grained control, you can use ``max_fail_percentage`` to abort the run after a given percentage of hosts has failed.
+In this example Ansible starts the software upgrade on the front ends only if all of the load balancers are successfully disabled.
 
 .. _maximum_failure_percentage:
 
 Setting a maximum failure percentage
 ------------------------------------
 
-By default, Ansible will continue executing actions as long as there are hosts that have not yet failed. In some situations, such as when executing a rolling update, you may want to abort the play when a certain threshold of failures has been reached. To achieve this, you can set a maximum failure percentage on a play::
+By default, Ansible continues to execute tasks as long as there are hosts that have not yet failed. In some situations, such as when executing a rolling update, you may want to abort the play when a certain threshold of failures has been reached. To achieve this, you can set a maximum failure percentage on a play::
 
     ---
     - hosts: webservers
       max_fail_percentage: 30
       serial: 10
 
-In this example, if more than 3 of the 10 servers in the first (or any) group of servers failed, the rest of the play would be aborted.
+The ``max_fail_percentage`` setting applies to each batch when you use it with :ref:`serial <rolling_update_batch_size>`. In the example above, if more than 3 of the 10 servers in the first (or any) batch of servers failed, the rest of the play would be aborted.
 
 .. note::
 

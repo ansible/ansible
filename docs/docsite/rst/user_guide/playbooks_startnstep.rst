@@ -1,14 +1,14 @@
 .. _playbooks_start_and_step:
 
-**************
-Start and Step
-**************
+***************************************
+Executing playbooks for troubleshooting
+***************************************
 
-When you are testing new plays or debugging playbooks, you may need to run the same play multiple times. To make this more efficient, Ansible offers two alternative ways to execute a playbook.
+When you are testing new plays or debugging playbooks, you may need to run the same play multiple times. To make this more efficient, Ansible offers two alternative ways to execute a playbook: start-at-task and step mode.
 
 .. _start_at_task:
 
-Start-at-task
+start-at-task
 -------------
 
 To start executing your playbook at a particular task (usually the task that failed on the previous run), use the ``--start-at-task`` option::
@@ -19,8 +19,8 @@ In this example, Ansible starts executing your playbook at a task named "install
 
 .. _step:
 
-Step
-----
+Step mode
+---------
 
 To execute a playbook interactively, use ``--step``::
 

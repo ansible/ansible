@@ -25,8 +25,8 @@ Enforcing or preventing check mode on tasks
 
 If you want certain tasks to run in check mode always, or never, regardless of whether you run the playbook with or without ``--check``, you can add the ``check_mode`` option to those tasks:
 
-1. To force a task to run in check mode, even when the playbook is called without ``--check``, set ``check_mode: yes``.
-2. To force a task to run in normal mode and make changes to the system, even when the playbook is called with ``--check``, set ``check_mode: no``.
+  - To force a task to run in check mode, even when the playbook is called without ``--check``, set ``check_mode: yes``.
+  - To force a task to run in normal mode and make changes to the system, even when the playbook is called with ``--check``, set ``check_mode: no``.
 
 For example::
 
@@ -73,7 +73,7 @@ If you want to skip a task or ignore errors on a task when you run Ansible in ch
 Using diff mode
 ===============
 
-The ``--diff`` option for ansible-playbook can be used alone or with ``--check``. When you run in diff mode, any module that supports diff mode reports the changes made or, if used with ``--check``, the changes that would have been made. Diff mode is most common in modules that manipulate files (i.e. template) but other modules might also show 'before and after' information (i.e. user).
+The ``--diff`` option for ansible-playbook can be used alone or with ``--check``. When you run in diff mode, any module that supports diff mode reports the changes made or, if used with ``--check``, the changes that would have been made. Diff mode is most common in modules that manipulate files (for example, the template module) but other modules might also show 'before and after' information (for example, the user module).
 
 Diff mode produces a large amount of output, so it is best used when checking a single host at a time. For example::
 

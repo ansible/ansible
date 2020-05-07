@@ -33,7 +33,7 @@ The ``debugger`` keyword can be used on any block where you provide a ``name`` a
 
    on_failed                 Only invoke the debugger if a task fails
 
-   on_unreachable            Only invoke the debugger if the a host was unreachable
+   on_unreachable            Only invoke the debugger if a host was unreachable
 
    on_skipped                Only invoke the debugger if the task is skipped
 
@@ -163,12 +163,36 @@ Available debug commands
 
 You can use these seven commands at the debug prompt:
 
+.. table::
+   :class: documentation-table
+
+   ========================== ============ =========================================================
+   Command                    Shortcut     Action
+   ========================== ============ =========================================================
+   print                      p            Print information about the task
+
+   task.args[*key*] = *value* no shortcut  Update module arguments
+
+   task_vars[*key*] = *value* no shortcut  Update task variables
+
+   update_task                u            Recreate a task with updated task variables
+
+   redo                       r            Run the task again
+
+   continue                   c            Continue editing
+
+   quit                       q            Quit the debugger
+
+   ========================== ============ =========================================================
+
+For more details, see the individual descriptions and examples below.
+
 .. _pprint_command:
 
-p(print) *task/task_vars/host/result*
--------------------------------------
+Print command
+-------------
 
-Print values used to execute a module::
+``print *task/task.args/task_vars/host/result*`` prints information about the task::
 
     [192.0.2.10] TASK: install package (debug)> p task
     TASK: install package
@@ -192,10 +216,10 @@ Print values used to execute a module::
 
 .. _update_args_command:
 
-task.args[*key*] = *value*
---------------------------
+Update args command
+-------------------
 
-Update a module argument. This sample playbook has an invalid package name::
+``task.args[*key*] = *value*`` updates a module argument. This sample playbook has an invalid package name::
 
     - hosts: test
       strategy: debug
@@ -219,10 +243,10 @@ When the module argument is correct, use ``redo`` to run the task again with new
 
 .. _update_vars_command:
 
-task_vars[*key*] = *value*
---------------------------
+Update vars command
+-------------------
 
-Update ``task_vars``. You could fix the same playbook above by viewing, then updating the task variables instead of the module args::
+``task_vars[*key*] = *value*`` updates the ``task_vars``. You could fix the same playbook above by viewing, then updating the task variables instead of the module args::
 
     [192.0.2.10] TASK: install package (debug)> p task_vars['pkg_name']
     u'not_exist'
@@ -239,38 +263,38 @@ When you update task variables, you must use ``update_task`` to load the new var
 
 .. _update_task_command:
 
-u(pdate_task)
--------------
+Update task command
+-------------------
 
 .. versionadded:: 2.8
 
-Re-create the task from the original task data structure and templates with updated task variables. See the entry :ref:`update_vars_command` for an example of use.
+``u`` or ``update_task`` recreates the task from the original task data structure and templates with updated task variables. See the entry :ref:`update_vars_command` for an example of use.
 
 .. _redo_command:
 
-r(edo)
-------
+Redo command
+------------
 
-Run the task again.
+``r`` or ``redo`` runs the task again.
 
 .. _continue_command:
 
-c(ontinue)
-----------
+Continue command
+----------------
 
-Continue executing.
+``c`` or ``continue`` continues executing.
 
 .. _quit_command:
 
-q(uit)
-------
+Quit command
+------------
 
-Quit the debugger. The playbook execution is aborted.
+``q`` or ``quit`` quits the debugger. The playbook execution is aborted.
 
 Debugging and the free strategy
 ===============================
 
-If you use the debugger with the ``free`` strategy, Ansible will not queue or execute any further tasks while the debugger is active. Additionally, using ``redo`` on a task to schedule it for re-execution may cause the rescheduled task to execute after subsequent tasks listed in your playbook.
+If you use the debugger with the ``free`` strategy, Ansible does not queue or execute any further tasks while the debugger is active. However, previously queued tasks remain in the queue and run as soon as you exit the debugger. If you use ``redo`` to reschedule a task from the debugger, other queued task may execute before your rescheduled task.
 
 
 .. seealso::
