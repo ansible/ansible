@@ -283,7 +283,7 @@ import shutil
 import tempfile
 from distutils.version import LooseVersion
 
-from ansible.module_utils.basic import AnsibleModule, get_module_path
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native, to_text
 
