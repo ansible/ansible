@@ -1424,14 +1424,14 @@ def prepare_multipart(fields):
             filename = value.get('filename')
             content = value.get('content')
             if not any((filename, content)):
-                raise ValueError('one of filename or content must be provided')
-            if all((filename, content)):
-                raise ValueError('filename and content are mutually exclusive')
+                raise ValueError('at least one of filename or content must be provided')
 
-            mime = value.get(
-                'mime_type',
-                mimetypes.guess_type(filename, strict=False)[0] or 'application/octet-stream'
-            )
+            mime = value.get('mime_type')
+            if not mime:
+                try:
+                    mime = mimetypes.guess_type(filename or '', strict=False)[0] or 'application/octet-stream'
+                except Exception:
+                    mime = 'application/octet-stream'
             main_type, sep, sub_type = mime.partition('/')
         else:
             raise TypeError(
@@ -1445,14 +1445,16 @@ def prepare_multipart(fields):
             field,
             header='Content-Disposition'
         )
-        if content:
-            part.set_payload(to_bytes(content))
-        else:
+        if filename:
             part.set_param(
                 'filename',
                 os.path.basename(filename),
                 header='Content-Disposition'
             )
+
+        if content:
+            part.set_payload(to_bytes(content))
+        else:
             with open(filename, 'rb') as f:
                 part.set_payload(f.read())
         m.attach(part)

@@ -13,6 +13,7 @@ from ansible.errors import AnsibleError, AnsibleAction, _AnsibleActionDone, Ansi
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common.collections import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
+from ansible.module_utils.six import text_type
 from ansible.plugins.action import ActionBase
 
 
@@ -58,8 +59,11 @@ class ActionModule(ActionBase):
                         'body must be mapping, cannot be type %s' % body.__class__.__name__
                     )
                 for field, value in body.items():
+                    if isinstance(value, text_type):
+                        continue
+                    content = value.get('content')
                     filename = value.get('filename')
-                    if not filename:
+                    if not filename or content:
                         continue
 
                     try:
