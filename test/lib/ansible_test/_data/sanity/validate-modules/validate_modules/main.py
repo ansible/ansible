@@ -2235,8 +2235,9 @@ def run():
                     continue
                 if ModuleValidator.is_blacklisted(path):
                     continue
-                with ModuleValidator(path, collection=args.collection, analyze_arg_spec=args.arg_spec,
-                                     base_branch=args.base_branch, git_cache=git_cache, reporter=reporter, routing=routing) as mv2:
+                with ModuleValidator(path, collection=args.collection, collection_version=args.collection_version,
+                                     analyze_arg_spec=args.arg_spec, base_branch=args.base_branch,
+                                     git_cache=git_cache, reporter=reporter, routing=routing) as mv2:
                     mv2.validate()
 
     if not args.collection:
