@@ -23,7 +23,7 @@ def get_component_fields_by_name(name, component,
 
     valid_components = ["storage_pool", "application",
                         "template", "datacenter", "migration_zone",
-                        "vnet", "vlan"]
+                        "vnet", "vlan", "firewall_profile", "firewall_override"]
 
     if component not in valid_components:
         return "Invalid component"
@@ -83,6 +83,33 @@ def get_component_fields_by_name(name, component,
                 fields=fields)
         except ApiException as e:
             return "Exception when calling get_vnets_using_get: %s\n" % e
+    elif component == "firewall_profile":
+        api_instance = tacp.FirewallProfilesApi(api_client)
+        try:
+            # View Firewall profiles for an organization
+            api_response = api_instance.get_firewall_profiles_using_get(
+                fields=fields)
+        except ApiException as e:
+            return "Exception when calling get_firewall_profiles_using_get: %s\n" % e
+    elif component == "firewall_override":
+        # Need to get all datacenter UUIDs first 
+        api_instance = tacp.DatacentersApi(api_client)
+        try:
+            # View datacenters for an organization
+            datacenter_list = api_instance.get_datacenters_using_get(
+                fields=fields)
+        except ApiException as e:
+            return "Exception when calling get_datacenters_using_get: %s\n" % e
+
+        api_response = []
+        for datacenter in datacenter_list:
+            api_instance = tacp.DatacentersApi(api_client)
+            try:
+                # View Firewall profiles for an organization
+                api_response += api_instance.get_datacenter_firewall_overrides_using_get(
+                    uuid=datacenter.uuid, fields=fields)
+            except ApiException as e:
+                return "Exception when calling get_firewall_profiles_using_get"
 
     if (api_response):
         if fields == ['name', 'uuid']:
