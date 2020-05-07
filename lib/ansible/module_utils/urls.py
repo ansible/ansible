@@ -34,7 +34,11 @@ this code instead.
 
 import atexit
 import base64
+import email.mime.multipart
+import email.mime.nonmultipart
+import email.parser
 import functools
+import mimetypes
 import netrc
 import os
 import platform
@@ -56,8 +60,8 @@ import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 
-from ansible.module_utils.six import PY3
-
+from ansible.module_utils.common.collections import Mapping
+from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.basic import get_distribution
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -1381,6 +1385,99 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
                           use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
                           unredirected_headers=unredirected_headers)
+
+
+def prepare_multipart(fields):
+    """Takes a mapping, and prepares a multipart/form-data body
+
+    :arg fields: Mapping
+    :returns: tuple of (content_type, body) where ``content_type`` is
+        the ``multipart/form-data`` ``Content-Type`` header including
+        ``boundary`` and ``body`` is the prepared bytestring body
+
+    Example:
+        {
+            "file1": {
+                "filename": "/bin/true",
+                "mime_type": "application/octet-stream"
+            },
+            "file2": {
+                "content": "text based file content",
+                "mime_type": "text/plain",
+            },
+            "text_form_field": "value"
+        }
+    """
+
+    if not isinstance(fields, Mapping):
+        raise TypeError(
+                'Mapping is required, cannot be type %s' % fields.__class__.__name__
+        )
+
+    m = email.mime.multipart.MIMEMultipart('form-data')
+    for field, value in fields.items():
+        if isinstance(value, string_types):
+            main_type = 'text'
+            sub_type = 'plain'
+            content = value
+        elif isinstance(value, Mapping):
+            filename = value.get('filename')
+            content = value.get('content')
+            if not any((filename, content)):
+                raise ValueError('one of filename or content must be provided')
+            if all((filename, content)):
+                raise ValueError('filename and content are mutually exclusive')
+
+            mime = value.get(
+                'mime_type',
+                mimetypes.guess_type(filename, strict=False)[0] or 'application/octet-stream'
+            )
+            main_type, sep, sub_type = mime.partition('/')
+        else:
+            raise TypeError(
+                'value must be a string, or mapping, cannot be type %s' % fields.__class__.__name__
+            )
+
+        part = email.mime.nonmultipart.MIMENonMultipart(main_type, sub_type)
+        part.add_header('Content-Disposition', 'form-data')
+        part.set_param(
+            'name',
+            field,
+            header='Content-Disposition'
+        )
+        if content:
+            part.set_payload(to_bytes(content))
+        else:
+            part.set_param(
+                'filename',
+                os.path.basename(filename),
+                header='Content-Disposition'
+            )
+            with open(filename, 'rb') as f:
+                part.set_payload(f.read())
+        m.attach(part)
+
+    try:
+        b_data = m.as_bytes()
+    except AttributeError:
+        # Py2
+        b_data = m.as_string()
+    finally:
+        del m
+
+    headers, sep, b_content = b_data.partition(b'\n\n')
+    del b_data
+
+    try:
+        parser = email.parser.BytesHeaderParser().parsebytes
+    except AttributeError:
+        # Py2
+        parser = email.parser.HeaderParser().parsestr
+
+    return (
+        parser(headers)['content-type'].replace('\n', ''),  # Message converts to native strings
+        b_content
+    )
 
 
 #
