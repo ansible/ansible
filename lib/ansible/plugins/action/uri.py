@@ -55,7 +55,7 @@ class ActionModule(ActionBase):
             elif body_format == 'form-multipart':
                 if not isinstance(body, Mapping):
                     raise AnsibleActionFail(
-                        'body must be mapping, cannot be type %s' % fields.__class__.__name__
+                        'body must be mapping, cannot be type %s' % body.__class__.__name__
                     )
                 for field, value in body.items():
                     filename = value.get('filename')

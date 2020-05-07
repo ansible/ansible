@@ -1411,7 +1411,7 @@ def prepare_multipart(fields):
 
     if not isinstance(fields, Mapping):
         raise TypeError(
-                'Mapping is required, cannot be type %s' % fields.__class__.__name__
+            'Mapping is required, cannot be type %s' % fields.__class__.__name__
         )
 
     m = email.mime.multipart.MIMEMultipart('form-data')
