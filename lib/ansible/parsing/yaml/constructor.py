@@ -159,5 +159,5 @@ AnsibleConstructor.add_constructor(u'!unsafe', AnsibleConstructor.construct_yaml
 AnsibleConstructor.add_constructor(u'!vault', AnsibleConstructor.construct_vault_encrypted_unicode)
 AnsibleConstructor.add_constructor(u'!vault-encrypted', AnsibleConstructor.construct_vault_encrypted_unicode)
 
-AnsibleConstructor.add_constructor( u'!jinja', AnsibleConstructor.construct_jinja2_expression)
-AnsibleConstructor.add_constructor( u'!jinja2_static', AnsibleConstructor.construct_static_expression)
+AnsibleConstructor.add_constructor(u'!jinja', AnsibleConstructor.construct_jinja2_expression)
+AnsibleConstructor.add_constructor(u'!jinja2_static', AnsibleConstructor.construct_static_expression)
