@@ -18,6 +18,16 @@ $installationpolicy = Get-AnsibleParam -obj $params -name "installation_policy" 
 
 $result = @{"changed" = $false}
 
+# Enable TLS1.1/TLS1.2 if they're available but disabled (eg. .NET 4.5)
+$security_protocols = [System.Net.ServicePointManager]::SecurityProtocol -bor [System.Net.SecurityProtocolType]::SystemDefault
+if ([System.Net.SecurityProtocolType].GetMember("Tls11").Count -gt 0) {
+    $security_protocols = $security_protocols -bor [System.Net.SecurityProtocolType]::Tls11
+}
+if ([System.Net.SecurityProtocolType].GetMember("Tls12").Count -gt 0) {
+    $security_protocols = $security_protocols -bor [System.Net.SecurityProtocolType]::Tls12
+}
+[System.Net.ServicePointManager]::SecurityProtocol = $security_protocols
+
 Function Update-NuGetPackageProvider {
     $PackageProvider = Get-PackageProvider -ListAvailable | Where-Object { ($_.name -eq 'Nuget') -and ($_.version -ge "2.8.5.201") }
     if ($null -eq $PackageProvider) {
@@ -25,7 +35,7 @@ Function Update-NuGetPackageProvider {
     }
 }
 
-$Repo = Get-PSRepository -Name $name -ErrorAction Ignore
+$Repo = Get-PSRepository -Name $name -ErrorAction SilentlyContinue
 if ($state -eq "present") {
     if ($null -eq $Repo) {
         if ($null -eq $installationpolicy) {

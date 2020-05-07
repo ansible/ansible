@@ -5,7 +5,7 @@
 
 ---
 - name: unregister the repository
-  win_shell: Unregister-PSRepository {{ repository_name | quote }} -ErrorAction Ignore
+  win_shell: Unregister-PSRepository {{ repository_name | quote }} -ErrorAction SilentlyContinue
 
 - block:
   - name: run all tests
@@ -13,4 +13,4 @@
 
   always:
   - name: ensure test repo is unregistered
-    win_shell: Unregister-PSRepository {{ repository_name | quote }} -ErrorAction Ignore
+    win_shell: Unregister-PSRepository {{ repository_name | quote }} -ErrorAction SilentlyContinue
