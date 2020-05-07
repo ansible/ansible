@@ -35,13 +35,17 @@ DOCUMENTATION = '''
                 - name: TOWER_HOST
             required: True
         username:
-            description: The user that you plan to use to access inventories on Ansible Tower.
+            description:
+                - The user that you plan to use to access inventories on Ansible Tower.
+                - If you want use token auth set "username = Bearer"
             type: string
             env:
                 - name: TOWER_USERNAME
             required: True
         password:
-            description: The password for your Ansible Tower user.
+            description:
+                - The password for your Ansible Tower user or
+                - Token if you want use token auth
             type: string
             env:
                 - name: TOWER_PASSWORD
@@ -156,13 +160,20 @@ class InventoryModule(BaseInventoryPlugin):
         # Read inventory from tower server.
         # Note the environment variables will be handled automatically by InventoryManager.
         tower_host = self.get_option('host')
+        tower_user = self.get_option('username')
         if not re.match('(?:http|https)://', tower_host):
             tower_host = 'https://{tower_host}'.format(tower_host=tower_host)
 
-        request_handler = Request(url_username=self.get_option('username'),
-                                  url_password=self.get_option('password'),
-                                  force_basic_auth=True,
-                                  validate_certs=self.get_option('validate_certs'))
+        if not re.match('[bB]earer', tower_user):
+            request_handler = Request(url_username=self.get_option('username'),
+                                      url_password=self.get_option('password'),
+                                      force_basic_auth=True,
+                                      validate_certs=self.get_option('validate_certs'))
+        else:
+            token = self.get_option('password')
+            token_header = 'Bearer '+ token
+            request_handler = Request(headers=dict(Authorization=token_header),
+                                      validate_certs=self.get_option('validate_certs'))
 
         # validate type of inventory_id because we allow two types as special case
         inventory_id = self.get_option('inventory_id')
