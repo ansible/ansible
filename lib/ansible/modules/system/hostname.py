@@ -814,6 +814,12 @@ class VoidLinuxHostname(Hostname):
     strategy_class = DebianStrategy
 
 
+class PopHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Pop'
+    strategy_class = DebianStrategy
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
