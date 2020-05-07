@@ -16,6 +16,9 @@ DOCUMENTATION = """
       _terms:
         description: path(s) of files to read
         required: True
+      recursive:
+        description: Whether to search rescursively (only supported on Python 3.5 or above)
+        required: False
     notes:
       - Patterns are only supported on files, not directory/paths.
       - Matching is against local system files on the Ansible controller.
@@ -45,6 +48,7 @@ RETURN = """
 
 import os
 import glob
+import sys
 
 from ansible.plugins.lookup import LookupBase
 from ansible.errors import AnsibleFileNotFound
@@ -53,7 +57,7 @@ from ansible.module_utils._text import to_bytes, to_text
 
 class LookupModule(LookupBase):
 
-    def run(self, terms, variables=None, **kwargs):
+    def run(self, terms, variables=None, recursive=False, **kwargs):
 
         ret = []
         for term in terms:
@@ -72,7 +76,10 @@ class LookupModule(LookupBase):
                     found_paths.append(p)
 
             for dwimmed_path in found_paths:
-                globbed = glob.glob(to_bytes(os.path.join(dwimmed_path, term_file), errors='surrogate_or_strict'))
+                if sys.version_info[:2] >= (3, 5):
+                    globbed = glob.glob(to_bytes(os.path.join(dwimmed_path, term_file), errors='surrogate_or_strict'), recursive=recursive)
+                else:
+                    globbed = glob.glob(to_bytes(os.path.join(dwimmed_path, term_file), errors='surrogate_or_strict'))
                 ret.extend(to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g))
                 if ret:
                     break
