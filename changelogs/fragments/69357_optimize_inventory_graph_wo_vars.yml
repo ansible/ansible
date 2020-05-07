@@ -1,0 +1,2 @@
+bugfix:
+    - Avoid running subfunctions that are passed to show_vars function when it will be a noop.
