@@ -248,6 +248,7 @@ EXAMPLES = r'''
         mime_type: application/octet-stream
       file2:
         content: text based file content
+        filename: fake.txt
         mime_type: text/plain
       text_form_field: value
 

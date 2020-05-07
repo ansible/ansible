@@ -1403,6 +1403,7 @@ def prepare_multipart(fields):
             },
             "file2": {
                 "content": "text based file content",
+                "filename": "fake.txt",
                 "mime_type": "text/plain",
             },
             "text_form_field": "value"
