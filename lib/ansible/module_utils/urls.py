@@ -38,7 +38,6 @@ import email.mime.multipart
 import email.mime.nonmultipart
 import email.mime.application
 import email.parser
-import email.policy
 import functools
 import mimetypes
 import netrc
@@ -53,6 +52,12 @@ import traceback
 from contextlib import contextmanager
 
 try:
+    import email.policy
+except ImportError:
+    # Py2
+    import email.generator
+
+try:
     import httplib
 except ImportError:
     # Python 3
@@ -64,6 +69,7 @@ import ansible.module_utils.six.moves.urllib.error as urllib_error
 
 from ansible.module_utils.common.collections import Mapping
 from ansible.module_utils.six import PY3, string_types
+from ansible.module_utils.six.moves import cStringIO
 from ansible.module_utils.basic import get_distribution
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -1471,23 +1477,25 @@ def prepare_multipart(fields):
 
         m.attach(part)
 
-    # Ensure headers are not split over multiple lines
-    policy = email.policy.compat32.clone(max_line_length=0)
-
-    try:
+    if PY3:
+        # Ensure headers are not split over multiple lines
+        policy = email.policy.compat32.clone(max_line_length=0)
         b_data = m.as_bytes(policy=policy)
-    except AttributeError:
+    else:
         # Py2
-        b_data = m.as_string(policy=policy)
-    finally:
-        del m
+        fp = cStringIO()  # cStringIO seems to be required here
+        # Ensure headers are not split over multiple lines
+        g = email.generator.Generator(fp, maxheaderlen=0)
+        g.flatten(m)
+        b_data = fp.getvalue()
+    del m
 
     headers, sep, b_content = b_data.partition(b'\n\n')
     del b_data
 
-    try:
+    if PY3:
         parser = email.parser.BytesHeaderParser().parsebytes
-    except AttributeError:
+    else:
         # Py2
         parser = email.parser.HeaderParser().parsestr
 
