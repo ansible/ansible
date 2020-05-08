@@ -36,7 +36,9 @@ import atexit
 import base64
 import email.mime.multipart
 import email.mime.nonmultipart
+import email.mime.application
 import email.parser
+import email.policy
 import functools
 import mimetypes
 import netrc
@@ -1395,6 +1397,10 @@ def prepare_multipart(fields):
         the ``multipart/form-data`` ``Content-Type`` header including
         ``boundary`` and ``body`` is the prepared bytestring body
 
+    Payload content from a file will be base64 encoded and will include
+    the appropriate ``Content-Transfer-Encoding`` and ``Content-Type``
+    headers.
+
     Example:
         {
             "file1": {
@@ -1421,6 +1427,7 @@ def prepare_multipart(fields):
             main_type = 'text'
             sub_type = 'plain'
             content = value
+            filename = None
         elif isinstance(value, Mapping):
             filename = value.get('filename')
             content = value.get('content')
@@ -1439,8 +1446,17 @@ def prepare_multipart(fields):
                 'value must be a string, or mapping, cannot be type %s' % value.__class__.__name__
             )
 
-        part = email.mime.nonmultipart.MIMENonMultipart(main_type, sub_type)
+        if not content and filename:
+            with open(to_bytes(filename, errors='surrogate_or_strict'), 'rb') as f:
+                part = email.mime.application.MIMEApplication(f.read())
+                del part['Content-Type']
+                part.add_header('Content-Type', '%s/%s' % (main_type, sub_type))
+        else:
+            part = email.mime.nonmultipart.MIMENonMultipart(main_type, sub_type)
+            part.set_payload(to_bytes(content))
+
         part.add_header('Content-Disposition', 'form-data')
+        del part['MIME-Version']
         part.set_param(
             'name',
             field,
@@ -1449,22 +1465,20 @@ def prepare_multipart(fields):
         if filename:
             part.set_param(
                 'filename',
-                os.path.basename(filename),
+                to_native(os.path.basename(filename)),
                 header='Content-Disposition'
             )
 
-        if content:
-            part.set_payload(to_bytes(content))
-        else:
-            with open(filename, 'rb') as f:
-                part.set_payload(f.read())
         m.attach(part)
 
+    # Ensure headers are not split over multiple lines
+    policy = email.policy.compat32.clone(max_line_length=0)
+
     try:
-        b_data = m.as_bytes()
+        b_data = m.as_bytes(policy=policy)
     except AttributeError:
         # Py2
-        b_data = m.as_string()
+        b_data = m.as_string(policy=policy)
     finally:
         del m
 
@@ -1478,7 +1492,7 @@ def prepare_multipart(fields):
         parser = email.parser.HeaderParser().parsestr
 
     return (
-        parser(headers)['content-type'].replace('\n', ''),  # Message converts to native strings
+        parser(headers)['content-type'],  # Message converts to native strings
         b_content
     )
 
