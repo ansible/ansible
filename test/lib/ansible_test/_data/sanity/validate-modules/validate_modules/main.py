@@ -1468,31 +1468,57 @@ class ModuleValidator(Validator):
                     version_of_what = "Ansible (%s)" % ansible_version
 
                 removed_in_version = data.get('removed_in_version', None)
-                if removed_in_version is not None and compare_version >= LooseVersion(str(removed_in_version)):
-                    msg = "Argument '%s' in argument_spec" % arg
-                    if context:
-                        msg += " found in %s" % " -> ".join(context)
-                    msg += " has a deprecated removed_in_version '%s'," % removed_in_version
-                    msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='ansible-deprecated-version',
-                        msg=msg,
-                    )
-
-                deprecated_aliases = data.get('deprecated_aliases', None)
-                if deprecated_aliases is not None:
-                    for deprecated_alias in deprecated_aliases:
-                        if compare_version >= LooseVersion(str(deprecated_alias['version'])):
+                if removed_in_version is not None:
+                    try:
+                        if compare_version >= LooseVersion(str(removed_in_version)):
                             msg = "Argument '%s' in argument_spec" % arg
                             if context:
                                 msg += " found in %s" % " -> ".join(context)
-                            msg += " has deprecated aliases '%s' with removal in version '%s'," % (
-                                deprecated_alias['name'], deprecated_alias['version'])
+                            msg += " has a deprecated removed_in_version '%s'," % removed_in_version
                             msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
                             self.reporter.error(
                                 path=self.object_path,
                                 code='ansible-deprecated-version',
+                                msg=msg,
+                            )
+                    except ValueError as dummy:
+                        msg = "Argument '%s' in argument_spec" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " has an invalid removed_in_version '%s'," % removed_in_version
+                        msg += " i.e. the version cannot be parsed"
+                        self.reporter.error(
+                            path=self.object_path,
+                            code='ansible-invalid-version',
+                            msg=msg,
+                        )
+
+                deprecated_aliases = data.get('deprecated_aliases', None)
+                if deprecated_aliases is not None:
+                    for deprecated_alias in deprecated_aliases:
+                        try:
+                            if compare_version >= LooseVersion(str(deprecated_alias['version'])):
+                                msg = "Argument '%s' in argument_spec" % arg
+                                if context:
+                                    msg += " found in %s" % " -> ".join(context)
+                                msg += " has deprecated aliases '%s' with removal in version '%s'," % (
+                                    deprecated_alias['name'], deprecated_alias['version'])
+                                msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
+                                self.reporter.error(
+                                    path=self.object_path,
+                                    code='ansible-deprecated-version',
+                                    msg=msg,
+                                )
+                        except ValueError as dummy:
+                            msg = "Argument '%s' in argument_spec" % arg
+                            if context:
+                                msg += " found in %s" % " -> ".join(context)
+                            msg += " has aliases '%s' with removal in invalid version '%s'," % (
+                                deprecated_alias['name'], deprecated_alias['version'])
+                            msg += " i.e. the version cannot be parsed"
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='ansible-invalid-version',
                                 msg=msg,
                             )
 
