@@ -268,6 +268,27 @@ def test_alpha():
     assert _Alpha('b') >= _Alpha('a')
     assert _Alpha('b') >= _Alpha('b')
 
+    assert _Alpha('a') == _Alpha('a')
+    assert not _Alpha('a') != _Alpha('a')
+    assert not _Alpha('a') < _Alpha('a')
+    assert _Alpha('a') <= _Alpha('a')
+    assert not _Alpha('a') > _Alpha('a')
+    assert _Alpha('a') >= _Alpha('a')
+
+    assert not _Alpha('a') == _Alpha('b')
+    assert _Alpha('a') != _Alpha('b')
+    assert _Alpha('a') < _Alpha('b')
+    assert _Alpha('a') <= _Alpha('b')
+    assert not _Alpha('a') > _Alpha('b')
+    assert not _Alpha('a') >= _Alpha('b')
+
+    assert not _Alpha('b') == _Alpha('a')
+    assert _Alpha('b') != _Alpha('a')
+    assert not _Alpha('b') < _Alpha('a')
+    assert not _Alpha('b') <= _Alpha('a')
+    assert _Alpha('b') > _Alpha('a')
+    assert _Alpha('b') >= _Alpha('a')
+
 
 def test_numeric():
     assert _Numeric(1) == _Numeric(1)
@@ -283,3 +304,24 @@ def test_numeric():
     assert _Numeric(1) <= _Numeric(2)
     assert _Numeric(2) >= _Numeric(1)
     assert _Numeric(2) >= _Numeric(2)
+
+    assert _Numeric(1) == _Numeric(1)
+    assert not _Numeric(1) != _Numeric(1)
+    assert not _Numeric(1) < _Numeric(1)
+    assert _Numeric(1) <= _Numeric(1)
+    assert not _Numeric(1) > _Numeric(1)
+    assert _Numeric(1) >= _Numeric(1)
+
+    assert not _Numeric(1) == _Numeric(2)
+    assert _Numeric(1) != _Numeric(2)
+    assert _Numeric(1) < _Numeric(2)
+    assert _Numeric(1) <= _Numeric(2)
+    assert not _Numeric(1) > _Numeric(2)
+    assert not _Numeric(1) >= _Numeric(2)
+
+    assert not _Numeric(2) == _Numeric(1)
+    assert _Numeric(2) != _Numeric(1)
+    assert not _Numeric(2) < _Numeric(1)
+    assert not _Numeric(2) <= _Numeric(1)
+    assert _Numeric(2) > _Numeric(1)
+    assert _Numeric(2) >= _Numeric(1)
