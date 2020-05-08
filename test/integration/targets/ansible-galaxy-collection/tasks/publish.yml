@@ -1,20 +1,20 @@
 ---
 - name: fail to publish with no token - {{ test_name }}
-  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
   register: fail_no_token
   failed_when: '"HTTP Code: 401" not in fail_no_token.stderr'
 
 - name: fail to publish with invalid token - {{ test_name }}
-  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token fail
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token fail {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
   register: fail_invalid_token
   failed_when: '"HTTP Code: 401" not in fail_invalid_token.stderr'
 
 - name: publish collection - {{ test_name }}
-  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ fallaxy_token }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ fallaxy_token }} {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
   register: publish_collection
@@ -34,7 +34,7 @@
     - publish_collection_actual.json.metadata.version == '1.0.0'
 
 - name: fail to publish existing collection version - {{ test_name }}
-  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ fallaxy_token }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ fallaxy_token }} {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
   register: fail_publish_existing
