@@ -34,7 +34,14 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from distutils.version import StrictVersion, LooseVersion
 from fnmatch import fnmatch
+
 import yaml
+
+try:
+    import semantic_version
+    HAS_SEMANTIC_VERSION = True
+except Exception as e:
+    HAS_SEMANTIC_VERSION = False
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
@@ -251,12 +258,15 @@ class ModuleValidator(Validator):
 
         self.analyze_arg_spec = analyze_arg_spec
 
+        self.Version = LooseVersion
+
         self.collection = collection
         self.routing = routing
         self.collection_version = None
         if collection_version is not None:
+            self.Version = semantic_version.Version
             self.collection_version_str = collection_version
-            self.collection_version = LooseVersion(collection_version)
+            self.collection_version = self.Version(collection_version)
 
         self.base_branch = base_branch
         self.git_cache = git_cache or GitCache()
@@ -1463,14 +1473,16 @@ class ModuleValidator(Validator):
                 if self.collection:
                     compare_version = self.collection_version
                     version_of_what = "this collection (%s)" % self.collection_version_str
+                    version_parser_error = "the version number is not a valid semantic version (https://semver.org/)"
                 else:
                     compare_version = LOOSE_ANSIBLE_VERSION
                     version_of_what = "Ansible (%s)" % ansible_version
+                    version_parser_error = "the version number cannot be parsed"
 
                 removed_in_version = data.get('removed_in_version', None)
                 if removed_in_version is not None:
                     try:
-                        if compare_version >= LooseVersion(str(removed_in_version)):
+                        if compare_version >= self.Version(str(removed_in_version)):
                             msg = "Argument '%s' in argument_spec" % arg
                             if context:
                                 msg += " found in %s" % " -> ".join(context)
@@ -1486,7 +1498,7 @@ class ModuleValidator(Validator):
                         if context:
                             msg += " found in %s" % " -> ".join(context)
                         msg += " has an invalid removed_in_version '%s'," % removed_in_version
-                        msg += " i.e. the version cannot be parsed"
+                        msg += " i.e. %s" % version_parser_error
                         self.reporter.error(
                             path=self.object_path,
                             code='ansible-invalid-version',
@@ -1497,7 +1509,7 @@ class ModuleValidator(Validator):
                 if deprecated_aliases is not None:
                     for deprecated_alias in deprecated_aliases:
                         try:
-                            if compare_version >= LooseVersion(str(deprecated_alias['version'])):
+                            if compare_version >= self.Version(str(deprecated_alias['version'])):
                                 msg = "Argument '%s' in argument_spec" % arg
                                 if context:
                                     msg += " found in %s" % " -> ".join(context)
@@ -1515,7 +1527,7 @@ class ModuleValidator(Validator):
                                 msg += " found in %s" % " -> ".join(context)
                             msg += " has aliases '%s' with removal in invalid version '%s'," % (
                                 deprecated_alias['name'], deprecated_alias['version'])
-                            msg += " i.e. the version cannot be parsed"
+                            msg += " i.e. %s" % version_parser_error
                             self.reporter.error(
                                 path=self.object_path,
                                 code='ansible-invalid-version',
@@ -2215,6 +2227,11 @@ def run():
     git_cache = GitCache(args.base_branch)
 
     check_dirs = set()
+
+    if args.collection and args.collection_version:
+        if not HAS_SEMANTIC_VERSION:
+            print(':0:0: Need semantic_version to handle collection versions')
+            args.collection_version = None
 
     routing = None
     if args.collection:
