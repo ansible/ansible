@@ -1,2 +1,2 @@
 minor_changes:
-  - Adds support for testing on Fedora 32
+  - ansible-test - Added support for testing on Fedora 32.
