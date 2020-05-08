@@ -19,5 +19,5 @@ included: .../test/integration/targets/callback_default/include_me.yml for testh
 PLAY [testhost] ****************************************************************
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=14   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2
+testhost                   : ok=14   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
 
