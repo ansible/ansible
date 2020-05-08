@@ -35,5 +35,5 @@ plugin_routing:
         warning_text: dead_ping has been removed
   module_utils:
     moved_out_root:
-      redirect: testns.content_adj.sub1.foo
+      redirect: testns.content_adj.sub1.foomodule
 requires_ansible: '>=2.11'

@@ -90,7 +90,8 @@ class _AnsibleCollectionFinder:
         AnsibleCollectionConfig._collection_finder = None
 
         # validate via the public property that we really killed it
-        assert AnsibleCollectionConfig.collection_finder is None
+        if AnsibleCollectionConfig.collection_finder is not None:
+            raise AssertionError('_AnsibleCollectionFinder remove did not reset AnsibleCollectionConfig.collection_finder')
 
     def _install(self):
         self._remove()
