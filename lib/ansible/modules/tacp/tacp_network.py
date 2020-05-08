@@ -90,6 +90,7 @@ def run_module():
         firewall_override=dict(type='str', required=False),
         firewall_profile=dict(type='str', required=False),
         autodeploy_nfv=dict(type='bool', required=False, default=True),
+        nfv=dict(type='dict', required=False),
         network_address=dict(type='str', required=False),
         subnet_mask=dict(type='str', required=False),
         gateway=dict(type='str', required=False),
@@ -138,7 +139,7 @@ def run_module():
         else:
             return None
 
-    def inputs_are_valid(params):
+    def validate_input(params):
         # Check if there is more than one site already
         # If there is only one, default to that one.
         # Otherwise require a site_name to be provided
@@ -185,13 +186,13 @@ def run_module():
             api_response = api_instance.create_vlan_using_post(
                 body)
 
-            result['api_response_message'] = api_response.message
+            result['msg'] = api_response.message
             if "Creating VLAN" in api_response.message:
                 should_wait_for_creation = True
 
         except ApiException as e:
             response_dict = api_response_to_dict(e)
-            result['api_response_message'] = response_dict['message']
+            result['msg'] = response_dict['message']
             if "already exists" in response_dict['message']:
                 result['changed'] = False
                 result['failed'] = False
@@ -246,6 +247,37 @@ def run_module():
             type=network_params['routing']['type']
         )
 
+        params = ['datacenter', 'storage_pool', 'mz',
+                  'cpu_cores', 'memory', 'auto_recovery']
+        for param in params:
+            if param not in network_params['nfv'].keys():
+                if param == 'cpu_cores':
+                    network_params['nfv']['cpu_cores'] = 1
+                elif param == 'memory':
+                    network_params['nfv']['memory'] = 1073741824  # 1 GB
+                elif param == 'auto_recovery':
+                    network_params['nfv']['auto_recovery'] = True
+                else:
+                    network_params['nfv'][param] = None
+            if param == 'datacenter':
+                network_params['nfv']['datacenter_uuid'] = get_component_fields_by_name(
+                    network_params['nfv']['datacenter'], 'datacenter', api_client)
+            elif param == 'storage_pool':
+                network_params['nfv']['storage_pool_uuid'] = get_component_fields_by_name(
+                    network_params['nfv']['storage_pool'], 'storage_pool', api_client)
+            elif param == 'mz':
+                network_params['nfv']['migration_zone_uuid'] = get_component_fields_by_name(
+                    network_params['nfv']['mz'], 'migration_zone', api_client)
+
+        nfv_instance = tacp.ApiCreateApplicationPayload(
+            datacenter_uuid=network_params['nfv']['datacenter_uuid'],
+            enable_automatic_recovery=network_params['nfv']['auto_recovery'],
+            flash_pool_uuid=network_params['nfv']['storage_pool_uuid'],
+            memory=network_params['nfv']['memory'],
+            migration_zone_uuid=network_params['nfv']['migration_zone_uuid'],
+            vcpus=network_params['nfv']['cpu_cores']
+        )
+
         body = tacp.ApiCreateVnetPayload(
             automatic_deployment=network_params['autodeploy_nfv'],
             default_gateway=network_params['gateway'],
@@ -255,6 +287,7 @@ def run_module():
             firewall_profile_uuid=network_params['firewall_profile_uuid'],
             name=network_params['name'],
             network_address=network_params['network_address'],
+            nfv_instance=nfv_instance,
             routing_service=routing_service,
             subnet_mask=network_params['subnet_mask']
         )
@@ -263,7 +296,7 @@ def run_module():
         try:
             api_response = api_instance.create_vnet_using_post(body)
 
-            result['api_response_message'] = api_response.message
+            result['msg'] = api_response.message
             if "Creating" in api_response.message:
                 should_wait_for_creation = True
             result['changed'] = True
@@ -271,7 +304,7 @@ def run_module():
             module.exit_json(**result)
         except ApiException as e:
             response_dict = api_response_to_dict(e)
-            result['api_response_message'] = response_dict['message']
+            result['msg'] = response_dict['message']
             if "Error" in response_dict['message']:
                 result['changed'] = False
                 result['failed'] = True
@@ -298,7 +331,7 @@ def run_module():
 
     network_params = {}
 
-    inputs_valid, missing_params = inputs_are_valid(module.params)
+    inputs_valid, missing_params = validate_input(module.params)
     if not inputs_valid:
         fail_with_reason("Invalid inputs - %s" % ', '.join(missing_params))
 
@@ -307,6 +340,9 @@ def run_module():
     if 'location_uuid' not in network_params.keys():
         location_uuid = get_component_fields_by_name(
             module.params['site_name'], 'location', api_client)
+        if not location_uuid:
+            fail_with_reason(
+                "Could not get a UUID for the provided site name. Verify that a site with name %s exists and try again." % module.params['site_name'])
         network_params['location_uuid'] = location_uuid
 
     if module.params['network_type'].upper() == 'VNET':
@@ -360,6 +396,19 @@ def run_module():
         network_params['routing']['network_uuid'] = get_component_fields_by_name(
             network_params['routing']['network'],
             network_params['routing']['type'].lower(), api_client)
+
+        nfv_params = ['datacenter', 'storage_pool',
+                      'mz', 'cpu_cores', 'memory', 'auto_recovery']
+        network_params['nfv'] = {}
+        for param in nfv_params:
+            if param in module.params['nfv'].keys():
+                if param == 'memory':
+                    network_params['nfv'][param] = convert_memory_abbreviation_to_bytes(
+                        module.params['nfv'][param])
+                else:
+                    network_params['nfv'][param] = module.params['nfv'][param]
+            else:
+                network_params['nfv'][param] = None
 
     elif module.params['network_type'].upper() == 'VLAN':
         if module.params['vlan_tag'] in range(1, 4095):
