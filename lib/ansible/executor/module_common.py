@@ -144,7 +144,7 @@ def _ansiballz_main():
         pass
 
     # Strip cwd from sys.path to avoid potential permissions issues
-    excludes = set(('', scriptdir))
+    excludes = set(('', '.', scriptdir))
     sys.path = [p for p in sys.path if p not in excludes]
 
     import base64

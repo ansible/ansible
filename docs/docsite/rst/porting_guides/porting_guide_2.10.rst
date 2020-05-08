@@ -135,6 +135,7 @@ Noteworthy module changes
 * The parameter ``message`` in :ref:`grafana_dashboard <grafana_dashboard_module>` module is renamed to ``commit_message`` since ``message`` is used by Ansible Core engine internally.
 * The parameter ``message`` in :ref:`datadog_monitor <datadog_monitor_module>` module is renamed to ``notification_message`` since ``message`` is used by Ansible Core engine internally.
 * The parameter ``message`` in :ref:`bigpanda <bigpanda_module>` module is renamed to ``deployment_message`` since ``message`` is used by Ansible Core engine internally.
+* Ansible modules most no longer rely on being able to import Python modules from the remote user's home directory. Such dependencies will need to live elsewhere in the Python path.
 
 
 Plugins
