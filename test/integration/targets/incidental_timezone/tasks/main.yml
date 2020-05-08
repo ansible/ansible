@@ -34,25 +34,14 @@
     hwclock_config_file: '/etc/sysconfig/clock'
   when: ansible_os_family == 'RedHat'
 
-####
-#### timezone tests
-####
-
-- name: make sure the dbus service is started under systemd
-  systemd:
-    name: dbus
-    state: started
-  when:
-    - ansible_service_mgr == 'systemd'
-    - ansible_distribution == 'Fedora'
-    - ansible_facts.distribution_major_version is version('31', '<')
-
-
 - name: Run tests
-  # Skip tests on Fedora 31 because dbus fails to start unless the container is run in priveleged mode.
+  # Skip tests on Fedora because dbus fails to start unless the container is run in priveleged mode.
   # Even then, it starts unreliably. This may be due to the move to cgroup v2 in Fedora 31.
   # https://www.redhat.com/sysadmin/fedora-31-control-group-v2
-  when: ansible_facts.distribution ~ ansible_facts.distribution_major_version != 'Fedora31'
+  # Just skip Fedora rather than version-limiting because F30 goes EOL within a month of this writing
+  # and that is the oldest version we currently test in CI. F31+ are affected by the issue
+  # and making the tests work on them is something to deal with in community.general, not here.
+  when: ansible_distribution != 'Fedora'
   block:
     - name: set timezone to Etc/UTC
       timezone:
