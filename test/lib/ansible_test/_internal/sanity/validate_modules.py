@@ -31,7 +31,8 @@ from ..util_common import (
 
 from ..ansible_util import (
     ansible_environment,
-    load_collection_metadata,
+    get_collection_detail,
+    CollectionDetailError,
 )
 
 from ..config import (
@@ -45,13 +46,6 @@ from ..data import (
 
 class ValidateModulesTest(SanitySingleVersion):
     """Sanity test using validate-modules."""
-
-    def __init__(self):
-        super(ValidateModulesTest, self).__init__()
-        self.optional_error_codes.update([
-            'ansible-deprecated-version',
-        ])
-
     @property
     def error_code(self):  # type: () -> t.Optional[str]
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
@@ -74,8 +68,10 @@ class ValidateModulesTest(SanitySingleVersion):
 
         paths = [target.path for target in targets.include]
 
+        python = find_python(python_version)
+
         cmd = [
-            find_python(python_version),
+            python,
             os.path.join(SANITY_ROOT, 'validate-modules', 'validate-modules'),
             '--format', 'json',
             '--arg-spec',
@@ -83,9 +79,16 @@ class ValidateModulesTest(SanitySingleVersion):
 
         if data_context().content.collection:
             cmd.extend(['--collection', data_context().content.collection.directory])
-            metadata = load_collection_metadata(args, python_version, data_context().content.collection)
-            if metadata.get('version'):
-                cmd.extend(['--collection-version', metadata.get('version')])
+
+            try:
+                collection_detail = get_collection_detail(args, python)
+
+                if collection_detail.version:
+                    cmd.extend(['--collection-version', collection_detail.version])
+                else:
+                    display.warning('Skipping validate-modules collection version checks since no collection version was found.')
+            except CollectionDetailError as ex:
+                display.warning('Skipping validate-modules collection version checks since collection detail loading failed: %s' % ex.reason)
         else:
             if args.base_branch:
                 cmd.extend([

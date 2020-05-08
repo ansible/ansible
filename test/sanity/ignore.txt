@@ -53,6 +53,7 @@ lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/task_queue_manager.py pylint:blacklisted-name
+lib/ansible/inventory/group.py pylint:ansible-deprecated-version
 lib/ansible/module_utils/_text.py future-import-boilerplate
 lib/ansible/module_utils/_text.py metaclass-boilerplate
 lib/ansible/module_utils/api.py future-import-boilerplate
@@ -467,6 +468,7 @@ test/units/module_utils/basic/test__symbolic_mode_to_octal.py future-import-boil
 test/units/module_utils/basic/test_deprecate_warn.py future-import-boilerplate
 test/units/module_utils/basic/test_deprecate_warn.py metaclass-boilerplate
 test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-no-version
+test/units/module_utils/basic/test_deprecate_warn.py pylint:ansible-deprecated-version
 test/units/module_utils/basic/test_exit_json.py future-import-boilerplate
 test/units/module_utils/basic/test_get_file_attributes.py future-import-boilerplate
 test/units/module_utils/basic/test_heuristic_log_sanitize.py future-import-boilerplate

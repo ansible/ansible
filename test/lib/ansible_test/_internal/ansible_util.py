@@ -40,7 +40,6 @@ from .data import (
 )
 
 CHECK_YAML_VERSIONS = {}
-LOAD_COLLECTION_METADATA = {}
 
 
 def ansible_environment(args, color=True, ansible_config=None):
@@ -220,29 +219,34 @@ def check_pyyaml(args, version):
     return result
 
 
-def load_collection_metadata(args, version, collection):
-    """
-    :type args: EnvironmentConfig
-    :type version: str
-    :type collection: CollectionDetail
-    """
+class CollectionDetail:
+    """Collection detail."""
+    def __init__(self):  # type: () -> None
+        self.version = None  # type: t.Optional[str]
+
+
+class CollectionDetailError(ApplicationError):
+    """An error occurred retrieving collection detail."""
+    def __init__(self, reason):  # type: (str) -> None
+        super(CollectionDetailError, self).__init__('Error collecting collection detail: %s' % reason)
+        self.reason = reason
+
+
+def get_collection_detail(args, python):  # type: (EnvironmentConfig, str) -> CollectionDetail
+    """Return collection detail."""
+    collection = data_context().content.collection
     directory = os.path.join(collection.root, collection.directory)
-    try:
-        return LOAD_COLLECTION_METADATA[(version, directory)]
-    except KeyError:
-        pass
 
-    python = find_python(version)
-    stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'collection_metadata.py'), directory],
-                                 capture=True, always=True)
+    stdout = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'collection_detail.py'), directory], capture=True, always=True)[0]
+    result = json.loads(stdout)
+    error = result.get('error')
 
-    LOAD_COLLECTION_METADATA[(version, directory)] = result = json.loads(stdout)
+    if error:
+        raise CollectionDetailError(error)
 
-    if result.get('no-pyyaml'):
-        display.warning('PyYAML is not installed for interpreter: %s' % python)
+    version = result.get('version')
 
-    warnings = result.get('warnings', [])
-    for warning in warnings:
-        display.warning(warning)
+    detail = CollectionDetail()
+    detail.version = str(version) if version is not None else None
 
-    return result
+    return detail

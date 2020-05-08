@@ -35,7 +35,9 @@ from ..util_common import (
 
 from ..ansible_util import (
     ansible_environment,
-    load_collection_metadata,
+    get_collection_detail,
+    CollectionDetail,
+    CollectionDetailError,
 )
 
 from ..config import (
@@ -49,14 +51,6 @@ from ..data import (
 
 class PylintTest(SanitySingleVersion):
     """Sanity test using pylint."""
-
-    def __init__(self):
-        super(PylintTest, self).__init__()
-        self.optional_error_codes.update([
-            'ansible-deprecated-version',
-            'ansible-deprecated-collection-version',
-        ])
-
     @property
     def error_code(self):  # type: () -> t.Optional[str]
         """Error code for ansible-test matching the format used by the underlying test program, or None if the program does not use error codes."""
@@ -147,6 +141,17 @@ class PylintTest(SanitySingleVersion):
 
         python = find_python(python_version)
 
+        collection_detail = None
+
+        if data_context().content.collection:
+            try:
+                collection_detail = get_collection_detail(args, python)
+
+                if not collection_detail.version:
+                    display.warning('Skipping pylint collection version checks since no collection version was found.')
+            except CollectionDetailError as ex:
+                display.warning('Skipping pylint collection version checks since collection detail loading failed: %s' % ex.reason)
+
         test_start = datetime.datetime.utcnow()
 
         for context, context_paths in sorted(contexts):
@@ -154,7 +159,7 @@ class PylintTest(SanitySingleVersion):
                 continue
 
             context_start = datetime.datetime.utcnow()
-            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python, python_version)
+            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python, collection_detail)
             context_end = datetime.datetime.utcnow()
 
             context_times.append('%s: %d (%s)' % (context, len(context_paths), context_end - context_start))
@@ -193,7 +198,7 @@ class PylintTest(SanitySingleVersion):
             plugin_dir,  # type: str
             plugin_names,  # type: t.List[str]
             python,  # type: str
-            python_version,  # type: str
+            collection_detail,  # type: CollectionDetail
     ):  # type: (...) -> t.List[t.Dict[str, str]]
         """Run pylint using the config specified by the context on the specified paths."""
         rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', context.split('/')[0] + '.cfg')
@@ -226,14 +231,13 @@ class PylintTest(SanitySingleVersion):
             '--load-plugins', ','.join(load_plugins),
         ] + paths
 
-        if 'deprecated' in load_plugins:
-            if not data_context().content.collection:
-                cmd.extend(['--enable', 'ansible-deprecated-version'])
-            if data_context().content.collection:
-                cmd.extend(['--is-collection', 'yes'])
-                metadata = load_collection_metadata(args, python_version, data_context().content.collection)
-                if metadata.get('version'):
-                    cmd.extend(['--collection-version', metadata.get('version')])
+        if data_context().content.collection:
+            cmd.extend(['--is-collection', 'yes'])
+
+            if collection_detail and collection_detail.version:
+                cmd.extend(['--collection-version', collection_detail.version])
+        else:
+            cmd.extend(['--enable', 'ansible-deprecated-version'])
 
         append_python_path = [plugin_dir]
 
