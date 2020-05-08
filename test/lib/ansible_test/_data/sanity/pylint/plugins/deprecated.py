@@ -6,13 +6,8 @@ __metaclass__ = type
 
 from distutils.version import LooseVersion
 
-try:
-    import semantic_version
-    HAS_SEMANTIC_VERSION = True
-except ImportError as dummy:
-    HAS_SEMANTIC_VERSION = False
-
 import astroid
+import semantic_version
 
 from pylint.interfaces import IAstroidChecker
 from pylint.checkers import BaseChecker
@@ -95,8 +90,6 @@ class AnsibleDeprecatedChecker(BaseChecker):
     def set_option(self, optname, value, action=None, optdict=None):
         super(AnsibleDeprecatedChecker, self).set_option(optname, value, action, optdict)
         if optname == 'collection-version' and value is not None:
-            if not HAS_SEMANTIC_VERSION:
-                raise Exception('Need semantic_version to handle collection versions')
             self.version_constructor = semantic_version.Version
             self.collection_version = self.version_constructor(self.config.collection_version)
         if optname == 'is-collection':

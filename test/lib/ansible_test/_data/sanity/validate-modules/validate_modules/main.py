@@ -35,13 +35,8 @@ from contextlib import contextmanager
 from distutils.version import StrictVersion, LooseVersion
 from fnmatch import fnmatch
 
+import semantic_version
 import yaml
-
-try:
-    import semantic_version
-    HAS_SEMANTIC_VERSION = True
-except Exception as e:
-    HAS_SEMANTIC_VERSION = False
 
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
@@ -2227,11 +2222,6 @@ def run():
     git_cache = GitCache(args.base_branch)
 
     check_dirs = set()
-
-    if args.collection and args.collection_version:
-        if not HAS_SEMANTIC_VERSION:
-            print(':0:0: Need semantic_version to handle collection versions')
-            args.collection_version = None
 
     routing = None
     if args.collection:
