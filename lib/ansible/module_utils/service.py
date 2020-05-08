@@ -103,7 +103,7 @@ def get_ps(module, pattern):
     return found
 
 
-def fail_if_missing(module, found, service, msg='', fail_in_check_mode=False):
+def fail_if_missing(module, found, service, msg=''):
     '''
     This function will return an error or exit gracefully depending on check mode status
     and if the service is missing or not.
@@ -114,10 +114,7 @@ def fail_if_missing(module, found, service, msg='', fail_in_check_mode=False):
     :kw msg: extra info to append to error/success msg when missing
     '''
     if not found:
-        if module.check_mode and not fail_in_check_mode:
-            module.exit_json(msg="Service %s not found on %s, assuming it will exist on full run" % (service, msg), changed=True)
-        else:
-            module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
+        module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
 
 
 def fork_process():
