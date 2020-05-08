@@ -38,7 +38,7 @@ else
   export TEST_PLAYBOOK=posix.yml
 
   echo "testing default collection support"
-  ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml
+  ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml "$@"
 fi
 
 # run test playbooks

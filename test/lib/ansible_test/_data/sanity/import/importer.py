@@ -9,16 +9,16 @@ def main():
     Main program function used to isolate globals from imported code.
     Changes to globals in imported modules on Python 2.x will overwrite our own globals.
     """
+    import ansible
     import contextlib
     import os
     import re
     import runpy
     import sys
     import traceback
-    import types
     import warnings
 
-    ansible_path = os.environ['PYTHONPATH']
+    ansible_path = os.path.dirname(os.path.dirname(ansible.__file__))
     temp_path = os.environ['SANITY_TEMP_PATH'] + os.path.sep
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
     collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATHS')
@@ -37,63 +37,16 @@ def main():
     except ImportError:
         from io import StringIO
 
-    # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
-    # without this the ansible.release import there would pull in many Python modules which Ansible modules should not have access to
-    ansible_module = types.ModuleType('ansible')
-    ansible_module.__file__ = os.path.join(os.environ['PYTHONPATH'], 'ansible', '__init__.py')
-    ansible_module.__path__ = [os.path.dirname(ansible_module.__file__)]
-    ansible_module.__package__ = 'ansible'
-
-    sys.modules['ansible'] = ansible_module
-
     if collection_full_name:
         # allow importing code from collections when testing a collection
-        from ansible.utils.collection_loader import AnsibleCollectionLoader
-        from ansible.module_utils._text import to_bytes
+        from ansible.utils.collection_loader import AnsibleCollectionConfig
+        from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 
-        def get_source(self, fullname):
-            with open(to_bytes(self.get_filename(fullname)), 'rb') as mod_file:
-                return mod_file.read()
+        collection_loader = _AnsibleCollectionFinder(paths=[collection_root])
+        collection_loader._install()  # pylint: disable=protected-access
+        nuke_modules = list(m for m in sys.modules if m.partition('.')[0] == 'ansible')
+        map(sys.modules.pop, nuke_modules)
 
-        def get_code(self, fullname):
-            return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
-
-        def is_package(self, fullname):
-            return os.path.basename(self.get_filename(fullname)) in ('__init__.py', '__synthetic__')
-
-        def get_filename(self, fullname):
-            if fullname in sys.modules:
-                return sys.modules[fullname].__file__
-
-            # find the module without importing it
-            # otherwise an ImportError during module load will prevent us from getting the filename of the module
-            loader = self.find_module(fullname)
-
-            if not loader:
-                raise ImportError('module {0} not found'.format(fullname))
-
-            # determine the filename of the module that was found
-            filename = os.path.join(collection_root, fullname.replace('.', os.path.sep))
-
-            if os.path.isdir(filename):
-                init_filename = os.path.join(filename, '__init__.py')
-                filename = init_filename if os.path.exists(init_filename) else os.path.join(filename, '__synthetic__')
-            else:
-                filename += '.py'
-
-            return filename
-
-        # monkeypatch collection loader to work with runpy
-        # remove this (and the associated code above) once implemented natively in the collection loader
-        AnsibleCollectionLoader.get_source = get_source
-        AnsibleCollectionLoader.get_code = get_code
-        AnsibleCollectionLoader.is_package = is_package
-        AnsibleCollectionLoader.get_filename = get_filename
-
-        collection_loader = AnsibleCollectionLoader()
-
-        # noinspection PyCallingNonCallable
-        sys.meta_path.insert(0, collection_loader)
     else:
         # do not support collection loading when not testing a collection
         collection_loader = None

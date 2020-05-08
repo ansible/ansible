@@ -53,6 +53,7 @@ from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
 from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()
@@ -356,7 +357,18 @@ class JinjaPluginIntercept(MutableMapping):
         key = to_native(key)
 
         if '.' not in key:  # might be a built-in value, delegate to base dict
-            return self._delegatee.__getitem__(key)
+            ts = _get_collection_metadata('ansible.builtin')
+
+            # TODO: implement support for collection-backed redirect (currently only builtin)
+            # TODO: implement cycle detection (unified across collection redir as well)
+            redirect_fqcr = ts.get('plugin_routing', {}).get(self._dirname, {}).get(key, {}).get('redirect', None)
+            if redirect_fqcr:
+                acr = AnsibleCollectionRef.from_fqcr(ref=redirect_fqcr, ref_type=self._dirname)
+                display.vv('redirecting {0} {1} to {2}.{3}'.format(self._dirname, key, acr.collection, acr.resource))
+                key = redirect_fqcr
+            # TODO: handle recursive forwarding (not necessary for builtin, but definitely for further collection redirs)
+            else:  # try looking up in built-in filters
+                return self._delegatee.__getitem__(key)
 
         func = self._collection_jinja_func_cache.get(key)
 
@@ -377,6 +389,8 @@ class JinjaPluginIntercept(MutableMapping):
 
         if acr.subdirs:
             parent_prefix = '{0}.{1}'.format(parent_prefix, acr.subdirs)
+
+        # TODO: implement collection-level redirect
 
         for dummy, module_name, ispkg in pkgutil.iter_modules(pkg.__path__, prefix=parent_prefix + '.'):
             if ispkg:

@@ -26,7 +26,8 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.release import __version__
-from ansible.utils.collection_loader import AnsibleCollectionLoader, get_collection_name_from_path, set_collection_playbook_paths
+from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 from ansible.utils.unsafe_proxy import to_unsafe_text
@@ -455,11 +456,11 @@ class CLI(with_metaclass(ABCMeta, object)):
         if basedir:
             loader.set_basedir(basedir)
             add_all_plugin_dirs(basedir)
-            set_collection_playbook_paths(basedir)
-            default_collection = get_collection_name_from_path(basedir)
+            AnsibleCollectionConfig.playbook_paths = basedir
+            default_collection = _get_collection_name_from_path(basedir)
             if default_collection:
                 display.warning(u'running with default collection {0}'.format(default_collection))
-                AnsibleCollectionLoader().set_default_collection(default_collection)
+                AnsibleCollectionConfig.default_collection = default_collection
 
         vault_ids = list(options['vault_ids'])
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST

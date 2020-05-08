@@ -78,11 +78,8 @@ def get_docker_networks(args, container_id):
     :rtype: list[str]
     """
     results = docker_inspect(args, container_id)
-    # podman doesn't return Networks- just silently return None if it's missing...
-    networks = results[0]['NetworkSettings'].get('Networks')
-    if networks is None:
-        return None
-    return sorted(networks)
+    networks = sorted(results[0]['NetworkSettings']['Networks'])
+    return networks
 
 
 def docker_pull(args, image):
