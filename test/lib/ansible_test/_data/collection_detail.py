@@ -25,6 +25,7 @@ SEMVER_REGULAR_EXPRESSION = r'^' + VERSION_CORE + PRE_RELEASE + BUILD + r'$'
 
 
 def validate_version(version):
+    """Raise exception if the provided version is not None or a valid semantic version."""
     if version is None:
         return
     if not re.match(SEMVER_REGULAR_EXPRESSION, version):

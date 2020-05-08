@@ -9,7 +9,7 @@ from distutils.version import LooseVersion
 try:
     import semantic_version
     HAS_SEMANTIC_VERSION = True
-except Exception as e:
+except ImportError as dummy:
     HAS_SEMANTIC_VERSION = False
 
 import astroid
@@ -89,7 +89,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
     def __init__(self, *args, **kwargs):
         self.collection_version = None
         self.is_collection = False
-        self.Version = LooseVersion
+        self.version_constructor = LooseVersion
         super(AnsibleDeprecatedChecker, self).__init__(*args, **kwargs)
 
     def set_option(self, optname, value, action=None, optdict=None):
@@ -97,8 +97,8 @@ class AnsibleDeprecatedChecker(BaseChecker):
         if optname == 'collection-version' and value is not None:
             if not HAS_SEMANTIC_VERSION:
                 raise Exception('Need semantic_version to handle collection versions')
-            self.Version = semantic_version.Version
-            self.collection_version = self.Version(self.config.collection_version)
+            self.version_constructor = semantic_version.Version
+            self.collection_version = self.version_constructor(self.config.collection_version)
         if optname == 'is-collection':
             self.is_collection = self.config.is_collection
 
@@ -126,7 +126,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
                         return
 
                 try:
-                    loose_version = self.Version(str(version))
+                    loose_version = self.version_constructor(str(version))
                     if self.is_collection and self.collection_version is not None:
                         if self.collection_version >= loose_version:
                             self.add_message('ansible-deprecated-collection-version', node=node, args=(version,))
