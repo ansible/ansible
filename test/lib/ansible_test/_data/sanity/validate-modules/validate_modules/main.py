@@ -1488,7 +1488,7 @@ class ModuleValidator(Validator):
                                 code='ansible-deprecated-version',
                                 msg=msg,
                             )
-                    except ValueError as dummy:
+                    except ValueError:
                         msg = "Argument '%s' in argument_spec" % arg
                         if context:
                             msg += " found in %s" % " -> ".join(context)
@@ -1516,7 +1516,7 @@ class ModuleValidator(Validator):
                                     code='ansible-deprecated-version',
                                     msg=msg,
                                 )
-                        except ValueError as dummy:
+                        except ValueError:
                             msg = "Argument '%s' in argument_spec" % arg
                             if context:
                                 msg += " found in %s" % " -> ".join(context)
