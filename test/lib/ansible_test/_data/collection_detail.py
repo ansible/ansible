@@ -57,6 +57,8 @@ def main():
 
     try:
         result = read_manifest_json(collection_path) or read_galaxy_yml(collection_path)
+        if result is None:
+            result = dict()
     except Exception as ex:  # pylint: disable=broad-except
         result = dict(
             error='{0}'.format(ex),
