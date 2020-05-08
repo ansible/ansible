@@ -35,7 +35,6 @@ from contextlib import contextmanager
 from distutils.version import StrictVersion, LooseVersion
 from fnmatch import fnmatch
 
-import semantic_version
 import yaml
 
 from ansible import __version__ as ansible_version
@@ -45,6 +44,7 @@ from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
+from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
 
@@ -259,7 +259,7 @@ class ModuleValidator(Validator):
         self.routing = routing
         self.collection_version = None
         if collection_version is not None:
-            self.Version = semantic_version.Version
+            self.Version = SemanticVersion
             self.collection_version_str = collection_version
             self.collection_version = self.Version(collection_version)
 

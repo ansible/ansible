@@ -7,13 +7,13 @@ __metaclass__ = type
 from distutils.version import LooseVersion
 
 import astroid
-import semantic_version
 
 from pylint.interfaces import IAstroidChecker
 from pylint.checkers import BaseChecker
 from pylint.checkers.utils import check_messages
 
 from ansible.release import __version__ as ansible_version_raw
+from ansible.utils.version import SemanticVersion
 
 MSGS = {
     'E9501': ("Deprecated version (%r) found in call to Display.deprecated "
@@ -90,7 +90,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
     def set_option(self, optname, value, action=None, optdict=None):
         super(AnsibleDeprecatedChecker, self).set_option(optname, value, action, optdict)
         if optname == 'collection-version' and value is not None:
-            self.version_constructor = semantic_version.Version
+            self.version_constructor = SemanticVersion
             self.collection_version = self.version_constructor(self.config.collection_version)
         if optname == 'is-collection':
             self.is_collection = self.config.is_collection
