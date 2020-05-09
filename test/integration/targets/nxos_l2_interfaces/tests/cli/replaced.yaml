@@ -39,6 +39,10 @@
             vlan: 8
           trunk:
             allowed_vlans: "10-12"
+
+        - name: '{{ test_int2 }}'
+          trunk:
+            allowed_vlans: 25-27
       state: replaced
     register: result
 
@@ -48,7 +52,9 @@
         - "'interface {{ test_int1 }}' in result.commands"
         - "'switchport access vlan 8' in result.commands"
         - "'switchport trunk allowed vlan 10,11,12' in result.commands"
-        - "result.commands|length == 3"
+        - "'interface {{ test_int2 }}' in result.commands"
+        - "'no switchport trunk native vlan' in result.commands"
+        - result.commands|length == 5
 
   - name: Gather l2_interfaces post facts
     nxos_facts: *facts

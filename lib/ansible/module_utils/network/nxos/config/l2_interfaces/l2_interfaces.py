@@ -161,7 +161,7 @@ class L2_interfaces(ConfigBase):
                 del diff[k]
         replaced_commands = self.del_attribs(diff)
 
-        if merged_commands:
+        if merged_commands or replaced_commands:
             cmds = set(replaced_commands).intersection(set(merged_commands))
             for cmd in cmds:
                 merged_commands.remove(cmd)
