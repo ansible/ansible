@@ -427,6 +427,19 @@
       - to_uuid_1 is failed
       - '"Invalid value" in to_uuid_1.msg'
 
+- name: Verify is_uuid
+  assert:
+    that:
+      - '"0d03a178-da0f-5b51-934e-cda9c76578c3"|is_uuid == True'
+      - '"0d03a178-da0f-5b51-934e-cda9c76578c3"|is_uuid(version=5) == True'
+      - '"0d03a178-da0f-5b51-934e-cda9c76578c3"|is_uuid(version=4) == False'
+      - '"0d03a178-da0f-5b51-934e-cda9c76578c3"|is_uuid(version=3) == False'
+      - '"0d03a178-da0f-5b51-934e-cda9c76578c3"|is_uuid(version=2) == False'
+      - '"0d03a178-da0f-5b51-934e-cda9c76578c3"|is_uuid(version=1) == False'
+      - '"0d03a178-da0f-5b51-934e-cda9c76578c"|is_uuid == False' # missing char
+      - '"b0d03a178-da0f-5b51-934e-cda9c76578c"|is_uuid == False' # extra char beg
+      - '"0d03a178-da0f-5b51-934e-cda9c76578c3b"|is_uuid == False' # extra char end
+
 - name: Verify mandatory throws on undefined variable
   set_fact:
     foo: '{{hey|mandatory}}'

@@ -283,6 +283,31 @@ def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
     return to_text(uuid.uuid5(uuid_namespace, to_native(string, errors='surrogate_or_strict')))
 
 
+def is_uuid(a, version=None):
+    ''' check if input is uuid '''
+
+    if not isinstance(a, string_types):
+        raise AnsibleFilterError("|is_uuid expects string type, got %s instead." % type(a))
+
+    vers = ['1', '2', '3', '4', '5', 1, 2, 3, 4, 5]
+    if version and version in vers:
+        v = str(version)
+    else:
+        v = '[1-5]'  # support all version by default
+
+    re_uuid = re.compile(
+            '^[a-f0-9]{8}-' +
+            '[a-f0-9]{4}-' +
+            v + '[a-f0-9]{3}-' +
+            '[89ab][a-f0-9]{3}-' +
+            '[a-f0-9]{12}$'
+            )
+
+    re.IGNORECASE
+    match = re_uuid.match(a)
+    return bool(match)
+
+
 def mandatory(a, msg=None):
     from jinja2.runtime import Undefined
 
@@ -576,6 +601,7 @@ class FilterModule(object):
 
             # uuid
             'to_uuid': to_uuid,
+            'is_uuid': is_uuid,
 
             # json
             'to_json': to_json,
