@@ -287,7 +287,7 @@ def is_uuid(a, version=None):
     ''' check if input is uuid '''
 
     if not isinstance(a, string_types):
-        raise AnsibleFilterError("|is_uuid expects string type, got %s instead." % type(a))
+        raise AnsibleFilterError("|is_uuid expects string, got %s instead." % type(a))
 
     vers = ['1', '2', '3', '4', '5', 1, 2, 3, 4, 5]
     if version and version in vers:
