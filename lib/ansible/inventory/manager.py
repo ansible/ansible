@@ -382,14 +382,13 @@ class InventoryManager(object):
 
             if pattern_hash not in self._hosts_patterns_cache:
 
-                patterns = split_host_pattern(pattern)
-                hosts = self._evaluate_patterns(patterns)
-
                 # mainly useful for hostvars[host] access
                 if not ignore_limits and self._subset:
                     # exclude hosts not in a subset, if defined
-                    subset_uuids = set(s._uuid for s in self._evaluate_patterns(self._subset))
-                    hosts = [h for h in hosts if h._uuid in subset_uuids]
+                    hosts = self._evaluate_patterns(self._subset)
+                else:
+                    patterns = split_host_pattern(pattern)
+                    hosts = self._evaluate_patterns(patterns)
 
                 if not ignore_restrictions and self._restriction:
                     # exclude hosts mentioned in any restriction (ex: failed hosts)
