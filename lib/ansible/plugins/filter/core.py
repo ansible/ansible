@@ -295,15 +295,12 @@ def is_uuid(a, version=None):
     else:
         v = '[1-5]'  # support all version by default
 
-    re_uuid = re.compile(
-            '^[a-f0-9]{8}-' +
-            '[a-f0-9]{4}-' +
-            v + '[a-f0-9]{3}-' +
-            '[89ab][a-f0-9]{3}-' +
-            '[a-f0-9]{12}$'
-            )
+    re_uuid = re.compile('^[a-f0-9]{8}-' +
+                         '[a-f0-9]{4}-' +
+                         v + '[a-f0-9]{3}-' +
+                         '[89ab][a-f0-9]{3}-' +
+                         '[a-f0-9]{12}$')
 
-    re.IGNORECASE
     match = re_uuid.match(a)
     return bool(match)
 
