@@ -749,7 +749,7 @@ metadata:
 machineType:
   description:
   - A reference to a machine type which defines VM kind. See https://cloud.google.com/compute/docs/machine-types
-  for a list of current valid machine types.
+    for a list of current valid machine types.
   returned: success
   type: str
 minCpuPlatform:
