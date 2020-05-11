@@ -1428,7 +1428,7 @@ def prepare_multipart(fields):
         )
 
     m = email.mime.multipart.MIMEMultipart('form-data')
-    for field, value in fields.items():
+    for field, value in sorted(fields.items()):
         if isinstance(value, string_types):
             main_type = 'text'
             sub_type = 'plain'
