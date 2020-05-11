@@ -197,6 +197,8 @@ from ansible.module_utils.common.warnings import (
     deprecate,
     get_deprecation_messages,
     get_warning_messages,
+    reset_warning_messages,
+    reset_deprecation_messages,
     warn,
 )
 
@@ -610,6 +612,9 @@ class AnsibleModule(object):
         self._legal_inputs = []
         self._options_context = list()
         self._tmpdir = None
+
+        reset_warning_messages()
+        reset_deprecation_messages()
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():

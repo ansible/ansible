@@ -615,6 +615,7 @@ def test_no_log_false(stdin, capfd):
     arg_spec = {
         "arg_pass": {"no_log": False}
     }
+    assert len(get_warning_messages()) == 0
     am = basic.AnsibleModule(arg_spec)
     assert "testing" not in am.no_log_values and not get_warning_messages()
 

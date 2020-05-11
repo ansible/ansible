@@ -33,3 +33,15 @@ def get_warning_messages():
 def get_deprecation_messages():
     """Return a tuple of deprecations accumulated over this run"""
     return tuple(_global_deprecations)
+
+
+def reset_warning_messages():
+    """Reset warning messages """
+    global _global_warnings
+    _global_warnings = []
+
+
+def reset_deprecation_messages():
+    """Reset deprecation messages """
+    global _global_deprecations
+    _global_deprecations = []

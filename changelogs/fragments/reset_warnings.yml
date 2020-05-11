@@ -1,0 +1,2 @@
+bugfixes:
+- Reset warnings and deprecation messages for each module.
