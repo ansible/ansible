@@ -146,8 +146,6 @@ def run_module():
         site_list = get_site_list()
         if len(site_list) != 1:
             required_params.append('site_name')
-        else:
-            network_params['location_uuid'] = site_list[0].uuid
 
         inputs_valid = True
         if params['network_type'].upper() == 'VLAN':
@@ -171,6 +169,100 @@ def run_module():
                         missing_params.append(param)
                         inputs_valid = False
                 return inputs_valid, missing_params
+
+    def generate_network_params(module):
+        network_params = {}
+
+        site_list = get_site_list()
+        if len(site_list) == 1:
+            network_params['location_uuid'] = site_list[0].uuid
+
+        inputs_valid, missing_params = validate_input(module.params)
+        if not inputs_valid:
+            fail_with_reason("Invalid inputs - %s" % ', '.join(missing_params))
+
+        network_params['name'] = module.params['name']
+
+        if 'location_uuid' not in network_params.keys():
+            location_uuid = get_component_fields_by_name(
+                module.params['site_name'], 'location', api_client)
+            if not location_uuid:
+                fail_with_reason(
+                    "Could not get a UUID for the provided site name. Verify that a site with name %s exists and try again." % module.params['site_name'])
+            network_params['location_uuid'] = location_uuid
+
+        if module.params['network_type'].upper() == 'VNET':
+            base_params = ['autodeploy_nfv',
+                           'network_address', 'subnet_mask', 'gateway']
+
+            for param in base_params:
+                if param in module.params.keys():
+                    network_params[param] = module.params[param]
+                else:
+                    network_params[param] = None
+
+            if 'firewall_override' in module.params.keys():
+                network_params['firewall_override_uuid'] = get_component_fields_by_name(
+                    module.params['firewall_override'], 'firewall_override', api_client)
+            else:
+                network_params['firewall_override_uuid'] = None
+
+            if 'firewall_profile' in module.params.keys():
+                network_params['firewall_profile_uuid'] = get_component_fields_by_name(
+                    module.params['firewall_profile'], 'firewall_profile', api_client)
+            else:
+                network_params['firewall_profile_uuid'] = None
+
+            dhcp_params = ['dhcp_start', 'dhcp_end',
+                           'domain_name', 'lease_time', 'dns1', 'dns2',
+                           'static_bindings']
+            network_params['dhcp'] = {}
+            for param in dhcp_params:
+                if param in module.params['dhcp'].keys():
+                    network_params['dhcp'][param] = module.params['dhcp'][param]
+                else:
+                    network_params['dhcp'][param] = None
+
+            routing_params = ['network', 'type', 'address_mode', 'ip_address', 'subnet_mask',
+                              'gateway']
+            network_params['routing'] = {}
+            for param in routing_params:
+                if param in module.params['routing'].keys():
+                    network_params['routing'][param] = module.params['routing'][param]
+                else:
+                    network_params['routing'][param] = None
+            try:
+                if module.params['routing']['firewall_override']:
+                    network_params['routing']['firewall_override_uuid'] = get_component_fields_by_name(
+                        network_params['routing']['firewall_override'],
+                        'firewall_override', api_client)
+            except Exception:
+                network_params['routing']['firewall_override_uuid'] = None
+
+            network_params['routing']['network_uuid'] = get_component_fields_by_name(
+                network_params['routing']['network'],
+                network_params['routing']['type'].lower(), api_client)
+
+            nfv_params = ['datacenter', 'storage_pool',
+                          'mz', 'cpu_cores', 'memory', 'auto_recovery']
+            network_params['nfv'] = {}
+            for param in nfv_params:
+                if param in module.params['nfv'].keys():
+                    if param == 'memory':
+                        network_params['nfv'][param] = convert_memory_abbreviation_to_bytes(
+                            module.params['nfv'][param])
+                    else:
+                        network_params['nfv'][param] = module.params['nfv'][param]
+                else:
+                    network_params['nfv'][param] = None
+
+        elif module.params['network_type'].upper() == 'VLAN':
+            if module.params['vlan_tag'] in range(1, 4095):
+                network_params['vlan_tag'] = module.params['vlan_tag']
+            else:
+                fail_with_reason(
+                    "vlan_tag parameter is invalid - must be in range 1-4094")
+        return network_params
 
     def create_vlan_network(network_params):
         api_instance = tacp.VlansApi(tacp.ApiClient(configuration))
@@ -329,93 +421,7 @@ def run_module():
     configuration.api_key['Authorization'] = module.params['api_key']
     api_client = tacp.ApiClient(configuration)
 
-    network_params = {}
-
-    inputs_valid, missing_params = validate_input(module.params)
-    if not inputs_valid:
-        fail_with_reason("Invalid inputs - %s" % ', '.join(missing_params))
-
-    network_params['name'] = module.params['name']
-
-    if 'location_uuid' not in network_params.keys():
-        location_uuid = get_component_fields_by_name(
-            module.params['site_name'], 'location', api_client)
-        if not location_uuid:
-            fail_with_reason(
-                "Could not get a UUID for the provided site name. Verify that a site with name %s exists and try again." % module.params['site_name'])
-        network_params['location_uuid'] = location_uuid
-
-    if module.params['network_type'].upper() == 'VNET':
-        base_params = ['autodeploy_nfv',
-                       'network_address', 'subnet_mask', 'gateway']
-
-        for param in base_params:
-            if param in module.params.keys():
-                network_params[param] = module.params[param]
-            else:
-                network_params[param] = None
-
-        if 'firewall_override' in module.params.keys():
-            network_params['firewall_override_uuid'] = get_component_fields_by_name(
-                module.params['firewall_override'], 'firewall_override', api_client)
-        else:
-            network_params['firewall_override_uuid'] = None
-
-        if 'firewall_profile' in module.params.keys():
-            network_params['firewall_profile_uuid'] = get_component_fields_by_name(
-                module.params['firewall_profile'], 'firewall_profile', api_client)
-        else:
-            network_params['firewall_profile_uuid'] = None
-
-        dhcp_params = ['dhcp_start', 'dhcp_end',
-                       'domain_name', 'lease_time', 'dns1', 'dns2',
-                       'static_bindings']
-        network_params['dhcp'] = {}
-        for param in dhcp_params:
-            if param in module.params['dhcp'].keys():
-                network_params['dhcp'][param] = module.params['dhcp'][param]
-            else:
-                network_params['dhcp'][param] = None
-
-        routing_params = ['network', 'type', 'address_mode', 'ip_address', 'subnet_mask',
-                          'gateway']
-        network_params['routing'] = {}
-        for param in routing_params:
-            if param in module.params['routing'].keys():
-                network_params['routing'][param] = module.params['routing'][param]
-            else:
-                network_params['routing'][param] = None
-        try:
-            if module.params['routing']['firewall_override']:
-                network_params['routing']['firewall_override_uuid'] = get_component_fields_by_name(
-                    network_params['routing']['firewall_override'],
-                    'firewall_override', api_client)
-        except Exception:
-            network_params['routing']['firewall_override_uuid'] = None
-
-        network_params['routing']['network_uuid'] = get_component_fields_by_name(
-            network_params['routing']['network'],
-            network_params['routing']['type'].lower(), api_client)
-
-        nfv_params = ['datacenter', 'storage_pool',
-                      'mz', 'cpu_cores', 'memory', 'auto_recovery']
-        network_params['nfv'] = {}
-        for param in nfv_params:
-            if param in module.params['nfv'].keys():
-                if param == 'memory':
-                    network_params['nfv'][param] = convert_memory_abbreviation_to_bytes(
-                        module.params['nfv'][param])
-                else:
-                    network_params['nfv'][param] = module.params['nfv'][param]
-            else:
-                network_params['nfv'][param] = None
-
-    elif module.params['network_type'].upper() == 'VLAN':
-        if module.params['vlan_tag'] in range(1, 4095):
-            network_params['vlan_tag'] = module.params['vlan_tag']
-        else:
-            fail_with_reason(
-                "vlan_tag parameter is invalid - must be in range 1-4094")
+    network_params = generate_network_params(module)
 
     if module.params['network_type'].upper() == 'VLAN':
         create_vlan_network(network_params)
