@@ -241,7 +241,7 @@ To encrypt a string read from stdin and name it 'db_password':
 
 Result::
 
-    Reading plaintext input from stdin. (ctrl-d to end input)
+    Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a new line)
     db_password: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
               61323931353866666336306139373937316366366138656131323863373866376666353364373761
@@ -259,7 +259,7 @@ To be prompted for a string to encrypt, encrypt it, and give it the name 'new_us
 
 Output::
 
-    Reading plaintext input from stdin. (ctrl-d to end input)
+    Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a new line)
 
 User enters 'hunter2' and hits ctrl-d.
 
