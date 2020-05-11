@@ -56,4 +56,3 @@
     - name: this should work by ignoring the bad ags for orig host
       ping:
       delegate_to: delegatetome
-
