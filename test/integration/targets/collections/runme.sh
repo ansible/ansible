@@ -71,3 +71,6 @@ if [[ "$(grep -wc "dynamic_host_a" "$CACHEFILE")" -ne "0" ]]; then
 fi
 
 ./vars_plugin_tests.sh
+
+# ensure non existing callback does not crash ansible
+ANSIBLE_CALLBACK_WHITELIST=charlie.gomez.notme ansible -m ping localhost

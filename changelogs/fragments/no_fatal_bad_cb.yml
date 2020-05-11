@@ -1,0 +1,2 @@
+bugfixes:
+    - avoid fatal traceback when a bad FQCN for a callback is supplied in the whitelist (#69401).
