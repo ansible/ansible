@@ -16,7 +16,7 @@
       when: onetwo[item] is string
       loop: '{{onetwo.keys()|list}}'
       loop_control:
-        label: "{{item}}: {{onewto[item]}} <=> {{ansible_facts[item]}}"
+        label: "{{item}}: {{onetwo[item]}} <=> {{ansible_facts[item]}}"
 
     - name: check expected merge sequences
       assert:
@@ -25,7 +25,7 @@
       when: onetwo[item] is not string and onetwo[item] is not mapping
       loop: '{{onetwo.keys()|list}}'
       loop_control:
-        label: "{{item}}: {{onewto[item]}} <=> {{ansible_facts[item]}}"
+        label: "{{item}}: {{onetwo[item]}} <=> {{ansible_facts[item]}}"
 
     - name: check expected merge dicts
       assert:
@@ -34,7 +34,7 @@
       when: onetwo[item] is mapping
       loop: '{{onetwo.keys()|list}}'
       loop_control:
-        label: "{{item}}: {{onewto[item]}} <=> {{ansible_facts[item]}}"
+        label: "{{item}}: {{onetwo[item]}} <=> {{ansible_facts[item]}}"
 
 
 - name: gather two and one facts
