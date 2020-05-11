@@ -699,6 +699,13 @@ releases:
     - vault_tmp_race_fix.yml
     - win-unzip-check-extraction-path.yml
     release_date: '2020-04-16'
+  2.7.18:
+    codename: In the Light
+    fragments:
+    - 68592-pip-check_mode-prereleases.yml
+    - inventory_docs_fix.yml
+    - v2.7.18_summary.yaml
+    release_date: '2020-05-11'
   2.7.2:
     codename: In the Light
     fragments:

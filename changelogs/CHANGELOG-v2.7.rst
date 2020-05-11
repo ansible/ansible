@@ -5,6 +5,26 @@ Ansible 2.7 "In the Light" Release Notes
 .. contents:: Topics
 
 
+v2.7.18
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-05-11
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Point inventory script location to their respective version rather than devel version in documentation.
+
+Bugfixes
+--------
+
+- pip - check_mode with ``state: present`` now returns the correct state for pre-release versioned packages
+
 v2.7.17
 =======
 
@@ -37,7 +57,7 @@ Bugfixes
 - Ensure DataLoader temp files are removed at appropriate times and that we observe the LOCAL_TMP setting.
 - Ensure we don't allow ansible_facts subkey of ansible_facts to override top level, also fix 'deprefixing' to prevent key transforms.
 - Ensure we get an error when creating a remote tmp if it already exists. CVE-2020-1733
-- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2019-3828.
+- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2020-1735.
 - ansible-test - Use ``virtualenv`` versions before 20 on provisioned macOS instances to remain compatible with an older pip install.
 - ansible-test now limits Jinja2 installs to version 2.10 and earlier on Python 2.6
 
