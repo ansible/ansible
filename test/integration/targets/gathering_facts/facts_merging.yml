@@ -14,21 +14,27 @@
         that:
             - onetwo[item] == ansible_facts[item]
       when: onetwo[item] is string
+      loop: '{{onetwo.keys()|list}}'
+      loop_control:
+        label: "{{item}}: {{onewto[item]}} <=> {{ansible_facts[item]}}"
 
     - name: check expected merge sequences
       assert:
         that:
             - onetwo[item]|sort == ansible_facts[item]|sort
       when: onetwo[item] is not string and onetwo[item] is not mapping
+      loop: '{{onetwo.keys()|list}}'
+      loop_control:
+        label: "{{item}}: {{onewto[item]}} <=> {{ansible_facts[item]}}"
 
     - name: check expected merge dicts
       assert:
         that:
             - onetwo[item]|dictsort == ansible_facts[item]|dictsort
       when: onetwo[item] is mapping
-    loop: '{{onetwo.keys()|list}}'
-    loop_control:
-      label: "{{item}}: {{onewto[item]}} <=> {{ansible_facts[item]}}"
+      loop: '{{onetwo.keys()|list}}'
+      loop_control:
+        label: "{{item}}: {{onewto[item]}} <=> {{ansible_facts[item]}}"
 
 
 - name: gather two and one facts
@@ -47,19 +53,24 @@
         that:
             - twoone[item] == ansible_facts[item]
       when: twoone[item] is string
+      loop: '{{twoone.keys()|list}}'
+      loop_control:
+        label: "{{item}}: {{twoone[item]}} <=> {{ansible_facts[item]}}"
 
     - name: check expected merge sequences
       assert:
         that:
             - twoone[item]|sort == ansible_facts[item]|sort
       when: twoone[item] is not string and twoone[item] is not mapping
+      loop: '{{twoone.keys()|list}}'
+      loop_control:
+        label: "{{item}}: {{twoone[item]}} <=> {{ansible_facts[item]}}"
 
     - name: check expected merge dicts
       assert:
         that:
             - twoone[item]|dictsort == ansible_facts[item]|dictsort
       when: twoone[item] is mapping
-
-    loop: '{{twoone.keys()|list}}'
-    loop_control:
-      label: "{{item}}: {{twoone[item]}} <=> {{ansible_facts[item]}}"
+      loop: '{{twoone.keys()|list}}'
+      loop_control:
+        label: "{{item}}: {{twoone[item]}} <=> {{ansible_facts[item]}}"
