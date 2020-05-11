@@ -1469,10 +1469,12 @@ class ModuleValidator(Validator):
                     compare_version = self.collection_version
                     version_of_what = "this collection (%s)" % self.collection_version_str
                     version_parser_error = "the version number is not a valid semantic version (https://semver.org/)"
+                    code_prefix = 'collection'
                 else:
                     compare_version = LOOSE_ANSIBLE_VERSION
                     version_of_what = "Ansible (%s)" % ansible_version
                     version_parser_error = "the version number cannot be parsed"
+                    code_prefix = 'ansible'
 
                 removed_in_version = data.get('removed_in_version', None)
                 if removed_in_version is not None:
@@ -1485,7 +1487,7 @@ class ModuleValidator(Validator):
                             msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
                             self.reporter.error(
                                 path=self.object_path,
-                                code='ansible-deprecated-version',
+                                code=code_prefix + '-deprecated-version',
                                 msg=msg,
                             )
                     except ValueError:
@@ -1496,7 +1498,7 @@ class ModuleValidator(Validator):
                         msg += " i.e. %s" % version_parser_error
                         self.reporter.error(
                             path=self.object_path,
-                            code='ansible-invalid-version',
+                            code=code_prefix + '-invalid-version',
                             msg=msg,
                         )
 
@@ -1513,7 +1515,7 @@ class ModuleValidator(Validator):
                                 msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
                                 self.reporter.error(
                                     path=self.object_path,
-                                    code='ansible-deprecated-version',
+                                    code=code_prefix + '-deprecated-version',
                                     msg=msg,
                                 )
                         except ValueError:
@@ -1525,7 +1527,7 @@ class ModuleValidator(Validator):
                             msg += " i.e. %s" % version_parser_error
                             self.reporter.error(
                                 path=self.object_path,
-                                code='ansible-invalid-version',
+                                code=code_prefix + '-invalid-version',
                                 msg=msg,
                             )
 

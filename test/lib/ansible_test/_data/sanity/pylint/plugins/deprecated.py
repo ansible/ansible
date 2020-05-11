@@ -31,13 +31,20 @@ MSGS = {
               "Display.deprecated or AnsibleModule.deprecate",
               "ansible-invalid-deprecated-version",
               "Used when a call to Display.deprecated specifies an invalid "
-              "version number",
+              "Ansible version number",
               {'minversion': (2, 6)}),
     'E9504': ("Deprecated version (%r) found in call to Display.deprecated "
               "or AnsibleModule.deprecate",
-              "ansible-deprecated-collection-version",
-              "Used when a call to Display.deprecated specifies a version "
-              "less than or equal to the current version of this collection",
+              "collection-deprecated-version",
+              "Used when a call to Display.deprecated specifies a collection "
+              "version less than or equal to the current version of this "
+              "collection",
+              {'minversion': (2, 6)}),
+    'E9505': ("Invalid deprecated version (%r) found in call to "
+              "Display.deprecated or AnsibleModule.deprecate",
+              "collection-invalid-deprecated-version",
+              "Used when a call to Display.deprecated specifies an invalid "
+              "collection version number",
               {'minversion': (2, 6)}),
 }
 
@@ -122,11 +129,14 @@ class AnsibleDeprecatedChecker(BaseChecker):
                     loose_version = self.version_constructor(str(version))
                     if self.is_collection and self.collection_version is not None:
                         if self.collection_version >= loose_version:
-                            self.add_message('ansible-deprecated-collection-version', node=node, args=(version,))
+                            self.add_message('collection-deprecated-version', node=node, args=(version,))
                     if not self.is_collection and ANSIBLE_VERSION >= loose_version:
                         self.add_message('ansible-deprecated-version', node=node, args=(version,))
                 except ValueError:
-                    self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
+                    if self.is_collection:
+                        self.add_message('collection-invalid-deprecated-version', node=node, args=(version,))
+                    else:
+                        self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
         except AttributeError:
             # Not the type of node we are interested in
             pass
