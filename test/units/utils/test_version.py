@@ -268,6 +268,31 @@ def test_alpha():
     assert _Alpha('b') >= _Alpha('a')
     assert _Alpha('b') >= _Alpha('b')
 
+    # The following 3*6 tests check that all comparison operators perform
+    # as expected. DO NOT remove any of them, or reformulate them (to remove
+    # the explicit `not`)!
+
+    assert _Alpha('a') == _Alpha('a')
+    assert not _Alpha('a') != _Alpha('a')  # pylint: disable=unneeded-not
+    assert not _Alpha('a') < _Alpha('a')  # pylint: disable=unneeded-not
+    assert _Alpha('a') <= _Alpha('a')
+    assert not _Alpha('a') > _Alpha('a')  # pylint: disable=unneeded-not
+    assert _Alpha('a') >= _Alpha('a')
+
+    assert not _Alpha('a') == _Alpha('b')  # pylint: disable=unneeded-not
+    assert _Alpha('a') != _Alpha('b')
+    assert _Alpha('a') < _Alpha('b')
+    assert _Alpha('a') <= _Alpha('b')
+    assert not _Alpha('a') > _Alpha('b')  # pylint: disable=unneeded-not
+    assert not _Alpha('a') >= _Alpha('b')  # pylint: disable=unneeded-not
+
+    assert not _Alpha('b') == _Alpha('a')  # pylint: disable=unneeded-not
+    assert _Alpha('b') != _Alpha('a')
+    assert not _Alpha('b') < _Alpha('a')  # pylint: disable=unneeded-not
+    assert not _Alpha('b') <= _Alpha('a')  # pylint: disable=unneeded-not
+    assert _Alpha('b') > _Alpha('a')
+    assert _Alpha('b') >= _Alpha('a')
+
 
 def test_numeric():
     assert _Numeric(1) == _Numeric(1)
@@ -283,3 +308,28 @@ def test_numeric():
     assert _Numeric(1) <= _Numeric(2)
     assert _Numeric(2) >= _Numeric(1)
     assert _Numeric(2) >= _Numeric(2)
+
+    # The following 3*6 tests check that all comparison operators perform
+    # as expected. DO NOT remove any of them, or reformulate them (to remove
+    # the explicit `not`)!
+
+    assert _Numeric(1) == _Numeric(1)
+    assert not _Numeric(1) != _Numeric(1)  # pylint: disable=unneeded-not
+    assert not _Numeric(1) < _Numeric(1)  # pylint: disable=unneeded-not
+    assert _Numeric(1) <= _Numeric(1)
+    assert not _Numeric(1) > _Numeric(1)  # pylint: disable=unneeded-not
+    assert _Numeric(1) >= _Numeric(1)
+
+    assert not _Numeric(1) == _Numeric(2)  # pylint: disable=unneeded-not
+    assert _Numeric(1) != _Numeric(2)
+    assert _Numeric(1) < _Numeric(2)
+    assert _Numeric(1) <= _Numeric(2)
+    assert not _Numeric(1) > _Numeric(2)  # pylint: disable=unneeded-not
+    assert not _Numeric(1) >= _Numeric(2)  # pylint: disable=unneeded-not
+
+    assert not _Numeric(2) == _Numeric(1)  # pylint: disable=unneeded-not
+    assert _Numeric(2) != _Numeric(1)
+    assert not _Numeric(2) < _Numeric(1)  # pylint: disable=unneeded-not
+    assert not _Numeric(2) <= _Numeric(1)  # pylint: disable=unneeded-not
+    assert _Numeric(2) > _Numeric(1)
+    assert _Numeric(2) >= _Numeric(1)
