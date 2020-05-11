@@ -1480,8 +1480,8 @@ def prepare_multipart(fields):
 
     if PY3:
         # Ensure headers are not split over multiple lines
-        policy = email.policy.HTTP
-        b_data = m.as_bytes(policy=policy)
+        # The HTTP policy also uses CRLF by default
+        b_data = m.as_bytes(policy=email.policy.HTTP)
     else:
         # Py2
         # We cannot just call ``as_string`` since it provides no way
