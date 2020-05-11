@@ -29,6 +29,11 @@
             hold_time:
               up: 3000
               down: 3200
+          - name: gr-0/0/0
+            description: "Configured by Ansible - Interface 3"
+            hold_time:
+              up: 2400
+              down: 2600
         state: merged
       register: result
 
@@ -37,6 +42,7 @@
         config:
         - name: ge-0/0/1
         - name: ge-0/0/2
+        - name: gr-0/0/0
         state: deleted
       register: result
 

@@ -6,8 +6,14 @@
 
 - set_fact:
     expected_merged_output:
-      - name: ge-0/0/1
+      - name: gr-0/0/0
         description: "Configured by Ansible - Interface 1"
+        enabled: true
+        hold_time:
+          down: 2600
+          up: 2400
+      - name: ge-0/0/1
+        description: "Configured by Ansible - Interface 2"
         mtu: 1024
         speed: 100m
         enabled: false
@@ -16,7 +22,7 @@
           up: 2000
           down: 2200
       - name: ge-0/0/2
-        description: "Configured by Ansible - Interface 2"
+        description: "Configured by Ansible - Interface 3"
         mtu: 2048
         speed: 10m
         enabled: true
@@ -30,8 +36,13 @@
     - name: Merge the provided configuration with the exisiting running configuration
       junos_interfaces: &merged
         config:
-          - name: ge-0/0/1
+          - name: gr-0/0/0
             description: "Configured by Ansible - Interface 1"
+            hold_time:
+              up: 2400
+              down: 2600
+          - name: ge-0/0/1
+            description: "Configured by Ansible - Interface 2"
             mtu: 1024
             speed: 100m
             enabled: False
@@ -40,7 +51,7 @@
               up: 2000
               down: 2200
           - name: ge-0/0/2
-            description: "Configured by Ansible - Interface 2"
+            description: "Configured by Ansible - Interface 3"
             mtu: 2048
             speed: 10m
             hold_time:

@@ -8,6 +8,7 @@
       - delete interfaces ge-0/0/1
       - delete interfaces ge-0/0/2
       - delete interfaces ge-0/0/3
+      - delete interfaces gr-0/0/0
       - delete interfaces lo0
 
 - debug:
