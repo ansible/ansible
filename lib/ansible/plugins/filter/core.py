@@ -284,7 +284,7 @@ def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
 
 
 def is_uuid(a, version=None):
-    ''' check if input is uuid '''
+    '''check if input is uuid'''
 
     if not isinstance(a, string_types):
         raise AnsibleFilterError("|is_uuid expects string, got %s instead." % type(a))
