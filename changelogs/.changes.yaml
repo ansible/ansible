@@ -1650,6 +1650,18 @@ releases:
     - vault_tmp_race_fix.yml
     - win-unzip-check-extraction-path.yml
     release_date: '2020-04-16'
+  2.8.12:
+    codename: How Many More Times
+    fragments:
+    - 225-mysql_user_fix_no_database_selected.yml
+    - 68251-redfish_config-fix-boolean-bios-attr-support.yaml
+    - 68592-pip-check_mode-prereleases.yml
+    - ansible-test-rhel-82.yml
+    - dnf-4-2-18.yml
+    - inventory_docs_fix.yml
+    - v2.8.12_summary.yaml
+    - win_psmodule-repo-tls.yaml
+    release_date: '2020-05-11'
   2.8.2:
     codename: How Many More Times
     fragments:

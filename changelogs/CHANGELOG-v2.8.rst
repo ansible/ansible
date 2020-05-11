@@ -5,6 +5,34 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.12
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-05-11
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Point inventory script location to their respective version rather than devel version in documentation.
+- ansible-test - Now includes testing support for RHEL 8.2
+
+Bugfixes
+--------
+
+- dnf - Unified error messages when trying to install a nonexistent package with newer dnf (4.2.18) vs older dnf (4.2.9)
+- dnf - Unified error messages when trying to remove a wildcard name that is not currently installed, with newer dnf (4.2.18) vs older dnf (4.2.9)
+- mysql_user - fix the error No database selected (https://github.com/ansible/ansible/issues/68070).
+- pip - check_mode with ``state: present`` now returns the correct state for pre-release versioned packages
+- redfish_config - fix support for boolean bios attrs (https://github.com/ansible/ansible/pull/68251)
+- win_psmodule - Fix TLS 1.2 compatibility with PSGallery.
+- win_psrepository - Fix TLS 1.2 compatibility with PSGallery.
+- win_psrepository - Fix ``Ignore`` error when trying to retrieve the list of registered repositories
+
 v2.8.11
 =======
 
@@ -38,7 +66,7 @@ Bugfixes
 - Ensure we don't allow ansible_facts subkey of ansible_facts to override top level, also fix 'deprefixing' to prevent key transforms.
 - Ensure we get an error when creating a remote tmp if it already exists. CVE-2020-1733
 - Fact Delegation - Add ability to indicate which facts must always be delegated. Primarily for ``discovered_interpreter_python`` right now, but extensible later. (https://github.com/ansible/ansible/issues/61002)
-- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2019-3828.
+- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2020-1735.
 - acl - fixed module failure if there are spaces in a path
 
 v2.8.10
