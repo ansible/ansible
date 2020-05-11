@@ -58,8 +58,10 @@ class TaskInclude(Task):
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         ti = TaskInclude(block=block, role=role, task_include=task_include)
-        task = ti.load_data(data, variable_manager=variable_manager, loader=loader)
-        task = ti.check_options(task, data)
+        task = ti.check_options(
+            ti.load_data(data, variable_manager=variable_manager, loader=loader),
+            data
+        )
 
         return task
 
