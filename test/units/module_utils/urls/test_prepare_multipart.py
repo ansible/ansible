@@ -76,7 +76,7 @@ def test_prepare_multipart():
         b_expected = f.read().replace(fixture_boundary, boundary.encode())
 
     # Depending on Python version, there may or may not be a trailing newline
-    assert b_data.rstrip(b'\n') == b_expected.rstrip(b'\n')
+    assert b_data.rstrip(b'\r\n') == b_expected.rstrip(b'\r\n')
 
 
 def test_wrong_type():

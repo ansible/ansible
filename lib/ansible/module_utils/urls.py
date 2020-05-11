@@ -38,6 +38,7 @@ import email.mime.multipart
 import email.mime.nonmultipart
 import email.mime.application
 import email.parser
+import email.utils
 import functools
 import mimetypes
 import netrc
@@ -1479,18 +1480,21 @@ def prepare_multipart(fields):
 
     if PY3:
         # Ensure headers are not split over multiple lines
-        policy = email.policy.compat32.clone(max_line_length=0)
+        policy = email.policy.HTTP
         b_data = m.as_bytes(policy=policy)
     else:
         # Py2
+        # We cannot just call ``as_string`` since it provides no way
+        # to specify ``maxheaderlen``
         fp = cStringIO()  # cStringIO seems to be required here
         # Ensure headers are not split over multiple lines
         g = email.generator.Generator(fp, maxheaderlen=0)
         g.flatten(m)
-        b_data = fp.getvalue()
+        # ``fix_eols`` switches from ``\n`` to ``\r\n``
+        b_data = email.utils.fix_eols(fp.getvalue())
     del m
 
-    headers, sep, b_content = b_data.partition(b'\n\n')
+    headers, sep, b_content = b_data.partition(b'\r\n\r\n')
     del b_data
 
     if PY3:
