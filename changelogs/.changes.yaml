@@ -1678,3 +1678,34 @@ releases:
     - win-web-request-no_proxy.yaml
     - win_setup-fqdn.yaml
     release_date: '2020-04-16'
+  2.9.8:
+    codename: Immigrant Song
+    fragments:
+    - 225-mysql_user_fix_no_database_selected.yml
+    - 64810-hostname-add-manjaro-linux-distribution.yml
+    - 66721-better-jinja2-collection-error-handling.yml
+    - 66996-zabbix-template.yaml
+    - 67407-pip-virtualenv_command-args.yml
+    - 67418-postgresql_set_converts_value_to_uppercase.yml
+    - 68211-systemd-list-unit-files-parsing.yml
+    - 68251-redfish_config-fix-boolean-bios-attr-support.yaml
+    - 68310-low_level_execute_command-honor-executable.yml
+    - 68592-pip-check_mode-prereleases.yml
+    - 69101-collection-role-to-standalone-role.yml
+    - 69123-ovirt_network-allow-to-remove-vlan_tag.yml
+    - 69133-role-install-non-ascii.yml
+    - 69150-ovirt_disk-upload-image-auto-detect-size.yml
+    - 69153-ovirt_disk-add-warning-when-uploading-wrong-format.yml
+    - 69160-add-missing-parameter.yaml
+    - 69165_constructed.yml
+    - ansible-test-obsolete-vcenter-proivisioning.yml
+    - ansible-test-rhel-82.yml
+    - b5a0475a-revert-persistent-connection-messages.yml
+    - dnf-4-2-18.yml
+    - dont_hide_json_error.yml
+    - fileglob_fixes.yml
+    - inventory_docs_fix.yml
+    - network_refactor_prompt_check.yaml
+    - v2.9.8_summary.yaml
+    - win_psmodule-repo-tls.yaml
+    release_date: '2020-05-11'

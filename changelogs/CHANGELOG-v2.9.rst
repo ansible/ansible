@@ -5,6 +5,55 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.8
+======
+
+Release Summary
+---------------
+
+| Release Date: 2020-05-11
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Add test for reboot & wait_for_connection on EOS & IOS (https://github.com/ansible/ansible/pull/63014)
+- Fixed 'intersect' filter spelling in constructed inventory plugin example.
+- Move cli prompt check logic from action to cliconf plugin (https://github.com/ansible/ansible/pull/63945)
+- Point inventory script location to their respective version rather than devel version in documentation.
+- ansible-test - Now includes testing support for RHEL 8.2
+- ansible-test - Remove obsolete support for provisioning remote vCenter instances. The supporting services are no longer available.
+
+Bugfixes
+--------
+
+- Collections - Allow a collection role to call a stand alone role, without needing to explicitly add ``ansible.legacy`` to the collection search order within the collection role. (https://github.com/ansible/ansible/issues/69101)
+- Fix cli context check for network_cli connection (https://github.com/ansible/ansible/pull/64697)
+- Revert 5f6427b1fc7449a5c42212013d3f628665701c3d as it breaks netconf connection
+- Role Installation - Ensure that a role containing files with non-ascii characters can be installed (https://github.com/ansible/ansible/issues/69133)
+- Update ActionBase._low_level_execute_command to honor executable (https://github.com/ansible/ansible/issues/68054)
+- collections - Handle errors better for filters and tests in collections, where a non-existent collection is specified, or importing the plugin results in an exception (https://github.com/ansible/ansible/issues/66721)
+- deal with cases in which just a file is pased and not a path with directories, now fileglob correctly searches in 'files/' subdirs.
+- dnf - Unified error messages when trying to install a nonexistent package with newer dnf (4.2.18) vs older dnf (4.2.9)
+- dnf - Unified error messages when trying to remove a wildcard name that is not currently installed, with newer dnf (4.2.18) vs older dnf (4.2.9)
+- hostname - make module work on Manjaro Linux (https://github.com/ansible/ansible/issues/61382)
+- mysql_user - fix the error No database selected (https://github.com/ansible/ansible/issues/68070).
+- ovirt_disk: add warning when uploading wrong format
+- ovirt_disk: upload image auto detect size
+- ovirt_network: allow to remove vlan_tag
+- pip - The virtualenv_command option can now include arguments without requiring the full path to the binary. (https://github.com/ansible/ansible/issues/52275)
+- pip - check_mode with ``state: present`` now returns the correct state for pre-release versioned packages
+- postgresql_set - fix converting value to uppercase (https://github.com/ansible/ansible/issues/67377).
+- redfish_config - fix support for boolean bios attrs (https://github.com/ansible/ansible/pull/68251)
+- service_facts - Now correctly parses systemd list-unit-files for systemd >=245
+- sysvinit - Add missing parameter ``module`` in call to ``daemonize()``.
+- the default parsing will now show existing JSON errors and not just YAML (last attempted), also we avoid YAML parsing when we know we only want JSON issue
+- win_psmodule - Fix TLS 1.2 compatibility with PSGallery.
+- win_psrepository - Fix TLS 1.2 compatibility with PSGallery.
+- win_psrepository - Fix ``Ignore`` error when trying to retrieve the list of registered repositories
+- zabbix_template - no longer fails with KeyError when there are no macros present in existing template (see https://github.com/ansible-collections/community.zabbix/issues/19)
+
 v2.9.7
 ======
 
@@ -46,7 +95,7 @@ Bugfixes
 - Fact Delegation - Add ability to indicate which facts must always be delegated. Primarily for ``discovered_interpreter_python`` right now, but extensible later. (https://github.com/ansible/ansible/issues/61002)
 - Fix nxos_lacp replace operation (https://github.com/ansible/ansible/pull/64074).
 - Handle equal sign in password while using passwordstore lookup plugin.
-- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2019-3828.
+- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2020-1735.
 - In vmware_guest_network module use appropriate network while creating or reconfiguring (https://github.com/ansible/ansible/issues/65968).
 - Log additional messages from persistent connection modules that may be missed if the module fails or returns early.
 - `vmware_content_deploy_template`'s `cluster` argument no longer fails with an error message about resource pools.
