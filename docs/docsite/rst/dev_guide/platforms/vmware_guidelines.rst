@@ -184,7 +184,7 @@ Example should use the fully qualified collection name (FQCN)
 Use FQCN for examples within module documentation For instance, you should use ``community.vmware.vmware_guest`` instead of just
 ``vmware_guest``.
 
-This way, the examples don't depend on the `collections` directive of the
+This way, the examples don't depend on the ``collections`` directive of the
 playbook.
 
 Functional tests
