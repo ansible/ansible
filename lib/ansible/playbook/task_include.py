@@ -58,13 +58,24 @@ class TaskInclude(Task):
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         ti = TaskInclude(block=block, role=role, task_include=task_include)
-        task = ti.load_data(data, variable_manager=variable_manager, loader=loader)
+        task = ti.check_options(
+            ti.load_data(data, variable_manager=variable_manager, loader=loader),
+            data
+        )
 
-        # Validate options
+        return task
+
+    def check_options(self, task, data):
+        '''
+        Method for options validation to use in 'load_data' for TaskInclude and HandlerTaskInclude
+        since they share the same validations. It is not named 'validate_options' on purpose
+        to prevent confusion with '_validate_*" methods. Note that the task passed might be changed
+        as a side-effect of this method.
+        '''
         my_arg_names = frozenset(task.args.keys())
 
         # validate bad args, otherwise we silently ignore
-        bad_opts = my_arg_names.difference(TaskInclude.VALID_ARGS)
+        bad_opts = my_arg_names.difference(self.VALID_ARGS)
         if bad_opts and task.action in ('include_tasks', 'import_tasks'):
             raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
 
