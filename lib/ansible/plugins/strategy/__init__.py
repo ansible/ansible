@@ -1005,7 +1005,17 @@ class StrategyBase:
         if len(included_files) > 0:
             for included_file in included_files:
                 try:
-                    new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=True)
+                    if included_file._is_role:
+                        ir = self._copy_included_file(included_file)
+                        # get_block_list returns (blocks, handlers)
+                        # and in this instance we only care about the handler
+                        # blocks
+                        (_, new_blocks) = ir.get_block_list(
+                                play=iterator._play,
+                                variable_manager=self._variable_manager,
+                                loader=self.loader)
+                    else:
+                        new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=True)
                     # for every task in each block brought in by the include, add the list
                     # of hosts which included the file to the notified_handlers dict
                     for block in new_blocks:
