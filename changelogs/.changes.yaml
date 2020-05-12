@@ -1709,3 +1709,9 @@ releases:
     - v2.9.8_summary.yaml
     - win_psmodule-repo-tls.yaml
     release_date: '2020-05-11'
+  2.9.9:
+    codename: Immigrant Song
+    fragments:
+    - 69451-fix-fileglob-nonexistent-subdirs.yaml
+    - v2.9.9_summary.yaml
+    release_date: '2020-05-12'
