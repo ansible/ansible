@@ -65,7 +65,9 @@ except ImportError:
 
 try:
     from systemd import journal
-    has_journal = True
+    # Makes sure that systemd.journal has method sendv()
+    # Double check that journal has method sendv (some packages don't)
+    has_journal = hasattr(journal, 'sendv')
 except ImportError:
     has_journal = False
 
