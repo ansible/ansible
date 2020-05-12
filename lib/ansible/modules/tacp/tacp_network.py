@@ -277,10 +277,8 @@ def run_module():
         try:
             api_response = api_instance.create_vlan_using_post(
                 body)
-
+            result['api_response'] = str(api_response)
             result['msg'] = api_response.message
-            if "Creating VLAN" in api_response.message:
-                should_wait_for_creation = True
 
         except ApiException as e:
             response_dict = api_response_to_dict(e)
@@ -290,7 +288,11 @@ def run_module():
                 result['failed'] = False
                 module.exit_json(**result)
             pass
-        return
+
+        wait_for_action_to_complete(api_response.action_uuid, api_client)
+        result['changed'] = True
+        result['failed'] = False
+        module.exit_json(**result)
 
     def create_vnet_network(network_params):
         api_instance = tacp.VnetsApi(tacp.ApiClient(configuration))
@@ -387,13 +389,9 @@ def run_module():
         result['api_request_body'] = str(body)
         try:
             api_response = api_instance.create_vnet_using_post(body)
-
+            result['api_response'] = str(api_response)
             result['msg'] = api_response.message
-            if "Creating" in api_response.message:
-                should_wait_for_creation = True
-            result['changed'] = True
-            result['failed'] = False
-            module.exit_json(**result)
+
         except ApiException as e:
             response_dict = api_response_to_dict(e)
             result['msg'] = response_dict['message']
@@ -405,9 +403,63 @@ def run_module():
                 result['changed'] = False
                 result['failed'] = False
                 module.exit_json(**result)
-        return
 
+        wait_for_action_to_complete(api_response.action_uuid, api_client)
+        result['changed'] = True
+        result['failed'] = False
         module.exit_json(**result)
+
+    def delete_network(name, network_type, api_client):
+        if network_type == 'VLAN':
+            vlan_uuid = get_component_fields_by_name(
+                module.params['name'], 'vlan', api_client)
+            api_instance = tacp.VlansApi(api_client)
+            try:
+                # Delete a VNET
+                api_response = api_instance.delete_vlan_using_delete(vlan_uuid)
+                result['api_response'] = str(api_response)
+                result['changed'] = True
+                result['failed'] = False
+                module.exit_json(**result)
+            except ApiException as e:
+                response_dict = api_response_to_dict(e)
+               # result['msg'] = response_dict['message']
+                if "Error" in response_dict['message']:
+                    result['changed'] = False
+                    result['failed'] = True
+                    fail_with_reason(response_dict['message'])
+
+        elif network_type == 'VNET':
+            vnet_uuid = get_component_fields_by_name(
+                module.params['name'], 'vnet', api_client)
+            api_instance = tacp.VnetsApi(api_client)
+
+            # Get the NFV instance UUID from the VNET
+            nfv_uuid = get_component_fields_by_name(
+                module.params['name'], 'vnet', api_client, fields=['nfvInstanceUuid']).nfv_instance_uuid
+
+            # Delete the NFV instance
+            delete_application(name=None, uuid=nfv_uuid, api_client=api_client)
+
+            try:
+                # Delete a VNET
+                api_response = api_instance.delete_vnet_using_delete(vnet_uuid)
+                result['api_response'] = str(api_response)
+
+            except ApiException as e:
+                response_dict = api_response_to_dict(e)
+               # result['msg'] = response_dict['message']
+                module.exit_json(**result)
+                if "Error" in response_dict['message']:
+                    result['changed'] = False
+                    result['failed'] = True
+                    fail_with_reason(response_dict['message'])
+
+            wait_for_action_to_complete(api_response.action_uuid, api_client)
+            result['changed'] = True
+            result['failed'] = False
+            module.exit_json(**result)
+
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
 
@@ -421,12 +473,45 @@ def run_module():
     configuration.api_key['Authorization'] = module.params['api_key']
     api_client = tacp.ApiClient(configuration)
 
-    network_params = generate_network_params(module)
-
     if module.params['network_type'].upper() == 'VLAN':
-        create_vlan_network(network_params)
+        if module.params['state'] == 'present':
+            if get_component_fields_by_name(module.params['name'], 'vlan', api_client):
+                result['msg'] = "VLAN network %s is already present, nothing to do." % module.params['name']
+                result['failed'] = False
+                result['changed'] = False
+                module.exit_json(**result)
+            else:
+                network_params = generate_network_params(module)
+                create_vlan_network(network_params)
+        elif module.params['state'] == 'absent':
+            if get_component_fields_by_name(module.params['name'], 'vlan', api_client):
+                delete_network(
+                    name=module.params['name'], network_type='VLAN', api_client=api_client)
+            else:
+                result['msg'] = "VLAN network %s is already absent, nothing to do." % module.params['name']
+                result['failed'] = False
+                result['changed'] = False
+                module.exit_json(**result)
+
     elif module.params['network_type'].upper() == 'VNET':
-        create_vnet_network(network_params)
+        if module.params['state'] == 'present':
+            if get_component_fields_by_name(module.params['name'], 'vnet', api_client):
+                result['msg'] = "VNET network %s is already present, nothing to do." % module.params['name']
+                result['failed'] = False
+                result['changed'] = False
+                module.exit_json(**result)
+            else:
+                network_params = generate_network_params(module)
+                create_vnet_network(network_params)
+        elif module.params['state'] == 'absent':
+            if get_component_fields_by_name(module.params['name'], 'vnet', api_client):
+                delete_network(
+                    name=module.params['name'], network_type='VNET', api_client=api_client)
+            else:
+                result['msg'] = "VNET network %s is already absent, nothing to do." % module.params['name']
+                result['failed'] = False
+                result['changed'] = False
+                module.exit_json(**result)
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target
