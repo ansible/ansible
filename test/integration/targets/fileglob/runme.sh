@@ -7,3 +7,9 @@ for seed in play_adj play_adj_subdir somepath/play_adj_subsubdir in_role otherpa
 do
 	ansible-playbook find_levels/play.yml -e "seed='${seed}'" "$@"
 done
+
+# non-existent paths
+for seed in foo foo/bar foo/bar/baz
+do
+	ansible-playbook non_existent/play.yml -e "seed='${seed}'" "$@"
+done
