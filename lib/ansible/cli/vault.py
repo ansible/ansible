@@ -99,6 +99,9 @@ class VaultCLI(CLI):
         enc_str_parser.add_argument('-p', '--prompt', dest='encrypt_string_prompt',
                                     action='store_true',
                                     help="Prompt for the string to encrypt")
+        enc_str_parser.add_argument('-i', '--insecure', dest='show_string_to_encrypt',
+                                    action='store_false',
+                                    help="Display string to encrypt while typing")
         enc_str_parser.add_argument('-n', '--name', dest='encrypt_string_names',
                                     action='append',
                                     help="Specify the variable name")
@@ -311,15 +314,17 @@ class VaultCLI(CLI):
 
         # read from stdin
         if self.encrypt_string_read_stdin:
-            if sys.stdout.isatty():
-                display.display("Reading plaintext input from stdin. (ctrl-d to end input)", stderr=True)
+            # If we weren't passed anything in stdin we need to prompt, otherwise we can read whatever was on stdin
+            if sys.stdin.isatty():
+                try:
+                    stdin_text = display.prompt("Reading plaintext input to encrypt: ", private=context.CLIARGS['show_string_to_encrypt'])
+                except EOFError:
+                    raise AnsibleOptionsError('EOFError (ctrl-d) on prompt for input')
+            else:
+                stdin_text = sys.stdin.read()
 
-            stdin_text = sys.stdin.read()
             if stdin_text == '':
                 raise AnsibleOptionsError('stdin was empty, not encrypting')
-
-            if sys.stdout.isatty() and not stdin_text.endswith("\n"):
-                display.display("\n")
 
             b_plaintext = to_bytes(stdin_text)
 

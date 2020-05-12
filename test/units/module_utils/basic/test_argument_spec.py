@@ -167,6 +167,10 @@ def options_argspec_list():
             mutually_exclusive=[
                 ['bam', 'bam1'],
             ],
+            mutually_exclusive_if=[
+                ['foo', 'hello', ['bam2']],
+                ['foo', 'bam2', ['bam']]
+            ],
             required_if=[
                 ['foo', 'hello', ['bam']],
                 ['foo', 'bam2', ['bam2']]
@@ -503,6 +507,9 @@ class TestComplexOptions:
         # required_if fails
         ({'foobar': [{"foo": "hello", "bar": "bad"}]},
          'foo is hello but all of the following are missing: bam found in foobar'),
+        # mutually_exclusive_if fails
+        ({'foobar': [{"foo": "hello", "bam2": "bad"}]},
+         'foo is hello so the following fields can not be set: bam2'),
         # Missing required_one_of option
         ({'foobar': [{"foo": "test"}]},
          'one of the following is required: bar, bam found in foobar'),
@@ -527,6 +534,9 @@ class TestComplexOptions:
         # required_if fails
         ({'foobar': {"foo": "hello", "bar": "bad"}},
          'foo is hello but all of the following are missing: bam found in foobar'),
+        # mutually_exclusive_if fails
+        ({'foobar': {"foo": "hello", "bam2": "bad"}},
+         'foo is hello so the following fields can not be set: bam2'),
         # Missing required_one_of option
         ({'foobar': {"foo": "test"}},
          'one of the following is required: bar, bam found in foobar'),
@@ -541,7 +551,7 @@ class TestComplexOptions:
     @pytest.mark.parametrize('stdin, expected', OPTIONS_PARAMS_DICT, indirect=['stdin'])
     def test_options_type_dict(self, stdin, options_argspec_dict, expected):
         """Test that a basic creation with required and required_if works"""
-        # should test ok, tests basic foo requirement and required_if
+        # should test ok, tests basic foo requirement, required_if and mutually_exclusive_if
         am = basic.AnsibleModule(**options_argspec_dict)
 
         assert isinstance(am.params['foobar'], dict)
@@ -550,7 +560,7 @@ class TestComplexOptions:
     @pytest.mark.parametrize('stdin, expected', OPTIONS_PARAMS_LIST, indirect=['stdin'])
     def test_options_type_list(self, stdin, options_argspec_list, expected):
         """Test that a basic creation with required and required_if works"""
-        # should test ok, tests basic foo requirement and required_if
+        # should test ok, tests basic foo requirement, required_if and mutually_esclusive_if
         am = basic.AnsibleModule(**options_argspec_list)
 
         assert isinstance(am.params['foobar'], list)
