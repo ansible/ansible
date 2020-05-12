@@ -72,8 +72,9 @@ class LookupModule(LookupBase):
                     found_paths.append(p)
 
             for dwimmed_path in found_paths:
-                globbed = glob.glob(to_bytes(os.path.join(dwimmed_path, term_file), errors='surrogate_or_strict'))
-                ret.extend(to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g))
-                if ret:
-                    break
+                if dwimmed_path:
+                    globbed = glob.glob(to_bytes(os.path.join(dwimmed_path, term_file), errors='surrogate_or_strict'))
+                    ret.extend(to_text(g, errors='surrogate_or_strict') for g in globbed if os.path.isfile(g))
+                    if ret:
+                        break
         return ret

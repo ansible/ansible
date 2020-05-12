@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: fileglob should be empty
+      assert:
+        that: q("fileglob", seed) | length == 0
