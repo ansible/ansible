@@ -8,6 +8,7 @@ import re
 import tacp
 from tacp.rest import ApiException
 from uuid import UUID, uuid4
+from time import sleep
 
 
 def get_component_fields_by_name(name, component,
@@ -92,7 +93,7 @@ def get_component_fields_by_name(name, component,
         except ApiException as e:
             return "Exception when calling get_firewall_profiles_using_get: %s\n" % e
     elif component == "firewall_override":
-        # Need to get all datacenter UUIDs first 
+        # Need to get all datacenter UUIDs first
         api_instance = tacp.DatacentersApi(api_client)
         try:
             # View datacenters for an organization
@@ -137,6 +138,8 @@ def get_component_fields_by_name(name, component,
                                                                       vnic_uuid=vnic_uuid)
                         boot_order.append(boot_order_payload)
                     return boot_order
+        if 'nfvInstanceUuid' in fields:
+            return api_response[0]
     return None
 
 
@@ -196,7 +199,10 @@ def is_valid_uuid(uuid_to_test, version=4):
 
 def api_response_to_dict(api_response):
     if type(api_response) != ApiException:
-        message_str = api_response.message
+        if type(api_response) == str:
+            message_str = api_response
+        else:
+            message_str = api_response.message
     else:
         message_str = str(api_response)
     message_str = message_str.replace('\n', '').replace('null', 'None')
@@ -208,3 +214,28 @@ def api_response_to_dict(api_response):
 
     message_dict = dict(json.loads(message_str))
     return message_dict
+
+
+def wait_for_action_to_complete(action_uuid, api_client):
+    if action_uuid:
+        api_instance = tacp.ActionsApi(api_client)
+        action_incomplete = True
+
+        while action_incomplete:
+            api_response = api_instance.get_action_using_get(action_uuid)
+            if api_response.status == 'Completed':
+                action_incomplete = False
+            else:
+                sleep(1)
+
+
+def delete_application(name, uuid, api_client):
+    if uuid:
+        api_instance = tacp.ApplicationsApi(api_client)
+        try:
+            api_response = api_instance.delete_application_using_delete(
+                uuid=uuid)
+        except ApiException as e:
+            return "Exception when calling get_firewall_profiles_using_get"
+
+        wait_for_action_to_complete(api_response.action_uuid, api_client)
