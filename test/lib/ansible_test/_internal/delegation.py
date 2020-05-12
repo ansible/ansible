@@ -350,8 +350,12 @@ def delegate_docker(args, exclude, require, integration_targets):
 
                 networks = get_docker_networks(args, test_id)
 
-                for network in networks:
-                    docker_network_disconnect(args, test_id, network)
+                if networks is not None:
+                    for network in networks:
+                        docker_network_disconnect(args, test_id, network)
+                else:
+                    display.warning('Network disconnection is not supported (this is normal under podman). '
+                                    'Tests will not be isolated from the network. Network-related tests may misbehave.')
 
                 cmd += ['--requirements-mode', 'skip']
 
