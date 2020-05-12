@@ -13,7 +13,7 @@ import sys
 
 # DO NOT add new non-stdlib import deps here, this loader is used by external tools (eg ansible-test import sanity)
 # that only allow stdlib and module_utils
-from ansible.module_utils._text import to_native, to_text, to_bytes
+from ansible.module_utils.common.text.converters import to_native, to_text, to_bytes
 from ansible.module_utils.six import string_types, PY3
 from ._collection_config import AnsibleCollectionConfig
 
@@ -35,7 +35,7 @@ except ImportError:
 
 # NB: this supports import sanity test providing a different impl
 try:
-    from .collection_meta import _meta_yml_to_dict
+    from ._collection_meta import _meta_yml_to_dict
 except ImportError:
     _meta_yml_to_dict = None
 
@@ -43,7 +43,7 @@ except ImportError:
 class _AnsibleCollectionFinder:
     def __init__(self, paths=None):
         # TODO: accept metadata loader override
-        self._ansible_pkg_path = os.path.dirname(sys.modules['ansible'].__file__)
+        self._ansible_pkg_path = to_native(os.path.dirname(to_bytes(sys.modules['ansible'].__file__)))
 
         if isinstance(paths, string_types):
             paths = [paths]
@@ -51,10 +51,7 @@ class _AnsibleCollectionFinder:
             paths = []
 
         # expand any placeholders in configured paths
-        paths = [
-            to_native(os.path.expanduser(p), errors='surrogate_or_strict')
-            for p in paths
-        ]
+        paths = [os.path.expanduser(to_native(p, errors='surrogate_or_strict')) for p in paths]
 
         # append all sys.path entries with an ansible_collections package
         for path in sys.path:
@@ -102,10 +99,11 @@ class _AnsibleCollectionFinder:
         AnsibleCollectionConfig.collection_finder = self
 
     def _ansible_collection_path_hook(self, path):
+        path = to_native(path)
         interesting_paths = self._n_cached_collection_qualified_paths
         if not interesting_paths:
             interesting_paths = [os.path.join(p, 'ansible_collections') for p in
-                                 self.n_collection_paths]
+                                 self._n_collection_paths]
             interesting_paths.insert(0, self._ansible_pkg_path)
             self._n_cached_collection_qualified_paths = interesting_paths
 
@@ -114,23 +112,22 @@ class _AnsibleCollectionFinder:
 
         raise ImportError('not interested')
 
-    # TODO: move this to a collection config object instead?
     @property
-    def n_collection_paths(self):
+    def _n_collection_paths(self):
         paths = self._n_cached_collection_paths
         if not paths:
             self._n_cached_collection_paths = paths = self._n_playbook_paths + self._n_configured_paths
         return paths
 
-    def set_playbook_paths(self, b_playbook_paths):
-        if isinstance(b_playbook_paths, string_types):
-            b_playbook_paths = [b_playbook_paths]
+    def set_playbook_paths(self, playbook_paths):
+        if isinstance(playbook_paths, string_types):
+            playbook_paths = [playbook_paths]
 
         # track visited paths; we have to preserve the dir order as-passed in case there are duplicate collections (first one wins)
         added_paths = set()
 
-        # de-dupe and ensure the paths are native strings (Python seems to do this for package paths etc, so assume it's safe)
-        self._n_playbook_paths = [os.path.join(to_native(p), 'collections') for p in b_playbook_paths if not (p in added_paths or added_paths.add(p))]
+        # de-dupe
+        self._n_playbook_paths = [os.path.join(to_native(p), 'collections') for p in playbook_paths if not (p in added_paths or added_paths.add(p))]
         self._n_cached_collection_paths = None
         # HACK: playbook CLI sets this relatively late, so we've already loaded some packages whose paths might depend on this. Fix those up.
         # NB: this should NOT be used for late additions; ideally we'd fix the playbook dir setup earlier in Ansible init
@@ -162,7 +159,7 @@ class _AnsibleCollectionFinder:
                 raise ValueError('path should not be specified for top-level packages (trying to find {0})'.format(fullname))
             else:
                 # seed the path to the configured collection roots
-                path = self.n_collection_paths
+                path = self._n_collection_paths
 
         if part_count > 1 and path is None:
             raise ValueError('path must be specified for subpackages (trying to find {0})'.format(fullname))
@@ -191,7 +188,7 @@ class _AnsibleCollectionFinder:
 class _AnsiblePathHookFinder:
     def __init__(self, collection_finder, pathctx):
         # when called from a path_hook, find_module doesn't usually get the path arg, so this provides our context
-        self._pathctx = pathctx
+        self._pathctx = to_native(pathctx)
         self._collection_finder = collection_finder
         if PY3:
             # cache the native FileFinder (take advantage of its filesystem cache for future find/load requests)
@@ -260,7 +257,7 @@ class _AnsibleCollectionPkgLoaderBase:
 
         self._validate_args()
 
-        self._candidate_paths = self._get_candidate_paths(path_list)
+        self._candidate_paths = self._get_candidate_paths([to_native(p) for p in path_list])
         self._subpackage_search_paths = self._get_subpackage_search_paths(self._candidate_paths)
 
         self._validate_final()
@@ -277,7 +274,7 @@ class _AnsibleCollectionPkgLoaderBase:
     # allow subclasses to customize finding paths
     def _get_subpackage_search_paths(self, candidate_paths):
         # filter candidate paths for existence (NB: silently ignoring package init code and same-named modules)
-        return [p for p in candidate_paths if os.path.isdir(p)]
+        return [p for p in candidate_paths if os.path.isdir(to_bytes(p))]
 
     # allow subclasses to customize state validation/manipulation before we return the loader instance
     def _validate_final(self):
@@ -309,20 +306,20 @@ class _AnsibleCollectionPkgLoaderBase:
     @staticmethod
     def _module_file_from_path(leaf_name, path):
         has_code = True
-        package_path = os.path.join(path, leaf_name)
+        package_path = os.path.join(to_native(path), to_native(leaf_name))
         module_path = None
 
         # if the submodule is a package, assemble valid submodule paths, but stop looking for a module
-        if os.path.isdir(package_path):
+        if os.path.isdir(to_bytes(package_path)):
             # is there a package init?
             module_path = os.path.join(package_path, '__init__.py')
-            if not os.path.isfile(module_path):
+            if not os.path.isfile(to_bytes(module_path)):
                 module_path = os.path.join(package_path, '__synthetic__')
                 has_code = False
         else:
             module_path = package_path + '.py'
             package_path = None
-            if not os.path.isfile(module_path):
+            if not os.path.isfile(to_bytes(module_path)):
                 raise ImportError('{0} not found at {1}'.format(leaf_name, path))
 
         return module_path, has_code, package_path
@@ -382,8 +379,9 @@ class _AnsibleCollectionPkgLoaderBase:
             candidate_paths = [path]
 
         for p in candidate_paths:
-            if os.path.isfile(p):
-                with open(p, 'rb') as fd:
+            b_path = to_bytes(p)
+            if os.path.isfile(b_path):
+                with open(b_path, 'rb') as fd:
                     return fd.read()
 
         return None
@@ -484,9 +482,9 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
             # ansible.builtin is a synthetic collection, get its routing config from the Ansible distro
             raw_routing = pkgutil.get_data('ansible.config', 'routing.yml')
         else:
-            routing_meta_path = os.path.join(module.__path__[0], 'meta/routing.yml')
-            if os.path.isfile(routing_meta_path):
-                with open(routing_meta_path, 'rb') as fd:
+            b_routing_meta_path = to_bytes(os.path.join(module.__path__[0], 'meta/routing.yml'))
+            if os.path.isfile(b_routing_meta_path):
+                with open(b_routing_meta_path, 'rb') as fd:
                     raw_routing = fd.read()
             else:
                 raw_routing = ''
@@ -865,7 +863,7 @@ def _get_collection_name_from_path(path):
 
     try:
         # we've got a name for it, now see if the path prefix matches what the loader sees
-        imported_pkg_path = os.path.dirname(import_module('ansible_collections.' + candidate_collection_name).__file__)
+        imported_pkg_path = to_native(os.path.dirname(to_bytes(import_module('ansible_collections.' + candidate_collection_name).__file__)))
     except ImportError:
         return None
 
@@ -918,23 +916,23 @@ def _iter_modules_impl(paths, prefix=''):
         prefix = to_native(prefix)
     # yield (module_loader, name, ispkg) for each module/pkg under path
     # TODO: implement ignore/silent catch for unreadable?
-    for path in paths:
-        if not os.path.isdir(path):
+    for b_path in map(to_bytes, paths):
+        if not os.path.isdir(b_path):
             continue
-        for basename in sorted(os.listdir(path)):
-            candidate_module_path = os.path.join(path, basename)
-            if os.path.isdir(candidate_module_path):
+        for b_basename in sorted(os.listdir(b_path)):
+            b_candidate_module_path = os.path.join(b_path, b_basename)
+            if os.path.isdir(b_candidate_module_path):
                 # exclude things that obviously aren't Python package dirs
                 # FIXME: this dir is adjustable in py3.8+, check for it
-                if '.' in basename or basename == '__pycache__':
+                if '.' in b_basename or b_basename == b'__pycache__':
                     continue
 
                 # TODO: proper string handling?
-                yield prefix + to_native(basename), True
+                yield prefix + to_native(b_basename), True
             else:
                 # FIXME: match builtin ordering for package/dir/file, support compiled?
-                if basename.endswith('.py') and basename != '__init__.py':
-                    yield prefix + to_native(os.path.splitext(basename)[0]), False
+                if b_basename.endswith(b'.py') and b_basename != b'__init__.py':
+                    yield prefix + to_native(os.path.splitext(b_basename)[0]), False
 
 
 def _get_collection_metadata(collection_name):
@@ -956,24 +954,27 @@ def _get_collection_metadata(collection_name):
 
 # implement flatmapping via plugin routing
 def _make_flatmap_redirects(root_path, collection_name, collection_meta, plugin_type='modules'):
+    collection_name = to_native(collection_name)
     routing_dict = collection_meta.setdefault('plugin_routing', {}).setdefault(plugin_type, {})
 
-    for root, dirs, files in os.walk(root_path):
-        root_trailer = root[len(root_path):].replace('/', '.')
-        if not root_trailer:
+    b_root_path = to_bytes(root_path)
+
+    for b_root, b_dirs, b_files in os.walk(b_root_path):
+        b_root_trailer = b_root[len(root_path):].replace(b'/', b'.')
+        if not b_root_trailer:
             # ignore the top dir, we don't need to redirect those since they're already in the package
             continue
-        if root_trailer[0] == '.':
-            root_trailer = root_trailer[1:]
-        redirect_pkg = '{0}.{1}.'.format(collection_name, root_trailer)
+        if b_root_trailer[0] == b'.':
+            b_root_trailer = b_root_trailer[1:]
+        redirect_pkg = '{0}.{1}.'.format(collection_name, to_native(b_root_trailer))
         # make both extensioned and extensionless routing entries for all plugin-looking files in this dir that don't already have one
-        for plugin_file in files:
+        for b_plugin_file in b_files:
             # FIXME: global extension blacklist that doesn't come from config?
-            basename = os.path.splitext(plugin_file)[0]
+            basename = to_native(os.path.splitext(b_plugin_file)[0])
             # skip known non-plugin files
-            if not basename or basename == '__init__' or '.' in basename or any(plugin_file.endswith(ext) for ext in ['.pyc', '.pyo']):
+            if not basename or basename == '__init__' or '.' in basename or any(b_plugin_file.endswith(b_ext) for b_ext in [b'.pyc', b'.pyo']):
                 continue
             # FIXME: silently skips collisions- is that what we want?
             # FIXME: we're not preserving the extension on the redirect, which could have "interesting" effects for chained things with collisions like setup
-            routing_dict.setdefault(plugin_file, dict(redirect=redirect_pkg + basename))
+            routing_dict.setdefault(to_native(b_plugin_file), dict(redirect=redirect_pkg + basename))
             routing_dict.setdefault(basename, dict(redirect=redirect_pkg + basename))

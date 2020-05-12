@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.common.text.converters import to_text
 from ansible.module_utils.six import with_metaclass
 
 
@@ -59,7 +59,7 @@ class _AnsibleCollectionConfig(type):
     @property
     def collection_paths(cls):
         cls._require_finder()
-        return [to_text(p) for p in cls._collection_finder.n_collection_paths]
+        return [to_text(p) for p in cls._collection_finder._n_collection_paths]
 
     @property
     def default_collection(cls):
@@ -89,7 +89,7 @@ class _AnsibleCollectionConfig(type):
     @playbook_paths.setter
     def playbook_paths(cls, value):
         cls._require_finder()
-        cls._collection_finder.set_playbook_paths([to_bytes(p) for p in value])
+        cls._collection_finder.set_playbook_paths(value)
 
     def _require_finder(cls):
         if not cls._collection_finder:

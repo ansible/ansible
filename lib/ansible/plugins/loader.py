@@ -469,16 +469,6 @@ class PluginLoader:
             except (ImportError, ModuleNotFoundError):
                 return plugin_load_context.nope('Python package {0} not found'.format(acr.n_python_package_name))
 
-        # # if the package is one of our flatmaps, we need to consult its loader to find the path, since the file could be
-        # # anywhere in the tree
-        # if hasattr(pkg, '__loader__') and isinstance(pkg.__loader__, AnsibleFlatMapLoader):
-        #     try:
-        #         file_path = pkg.__loader__.find_file(n_resource)
-        #         return plugin_load_context.resolve(full_name, to_text(file_path), '{0} loaded from flatmapped collection package'.format(full_name))
-        #     except IOError:
-        #         # this loader already takes care of extensionless files, so if we didn't find it, just bail
-        #         return plugin_load_context.nope('{0} not found in flatmapped collection package'.format(full_name))
-
         pkg_path = os.path.dirname(pkg.__file__)
 
         n_resource_path = os.path.join(pkg_path, n_resource)
@@ -693,9 +683,12 @@ class PluginLoader:
                 plugin_load_context.resolved = True
                 return plugin_load_context
 
-        # last ditch, look for a builtin redirect before giving up
-        # TODO: honor deprecation ignores etc, error handling
-        return self._find_fq_plugin(fq_name='ansible.builtin.{0}'.format(name), extension=suffix, plugin_load_context=plugin_load_context)
+        # last ditch, if it's something that can be redirected, look for a builtin redirect before giving up
+        candidate_fqcr = 'ansible.builtin.{0}'.format(name)
+        if '.' not in name and AnsibleCollectionRef.is_valid_fqcr(candidate_fqcr):
+            return self._find_fq_plugin(fq_name=candidate_fqcr, extension=suffix, plugin_load_context=plugin_load_context)
+
+        return plugin_load_context.nope('{0} is not eligible for last-chance resolution'.format(name))
 
     def has_plugin(self, name, collection_list=None):
         ''' Checks if a plugin named name exists '''
