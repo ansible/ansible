@@ -272,12 +272,13 @@ def run_module():
             location_uuid=network_params['location_uuid'],
             vlan_tag=network_params['vlan_tag']
         )
-
-        result['api_request_body'] = str(body)
+        if module._verbosity >= 3:
+            result['api_request_body'] = str(body)
         try:
             api_response = api_instance.create_vlan_using_post(
                 body)
-            result['api_response'] = str(api_response)
+            if module._verbosity >= 3:
+                result['api_response'] = str(api_response)
             result['msg'] = api_response.message
 
         except ApiException as e:
@@ -290,6 +291,8 @@ def run_module():
             pass
 
         wait_for_action_to_complete(api_response.action_uuid, api_client)
+        result['ansible_module_results'] = get_resource_by_uuid(
+            api_response.object_uuid, 'vlan', api_client)
         result['changed'] = True
         result['failed'] = False
         module.exit_json(**result)
@@ -385,11 +388,12 @@ def run_module():
             routing_service=routing_service,
             subnet_mask=network_params['subnet_mask']
         )
-
-        result['api_request_body'] = str(body)
+        if module._verbosity >= 3:
+            result['api_request_body'] = str(body)
         try:
             api_response = api_instance.create_vnet_using_post(body)
-            result['api_response'] = str(api_response)
+            if module._verbosity >= 3:
+                result['api_response'] = str(api_response)
             result['msg'] = api_response.message
 
         except ApiException as e:
@@ -405,6 +409,8 @@ def run_module():
                 module.exit_json(**result)
 
         wait_for_action_to_complete(api_response.action_uuid, api_client)
+        result['ansible_module_results'] = get_resource_by_uuid(
+            api_response.object_uuid, 'vnet', api_client)
         result['changed'] = True
         result['failed'] = False
         module.exit_json(**result)
@@ -417,10 +423,8 @@ def run_module():
             try:
                 # Delete a VNET
                 api_response = api_instance.delete_vlan_using_delete(vlan_uuid)
-                result['api_response'] = str(api_response)
-                result['changed'] = True
-                result['failed'] = False
-                module.exit_json(**result)
+                if module._verbosity >= 3:
+                    result['api_response'] = str(api_response)
             except ApiException as e:
                 response_dict = api_response_to_dict(e)
                # result['msg'] = response_dict['message']
@@ -428,6 +432,11 @@ def run_module():
                     result['changed'] = False
                     result['failed'] = True
                     fail_with_reason(response_dict['message'])
+
+            wait_for_action_to_complete(api_response.action_uuid, api_client)
+            result['changed'] = True
+            result['failed'] = False
+            module.exit_json(**result)
 
         elif network_type == 'VNET':
             vnet_uuid = get_component_fields_by_name(
@@ -444,7 +453,8 @@ def run_module():
             try:
                 # Delete a VNET
                 api_response = api_instance.delete_vnet_using_delete(vnet_uuid)
-                result['api_response'] = str(api_response)
+                if module._verbosity >= 3:
+                    result['api_response'] = str(api_response)
 
             except ApiException as e:
                 response_dict = api_response_to_dict(e)

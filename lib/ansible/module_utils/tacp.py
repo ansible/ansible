@@ -201,10 +201,19 @@ def api_response_to_dict(api_response):
     if type(api_response) != ApiException:
         if type(api_response) == str:
             message_str = api_response
-        else:
+            message_str = message_str.replace('\n', '').replace('null', 'None')
+        elif "message" in dir(api_response):
             message_str = api_response.message
-    else:
-        message_str = str(api_response)
+        else:
+            attrs = [key for key in api_response.__dict__.keys() if not key.startswith("__") and key != "discriminator"]
+            api_dict = {}
+            for attr in attrs:
+                val = str(api_response.__dict__[
+                    attr]).replace('\n', '').replace('null', 'None')
+                extra_space_pattern = ",\\s{2,}"
+                api_dict[str(attr).lstrip("_")] = re.sub(extra_space_pattern, ", ", val)
+            return api_dict
+
     message_str = message_str.replace('\n', '').replace('null', 'None')
 
     http_text = 'HTTP response body: '
@@ -239,3 +248,86 @@ def delete_application(name, uuid, api_client):
             return "Exception when calling get_firewall_profiles_using_get"
 
         wait_for_action_to_complete(api_response.action_uuid, api_client)
+
+
+def get_resource_by_uuid(uuid, component, api_client):
+    valid_components = ["storage_pool", "application",
+                        "template", "datacenter", "migration_zone",
+                        "vnet", "vlan", "firewall_profile", "firewall_override"]
+
+    if component not in valid_components:
+        return "Invalid component"
+    if component == "storage_pool":
+        api_instance = tacp.FlashPoolsApi(api_client)
+        try:
+            api_response = api_instance.get_flash_pool_using_get(uuid)
+        except ApiException as e:
+            return "Exception when calling get_flash_pool_using_get: %s\n" % e
+    elif component == "application":
+        api_instance = tacp.ApplicationsApi(api_client)
+        try:
+            api_response = api_instance.get_application_using_get(uuid)
+        except ApiException as e:
+            return "Exception when calling get_application_using_get: %s\n" % e
+    elif component == "template":
+        api_instance = tacp.TemplatesApi(api_client)
+        try:
+            api_response = api_instance.get_template_using_get(uuid)
+        except ApiException as e:
+            return "Exception when calling get_template_using_get: %s\n" % e
+    elif component == "datacenter":
+        api_instance = tacp.DatacentersApi(api_client)
+        try:
+            # View datacenters for an organization
+            api_response = api_instance.get_datacenter_using_get(uuid)
+        except ApiException as e:
+            return "Exception when calling get_datacenter_using_get: %s\n" % e
+    elif component == "migration_zone":
+        api_instance = tacp.MigrationZonesApi(api_client)
+        try:
+            # View migration zones for an organization
+            api_response = api_instance.get_migration_zone_using_get(uuid)
+        except ApiException as e:
+            return "Exception when calling get_migration_zone_using_get: %s\n" % e
+    elif component == "vlan":
+        api_instance = tacp.VlansApi(api_client)
+        try:
+            # View VLAN networks for an organization
+            api_response = api_instance.get_vlan_using_get(uuid)
+        except ApiException as e:
+            return "Exception when calling get_vlan_using_get: %s\n" % e
+    elif component == "vnet":
+        api_instance = tacp.VnetsApi(api_client)
+        try:
+            # View VNET networks for an organization
+            api_response = api_instance.get_vnet_using_get(uuid)
+        except ApiException as e:
+            return "Exception when calling get_vnet_using_get: %s\n" % e
+    elif component == "firewall_profile":
+        api_instance = tacp.FirewallProfilesApi(api_client)
+        try:
+            # View Firewall profiles for an organization
+            api_response = api_instance.get_firewall_profile_using_get(uuid)
+        except ApiException as e:
+            return "Exception when calling get_firewall_profile_using_get: %s\n" % e
+
+    return api_response_to_dict(api_response)
+    # elif component == "firewall_override":
+    #     # Need to get all datacenter UUIDs first
+    #     api_instance = tacp.DatacentersApi(api_client)
+    #     try:
+    #         # View datacenters for an organization
+    #         datacenter_list = api_instance.get_datacenters_using_get(
+    #             uuid)
+    #     except ApiException as e:
+    #         return "Exception when calling get_datacenters_using_get: %s\n" % e
+
+    #     api_response = []
+    #     for datacenter in datacenter_list:
+    #         api_instance = tacp.DatacentersApi(api_client)
+    #         try:
+    #             # View Firewall profiles for an organization
+    #             api_response += api_instance.get_datacenter_firewall_overrides_using_get(
+    #                 uuid=datacenter.uuid, uuid)
+    #         except ApiException as e:
+    #             return "Exception when calling get_firewall_profiles_using_get"
