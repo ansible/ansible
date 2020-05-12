@@ -31,4 +31,9 @@ class HandlerTaskInclude(Handler, TaskInclude):
     @staticmethod
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = HandlerTaskInclude(block=block, role=role, task_include=task_include)
-        return t.load_data(data, variable_manager=variable_manager, loader=loader)
+        handler = t.check_options(
+            t.load_data(data, variable_manager=variable_manager, loader=loader),
+            data
+        )
+
+        return handler
