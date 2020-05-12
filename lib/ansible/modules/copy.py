@@ -81,6 +81,7 @@ options:
     - When doing a recursive copy set the mode for the directories.
     - If this is not set we will use the system defaults.
     - The mode is only set on directories which are newly created, and will not affect those that already existed.
+    - Requires a quoted or octal number(with a leading zero) similar to the "mode" option.
     type: raw
     version_added: '1.5'
   remote_src:
@@ -163,6 +164,14 @@ EXAMPLES = r'''
     group: root
     mode: '0644'
     backup: yes
+    
+- name: Recursively copy and assign 755 permissions to all contents(directories and files) from "etc" directory into "path" directory 
+  copy:
+    src: /mine/
+    dest: /path/ 
+    owner: root
+    group: root
+    directory_mode: 0755
 
 - name: Copy a new "sudoers" file into place, after passing validation with visudo
   copy:
