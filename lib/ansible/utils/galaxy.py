@@ -49,8 +49,6 @@ def scm_archive_resource(src, scm='git', name=None, version='HEAD', keep_scm_met
         except Exception as e:
             ran = " ".join(cmd)
             display.debug("ran %s:" % ran)
-            display.debug("\tstdout: " + to_text(stdout))
-            display.debug("\tstderr: " + to_text(stderr))
             raise AnsibleError("when executing %s: %s" % (ran, to_native(e)))
         if popen.returncode != 0:
             raise AnsibleError("- command %s failed in directory %s (rc=%s) - %s" % (' '.join(cmd), tempdir, popen.returncode, to_native(stderr)))

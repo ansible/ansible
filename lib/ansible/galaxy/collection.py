@@ -458,7 +458,7 @@ class CollectionRequirement:
                                      metadata=meta, files=files, allow_pre_releases=allow_pre_release)
 
     @staticmethod
-    def from_path(b_path, force, parent=None, fallback_metadata=False):
+    def from_path(b_path, force, parent=None, fallback_metadata=False, skip=True):
         info = CollectionRequirement.collection_info(b_path, fallback_metadata)
 
         allow_pre_release = False
@@ -494,13 +494,6 @@ class CollectionRequirement:
         meta = CollectionVersionMetadata(namespace, name, version, None, None, dependencies)
 
         files = info.get('files_file', {}).get('files', {})
-
-        if fallback_metadata and not CollectionRequirement.artifact_info(b_path):
-            skip = False
-        elif fallback_metadata:
-            skip = not force
-        else:
-            skip = True
 
         return CollectionRequirement(namespace, name, b_path, None, [version], version, force, parent=parent,
                                      metadata=meta, files=files, skip=skip, allow_pre_releases=allow_pre_release)
@@ -1205,17 +1198,19 @@ def _collections_from_scm(collection, requirement, b_temp_path, force, parent=No
 
     display.vvvvv("Considering {0} as a possible path to a collection's galaxy.yml".format(b_galaxy_path))
     if os.path.exists(b_galaxy_path):
-        return [CollectionRequirement.from_path(b_collection_path, force, parent, fallback_metadata=True)]
+        return [CollectionRequirement.from_path(b_collection_path, force, parent, fallback_metadata=True, skip=False)]
 
     if not os.path.isdir(b_collection_path) or not os.listdir(b_collection_path):
         raise AnsibleError(err)
 
     for b_possible_collection in os.listdir(b_collection_path):
         b_collection = os.path.join(b_collection_path, b_possible_collection)
+        if not os.path.isdir(b_collection):
+            continue
         b_galaxy = os.path.join(b_collection, b'galaxy.yml')
         display.vvvvv("Considering {0} as a possible path to a collection's galaxy.yml".format(b_galaxy))
         if os.path.exists(b_galaxy):
-            reqs.append(CollectionRequirement.from_path(b_collection, force, parent, fallback_metadata=True))
+            reqs.append(CollectionRequirement.from_path(b_collection, force, parent, fallback_metadata=True, skip=False))
         else:
             raise AnsibleError(err)
 
