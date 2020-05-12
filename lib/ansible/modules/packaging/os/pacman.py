@@ -159,20 +159,17 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def get_version(pacman_output):
-    """Take pacman -Qi or pacman -Si output and get the Version"""
-    lines = pacman_output.split('\n')
-    for line in lines:
-        if line.startswith('Version '):
-            return line.split(':')[1].strip()
+    """Take pacman -Q or pacman -S output and get the Version"""
+    fields = pacman_output.split()
+    if len(fields) == 2:
+        return fields[1]
     return None
 
-
 def get_name(module, pacman_output):
-    """Take pacman -Qi or pacman -Si output and get the package name"""
-    lines = pacman_output.split('\n')
-    for line in lines:
-        if line.startswith('Name '):
-            return line.split(':')[1].strip()
+    """Take pacman -Q or pacman -S output and get the package name"""
+    fields = pacman_output.split()
+    if len(fields) == 2:
+        return fields[0]
     module.fail_json(msg="get_name: fail to retrieve package name from pacman output")
 
 
@@ -181,7 +178,7 @@ def query_package(module, pacman_path, name, state="present"):
     boolean to indicate if the package is up-to-date and a third boolean to indicate whether online information were available
     """
     if state == "present":
-        lcmd = "%s --query --info %s" % (pacman_path, name)
+        lcmd = "%s --query %s" % (pacman_path, name)
         lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
         if lrc != 0:
             # package is not installed locally
@@ -196,7 +193,7 @@ def query_package(module, pacman_path, name, state="present"):
         # get the version installed locally (if any)
         lversion = get_version(lstdout)
 
-        rcmd = "%s --sync --info %s" % (pacman_path, name)
+        rcmd = "%s --sync --print-format \"%%n %%v\" %s" % (pacman_path, name)
         rrc, rstdout, rstderr = module.run_command(rcmd, check_rc=False)
         # get the version in the repository
         rversion = get_version(rstdout)
