@@ -279,7 +279,6 @@ def run_module():
                 body)
             if module._verbosity >= 3:
                 result['api_response'] = str(api_response)
-            result['msg'] = api_response.message
 
         except ApiException as e:
             response_dict = api_response_to_dict(e)
@@ -394,7 +393,6 @@ def run_module():
             api_response = api_instance.create_vnet_using_post(body)
             if module._verbosity >= 3:
                 result['api_response'] = str(api_response)
-            result['msg'] = api_response.message
 
         except ApiException as e:
             response_dict = api_response_to_dict(e)
