@@ -204,9 +204,7 @@ options:
   name:
     description:
       - Unique repository ID. This option builds the section name of the repository in the repo file.
-      - This parameter is only required if I(state) is set to C(present) or
-        C(absent).
-    required: true
+      - This parameter is required if you are not using the copr parameter.
   password:
     description:
       - Password to use with the username for basic authentication.
@@ -313,6 +311,15 @@ options:
   username:
     description:
       - Username to use for basic authentication to a repo or really any url.
+  copr:
+    description:
+      - COPR user and project in the format of 'user/project'
+    version_added: "2.10"
+  copr_api:
+    description:
+      - URL for COPR API
+    default: https://copr.fedorainfracloud.org
+    version_added: "2.10"
 
 extends_documentation_fragment:
   - files
@@ -371,6 +378,11 @@ EXAMPLES = '''
     name: epel
     file: external_repos
     state: absent
+
+- name: Install shadowman/hello-world COPR repo
+  yum_repository:
+    copr: shadowman/hello-world
+    state: present
 '''
 
 RETURN = '''
@@ -389,8 +401,11 @@ state:
 import os
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.six.moves import configparser
-from ansible.module_utils._text import to_native
+from ansible.module_utils.six.moves import (configparser, StringIO)
+from ansible.module_utils.six.moves.urllib.parse import urlparse
+from ansible.module_utils._text import (to_native, to_text)
+from ansible.module_utils.urls import (fetch_url, generic_urlparse)
+from ansible.module_utils.common.sys_info import (get_distribution, get_distribution_version)
 
 
 class YumRepo(object):
@@ -548,6 +563,8 @@ def main():
     argument_spec = dict(
         bandwidth=dict(),
         baseurl=dict(type='list'),
+        copr=dict(),
+        copr_api=dict(default='https://copr.fedorainfracloud.org', type='str'),
         cost=dict(),
         deltarpm_metadata_percentage=dict(),
         deltarpm_percentage=dict(),
@@ -576,7 +593,7 @@ def main():
         metalink=dict(),
         mirrorlist=dict(),
         mirrorlist_expire=dict(),
-        name=dict(required=True),
+        name=dict(),
         params=dict(type='dict'),
         password=dict(no_log=True),
         priority=dict(),
@@ -613,6 +630,69 @@ def main():
     # https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
     if module.params['params']:
         module.fail_json(msg="The params option to yum_repository was removed in Ansible 2.5 since it circumvents Ansible's option handling")
+
+    if module.params['name'] is None and module.params['copr'] is None:
+        module.fail_json(msg="Either the 'name' or the 'copr' parameter needs to be set")
+
+    if module.params['copr']:
+        copr_api = module.params['copr_api']
+        try:
+            copr_user, copr_project = module.params['copr'].split('/')
+        except ValueError:
+            module.fail_json(msg="failed to parse {0}".format(module.params['copr']))
+        copr_server = generic_urlparse(list(urlparse(copr_api)))['hostname']
+        distro = get_distribution().lower()
+        if distro in ['centos', 'rhel', 'redhat']:
+            distro = 'epel'
+
+        # RHEL/CentOS will give a version like '7.8' or '8.2'
+        # but Fedora will give a version like '31' or '32' or 'Rawhide'.
+        if distro == 'epel':
+            distro_version = get_distribution_version().split('.')[0]
+        else:
+            distro_version = get_distribution_version().lower()
+        copr_url = '{0}/coprs/{1}/{2}/repo/{3}-{4}/dnf.repo'.format(copr_api, copr_user, copr_project, distro, distro_version)
+        response, info = fetch_url(module, copr_url)
+        if info['status'] != 200:
+            module.fail_json(msg="failed to fetch COPR repo {0}, error was: {1}".format(copr_url, info['msg']))
+
+        copr_params = configparser.RawConfigParser()
+
+        # Python 2 ConfigParser doesn't have read_string and readfp is
+        # deprecated in Python 3.
+        try:
+            copr_params.read_string(to_text(response.read()))
+        except AttributeError:
+            copr_params.readfp(StringIO(to_text(response.read())))
+
+        copr_server_user_project = "copr:{0}:{1}:{2}".format(copr_server, copr_user, copr_project)
+        if not module.params.get('name', None):
+            module.params['name'] = copr_server_user_project
+        if not module.params.get('description', None):
+            module.params['description'] = copr_params.get(copr_server_user_project, 'name')
+        if not module.params.get('file', None):
+            if distro == 'epel' and int(distro_version) <= 6:
+                module.params['file'] = "_copr_{0}-{1}".format(copr_user, copr_project)
+            else:
+                module.params['file'] = "_{0}".format(copr_server_user_project)
+
+        # Take all the parameters from the yum repo we just got from the COPR
+        # server and use them to set module.params for this module. We only set
+        # the variable if it hasn't been set by the user already.
+        #
+        # What this means in practical terms is the user can specify 'baseurl:
+        # http://example.com/packages/' in their playbook and that will override
+        # the baseurl we get from the COPR server.
+        for key in dict(copr_params.items(copr_server_user_project)).keys():
+            if not module.params.get(key, None):
+                module.params[key] = copr_params.get(copr_server_user_project, key)
+
+        # It is possible to have multiple entries for the baseurl and gpgkey but
+        # copr doesn't do this. This ansible module expects it to be a list so
+        # give it a list.
+        for list_param in ['baseurl', 'gpgkey']:
+            if list_param in module.params and not isinstance(module.params[list_param], list):
+                module.params[list_param] = [module.params[list_param]]
 
     name = module.params['name']
     state = module.params['state']

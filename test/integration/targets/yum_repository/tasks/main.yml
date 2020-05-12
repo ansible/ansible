@@ -196,9 +196,76 @@
         url_hostname: "{{ yum_repository_test_repo.baseurl | urlsplit('hostname') }}"
         url_hostname2: "{{ url_hostname | replace('download[0-9]?\\.', 'download2\\.', 1) }}"
 
+    - name: test COPR on x86_64
+      block:
+      - name: install {{ yum_repository_copr }} copr repo
+        yum_repository:
+          copr: "{{ yum_repository_copr }}"
+          state: present
+
+      - name: get repolist
+        shell: yum repolist
+        register: repolist
+        until: repolist.rc == 0
+        retries: 5
+        args:
+          warn: no
+
+      - name: ensure {{ yum_repository_copr }} was added
+        assert:
+          that:
+            - copr_name in repolist.stdout
+        vars:
+          copr_name: "{{ yum_repository_copr | replace('/', ':') }}"
+
+      - name: install copr repo again to check for idempotency
+        yum_repository:
+          copr: "{{ yum_repository_copr }}"
+        register: copr_again
+
+      - name: check for idempotentcy
+        assert:
+          that:
+            - copr_again is not changed
+
+      - name: add and override parameters for the COPR repo
+        yum_repository:
+          copr: "{{ yum_repository_copr }}"
+          # extra parameter that isn't part of the repo we get from the COPR server
+          includepkgs: 'sl awk sed'
+          # override parameters from the COPR server
+          gpgcheck: no
+          state: present
+        register: change_copr
+
+      - name: check that options get written to the copr repo
+        assert:
+          that:
+            - "'includepkgs = sl awk sed' in repo_file_contents"
+            - "'gpgcheck = 0' in repo_file_contents"
+        vars:
+          repo_file_contents: "{{ lookup('file', yum_repository_copr_file) }}"
+
+      - name: remove {{ yum_repository_copr }} copr repo
+        yum_repository:
+          copr: "{{ yum_repository_copr }}"
+          state: absent
+        register: copr_remove
+
+      - name: check return values
+        assert:
+          that:
+            - "copr_remove.state == 'absent'"
+      when: ansible_architecture == 'x86_64'
+
     - name: CLEANUP | Remove list test repo
       yum_repository:
         name: listtest
+        state: absent
+
+    - name: CLEANUP | Remove {{ yum_repository_copr }}
+      yum_repository:
+        copr: "{{ yum_repository_copr }}"
         state: absent
 
     - name: CLEANUP | Remove {{ yum_repository_test_repo.name }}

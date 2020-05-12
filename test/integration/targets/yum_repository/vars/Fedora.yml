@@ -3,3 +3,6 @@ yum_repository_test_repo:
   name: rpmfusion-free
   description: RPM Fusion for Fedora {{ ansible_distribution_major_version }} - Free
   baseurl: http://download1.rpmfusion.org/free/fedora/releases/{{ ansible_distribution_major_version }}/Everything/{{ ansible_architecture }}/os/
+
+yum_repository_copr: mmckinst/sl
+yum_repository_copr_file: "{{ '/etc/yum.repos.d/_copr:copr.fedorainfracloud.org:' ~ yum_repository_copr.replace('/', ':') ~ '.repo' }}"
