@@ -1,6 +1,3 @@
-Installing a collection from a git repository
----------------------------------------------
-
 You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma separated version (for example, a commit or tag).
 
 .. code-block:: bash
@@ -23,7 +20,7 @@ In a ``requirements.yml`` file, you can also use the ``scm`` and ``version`` key
        scm: git
        version: devel
 
-Git repositories can be used for collection dependencies as well.
+Git repositories can be used for collection dependencies as well. This can be helpful for local development and testing but built/published artifacts should only have dependencies on other artifacts.
 
 .. code-block:: yaml
 
@@ -60,7 +57,7 @@ The second is a ``galaxy.yml`` file in each directory in the repository path (on
 Specifying the location to search for collections
 -------------------------------------------------
 
-If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate which path ansible-galaxy should inspect for ``galaxy.yml`` file(s).
+If you have a different repository structure or only want to install a subset of collections, you can add a fragment to the end of your URI (before the optional comma-separated version) to indicate which path ansible-galaxy should inspect for ``galaxy.yml`` file(s). The path should be a directory to a collection or multiple collections (rather than the path to a ``galaxy.yml`` file).
 
 .. code-block:: text
 
