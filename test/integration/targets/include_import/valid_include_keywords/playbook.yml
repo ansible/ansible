@@ -1,7 +1,8 @@
 - hosts: localhost
   gather_facts: false
   handlers:
-    - include_tasks: include_me_listen.yml
+    - include_tasks:
+        file: include_me_listen.yml
       listen:
         - include_me_listen
 
