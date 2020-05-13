@@ -9,7 +9,7 @@ export ANSIBLE_HOST_PATTERN_MISMATCH=error
 
 
 # FUTURE: just use INVENTORY_PATH as-is once ansible-test sets the right dir
-ipath=../../$(basename "${INVENTORY_PATH}")
+ipath=../../$(basename "${INVENTORY_PATH:-../../inventory}")
 export INVENTORY_PATH="$ipath"
 
 # test callback
