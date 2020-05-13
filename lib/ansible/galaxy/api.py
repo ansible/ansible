@@ -12,7 +12,6 @@ import tarfile
 import uuid
 import time
 
-from ansible import context
 from ansible.errors import AnsibleError
 from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils.six import string_types
@@ -169,14 +168,14 @@ class CollectionVersionMetadata:
 class GalaxyAPI:
     """ This class is meant to be used as a API client for an Ansible Galaxy server """
 
-    def __init__(self, galaxy, name, url, username=None, password=None, token=None):
+    def __init__(self, galaxy, name, url, username=None, password=None, token=None, validate_certs=True):
         self.galaxy = galaxy
         self.name = name
         self.username = username
         self.password = password
         self.token = token
         self.api_server = url
-        self.validate_certs = not context.CLIARGS['ignore_certs']
+        self.validate_certs = validate_certs
         self._available_api_versions = {}
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
@@ -526,7 +525,7 @@ class GalaxyAPI:
 
         :param namespace: The collection namespace.
         :param name: The collection name.
-        :param version: Optional version of the collection to get the information for.
+        :param version: Version of the collection to get the information for.
         :return: CollectionVersionMetadata about the collection at the version requested.
         """
         api_path = self.available_api_versions.get('v3', self.available_api_versions.get('v2'))
