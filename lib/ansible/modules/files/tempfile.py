@@ -52,18 +52,18 @@ author:
 '''
 
 EXAMPLES = """
-- name: create temporary build directory
+- name: Create temporary build directory
   tempfile:
     state: directory
     suffix: build
 
-- name: create temporary file
+- name: Create temporary file
   tempfile:
     state: file
     suffix: temp
   register: tempfile_1
 
-- name: use the registered var and the file module to remove the temporary file
+- name: Use the registered var and the file module to remove the temporary file
   file:
     path: "{{ tempfile_1.path }}"
     state: absent

@@ -354,7 +354,7 @@ EXAMPLES = '''
     enabled: no
 
 # Handler showing how to clean yum metadata cache
-- name: yum-clean-metadata
+- name: Run yum-clean-metadata
   command: yum clean metadata
   args:
     warn: no

@@ -438,13 +438,13 @@ EXAMPLES = r'''
         - SYN
         - FIN
 
-- name: iptables flush filter
+- name: Iptables flush filter
   iptables:
     chain: "{{ item }}"
     flush: yes
   with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
 
-- name: iptables flush nat
+- name: Iptables flush nat
   iptables:
     table: nat
     chain: '{{ item }}'
