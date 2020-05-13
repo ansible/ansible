@@ -202,7 +202,8 @@ def test_collpkg_loader_not_interested():
 
 
 def test_collpkg_loader_load_module():
-    with patch('ansible.utils.collection_loader.AnsibleCollectionConfig'):
+    reset_collections_loader_state()
+    with patch('ansible.utils.collection_loader.AnsibleCollectionConfig') as p:
         for name in ['ansible_collections.ansible.builtin', 'ansible_collections.testns.testcoll']:
             parent_pkg = name.rpartition('.')[0]
             module_to_load = name.rpartition('.')[2]
@@ -321,7 +322,6 @@ def test_iter_modules_impl():
     modules = list(_iter_modules_impl([modules_path], modules_pkg_prefix))
 
     assert modules
-    assert len(modules) == 3
     assert set([('ansible_collections.testns.testcoll.plugins.action', True),
                 ('ansible_collections.testns.testcoll.plugins.module_utils', True),
                 ('ansible_collections.testns.testcoll.plugins.modules', True)]) == set(modules)
@@ -812,6 +812,8 @@ def reset_collections_loader_state(metapath_finder=None):
     _AnsibleCollectionFinder._remove()
 
     nuke_module_prefix('ansible_collections')
+    nuke_module_prefix('ansible.modules')
+    nuke_module_prefix('ansible.plugins')
 
     # FIXME: better to move this someplace else that gets cleaned up automatically?
     _AnsibleCollectionLoader._redirected_package_map = {}

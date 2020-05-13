@@ -940,8 +940,9 @@ def _get_collection_metadata(collection_name):
     if not collection_name or not isinstance(collection_name, string_types) or len(collection_name.split('.')) != 2:
         raise ValueError('collection_name must be a non-empty string of the form namespace.collection')
 
-    collection_pkg = import_module('ansible_collections.' + collection_name)
-    if not collection_pkg:
+    try:
+        collection_pkg = import_module('ansible_collections.' + collection_name)
+    except ImportError:
         raise ValueError('unable to locate collection {0}'.format(collection_name))
 
     _collection_meta = getattr(collection_pkg, '_collection_meta', None)
