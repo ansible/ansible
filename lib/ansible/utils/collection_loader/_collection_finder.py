@@ -477,7 +477,9 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
         module._collection_meta = {}
         # TODO: load collection metadata, cache in __loader__ state
 
-        if self._split_name[1:3] == ['ansible', 'builtin']:
+        collection_name = '.'.join(self._split_name[1:3])
+
+        if collection_name == 'ansible.builtin':
             # ansible.builtin is a synthetic collection, get its routing config from the Ansible distro
             raw_routing = pkgutil.get_data('ansible.config', 'routing.yml')
         else:
@@ -489,12 +491,12 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
                 raw_routing = ''
         try:
             if raw_routing:
-                routing_dict = _meta_yml_to_dict(raw_routing)
+                routing_dict = _meta_yml_to_dict(raw_routing, collection_name)
                 module._collection_meta = self._canonicalize_meta(routing_dict)
         except Exception as ex:
             raise ValueError('error parsing collection metadata: {0}'.format(to_native(ex)))
 
-        AnsibleCollectionConfig.on_collection_load.fire('.'.join(self._split_name[1:3]))
+        AnsibleCollectionConfig.on_collection_load.fire(collection_name)
 
         return module
 
