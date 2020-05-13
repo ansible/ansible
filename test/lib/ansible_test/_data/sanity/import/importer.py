@@ -206,7 +206,7 @@ def main():
         is_ansible_module = (path.startswith('lib/ansible/modules/') or path.startswith('plugins/modules/')) and os.path.basename(path) != '__init__.py'
         run_main = is_ansible_module
 
-        if path == 'lib/ansible/modules/utilities/async_wrapper.py':
+        if path == 'lib/ansible/modules/async_wrapper.py':
             # async_wrapper is a non-standard Ansible module (does not use AnsibleModule) so we cannot test the main function
             run_main = False
 
