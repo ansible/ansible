@@ -131,7 +131,7 @@ def clean_facts(facts):
     remove_keys.update(fact_keys.intersection(C.COMMON_CONNECTION_VARS))
 
     # next we remove any connection plugin specific vars
-    for conn_path in connection_loader.all(path_only=True):
+    for conn_path in connection_loader._path_cache.keys():
         conn_name = os.path.splitext(os.path.basename(conn_path))[0]
         re_key = re.compile('^ansible_%s_' % conn_name)
         for fact_key in fact_keys:

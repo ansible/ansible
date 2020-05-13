@@ -132,13 +132,13 @@ class TaskQueueManager:
             if self._stdout_callback not in callback_loader:
                 raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
             else:
-                self._stdout_callback = callback_loader.get(self._stdout_callback)
+                self._stdout_callback = callback_loader.get(self._stdout_callback)()
                 self._stdout_callback.set_options()
                 stdout_callback_loaded = True
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
-        for callback_plugin in callback_loader.all(class_only=True):
+        for callback_plugin in callback_loader.all():
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
             (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
@@ -161,7 +161,7 @@ class TaskQueueManager:
 
         for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)):
             # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
-            callback_obj = callback_loader.get(callback_plugin_name)
+            callback_obj = callback_loader.get(callback_plugin_name)()
             callback_obj.set_options()
             self._callback_plugins.append(callback_obj)
 
@@ -218,7 +218,7 @@ class TaskQueueManager:
         self._initialize_processes(min(self._forks, iterator.batch_size))
 
         # load the specified strategy (or the default linear one)
-        strategy = strategy_loader.get(new_play.strategy, self)
+        strategy = strategy_loader.get(new_play.strategy)(self)
         if strategy is None:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 

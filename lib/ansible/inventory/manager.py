@@ -200,7 +200,7 @@ class InventoryManager(object):
 
         plugins = []
         for name in C.INVENTORY_ENABLED:
-            plugin = inventory_loader.get(name)
+            plugin = inventory_loader.get(name)()
             if plugin:
                 plugins.append(plugin)
             else:

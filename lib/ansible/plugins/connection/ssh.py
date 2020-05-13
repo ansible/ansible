@@ -690,7 +690,7 @@ class Connection(ConnectionBase):
         except (OSError, IOError) as e:
             # The ssh connection may have already terminated at this point, with a more useful error
             # Only raise AnsibleConnectionFailure if the ssh process is still alive
-            time.sleep(0.001)
+            time.sleep(0.0001)
             ssh_process.poll()
             if getattr(ssh_process, 'returncode', None) is None:
                 raise AnsibleConnectionFailure(
@@ -878,21 +878,29 @@ class Connection(ConnectionBase):
             state += 1
 
         try:
+            last_time = time.time()
+            total_timeout = 0.0
             while True:
-                poll = p.poll()
-                events = selector.select(timeout)
+                events = selector.select(0)
 
                 # We pay attention to timeouts only while negotiating a prompt.
 
                 if not events:
-                    # We timed out
-                    if state <= states.index('awaiting_escalation'):
-                        # If the process has already exited, then it's not really a
-                        # timeout; we'll let the normal error handling deal with it.
-                        if poll is not None:
-                            break
-                        self._terminate_process(p)
-                        raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
+                    now = time.time()
+                    total_timeout += (now - last_time)
+                    last_time = now
+                    if total_timeout >= timeout:
+                        # We timed out
+                        if state <= states.index('awaiting_escalation'):
+                            # If the process has already exited, then it's not really a
+                            # timeout; we'll let the normal error handling deal with it.
+                            if p.poll() is not None:
+                                break
+                            self._terminate_process(p)
+                            raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, to_native(b_stdout)))
+
+                # something is ready, so we reset our current timeout counter
+                total_timeout = 0.0
 
                 # Read whatever output is available on stdout and stderr, and stop
                 # listening to the pipe if it's been closed.
@@ -960,7 +968,7 @@ class Connection(ConnectionBase):
                 # We've requested escalation (with or without a password), now we
                 # wait for an error message or a successful escalation.
 
-                if states[state] == 'awaiting_escalation':
+                elif states[state] == 'awaiting_escalation':
                     if self._flags['become_success']:
                         display.vvv(u'Escalation succeeded')
                         self._flags['become_success'] = False
@@ -987,7 +995,7 @@ class Connection(ConnectionBase):
                 # been dealt with, we can send any initial data and start waiting
                 # for output.
 
-                if states[state] == 'ready_to_send':
+                elif states[state] == 'ready_to_send':
                     if in_data:
                         self._send_initial_data(stdin, in_data, p)
                     state += 1
@@ -995,24 +1003,23 @@ class Connection(ConnectionBase):
                 # Now we're awaiting_exit: has the child process exited? If it has,
                 # and we've read all available output from it, we're done.
 
-                if poll is not None:
-                    if not selector.get_map() or not events:
+                elif states[state] == 'awaiting_exit':
+                    if p.poll() is not None:
+                        if not selector.get_map() or not events:
+                            break
+                        # We should not see further writes to the stdout/stderr file
+                        # descriptors after the process has closed, set the select
+                        # timeout to gather any last writes we may have missed.
+                        timeout = 0
+                        continue
+
+                    # If the process has not yet exited, but we've already read EOF from
+                    # its stdout and stderr (and thus no longer watching any file
+                    # descriptors), we can just wait for it to exit.
+
+                    elif not selector.get_map():
+                        p.wait()
                         break
-                    # We should not see further writes to the stdout/stderr file
-                    # descriptors after the process has closed, set the select
-                    # timeout to gather any last writes we may have missed.
-                    timeout = 0
-                    continue
-
-                # If the process has not yet exited, but we've already read EOF from
-                # its stdout and stderr (and thus no longer watching any file
-                # descriptors), we can just wait for it to exit.
-
-                elif not selector.get_map():
-                    p.wait()
-                    break
-
-                # Otherwise there may still be outstanding data to read.
         finally:
             selector.close()
             # close stdin, stdout, and stderr after process is terminated and

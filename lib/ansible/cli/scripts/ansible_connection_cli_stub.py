@@ -98,8 +98,12 @@ class ConnectionProcess(object):
             # find it now that our cwd is /
             if self.play_context.private_key_file and self.play_context.private_key_file[0] not in '~/':
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
-            self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
-                                                    task_uuid=self._task_uuid, ansible_playbook_pid=self._ansible_playbook_pid)
+            self.connection = connection_loader.get(self.play_context.connection)(
+                self.play_context, 
+                '/dev/null',
+                task_uuid=self._task_uuid,
+                ansible_playbook_pid=self._ansible_playbook_pid
+            )
             self.connection.set_options(var_options=variables)
 
             self.connection._socket_path = self.socket_path
@@ -256,7 +260,7 @@ def main():
         })
 
     if rc == 0:
-        ssh = connection_loader.get('ssh', class_only=True)
+        ssh = connection_loader.get('ssh')
         ansible_playbook_pid = sys.argv[1]
         task_uuid = sys.argv[2]
         cp = ssh._create_control_path(play_context.remote_addr, play_context.port, play_context.remote_user, play_context.connection, ansible_playbook_pid)

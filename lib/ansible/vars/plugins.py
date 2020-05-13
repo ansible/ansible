@@ -43,17 +43,26 @@ def get_vars_from_path(loader, path, entities, stage):
 
     data = {}
 
-    vars_plugin_list = list(vars_loader.all())
+    # first we build the list of vars plugins from our legacy list
+    # we do a list comprehension here as later searches for the collection
+    # plugins may alter the underlying dictionary leading to an error
+    vars_plugin_list = [k for k in vars_loader._plugin_cache.keys()]
+    # now we append any enabled vars plugins that may be in a collection
     for plugin_name in C.VARIABLE_PLUGINS_ENABLED:
         if AnsibleCollectionRef.is_valid_fqcr(plugin_name):
-            vars_plugin = vars_loader.get(plugin_name)
+            vars_plugin = vars_loader.find_plugin(plugin_name)
             if vars_plugin is None:
                 # Error if there's no play directory or the name is wrong?
                 continue
             if vars_plugin not in vars_plugin_list:
                 vars_plugin_list.append(vars_plugin)
 
-    for plugin in vars_plugin_list:
+    # finally we instantiate the plugins and execute them
+    for vars_plugin in vars_plugin_list:
+        plugin_cl = vars_loader.get(vars_plugin[0])
+        if not plugin_cl:
+            continue
+        plugin = plugin_cl()
         if plugin._load_name not in C.VARIABLE_PLUGINS_ENABLED and getattr(plugin, 'REQUIRES_WHITELIST', False):
             # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
             continue

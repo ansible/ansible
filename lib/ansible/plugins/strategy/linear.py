@@ -245,7 +245,7 @@ class StrategyModule(StrategyBase):
                     # will only send this task to the first host in the list.
 
                     try:
-                        action = action_loader.get(task.action, class_only=True)
+                        action = action_loader.get(task.action)
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin

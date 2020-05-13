@@ -26,7 +26,7 @@ from ansible import context
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_text
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.plugins.loader import become_loader, connection_loader, shell_loader
+# from ansible.plugins.loader import become_loader, connection_loader, shell_loader
 from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
@@ -83,9 +83,12 @@ class PlaybookExecutor:
         entry = {}
         try:
             # preload become/connection/shell to set config defs cached
-            list(connection_loader.all(class_only=True))
-            list(shell_loader.all(class_only=True))
-            list(become_loader.all(class_only=True))
+            # FIXME: this shouldn't be required anymore so commenting these lines
+            #        out for now, they should be removed later if there are no
+            #        problems with this.
+            # list(connection_loader.all(class_only=True))
+            # list(shell_loader.all(class_only=True))
+            # list(become_loader.all(class_only=True))
 
             for playbook_path in self._playbooks:
                 pb = Playbook.load(playbook_path, variable_manager=self._variable_manager, loader=self._loader)

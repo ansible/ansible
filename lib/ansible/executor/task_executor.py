@@ -233,7 +233,7 @@ class TaskExecutor:
                     loop_terms = [t for t in loop_terms if not templar.is_template(t)]
 
                 # get lookup
-                mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with, loader=self._loader, templar=templar)
+                mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with)(loader=self._loader, templar=templar)
 
                 # give lookup task 'context' for subdir (mostly needed for first_found)
                 for subdir in ['template', 'var', 'file']:  # TODO: move this to constants?
@@ -806,8 +806,7 @@ class TaskExecutor:
         # Because this is an async task, the action handler is async. However,
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader
-        async_handler = self._shared_loader_obj.action_loader.get(
-            'async_status',
+        async_handler = self._shared_loader_obj.action_loader.get('async_status')(
             task=async_task,
             connection=self._connection,
             play_context=self._play_context,
@@ -859,7 +858,7 @@ class TaskExecutor:
             return async_result
 
     def _get_become(self, name):
-        become = become_loader.get(name)
+        become = become_loader.get(name)()
         if not become:
             raise AnsibleError("Invalid become method specified, could not find matching plugin: '%s'. "
                                "Use `ansible-doc -t become -l` to list available plugins." % name)
@@ -887,8 +886,7 @@ class TaskExecutor:
 
         # load connection
         conn_type = self._play_context.connection
-        connection = self._shared_loader_obj.connection_loader.get(
-            conn_type,
+        connection = self._shared_loader_obj.connection_loader.get(conn_type)(
             self._play_context,
             self._new_stdin,
             task_uuid=self._task._uuid,
@@ -1039,15 +1037,13 @@ class TaskExecutor:
             handler_name = 'normal'
             collections = None  # until then, we don't want the task's collection list to be consulted; use the builtin
 
-        handler = self._shared_loader_obj.action_loader.get(
-            handler_name,
+        handler = self._shared_loader_obj.action_loader.get(handler_name, collection_list=collections)(
             task=self._task,
             connection=connection,
             play_context=self._play_context,
             loader=self._loader,
             templar=templar,
             shared_loader_obj=self._shared_loader_obj,
-            collection_list=collections
         )
 
         if not handler:

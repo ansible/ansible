@@ -278,7 +278,7 @@ class CachePluginAdjudicator(MutableMapping):
         self._cache = {}
         self._retrieved = {}
 
-        self._plugin = cache_loader.get(plugin_name, **kwargs)
+        self._plugin = cache_loader.get(plugin_name)(**kwargs)
         if not self._plugin:
             raise AnsibleError('Unable to load the cache plugin (%s).' % plugin_name)
 

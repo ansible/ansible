@@ -128,7 +128,7 @@ class DocCLI(CLI):
         basedir = context.CLIARGS['basedir']
         if basedir:
             set_collection_playbook_paths(basedir)
-            loader.add_directory(basedir, with_subdir=True)
+            loader.add_directory(basedir)
         if context.CLIARGS['module_path']:
             for path in context.CLIARGS['module_path']:
                 if path:
@@ -136,7 +136,6 @@ class DocCLI(CLI):
 
         # save only top level paths for errors
         search_paths = DocCLI.print_paths(loader)
-        loader._paths = None  # reset so we can use subdirs below
 
         # list plugins names or filepath for type, both options share most code
         if context.CLIARGS['list_files'] or context.CLIARGS['list_dir']:
@@ -146,7 +145,7 @@ class DocCLI(CLI):
                 coll_filter = context.CLIARGS['args'][0]
 
             if coll_filter in ('', None):
-                paths = loader._get_paths()
+                paths = loader._scanned_paths.keys()
                 for path in paths:
                     self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
 
@@ -266,7 +265,7 @@ class DocCLI(CLI):
     def get_all_plugins_of_type(plugin_type):
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         plugin_list = set()
-        paths = loader._get_paths()
+        paths = loader._scanned_paths.keys()
         for path in paths:
             plugins_to_add = DocCLI.find_plugins(path, plugin_type)
             plugin_list.update(plugins_to_add)
@@ -276,7 +275,7 @@ class DocCLI(CLI):
     def get_plugin_metadata(plugin_type, plugin_name):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
-        filename = loader.find_plugin(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+        filename = loader.find_plugin(plugin_name, mod_type='py', ignore_deprecated=True, check_aliases=True)
         if filename is None:
             raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
 
@@ -320,7 +319,7 @@ class DocCLI(CLI):
     @staticmethod
     def _get_plugin_doc(plugin, loader, search_paths):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-        filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+        filename = loader.find_plugin(plugin, mod_type='py', ignore_deprecated=True, check_aliases=True)[1]
         if filename is None:
             raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
 
@@ -457,7 +456,7 @@ class DocCLI(CLI):
 
             try:
                 # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-                filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+                filename = loader.find_plugin(plugin, mod_type='py', ignore_deprecated=True, check_aliases=True)[1]
 
                 if filename is None:
                     continue
@@ -479,7 +478,7 @@ class DocCLI(CLI):
 
         # Uses a list to get the order right
         ret = []
-        for i in finder._get_paths(subdirs=False):
+        for i in finder._scanned_paths.keys():
             i = to_text(i, errors='surrogate_or_strict')
             if i not in ret:
                 ret.append(i)

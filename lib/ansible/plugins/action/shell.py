@@ -17,13 +17,14 @@ class ActionModule(ActionBase):
         self._task.action = 'command'
         self._task.args['_uses_shell'] = True
 
-        command_action = self._shared_loader_obj.action_loader.get('command',
-                                                                   task=self._task,
-                                                                   connection=self._connection,
-                                                                   play_context=self._play_context,
-                                                                   loader=self._loader,
-                                                                   templar=self._templar,
-                                                                   shared_loader_obj=self._shared_loader_obj)
+        command_action = self._shared_loader_obj.action_loader.get('command')(
+            task=self._task,
+            connection=self._connection,
+            play_context=self._play_context,
+            loader=self._loader,
+            templar=self._templar,
+            shared_loader_obj=self._shared_loader_obj,
+        )
         result = command_action.run(task_vars=task_vars)
 
         return result
