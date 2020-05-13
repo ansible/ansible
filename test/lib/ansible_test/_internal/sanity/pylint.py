@@ -35,6 +35,9 @@ from ..util_common import (
 
 from ..ansible_util import (
     ansible_environment,
+    get_collection_detail,
+    CollectionDetail,
+    CollectionDetailError,
 )
 
 from ..config import (
@@ -138,6 +141,17 @@ class PylintTest(SanitySingleVersion):
 
         python = find_python(python_version)
 
+        collection_detail = None
+
+        if data_context().content.collection:
+            try:
+                collection_detail = get_collection_detail(args, python)
+
+                if not collection_detail.version:
+                    display.warning('Skipping pylint collection version checks since no collection version was found.')
+            except CollectionDetailError as ex:
+                display.warning('Skipping pylint collection version checks since collection detail loading failed: %s' % ex.reason)
+
         test_start = datetime.datetime.utcnow()
 
         for context, context_paths in sorted(contexts):
@@ -145,7 +159,7 @@ class PylintTest(SanitySingleVersion):
                 continue
 
             context_start = datetime.datetime.utcnow()
-            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python)
+            messages += self.pylint(args, context, context_paths, plugin_dir, plugin_names, python, collection_detail)
             context_end = datetime.datetime.utcnow()
 
             context_times.append('%s: %d (%s)' % (context, len(context_paths), context_end - context_start))
@@ -184,6 +198,7 @@ class PylintTest(SanitySingleVersion):
             plugin_dir,  # type: str
             plugin_names,  # type: t.List[str]
             python,  # type: str
+            collection_detail,  # type: CollectionDetail
     ):  # type: (...) -> t.List[t.Dict[str, str]]
         """Run pylint using the config specified by the context on the specified paths."""
         rcfile = os.path.join(SANITY_ROOT, 'pylint', 'config', context.split('/')[0] + '.cfg')
@@ -215,6 +230,14 @@ class PylintTest(SanitySingleVersion):
             '--output-format', 'json',
             '--load-plugins', ','.join(load_plugins),
         ] + paths
+
+        if data_context().content.collection:
+            cmd.extend(['--is-collection', 'yes'])
+
+            if collection_detail and collection_detail.version:
+                cmd.extend(['--collection-version', collection_detail.version])
+        else:
+            cmd.extend(['--enable', 'ansible-deprecated-version'])
 
         append_python_path = [plugin_dir]
 

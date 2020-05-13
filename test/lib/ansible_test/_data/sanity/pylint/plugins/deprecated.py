@@ -13,6 +13,7 @@ from pylint.checkers import BaseChecker
 from pylint.checkers.utils import check_messages
 
 from ansible.release import __version__ as ansible_version_raw
+from ansible.utils.version import SemanticVersion
 
 MSGS = {
     'E9501': ("Deprecated version (%r) found in call to Display.deprecated "
@@ -30,7 +31,20 @@ MSGS = {
               "Display.deprecated or AnsibleModule.deprecate",
               "ansible-invalid-deprecated-version",
               "Used when a call to Display.deprecated specifies an invalid "
-              "version number",
+              "Ansible version number",
+              {'minversion': (2, 6)}),
+    'E9504': ("Deprecated version (%r) found in call to Display.deprecated "
+              "or AnsibleModule.deprecate",
+              "collection-deprecated-version",
+              "Used when a call to Display.deprecated specifies a collection "
+              "version less than or equal to the current version of this "
+              "collection",
+              {'minversion': (2, 6)}),
+    'E9505': ("Invalid deprecated version (%r) found in call to "
+              "Display.deprecated or AnsibleModule.deprecate",
+              "collection-invalid-deprecated-version",
+              "Used when a call to Display.deprecated specifies an invalid "
+              "collection version number",
               {'minversion': (2, 6)}),
 }
 
@@ -59,6 +73,35 @@ class AnsibleDeprecatedChecker(BaseChecker):
     name = 'deprecated'
     msgs = MSGS
 
+    options = (
+        ('is-collection', {
+            'default': False,
+            'type': 'yn',
+            'metavar': '<y_or_n>',
+            'help': 'Whether this is a collection or not.',
+        }),
+        ('collection-version', {
+            'default': None,
+            'type': 'string',
+            'metavar': '<version>',
+            'help': 'The collection\'s version number used to check deprecations.',
+        }),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.collection_version = None
+        self.is_collection = False
+        self.version_constructor = LooseVersion
+        super(AnsibleDeprecatedChecker, self).__init__(*args, **kwargs)
+
+    def set_option(self, optname, value, action=None, optdict=None):
+        super(AnsibleDeprecatedChecker, self).set_option(optname, value, action, optdict)
+        if optname == 'collection-version' and value is not None:
+            self.version_constructor = SemanticVersion
+            self.collection_version = self.version_constructor(self.config.collection_version)
+        if optname == 'is-collection':
+            self.is_collection = self.config.is_collection
+
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
         version = None
@@ -83,10 +126,17 @@ class AnsibleDeprecatedChecker(BaseChecker):
                         return
 
                 try:
-                    if ANSIBLE_VERSION >= LooseVersion(str(version)):
+                    loose_version = self.version_constructor(str(version))
+                    if self.is_collection and self.collection_version is not None:
+                        if self.collection_version >= loose_version:
+                            self.add_message('collection-deprecated-version', node=node, args=(version,))
+                    if not self.is_collection and ANSIBLE_VERSION >= loose_version:
                         self.add_message('ansible-deprecated-version', node=node, args=(version,))
                 except ValueError:
-                    self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
+                    if self.is_collection:
+                        self.add_message('collection-invalid-deprecated-version', node=node, args=(version,))
+                    else:
+                        self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
         except AttributeError:
             # Not the type of node we are interested in
             pass

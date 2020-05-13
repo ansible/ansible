@@ -217,3 +217,36 @@ def check_pyyaml(args, version):
         display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)
 
     return result
+
+
+class CollectionDetail:
+    """Collection detail."""
+    def __init__(self):  # type: () -> None
+        self.version = None  # type: t.Optional[str]
+
+
+class CollectionDetailError(ApplicationError):
+    """An error occurred retrieving collection detail."""
+    def __init__(self, reason):  # type: (str) -> None
+        super(CollectionDetailError, self).__init__('Error collecting collection detail: %s' % reason)
+        self.reason = reason
+
+
+def get_collection_detail(args, python):  # type: (EnvironmentConfig, str) -> CollectionDetail
+    """Return collection detail."""
+    collection = data_context().content.collection
+    directory = os.path.join(collection.root, collection.directory)
+
+    stdout = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'collection_detail.py'), directory], capture=True, always=True)[0]
+    result = json.loads(stdout)
+    error = result.get('error')
+
+    if error:
+        raise CollectionDetailError(error)
+
+    version = result.get('version')
+
+    detail = CollectionDetail()
+    detail.version = str(version) if version is not None else None
+
+    return detail
