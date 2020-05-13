@@ -84,8 +84,8 @@ Conditions based on registered variables
 
 Often in a playbook you want to execute or skip a task based on the outcome of an earlier task. For example, you might want to configure a service after it is upgraded by an earlier task. To create a conditional based on a registered variable:
 
-  #. register the outcome of the earlier task as a variable
-  #. create a conditional test based on the registered variable
+  #. Register the outcome of the earlier task as a variable.
+  #. Create a conditional test based on the registered variable.
 
 You create the name of the registered variable using the ``register`` keyword. A registered variable always contains the status of the task that created it as well as any output that task generated. You can use registered variables in templates and action lines as well as in conditional ``when`` statements. You can access the string contents of the registered variable using ``variable.stdout``. For example::
 
@@ -277,7 +277,7 @@ Ansible expands this at execution time to the equivalent of::
 
 Thus if ``x`` is initially undefined, the ``debug`` task will be skipped. If this is not the behavior you want, use an ``include_*`` statement to apply a condition only to that statement itself.
 
-Starting with Ansible 2.0, you can apply conditions to ``import_playbook`` as well as to the other ``import_*`` statements. When you use this approach, Ansible returns a 'skipped' message for every task on every host that does not match the criteria, creating repetitive output. In many cases the :ref:`group_by module <group_by_module>` can be a more streamlined way to accomplish the same objective; see :ref:`os_variance`.
+You can apply conditions to ``import_playbook`` as well as to the other ``import_*`` statements. When you use this approach, Ansible returns a 'skipped' message for every task on every host that does not match the criteria, creating repetitive output. In many cases the :ref:`group_by module <group_by_module>` can be a more streamlined way to accomplish the same objective; see :ref:`os_variance`.
 
 .. _conditional_includes:
 
@@ -319,9 +319,9 @@ Conditionals with roles
 
 There are three ways to apply conditions to roles:
 
-  #. Add the same condition or conditions to all tasks in the role by placing your ``when`` statement under the ``roles`` keyword. See the example in this section.
-  #. Add the same condition or conditions to all tasks in the role by placing your ``when`` statement on a static ``import_role`` in your playbook.
-  #. Add a condition or conditions to individual tasks or blocks within the role itself. This is the only approach that allows you to select or skip some tasks within the role based on your ``when`` statement. To select or skip tasks within the role, you must have conditions set on individual tasks or blocks, use the dynamic ``include_role`` in your playbook, and add the condition or conditions to the include. When you use this approach, Ansible applies the condition to the include itself plus any tasks in the role that also have that ``when`` statement.
+  - Add the same condition or conditions to all tasks in the role by placing your ``when`` statement under the ``roles`` keyword. See the example in this section.
+  - Add the same condition or conditions to all tasks in the role by placing your ``when`` statement on a static ``import_role`` in your playbook.
+  - Add a condition or conditions to individual tasks or blocks within the role itself. This is the only approach that allows you to select or skip some tasks within the role based on your ``when`` statement. To select or skip tasks within the role, you must have conditions set on individual tasks or blocks, use the dynamic ``include_role`` in your playbook, and add the condition or conditions to the include. When you use this approach, Ansible applies the condition to the include itself plus any tasks in the role that also have that ``when`` statement.
 
 When you incorporate a role in your playbook statically with the ``roles`` keyword, Ansible adds the conditions you define to all the tasks in the role. For example:
 

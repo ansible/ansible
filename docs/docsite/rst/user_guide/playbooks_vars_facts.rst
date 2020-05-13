@@ -561,11 +561,11 @@ The ansible_local namespace separates custom facts created by facts.d from syste
 
 You can also use facts.d to execute a script on the remote host, generating dynamic custom facts to the ansible_local namespace. For example, you can generate a list of all users that exist on a remote host as a fact about that host. To generate dynamic custom facts using facts.d:
 
-  #. Write and test a script to generate the JSON data you want
-  #. Save the script in your facts.d directory
-  #. Make sure your script has the ``.fact`` file extension
-  #. Make sure your script is executable by the Ansible connection user
-  #. Gather facts to execute the script and add the JSON output to ansible_local
+  #. Write and test a script to generate the JSON data you want.
+  #. Save the script in your facts.d directory.
+  #. Make sure your script has the ``.fact`` file extension.
+  #. Make sure your script is executable by the Ansible connection user.
+  #. Gather facts to execute the script and add the JSON output to ansible_local.
 
 By default, fact gathering runs once at the beginning of each play. If you create a custom fact using facts.d in a playbook, it will be available in the next play that gathers facts. If you want to use it in the same play where you created it, you must explicitly re-run the setup module. For example::
 
@@ -626,23 +626,23 @@ You can use the magic variable ``inventory_hostname``, the name of the host as c
 
 Other useful magic variables refer to the current play or playbook. These vars may be useful for filling out templates with multiple hostnames or for injecting the list into the rules for a load balancer.
 
-``ansible_play_hosts`` is the list of all hosts still active in the current play
+``ansible_play_hosts`` is the list of all hosts still active in the current play.
 
-``ansible_play_batch`` is a list of hostnames that are in scope for the current 'batch' of the play
+``ansible_play_batch`` is a list of hostnames that are in scope for the current 'batch' of the play.
 
 The batch size is defined by ``serial``, when not set it is equivalent to the whole play (making it the same as ``ansible_play_hosts``).
 
-``ansible_playbook_python`` is the path to the python executable used to invoke the Ansible command line tool
+``ansible_playbook_python`` is the path to the python executable used to invoke the Ansible command line tool.
 
-``inventory_dir`` is the pathname of the directory holding Ansible's inventory host file
+``inventory_dir`` is the pathname of the directory holding Ansible's inventory host file.
 
-``inventory_file`` is the pathname and the filename pointing to the Ansible's inventory host file
+``inventory_file`` is the pathname and the filename pointing to the Ansible's inventory host file.
 
-``playbook_dir`` contains the playbook base directory
+``playbook_dir`` contains the playbook base directory.
 
-``role_path`` contains the current role's pathname and only works inside a role
+``role_path`` contains the current role's pathname and only works inside a role.
 
-``ansible_check_mode`` is a boolean, set to ``True`` if you run Ansible with ``--check``
+``ansible_check_mode`` is a boolean, set to ``True`` if you run Ansible with ``--check``.
 
 .. _ansible_version:
 
