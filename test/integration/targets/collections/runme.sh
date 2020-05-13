@@ -18,7 +18,7 @@ ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m pin
 # test documentation
 ansible-doc testns.testcoll.testmodule -vvv | grep -- "- normal_doc_frag"
 # same with symlink
-ln -s testcoll2 ./collection_root_sys/ansible_collections/testns/testcoll2
+ln -s "${PWD}/testcoll2" ./collection_root_sys/ansible_collections/testns/testcoll2
 ansible-doc testns.testcoll2.testmodule2 -vvv | grep "Test module"
 # now test we can list with symlink
 ansible-doc -l -vvv| grep "testns.testcoll2.testmodule2"
