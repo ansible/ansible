@@ -1236,7 +1236,7 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
             raise AnsibleError("Failed to download collection tar from '%s': %s"
                                % (to_native(collection), to_native(err)))
 
-    if req_type == 'git' or (not req_type and not b_tar_path and (collection.startswith('git+') or collection.startswith('git@'))):
+    if req_type == 'git' or (not req_type and not b_tar_path and collection.startswith(('git+', 'git@'))):
         if not collection.startswith('git'):
             collection = 'git+' + collection
 
