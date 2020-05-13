@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from units.compat import unittest
 
-from ansible.modules.packaging.yum import YumModule
+from ansible.modules.yum import YumModule
 
 
 yum_plugin_load_error = """

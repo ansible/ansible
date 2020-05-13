@@ -5,7 +5,7 @@ from units.compat import mock
 from units.compat import unittest
 
 try:
-    from ansible.modules.packaging.apt import (
+    from ansible.modules.apt import (
         expand_pkgspec_from_fnmatches,
     )
 except Exception:

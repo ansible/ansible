@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from ansible.modules.packaging import pip
+from ansible.modules import pip
 
 
 pytestmark = pytest.mark.usefixtures('patch_ansible_module')
