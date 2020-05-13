@@ -261,7 +261,6 @@ lib/ansible/plugins/doc_fragments/validate.py metaclass-boilerplate
 lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
-lib/ansible/utils/collection_loader/_collection_finder.py pylint:undefined-variable  # we're falling back to the Python 2.x reload global function, which trips this error on 3.x
 lib/ansible/vars/hostvars.py pylint:blacklisted-name
 setup.py future-import-boilerplate
 setup.py metaclass-boilerplate

@@ -31,7 +31,7 @@ try:
     from importlib import reload as reload_module
 except ImportError:
     # 2.7 has a global reload function instead...
-    reload_module = reload
+    reload_module = reload  # pylint:disable=undefined-variable
 
 # NB: this supports import sanity test providing a different impl
 try:
