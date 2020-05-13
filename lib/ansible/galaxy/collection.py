@@ -1130,9 +1130,9 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
     dependency_map = {}
 
     # First build the dependency map on the actual requirements
-    for name, version, source in collections:
+    for name, version, source, req_type in collections:
         _get_collection_info(dependency_map, existing_collections, name, version, source, b_temp_path, apis,
-                             validate_certs, (force or force_deps), allow_pre_release=allow_pre_release)
+                             validate_certs, (force or force_deps), allow_pre_release=allow_pre_release, req_type=req_type)
 
     checked_parents = set([to_text(c) for c in dependency_map.values() if c.skip])
     while len(dependency_map) != len(checked_parents):
@@ -1211,24 +1211,24 @@ def _collections_from_scm(collection, requirement, b_temp_path, force, parent=No
         display.vvvvv("Considering {0} as a possible path to a collection's galaxy.yml".format(b_galaxy))
         if os.path.exists(b_galaxy):
             reqs.append(CollectionRequirement.from_path(b_collection, force, parent, fallback_metadata=True, skip=False))
-        else:
-            raise AnsibleError(err)
+    if not reqs:
+        raise AnsibleError(err)
 
     return reqs
 
 
 def _get_collection_info(dep_map, existing_collections, collection, requirement, source, b_temp_path, apis,
-                         validate_certs, force, parent=None, allow_pre_release=False):
+                         validate_certs, force, parent=None, allow_pre_release=False, req_type=None):
     dep_msg = ""
     if parent:
         dep_msg = " - as dependency of %s" % parent
     display.vvv("Processing requirement collection '%s'%s" % (to_text(collection), dep_msg))
 
     b_tar_path = None
-    if os.path.isfile(to_bytes(collection, errors='surrogate_or_strict')):
+    if req_type == 'file' or (not req_type and os.path.isfile(to_bytes(collection, errors='surrogate_or_strict'))):
         display.vvvv("Collection requirement '%s' is a tar artifact" % to_text(collection))
         b_tar_path = to_bytes(collection, errors='surrogate_or_strict')
-    elif urlparse(collection).scheme.lower() in ['http', 'https']:
+    elif req_type == 'url' or (not req_type and urlparse(collection).scheme.lower() in ['http', 'https']):
         display.vvvv("Collection requirement '%s' is a URL to a tar artifact" % collection)
         try:
             b_tar_path = _download_file(collection, b_temp_path, None, validate_certs)
@@ -1236,7 +1236,10 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
             raise AnsibleError("Failed to download collection tar from '%s': %s"
                                % (to_native(collection), to_native(err)))
 
-    if not b_tar_path and (collection.startswith('git+') or collection.startswith('git@')):
+    if req_type == 'git' or (not req_type and not b_tar_path and (collection.startswith('git+') or collection.startswith('git@'))):
+        if not collection.startswith('git'):
+            collection = 'git+' + collection
+
         name, version, path, fragment = parse_scm(collection, requirement)
         b_tar_path = scm_archive_collection(path, name=name, version=version)
 
