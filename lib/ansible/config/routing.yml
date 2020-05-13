@@ -8752,13 +8752,9 @@ import_redirection:
   ansible.module_utils.known_hosts:
     redirect: ansible_collections.community.general.plugins.module_utils.known_hosts
   # ansible.builtin synthetic collection redirection hackery
-  ansible.modules:
-    flatmap: true
-  # ansible.builtin synthetic collection redirection hackery
   ansible_collections.ansible.builtin.plugins.modules:
     redirect: ansible.modules
   ansible_collections.ansible.builtin.plugins.module_utils:
     redirect: ansible.module_utils
-
   ansible_collections.ansible.builtin.plugins:
     redirect: ansible.plugins

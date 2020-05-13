@@ -511,23 +511,6 @@ def test_on_collection_load():
     assert 'bang' in str(ex.value)
 
 
-def test_builtin_module_flatmap():
-    finder = get_default_finder()
-    reset_collections_loader_state(finder)
-
-    builtin_pkg = import_module('ansible_collections.ansible.builtin')
-
-    assert builtin_pkg._collection_meta
-    assert builtin_pkg._collection_meta['plugin_routing']['modules'].get('ping') is None
-
-    # this will cause the flatmap redirect entries to get created
-    modules_pkg = import_module('ansible_collections.ansible.builtin.plugins.modules')
-
-    ping_entry = builtin_pkg._collection_meta['plugin_routing']['modules'].get('ping')
-    assert ping_entry
-    assert ping_entry.get('redirect') == 'ansible.builtin.system.ping'
-
-
 def test_default_collection_config():
     finder = get_default_finder()
     reset_collections_loader_state(finder)

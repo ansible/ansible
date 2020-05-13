@@ -249,7 +249,6 @@ class _AnsibleCollectionPkgLoaderBase:
         self._rpart_name = fullname.rpartition('.')
         self._parent_package_name = self._rpart_name[0]  # eg ansible_collections for ansible_collections.somens, '' for toplevel
         self._package_to_load = self._rpart_name[2]  # eg somens for ansible_collections.somens
-        self._flatmap = False
 
         self._source_code_path = None
         self._decoded_source = None
@@ -545,8 +544,6 @@ class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
         routing_entry = _nested_dict_get(collection_meta, ['import_redirection', self._fullname])
         if routing_entry:
             redirect = routing_entry.get('redirect')
-            # FIXME: implement for collections general case
-            # self._flatmap = routing_entry.get('flatmap', False)
 
         if redirect:
             explicit_redirect = True
@@ -607,12 +604,6 @@ class _AnsibleInternalRedirectLoader:
         routing_entry = _nested_dict_get(builtin_meta, ['import_redirection', fullname])
         if routing_entry:
             self._redirect = routing_entry.get('redirect')
-            flatmap = routing_entry.get('flatmap')
-
-            if flatmap:
-                # "find" the module, dig around to make our flatmap entries, but then raise ImportError to let the
-                # default path loader actually load the module(s)
-                _make_flatmap_redirects(os.path.join(path_list[0], module_to_load), 'ansible.builtin', builtin_meta, 'modules')
 
         if not self._redirect:
             raise ImportError('not redirected, go ask path_hook')
@@ -951,30 +942,3 @@ def _get_collection_metadata(collection_name):
         raise ValueError('collection metadata was not loaded for collection {0}'.format(collection_name))
 
     return _collection_meta
-
-
-# implement flatmapping via plugin routing
-def _make_flatmap_redirects(root_path, collection_name, collection_meta, plugin_type='modules'):
-    collection_name = to_native(collection_name)
-    routing_dict = collection_meta.setdefault('plugin_routing', {}).setdefault(plugin_type, {})
-
-    b_root_path = to_bytes(root_path)
-
-    for b_root, b_dirs, b_files in os.walk(b_root_path):
-        b_root_pkg_trailer = b_root[len(root_path):].replace(b'/', b'.')  # eg /foo/ansible/modules/packaging/os -> packaging.os
-        if not b_root_pkg_trailer:
-            # ignore the top dir, we don't need to redirect those since they're already in the package
-            continue
-        b_root_pkg_trailer = b_root_pkg_trailer.strip(b'.')  # converting from paths, there might be leading/trailing junk
-        redirect_pkg = '{0}.{1}.'.format(collection_name, to_native(b_root_pkg_trailer))
-        # make both extensioned and extensionless routing entries for all plugin-looking files in this dir that don't already have one
-        for b_plugin_file in b_files:
-            # FIXME: global extension blacklist that doesn't come from config?
-            basename = to_native(os.path.splitext(b_plugin_file)[0])
-            # skip known non-plugin files
-            if not basename or basename == '__init__' or '.' in basename or any(b_plugin_file.endswith(b_ext) for b_ext in [b'.pyc', b'.pyo']):
-                continue
-            # FIXME: silently skips collisions- is that what we want?
-            # FIXME: we're not preserving the extension on the redirect, which could have "interesting" effects for chained things with collisions like setup
-            routing_dict.setdefault(to_native(b_plugin_file), dict(redirect=redirect_pkg + basename))
-            routing_dict.setdefault(basename, dict(redirect=redirect_pkg + basename))
