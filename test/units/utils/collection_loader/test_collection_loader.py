@@ -13,7 +13,7 @@ from ansible.utils.collection_loader import AnsibleCollectionConfig, AnsibleColl
 from ansible.utils.collection_loader._collection_finder import (
     _AnsibleCollectionFinder, _AnsibleCollectionLoader, _AnsibleCollectionNSPkgLoader, _AnsibleCollectionPkgLoader,
     _AnsibleCollectionPkgLoaderBase, _AnsibleCollectionRootPkgLoader, _AnsiblePathHookFinder,
-    _get_collection_name_from_path, _get_collection_role_path, _get_collection_metadata
+    _get_collection_name_from_path, _get_collection_role_path, _get_collection_metadata, _iter_modules_impl
 )
 from ansible.utils.collection_loader._collection_config import _EventSource
 from units.compat.mock import MagicMock, NonCallableMagicMock, patch
@@ -312,6 +312,32 @@ def test_new_or_existing_module():
     assert ve.value is err_to_raise
     # and that the module was removed
     assert sys.modules.get(module_name) is None
+
+
+def test_iter_modules_impl():
+    modules_trailer = 'ansible_collections/testns/testcoll/plugins'
+    modules_pkg_prefix = modules_trailer.replace('/', '.') + '.'
+    modules_path = os.path.join(default_test_collection_paths[0], modules_trailer)
+    modules = list(_iter_modules_impl([modules_path], modules_pkg_prefix))
+
+    assert modules
+    assert len(modules) == 3
+    assert set([('ansible_collections.testns.testcoll.plugins.action', True),
+                ('ansible_collections.testns.testcoll.plugins.module_utils', True),
+                ('ansible_collections.testns.testcoll.plugins.modules', True)]) == set(modules)
+
+    modules_trailer = 'ansible_collections/testns/testcoll/plugins/modules'
+    modules_pkg_prefix = modules_trailer.replace('/', '.') + '.'
+    modules_path = os.path.join(default_test_collection_paths[0], modules_trailer)
+    modules = list(_iter_modules_impl([modules_path], modules_pkg_prefix))
+
+    assert modules
+    assert len(modules) == 1
+    assert modules[0][0] == 'ansible_collections.testns.testcoll.plugins.modules.amodule'  # name
+    assert modules[0][1] is False  # is_pkg
+
+    # FIXME: more
+
 
 # BEGIN IN-CIRCUIT TESTS - these exercise behaviors of the loader when wired up to the import machinery
 

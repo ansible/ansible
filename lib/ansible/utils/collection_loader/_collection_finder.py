@@ -909,7 +909,7 @@ def _nested_dict_get(root_dict, key_list):
 
 
 def _iter_modules_impl(paths, prefix=''):
-    # NB: this currently only iterates what's on disk- redirected modules are
+    # NB: this currently only iterates what's on disk- redirected modules are not considered
     if not prefix:
         prefix = ''
     else:
@@ -924,7 +924,7 @@ def _iter_modules_impl(paths, prefix=''):
             if os.path.isdir(b_candidate_module_path):
                 # exclude things that obviously aren't Python package dirs
                 # FIXME: this dir is adjustable in py3.8+, check for it
-                if '.' in b_basename or b_basename == b'__pycache__':
+                if b'.' in b_basename or b_basename == b'__pycache__':
                     continue
 
                 # TODO: proper string handling?
@@ -960,13 +960,12 @@ def _make_flatmap_redirects(root_path, collection_name, collection_meta, plugin_
     b_root_path = to_bytes(root_path)
 
     for b_root, b_dirs, b_files in os.walk(b_root_path):
-        b_root_trailer = b_root[len(root_path):].replace(b'/', b'.')
-        if not b_root_trailer:
+        b_root_pkg_trailer = b_root[len(root_path):].replace(b'/', b'.')  # eg /foo/ansible/modules/packaging/os -> packaging.os
+        if not b_root_pkg_trailer:
             # ignore the top dir, we don't need to redirect those since they're already in the package
             continue
-        if b_root_trailer[0] == b'.':
-            b_root_trailer = b_root_trailer[1:]
-        redirect_pkg = '{0}.{1}.'.format(collection_name, to_native(b_root_trailer))
+        b_root_pkg_trailer = b_root_pkg_trailer.strip(b'.')  # converting from paths, there might be leading/trailing junk
+        redirect_pkg = '{0}.{1}.'.format(collection_name, to_native(b_root_pkg_trailer))
         # make both extensioned and extensionless routing entries for all plugin-looking files in this dir that don't already have one
         for b_plugin_file in b_files:
             # FIXME: global extension blacklist that doesn't come from config?
