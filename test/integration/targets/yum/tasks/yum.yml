@@ -448,6 +448,25 @@
         - "'msg' in yum_result"
         - "'results' in yum_result"
 
+- name: install the group again without @ symbol (to ensure backwards compat of group handling)
+  yum:
+    name: "Development Tools"
+    state: present
+  register: yum_result
+
+- name: verify nothing changed
+  assert:
+    that:
+        - "yum_result is success"
+        - "not yum_result is changed"
+
+- name: verify yum module outputs
+  assert:
+    that:
+        - "'changed' in yum_result"
+        - "'msg' in yum_result"
+        - "'results' in yum_result"
+
 - name: install the group again but also with a package that is not yet installed
   yum:
     name:

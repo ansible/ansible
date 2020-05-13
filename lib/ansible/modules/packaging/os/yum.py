@@ -508,6 +508,12 @@ class YumModule(YumDnf):
 
         return '%s:%s-%s-%s.%s' % (po.epoch, po.name, po.version, po.release, po.arch)
 
+    def is_group_spec(self, spec):
+        if spec.startswith('@') or (' ' in spec.strip()):
+            return True
+        else:
+            return False
+
     def is_group_env_installed(self, name):
         name_lower = name.lower()
 
@@ -1010,7 +1016,7 @@ class YumModule(YumDnf):
                 pkg = package
 
             # groups
-            elif spec.startswith('@'):
+            elif self.is_group_spec(spec):
                 if self.is_group_env_installed(spec):
                     continue
 
@@ -1115,7 +1121,7 @@ class YumModule(YumDnf):
         res['rc'] = 0
 
         for pkg in items:
-            if pkg.startswith('@'):
+            if self.is_group_spec(pkg):
                 installed = self.is_group_env_installed(pkg)
             else:
                 installed = self.is_installed(repoq, pkg)
@@ -1156,7 +1162,7 @@ class YumModule(YumDnf):
             # at this point we check to see if the pkg is no longer present
             self._yum_base = None  # previous YumBase package index is now invalid
             for pkg in pkgs:
-                if pkg.startswith('@'):
+                if self.is_group_spec(pkg):
                     installed = self.is_group_env_installed(pkg)
                 else:
                     installed = self.is_installed(repoq, pkg)
@@ -1267,7 +1273,7 @@ class YumModule(YumDnf):
             will_update_from_other_package = dict()
             for spec in items:
                 # some guess work involved with groups. update @<group> will install the group if missing
-                if spec.startswith('@'):
+                if self.is_group_spec(spec):
                     pkgs['update'].append(spec)
                     will_update.add(spec)
                     continue
