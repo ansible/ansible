@@ -99,7 +99,9 @@ To use the ``debug`` strategy, change the ``strategy`` attribute like this::
       tasks:
       ...
 
-You can also set the strategy to ``debug`` with the environment variable ``ANSIBLE_STRATEGY=debug``, or by modifying ``ansible.cfg``::
+You can also set the strategy to ``debug`` with the environment variable ``ANSIBLE_STRATEGY=debug``, or by modifying ``ansible.cfg``:
+
+.. code-block:: yaml
 
     [defaults]
     strategy = debug
@@ -108,7 +110,9 @@ You can also set the strategy to ``debug`` with the environment variable ``ANSIB
 Using the debugger
 ==================
 
-Once you invoke the debugger, you can use the seven :ref:`available_commands` to work through the error Ansible encountered. For example, if you run the playbook below, Ansible invokes the debugger because the playbook defines a ``var1`` variable but uses the ``wrong_var`` variable, which is undefined::
+Once you invoke the debugger, you can use the seven :ref:`debugger commands <available_commands>` to work through the error Ansible encountered. For example, the playbook below defines the ``var1`` variable but uses the ``wrong_var`` variable, which is undefined, by mistake.
+
+.. code-block:: yaml
 
     - hosts: test
       debugger: on_failed
@@ -119,7 +123,7 @@ Once you invoke the debugger, you can use the seven :ref:`available_commands` to
         - name: wrong variable
           ping: data={{ wrong_var }}
 
-From the debug prompt, you can change the module arguments or the variables and run the task again.
+If you run this playbook, Ansible invokes the debugger when the task fails. From the debug prompt, you can change the module arguments or the variables and run the task again.
 
 .. code-block:: none
 
