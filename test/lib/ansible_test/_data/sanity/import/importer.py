@@ -41,6 +41,10 @@ def main():
         # allow importing code from collections when testing a collection
         from ansible.utils.collection_loader import AnsibleCollectionConfig
         from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+        from ansible.utils.collection_loader import _collection_meta
+
+        # FIXME: implement a real YAML->dict conversion
+        _collection_meta._meta_yml_to_dict = lambda *args, **kwargs: {}
 
         collection_loader = _AnsibleCollectionFinder(paths=[collection_root])
         collection_loader._install()  # pylint: disable=protected-access
