@@ -30,8 +30,13 @@ from ansible.utils.plugin_docs import add_fragments
 from ansible import __version__ as ansible_version
 
 # TODO: take the packaging dep, or vendor SpecifierSet?
-from packaging.specifiers import SpecifierSet
-from packaging.version import Version
+
+try:
+    from packaging.specifiers import SpecifierSet
+    from packaging.version import Version
+except ImportError:
+    SpecifierSet = None
+    Version = None
 
 try:
     # use C version if possible for speedup
@@ -1041,6 +1046,10 @@ def _on_collection_load_handler(collection_name):
 
 def _does_collection_support_ansible_version(requirement_string, ansible_version):
     if not requirement_string:
+        return True
+
+    if not SpecifierSet:
+        display.warning('packaging Python module unavailable; unable to validate collection Ansible version requirements')
         return True
 
     ss = SpecifierSet(requirement_string)
