@@ -418,7 +418,6 @@ class JinjaPluginIntercept(MutableMapping):
             display.warning('an unexpected error occurred during Jinja2 environment setup: {0}'.format(to_native(ex)))
             display.vvv('exception during Jinja2 environment setup: {0}'.format(format_exc()))
             raise
-            #raise KeyError('an error occurred while resolving Jinja2 function {0}: {1}'.format(to_native(key), to_native(ex)))  # HACK: prevent the templating from succeeding by denying the lookup for this item
 
     def __setitem__(self, key, value):
         return self._delegatee.__setitem__(key, value)
