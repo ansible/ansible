@@ -48,13 +48,13 @@ MSGS = {
               "Used when a call to Display.deprecated specifies an invalid "
               "collection version number",
               {'minversion': (2, 6)}),
-    'E9504': ("Expired date (%r) found in call to Display.deprecated "
+    'E9506': ("Expired date (%r) found in call to Display.deprecated "
               "or AnsibleModule.deprecate",
               "ansible-deprecated-date",
               "Used when a call to Display.deprecated specifies a date "
               "before today",
               {'minversion': (2, 6)}),
-    'E9505': ("Invalid deprecated date (%r) found in call to "
+    'E9507': ("Invalid deprecated date (%r) found in call to "
               "Display.deprecated or AnsibleModule.deprecate",
               "ansible-invalid-deprecated-date",
               "Used when a call to Display.deprecated specifies an invalid "
