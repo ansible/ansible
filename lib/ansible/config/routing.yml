@@ -6774,9 +6774,9 @@ plugin_routing:
     skydive_node:
       redirect: skydive.skydive.skydive_node
     cyberark_authentication:
-      redirect: cyberark.bizdev.cyberark_authentication
+      redirect: cyberark.pas.cyberark_authentication
     cyberark_user:
-      redirect: cyberark.bizdev.cyberark_user
+      redirect: cyberark.pas.cyberark_user
     gcp_appengine_firewall_rule:
       redirect: google.cloud.gcp_appengine_firewall_rule
     gcp_appengine_firewall_rule_info:
