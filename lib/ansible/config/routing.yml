@@ -1,3 +1,6 @@
+# Copyright (c) 2020 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# This file is only for 2.9 backwards compatiblity, expect it to go away in future ansible versions.
 plugin_routing:
   connection:
     buildah:
