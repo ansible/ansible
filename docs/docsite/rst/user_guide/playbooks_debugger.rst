@@ -57,7 +57,7 @@ Here are examples of invoking the debugger with the ``debugger`` keyword::
           command: "true"
           when: False
 
-In this example, the task will open the debugger when it fails, because the task-level definition overrides the play-level definition::
+In the example below, the task will open the debugger when it fails, because the task-level definition overrides the play-level definition::
 
     - name: Play
       hosts: all
@@ -74,7 +74,7 @@ In configuration or an environment variable
 
 You can turn the task debugger on or off globally with a setting in ansible.cfg or with an environment variable. The only options are ``True`` or ``False``. If you set the configuration option or environment variable to ``True``, Ansible runs the debugger on failed tasks by default.
 
-To invoke task debugger from ansible.cfg::
+To invoke the task debugger from ansible.cfg::
 
     [defaults]
     enable_task_debugger = True
@@ -89,8 +89,8 @@ As a strategy
 -------------
 
 .. note::
-     This is a backwards compatible method, to match Ansible versions before 2.5,
-     and may be removed in a future release
+
+   This backwards-compatible method, which matches Ansible versions before 2.5, may be removed in a future release.
 
 To use the ``debug`` strategy, change the ``strategy`` attribute like this::
 
@@ -108,7 +108,7 @@ You can also set the strategy to ``debug`` with the environment variable ``ANSIB
 Using the debugger
 ==================
 
-Once you invoke the debugger, you can use the seven :ref:`available_commands` to work through the error Ansible encountered. For example, if you run the playbook below, Ansible invokes the debugger because the variable *wrong_var* is undefined::
+Once you invoke the debugger, you can use the seven :ref:`available_commands` to work through the error Ansible encountered. For example, if you run the playbook below, Ansible invokes the debugger because the playbook defines a ``var1`` variable but uses the ``wrong_var`` variable, which is undefined::
 
     - hosts: test
       debugger: on_failed
@@ -119,7 +119,7 @@ Once you invoke the debugger, you can use the seven :ref:`available_commands` to
         - name: wrong variable
           ping: data={{ wrong_var }}
 
-From the debug prompt, you can change the module arguments and run the task again.
+From the debug prompt, you can change the module arguments or the variables and run the task again.
 
 .. code-block:: none
 
@@ -154,7 +154,7 @@ From the debug prompt, you can change the module arguments and run the task agai
     PLAY RECAP *********************************************************************
     192.0.2.10               : ok=1    changed=0    unreachable=0    failed=0
 
-With correctly defined variables, the task runs successfully.
+As the example above shows, once the task arguments use ``var1`` instead of ``wrong_var``, the task runs successfully.
 
 .. _available_commands:
 
@@ -173,7 +173,7 @@ You can use these seven commands at the debug prompt:
 
    task.args[*key*] = *value* no shortcut  Update module arguments
 
-   task_vars[*key*] = *value* no shortcut  Update task variables
+   task_vars[*key*] = *value* no shortcut  Update task variables (you must ``update_task`` next)
 
    update_task                u            Recreate a task with updated task variables
 
@@ -239,14 +239,14 @@ When you run the playbook, the invalid package name triggers an error, and Ansib
     {u'name': 'bash'}
     [192.0.2.10] TASK: install package (debug)> redo
 
-When the module argument is correct, use ``redo`` to run the task again with new args.
+After you update the module argument, use ``redo`` to run the task again with the new args.
 
 .. _update_vars_command:
 
 Update vars command
 -------------------
 
-``task_vars[*key*] = *value*`` updates the ``task_vars``. You could fix the same playbook above by viewing, then updating the task variables instead of the module args::
+``task_vars[*key*] = *value*`` updates the ``task_vars``. You could fix the playbook above by viewing, then updating the task variables instead of the module args::
 
     [192.0.2.10] TASK: install package (debug)> p task_vars['pkg_name']
     u'not_exist'
@@ -256,7 +256,7 @@ Update vars command
     [192.0.2.10] TASK: install package (debug)> update_task
     [192.0.2.10] TASK: install package (debug)> redo
 
-When you update task variables, you must use ``update_task`` to load the new variables before using ``redo`` to run the task again.
+After you update the task variables, you must use ``update_task`` to load the new variables before using ``redo`` to run the task again.
 
 .. note::
     In 2.5 this was updated from ``vars`` to ``task_vars`` to avoid conflicts with the ``vars()`` python function.
