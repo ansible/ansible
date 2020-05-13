@@ -179,7 +179,7 @@ You can use these seven commands at the debug prompt:
 
    redo                       r            Run the task again
 
-   continue                   c            Continue editing
+   continue                   c            Continue executing, starting with the next task
 
    quit                       q            Quit the debugger
 
@@ -282,7 +282,7 @@ Redo command
 Continue command
 ----------------
 
-``c`` or ``continue`` continues executing.
+``c`` or ``continue`` continues executing, starting with the next task.
 
 .. _quit_command:
 
