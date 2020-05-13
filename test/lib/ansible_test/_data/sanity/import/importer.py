@@ -11,15 +11,18 @@ def main():
     """
     import ansible
     import contextlib
+    import json
     import os
     import re
     import runpy
+    import subprocess
     import sys
     import traceback
     import warnings
 
     ansible_path = os.path.dirname(os.path.dirname(ansible.__file__))
     temp_path = os.environ['SANITY_TEMP_PATH'] + os.path.sep
+    external_python = os.environ.get('SANITY_EXTERNAL_PYTHON')
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
     collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATHS')
 
@@ -39,12 +42,37 @@ def main():
 
     if collection_full_name:
         # allow importing code from collections when testing a collection
+        from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
         from ansible.utils.collection_loader import AnsibleCollectionConfig
         from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
         from ansible.utils.collection_loader import _collection_finder
 
-        # FIXME: implement a real YAML->dict conversion
-        _collection_finder._meta_yml_to_dict = lambda *args, **kwargs: {}
+        yaml_to_json_path = os.path.join(os.path.dirname(__file__), 'yaml_to_json.py')
+        yaml_to_dict_cache = {}
+
+        def yaml_to_dict(yaml, name):
+            """
+            Return a Python dict version of the provided YAML.
+            Conversion is done in a subprocess since the current Python interpreter does not have access to PyYAML.
+            """
+            if name in yaml_to_dict_cache:
+                return yaml_to_dict_cache[name]
+
+            try:
+                cmd = [external_python, yaml_to_json_path]
+                proc = subprocess.Popen([to_bytes(c) for c in cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout_bytes, stderr_bytes = proc.communicate(to_bytes(yaml))
+
+                if proc.returncode != 0:
+                    raise Exception('command %s failed with return code %d: %s' % ([to_native(c) for c in cmd], proc.returncode, to_native(stderr_bytes)))
+
+                data = yaml_to_dict_cache[name] = json.loads(to_text(stdout_bytes))
+
+                return data
+            except Exception as ex:
+                raise Exception('internal importer error - failed to parse yaml: %s' % to_native(ex))
+
+        _collection_finder._meta_yml_to_dict = yaml_to_dict  # pylint: disable=protected-access
 
         collection_loader = _AnsibleCollectionFinder(paths=[collection_root])
         collection_loader._install()  # pylint: disable=protected-access
