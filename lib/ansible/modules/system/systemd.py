@@ -317,6 +317,114 @@ def parse_systemctl_show(lines):
     return parsed
 
 
+def unit_is_enabled(module, systemctl_executable, systemd_unit, is_initd):
+    """Detect whether given unit is enabled.
+
+    Args:
+       module (AnsibleModule): Instance of ansible module singleton.
+       systemctl_executable (str): systemctl executable with default
+           arguments pre-filled.
+       systemd_unit (str): Name of systemd unit being checked.
+
+    Returns:
+       bool: True if systemd unit is enabled, False otherwise.
+    """
+    rc, out, _err = module.run_command(
+        "%s is-enabled '%s'"
+        % (systemctl_executable, systemd_unit),)
+
+    # check systemctl result or if it is a init script
+    if rc == 0:
+        indirect = False
+        installed_unit = ''
+        if out.strip().endswith('static'):
+            _rc, cat_out, _err = module.run_command(
+                "%s cat '%s' | grep ^Also= | sed 's#^Also=##'"
+                % (systemctl_executable, systemd_unit),)
+            installed_unit = cat_out.strip()
+            if installed_unit:
+                indirect = True
+        elif out.strip().endswith('indirect'):
+            indirect = True
+        if indirect:
+            return unit_is_enabled(
+                module, systemctl_executable,
+                installed_unit, is_initd,
+            )
+        return True
+
+    if rc == 1:
+        # if not a user or global user service and both init script and
+        # unit file exist stdout should have enabled/disabled,
+        # otherwise use rc entries
+        return (
+            module.params['scope'] in (None, 'system') and
+            not module.params['user'] and
+            is_initd and
+            not out.strip().endswith('disabled') and
+            sysv_is_enabled(systemd_unit)
+        )
+
+    return False
+
+
+def run_systemctl(
+    module, systemctl_executable, systemd_unit,
+    action, abort_on_fail=False,
+):
+    """Run a systemctl action on the specified unit, optionally halt.
+
+    Args:
+       module (AnsibleModule): Instance of ansible module singleton.
+       systemctl_executable (str): systemctl executable with default
+           arguments pre-filled.
+       systemd_unit (str): Name of systemd unit being checked.
+
+    Returns:
+       bool: True if systemd unit is enabled, False otherwise.
+    """
+    rc, out, err = module.run_command(
+        "%s %s '%s'"
+        % (systemctl_executable, action, systemd_unit),
+    )
+    if abort_on_fail and rc != 0:
+        module.fail_json(
+            msg="Unable to %s service %s: %s"
+            % (action, systemd_unit, err),
+        )
+    return rc, out, err
+
+
+
+DO_NOTHING = None
+"""Constant indicating a no-op action."""
+
+
+def get_action_from_enabled_flag(requested_state, current_state):
+    """Decide final action string from current state.
+
+    Args:
+       requested_state (str): The desired state, requested via module
+           argument in task.
+       current_state (bool): The initial state of the service.
+           True for running, False for stopped.
+
+    Returns:
+       str: The actual action this module is going to run.
+    """
+    ENABLED_NOW = ENABLE_REQUEST = True
+    DISABLED_NOW = DISABLE_REQUEST = False
+    state_transitions = {
+        # current state => new state action:
+        (ENABLE_REQUEST, DISABLED_NOW): 'enable',
+        (DISABLE_REQUEST, DISABLED_NOW): DO_NOTHING,
+        (ENABLE_REQUEST, ENABLED_NOW): DO_NOTHING,
+        (DISABLE_REQUEST, ENABLED_NOW): 'disable',
+    }
+    transition = requested_state, current_state
+    return state_transitions[transition]
+
+
 # ===========================================
 # Main control flow
 
@@ -471,41 +579,29 @@ def main():
         # Enable/disable service startup at boot if requested
         if module.params['enabled'] is not None:
 
-            if module.params['enabled']:
-                action = 'enable'
-            else:
-                action = 'disable'
-
             fail_if_missing(module, found, unit, msg='host')
 
             # do we need to enable the service?
-            enabled = False
-            (rc, out, err) = module.run_command("%s is-enabled '%s'" % (systemctl, unit))
-
-            # check systemctl result or if it is a init script
-            if rc == 0:
-                enabled = True
-            elif rc == 1:
-                # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
-                if module.params['scope'] in (None, 'system') and \
-                        not module.params['user'] and \
-                        is_initd and \
-                        not out.strip().endswith('disabled') and \
-                        sysv_is_enabled(unit):
-                    enabled = True
+            is_unit_enabled = unit_is_enabled(module, systemctl, unit, is_initd)
 
             # default to current state
-            result['enabled'] = enabled
+            result['enabled'] = is_unit_enabled
 
-            # Change enable/disable if needed
-            if enabled != module.params['enabled']:
+            # figure out action to get to the desired state
+            action = get_action_from_enabled_flag(
+                requested_state=module.params['enabled'],
+                current_state=is_unit_enabled,
+            )
+
+            if action is not DO_NOTHING:
                 result['changed'] = True
                 if not module.check_mode:
-                    (rc, out, err) = module.run_command("%s %s '%s'" % (systemctl, action, unit))
-                    if rc != 0:
-                        module.fail_json(msg="Unable to %s service %s: %s" % (action, unit, out + err))
+                    run_systemctl(
+                        module, systemctl, unit,
+                        action, abort_on_fail=True,
+                    )
 
-                result['enabled'] = not enabled
+                result['enabled'] = not is_unit_enabled
 
         # set service state if requested
         if module.params['state'] is not None:
