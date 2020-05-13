@@ -610,6 +610,12 @@ class DnfModule(YumDnf):
         base = dnf.Base()
         self._configure_base(base, conf_file, disable_gpg_check, installroot)
         try:
+            # this method has been supported in dnf-4.2.17-6 or later
+            # https://bugzilla.redhat.com/show_bug.cgi?id=1788212
+            base.setup_loggers()
+        except AttributeError:
+            pass
+        try:
             base.init_plugins(set(self.disable_plugin), set(self.enable_plugin))
             base.pre_configure_plugins()
         except AttributeError:
