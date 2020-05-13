@@ -396,6 +396,11 @@ class SanityIgnoreParser:
                 if len(error_codes) > 1:
                     self.parse_errors.append((line_no, len(path) + len(test_name) + len(error_code) + 3, "Error code cannot contain multiple ':' characters"))
                     continue
+
+                if error_code in test.optional_error_codes:
+                    self.parse_errors.append((line_no, len(path) + len(test_name) + 3, "Optional error code '%s' cannot be ignored" % (
+                        error_code)))
+                    continue
             else:
                 if error_codes:
                     self.parse_errors.append((line_no, len(path) + len(test_name) + 2, "Sanity test '%s' does not support error codes" % test_name))
@@ -470,6 +475,9 @@ class SanityIgnoreProcessor:
         filtered = []
 
         for message in messages:
+            if message.code in self.test.optional_error_codes and not self.args.enable_optional_errors:
+                continue
+
             path_entry = self.ignore_entries.get(message.path)
 
             if path_entry:
@@ -610,6 +618,12 @@ class SanityTest(ABC):
     def __init__(self, name):
         self.name = name
         self.enabled = True
+
+        # Optional error codes represent errors which spontaneously occur without changes to the content under test, such as those based on the current date.
+        # Because these errors can be unpredictable they behave differently than normal error codes:
+        #  * They are not reported by default. The `--enable-optional-errors` option must be used to display these errors.
+        #  * They cannot be ignored. This is done to maintain the integrity of the ignore system.
+        self.optional_error_codes = set()
 
     @property
     def error_code(self):  # type: () -> t.Optional[str]

@@ -530,6 +530,10 @@ def parse_args():
     sanity.add_argument('--base-branch',
                         help=argparse.SUPPRESS)
 
+    sanity.add_argument('--enable-optional-errors',
+                        action='store_true',
+                        help='enable optional errors')
+
     add_lint(sanity)
     add_extra_docker_options(sanity, integration=False)
 
