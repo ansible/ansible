@@ -691,3 +691,46 @@
         - hard_link_file.txt
 
 # END #55971
+
+# https://github.com/ansible/ansible/issues/57573
+- name: Create directory
+  file:
+    path: "{{ output_dir }}/foobar2"
+    state: directory
+    mode: 0700
+
+- name: Touch file in directory
+  file:
+    path: "{{ output_dir }}/foobar2/test.txt"
+    state: touch
+
+- name: Change permissions on directory
+  file:
+    path: "{{ output_dir }}/foobar2"
+    state: directory
+    mode: 0000
+
+- name: Try to remove file from inaccessible directory
+  become: yes
+  become_user: nobody
+  file:
+    path: "{{ output_dir }}/foobar2/test.txt"
+    state: absent
+  register: removal_result
+
+- block:
+    - name: Verify that warning about inaccessible path has been displayed
+      assert:
+        that:
+          - >
+            removal_result.warnings
+            | select('match', '^Cannot access .+ Treating path as absent')
+            | list
+            | length >= 1
+  always:
+    - name: Clean up
+      file:
+        path: "{{ output_dir }}/foobar2"
+        state: absent
+
+# END #57573
