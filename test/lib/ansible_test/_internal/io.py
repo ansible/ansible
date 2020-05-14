@@ -67,6 +67,15 @@ def write_text_file(path, content, create_directories=False):  # type: (str, str
         file.write(to_bytes(content))
 
 
+def write_binary_file(path, content, create_directories=False):  # type: (t.AnyStr, bytes, bool) -> None
+    """Write the given binary content to the specified path, optionally creating missing directories."""
+    if create_directories:
+        make_dirs(os.path.dirname(path))
+
+    with open_binary_file(path, 'wb') as file:
+        file.write(content)
+
+
 def open_text_file(path, mode='r'):  # type: (str, str) -> t.TextIO
     """Open the given path for text access."""
     if 'b' in mode:

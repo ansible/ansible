@@ -4,6 +4,7 @@ __metaclass__ = type
 
 import os
 import re
+import time
 
 from .. import types as t
 
@@ -32,6 +33,7 @@ from . import (
     AuthContext,
     ChangeDetectionNotSupported,
     CIProvider,
+    OpenSSLAuthHelper,
 )
 
 
@@ -40,6 +42,9 @@ CODE = 'shippable'
 
 class Shippable(CIProvider):
     """CI provider implementation for Shippable."""
+    def __init__(self):
+        self.auth = ShippableAuthHelper()
+
     @staticmethod
     def is_supported():  # type: () -> bool
         """Return True if this provider is supported in the current running environment."""
@@ -114,6 +119,8 @@ class Shippable(CIProvider):
         except KeyError as ex:
             raise MissingEnvironmentVariable(name=ex.args[0])
 
+        self.auth.sign_request(request)
+
         auth = dict(
             shippable=request,
         )
@@ -182,6 +189,20 @@ class Shippable(CIProvider):
         last_commit = parents.pop()
 
         return last_commit
+
+
+class ShippableAuthHelper(OpenSSLAuthHelper):
+    """
+    Authentication helper for Shippable.
+    Based on OpenSSL since cryptography is not provided by the default Shippable environment.
+    """
+    def publish_public_key(self, public_key_pem_bytes):  # type: (bytes) -> None
+        """Publish the given public key."""
+        public_key_pem_string = public_key_pem_bytes.decode()
+        # display the public key as a single line to avoid mangling such as when prefixing each line with a timestamp
+        display.info(public_key_pem_string.replace('\n', ' '))
+        # allow time for logs to become available to reduce repeated API calls
+        time.sleep(3)
 
 
 class ShippableChanges:
