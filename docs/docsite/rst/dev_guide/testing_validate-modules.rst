@@ -66,6 +66,7 @@ Codes
   ansible-module-not-initialized                               Syntax               Error                  Execution of the module did not result in initialization of AnsibleModule
   collection-deprecated-version                                Documentation        Error                  A feature is deprecated and supposed to be removed in the current or an earlier collection version
   collection-invalid-version                                   Documentation        Error                  The collection version at which a feature is supposed to be removed cannot be parsed (it must be a semantic version, see https://semver.org/)
+  deprecated-date                                              Documentation        Error                  A date before today appears as ``removed_at_date`` or in ``deprecated_aliases``
   deprecation-mismatch                                         Documentation        Error                  Module marked as deprecated or removed in at least one of the filename, its metadata, or in DOCUMENTATION (setting DOCUMENTATION.deprecated for deprecation or removing all Documentation for removed) but not in all three places.
   doc-choices-do-not-match-spec                                Documentation        Error                  Value for "choices" from the argument_spec does not match the documentation
   doc-choices-incompatible-type                                Documentation        Error                  Choices value from the documentation is not compatible with type defined in the argument_spec

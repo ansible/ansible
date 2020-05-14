@@ -1464,6 +1464,46 @@ class ModuleValidator(Validator):
                 )
                 continue
 
+            removed_at_date = data.get('removed_at_date', None)
+            if removed_at_date is not None:
+                try:
+                    if datetime.date.fromisoformat(removed_at_date) < datetime.date.today():
+                        msg = "Argument '%s' in argument_spec" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " has a removed_at_date '%s' before today" % removed_at_date
+                        self.reporter.error(
+                            path=self.object_path,
+                            code='deprecated-date',
+                            msg=msg,
+                        )
+                except ValueError:
+                    # This only happens when removed_at_date is not in ISO format. Since schema
+                    # validation already reported this as an error, don't report it a second time.
+                    pass
+
+            deprecated_aliases = data.get('deprecated_aliases', None)
+            if deprecated_aliases is not None:
+                for deprecated_alias in deprecated_aliases:
+                    if 'date' in deprecated_alias:
+                        try:
+                            if datetime.date.fromisoformat(deprecated_alias['date']) < datetime.date.today():
+                                msg = "Argument '%s' in argument_spec" % arg
+                                if context:
+                                    msg += " found in %s" % " -> ".join(context)
+                                msg += " has deprecated aliases '%s' with removal date '%s' before today" % (
+                                    deprecated_alias['name'], deprecated_alias['version'])
+                                self.reporter.error(
+                                    path=self.object_path,
+                                    code='deprecated-date',
+                                    msg=msg,
+                                )
+                        except ValueError:
+                            # This only happens when deprecated_alias['date'] is not in ISO format. Since
+                            # schema validation already reported this as an error, don't report it a second
+                            # time.
+                            pass
+
             if not self.collection or self.collection_version is not None:
                 if self.collection:
                     compare_version = self.collection_version
@@ -1502,34 +1542,34 @@ class ModuleValidator(Validator):
                             msg=msg,
                         )
 
-                deprecated_aliases = data.get('deprecated_aliases', None)
                 if deprecated_aliases is not None:
                     for deprecated_alias in deprecated_aliases:
-                        try:
-                            if compare_version >= self.Version(str(deprecated_alias['version'])):
+                        if 'version' in deprecated_alias:
+                            try:
+                                if compare_version >= self.Version(str(deprecated_alias['version'])):
+                                    msg = "Argument '%s' in argument_spec" % arg
+                                    if context:
+                                        msg += " found in %s" % " -> ".join(context)
+                                    msg += " has deprecated aliases '%s' with removal in version '%s'," % (
+                                        deprecated_alias['name'], deprecated_alias['version'])
+                                    msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
+                                    self.reporter.error(
+                                        path=self.object_path,
+                                        code=code_prefix + '-deprecated-version',
+                                        msg=msg,
+                                    )
+                            except ValueError:
                                 msg = "Argument '%s' in argument_spec" % arg
                                 if context:
                                     msg += " found in %s" % " -> ".join(context)
-                                msg += " has deprecated aliases '%s' with removal in version '%s'," % (
+                                msg += " has aliases '%s' with removal in invalid version '%s'," % (
                                     deprecated_alias['name'], deprecated_alias['version'])
-                                msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
+                                msg += " i.e. %s" % version_parser_error
                                 self.reporter.error(
                                     path=self.object_path,
-                                    code=code_prefix + '-deprecated-version',
+                                    code=code_prefix + '-invalid-version',
                                     msg=msg,
                                 )
-                        except ValueError:
-                            msg = "Argument '%s' in argument_spec" % arg
-                            if context:
-                                msg += " found in %s" % " -> ".join(context)
-                            msg += " has aliases '%s' with removal in invalid version '%s'," % (
-                                deprecated_alias['name'], deprecated_alias['version'])
-                            msg += " i.e. %s" % version_parser_error
-                            self.reporter.error(
-                                path=self.object_path,
-                                code=code_prefix + '-invalid-version',
-                                msg=msg,
-                            )
 
             aliases = data.get('aliases', [])
             if arg in aliases:
