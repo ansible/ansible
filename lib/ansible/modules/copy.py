@@ -171,7 +171,7 @@ EXAMPLES = r'''
     dest: /path/
     owner: root
     group: root
-    directory_mode: 0755
+    directory_mode: '0755'
 
 - name: Copy a new "sudoers" file into place, after passing validation with visudo
   copy:
