@@ -214,11 +214,18 @@ class _AnsiblePathHookFinder:
         toplevel_pkg = split_name[0]
 
         if toplevel_pkg == 'ansible_collections':
+            # collections content? delegate to the collection finder
             return self._collection_finder.find_module(fullname, path=[self._pathctx])
-        elif toplevel_pkg == 'ansible':
-            # simulate a "classic" load so we can take advantage of Python's builtin caching/bytecompiling, etc
+        else:
+            # Something else; we'd normally restrict this to `ansible` descendent modules so that any weird loader
+            # behavior that arbitrary Python modules have can be serviced by those loaders. In some dev/test
+            # scenarios (eg a venv under a collection) our path_hook signs us up to load non-Ansible things, and
+            # it's too late by the time we've reached this point, but also too expensive for the path_hook to figure
+            # out what we *shouldn't* be loading with the limited info it has. So we'll just delegate to the
+            # normal path-based loader as best we can to service it. This also allows us to take advantage of Python's
+            # built-in FS caching and byte-compilation for most things.
             if PY3:
-                # consult our internal cached file finder for this path or populate it
+                # create or consult our cached file finder for this path
                 if not self._file_finder:
                     self._file_finder = _AnsiblePathHookFinder._filefinder_path_hook(self._pathctx)
 
@@ -227,12 +234,11 @@ class _AnsiblePathHookFinder:
                     return None
                 return spec.loader
             else:
+                # call py2's internal loader
                 return pkgutil.ImpImporter(self._pathctx).find_module(fullname)
-        else:
-            return None
 
     def iter_modules(self, prefix):
-        # FIXME blindly walk modules on disk only for the requested path, or map backwards to parent package + collection
+        # NB: this currently represents only what's on disk, and does not handle package redirection
         return _iter_modules_impl([self._pathctx], prefix)
 
     def __repr__(self):
