@@ -1,0 +1,2 @@
+bugfixes:
+- Fixed the equality check for IncludedFiles to ensure they are not accidently merged when process_include_results runs.
