@@ -202,9 +202,10 @@ f_ansible_galaxy_status \
 f_ansible_galaxy_status \
     "collection list specific collection which contains galaxy.yml"
 
-    ansible-galaxy collection list -p ./install ansible_test.development | tee out.txt
+    ansible-galaxy collection list -p ./install ansible_test.development 2>&1 | tee out.txt
 
     [[ $(grep -c 'ansible_test\.development' out.txt) -eq 1 ]]
+    [[ $(grep -c 'WARNING' out.txt) -eq 0 ]]
 
 f_ansible_galaxy_status \
     "collection list specific collection found in multiple places"
