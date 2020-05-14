@@ -165,7 +165,7 @@ EXAMPLES = r'''
     mode: '0644'
     backup: yes
 
-- name: Recursively copy and assign 755 permissions to all contents(directories and files) from "etc" directory into "path" directory
+- name: Recursively copy and assign 755 permissions to all contents(directories and files) from "mine" directory into "path" directory
   copy:
     src: /mine/
     dest: /path/
