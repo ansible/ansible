@@ -114,7 +114,7 @@ collections on a host without access to a Galaxy or Automation Hub server.
 Listing collections
 ===================
 
-To list installed collections, run ``ansible-galaxy collection list``. This shows all of the installed collections found in the configured collections search paths. The path where the collections are located are displayed as well as version information. If no version information is available, a ``*`` is displayed for the version number.
+To list installed collections, run ``ansible-galaxy collection list``. This shows all of the installed collections found in the configured collections search paths. It will also show collections under development which contain a galaxy.yml file instead of a MANIFEST.json. The path where the collections are located are displayed as well as version information. If no version information is available, a ``*`` is displayed for the version number.
 
 .. code-block:: shell
 
