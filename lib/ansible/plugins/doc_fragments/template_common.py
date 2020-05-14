@@ -73,13 +73,11 @@ options:
     description:
     - The string marking the beginning of a comment statement.
     type: str
-    default: '{#'
     version_added: '2.10'
   comment_end_string:
     description:
     - The string marking the end of a comment statement.
     type: str
-    default: '#}'
     version_added: '2.10'
   trim_blocks:
     description:
