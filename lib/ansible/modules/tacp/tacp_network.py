@@ -4,7 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.tacp import *
+from ansible.module_utils import tacp as tacp_utils
 
 import json
 import tacp
@@ -184,7 +184,7 @@ def run_module():
         network_params['name'] = module.params['name']
 
         if 'location_uuid' not in network_params.keys():
-            location_uuid = get_component_fields_by_name(
+            location_uuid = tacp_utils.get_component_fields_by_name(
                 module.params['site_name'], 'location', api_client)
             if not location_uuid:
                 fail_with_reason(
@@ -202,13 +202,13 @@ def run_module():
                     network_params[param] = None
 
             if 'firewall_override' in module.params.keys():
-                network_params['firewall_override_uuid'] = get_component_fields_by_name(
+                network_params['firewall_override_uuid'] = tacp_utils.get_component_fields_by_name(
                     module.params['firewall_override'], 'firewall_override', api_client)
             else:
                 network_params['firewall_override_uuid'] = None
 
             if 'firewall_profile' in module.params.keys():
-                network_params['firewall_profile_uuid'] = get_component_fields_by_name(
+                network_params['firewall_profile_uuid'] = tacp_utils.get_component_fields_by_name(
                     module.params['firewall_profile'], 'firewall_profile', api_client)
             else:
                 network_params['firewall_profile_uuid'] = None
@@ -233,13 +233,13 @@ def run_module():
                     network_params['routing'][param] = None
             try:
                 if module.params['routing']['firewall_override']:
-                    network_params['routing']['firewall_override_uuid'] = get_component_fields_by_name(
+                    network_params['routing']['firewall_override_uuid'] = tacp_utils.get_component_fields_by_name(
                         network_params['routing']['firewall_override'],
                         'firewall_override', api_client)
             except Exception:
                 network_params['routing']['firewall_override_uuid'] = None
 
-            network_params['routing']['network_uuid'] = get_component_fields_by_name(
+            network_params['routing']['network_uuid'] = tacp_utils.get_component_fields_by_name(
                 network_params['routing']['network'],
                 network_params['routing']['type'].lower(), api_client)
 
@@ -249,7 +249,7 @@ def run_module():
             for param in nfv_params:
                 if param in module.params['nfv'].keys():
                     if param == 'memory':
-                        network_params['nfv'][param] = convert_memory_abbreviation_to_bytes(
+                        network_params['nfv'][param] = tacp_utils.convert_memory_abbreviation_to_bytes(
                             module.params['nfv'][param])
                     else:
                         network_params['nfv'][param] = module.params['nfv'][param]
@@ -281,7 +281,7 @@ def run_module():
                 result['api_response'] = str(api_response)
 
         except ApiException as e:
-            response_dict = api_response_to_dict(e)
+            response_dict = tacp_utils.api_response_to_dict(e)
             result['msg'] = response_dict['message']
             if "already exists" in response_dict['message']:
                 result['changed'] = False
@@ -289,8 +289,9 @@ def run_module():
                 module.exit_json(**result)
             pass
 
-        wait_for_action_to_complete(api_response.action_uuid, api_client)
-        result['ansible_module_results'] = get_resource_by_uuid(
+        tacp_utils.wait_for_action_to_complete(
+            api_response.action_uuid, api_client)
+        result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
             api_response.object_uuid, 'vlan', api_client)
         result['changed'] = True
         result['failed'] = False
@@ -356,13 +357,13 @@ def run_module():
                 else:
                     network_params['nfv'][param] = None
             if param == 'datacenter':
-                network_params['nfv']['datacenter_uuid'] = get_component_fields_by_name(
+                network_params['nfv']['datacenter_uuid'] = tacp_utils.get_component_fields_by_name(
                     network_params['nfv']['datacenter'], 'datacenter', api_client)
             elif param == 'storage_pool':
-                network_params['nfv']['storage_pool_uuid'] = get_component_fields_by_name(
+                network_params['nfv']['storage_pool_uuid'] = tacp_utils.get_component_fields_by_name(
                     network_params['nfv']['storage_pool'], 'storage_pool', api_client)
             elif param == 'mz':
-                network_params['nfv']['migration_zone_uuid'] = get_component_fields_by_name(
+                network_params['nfv']['migration_zone_uuid'] = tacp_utils.get_component_fields_by_name(
                     network_params['nfv']['mz'], 'migration_zone', api_client)
 
         nfv_instance = tacp.ApiCreateApplicationPayload(
@@ -395,7 +396,7 @@ def run_module():
                 result['api_response'] = str(api_response)
 
         except ApiException as e:
-            response_dict = api_response_to_dict(e)
+            response_dict = tacp_utils.api_response_to_dict(e)
             result['msg'] = response_dict['message']
             if "Error" in response_dict['message']:
                 result['changed'] = False
@@ -406,8 +407,8 @@ def run_module():
                 result['failed'] = False
                 module.exit_json(**result)
 
-        wait_for_action_to_complete(api_response.action_uuid, api_client)
-        result['ansible_module_results'] = get_resource_by_uuid(
+        tacp_utils.wait_for_action_to_complete(api_response.action_uuid, api_client)
+        result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
             api_response.object_uuid, 'vnet', api_client)
         result['changed'] = True
         result['failed'] = False
@@ -415,7 +416,7 @@ def run_module():
 
     def delete_network(name, network_type, api_client):
         if network_type == 'VLAN':
-            vlan_uuid = get_component_fields_by_name(
+            vlan_uuid = tacp_utils.get_component_fields_by_name(
                 module.params['name'], 'vlan', api_client)
             api_instance = tacp.VlansApi(api_client)
             try:
@@ -424,29 +425,31 @@ def run_module():
                 if module._verbosity >= 3:
                     result['api_response'] = str(api_response)
             except ApiException as e:
-                response_dict = api_response_to_dict(e)
+                response_dict = tacp_utils.api_response_to_dict(e)
                # result['msg'] = response_dict['message']
                 if "Error" in response_dict['message']:
                     result['changed'] = False
                     result['failed'] = True
                     fail_with_reason(response_dict['message'])
 
-            wait_for_action_to_complete(api_response.action_uuid, api_client)
+            tacp_utils.wait_for_action_to_complete(
+                api_response.action_uuid, api_client)
             result['changed'] = True
             result['failed'] = False
             module.exit_json(**result)
 
         elif network_type == 'VNET':
-            vnet_uuid = get_component_fields_by_name(
+            vnet_uuid = tacp_utils.get_component_fields_by_name(
                 module.params['name'], 'vnet', api_client)
             api_instance = tacp.VnetsApi(api_client)
 
             # Get the NFV instance UUID from the VNET
-            nfv_uuid = get_component_fields_by_name(
+            nfv_uuid = tacp_utils.get_component_fields_by_name(
                 module.params['name'], 'vnet', api_client, fields=['nfvInstanceUuid']).nfv_instance_uuid
 
             # Delete the NFV instance
-            delete_application(name=None, uuid=nfv_uuid, api_client=api_client)
+            tacp_utils.delete_application(
+                name=None, uuid=nfv_uuid, api_client=api_client)
 
             try:
                 # Delete a VNET
@@ -455,7 +458,7 @@ def run_module():
                     result['api_response'] = str(api_response)
 
             except ApiException as e:
-                response_dict = api_response_to_dict(e)
+                response_dict = tacp_utils.api_response_to_dict(e)
                # result['msg'] = response_dict['message']
                 module.exit_json(**result)
                 if "Error" in response_dict['message']:
@@ -463,7 +466,8 @@ def run_module():
                     result['failed'] = True
                     fail_with_reason(response_dict['message'])
 
-            wait_for_action_to_complete(api_response.action_uuid, api_client)
+            tacp_utils.wait_for_action_to_complete(
+                api_response.action_uuid, api_client)
             result['changed'] = True
             result['failed'] = False
             module.exit_json(**result)
@@ -483,7 +487,7 @@ def run_module():
 
     if module.params['network_type'].upper() == 'VLAN':
         if module.params['state'] == 'present':
-            if get_component_fields_by_name(module.params['name'], 'vlan', api_client):
+            if tacp_utils.get_component_fields_by_name(module.params['name'], 'vlan', api_client):
                 result['msg'] = "VLAN network %s is already present, nothing to do." % module.params['name']
                 result['failed'] = False
                 result['changed'] = False
@@ -492,7 +496,7 @@ def run_module():
                 network_params = generate_network_params(module)
                 create_vlan_network(network_params)
         elif module.params['state'] == 'absent':
-            if get_component_fields_by_name(module.params['name'], 'vlan', api_client):
+            if tacp_utils.get_component_fields_by_name(module.params['name'], 'vlan', api_client):
                 delete_network(
                     name=module.params['name'], network_type='VLAN', api_client=api_client)
             else:
@@ -503,7 +507,7 @@ def run_module():
 
     elif module.params['network_type'].upper() == 'VNET':
         if module.params['state'] == 'present':
-            if get_component_fields_by_name(module.params['name'], 'vnet', api_client):
+            if tacp_utils.get_component_fields_by_name(module.params['name'], 'vnet', api_client):
                 result['msg'] = "VNET network %s is already present, nothing to do." % module.params['name']
                 result['failed'] = False
                 result['changed'] = False
@@ -512,7 +516,7 @@ def run_module():
                 network_params = generate_network_params(module)
                 create_vnet_network(network_params)
         elif module.params['state'] == 'absent':
-            if get_component_fields_by_name(module.params['name'], 'vnet', api_client):
+            if tacp_utils.get_component_fields_by_name(module.params['name'], 'vnet', api_client):
                 delete_network(
                     name=module.params['name'], network_type='VNET', api_client=api_client)
             else:
