@@ -40,12 +40,12 @@ display = Display()
 __all__ = ['TaskExecutor']
 
 
-class TimeoutError(BaseException):
+class TaskTimeoutError(BaseException):
     pass
 
 
 def task_timeout(signum, frame):
-    raise TimeoutError
+    raise TaskTimeoutError
 
 
 def remove_omit(task_args, omit_token):
@@ -661,7 +661,7 @@ class TaskExecutor:
                 return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
-            except TimeoutError as e:
+            except TaskTimeoutError as e:
                 msg = 'The %s action failed to execute in the expected time frame (%d) and was terminated' % (self._task.action, self._task.timeout)
                 return dict(failed=True, msg=msg)
             finally:
