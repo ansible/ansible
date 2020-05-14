@@ -7,10 +7,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
-import argparse
-import os.path
-import sys
-
 from jinja2 import Environment, DictLoader
 
 # Pylint doesn't understand Python3 namespace modules.
