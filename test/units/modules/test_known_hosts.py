@@ -6,7 +6,7 @@ from units.compat import unittest
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.basic import AnsibleModule
 
-from ansible.modules.system.known_hosts import compute_diff, sanity_check
+from ansible.modules.known_hosts import compute_diff, sanity_check
 
 
 class KnownHostsDiffTestCase(unittest.TestCase):

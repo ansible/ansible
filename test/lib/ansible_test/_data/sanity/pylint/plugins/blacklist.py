@@ -125,7 +125,7 @@ class AnsibleBlacklistChecker(BaseChecker):
         'sys.exit': BlacklistEntry('exit_json or fail_json',
                                    ignore_paths=(
                                        '/lib/ansible/module_utils/basic.py',
-                                       '/lib/ansible/modules/utilities/logic/async_wrapper.py',
+                                       '/lib/ansible/modules/async_wrapper.py',
                                        '/lib/ansible/module_utils/common/removed.py',
                                    ),
                                    modules_only=True),

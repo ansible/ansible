@@ -9,7 +9,7 @@ __metaclass__ = type
 
 import pytest
 
-from ansible.modules.files.copy import AnsibleModuleError, split_pre_existing_dir
+from ansible.modules.copy import AnsibleModuleError, split_pre_existing_dir
 
 from ansible.module_utils.basic import AnsibleModule
 
