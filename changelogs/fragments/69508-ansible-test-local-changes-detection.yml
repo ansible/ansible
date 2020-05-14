@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-test - honor ``--base-branch`` for local change detection (https://github.com/ansible/ansible/pull/69508)."
