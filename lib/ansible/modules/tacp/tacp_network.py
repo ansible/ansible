@@ -143,6 +143,9 @@ def run_module():
         # Check if there is more than one site already
         # If there is only one, default to that one.
         # Otherwise require a site_name to be provided
+        required_params = []
+        missing_params = []
+
         site_list = get_site_list()
         if len(site_list) != 1:
             required_params.append('site_name')
@@ -150,9 +153,7 @@ def run_module():
         inputs_valid = True
         if params['network_type'].upper() == 'VLAN':
             if params['state'] == 'present':
-                missing_params = []
-                required_params = ['name', 'vlan_tag']
-
+                required_params += ['name', 'vlan_tag']
                 for param in required_params:
                     if not params[param]:
                         missing_params.append(param)
@@ -161,9 +162,8 @@ def run_module():
 
         elif params['network_type'].upper() == 'VNET':
             if params['state'] == 'present':
-                missing_params = []
-                required_params = ['network_address', 'subnet_mask', 'gateway',
-                                   'dhcp', 'routing']
+                required_params += ['network_address', 'subnet_mask',
+                                    'gateway', 'dhcp', 'routing']
                 for param in required_params:
                     if not params[param]:
                         missing_params.append(param)
@@ -407,7 +407,8 @@ def run_module():
                 result['failed'] = False
                 module.exit_json(**result)
 
-        tacp_utils.wait_for_action_to_complete(api_response.action_uuid, api_client)
+        tacp_utils.wait_for_action_to_complete(
+            api_response.action_uuid, api_client)
         result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
             api_response.object_uuid, 'vnet', api_client)
         result['changed'] = True
