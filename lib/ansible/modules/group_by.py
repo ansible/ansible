@@ -41,16 +41,16 @@ author:
 '''
 
 EXAMPLES = r'''
-# Create groups based on the machine architecture
-- group_by:
+- name: Create groups based on the machine architecture
+  group_by:
     key: machine_{{ ansible_machine }}
 
-# Create groups like 'virt_kvm_host'
-- group_by:
+- name: Create groups like 'virt_kvm_host'
+  group_by:
     key: virt_{{ ansible_virtualization_type }}_{{ ansible_virtualization_role }}
 
-# Create nested groups
-- group_by:
+- name: Create nested groups
+  group_by:
     key: el{{ ansible_distribution_major_version }}-{{ ansible_architecture }}
     parents:
       - el{{ ansible_distribution_major_version }}

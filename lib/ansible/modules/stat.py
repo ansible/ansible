@@ -73,7 +73,8 @@ author: Bruce Pennypacker (@bpennypacker)
 EXAMPLES = r'''
 # Obtain the stats of /etc/foo.conf, and check that the file still belongs
 # to 'root'. Fail otherwise.
-- stat:
+- name: Get stats of a file
+  stat:
     path: /etc/foo.conf
   register: st
 - fail:
@@ -85,7 +86,8 @@ EXAMPLES = r'''
 # therefore, we must test whether it is defined.
 # Run this to understand the structure, the skipped ones do not pass the
 # check performed by 'when'
-- stat:
+- name: Get stats of the FS object
+  stat:
     path: /path/to/something
   register: sym
 
@@ -108,20 +110,21 @@ EXAMPLES = r'''
 
 # Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
-- stat:
+- name: Get stats of the FS object
+  stat:
     path: /path/to/something
   register: p
 - debug:
     msg: "Path exists and is a directory"
   when: p.stat.isdir is defined and p.stat.isdir
 
-# Don't do checksum
-- stat:
+- name: Don't do checksum
+  stat:
     path: /path/to/myhugefile
     get_checksum: no
 
-# Use sha256 to calculate checksum
-- stat:
+- name: Use sha256 to calculate checksum
+  stat:
     path: /path/to/something
     checksum_algorithm: sha256
 '''

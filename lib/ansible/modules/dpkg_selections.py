@@ -36,8 +36,8 @@ notes:
     - This module won't cause any packages to be installed/removed/purged, use the C(apt) module for that.
 '''
 EXAMPLES = '''
-# Prevent python from being upgraded.
-- dpkg_selections:
+- name: Prevent python from being upgraded
+  dpkg_selections:
     name: python
     selection: hold
 '''

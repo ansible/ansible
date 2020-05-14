@@ -59,7 +59,7 @@ author: "Matthew Vernon (@mcv21)"
 '''
 
 EXAMPLES = '''
-- name: tell the host about our servers it might want to ssh to
+- name: Tell the host about our servers it might want to ssh to
   known_hosts:
     path: /etc/ssh/ssh_known_hosts
     name: foo.com.invalid

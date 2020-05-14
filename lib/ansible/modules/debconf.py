@@ -68,7 +68,7 @@ EXAMPLES = r'''
     value: fr_FR.UTF-8
     vtype: select
 
-- name: set to generate locales
+- name: Set to generate locales
   debconf:
     name: locales
     question: locales/locales_to_be_generated
