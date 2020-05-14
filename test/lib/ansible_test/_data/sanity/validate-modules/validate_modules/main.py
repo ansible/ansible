@@ -1486,14 +1486,14 @@ class ModuleValidator(Validator):
             deprecated_aliases = data.get('deprecated_aliases', None)
             if deprecated_aliases is not None:
                 for deprecated_alias in deprecated_aliases:
-                    if 'date' in deprecated_alias:
+                    if 'name' in deprecated_alias and 'date' in deprecated_alias:
                         try:
                             if parse_isodate(deprecated_alias['date']) < datetime.date.today():
                                 msg = "Argument '%s' in argument_spec" % arg
                                 if context:
                                     msg += " found in %s" % " -> ".join(context)
                                 msg += " has deprecated aliases '%s' with removal date '%s' before today" % (
-                                    deprecated_alias['name'], deprecated_alias['version'])
+                                    deprecated_alias['name'], deprecated_alias['date'])
                                 self.reporter.error(
                                     path=self.object_path,
                                     code='deprecated-date',
@@ -1545,7 +1545,7 @@ class ModuleValidator(Validator):
 
                 if deprecated_aliases is not None:
                     for deprecated_alias in deprecated_aliases:
-                        if 'version' in deprecated_alias:
+                        if 'name' in deprecated_alias and 'version' in deprecated_alias:
                             try:
                                 if compare_version >= self.Version(str(deprecated_alias['version'])):
                                     msg = "Argument '%s' in argument_spec" % arg
