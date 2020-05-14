@@ -15,7 +15,7 @@ DOCUMENTATION = """
         description: path(s) of files to read
         required: True
     notes:
-      - This lookup does not understand 'globing' nor shell environment variables.
+      - This lookup does not understand 'globbing' nor shell environment variables.
 """
 
 EXAMPLES = """
