@@ -3,6 +3,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import abc
+import base64
+import json
+import os
+import subprocess  # using subprocess directly since we're interested in working with bytes instead of text
+import tempfile
 
 
 from .. import types as t
@@ -99,3 +104,66 @@ def get_ci_provider():  # type: () -> CIProvider
     get_ci_provider.provider = provider
 
     return provider
+
+
+class AuthHelper(ABC):
+    """Public key based authentication helper for Ansible Core CI."""
+    def sign_request(self, request):  # type: (t.Dict[str, t.Any]) -> None
+        """Sign the given auth request and make the public key available."""
+        payload_bytes = json.dumps(request, sort_keys=True).encode()
+        signature_base64_string = self.sign_bytes(payload_bytes)
+
+        request.update(signature=signature_base64_string)
+
+    @abc.abstractmethod
+    def sign_bytes(self, payload_bytes):  # type: (bytes) -> str
+        """
+        Generate a private key and then sign the given bytes.
+        Returns the PEM public key bytes and the base64 encoded signature string.
+        """
+
+    @abc.abstractmethod
+    def publish_public_key(self, public_key_pem_bytes):
+        """Publish the given public key."""
+
+
+class OpenSSLAuthHelper(AuthHelper, ABC):
+    """OpenSSL based public key based authentication helper for Ansible Core CI."""
+    def __init__(self):
+        self._private_key = None  # type: t.Optional[bytes]
+
+    def sign_bytes(self, payload_bytes):  # type: (bytes) -> str
+        """
+        Generate a private key and then sign the given bytes.
+        Returns the PEM public key bytes and the base64 encoded signature string.
+        """
+        private_key_pem_bytes = self.initialize_key_pair()
+
+        with open(os.devnull, 'wb') as devnull:
+            with tempfile.NamedTemporaryFile() as private_key_file:
+                private_key_file.write(private_key_pem_bytes)
+                private_key_file.flush()
+
+                with tempfile.NamedTemporaryFile() as payload_file:
+                    payload_file.write(payload_bytes)
+                    payload_file.flush()
+
+                    signature_bytes = subprocess.check_output(['openssl', 'dgst', '-sha256', '-sign', private_key_file.name, payload_file.name], stderr=devnull)
+
+        signature_base64_string = base64.b64encode(signature_bytes).decode()
+
+        return signature_base64_string
+
+    def initialize_key_pair(self):  # type: () -> t.Any
+        """Return a key pair, creating one if not yet initialized."""
+        if not self._private_key:
+            with open(os.devnull, 'wb') as devnull:
+                private_key_pem_bytes = subprocess.check_output(['openssl', 'ecparam', '-genkey', '-name', 'secp384r1', '-noout'], stderr=devnull)
+
+                openssl = subprocess.Popen(['openssl', 'ec', '-pubout'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=devnull)
+                public_key_pem_bytes = openssl.communicate(private_key_pem_bytes)[0]
+
+            self.publish_public_key(public_key_pem_bytes)
+            self._private_key = private_key_pem_bytes
+
+        return self._private_key
