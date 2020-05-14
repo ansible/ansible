@@ -60,6 +60,11 @@ MSGS = {
               "Used when a call to Display.deprecated specifies an invalid "
               "date. It must be a string in format YYYY-MM-DD (ISO 8601)",
               {'minversion': (2, 6)}),
+    'E9508': ("Both version and date found in call to "
+              "Display.deprecated or AnsibleModule.deprecate",
+              "ansible-deprecated-both-version-and-date",
+              "Only one of version and date must be specified",
+              {'minversion': (2, 6)}),
 }
 
 
@@ -144,6 +149,9 @@ class AnsibleDeprecatedChecker(BaseChecker):
                     except IndexError:
                         self.add_message('ansible-deprecated-no-version', node=node)
                         return
+                if version and date:
+                    self.add_message('ansible-deprecated-both-version-and-date', node=node)
+                    return
 
                 if version:
                     try:
