@@ -64,6 +64,7 @@ credentials.yml
 results.xml
 coverage.xml
 /test/units/cover-html
+/test/integration/inventory
 /test/integration/targets/*/backup/
 /test/cache/*
 # Development
