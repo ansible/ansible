@@ -503,7 +503,7 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
         except Exception as ex:
             raise ValueError('error parsing collection metadata: {0}'.format(to_native(ex)))
 
-        AnsibleCollectionConfig.on_collection_load.fire(collection_name)
+        AnsibleCollectionConfig.on_collection_load.fire(collection_name=collection_name, collection_path=os.path.dirname(module.__file__))
 
         return module
 

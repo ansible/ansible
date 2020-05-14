@@ -1027,7 +1027,9 @@ def _load_plugin_filter():
 
 
 # since we don't want the actual collection loader understanding metadata, we'll do it in an event handler
-def _on_collection_load_handler(collection_name):
+def _on_collection_load_handler(collection_name, collection_path):
+    display.vvvv('Loading collection {0} from {1}'.format(collection_name, collection_path))
+
     collection_meta = _get_collection_metadata(collection_name)
 
     try:
