@@ -46,7 +46,7 @@ class DocumentConfig(Command):
                             default=DEFAULT_TEMPLATE_FILE,
                             help="Jinja2 template to use for the config")
         parser.add_argument("-T", "--template-dir", action="store", dest="template_dir",
-                            default=DEFAULT_TEMPLATE_DIR,
+                            default=str(DEFAULT_TEMPLATE_DIR),
                             help="directory containing Jinja2 templates")
         parser.add_argument("-o", "--output-dir", action="store", dest="output_dir", default='/tmp/',
                             help="Output directory for rst files")
