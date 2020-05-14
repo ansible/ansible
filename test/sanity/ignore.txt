@@ -16,18 +16,30 @@ hacking/build-ansible.py shebang # only run by release engineers, Python 3.6+ re
 hacking/build_library/build_ansible/announce.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.7!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-3.5!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/dump_config.py compile-2.6!skip # docs build only, 2.7+ required
-hacking/build_library/build_ansible/command_plugins/dump_keywords.py compile-2.6!skip # docs build only, 2.7+ required
-hacking/build_library/build_ansible/command_plugins/generate_man.py compile-2.6!skip # docs build only, 2.7+ required
-hacking/build_library/build_ansible/command_plugins/plugin_formatter.py compile-2.6!skip # docs build only, 2.7+ required
+hacking/build_library/build_ansible/commands.py compile-2.6!skip # release and docs process only, 3.6+ required
+hacking/build_library/build_ansible/commands.py compile-2.7!skip # release and docs process only, 3.6+ required
+hacking/build_library/build_ansible/commands.py compile-3.5!skip # release and docs process only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/dump_config.py compile-2.6!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/dump_config.py compile-2.7!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/dump_config.py compile-3.5!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/dump_keywords.py compile-2.6!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/dump_keywords.py compile-2.7!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/dump_keywords.py compile-3.5!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/generate_man.py compile-2.6!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/generate_man.py compile-2.7!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/generate_man.py compile-3.5!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/plugin_formatter.py compile-2.6!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/plugin_formatter.py compile-2.7!skip # docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/plugin_formatter.py compile-3.5!skip # docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-2.7!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-3.5!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/release_announcement.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/release_announcement.py compile-2.7!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/release_announcement.py compile-3.5!skip # release process only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.6!skip # release process and docs build only, 3.5+ required
-hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.7!skip # release process and docs build only, 3.5+ required
+hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.6!skip # release process and docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.7!skip # release process and docs build only, 3.6+ required
+hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-3.5!skip # release process and docs build only, 3.6+ required
 hacking/fix_test_syntax.py future-import-boilerplate
 hacking/fix_test_syntax.py metaclass-boilerplate
 hacking/get_library.py future-import-boilerplate
