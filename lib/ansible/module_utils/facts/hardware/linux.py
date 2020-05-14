@@ -286,8 +286,7 @@ class LinuxHardware(Hardware):
                         os.sched_getaffinity(0)
                     )
                 except AttributeError:
-                    # in Python < 3.3 and MacOS (shouldn't happen here,
-                    # but to be safe) ``sched_getaffinity`` is not available
+                    # In Python < 3.3, os.sched_getaffinity() is not available
                     try:
                         cmd = get_bin_path('nproc')
                     except ValueError:
