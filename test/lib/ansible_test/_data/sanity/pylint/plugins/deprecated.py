@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
+import re
 
 from distutils.version import LooseVersion
 
@@ -14,6 +15,7 @@ from pylint.interfaces import IAstroidChecker
 from pylint.checkers import BaseChecker
 from pylint.checkers.utils import check_messages
 
+from ansible.module_utils.six import string_types
 from ansible.release import __version__ as ansible_version_raw
 from ansible.utils.version import SemanticVersion
 
@@ -81,6 +83,20 @@ def _get_expr_name(node):
     except AttributeError:
         # If this fails too, we'll let it raise, the caller should catch it
         return node.func.expr.name
+
+
+def parse_isodate(v):
+    msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
+    if not isinstance(v, string_types):
+        raise ValueError(msg)
+    # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
+    # we have to do things manually.
+    if not re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$', v):
+        raise ValueError(msg)
+    try:
+        return datetime.datetime.strptime(v, '%Y-%m-%d').date()
+    except ValueError:
+        raise ValueError(msg)
 
 
 class AnsibleDeprecatedChecker(BaseChecker):
@@ -169,7 +185,7 @@ class AnsibleDeprecatedChecker(BaseChecker):
 
                 if date:
                     try:
-                        if datetime.date.fromisoformat(date) < datetime.date.today():
+                        if parse_isodate(date) < datetime.date.today():
                             self.add_message('deprecated-date', node=node, args=(date,))
                     except ValueError:
                         self.add_message('invalid-deprecated-date', node=node, args=(date,))

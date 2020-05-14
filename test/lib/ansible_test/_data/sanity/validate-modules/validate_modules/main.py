@@ -21,6 +21,7 @@ __metaclass__ = type
 import abc
 import argparse
 import ast
+import datetime
 import json
 import errno
 import os
@@ -50,7 +51,7 @@ from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, 
 
 from .schema import ansible_module_kwargs_schema, doc_schema, metadata_1_1_schema, return_schema
 
-from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml
+from .utils import CaptureStd, NoArgsAnsibleModule, compare_unordered_lists, is_empty, parse_yaml, parse_isodate
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import PY3, with_metaclass, string_types
@@ -1467,7 +1468,7 @@ class ModuleValidator(Validator):
             removed_at_date = data.get('removed_at_date', None)
             if removed_at_date is not None:
                 try:
-                    if datetime.date.fromisoformat(removed_at_date) < datetime.date.today():
+                    if parse_isodate(removed_at_date) < datetime.date.today():
                         msg = "Argument '%s' in argument_spec" % arg
                         if context:
                             msg += " found in %s" % " -> ".join(context)
@@ -1478,7 +1479,7 @@ class ModuleValidator(Validator):
                             msg=msg,
                         )
                 except ValueError:
-                    # This only happens when removed_at_date is not in ISO format. Since schema
+                    # This should only happen when removed_at_date is not in ISO format. Since schema
                     # validation already reported this as an error, don't report it a second time.
                     pass
 
@@ -1487,7 +1488,7 @@ class ModuleValidator(Validator):
                 for deprecated_alias in deprecated_aliases:
                     if 'date' in deprecated_alias:
                         try:
-                            if datetime.date.fromisoformat(deprecated_alias['date']) < datetime.date.today():
+                            if parse_isodate(deprecated_alias['date']) < datetime.date.today():
                                 msg = "Argument '%s' in argument_spec" % arg
                                 if context:
                                     msg += " found in %s" % " -> ".join(context)
@@ -1499,7 +1500,7 @@ class ModuleValidator(Validator):
                                     msg=msg,
                                 )
                         except ValueError:
-                            # This only happens when deprecated_alias['date'] is not in ISO format. Since
+                            # This should only happen when deprecated_alias['date'] is not in ISO format. Since
                             # schema validation already reported this as an error, don't report it a second
                             # time.
                             pass

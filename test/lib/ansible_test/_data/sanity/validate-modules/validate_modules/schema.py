@@ -13,6 +13,8 @@ from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Re
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
 
+from .utils import parse_isodate
+
 list_string_types = list(string_types)
 tuple_string_types = tuple(string_types)
 any_string_types = Any(*string_types)
@@ -100,17 +102,10 @@ def options_with_apply_defaults(v):
 
 
 def isodate(v):
-    msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
-    if not isinstance(v, string_types):
-        raise Invalid(msg)
-    # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
-    # we have to do things manually.
-    if not re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$', v):
-        raise Invalid(msg)
     try:
-        datetime.datetime.strptime(v, '%Y-%m-%d')
-    except ValueError:
-        raise Invalid(msg)
+        parse_isodate(v)
+    except ValueError as e:
+        raise Invalid(str(e))
     return v
 
 
