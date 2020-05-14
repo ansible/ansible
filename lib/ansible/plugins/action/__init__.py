@@ -28,6 +28,7 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
+from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
@@ -178,7 +179,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     module_name = '%s.%s' % (win_collection, module_name)
 
                 # Remove extra quotes surrounding path parameters before sending to module.
-                if module_name.split('.')[-1] in ['win_stat', 'win_file', 'win_copy', 'slurp'] and module_args and \
+                if resource_from_fqcr(module_name) in ['win_stat', 'win_file', 'win_copy', 'slurp'] and module_args and \
                         hasattr(self._connection._shell, '_unquote'):
                     for key in ('src', 'dest', 'path'):
                         if key in module_args:
@@ -1060,7 +1061,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         ruser = self._get_remote_user()
         buser = self.get_become_option('become_user')
         if (sudoable and self._connection.become and  # if sudoable and have become
-                self._connection.transport.split('.')[-1] != 'network_cli' and  # if not using network_cli
+                resource_from_fqcr(self._connection.transport) != 'network_cli' and  # if not using network_cli
                 (C.BECOME_ALLOW_SAME_USER or (buser != ruser or not any((ruser, buser))))):  # if we allow same user PE or users are different and either is set
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)
