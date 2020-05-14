@@ -52,13 +52,13 @@ MSGS = {
               {'minversion': (2, 6)}),
     'E9506': ("Expired date (%r) found in call to Display.deprecated "
               "or AnsibleModule.deprecate",
-              "deprecated-date",
+              "ansible-deprecated-date",
               "Used when a call to Display.deprecated specifies a date "
               "before today",
               {'minversion': (2, 6)}),
     'E9507': ("Invalid deprecated date (%r) found in call to "
               "Display.deprecated or AnsibleModule.deprecate",
-              "invalid-deprecated-date",
+              "ansible-invalid-deprecated-date",
               "Used when a call to Display.deprecated specifies an invalid "
               "date. It must be a string in format YYYY-MM-DD (ISO 8601)",
               {'minversion': (2, 6)}),
@@ -186,9 +186,9 @@ class AnsibleDeprecatedChecker(BaseChecker):
                 if date:
                     try:
                         if parse_isodate(date) < datetime.date.today():
-                            self.add_message('deprecated-date', node=node, args=(date,))
+                            self.add_message('ansible-deprecated-date', node=node, args=(date,))
                     except ValueError:
-                        self.add_message('invalid-deprecated-date', node=node, args=(date,))
+                        self.add_message('ansible-invalid-deprecated-date', node=node, args=(date,))
         except AttributeError:
             # Not the type of node we are interested in
             pass
