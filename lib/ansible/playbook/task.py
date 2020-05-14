@@ -23,8 +23,8 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
-from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins.loader import lookup_loader
