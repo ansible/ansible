@@ -215,6 +215,14 @@ CACHE_PLUGIN_TIMEOUT:
   - {key: fact_caching_timeout, section: defaults}
   type: integer
   yaml: {key: facts.cache.timeout}
+COLLECTIONS_SCAN_SYS_PATH:
+  name: enable/disable scanning sys.path for installed collections
+  default: true
+  type: boolean
+  env:
+  - {name: ANSIBLE_COLLECTIONS_SCAN_SYS_PATH}
+  ini:
+  - {key: collections_scan_sys_path, section: defaults}
 COLLECTIONS_PATHS:
   name: ordered list of root paths for loading installed Ansible collections content
   description: Colon separated paths in which Ansible will search for collections content.

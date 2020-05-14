@@ -41,7 +41,7 @@ except ImportError:
 
 
 class _AnsibleCollectionFinder:
-    def __init__(self, paths=None):
+    def __init__(self, paths=None, scan_sys_paths=True):
         # TODO: accept metadata loader override
         self._ansible_pkg_path = to_native(os.path.dirname(to_bytes(sys.modules['ansible'].__file__)))
 
@@ -53,16 +53,17 @@ class _AnsibleCollectionFinder:
         # expand any placeholders in configured paths
         paths = [os.path.expanduser(to_native(p, errors='surrogate_or_strict')) for p in paths]
 
-        # append all sys.path entries with an ansible_collections package
-        for path in sys.path:
-            if (
-                    path not in paths and
-                    os.path.isdir(to_bytes(
-                        os.path.join(path, 'ansible_collections'),
-                        errors='surrogate_or_strict',
-                    ))
-            ):
-                paths.append(path)
+        if scan_sys_paths:
+            # append all sys.path entries with an ansible_collections package
+            for path in sys.path:
+                if (
+                        path not in paths and
+                        os.path.isdir(to_bytes(
+                            os.path.join(path, 'ansible_collections'),
+                            errors='surrogate_or_strict',
+                        ))
+                ):
+                    paths.append(path)
 
         self._n_configured_paths = paths
         self._n_cached_collection_paths = None
