@@ -143,7 +143,7 @@ class PlaybookExecutor:
                     templar = Templar(loader=self._loader, variables=all_vars)
                     play.post_validate(templar)
 
-                    if context.CLIARGS['syntax']:
+                    if context.CLIARGS.get('syntax'):
                         continue
 
                     if self._tqm is None:
@@ -238,7 +238,7 @@ class PlaybookExecutor:
             display.display("No issues encountered")
             return result
 
-        if context.CLIARGS['start_at_task'] and not self._tqm._start_at_done:
+        if context.CLIARGS.get('start_at_task') and not self._tqm._start_at_done:
             display.error(
                 "No matching task \"%s\" found."
                 " Note: --start-at-task can only follow static includes."
