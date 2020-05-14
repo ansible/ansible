@@ -1,10 +1,19 @@
 {# avoids rST "isn't included in any toctree" errors for module docs #}
 :orphan:
 
+{% if title %}
 .. _@{ title.lower() + '_' + plugin_type + 's' }@:
+{% else %}
+.. _@{ plugin_type + 's' }@:
+{% endif %}
 
+{% if title %}
 @{ title }@ @{ plugin_type + 's' }@
 @{ '`' * title | length }@````````
+{% else %}
+@{ plugin_type + 's' }@
+```````
+{% endif %}
 
 {% if blurb %}
 @{ blurb }@

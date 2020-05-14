@@ -24,7 +24,7 @@ echo "$PB_OUT" | grep -F "assert works (True)" || exit 1
 
 set -e
 
-PING_MODULE_PATH="../../../../lib/ansible/modules/system/ping.py"
+PING_MODULE_PATH="../../../../lib/ansible/modules/ping.py"
 
 # ensure test-module.py script works without passing Python interpreter path
 ../../../../hacking/test-module.py -m "$PING_MODULE_PATH"
@@ -36,4 +36,4 @@ PING_MODULE_PATH="../../../../lib/ansible/modules/system/ping.py"
 ../../../../hacking/test-module.py -m library/test.py -I ansible_python_interpreter="$(which python)" <<< '{"ANSIBLE_MODULE_ARGS": {}}'
 
 # ensure exercising module code locally works
-python -m ansible.modules.files.file  <<< '{"ANSIBLE_MODULE_ARGS": {"path": "/path/to/file", "state": "absent"}}'
+python -m ansible.modules.file  <<< '{"ANSIBLE_MODULE_ARGS": {"path": "/path/to/file", "state": "absent"}}'

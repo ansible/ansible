@@ -1,6 +1,6 @@
 
 from units.compat import unittest
-from ansible.modules.system.systemd import parse_systemctl_show
+from ansible.modules.systemd import parse_systemctl_show
 
 
 class ParseSystemctlShowTestCase(unittest.TestCase):
