@@ -1,0 +1,2 @@
+bugfixes:
+  - setup - properly detect yum package manager for IBM i.
