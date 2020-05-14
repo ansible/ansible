@@ -10,17 +10,17 @@ __metaclass__ = type
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 
-class Command:
+class Command(metaclass=ABCMeta):
     """
     Subcommands of :program:`build-ansible.py`.
 
-    This defines an interface that all subcommands must conform to.  :program:`build-ansible.py` will
-    require that these things are present in order to proceed.
+    This defines an interface that all subcommands must conform to.  :program:`build-ansible.py`
+    will require that these things are present in order to proceed.
     """
     @staticmethod
     @abstractproperty
     def name():
-        """Name of the command.  The same as the string is invoked with"""
+        """Name of the subcommand.  It's the string to invoked it via on the command line"""
 
     @staticmethod
     @abstractmethod
