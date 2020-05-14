@@ -497,7 +497,7 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
                 raw_routing = ''
         try:
             if raw_routing:
-                routing_dict = _meta_yml_to_dict(raw_routing, collection_name)
+                routing_dict = _meta_yml_to_dict(raw_routing, (collection_name, 'routing.yml'))
                 module._collection_meta = self._canonicalize_meta(routing_dict)
         except Exception as ex:
             raise ValueError('error parsing collection metadata: {0}'.format(to_native(ex)))

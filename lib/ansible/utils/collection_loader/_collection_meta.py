@@ -7,7 +7,7 @@ __metaclass__ = type
 from yaml import safe_load
 
 
-def _meta_yml_to_dict(yaml_string_data, collection_name):
+def _meta_yml_to_dict(yaml_string_data, content_id):
     routing_dict = safe_load(yaml_string_data)
     if not routing_dict:
         routing_dict = {}

@@ -50,13 +50,13 @@ def main():
         yaml_to_json_path = os.path.join(os.path.dirname(__file__), 'yaml_to_json.py')
         yaml_to_dict_cache = {}
 
-        def yaml_to_dict(yaml, name):
+        def yaml_to_dict(yaml, content_id):
             """
             Return a Python dict version of the provided YAML.
             Conversion is done in a subprocess since the current Python interpreter does not have access to PyYAML.
             """
-            if name in yaml_to_dict_cache:
-                return yaml_to_dict_cache[name]
+            if content_id in yaml_to_dict_cache:
+                return yaml_to_dict_cache[content_id]
 
             try:
                 cmd = [external_python, yaml_to_json_path]
@@ -66,7 +66,7 @@ def main():
                 if proc.returncode != 0:
                     raise Exception('command %s failed with return code %d: %s' % ([to_native(c) for c in cmd], proc.returncode, to_native(stderr_bytes)))
 
-                data = yaml_to_dict_cache[name] = json.loads(to_text(stdout_bytes))
+                data = yaml_to_dict_cache[content_id] = json.loads(to_text(stdout_bytes))
 
                 return data
             except Exception as ex:
