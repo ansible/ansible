@@ -28,7 +28,7 @@ from ansible.plugins.loader import become_loader, cliconf_loader, connection_loa
 from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.unsafe_proxy import AnsibleUnsafe, to_unsafe_text, wrap_var
+from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars, isidentifier
@@ -604,7 +604,16 @@ class TaskExecutor:
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
 
-        self._set_connection_options(variables, templar)
+        if self._task.delegate_to:
+            # use vars from delegated host (which already include task vars) instead of original host
+            delegated_vars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+            orig_vars = templar.available_variables
+            templar.available_variables = delegated_vars
+            plugin_vars = self._set_connection_options(delegated_vars, templar)
+            templar.available_variables = orig_vars
+        else:
+            # just use normal host vars
+            plugin_vars = self._set_connection_options(variables, templar)
 
         # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
@@ -771,15 +780,10 @@ class TaskExecutor:
 
         # add the delegated vars to the result, so we can reference them
         # on the results side without having to do any further templating
-        # FIXME: we only want a limited set of variables here, so this is currently
-        #        hardcoded but should be possibly fixed if we want more or if
-        #        there is another source of truth we can use
-        delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()).copy()
-        if len(delegated_vars) > 0:
+        if self._task.delegate_to:
             result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
-            for k in ('ansible_host', ):
+            for k in plugin_vars:
                 result["_ansible_delegated_vars"][k] = delegated_vars.get(k)
-
         # and return
         display.debug("attempt loop complete, returning result")
         return result
@@ -872,21 +876,20 @@ class TaskExecutor:
         '''
 
         if self._task.delegate_to is not None:
-            # since we're delegating, we don't want to use interpreter values
-            # which would have been set for the original target host
-            for i in list(variables.keys()):
-                if isinstance(i, string_types) and i.startswith('ansible_') and i.endswith('_interpreter'):
-                    del variables[i]
-            # now replace the interpreter values with those that may have come
-            # from the delegated-to host
-            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict())
-            if isinstance(delegated_vars, dict):
-                for i in delegated_vars:
-                    if isinstance(i, string_types) and i.startswith("ansible_") and i.endswith("_interpreter"):
-                        variables[i] = delegated_vars[i]
+            cvars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+        else:
+            cvars = variables
+
+        # use magic var if it exists, if not, let task inheritance do it's thing.
+        self._play_context.connection = cvars.get('ansible_connection', self._task.connection)
+
+        # TODO: play context has logic to update the conneciton for 'smart'
+        # (default value, will chose between ssh and paramiko) and 'persistent'
+        # (really paramiko), evnentually this should move to task object itself.
+        connection_name = self._play_context.connection
 
         # load connection
-        conn_type = self._play_context.connection
+        conn_type = connection_name
         connection = self._shared_loader_obj.connection_loader.get(
             conn_type,
             self._play_context,
@@ -899,28 +902,27 @@ class TaskExecutor:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
         # load become plugin if needed
-        become_plugin = None
-        if self._play_context.become:
-            become_plugin = self._get_become(self._play_context.become_method)
+        if cvars.get('ansible_become', self._task.become):
+            become_plugin = self._get_become(cvars.get('ansible_become_method', self._task.become_method))
 
-        if getattr(become_plugin, 'require_tty', False) and not getattr(connection, 'has_tty', False):
-            raise AnsibleError(
-                "The '%s' connection does not provide a tty which is required for the selected "
-                "become plugin: %s." % (conn_type, become_plugin.name)
-            )
+            try:
+                connection.set_become_plugin(become_plugin)
+            except AttributeError:
+                # Older connection plugin that does not support set_become_plugin
+                pass
 
-        try:
-            connection.set_become_plugin(become_plugin)
-        except AttributeError:
-            # Connection plugin does not support set_become_plugin
-            pass
+            if getattr(connection.become, 'require_tty', False) and not getattr(connection, 'has_tty', False):
+                raise AnsibleError(
+                    "The '%s' connection does not provide a TTY which is required for the selected "
+                    "become plugin: %s." % (conn_type, become_plugin.name)
+                )
 
-        # Backwards compat for connection plugins that don't support become plugins
-        # Just do this unconditionally for now, we could move it inside of the
-        # AttributeError above later
-        self._play_context.set_become_plugin(become_plugin)
+            # Backwards compat for connection plugins that don't support become plugins
+            # Just do this unconditionally for now, we could move it inside of the
+            # AttributeError above later
+            self._play_context.set_become_plugin(become_plugin.name)
 
-        # FIXME: remove once all plugins pull all data from self._options
+        # Also backwards compat call for those still using play_context
         self._play_context.set_attributes_from_plugin(connection)
 
         if any(((connection.supports_persistence and C.USE_PERSISTENT_CONNECTIONS), connection.force_persistence)):
@@ -956,6 +958,7 @@ class TaskExecutor:
         except AttributeError:
             # Some plugins are assigned to private attrs, ``become`` is not
             plugin = getattr(self._connection, plugin_type)
+
         option_vars = C.config.get_plugin_vars(plugin_type, plugin._load_name)
         options = {}
         for k in option_vars:
@@ -964,53 +967,51 @@ class TaskExecutor:
         # TODO move to task method?
         plugin.set_options(task_keys=task_keys, var_options=options)
 
+        return option_vars
+
     def _set_connection_options(self, variables, templar):
 
-        # Keep the pre-delegate values for these keys
-        PRESERVE_ORIG = ('inventory_hostname',)
-
-        # create copy with delegation built in
-        final_vars = combine_vars(
-            variables,
-            variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
-        )
+        # keep list of variable names possibly consumed
+        varnames = []
 
         # grab list of usable vars for this plugin
         option_vars = C.config.get_plugin_vars('connection', self._connection._load_name)
+        varnames.extend(option_vars)
 
         # create dict of 'templated vars'
         options = {'_extras': {}}
         for k in option_vars:
-            if k in PRESERVE_ORIG:
+            if k in variables:
                 options[k] = templar.template(variables[k])
-            elif k in final_vars:
-                options[k] = templar.template(final_vars[k])
 
         # add extras if plugin supports them
         if getattr(self._connection, 'allow_extras', False):
-            for k in final_vars:
+            for k in variables:
                 if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
-                    options['_extras'][k] = templar.template(final_vars[k])
+                    options['_extras'][k] = templar.template(variables[k])
 
         task_keys = self._task.dump_attrs()
 
         # set options with 'templated vars' specific to this plugin and dependant ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
-        self._set_plugin_options('shell', final_vars, templar, task_keys)
+        varnames.extend(self._set_plugin_options('shell', variables, templar, task_keys))
 
         if self._connection.become is not None:
-            # FIXME: find alternate route to provide passwords,
-            # keep out of play objects to avoid accidental disclosure
-            task_keys['become_pass'] = self._play_context.become_pass
-            self._set_plugin_options('become', final_vars, templar, task_keys)
+
+            varnames.extend(self._set_plugin_options('become', variables, templar, task_keys))
+            # FIXME: eventually remove from task and play_context, here for backwards compat
+            # keep out of play objects to avoid accidental disclosure, only become plugin should have
+            task_keys['become_pass'] = self._connection.become.get_option('become_pass')
 
             # FOR BACKWARDS COMPAT:
-            for option in ('become_user', 'become_flags', 'become_exe'):
+            for option in ('become_user', 'become_flags', 'become_exe', 'become_pass'):
                 try:
                     setattr(self._play_context, option, self._connection.become.get_option(option))
                 except KeyError:
                     pass  # some plugins don't support all base flags
             self._play_context.prompt = self._connection.become.prompt
+
+        return varnames
 
     def _get_action_handler(self, connection, templar):
         '''
