@@ -79,11 +79,6 @@ You will see: ``ERROR! Syntax Error while loading YAML.`` If you add quotes, Ans
       vars:
            app_path: "{{ base_path }}/22"
 
-.. _vars_and_facts:
-
-Variables discovered from systems: Facts
-========================================
-
 Defining variables as lists
 ---------------------------
 
