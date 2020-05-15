@@ -1,0 +1,5 @@
+---
+bugfixes:
+  - ansible-vault - Alter behavior of ``encrypt_string`` to work more intutativly (ending input on Enter and masking input) (https://github.com/ansible/ansible/issues/51860)
+minor_changes:
+  - ansible-vault ``encrypt_string`` no longer supports prompted multi-line input see docs for new methods to send multi line content.
