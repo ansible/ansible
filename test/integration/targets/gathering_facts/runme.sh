@@ -11,12 +11,4 @@ set -eux
 ## ensure clean_facts is working properly
 #ansible-playbook test_prevent_injection.yml -i inventory -v "$@"
 
-
-export ANSIBLE_NOCOLOR=true ANSIBLE_FORCE_COLOR=false
-# ensure fact gathering merge order is expected:
-ansible -m gather_facts -e 'ansible_facts_modules=facts_one,facts_two' localhost --playbook-dir ./ > one_two.current
-diff -u one_two.output one_two.current
-
-# now reverse order
-ansible -m gather_facts -e 'ansible_facts_modules=facts_two,facts_one' localhost --playbook-dir ./ > two_one.current
-diff -u two_one.output two_one.current
+ansible-playbook verify_merge_facts.yml -v "$@"
