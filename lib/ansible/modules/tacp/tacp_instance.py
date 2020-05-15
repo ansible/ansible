@@ -4,7 +4,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.tacp import *
+from ansible.module_utils import tacp as tacp_utils
 
 import json
 import tacp
@@ -82,7 +82,7 @@ def run_module():
         api_key=dict(type='str', required=True),
         name=dict(type='str', required=True),
         state=dict(type='str', default='present',
-                   choices=['present', 'absent']),
+                   choices=['started', 'absent', 'stopped', 'restarted', 'force-restarted', 'paused', 'shutdown']),
         datacenter=dict(type='str', required=False),
         mz=dict(type='str', required=False),
         storage_pool=dict(type='str', required=False),
@@ -130,16 +130,13 @@ def run_module():
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
 
-    def validate_input(params):
-        pass
-
     def generate_instance_params(module):
         # VM does not exist yet, so we must create it
         instance_params = {}
         instance_params['instance_name'] = module.params['name']
 
         # Check if storage pool exists, it must in order to continue
-        storage_pool_uuid = get_component_fields_by_name(
+        storage_pool_uuid = tacp_utils.get_component_fields_by_name(
             module.params['storage_pool'], 'storage_pool', api_client)
         if storage_pool_uuid:
             instance_params['storage_pool_uuid'] = storage_pool_uuid
@@ -150,7 +147,7 @@ def run_module():
             fail_with_reason(reason)
 
         # Check if datacenter exists, it must in order to continue
-        datacenter_uuid = get_component_fields_by_name(
+        datacenter_uuid = tacp_utils.get_component_fields_by_name(
             module.params['datacenter'], 'datacenter', api_client)
         if datacenter_uuid:
             instance_params['datacenter_uuid'] = datacenter_uuid
@@ -161,7 +158,7 @@ def run_module():
             fail_with_reason(reason)
 
         # Check if migration_zone exists, it must in order to continue
-        migration_zone_uuid = get_component_fields_by_name(
+        migration_zone_uuid = tacp_utils.get_component_fields_by_name(
             module.params['mz'], 'migration_zone', api_client)
         if migration_zone_uuid:
             instance_params['migration_zone_uuid'] = migration_zone_uuid
@@ -172,11 +169,11 @@ def run_module():
             fail_with_reason(reason)
 
         # Check if template exists, it must in order to continue
-        template_uuid = get_component_fields_by_name(
+        template_uuid = tacp_utils.get_component_fields_by_name(
             module.params['template'], 'template', api_client)
         if template_uuid:
             instance_params['template_uuid'] = template_uuid
-            boot_order = get_component_fields_by_name(
+            boot_order = tacp_utils.get_component_fields_by_name(
                 module.params['template'], 'template', api_client, fields=['name', 'uuid', 'bootOrder'])
         else:
             # Template does not exist - must fail the task
@@ -188,10 +185,10 @@ def run_module():
 
         for i, nic in enumerate(module.params['nics']):
             if nic['type'].lower() == "vnet":
-                network_uuid = get_component_fields_by_name(
+                network_uuid = tacp_utils.get_component_fields_by_name(
                     nic['network'], 'vnet', api_client)
             elif nic['type'].lower() == "vlan":
-                network_uuid = get_component_fields_by_name(
+                network_uuid = tacp_utils.get_component_fields_by_name(
                     nic['network'], 'vlan', api_client)
 
             if 'mac_address' in nic.keys():
@@ -238,7 +235,7 @@ def run_module():
             instance_params['networks'] = network_payloads
             instance_params['vnics'] = vnic_payloads
             instance_params['vcpus'] = module.params['vcpu_cores']
-            instance_params['memory'] = convert_memory_abbreviation_to_bytes(
+            instance_params['memory'] = tacp_utils.convert_memory_abbreviation_to_bytes(
                 module.params['memory'])
             instance_params['vm_mode'] = module.params['vm_mode'].capitalize()
             instance_params['vtx_enabled'] = module.params['vtx_enabled']
@@ -281,35 +278,44 @@ def run_module():
 
             return "Exception when calling ApplicationsApi->create_application_from_template_using_post: %s\n" % e
 
-        wait_for_action_to_complete(api_response.action_uuid, api_client)
-        result['ansible_module_results'] = get_resource_by_uuid(
+        tacp_utils.wait_for_action_to_complete(
+            api_response.action_uuid, api_client)
+        result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
             api_response.object_uuid, 'application', api_client)
         result['changed'] = True
-        result['failed'] = False
-        module.exit_json(**result)
 
-    def delete_instance(name, api_client):
-        instance_uuid = get_component_fields_by_name(
+    def instance_power_action(name, api_client, action):
+        instance_uuid = tacp_utils.get_component_fields_by_name(
             module.params['name'], 'application', api_client)
         api_instance = tacp.ApplicationsApi(api_client)
+
+        actions = {"start": api_instance.start_application_using_put,
+                   "stop": api_instance.stop_application_using_put,
+                   "restart": api_instance.restart_application_using_put,
+                   "shutdown": api_instance.shutdown_application_using_put,
+                   "pause": api_instance.pause_application_using_put,
+                   "resume": api_instance.resume_application_using_put,
+                   "delete": api_instance.delete_application_using_delete}
+
         try:
-            # Delete an application
-            api_response = api_instance.delete_application_using_delete(
+            api_response = actions[action](
                 instance_uuid)
             if module._verbosity >= 3:
                 result['api_response'] = str(api_response)
         except ApiException as e:
-            response_dict = api_response_to_dict(e)
-            # result['msg'] = response_dict['message']
+            response_dict = tacp_utils.api_response_to_dict(e)
+
             if "Error" in response_dict['message']:
                 result['changed'] = False
                 result['failed'] = True
                 fail_with_reason(response_dict['message'])
 
-        wait_for_action_to_complete(api_response.action_uuid, api_client)
+        success, failure_reason = tacp_utils.wait_for_action_to_complete(
+            api_response.action_uuid, api_client)
+        
+        if not success:
+            fail_with_reason(failure_reason)
         result['changed'] = True
-        result['failed'] = False
-        module.exit_json(**result)
 
     # Return the inputs for debugging purposes
     result['args'] = module.params
@@ -321,48 +327,109 @@ def run_module():
     configuration.api_key['Authorization'] = module.params['api_key']
     api_client = tacp.ApiClient(configuration)
 
-    instance_params = generate_instance_params(module)
-
-    instance_uuid = get_component_fields_by_name(
+    instance_uuid = tacp_utils.get_component_fields_by_name(
         module.params['name'], 'application', api_client)
     if instance_uuid:
-        vm_is_present = True
+        instance_is_present = True
     else:
-        vm_is_present = False
+        instance_is_present = False
 
-    if module.params['state'] == 'present':
-        if vm_is_present:
-            result['changed'] = False
+    if instance_is_present:
+        instance_properties = tacp_utils.get_resource_by_uuid(
+            instance_uuid, 'application', api_client)
+        current_state = instance_properties['status']
+        # 'Running', 'Shut down', 'Paused'
+
+        if module.params['state'] == 'absent':
+            instance_power_action(module.params['name'], api_client, "delete")
             module.exit_json(**result)
-        else:
-            create_instance_response = create_instance(instance_params, api_client)
-    elif module.params['state'] == 'absent':
-        if vm_is_present:
-            delete_instance(module.params['name'], api_client)
-        else:
-            result['changed'] = False
-            module.exit_json(**result)
-    elif module.params['state'] == 'shutdown':
-        pass
-    elif module.params['state'] == 'stopped':
-        pass
-    elif module.params['state'] == 'paused':
-        pass
-    elif module.params['state'] == 'resumed':
-        pass
+        elif module.params['state'] == 'started':
+            if current_state == 'Shut down':
+                instance_power_action(
+                    module.params['name'], api_client, "start")
+            elif current_state == 'Paused':
+                instance_power_action(
+                    module.params['name'], api_client, "resume")
+            else:
+                # Application is already running, so do nothing
+                pass
+        elif module.params['state'] == 'shutdown':
+            if current_state == 'Running':
+                instance_power_action(
+                    module.params['name'], api_client, "shutdown")
+            elif current_state == 'Paused':
+                instance_power_action(
+                    module.params['name'], api_client, "resume")
+                instance_power_action(
+                    module.params['name'], api_client, "shutdown")
+            else:
+                # Application is already shut down, so do nothing
+                pass
+        elif module.params['state'] == 'stopped':
+            if current_state != 'Shut down':
+                instance_power_action(
+                    module.params['name'], api_client, "stop")
+            else:
+                # Application is already shut down, so do nothing
+                pass
+        elif module.params['state'] == 'restarted':
+            if current_state == 'Running':
+                instance_power_action(
+                    module.params['name'], api_client, "restart")
+            elif current_state == 'Paused':
+                instance_power_action(
+                    module.params['name'], api_client, "resume")
+                instance_power_action(
+                    module.params['name'], api_client, "restart")
+            else:
+                # Application is shut down, so start
+                instance_power_action(
+                    module.params['name'], api_client, "start")
+        elif module.params['state'] == 'force-restarted':
+            if current_state == 'Shut down':
+                # Application is shut down, so start
+                instance_power_action(
+                    module.params['name'], api_client, "start")
+            else:
+                instance_power_action(
+                    module.params['name'], api_client, "force-restart")
+        elif module.params['state'] == 'paused':
+            if current_state == 'Running':
+                instance_power_action(
+                    module.params['name'], api_client, "pause")
+            elif current_state == 'Shut down':
+                # Application is shut down, so start, then pause
+                instance_power_action(
+                    module.params['name'], api_client, "start")
+                instance_power_action(
+                    module.params['name'], api_client, "pause")
+            else:
+                # Application is already paused, so do nothing
+                pass
+            
+    else:
+        if module.params['state'] != 'absent':
+            # Application does not exist yet, so create it
+            instance_params = generate_instance_params(module)
+            create_instance(instance_params, api_client)
 
-    # Check if VM instance with this name exists already
+            if module.params['state'] in ['shutdown', 'stopped']:
+                # No need to do anything
+                pass
+            elif module.params['state'] in 'started':
+                instance_power_action(
+                    module.params['name'], api_client, "start")
+            elif module.params['state'] == 'restarted':
+                instance_power_action(
+                    module.params['name'], api_client, "restart")
+            elif module.params['state'] == 'force-restarted':
+                instance_power_action(
+                    module.params['name'], api_client, "restart")
+            elif module.params['state'] == 'paused':
+                instance_power_action(
+                    module.params['name'], api_client, "pause")
 
-    if instance_uuid:
-        # VM does exist - so for now we need to just break without changing anything,
-        # but in the future this would mean we go to edit the existing VM with this name/uuid
-        # vm_exists = True
-        result['msg'] = "An application for this datacenter already exists with name %s" % module.params['name']
-        result['changed'] = False
-
-        module.exit_json(**result)
-
-    result['create_instance_response'] = create_instance_response
+    module.exit_json(**result)
 
     # AnsibleModule.fail_json() to pass in the message and the result
 
