@@ -12,7 +12,7 @@
     - name: fail if ref file is updated
       assert:
         that:
-            - update is not changed
+            - not update.diff
 
     - name: clear existing facts for next play
       meta: clear_facts
@@ -32,4 +32,4 @@
     - name: fail if ref file is updated
       assert:
         that:
-            - update is not changed
+            - not update.diff
