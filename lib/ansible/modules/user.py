@@ -187,7 +187,7 @@ options:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
             - Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
-            - Since Ansible 2.6 you can remove the expiry time by specifying a negative value.
+            - Since Ansible 2.6 you can remove the expiry time specify a negative value.
               Currently supported on GNU/Linux and FreeBSD.
         type: float
         version_added: "1.9"
@@ -238,6 +238,17 @@ options:
             - Currently supported on Illumos/Solaris.
         type: str
         version_added: "2.8"
+    password_expire_max:
+        description:
+            - Maximum number of days between password change.
+        type: int
+        version_added: "2.10"
+    password_expire_min:
+        description:
+            - Minimum number of days between password change.
+        type: int
+        version_added: "2.10"
+
 notes:
   - There are specific requirements per platform on user management utilities. However
     they generally come pre-installed with the system and Ansible will require they
@@ -299,6 +310,14 @@ EXAMPLES = r'''
   ansible.builtin.user:
     name: james18
     expires: -1
+- name: Set Maximum Expire date for password
+  user:
+    name: ram19
+    password_expire_max: 10
+- name: Set Minimum Expire date for password
+  user:
+    name: pushkar15
+    password_expire_min: 5
 '''
 
 RETURN = r'''
@@ -400,6 +419,16 @@ uid:
   returned: When I(uid) is passed to the module
   type: int
   sample: 1044
+password_expire_max:
+  description: Maximum number of days between password change
+  returned: When user exists
+  type: int
+  sample: 20
+password_expire_min:
+  description: Minimum number of days between password change
+  returned: When user exists
+  type: int
+  sample: 20
 '''
 
 
@@ -494,6 +523,8 @@ class User(object):
         self.profile = module.params['profile']
         self.authorization = module.params['authorization']
         self.role = module.params['role']
+        self.password_expire_max = module.params['password_expire_max']
+        self.password_expire_min = module.params['password_expire_min']
 
         if module.params['groups'] is not None:
             self.groups = ','.join(module.params['groups'])
@@ -563,6 +594,26 @@ class User(object):
     def backup_shadow(self):
         if not self.module.check_mode and self.SHADOWFILE:
             return self.module.backup_local(self.SHADOWFILE)
+
+    def set_password_expire_max(self):
+        command_name = 'chage'
+
+        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd.append('-M')
+        cmd.append(self.password_expire_max)
+        cmd.append(self.name)
+
+        return self.execute_command(cmd)
+
+    def set_password_expire_min(self):
+        command_name = 'chage'
+
+        cmd = [self.module.get_bin_path(command_name, True)]
+        cmd.append('-m')
+        cmd.append(self.password_expire_min)
+        cmd.append(self.name)
+
+        return self.execute_command(cmd)
 
     def remove_user_userdel(self):
         if self.local:
@@ -694,7 +745,7 @@ class User(object):
             out += _out
             err += _err
             if rc != 0:
-                return (rc, out, err)
+            return (rc, out, err)
 
         if self.groups is None or len(self.groups) == 0:
             return (rc, out, err)
@@ -1145,6 +1196,14 @@ class User(object):
         except IOError:
             return None
         return ssh_public_key
+
+    def password_expire_set_max(self):
+        # by default we use the set_password_expire_max method
+        return self.set_password_expire_max()
+
+    def password_expire_set_min(self):
+        # by default we use the set_password_expire_min method
+        return self.set_password_expire_min()
 
     def create_user(self):
         # by default we use the create_user_useradd method
@@ -2957,6 +3016,8 @@ def main():
             shell=dict(type='str'),
             password=dict(type='str', no_log=True),
             login_class=dict(type='str'),
+            password_expire_max=dict(type='int', no_log=True),
+            password_expire_min=dict(type='int', no_log=True),
             # following options are specific to macOS
             hidden=dict(type='bool'),
             # following options are specific to selinux
@@ -3095,6 +3156,20 @@ def main():
                 result['ssh_fingerprint'] = err.strip()
             result['ssh_key_file'] = user.get_ssh_key_path()
             result['ssh_public_key'] = user.get_ssh_public_key()
+
+    # deal with password expire max
+    if user.password_expire_max:
+        if user.user_exists():
+            if module.check_mode:
+                module.exit_json(changed=True)
+            (rc, out, err) = user.password_expire_set_max()
+
+    # deal with password expire min
+    if user.password_expire_min:
+        if user.user_exists():
+            if module.check_mode:
+                module.exit_json(changed=True)
+            (rc, out, err) = user.password_expire_set_min()
 
     module.exit_json(**result)
 
