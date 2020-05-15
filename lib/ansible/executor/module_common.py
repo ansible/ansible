@@ -36,7 +36,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
 
@@ -654,12 +654,12 @@ class CollectionModuleInfo(ModuleInfo):
         resource_base_path = os.path.join(*split_name[3:])
         # look for package_dir first, then module
 
-        self._src = pkgutil.get_data(collection_pkg_name, os.path.join(resource_base_path, '__init__.py'))
+        self._src = pkgutil.get_data(collection_pkg_name, to_native(os.path.join(resource_base_path, '__init__.py')))
 
         if self._src is not None:  # empty string is OK
             return
 
-        self._src = pkgutil.get_data(collection_pkg_name, resource_base_path + '.py')
+        self._src = pkgutil.get_data(collection_pkg_name, to_native(resource_base_path + '.py'))
 
         if not self._src:
             raise ImportError('unable to load collection-hosted module_util'
