@@ -255,12 +255,15 @@ class ModuleValidator(Validator):
         self.analyze_arg_spec = analyze_arg_spec
 
         self.Version = LooseVersion
+        self.StrictVersion = StrictVersion
 
         self.collection = collection
+        if self.collection:
+            self.Version = SemanticVersion
+            self.StrictVersion = SemanticVersion
         self.routing = routing
         self.collection_version = None
         if collection_version is not None:
-            self.Version = SemanticVersion
             self.collection_version_str = collection_version
             self.collection_version = self.Version(collection_version)
 
@@ -1137,7 +1140,7 @@ class ModuleValidator(Validator):
     def _check_version_added(self, doc, existing_doc):
         version_added_raw = doc.get('version_added')
         try:
-            version_added = StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
+            version_added = self.StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
             if self._is_new_module() or version_added != 'historical':
@@ -1160,7 +1163,7 @@ class ModuleValidator(Validator):
             return
 
         should_be = '.'.join(ansible_version.split('.')[:2])
-        strict_ansible_version = StrictVersion(should_be)
+        strict_ansible_version = self.StrictVersion(should_be)
 
         if (version_added < strict_ansible_version or
                 strict_ansible_version < version_added):
@@ -1972,12 +1975,12 @@ class ModuleValidator(Validator):
                 return
 
         try:
-            mod_version_added = StrictVersion()
+            mod_version_added = self.StrictVersion()
             mod_version_added.parse(
                 str(existing_doc.get('version_added', '0.0'))
             )
         except ValueError:
-            mod_version_added = StrictVersion('0.0')
+            mod_version_added = self.StrictVersion('0.0')
 
         if self.base_branch and 'stable-' in self.base_branch:
             metadata.pop('metadata_version', None)
@@ -1992,7 +1995,7 @@ class ModuleValidator(Validator):
         options = doc.get('options', {}) or {}
 
         should_be = '.'.join(ansible_version.split('.')[:2])
-        strict_ansible_version = StrictVersion(should_be)
+        strict_ansible_version = self.StrictVersion(should_be)
 
         for option, details in options.items():
             try:
@@ -2018,7 +2021,7 @@ class ModuleValidator(Validator):
                 continue
 
             try:
-                version_added = StrictVersion()
+                version_added = self.StrictVersion()
                 version_added.parse(
                     str(details.get('version_added', '0.0'))
                 )
@@ -2104,12 +2107,18 @@ class ModuleValidator(Validator):
                 end_of_deprecation_should_be_removed_only = True
             elif docs and 'deprecated' in docs and docs['deprecated'] is not None:
                 try:
-                    removed_in = StrictVersion(str(docs.get('deprecated')['removed_in']))
+                    removed_in = self.StrictVersion(str(docs.get('deprecated')['removed_in']))
                 except ValueError:
                     end_of_deprecation_should_be_removed_only = False
                 else:
-                    strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
-                    end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                    if not self.collection:
+                        strict_ansible_version = self.StrictVersion('.'.join(ansible_version.split('.')[:2]))
+                        end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                    elif self.collection_version:
+                        strict_ansible_version = self.collection_version
+                        end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                    else:
+                        end_of_deprecation_should_be_removed_only = False
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_removed_only:
             self._validate_ansible_module_call(docs)
