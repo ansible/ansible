@@ -1,0 +1,2 @@
+bugfixes:
+    - ansible-test now uses ``pycodestyle`` frozen at version 2.6.0 for consistent test results.
