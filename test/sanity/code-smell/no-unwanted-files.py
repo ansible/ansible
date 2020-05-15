@@ -19,7 +19,7 @@ def main():
     )
 
     skip_paths = set([
-        'lib/ansible/config/runtime.yml',  # not included in the sanity ignore file since it won't exist until after migration
+        'lib/ansible/config/ansible_builtin_runtime.yml',  # not included in the sanity ignore file since it won't exist until after migration
     ])
 
     skip_directories = (
