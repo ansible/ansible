@@ -310,7 +310,7 @@ def parse_args():
                       help=argparse.SUPPRESS)
 
     test.add_argument('--base-branch',
-                      help=argparse.SUPPRESS)
+                      help='base branch used for change detection')
 
     add_changes(test, argparse)
     add_environments(test)
