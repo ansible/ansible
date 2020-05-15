@@ -48,13 +48,13 @@ class TestBoolean:
 
     def test_junk_values_strict(self):
         with pytest.raises(TypeError):
-            assert boolean("flibbity", strict=True)is False
+            assert boolean("flibbity", strict=True) is False
 
         with pytest.raises(TypeError):
-            assert boolean(42, strict=True)is False
+            assert boolean(42, strict=True) is False
 
         with pytest.raises(TypeError):
-            assert boolean(42.0, strict=True)is False
+            assert boolean(42.0, strict=True) is False
 
         with pytest.raises(TypeError):
-            assert boolean(object(), strict=True)is False
+            assert boolean(object(), strict=True) is False
