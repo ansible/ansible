@@ -42,6 +42,6 @@ Running ``ansible-galaxy collection install -r`` or ``ansible-galaxy role instal
 or roles respectively.
 
 .. note::
-    Installing both roles and collections from the same requirements file will not work when specifying a custom path
-    to install either collections or roles to. In this scenario the collections will be skipped and the command will
-    process each like like ``ansible-galaxy role install`` would.
+    Installing both roles and collections from the same requirements file will not work when specifying a custom
+    collection or role install path. In this scenario the collections will be skipped and the command will process
+    each like ``ansible-galaxy role install`` would.
