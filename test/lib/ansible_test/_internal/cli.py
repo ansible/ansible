@@ -309,6 +309,9 @@ def parse_args():
     test.add_argument('--metadata',
                       help=argparse.SUPPRESS)
 
+    test.add_argument('--base-branch',
+                      help=argparse.SUPPRESS)
+
     add_changes(test, argparse)
     add_environments(test)
 
@@ -526,9 +529,6 @@ def parse_args():
                         metavar='VERSION',
                         choices=SUPPORTED_PYTHON_VERSIONS + ('default',),
                         help='python version: %s' % ', '.join(SUPPORTED_PYTHON_VERSIONS))
-
-    sanity.add_argument('--base-branch',
-                        help=argparse.SUPPRESS)
 
     sanity.add_argument('--enable-optional-errors',
                         action='store_true',
