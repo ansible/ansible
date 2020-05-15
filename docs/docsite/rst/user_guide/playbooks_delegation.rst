@@ -1,156 +1,24 @@
 .. _playbooks_delegation:
 
-Delegation, Rolling Updates, and Local Actions
-==============================================
+Delegation and local actions
+============================
 
-.. contents:: Topics
+By default Ansible executes all tasks on the machines that match the ``hosts`` line of your playbook. If you want to run some tasks on a different machine, you can use delegation. For example, when updating webservers, you might want to retrieve information from your database servers. In this scenario, your play would target the webservers group and you would delegate the database tasks to your dbservers group. With delegation, you can perform a task on one host on behalf of another, or execute tasks locally on behalf of remote hosts.
 
-Being designed for multi-tier deployments since the beginning, Ansible is great at doing things on one host on behalf of another, or doing local steps with reference to some remote hosts.
+.. contents::
+   :local:
 
-This in particular is very applicable when setting up continuous deployment infrastructure or zero downtime rolling updates, where you might be talking with load balancers or monitoring systems.
+Tasks that cannot be delegated
+------------------------------
 
-Additional features allow for tuning the orders in which things complete, and assigning a batch window size for how many machines to process at once during a rolling update.
-
-This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <https://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
-
-You should also consult the :ref:`module documentation<modules_by_category>` section. Modules like :ref:`ec2_elb<ec2_elb_module>`, :ref:`nagios<nagios_module>`, :ref:`bigip_pool<bigip_pool_module>`, and other :ref:`network_modules` dovetail neatly with the concepts mentioned here.
-
-You'll also want to read up on :ref:`playbooks_reuse_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules.
-
-Be aware that certain tasks are impossible to delegate, i.e. `include`, `add_host`, `debug`, etc as they always execute on the controller.
-
-
-.. _rolling_update_batch_size:
-
-Rolling Update Batch Size
-`````````````````````````
-
-By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling update use case, you can define how many hosts Ansible should manage at a single time by using the ``serial`` keyword::
-
-    ---
-    - name: test play
-      hosts: webservers
-      serial: 2
-      gather_facts: False
-
-      tasks:
-        - name: task one
-          command: hostname
-        - name: task two
-          command: hostname
-
-In the above example, if we had 4 hosts in the group 'webservers', 2
-would complete the play completely before moving on to the next 2 hosts::
-
-
-    PLAY [webservers] ****************************************
-
-    TASK [task one] ******************************************
-    changed: [web2]
-    changed: [web1]
-
-    TASK [task two] ******************************************
-    changed: [web1]
-    changed: [web2]
-
-    PLAY [webservers] ****************************************
-
-    TASK [task one] ******************************************
-    changed: [web3]
-    changed: [web4]
-
-    TASK [task two] ******************************************
-    changed: [web3]
-    changed: [web4]
-
-    PLAY RECAP ***********************************************
-    web1      : ok=2    changed=2    unreachable=0    failed=0
-    web2      : ok=2    changed=2    unreachable=0    failed=0
-    web3      : ok=2    changed=2    unreachable=0    failed=0
-    web4      : ok=2    changed=2    unreachable=0    failed=0
-
-
-The ``serial`` keyword can also be specified as a percentage, which will be applied to the total number of hosts in a
-play, in order to determine the number of hosts per pass::
-
-    ---
-    - name: test play
-      hosts: webservers
-      serial: "30%"
-
-If the number of hosts does not divide equally into the number of passes, the final pass will contain the remainder.
-
-As of Ansible 2.2, the batch sizes can be specified as a list, as follows::
-
-    ---
-    - name: test play
-      hosts: webservers
-      serial:
-        - 1
-        - 5
-        - 10
-
-In the above example, the first batch would contain a single host, the next would contain 5 hosts, and (if there are any hosts left),
-every following batch would contain 10 hosts until all available hosts are used.
-
-It is also possible to list multiple batch sizes as percentages::
-
-    ---
-    - name: test play
-      hosts: webservers
-      serial:
-        - "10%"
-        - "20%"
-        - "100%"
-
-You can also mix and match the values::
-
-    ---
-    - name: test play
-      hosts: webservers
-      serial:
-        - 1
-        - 5
-        - "20%"
-
-.. note::
-     No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
-
-
-.. _maximum_failure_percentage:
-
-Maximum Failure Percentage
-``````````````````````````
-
-By default, Ansible will continue executing actions as long as there are hosts in the batch that have not yet failed. The batch size for a play is determined by the ``serial`` parameter. If ``serial`` is not set, then batch size is all the hosts specified in the ``hosts:`` field.
-In some situations, such as with the rolling updates described above, it may be desirable to abort the play when a
-certain threshold of failures have been reached. To achieve this, you can set a maximum failure
-percentage on a play as follows::
-
-    ---
-    - hosts: webservers
-      max_fail_percentage: 30
-      serial: 10
-
-In the above example, if more than 3 of the 10 servers in the group were to fail, the rest of the play would be aborted.
-
-.. note::
-
-     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort
-     when 2 of the systems failed, the percentage should be set at 49 rather than 50.
+Some tasks always execute on the controller. These tasks, including ``include``, ``add_host``, and ``debug``, cannot be delegated.
 
 .. _delegation:
 
-Delegation
-``````````
+Delegating tasks
+----------------
 
-
-This isn't actually rolling update specific but comes up frequently in those cases.
-
-If you want to perform a task on one host with reference to other hosts, use the 'delegate_to' keyword on a task.
-This is ideal for placing nodes in a load balanced pool, or removing them.  It is also very useful for controlling outage windows.
-Be aware that it does not make sense to delegate all tasks, debug, add_host, include, etc always get executed on the controller.
-Using this with the 'serial' keyword to control the number of hosts executing at one time is also a good idea::
+If you want to perform a task on one host with reference to other hosts, use the 'delegate_to' keyword on a task. This is ideal for managing nodes in a load balanced pool or for controlling outage windows. You can use delegation with the :ref:`serial <rolling_update_batch_size>` keyword to control the number of hosts executing at one time::
 
     ---
     - hosts: webservers
@@ -170,8 +38,7 @@ Using this with the 'serial' keyword to control the number of hosts executing at
           command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
 
-
-These commands will run on 127.0.0.1, which is the machine running Ansible. There is also a shorthand syntax that you can use on a per-task basis: 'local_action'. Here is the same playbook as above, but using the shorthand syntax for delegating to 127.0.0.1::
+The first and third tasks in this play run on 127.0.0.1, which is the machine running Ansible. There is also a shorthand syntax that you can use on a per-task basis: 'local_action'. Here is the same playbook as above, but using the shorthand syntax for delegating to 127.0.0.1::
 
     ---
     # ...
@@ -185,8 +52,7 @@ These commands will run on 127.0.0.1, which is the machine running Ansible. Ther
         - name: add back to load balancer pool
           local_action: command /usr/bin/add_back_to_pool {{ inventory_hostname }}
 
-A common pattern is to use a local action to call 'rsync' to recursively copy files to the managed servers.
-Here is an example::
+You can use a local action to call 'rsync' to recursively copy files to the managed servers::
 
     ---
     # ...
@@ -198,7 +64,7 @@ Here is an example::
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
 
-In case you have to specify more arguments you can use the following syntax::
+To specify more arguments, use the following syntax::
 
     ---
     # ...
@@ -212,15 +78,14 @@ In case you have to specify more arguments you can use the following syntax::
             body: "{{ mail_body }}"
           run_once: True
 
-The `ansible_host` variable (`ansible_ssh_host` in 1.x or specific to ssh/paramiko plugins) reflects the host a task is delegated to.
+The `ansible_host` variable reflects the host a task is delegated to.
 
 .. _delegate_facts:
 
-Delegated facts
-```````````````
+Delegating facts
+----------------
 
-By default, any fact gathered by a delegated task are assigned to the `inventory_hostname` (the current host) instead of the host which actually produced the facts (the delegated to host).
-The directive `delegate_facts` may be set to `True` to assign the task's gathered facts to the delegated host instead of the current one.::
+Delegating Ansible tasks is like delegating tasks in the real world - your groceries belong to you, even if someone else delivers them to your home. Similarly, any facts gathered by a delegated task are assigned by default to the `inventory_hostname` (the current host), not to the host which produced the facts (the delegated to host). To assign gathered facts to the delegated host instead of the current host, set `delegate_facts` to `True`::
 
     ---
     - hosts: app_servers
@@ -232,17 +97,14 @@ The directive `delegate_facts` may be set to `True` to assign the task's gathere
           delegate_facts: True
           loop: "{{groups['dbservers']}}"
 
-The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers.
-This way you can lookup `hostvars['dbhost1']['ansible_default_ipv4']['address']` even though dbservers were not part of the play, or left out by using `--limit`.
-
+This task gathers facts for the machines in the dbservers group and assigns the facts to those machines, even though the play targets the app_servers group. This way you can lookup `hostvars['dbhost1']['ansible_default_ipv4']['address']` even though dbservers were not part of the play, or left out by using `--limit`.
 
 .. _run_once:
 
-Run Once
-````````
+Run once
+--------
 
-In some cases there may be a need to only run a task one time for a batch of hosts.
-This can be achieved by configuring "run_once" on a task::
+If you want a task to run only on the first host in your batch of hosts, set ``run_once`` to true on that task::
 
     ---
     # ...
@@ -256,16 +118,12 @@ This can be achieved by configuring "run_once" on a task::
 
         # ...
 
-This directive forces the task to attempt execution on the first host in the current batch and then applies all results and facts to all the hosts in the same batch.
-
-This approach is similar to applying a conditional to a task such as::
+Ansible executes this task on the first host in the current batch and applies all results and facts to all the hosts in the same batch. This approach is similar to applying a conditional to a task such as::
 
         - command: /opt/application/upgrade_db.py
           when: inventory_hostname == webservers[0]
 
-But the results are applied to all the hosts.
-
-Like most tasks, this can be optionally paired with "delegate_to" to specify an individual host to execute on::
+However, with ``run_once``, the results are applied to all the hosts. To specify an individual host to execute on, delegate the task::
 
         - command: /opt/application/upgrade_db.py
           run_once: true
@@ -274,23 +132,21 @@ Like most tasks, this can be optionally paired with "delegate_to" to specify an 
 As always with delegation, the action will be executed on the delegated host, but the information is still that of the original host in the task.
 
 .. note::
-     When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch.
-     If it's crucial that the task is run only once regardless of "serial" mode, use
+     When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch. If the task must run only once regardless of "serial" mode, use
      :code:`when: inventory_hostname == ansible_play_hosts_all[0]` construct.
 
 .. note::
     Any conditional (i.e `when:`) will use the variables of the 'first host' to decide if the task runs or not, no other hosts will be tested.
 
 .. note::
-    If you want to avoid the default behaviour of setting the fact for all hosts, set `delegate_facts: True` for the specific task or block.
+    If you want to avoid the default behavior of setting the fact for all hosts, set `delegate_facts: True` for the specific task or block.
 
 .. _local_playbooks:
 
-Local Playbooks
+Local playbooks
 ```````````````
 
-It may be useful to use a playbook locally, rather than by connecting over SSH.  This can be useful
-for assuring the configuration of a system by putting a playbook in a crontab.  This may also be used
+It may be useful to use a playbook locally on a remote host, rather than by connecting over SSH.  This can be useful for assuring the configuration of a system by putting a playbook in a crontab.  This may also be used
 to run a playbook inside an OS installer, such as an Anaconda kickstart.
 
 To run an entire playbook locally, just set the "hosts:" line to "hosts: 127.0.0.1" and then run the playbook like so::
@@ -309,52 +165,6 @@ use the default remote connection type::
     under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in
     host_vars/localhost.yml, for example. You can avoid this issue by using ``local_action`` or ``delegate_to: localhost`` instead.
 
-
-
-.. _interrupt_execution_on_any_error:
-
-Interrupt execution on any error
-````````````````````````````````
-
-With the ''any_errors_fatal'' option, any failure on any host in a multi-host play will be treated as fatal and Ansible will exit as soon as all hosts in the current batch have finished the fatal task. Subsequent tasks and plays will not be executed. You can recover from what would be a fatal error by adding a rescue section to the block.
-
-Sometimes ''serial'' execution is unsuitable; the number of hosts is unpredictable (because of dynamic inventory) and speed is crucial (simultaneous execution is required), but all tasks must be 100% successful to continue playbook execution.
-
-For example, consider a service located in many datacenters with some load balancers to pass traffic from users to the service. There is a deploy playbook to upgrade service deb-packages. The playbook has the stages:
-
-- disable traffic on load balancers (must be turned off simultaneously)
-- gracefully stop the service
-- upgrade software (this step includes tests and starting the service)
-- enable traffic on the load balancers (which should be turned on simultaneously)
-
-The service can't be stopped with "alive" load balancers; they must be disabled first. Because of this, the second stage can't be played if any server failed in the first stage.
-
-For datacenter "A", the playbook can be written this way::
-
-    ---
-    - hosts: load_balancers_dc_a
-      any_errors_fatal: True
-
-      tasks:
-        - name: 'shutting down datacenter [ A ]'
-          command: /usr/bin/disable-dc
-
-    - hosts: frontends_dc_a
-
-      tasks:
-        - name: 'stopping service'
-          command: /usr/bin/stop-software
-        - name: 'updating software'
-          command: /usr/bin/upgrade-software
-
-    - hosts: load_balancers_dc_a
-
-      tasks:
-        - name: 'Starting datacenter [ A ]'
-          command: /usr/bin/enable-dc
-
-
-In this example Ansible will start the software upgrade on the front ends only if all of the load balancers are successfully disabled.
 
 .. seealso::
 

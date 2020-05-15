@@ -3,9 +3,7 @@
 Advanced Playbooks Features
 ===========================
 
-Here are some playbook features that not everyone may need to learn, but can be quite useful for particular applications.
-Browsing these topics is recommended as you may find some useful tips here, but feel free to learn the basics of Ansible first
-and adopt these only if they seem relevant or useful to your environment.
+As you write more playbooks and roles, you might have some special use cases. For example, you may want to execute "dry runs" of your playbooks (:ref:`check_mode_dry`), ask playbook users to supply information (:ref:`playbooks_prompts`), retrieve information from an external datastore or API (:ref:`lookup_plugins`), or change the way Ansible handles failures (:ref:`playbooks_error_handling`). The topics listed on this page cover these use cases and many more. If you cannot achieve your goals with basic Ansible concepts and actions, browse through these topics for help with your use case.
 
 .. toctree::
    :maxdepth: 1

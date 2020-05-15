@@ -3,8 +3,8 @@
 Special Variables
 =================
 
-Magic
------
+Magic variables
+---------------
 These variables cannot be set directly by the user; Ansible will always override them to reflect internal state.
 
 ansible_check_mode
@@ -132,7 +132,7 @@ role_path
 
 Facts
 -----
-These are variables that contain information pertinent to the current host (`inventory_hostname`). They are only available if gathered first.
+These are variables that contain information pertinent to the current host (`inventory_hostname`). They are only available if gathered first. See :ref:`vars_and_facts` for more information.
 
 ansible_facts
     Contains any facts gathered or cached for the `inventory_hostname`
@@ -141,7 +141,7 @@ ansible_facts
 ansible_local
     Contains any 'local facts' gathered or cached for the `inventory_hostname`.
     The keys available depend on the custom facts created.
-    See the :ref:`setup <setup_module>` module for more details.
+    See the :ref:`setup <setup_module>` module and :ref:`local_facts` for more details.
 
 .. _connection_variables:
 

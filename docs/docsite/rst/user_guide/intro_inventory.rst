@@ -177,6 +177,8 @@ For numeric patterns, leading zeros can be included or removed, as desired. Rang
     [databases]
     db-[a:f].example.com
 
+.. _variables_in_inventory:
+
 Adding variables to inventory
 =============================
 

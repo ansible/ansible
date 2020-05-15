@@ -27,10 +27,7 @@ Ignoring unreachable host errors
 
 .. versionadded:: 2.7
 
-You may ignore task failure due to the host instance being 'UNREACHABLE' with the ``ignore_unreachable`` keyword.
-Note that task errors are what's being ignored, not the unreachable host.
-
-Here's an example explaining the behavior for an unreachable host at the task level::
+You may ignore task failure due to the host instance being 'UNREACHABLE' with the ``ignore_unreachable`` keyword. Ansible ignores the task errors, but continues to execute future tasks against the unreachable host. For example, at the task level::
 
     - name: this executes, fails, and the failure is ignored
       command: /bin/true
@@ -162,7 +159,12 @@ The :ref:`command <command_module>` and :ref:`shell <shell_module>` modules care
 Aborting a play on all hosts
 ============================
 
-Sometimes you want a failure on a single host to abort the entire play on all hosts. If you set ``any_errors_fatal`` and a task returns an error, Ansible lets all hosts in the current batch finish the fatal task and then stops executing the play on all hosts. You can set ``any_errors_fatal`` at the play or block level::
+Sometimes you want a failure on a single host, or failures on a certain percentage of hosts, to abort the entire play on all hosts. You can stop play execution after the first failure happens with ``any_errors_fatal``. For finer-grained control, you can use ``max_fail_percentage`` to abort the run after a given percentage of hosts has failed.
+
+Aborting on the first error: any_errors_fatal
+---------------------------------------------
+
+If you set ``any_errors_fatal`` and a task returns an error, Ansible finishes the fatal task on all hosts in the current batch, then stops executing the play on all hosts. Subsequent tasks and plays are not executed. You can recover from fatal errors by adding a :ref:`rescue section <block_error_handling>` to the block. You can set ``any_errors_fatal`` at the play or block level::
 
      - hosts: somehosts
        any_errors_fatal: true
@@ -175,7 +177,49 @@ Sometimes you want a failure on a single host to abort the entire play on all ho
              - include_tasks: mytasks.yml
            any_errors_fatal: true
 
-For finer-grained control, you can use ``max_fail_percentage`` to abort the run after a given percentage of hosts has failed.
+You can use this feature when all tasks must be 100% successful to continue playbook execution. For example, if you run a service on machines in multiple data centers with load balancers to pass traffic from users to the service, you want all load balancers to be disabled before you stop the service for maintenance. To ensure that any failure in the task that disables the load balancers will stop all other tasks::
+
+    ---
+    - hosts: load_balancers_dc_a
+      any_errors_fatal: True
+
+      tasks:
+        - name: 'shutting down datacenter [ A ]'
+          command: /usr/bin/disable-dc
+
+    - hosts: frontends_dc_a
+
+      tasks:
+        - name: 'stopping service'
+          command: /usr/bin/stop-software
+        - name: 'updating software'
+          command: /usr/bin/upgrade-software
+
+    - hosts: load_balancers_dc_a
+
+      tasks:
+        - name: 'Starting datacenter [ A ]'
+          command: /usr/bin/enable-dc
+
+In this example Ansible starts the software upgrade on the front ends only if all of the load balancers are successfully disabled.
+
+.. _maximum_failure_percentage:
+
+Setting a maximum failure percentage
+------------------------------------
+
+By default, Ansible continues to execute tasks as long as there are hosts that have not yet failed. In some situations, such as when executing a rolling update, you may want to abort the play when a certain threshold of failures has been reached. To achieve this, you can set a maximum failure percentage on a play::
+
+    ---
+    - hosts: webservers
+      max_fail_percentage: 30
+      serial: 10
+
+The ``max_fail_percentage`` setting applies to each batch when you use it with :ref:`serial <rolling_update_batch_size>`. In the example above, if more than 3 of the 10 servers in the first (or any) batch of servers failed, the rest of the play would be aborted.
+
+.. note::
+
+     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort the play when 2 of the systems failed, set the max_fail_percentage at 49 rather than 50.
 
 Controlling errors in blocks
 ============================
