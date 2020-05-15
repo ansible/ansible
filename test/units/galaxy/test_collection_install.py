@@ -746,12 +746,34 @@ def test_install_collections_existing_without_force(collection_artifact, monkeyp
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
-    assert len(display_msgs) == 4
-    # Msg1 is the warning about not MANIFEST.json, cannot really check message as it has line breaks which varies based
-    # on the path size
-    assert display_msgs[1] == "Process install dependency map"
-    assert display_msgs[2] == "Starting collection install process"
-    assert display_msgs[3] == "Skipping 'ansible_namespace.collection' as it is already installed"
+    assert len(display_msgs) == 3
+
+    assert display_msgs[0] == "Process install dependency map"
+    assert display_msgs[1] == "Starting collection install process"
+    assert display_msgs[2] == "Skipping 'ansible_namespace.collection' as it is already installed"
+
+    for msg in display_msgs:
+        assert 'WARNING' not in msg
+
+
+def test_install_missing_metadata_warning(collection_artifact, monkeypatch):
+    collection_path, collection_tar = collection_artifact
+    temp_path = os.path.split(collection_tar)[0]
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    for file in [b'MANIFEST.json', b'galaxy.yml']:
+        b_path = os.path.join(collection_path, file)
+        if os.path.isfile(b_path):
+            os.unlink(b_path)
+
+    collection.install_collections([(to_text(collection_tar), '*', None,)], to_text(temp_path),
+                                   [u'https://galaxy.ansible.com'], True, False, False, False, False)
+
+    display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
+
+    assert 'WARNING' in display_msgs[0]
 
 
 # Makes sure we don't get stuck in some recursive loop
