@@ -12,6 +12,10 @@ import tempfile
 
 from .. import types as t
 
+from ..encoding import (
+    to_bytes,
+)
+
 from ..io import (
     read_binary_file,
     write_binary_file,
@@ -127,7 +131,7 @@ class AuthHelper(ABC):
         """
         path = os.path.expanduser('~/.ansible-core-ci-private.key')
 
-        if os.path.exists(path):
+        if os.path.exists(to_bytes(path)):
             private_key_pem_bytes = read_binary_file(path)
         else:
             private_key_pem_bytes = self.generate_private_key()
