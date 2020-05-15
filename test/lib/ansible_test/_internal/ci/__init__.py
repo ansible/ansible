@@ -6,7 +6,6 @@ import abc
 import base64
 import json
 import os
-import subprocess  # using subprocess directly since we're interested in working with bytes instead of text
 import tempfile
 
 
@@ -14,11 +13,12 @@ from .. import types as t
 
 from ..encoding import (
     to_bytes,
+    to_text,
 )
 
 from ..io import (
-    read_binary_file,
-    write_binary_file,
+    read_text_file,
+    write_text_file,
 )
 
 from ..config import (
@@ -32,6 +32,7 @@ from ..util import (
     display,
     get_subclasses,
     import_plugins,
+    raw_command,
 )
 
 
@@ -119,12 +120,13 @@ class AuthHelper(ABC):
     """Public key based authentication helper for Ansible Core CI."""
     def sign_request(self, request):  # type: (t.Dict[str, t.Any]) -> None
         """Sign the given auth request and make the public key available."""
-        payload_bytes = json.dumps(request, sort_keys=True).encode()
-        signature_base64_string = self.sign_bytes(payload_bytes)
+        payload_bytes = to_bytes(json.dumps(request, sort_keys=True))
+        signature_raw_bytes = self.sign_bytes(payload_bytes)
+        signature = to_text(base64.b64encode(signature_raw_bytes))
 
-        request.update(signature=signature_base64_string)
+        request.update(signature=signature)
 
-    def initialize_private_key(self):  # type: () -> bytes
+    def initialize_private_key(self):  # type: () -> str
         """
         Initialize and publish a new key pair (if needed) and return the private key.
         The private key is cached across ansible-test invocations so it is only generated and published once per CI job.
@@ -132,61 +134,51 @@ class AuthHelper(ABC):
         path = os.path.expanduser('~/.ansible-core-ci-private.key')
 
         if os.path.exists(to_bytes(path)):
-            private_key_pem_bytes = read_binary_file(path)
+            private_key_pem = read_text_file(path)
         else:
-            private_key_pem_bytes = self.generate_private_key()
-            write_binary_file(path, private_key_pem_bytes)
+            private_key_pem = self.generate_private_key()
+            write_text_file(path, private_key_pem)
 
-        return private_key_pem_bytes
-
-    @abc.abstractmethod
-    def sign_bytes(self, payload_bytes):  # type: (bytes) -> str
-        """
-        Generate a private key and then sign the given bytes.
-        Returns the PEM public key bytes and the base64 encoded signature string.
-        """
+        return private_key_pem
 
     @abc.abstractmethod
-    def publish_public_key(self, public_key_pem_bytes):
+    def sign_bytes(self, payload_bytes):  # type: (bytes) -> bytes
+        """Sign the given payload and return the signature, initializing a new key pair if required."""
+
+    @abc.abstractmethod
+    def publish_public_key(self, public_key_pem):  # type: (str) -> None
         """Publish the given public key."""
 
     @abc.abstractmethod
-    def generate_private_key(self):  # type: () -> bytes
+    def generate_private_key(self):  # type: () -> str
         """Generate a new key pair, publishing the public key and returning the private key."""
 
 
 class OpenSSLAuthHelper(AuthHelper, ABC):  # pylint: disable=abstract-method
     """OpenSSL based public key based authentication helper for Ansible Core CI."""
-    def sign_bytes(self, payload_bytes):  # type: (bytes) -> str
-        """
-        Generate a private key and then sign the given bytes.
-        Returns the PEM public key bytes and the base64 encoded signature string.
-        """
-        private_key_pem_bytes = self.initialize_private_key()
+    def sign_bytes(self, payload_bytes):  # type: (bytes) -> bytes
+        """Sign the given payload and return the signature, initializing a new key pair if required."""
+        private_key_pem = self.initialize_private_key()
 
-        with open(os.devnull, 'wb') as devnull:
-            with tempfile.NamedTemporaryFile() as private_key_file:
-                private_key_file.write(private_key_pem_bytes)
-                private_key_file.flush()
+        with tempfile.NamedTemporaryFile() as private_key_file:
+            private_key_file.write(to_bytes(private_key_pem))
+            private_key_file.flush()
 
-                with tempfile.NamedTemporaryFile() as payload_file:
-                    payload_file.write(payload_bytes)
-                    payload_file.flush()
+            with tempfile.NamedTemporaryFile() as payload_file:
+                payload_file.write(payload_bytes)
+                payload_file.flush()
 
-                    signature_bytes = subprocess.check_output(['openssl', 'dgst', '-sha256', '-sign', private_key_file.name, payload_file.name], stderr=devnull)
+                with tempfile.NamedTemporaryFile() as signature_file:
+                    raw_command(['openssl', 'dgst', '-sha256', '-sign', private_key_file.name, '-out', signature_file.name, payload_file.name], capture=True)
+                    signature_raw_bytes = signature_file.read()
 
-        signature_base64_string = base64.b64encode(signature_bytes).decode()
+        return signature_raw_bytes
 
-        return signature_base64_string
-
-    def generate_private_key(self):  # type: () -> bytes
+    def generate_private_key(self):  # type: () -> str
         """Generate a new key pair, publishing the public key and returning the private key."""
-        with open(os.devnull, 'wb') as devnull:
-            private_key_pem_bytes = subprocess.check_output(['openssl', 'ecparam', '-genkey', '-name', 'secp384r1', '-noout'], stderr=devnull)
+        private_key_pem = raw_command(['openssl', 'ecparam', '-genkey', '-name', 'secp384r1', '-noout'], capture=True)[0]
+        public_key_pem = raw_command(['openssl', 'ec', '-pubout'], data=private_key_pem, capture=True)[0]
 
-            openssl = subprocess.Popen(['openssl', 'ec', '-pubout'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=devnull)
-            public_key_pem_bytes = openssl.communicate(private_key_pem_bytes)[0]
+        self.publish_public_key(public_key_pem)
 
-        self.publish_public_key(public_key_pem_bytes)
-
-        return private_key_pem_bytes
+        return private_key_pem

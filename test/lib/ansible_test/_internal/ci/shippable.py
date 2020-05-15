@@ -196,11 +196,10 @@ class ShippableAuthHelper(OpenSSLAuthHelper):
     Authentication helper for Shippable.
     Based on OpenSSL since cryptography is not provided by the default Shippable environment.
     """
-    def publish_public_key(self, public_key_pem_bytes):  # type: (bytes) -> None
+    def publish_public_key(self, public_key_pem):  # type: (str) -> None
         """Publish the given public key."""
-        public_key_pem_string = public_key_pem_bytes.decode()
         # display the public key as a single line to avoid mangling such as when prefixing each line with a timestamp
-        display.info(public_key_pem_string.replace('\n', ' '))
+        display.info(public_key_pem.replace('\n', ' '))
         # allow time for logs to become available to reduce repeated API calls
         time.sleep(3)
 
