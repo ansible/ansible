@@ -942,7 +942,7 @@ class ModuleValidator(Validator):
         else:
             # We are testing a collection
             if self.routing and self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {}):
-                # meta/routing.yml says this is deprecated
+                # meta/runtime.yml says this is deprecated
                 routing_says_deprecated = True
                 deprecated = True
 
@@ -1118,15 +1118,15 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code='collections-no-underscore-on-deprecation',
-                    msg='Deprecated content in collections MUST NOT start with "_", update meta/routing.yml instead',
+                    msg='Deprecated content in collections MUST NOT start with "_", update meta/runtime.yml instead',
                 )
 
             if not (doc_deprecated == routing_says_deprecated):
-                # DOCUMENTATION.deprecated and meta/routing.yml disagree
+                # DOCUMENTATION.deprecated and meta/runtime.yml disagree
                 self.reporter.error(
                     path=self.object_path,
                     code='deprecation-mismatch',
-                    msg='"meta/routing.yml" and DOCUMENTATION.deprecation do not agree.'
+                    msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree.'
                 )
 
             # In the future we should error if ANSIBLE_METADATA exists in a collection
@@ -2197,8 +2197,8 @@ def run():
     routing = None
     if args.collection:
         setup_collection_loader()
-        routing_file = 'meta/routing.yml'
-        # Load meta/routing.yml if it exists, as it may contain deprecation information
+        routing_file = 'meta/runtime.yml'
+        # Load meta/runtime.yml if it exists, as it may contain deprecation information
         if os.path.isfile(routing_file):
             try:
                 with open(routing_file) as f:

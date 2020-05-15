@@ -45,7 +45,7 @@ def jdump(text):
 
 def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
 
-    # TODO: take into account routing.yml once implemented
+    # TODO: take into account runtime.yml once implemented
     b_colldirs = list_collection_dirs(coll_filter=coll_filter)
     for b_path in b_colldirs:
         path = to_text(b_path, errors='surrogate_or_strict')

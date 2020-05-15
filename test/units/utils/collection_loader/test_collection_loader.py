@@ -495,8 +495,8 @@ def test_on_collection_load():
     load_handler = MagicMock()
     AnsibleCollectionConfig.on_collection_load += load_handler
 
-    import_module('ansible_collections.testns.testcoll')
-    load_handler.assert_called_once_with('testns.testcoll')
+    m = import_module('ansible_collections.testns.testcoll')
+    load_handler.assert_called_once_with(collection_name='testns.testcoll', collection_path=os.path.dirname(m.__file__))
 
     _meta = _get_collection_metadata('testns.testcoll')
     assert _meta
