@@ -24,6 +24,7 @@ You should look at `Example Playbooks <https://github.com/ansible/ansible-exampl
    playbooks_reuse
    playbooks_reuse_roles
    playbooks_variables
+   playbooks_vars_facts
    playbooks_templating
    playbooks_conditionals
    playbooks_loops

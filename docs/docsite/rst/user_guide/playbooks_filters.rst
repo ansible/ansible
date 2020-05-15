@@ -178,6 +178,12 @@ You can cast values as certain types. For example, if you expect the input "True
      msg: test
      when: some_string_value | bool
 
+If you want to perform a mathematical comparison on a fact and you want Ansible to recognize it as an integer instead of a string::
+
+   - shell: echo "only on Red Hat 6, derivatives, and later"
+     when: ansible_facts['os_family'] == "RedHat" and ansible_facts['lsb']['major_release'] | int >= 6
+
+
 .. versionadded:: 1.6
 
 .. _filters_for_formatting_data:
