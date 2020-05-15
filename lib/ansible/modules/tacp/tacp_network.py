@@ -143,6 +143,7 @@ def run_module():
         # Check if there is more than one site already
         # If there is only one, default to that one.
         # Otherwise require a site_name to be provided
+        required_params = []
         site_list = get_site_list()
         if len(site_list) != 1:
             required_params.append('site_name')
@@ -289,7 +290,9 @@ def run_module():
                 module.exit_json(**result)
             pass
 
-        wait_for_action_to_complete(api_response.action_uuid, api_client)
+        success, failure_reason = wait_for_action_to_complete(api_response.action_uuid, api_client)
+        if not success:
+            fail_with_reason(failure_reason)
         result['ansible_module_results'] = get_resource_by_uuid(
             api_response.object_uuid, 'vlan', api_client)
         result['changed'] = True
@@ -406,7 +409,9 @@ def run_module():
                 result['failed'] = False
                 module.exit_json(**result)
 
-        wait_for_action_to_complete(api_response.action_uuid, api_client)
+        success, failure_reason = wait_for_action_to_complete(api_response.action_uuid, api_client)
+        if not success:
+            fail_with_reason(failure_reason)
         result['ansible_module_results'] = get_resource_by_uuid(
             api_response.object_uuid, 'vnet', api_client)
         result['changed'] = True
@@ -431,7 +436,9 @@ def run_module():
                     result['failed'] = True
                     fail_with_reason(response_dict['message'])
 
-            wait_for_action_to_complete(api_response.action_uuid, api_client)
+            success, failure_reason = wait_for_action_to_complete(api_response.action_uuid, api_client)
+            if not success:
+                fail_with_reason(failure_reason)
             result['changed'] = True
             result['failed'] = False
             module.exit_json(**result)
@@ -463,7 +470,9 @@ def run_module():
                     result['failed'] = True
                     fail_with_reason(response_dict['message'])
 
-            wait_for_action_to_complete(api_response.action_uuid, api_client)
+            success, failure_reason = wait_for_action_to_complete(api_response.action_uuid, api_client)
+            if not success:
+                fail_with_reason(failure_reason)
             result['changed'] = True
             result['failed'] = False
             module.exit_json(**result)
