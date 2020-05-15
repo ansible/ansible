@@ -205,13 +205,15 @@ def api_response_to_dict(api_response):
         elif "message" in dir(api_response):
             message_str = api_response.message
         else:
-            attrs = [key for key in api_response.__dict__.keys() if not key.startswith("__") and key != "discriminator"]
+            attrs = [key for key in api_response.__dict__.keys(
+            ) if not key.startswith("__") and key != "discriminator"]
             api_dict = {}
             for attr in attrs:
                 val = str(api_response.__dict__[
                     attr]).replace('\n', '').replace('null', 'None')
                 extra_space_pattern = ",\\s{2,}"
-                api_dict[str(attr).lstrip("_")] = re.sub(extra_space_pattern, ", ", val)
+                api_dict[str(attr).lstrip("_")] = re.sub(
+                    extra_space_pattern, ", ", val)
             return api_dict
 
     message_str = message_str.replace('\n', '').replace('null', 'None')
@@ -230,12 +232,20 @@ def wait_for_action_to_complete(action_uuid, api_client):
         api_instance = tacp.ActionsApi(api_client)
         action_incomplete = True
 
-        while action_incomplete:
+        timeout = 30
+        time_spent = 0
+
+        while action_incomplete and time_spent < timeout:
             api_response = api_instance.get_action_using_get(action_uuid)
             if api_response.status == 'Completed':
                 action_incomplete = False
+                return True, None
             else:
                 sleep(1)
+                time_spent += 1
+
+        return False, "Action timed out."
+    return False, "Invalid action UUID, nothing to do."
 
 
 def delete_application(name, uuid, api_client):
