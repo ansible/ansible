@@ -555,6 +555,7 @@ This will return a large amount of variable data, which may look like this on An
         ],
         "ansible_processor_cores": 8,
         "ansible_processor_count": 8,
+        "ansible_processor_nproc": 8,
         "ansible_processor_threads_per_core": 1,
         "ansible_processor_vcpus": 8,
         "ansible_product_name": "HVM domU",
