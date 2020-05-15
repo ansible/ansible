@@ -88,7 +88,7 @@ class TaskResult:
             ret = True
         elif _debugger in ('on_unreachable',) and self.is_unreachable():
             ret = True
-        elif _debugger in('on_skipped',) and self.is_skipped():
+        elif _debugger in ('on_skipped',) and self.is_skipped():
             ret = True
 
         return ret
