@@ -1,4 +1,4 @@
-ansible (%VERSION%-%RELEASE%~%DIST%) %DIST%; urgency=low
+ansible-base (%VERSION%-%RELEASE%~%DIST%) %DIST%; urgency=low
 
   * %VERSION% release
 
