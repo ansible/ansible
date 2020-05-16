@@ -1027,6 +1027,10 @@ class GalaxyCLI(CLI):
                     role = RoleRequirement.role_yaml_parse(rname.strip())
                     role_requirements.append(GalaxyRole(self.galaxy, self.api, **role))
 
+        if not role_requirements and not collection_requirements:
+            display.display("Skipping install, no requirements found")
+            return
+
         if role_requirements:
             display.display("Starting galaxy role install process")
             self._execute_install_role(role_requirements)
