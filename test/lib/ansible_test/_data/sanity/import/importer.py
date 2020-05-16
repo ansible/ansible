@@ -191,7 +191,7 @@ def main():
             test_python_module(path, name, base_dir, messages)
 
         if messages:
-            exit(10)
+            sys.exit(10)
 
     def test_python_module(path, name, base_dir, messages):
         """Test the given python module by importing it.
