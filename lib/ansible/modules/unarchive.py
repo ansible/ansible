@@ -223,7 +223,7 @@ class ZipArchive(object):
 #                    mode += 2 ** (9 + j)
         return (mode & ~umask)
 
-    def _legacy_file_list(self, force_refresh=False):
+    def _legacy_file_list(self):
         unzip_bin = self.module.get_bin_path('unzip')
         if not unzip_bin:
             raise UnarchiveError('Python Zipfile cannot read %s and unzip not found' % self.src)
@@ -261,8 +261,8 @@ class ZipArchive(object):
         return self._infodict[path]
 
     @property
-    def files_in_archive(self, force_refresh=False):
-        if self._files_in_archive and not force_refresh:
+    def files_in_archive(self):
+        if self._files_in_archive:
             return self._files_in_archive
 
         self._files_in_archive = []
@@ -272,7 +272,7 @@ class ZipArchive(object):
             if e.args[0].lower().startswith('bad magic number'):
                 # Python2.4 can't handle zipfiles with > 64K files.  Try using
                 # /usr/bin/unzip instead
-                self._legacy_file_list(force_refresh)
+                self._legacy_file_list()
             else:
                 raise
         else:
@@ -653,8 +653,8 @@ class TgzArchive(object):
         return tar_type
 
     @property
-    def files_in_archive(self, force_refresh=False):
-        if self._files_in_archive and not force_refresh:
+    def files_in_archive(self):
+        if self._files_in_archive:
             return self._files_in_archive
 
         cmd = [self.cmd_path, '--list', '-C', self.b_dest]
