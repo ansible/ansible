@@ -114,7 +114,7 @@ On RHEL and CentOS:
 
     $ sudo yum install ansible
 
-RPMs for RHEL 7  and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
+RPMs for RHEL 7 and RHEL 8 are available from the `Ansible Engine repository <https://access.redhat.com/articles/3174981>`_.
 
 To enable the Ansible Engine repository for RHEL 8, run the following command:
 
@@ -128,18 +128,9 @@ To enable the Ansible Engine repository for RHEL 7, run the following command:
 
     $ sudo subscription-manager repos --enable rhel-7-server-ansible-2.9-rpms
 
-RPMs for currently supported versions of RHEL, CentOS, and Fedora are available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
+RPMs for currently supported versions of RHEL and CentOS are also available from `EPEL <https://fedoraproject.org/wiki/EPEL>`_.
 
-Ansible version 2.4 and later can manage earlier operating systems that contain Python 2.6 or higher.
-
-You can also build an RPM yourself. From the root of a checkout or tarball, use the ``make rpm`` command to build an RPM you can distribute and install.
-
-.. code-block:: bash
-
-    $ git clone https://github.com/ansible/ansible.git
-    $ cd ./ansible
-    $ make rpm
-    $ sudo rpm -Uvh ./rpm-build/ansible-*.noarch.rpm
+Ansible version 2.4 and later can manage older operating systems that contain Python 2.6 or higher.
 
 .. _from_apt:
 
