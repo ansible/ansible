@@ -761,115 +761,115 @@ plugin_routing:
     gcp_backend_service:
       redirect: community.general.gcp_backend_service
     gcp_bigquery_dataset_facts:
-      redirect: community.general.gcp_bigquery_dataset_facts
+      redirect: google.cloud.gcp_bigquery_dataset_info
     gcp_bigquery_table_facts:
-      redirect: community.general.gcp_bigquery_table_facts
+      redirect: google.cloud.gcp_bigquery_table_info
     gcp_cloudbuild_trigger_facts:
-      redirect: community.general.gcp_cloudbuild_trigger_facts
+      redirect: google.cloud.gcp_cloudbuild_trigger_info
     gcp_compute_address_facts:
-      redirect: community.general.gcp_compute_address_facts
+      redirect: google.cloud.gcp_compute_address_info
     gcp_compute_backend_bucket_facts:
-      redirect: community.general.gcp_compute_backend_bucket_facts
+      redirect: google.cloud.gcp_compute_backend_bucket_info
     gcp_compute_backend_service_facts:
-      redirect: community.general.gcp_compute_backend_service_facts
+      redirect: google.cloud.gcp_compute_backend_service_info
     gcp_compute_disk_facts:
-      redirect: community.general.gcp_compute_disk_facts
+      redirect: google.cloud.gcp_compute_disk_info
     gcp_compute_firewall_facts:
-      redirect: community.general.gcp_compute_firewall_facts
+      redirect: google.cloud.gcp_compute_firewall_info
     gcp_compute_forwarding_rule_facts:
-      redirect: community.general.gcp_compute_forwarding_rule_facts
+      redirect: google.cloud.gcp_compute_forwarding_rule_info
     gcp_compute_global_address_facts:
-      redirect: community.general.gcp_compute_global_address_facts
+      redirect: google.cloud.gcp_compute_global_address_info
     gcp_compute_global_forwarding_rule_facts:
-      redirect: community.general.gcp_compute_global_forwarding_rule_facts
+      redirect: google.cloud.gcp_compute_global_forwarding_rule_info
     gcp_compute_health_check_facts:
-      redirect: community.general.gcp_compute_health_check_facts
+      redirect: google.cloud.gcp_compute_health_check_info
     gcp_compute_http_health_check_facts:
-      redirect: community.general.gcp_compute_http_health_check_facts
+      redirect: google.cloud.gcp_compute_http_health_check_info
     gcp_compute_https_health_check_facts:
-      redirect: community.general.gcp_compute_https_health_check_facts
+      redirect: google.cloud.gcp_compute_https_health_check_info
     gcp_compute_image_facts:
-      redirect: community.general.gcp_compute_image_facts
+      redirect: google.cloud.gcp_compute_image_info
     gcp_compute_instance_facts:
-      redirect: community.general.gcp_compute_instance_facts
+      redirect: google.cloud.gcp_compute_instance_info
     gcp_compute_instance_group_facts:
-      redirect: community.general.gcp_compute_instance_group_facts
+      redirect: google.cloud.gcp_compute_instance_group_info
     gcp_compute_instance_group_manager_facts:
-      redirect: community.general.gcp_compute_instance_group_manager_facts
+      redirect: google.cloud.gcp_compute_instance_group_manager_info
     gcp_compute_instance_template_facts:
-      redirect: community.general.gcp_compute_instance_template_facts
+      redirect: google.cloud.gcp_compute_instance_template_info
     gcp_compute_interconnect_attachment_facts:
-      redirect: community.general.gcp_compute_interconnect_attachment_facts
+      redirect: google.cloud.gcp_compute_interconnect_attachment_info
     gcp_compute_network_facts:
-      redirect: community.general.gcp_compute_network_facts
+      redirect: google.cloud.gcp_compute_network_info
     gcp_compute_region_disk_facts:
-      redirect: community.general.gcp_compute_region_disk_facts
+      redirect: google.cloud.gcp_compute_region_disk_info
     gcp_compute_route_facts:
-      redirect: community.general.gcp_compute_route_facts
+      redirect: google.cloud.gcp_compute_route_info
     gcp_compute_router_facts:
-      redirect: community.general.gcp_compute_router_facts
+      redirect: google.cloud.gcp_compute_router_info
     gcp_compute_ssl_certificate_facts:
-      redirect: community.general.gcp_compute_ssl_certificate_facts
+      redirect: google.cloud.gcp_compute_ssl_certificate_info
     gcp_compute_ssl_policy_facts:
-      redirect: community.general.gcp_compute_ssl_policy_facts
+      redirect: google.cloud.gcp_compute_ssl_policy_info
     gcp_compute_subnetwork_facts:
-      redirect: community.general.gcp_compute_subnetwork_facts
+      redirect: google.cloud.gcp_compute_subnetwork_info
     gcp_compute_target_http_proxy_facts:
-      redirect: community.general.gcp_compute_target_http_proxy_facts
+      redirect: google.cloud.gcp_compute_target_http_proxy_info
     gcp_compute_target_https_proxy_facts:
-      redirect: community.general.gcp_compute_target_https_proxy_facts
+      redirect: google.cloud.gcp_compute_target_https_proxy_info
     gcp_compute_target_pool_facts:
-      redirect: community.general.gcp_compute_target_pool_facts
+      redirect: google.cloud.gcp_compute_target_pool_info
     gcp_compute_target_ssl_proxy_facts:
-      redirect: community.general.gcp_compute_target_ssl_proxy_facts
+      redirect: google.cloud.gcp_compute_target_ssl_proxy_info
     gcp_compute_target_tcp_proxy_facts:
-      redirect: community.general.gcp_compute_target_tcp_proxy_facts
+      redirect: google.cloud.gcp_compute_target_tcp_proxy_info
     gcp_compute_target_vpn_gateway_facts:
-      redirect: community.general.gcp_compute_target_vpn_gateway_facts
+      redirect: google.cloud.gcp_compute_target_vpn_gateway_info
     gcp_compute_url_map_facts:
-      redirect: community.general.gcp_compute_url_map_facts
+      redirect: google.cloud.gcp_compute_url_map_info
     gcp_compute_vpn_tunnel_facts:
-      redirect: community.general.gcp_compute_vpn_tunnel_facts
+      redirect: google.cloud.gcp_compute_vpn_tunnel_info
     gcp_container_cluster_facts:
-      redirect: community.general.gcp_container_cluster_facts
+      redirect: google.cloud.gcp_container_cluster_info
     gcp_container_node_pool_facts:
-      redirect: community.general.gcp_container_node_pool_facts
+      redirect: google.cloud.gcp_container_node_pool_info
     gcp_dns_managed_zone_facts:
-      redirect: community.general.gcp_dns_managed_zone_facts
+      redirect: google.cloud.gcp_dns_managed_zone_info
     gcp_dns_resource_record_set_facts:
-      redirect: community.general.gcp_dns_resource_record_set_facts
+      redirect: google.cloud.gcp_dns_resource_record_set_info
     gcp_forwarding_rule:
       redirect: community.general.gcp_forwarding_rule
     gcp_healthcheck:
       redirect: community.general.gcp_healthcheck
     gcp_iam_role_facts:
-      redirect: community.general.gcp_iam_role_facts
+      redirect: google.cloud.gcp_iam_role_info
     gcp_iam_service_account_facts:
-      redirect: community.general.gcp_iam_service_account_facts
+      redirect: google.cloud.gcp_iam_service_account_info
     gcp_pubsub_subscription_facts:
-      redirect: community.general.gcp_pubsub_subscription_facts
+      redirect: google.cloud.gcp_pubsub_subscription_info
     gcp_pubsub_topic_facts:
-      redirect: community.general.gcp_pubsub_topic_facts
+      redirect: google.cloud.gcp_pubsub_topic_info
     gcp_redis_instance_facts:
-      redirect: community.general.gcp_redis_instance_facts
+      redirect: google.cloud.gcp_redis_instance_info
     gcp_resourcemanager_project_facts:
-      redirect: community.general.gcp_resourcemanager_project_facts
+      redirect: google.cloud.gcp_resourcemanager_project_info
     gcp_sourcerepo_repository_facts:
-      redirect: community.general.gcp_sourcerepo_repository_facts
+      redirect: google.cloud.gcp_sourcerepo_repository_info
     gcp_spanner_database_facts:
-      redirect: community.general.gcp_spanner_database_facts
+      redirect: google.cloud.gcp_spanner_database_info
     gcp_spanner_instance_facts:
-      redirect: community.general.gcp_spanner_instance_facts
+      redirect: google.cloud.gcp_spanner_instance_info
     gcp_sql_database_facts:
-      redirect: community.general.gcp_sql_database_facts
+      redirect: google.cloud.gcp_sql_database_info
     gcp_sql_instance_facts:
-      redirect: community.general.gcp_sql_instance_facts
+      redirect: google.cloud.gcp_sql_instance_info
     gcp_sql_user_facts:
-      redirect: community.general.gcp_sql_user_facts
+      redirect: google.cloud.gcp_sql_user_info
     gcp_target_proxy:
       redirect: community.general.gcp_target_proxy
     gcp_tpu_node_facts:
-      redirect: community.general.gcp_tpu_node_facts
+      redirect: google.cloud.gcp_tpu_node_info
     gcp_url_map:
       redirect: community.general.gcp_url_map
     gcpubsub_facts:
