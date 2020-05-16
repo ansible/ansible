@@ -33,16 +33,11 @@ endif
 PYTHON=python
 GENERATE_CLI = hacking/build-ansible.py generate-man
 
-SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
-
 # fetch version from project release.py as single source-of-truth
 VERSION := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --raw || echo error)
 ifeq ($(findstring error,$(VERSION)), error)
 $(error "version_helper failed")
 endif
-
-MAJOR_VERSION := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --majorversion)
-CODENAME := $(shell $(PYTHON) packaging/release/versionhelper/version_helper.py --codename)
 
 # Get the branch information from git
 ifneq ($(shell which git),)
