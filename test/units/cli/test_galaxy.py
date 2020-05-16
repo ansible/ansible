@@ -1265,7 +1265,7 @@ def test_install_explicit_role_with_collections(requirements_file, monkeypatch):
     monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
 
     mock_display = MagicMock()
-    monkeypatch.setattr(Display, 'display', mock_display)
+    monkeypatch.setattr(Display, 'vvv', mock_display)
 
     cli = GalaxyCLI(args=['ansible-galaxy', 'role', 'install', '-r', requirements_file])
     cli.run()
@@ -1297,7 +1297,7 @@ def test_install_role_with_collections_and_path(requirements_file, monkeypatch):
     monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
 
     mock_display = MagicMock()
-    monkeypatch.setattr(Display, 'display', mock_display)
+    monkeypatch.setattr(Display, 'warning', mock_display)
 
     cli = GalaxyCLI(args=['ansible-galaxy', 'install', '-p', 'path', '-r', requirements_file])
     cli.run()
@@ -1329,7 +1329,7 @@ def test_install_collection_with_roles(requirements_file, monkeypatch):
     monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
 
     mock_display = MagicMock()
-    monkeypatch.setattr(Display, 'display', mock_display)
+    monkeypatch.setattr(Display, 'vvv', mock_display)
 
     cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', '-r', requirements_file])
     cli.run()

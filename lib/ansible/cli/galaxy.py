@@ -762,7 +762,7 @@ class GalaxyCLI(CLI):
         if requirements_file:
             requirements_file = GalaxyCLI._resolve_path(requirements_file)
 
-        requirements = self._require_one_of_collections_requirements(collections, requirements_file)
+        requirements = self._require_one_of_collections_requirements(collections, requirements_file)['collections']
 
         download_path = GalaxyCLI._resolve_path(download_path)
         b_download_path = to_bytes(download_path, errors='surrogate_or_strict')
@@ -995,7 +995,7 @@ class GalaxyCLI(CLI):
 
             collection_requirements = requirements['collections']
             if requirements['roles']:
-                display.display(two_type_warning.format('role'))
+                display.vvv(two_type_warning.format('role'))
         else:
             if not install_items and requirements_file is None:
                 raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
@@ -1012,7 +1012,11 @@ class GalaxyCLI(CLI):
                 galaxy_args = self._raw_args
                 if requirements['collections'] and (not self._implicit_role or '-p' in galaxy_args or
                                                     '--roles-path' in galaxy_args):
-                    display.display(two_type_warning.format('collection'))
+
+                    # We only want to display a warning if 'ansible-galaxy install -r ... -p ...'. Other cases the user
+                    # was explicit about the type and shouldn't care that collections were skipped.
+                    display_func = display.warning if self._implicit_role else display.vvv
+                    display_func(two_type_warning.format('collection'))
                 else:
                     collection_path = self._get_default_collection_path()
                     collection_requirements = requirements['collections']
