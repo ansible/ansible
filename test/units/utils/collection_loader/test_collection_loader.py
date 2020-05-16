@@ -18,6 +18,7 @@ from ansible.utils.collection_loader._collection_finder import (
 from ansible.utils.collection_loader._collection_config import _EventSource
 from units.compat.mock import MagicMock, NonCallableMagicMock, patch
 
+
 # fixture to ensure we always clean up the import stuff when we're done
 @pytest.fixture(autouse=True, scope='function')
 def teardown(*args, **kwargs):
