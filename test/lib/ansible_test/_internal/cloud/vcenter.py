@@ -14,6 +14,7 @@ from ..util import (
     find_executable,
     display,
     ConfigParser,
+    ApplicationError,
 )
 
 from ..docker_util import (
@@ -85,8 +86,7 @@ class VcenterProvider(CloudProvider):
             self._use_static_config()
             self._setup_static()
         else:
-            display.error('Unknown vmware_test_platform: %s' % self.vmware_test_platform)
-            exit(1)
+            raise ApplicationError('Unknown vmware_test_platform: %s' % self.vmware_test_platform)
 
     def get_docker_run_options(self):
         """Get any additional options needed when delegating tests to a docker container.
@@ -161,8 +161,8 @@ class VcenterProvider(CloudProvider):
 
     def _setup_static(self):
         if not os.path.exists(self.config_static_path):
-            display.error('Configuration file does not exist: %s' % self.config_static_path)
-            exit(1)
+            raise ApplicationError('Configuration file does not exist: %s' % self.config_static_path)
+
         parser = ConfigParser({
             'vcenter_port': '443',
             'vmware_proxy_host': '',
