@@ -225,8 +225,9 @@
       - skip.me
     dest: '{{ galaxy_dir }}/ansible_collections/requirements-with-role.yml'
 
+# Need to run with -vvv to validate the roles will be skipped msg
 - name: install collections only with requirements-with-role.yml - {{ test_name }}
-  command: ansible-galaxy collection install -r '{{ galaxy_dir }}/ansible_collections/requirements-with-role.yml' -s '{{ test_server }}'
+  command: ansible-galaxy collection install -r '{{ galaxy_dir }}/ansible_collections/requirements-with-role.yml' -s '{{ test_server }}' -vvv
   register: install_req_collection
   environment:
     ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
