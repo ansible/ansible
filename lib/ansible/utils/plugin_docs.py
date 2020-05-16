@@ -40,6 +40,36 @@ def merge_fragment(target, source):
         target[key] = value
 
 
+def tag_version_added(fragment, prefix):
+    def tag(option, prefix, recursive=True):
+        if 'version_added' in option:
+            option['version_added'] = '%s%s' % (prefix, option['version_added'])
+        if recursive:
+            if 'suboptions' in option:
+                for option_ in option['suboptions'].values():
+                    tag(option_, prefix)
+
+    tag(fragment, prefix, recursive=False)
+    if 'options' in fragment:
+        for option in fragment['options'].values():
+            tag(option, prefix)
+
+
+def untag_version_added(fragment, prefix):
+    def untag(option, prefix, recursive=True):
+        if isinstance(option.get('version_added'), string_types) and to_native(option['version_added']).startswith(prefix):
+            option['version_added'] = option['version_added'][len(prefix):]
+        if recursive:
+            if 'suboptions' in option:
+                for option_ in option['suboptions'].values():
+                    untag(option_, prefix)
+
+    untag(fragment, prefix, recursive=False)
+    if 'options' in fragment:
+        for option in fragment['options'].values():
+            untag(option, prefix)
+
+
 def add_fragments(doc, filename, fragment_loader):
 
     fragments = doc.pop('extends_documentation_fragment', [])
@@ -80,6 +110,12 @@ def add_fragments(doc, filename, fragment_loader):
 
         fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
 
+        real_collection_name = 'ansible.builtin'
+        real_fragment_name = getattr(fragment_class, '_load_name')
+        if real_fragment_name.startswith('ansible_collections.'):
+            real_collection_name = '.'.join(real_fragment_name.split('.')[1:3])
+        tag_version_added(fragment, '%s:' % (real_collection_name, ))
+
         if 'notes' in fragment:
             notes = fragment.pop('notes')
             if notes:
@@ -116,15 +152,19 @@ def add_fragments(doc, filename, fragment_loader):
         raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
-def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
+def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None):
     """
     DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
 
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
 
-    # add fragments to documentation
     if data.get('doc', False):
+        # tag version_added
+        if collection_name is not None:
+            tag_version_added(data['doc'], '%s:' % (collection_name, ))
+
+        # add fragments to documentation
         add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
