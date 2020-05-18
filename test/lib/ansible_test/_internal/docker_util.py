@@ -135,7 +135,7 @@ def docker_get(args, container_id, src, dst):
                     options=['-i'], stdout=dst_fd, capture=True)
 
 
-def docker_run(args, image, options, cmd=None):
+def docker_run(args, image, options, cmd=None, create_only=False):
     """
     :type args: EnvironmentConfig
     :type image: str
@@ -149,15 +149,42 @@ def docker_run(args, image, options, cmd=None):
     if not cmd:
         cmd = []
 
+    if create_only:
+        command = 'create'
+    else:
+        command = 'run'
+
     for _iteration in range(1, 3):
         try:
-            return docker_command(args, ['run'] + options + [image] + cmd, capture=True)
+            return docker_command(args, [command] + options + [image] + cmd, capture=True)
         except SubprocessError as ex:
             display.error(ex)
             display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
             time.sleep(3)
 
     raise ApplicationError('Failed to run docker image "%s".' % image)
+
+
+def docker_start(args, container_id, options):
+    """
+    :type args: EnvironmentConfig
+    :type container_id: str
+    :type options: list[str] | None
+    :rtype: str | None, str | None
+    """
+    if not options:
+        options = []
+
+    for _iteration in range(1, 3):
+        try:
+            return docker_command(args, ['start'] + options + [container_id], capture=True)
+        except SubprocessError as ex:
+            display.error(ex)
+            display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
+            time.sleep(3)
+
+    raise ApplicationError('Failed to run docker image "%s".' % image)
+
 
 
 def docker_images(args, image):
@@ -275,7 +302,7 @@ def docker_version(args):
     return json.loads(stdout)
 
 
-def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=False):
+def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=False, data=None):
     """
     :type args: CommonConfig
     :type cmd: list[str]
@@ -286,7 +313,7 @@ def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=Fal
     :rtype: str | None, str | None
     """
     env = docker_environment()
-    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always)
+    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
 
 
 def docker_environment():
