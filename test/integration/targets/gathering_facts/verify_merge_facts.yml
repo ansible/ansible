@@ -11,7 +11,7 @@
 
     - name: fail if ref file is updated
       assert:
-        msg: '{{update.diff}}'
+        msg: '{{update.diff|to_json}}'
         that:
             - not update.diff
 
@@ -32,6 +32,6 @@
 
     - name: fail if ref file is updated
       assert:
-        msg: '{{update.diff}}'
+        msg: '{{update.diff|to_json}}'
         that:
             - not update.diff
