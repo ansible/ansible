@@ -182,25 +182,15 @@ def run_module():
             fail_with_reason(reason)
 
         network_payloads = []
-
+        vnic_payloads = []
         for i, nic in enumerate(module.params['nics']):
-            if nic['type'].lower() == "vnet":
-                network_uuid = tacp_utils.get_component_fields_by_name(
-                    nic['network'], 'vnet', api_client)
-            elif nic['type'].lower() == "vlan":
-                network_uuid = tacp_utils.get_component_fields_by_name(
-                    nic['network'], 'vlan', api_client)
+            network_uuid = tacp_utils.get_component_fields_by_name(
+                    nic['network'], nic['type'].lower(), api_client)
 
-            if 'mac_address' in nic.keys():
-                if nic['mac_address']:
-                    automatic_mac_address = False
-                    mac_address = nic['mac_address']
-            else:
-                automatic_mac_address = True
-                mac_address = None
+            mac_address = nic.get('mac_address')
+            automatic_mac_address = not bool(mac_address)
 
             if i == 0:
-                vnic_payloads = []
                 for boot_order_item in boot_order:
                     if boot_order_item.vnic_uuid:
                         vnic_uuid = boot_order_item.vnic_uuid
@@ -338,7 +328,7 @@ def run_module():
         instance_properties = tacp_utils.get_resource_by_uuid(
             instance_uuid, 'application', api_client)
         current_state = instance_properties['status']
-        # 'Running', 'Shut down', 'Paused'
+        # 'Running', 'Shut down', 'Paused', 'Restarting'
 
         if module.params['state'] == 'absent':
             instance_power_action(module.params['name'], api_client, "delete")
