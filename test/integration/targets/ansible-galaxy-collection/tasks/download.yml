@@ -103,5 +103,4 @@
 - name: assert install collection with no roles and no collections in requirements
   assert:
     that:
-      - '"Process install" in install_no_requirements.stdout'
-      - '"Starting collection" in install_no_requirements.stdout'
+      - '"Skipping install, no requirements found" in install_no_requirements.stdout'

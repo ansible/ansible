@@ -32,7 +32,16 @@ file used in older Ansible releases.
         version: 0.9.3
         source: https://galaxy.ansible.com
 
+To install both roles and collections at the same time with one command, run the following:
+
+.. code-block:: bash
+
+    $ ansible-galaxy install -r requirements.yml
+
+Running ``ansible-galaxy collection install -r`` or ``ansible-galaxy role install -r`` will only install collections,
+or roles respectively.
+
 .. note::
-    While both roles and collections can be specified in one requirements file, they need to be installed separately.
-    The ``ansible-galaxy role install -r requirements.yml`` will only install roles and
-    ``ansible-galaxy collection install -r requirements.yml`` will only install collections.
+    Installing both roles and collections from the same requirements file will not work when specifying a custom
+    collection or role install path. In this scenario the collections will be skipped and the command will process
+    each like ``ansible-galaxy role install`` would.

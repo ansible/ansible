@@ -37,6 +37,7 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils import context_objects as co
+from ansible.utils.display import Display
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock
 
@@ -227,7 +228,7 @@ class TestGalaxy(unittest.TestCase):
         gc.parse()
         self.assertEqual(context.CLIARGS['ignore_errors'], False)
         self.assertEqual(context.CLIARGS['no_deps'], False)
-        self.assertEqual(context.CLIARGS['role_file'], None)
+        self.assertEqual(context.CLIARGS['requirements'], None)
         self.assertEqual(context.CLIARGS['force'], False)
 
     def test_parse_list(self):
@@ -818,7 +819,7 @@ def test_collection_install_with_relative_path(collection_install, monkeypatch):
     mock_install = collection_install[0]
 
     mock_req = MagicMock()
-    mock_req.return_value = {'collections': [('namespace.coll', '*', None)]}
+    mock_req.return_value = {'collections': [('namespace.coll', '*', None)], 'roles': []}
     monkeypatch.setattr(ansible.cli.galaxy.GalaxyCLI, '_parse_requirements_file', mock_req)
 
     monkeypatch.setattr(os, 'makedirs', MagicMock())
@@ -849,7 +850,7 @@ def test_collection_install_with_unexpanded_path(collection_install, monkeypatch
     mock_install = collection_install[0]
 
     mock_req = MagicMock()
-    mock_req.return_value = {'collections': [('namespace.coll', '*', None)]}
+    mock_req.return_value = {'collections': [('namespace.coll', '*', None)], 'roles': []}
     monkeypatch.setattr(ansible.cli.galaxy.GalaxyCLI, '_parse_requirements_file', mock_req)
 
     monkeypatch.setattr(os, 'makedirs', MagicMock())
@@ -1215,3 +1216,133 @@ def test_parse_requirements_roles_with_include_missing(requirements_cli, require
 
     with pytest.raises(AnsibleError, match=expected):
         requirements_cli._parse_requirements_file(requirements_file)
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- namespace.name
+roles:
+- namespace.name
+'''], indirect=True)
+def test_install_implicit_role_with_collections(requirements_file, monkeypatch):
+    mock_collection_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
+    mock_role_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'display', mock_display)
+
+    cli = GalaxyCLI(args=['ansible-galaxy', 'install', '-r', requirements_file])
+    cli.run()
+
+    assert mock_collection_install.call_count == 1
+    assert mock_collection_install.call_args[0][0] == [('namespace.name', '*', None)]
+    assert mock_collection_install.call_args[0][1] == cli._get_default_collection_path()
+
+    assert mock_role_install.call_count == 1
+    assert len(mock_role_install.call_args[0][0]) == 1
+    assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
+
+    found = False
+    for mock_call in mock_display.mock_calls:
+        if 'contains collections which will be ignored' in mock_call[1][0]:
+            found = True
+            break
+    assert not found
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- namespace.name
+roles:
+- namespace.name
+'''], indirect=True)
+def test_install_explicit_role_with_collections(requirements_file, monkeypatch):
+    mock_collection_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
+    mock_role_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_display)
+
+    cli = GalaxyCLI(args=['ansible-galaxy', 'role', 'install', '-r', requirements_file])
+    cli.run()
+
+    assert mock_collection_install.call_count == 0
+
+    assert mock_role_install.call_count == 1
+    assert len(mock_role_install.call_args[0][0]) == 1
+    assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
+
+    found = False
+    for mock_call in mock_display.mock_calls:
+        if 'contains collections which will be ignored' in mock_call[1][0]:
+            found = True
+            break
+    assert found
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- namespace.name
+roles:
+- namespace.name
+'''], indirect=True)
+def test_install_role_with_collections_and_path(requirements_file, monkeypatch):
+    mock_collection_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
+    mock_role_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'warning', mock_display)
+
+    cli = GalaxyCLI(args=['ansible-galaxy', 'install', '-p', 'path', '-r', requirements_file])
+    cli.run()
+
+    assert mock_collection_install.call_count == 0
+
+    assert mock_role_install.call_count == 1
+    assert len(mock_role_install.call_args[0][0]) == 1
+    assert str(mock_role_install.call_args[0][0][0]) == 'namespace.name'
+
+    found = False
+    for mock_call in mock_display.mock_calls:
+        if 'contains collections which will be ignored' in mock_call[1][0]:
+            found = True
+            break
+    assert found
+
+
+@pytest.mark.parametrize('requirements_file', ['''
+collections:
+- namespace.name
+roles:
+- namespace.name
+'''], indirect=True)
+def test_install_collection_with_roles(requirements_file, monkeypatch):
+    mock_collection_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_collection', mock_collection_install)
+    mock_role_install = MagicMock()
+    monkeypatch.setattr(GalaxyCLI, '_execute_install_role', mock_role_install)
+
+    mock_display = MagicMock()
+    monkeypatch.setattr(Display, 'vvv', mock_display)
+
+    cli = GalaxyCLI(args=['ansible-galaxy', 'collection', 'install', '-r', requirements_file])
+    cli.run()
+
+    assert mock_collection_install.call_count == 1
+    assert mock_collection_install.call_args[0][0] == [('namespace.name', '*', None)]
+    assert mock_collection_install.call_args[0][1] == cli._get_default_collection_path()
+
+    assert mock_role_install.call_count == 0
+
+    found = False
+    for mock_call in mock_display.mock_calls:
+        if 'contains roles which will be ignored' in mock_call[1][0]:
+            found = True
+            break
+    assert found
