@@ -106,6 +106,11 @@ class VarsModule(BaseVarsPlugin):
                                 self._display.warning("Found %s that is not a directory, skipping: %s" % (subdir, opath))
 
                     for found in found_files:
+                        # if the file is called 'vault' then there is a pretty good chance it's 
+                        # an encrypted vault so don't try and load the variables
+                        if os.path.basename(found) == "vault":
+                            break;
+
                         new_data = loader.load_from_file(found, cache=True, unsafe=True)
                         if new_data:  # ignore empty files
                             data = combine_vars(data, new_data)
