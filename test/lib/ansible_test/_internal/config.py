@@ -148,6 +148,7 @@ class TestConfig(EnvironmentConfig):
         self.unstaged = args.unstaged  # type: bool
         self.changed_from = args.changed_from  # type: str
         self.changed_path = args.changed_path  # type: t.List[str]
+        self.base_branch = args.base_branch  # type: str
 
         self.lint = args.lint if 'lint' in args else False  # type: bool
         self.junit = args.junit if 'junit' in args else False  # type: bool
@@ -200,7 +201,6 @@ class SanityConfig(TestConfig):
         self.skip_test = args.skip_test  # type: t.List[str]
         self.list_tests = args.list_tests  # type: bool
         self.allow_disabled = args.allow_disabled  # type: bool
-        self.base_branch = args.base_branch  # type: str
 
 
 class IntegrationConfig(TestConfig):
