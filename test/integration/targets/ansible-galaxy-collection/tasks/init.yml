@@ -1,6 +1,6 @@
 ---
 - name: create default skeleton
-  command: ansible-galaxy collection init ansible_test.my_collection
+  command: ansible-galaxy collection init ansible_test.my_collection {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}/scratch'
   register: init_relative
@@ -25,7 +25,7 @@
     - (init_relative_actual.files | map(attribute='path') | list)[2] | basename in ['docs', 'plugins', 'roles']
 
 - name: create collection with custom init path
-  command: ansible-galaxy collection init ansible_test2.my_collection --init-path "{{ galaxy_dir }}/scratch/custom-init-dir"
+  command: ansible-galaxy collection init ansible_test2.my_collection --init-path "{{ galaxy_dir }}/scratch/custom-init-dir" {{ galaxy_verbosity }}
   register: init_custom_path
 
 - name: get result of create default skeleton
