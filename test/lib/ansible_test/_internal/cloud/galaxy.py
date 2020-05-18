@@ -44,6 +44,7 @@ if { /usr/local/bin/django-admin reset-admin-password --password password }
 if { s6-svc -d /var/run/s6/services/x_admin_pass/ }
 '''
 
+
 class GalaxyProvider(CloudProvider):
     """Galaxy plugin.
 
