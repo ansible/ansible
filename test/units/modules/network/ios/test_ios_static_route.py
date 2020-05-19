@@ -65,12 +65,12 @@ class TestIosStaticRouteModule(TestIosModule):
             tag=100,
             vrf='DATA_VRF',
             admin_distance=150,
-            interface='GigabitEthernet0/0',
+            interface='GigabitEthernet0/1',
             name='Web Server Static',
             state='present'
         ))
         commands = [
-            'ip route vrf DATA_VRF 12.11.0.0 255.255.0.0 GigabitEthernet0/0 10.1.1.1 150 tag 100 name "Web Server Static"'
+            'ip route vrf DATA_VRF 12.11.0.0 255.255.0.0 GigabitEthernet0/1 10.1.1.1 150 tag 100 name "Web Server Static"'
         ]
         self.execute_module(changed=True, commands=commands)
 
