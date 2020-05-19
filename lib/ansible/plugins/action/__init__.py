@@ -234,7 +234,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # we'll propagate back to the controller in the task result
                 discovered_key = 'discovered_interpreter_%s' % idre.interpreter_name
                 # store in local task_vars facts collection for the retry and any other usages in this worker
-                if not delegation:
+                if not delegation or self._task.delegate_facts:
                     if use_vars.get('ansible_facts') is None:
                         task_vars['ansible_facts'] = {}
                     task_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
