@@ -56,6 +56,7 @@ def assemble_files_to_ship(complete_file_list):
         # Possibly should be included
         'examples/scripts/uptime.py',
         'examples/DOCUMENTATION.yml',
+        'examples/play.yml',
         'examples/hosts.yaml',
         'examples/hosts.yml',
         'examples/inventory_script_schema.json',
