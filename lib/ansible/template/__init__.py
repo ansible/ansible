@@ -358,7 +358,12 @@ class JinjaPluginIntercept(MutableMapping):
 
             key = to_native(key)
 
-            if '.' not in key:  # might be a built-in value, delegate to base dict
+            if '.' not in key:  # might be a built-in or legacy, check the delegatee dict first, then try for a last-chance base redirect
+                func = self._delegatee.get(key)
+
+                if func:
+                    return func
+
                 ts = _get_collection_metadata('ansible.builtin')
 
                 # TODO: implement support for collection-backed redirect (currently only builtin)
@@ -369,8 +374,6 @@ class JinjaPluginIntercept(MutableMapping):
                     display.vvv('redirecting {0} {1} to {2}.{3}'.format(self._dirname, key, acr.collection, acr.resource))
                     key = redirect_fqcr
                 # TODO: handle recursive forwarding (not necessary for builtin, but definitely for further collection redirs)
-                else:  # try looking up in built-in filters
-                    return self._delegatee.__getitem__(key)
 
             func = self._collection_jinja_func_cache.get(key)
 

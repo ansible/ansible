@@ -21,9 +21,14 @@
   # redirect filter
   - assert:
       that: ('yes' | formerly_core_filter) == True
+  # legacy filter should mask redirected
+  - assert:
+      that: ('' | formerly_core_masked_filter) == 'hello from overridden formerly_core_masked_filter'
   # redirect test
   - assert:
-      that: "'stuff' is formerly_core_test('tuf')"
+      that:
+      - "'stuff' is formerly_core_test('tuf')"
+      - "'hello override' is formerly_core_masked_test"
   # redirect module (formerly internal)
   - formerly_core_ping:
   # redirect module from collection (with subdir)

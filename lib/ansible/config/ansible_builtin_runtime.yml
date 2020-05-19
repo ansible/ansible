@@ -8508,8 +8508,10 @@ plugin_routing:
     vyos:
       redirect: vyos.vyos.vyos
   filter:
-    # test entry
+    # test entries
     formerly_core_filter:
+      redirect: ansible.builtin.bool
+    formerly_core_masked_filter:
       redirect: ansible.builtin.bool
     gcp_kms_encrypt:
       redirect: google.cloud.gcp_kms_encrypt
@@ -8743,7 +8745,10 @@ plugin_routing:
     fish:
       redirect: ansible.posix.fish
   test:
+    # test entries
     formerly_core_test:
+      redirect: ansible.builtin.search
+    formerly_core_masked_test:
       redirect: ansible.builtin.search
 import_redirection:
   # test entry
