@@ -306,6 +306,10 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
+.. warning::
+
+   Use SSH keys instead of embedding credentials into a SCM URL.
+
 Installing roles and collections from the same requirements.yml file
 ---------------------------------------------------------------------
 

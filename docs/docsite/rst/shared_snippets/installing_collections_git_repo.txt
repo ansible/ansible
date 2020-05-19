@@ -1,5 +1,9 @@
 You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma separated version (for example, a commit or tag).
 
+.. warning::
+
+   Use SSH keys instead of embedding credentials into a git URL.
+
 .. code-block:: bash
 
    # Install a collection in a repository using the latest commit on the branch 'devel'
