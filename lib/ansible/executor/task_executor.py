@@ -9,6 +9,7 @@ import re
 import pty
 import time
 import json
+import signal
 import subprocess
 import sys
 import termios
@@ -37,6 +38,14 @@ display = Display()
 
 
 __all__ = ['TaskExecutor']
+
+
+class TaskTimeoutError(BaseException):
+    pass
+
+
+def task_timeout(signum, frame):
+    raise TaskTimeoutError
 
 
 def remove_omit(task_args, omit_token):
@@ -651,6 +660,9 @@ class TaskExecutor:
         for attempt in xrange(1, retries + 1):
             display.debug("running the handler")
             try:
+                if self._task.timeout:
+                    old_sig = signal.signal(signal.SIGALRM, task_timeout)
+                    signal.alarm(self._task.timeout)
                 result = self._handler.run(task_vars=variables)
             except AnsibleActionSkip as e:
                 return dict(skipped=True, msg=to_text(e))
@@ -658,7 +670,13 @@ class TaskExecutor:
                 return dict(failed=True, msg=to_text(e))
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=to_text(e))
+            except TaskTimeoutError as e:
+                msg = 'The %s action failed to execute in the expected time frame (%d) and was terminated' % (self._task.action, self._task.timeout)
+                return dict(failed=True, msg=msg)
             finally:
+                if self._task.timeout:
+                    signal.alarm(0)
+                    old_sig = signal.signal(signal.SIGALRM, old_sig)
                 self._handler.cleanup()
             display.debug("handler run complete")
 
