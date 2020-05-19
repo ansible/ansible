@@ -605,7 +605,7 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
     :param force: Re-install a collection if it has already been installed.
     :param force_deps: Re-install a collection as well as its dependencies if they have already been installed.
     """
-    existing_collections = find_existing_collections(output_path)
+    existing_collections = find_existing_collections(output_path, fallback_metadata=True)
 
     with _tempdir() as b_temp_path:
         display.display("Process install dependency map")
