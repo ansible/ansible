@@ -61,7 +61,7 @@ class GalaxyProvider(CloudProvider):
         super(GalaxyProvider, self).__init__(args)
 
         self.fallaxy = os.environ.get('ANSIBLE_FALLAXY_CONTAINER', 'quay.io/ansible/fallaxy-test-container:1.0.0')
-        self.pulp = os.environ.get('ANSIBLE_PULP_CONTAINER', 'pulp/pulp-fedora31:latest')
+        self.pulp = os.environ.get('ANSIBLE_PULP_CONTAINER', 'docker.io/pulp/pulp-fedora31:latest')
 
         self.containers = []
 
@@ -160,7 +160,7 @@ class GalaxyProvider(CloudProvider):
             docker_pull(self.args, self.pulp)
 
             # Create the container, don't run it, we need to inject configs before it starts
-            stdout, stderr = docker_run(
+            stdout, _dummy = docker_run(
                 self.args,
                 self.pulp,
                 ['--name', 'pulp'] + publish_ports,
@@ -181,10 +181,10 @@ class GalaxyProvider(CloudProvider):
             with io.BytesIO() as admin_pass:
                 # Use a tar file, because that is the only way to create intermediate
                 # directories using docker cp
-                with tarfile.open(mode='w', fileobj=admin_pass) as t:
+                with tarfile.open(mode='w', fileobj=admin_pass) as tar:
                     member = tarfile.TarInfo(name='/etc/services.d/x_admin_pass/run')
                     member.size = len(SET_ADMIN_PASSWORD)
-                    t.addfile(member, fileobj=io.BytesIO(SET_ADMIN_PASSWORD))
+                    tar.addfile(member, fileobj=io.BytesIO(SET_ADMIN_PASSWORD))
                 docker_command(self.args, ['cp', '-', '%s:/' % pulp_id], data=admin_pass.getvalue())
 
             # Start the container
