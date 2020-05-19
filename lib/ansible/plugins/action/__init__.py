@@ -159,12 +159,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         modify_module() function.
         '''
 
-        delegation = False
         if task_vars is None:
             use_vars = dict()
-        elif task_vars.get('ansible_delegated_vars') and self._play_context.remote_addr in task_vars['ansible_delegated_vars']:
-            use_vars = task_vars.get('ansible_delegated_vars')[self._play_context.remote_addr]
-            delegation = True
+
+        if self._task.delegate_to:
+            use_vars = task_vars.get('ansible_delegated_vars')[self._task.delegate_to]
         else:
             use_vars = task_vars
 
@@ -237,7 +236,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # TODO: this condition prevents 'wrong host' from being updated
                 # but in future we would want to be able to update 'delegated host facts'
                 # irrespective of task settings
-                if not delegation or self._task.delegate_facts:
+                if not self._task.delegate_to or self._task.delegate_facts:
                     # store in local task_vars facts collection for the retry and any other usages in this worker
                     if use_vars.get('ansible_facts') is None:
                         task_vars['ansible_facts'] = {}
