@@ -195,12 +195,24 @@ def map_config_to_obj(module):
     for line in out.splitlines():
         splitted_line = findall(r'[^"\s]\S*|".+?"', line)  # Split by whitespace but do not split quotes, needed for name parameter
 
+
+        # Exit the iteration if the first two words in the match are different than ip route
+        # (eg: EEM applet 'action 1.3 cli command "ip route 10.1.1.1 255.255.255.255 192.168.1.1"')
+        match_conditions = (splitted_line[0] != 'ip', splitted_line[1] != 'route')
+
+        if all(match_conditions):
+            continue
+
         if splitted_line[2] == 'vrf':
             route = {'vrf': splitted_line[3]}
             del splitted_line[:4]  # Removes the words ip route vrf vrf_name
         else:
             route = {}
             del splitted_line[:2]  # Removes the words ip route
+
+        # Edge case to handle: ip route profile command.
+        if len(splitted_line) <= 1:
+            continue
 
         prefix = splitted_line[0]
         mask = splitted_line[1]
