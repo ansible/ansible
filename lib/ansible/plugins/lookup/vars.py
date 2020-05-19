@@ -9,7 +9,7 @@ DOCUMENTATION = """
     version_added: "2.5"
     short_description: Lookup templated value of variables
     description:
-      - Retrieves the value of an Ansible variable. Note: Only returns top level variable names.
+      - 'Retrieves the value of an Ansible variable. Note: Only returns top level variable names.'
     options:
       _terms:
         description: The variable names to look up.
