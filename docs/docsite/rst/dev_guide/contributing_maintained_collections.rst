@@ -1,264 +1,220 @@
 
 .. _contributing_maintained_collections:
 
-***********************************************************
-How to Contribute to Ansible Maintained Content Collections
-***********************************************************
+***********************************************
+Contributing to Ansible-maintained Collections
+***********************************************
 
-The purpose of this document is to define the community requirements for contributing to content collections maintained by Red Hat Ansible Engineering. This includes listing those collections under the sponsorship of Red Hat Ansible, as well as developer resources for GitHub issues, pull requests, and testing acceptance criteria.
+The Ansible team welcomes community contributions to the collections maintained by Red Hat Ansible Engineering. This section describes how to open issue and create PRs with the required testing to speed merging your contributions.
 
-List of Red Hat sponsored and maintained platform collections
-===============================================================
+Ansible-maintained collections
+=================================
+
 
 .. raw:: html
 
-  <table>
+  <style>
+  /* Style for this single table.  Add delimiters between header columns */
+  table#ansible-collection-table  th {
+    border-width: 1px;
+    border-color: #dddddd /*rgb(225, 228, 229)*/;
+    border-style: solid;
+    text-align: center;
+    padding: 5px;
+    background-color: #eeeeee;
+  }
+  tr, td {
+   border-width: 1px;
+   border-color: rgb(225, 228, 229);
+   border-style: solid;
+   text-align: center;
+   padding: 5px;
+
+ }
+  </style>
+
+  <table id="ansible-collection-table">
     <tr>
-     <td><strong>Collection name, Upstream Source Location, Galaxy Location</strong>
-     </td>
-     <td><strong>Ansible Domain Sponsor (Team)</strong>
-     </td>
-     <td><strong>Tests Required: Sanity / Unit / Integration</strong>
-     </td>
-     <td><strong>CI Platform</strong>
-     </td>
-     <td><strong>Features and bugfixes to existing content?\*</strong>
-     </td>
-     <td><strong>New content proposals?</strong>
-     </td>
+      <th colspan="3">Collection details</th>
+      <th colspan="4">Test requirements</th>
+      <th colspan="2">Developer details</th>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/amazon.aws/">amazon.aws</a> (<a href="https://galaxy.ansible.com/amazon/aws">Galaxy</a>)
-     </td>
-     <td>Cloud
-     </td>
-     <td>YES / NO / YES
-     </td>
-     <td>Shippable
-     </td>
-     <td>YES
-     </td>
-     <td>community.aws
-     </td>
+      <th>Ansible collection</th>
+      <th>Community collection</th>
+      <th>Sponsor</th>
+      <th>Sanity</th>
+      <th>Unit</th>
+      <th>Integration</th>
+      <th>CI Platform</th>
+      <th>Open to PRs*</th>
+      <th>Guidelines</th>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/ansible.netcommon">ansible.netcommon</a> (<a href="https://galaxy.ansible.com/ansible/netcommon">Galaxy</a>)
-     </td>
-     <td>Network
-     </td>
-     <td>YES / YES / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>community.network
-     </td>
+      <td><a href="https://galaxy.ansible.com/amazon/aws">amazon.aws</a></td>
+      <td><a href="https://galaxy.ansible.com/community/aws">community.aws</a></td>
+      <td><a href="https://github.com/ansible/community/tree/master/group-aws">Cloud</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Shippable</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/platforms/aws_guidelines.html">AWS guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/ansible.posix/">ansible.posix</a> (<a href="https://galaxy.ansible.com/ansible/posix">Galaxy</a>)
-     </td>
-     <td>Linux
-     </td>
-     <td>YES / NO / NO
-     </td>
-     <td>Shippable
-     </td>
-     <td>YES
-     </td>
-     <td>community.general
-     </td>
+      <td><a href="https://galaxy.ansible.com/ansible/netcommon">ansible.netcommon**</a></td>
+      <td><a href="https://galaxy.ansible.com/community/netcommon">community.netcommon</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/ansible.windows/">ansible.windows</a> (<a href="https://galaxy.ansible.com/ansible/windows">Galaxy</a>)
-     </td>
-     <td>Windows
-     </td>
-     <td>YES / YES\*\* / YES
-     </td>
-     <td>Shippable
-     </td>
-     <td>YES
-     </td>
-     <td>community.windows
-     </td>
+      <td><a href="https://galaxy.ansible.com/ansible/posix">ansible.posix</a></td>
+      <td><a href="https://galaxy.ansible.com/community/general">community.general</a></td>
+      <td>Linux</a></td>
+      <td>✓</td>
+      <td></td>
+      <td></td>
+      <td>Shippable</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/latest/dev_guide/index.html">Developer guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/arista.eos">arista.eos</a> (<a href="https://galaxy.ansible.com/arista/eos">Galaxy</a>)
-     </td>
-     <td>Network
-     </td>
-     <td>YES / YES / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>community.network
-     </td>
+      <td><a href="https://galaxy.ansible.com/ansible/windows">ansible.windows</a></td>
+      <td><a href="https://galaxy.ansible.com/community/windows">community.windows</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Windows">Windows</a></td>
+      <td>✓</td>
+      <td>✓***</td>
+      <td>✓</td>
+      <td>Shippable</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_general_windows.html#developing-modules-general-windows">windows guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/cisco.asa">cisco.asa</a> (<a href="https://galaxy.ansible.com/cisco/asa">Galaxy</a>)
-     </td>
-     <td>Security
-     </td>
-     <td>YES / YES / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td><em>confirmation_needed</em>
-     </td>
+      <td><a href="https://galaxy.ansible.com/ansible/eos">ansible.eos</a></td>
+      <td><a href="https://galaxy.ansible.com/community/eos">community.eos</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/cisco.ios">cisco.ios</a> (<a href="https://galaxy.ansible.com/cisco/ios">Galaxy</a>)
-     </td>
-     <td>Network
-     </td>
-     <td>YES / YES / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>community.network
-     </td>
+      <td><a href="https://galaxy.ansible.com/cisco/asa">cisco.asa</a></td>
+      <td><a href="https://galaxy.ansible.com/community/asa">community.asa</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/latest/dev_guide/index.html">Developer guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/cisco.iosxr">cisco.iosxr</a> (<a href="https://galaxy.ansible.com/cisco/iosxr">Galaxy</a>)
-     </td>
-     <td>Network
-     </td>
-     <td>YES / YES / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>community.network
-     </td>
+      <td><a href="https://galaxy.ansible.com/cisco/ios">cisco.ios</a></td>
+      <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/cisco.nxos">cisco.nxos</a> (<a href="https://galaxy.ansible.com/cisco/nxos">Galaxy</a>)
-     </td>
-     <td>Network
-     </td>
-     <td>YES / YES / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>community.network
-     </td>
+      <td><a href="https://galaxy.ansible.com/cisco/iosxr">cisco.iosxr</a></td>
+      <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/frr.frr">frr.frr</a> (<a href="https://galaxy.ansible.com/frr/frr">Galaxy</a>)
-     </td>
-     <td>Network
-     </td>
-     <td>YES / YES / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>community.network
-     </td>
+      <td><a href="https://galaxy.ansible.com/cisco/nxos">cisco.nxos</a></td>
+      <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/ibm.qradar/">ibm.qradar</a> (<a href="https://galaxy.ansible.com/ibm/qradar">Galaxy</a>)
-     </td>
-     <td>Security
-     </td>
-     <td>
-     </td>
-     <td>
-     </td>
-     <td>YES
-     </td>
-     <td>YES
-     </td>
+      <td><a href="https://galaxy.ansible.com/ibm/qradar">ibm.qradar</a></td>
+      <td><a href="https://galaxy.ansible.com/community/qradar">community.qradar</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Security">Security</a></td>
+      <td>✓</td>
+      <td></td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/latest/dev_guide/index.html">Developer guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/junipernetworks.junos">junipernetworks.junos</a> (<a href="https://galaxy.ansible.com/junipernetworks/junos">Galaxy</a>)
-     </td>
-     <td>Network
-     </td>
-     <td>YES / YES / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>community.network
-     </td>
+      <td><a href="https://galaxy.ansible.com/junipernetworks/junos">junipernetworks.junos</a></td>
+      <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/openvswitch.openvswitch">openvswitch.openvswitch</a> (<a href="https://galaxy.ansible.com/openvswitch/openvswitch">Galaxy</a>)
-     </td>
-     <td>Network
-     </td>
-     <td>YES / YES / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>community.network
-     </td>
+      <td><a href="https://galaxy.ansible.com/openvswitch/openvswitch">openvswitch.openvswitch</a></td>
+      <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/splunk.enterprise_security/">splunk.enterprise_security</a> (<a href="https://galaxy.ansible.com/splunk/enterprise_security">Galaxy</a>)
-     </td>
-     <td>Security
-     </td>
-     <td>YES / NO / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>YES
-     </td>
+      <td><a href="https://galaxy.ansible.com/splunk/enterprise_security">splunk.enterprise_security</a></td>
+      <td><a href="https://galaxy.ansible.com/community/enterprise_security">community.enterprise_security</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Security">Security</a></td>
+      <td>✓</td>
+      <td></td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/latest/dev_guide/index.html">Developer guide</a></td>
     </tr>
     <tr>
-     <td><a href="https://github.com/ansible-collections/symantec.epm/">symantec.epm</a> (<a href="https://galaxy.ansible.com/symantec/epm">Galaxy</a>)
-     </td>
-     <td>Security
-     </td>
-     <td>YES / NO / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>YES
-     </td>
-    </tr>
-    <tr>
-     <td><a href="https://github.com/ansible-collections/vyos.vyos">vyos.vyos</a> (<a href="https://galaxy.ansible.com/vyos/vyos">Galaxy</a>)
-     </td>
-     <td>Network
-     </td>
-     <td>YES / YES / YES
-     </td>
-     <td>Zuul
-     </td>
-     <td>YES
-     </td>
-     <td>community.network
-     </td>
+      <td><a href="https://galaxy.ansible.com/vyos/vyos">vyos.vyos</a></td>
+      <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
   </table>
----
 
-*A value of “YES” means that all features/defects on existing content may be proposed as GitHub issues and pull requests directly in the GitHub repository for each collection listed above.
 
 .. note::
 
-  Unit tests for Windows PowerShell modules are an exception to testing, but unit tests are valid and required for the remainder of the collection including Ansible-side plugins.
+  \* A ✓ means that all features/defects on existing content may be proposed as GitHub issues and pull requests directly in the GitHub repository for each collection listed above.
+
+  \*\* This collection contains all foundational components for enabling many network and security :ref:`platform <platform_options>` collections. It contains all connection and filter plugins required, and is installed as a dependency automatically from the platform collection.
+
+  \*\*\* Unit tests for Windows PowerShell modules are an exception to testing, but unit tests are valid and required for the remainder of the collection including Ansible-side plugins.
+
 
 Community Contributor Inclusion Criteria For All Ansible-maintained Collections
 ===============================================================================
