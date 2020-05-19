@@ -180,11 +180,10 @@ def docker_start(args, container_id, options):
             return docker_command(args, ['start'] + options + [container_id], capture=True)
         except SubprocessError as ex:
             display.error(ex)
-            display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
+            display.warning('Failed to start docker container "%s". Waiting a few seconds before trying again.' % container_id)
             time.sleep(3)
 
-    raise ApplicationError('Failed to run docker image "%s".' % image)
-
+    raise ApplicationError('Failed to run docker container "%s".' % container_id)
 
 
 def docker_images(args, image):
