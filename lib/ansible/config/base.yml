@@ -1844,6 +1844,17 @@ TAGS_SKIP:
   ini:
   - {key: skip, section: tags}
   version_added: "2.5"
+TASK_TIMEOUT:
+  name: Task Timeout
+  default: 0
+  description:
+    - Set the maximum time (in seconds) that a task can run for.
+    - If set to 0 (the default) there is no timeout.
+  env: [{name: ANSIBLE_TASK_TIMEOUT}]
+  ini:
+  - {key: task_timeout, section: defaults}
+  type: integer
+  version_added: '2.10'
 WORKER_SHUTDOWN_POLL_COUNT:
   name: Worker Shutdown Poll Count
   default: 0
