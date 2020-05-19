@@ -93,6 +93,7 @@ class TestActionBase(unittest.TestCase):
         mock_task = MagicMock()
         mock_task.action = "foo"
         mock_task.args = dict(a=1, b=2, c=3)
+        mock_task.delegate_to = None
 
         mock_connection = MagicMock()
 
