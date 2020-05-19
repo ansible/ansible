@@ -162,7 +162,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         delegation = False
         if task_vars is None:
             use_vars = dict()
-        elif task_vars.get('ansible_delegated_vars'):
+        elif task_vars.get('ansible_delegated_vars') and self._play_context.remote_addr in task_vars['ansible_delegated_vars']:
             use_vars = task_vars.get('ansible_delegated_vars')[self._play_context.remote_addr]
             delegation = True
         else:
