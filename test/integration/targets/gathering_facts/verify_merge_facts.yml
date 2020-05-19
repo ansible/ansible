@@ -5,15 +5,17 @@
         - facts_one
         - facts_two
   tasks:
-    - name: try to update ref file
-      copy: content={{ansible_facts|dictsort(true)|to_json}} dest=./one_two.json
-      register: update
+
+    - name: populate original
+      include_vars:
+        name: original
+        file: one_two.json
 
     - name: fail if ref file is updated
       assert:
-        msg: '{{update.diff|to_json}}'
+        msg: '{{ansible_facts}} vs {{original}}'
         that:
-            - not update.diff
+            - ansible_facts|to_json(indent=4, sort_keys=True) == original|to_json(indent=4, sort_keys=True)
 
     - name: clear existing facts for next play
       meta: clear_facts
@@ -26,12 +28,15 @@
         - facts_two
         - facts_one
   tasks:
-    - name: try to update ref file
-      copy: content={{ansible_facts|dictsort(true)|to_json}} dest=./two_one.json
-      register: update
+
+    - name: populate original
+      include_vars:
+        name: original
+        file: two_one.json
 
     - name: fail if ref file is updated
       assert:
-        msg: '{{update.diff|to_json}}'
+        msg: '{{ansible_facts}} vs {{original}}'
         that:
-            - not update.diff
+            - ansible_facts|to_json(indent=4, sort_keys=True) == original|to_json(indent=4, sort_keys=True)
+
