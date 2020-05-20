@@ -22,8 +22,7 @@ import ast
 import sys
 
 from ansible import constants as C
-from ansible.module_utils._text import to_native
-from ansible.module_utils.common.text.converters import container_to_text
+from ansible.module_utils.common.text.converters import container_to_text, to_native
 from ansible.module_utils.six import string_types, PY2
 from ansible.module_utils.six.moves import builtins
 from ansible.plugins.loader import filter_loader, test_loader
