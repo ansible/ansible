@@ -8,7 +8,6 @@ cleanup() {
     echo "Cleanup"
     ansible-playbook playbooks/swarm_cleanup.yml
     echo "Done"
-    exit 0
 }
 
 trap cleanup INT TERM EXIT
