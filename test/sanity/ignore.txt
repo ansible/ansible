@@ -5939,6 +5939,8 @@ test/integration/targets/collections_relative_imports/collection_root/ansible_co
 test/integration/targets/expect/files/test_command.py future-import-boilerplate
 test/integration/targets/expect/files/test_command.py metaclass-boilerplate
 test/integration/targets/gathering_facts/library/bogus_facts shebang
+test/integration/targets/gathering_facts/library/facts_one shebang
+test/integration/targets/gathering_facts/library/facts_two shebang
 test/integration/targets/get_url/files/testserver.py future-import-boilerplate
 test/integration/targets/get_url/files/testserver.py metaclass-boilerplate
 test/integration/targets/group/files/gidget.py future-import-boilerplate
