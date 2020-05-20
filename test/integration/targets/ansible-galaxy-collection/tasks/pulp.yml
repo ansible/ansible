@@ -1,6 +1,8 @@
 # These tasks configure pulp/pulp_ansible so that we can use the container
 # They tasks will also reset pulp between iterations
 
+# The pulp container has a long start up time
+# The first task to interact with pulp needs to wait until it responds appropriately
 - name: list pulp distributions
   uri:
     url: '{{ pulp_api }}/pulp/api/v3/distributions/ansible/ansible/'
@@ -120,9 +122,6 @@
     password: '{{ pulp_password }}'
     force_basic_auth: true
   register: pulp_repo
-  until: pulp_repo is successful
-  delay: 1
-  retries: 25
 
 - name: create pulp distribution
   uri:
