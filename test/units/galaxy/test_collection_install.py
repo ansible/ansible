@@ -768,7 +768,7 @@ def test_install_missing_metadata_warning(collection_artifact, monkeypatch):
         if os.path.isfile(b_path):
             os.unlink(b_path)
 
-    collection.install_collections([(to_text(collection_tar), '*', None,)], to_text(temp_path),
+    collection.install_collections([(to_text(collection_tar), '*', None, None)], to_text(temp_path),
                                    [u'https://galaxy.ansible.com'], True, False, False, False, False)
 
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
