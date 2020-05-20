@@ -70,3 +70,4 @@
 
 - name: reset published collections - {{ test_name }}
   include_tasks: pulp.yml
+  when: is_pulp
