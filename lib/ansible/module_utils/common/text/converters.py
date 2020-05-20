@@ -303,7 +303,7 @@ def container_to_bytes(d, encoding='utf-8', errors='surrogate_or_strict'):
 
 
 def container_to_text(d, encoding='utf-8', errors='surrogate_or_strict'):
-    """Recursively convert dict keys and values to byte str
+    """Recursively convert dict keys and values to text str
 
     Specialized for json return because this only handles, lists, tuples,
     and dict container types (the containers that the json module returns)
