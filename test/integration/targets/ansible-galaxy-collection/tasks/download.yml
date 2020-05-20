@@ -5,7 +5,7 @@
     state: directory
 
 - name: download collection with multiple dependencies
-  command: ansible-galaxy collection download parent_dep.parent_collection -s {{ fallaxy_galaxy_server }}
+  command: ansible-galaxy collection download parent_dep.parent_collection -s {{ fallaxy_galaxy_server }} {{ galaxy_verbosity }}
   register: download_collection
   args:
     chdir: '{{ galaxy_dir }}/download'
@@ -30,7 +30,7 @@
     - (download_collection_actual.files[3].path | basename) in ['requirements.yml', 'child_dep-child_dep2-1.2.2.tar.gz', 'child_dep-child_collection-0.9.9.tar.gz', 'parent_dep-parent_collection-1.0.0.tar.gz']
 
 - name: test install of download requirements file
-  command: ansible-galaxy collection install -r requirements.yml -p '{{ galaxy_dir }}/download'
+  command: ansible-galaxy collection install -r requirements.yml -p '{{ galaxy_dir }}/download' {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}/download/collections'
   register: install_download
@@ -69,7 +69,7 @@
     dest: '{{ galaxy_dir }}/download/download.yml'
 
 - name: download collection with req to custom dir
-  command: ansible-galaxy collection download -r '{{ galaxy_dir }}/download/download.yml' -s {{ fallaxy_ah_server }} -p '{{ galaxy_dir }}/download/collections-custom'
+  command: ansible-galaxy collection download -r '{{ galaxy_dir }}/download/download.yml' -s {{ fallaxy_ah_server }} -p '{{ galaxy_dir }}/download/collections-custom' {{ galaxy_verbosity }}
   register: download_req_custom_path
 
 - name: get result of download collection with req to custom dir
@@ -97,7 +97,7 @@
     dest: '{{ galaxy_dir }}/download/no_roles_no_collections.yml'
 
 - name: install collection with requirements
-  command: ansible-galaxy collection install -r '{{ galaxy_dir }}/download/no_roles_no_collections.yml'
+  command: ansible-galaxy collection install -r '{{ galaxy_dir }}/download/no_roles_no_collections.yml' {{ galaxy_verbosity }}
   register: install_no_requirements
 
 - name: assert install collection with no roles and no collections in requirements

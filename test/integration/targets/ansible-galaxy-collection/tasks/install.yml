@@ -5,7 +5,7 @@
     state: directory
 
 - name: install simple collection with implicit path - {{ test_name }}
-  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}'
+  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}' {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
   register: install_normal
@@ -32,7 +32,7 @@
     - (install_normal_manifest.content | b64decode | from_json).collection_info.version == '1.0.9'
 
 - name: install existing without --force - {{ test_name }}
-  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}'
+  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}' {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
   register: install_existing_no_force
@@ -43,7 +43,7 @@
     - '"Skipping ''namespace1.name1'' as it is already installed" in install_existing_no_force.stdout'
 
 - name: install existing with --force - {{ test_name }}
-  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}' --force
+  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}' --force {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_existing_force
@@ -59,7 +59,7 @@
     state: absent
 
 - name: install pre-release as explicit version to custom dir - {{ test_name }}
-  command: ansible-galaxy collection install 'namespace1.name1:1.1.0-beta.1' -s '{{ test_server }}' -p '{{ galaxy_dir }}/ansible_collections'
+  command: ansible-galaxy collection install 'namespace1.name1:1.1.0-beta.1' -s '{{ test_server }}' -p '{{ galaxy_dir }}/ansible_collections' {{ galaxy_verbosity }}
   register: install_prerelease
 
 - name: get result of install pre-release as explicit version to custom dir - {{ test_name }}
@@ -79,7 +79,7 @@
     state: absent
 
 - name: install pre-release version with --pre to custom dir - {{ test_name }}
-  command: ansible-galaxy collection install --pre 'namespace1.name1' -s '{{ test_server }}' -p '{{ galaxy_dir }}/ansible_collections'
+  command: ansible-galaxy collection install --pre 'namespace1.name1' -s '{{ test_server }}' -p '{{ galaxy_dir }}/ansible_collections' {{ galaxy_verbosity }}
   register: install_prerelease
 
 - name: get result of install pre-release version with --pre to custom dir - {{ test_name }}
@@ -94,7 +94,7 @@
     - (install_prerelease_actual.content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
 
 - name: install multiple collections with dependencies - {{ test_name }}
-  command: ansible-galaxy collection install parent_dep.parent_collection namespace2.name -s {{ test_name }}
+  command: ansible-galaxy collection install parent_dep.parent_collection namespace2.name -s {{ test_name }} {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}/ansible_collections'
   environment:
@@ -127,7 +127,7 @@
     - (install_multiple_with_dep_actual.results[3].content | b64decode | from_json).collection_info.version == '1.2.2'
 
 - name: expect failure with dep resolution failure
-  command:  ansible-galaxy collection install fail_namespace.fail_collection -s {{ test_server }}
+  command:  ansible-galaxy collection install fail_namespace.fail_collection -s {{ test_server }} {{ galaxy_verbosity }}
   register: fail_dep_mismatch
   failed_when: '"Cannot meet dependency requirement ''fail_dep2.name:<0.0.5'' for collection fail_namespace.fail_collection" not in fail_dep_mismatch.stderr'
 
@@ -137,7 +137,7 @@
     dest: '{{ galaxy_dir }}/namespace3.tar.gz'
 
 - name: install a collection from a tarball - {{ test_name }}
-  command: ansible-galaxy collection install '{{ galaxy_dir }}/namespace3.tar.gz'
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/namespace3.tar.gz' {{ galaxy_verbosity }}
   register: install_tarball
   environment:
     ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
@@ -157,7 +157,7 @@
   script: build_bad_tar.py {{ galaxy_dir | quote }}
 
 - name: fail to install a collection from a bad tarball - {{ test_name }}
-  command: ansible-galaxy collection install '{{ galaxy_dir }}/suspicious-test-1.0.0.tar.gz'
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/suspicious-test-1.0.0.tar.gz' {{ galaxy_verbosity }}
   register: fail_bad_tar
   failed_when: fail_bad_tar.rc != 1 and "Cannot extract tar entry '../../outside.sh' as it will be placed outside the collection directory" not in fail_bad_tar.stderr
   environment:
@@ -174,7 +174,7 @@
     - not fail_bad_tar_actual.stat.exists
 
 - name: install a collection from a URI - {{ test_name }}
-  command: ansible-galaxy collection install '{{ test_server }}custom/collections/namespace4-name-1.0.0.tar.gz'
+  command: ansible-galaxy collection install '{{ test_server }}custom/collections/namespace4-name-1.0.0.tar.gz' {{ galaxy_verbosity }}
   register: install_uri
   environment:
     ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
@@ -191,14 +191,14 @@
     - (install_uri_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
 
 - name: fail to install a collection with an undefined URL - {{ test_name }}
-  command: ansible-galaxy collection install namespace5.name
+  command: ansible-galaxy collection install namespace5.name {{ galaxy_verbosity }}
   register: fail_undefined_server
   failed_when: '"No setting was provided for required configuration plugin_type: galaxy_server plugin: undefined" not in fail_undefined_server.stderr'
   environment:
     ANSIBLE_GALAXY_SERVER_LIST: undefined
 
 - name: install a collection with an empty server list - {{ test_name }}
-  command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}'
+  command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' {{ galaxy_verbosity }}
   register: install_empty_server_list
   environment:
     ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'

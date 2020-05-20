@@ -34,7 +34,13 @@ this code instead.
 
 import atexit
 import base64
+import email.mime.multipart
+import email.mime.nonmultipart
+import email.mime.application
+import email.parser
+import email.utils
 import functools
+import mimetypes
 import netrc
 import os
 import platform
@@ -47,6 +53,12 @@ import traceback
 from contextlib import contextmanager
 
 try:
+    import email.policy
+except ImportError:
+    # Py2
+    import email.generator
+
+try:
     import httplib
 except ImportError:
     # Python 3
@@ -56,8 +68,9 @@ import ansible.module_utils.six.moves.http_cookiejar as cookiejar
 import ansible.module_utils.six.moves.urllib.request as urllib_request
 import ansible.module_utils.six.moves.urllib.error as urllib_error
 
-from ansible.module_utils.six import PY3
-
+from ansible.module_utils.common.collections import Mapping
+from ansible.module_utils.six import PY3, string_types
+from ansible.module_utils.six.moves import cStringIO
 from ansible.module_utils.basic import get_distribution
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -1381,6 +1394,119 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
                           client_cert=client_cert, client_key=client_key, cookies=cookies,
                           use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
                           unredirected_headers=unredirected_headers)
+
+
+def prepare_multipart(fields):
+    """Takes a mapping, and prepares a multipart/form-data body
+
+    :arg fields: Mapping
+    :returns: tuple of (content_type, body) where ``content_type`` is
+        the ``multipart/form-data`` ``Content-Type`` header including
+        ``boundary`` and ``body`` is the prepared bytestring body
+
+    Payload content from a file will be base64 encoded and will include
+    the appropriate ``Content-Transfer-Encoding`` and ``Content-Type``
+    headers.
+
+    Example:
+        {
+            "file1": {
+                "filename": "/bin/true",
+                "mime_type": "application/octet-stream"
+            },
+            "file2": {
+                "content": "text based file content",
+                "filename": "fake.txt",
+                "mime_type": "text/plain",
+            },
+            "text_form_field": "value"
+        }
+    """
+
+    if not isinstance(fields, Mapping):
+        raise TypeError(
+            'Mapping is required, cannot be type %s' % fields.__class__.__name__
+        )
+
+    m = email.mime.multipart.MIMEMultipart('form-data')
+    for field, value in sorted(fields.items()):
+        if isinstance(value, string_types):
+            main_type = 'text'
+            sub_type = 'plain'
+            content = value
+            filename = None
+        elif isinstance(value, Mapping):
+            filename = value.get('filename')
+            content = value.get('content')
+            if not any((filename, content)):
+                raise ValueError('at least one of filename or content must be provided')
+
+            mime = value.get('mime_type')
+            if not mime:
+                try:
+                    mime = mimetypes.guess_type(filename or '', strict=False)[0] or 'application/octet-stream'
+                except Exception:
+                    mime = 'application/octet-stream'
+            main_type, sep, sub_type = mime.partition('/')
+        else:
+            raise TypeError(
+                'value must be a string, or mapping, cannot be type %s' % value.__class__.__name__
+            )
+
+        if not content and filename:
+            with open(to_bytes(filename, errors='surrogate_or_strict'), 'rb') as f:
+                part = email.mime.application.MIMEApplication(f.read())
+                del part['Content-Type']
+                part.add_header('Content-Type', '%s/%s' % (main_type, sub_type))
+        else:
+            part = email.mime.nonmultipart.MIMENonMultipart(main_type, sub_type)
+            part.set_payload(to_bytes(content))
+
+        part.add_header('Content-Disposition', 'form-data')
+        del part['MIME-Version']
+        part.set_param(
+            'name',
+            field,
+            header='Content-Disposition'
+        )
+        if filename:
+            part.set_param(
+                'filename',
+                to_native(os.path.basename(filename)),
+                header='Content-Disposition'
+            )
+
+        m.attach(part)
+
+    if PY3:
+        # Ensure headers are not split over multiple lines
+        # The HTTP policy also uses CRLF by default
+        b_data = m.as_bytes(policy=email.policy.HTTP)
+    else:
+        # Py2
+        # We cannot just call ``as_string`` since it provides no way
+        # to specify ``maxheaderlen``
+        fp = cStringIO()  # cStringIO seems to be required here
+        # Ensure headers are not split over multiple lines
+        g = email.generator.Generator(fp, maxheaderlen=0)
+        g.flatten(m)
+        # ``fix_eols`` switches from ``\n`` to ``\r\n``
+        b_data = email.utils.fix_eols(fp.getvalue())
+    del m
+
+    headers, sep, b_content = b_data.partition(b'\r\n\r\n')
+    del b_data
+
+    if PY3:
+        parser = email.parser.BytesHeaderParser().parsebytes
+    else:
+        # Py2
+        parser = email.parser.HeaderParser().parsestr
+
+    return (
+        parser(headers)['content-type'],  # Message converts to native strings
+        b_content
+    )
 
 
 #
