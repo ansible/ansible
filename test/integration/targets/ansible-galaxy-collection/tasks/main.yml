@@ -177,7 +177,7 @@
 
 # The above setup_collections uses --no-wait
 # pause for good measure.
-- name: Cautionary wait
+- name: precautionary wait
   pause:
     seconds: 5
 
