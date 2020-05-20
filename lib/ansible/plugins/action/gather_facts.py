@@ -9,6 +9,7 @@ import time
 
 from ansible import constants as C
 from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.plugins.action import ActionBase
 from ansible.utils.vars import merge_hash
 
@@ -72,7 +73,13 @@ class ActionModule(ActionBase):
 
         failed = {}
         skipped = {}
-        if parallel is False or (len(modules) == 1 and parallel is None):
+
+        if parallel is None and len(modules) >= 1:
+            parallel = True
+        else:
+            parallel = boolean(parallel)
+
+        if parallel:
             # serially execute each module
             for fact_module in modules:
                 # just one module, no need for fancy async
@@ -90,7 +97,6 @@ class ActionModule(ActionBase):
             # do it async
             jobs = {}
             for fact_module in modules:
-
                 mod_args = self._get_module_args(fact_module, task_vars)
                 self._display.vvvv("Running %s" % fact_module)
                 jobs[fact_module] = (self._execute_module(module_name=fact_module, module_args=mod_args, task_vars=task_vars, wrap_async=True))
