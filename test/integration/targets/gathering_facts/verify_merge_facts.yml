@@ -39,4 +39,3 @@
         msg: '{{ansible_facts}} vs {{original}}'
         that:
             - ansible_facts|to_json(indent=4, sort_keys=True) == original|to_json(indent=4, sort_keys=True)
-
