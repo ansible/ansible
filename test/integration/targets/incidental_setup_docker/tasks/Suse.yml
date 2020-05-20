@@ -1,4 +1,4 @@
-- name: Install docker 17
+- name: Install docker
   zypper:
     name: "{{ docker_packages }}"
     force: yes
