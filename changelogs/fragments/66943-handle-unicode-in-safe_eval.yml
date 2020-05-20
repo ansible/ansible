@@ -1,0 +1,2 @@
+bugfixes:
+  - Properly handle unicode in ``safe_eval``. (https://github.com/ansible/ansible/issues/66943)
