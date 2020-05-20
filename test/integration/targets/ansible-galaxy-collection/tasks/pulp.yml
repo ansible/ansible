@@ -1,5 +1,5 @@
 # These tasks configure pulp/pulp_ansible so that we can use the container
-# They tasks will also reset pulp between iterations
+# This will also reset pulp between iterations
 
 # The pulp container has a long start up time
 # The first task to interact with pulp needs to wait until it responds appropriately
