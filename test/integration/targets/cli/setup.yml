@@ -18,6 +18,16 @@
             name: cliuser2
             shell: /bin/bash
             password: "{{ 'secretpassword' | password_hash('sha512', 'mysecretsalt') }}"
+        - name: Run the test
+          shell: python test_k_and_K.py
+      always:
+        - name: Remove user {{ item }}
+          user:
+            name: "{{ item }}"
+            state: absent
+          with_items:
+            - cliuser1
+            - cliuser2
       # For now, we don't test this everywhere, because `user` works differently
       # on some platforms, as does sudo/sudoers. On RHEL-ish, we can just add
       # the user to 'wheel' and things magically work.
