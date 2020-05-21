@@ -141,7 +141,7 @@ Changelogs
 
 Changelogs help users and developers keep up with changes to Ansible.
 Ansible builds a changelog for each release from fragments.
-You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-base or collection.
+You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-base.
 You don't have to add a changelog fragment for PRs that add new
 modules and plugins, because our tooling does that for you automatically.
 
@@ -200,11 +200,6 @@ Here are some examples:
   bugfixes:
     - apt_repository - fix crash caused by ``cache.update()`` raising an ``IOError``
       due to a timeout in ``apt update`` (https://github.com/ansible/ansible/issues/51995).
-
-.. code-block:: yaml
-
-  minor_changes:
-    - datadog_monitor - add missing ``log alert`` type to ``type`` choices (https://github.com/ansible-collections/community.general/issues/251).
 
 .. code-block:: yaml
 
