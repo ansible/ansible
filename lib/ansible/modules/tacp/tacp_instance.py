@@ -243,7 +243,6 @@ def run_module():
             if module._verbosity >= 3:
                 result['api_response'] = str(api_response)
         except ApiException as e:
-
             return "Exception when calling ApplicationsApi->create_application_from_template_using_post: %s\n" % e
 
         tacp_utils.wait_for_action_to_complete(
@@ -272,11 +271,9 @@ def run_module():
                 result['api_response'] = str(api_response)
         except ApiException as e:
             response_dict = tacp_utils.api_response_to_dict(e)
-
-            if "Error" in response_dict['message']:
-                result['changed'] = False
-                result['failed'] = True
-                fail_with_reason(response_dict['message'])
+            result['changed'] = False
+            result['failed'] = True
+            fail_with_reason(response_dict['message'])
 
         success, failure_reason = tacp_utils.wait_for_action_to_complete(
             api_response.action_uuid, api_client)
