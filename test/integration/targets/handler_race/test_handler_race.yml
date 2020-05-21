@@ -1,0 +1,10 @@
+- hosts: all
+  gather_facts: no
+  strategy: free
+  tasks:
+    - include_role:
+        name: random_sleep
+    - include_role:
+        name: do_handlers
+    - include_role:
+        name: more_sleep

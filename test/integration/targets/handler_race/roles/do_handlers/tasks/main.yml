@@ -1,0 +1,9 @@
+---
+# tasks file for do_handlers
+- name: Invoke handler
+  shell: sleep 1
+  notify:
+    - My Handler
+
+- name: Flush handlers
+  meta: flush_handlers
