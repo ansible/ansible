@@ -18,6 +18,11 @@
             name: cliuser2
             shell: /bin/bash
             password: "{{ 'secretpassword' | password_hash('sha512', 'mysecretsalt') }}"
+        # Sometimes this file doesn't get removed, and we need it gone to ssh
+        - name: Remove /run/nologin
+          file:
+            path: /run/nologin
+            state: absent
         # Make Ansible run Python to run Ansible
         - name: Run the test
           shell: python test_k_and_K.py
