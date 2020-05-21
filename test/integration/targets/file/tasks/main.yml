@@ -61,6 +61,25 @@
       - "file_result.changed == false"
       - "file_result.state == 'file'"
 
+- name: Make sure file does not exist
+  file:
+    path: /tmp/ghost
+    state: absent
+
+- name: Target a file that does not exist
+  file:
+    path: /tmp/ghost
+  ignore_errors: yes
+  register: ghost_file_result
+
+- name: Validate ghost file results
+  assert:
+    that:
+      - ghost_file_result is failed
+      - ghost_file_result is not changed
+      - ghost_file_result.state == 'absent'
+      - "'cannot continue' in ghost_file_result.msg"
+
 - name: verify that we are checking an absent file
   file: path={{output_dir}}/bar.txt state=absent
   register: file2_result
@@ -269,7 +288,7 @@
   copy: src=foobar dest={{output_dir}}
 
 - name: check what would be removed if folder state was absent and diff is enabled
-  file: 
+  file:
     path: "{{ item }}"
     state: absent
   check_mode: yes
