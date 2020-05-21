@@ -1,4 +1,26 @@
 - hosts: localhost
-  gather_facts: no
+  gather_facts: yes
   roles:
     - setup_pexpect
+
+  tasks:
+    - name: Test ansible-playbook and ansible with -K
+      block:
+        - name: Create user to connect as
+          user:
+            name: cliuser1
+            shell: /bin/bash
+            groups: wheel
+            append: yes
+            password: "{{ 'secretpassword' | password_hash('sha512', 'mysecretsalt') }}"
+        - name: Create user to become
+          user:
+            name: cliuser2
+            shell: /bin/bash
+            password: "{{ 'secretpassword' | password_hash('sha512', 'mysecretsalt') }}"
+      # For now, we don't test this everywhere, because `user` works differently
+      # on some platforms, as does sudo/sudoers. On RHEL-ish, we can just add
+      # the user to 'wheel' and things magically work.
+      # TODO: In theory, we should test this with all the different 'become'
+      # plugins in base.
+      when: ansible_os_family == 'RedHat'
