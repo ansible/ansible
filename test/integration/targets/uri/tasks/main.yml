@@ -544,6 +544,18 @@
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
 
+- name: Make request that includes password in JSON keys
+  uri:
+    url: "https://{{ httpbin_host}}/get?key-password=value-password"
+    user: admin
+    password: password
+  register: sanitize_keys
+
+- name: assert that keys were sanitized
+  assert:
+    that:
+      - sanitize_keys.json.args['key-********'] == 'value-********'
+
 - name: Create a testing file
   copy:
     content: "content"

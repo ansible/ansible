@@ -105,12 +105,17 @@ class TestRemoveValues(unittest.TestCase):
                 'three': [
                     OMIT, 'musketeers', None, {
                         'ping': OMIT,
-                        'base': [
+                        OMIT: [
                             OMIT, 'raquets'
                         ]
                     }
                 ]
             }
+        ),
+        (
+            {'key-password': 'value-password'},
+            frozenset(['password']),
+            {'key-********': 'value-********'},
         ),
         (
             'This sentence has an enigma wrapped in a mystery inside of a secret. - mr mystery',
