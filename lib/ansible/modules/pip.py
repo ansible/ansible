@@ -214,7 +214,7 @@ EXAMPLES = '''
     requirements: /my_app/requirements.txt
     extra_args: "--no-index --find-links=file:///my_downloaded_packages_dir"
 
-- name: Install bottle for Python 3.3 specifically,using the 'pip3.3' executable
+- name: Install bottle for Python 3.3 specifically, using the 'pip3.3' executable
   pip:
     name: bottle
     executable: pip3.3
