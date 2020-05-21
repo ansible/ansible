@@ -140,7 +140,8 @@ Changelogs
 ----------
 
 Changelogs help users and developers keep up with changes to Ansible.
-Ansible builds a changelog for each release from fragments. You **must** add a changelog fragment to any PR that changes functionality or fixes a bug.
+Ansible builds a changelog for each release from fragments.
+You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-base or collection.
 You don't have to add a changelog fragment for PRs that add new
 modules and plugins, because our tooling does that for you automatically.
 
@@ -161,7 +162,9 @@ and not by yaml (or escaped for both yaml and rst if that's your
 desire).  Each PR **must** use a new fragment file rather than adding to
 an existing one, so we can trace the change back to the PR that introduced it.
 
-To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
+To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of corresponding repository.
+The file name should include the PR number and a description of the change.
+It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
 
 A single changelog fragment may contain multiple sections but most will only contain one section.
 The toplevel keys (bugfixes, major_changes, and so on) are defined in the
@@ -197,6 +200,11 @@ Here are some examples:
   bugfixes:
     - apt_repository - fix crash caused by ``cache.update()`` raising an ``IOError``
       due to a timeout in ``apt update`` (https://github.com/ansible/ansible/issues/51995).
+
+.. code-block:: yaml
+
+  minor_changes:
+    - datadog_monitor - add missing ``log alert`` type to ``type`` choices (https://github.com/ansible-collections/community.general/issues/251).
 
 .. code-block:: yaml
 
