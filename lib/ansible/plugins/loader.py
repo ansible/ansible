@@ -733,11 +733,12 @@ class PluginLoader:
                     module = imp.load_source(to_native(full_name), to_native(path), module_file)
         return module
 
-    def _update_object(self, obj, name, path):
+    def _update_object(self, obj, name, path, redirected_names=[]):
 
         # set extra info on the module, in case we want it later
         setattr(obj, '_original_path', path)
         setattr(obj, '_load_name', name)
+        setattr(obj, '_redirected_names', redirected_names)
 
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
@@ -754,6 +755,7 @@ class PluginLoader:
 
         name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
+        redirected_names = plugin_load_context.redirect_list or []
 
         if path not in self._module_cache:
             self._module_cache[path] = self._load_module_source(name, path)
@@ -781,7 +783,7 @@ class PluginLoader:
                 # A plugin may need to use its _load_name in __init__ (for example, to set
                 # or get options from config), so update the object before using the constructor
                 instance = object.__new__(obj)
-                self._update_object(instance, name, path)
+                self._update_object(instance, name, path, redirected_names)
                 obj.__init__(instance, *args, **kwargs)
                 obj = instance
             except TypeError as e:
@@ -791,7 +793,7 @@ class PluginLoader:
                     return None
                 raise
 
-        self._update_object(obj, name, path)
+        self._update_object(obj, name, path, redirected_names)
         return obj
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):

@@ -8595,6 +8595,9 @@ plugin_routing:
     qradar:
       redirect: ibm.qradar.qradar
   inventory:
+    # test entry
+    formerly_core_inventory:
+      redirect: testns.content_adj.statichost
     cloudscale:
       redirect: community.general.cloudscale
     docker_machine:
