@@ -413,7 +413,7 @@ def main():
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
                     if params['depth']:
-                        wpath = npath.rstrip(os.path.sep) + os.path.sep 
+                        wpath = npath.rstrip(os.path.sep) + os.path.sep
                         depth = int(fsname.count(os.path.sep)) - int(wpath.count(os.path.sep)) + 1
                         if depth > params['depth']:
                             continue
