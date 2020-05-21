@@ -59,7 +59,7 @@ class DataLoader:
         self._FILE_CACHE = dict()
 
         # NOTE: not thread safe, also issues with forks not returning data to main proc
-        #       so they need to be cleaned independantly. See WorkerProcess for example.
+        #       so they need to be cleaned independently. See WorkerProcess for example.
         # used to keep track of temp files for cleaning
         self._tempfiles = set()
 
