@@ -4,7 +4,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils import tacp as tacp_utils
+from ansible.module_utils.tacp_utils import tacp as tacp_utils
+from ansible.module_utils.tacp_utils.exception import ActionTimedOutException, InvalidActionUuidException
 
 import json
 import tacp
@@ -135,38 +136,15 @@ def run_module():
         instance_params = {}
         instance_params['instance_name'] = module.params['name']
 
-        # Check if storage pool exists, it must in order to continue
-        storage_pool_uuid = tacp_utils.get_component_fields_by_name(
-            module.params['storage_pool'], 'storage_pool', api_client)
-        if storage_pool_uuid:
-            instance_params['storage_pool_uuid'] = storage_pool_uuid
-        else:
-            # Pool does not exist - must fail the task
-            reason = "Storage pool %s does not exist, cannot continue." % module.params[
-                'storage_pool']
-            fail_with_reason(reason)
-
-        # Check if datacenter exists, it must in order to continue
-        datacenter_uuid = tacp_utils.get_component_fields_by_name(
-            module.params['datacenter'], 'datacenter', api_client)
-        if datacenter_uuid:
-            instance_params['datacenter_uuid'] = datacenter_uuid
-        else:
-            # Datacenter does not exist - must fail the task
-            reason = "Datacenter %s does not exist, cannot continue." % module.params[
-                'datacenter']
-            fail_with_reason(reason)
-
-        # Check if migration_zone exists, it must in order to continue
-        migration_zone_uuid = tacp_utils.get_component_fields_by_name(
-            module.params['mz'], 'migration_zone', api_client)
-        if migration_zone_uuid:
-            instance_params['migration_zone_uuid'] = migration_zone_uuid
-        else:
-            # Migration zone does not exist - must fail the task
-            reason = "Migration Zone %s does not exist, cannot continue." % module.params[
-                'mz']
-            fail_with_reason(reason)
+        components = ['storage_pool', 'datacenter', 'migration_zone']
+        for component in components:
+            component_uuid = tacp_utils.get_component_fields_by_name(
+                module.params[component], component, api_client)
+            if not component_uuid:
+                reason = "%s %s does not exist, cannot continue." % component.capitalize(
+                ) % module.params[component]
+                fail_with_reason(reason)
+            instance_params['{}_uuid'.format(component)] = component_uuid
 
         # Check if template exists, it must in order to continue
         template_uuid = tacp_utils.get_component_fields_by_name(
@@ -185,7 +163,7 @@ def run_module():
         vnic_payloads = []
         for i, nic in enumerate(module.params['nics']):
             network_uuid = tacp_utils.get_component_fields_by_name(
-                    nic['network'], nic['type'].lower(), api_client)
+                nic['network'], nic['type'].lower(), api_client)
 
             mac_address = nic.get('mac_address')
             automatic_mac_address = not bool(mac_address)
@@ -302,7 +280,7 @@ def run_module():
 
         success, failure_reason = tacp_utils.wait_for_action_to_complete(
             api_response.action_uuid, api_client)
-        
+
         if not success:
             fail_with_reason(failure_reason)
         result['changed'] = True
@@ -396,7 +374,7 @@ def run_module():
             else:
                 # Application is already paused, so do nothing
                 pass
-            
+
     else:
         if module.params['state'] != 'absent':
             # Application does not exist yet, so create it
