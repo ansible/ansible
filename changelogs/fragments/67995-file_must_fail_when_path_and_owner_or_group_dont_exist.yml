@@ -1,0 +1,2 @@
+bugfixes:
+- file - the module must fail in check_mode when path and owner/group don't exist (https://github.com/ansible/ansible/issues/67307).

@@ -218,6 +218,9 @@ import shutil
 import sys
 import time
 
+from pwd import getpwnam, getpwuid
+from grp import getgrnam, getgrgid
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
 
@@ -707,7 +710,7 @@ def ensure_symlink(path, src, follow, force, timestamps):
     diff = initial_diff(path, 'link', prev_state)
     changed = False
 
-    if prev_state in ('hard', 'file', 'directory', 'absent'):
+    if prev_state == 'absent':
         changed = True
     elif prev_state == 'link':
         b_old_src = os.readlink(b_path)
@@ -715,6 +718,22 @@ def ensure_symlink(path, src, follow, force, timestamps):
             diff['before']['src'] = to_native(b_old_src, errors='strict')
             diff['after']['src'] = src
             changed = True
+    elif prev_state == 'hard':
+        changed = True
+        if not force:
+            raise AnsibleModuleError(results={'msg': 'Cannot link because a hard link exists at destination',
+                                              'dest': path, 'src': src})
+    elif prev_state == 'file':
+        changed = True
+        if not force:
+            raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
+                                              'dest': path, 'src': src})
+    elif prev_state == 'directory':
+        changed = True
+        if os.path.exists(b_path):
+            if not force:
+                raise AnsibleModuleError(results={'msg': 'Cannot link because a file exists at destination',
+                                                  'dest': path, 'src': src})
     else:
         raise AnsibleModuleError(results={'msg': 'unexpected position reached', 'dest': path, 'src': src})
 
@@ -853,6 +872,34 @@ def ensure_hardlink(path, src, follow, force, timestamps):
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
+def check_owner_exists(module, owner):
+    try:
+        uid = int(owner)
+        try:
+            getpwuid(uid).pw_name
+        except KeyError:
+            module.fail_json(msg='failed to look up user with uid %s' % uid)
+    except ValueError:
+        try:
+            getpwnam(owner).pw_uid
+        except KeyError:
+            module.fail_json(msg='failed to look up user %s' % owner)
+
+
+def check_group_exists(module, group):
+    try:
+        gid = int(group)
+        try:
+            getgrgid(gid).gr_name
+        except KeyError:
+            module.fail_json(msg='failed to look up group with gid %s' % gid)
+    except ValueError:
+        try:
+            getgrnam(group).gr_gid
+        except KeyError:
+            module.fail_json(msg='failed to look up group %s' % group)
+
+
 def main():
 
     global module
@@ -887,6 +934,13 @@ def main():
     follow = params['follow']
     path = params['path']
     src = params['src']
+
+    if state != 'absent':
+        file_args = module.load_file_common_arguments(module.params)
+        if file_args['owner']:
+            check_owner_exists(module, file_args['owner'])
+        if file_args['group']:
+            check_group_exists(module, file_args['group'])
 
     timestamps = {}
     timestamps['modification_time'] = keep_backward_compatibility_on_timestamps(params['modification_time'], state)
