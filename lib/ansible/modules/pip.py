@@ -152,8 +152,8 @@ EXAMPLES = '''
       - django>1.11.0,<1.12.0
       - bottle>0.10,<0.20,!=0.11
 
-# It doesn't use the standard environment variables, please use the CAPITALIZED ones below
 - name: Install python package using a proxy
+  # Pip doesn't use the standard environment variables, please use the CAPITALIZED ones below
   pip:
     name: six
   environment:
