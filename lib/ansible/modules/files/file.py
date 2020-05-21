@@ -588,7 +588,7 @@ def ensure_file_attributes(path, follow, timestamps):
     if prev_state not in ('file', 'hard'):
         # file is not absent and any other state is a conflict
         raise AnsibleModuleError(results={'msg': 'file (%s) is %s, cannot continue' % (path, prev_state),
-                                          'path': path})
+                                          'path': path, 'state': prev_state})
 
     diff = initial_diff(path, 'file', prev_state)
     changed = module.set_fs_attributes_if_different(file_args, False, diff, expand=False)
