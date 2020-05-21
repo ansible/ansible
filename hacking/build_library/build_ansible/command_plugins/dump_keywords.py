@@ -84,7 +84,13 @@ def extract_keywords(keyword_definitions):
 def generate_page(pb_keywords, template_dir):
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True,)
     template = env.get_template(TEMPLATE_FILE)
-    tempvars = {'pb_keywords': pb_keywords, 'playbook_class_names': PLAYBOOK_CLASS_NAMES}
+    tempvars = {
+        'pb_keywords': pb_keywords,
+        'playbook_class_names': PLAYBOOK_CLASS_NAMES,
+        'keywords': {keyword: pb_keywords[class_name][keyword]
+                     for class_name in PLAYBOOK_CLASS_NAMES
+                     for keyword in pb_keywords[class_name]},
+    }
 
     keyword_page = template.render(tempvars)
     if LooseVersion(jinja2.__version__) < LooseVersion('2.10'):

@@ -19,15 +19,16 @@ These are the keywords available on common playbook objects. Keywords are one of
    :local:
    :depth: 1
 
-{% for name in playbook_class_names %}
 
-{{ name }}
-{{ '-' * name|length }}
-.. glossary::
+{% for keyword in keywords | sort %}
+{{ keyword }}
+{{ '-' * keyword | length }}
 
-{% for attribute in pb_keywords[name]|sort %}
-    {{ attribute }}
-        {{ pb_keywords[name][attribute] |indent(8) }}
 
-{% endfor %}
+Applies to:{% for name in playbook_class_names %}  {% if keyword in pb_keywords[name] %}✓{% else %}✗{% endif %} {{ name }}{% endfor %}
+
+
+{{ keywords[keyword] }}
+
+
 {% endfor %}
