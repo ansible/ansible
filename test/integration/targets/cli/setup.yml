@@ -25,7 +25,7 @@
             state: absent
         # Make Ansible run Python to run Ansible
         - name: Run the test
-          shell: python test_k_and_K.py
+          shell: python test_k_and_K.py {{ ansible_python_interpreter }}
       always:
         - name: Remove users
           user:
