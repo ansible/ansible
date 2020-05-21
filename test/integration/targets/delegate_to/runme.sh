@@ -64,7 +64,7 @@ ANSIBLE_TIMEOUT=3 ansible-playbook delegate_vars_hanldling.yml -i inventory -v "
 # python
 source virtualenv.sh
 (
-cd $OUTPUT_DIR/venv/bin
+cd "${OUTPUT_DIR}"/venv/bin
 ln -s python firstpython
 ln -s python secondpython
 )
