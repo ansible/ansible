@@ -2790,8 +2790,6 @@ plugin_routing:
       redirect: community.general.hponcfg
     imc_rest:
       redirect: community.general.imc_rest
-    intersight_info:
-      redirect: community.general.intersight_info
     ipmi_boot:
       redirect: community.general.ipmi_boot
     ipmi_power:
@@ -5631,7 +5629,9 @@ plugin_routing:
     asa_command:
       redirect: cisco.asa.asa_command
     intersight_facts:
-      redirect: cisco.intersight.intersight_facts
+      redirect: cisco.intersight.intersight_info
+    intersight_info:
+      redirect: community.general.intersight_info
     intersight_rest_api:
       redirect: cisco.intersight.intersight_rest_api
     ios_l3_interfaces:
