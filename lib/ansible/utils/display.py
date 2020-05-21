@@ -250,10 +250,9 @@ class Display(metaclass=Singleton):
                     self.b_cowsay = b_cow_path
 
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
-        """ Display a message to the user
-
-        Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
-        """
+        """ Display a message to the user """
+        # defensive conversion to prevent display/logging code from bombing
+        msg = to_text(msg)
 
         if self._final_q:
             # If _final_q is set, that means we are in a WorkerProcess
@@ -335,19 +334,26 @@ class Display(metaclass=Singleton):
 
     def debug(self, msg, host=None):
         if C.DEFAULT_DEBUG:
+            msg = to_text(msg)
+            if host:
+                host = to_text(host)
+
             if host is None:
                 self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
             else:
                 self.display("%6d %0.5f [%s]: %s" % (os.getpid(), time.time(), host, msg), color=C.COLOR_DEBUG)
 
     def verbose(self, msg, host=None, caplevel=2):
+        msg = to_text(msg)
+        if host:
+            host = to_text(host)
 
         to_stderr = C.VERBOSE_TO_STDERR
         if self.verbosity > caplevel:
             if host is None:
                 self.display(msg, color=C.COLOR_VERBOSE, stderr=to_stderr)
             else:
-                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
+                self.display(u"<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
     def get_deprecation_message(self, msg, version=None, removed=False, date=None, collection_name=None):
         ''' used to print out a deprecation message.'''
@@ -401,13 +407,13 @@ class Display(metaclass=Singleton):
             self._deprecations[message_text] = 1
 
     def warning(self, msg, formatted=False):
-
+        msg = to_text(msg)
         if not formatted:
-            new_msg = "[WARNING]: %s" % msg
+            new_msg = u"[WARNING]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
-            new_msg = "\n".join(wrapped) + "\n"
+            new_msg = u"\n".join(wrapped) + u"\n"
         else:
-            new_msg = "\n[WARNING]: \n%s" % msg
+            new_msg = u"\n[WARNING]: \n%s" % msg
 
         if new_msg not in self._warns:
             self.display(new_msg, color=C.COLOR_WARN, stderr=True)
@@ -441,6 +447,7 @@ class Display(metaclass=Singleton):
         self.display(u"\n%s %s" % (msg, stars), color=color)
 
     def banner_cowsay(self, msg, color=None):
+        msg = to_text(msg)
         if u": [" in msg:
             msg = msg.replace(u"[", u"")
             if msg.endswith(u"]"):
@@ -458,6 +465,7 @@ class Display(metaclass=Singleton):
         self.display(u"%s\n" % to_text(out), color=color)
 
     def error(self, msg, wrap_text=True):
+        msg = to_text(msg)
         if wrap_text:
             new_msg = u"\n[ERROR]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
@@ -476,6 +484,11 @@ class Display(metaclass=Singleton):
             return input(msg)
 
     def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None, unsafe=None):
+        varname = to_text(varname)
+        if prompt:
+            prompt = to_text(prompt)
+        if default:
+            default = to_text(default)
 
         result = None
         if sys.__stdin__.isatty():
@@ -483,16 +496,16 @@ class Display(metaclass=Singleton):
             do_prompt = self.prompt
 
             if prompt and default is not None:
-                msg = "%s [%s]: " % (prompt, default)
+                msg = u"%s [%s]: " % (prompt, default)
             elif prompt:
-                msg = "%s: " % prompt
+                msg = u"%s: " % prompt
             else:
-                msg = 'input for %s: ' % varname
+                msg = u'input for %s: ' % varname
 
             if confirm:
                 while True:
                     result = do_prompt(msg, private)
-                    second = do_prompt("confirm " + msg, private)
+                    second = do_prompt(u"confirm " + msg, private)
                     if result == second:
                         break
                     self.display("***** VALUES ENTERED DO NOT MATCH ****")
