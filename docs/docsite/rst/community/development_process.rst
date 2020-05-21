@@ -195,8 +195,8 @@ Here are some examples:
 .. code-block:: yaml
 
   bugfixes:
-    - win_updates - fixed issue where running win_updates on async fails
-      without any error (https://github.com/ansible/ansible/issues/29442).
+    - apt_repository - fix crash caused by ``cache.update()`` raising an ``IOError``
+      due to a timeout in ``apt update`` (https://github.com/ansible/ansible/issues/51995).
 
 .. code-block:: yaml
 
