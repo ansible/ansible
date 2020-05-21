@@ -266,8 +266,7 @@ def run_module():
         return network_params
 
     def create_vlan_network(network_params):
-        api_instance = tacp.VlansApi(tacp.ApiClient(configuration))
-
+        vlanResource = tacp_utils.VlanResource(api_client)
         body = tacp.ApiVlanPropertiesPayload(
             name=network_params['name'],
             location_uuid=network_params['location_uuid'],
@@ -275,38 +274,32 @@ def run_module():
         )
         if module._verbosity >= 3:
             result['api_request_body'] = str(body)
-        try:
-            api_response = api_instance.create_vlan_using_post(
-                body)
-            if module._verbosity >= 3:
-                result['api_response'] = str(api_response)
 
-        except ApiException as e:
-            response_dict = tacp_utils.api_response_to_dict(e)
-            result['msg'] = response_dict['message']
-            if "already exists" in response_dict['message']:
-                result['changed'] = False
-                result['failed'] = False
-                module.exit_json(**result)
-            pass
+        created_vlan_uuid = vlanResource.create(body)
+        # try:
+        #     api_response = api_instance.create_vlan_using_post(
+        #         body)
+        #     if module._verbosity >= 3:
+        #         result['api_response'] = str(api_response)
 
-        try:
-            tacp_utils.wait_for_action_to_complete(api_response.action_uuid, api_client)
-        except ActionTimedOutException:
-            fail_with_reason(
-                "Exception when waiting for action to complete, action timed out.")
-        except InvalidActionUuidException:
-            fail_with_reason(
-                "Exception when waiting for action to complete, invalid action UUID.")
+        # except ApiException as e:
+        #     response_dict = tacp_utils.api_response_to_dict(e)
+        #     result['msg'] = response_dict['message']
+        #     if "already exists" in response_dict['message']:
+        #         result['changed'] = False
+        #         result['failed'] = False
+        #         module.exit_json(**result)
+        #     pass
 
-        result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
-            api_response.object_uuid, 'vlan', api_client)
+        result['ansible_module_results'] = vlanResource.get_by_uuid(
+            created_vlan_uuid)
+
         result['changed'] = True
         result['failed'] = False
         module.exit_json(**result)
 
     def create_vnet_network(network_params):
-        api_instance = tacp.VnetsApi(tacp.ApiClient(configuration))
+        vnetResource = tacp_utils.VnetResource(api_client)
 
         # Package static bindings input as a list of ApiStaticBindingRulePayloads
         static_binding_payloads = []
@@ -398,108 +391,89 @@ def run_module():
         )
         if module._verbosity >= 3:
             result['api_request_body'] = str(body)
-        try:
-            api_response = api_instance.create_vnet_using_post(body)
-            if module._verbosity >= 3:
-                result['api_response'] = str(api_response)
 
-        except ApiException as e:
-            response_dict = tacp_utils.api_response_to_dict(e)
-            result['msg'] = response_dict['message']
-            if "Error" in response_dict['message']:
-                result['changed'] = False
-                result['failed'] = True
-                fail_with_reason(response_dict['message'])
-            elif "already exists" in response_dict['message']:
-                result['changed'] = False
-                result['failed'] = False
-                module.exit_json(**result)
+        created_vnet_uuid = vnetResource.create(body)
+        # try:
+        #     api_response = api_instance.create_vnet_using_post(body)
+        #     if module._verbosity >= 3:
+        #         result['api_response'] = str(api_response)
 
-        try:
-            tacp_utils.wait_for_action_to_complete(api_response.action_uuid, api_client)
-        except ActionTimedOutException:
-            fail_with_reason(
-                "Exception when waiting for action to complete, action timed out.")
-        except InvalidActionUuidException:
-            fail_with_reason(
-                "Exception when waiting for action to complete, invalid action UUID.")
+        # except ApiException as e:
+        #     response_dict = tacp_utils.api_response_to_dict(e)
+        #     result['msg'] = response_dict['message']
+        #     if "Error" in response_dict['message']:
+        #         result['changed'] = False
+        #         result['failed'] = True
+        #         fail_with_reason(response_dict['message'])
+        #     elif "already exists" in response_dict['message']:
+        #         result['changed'] = False
+        #         result['failed'] = False
+        #         module.exit_json(**result)
 
-        result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
-            api_response.object_uuid, 'vnet', api_client)
+        result['ansible_module_results'] = vnetResource.get_by_uuid(
+            created_vnet_uuid)
         result['changed'] = True
         result['failed'] = False
         module.exit_json(**result)
 
     def delete_network(name, network_type, api_client):
         if network_type == 'VLAN':
-            vlan_uuid = tacp_utils.get_component_fields_by_name(
-                module.params['name'], 'vlan', api_client)
-            api_instance = tacp.VlansApi(api_client)
-            try:
-                # Delete a VNET
-                api_response = api_instance.delete_vlan_using_delete(vlan_uuid)
-                if module._verbosity >= 3:
-                    result['api_response'] = str(api_response)
-            except ApiException as e:
-                response_dict = tacp_utils.api_response_to_dict(e)
-               # result['msg'] = response_dict['message']
-                if "Error" in response_dict['message']:
-                    result['changed'] = False
-                    result['failed'] = True
-                    fail_with_reason(response_dict['message'])
+            vlanResource = tacp_utils.VlanResource(api_client)
 
-            try:
-                tacp_utils.wait_for_action_to_complete(
-                    api_response.action_uuid, api_client)
-            except ActionTimedOutException:
-                fail_with_reason(
-                    "Exception when waiting for action to complete, action timed out.")
-            except InvalidActionUuidException:
-                fail_with_reason(
-                    "Exception when waiting for action to complete, invalid action UUID.")
+            vlan_uuid = vlanResource.get_uuid_by_name(name)
 
+            if vlan_uuid:
+                vlanResource.delete(vlan_uuid)
+            # try:
+            #     # Delete a VNET
+            #     api_response = api_instance.delete_vlan_using_delete(vlan_uuid)
+            #     if module._verbosity >= 3:
+            #         result['api_response'] = str(api_response)
+            # except ApiException as e:
+            #     response_dict = tacp_utils.api_response_to_dict(e)
+            #    # result['msg'] = response_dict['message']
+            #     if "Error" in response_dict['message']:
+            #         result['changed'] = False
+            #         result['failed'] = True
+            #         fail_with_reason(response_dict['message'])
+
+            # tacp_utils.wait_for_action_to_complete(
+            #     api_response.action_uuid, api_client)
             result['changed'] = True
             result['failed'] = False
             module.exit_json(**result)
 
         elif network_type == 'VNET':
-            vnet_uuid = tacp_utils.get_component_fields_by_name(
-                module.params['name'], 'vnet', api_client)
-            api_instance = tacp.VnetsApi(api_client)
+            vnetResource = tacp_utils.VnetResource(api_client)
+
+            vnet_uuid = vnetResource.get_uuid_by_name(name)
 
             # Get the NFV instance UUID from the VNET
-            nfv_uuid = tacp_utils.get_component_fields_by_name(
-                module.params['name'], 'vnet', api_client, fields=['nfvInstanceUuid']).nfv_instance_uuid
+            nfv_uuid = vnetResource.get_by_uuid(vnet_uuid)['nfv_instance_uuid']
+
+            applicationResource = tacp_utils.ApplicationInstanceResource(
+                api_client)
 
             # Delete the NFV instance
-            tacp_utils.delete_application(
-                name=None, uuid=nfv_uuid, api_client=api_client)
+            applicationResource.delete(nfv_uuid)
 
-            try:
-                # Delete a VNET
-                api_response = api_instance.delete_vnet_using_delete(vnet_uuid)
-                if module._verbosity >= 3:
-                    result['api_response'] = str(api_response)
+            vnetResource.delete(vnet_uuid)
 
-            except ApiException as e:
-                response_dict = tacp_utils.api_response_to_dict(e)
-               # result['msg'] = response_dict['message']
-                module.exit_json(**result)
-                if "Error" in response_dict['message']:
-                    result['changed'] = False
-                    result['failed'] = True
-                    fail_with_reason(response_dict['message'])
+            # try:
+            #     # Delete a VNET
+            #     api_response = api_instance.delete_vnet_using_delete(vnet_uuid)
+            #     if module._verbosity >= 3:
+            #         result['api_response'] = str(api_response)
 
-            try:
-                tacp_utils.wait_for_action_to_complete(
-                    api_response.action_uuid, api_client)
-            except ActionTimedOutException:
-                fail_with_reason(
-                    "Exception when waiting for action to complete, action timed out.")
-            except InvalidActionUuidException:
-                fail_with_reason(
-                    "Exception when waiting for action to complete, invalid action UUID.")
-                    
+            # except ApiException as e:
+            #     response_dict = tacp_utils.api_response_to_dict(e)
+            #    # result['msg'] = response_dict['message']
+            #     module.exit_json(**result)
+            #     if "Error" in response_dict['message']:
+            #         result['changed'] = False
+            #         result['failed'] = True
+            #         fail_with_reason(response_dict['message'])
+
             result['changed'] = True
             result['failed'] = False
             module.exit_json(**result)
@@ -518,17 +492,20 @@ def run_module():
     api_client = tacp.ApiClient(configuration)
 
     if module.params['network_type'].upper() == 'VLAN':
+        vlanResource = tacp_utils.VlanResource(api_client)
+        vlan_uuid = vlanResource.get_uuid_by_name(module.params['name'])
         if module.params['state'] == 'present':
-            if tacp_utils.get_component_fields_by_name(module.params['name'], 'vlan', api_client):
+            if vlan_uuid:
                 result['msg'] = "VLAN network %s is already present, nothing to do." % module.params['name']
                 result['failed'] = False
                 result['changed'] = False
                 module.exit_json(**result)
             else:
                 network_params = generate_network_params(module)
+
                 create_vlan_network(network_params)
         elif module.params['state'] == 'absent':
-            if tacp_utils.get_component_fields_by_name(module.params['name'], 'vlan', api_client):
+            if vlan_uuid:
                 delete_network(
                     name=module.params['name'], network_type='VLAN', api_client=api_client)
             else:
@@ -538,8 +515,10 @@ def run_module():
                 module.exit_json(**result)
 
     elif module.params['network_type'].upper() == 'VNET':
+        vnetResource = tacp_utils.VnetResource(api_client)
+        vnet_uuid = vnetResource.get_uuid_by_name(module.params['name'])
         if module.params['state'] == 'present':
-            if tacp_utils.get_component_fields_by_name(module.params['name'], 'vnet', api_client):
+            if vnet_uuid:
                 result['msg'] = "VNET network %s is already present, nothing to do." % module.params['name']
                 result['failed'] = False
                 result['changed'] = False
@@ -548,7 +527,7 @@ def run_module():
                 network_params = generate_network_params(module)
                 create_vnet_network(network_params)
         elif module.params['state'] == 'absent':
-            if tacp_utils.get_component_fields_by_name(module.params['name'], 'vnet', api_client):
+            if vnet_uuid:
                 delete_network(
                     name=module.params['name'], network_type='VNET', api_client=api_client)
             else:

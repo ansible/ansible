@@ -12,6 +12,227 @@ from ansible.module_utils.tacp_ansible.tacp_exceptions import ActionTimedOutExce
 from uuid import UUID, uuid4
 from time import sleep
 
+ACTION_START = "start"
+ACTION_STOP = "stop"
+ACTION_RESTART = "restart"
+ACTION_SHUTDOWN = "shutdown"
+ACTION_FORCE_RESTART = "force-restart"
+ACTION_PAUSE = "pause"
+ACTION_RESUME = "resume"
+
+
+class ApplicationInstanceResource(object):
+    def __init__(self, api_client):
+        self.api = tacp.ApplicationsApi(api_client)
+        self.api_client = api_client
+
+    def get_all(self):
+        """ Get all application instances as a list of dicts
+        """
+        response = self.api.get_applications_using_get()
+        if response:
+            instance_dicts = []
+            for instance in response:
+                instance_dicts.append(instance.to_dict())
+            return instance_dicts
+        return None
+
+    def get_uuid_by_name(self, name):
+        """ Return the UUID of an appplication instance if it exists
+            given the name of the instance, None otherwise
+        """
+        assert name is not None
+
+        all_instances = self.get_all()
+        for instance in all_instances:
+            if instance.name == name:
+                return instance.uuid
+        return None
+
+    def get_by_uuid(self, uuid):
+        """ Returns an application as a dict specified by UUID, None otherwise
+        """
+        assert uuid is not None
+
+        response = self.api.get_application_using_get(uuid)
+        if response:
+            return response.to_dict()
+        return None
+
+    def create(self, body):
+        """ Creates an application with the provided API request body, returns
+            bool of success/failure
+        """
+        assert body is not None
+
+        response = self.api.create_application_from_template_using_post(body)
+        if response:
+            wait_for_action_to_complete(
+                response.action_uuid, self.api_client)
+            return response.object_uuid
+        return None
+
+    def delete(self, uuid):
+        """ Deletes an application specified by UUID, returns bool of success/failure
+        """
+        assert uuid is not None
+
+        response = self.api.delete_application_using_delete(uuid)
+        if response:
+            wait_for_action_to_complete(
+                response.action_uuid, self.api_client)
+            return True
+        return False
+
+    def power_action_on_instance_by_uuid(self, uuid, power_action):
+        """ Performs a specified power operation on an application instance
+            specified by UUID, returns bool of success/failure
+        """
+        power_action_dict = {
+            ACTION_START: self.api.start_application_using_put,
+            ACTION_STOP: self.api.stop_application_using_put,
+            ACTION_RESTART: self.api.restart_application_using_put,
+            ACTION_SHUTDOWN: self.api.shutdown_application_using_put,
+            ACTION_FORCE_RESTART: self.api.force_restart_application_using_put,
+            ACTION_PAUSE: self.api.pause_application_using_put,
+            ACTION_RESUME: self.api.resume_application_using_put
+        }
+        assert uuid is not None
+        assert power_action in power_action_dict
+
+        response = power_action_dict[power_action](uuid)
+        if response:
+            wait_for_action_to_complete(
+                response.action_uuid, self.api_client)
+            return True
+        return False
+
+
+class VlanResource(object):
+    def __init__(self, api_client):
+        self.api = tacp.VlansApi(api_client)
+        self.api_client = api_client
+
+    def get_all(self):
+        """ Get all VLAN networks as a list of dicts
+        """
+        response = self.api.get_vlans_using_get()
+        if response:
+            vlan_dicts = []
+            for vlan in response:
+                vlan_dicts.append(vlan.to_dict())
+            return vlan_dicts
+        return None
+
+    def get_uuid_by_name(self, name):
+        """ Return the UUID of a VLAN network if it exists
+            given the name of the network, None otherwise
+        """
+        assert name is not None
+
+        all_vlans = self.get_all()
+        for vlan in all_vlans:
+            if vlan['name'] == name:
+                return vlan['uuid']
+        return None
+
+    def get_by_uuid(self, uuid):
+        """ Returns an vlan as a dict specified by UUID, None otherwise
+        """
+        assert uuid is not None
+
+        response = self.api.get_vlan_using_get(uuid)
+        if response:
+            return response.to_dict()
+        return None
+
+    def create(self, body):
+        """ Creates a VLAN network with the provided API request body, returns 
+            object UUID if success else None
+        """
+        assert body is not None
+
+        response = self.api.create_vlan_using_post(body)
+        if response:
+            wait_for_action_to_complete(
+                response.action_uuid, self.api_client)
+            return response.object_uuid
+        return None
+
+    def delete(self, uuid):
+        """ Deletes a VLAN network specified by UUID, returns bool of success/failure
+        """
+        assert uuid is not None
+
+        response = self.api.delete_vlan_using_delete(uuid)
+        if response:
+            wait_for_action_to_complete(
+                response.action_uuid, self.api_client)
+            return True
+        return False
+
+
+class VnetResource(object):
+    def __init__(self, api_client):
+        self.api = tacp.VnetsApi(api_client)
+        self.api_client = api_client
+
+    def get_all(self):
+        """ Get all VNET networks as a list of dicts
+        """
+        response = self.api.get_vnets_using_get()
+        if response:
+            vnet_dicts = []
+            for vnet in response:
+                vnet_dicts.append(vnet.to_dict())
+            return vnet_dicts
+        return None
+
+    def get_uuid_by_name(self, name):
+        """ Return the UUID of a VNET network if it exists
+            given the name of the network, None otherwise
+        """
+        assert name is not None
+
+        all_vnets = self.get_all()
+        for vnet in all_vnets:
+            if vnet['name'] == name:
+                return vnet['uuid']
+        return None
+
+    def get_by_uuid(self, uuid):
+        """ Returns a VNET as a dict specified by UUID, None otherwise
+        """
+        assert uuid is not None
+        response = self.api.get_vnet_using_get(uuid)
+        if response:
+            return response.to_dict()
+        return None
+
+    def create(self, body):
+        """ Creates a VNET network with the provided API request body, returns 
+            object UUID if success, None if failure
+        """
+        assert body is not None
+
+        response = self.api.create_vnet_using_post(body)
+        if response:
+            wait_for_action_to_complete(
+                response.action_uuid, self.api_client)
+            return response.object_uuid
+        return None
+
+    def delete(self, uuid):
+        """ Deletes a VNET network specified by UUID, returns bool of success/failure
+        """
+        assert uuid is not None
+        response = self.api.delete_vnet_using_delete(uuid)
+        if response:
+            wait_for_action_to_complete(
+                response.action_uuid, self.api_client)
+            return True
+        return False
+
 
 def get_component_fields_by_name(name, component,
                                  api_client, fields=['name', 'uuid']):
@@ -225,7 +446,10 @@ def api_response_to_dict(api_response):
             # }
             attrs = [key for key in api_response.__dict__.keys(
             ) if not key.startswith("__") and key != "discriminator"]
+<<<<<<< 5f5ed3072677221d158ae8282eb79faa6bc9aee6:lib/ansible/module_utils/tacp_ansible/tacp_utils.py
 
+=======
+>>>>>>> OL-9816 tacp_network using class-ified ApplicationInstanceResource and VnetResource/VlanResource properly:lib/ansible/module_utils/tacp.py
             api_dict = {}
             for attr in attrs:
                 val = str(api_response.__dict__[

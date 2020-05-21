@@ -1,0 +1,95 @@
+---
+- name: Test the tacp_network Ansible module
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Create a VLAN network on TACP
+    tacp_network:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: ANSIBLETEST-VLAN-15
+      state: present
+      network_type: VLAN
+      vlan_tag: 15
+    register: network_creation_output
+
+  - name: Show output
+    debug:
+      msg: '{{ network_creation_output }}'
+
+  - name: Try to create a VLAN network that already exists
+    tacp_network:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: ANSIBLETEST-VLAN-15
+      state: present
+      network_type: VLAN
+      vlan_tag: 15
+    register: network_creation_output
+
+  - pause:
+      seconds: 20
+  
+  - name: Delete a VLAN network on TACP
+    tacp_network:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: ANSIBLETEST-VLAN-15
+      state: absent
+      network_type: VLAN
+
+  - name: Try to delete a non-existent VLAN network on TACP
+    tacp_network:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: ANSIBLETEST-VLAN-15
+      state: absent
+      network_type: VLAN
+
+  - name: Create a VNET network on TACP
+    tacp_network:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: ANSIBLETEST-VNET
+      state: present
+      network_type: VNET
+      autodeploy_nfv: True
+      network_address: 192.168.41.0
+      subnet_mask: 255.255.255.0
+      gateway: 192.168.41.1
+      dhcp:
+        dhcp_start: 192.168.41.100
+        dhcp_end: 192.168.41.200
+        domain_name: test.local
+        lease_time: 86400 #seconds, 24 hours
+        dns1: 1.1.1.1
+        dns2: 8.8.8.8
+        static_bindings:
+          - hostname: controller
+            ip_address: 192.168.41.101
+            mac_address: b4:d1:35:00:0f:ff
+      routing:
+        type: VLAN
+        network: OTA_VLAN
+        address_mode: static
+        ip_address: 192.168.100.200
+        subnet_mask: 255.255.255.0
+        gateway: 192.168.100.1
+      nfv:
+        datacenter: OTA_TEST
+        storage_pool: Pool 1
+        mz: MZ 1
+        cpu_cores: 1
+        memory: 1G
+        auto_recovery: True
+    register: network_creation_output
+
+  - pause:
+      seconds: 30
+
+  - name: Show output
+    debug:
+      msg: '{{ network_creation_output }}'
+
+      
+  - name: Delete a VNET network on TACP
+    tacp_network:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: ANSIBLETEST-VNET
+      state: absent
+      network_type: VNET

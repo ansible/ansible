@@ -1,0 +1,139 @@
+---
+- name: Demo TACP Ansible modules for IGT
+  hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: Create a VLAN network on TACP
+    tacp_network:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: IGT-ANSIBLEDEMO-VLAN-15
+      state: present
+      network_type: VLAN
+      vlan_tag: 15
+    register: network_creation_output
+
+  - name: Show output
+    debug:
+      msg: '{{ network_creation_output }}'
+
+  - name: Try to create a VLAN network that already exists
+    tacp_network:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: IGT-ANSIBLEDEMO-VLAN-15
+      state: present
+      network_type: VLAN
+      vlan_tag: 15
+
+  - pause:
+      seconds: 20
+
+  - name: Create a VNET network on TACP
+    tacp_network:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name:  IGT-ANSIBLEDEMO-VNET
+      state: present
+      network_type: VNET
+      autodeploy_nfv: True
+      network_address: 192.168.41.0
+      subnet_mask: 255.255.255.0
+      gateway: 192.168.41.1
+      dhcp:
+        dhcp_start: 192.168.41.100
+        dhcp_end: 192.168.41.200
+        domain_name: test.local
+        lease_time: 86400 #seconds, 24 hours
+        dns1: 1.1.1.1
+        dns2: 8.8.8.8
+        static_bindings:
+          - hostname: IGT-VM2-RHEL-VNET
+            ip_address: 192.168.41.101
+            mac_address: b4:d1:35:00:0f:f1
+          - hostname: IGT-VM3-Windows2019-VNET
+            ip_address: 192.168.41.102
+            mac_address: b4:d1:35:00:0f:f2
+      routing:
+        type: VLAN
+        network: OTA_VLAN
+        address_mode: static
+        ip_address: 192.168.100.200
+        subnet_mask: 255.255.255.0
+        gateway: 192.168.100.1
+      nfv:
+        datacenter: OTA_TEST
+        storage_pool: Pool 1
+        migration_zone: MZ 1
+        cpu_cores: 1
+        memory: 1G
+        auto_recovery: True
+    register: network_creation_output
+  
+  - name: Show output
+    debug:
+      msg: '{{ network_creation_output }}'
+  
+  - pause:
+      seconds: 30
+
+  - name: Create a VM on TACP
+    tacp_instance:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: "{{ instance.name }}"
+      state: "{{ instance.state }}"
+      datacenter: OTA_TEST
+      migration_zone: MZ 1
+      template: "{{ instance.template }}"
+      storage_pool: Pool 1
+      vcpu_cores: "{{ instance.vcpu_cores }}"
+      memory: "{{ instance.memory }}"
+      disks:
+        - size_gb: 50
+      nics:
+        - name: vNIC 0
+          type: "{{ instance.network_type }}"
+          network: "{{ instance.network_name }}"
+          mac_address: "{{ instance.mac_address }}"
+    loop:
+      - { name: IGT-VM1-CentOS-VLAN15, state: started, template: "CentOS 7.5 (64-bit) - Lenovo Template", vcpu_cores: 2, memory: 4096MB, network_type: VLAN, network_name: IGT-ANSIBLEDEMO-VLAN-15, mac_address: b4:d1:35:00:0f:f0 }
+      - { name: IGT-VM2-RHEL-VNET, state: stopped, template: "RHEL 7.4 (Minimal) - Lenovo Template", vcpu_cores: 6, memory: 6G, network_type: VNET, network_name: IGT-ANSIBLEDEMO-VNET, mac_address: b4:d1:35:00:0f:f1 }
+      - { name: IGT-VM3-Windows2019-VNET, state: stopped, template: "Windows Server 2019 Standard - Lenovo Template", vcpu_cores: 8, memory: 8GB, network_type: VNET, network_name: IGT-ANSIBLEDEMO-VNET, mac_address: b4:d1:35:00:0f:f2 }
+    loop_control:
+      loop_var: instance
+    register: vm_creation_output
+  
+  - name: Show output
+    debug:
+      msg: '{{ vm_creation_output }}'
+
+  - name: Force-restart all IGT VMs on TACP
+    tacp_instance:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: "{{ instance.name }}"
+      state: force-restarted
+    loop:
+      - { name: IGT-VM1-CentOS-VLAN15 }
+      - { name: IGT-VM2-RHEL-VNET }
+      - { name: IGT-VM3-Windows2019-VNET }
+    loop_control:
+      loop_var: instance
+
+  - pause:
+      seconds: 60
+
+  - name: Delete all IGT VMs on TACP
+    tacp_instance:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: "{{ instance.name }}"
+      state: absent
+    loop:
+      - { name: IGT-VM1-CentOS-VLAN15 }
+      - { name: IGT-VM2-RHEL-VNET }
+      - { name: IGT-VM3-Windows2019-VNET }
+    loop_control:
+      loop_var: instance
+
+  - name: Delete a VLAN network on TACP
+    tacp_network:
+      api_key: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJYYW5kZXIgTWFkc2VuIFR1ZSBBcHIgMjEgMTg6Mjg6MzAgVVRDIDIwMjAifQ.lMQzOVVozwPq38C43zJ83B8hDQKHeW9DESkmQx_cc3t22vBLRVVC2CAQIxIkVmKAYprrgkBWtXUJG8wz33q_cg
+      name: IGT-ANSIBLEDEMO-VLAN-15
+      network_type: VLAN
+      state: absent
