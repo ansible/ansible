@@ -733,12 +733,12 @@ class PluginLoader:
                     module = imp.load_source(to_native(full_name), to_native(path), module_file)
         return module
 
-    def _update_object(self, obj, name, path, redirected_names=[]):
+    def _update_object(self, obj, name, path, redirected_names=None):
 
         # set extra info on the module, in case we want it later
         setattr(obj, '_original_path', path)
         setattr(obj, '_load_name', name)
-        setattr(obj, '_redirected_names', redirected_names)
+        setattr(obj, '_redirected_names', redirected_names or [])
 
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
