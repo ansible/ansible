@@ -410,8 +410,9 @@ def remove_values(value, no_log_strings):
         old_data, new_data = deferred_removals.popleft()
         if isinstance(new_data, Mapping):
             for old_key, old_elem in old_data.items():
+                new_key = _remove_values_conditions(old_key, no_log_strings, deferred_removals)
                 new_elem = _remove_values_conditions(old_elem, no_log_strings, deferred_removals)
-                new_data[old_key] = new_elem
+                new_data[new_key] = new_elem
         else:
             for elem in old_data:
                 new_elem = _remove_values_conditions(elem, no_log_strings, deferred_removals)
