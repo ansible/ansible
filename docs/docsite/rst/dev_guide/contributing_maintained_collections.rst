@@ -92,7 +92,7 @@ Ansible-maintained collections
       <td>✓</td>
       <td>Shippable</td>
       <td>✓</td>
-      <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_general_windows.html#developing-modules-general-windows">windows guide</a></td>
+      <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_general_windows.html#developing-modules-general-windows">Windows guide</a></td>
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/ansible/eos">ansible.eos</a></td>
@@ -209,15 +209,15 @@ Ansible-maintained collections
 
 .. note::
 
-  \* A ✓ means that all features/defects on existing content may be proposed as GitHub issues and pull requests directly in the GitHub repository for each collection listed above.
+  \* A ✓  under Open to PRs means that all features/defects on existing content may be proposed as GitHub issues and pull requests directly in the GitHub repository for each collection listed above.
 
   \*\* This collection contains all foundational components for enabling many network and security :ref:`platform <platform_options>` collections. It contains all connection and filter plugins required, and is installed as a dependency automatically from the platform collection.
 
   \*\*\* Unit tests for Windows PowerShell modules are an exception to testing, but unit tests are valid and required for the remainder of the collection including Ansible-side plugins.
 
 
-Community Contributor Inclusion Criteria For All Ansible-maintained Collections
-===============================================================================
+Contributing to Ansible-maintained collections
+==============================================
 
 The community is what drives open source innovation, and Red Hat welcomes contributions to its sponsored and maintained collections. The above collections are specifically called out in this document because they are consumed as part of a downstream supported Red Hat product, and therefore the criteria for contribution, testing, and release may be higher than other community collections. More general community collections (such as community.general, community.network, etc.) may have fewer barriers to entry, and may also be a great place for fostering new functionality that may be someday graduated to an above platform collection.
 
