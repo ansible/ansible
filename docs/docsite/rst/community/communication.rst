@@ -28,6 +28,8 @@ Ansible has several mailing lists.  Your first post to the mailing list will be 
 
 To subscribe to a group from a non-Google account, you can send an email to the subscription address requesting the subscription. For example: ``ansible-devel+subscribe@googlegroups.com``
 
+.. _communication_irc:
+
 IRC channels
 ============
 
