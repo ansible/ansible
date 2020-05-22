@@ -157,8 +157,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Handles the loading and templating of the module code through the
         modify_module() function.
         '''
+
         if task_vars is None:
-            task_vars = dict()
+            use_vars = dict()
+
+        if self._task.delegate_to:
+            use_vars = task_vars.get('ansible_delegated_vars')[self._task.delegate_to]
+        else:
+            use_vars = task_vars
 
         # Search module path(s) for named module.
         for mod_type in self._connection.module_implementation_preferences:
@@ -202,7 +208,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         for dummy in (1, 2):
             try:
                 (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
-                                                                            task_vars=task_vars,
+                                                                            task_vars=use_vars,
                                                                             module_compression=self._play_context.module_compression,
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
@@ -213,17 +219,22 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     action=self,
                     interpreter_name=idre.interpreter_name,
                     discovery_mode=idre.discovery_mode,
-                    task_vars=task_vars))
+                    task_vars=use_vars))
 
                 # update the local task_vars with the discovered interpreter (which might be None);
                 # we'll propagate back to the controller in the task result
                 discovered_key = 'discovered_interpreter_%s' % idre.interpreter_name
-                # store in local task_vars facts collection for the retry and any other usages in this worker
-                if task_vars.get('ansible_facts') is None:
-                    task_vars['ansible_facts'] = {}
-                task_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
-                # preserve this so _execute_module can propagate back to controller as a fact
-                self._discovered_interpreter_key = discovered_key
+
+                # TODO: this condition prevents 'wrong host' from being updated
+                # but in future we would want to be able to update 'delegated host facts'
+                # irrespective of task settings
+                if not self._task.delegate_to or self._task.delegate_facts:
+                    # store in local task_vars facts collection for the retry and any other usages in this worker
+                    if use_vars.get('ansible_facts') is None:
+                        task_vars['ansible_facts'] = {}
+                    task_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
+                    # preserve this so _execute_module can propagate back to controller as a fact
+                    self._discovered_interpreter_key = discovered_key
 
         return (module_style, module_shebang, module_data, module_path)
 
