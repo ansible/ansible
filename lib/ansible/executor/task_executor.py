@@ -1010,6 +1010,18 @@ class TaskExecutor:
 
         task_keys = self._task.dump_attrs()
 
+        if self._play_context.password:
+            # The connection password is threaded through the play_context for
+            # now. This is something we ultimately want to avoid, but the first
+            # step is to get connection plugins pulling the password through the
+            # config system instead of directly accessing play_context.
+            #
+            # This needs to be set as a *variable* here because plugins use
+            # different option names (e.g. ssh "password" vs psrp
+            # "remote_password") but they all seem to take ansible_password as a
+            # variable to set it.
+            options['ansible_password'] = self._play_context.password
+
         # set options with 'templated vars' specific to this plugin and dependent ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
         varnames.extend(self._set_plugin_options('shell', variables, templar, task_keys))
