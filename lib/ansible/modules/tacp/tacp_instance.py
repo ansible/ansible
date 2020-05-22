@@ -4,8 +4,10 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.tacp_utils import tacp as tacp_utils
-from ansible.module_utils.tacp_utils.exception import ActionTimedOutException, InvalidActionUuidException
+from ansible.module_utils.tacp_ansible import tacp_utils
+from ansible.module_utils.tacp_ansible import tacp_exceptions
+
+
 
 import json
 import tacp
@@ -75,6 +77,25 @@ message:
     type: str
     returned: always
 '''
+STATE_running = "Running"
+STATE_shutdown = "Shut down"
+STATE_paused = "Paused"
+STATE_restarting = "Restarting"
+STATE_resuming = "Resuming"
+STATE_creating = "Creating"
+STATE_deleting = "Deleting"
+
+ACTION_started = "started"
+ACTION_shutdown = "shutdown"
+ACTION_stopped = "stopped"
+ACTION_restarted = "restarted"
+ACTION_force_restarted = "force-restarted"
+ACTION_paused = "paused"
+ACTION_absent = "absent"
+
+STATE_ACTIONS = [ACTION_started, ACTION_shutdown, ACTION_stopped,
+                 ACTION_restarted, ACTION_force_restarted, ACTION_paused,
+                 ACTION_absent]
 
 
 def run_module():
@@ -82,10 +103,10 @@ def run_module():
     module_args = dict(
         api_key=dict(type='str', required=True),
         name=dict(type='str', required=True),
-        state=dict(type='str', default='present',
-                   choices=['started', 'absent', 'stopped', 'restarted', 'force-restarted', 'paused', 'shutdown']),
+        state=dict(type='str', required=True,
+                   choices=STATE_ACTIONS),
         datacenter=dict(type='str', required=False),
-        mz=dict(type='str', required=False),
+        migration_zone=dict(type='str', required=False),
         storage_pool=dict(type='str', required=False),
         template=dict(type='str', required=False),
         vcpu_cores=dict(type='int', required=False),
@@ -245,8 +266,15 @@ def run_module():
         except ApiException as e:
             return "Exception when calling ApplicationsApi->create_application_from_template_using_post: %s\n" % e
 
-        tacp_utils.wait_for_action_to_complete(
-            api_response.action_uuid, api_client)
+        try:
+            tacp_utils.wait_for_action_to_complete(
+                api_response.action_uuid, api_client)
+        except ActionTimedOutException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, action timed out.")
+        except InvalidActionUuidException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, invalid action UUID.")
         result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
             api_response.object_uuid, 'application', api_client)
         result['changed'] = True
@@ -258,6 +286,7 @@ def run_module():
 
         actions = {"start": api_instance.start_application_using_put,
                    "stop": api_instance.stop_application_using_put,
+                   "force-restart": api_instance.force_restart_application_using_put,
                    "restart": api_instance.restart_application_using_put,
                    "shutdown": api_instance.shutdown_application_using_put,
                    "pause": api_instance.pause_application_using_put,
@@ -275,12 +304,102 @@ def run_module():
             result['failed'] = True
             fail_with_reason(response_dict['message'])
 
-        success, failure_reason = tacp_utils.wait_for_action_to_complete(
-            api_response.action_uuid, api_client)
-
-        if not success:
-            fail_with_reason(failure_reason)
+        try:
+            tacp_utils.wait_for_action_to_complete(
+                api_response.action_uuid, api_client)
+        except ActionTimedOutException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, action timed out.")
+        except InvalidActionUuidException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, invalid action UUID.")
         result['changed'] = True
+
+    def powerstate_absent():
+        instance_power_action(module.params['name'], api_client, "delete")
+
+    def powerstate_do_nothing():
+        pass
+
+    def powerstate_absent():
+        instance_power_action(module.params['name'], api_client, "delete")
+
+    def powerstate_stop():
+        instance_power_action(module.params['name'], api_client, "stop")
+
+    def powerstate_shutdown():
+        instance_power_action(
+            module.params['name'], api_client, "shutdown")
+
+    def powerstate_start():
+        instance_power_action(
+            module.params['name'], api_client, "start")
+
+    def powerstate_restart():
+        instance_power_action(
+            module.params['name'], api_client, "restart")
+
+    def powerstate_force_restart():
+        instance_power_action(
+            module.params['name'], api_client, "force-restart")
+
+    def powerstate_pause():
+        instance_power_action(
+            module.params['name'], api_client, "pause")
+
+    def powerstate_resume():
+        instance_power_action(
+            module.params['name'], api_client, "resume")
+
+    def powerstate_resume_shutdown():
+        instance_power_action(
+            module.params['name'], api_client, "resume")
+        instance_power_action(
+            module.params['name'], api_client, "shutdown")
+
+    def powerstate_resume_restart():
+        instance_power_action(
+            module.params['name'], api_client, "resume")
+        instance_power_action(
+            module.params['name'], api_client, "restart")
+
+    def powerstate_resume_force_restart():
+        instance_power_action(
+            module.params['name'], api_client, "resume")
+        instance_power_action(
+            module.params['name'], api_client, "force-restart")
+
+    def powerstate_start_pause():
+        instance_power_action(
+            module.params['name'], api_client, "start")
+        instance_power_action(
+            module.params['name'], api_client, "pause")
+
+    # Current state is first dimension
+    # Specified state is second dimension
+    power_state_dict = {
+        (STATE_running, ACTION_started): powerstate_do_nothing,
+        (STATE_running, ACTION_shutdown): powerstate_shutdown,
+        (STATE_running, ACTION_stopped): powerstate_stop,
+        (STATE_running, ACTION_restarted): powerstate_restart,
+        (STATE_running, ACTION_force_restarted): powerstate_force_restart,
+        (STATE_running, ACTION_paused): powerstate_pause,
+        (STATE_running, ACTION_absent): powerstate_absent,
+        (STATE_shutdown, ACTION_started): powerstate_start,
+        (STATE_shutdown, ACTION_shutdown): powerstate_do_nothing,
+        (STATE_shutdown, ACTION_stopped): powerstate_do_nothing,
+        (STATE_shutdown, ACTION_restarted): powerstate_start,
+        (STATE_shutdown, ACTION_force_restarted): powerstate_start,
+        (STATE_shutdown, ACTION_paused): powerstate_start_pause,
+        (STATE_shutdown, ACTION_absent): powerstate_absent,
+        (STATE_paused, ACTION_started): powerstate_resume,
+        (STATE_paused, ACTION_shutdown): powerstate_resume_shutdown,
+        (STATE_paused, ACTION_stopped): powerstate_stop,
+        (STATE_paused, ACTION_restarted): powerstate_resume_restart,
+        (STATE_paused, ACTION_force_restarted): powerstate_resume_force_restart,
+        (STATE_paused, ACTION_paused): powerstate_do_nothing,
+        (STATE_paused, ACTION_absent): powerstate_absent
+    }
 
     # Return the inputs for debugging purposes
     result['args'] = module.params
@@ -299,100 +418,34 @@ def run_module():
     else:
         instance_is_present = False
 
+    desired_state = module.params['state']
+
     if instance_is_present:
         instance_properties = tacp_utils.get_resource_by_uuid(
             instance_uuid, 'application', api_client)
-        current_state = instance_properties['status']
-        # 'Running', 'Shut down', 'Paused', 'Restarting'
 
-        if module.params['state'] == 'absent':
-            instance_power_action(module.params['name'], api_client, "delete")
-            module.exit_json(**result)
-        elif module.params['state'] == 'started':
-            if current_state == 'Shut down':
-                instance_power_action(
-                    module.params['name'], api_client, "start")
-            elif current_state == 'Paused':
-                instance_power_action(
-                    module.params['name'], api_client, "resume")
-            else:
-                # Application is already running, so do nothing
-                pass
-        elif module.params['state'] == 'shutdown':
-            if current_state == 'Running':
-                instance_power_action(
-                    module.params['name'], api_client, "shutdown")
-            elif current_state == 'Paused':
-                instance_power_action(
-                    module.params['name'], api_client, "resume")
-                instance_power_action(
-                    module.params['name'], api_client, "shutdown")
-            else:
-                # Application is already shut down, so do nothing
-                pass
-        elif module.params['state'] == 'stopped':
-            if current_state != 'Shut down':
-                instance_power_action(
-                    module.params['name'], api_client, "stop")
-            else:
-                # Application is already shut down, so do nothing
-                pass
-        elif module.params['state'] == 'restarted':
-            if current_state == 'Running':
-                instance_power_action(
-                    module.params['name'], api_client, "restart")
-            elif current_state == 'Paused':
-                instance_power_action(
-                    module.params['name'], api_client, "resume")
-                instance_power_action(
-                    module.params['name'], api_client, "restart")
-            else:
-                # Application is shut down, so start
-                instance_power_action(
-                    module.params['name'], api_client, "start")
-        elif module.params['state'] == 'force-restarted':
-            if current_state == 'Shut down':
-                # Application is shut down, so start
-                instance_power_action(
-                    module.params['name'], api_client, "start")
-            else:
-                instance_power_action(
-                    module.params['name'], api_client, "force-restart")
-        elif module.params['state'] == 'paused':
-            if current_state == 'Running':
-                instance_power_action(
-                    module.params['name'], api_client, "pause")
-            elif current_state == 'Shut down':
-                # Application is shut down, so start, then pause
-                instance_power_action(
-                    module.params['name'], api_client, "start")
-                instance_power_action(
-                    module.params['name'], api_client, "pause")
-            else:
-                # Application is already paused, so do nothing
-                pass
+        current_state = instance_properties['status']
+
+        if current_state in [STATE_running, STATE_shutdown, STATE_paused]:
+            power_state_dict[(current_state, desired_state)]()
 
     else:
         if module.params['state'] != 'absent':
             # Application does not exist yet, so create it
             instance_params = generate_instance_params(module)
             create_instance(instance_params, api_client)
+            
+            instance_uuid = tacp_utils.get_component_fields_by_name(
+                module.params['name'], 'application', api_client)
 
-            if module.params['state'] in ['shutdown', 'stopped']:
-                # No need to do anything
-                pass
-            elif module.params['state'] in 'started':
-                instance_power_action(
-                    module.params['name'], api_client, "start")
-            elif module.params['state'] == 'restarted':
-                instance_power_action(
-                    module.params['name'], api_client, "restart")
-            elif module.params['state'] == 'force-restarted':
-                instance_power_action(
-                    module.params['name'], api_client, "restart")
-            elif module.params['state'] == 'paused':
-                instance_power_action(
-                    module.params['name'], api_client, "pause")
+            instance_properties = tacp_utils.get_resource_by_uuid(
+                instance_uuid, 'application', api_client)
+
+            current_state = instance_properties['status']
+
+            power_state_dict[(STATE_shutdown, desired_state)]()
+        else:
+            powerstate_absent()
 
     module.exit_json(**result)
 

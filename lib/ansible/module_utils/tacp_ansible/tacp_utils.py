@@ -6,8 +6,9 @@
 import json
 import re
 import tacp
-from exceptions import ActionTimedOutException, InvalidActionUuidException
 from tacp.rest import ApiException
+
+from ansible.module_utils.tacp_ansible.tacp_exceptions import ActionTimedOutException, InvalidActionUuidException
 from uuid import UUID, uuid4
 from time import sleep
 
