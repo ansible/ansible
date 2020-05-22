@@ -4,7 +4,8 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils import tacp as tacp_utils
+from ansible.module_utils.tacp_ansible import tacp_utils
+from ansible.module_utils.tacp_ansible.tacp_exceptions import ActionTimedOutException, InvalidActionUuidException
 
 import json
 import tacp
@@ -244,7 +245,7 @@ def run_module():
                 network_params['routing']['type'].lower(), api_client)
 
             nfv_params = ['datacenter', 'storage_pool',
-                          'mz', 'cpu_cores', 'memory', 'auto_recovery']
+                          'migration_zone', 'cpu_cores', 'memory', 'auto_recovery']
             network_params['nfv'] = {}
             for param in nfv_params:
                 if param in module.params['nfv'].keys():
@@ -289,8 +290,15 @@ def run_module():
                 module.exit_json(**result)
             pass
 
-        tacp_utils.wait_for_action_to_complete(
-            api_response.action_uuid, api_client)
+        try:
+            tacp_utils.wait_for_action_to_complete(api_response.action_uuid, api_client)
+        except ActionTimedOutException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, action timed out.")
+        except InvalidActionUuidException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, invalid action UUID.")
+
         result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
             api_response.object_uuid, 'vlan', api_client)
         result['changed'] = True
@@ -344,7 +352,7 @@ def run_module():
             type=network_params['routing']['type']
         )
 
-        params = ['datacenter', 'storage_pool', 'mz',
+        params = ['datacenter', 'storage_pool', 'migration_zone',
                   'cpu_cores', 'memory', 'auto_recovery']
         for param in params:
             if param not in network_params['nfv'].keys():
@@ -362,9 +370,9 @@ def run_module():
             elif param == 'storage_pool':
                 network_params['nfv']['storage_pool_uuid'] = tacp_utils.get_component_fields_by_name(
                     network_params['nfv']['storage_pool'], 'storage_pool', api_client)
-            elif param == 'mz':
+            elif param == 'migration_zone':
                 network_params['nfv']['migration_zone_uuid'] = tacp_utils.get_component_fields_by_name(
-                    network_params['nfv']['mz'], 'migration_zone', api_client)
+                    network_params['nfv']['migration_zone'], 'migration_zone', api_client)
 
         nfv_instance = tacp.ApiCreateApplicationPayload(
             datacenter_uuid=network_params['nfv']['datacenter_uuid'],
@@ -407,8 +415,15 @@ def run_module():
                 result['failed'] = False
                 module.exit_json(**result)
 
-        tacp_utils.wait_for_action_to_complete(
-            api_response.action_uuid, api_client)
+        try:
+            tacp_utils.wait_for_action_to_complete(api_response.action_uuid, api_client)
+        except ActionTimedOutException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, action timed out.")
+        except InvalidActionUuidException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, invalid action UUID.")
+
         result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
             api_response.object_uuid, 'vnet', api_client)
         result['changed'] = True
@@ -433,8 +448,16 @@ def run_module():
                     result['failed'] = True
                     fail_with_reason(response_dict['message'])
 
-            tacp_utils.wait_for_action_to_complete(
-                api_response.action_uuid, api_client)
+            try:
+                tacp_utils.wait_for_action_to_complete(
+                    api_response.action_uuid, api_client)
+            except ActionTimedOutException:
+                fail_with_reason(
+                    "Exception when waiting for action to complete, action timed out.")
+            except InvalidActionUuidException:
+                fail_with_reason(
+                    "Exception when waiting for action to complete, invalid action UUID.")
+
             result['changed'] = True
             result['failed'] = False
             module.exit_json(**result)
@@ -467,8 +490,16 @@ def run_module():
                     result['failed'] = True
                     fail_with_reason(response_dict['message'])
 
-            tacp_utils.wait_for_action_to_complete(
-                api_response.action_uuid, api_client)
+            try:
+                tacp_utils.wait_for_action_to_complete(
+                    api_response.action_uuid, api_client)
+            except ActionTimedOutException:
+                fail_with_reason(
+                    "Exception when waiting for action to complete, action timed out.")
+            except InvalidActionUuidException:
+                fail_with_reason(
+                    "Exception when waiting for action to complete, invalid action UUID.")
+                    
             result['changed'] = True
             result['failed'] = False
             module.exit_json(**result)

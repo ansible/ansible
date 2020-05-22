@@ -4,7 +4,10 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.tacp import *
+from ansible.module_utils.tacp_ansible import tacp_utils
+from ansible.module_utils.tacp_ansible import tacp_exceptions
+
+
 
 import json
 import tacp
@@ -74,6 +77,25 @@ message:
     type: str
     returned: always
 '''
+STATE_running = "Running"
+STATE_shutdown = "Shut down"
+STATE_paused = "Paused"
+STATE_restarting = "Restarting"
+STATE_resuming = "Resuming"
+STATE_creating = "Creating"
+STATE_deleting = "Deleting"
+
+ACTION_started = "started"
+ACTION_shutdown = "shutdown"
+ACTION_stopped = "stopped"
+ACTION_restarted = "restarted"
+ACTION_force_restarted = "force-restarted"
+ACTION_paused = "paused"
+ACTION_absent = "absent"
+
+STATE_ACTIONS = [ACTION_started, ACTION_shutdown, ACTION_stopped,
+                 ACTION_restarted, ACTION_force_restarted, ACTION_paused,
+                 ACTION_absent]
 
 
 def run_module():
@@ -81,16 +103,16 @@ def run_module():
     module_args = dict(
         api_key=dict(type='str', required=True),
         name=dict(type='str', required=True),
-        state=dict(type='str', default='present',
-                   choices=['present', 'absent']),
-        datacenter=dict(type='str', required=True),
-        mz=dict(type='str', required=True),
-        storage_pool=dict(type='str', required=True),
-        template=dict(type='str', required=True),
-        vcpu_cores=dict(type='int', required=True),
-        memory=dict(type='str', required=True),
-        disks=dict(type='list', required=True),
-        nics=dict(type='list', required=True),
+        state=dict(type='str', required=True,
+                   choices=STATE_ACTIONS),
+        datacenter=dict(type='str', required=False),
+        migration_zone=dict(type='str', required=False),
+        storage_pool=dict(type='str', required=False),
+        template=dict(type='str', required=False),
+        vcpu_cores=dict(type='int', required=False),
+        memory=dict(type='str', required=False),
+        disks=dict(type='list', required=False),
+        nics=dict(type='list', required=False),
         vtx_enabled=dict(type='bool', default=True, required=False),
         auto_recovery_enabled=dict(type='bool', default=True, required=False),
         description=dict(type='str', required=False),
@@ -124,150 +146,95 @@ def run_module():
         module.exit_json(**result)
 
     def fail_with_reason(reason):
-        result['failure_reason'] = reason
-        result['failed'] = True
-        module.exit_json(**result)
+        result['msg'] = reason
+        module.fail_json(**result)
 
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
 
-    # Return the inputs for debugging purposes
-    result['args'] = module.params
+    def generate_instance_params(module):
+        # VM does not exist yet, so we must create it
+        instance_params = {}
+        instance_params['instance_name'] = module.params['name']
 
-    # Define configuration
-    configuration = tacp.Configuration()
-    configuration.host = "https://manage.cp.lenovo.com"
-    configuration.api_key_prefix['Authorization'] = 'Bearer'
-    configuration.api_key['Authorization'] = module.params['api_key']
-    api_client = tacp.ApiClient(configuration)
+        components = ['storage_pool', 'datacenter', 'migration_zone']
+        for component in components:
+            component_uuid = tacp_utils.get_component_fields_by_name(
+                module.params[component], component, api_client)
+            if not component_uuid:
+                reason = "%s %s does not exist, cannot continue." % component.capitalize(
+                ) % module.params[component]
+                fail_with_reason(reason)
+            instance_params['{}_uuid'.format(component)] = component_uuid
 
-    instance_params = {}
-
-    # Check if VM instance with this name exists already
-    instance_uuid = get_component_fields_by_name(
-        module.params['name'], 'application', api_client)
-
-    if instance_uuid:
-        # VM does exist - so for now we need to just break without changing anything,
-        # but in the future this would mean we go to edit the existing VM with this name/uuid
-        # vm_exists = True
-        result['msg'] = "An application for this datacenter already exists with name %s" % module.params['name']
-        result['changed'] = False
-
-        module.exit_json(**result)
-
-    # VM does not exist yet, so we must create it
-    instance_params['instance_name'] = module.params['name']
-
-    # Check if storage pool exists, it must in order to continue
-    storage_pool_uuid = get_component_fields_by_name(
-        module.params['storage_pool'], 'storage_pool', api_client)
-    if storage_pool_uuid:
-        instance_params['storage_pool_uuid'] = storage_pool_uuid
-    else:
-        # Pool does not exist - must fail the task
-        reason = "Storage pool %s does not exist, cannot continue." % module.params[
-            'storage_pool']
-        fail_with_reason(reason)
-
-    # Check if datacenter exists, it must in order to continue
-    datacenter_uuid = get_component_fields_by_name(
-        module.params['datacenter'], 'datacenter', api_client)
-    if datacenter_uuid:
-        instance_params['datacenter_uuid'] = datacenter_uuid
-    else:
-        # Datacenter does not exist - must fail the task
-        reason = "Datacenter %s does not exist, cannot continue." % module.params[
-            'datacenter']
-        fail_with_reason(reason)
-
-    # Check if migration_zone exists, it must in order to continue
-    migration_zone_uuid = get_component_fields_by_name(
-        module.params['mz'], 'migration_zone', api_client)
-    if migration_zone_uuid:
-        instance_params['migration_zone_uuid'] = migration_zone_uuid
-    else:
-        # Migration zone does not exist - must fail the task
-        reason = "Migration Zone %s does not exist, cannot continue." % module.params[
-            'mz']
-        fail_with_reason(reason)
-
-    # Check if template exists, it must in order to continue
-    template_uuid = get_component_fields_by_name(
-        module.params['template'], 'template', api_client)
-    if template_uuid:
-        instance_params['template_uuid'] = template_uuid
-        boot_order = get_component_fields_by_name(
-            module.params['template'], 'template', api_client, fields=['name', 'uuid', 'bootOrder'])
-    else:
-        # Template does not exist - must fail the task
-        reason = "Template %s does not exist, cannot continue." % module.params[
-            'template']
-        fail_with_reason(reason)
-
-    network_payloads = []
-
-    for i, nic in enumerate(module.params['nics']):
-        if nic['type'].lower() == "vnet":
-            network_uuid = get_component_fields_by_name(
-                nic['network'], 'vnet', api_client)
-        elif nic['type'].lower() == "vlan":
-            network_uuid = get_component_fields_by_name(
-                nic['network'], 'vlan', api_client)
-
-        if 'mac_address' in nic.keys():
-            if nic['mac_address']:
-                automatic_mac_address = False
-                mac_address = nic['mac_address']
+        # Check if template exists, it must in order to continue
+        template_uuid = tacp_utils.get_component_fields_by_name(
+            module.params['template'], 'template', api_client)
+        if template_uuid:
+            instance_params['template_uuid'] = template_uuid
+            boot_order = tacp_utils.get_component_fields_by_name(
+                module.params['template'], 'template', api_client, fields=['name', 'uuid', 'bootOrder'])
         else:
-            automatic_mac_address = True
-            mac_address = None
+            # Template does not exist - must fail the task
+            reason = "Template %s does not exist, cannot continue." % module.params[
+                'template']
+            fail_with_reason(reason)
 
-        if i == 0:
-            vnic_payloads = []
-            for boot_order_item in boot_order:
-                if boot_order_item.vnic_uuid:
-                    vnic_uuid = boot_order_item.vnic_uuid
-                    vnic_name = boot_order_item.name
+        network_payloads = []
+        vnic_payloads = []
+        for i, nic in enumerate(module.params['nics']):
+            network_uuid = tacp_utils.get_component_fields_by_name(
+                nic['network'], nic['type'].lower(), api_client)
 
-        else:
-            # TODO - his will eventually need to be modified so that any
-            # boot order is possible for any extra NICs
+            mac_address = nic.get('mac_address')
+            automatic_mac_address = not bool(mac_address)
 
-            vnic_uuid = str(uuid4())
-            vnic_boot_order = len(boot_order) + i
+            if i == 0:
+                for boot_order_item in boot_order:
+                    if boot_order_item.vnic_uuid:
+                        vnic_uuid = boot_order_item.vnic_uuid
+                        vnic_name = boot_order_item.name
 
-            vnic_payload = tacp.ApiAddVnicPayload(
-                automatic_mac_address=automatic_mac_address,
+            else:
+                # TODO - his will eventually need to be modified so that any
+                # boot order is possible for any extra NICs
+
+                vnic_uuid = str(uuid4())
+                vnic_boot_order = len(boot_order) + i
+
+                vnic_payload = tacp.ApiAddVnicPayload(
+                    automatic_mac_address=automatic_mac_address,
+                    name=vnic_name,
+                    network_uuid=network_uuid,
+                    boot_order=vnic_boot_order,
+                    mac_address=mac_address
+                )
+                vnic_payloads.append(vnic_payload)
+
+            network_payload = tacp.ApiCreateOrEditApplicationNetworkOptionsPayload(
                 name=vnic_name,
+                automatic_mac_assignment=automatic_mac_address,
                 network_uuid=network_uuid,
-                boot_order=vnic_boot_order,
+                vnic_uuid=vnic_uuid,
                 mac_address=mac_address
             )
-            vnic_payloads.append(vnic_payload)
+            network_payloads.append(network_payload)
 
-        network_payload = tacp.ApiCreateOrEditApplicationNetworkOptionsPayload(
-            name=vnic_name,
-            automatic_mac_assignment=automatic_mac_address,
-            network_uuid=network_uuid,
-            vnic_uuid=vnic_uuid,
-            mac_address=mac_address
-        )
-        network_payloads.append(network_payload)
+            instance_params['boot_order'] = boot_order
+            instance_params['networks'] = network_payloads
+            instance_params['vnics'] = vnic_payloads
+            instance_params['vcpus'] = module.params['vcpu_cores']
+            instance_params['memory'] = tacp_utils.convert_memory_abbreviation_to_bytes(
+                module.params['memory'])
+            instance_params['vm_mode'] = module.params['vm_mode'].capitalize()
+            instance_params['vtx_enabled'] = module.params['vtx_enabled']
+            instance_params['auto_recovery_enabled'] = module.params['auto_recovery_enabled']
+            instance_params['description'] = module.params['description']
 
-    instance_params['boot_order'] = boot_order
-    instance_params['networks'] = network_payloads
-    instance_params['vnics'] = vnic_payloads
-    instance_params['vcpus'] = module.params['vcpu_cores']
-    instance_params['memory'] = convert_memory_abbreviation_to_bytes(
-        module.params['memory'])
-    instance_params['vm_mode'] = module.params['vm_mode'].capitalize()
-    instance_params['vtx_enabled'] = module.params['vtx_enabled']
-    instance_params['auto_recovery_enabled'] = module.params['auto_recovery_enabled']
-    instance_params['description'] = module.params['description']
+            return instance_params
 
-    def create_instance(instance_params):
-        api_instance = tacp.ApplicationsApi(tacp.ApiClient(configuration))
+    def create_instance(instance_params, api_client):
+        api_instance = tacp.ApplicationsApi(api_client)
 
         # Need to create boot disk ahead of time and provide it in the
         # ApiCreateApplicationPayload parameters
@@ -288,30 +255,200 @@ def run_module():
             enable_automatic_recovery=instance_params['auto_recovery_enabled'],
             description=instance_params['description'])
 
-        result['api_request_body'] = str(body)
+        if module._verbosity >= 3:
+            result['api_request_body'] = str(body)
         try:
             # Create an application from a template
             api_response = api_instance.create_application_from_template_using_post(
                 body)
-            result['changed'] = True
-            result['failed'] = False
-            module.exit_json(**result)
-
+            if module._verbosity >= 3:
+                result['api_response'] = str(api_response)
         except ApiException as e:
-
             return "Exception when calling ApplicationsApi->create_application_from_template_using_post: %s\n" % e
 
-    create_instance_response = create_instance(instance_params)
+        try:
+            tacp_utils.wait_for_action_to_complete(
+                api_response.action_uuid, api_client)
+        except ActionTimedOutException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, action timed out.")
+        except InvalidActionUuidException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, invalid action UUID.")
+        result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
+            api_response.object_uuid, 'application', api_client)
+        result['changed'] = True
 
-    result['create_instance_response'] = create_instance_response
+    def instance_power_action(name, api_client, action):
+        instance_uuid = tacp_utils.get_component_fields_by_name(
+            module.params['name'], 'application', api_client)
+        api_instance = tacp.ApplicationsApi(api_client)
 
-    # use whatever logic you need to determine whether or not this module
-    # made any modifications to your target
-    # if module.params['new']:
-    #     result['changed'] = True
+        actions = {"start": api_instance.start_application_using_put,
+                   "stop": api_instance.stop_application_using_put,
+                   "force-restart": api_instance.force_restart_application_using_put,
+                   "restart": api_instance.restart_application_using_put,
+                   "shutdown": api_instance.shutdown_application_using_put,
+                   "pause": api_instance.pause_application_using_put,
+                   "resume": api_instance.resume_application_using_put,
+                   "delete": api_instance.delete_application_using_delete}
 
-    # during the execution of the module, if there is an exception or a
-    # conditional state that effectively causes a failure, run
+        try:
+            api_response = actions[action](
+                instance_uuid)
+            if module._verbosity >= 3:
+                result['api_response'] = str(api_response)
+        except ApiException as e:
+            response_dict = tacp_utils.api_response_to_dict(e)
+            result['changed'] = False
+            result['failed'] = True
+            fail_with_reason(response_dict['message'])
+
+        try:
+            tacp_utils.wait_for_action_to_complete(
+                api_response.action_uuid, api_client)
+        except ActionTimedOutException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, action timed out.")
+        except InvalidActionUuidException:
+            fail_with_reason(
+                "Exception when waiting for action to complete, invalid action UUID.")
+        result['changed'] = True
+
+    def powerstate_absent():
+        instance_power_action(module.params['name'], api_client, "delete")
+
+    def powerstate_do_nothing():
+        pass
+
+    def powerstate_absent():
+        instance_power_action(module.params['name'], api_client, "delete")
+
+    def powerstate_stop():
+        instance_power_action(module.params['name'], api_client, "stop")
+
+    def powerstate_shutdown():
+        instance_power_action(
+            module.params['name'], api_client, "shutdown")
+
+    def powerstate_start():
+        instance_power_action(
+            module.params['name'], api_client, "start")
+
+    def powerstate_restart():
+        instance_power_action(
+            module.params['name'], api_client, "restart")
+
+    def powerstate_force_restart():
+        instance_power_action(
+            module.params['name'], api_client, "force-restart")
+
+    def powerstate_pause():
+        instance_power_action(
+            module.params['name'], api_client, "pause")
+
+    def powerstate_resume():
+        instance_power_action(
+            module.params['name'], api_client, "resume")
+
+    def powerstate_resume_shutdown():
+        instance_power_action(
+            module.params['name'], api_client, "resume")
+        instance_power_action(
+            module.params['name'], api_client, "shutdown")
+
+    def powerstate_resume_restart():
+        instance_power_action(
+            module.params['name'], api_client, "resume")
+        instance_power_action(
+            module.params['name'], api_client, "restart")
+
+    def powerstate_resume_force_restart():
+        instance_power_action(
+            module.params['name'], api_client, "resume")
+        instance_power_action(
+            module.params['name'], api_client, "force-restart")
+
+    def powerstate_start_pause():
+        instance_power_action(
+            module.params['name'], api_client, "start")
+        instance_power_action(
+            module.params['name'], api_client, "pause")
+
+    # Current state is first dimension
+    # Specified state is second dimension
+    power_state_dict = {
+        (STATE_running, ACTION_started): powerstate_do_nothing,
+        (STATE_running, ACTION_shutdown): powerstate_shutdown,
+        (STATE_running, ACTION_stopped): powerstate_stop,
+        (STATE_running, ACTION_restarted): powerstate_restart,
+        (STATE_running, ACTION_force_restarted): powerstate_force_restart,
+        (STATE_running, ACTION_paused): powerstate_pause,
+        (STATE_running, ACTION_absent): powerstate_absent,
+        (STATE_shutdown, ACTION_started): powerstate_start,
+        (STATE_shutdown, ACTION_shutdown): powerstate_do_nothing,
+        (STATE_shutdown, ACTION_stopped): powerstate_do_nothing,
+        (STATE_shutdown, ACTION_restarted): powerstate_start,
+        (STATE_shutdown, ACTION_force_restarted): powerstate_start,
+        (STATE_shutdown, ACTION_paused): powerstate_start_pause,
+        (STATE_shutdown, ACTION_absent): powerstate_absent,
+        (STATE_paused, ACTION_started): powerstate_resume,
+        (STATE_paused, ACTION_shutdown): powerstate_resume_shutdown,
+        (STATE_paused, ACTION_stopped): powerstate_stop,
+        (STATE_paused, ACTION_restarted): powerstate_resume_restart,
+        (STATE_paused, ACTION_force_restarted): powerstate_resume_force_restart,
+        (STATE_paused, ACTION_paused): powerstate_do_nothing,
+        (STATE_paused, ACTION_absent): powerstate_absent
+    }
+
+    # Return the inputs for debugging purposes
+    result['args'] = module.params
+
+    # Define configuration
+    configuration = tacp.Configuration()
+    configuration.host = "https://manage.cp.lenovo.com"
+    configuration.api_key_prefix['Authorization'] = 'Bearer'
+    configuration.api_key['Authorization'] = module.params['api_key']
+    api_client = tacp.ApiClient(configuration)
+
+    instance_uuid = tacp_utils.get_component_fields_by_name(
+        module.params['name'], 'application', api_client)
+    if instance_uuid:
+        instance_is_present = True
+    else:
+        instance_is_present = False
+
+    desired_state = module.params['state']
+
+    if instance_is_present:
+        instance_properties = tacp_utils.get_resource_by_uuid(
+            instance_uuid, 'application', api_client)
+
+        current_state = instance_properties['status']
+
+        if current_state in [STATE_running, STATE_shutdown, STATE_paused]:
+            power_state_dict[(current_state, desired_state)]()
+
+    else:
+        if module.params['state'] != 'absent':
+            # Application does not exist yet, so create it
+            instance_params = generate_instance_params(module)
+            create_instance(instance_params, api_client)
+            
+            instance_uuid = tacp_utils.get_component_fields_by_name(
+                module.params['name'], 'application', api_client)
+
+            instance_properties = tacp_utils.get_resource_by_uuid(
+                instance_uuid, 'application', api_client)
+
+            current_state = instance_properties['status']
+
+            power_state_dict[(STATE_shutdown, desired_state)]()
+        else:
+            powerstate_absent()
+
+    module.exit_json(**result)
+
     # AnsibleModule.fail_json() to pass in the message and the result
 
     # in the event of a successful module execution, you will want to

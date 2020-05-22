@@ -7,6 +7,8 @@ import json
 import re
 import tacp
 from tacp.rest import ApiException
+
+from ansible.module_utils.tacp_ansible.tacp_exceptions import ActionTimedOutException, InvalidActionUuidException
 from uuid import UUID, uuid4
 from time import sleep
 
@@ -221,13 +223,16 @@ def api_response_to_dict(api_response):
             #     "_uuid": "da1868e5-59f8-46be-97dc-f2c62912e446",
             #     "discriminator": "None"
             # }
-            attrs = [key for key in api_response.__dict__.keys() if not key.startswith("__") and key != "discriminator"]
+            attrs = [key for key in api_response.__dict__.keys(
+            ) if not key.startswith("__") and key != "discriminator"]
+
             api_dict = {}
             for attr in attrs:
                 val = str(api_response.__dict__[
                     attr]).replace('\n', '').replace('null', 'None')
                 extra_space_pattern = ",\\s{2,}"
-                api_dict[str(attr).lstrip("_")] = re.sub(extra_space_pattern, ", ", val)
+                api_dict[str(attr).lstrip("_")] = re.sub(
+                    extra_space_pattern, ", ", val)
             return api_dict
 
     message_str = message_str.replace('\n', '').replace('null', 'None')
@@ -246,12 +251,19 @@ def wait_for_action_to_complete(action_uuid, api_client):
         api_instance = tacp.ActionsApi(api_client)
         action_incomplete = True
 
-        while action_incomplete:
+        timeout = 30
+        time_spent = 0
+
+        while action_incomplete and time_spent < timeout:
             api_response = api_instance.get_action_using_get(action_uuid)
             if api_response.status == 'Completed':
                 action_incomplete = False
+                return True
             else:
                 sleep(1)
+                time_spent += 1
+        raise ActionTimedOutException
+    raise InvalidActionUuidException
 
 
 def delete_application(name, uuid, api_client):
@@ -263,7 +275,12 @@ def delete_application(name, uuid, api_client):
         except ApiException as e:
             return "Exception when calling get_firewall_profiles_using_get"
 
-        wait_for_action_to_complete(api_response.action_uuid, api_client)
+        try:
+            wait_for_action_to_complete(api_response.action_uuid, api_client)
+        except ActionTimedOutException:
+            return "Exception when waiting for action to complete, action timed out."
+        except InvalidActionUuidException:
+            return "Exception when waiting for action to complete, invalid action UUID."
 
 
 def get_resource_by_uuid(uuid, component, api_client):
