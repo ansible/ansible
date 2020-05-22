@@ -9,16 +9,9 @@ import tacp
 from tacp.rest import ApiException
 
 from ansible.module_utils.tacp_ansible.tacp_exceptions import ActionTimedOutException, InvalidActionUuidException
+from ansible.module_utils.tacp_ansible.tacp_constants import *
 from uuid import UUID, uuid4
 from time import sleep
-
-ACTION_START = "start"
-ACTION_STOP = "stop"
-ACTION_RESTART = "restart"
-ACTION_SHUTDOWN = "shutdown"
-ACTION_FORCE_RESTART = "force-restart"
-ACTION_PAUSE = "pause"
-ACTION_RESUME = "resume"
 
 
 class ApplicationInstanceResource(object):
@@ -29,10 +22,10 @@ class ApplicationInstanceResource(object):
     def get_all(self):
         """ Get all application instances as a list of dicts
         """
-        response = self.api.get_applications_using_get()
-        if response:
+        api_response = self.api.get_applications_using_get()
+        if api_response:
             instance_dicts = []
-            for instance in response:
+            for instance in api_response:
                 instance_dicts.append(instance.to_dict())
             return instance_dicts
         return None
@@ -45,8 +38,8 @@ class ApplicationInstanceResource(object):
 
         all_instances = self.get_all()
         for instance in all_instances:
-            if instance.name == name:
-                return instance.uuid
+            if instance['name'] == name:
+                return instance['uuid']
         return None
 
     def get_by_uuid(self, uuid):
@@ -54,9 +47,9 @@ class ApplicationInstanceResource(object):
         """
         assert uuid is not None
 
-        response = self.api.get_application_using_get(uuid)
-        if response:
-            return response.to_dict()
+        api_response = self.api.get_application_using_get(uuid)
+        if api_response:
+            return api_response.to_dict()
         return None
 
     def create(self, body):
@@ -65,47 +58,64 @@ class ApplicationInstanceResource(object):
         """
         assert body is not None
 
-        response = self.api.create_application_from_template_using_post(body)
-        if response:
+        api_response = self.api.create_application_from_template_using_post(
+            body)
+        try:
             wait_for_action_to_complete(
-                response.action_uuid, self.api_client)
-            return response.object_uuid
-        return None
+                api_response.action_uuid, self.api_client)
+            return api_response.object_uuid
+        except ActionTimedOutException:
+            return "Exception when waiting for action to complete, action timed out."
+        except InvalidActionUuidException:
+            return "Exception when waiting for action to complete, invalid action UUID."
+        except Exception as e:
+            return e
 
     def delete(self, uuid):
         """ Deletes an application specified by UUID, returns bool of success/failure
         """
         assert uuid is not None
 
-        response = self.api.delete_application_using_delete(uuid)
-        if response:
+        api_response = self.api.delete_application_using_delete(uuid)
+        try:
             wait_for_action_to_complete(
-                response.action_uuid, self.api_client)
+                api_response.action_uuid, self.api_client)
             return True
-        return False
+        except ActionTimedOutException:
+            return "Exception when waiting for action to complete, action timed out."
+        except InvalidActionUuidException:
+            return "Exception when waiting for action to complete, invalid action UUID."
+        except Exception as e:
+            return e
 
     def power_action_on_instance_by_uuid(self, uuid, power_action):
         """ Performs a specified power operation on an application instance
             specified by UUID, returns bool of success/failure
         """
         power_action_dict = {
-            ACTION_START: self.api.start_application_using_put,
-            ACTION_STOP: self.api.stop_application_using_put,
-            ACTION_RESTART: self.api.restart_application_using_put,
-            ACTION_SHUTDOWN: self.api.shutdown_application_using_put,
-            ACTION_FORCE_RESTART: self.api.force_restart_application_using_put,
-            ACTION_PAUSE: self.api.pause_application_using_put,
-            ACTION_RESUME: self.api.resume_application_using_put
+            ACTION_started: self.api.start_application_using_put,
+            ACTION_stopped: self.api.stop_application_using_put,
+            ACTION_restarted: self.api.restart_application_using_put,
+            ACTION_shutdown: self.api.shutdown_application_using_put,
+            ACTION_force_restarted: self.api.force_restart_application_using_put,
+            ACTION_paused: self.api.pause_application_using_put,
+            ACTION_resumed: self.api.resume_application_using_put,
+            ACTION_absent: self.api.delete_application_using_delete
         }
         assert uuid is not None
         assert power_action in power_action_dict
 
-        response = power_action_dict[power_action](uuid)
-        if response:
+        api_response = power_action_dict[power_action](uuid)
+        try:
             wait_for_action_to_complete(
-                response.action_uuid, self.api_client)
+                api_response.action_uuid, self.api_client)
             return True
-        return False
+        except ActionTimedOutException:
+            return "Exception when waiting for action to complete, action timed out."
+        except InvalidActionUuidException:
+            return "Exception when waiting for action to complete, invalid action UUID."
+        except Exception as e:
+            return e
 
 
 class VlanResource(object):
@@ -116,10 +126,10 @@ class VlanResource(object):
     def get_all(self):
         """ Get all VLAN networks as a list of dicts
         """
-        response = self.api.get_vlans_using_get()
-        if response:
+        api_response = self.api.get_vlans_using_get()
+        if api_response:
             vlan_dicts = []
-            for vlan in response:
+            for vlan in api_response:
                 vlan_dicts.append(vlan.to_dict())
             return vlan_dicts
         return None
@@ -141,9 +151,9 @@ class VlanResource(object):
         """
         assert uuid is not None
 
-        response = self.api.get_vlan_using_get(uuid)
-        if response:
-            return response.to_dict()
+        api_response = self.api.get_vlan_using_get(uuid)
+        if api_response:
+            return api_response.to_dict()
         return None
 
     def create(self, body):
@@ -152,24 +162,34 @@ class VlanResource(object):
         """
         assert body is not None
 
-        response = self.api.create_vlan_using_post(body)
-        if response:
+        api_response = self.api.create_vlan_using_post(body)
+        try:
             wait_for_action_to_complete(
-                response.action_uuid, self.api_client)
-            return response.object_uuid
-        return None
+                api_response.action_uuid, self.api_client)
+            return api_response.object_uuid
+        except ActionTimedOutException:
+            return "Exception when waiting for action to complete, action timed out."
+        except InvalidActionUuidException:
+            return "Exception when waiting for action to complete, invalid action UUID."
+        except Exception as e:
+            return e
 
     def delete(self, uuid):
         """ Deletes a VLAN network specified by UUID, returns bool of success/failure
         """
         assert uuid is not None
 
-        response = self.api.delete_vlan_using_delete(uuid)
-        if response:
+        api_response = self.api.delete_vlan_using_delete(uuid)
+        try:
             wait_for_action_to_complete(
-                response.action_uuid, self.api_client)
+                api_response.action_uuid, self.api_client)
             return True
-        return False
+        except ActionTimedOutException:
+            return "Exception when waiting for action to complete, action timed out."
+        except InvalidActionUuidException:
+            return "Exception when waiting for action to complete, invalid action UUID."
+        except Exception as e:
+            return e
 
 
 class VnetResource(object):
@@ -180,10 +200,10 @@ class VnetResource(object):
     def get_all(self):
         """ Get all VNET networks as a list of dicts
         """
-        response = self.api.get_vnets_using_get()
-        if response:
+        api_response = self.api.get_vnets_using_get()
+        if api_response:
             vnet_dicts = []
-            for vnet in response:
+            for vnet in api_response:
                 vnet_dicts.append(vnet.to_dict())
             return vnet_dicts
         return None
@@ -204,9 +224,9 @@ class VnetResource(object):
         """ Returns a VNET as a dict specified by UUID, None otherwise
         """
         assert uuid is not None
-        response = self.api.get_vnet_using_get(uuid)
-        if response:
-            return response.to_dict()
+        api_response = self.api.get_vnet_using_get(uuid)
+        if api_response:
+            return api_response.to_dict()
         return None
 
     def create(self, body):
@@ -215,23 +235,33 @@ class VnetResource(object):
         """
         assert body is not None
 
-        response = self.api.create_vnet_using_post(body)
-        if response:
+        api_response = self.api.create_vnet_using_post(body)
+        try:
             wait_for_action_to_complete(
-                response.action_uuid, self.api_client)
-            return response.object_uuid
-        return None
+                api_response.action_uuid, self.api_client)
+            return api_response.object_uuid
+        except ActionTimedOutException:
+            return "Exception when waiting for action to complete, action timed out."
+        except InvalidActionUuidException:
+            return "Exception when waiting for action to complete, invalid action UUID."
+        except Exception as e:
+            return e
 
     def delete(self, uuid):
         """ Deletes a VNET network specified by UUID, returns bool of success/failure
         """
         assert uuid is not None
-        response = self.api.delete_vnet_using_delete(uuid)
-        if response:
+        api_response = self.api.delete_vnet_using_delete(uuid)
+        try:
             wait_for_action_to_complete(
-                response.action_uuid, self.api_client)
+                api_response.action_uuid, self.api_client)
             return True
-        return False
+        except ActionTimedOutException:
+            return "Exception when waiting for action to complete, action timed out."
+        except InvalidActionUuidException:
+            return "Exception when waiting for action to complete, invalid action UUID."
+        except Exception as e:
+            return e
 
 
 def get_component_fields_by_name(name, component,
@@ -446,10 +476,6 @@ def api_response_to_dict(api_response):
             # }
             attrs = [key for key in api_response.__dict__.keys(
             ) if not key.startswith("__") and key != "discriminator"]
-<<<<<<< 5f5ed3072677221d158ae8282eb79faa6bc9aee6:lib/ansible/module_utils/tacp_ansible/tacp_utils.py
-
-=======
->>>>>>> OL-9816 tacp_network using class-ified ApplicationInstanceResource and VnetResource/VlanResource properly:lib/ansible/module_utils/tacp.py
             api_dict = {}
             for attr in attrs:
                 val = str(api_response.__dict__[
@@ -475,7 +501,7 @@ def wait_for_action_to_complete(action_uuid, api_client):
         api_instance = tacp.ActionsApi(api_client)
         action_incomplete = True
 
-        timeout = 30
+        timeout = 60
         time_spent = 0
 
         while action_incomplete and time_spent < timeout:
@@ -491,20 +517,21 @@ def wait_for_action_to_complete(action_uuid, api_client):
 
 
 def delete_application(name, uuid, api_client):
-    if uuid:
-        api_instance = tacp.ApplicationsApi(api_client)
-        try:
-            api_response = api_instance.delete_application_using_delete(
-                uuid=uuid)
-        except ApiException as e:
-            return "Exception when calling get_firewall_profiles_using_get"
+    assert uuid is not None
 
-        try:
-            wait_for_action_to_complete(api_response.action_uuid, api_client)
-        except ActionTimedOutException:
-            return "Exception when waiting for action to complete, action timed out."
-        except InvalidActionUuidException:
-            return "Exception when waiting for action to complete, invalid action UUID."
+    api_instance = tacp.ApplicationsApi(api_client)
+    try:
+        api_response = api_instance.delete_application_using_delete(
+            uuid=uuid)
+    except ApiException as e:
+        return "Exception when calling get_firewall_profiles_using_get"
+
+    try:
+        wait_for_action_to_complete(api_response.action_uuid, api_client)
+    except ActionTimedOutException:
+        return "Exception when waiting for action to complete, action timed out."
+    except InvalidActionUuidException:
+        return "Exception when waiting for action to complete, invalid action UUID."
 
 
 def get_resource_by_uuid(uuid, component, api_client):
