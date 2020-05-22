@@ -332,6 +332,10 @@ class Connection(NetworkConnectionBase):
         self.cliconf = None
         self._paramiko_conn = None
 
+        # Managing prompt context
+        self._check_prompt = False
+        self._task_uuid = to_text(kwargs.get('task_uuid', ''))
+
         if self._play_context.verbosity > 3:
             logging.getLogger('paramiko').setLevel(logging.DEBUG)
 
