@@ -184,7 +184,7 @@ class CallbackModule(CallbackBase):
             )
 
         # Display the number of tasks specified or the default of 20
-        results = results[:self.task_output_limit]
+        results = list(results)[:self.task_output_limit]
 
         # Print the timings
         for uuid, result in results:
