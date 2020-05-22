@@ -992,16 +992,19 @@ class TaskExecutor:
 
         task_keys = self._task.dump_attrs()
 
-        # set options with 'templated vars' specific to this plugin and dependant ones
+        # set options with 'templated vars' specific to this plugin and dependent ones
         self._connection.set_options(task_keys=task_keys, var_options=options)
         varnames.extend(self._set_plugin_options('shell', variables, templar, task_keys))
 
         if self._connection.become is not None:
+            if self._play_context.become_pass:
+                # FIXME: eventually remove from task and play_context, here for backwards compat
+                # keep out of play objects to avoid accidental disclosure, only become plugin should have
+                # The become pass is already in the play_context if given on
+                # the CLI (-K). Make the plugin aware of it in this case.
+                task_keys['become_pass'] = self._play_context.become_pass
 
             varnames.extend(self._set_plugin_options('become', variables, templar, task_keys))
-            # FIXME: eventually remove from task and play_context, here for backwards compat
-            # keep out of play objects to avoid accidental disclosure, only become plugin should have
-            task_keys['become_pass'] = self._connection.become.get_option('become_pass')
 
             # FOR BACKWARDS COMPAT:
             for option in ('become_user', 'become_flags', 'become_exe', 'become_pass'):
