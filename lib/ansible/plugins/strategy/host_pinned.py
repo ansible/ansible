@@ -41,5 +41,8 @@ display = Display()
 class StrategyModule(FreeStrategyModule):
 
     def __init__(self, tqm):
+        # DEPRECATED: Ansible Strategy plugins now allow custom options.  The free strategy implements
+        #   this setting as an option that can be defined either through environment variable or
+        #   ansible.cfg `[default] host_pinned = True` setting.
         super(StrategyModule, self).__init__(tqm)
-        self._host_pinned = True
+        self.set_option("host_pinned", True)

@@ -46,7 +46,7 @@ from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
-from ansible.plugins import loader as plugin_loader
+from ansible.plugins import loader as plugin_loader, AnsiblePlugin
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
@@ -161,7 +161,7 @@ def debug_closure(func):
     return inner
 
 
-class StrategyBase:
+class StrategyBase(AnsiblePlugin):
 
     '''
     This is the base class for strategy plugins, which contains some common
@@ -174,6 +174,7 @@ class StrategyBase:
     ALLOW_BASE_THROTTLING = True
 
     def __init__(self, tqm):
+        super(StrategyBase, self).__init__()
         self._tqm = tqm
         self._inventory = tqm.get_inventory()
         self._workers = tqm._workers

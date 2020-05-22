@@ -29,6 +29,26 @@ DOCUMENTATION = '''
           won't hold up the rest of the hosts and tasks.
     version_added: "2.0"
     author: Ansible Core Team
+    options:
+        host_pinned:
+            description:
+                - Executes tasks on each host without interruption.
+                - Task execution is as fast as possible per host in batch as defined by C(serial) (default all).
+                  Ansible will not start a play for a host unless the play can be finished without interruption 
+                  by tasks for another host, i.e. the number of hosts with an active play does not exceed the
+                  number of forks.
+                - Ansible will not wait for other hosts to finish the current task before queuing the next task
+                  for a host that has finished.  Once a host is done with the play, it opens it's slot to a new
+                  host that was waiting to start.
+            default: False
+            env:
+                - name: ANSIBLE_HOST_PINNED
+            ini:
+                - section: default
+                  key: host_pinned
+            required: False
+            type: boolean
+            version_added: "2.9"
 '''
 
 import time
@@ -66,7 +86,6 @@ class StrategyModule(StrategyBase):
 
     def __init__(self, tqm):
         super(StrategyModule, self).__init__(tqm)
-        self._host_pinned = False
 
     def run(self, iterator, play_context):
         '''
@@ -208,7 +227,7 @@ class StrategyModule(StrategyBase):
 
                 # all workers have tasks to do (and the current host isn't done with the play).
                 # loop back to starting host and break out
-                if self._host_pinned and workers_free == 0 and work_to_do:
+                if self.get_option("host_pinned") and workers_free == 0 and work_to_do:
                     last_host = starting_host
                     break
 
