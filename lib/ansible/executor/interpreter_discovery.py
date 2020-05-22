@@ -156,7 +156,7 @@ def discover_interpreter(action, interpreter_name, discovery_mode, task_vars):
     if not is_silent:
         action._discovery_warnings \
             .append(u"Platform {0} on host {1} is using the discovered Python interpreter at {2}, but future installation of "
-                    u"another Python interpreter could change this. See {3} "
+                    u"another Python interpreter could change the meaning of that path. See {3} "
                     u"for more information."
                     .format(platform_type, host, found_interpreters[0],
                             get_versioned_doclink('reference_appendices/interpreter_discovery.html')))
