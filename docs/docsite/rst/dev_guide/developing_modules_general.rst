@@ -304,6 +304,8 @@ surrounding Ansible development.
 For questions and discussions pertaining to using the Ansible product,
 use the ``#ansible`` channel.
 
+For more specific IRC channels look at :ref:`Community Guide <ansible_community_guide/communication#irc-channels>`.
+
 Credit
 ======
 
