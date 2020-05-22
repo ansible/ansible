@@ -1344,6 +1344,7 @@ CONNECTION_FACTS_MODULES:
     voss: voss_facts
     extreme.voss.voss: extreme.voss.voss_facts
     ironware: ironware_facts
+    community.network.ironware: community.network.ironware_facts
   description: "Which modules to run during a play's fact gathering stage based on connection"
   env: [{name: ANSIBLE_CONNECTION_FACTS_MODULES}]
   ini:
