@@ -1127,7 +1127,7 @@ class GalaxyCLI(CLI):
                         else:
                             if dep_role.install_info['version'] != dep_role.version:
                                 if force_deps:
-                                    display.display('- changing dependant role %s from %s to %s' %
+                                    display.display('- changing dependent role %s from %s to %s' %
                                                     (dep_role.name, dep_role.install_info['version'], dep_role.version or "unspecified"))
                                     dep_role.remove()
                                     requirements.append(dep_role)
