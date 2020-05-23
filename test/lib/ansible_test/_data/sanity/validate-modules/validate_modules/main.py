@@ -44,7 +44,7 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-from ansible.utils.plugin_docs import BLACKLIST, tag_version_added, add_fragments, get_docstring
+from ansible.utils.plugin_docs import BLACKLIST, tag_versions, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
@@ -990,7 +990,7 @@ class ModuleValidator(Validator):
                     self.name, 'DOCUMENTATION'
                 )
                 if doc:
-                    tag_version_added(doc, '%s:' % (self.collection_name, ))
+                    tag_versions(doc, '%s:' % (self.collection_name, ), is_module=True)
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
@@ -1006,7 +1006,8 @@ class ModuleValidator(Validator):
                     missing_fragment = False
                     with CaptureStd():
                         try:
-                            get_docstring(self.path, fragment_loader, verbose=True)
+                            get_docstring(self.path, fragment_loader, verbose=True,
+                                          collection_name=self.collection_name, is_module=True)
                         except AssertionError:
                             fragment = doc['extends_documentation_fragment']
                             self.reporter.error(
@@ -1027,7 +1028,7 @@ class ModuleValidator(Validator):
                             )
 
                     if not missing_fragment:
-                        add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
+                        add_fragments(doc, self.object_path, fragment_loader=fragment_loader, is_module=True)
 
                     if 'options' in doc and doc['options'] is None:
                         self.reporter.error(
@@ -1462,7 +1463,7 @@ class ModuleValidator(Validator):
 
         try:
             if not context:
-                add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+                add_fragments(docs, self.object_path, fragment_loader=fragment_loader, is_module=True)
         except Exception:
             # Cannot merge fragments
             return
@@ -1991,7 +1992,7 @@ class ModuleValidator(Validator):
         with CaptureStd():
             try:
                 existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(
-                    self.base_module, fragment_loader, verbose=True, collection_name=self.collection_name)
+                    self.base_module, fragment_loader, verbose=True, collection_name=self.collection_name, is_module=True)
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
