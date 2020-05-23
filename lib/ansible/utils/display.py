@@ -302,11 +302,14 @@ class Display(with_metaclass(Singleton, object)):
 
         msg = msg.strip()
         msglen = 0
-        for c in msg:
-            if (sys.version_info >= (3,) or isinstance(msg, unicode)) and unicodedata.east_asian_width(c) in 'FWA':
-                msglen += 2
-            else:
-                msglen += 1
+        if sys.version_info >= (3,) or isinstance(msg, unicode):
+            for c in msg:
+                if unicodedata.east_asian_width(c) in 'FWA':
+                    msglen += 2
+                else:
+                    msglen += 1
+        else:
+            msglen = len(msg)
         star_len = self.columns - msglen
         if star_len <= 3:
             star_len = 3
