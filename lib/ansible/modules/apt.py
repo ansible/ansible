@@ -603,10 +603,10 @@ def parse_diff(output):
         diff_end = diff.index('Download complete and in download only mode')
     except ValueError:
         try:
-        # check for end marker line from both apt-get and aptitude
-        diff_end = next(i for i, item in enumerate(diff) if re.match('[0-9]+ (packages )?upgraded', item))
-    except StopIteration:
-        diff_end = len(diff)
+            # check for end marker line from both apt-get and aptitude
+            diff_end = next(i for i, item in enumerate(diff) if re.match('[0-9]+ (packages )?upgraded', item))
+        except StopIteration:
+            diff_end = len(diff)
     diff_start += 1
     diff_end += 1
     return {'prepared': '\n'.join(diff[diff_start:diff_end])}
