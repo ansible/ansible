@@ -265,6 +265,12 @@ EXAMPLES = '''
   apt:
     autoremove: yes
 
+- name: Download package to local cache without installing
+  apt:
+    pkg: foo
+    state: present
+    download_only: yes
+
 '''
 
 RETURN = '''
@@ -697,7 +703,6 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         if download_only:
             download_only = '--download-only'
-            # TODO: Test what happens if you auto-remove while also downloading, they may not be compatible
             autoremove = ''
         else:
             download_only = ''
