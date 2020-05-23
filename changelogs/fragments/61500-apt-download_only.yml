@@ -1,0 +1,2 @@
+minor_changes:
+  - apt - Add ``download_only`` parameter to allow for downloading installers without installing  (https://github.com/ansible/ansible/pull/61500)
