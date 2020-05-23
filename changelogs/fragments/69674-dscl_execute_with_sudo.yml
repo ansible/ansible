@@ -1,0 +1,2 @@
+bugfixes:
+- "user module - The user module was unable to create users on darwin targets (10.14+) due to insufficient permission. This fix addresses this issue by executing dscl with sudo (https://github.com/ansible/ansible/pull/69674)"
