@@ -2076,7 +2076,7 @@ class DarwinUser(User):
             self.fields.append(('hidden', 'IsHidden'))
 
     def _get_dscl(self):
-        return [self.module.get_bin_path('dscl', True), self.dscl_directory]
+        return ["sudo", self.module.get_bin_path('dscl', True), self.dscl_directory]
 
     def _list_user_groups(self):
         cmd = self._get_dscl()
