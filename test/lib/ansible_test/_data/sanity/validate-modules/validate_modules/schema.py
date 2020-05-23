@@ -64,11 +64,11 @@ TAGGED_VERSION_RE = re.compile('^([^.]+.[^.]+):(.*)$')
 def tagged_version(v, error_code=None):
     if not isinstance(v, string_types):
         # Should never happen to versions tagged by code
-        raise Invalid('Tagged version must be a string')
+        raise _add_ansible_error_code(Invalid('Tagged version must be a string'), 'invalid-tagged-version')
     m = TAGGED_VERSION_RE.match(v)
     if not m:
         # Should never happen to versions tagged by code
-        raise Invalid('Tagged version does not match format')
+        raise _add_ansible_error_code(Invalid('Tagged version does not match format'), 'invalid-tagged-version')
     collection = m.group(1)
     version = m.group(2)
     if collection != 'ansible.builtin':
@@ -183,7 +183,7 @@ def argument_spec_schema(for_collection):
             'no_log': bool,
             'aliases': Any(list_string_types, tuple(list_string_types)),
             'apply_defaults': bool,
-            'removed_in_version': version(for_collection),
+            'removed_in_version': version(for_collection, tagged='always'),
             'removed_at_date': Any(isodate),
             'options': Self,
             'deprecated_aliases': Any([Any(
@@ -193,7 +193,7 @@ def argument_spec_schema(for_collection):
                 },
                 {
                     Required('name'): Any(*string_types),
-                    Required('version'): version(for_collection),
+                    Required('version'): version(for_collection, tagged='always'),
                 },
             )]),
         }
@@ -349,7 +349,7 @@ def deprecation_schema(for_collection):
 
     if for_collection:
         version_schema = {
-            Required('removed_in'): version(for_collection),
+            Required('removed_in'): version(for_collection, tagged='always'),
         }
     else:
         version_schema = {
@@ -357,7 +357,10 @@ def deprecation_schema(for_collection):
             # Deprecation cycle changed at 2.4 (though not retroactively)
             # 2.3 -> removed_in: "2.5" + n for docs stub
             # 2.4 -> removed_in: "2.8" + n for docs stub
-            Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.6", "2.8", "2.9", "2.10", "2.11", "2.12", "2.13", "2.14"),
+            Required('removed_in'): Any(
+                "ansible.builtin:2.2", "ansible.builtin:2.3", "ansible.builtin:2.4", "ansible.builtin:2.5",
+                "ansible.builtin:2.6", "ansible.builtin:2.8", "ansible.builtin:2.9", "ansible.builtin:2.10",
+                "ansible.builtin:2.11", "ansible.builtin:2.12", "ansible.builtin:2.13", "ansible.builtin:2.14"),
         }
     version_schema.update(main_fields)
 

@@ -1579,7 +1579,8 @@ class ModuleValidator(Validator):
                 removed_in_version = data.get('removed_in_version', None)
                 if removed_in_version is not None:
                     try:
-                        if compare_version >= self.Version(str(removed_in_version)):
+                        collection_name, removed_in_version = self._split_tagged_version(removed_in_version)
+                        if collection_name == self.collection_name and compare_version >= self.Version(str(removed_in_version)):
                             msg = "Argument '%s' in argument_spec" % arg
                             if context:
                                 msg += " found in %s" % " -> ".join(context)
@@ -1598,7 +1599,8 @@ class ModuleValidator(Validator):
                     for deprecated_alias in deprecated_aliases:
                         if 'name' in deprecated_alias and 'version' in deprecated_alias:
                             try:
-                                if compare_version >= self.Version(str(deprecated_alias['version'])):
+                                collection_name, version = self._split_tagged_version(deprecated_alias['version'])
+                                if collection_name == self.collection_name and compare_version >= self.Version(str(version)):
                                     msg = "Argument '%s' in argument_spec" % arg
                                     if context:
                                         msg += " found in %s" % " -> ".join(context)
@@ -2151,7 +2153,16 @@ class ModuleValidator(Validator):
                         pass
                 if 'removed_in' in docs['deprecated']:
                     try:
-                        removed_in = self.StrictVersion(str(docs['deprecated']['removed_in']))
+                        collection_name, version = self._split_tagged_version(docs['deprecated']['removed_in'])
+                        if collection_name != self.collection_name:
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='invalid-module-deprecation-source',
+                                msg=('The deprecation version for a module must be added in this collection')
+                            )
+                            # Treat the module as not to be removed:
+                            raise ValueError('')
+                        removed_in = self.StrictVersion(str(version))
                     except ValueError:
                         end_of_deprecation_should_be_removed_only = False
                     else:
