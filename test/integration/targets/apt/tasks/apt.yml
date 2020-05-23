@@ -113,6 +113,46 @@
     that:
         - "not apt_result.changed"
 
+# Download only
+- name: pre-check absence of downloaded file
+  find:
+    path: "/var/cache/apt/archives/"
+    patterns: 'hello_*'
+  register: pre_apt_download
+
+- name: Clean up hello dpg if it exists
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ pre_apt_download.files }}"
+  when: pre_apt_download.matched >= 1
+
+- name: Confirm absence of downloaded file
+  find:
+    path: "/var/cache/apt/archives/"
+    patterns: 'hello_*'
+  register: apt_download_absence
+
+- name: download hello with apt without installing
+  apt: 
+    name: hello
+    state: present
+    download_only: true
+  register: apt_download_result
+
+- name: check for downloaded file
+  find:
+    path: "/var/cache/apt/archives/"
+    patterns: 'hello_*'
+  register: apt_download_file
+
+- name: verify hello is downloaded only
+  assert:
+    that:
+        - apt_download_absence.matched == 0
+        - apt_download_file.matched >= 1
+        - "'Download complete and in download only mode' in apt_download_result.stdout_lines"
+
 # INSTALL
 - name: install hello with apt
   apt: name=hello state=present

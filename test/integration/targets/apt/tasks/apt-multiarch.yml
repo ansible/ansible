@@ -2,6 +2,43 @@
 - name: add architecture {{ apt_foreign_arch }}
   command: dpkg --add-architecture {{ apt_foreign_arch }}
 
+# --download-only
+- name: pre-check absence of hello:{{ apt_foreign_arch }} deb
+  find:
+    path: "/var/cache/apt/archives/"
+    patterns: 'hello_*'
+  register: pre_multiarch_download
+
+- name: Clean up hello:{{ apt_foreign_arch }} deb if it exists
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ pre_multiarch_download.files }}"
+  when: pre_multiarch_download.matched >= 1
+
+- name: Confirm absence of hello:{{ apt_foreign_arch }} deb
+  find:
+    path: "/var/cache/apt/archives/"
+    patterns: 'hello_*'
+  register: multiarch_download_absence
+  tags: 
+    - test_apt_builddep
+
+- name: download-only hello:{{ apt_foreign_arch }}
+  apt:
+    pkg: "hello:{{ apt_foreign_arch }}"
+    state: present
+    update_cache: yes
+    download_only: yes
+  register: multiarch_download_result
+
+- name: check for downloaded file
+  find:
+    path: "/var/cache/apt/archives/"
+    patterns: 'hello_*'
+  register: multiarch_download_result_file
+
+# Install
 - name: install hello:{{ apt_foreign_arch }} with apt
   apt: pkg=hello:{{ apt_foreign_arch }} state=present update_cache=yes
   register: apt_result
@@ -18,9 +55,11 @@
   apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ apt_foreign_arch }}.deb"
   register: apt_multi_secondary
 
-- name: verify installation of hello:{{ apt_foreign_arch }}
+- name: verify download and installation of hello:{{ apt_foreign_arch }}
   assert:
     that:
+        - multiarch_download_absence.matched == 0
+        - multiarch_download_result_file.matched >= 1
         - "apt_multi_initial.changed"
         - "not apt_multi_secondary.changed"
 
