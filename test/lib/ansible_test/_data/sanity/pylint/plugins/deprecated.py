@@ -196,13 +196,13 @@ class AnsibleDeprecatedChecker(BaseChecker):
                     self.add_message('invalid-tagged-version', node=node, args=(version,))
                     return
 
-                m = TAGGED_VERSION_RE.match(version)
-                if not m:
+                matcher = TAGGED_VERSION_RE.match(version)
+                if not matcher:
                     self.add_message('invalid-tagged-version', node=node, args=(version,))
                     return
 
-                collection = m.group(1)
-                version_no = m.group(2)
+                collection = matcher.group(1)
+                version_no = matcher.group(2)
 
                 if collection != (self.collection_name or 'ansible.builtin'):
                     self.add_message('wrong-collection-deprecated-version-tag', node=node, args=(version,))
