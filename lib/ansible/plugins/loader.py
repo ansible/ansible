@@ -374,7 +374,7 @@ class PluginLoader:
             if type_name in C.CONFIGURABLE_PLUGINS:
                 dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
                 if dstring:
-                    add_fragments(dstring, path, fragment_loader=fragment_loader)
+                    add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
 
                 if dstring and 'options' in dstring and isinstance(dstring['options'], dict):
                     C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])

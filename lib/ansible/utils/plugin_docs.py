@@ -40,7 +40,7 @@ def merge_fragment(target, source):
         target[key] = value
 
 
-def tag_version_added(fragment, prefix):
+def tag_versions(fragment, prefix, is_module):
     def tag(option, prefix, recursive=True):
         if 'version_added' in option:
             option['version_added'] = '%s%s' % (prefix, option['version_added'])
@@ -55,7 +55,7 @@ def tag_version_added(fragment, prefix):
             tag(option, prefix)
 
 
-def untag_version_added(fragment, prefix):
+def untag_versions(fragment, prefix, is_module):
     def untag(option, prefix, recursive=True):
         if isinstance(option.get('version_added'), string_types) and to_native(option['version_added']).startswith(prefix):
             option['version_added'] = option['version_added'][len(prefix):]
@@ -70,7 +70,7 @@ def untag_version_added(fragment, prefix):
             untag(option, prefix)
 
 
-def add_fragments(doc, filename, fragment_loader):
+def add_fragments(doc, filename, fragment_loader, is_module=False):
 
     fragments = doc.pop('extends_documentation_fragment', [])
 
@@ -114,7 +114,7 @@ def add_fragments(doc, filename, fragment_loader):
         real_fragment_name = getattr(fragment_class, '_load_name')
         if real_fragment_name.startswith('ansible_collections.'):
             real_collection_name = '.'.join(real_fragment_name.split('.')[1:3])
-        tag_version_added(fragment, '%s:' % (real_collection_name, ))
+        tag_versions(fragment, '%s:' % (real_collection_name, ), is_module=is_module)
 
         if 'notes' in fragment:
             notes = fragment.pop('notes')
@@ -152,7 +152,7 @@ def add_fragments(doc, filename, fragment_loader):
         raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
-def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None):
+def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=False):
     """
     DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
@@ -162,10 +162,10 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False,
     if data.get('doc', False):
         # tag version_added
         if collection_name is not None:
-            tag_version_added(data['doc'], '%s:' % (collection_name, ))
+            tag_versions(data['doc'], '%s:' % (collection_name, ), is_module=is_module)
 
         # add fragments to documentation
-        add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
+        add_fragments(data['doc'], filename, fragment_loader=fragment_loader, is_module=is_module)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
 
