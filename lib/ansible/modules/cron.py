@@ -621,12 +621,12 @@ def main():
     if not name:
         module.deprecate(
             msg="The 'name' parameter will be required in future releases.",
-            version='2.12'
+            version='ansible.builtin:2.12'
         )
     if reboot:
         module.deprecate(
             msg="The 'reboot' parameter will be removed in future releases. Use 'special_time' option instead.",
-            version='2.12'
+            version='ansible.builtin:2.12'
         )
 
     if module._diff:

@@ -360,7 +360,7 @@ def main():
     ''' Set CLI options depending on params '''
     if module.params['user'] is not None:
         # handle user deprecation, mutually exclusive with scope
-        module.deprecate("The 'user' option is being replaced by 'scope'", version='2.11')
+        module.deprecate("The 'user' option is being replaced by 'scope'", version='ansible.builtin:2.11')
         if module.params['user']:
             module.params['scope'] = 'user'
         else:

@@ -517,7 +517,7 @@ def main():
     )
 
     if module.params.get('thirsty'):
-        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='ansible.builtin:2.13')
 
     src = module.params['src']
     b_src = to_bytes(src, errors='surrogate_or_strict')
