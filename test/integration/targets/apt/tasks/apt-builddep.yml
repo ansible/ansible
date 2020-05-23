@@ -1,55 +1,108 @@
-# test installing build-deps using netcat and quilt as test victims.
+# test installing build-deps using netcat and dpkg-dev as test victims.
 #
-# Deps can be discovered like so (taken from ubuntu 12.04)
+# Deps can be discovered like so (taken from ubuntu 16.04)
 # ====
-# root@localhost:~ # apt-rdepends --build-depends --follow=DEPENDS netcat
+# root@localhost:~  apt-rdepends --build-depends --follow=DEPENDS netcat
 # Reading package lists... Done
 # Building dependency tree
 # Reading state information... Done
 # netcat
-#   Build-Depends: debhelper (>= 8.0.0)
-#   Build-Depends: quilt
+#   Build-Depends: debhelper (>= 9)
+#   Build-Depends: dpkg-dev (>= 1.16.1~)
 # root@localhost:~ #
 # ====
-# Since many things depend on debhelper, let's just uninstall quilt, then
+# Since many things depend on debhelper, and netcat changed it's dependencies to drop quilt in 1.10-41, let's uninstall dpkg-dev, then
 # install build-dep for netcat to get it back.  build-dep doesn't have an
 # uninstall, so we don't need to test for reverse actions (eg, uninstall
 # build-dep and ensure things are clean)
 
-# uninstall quilt
-- name: check quilt with dpkg
-  shell: dpkg -s quilt
-  register: dpkg_result
-  ignore_errors: true
-  tags: ['test_apt_builddep']
+# uninstall dpkg-dev
+- name: uninstall dpkg-dev with apt
+  apt: 
+    pkg: dpkg-dev
+    state: absent
+    purge: yes
+  tags: 
+    - test_apt_builddep
 
-- name: uninstall quilt with apt
-  apt: pkg=quilt state=absent purge=yes
-  register: apt_result
-  when: dpkg_result is successful
-  tags: ['test_apt_builddep']
+# download installers without installing
+- name: pre-check absence of dpkg-dev deb
+  find:
+    path: "/var/cache/apt/archives/"
+    patterns: 'dpkg-dev_*'
+  register: pre_builddep_download
+  tags: 
+    - test_apt_builddep
+
+- name: Clean up dpkg-dev deb if it exists
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ pre_builddep_download.files }}"
+  when: pre_builddep_download.matched >= 1
+  tags: 
+    - test_apt_builddep
+
+- name: Confirm absence of dpkg-dev deb
+  find:
+    path: "/var/cache/apt/archives/"
+    patterns: 'dpkg-dev_*'
+  register: builddep_download_absence
+  tags: 
+    - test_apt_builddep
+
+- name: netcat build-dep download_only to cache dpkg-dev dependency
+  apt: 
+    pkg: netcat
+    state: build-dep
+    download_only: true
+  register: builddep_download_result
+  tags: 
+    - test_apt_builddep
+
+- name: check for dpkg-dev deb in apt cache
+  find:
+    path: "/var/cache/apt/archives/"
+    patterns: 'dpkg-dev_*'
+  register: builddep_download_result_file
+  tags: 
+    - test_apt_builddep
+
+- name: verify netcat dependencies are downloaded only
+  assert:
+    that:
+      - builddep_download_absence.matched == 0
+      - builddep_download_result_file.matched >= 1
+  tags: 
+    - test_apt_builddep
 
 # install build-dep for netcat
 - name: install netcat build-dep with apt
-  apt: pkg=netcat state=build-dep
+  apt: 
+    pkg: netcat
+    state: build-dep
   register: apt_result
-  tags: ['test_apt_builddep']
+  tags: 
+    - test_apt_builddep
 
 - name: verify build_dep of netcat
   assert:
     that:
         - "'changed' in apt_result"
-  tags: ['test_apt_builddep']
+  tags: 
+    - test_apt_builddep
 
 # ensure debhelper and qilt are installed
 - name: check build_deps with dpkg
-  shell: dpkg --get-selections | egrep '(debhelper|quilt)'
+  shell: dpkg --get-selections | egrep '(debhelper|dpkg-dev)'
   failed_when: False
   register: dpkg_result
-  tags: ['test_apt_builddep']
+  tags: 
+    - test_apt_builddep
 
 - name: verify build_deps are really there
   assert:
     that:
         - "dpkg_result.rc == 0"
-  tags: ['test_apt_builddep']
+  tags: 
+    - test_apt_builddep
