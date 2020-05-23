@@ -149,6 +149,12 @@ options:
     type: bool
     default: 'no'
     version_added: "2.4"
+  download_only:
+    description:
+      - Only download packages. Do not install them now.
+    type: bool
+    default: 'no'
+    version_added: "2.10"
 requirements:
    - python-apt (python 2)
    - python3-apt (python 3)
@@ -593,6 +599,10 @@ def parse_diff(output):
             # show everything
             diff_start = -1
     try:
+        # check for download_only marker used by apt-get
+        diff_end = diff.index('Download complete and in download only mode')
+    except ValueError:
+        try:
         # check for end marker line from both apt-get and aptitude
         diff_end = next(i for i, item in enumerate(diff) if re.match('[0-9]+ (packages )?upgraded', item))
     except StopIteration:
@@ -628,7 +638,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False, fixed=False, autoremove=False, fail_on_autoremove=False, only_upgrade=False,
-            allow_unauthenticated=False):
+            allow_unauthenticated=False, download_only=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -685,11 +695,19 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             fixed = ''
 
-        if build_dep:
-            cmd = "%s -y %s %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, fail_on_autoremove, check_arg, packages)
+        if download_only:
+            download_only = '--download-only'
+            # TODO: Test what happens if you auto-remove while also downloading, they may not be compatible
+            autoremove = ''
         else:
-            cmd = "%s -y %s %s %s %s %s %s %s install %s" % \
-                  (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, fail_on_autoremove, check_arg, packages)
+            download_only = ''
+
+        if build_dep:
+            cmd = "%s -y %s %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade,
+                                                            fixed, force_yes, fail_on_autoremove, check_arg, download_only, packages)
+        else:
+            cmd = "%s -y %s %s %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade,
+                                                             fixed, force_yes, autoremove, fail_on_autoremove, check_arg, download_only, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -739,7 +757,7 @@ def get_field_of_deb(m, deb_file, field="Version"):
     return to_native(stdout).strip('\n')
 
 
-def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, allow_unauthenticated, dpkg_options):
+def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, allow_unauthenticated, dpkg_options, download_only=False):
     changed = False
     deps_to_install = []
     pkgs_to_install = []
@@ -783,7 +801,8 @@ def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, a
                                      install_recommends=install_recommends,
                                      fail_on_autoremove=fail_on_autoremove,
                                      allow_unauthenticated=allow_unauthenticated,
-                                     dpkg_options=expand_dpkg_options(dpkg_options))
+                                     dpkg_options=expand_dpkg_options(dpkg_options),
+                                     download_only=download_only)
         if not success:
             m.fail_json(**retvals)
         changed = retvals.get('changed', False)
@@ -912,13 +931,17 @@ def cleanup(m, purge=False, force=False, operation=None,
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False, fail_on_autoremove=False,
-            allow_unauthenticated=False,
-            ):
+            allow_unauthenticated=False, download_only=False):
 
     if autoremove:
         autoremove = '--auto-remove'
     else:
         autoremove = ''
+
+    if download_only:
+        download_only = '--download-only'
+    else:
+        download_only = ''
 
     if m.check_mode:
         check_arg = '--simulate'
@@ -968,7 +991,8 @@ def upgrade(m, mode="yes", force=False, default_release=None,
                             "to have APTITUDE in path or use 'force_apt_get=True'")
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
-    cmd = '%s -y %s %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, fail_on_autoremove, allow_unauthenticated, check_arg, upgrade_command)
+    cmd = '%s -y %s %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, fail_on_autoremove,
+                                       allow_unauthenticated, check_arg, upgrade_command, download_only)
 
     if default_release:
         cmd += " -t '%s'" % (default_release,)
@@ -1059,6 +1083,7 @@ def main():
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
             allow_unauthenticated=dict(type='bool', default=False, aliases=['allow-unauthenticated']),
+            download_only=dict(type='bool', default=False),
         ),
         mutually_exclusive=[['deb', 'package', 'upgrade']],
         required_one_of=[['autoremove', 'deb', 'package', 'update_cache', 'upgrade']],
@@ -1112,6 +1137,7 @@ def main():
     autoremove = p['autoremove']
     fail_on_autoremove = p['fail_on_autoremove']
     autoclean = p['autoclean']
+    download_only = p['download_only']
 
     # Get the cache object
     cache = get_cache(module)
@@ -1172,7 +1198,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated)
+            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated, download_only)
 
         if p['deb']:
             if p['state'] != 'present':
@@ -1232,7 +1258,8 @@ def main():
                 autoremove=autoremove,
                 fail_on_autoremove=fail_on_autoremove,
                 only_upgrade=p['only_upgrade'],
-                allow_unauthenticated=allow_unauthenticated
+                allow_unauthenticated=allow_unauthenticated,
+                download_only=download_only
             )
 
             # Store if the cache has been updated
