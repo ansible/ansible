@@ -40,34 +40,65 @@ def merge_fragment(target, source):
         target[key] = value
 
 
-def tag_versions(fragment, prefix, is_module):
-    def tag(option, prefix, recursive=True):
-        if 'version_added' in option:
-            option['version_added'] = '%s%s' % (prefix, option['version_added'])
-        if recursive:
-            if 'suboptions' in option:
-                for option_ in option['suboptions'].values():
-                    tag(option_, prefix)
+def _process_versions(fragment, is_module, callback):
+    def process_deprecation(deprecation):
+        if 'removed_in' in deprecation:
+            callback(deprecation, 'removed_in')
+        if 'version' in deprecation:  # wrong usage, but happens
+            callback(deprecation, 'version')
 
-    tag(fragment, prefix, recursive=False)
-    if 'options' in fragment:
-        for option in fragment['options'].values():
-            tag(option, prefix)
+    def process_option_specifiers(specifiers):
+        for specifier in specifiers:
+            if 'version_added' in specifier:
+                callback(specifier, 'version_added')
+            if isinstance(specifier.get('deprecated'), dict):
+                process_deprecation(specifier['deprecated'])
+
+    def process_options(options):
+        for option in options.values():
+            if 'version_added' in option:
+                callback(option, 'version_added')
+            if not is_module:
+                if isinstance(option.get('env'), list):
+                    process_option_specifiers(option['env'])
+                if isinstance(option.get('ini'), list):
+                    process_option_specifiers(option['ini'])
+                if isinstance(option.get('vars'), list):
+                    process_option_specifiers(option['vars'])
+            if isinstance(option.get('suboptions'), dict):
+                process_options(option['suboptions'])
+
+    def process_return_values(return_values):
+        for return_value in return_values.values():
+            if 'version_added' in return_value:
+                callback(return_value, 'version_added')
+            if isinstance(return_value.get('contains'), dict):
+                process_return_values(return_value['contains'])
+
+    if 'version_added' in fragment:
+        callback(fragment, 'version_added')
+    if isinstance(fragment.get('deprecated'), dict):
+        process_deprecation(fragment['deprecated'])
+    if isinstance(fragment.get('options'), dict):
+        process_options(fragment['options'])
+
+
+def tag_versions(fragment, prefix, is_module):
+    def tag(options, option):
+        options[option] = '%s%s' % (prefix, options[option])
+
+    _process_versions(fragment, is_module, tag)
 
 
 def untag_versions(fragment, prefix, is_module):
-    def untag(option, prefix, recursive=True):
-        if isinstance(option.get('version_added'), string_types) and to_native(option['version_added']).startswith(prefix):
-            option['version_added'] = option['version_added'][len(prefix):]
-        if recursive:
-            if 'suboptions' in option:
-                for option_ in option['suboptions'].values():
-                    untag(option_, prefix)
+    def untag(options, option):
+        v = options[option]
+        if isinstance(v, string_types):
+            v = to_native(v)
+            if v.startswith(prefix):
+                options[option] = v[len(prefix):]
 
-    untag(fragment, prefix, recursive=False)
-    if 'options' in fragment:
-        for option in fragment['options'].values():
-            untag(option, prefix)
+    _process_versions(fragment, is_module, untag)
 
 
 def add_fragments(doc, filename, fragment_loader, is_module=False):
