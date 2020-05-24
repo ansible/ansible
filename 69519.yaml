@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+
+  tasks:
+  - name: template a remote file
+    template:
+      src: /some/file/on/remote
+      dest: /some/other/file/on/remote
