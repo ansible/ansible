@@ -303,7 +303,7 @@ class Display(with_metaclass(Singleton, object)):
         msg = msg.strip()
         msglen = 0
         for c in msg:
-            if ord(c) >= 0x100 and unicodedata.east_asian_width(c) in "FWA":
+            if ord(c) > 0xff and unicodedata.east_asian_width(c) in "FWA":
                 msglen += 2
             else:
                 msglen += 1
