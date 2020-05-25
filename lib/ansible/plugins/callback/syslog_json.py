@@ -67,7 +67,9 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__()
 
-        self.set_options()
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
 
         syslog_host = self.get_option("server")
         syslog_port = int(self.get_option("port"))
