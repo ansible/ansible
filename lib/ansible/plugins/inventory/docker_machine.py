@@ -176,6 +176,14 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         return json.loads(inspect_lines)
 
+    def _ip_addr_docker_machine_host(self, node):
+        try:
+            ip_addr = self._run_command(['ip', self.node])
+        except subprocess.CalledProcessError:
+            return None
+
+        return ip_addr
+
     def _should_skip_host(self, machine_name, env_var_tuples, daemon_env):
         if not env_var_tuples:
             warning_prefix = 'Unable to fetch Docker daemon env vars from Docker Machine for host {0}'.format(machine_name)
@@ -210,9 +218,17 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
                 # add an entry in the inventory for this host
                 self.inventory.add_host(machine_name)
 
+                # check for valid ip address from inspect output, else explicitly use ip command to find host ip address
+                # this works around an issue seen with Google Compute Platform where the IP address was not available
+                # via the 'inspect' subcommand but was via the 'ip' subcomannd.
+                if self.node_attrs['Driver']['IPAddress']:
+                    ip_addr = self.node_attrs['Driver']['IPAddress']
+                else:
+                    ip_addr = self._ip_addr_docker_machine_host(self.node)
+
                 # set standard Ansible remote host connection settings to details captured from `docker-machine`
                 # see: https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html
-                self.inventory.set_variable(machine_name, 'ansible_host', self.node_attrs['Driver']['IPAddress'])
+                self.inventory.set_variable(machine_name, 'ansible_host', ip_addr)
                 self.inventory.set_variable(machine_name, 'ansible_port', self.node_attrs['Driver']['SSHPort'])
                 self.inventory.set_variable(machine_name, 'ansible_user', self.node_attrs['Driver']['SSHUser'])
                 self.inventory.set_variable(machine_name, 'ansible_ssh_private_key_file', self.node_attrs['Driver']['SSHKeyPath'])
