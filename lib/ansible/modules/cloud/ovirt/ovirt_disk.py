@@ -344,6 +344,25 @@ from ansible.module_utils.ovirt import (
 )
 
 
+def create_transfer_connection(module, transfer, context, connect_timeout=10, read_timeout=60):
+    url = urlparse(transfer.transfer_url)
+    connection = HTTPSConnection(
+        url.netloc, context=context, timeout=connect_timeout)
+    try:
+        connection.connect()
+    except OSError as e:
+        # Typically ConnectionRefusedError or socket.gaierror.
+        module.warn("Cannot connect to %s, trying %s: %s" % (transfer.transfer_url, transfer.proxy_url, e))
+
+        url = urlparse(transfer.proxy_url)
+        connection = HTTPSConnection(
+            url.netloc, context=context, timeout=connect_timeout)
+        connection.connect()
+
+    connection.sock.settimeout(read_timeout)
+    return connection, url
+
+
 def _search_by_lun(disks_service, lun_id):
     """
     Find disk by LUN ID.
@@ -375,7 +394,6 @@ def transfer(connection, module, direction, transfer_func):
             time.sleep(module.params['poll_interval'])
             transfer = transfer_service.get()
 
-        proxy_url = urlparse(transfer.proxy_url)
         context = ssl.create_default_context()
         auth = module.params['auth']
         if auth.get('insecure'):
@@ -384,17 +402,11 @@ def transfer(connection, module, direction, transfer_func):
         elif auth.get('ca_file'):
             context.load_verify_locations(cafile=auth.get('ca_file'))
 
-        proxy_connection = HTTPSConnection(
-            proxy_url.hostname,
-            proxy_url.port,
-            context=context,
-        )
-
+        transfer_connection, transfer_url = create_transfer_connection(module, transfer, context)
         transfer_func(
             transfer_service,
-            proxy_connection,
-            proxy_url,
-            transfer.signed_ticket
+            transfer_connection,
+            transfer_url,
         )
         return True
     finally:
@@ -425,17 +437,10 @@ def transfer(connection, module, direction, transfer_func):
 
 
 def download_disk_image(connection, module):
-    def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
+    def _transfer(transfer_service, transfer_connection, transfer_url):
         BUF_SIZE = 128 * 1024
-        transfer_headers = {
-            'Authorization': transfer_ticket,
-        }
-        proxy_connection.request(
-            'GET',
-            proxy_url.path,
-            headers=transfer_headers,
-        )
-        r = proxy_connection.getresponse()
+        transfer_connection.request('GET', transfer_url.path)
+        r = transfer_connection.getresponse()
         path = module.params["download_image_path"]
         image_size = int(r.getheader('Content-Length'))
         with open(path, "wb") as mydisk:
@@ -457,14 +462,14 @@ def download_disk_image(connection, module):
 
 
 def upload_disk_image(connection, module):
-    def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
+    def _transfer(transfer_service, transfer_connection, transfer_url):
         BUF_SIZE = 128 * 1024
         path = module.params['upload_image_path']
 
         image_size = os.path.getsize(path)
-        proxy_connection.putrequest("PUT", proxy_url.path)
-        proxy_connection.putheader('Content-Length', "%d" % (image_size,))
-        proxy_connection.endheaders()
+        transfer_connection.putrequest("PUT", transfer_url.path)
+        transfer_connection.putheader('Content-Length', "%d" % (image_size,))
+        transfer_connection.endheaders()
         with open(path, "rb") as disk:
             pos = 0
             while pos < image_size:
@@ -473,7 +478,7 @@ def upload_disk_image(connection, module):
                 if not chunk:
                     transfer_service.pause()
                     raise RuntimeError("Unexpected end of file at pos=%d" % pos)
-                proxy_connection.send(chunk)
+                transfer_connection.send(chunk)
                 pos += len(chunk)
 
     return transfer(
