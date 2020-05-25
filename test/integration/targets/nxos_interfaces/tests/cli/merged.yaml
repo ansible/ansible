@@ -2,7 +2,10 @@
 - debug:
     msg: "Start nxos_interfaces merged integration tests connection={{ ansible_connection }}"
 
-- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: 
+    test_int1: "{{ nxos_int1 }}"
+    test_int2: "{{ nxos_int2 }}"
+
 - set_fact: enabled=true
   when: platform is not search('N3[5KL]|N[56]K|titanium')
 
@@ -10,6 +13,7 @@
   cli_config: &cleanup
     config: |
       default interface {{ test_int1 }}
+      default interface {{ test_int2 }}
 
 - block:
   - name: Merged
@@ -51,6 +55,31 @@
       that:
         - "result.changed == false"
         - "result.commands|length == 0"
+
+  - name: "Populate {{ test_int2 }}"
+    nxos_config:
+      lines:
+        - "description Test"
+        - "switchport"
+        - "no shutdown"
+      parents: "interface {{ test_int2 }}"
+
+  - name: Update interface state
+    nxos_interfaces:
+      config:
+        - name: "{{ test_int2 }}"
+          enabled: False
+          mode: layer2
+          description: Test
+      state: merged
+    register: result
+
+  - assert:
+      that:
+        - "'interface {{ test_int2 }}' in result.commands"
+        - "'shutdown' in result.commands"
+        - result.changed == True
+        - result.commands|length == 2
 
   always:
   - name: teardown
