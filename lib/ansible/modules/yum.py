@@ -1159,7 +1159,7 @@ class YumModule(YumDnf):
                 if pkg.startswith('@'):
                     installed = self.is_group_env_installed(pkg)
                 else:
-                    installed = self.is_installed(repoq, pkg)
+                    installed = self.is_installed(repoq, pkg, is_pkg=True)
 
                 if installed:
                     # Return a message so it's obvious to the user why yum failed
