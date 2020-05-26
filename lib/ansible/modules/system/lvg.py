@@ -270,7 +270,7 @@ def main():
                     pvdiplay_cmd_device_options = [pvdisplay_cmd, device] + pvdisplay_ops
                     rc, dev_size, err = module.run_command(pvdiplay_cmd_device_options + " -o dev_size")
                     dev_size = int(dev_size.replace(" ", ""))
-                    rc, pv_size, err = module.run_command(pvdiplay_cmd_device_options + " -o pv_size")
+                    rc, pv_size, err = module.run_command(pvdiplay_cmd_device_options + ["-o", "pv_size"])
                     pv_size = int(pv_size.replace(" ", ""))
                     rc, pe_start, err = module.run_command(pvdiplay_cmd_device_options + ["-o", "pe_start"])
                     pe_start = int(pe_start.replace(" ", ""))
