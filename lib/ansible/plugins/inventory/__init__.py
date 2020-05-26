@@ -216,10 +216,13 @@ class BaseInventoryPlugin(AnsiblePlugin):
         except Exception as e:
             raise AnsibleParserError(to_native(e))
 
+        # a plugin can be loaded via many different names with redirection- if so, we want to accept any of those names
+        valid_names = getattr(self, '_redirected_names') or [self.NAME]
+
         if not config:
             # no data
             raise AnsibleParserError("%s is empty" % (to_native(path)))
-        elif config.get('plugin') != self.NAME:
+        elif config.get('plugin') not in valid_names:
             # this is not my config file
             raise AnsibleParserError("Incorrect plugin name in file: %s" % config.get('plugin', 'none found'))
         elif not isinstance(config, Mapping):

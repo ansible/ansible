@@ -142,7 +142,7 @@ class PSModuleDepFinder(object):
         if name in self.exec_scripts.keys():
             return
 
-        data = pkgutil.get_data("ansible.executor.powershell", name + ".ps1")
+        data = pkgutil.get_data("ansible.executor.powershell", to_native(name + ".ps1"))
         if data is None:
             raise AnsibleError("Could not find executor powershell script "
                                "for '%s'" % name)

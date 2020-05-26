@@ -63,6 +63,16 @@
     testns.testcoll.uses_leaf_mu_module_import_from:
     register: from_out
 
+  # module with multiple levels of the same nested package name and imported as a function
+  - name: exec module with multiple levels of the same nested package name imported as a function
+    testns.testcoll.uses_nested_same_as_func:
+    register: from_nested_func
+
+  # module with multiple levels of the same nested package name and imported as a module
+  - name: exec module with multiple levels of the same nested package name imported as a module
+    testns.testcoll.uses_nested_same_as_module:
+    register: from_nested_module
+
   - assert:
       that:
       - testmodule_out.source == 'user'
@@ -79,6 +89,8 @@
       - flat_out.mu_result == 'thingtocall in leaf'
       - from_out.mu_result == 'thingtocall in leaf'
       - from_out.mu2_result == 'thingtocall in secondary'
+      - from_nested_func.mu_result == 'hello from nested_same'
+      - from_nested_module.mu_result == 'hello from nested_same'
 
 - hosts: testhost
   tasks:
@@ -373,28 +385,7 @@
   - include_tasks: includeme.yml
 
 
-- name: test a collection-hosted connection plugin against a host from a collection-hosted inventory plugin
-  hosts: dynamic_host_a
-  vars:
-    ansible_connection: testns.testcoll.localconn
-    ansible_localconn_connectionvar: from_play
-  tasks:
-  - raw: echo 'hello world'
-    register: connection_out
-
-  - assert:
-      that:
-      - connection_out.stdout == "localconn ran echo 'hello world'"
-      # ensure that the connection var we overrode above made it into the running config
-      - connection_out.stderr == "connectionvar is from_play"
-
-- hosts: testhost
-  tasks:
-  - assert:
-      that:
-      - hostvars['dynamic_host_a'] is defined
-      - hostvars['dynamic_host_a'].connection_out.stdout == "localconn ran echo 'hello world'"
-
+- import_playbook: test_collection_meta.yml
 - name: Test FQCN handlers
   hosts: testhost
   vars:

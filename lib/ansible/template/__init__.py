@@ -30,6 +30,7 @@ import time
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 from numbers import Number
+from traceback import format_exc
 
 try:
     from hashlib import sha1
@@ -53,6 +54,7 @@ from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
 from ansible.utils.unsafe_proxy import wrap_var
 
 display = Display()
@@ -350,52 +352,75 @@ class JinjaPluginIntercept(MutableMapping):
     # FUTURE: we can cache FQ filter/test calls for the entire duration of a run, since a given collection's impl's
     # aren't supposed to change during a run
     def __getitem__(self, key):
-        if not isinstance(key, string_types):
-            raise ValueError('key must be a string')
-
-        key = to_native(key)
-
-        if '.' not in key:  # might be a built-in value, delegate to base dict
-            return self._delegatee.__getitem__(key)
-
-        func = self._collection_jinja_func_cache.get(key)
-
-        if func:
-            return func
-
-        acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
-
-        if not acr:
-            raise KeyError('invalid plugin name: {0}'.format(key))
-
         try:
-            pkg = import_module(acr.n_python_package_name)
-        except ImportError:
-            raise KeyError()
+            if not isinstance(key, string_types):
+                raise ValueError('key must be a string')
 
-        parent_prefix = acr.collection
+            key = to_native(key)
 
-        if acr.subdirs:
-            parent_prefix = '{0}.{1}'.format(parent_prefix, acr.subdirs)
+            if '.' not in key:  # might be a built-in or legacy, check the delegatee dict first, then try for a last-chance base redirect
+                func = self._delegatee.get(key)
 
-        for dummy, module_name, ispkg in pkgutil.iter_modules(pkg.__path__, prefix=parent_prefix + '.'):
-            if ispkg:
-                continue
+                if func:
+                    return func
+
+                ts = _get_collection_metadata('ansible.builtin')
+
+                # TODO: implement support for collection-backed redirect (currently only builtin)
+                # TODO: implement cycle detection (unified across collection redir as well)
+                redirect_fqcr = ts.get('plugin_routing', {}).get(self._dirname, {}).get(key, {}).get('redirect', None)
+                if redirect_fqcr:
+                    acr = AnsibleCollectionRef.from_fqcr(ref=redirect_fqcr, ref_type=self._dirname)
+                    display.vvv('redirecting {0} {1} to {2}.{3}'.format(self._dirname, key, acr.collection, acr.resource))
+                    key = redirect_fqcr
+                # TODO: handle recursive forwarding (not necessary for builtin, but definitely for further collection redirs)
+
+            func = self._collection_jinja_func_cache.get(key)
+
+            if func:
+                return func
+
+            acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
+
+            if not acr:
+                raise KeyError('invalid plugin name: {0}'.format(key))
 
             try:
-                plugin_impl = self._pluginloader.get(module_name)
-            except Exception as e:
-                raise TemplateSyntaxError(to_native(e), 0)
+                pkg = import_module(acr.n_python_package_name)
+            except ImportError:
+                raise KeyError()
 
-            method_map = getattr(plugin_impl, self._method_map_name)
+            parent_prefix = acr.collection
 
-            for f in iteritems(method_map()):
-                fq_name = '.'.join((parent_prefix, f[0]))
-                # FIXME: detect/warn on intra-collection function name collisions
-                self._collection_jinja_func_cache[fq_name] = f[1]
+            if acr.subdirs:
+                parent_prefix = '{0}.{1}'.format(parent_prefix, acr.subdirs)
 
-        function_impl = self._collection_jinja_func_cache[key]
-        return function_impl
+            # TODO: implement collection-level redirect
+
+            for dummy, module_name, ispkg in pkgutil.iter_modules(pkg.__path__, prefix=parent_prefix + '.'):
+                if ispkg:
+                    continue
+
+                try:
+                    plugin_impl = self._pluginloader.get(module_name)
+                except Exception as e:
+                    raise TemplateSyntaxError(to_native(e), 0)
+
+                method_map = getattr(plugin_impl, self._method_map_name)
+
+                for f in iteritems(method_map()):
+                    fq_name = '.'.join((parent_prefix, f[0]))
+                    # FIXME: detect/warn on intra-collection function name collisions
+                    self._collection_jinja_func_cache[fq_name] = f[1]
+
+            function_impl = self._collection_jinja_func_cache[key]
+            return function_impl
+        except KeyError:
+            raise
+        except Exception as ex:
+            display.warning('an unexpected error occurred during Jinja2 environment setup: {0}'.format(to_native(ex)))
+            display.vvv('exception during Jinja2 environment setup: {0}'.format(format_exc()))
+            raise
 
     def __setitem__(self, key, value):
         return self._delegatee.__setitem__(key, value)

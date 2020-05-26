@@ -36,9 +36,10 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
-from ansible.module_utils._text import to_bytes, to_text, to_native
-from ansible.module_utils.compat.importlib import import_module
+from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
+
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
@@ -601,7 +602,8 @@ class ModuleInfo:
         path = None
 
         if imp is None:
-            self._info = info = importlib.machinery.PathFinder.find_spec(name, paths)
+            # don't pretend this is a top-level module, prefix the rest of the namespace
+            self._info = info = importlib.machinery.PathFinder.find_spec('ansible.module_utils.' + name, paths)
             if info is not None:
                 self.py_src = os.path.splitext(info.origin)[1] in importlib.machinery.SOURCE_SUFFIXES
                 self.pkg_dir = info.origin.endswith('/__init__.py')
@@ -632,33 +634,61 @@ class ModuleInfo:
 
 
 class CollectionModuleInfo(ModuleInfo):
-    def __init__(self, name, paths):
+    def __init__(self, name, pkg):
         self._mod_name = name
         self.py_src = True
-        # FIXME: Implement pkg_dir so that we can place __init__.py files
         self.pkg_dir = False
 
-        for path in paths:
-            self._package_name = '.'.join(path.split('/'))
-            try:
-                self.get_source()
-            except FileNotFoundError:
-                pass
-            else:
-                self.path = os.path.join(path, self._mod_name) + '.py'
-                break
-        else:
-            # FIXME (nitz): implement package fallback code
+        split_name = pkg.split('.')
+        split_name.append(name)
+        if len(split_name) < 5 or split_name[0] != 'ansible_collections' or split_name[3] != 'plugins' or split_name[4] != 'module_utils':
+            raise ValueError('must search for something beneath a collection module_utils, not {0}.{1}'.format(to_native(pkg), to_native(name)))
+
+        # NB: we can't use pkgutil.get_data safely here, since we don't want to import/execute package/module code on
+        # the controller while analyzing/assembling the module, so we'll have to manually import the collection's
+        # Python package to locate it (import root collection, reassemble resource path beneath, fetch source)
+
+        # FIXME: handle MU redirection logic here
+
+        collection_pkg_name = '.'.join(split_name[0:3])
+        resource_base_path = os.path.join(*split_name[3:])
+        # look for package_dir first, then module
+
+        self._src = pkgutil.get_data(collection_pkg_name, to_native(os.path.join(resource_base_path, '__init__.py')))
+
+        if self._src is not None:  # empty string is OK
+            return
+
+        self._src = pkgutil.get_data(collection_pkg_name, to_native(resource_base_path + '.py'))
+
+        if not self._src:
             raise ImportError('unable to load collection-hosted module_util'
-                              ' {0}.{1}'.format(to_native(self._package_name),
-                                                to_native(name)))
+                              ' {0}.{1}'.format(to_native(pkg), to_native(name)))
 
     def get_source(self):
-        # FIXME (nitz): need this in py2 for some reason TBD, but we shouldn't (get_data delegates
-        # to wrong loader without it)
-        pkg = import_module(self._package_name)
-        data = pkgutil.get_data(to_native(self._package_name), to_native(self._mod_name + '.py'))
-        return data
+        return self._src
+
+
+class InternalRedirectModuleInfo(ModuleInfo):
+    def __init__(self, name, full_name):
+        self.pkg_dir = None
+        self._original_name = full_name
+        self.path = full_name.replace('.', '/') + '.py'
+        collection_meta = _get_collection_metadata('ansible.builtin')
+        redirect = collection_meta.get('plugin_routing', {}).get('module_utils', {}).get(name, {}).get('redirect', None)
+        if not redirect:
+            raise ImportError('no redirect found for {0}'.format(name))
+        self._redirect = redirect
+        self.py_src = True
+        self._shim_src = """
+import sys
+import {1} as mod
+
+sys.modules['{0}'] = mod
+""".format(self._original_name, self._redirect)
+
+    def get_source(self):
+        return self._shim_src
 
 
 def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, zf):
@@ -721,8 +751,7 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
                     break
                 try:
                     # this is a collection-hosted MU; look it up with pkgutil.get_data()
-                    module_info = CollectionModuleInfo(py_module_name[-idx],
-                                                       [os.path.join(*py_module_name[:-idx])])
+                    module_info = CollectionModuleInfo(py_module_name[-idx], '.'.join(py_module_name[:-idx]))
                     break
                 except ImportError:
                     continue
@@ -740,7 +769,13 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
                                              [os.path.join(p, *relative_module_utils_dir[:-idx]) for p in module_utils_paths])
                     break
                 except ImportError:
-                    continue
+                    # check metadata for redirect, generate stub if present
+                    try:
+                        module_info = InternalRedirectModuleInfo(py_module_name[-idx],
+                                                                 '.'.join(py_module_name[:(None if idx == 1 else -1)]))
+                        break
+                    except ImportError:
+                        continue
         else:
             # If we get here, it's because of a bug in ModuleDepFinder.  If we get a reproducer we
             # should then fix ModuleDepFinder

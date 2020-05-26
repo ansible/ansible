@@ -550,12 +550,19 @@ test/units/plugins/test_plugins.py pylint:blacklisted-name
 test/units/template/test_templar.py pylint:blacklisted-name
 test/units/test_constants.py future-import-boilerplate
 test/units/test_context.py future-import-boilerplate
-test/units/utils/fixtures/collections/ansible_collections/my_namespace/my_collection/plugins/action/my_action.py future-import-boilerplate
-test/units/utils/fixtures/collections/ansible_collections/my_namespace/my_collection/plugins/action/my_action.py metaclass-boilerplate
-test/units/utils/fixtures/collections/ansible_collections/my_namespace/my_collection/plugins/module_utils/my_other_util.py future-import-boilerplate
-test/units/utils/fixtures/collections/ansible_collections/my_namespace/my_collection/plugins/module_utils/my_other_util.py metaclass-boilerplate
-test/units/utils/fixtures/collections/ansible_collections/my_namespace/my_collection/plugins/module_utils/my_util.py future-import-boilerplate
-test/units/utils/fixtures/collections/ansible_collections/my_namespace/my_collection/plugins/module_utils/my_util.py metaclass-boilerplate
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py future-import-boilerplate
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py metaclass-boilerplate
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/action/my_action.py pylint:relative-beyond-top-level
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_other_util.py future-import-boilerplate
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_other_util.py metaclass-boilerplate
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py future-import-boilerplate
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/module_utils/my_util.py metaclass-boilerplate
+test/units/utils/collection_loader/fixtures/collections/ansible_collections/testns/testcoll/plugins/modules/__init__.py empty-init  # testing that collections don't need inits
+test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/__init__.py empty-init  # testing that collections don't need inits
+test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/ansible/__init__.py empty-init  # testing that collections don't need inits
+test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/__init__.py empty-init  # testing that collections don't need inits
+test/units/utils/collection_loader/fixtures/collections_masked/ansible_collections/testns/testcoll/__init__.py empty-init  # testing that collections don't need inits
+test/units/utils/collection_loader/test_collection_loader.py pylint:undefined-variable  # magic runtime local var splatting
 test/units/utils/test_cleanup_tmp_file.py future-import-boilerplate
 test/units/utils/test_encrypt.py future-import-boilerplate
 test/units/utils/test_encrypt.py metaclass-boilerplate

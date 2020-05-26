@@ -9,17 +9,20 @@ def main():
     Main program function used to isolate globals from imported code.
     Changes to globals in imported modules on Python 2.x will overwrite our own globals.
     """
+    import ansible
     import contextlib
+    import json
     import os
     import re
     import runpy
+    import subprocess
     import sys
     import traceback
-    import types
     import warnings
 
-    ansible_path = os.environ['PYTHONPATH']
+    ansible_path = os.path.dirname(os.path.dirname(ansible.__file__))
     temp_path = os.environ['SANITY_TEMP_PATH'] + os.path.sep
+    external_python = os.environ.get('SANITY_EXTERNAL_PYTHON')
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
     collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATHS')
 
@@ -37,63 +40,45 @@ def main():
     except ImportError:
         from io import StringIO
 
-    # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
-    # without this the ansible.release import there would pull in many Python modules which Ansible modules should not have access to
-    ansible_module = types.ModuleType('ansible')
-    ansible_module.__file__ = os.path.join(os.environ['PYTHONPATH'], 'ansible', '__init__.py')
-    ansible_module.__path__ = [os.path.dirname(ansible_module.__file__)]
-    ansible_module.__package__ = 'ansible'
-
-    sys.modules['ansible'] = ansible_module
-
     if collection_full_name:
         # allow importing code from collections when testing a collection
-        from ansible.utils.collection_loader import AnsibleCollectionLoader
-        from ansible.module_utils._text import to_bytes
+        from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
+        from ansible.utils.collection_loader import AnsibleCollectionConfig
+        from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
+        from ansible.utils.collection_loader import _collection_finder
 
-        def get_source(self, fullname):
-            with open(to_bytes(self.get_filename(fullname)), 'rb') as mod_file:
-                return mod_file.read()
+        yaml_to_json_path = os.path.join(os.path.dirname(__file__), 'yaml_to_json.py')
+        yaml_to_dict_cache = {}
 
-        def get_code(self, fullname):
-            return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
+        def yaml_to_dict(yaml, content_id):
+            """
+            Return a Python dict version of the provided YAML.
+            Conversion is done in a subprocess since the current Python interpreter does not have access to PyYAML.
+            """
+            if content_id in yaml_to_dict_cache:
+                return yaml_to_dict_cache[content_id]
 
-        def is_package(self, fullname):
-            return os.path.basename(self.get_filename(fullname)) in ('__init__.py', '__synthetic__')
+            try:
+                cmd = [external_python, yaml_to_json_path]
+                proc = subprocess.Popen([to_bytes(c) for c in cmd], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout_bytes, stderr_bytes = proc.communicate(to_bytes(yaml))
 
-        def get_filename(self, fullname):
-            if fullname in sys.modules:
-                return sys.modules[fullname].__file__
+                if proc.returncode != 0:
+                    raise Exception('command %s failed with return code %d: %s' % ([to_native(c) for c in cmd], proc.returncode, to_native(stderr_bytes)))
 
-            # find the module without importing it
-            # otherwise an ImportError during module load will prevent us from getting the filename of the module
-            loader = self.find_module(fullname)
+                data = yaml_to_dict_cache[content_id] = json.loads(to_text(stdout_bytes))
 
-            if not loader:
-                raise ImportError('module {0} not found'.format(fullname))
+                return data
+            except Exception as ex:
+                raise Exception('internal importer error - failed to parse yaml: %s' % to_native(ex))
 
-            # determine the filename of the module that was found
-            filename = os.path.join(collection_root, fullname.replace('.', os.path.sep))
+        _collection_finder._meta_yml_to_dict = yaml_to_dict  # pylint: disable=protected-access
 
-            if os.path.isdir(filename):
-                init_filename = os.path.join(filename, '__init__.py')
-                filename = init_filename if os.path.exists(init_filename) else os.path.join(filename, '__synthetic__')
-            else:
-                filename += '.py'
+        collection_loader = _AnsibleCollectionFinder(paths=[collection_root])
+        collection_loader._install()  # pylint: disable=protected-access
+        nuke_modules = list(m for m in sys.modules if m.partition('.')[0] == 'ansible')
+        map(sys.modules.pop, nuke_modules)
 
-            return filename
-
-        # monkeypatch collection loader to work with runpy
-        # remove this (and the associated code above) once implemented natively in the collection loader
-        AnsibleCollectionLoader.get_source = get_source
-        AnsibleCollectionLoader.get_code = get_code
-        AnsibleCollectionLoader.is_package = is_package
-        AnsibleCollectionLoader.get_filename = get_filename
-
-        collection_loader = AnsibleCollectionLoader()
-
-        # noinspection PyCallingNonCallable
-        sys.meta_path.insert(0, collection_loader)
     else:
         # do not support collection loading when not testing a collection
         collection_loader = None

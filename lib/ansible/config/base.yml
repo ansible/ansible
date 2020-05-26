@@ -215,6 +215,14 @@ CACHE_PLUGIN_TIMEOUT:
   - {key: fact_caching_timeout, section: defaults}
   type: integer
   yaml: {key: facts.cache.timeout}
+COLLECTIONS_SCAN_SYS_PATH:
+  name: enable/disable scanning sys.path for installed collections
+  default: true
+  type: boolean
+  env:
+  - {name: ANSIBLE_COLLECTIONS_SCAN_SYS_PATH}
+  ini:
+  - {key: collections_scan_sys_path, section: defaults}
 COLLECTIONS_PATHS:
   name: ordered list of root paths for loading installed Ansible collections content
   description: Colon separated paths in which Ansible will search for collections content.
@@ -224,6 +232,16 @@ COLLECTIONS_PATHS:
   - {name: ANSIBLE_COLLECTIONS_PATHS}
   ini:
   - {key: collections_paths, section: defaults}
+COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH:
+  name: Defines behavior when loading a collection that does not support the current Ansible version
+  description:
+  - When a collection is loaded that does not support the running Ansible version (via the collection metadata key
+    `requires_ansible`), the default behavior is to issue a warning and continue anyway. Setting this value to `ignore`
+    skips the warning entirely, while setting it to `fatal` will immediately halt Ansible execution.
+  env: [{name: ANSIBLE_COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH}]
+  ini: [{key: collections_on_ansible_version_mismatch, section: defaults}]
+  choices: [error, warning, ignore]
+  default: warning
 COLOR_CHANGED:
   name: Color for 'changed' task status
   default: yellow

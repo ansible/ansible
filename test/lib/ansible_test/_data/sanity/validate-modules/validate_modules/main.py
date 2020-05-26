@@ -42,7 +42,7 @@ from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils._text import to_bytes
 from ansible.plugins.loader import fragment_loader
-from ansible.utils.collection_loader import AnsibleCollectionLoader
+from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
 
@@ -942,7 +942,7 @@ class ModuleValidator(Validator):
         else:
             # We are testing a collection
             if self.routing and self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {}):
-                # meta/routing.yml says this is deprecated
+                # meta/runtime.yml says this is deprecated
                 routing_says_deprecated = True
                 deprecated = True
 
@@ -1118,15 +1118,15 @@ class ModuleValidator(Validator):
                 self.reporter.error(
                     path=self.object_path,
                     code='collections-no-underscore-on-deprecation',
-                    msg='Deprecated content in collections MUST NOT start with "_", update meta/routing.yml instead',
+                    msg='Deprecated content in collections MUST NOT start with "_", update meta/runtime.yml instead',
                 )
 
             if not (doc_deprecated == routing_says_deprecated):
-                # DOCUMENTATION.deprecated and meta/routing.yml disagree
+                # DOCUMENTATION.deprecated and meta/runtime.yml disagree
                 self.reporter.error(
                     path=self.object_path,
                     code='deprecation-mismatch',
-                    msg='"meta/routing.yml" and DOCUMENTATION.deprecation do not agree.'
+                    msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree.'
                 )
 
             # In the future we should error if ANSIBLE_METADATA exists in a collection
@@ -2140,39 +2140,8 @@ class PythonPackageValidator(Validator):
 
 
 def setup_collection_loader():
-    def get_source(self, fullname):
-        mod = sys.modules.get(fullname)
-        if not mod:
-            mod = self.load_module(fullname)
-
-        with open(to_bytes(mod.__file__), 'rb') as mod_file:
-            source = mod_file.read()
-
-        return source
-
-    def get_code(self, fullname):
-        return compile(source=self.get_source(fullname), filename=self.get_filename(fullname), mode='exec', flags=0, dont_inherit=True)
-
-    def is_package(self, fullname):
-        return self.get_filename(fullname).endswith('__init__.py')
-
-    def get_filename(self, fullname):
-        mod = sys.modules.get(fullname) or self.load_module(fullname)
-
-        return mod.__file__
-
-    # monkeypatch collection loader to work with runpy
-    # remove this (and the associated code above) once implemented natively in the collection loader
-    AnsibleCollectionLoader.get_source = get_source
-    AnsibleCollectionLoader.get_code = get_code
-    AnsibleCollectionLoader.is_package = is_package
-    AnsibleCollectionLoader.get_filename = get_filename
-
-    collection_loader = AnsibleCollectionLoader()
-
-    # allow importing code from collections when testing a collection
-    # noinspection PyCallingNonCallable
-    sys.meta_path.insert(0, collection_loader)
+    collections_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATHS', '').split(os.pathsep)
+    _AnsibleCollectionFinder(collections_paths)
 
 
 def re_compile(value):
@@ -2228,8 +2197,8 @@ def run():
     routing = None
     if args.collection:
         setup_collection_loader()
-        routing_file = 'meta/routing.yml'
-        # Load meta/routing.yml if it exists, as it may contain deprecation information
+        routing_file = 'meta/runtime.yml'
+        # Load meta/runtime.yml if it exists, as it may contain deprecation information
         if os.path.isfile(routing_file):
             try:
                 with open(routing_file) as f:

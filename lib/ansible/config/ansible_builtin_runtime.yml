@@ -1,8 +1,10 @@
 # Copyright (c) 2020 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-# This file is only for 2.9 backwards compatiblity, expect it to go away in future ansible versions.
 plugin_routing:
   connection:
+    # test entry
+    redirected_local:
+      redirect: ansible.builtin.local
     buildah:
       redirect: containers.podman.buildah
     podman:
@@ -48,6 +50,12 @@ plugin_routing:
     persistent:
       redirect: ansible.netcommon.persistent
   modules:
+    # test entry
+    formerly_core_ping:
+      redirect: testns.testcoll.ping
+    # test entry
+    uses_redirected_action:
+      redirect: ansible.builtin.ping
     podman_container_info:
       redirect: containers.podman.podman_container_info
     podman_image_info:
@@ -4100,8 +4108,8 @@ plugin_routing:
       redirect: ansible.posix.sysctl
     async_status:
       redirect: ansible.windows.async_status
-    setup:
-      redirect: ansible.windows.setup
+    setup.ps1:
+      redirect: ansible.windows.setup.ps1
     slurp:
       redirect: ansible.windows.slurp
     win_acl:
@@ -7553,6 +7561,10 @@ plugin_routing:
     cpm_user:
       redirect: wti.remote.cpm_user
   module_utils:
+    formerly_core:
+      redirect: ansible_collections.testns.testcoll.plugins.module_utils.base
+    sub1.sub2.formerly_core:
+      redirect: ansible_collections.testns.testcoll.plugins.module_utils.base
     common:
       redirect: f5networks.f5_modules.common
     frr:
@@ -8052,6 +8064,9 @@ plugin_routing:
     vyos:
       redirect: vyos.vyos.vyos
   action:
+    # test entry, overloaded with module of same name to use a different base action (ie not "normal.py")
+    uses_redirected_action:
+      redirect: testns.testcoll.subclassed_norm
     aireos:
       redirect: community.general.aireos
     aruba:
@@ -8493,6 +8508,11 @@ plugin_routing:
     vyos:
       redirect: vyos.vyos.vyos
   filter:
+    # test entries
+    formerly_core_filter:
+      redirect: ansible.builtin.bool
+    formerly_core_masked_filter:
+      redirect: ansible.builtin.bool
     gcp_kms_encrypt:
       redirect: google.cloud.gcp_kms_encrypt
     gcp_kms_decrypt:
@@ -8575,6 +8595,9 @@ plugin_routing:
     qradar:
       redirect: ibm.qradar.qradar
   inventory:
+    # test entry
+    formerly_core_inventory:
+      redirect: testns.content_adj.statichost
     cloudscale:
       redirect: community.general.cloudscale
     docker_machine:
@@ -8622,6 +8645,9 @@ plugin_routing:
     azure_rm:
       redirect: azure.azcollection.azure_rm
   lookup:
+    # test entry
+    formerly_core_lookup:
+      redirect: testns.testcoll.mylookup
     avi:
       redirect: community.general.avi
     cartesian:
@@ -8714,7 +8740,29 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
   shell:
+    # test entry
+    formerly_core_powershell:
+      redirect: ansible.builtin.powershell
     csh:
       redirect: ansible.posix.csh
     fish:
       redirect: ansible.posix.fish
+  test:
+    # test entries
+    formerly_core_test:
+      redirect: ansible.builtin.search
+    formerly_core_masked_test:
+      redirect: ansible.builtin.search
+import_redirection:
+  # test entry
+  ansible.module_utils.formerly_core:
+    redirect: ansible_collections.testns.testcoll.plugins.module_utils.base
+  ansible.module_utils.known_hosts:
+    redirect: ansible_collections.community.general.plugins.module_utils.known_hosts
+  # ansible.builtin synthetic collection redirection hackery
+  ansible_collections.ansible.builtin.plugins.modules:
+    redirect: ansible.modules
+  ansible_collections.ansible.builtin.plugins.module_utils:
+    redirect: ansible.module_utils
+  ansible_collections.ansible.builtin.plugins:
+    redirect: ansible.plugins
