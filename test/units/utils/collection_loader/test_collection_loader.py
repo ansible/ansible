@@ -273,6 +273,15 @@ def test_path_hook_setup():
     assert repr(_AnsiblePathHookFinder(object(), '/bogus/path')) == "_AnsiblePathHookFinder(path='/bogus/path')"
 
 
+def test_path_hook_importerror():
+    # ensure that AnsiblePathHookFinder.find_module swallows ImportError from path hook delegation on Py3, eg if the delegated
+    # path hook gets passed a file on sys.path (python36.zip)
+    reset_collections_loader_state()
+    path_to_a_file = os.path.join(default_test_collection_paths[0], 'ansible_collections/testns/testcoll/plugins/action/my_action.py')
+    # it's a bug if the following pops an ImportError...
+    assert _AnsiblePathHookFinder(_AnsibleCollectionFinder(), path_to_a_file).find_module('foo.bar.my_action') is None
+
+
 def test_new_or_existing_module():
     module_name = 'blar.test.module'
     pkg_name = module_name.rpartition('.')[0]
