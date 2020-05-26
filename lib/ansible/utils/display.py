@@ -257,10 +257,10 @@ class Display(with_metaclass(Singleton, object)):
             return
 
         if not removed:
-            if version:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
-            elif date:
+            if date:
                 new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a release after %s." % (msg, date)
+            elif version:
+                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
             else:
                 new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
             new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
