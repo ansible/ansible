@@ -40,10 +40,12 @@ options:
     description:
     - The name of the ANP.
     type: str
+    required: yes
   epg:
     description:
     - The name of the EPG.
     type: str
+    required: yes
   domain_association_type:
     description:
     - The type of domain to associate.
