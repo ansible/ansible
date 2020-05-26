@@ -272,7 +272,7 @@ def main():
                     dev_size = int(dev_size.replace(" ", ""))
                     rc, pv_size, err = module.run_command(pvdiplay_cmd_device_options + " -o pv_size")
                     pv_size = int(pv_size.replace(" ", ""))
-                    rc, pe_start, err = module.run_command(pvdiplay_cmd_device_options + " -o pe_start")
+                    rc, pe_start, err = module.run_command(pvdiplay_cmd_device_options + ["-o", "pe_start"])
                     pe_start = int(pe_start.replace(" ", ""))
                     rc, vg_extent_size, err = module.run_command(pvdiplay_cmd_device_options + ["-o", "vg_extent_size"])
                     vg_extent_size = int(vg_extent_size.replace(" ", ""))
