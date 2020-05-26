@@ -228,7 +228,12 @@ class _AnsiblePathHookFinder:
             if PY3:
                 # create or consult our cached file finder for this path
                 if not self._file_finder:
-                    self._file_finder = _AnsiblePathHookFinder._filefinder_path_hook(self._pathctx)
+                    try:
+                        self._file_finder = _AnsiblePathHookFinder._filefinder_path_hook(self._pathctx)
+                    except ImportError:
+                        # FUTURE: log at a high logging level? This is normal for things like python36.zip on the path, but
+                        # might not be in some other situation...
+                        return None
 
                 spec = self._file_finder.find_spec(fullname)
                 if not spec:
