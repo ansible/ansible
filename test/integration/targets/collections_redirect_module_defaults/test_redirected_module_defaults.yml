@@ -1,0 +1,50 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: run actions without module defaults
+    block:
+      - collection_namespace.collection_1.formerly_module:
+        register: result
+      - assert:
+          that: "result.option == 'default_value'"
+
+      - collection_namespace.collection_2.first_redirect:
+        register: result
+      - assert:
+          that: "result.option == 'default_value'"
+
+  - name: test that module defaults are applied to redirected actions
+    module_defaults:
+      collection_namespace.collection_1.formerly_module:
+        option: value
+    block:
+
+    - collection_namespace.collection_1.formerly_module:
+      register: result
+    - assert:
+        that: "result.option == 'value'"
+
+    - formerly_module:
+      register: result
+      collections: collection_namespace.collection_1
+    - assert:
+        that: "result.option == 'value'"
+
+  - name: test redirected unqualified action names in module defaults
+    collections:
+      - collection_namespace.collection_1
+    module_defaults:
+      formerly_module:  # equivalent to collection_namespace.collection_1.formerly_module
+        option: value
+    block:
+
+    - collection_namespace.collection_1.formerly_module:
+      register: result
+    - assert:
+        that: "result.option == 'value'"
+
+    - formerly_module:
+      register: result
+    - assert:
+        that: "result.option == 'value'"

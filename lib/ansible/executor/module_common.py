@@ -38,7 +38,7 @@ from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredE
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_loader, module_utils_loader
-from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -1317,10 +1317,11 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     return (b_module_data, module_style, shebang)
 
 
-def get_action_args_with_defaults(action, args, defaults, templar, collection_list=None):
+def get_action_args_with_defaults(action, args, defaults, templar, redirected_names=None):
+    if not redirected_names:
+        redirected_names = [action]
 
-    if collection_list is None:
-        collection_list = []
+    resolved_name = redirected_names[-1]
 
     tmp_args = {}
     module_defaults = {}
@@ -1334,14 +1335,29 @@ def get_action_args_with_defaults(action, args, defaults, templar, collection_li
     if module_defaults:
         module_defaults = templar.template(module_defaults)
 
-        # FIXME: This will become more efficient with nitzmahone's PluginLoadContext
-        name, action_path = module_loader.find_plugin_with_name(action, collection_list=collection_list, check_aliases=True)
-        if len(name.split('.')) == 6:
-            collections_dir, collection_namespace, collection_name, section, subsection, shortname = name.split('.')
-            name = '%s.%s.%s' % (collection_namespace, collection_name, shortname)
-        # deal with collection-specific group defaults
-        if name in module_defaults:
-            tmp_args.update((module_defaults[name]).copy())
+        if AnsibleCollectionRef.is_valid_fqcr(resolved_name):
+
+            collection_ref = AnsibleCollectionRef.from_fqcr(resolved_name, 'modules')
+
+            collection_name = collection_ref.collection
+            resource = collection_ref.resource
+
+            collection_routing = _get_collection_metadata(collection_name)
+            collection_groups = collection_routing.get('action_groups', {})
+            redirect_action_groups = collection_routing.get('action_groups_redirection', {})
+
+            action_groups = collection_groups.get(resolved_name, collection_groups.get(action, collection_groups.get(resource, [])))
+            for group in action_groups:
+                if AnsibleCollectionRef.is_valid_fqcr(group):
+                    fqcr = group
+                else:
+                    fqcr = '%s.%s' % (collection_name, group)
+
+                tmp_args.update((module_defaults.get('group/{0}'.format(fqcr)) or {}).copy())
+
+                redirected_group = redirect_action_groups.get(fqcr, redirect_action_groups.get(group, {})).get('redirect')
+                if redirected_group:
+                    tmp_args.update((module_defaults.get('group/{0}'.format(redirected_group), {})))
 
         # deal with configured group defaults first
         if action in C.config.module_defaults_groups:
@@ -1349,8 +1365,10 @@ def get_action_args_with_defaults(action, args, defaults, templar, collection_li
                 tmp_args.update((module_defaults.get('group/{0}'.format(group)) or {}).copy())
 
         # handle specific action defaults
-        if action in module_defaults:
-            tmp_args.update(module_defaults[action].copy())
+        # Original, resolved FQCN of original if it was just a resource, and any redirects (including the resolved name)
+        for action_identifier in redirected_names:
+            if action_identifier in module_defaults:
+                tmp_args.update(module_defaults[action_identifier].copy())
 
     # direct args override all
     tmp_args.update(args)

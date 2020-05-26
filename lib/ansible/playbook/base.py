@@ -7,7 +7,6 @@ __metaclass__ = type
 
 import itertools
 import operator
-import os
 
 from copy import copy as shallowcopy
 from functools import partial
@@ -274,6 +273,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
 
     def _validate_module_defaults(self, attr, name, value):
+        if hasattr(self, 'collections') and self.collections:
+            namespace = self.collections[0] + '.'
+        else:
+            namespace = ''
+
         if not value:
             setattr(self, name, [])
             return
@@ -284,36 +288,21 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         module_defaults = {}
         action_groups = {}
 
-        # FIXME: this will be much more efficient with nitzmahone's tweaks to make collection_loader utils aware of /meta
-        for path in C.COLLECTIONS_PATHS:
-            if os.path.split(path)[-1] != 'ansible_collections':
-                path = os.path.join(path, 'ansible_collections')
-            if not os.path.isdir(path):
-                continue
-            for collection_namespace in os.listdir(path):
-                if not os.path.isdir(os.path.join(path, collection_namespace)):
-                    continue
-                for collection_name in os.listdir(os.path.join(path, collection_namespace)):
-                    action_groups_path = os.path.join(path, collection_namespace, collection_name, 'meta', 'action_groups.yml')
-                    if not os.path.isfile(action_groups_path):
-                        continue
-                    with open(action_groups_path, 'r') as config_def:
-                        action_group_config = DataLoader().load(config_def)
-                        for action_group in action_group_config:
-                            action_groups['%s.%s.%s' % (collection_namespace, collection_name, action_group)] = action_group_config[action_group]
-
         for module_default in value:
-            for action_group in action_groups:
-                if 'group/%s' % action_group in module_default:
-                    for module in action_groups[action_group]:
-                        if not len(module.split('.')) == 3:
-                            # Looks like FQ was not provided: assume the default should only be applied to the module within the collection
-                            module = '%s.%s.%s' % (action_group.split('.')[0], action_group.split('.')[1], module)
-                        module_defaults[module] = module_default['group/%s' % action_group]
+            temp_module_default = {}
+            for action in module_default:
+                if action.startswith('group/'):
+                    temp_module_default[action] = module_default[action]
+                    continue
+
+                if len(action.split('.')) > 5:
+                    fqcn = action
                 else:
-                    module_defaults.update(module_default)
-            if not action_groups:
-                module_defaults.update(module_default)
+                    fqcn = namespace + action
+
+                temp_module_default[fqcn] = module_default[action]
+
+            module_defaults.update(temp_module_default)
 
         setattr(self, name, module_defaults)
 

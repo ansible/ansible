@@ -117,3 +117,6 @@ class Attribute:
 
 class FieldAttribute(Attribute):
     pass
+
+class ContextAttribute(Attribute):
+    pass

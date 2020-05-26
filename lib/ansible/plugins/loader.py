@@ -129,6 +129,20 @@ class PluginLoadContext(object):
         self.removal_version = None
         self.deprecation_warnings = []
         self.resolved = False
+        self.plugin_type = None
+
+    @property
+    def fqcr(self):
+        if hasattr(self, '_fqcr'):
+            return self._fqcr
+
+        if self.plugin_resolved_name and self.plugin_type:
+            collection_ref = AnsibleCollectionRef.try_parse_fqcr(self.plugin_resolved_name, self.plugin_type)
+            if collection_ref:
+                self._fqcr = '%s.%s' % (collection_ref.collection, collection_ref.resource)
+                return self._fqcr
+
+        return None
 
     def record_deprecation(self, name, deprecation):
         if not deprecation:
@@ -526,6 +540,7 @@ class PluginLoader:
         ''' Find a plugin named name, returning contextual info about the load, recursively resolving redirection '''
         plugin_load_context = PluginLoadContext()
         plugin_load_context.original_name = name
+        plugin_load_context.plugin_type = AnsibleCollectionRef.legacy_plugin_dir_to_plugin_type(self.subdir)
         while True:
             result = self._resolve_plugin_step(name, mod_type, ignore_deprecated, check_aliases, collection_list, plugin_load_context=plugin_load_context)
             if result.pending_redirect:
@@ -593,6 +608,10 @@ class PluginLoader:
                     else:
                         # 'ansible.builtin' should be handled here. This means only internal, or builtin, paths are searched.
                         plugin_load_context = self._find_fq_plugin(candidate_name, suffix, plugin_load_context=plugin_load_context)
+
+                        if candidate_name != plugin_load_context.original_name and candidate_name not in plugin_load_context.redirect_list:
+                            plugin_load_context.redirect_list.append(candidate_name)
+
                     if plugin_load_context.resolved or plugin_load_context.pending_redirect:  # if we got an answer or need to chase down a redirect, return
                         return plugin_load_context
                 except (AnsiblePluginRemoved, AnsiblePluginCircularRedirect, AnsibleCollectionUnsupportedVersionError):

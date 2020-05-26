@@ -301,6 +301,11 @@ class ModuleArgsParser:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
                 action = item
                 thing = value
+
+                context = module_loader.find_plugin_with_context(item, check_aliases=True, collection_list=self._collection_list)
+                if context.resolved and context.redirect_list:
+                    self._task_ds['ansible_internal_redirect_list'] = context.redirect_list
+
                 action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
 
         # if we didn't see any module in the task at all, it's not a task really

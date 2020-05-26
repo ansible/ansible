@@ -47,3 +47,34 @@
         register: result
       - assert:
           that: "result.option == 'updated_value'"
+
+  - name: test module_defaults with redirected actions groups
+
+    module_defaults:
+      group/redirected:
+        option: value
+
+    block:
+      - collection_namespace.collection_name.example_module:
+        register: result
+      - assert:
+          that: "result.option == 'value'"
+
+      - collection_namespace.collection_name.example_module:
+          option: updated_value
+        register: result
+      - assert:
+          that: "result.option == 'updated_value'"
+
+      - example_module:
+        register: result
+        collections: collection_namespace.collection_name
+      - assert:
+          that: "result.option == 'value'"
+
+      - example_module:
+          option: updated_value
+        register: result
+        collections: collection_namespace.collection_name
+      - assert:
+          that: "result.option == 'updated_value'"

@@ -1,0 +1,4 @@
+plugin_routing:
+  modules:
+    formerly_module:
+      redirect: collection_namespace.collection_2.first_redirect

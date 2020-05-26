@@ -629,7 +629,7 @@ class TaskExecutor:
 
         # Apply default params for action/module, if present
         self._task.args = get_action_args_with_defaults(
-            self._task.action, self._task.args, self._task.module_defaults, templar, collection_list=self._task.collections
+            self._task.action, self._task.args, self._task.module_defaults, templar, self._task.ansible_internal_redirect_list
         )
 
         # And filter out any fields which were set to default(omit), and got the omit token value
