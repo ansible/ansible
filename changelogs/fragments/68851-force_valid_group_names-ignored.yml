@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - constructed - Fix regression introduced in https://github.com/ansible/ansible/pull/60912 which caused group name sanitization to always run regardless of the force_valid_group_names setting
