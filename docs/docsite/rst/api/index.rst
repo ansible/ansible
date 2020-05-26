@@ -101,5 +101,7 @@ Modules
 .. py:module:: ansible.module_utils
 
 .. py:module:: ansible.module_utils.basic
+  :noindex:
+
 
 .. py:module:: ansible.module_utils.url
