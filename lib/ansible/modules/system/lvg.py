@@ -281,7 +281,7 @@ def main():
                             changed = True
                         else:
                             pvresize_cmd = module.get_bin_path('pvresize', True)
-                            rc, _, err = module.run_command("%s %s" % (pvresize_cmd, device))
+                            rc, _, err = module.run_command([pvresize_cmd, device])
                             if rc != 0:
                                 module.fail_json(msg="Failed executing pvresize command.", rc=rc, err=err)
                             else:
