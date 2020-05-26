@@ -479,8 +479,6 @@ def wait_for_action_to_complete(action_uuid, api_client):
 
 
 def delete_application(name, uuid, api_client):
-    assert uuid is not None
-
     api_instance = tacp.ApplicationsApi(api_client)
     try:
         api_response = api_instance.delete_application_using_delete(
