@@ -409,16 +409,14 @@ def main():
         npath = os.path.expanduser(os.path.expandvars(npath))
         if os.path.isdir(npath):
             for root, dirs, files in os.walk(npath, followlinks=params['follow']):
-                if params['depth']:
-                    depth = root.replace(npath.rstrip(os.path.sep), '').count(os.path.sep)
-                    if files or dirs:
-                        depth += 1
-                    if depth > params['depth']:
-                        continue
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname = os.path.normpath(os.path.join(root, fsobj))
-
+                    if params['depth']:
+                        wpath = npath.rstrip(os.path.sep) + os.path.sep
+                        depth = int(fsname.count(os.path.sep)) - int(wpath.count(os.path.sep)) + 1
+                        if depth > params['depth']:
+                            continue
                     if os.path.basename(fsname).startswith('.') and not params['hidden']:
                         continue
 
