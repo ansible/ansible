@@ -9,7 +9,7 @@ import tacp
 from tacp.rest import ApiException
 
 from ansible.module_utils.tacp_ansible.tacp_exceptions import ActionTimedOutException, InvalidActionUuidException
-from ansible.module_utils.tacp_ansible.tacp_constants import *
+from ansible.module_utils.tacp_ansible.tacp_constants import Action
 from uuid import UUID, uuid4
 from time import sleep
 
@@ -93,14 +93,14 @@ class ApplicationInstanceResource(object):
             specified by UUID, returns bool of success/failure
         """
         power_action_dict = {
-            ACTION_started: self.api.start_application_using_put,
-            ACTION_stopped: self.api.stop_application_using_put,
-            ACTION_restarted: self.api.restart_application_using_put,
-            ACTION_shutdown: self.api.shutdown_application_using_put,
-            ACTION_force_restarted: self.api.force_restart_application_using_put,
-            ACTION_paused: self.api.pause_application_using_put,
-            ACTION_resumed: self.api.resume_application_using_put,
-            ACTION_absent: self.api.delete_application_using_delete
+            Action.STARTED: self.api.start_application_using_put,
+            Action.STOPPED: self.api.stop_application_using_put,
+            Action.RESTARTED: self.api.restart_application_using_put,
+            Action.SHUTDOWN: self.api.shutdown_application_using_put,
+            Action.FORCE_RESTARTED: self.api.force_restart_application_using_put,
+            Action.PAUSED: self.api.pause_application_using_put,
+            Action.RESUMED: self.api.resume_application_using_put,
+            Action.ABSENT: self.api.delete_application_using_delete
         }
         assert uuid is not None
         assert power_action in power_action_dict
