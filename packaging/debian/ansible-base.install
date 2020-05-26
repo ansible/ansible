@@ -11,5 +11,5 @@ debian/tmp/usr/bin/ansible-pull usr/bin
 debian/tmp/usr/bin/ansible-playbook usr/bin
 debian/tmp/usr/bin/ansible usr/bin
 examples/ansible.cfg etc/ansible
-debian/tmp/usr/lib/python2.7/dist-packages/ansible usr/lib/python2.7/dist-packages
-debian/tmp/usr/lib/python2.7/dist-packages/ansible-*.egg-info
+debian/tmp/usr/lib/python3/dist-packages/ansible usr/lib/python3/dist-packages
+debian/tmp/usr/lib/python3/dist-packages/ansible_*.egg-info
