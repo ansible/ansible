@@ -42,8 +42,6 @@ class ApplicationResource(object):
     def get_by_uuid(self, uuid):
         """ Returns an application as a dict specified by UUID, None otherwise
         """
-        assert uuid is not None
-
         api_response = self.api.get_application_using_get(uuid)
         if api_response:
             return api_response.to_dict()
@@ -53,8 +51,6 @@ class ApplicationResource(object):
         """ Creates an application with the provided API request body, returns
             bool of success/failure
         """
-        assert body is not None
-
         api_response = self.api.create_application_from_template_using_post(
             body)
         try:
@@ -71,8 +67,6 @@ class ApplicationResource(object):
     def delete(self, uuid):
         """ Deletes an application specified by UUID, returns bool of success/failure
         """
-        assert uuid is not None
-
         api_response = self.api.delete_application_using_delete(uuid)
         try:
             wait_for_action_to_complete(
@@ -89,19 +83,6 @@ class ApplicationResource(object):
         """ Performs a specified power operation on an application instance
             specified by UUID, returns bool of success/failure
         """
-        power_action_dict = {
-            Action.STARTED: self.api.start_application_using_put,
-            Action.STOPPED: self.api.stop_application_using_put,
-            Action.RESTARTED: self.api.restart_application_using_put,
-            Action.SHUTDOWN: self.api.shutdown_application_using_put,
-            Action.FORCE_RESTARTED: self.api.force_restart_application_using_put,
-            Action.PAUSED: self.api.pause_application_using_put,
-            Action.RESUMED: self.api.resume_application_using_put,
-            Action.ABSENT: self.api.delete_application_using_delete
-        }
-        assert uuid is not None
-        assert power_action in power_action_dict
-
         api_response = power_action_dict[power_action](uuid)
         try:
             wait_for_action_to_complete(
@@ -143,8 +124,6 @@ class VlanResource(object):
     def get_by_uuid(self, uuid):
         """ Returns an vlan as a dict specified by UUID, None otherwise
         """
-        assert uuid is not None
-
         api_response = self.api.get_vlan_using_get(uuid)
         if api_response:
             return api_response.to_dict()
@@ -154,8 +133,6 @@ class VlanResource(object):
         """ Creates a VLAN network with the provided API request body, returns 
             object UUID if success else None
         """
-        assert body is not None
-
         api_response = self.api.create_vlan_using_post(body)
         try:
             wait_for_action_to_complete(
@@ -171,8 +148,6 @@ class VlanResource(object):
     def delete(self, uuid):
         """ Deletes a VLAN network specified by UUID, returns bool of success/failure
         """
-        assert uuid is not None
-
         api_response = self.api.delete_vlan_using_delete(uuid)
         try:
             wait_for_action_to_complete(
@@ -214,7 +189,6 @@ class VnetResource(object):
     def get_by_uuid(self, uuid):
         """ Returns a VNET as a dict specified by UUID, None otherwise
         """
-        assert uuid is not None
         api_response = self.api.get_vnet_using_get(uuid)
         if api_response:
             return api_response.to_dict()
@@ -224,8 +198,6 @@ class VnetResource(object):
         """ Creates a VNET network with the provided API request body, returns 
             object UUID if success, None if failure
         """
-        assert body is not None
-
         api_response = self.api.create_vnet_using_post(body)
         try:
             wait_for_action_to_complete(
@@ -241,7 +213,6 @@ class VnetResource(object):
     def delete(self, uuid):
         """ Deletes a VNET network specified by UUID, returns bool of success/failure
         """
-        assert uuid is not None
         api_response = self.api.delete_vnet_using_delete(uuid)
         try:
             wait_for_action_to_complete(
