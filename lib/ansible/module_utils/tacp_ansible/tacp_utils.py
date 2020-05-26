@@ -14,7 +14,7 @@ from uuid import UUID, uuid4
 from time import sleep
 
 
-class ApplicationInstanceResource(object):
+class ApplicationResource(object):
     def __init__(self, api_client):
         self.api = tacp.ApplicationsApi(api_client)
         self.api_client = api_client

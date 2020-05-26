@@ -217,7 +217,7 @@ def run_module():
             return instance_params
 
     def create_instance(instance_params, api_client):
-        applicationInstanceResource = tacp_utils.ApplicationInstanceResource(
+        applicationResource = tacp_utils.ApplicationResource(
             api_client)
 
         body = tacp.ApiCreateApplicationPayload(
@@ -238,9 +238,9 @@ def run_module():
 
         if module._verbosity >= 3:
             result['api_request_body'] = str(body)
-        created_instance_uuid = applicationInstanceResource.create(body)
+        created_instance_uuid = applicationResource.create(body)
 
-        result['ansible_module_results'] = applicationInstanceResource.get_by_uuid(
+        result['ansible_module_results'] = applicationResource.get_by_uuid(
             created_instance_uuid)
         result['changed'] = True
 
@@ -249,11 +249,11 @@ def run_module():
                           Action.RESTARTED, Action.FORCE_RESTARTED,
                           Action.PAUSED, Action.ABSENT, Action.RESUMED]
 
-        applicationInstanceResource = tacp_utils.ApplicationInstanceResource(
+        applicationResource = tacp_utils.ApplicationResource(
             api_client)
-        instance_uuid = applicationInstanceResource.get_uuid_by_name(name)
+        instance_uuid = applicationResource.get_uuid_by_name(name)
 
-        applicationInstanceResource.power_action_on_instance_by_uuid(
+        applicationResource.power_action_on_instance_by_uuid(
             instance_uuid, action)
 
         result['changed'] = True
@@ -353,15 +353,15 @@ def run_module():
     configuration.api_key['Authorization'] = module.params['api_key']
     api_client = tacp.ApiClient(configuration)
 
-    applicationInstanceResource = tacp_utils.ApplicationInstanceResource(
+    applicationResource = tacp_utils.ApplicationResource(
         api_client)
-    instance_uuid = applicationInstanceResource.get_uuid_by_name(
+    instance_uuid = applicationResource.get_uuid_by_name(
         module.params['name'])
 
     desired_state = module.params['state']
 
     if instance_uuid:
-        instance_properties = applicationInstanceResource.get_by_uuid(
+        instance_properties = applicationResource.get_by_uuid(
             instance_uuid)
         current_state = instance_properties['status']
     else:

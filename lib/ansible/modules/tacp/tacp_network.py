@@ -399,7 +399,7 @@ def run_module():
 
         elif network_type == 'VNET':
             vnetResource = tacp_utils.VnetResource(api_client)
-            applicationResource = tacp_utils.ApplicationInstanceResource(
+            applicationResource = tacp_utils.ApplicationResource(
                 api_client)
 
             vnet_uuid = vnetResource.get_uuid_by_name(name)
