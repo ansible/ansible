@@ -23,19 +23,16 @@ class ApplicationResource(object):
         """ Get all application instances as a list of dicts
         """
         api_response = self.api.get_applications_using_get()
+        instance_dicts = []
         if api_response:
-            instance_dicts = []
             for instance in api_response:
                 instance_dicts.append(instance.to_dict())
-            return instance_dicts
-        return None
+        return instance_dicts
 
     def get_uuid_by_name(self, name):
         """ Return the UUID of an appplication instance if it exists
             given the name of the instance, None otherwise
         """
-        assert name is not None
-
         all_instances = self.get_all()
         for instance in all_instances:
             if instance['name'] == name:
@@ -127,19 +124,16 @@ class VlanResource(object):
         """ Get all VLAN networks as a list of dicts
         """
         api_response = self.api.get_vlans_using_get()
+        vlan_dicts = []
         if api_response:
-            vlan_dicts = []
             for vlan in api_response:
                 vlan_dicts.append(vlan.to_dict())
-            return vlan_dicts
-        return None
+        return vlan_dicts
 
     def get_uuid_by_name(self, name):
         """ Return the UUID of a VLAN network if it exists
             given the name of the network, None otherwise
         """
-        assert name is not None
-
         all_vlans = self.get_all()
         for vlan in all_vlans:
             if vlan['name'] == name:
@@ -201,19 +195,16 @@ class VnetResource(object):
         """ Get all VNET networks as a list of dicts
         """
         api_response = self.api.get_vnets_using_get()
+        vnet_dicts = []
         if api_response:
-            vnet_dicts = []
             for vnet in api_response:
                 vnet_dicts.append(vnet.to_dict())
-            return vnet_dicts
-        return None
+        return vnet_dicts
 
     def get_uuid_by_name(self, name):
         """ Return the UUID of a VNET network if it exists
             given the name of the network, None otherwise
         """
-        assert name is not None
-
         all_vnets = self.get_all()
         for vnet in all_vnets:
             if vnet['name'] == name:
