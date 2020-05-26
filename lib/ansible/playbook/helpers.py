@@ -25,7 +25,6 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, Ansible
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
-from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.display import Display
 
 display = Display()

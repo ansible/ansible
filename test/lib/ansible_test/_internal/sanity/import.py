@@ -76,10 +76,12 @@ class ImportTest(SanityMultipleVersion):
         """
         capture_pip = args.verbosity < 2
 
+        python = find_python(python_version)
+
         if python_version.startswith('2.') and args.requirements:
             # hack to make sure that virtualenv is available under Python 2.x
             # on Python 3.x we can use the built-in venv
-            pip = generate_pip_command(find_python(python_version))
+            pip = generate_pip_command(python)
             run_command(args, generate_pip_install(pip, 'sanity.import', packages=['virtualenv']), capture=capture_pip)
 
         settings = self.load_processor(args, python_version)
@@ -102,8 +104,10 @@ class ImportTest(SanityMultipleVersion):
 
         # add the importer to our virtual environment so it can be accessed through the coverage injector
         importer_path = os.path.join(virtual_environment_bin, 'importer.py')
+        yaml_to_json_path = os.path.join(virtual_environment_bin, 'yaml_to_json.py')
         if not args.explain:
             os.symlink(os.path.abspath(os.path.join(SANITY_ROOT, 'import', 'importer.py')), importer_path)
+            os.symlink(os.path.abspath(os.path.join(SANITY_ROOT, 'import', 'yaml_to_json.py')), yaml_to_json_path)
 
         # activate the virtual environment
         env['PATH'] = '%s:%s' % (virtual_environment_bin, env['PATH'])
@@ -115,6 +119,7 @@ class ImportTest(SanityMultipleVersion):
         if data_context().content.collection:
             env.update(
                 SANITY_COLLECTION_FULL_NAME=data_context().content.collection.full_name,
+                SANITY_EXTERNAL_PYTHON=python,
             )
 
         virtualenv_python = os.path.join(virtual_environment_bin, 'python')

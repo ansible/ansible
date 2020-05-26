@@ -26,10 +26,11 @@ def pytest_configure():
     except AttributeError:
         pytest_configure.executed = True
 
-    from ansible.utils.collection_loader import AnsibleCollectionLoader
+    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 
     # allow unit tests to import code from collections
-    sys.meta_path.insert(0, AnsibleCollectionLoader())
+
+    _AnsibleCollectionFinder(paths=[os.path.dirname(ANSIBLE_COLLECTIONS_PATH)])._install()  # pylint: disable=protected-access
 
     # noinspection PyProtectedMember
     import py._path.local

@@ -10,7 +10,7 @@ from collections import defaultdict
 
 from ansible.collections import is_collection_path
 from ansible.module_utils._text import to_bytes
-from ansible.utils.collection_loader import AnsibleCollectionLoader
+from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 
 display = Display()
@@ -27,7 +27,7 @@ def list_valid_collection_paths(search_paths=None, warn=False):
     if search_paths is None:
         search_paths = []
 
-    search_paths.extend(AnsibleCollectionLoader().n_collection_paths)
+    search_paths.extend(AnsibleCollectionConfig.collection_paths)
 
     for path in search_paths:
 

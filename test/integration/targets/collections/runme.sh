@@ -38,19 +38,22 @@ else
   export TEST_PLAYBOOK=posix.yml
 
   echo "testing default collection support"
-  ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml
+  ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml "$@"
 fi
 
 # run test playbooks
-ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v "${TEST_PLAYBOOK}" "$@"
+ansible-playbook -i "${INVENTORY_PATH}" -v "${TEST_PLAYBOOK}" "$@"
 
 if [[ ${INVENTORY_PATH} != *.winrm ]]; then
-	ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v invocation_tests.yml "$@"
+	ansible-playbook -i "${INVENTORY_PATH}" -v invocation_tests.yml "$@"
 fi
+
+# test collection inventories
+ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
 
 # test adjacent with --playbook-dir
 export ANSIBLE_COLLECTIONS_PATHS=''
-ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=1 ansible-inventory -i a.statichost.yml --list --export --playbook-dir=. -v "$@"
+ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=1 ansible-inventory --list --export --playbook-dir=. -v "$@"
 
 # use an inventory source with caching enabled
 ansible-playbook -i a.statichost.yml -i ./cache.statichost.yml -v check_populated_inventory.yml

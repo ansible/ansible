@@ -276,6 +276,21 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
                                                   suppress_extended_error=suppress_extended_error, orig_exc=orig_exc)
 
 
+class AnsiblePluginRemoved(AnsibleRuntimeError):
+    ''' a requested plugin has been removed '''
+    pass
+
+
+class AnsiblePluginCircularRedirect(AnsibleRuntimeError):
+    '''a cycle was detected in plugin redirection'''
+    pass
+
+
+class AnsibleCollectionUnsupportedVersionError(AnsibleRuntimeError):
+    '''a collection is not supported by this version of Ansible'''
+    pass
+
+
 # These Exceptions are temporary, using them as flow control until we can get a better solution.
 # DO NOT USE as they will probably be removed soon.
 # We will port the action modules in our tree to use a context manager instead.

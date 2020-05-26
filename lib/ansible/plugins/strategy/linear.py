@@ -240,17 +240,6 @@ class StrategyModule(StrategyBase):
                     run_once = False
                     work_to_do = True
 
-                    # test to see if the task across all hosts points to an action plugin which
-                    # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
-                    # will only send this task to the first host in the list.
-
-                    try:
-                        action = action_loader.get(task.action, class_only=True)
-                    except KeyError:
-                        # we don't care here, because the action may simply not have a
-                        # corresponding action plugin
-                        action = None
-
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
                     if task._role and task._role.has_run(host):
@@ -259,6 +248,26 @@ class StrategyModule(StrategyBase):
                         if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
                             display.debug("'%s' skipped because role has already run" % task)
                             continue
+
+                    display.debug("getting variables")
+                    task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
+                                                                _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
+                    self.add_tqm_variables(task_vars, play=iterator._play)
+                    templar = Templar(loader=self._loader, variables=task_vars)
+                    display.debug("done getting variables")
+
+                    # test to see if the task across all hosts points to an action plugin which
+                    # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
+                    # will only send this task to the first host in the list.
+
+                    task.action = templar.template(task.action)
+
+                    try:
+                        action = action_loader.get(task.action, class_only=True)
+                    except KeyError:
+                        # we don't care here, because the action may simply not have a
+                        # corresponding action plugin
+                        action = None
 
                     if task.action == 'meta':
                         # for the linear strategy, we run meta tasks just once and for
@@ -276,13 +285,6 @@ class StrategyModule(StrategyBase):
                             else:
                                 skip_rest = True
                                 break
-
-                        display.debug("getting variables")
-                        task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=task,
-                                                                    _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
-                        self.add_tqm_variables(task_vars, play=iterator._play)
-                        templar = Templar(loader=self._loader, variables=task_vars)
-                        display.debug("done getting variables")
 
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
 

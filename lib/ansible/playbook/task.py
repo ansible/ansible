@@ -36,7 +36,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.utils.collection_loader import AnsibleCollectionLoader
+from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 
@@ -182,7 +182,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             new_ds.ansible_pos = ds.ansible_pos
 
         # since this affects the task action parsing, we have to resolve in preprocess instead of in typical validator
-        default_collection = AnsibleCollectionLoader().default_collection
+        default_collection = AnsibleCollectionConfig.default_collection
 
         collections_list = ds.get('collections')
         if collections_list is None:
@@ -293,7 +293,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if self._parent:
             self._parent.post_validate(templar)
 
-        if AnsibleCollectionLoader().default_collection:
+        if AnsibleCollectionConfig.default_collection:
             pass
 
         super(Task, self).post_validate(templar)

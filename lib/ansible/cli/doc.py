@@ -28,7 +28,8 @@ from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
-from ansible.utils.collection_loader import set_collection_playbook_paths, get_collection_name_from_path
+from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
 
@@ -44,11 +45,11 @@ def jdump(text):
 
 def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
 
-    # TODO: take into account routing.yml once implemented
+    # TODO: take into account runtime.yml once implemented
     b_colldirs = list_collection_dirs(coll_filter=coll_filter)
     for b_path in b_colldirs:
         path = to_text(b_path, errors='surrogate_or_strict')
-        collname = get_collection_name_from_path(b_path)
+        collname = _get_collection_name_from_path(b_path)
         ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
         plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), plugin_type, collection=collname))
 
@@ -127,7 +128,7 @@ class DocCLI(CLI):
         # add to plugin paths from command line
         basedir = context.CLIARGS['basedir']
         if basedir:
-            set_collection_playbook_paths(basedir)
+            AnsibleCollectionConfig.playbook_paths = basedir
             loader.add_directory(basedir, with_subdir=True)
         if context.CLIARGS['module_path']:
             for path in context.CLIARGS['module_path']:

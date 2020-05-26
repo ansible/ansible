@@ -1,0 +1,3 @@
+# use a plugin redirected by core to a collection to ensure inventory redirection and redirected config names are working
+plugin: formerly_core_inventory  # this is defined in the ansible-base runtime.yml routing to point at testns.content_adj.statichost
+hostname: dynamic_host_redirected

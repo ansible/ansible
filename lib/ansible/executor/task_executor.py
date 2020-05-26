@@ -27,7 +27,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.plugins.loader import become_loader, cliconf_loader, connection_loader, httpapi_loader, netconf_loader, terminal_loader
 from ansible.template import Templar
-from ansible.utils.collection_loader import AnsibleCollectionLoader
+from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
@@ -1101,7 +1101,7 @@ def start_connection(play_context, variables, task_uuid):
         # can.
         'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
         'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),
-        'ANSIBLE_COLLECTIONS_PATHS': os.pathsep.join(AnsibleCollectionLoader().n_collection_paths),
+        'ANSIBLE_COLLECTIONS_PATHS': to_native(os.pathsep.join(AnsibleCollectionConfig.collection_paths)),
         'ANSIBLE_CONNECTION_PLUGINS': connection_loader.print_paths(),
         'ANSIBLE_HTTPAPI_PLUGINS': httpapi_loader.print_paths(),
         'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),

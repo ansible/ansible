@@ -32,7 +32,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
-from ansible.utils.collection_loader import AnsibleCollectionLoader
+from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.vars import combine_vars
 
 
@@ -234,7 +234,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         if self._role_collection:  # this is a collection-hosted role
             self.collections.insert(0, self._role_collection)
         else:  # this is a legacy role, but set the default collection if there is one
-            default_collection = AnsibleCollectionLoader().default_collection
+            default_collection = AnsibleCollectionConfig.default_collection
             if default_collection:
                 self.collections.insert(0, default_collection)
             # legacy role, ensure all plugin dirs under the role are added to plugin search path
