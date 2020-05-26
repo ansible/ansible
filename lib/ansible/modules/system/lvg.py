@@ -274,7 +274,7 @@ def main():
                     pv_size = int(pv_size.replace(" ", ""))
                     rc, pe_start, err = module.run_command(pvdiplay_cmd_device_options + " -o pe_start")
                     pe_start = int(pe_start.replace(" ", ""))
-                    rc, vg_extent_size, err = module.run_command(pvdiplay_cmd_device_options + " -o vg_extent_size")
+                    rc, vg_extent_size, err = module.run_command(pvdiplay_cmd_device_options + ["-o", "vg_extent_size"])
                     vg_extent_size = int(vg_extent_size.replace(" ", ""))
                     if (dev_size - (pe_start + pv_size)) > vg_extent_size:
                         if module.check_mode:
