@@ -3003,7 +3003,7 @@ plugin_routing:
     netapp_e_amg:
       redirect: netapp_eseries.santricity.netapp_e__amg
     netapp_e_amg_role:
-      redirect: netapp_eseries.santricity.netapp_e__amg_role
+      redirect: netapp_eseries.santricity.netapp_e_amg_role
     netapp_e_amg_sync:
       redirect: netapp_eseries.santricity.netapp_e__amg_sync
     netapp_e_asup:
