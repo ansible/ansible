@@ -563,14 +563,12 @@ class TaskExecutor:
                 display.debug("when evaluation is False, skipping this task")
                 return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
         except AnsibleError as e:
-            # Loop errors takes precendece but if both the loop and the conditional failed,
-            # include both information in the exception to prevent losing information useful
-            # for debugging.
+            # loop error takes precedence
             if self._loop_eval_error is not None:
-                raise type(self._loop_eval_error)(
-                    "Loop error was: '%s'. Conditional error was: '%s'." %
-                    (to_native(self._loop_eval_error), to_native(e))
-                )  # pylint: disable=raising-bad-type
+                # Display the error from the conditional as well to prevent
+                # losing information useful for debugging.
+                display.v(to_text(e))
+                raise self._loop_eval_error  # pylint: disable=raising-bad-type
             raise
 
         # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
