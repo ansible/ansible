@@ -63,19 +63,19 @@ MSGS = {
               "Deprecation calls must be prefixed with the name of this "
               "collection (`ansible.builtin:` for Ansible-base)",
               {'minversion': (2, 6)}),
-    'E9506': ("Expired date (%r) found in call to Display.deprecated "
+    'E9508': ("Expired date (%r) found in call to Display.deprecated "
               "or AnsibleModule.deprecate",
               "ansible-deprecated-date",
               "Used when a call to Display.deprecated specifies a date "
               "before today",
               {'minversion': (2, 6)}),
-    'E9507': ("Invalid deprecated date (%r) found in call to "
+    'E9509': ("Invalid deprecated date (%r) found in call to "
               "Display.deprecated or AnsibleModule.deprecate",
               "ansible-invalid-deprecated-date",
               "Used when a call to Display.deprecated specifies an invalid "
               "date. It must be a string in format YYYY-MM-DD (ISO 8601)",
               {'minversion': (2, 6)}),
-    'E9508': ("Both version and date found in call to "
+    'E9510': ("Both version and date found in call to "
               "Display.deprecated or AnsibleModule.deprecate",
               "ansible-deprecated-both-version-and-date",
               "Only one of version and date must be specified",
