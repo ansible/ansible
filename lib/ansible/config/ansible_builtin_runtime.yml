@@ -717,7 +717,7 @@ plugin_routing:
     docker_image_facts:
       redirect: community.general.docker_image_facts
     docker_service:
-      redirect: community.general.docker_compose
+      redirect: community.general.docker_service
     docker_compose:
       redirect: community.general.docker_compose
     docker_config:
