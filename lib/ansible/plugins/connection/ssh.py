@@ -48,6 +48,17 @@ DOCUMENTATION = '''
               - name: ansible_password
               - name: ansible_ssh_pass
               - name: ansible_ssh_password
+      sshpass_prompt:
+          description: Password prompt that sshpass should search for. Supported by sshpass 1.06 and up.
+          default: ''
+          ini:
+              - section: 'ssh_connection'
+                key: 'sshpass_prompt'
+          env:
+              - name: ANSIBLE_SSHPASS_PROMPT
+          vars:
+              - name: ansible_sshpass_prompt
+          version_added: '2.10'
       ssh_args:
           description: Arguments to pass to all ssh cli tools
           default: '-C -o ControlMaster=auto -o ControlPersist=60s'
@@ -331,13 +342,19 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
             raise AnsibleAuthenticationFailure(msg)
 
         # sshpass returns codes are 1-6. We handle 5 previously, so this catches other scenarios.
-        # No exception is raised, so the connection is retried.
+        # No exception is raised, so the connection is retried - except when attempting to use
+        # sshpass_prompt with an sshpass that won't let us pass -P, in which case we fail loudly.
         elif return_tuple[0] in [1, 2, 3, 4, 6]:
             msg = 'sshpass error:'
             if no_log:
                 msg = '{0} <error censored due to no log>'.format(msg)
             else:
-                msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
+                details = to_native(return_tuple[2]).rstrip()
+                if "sshpass: invalid option -- 'P'" in details:
+                    details = 'Installed sshpass version does not support customized password prompts. ' \
+                              'Upgrade sshpass to use sshpass_prompt, or otherwise switch to ssh keys.'
+                    raise AnsibleError('{0} {1}'.format(msg, details))
+                msg = '{0} {1}'.format(msg, details)
 
     if return_tuple[0] == 255:
         SSH_ERROR = True
@@ -561,6 +578,10 @@ class Connection(ConnectionBase):
 
             self.sshpass_pipe = os.pipe()
             b_command += [b'sshpass', b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')]
+
+            password_prompt = self.get_option('sshpass_prompt')
+            if password_prompt:
+                b_command += [b'-P', to_bytes(password_prompt, errors='surrogate_or_strict')]
 
         if binary == 'ssh':
             b_command += [to_bytes(self._play_context.ssh_executable, errors='surrogate_or_strict')]
