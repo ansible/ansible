@@ -2,4 +2,5 @@ docker_prereq_packages:
   - dnf-plugins-core
 
 docker_packages:
-  - docker-ce
+  - docker-ce-19.03.1
+  - docker-ce-cli-19.03.1
