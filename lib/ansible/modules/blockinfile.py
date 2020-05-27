@@ -272,6 +272,8 @@ def main():
         # Escape sequences like '\n' need to be handled in Ansible 1.x
         if module.ansible_version.startswith('1.'):
             block = re.sub('', block, '')
+        if not block.endswith(b(os.linesep)):
+            block += b(os.linesep)
         blocklines = [marker0] + block.splitlines(True) + [marker1]
     else:
         blocklines = []
