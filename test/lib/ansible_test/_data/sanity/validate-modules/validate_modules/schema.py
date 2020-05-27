@@ -58,6 +58,14 @@ def ansible_version(v, error_code=None):
     return v
 
 
+def isodate(v, error_code=None):
+    try:
+        parse_isodate(v)
+    except ValueError as e:
+        raise _add_ansible_error_code(Invalid(str(e)), error_code or 'ansible-invalid-date')
+    return v
+
+
 TAGGED_VERSION_RE = re.compile('^([^.]+.[^.]+):(.*)$')
 
 
@@ -78,12 +86,30 @@ def tagged_version(v, error_code=None):
     return v
 
 
+def tagged_isodate(v, error_code=None):
+    if not isinstance(v, string_types):
+        # Should never happen to dates tagged by code
+        raise _add_ansible_error_code(Invalid('Tagged date must be a string'), 'invalid-tagged-date')
+    m = TAGGED_VERSION_RE.match(v)
+    if not m:
+        # Should never happen to dates tagged by code
+        raise _add_ansible_error_code(Invalid('Tagged date does not match format'), 'invalid-tagged-date')
+    isodate(m.group(2), error_code=error_code)
+    return v
+
+
 def version(for_collection=False, tagged='never', error_code=None):
     if tagged == 'always':
         return Any(partial(tagged_version, error_code=error_code))
     if for_collection:
         return Any(partial(semantic_version, error_code=error_code))
     return All(Any(float, *string_types), partial(ansible_version, error_code=error_code))
+
+
+def date(tagged='never', error_code=None):
+    if tagged == 'always':
+        return Any(partial(tagged_isodate, error_code=error_code))
+    return Any(isodate)
 
 
 def is_callable(v):
@@ -159,15 +185,8 @@ def options_with_apply_defaults(v):
     return v
 
 
-def isodate(v):
-    try:
-        parse_isodate(v)
-    except ValueError as e:
-        raise Invalid(str(e))
-    return v
-
-
-def argument_spec_schema(for_collection):
+def argument_spec_schema(for_collection, dates_tagged=True):
+    dates_tagged = 'always' if dates_tagged else 'never'
     any_string_types = Any(*string_types)
     schema = {
         any_string_types: {
@@ -184,12 +203,12 @@ def argument_spec_schema(for_collection):
             'aliases': Any(list_string_types, tuple(list_string_types)),
             'apply_defaults': bool,
             'removed_in_version': version(for_collection, tagged='always'),
-            'removed_at_date': Any(isodate),
+            'removed_at_date': date(tagged=dates_tagged),
             'options': Self,
             'deprecated_aliases': Any([Any(
                 {
                     Required('name'): Any(*string_types),
-                    Required('date'): Any(isodate),
+                    Required('date'): date(tagged=dates_tagged),
                 },
                 {
                     Required('name'): Any(*string_types),
@@ -208,9 +227,9 @@ def argument_spec_schema(for_collection):
     return Schema(schemas)
 
 
-def ansible_module_kwargs_schema(for_collection):
+def ansible_module_kwargs_schema(for_collection, dates_tagged=True):
     schema = {
-        'argument_spec': argument_spec_schema(for_collection),
+        'argument_spec': argument_spec_schema(for_collection, dates_tagged=dates_tagged),
         'bypass_checks': bool,
         'no_log': bool,
         'check_invalid_arguments': Any(None, bool),

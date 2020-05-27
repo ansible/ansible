@@ -1228,7 +1228,7 @@ class ModuleValidator(Validator):
                     should_be, self._extract_version_from_tag_for_msg(version_added_raw))
             )
 
-    def _validate_ansible_module_call(self, docs):
+    def _validate_ansible_module_call(self, docs, dates_tagged=True):
         try:
             spec, args, kwargs = get_argument_spec(self.path, self.collection)
         except AnsibleModuleNotInitialized:
@@ -1250,7 +1250,8 @@ class ModuleValidator(Validator):
             )
             return
 
-        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema(for_collection=bool(self.collection)),
+        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema(for_collection=bool(self.collection),
+                                                                        dates_tagged=dates_tagged),
                                    'AnsibleModule', 'invalid-ansiblemodule-schema')
 
         self._validate_argument_spec(docs, spec, kwargs)
@@ -1527,7 +1528,8 @@ class ModuleValidator(Validator):
             removed_at_date = data.get('removed_at_date', None)
             if removed_at_date is not None:
                 try:
-                    if parse_isodate(removed_at_date) < datetime.date.today():
+                    date = self._extract_version_from_tag_for_msg(removed_at_date)
+                    if parse_isodate(date) < datetime.date.today():
                         msg = "Argument '%s' in argument_spec" % arg
                         if context:
                             msg += " found in %s" % " -> ".join(context)
@@ -1547,7 +1549,8 @@ class ModuleValidator(Validator):
                 for deprecated_alias in deprecated_aliases:
                     if 'name' in deprecated_alias and 'date' in deprecated_alias:
                         try:
-                            if parse_isodate(deprecated_alias['date']) < datetime.date.today():
+                            date = self._extract_version_from_tag_for_msg(deprecated_alias['date'])
+                            if parse_isodate(date) < datetime.date.today():
                                 msg = "Argument '%s' in argument_spec" % arg
                                 if context:
                                     msg += " found in %s" % " -> ".join(context)
@@ -2196,7 +2199,8 @@ class ModuleValidator(Validator):
             if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_BLACKLIST:
                 with ModuleValidator(docs_path, base_branch=self.base_branch, git_cache=self.git_cache) as docs_mv:
                     docs = docs_mv._validate_docs()[1]
-                    self._validate_ansible_module_call(docs)
+                    # Don't expect tagged dates!
+                    self._validate_ansible_module_call(docs, dates_tagged=False)
 
         self._check_gpl3_header()
         if not self._just_docs() and not end_of_deprecation_should_be_removed_only:

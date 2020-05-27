@@ -24,7 +24,7 @@ def test_deprecate(am, capfd):
     am.deprecate('deprecation1')
     am.deprecate('deprecation2', 'ansible.builtin:2.3')
     am.deprecate('deprecation3', version='ansible.builtin:2.4')
-    am.deprecate('deprecation4', date='2020-03-10')
+    am.deprecate('deprecation4', date='ansible.builtin:2020-03-10')
 
     with pytest.raises(SystemExit):
         am.exit_json(deprecations=['deprecation5', ('deprecation6', 'ansible.builtin:2.4')])
@@ -36,7 +36,7 @@ def test_deprecate(am, capfd):
         {u'msg': u'deprecation1', u'version': None},
         {u'msg': u'deprecation2', u'version': 'ansible.builtin:2.3'},
         {u'msg': u'deprecation3', u'version': 'ansible.builtin:2.4'},
-        {u'msg': u'deprecation4', u'date': '2020-03-10'},
+        {u'msg': u'deprecation4', u'date': 'ansible.builtin:2020-03-10'},
         {u'msg': u'deprecation5', u'version': None},
         {u'msg': u'deprecation6', u'version': 'ansible.builtin:2.4'},
     ]
