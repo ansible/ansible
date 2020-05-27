@@ -1,0 +1,3 @@
+bugfixes:
+- Fix the issue when OS secgroup rule couldn't be imported from
+  a different tenant https://github.com/ansible/ansible/issues/69673
