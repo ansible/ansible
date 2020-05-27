@@ -237,7 +237,7 @@ def main():
         f = open(path, 'rb')
         original = f.read()
         f.close()
-        lines = original.splitlines()
+        lines = original.splitlines(True)
 
     diff = {'before': '',
             'after': '',
@@ -266,13 +266,13 @@ def main():
     else:
         insertre = None
 
-    marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker)
-    marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker)
+    marker0 = re.sub(b(r'{mark}'), b(params['marker_begin']), marker) + b(os.linesep)
+    marker1 = re.sub(b(r'{mark}'), b(params['marker_end']), marker) + b(os.linesep)
     if present and block:
         # Escape sequences like '\n' need to be handled in Ansible 1.x
         if module.ansible_version.startswith('1.'):
             block = re.sub('', block, '')
-        blocklines = [marker0] + block.splitlines() + [marker1]
+        blocklines = [marker0] + block.splitlines(True) + [marker1]
     else:
         blocklines = []
 
@@ -306,9 +306,7 @@ def main():
     lines[n0:n0] = blocklines
 
     if lines:
-        result = b('\n').join(lines)
-        if original is None or original.endswith(b('\n')):
-            result += b('\n')
+        result = b''.join(lines)
     else:
         result = b''
 
