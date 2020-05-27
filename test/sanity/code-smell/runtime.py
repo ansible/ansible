@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Make sure the data in meta/routing.yml is valid"""
+"""Make sure the data in lib/ansible/config/ansible_builtin_runtime.yml is valid"""
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -10,17 +10,19 @@ import re
 import sys
 import yaml
 
-from voluptuous import All, Any, Match, MultipleInvalid, Required, Schema, ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
+from voluptuous import All, Any, Match, MultipleInvalid, Required, Schema, ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema
+from voluptuous import All, Self, ValueInvalid
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import string_types
 
+
 def main():
     """Validate ansible-base' routing.yml"""
-    path = 'lib/ansible/config/routing.yml'
+    path = 'lib/ansible/config/ansible_builtin_runtime.yml'
 
     if not os.path.isfile(path):
-        # skip if routing file doesn't exist
+        # skip if runtime file doesn't exist
         sys.exit(0)
 
     try:
@@ -52,7 +54,7 @@ def main():
             ('deprecation'): Any(deprecation_schema),
             Required('redirect'): Any(*string_types),
         },
-        extra=PREVENT_EXTRA)
+            extra=PREVENT_EXTRA)
     )
 
     list_dict_file_schema = [{str_type: files_schema}
@@ -77,11 +79,11 @@ def main():
         Required('shell'): Any(None, *list_dict_file_schema),
         Required('terminal'): Any(None, *list_dict_file_schema),
     },
-    extra=PREVENT_EXTRA)
+        extra=PREVENT_EXTRA)
 
     schema = Schema({
         Required('plugin_routing'): Any(plugin_schema),
-        },
+    },
         extra=PREVENT_EXTRA
     )
 
@@ -110,6 +112,7 @@ def main():
 #            if not found_plugin:
 #                print("%s:%d:%d: Can't find '%s/%s.py' in %s.%s" %
 #                    (path, 0, 0, plugin_type, new_name, namespace, collection))
+
 
 if __name__ == '__main__':
     main()
