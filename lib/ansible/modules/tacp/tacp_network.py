@@ -403,16 +403,21 @@ def run_module():
                 api_client)
 
             vnet_uuid = vnetResource.get_uuid_by_name(name)
-            nfv_uuid = vnetResource.get_by_uuid(vnet_uuid)['nfv_instance_uuid']
 
-            # Delete the NFV instance
-            action_result = applicationResource.delete(nfv_uuid)
-            if action_result is not True:
-                fail_with_reason(action_result)
+            if vnet_uuid:
+                nfv_uuid = vnetResource.get_by_uuid(vnet_uuid)['nfv_instance_uuid']
 
-            action_result = vnetResource.delete(vnet_uuid)
-            if action_result is not True:
-                fail_with_reason(action_result)
+                if nfv_uuid:
+                    # Delete the NFV instance
+                    action_result = applicationResource.delete(nfv_uuid)
+                    if action_result is not True:
+                        fail_with_reason(action_result)
+
+                action_result = vnetResource.delete(vnet_uuid)
+                if action_result is not True:
+                    fail_with_reason(action_result)
+            else:
+                fail_with_reason("No VNET found with name %s " % name)
 
         result['changed'] = True
         result['failed'] = False
@@ -438,7 +443,7 @@ def run_module():
         if module.params['state'] == 'present':
             if vlan_uuid:
                 result['msg'] = "VLAN network %s is already present, nothing to do." % module.params['name']
-               
+
             else:
                 network_params = generate_network_params(module)
                 create_vlan_network(network_params)
@@ -449,7 +454,6 @@ def run_module():
                     name=module.params['name'], network_type='VLAN', api_client=api_client)
             else:
                 result['msg'] = "VLAN network %s is already absent, nothing to do." % module.params['name']
-               
 
     elif module.params['network_type'].upper() == 'VNET':
         vnetResource = tacp_utils.VnetResource(api_client)
@@ -457,7 +461,7 @@ def run_module():
         if module.params['state'] == 'present':
             if vnet_uuid:
                 result['msg'] = "VNET network %s is already present, nothing to do." % module.params['name']
-               
+
             else:
                 network_params = generate_network_params(module)
                 create_vnet_network(network_params)
@@ -467,7 +471,6 @@ def run_module():
                     name=module.params['name'], network_type='VNET', api_client=api_client)
             else:
                 result['msg'] = "VNET network %s is already absent, nothing to do." % module.params['name']
-               
 
     # use whatever logic you need to determine whether or not this module
     # made any modifications to your target

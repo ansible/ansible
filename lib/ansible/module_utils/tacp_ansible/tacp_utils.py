@@ -14,217 +14,113 @@ from uuid import UUID, uuid4
 from time import sleep
 
 
-class ApplicationResource(object):
-    def __init__(self, api_client):
-        self.api = tacp.ApplicationsApi(api_client)
-        self.api_client = api_client
+class ApiResource(object):
 
-    def get_all(self):
-        """ Get all application instances as a list of dicts
-        """
-        api_response = self.api.get_applications_using_get()
-        instance_dicts = []
-        if api_response:
-            for instance in api_response:
-                instance_dicts.append(instance.to_dict())
-        return instance_dicts
+    def __init__(self, api_client):
+        self._api = self.model(api_client)
+        self._api_client = api_client
+
+    def get_all(self, *args, **kwargs):
+        all_instances = self._get_all(*args, **kwargs)
+        return all_instances
 
     def get_uuid_by_name(self, name):
         """ Return the UUID of an appplication instance if it exists
             given the name of the instance, None otherwise
         """
-        all_instances = self.get_all()
+        all_instances = self._get_all()
         for instance in all_instances:
-            if instance['name'] == name:
-                return instance['uuid']
+            if instance.name == name:
+                return instance.uuid
         return None
 
     def get_by_uuid(self, uuid):
-        """ Returns an application as a dict specified by UUID, None otherwise
-        """
-        api_response = self.api.get_application_using_get(uuid)
-        if api_response:
-            return api_response.to_dict()
-        return None
+        return self._get_by_uuid(uuid).to_dict()
 
     def create(self, body):
-        """ Creates an application with the provided API request body, returns
-            bool of success/failure
-        """
-        api_response = self.api.create_application_from_template_using_post(
+        api_response = self._create(
             body)
-        try:
-            wait_for_action_to_complete(
-                api_response.action_uuid, self.api_client)
-            return api_response.object_uuid
-        except ActionTimedOutException:
-            return "Exception when waiting for action to complete, action timed out."
-        except InvalidActionUuidException:
-            return "Exception when waiting for action to complete, invalid action UUID."
-        except Exception as e:
-            return e
+        wait_for_action_to_complete(
+            api_response.action_uuid, self._api_client)
+        return api_response.object_uuid
 
     def delete(self, uuid):
-        """ Deletes an application specified by UUID, returns bool of success/failure
-        """
-        api_response = self.api.delete_application_using_delete(uuid)
-        try:
-            wait_for_action_to_complete(
-                api_response.action_uuid, self.api_client)
-            return True
-        except ActionTimedOutException:
-            return "Exception when waiting for action to complete, action timed out."
-        except InvalidActionUuidException:
-            return "Exception when waiting for action to complete, invalid action UUID."
-        except Exception as e:
-            return e
+        api_response = self._delete(uuid)
+        wait_for_action_to_complete(
+            api_response.action_uuid, self._api_client)
+        return True
+
+
+class ApplicationResource(ApiResource):
+
+    model = tacp.ApplicationsApi
+
+    def _get_all(self, *args, **kwargs):
+        return self._api.get_applications_using_get(*args, **kwargs)
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_application_using_get(uuid)
+
+    def _create(self, body):
+        return self._api.create_application_from_template_using_post(body)
+
+    def _delete(self, uuid):
+        return self._api.delete_application_using_delete(uuid)
 
     def power_action_on_instance_by_uuid(self, uuid, power_action):
         """ Performs a specified power operation on an application instance
             specified by UUID, returns bool of success/failure
         """
+        power_action_dict = {
+            Action.STARTED: self._api.start_application_using_put,
+            Action.SHUTDOWN: self._api.shutdown_application_using_put,
+            Action.STOPPED: self._api.stop_application_using_put,
+            Action.RESTARTED: self._api.restart_application_using_put,
+            Action.FORCE_RESTARTED: self._api.force_restart_application_using_put,
+            Action.PAUSED: self._api.pause_application_using_put,
+            Action.ABSENT: self._api.delete_application_using_delete,
+            Action.RESUMED: self._api.resume_application_using_put
+        }
+
         api_response = power_action_dict[power_action](uuid)
-        try:
-            wait_for_action_to_complete(
-                api_response.action_uuid, self.api_client)
-            return True
-        except ActionTimedOutException:
-            return "Exception when waiting for action to complete, action timed out."
-        except InvalidActionUuidException:
-            return "Exception when waiting for action to complete, invalid action UUID."
-        except Exception as e:
-            return e
+        wait_for_action_to_complete(
+                api_response.action_uuid, self._api_client)
+        return True
 
 
-class VlanResource(object):
-    def __init__(self, api_client):
-        self.api = tacp.VlansApi(api_client)
-        self.api_client = api_client
+class VlanResource(ApiResource):
 
-    def get_all(self):
-        """ Get all VLAN networks as a list of dicts
-        """
-        api_response = self.api.get_vlans_using_get()
-        vlan_dicts = []
-        if api_response:
-            for vlan in api_response:
-                vlan_dicts.append(vlan.to_dict())
-        return vlan_dicts
+    model = tacp.VlansApi
 
-    def get_uuid_by_name(self, name):
-        """ Return the UUID of a VLAN network if it exists
-            given the name of the network, None otherwise
-        """
-        all_vlans = self.get_all()
-        for vlan in all_vlans:
-            if vlan['name'] == name:
-                return vlan['uuid']
-        return None
+    def _get_all(self, *args, **kwargs):
+        return self._api.get_vlans_using_get(*args, **kwargs)
 
-    def get_by_uuid(self, uuid):
-        """ Returns an vlan as a dict specified by UUID, None otherwise
-        """
-        api_response = self.api.get_vlan_using_get(uuid)
-        if api_response:
-            return api_response.to_dict()
-        return None
+    def _get_by_uuid(self, uuid):
+        return self._api.get_vlan_using_get(uuid)
 
-    def create(self, body):
-        """ Creates a VLAN network with the provided API request body, returns 
-            object UUID if success else None
-        """
-        api_response = self.api.create_vlan_using_post(body)
-        try:
-            wait_for_action_to_complete(
-                api_response.action_uuid, self.api_client)
-            return api_response.object_uuid
-        except ActionTimedOutException:
-            return "Exception when waiting for action to complete, action timed out."
-        except InvalidActionUuidException:
-            return "Exception when waiting for action to complete, invalid action UUID."
-        except Exception as e:
-            return e
-
-    def delete(self, uuid):
-        """ Deletes a VLAN network specified by UUID, returns bool of success/failure
-        """
-        api_response = self.api.delete_vlan_using_delete(uuid)
-        try:
-            wait_for_action_to_complete(
-                api_response.action_uuid, self.api_client)
-            return True
-        except ActionTimedOutException:
-            return "Exception when waiting for action to complete, action timed out."
-        except InvalidActionUuidException:
-            return "Exception when waiting for action to complete, invalid action UUID."
-        except Exception as e:
-            return e
+    def _create(self, body):
+        return self._api.create_vlan_using_post(body)
+        
+    def _delete(self, uuid):
+        return self._api.delete_vlan_using_delete(uuid)
 
 
-class VnetResource(object):
-    def __init__(self, api_client):
-        self.api = tacp.VnetsApi(api_client)
-        self.api_client = api_client
+class VnetResource(ApiResource):
 
-    def get_all(self):
-        """ Get all VNET networks as a list of dicts
-        """
-        api_response = self.api.get_vnets_using_get()
-        vnet_dicts = []
-        if api_response:
-            for vnet in api_response:
-                vnet_dicts.append(vnet.to_dict())
-        return vnet_dicts
+    model = tacp.VnetsApi
 
-    def get_uuid_by_name(self, name):
-        """ Return the UUID of a VNET network if it exists
-            given the name of the network, None otherwise
-        """
-        all_vnets = self.get_all()
-        for vnet in all_vnets:
-            if vnet['name'] == name:
-                return vnet['uuid']
-        return None
+    def _get_all(self, *args, **kwargs):
+        return self._api.get_vnets_using_get(*args, **kwargs)
 
-    def get_by_uuid(self, uuid):
-        """ Returns a VNET as a dict specified by UUID, None otherwise
-        """
-        api_response = self.api.get_vnet_using_get(uuid)
-        if api_response:
-            return api_response.to_dict()
-        return None
+    def _get_by_uuid(self, uuid):
+        return self._api.get_vnet_using_get(uuid)
 
-    def create(self, body):
-        """ Creates a VNET network with the provided API request body, returns 
-            object UUID if success, None if failure
-        """
-        api_response = self.api.create_vnet_using_post(body)
-        try:
-            wait_for_action_to_complete(
-                api_response.action_uuid, self.api_client)
-            return api_response.object_uuid
-        except ActionTimedOutException:
-            return "Exception when waiting for action to complete, action timed out."
-        except InvalidActionUuidException:
-            return "Exception when waiting for action to complete, invalid action UUID."
-        except Exception as e:
-            return e
+    def _create(self, body):
+        return self._api.create_vnet_using_post(body)
 
-    def delete(self, uuid):
-        """ Deletes a VNET network specified by UUID, returns bool of success/failure
-        """
-        api_response = self.api.delete_vnet_using_delete(uuid)
-        try:
-            wait_for_action_to_complete(
-                api_response.action_uuid, self.api_client)
-            return True
-        except ActionTimedOutException:
-            return "Exception when waiting for action to complete, action timed out."
-        except InvalidActionUuidException:
-            return "Exception when waiting for action to complete, invalid action UUID."
-        except Exception as e:
-            return e
-
+    def _delete(self, uuid):
+        return self._api.delete_vnet_using_delete(uuid)
+        
 
 def get_component_fields_by_name(name, component,
                                  api_client, fields=['name', 'uuid']):
@@ -556,22 +452,3 @@ def get_resource_by_uuid(uuid, component, api_client):
             return "Exception when calling get_firewall_profile_using_get: %s\n" % e
 
     return api_response_to_dict(api_response)
-    # elif component == "firewall_override":
-    #     # Need to get all datacenter UUIDs first
-    #     api_instance = tacp.DatacentersApi(api_client)
-    #     try:
-    #         # View datacenters for an organization
-    #         datacenter_list = api_instance.get_datacenters_using_get(
-    #             uuid)
-    #     except ApiException as e:
-    #         return "Exception when calling get_datacenters_using_get: %s\n" % e
-
-    #     api_response = []
-    #     for datacenter in datacenter_list:
-    #         api_instance = tacp.DatacentersApi(api_client)
-    #         try:
-    #             # View Firewall profiles for an organization
-    #             api_response += api_instance.get_datacenter_firewall_overrides_using_get(
-    #                 uuid=datacenter.uuid, uuid)
-    #         except ApiException as e:
-    #             return "Exception when calling get_firewall_profiles_using_get"
