@@ -126,6 +126,7 @@ class PluginLoadContext(object):
         self.plugin_resolved_name = None
         self.deprecated = False
         self.removal_date = None
+        self.removal_version = None
         self.deprecation_warnings = []
         self.resolved = False
 
@@ -135,15 +136,23 @@ class PluginLoadContext(object):
 
         warning_text = deprecation.get('warning_text', None)
         removal_date = deprecation.get('removal_date', None)
+        removal_version = deprecation.get('removal_version', None)
+        # If both removal_date and removal_version are specified, use removal_date
+        if removal_date is not None:
+            removal_version = None
         if not warning_text:
             if removal_date:
                 warning_text = '{0} has been deprecated and will be removed in a release after {1}'.format(name, removal_date)
+            elif removal_version:
+                warning_text = '{0} has been deprecated and will be removed in version {1}'.format(name, removal_version)
             else:
                 warning_text = '{0} has been deprecated and will be removed in a future release'.format(name)
 
         self.deprecated = True
         if removal_date:
             self.removal_date = removal_date
+        if removal_version:
+            self.removal_version = removal_version
         self.deprecation_warnings.append(warning_text)
         return self
 
@@ -442,11 +451,16 @@ class PluginLoader:
             if tombstone:
                 redirect = tombstone.get('redirect', None)
                 removal_date = tombstone.get('removal_date')
+                removal_version = tombstone.get('removal_version')
                 if removal_date:
                     removed_msg = '{0} was removed on {1}'.format(fq_name, removal_date)
+                    removal_version = None
+                elif removal_version:
+                    removed_msg = '{0} was removed in version {1}'.format(fq_name, removal_version)
                 else:
                     removed_msg = '{0} was removed in a previous release'.format(fq_name)
                 plugin_load_context.removal_date = removal_date
+                plugin_load_context.removal_version = removal_version
                 plugin_load_context.resolved = True
                 plugin_load_context.exit_reason = removed_msg
                 return plugin_load_context
