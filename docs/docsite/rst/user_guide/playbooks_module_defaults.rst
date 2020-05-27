@@ -82,7 +82,7 @@ Module defaults groups
 
 .. versionadded:: 2.7
 
-Ansible 2.7 adds a preview-status feature to group together modules that share common sets of parameters. This makes it easier to author playbooks making heavy use of API-based modules such as cloud modules.
+Ansible 2.7 adds a preview-status feature to group together modules that share common sets of parameters. Ansible 2.10 adds support for groups to be defined in collections. This makes it easier to author playbooks making heavy use of API-based modules such as cloud modules.
 
 +---------+---------------------------+-----------------+
 | Group   | Purpose                   | Ansible Version |
@@ -125,3 +125,68 @@ In a playbook, you can set module defaults for whole groups of modules, such as 
       - ec2_ami_info:
           filters:
             name: 'RHEL*7.5*'
+
+As of Ansible 2.10, a collection can define ``action_groups`` in its ``meta/runtime.yml`` file to be used with module_defaults.
+
+.. code-block:: YAML
+
+   # collection_namespace/collection_name/meta/runtime.yml
+   action_groups:
+     group_name:
+       - module_name
+       - another_module
+
+.. code-block:: YAML
+
+   # example_play.yml
+   - hosts: all
+     module_defaults:
+       group/collection_namespace.collection_name.group_name:
+         common_option: value
+
+Allowing content in another collection to share the same group name is supported via the collection's ``action_groups_redirection`` metadata field. This allows playbooks to work without modification when content is relocated.
+
+The ``ansible.builtin`` collection metadata contains the unqualified group names listed above for backwards compatibility and redirects the options to the new fully qualified group name(s).
+
+.. code-block:: YAML
+
+   acme:
+     redirect: [community.crypto.acme]
+   aws:
+     redirect: [amazon.aws.aws, community.aws.aws]
+   azure:
+     redirect: [azure.azcollection.azure]
+   cpm:
+     redirect: [wti.remote.cpm]
+   docker:
+     redirect: [community.general.docker]
+   gcp:
+     redirect: [google.cloud.gcp]
+   k8s:
+     redirect: [community.kubernetes.k8s]
+   os:
+     redirect: [openstack.cloud.os]
+   ovirt:
+     redirect: [ovirt.ovirt.ovirt]
+   vmware:
+     redirect: [community.vmware.vmware]
+
+This allows a playbook written using the group ``aws`` to continue working with AWS modules which were moved to the ``amazon.aws`` and ``community.aws`` collections.
+
+.. code-block:: YAML
+
+   hosts: localhost
+   gather_facts: no
+   module_defaults:
+     group/aws:
+       ...
+   tasks:
+     - name: Use group/aws options with a redirected module from ansible.builtin
+       aws_s3:
+
+     - name: Use group/aws options with fully qualified module name
+       amazon.aws.aws_s3:
+
+     - name: Use group/aws options with collections list shorthand
+       aws_s3:
+       collections: amazon.aws

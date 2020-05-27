@@ -26,6 +26,8 @@ Collections follow a simple data structure. None of the directories are required
     collection/
     ├── docs/
     ├── galaxy.yml
+    ├── meta/
+    │   └── runtime.yml
     ├── plugins/
     │   ├── modules/
     │   │   └── module1.py
@@ -195,6 +197,132 @@ command completion, or environment variables are presented throughout the
 Ansible Collection Testing because the act of installing the stable release of
 Ansible containing `ansible-test` is expected to setup those things for you.
 
+.. _meta_runtime_yml:
+
+meta directory
+--------------
+
+A collection can store some additional runtime metadata in a ``runtime.yml`` file in the ``meta`` directory.
+
+The ``runtime.yml`` file supports the top level keys:
+
+- *plugin_routing*:
+
+  A mapping of content which has been deprecated or removed or moved to a different location.
+
+  .. code:: yaml
+
+     plugin_routing:
+       inventory:
+         my_inventory:
+           redirect: another_namespace.collection_name.inventory_plugin
+       modules:
+         my_module:
+           deprecation:
+             removal_date: "2020-11-30"
+             warning_text: my_module will be removed in a future release of this collection. Use new_module instead.
+           redirect: another_namespace.collection_name.module_name
+       module_utils:
+         my_util:
+           redirect: namepsace.collection_name.sub_folder.util_name
+
+- *requires_ansible*:
+
+  The collection's version constraint for Ansible.
+
+  .. code:: yaml
+
+     requires_ansible: ">=2.10"
+
+- *import_redirection*:
+
+  A mapping of names for Python import statements for resources which have moved.
+
+  .. code:: yaml
+
+     import_redirection:
+       ansible.module_utils.old_utility:
+         redirect: ansible_collections.collection_name.plugins.module_utils.new_location
+
+- *action_groups*:
+
+  A mapping of group names and actions/modules they contain. Action group names allow playbooks to cut down on boilerplate by configuring common settings (such as authentication for the AWS modules) via module_defaults instead of per task.
+
+  .. code:: yaml
+
+     action_groups:
+       group_name:
+         - my_module:
+       another_namespace.collection.group_name:
+         - another_module:
+
+  In a playbook the collection's group name should be prefixed with ``group/`` to identify it as a group rather than an action/module.
+
+  .. code:: yaml
+
+     module_defaults:
+       group/my_collection.my_namespace.group_name:
+         common_opt: value
+       group/another_namespace.collection.group_name:
+         another_common_opt: value
+
+- *action_groups_redirection*:
+
+  A mapping of group names and the redirected fully qualified group name(s) of the content that should apply to the group. This allows content in different collections to share a common module_defaults ``group/`` entry. If a collection needs to move action plugins or modules to another collection, the original collection's ``action_groups_redirection`` metadata should be updated to specifiy the new fully qualified group names. This is important to keep playbooks that reference the original group name working.
+
+  .. code:: yaml
+
+     action_groups_redirection:
+       group_name:
+         redirect: common_group
+
+  For example, if a collection ``original_namespace.original_collection`` defines an action group ``original_group_name`` for a set of modules which are being moved to ``new_namespace.new_collection``, the new collection should also define an action group for the modules:
+
+  .. code:: yaml
+
+     # new_namespace/new_collection/meta/runtime.yml
+     action_groups:
+       new_group_name:
+         - module
+
+  The original collection should add the redirection entry for it:
+
+  .. code:: yaml
+
+     # original_namespace/original_collection/meta/runtime.yml
+     action_groups_redirection:
+       original_group_name:
+         redirect: new_namespace.new_collection.new_group_name
+
+     plugin_routing:
+       modules:
+         module:
+           redirect: new_namespace.new_collection.module
+
+
+  Once this is done, options defined for the module_default entry ``group/original_namespace.original_collection.original_group_name`` will apply to the module in ``new_namespace.new_collection``.
+
+  .. code:: yaml
+
+     # playbook.yml
+     - hosts: localhost
+       gather_facts: no
+
+       module_defaults:
+         group/original_namespace.original_collection.original_group_name:
+           option_name: option_value
+
+       tasks:
+       - name: use group options with FQCN of original redirected module
+         original_namespace.original_collection.module:
+
+       - name: use group options with FQCN of new location
+         new_namespace.new_collection.module:
+
+       - name: use group options using collections list shorthand
+         module:
+         collections:
+           - original_namespace.original_collection
 
 .. _creating_collections_skeleton:
 
