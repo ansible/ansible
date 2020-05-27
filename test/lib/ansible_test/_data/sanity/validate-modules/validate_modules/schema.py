@@ -277,9 +277,9 @@ return_schema = Any(
 
 def deprecation_schema(for_collection):
     main_fields = {
-            Required('why'): Any(*string_types),
-            Required('alternative'): Any(*string_types),
-            'removed': Any(True),
+        Required('why'): Any(*string_types),
+        Required('alternative'): Any(*string_types),
+        'removed': Any(True),
     }
 
     date_schema = {
