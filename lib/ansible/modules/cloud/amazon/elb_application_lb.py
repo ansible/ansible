@@ -208,6 +208,16 @@ EXAMPLES = '''
             Actions:
               - TargetGroupName: test-target-group
                 Type: forward
+          - Conditions:
+              - Field: http-header
+                HttpHeaderConfig:
+                  HttpHeaderName: X-Forwarded-Port
+                  Values:
+                    - "4321"
+            Priority: '2'
+            Actions:
+              - TargetGroupName: test-target-group
+                Type: forward                
     state: present
 
 # Remove an ELB
