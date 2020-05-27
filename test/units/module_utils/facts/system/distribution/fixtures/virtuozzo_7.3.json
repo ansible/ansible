@@ -1,0 +1,25 @@
+{
+    "name": "Virtuozzo 7.3",
+    "platform.dist": ["redhat", "7.3", ""],
+    "distro": {
+        "codename": "",
+        "id": "virtuozzo",
+        "name": "Virtuozzo Linux",
+        "version": "7.3",
+        "version_best": "7.3",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/redhat-release": "Virtuozzo Linux release 7.3\n",
+        "/etc/os-release": "NAME=\"Virtuozzo\"\nVERSION=\"7.0.3\"\nID=\"virtuozzo\"\nID_LIKE=\"rhel fedora\"\nVERSION_ID=\"7\"\nPRETTY_NAME=\"Virtuozzo release 7.0.3\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:virtuozzoproject:vz:7\"\nHOME_URL=\"http://www.virtuozzo.com\"\nBUG_REPORT_URL=\"https://bugs.openvz.org/\"\n",
+        "/etc/system-release": "Virtuozzo release 7.0.3 (640)\n"
+    },
+    "result": {
+        "distribution_release": "NA",
+        "distribution": "Virtuozzo",
+        "distribution_major_version": "7",
+        "os_family": "RedHat",
+        "distribution_version": "7.3"
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "name": "Cumulus Linux 2.5.4",
+    "input": {
+        "/etc/os-release": "NAME=\"Cumulus Linux\"\nVERSION_ID=2.5.4\nVERSION=\"2.5.4-6dc6e80-201510091936-build\"\nPRETTY_NAME=\"Cumulus Linux\"\nID=cumulus-linux\nID_LIKE=debian\nCPE_NAME=cpe:/o:cumulusnetworks:cumulus_linux:2.5.4-6dc6e80-201510091936-build\nHOME_URL=\"http://www.cumulusnetworks.com/\"\nSUPPORT_URL=\"http://support.cumulusnetworks.com/\""
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "cumulus-linux",
+        "name": "Cumulus Linux",
+        "version": "2.5.4",
+        "version_best": "2.5.4",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "Cumulus Linux",
+        "distribution_major_version": "2",
+        "distribution_release": "2.5.4-6dc6e80-201510091936-build",
+        "os_family": "Debian",
+        "distribution_version": "2.5.4"
+    }
+}

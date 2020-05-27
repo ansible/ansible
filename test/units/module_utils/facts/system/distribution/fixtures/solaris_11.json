@@ -1,0 +1,26 @@
+{
+    "name": "Solaris 11",
+    "uname_v": "11.0",
+    "uname_r": "5.11",
+    "result": {
+        "distribution_release": "Oracle Solaris 11 11/11 X86",
+        "distribution": "Solaris",
+        "os_family": "Solaris",
+        "distribution_major_version": "11",
+        "distribution_version": "11"
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "",
+        "name": "",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/release": "                           Oracle Solaris 11 11/11 X86\n  Copyright (c) 1983, 2011, Oracle and/or its affiliates.  All rights reserved.\n                            Assembled 18 October 2011\n"
+    },
+    "platform.system": "SunOS"
+}

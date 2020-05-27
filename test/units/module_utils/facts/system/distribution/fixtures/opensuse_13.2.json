@@ -1,0 +1,24 @@
+{
+    "name": "openSUSE 13.2",
+    "input": {
+        "/etc/SuSE-release": "openSUSE 13.2 (x86_64)\nVERSION = 13.2\nCODENAME = Harlequin\n# /etc/SuSE-release is deprecated and will be removed in the future, use /etc/os-release instead",
+        "/etc/os-release": "NAME=openSUSE\nVERSION=\"13.2 (Harlequin)\"\nVERSION_ID=\"13.2\"\nPRETTY_NAME=\"openSUSE 13.2 (Harlequin) (x86_64)\"\nID=opensuse\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:opensuse:13.2\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://opensuse.org/\"\nID_LIKE=\"suse\""
+    },
+    "platform.dist": ["SuSE", "13.2", "x86_64"],
+    "distro": {
+        "codename": "",
+        "id": "opensuse-harlequin",
+        "name": "openSUSE Harlequin",
+        "version": "13.2",
+        "version_best": "13.2",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "openSUSE",
+        "distribution_major_version": "13",
+        "distribution_release": "2",
+        "os_family": "Suse",
+        "distribution_version": "13.2"
+    }
+}

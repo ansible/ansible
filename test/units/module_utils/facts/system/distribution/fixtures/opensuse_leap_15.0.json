@@ -1,0 +1,23 @@
+{
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "opensuse-leap",
+        "name": "openSUSE Leap",
+        "version": "15.0",
+        "version_best": "15.0",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"openSUSE Leap\"\n# VERSION=\"15.0\"\nID=opensuse-leap\nID_LIKE=\"suse opensuse\"\nVERSION_ID=\"15.0\"\nPRETTY_NAME=\"openSUSE Leap 15.0\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:leap:15.0\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n"
+    },
+    "name": "openSUSE Leap 15.0",
+    "result": {
+        "distribution_release": "0",
+        "distribution": "openSUSE Leap",
+        "distribution_major_version": "15",
+        "os_family": "Suse",
+        "distribution_version": "15.0"
+    }
+}
