@@ -262,7 +262,20 @@ class Display(with_metaclass(Singleton, object)):
 
         if not removed:
             if date:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a release after %s." % (msg, date)
+                m = None
+                if isinstance(date, string_types):
+                    version = to_native(date)
+                    m = TAGGED_VERSION_RE.match(date)
+                if m:
+                    collection = m.group(1)
+                    date = m.group(2)
+                    if collection == 'ansible.builtin':
+                        collection = 'Ansible-base'
+                    new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a release of %s after %s." % (
+                        msg, collection, date)
+                else:
+                    new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a release after %s." % (
+                        msg, date)
             elif version:
                 m = None
                 if isinstance(version, string_types):
