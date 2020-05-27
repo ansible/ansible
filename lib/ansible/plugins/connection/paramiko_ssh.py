@@ -326,7 +326,7 @@ class Connection(ConnectionBase):
 
         allow_agent = True
 
-        if self._play_context.password is not None:
+        if self.get_option('password') is not None:
             allow_agent = False
 
         try:
@@ -344,7 +344,7 @@ class Connection(ConnectionBase):
                 allow_agent=allow_agent,
                 look_for_keys=self.get_option('look_for_keys'),
                 key_filename=key_filename,
-                password=self._play_context.password,
+                password=self.get_option('password'),
                 timeout=self._play_context.timeout,
                 port=port,
                 **ssh_connect_kwargs
