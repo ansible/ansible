@@ -45,7 +45,7 @@ Collections follow a simple data structure. None of the directories are required
 
 
 .. note::
-    * Ansible only accepts ``.yml`` extensions for :file:`galaxy.yml`, and ``.md`` for the :file:`README` file and any files in the :file:`/docs` folder.
+    * Ansible only accepts ``.md`` extensions for the :file:`README` file and any files in the :file:`/docs` folder.
     * See the `ansible-collections <https://github.com/ansible-collections/>`_ GitHub Org for examples of collection structure.
     * Not all directories are currently in use. Those are placeholders for future features.
 

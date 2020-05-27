@@ -166,7 +166,7 @@ class CollectionRequirement:
         Generate the manifest data from the galaxy.yml file. If the galaxy.yml exists, return a dictionary containing the keys 'files_file' and 'manifest_file'.
         "param b_path: The directory of a collection.
         """
-        b_galaxy_path = os.path.join(b_path, b'galaxy.yml')
+        b_galaxy_path = get_galaxy_metadata_path(b_path)
         info = {}
         if os.path.exists(b_galaxy_path):
             collection_meta = _get_galaxy_yml(b_galaxy_path)
@@ -291,7 +291,7 @@ class CollectionRequirement:
         """
         b_collection_path = self.b_path
 
-        b_galaxy_path = os.path.join(b_collection_path, b'galaxy.yml')
+        b_galaxy_path = get_galaxy_metadata_path(b_collection_path)
         if not os.path.exists(b_galaxy_path):
             raise AnsibleError("The collection galaxy.yml path '%s' does not exist." % to_native(b_galaxy_path))
 
@@ -547,7 +547,7 @@ def build_collection(collection_path, output_path, force):
     :return: The path to the collection build artifact.
     """
     b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')
-    b_galaxy_path = os.path.join(b_collection_path, b'galaxy.yml')
+    b_galaxy_path = get_galaxy_metadata_path(b_collection_path)
     if not os.path.exists(b_galaxy_path):
         raise AnsibleError("The collection galaxy.yml path '%s' does not exist." % to_native(b_galaxy_path))
 
@@ -914,6 +914,7 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
     # patterns can be extended by the build_ignore key in galaxy.yml
     b_ignore_patterns = [
         b'galaxy.yml',
+        b'galaxy.yaml',
         b'.git',
         b'*.pyc',
         b'*.retry',
@@ -1086,8 +1087,8 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         if file_info['name'] == '.':
             continue
 
-        src_file = os.path.join(b_collection_path, to_bytes(file_info['name']))
-        dest_file = os.path.join(b_collection_output, to_bytes(file_info['name']))
+        src_file = os.path.join(b_collection_path, to_bytes(file_info['name'], errors='surrogate_or_strict'))
+        dest_file = os.path.join(b_collection_output, to_bytes(file_info['name'], errors='surrogate_or_strict'))
 
         if any([src_file.startswith(directory) for directory in base_directories]):
             continue
@@ -1190,7 +1191,7 @@ def _collections_from_scm(collection, requirement, b_temp_path, force, parent=No
     else:
         b_collection_path = os.path.join(b_temp_path, b_repo_root)
 
-    b_galaxy_path = os.path.join(b_collection_path, b'galaxy.yml')
+    b_galaxy_path = get_galaxy_metadata_path(b_collection_path)
 
     err = "{0} appears to be an SCM collection source, but the required galaxy.yml was not found. " \
           "Append #path/to/collection/ to your URI (before the comma separated version, if one is specified) " \
@@ -1421,3 +1422,13 @@ def _consume_file(read_from, write_to=None):
         data = read_from.read(bufsize)
 
     return sha256_digest.hexdigest()
+
+
+def get_galaxy_metadata_path(b_path):
+    b_default_path = os.path.join(b_path, b'galaxy.yml')
+    candidate_names = [b'galaxy.yml', b'galaxy.yaml']
+    for b_name in candidate_names:
+        b_path = os.path.join(b_path, b_name)
+        if os.path.exists(b_path):
+            return b_path
+    return b_default_path
