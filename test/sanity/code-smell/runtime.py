@@ -18,7 +18,7 @@ from ansible.module_utils.six import string_types
 
 
 def main():
-    """Validate ansible-base' routing.yml"""
+    """Validate ansible-base' ansible_builtin_runtime..yml"""
     path = 'lib/ansible/config/ansible_builtin_runtime.yml'
 
     if not os.path.isfile(path):
@@ -65,24 +65,29 @@ def main():
         Required('action'): Any(None, *list_dict_file_schema),
         Required('become'): Any(None, *list_dict_file_schema),
         Required('cache'): Any(None, *list_dict_file_schema),
-        Required('doc_fragments'): Any(None, *list_dict_file_schema),
         Required('callback'): Any(None, *list_dict_file_schema),
-        Required('lookup'): Any(None, *list_dict_file_schema),
         Required('cliconf'): Any(None, *list_dict_file_schema),
         Required('connection'): Any(None, *list_dict_file_schema),
+        Required('doc_fragments'): Any(None, *list_dict_file_schema),
         Required('filter'): Any(None, *list_dict_file_schema),
         Required('httpapi'): Any(None, *list_dict_file_schema),
         Required('inventory'): Any(None, *list_dict_file_schema),
-        Required('modules'): Any(None, *list_dict_file_schema),
+        Required('lookup'): Any(None, *list_dict_file_schema),
         Required('module_utils'): Any(None, *list_dict_file_schema),
+        Required('modules'): Any(None, *list_dict_file_schema),
         Required('netconf'): Any(None, *list_dict_file_schema),
         Required('shell'): Any(None, *list_dict_file_schema),
         Required('terminal'): Any(None, *list_dict_file_schema),
+        Required('test'): Any(None, *list_dict_file_schema),
     },
         extra=PREVENT_EXTRA)
 
+    list_dict_import_schema = [{str_type: files_schema}
+                             for str_type in string_types]
+
     schema = Schema({
         Required('plugin_routing'): Any(plugin_schema),
+        Required('import_redirection'): Any(None, *list_dict_file_schema),
     },
         extra=PREVENT_EXTRA
     )
