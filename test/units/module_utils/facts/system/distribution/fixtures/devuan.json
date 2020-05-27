@@ -1,0 +1,23 @@
+{
+    "name": "Devuan",
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"Devuan GNU/Linux ascii\"\nNAME=\"Devuan GNU/Linux\"\nID=devuan\nHOME_URL=\"https://www.devuan.org/\"\nSUPPORT_URL=\"https://devuan.org/os/community\"\nBUG_REPORT_URL=\"https://bugs.devuan.org/\""
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "devuan",
+        "name": "Devuan GNU/Linux",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "Devuan",
+        "distribution_major_version": "NA",
+        "distribution_release": "ascii",
+        "os_family": "Debian",
+        "distribution_version": "NA"
+    }
+}

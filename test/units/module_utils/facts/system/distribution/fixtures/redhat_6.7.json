@@ -1,0 +1,25 @@
+{
+    "name": "RedHat 6.7",
+    "platform.dist": ["redhat", "6.7", "Santiago"],
+    "distro": {
+        "codename": "Santiago",
+        "id": "rhel",
+        "name": "RedHat Enterprise Linux",
+        "version": "6.7",
+        "version_best": "6.7",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/redhat-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n",
+        "/etc/lsb-release": "LSB_VERSION=base-4.0-amd64:base-4.0-noarch:core-4.0-amd64:core-4.0-noarch:graphics-4.0-amd64:graphics-4.0-noarch:printing-4.0-amd64:printing-4.0-noarch\n",
+        "/etc/system-release": "Red Hat Enterprise Linux Server release 6.7 (Santiago)\n"
+    },
+    "result": {
+        "distribution_release": "Santiago",
+        "distribution": "RedHat",
+        "distribution_major_version": "6",
+        "os_family": "RedHat",
+        "distribution_version": "6.7"
+    }
+}

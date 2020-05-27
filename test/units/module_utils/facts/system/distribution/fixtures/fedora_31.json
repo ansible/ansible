@@ -1,0 +1,55 @@
+{
+    "name": "Fedora 31",
+    "distro": {
+        "codename": "",
+        "id": "fedora",
+        "name": "Fedora",
+        "version": "31",
+        "version_best": "31",
+        "lsb_release_info": {
+            "lsb_version": ":core-4.1-amd64:core-4.1-noarch",
+            "distributor_id": "Fedora",
+            "description": "Fedora release 31 (Thirty One)",
+            "release": "31",
+            "codename": "ThirtyOne"
+        },
+        "os_release_info": {
+            "name": "Fedora",
+            "version": "31 (Workstation Edition)",
+            "id": "fedora",
+            "version_id": "31",
+            "version_codename": "",
+            "platform_id": "platform:f31",
+            "pretty_name": "Fedora 31 (Workstation Edition)",
+            "ansi_color": "0;34",
+            "logo": "fedora-logo-icon",
+            "cpe_name": "cpe:/o:fedoraproject:fedora:31",
+            "home_url": "https://fedoraproject.org/",
+            "documentation_url": "https://docs.fedoraproject.org/en-US/fedora/f31/system-administrators-guide/",
+            "support_url": "https://fedoraproject.org/wiki/Communicating_and_getting_help",
+            "bug_report_url": "https://bugzilla.redhat.com/",
+            "redhat_bugzilla_product": "Fedora",
+            "redhat_bugzilla_product_version": "31",
+            "redhat_support_product": "Fedora",
+            "redhat_support_product_version": "31",
+            "privacy_policy_url": "https://fedoraproject.org/wiki/Legal:PrivacyPolicy",
+            "variant": "Workstation Edition",
+            "variant_id": "workstation",
+            "codename": ""
+        }
+    },
+    "input": {
+        "/etc/redhat-release": "Fedora release 31 (Thirty One)\n",
+        "/etc/system-release": "Fedora release 31 (Thirty One)\n",
+        "/etc/os-release": "NAME=Fedora\nVERSION=\"31 (Workstation Edition)\"\nID=fedora\nVERSION_ID=31\nVERSION_CODENAME=\"\"\nPLATFORM_ID=\"platform:f31\"\nPRETTY_NAME=\"Fedora 31 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nLOGO=fedora-logo-icon\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:31\"\nHOME_URL=\"https://fedoraproject.org/\"\nDOCUMENTATION_URL=\"https://docs.fedoraproject.org/en-US/fedora/f31/system-administrators-guide/\"\nSUPPORT_URL=\"https://fedoraproject.org/wiki/Communicating_and_getting_help\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=31\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=31\nPRIVACY_POLICY_URL=\"https://fedoraproject.org/wiki/Legal:PrivacyPolicy\"\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n",
+        "/usr/lib/os-release": "NAME=Fedora\nVERSION=\"31 (Workstation Edition)\"\nID=fedora\nVERSION_ID=31\nVERSION_CODENAME=\"\"\nPLATFORM_ID=\"platform:f31\"\nPRETTY_NAME=\"Fedora 31 (Workstation Edition)\"\nANSI_COLOR=\"0;34\"\nLOGO=fedora-logo-icon\nCPE_NAME=\"cpe:/o:fedoraproject:fedora:31\"\nHOME_URL=\"https://fedoraproject.org/\"\nDOCUMENTATION_URL=\"https://docs.fedoraproject.org/en-US/fedora/f31/system-administrators-guide/\"\nSUPPORT_URL=\"https://fedoraproject.org/wiki/Communicating_and_getting_help\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\nREDHAT_BUGZILLA_PRODUCT=\"Fedora\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=31\nREDHAT_SUPPORT_PRODUCT=\"Fedora\"\nREDHAT_SUPPORT_PRODUCT_VERSION=31\nPRIVACY_POLICY_URL=\"https://fedoraproject.org/wiki/Legal:PrivacyPolicy\"\nVARIANT=\"Workstation Edition\"\nVARIANT_ID=workstation\n"
+    },
+    "platform.dist": ["fedora", "31", ""],
+    "result": {
+        "distribution": "Fedora",
+        "distribution_version": "31",
+        "distribution_release": "",
+        "distribution_major_version": "31",
+        "os_family": "RedHat"
+    }
+}
