@@ -275,19 +275,31 @@ return_schema = Any(
 )
 
 
-deprecation_schema = Schema(
-    {
+def deprecation_schema():
+    main_fields = {
+            Required('why'): Any(*string_types),
+            Required('alternative'): Any(*string_types),
+            'removed': Any(True),
+    }
+
+    date_schema = {
+        Required('removed_at_date'): Any(isodate),
+    }
+    date_schema.update(main_fields)
+
+    version_schema = {
         # Only list branches that are deprecated or may have docs stubs in
         # Deprecation cycle changed at 2.4 (though not retroactively)
         # 2.3 -> removed_in: "2.5" + n for docs stub
         # 2.4 -> removed_in: "2.8" + n for docs stub
         Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.6", "2.8", "2.9", "2.10", "2.11", "2.12", "2.13", "2.14"),
-        Required('why'): Any(*string_types),
-        Required('alternative'): Any(*string_types),
-        'removed': Any(True),
-    },
-    extra=PREVENT_EXTRA
-)
+    }
+    version_schema.update(main_fields)
+
+    return Any(
+        Schema(date_schema, extra=PREVENT_EXTRA),
+        Schema(version_schema, extra=PREVENT_EXTRA),
+    )
 
 
 def author(value):
@@ -327,7 +339,7 @@ def doc_schema(module_name, version_added=True, deprecated_module=False):
 
     if deprecated_module:
         deprecation_required_scheme = {
-            Required('deprecated'): Any(deprecation_schema),
+            Required('deprecated'): Any(deprecation_schema()),
         }
 
         doc_schema_dict.update(deprecation_required_scheme)

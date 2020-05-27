@@ -2103,13 +2103,28 @@ class ModuleValidator(Validator):
             if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict) and 'removed' in ast.literal_eval(doc_info['ANSIBLE_METADATA']['value'])['status']:
                 end_of_deprecation_should_be_removed_only = True
             elif docs and 'deprecated' in docs and docs['deprecated'] is not None:
-                try:
-                    removed_in = StrictVersion(str(docs.get('deprecated')['removed_in']))
-                except ValueError:
-                    end_of_deprecation_should_be_removed_only = False
-                else:
-                    strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
-                    end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                end_of_deprecation_should_be_removed_only = False
+                if 'removed_at_date' in docs['deprecated']:
+                    try:
+                        removed_at_date = docs['deprecated']['removed_at_date']
+                        if parse_isodate(removed_at_date) < datetime.date.today():
+                            msg = "Module's deprecated.removed_at_date date '%s' is before today" % removed_at_date
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='deprecated-date',
+                                msg=msg,
+                            )
+                    except ValueError:
+                        # Already checked during schema validation
+                        pass
+                if 'removed_in' in docs['deprecated']:
+                    try:
+                        removed_in = StrictVersion(str(docs['deprecated']['removed_in']))
+                    except ValueError:
+                        pass
+                    else:
+                        strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
+                        end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_removed_only:
             self._validate_ansible_module_call(docs)
