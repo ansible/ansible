@@ -18,9 +18,14 @@ def warn(warning):
         raise TypeError("warn requires a string not a %s" % type(warning))
 
 
-def deprecate(msg, version=None):
+def deprecate(msg, version=None, date=None):
     if isinstance(msg, string_types):
-        _global_deprecations.append({'msg': msg, 'version': version})
+        # For compatibility, we accept that neither version nor date is set,
+        # and treat that the same as if version would haven been set
+        if date is not None:
+            _global_deprecations.append({'msg': msg, 'date': date})
+        else:
+            _global_deprecations.append({'msg': msg, 'version': version})
     else:
         raise TypeError("deprecate requires a string not a %s" % type(msg))
 
