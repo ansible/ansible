@@ -1,8 +1,8 @@
-You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma separated version (for example, a commit or tag).
+You can install a collection in a git repository by providing the URI to the repository instead of a collection name or path to a ``tar.gz`` file. The collection must contain a ``galaxy.yml`` file, which will be used to generate the would-be collection artifact data from the directory. The URI should be prefixed with ``git+`` (or with ``git@`` to use a private repository with ssh authentication) and optionally supports a comma-separated `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_ version (for example, a commit or tag).
 
 .. warning::
 
-   Use SSH keys instead of embedding credentials into a git URL.
+   Embedding credentials into a git URI is not secure. Make sure to use safe auth options for security reasons. For example, use SSH, netrc or http.extraHeader/url.<base>.pushInsteadOf in Git config to prevent your creds from being exposed in logs.
 
 .. code-block:: bash
 
@@ -40,23 +40,23 @@ The first is the ``galaxy.yml`` file in the top level of the repository path. If
 .. code-block:: text
 
    ├── galaxy.yml
-   ├── plugins
-   │   ├── lookup
-   │   ├── modules
-   │   └── module_utils
+   ├── plugins/
+   │   ├── lookup/
+   │   ├── modules/
+   │   └── module_utils/
    └─── README.md
 
 The second is a ``galaxy.yml`` file in each directory in the repository path (one level deep). In this scenario, each directory with a ``galaxy.yml`` is installed as a collection.
 
 .. code-block:: text
 
-   directory
-   ├── docs
+   directory/
+   ├── docs/
    ├── galaxy.yml
-   ├── plugins
-   │   ├── inventory
-   │   └── modules
-   └── roles
+   ├── plugins/
+   │   ├── inventory/
+   │   └── modules/
+   └── roles/
 
 Specifying the location to search for collections
 -------------------------------------------------
@@ -65,15 +65,15 @@ If you have a different repository structure or only want to install a subset of
 
 .. code-block:: text
 
-   namespace
-   └── name
-       ├── docs
+   namespace/
+   └── name/
+       ├── docs/
        ├── galaxy.yml
-       ├── plugins
+       ├── plugins/
        │   ├── README.md
-       │   └── modules
+       │   └── modules/
        ├── README.md
-       └── roles
+       └── roles/
 
 .. code-block:: bash
 

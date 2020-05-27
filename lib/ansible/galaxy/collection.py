@@ -61,8 +61,7 @@ class CollectionRequirement:
 
     def __init__(self, namespace, name, b_path, api, versions, requirement, force, parent=None, metadata=None,
                  files=None, skip=False, allow_pre_releases=False):
-        """
-        Represents a collection requirement, the versions that are available to be installed as well as any
+        """Represents a collection requirement, the versions that are available to be installed as well as any
         dependencies the collection has.
 
         :param namespace: The collection namespace.
@@ -144,8 +143,7 @@ class CollectionRequirement:
 
     @staticmethod
     def artifact_info(b_path):
-        """
-        Load the manifest data from the MANIFEST.json and FILES.json. If the files exist, return a dict containing the keys 'files_file' and 'manifest_file'.
+        """Load the manifest data from the MANIFEST.json and FILES.json. If the files exist, return a dict containing the keys 'files_file' and 'manifest_file'.
         :param b_path: The directory of a collection.
         """
         info = {}
@@ -162,9 +160,10 @@ class CollectionRequirement:
 
     @staticmethod
     def galaxy_metadata(b_path):
-        """
-        Generate the manifest data from the galaxy.yml file. If the galaxy.yml exists, return a dictionary containing the keys 'files_file' and 'manifest_file'.
-        "param b_path: The directory of a collection.
+        """Generate the manifest data from the galaxy.yml file.
+        If the galaxy.yml exists, return a dictionary containing the keys 'files_file' and 'manifest_file'.
+
+        :param b_path: The directory of a collection.
         """
         b_galaxy_path = get_galaxy_metadata_path(b_path)
         info = {}
@@ -177,10 +176,9 @@ class CollectionRequirement:
     @staticmethod
     def collection_info(b_path, fallback_metadata=False):
         info = CollectionRequirement.artifact_info(b_path)
-        if not info and fallback_metadata:
-            info = CollectionRequirement.galaxy_metadata(b_path)
-
-        return info
+        if info or not fallback_metadata:
+            return info
+        return CollectionRequirement.galaxy_metadata(b_path)
 
     def add_requirement(self, parent, requirement):
         self.required_by.append((parent, requirement))
@@ -284,10 +282,12 @@ class CollectionRequirement:
             raise
 
     def install_scm(self, b_collection_output_path):
-        """
+        """Install the collection from source control into given dir.
+
         Generates the Ansible collection artifact data from a galaxy.yml and installs the artifact to a directory.
         This should follow the same pattern as build_collection, but instead of creating an artifact, install it.
         :param b_collection_output_path: The installation directory for the collection artifact.
+        :raises AnsibleError: If no collection metadata found.
         """
         b_collection_path = self.b_path
 
@@ -537,8 +537,7 @@ class CollectionRequirement:
 
 
 def build_collection(collection_path, output_path, force):
-    """
-    Creates the Ansible collection artifact in a .tar.gz file.
+    """Creates the Ansible collection artifact in a .tar.gz file.
 
     :param collection_path: The path to the collection to build. This should be the directory that contains the
         galaxy.yml file.
@@ -574,8 +573,7 @@ def build_collection(collection_path, output_path, force):
 
 
 def download_collections(collections, output_path, apis, validate_certs, no_deps, allow_pre_release):
-    """
-    Download Ansible collections as their tarball from a Galaxy server to the path specified and creates a requirements
+    """Download Ansible collections as their tarball from a Galaxy server to the path specified and creates a requirements
     file of the downloaded requirements to be used for an install.
 
     :param collections: The collections to download, should be a list of tuples with (name, requirement, Galaxy Server).
@@ -611,8 +609,7 @@ def download_collections(collections, output_path, apis, validate_certs, no_deps
 
 
 def publish_collection(collection_path, api, wait, timeout):
-    """
-    Publish an Ansible collection tarball into an Ansible Galaxy server.
+    """Publish an Ansible collection tarball into an Ansible Galaxy server.
 
     :param collection_path: The path to the collection tarball to publish.
     :param api: A GalaxyAPI to publish the collection to.
@@ -648,8 +645,7 @@ def publish_collection(collection_path, api, wait, timeout):
 
 def install_collections(collections, output_path, apis, validate_certs, ignore_errors, no_deps, force, force_deps,
                         allow_pre_release=False):
-    """
-    Install Ansible collections to the path specified.
+    """Install Ansible collections to the path specified.
 
     :param collections: The collections to install, should be a list of tuples with (name, requirement, Galaxy server).
     :param output_path: The path to install the collections to.
@@ -683,8 +679,7 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
 
 
 def validate_collection_name(name):
-    """
-    Validates the collection name as an input from the user or a requirements file fit the requirements.
+    """Validates the collection name as an input from the user or a requirements file fit the requirements.
 
     :param name: The input name with optional range specifier split by ':'.
     :return: The input value, required for argparse validation.
@@ -700,7 +695,7 @@ def validate_collection_name(name):
 
 
 def validate_collection_path(collection_path):
-    """ Ensure a given path ends with 'ansible_collections'
+    """Ensure a given path ends with 'ansible_collections'
 
     :param collection_path: The path that should end in 'ansible_collections'
     :return: collection_path ending in 'ansible_collections' if it does not already.
@@ -1024,7 +1019,7 @@ def _build_manifest(namespace, name, version, authors, readme, tags, description
 
 
 def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, file_manifest):
-    """ Build a tar.gz collection artifact from the manifest data. """
+    """Build a tar.gz collection artifact from the manifest data."""
     files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
     collection_manifest['file_manifest_file']['chksum_sha256'] = secure_hash_s(files_manifest_json, hash_func=sha256)
     collection_manifest_json = to_bytes(json.dumps(collection_manifest, indent=True), errors='surrogate_or_strict')
@@ -1066,7 +1061,10 @@ def _build_collection_tar(b_collection_path, b_tar_path, collection_manifest, fi
 
 
 def _build_collection_dir(b_collection_path, b_collection_output, collection_manifest, file_manifest):
-    """ Build a collection directory from the manifest data. This should follow the same pattern as _build_collection_tar. """
+    """Build a collection directory from the manifest data.
+
+    This should follow the same pattern as _build_collection_tar.
+    """
     os.makedirs(b_collection_output, mode=0o0755)
 
     files_manifest_json = to_bytes(json.dumps(file_manifest, indent=True), errors='surrogate_or_strict')
@@ -1076,8 +1074,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
     # Write contents to the files
     for name, b in [('MANIFEST.json', collection_manifest_json), ('FILES.json', files_manifest_json)]:
         b_path = os.path.join(b_collection_output, to_bytes(name, errors='surrogate_or_strict'))
-        b_io = BytesIO(b)
-        with open(b_path, 'wb') as file_obj:
+        with open(b_path, 'wb') as file_obj, BytesIO(b) as b_io:
             shutil.copyfileobj(b_io, file_obj)
 
         os.chmod(b_path, 0o0644)
@@ -1090,7 +1087,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         src_file = os.path.join(b_collection_path, to_bytes(file_info['name'], errors='surrogate_or_strict'))
         dest_file = os.path.join(b_collection_output, to_bytes(file_info['name'], errors='surrogate_or_strict'))
 
-        if any([src_file.startswith(directory) for directory in base_directories]):
+        if any(src_file.startswith(directory) for directory in base_directories):
             continue
 
         existing_is_exec = os.stat(src_file).st_mode & stat.S_IXUSR
@@ -1169,8 +1166,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
 
 
 def _collections_from_scm(collection, requirement, b_temp_path, force, parent=None):
-    """
-    Returns a list of collections found in the repo. If there is a galaxy.yml in the collection then just return
+    """Returns a list of collections found in the repo. If there is a galaxy.yml in the collection then just return
     the specific collection. Otherwise, check each top-level directory for a galaxy.yml.
 
     :param collection: URI to a git repo
@@ -1178,26 +1174,27 @@ def _collections_from_scm(collection, requirement, b_temp_path, force, parent=No
     :param b_temp_path: The temporary path to the archive of a collection
     :param force: Whether to overwrite an existing collection or fail
     :param parent: The name of the parent collection
+    :raises AnsibleError: if nothing found
     :return: List of CollectionRequirement objects
+    :rtype: list
     """
 
     reqs = []
     name, version, path, fragment = parse_scm(collection, requirement)
     b_repo_root = to_bytes(name, errors='surrogate_or_strict')
 
+    b_collection_path = os.path.join(b_temp_path, b_repo_root)
     if fragment:
         b_fragment = to_bytes(fragment, errors='surrogate_or_strict')
-        b_collection_path = os.path.join(b_temp_path, b_repo_root, b_fragment)
-    else:
-        b_collection_path = os.path.join(b_temp_path, b_repo_root)
+        b_collection_path = os.path.join(b_collection_path, b_fragment)
 
     b_galaxy_path = get_galaxy_metadata_path(b_collection_path)
 
-    err = "{0} appears to be an SCM collection source, but the required galaxy.yml was not found. " \
-          "Append #path/to/collection/ to your URI (before the comma separated version, if one is specified) " \
-          "to point to a directory containing the galaxy.yml or directories of collections".format(collection)
+    err = ("%s appears to be an SCM collection source, but the required galaxy.yml was not found. "
+           "Append #path/to/collection/ to your URI (before the comma separated version, if one is specified) "
+           "to point to a directory containing the galaxy.yml or directories of collections" % collection)
 
-    display.vvvvv("Considering {0} as a possible path to a collection's galaxy.yml".format(b_galaxy_path))
+    display.vvvvv("Considering %s as a possible path to a collection's galaxy.yml" % b_galaxy_path)
     if os.path.exists(b_galaxy_path):
         return [CollectionRequirement.from_path(b_collection_path, force, parent, fallback_metadata=True, skip=False)]
 
@@ -1208,8 +1205,8 @@ def _collections_from_scm(collection, requirement, b_temp_path, force, parent=No
         b_collection = os.path.join(b_collection_path, b_possible_collection)
         if not os.path.isdir(b_collection):
             continue
-        b_galaxy = os.path.join(b_collection, b'galaxy.yml')
-        display.vvvvv("Considering {0} as a possible path to a collection's galaxy.yml".format(b_galaxy))
+        b_galaxy = get_galaxy_metadata_path(b_collection)
+        display.vvvvv("Considering %s as a possible path to a collection's galaxy.yml" % b_galaxy)
         if os.path.exists(b_galaxy):
             reqs.append(CollectionRequirement.from_path(b_collection, force, parent, fallback_metadata=True, skip=False))
     if not reqs:
@@ -1226,10 +1223,26 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
     display.vvv("Processing requirement collection '%s'%s" % (to_text(collection), dep_msg))
 
     b_tar_path = None
-    if req_type == 'file' or (not req_type and os.path.isfile(to_bytes(collection, errors='surrogate_or_strict'))):
+
+    is_file = (
+        req_type == 'file' or
+        (not req_type and os.path.isfile(to_bytes(collection, errors='surrogate_or_strict')))
+    )
+
+    is_url = (
+        req_type == 'url' or
+        (not req_type and urlparse(collection).scheme.lower() in ['http', 'https'])
+    )
+
+    is_scm = (
+        req_type == 'git' or
+        (not req_type and not b_tar_path and collection.startswith(('git+', 'git@')))
+    )
+
+    if is_file:
         display.vvvv("Collection requirement '%s' is a tar artifact" % to_text(collection))
         b_tar_path = to_bytes(collection, errors='surrogate_or_strict')
-    elif req_type == 'url' or (not req_type and urlparse(collection).scheme.lower() in ['http', 'https']):
+    elif is_url:
         display.vvvv("Collection requirement '%s' is a URL to a tar artifact" % collection)
         try:
             b_tar_path = _download_file(collection, b_temp_path, None, validate_certs)
@@ -1237,7 +1250,7 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
             raise AnsibleError("Failed to download collection tar from '%s': %s"
                                % (to_native(collection), to_native(err)))
 
-    if req_type == 'git' or (not req_type and not b_tar_path and collection.startswith(('git+', 'git@'))):
+    if is_scm:
         if not collection.startswith('git'):
             collection = 'git+' + collection
 
@@ -1249,7 +1262,7 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
 
         # Ignore requirement if it is set (it must follow semantic versioning, unlike a git version, which is any tree-ish)
         # If the requirement was the only place version was set, requirement == version at this point
-        if requirement not in ("*", "",) and requirement != version:
+        if requirement not in {"*", ""} and requirement != version:
             display.warning(
                 "The collection {0} appears to be a git repository and two versions were provided: '{1}', and '{2}'. "
                 "The version {2} is being disregarded.".format(collection, version, requirement)

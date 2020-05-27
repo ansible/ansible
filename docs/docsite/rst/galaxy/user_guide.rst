@@ -308,7 +308,7 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 
 .. warning::
 
-   Use SSH keys instead of embedding credentials into a SCM URL.
+   Embedding credentials into a SCM URL is not secure. Make sure to use safe auth options for security reasons. For example, use SSH, netrc or http.extraHeader/url.<base>.pushInsteadOf in Git config to prevent your creds from being exposed in logs.
 
 Installing roles and collections from the same requirements.yml file
 ---------------------------------------------------------------------
