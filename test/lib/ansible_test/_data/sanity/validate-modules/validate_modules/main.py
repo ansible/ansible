@@ -942,10 +942,12 @@ class ModuleValidator(Validator):
                     )
         else:
             # We are testing a collection
-            if self.routing and self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {}):
-                # meta/runtime.yml says this is deprecated
-                routing_says_deprecated = True
-                deprecated = True
+            if self.routing:
+                routing_deprecation = self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {})
+                if routing_deprecation:
+                    # meta/runtime.yml says this is deprecated
+                    routing_says_deprecated = True
+                    deprecated = True
 
         if not removed:
             if not bool(doc_info['DOCUMENTATION']['value']):
@@ -1008,6 +1010,7 @@ class ModuleValidator(Validator):
 
                     if 'deprecated' in doc and doc.get('deprecated'):
                         doc_deprecated = True
+                        doc_deprecation = doc['deprecated']
                     else:
                         doc_deprecated = False
 
@@ -1129,6 +1132,27 @@ class ModuleValidator(Validator):
                     code='deprecation-mismatch',
                     msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree.'
                 )
+            elif routing_says_deprecated:
+                # Both DOCUMENTATION.deprecated and meta/runtime.yml agree that the module is deprecated.
+                # Make sure they give the same version or date.
+                routing_date = routing_deprecation.get('removal_date')
+                routing_version = routing_deprecation.get('removal_version')
+                documentation_date = doc_deprecation.get('removed_at_date')
+                documentation_version = doc_deprecation.get('removed_in')
+                if routing_date != documentation_date:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='deprecation-mismatch',
+                        msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree on removal date: %r vs. %r' % (
+                            routing_date, documentation_date)
+                    )
+                if routing_version != documentation_version:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='deprecation-mismatch',
+                        msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree on removal version: %r vs. %r' % (
+                            routing_version, documentation_version)
+                    )
 
             # In the future we should error if ANSIBLE_METADATA exists in a collection
 
