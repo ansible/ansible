@@ -3,8 +3,4 @@ action_groups:
     - example_module
 action_groups_redirection:
   test_group:
-    redirect: redirected
-plugin_routing:
-  modules:
-    formerly_module:
-      redirect: other_namespace.collection_name.first_redirect
+    redirect: collection_namespace.collection_name.redirected_group

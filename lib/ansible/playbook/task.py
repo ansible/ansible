@@ -88,7 +88,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     # deprecated, used to be loop and loop_args but loop has been repurposed
     _loop_with = FieldAttribute(isa='string', private=True, inherit=False)
 
-    ansible_internal_redirect_list = ContextAttribute(isa='list', inherit=False, default=list, static=True)
+    _ansible_internal_redirect_list = ContextAttribute(isa='list', inherit=False, default=list, static=True)
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
