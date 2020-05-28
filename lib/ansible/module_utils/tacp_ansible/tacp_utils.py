@@ -56,7 +56,7 @@ class ApplicationResource(ApiResource):
     model = tacp.ApplicationsApi
 
     def _get_all(self, *args, **kwargs):
-        return self._api.get_applications_using_get(*args, **kwargs)
+        return self._api.get_applications_using_get(*args, filters=**kwargs)
 
     def _get_by_uuid(self, uuid):
         return self._api.get_application_using_get(uuid)
@@ -93,7 +93,7 @@ class VlanResource(ApiResource):
     model = tacp.VlansApi
 
     def _get_all(self, *args, **kwargs):
-        return self._api.get_vlans_using_get(*args, **kwargs)
+        return self._api.get_vlans_using_get(*args, filters=**kwargs)
 
     def _get_by_uuid(self, uuid):
         return self._api.get_vlan_using_get(uuid)
@@ -110,7 +110,7 @@ class VnetResource(ApiResource):
     model = tacp.VnetsApi
 
     def _get_all(self, *args, **kwargs):
-        return self._api.get_vnets_using_get(*args, **kwargs)
+        return self._api.get_vnets_using_get(*args, filters=**kwargs)
 
     def _get_by_uuid(self, uuid):
         return self._api.get_vnet_using_get(uuid)
