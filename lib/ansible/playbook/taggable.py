@@ -66,14 +66,8 @@ class Taggable:
         if only_tags:
             if 'always' in tags:
                 should_run = True
-            elif ('all' in only_tags and 'never' not in tags):
-                should_run = True
-            elif not tags.isdisjoint(only_tags):
-                should_run = True
-            elif 'tagged' in only_tags and tags != self.untagged and 'never' not in tags:
-                should_run = True
             else:
-                should_run = False
+                should_run = self._filter_only_tags(tags, only_tags)
 
         if should_run and skip_tags:
 
@@ -87,3 +81,29 @@ class Taggable:
                 should_run = False
 
         return should_run
+
+    def _filter_only_tags(self, tags, only_tags):
+        if not only_tags:
+            return True
+
+        if isinstance(only_tags, list) and not isinstance(only_tags[0], (list, set, frozenset)):
+            only_tags = [only_tags]
+        elif isinstance(only_tags, set):
+            only_tags = [only_tags]
+
+        for matching_tags in only_tags:
+            if not matching_tags:
+                continue
+
+            if ('all' in matching_tags and 'never' not in tags):
+                continue
+
+            if not tags.isdisjoint(matching_tags):
+                continue
+
+            if 'tagged' in matching_tags and tags != self.untagged and 'never' not in tags:
+                continue
+
+            return False
+
+        return True

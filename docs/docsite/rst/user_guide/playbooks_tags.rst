@@ -318,13 +318,14 @@ Selecting or skipping tags when you run a playbook
 
 Once you have added tags to your tasks, includes, blocks, plays, roles, and imports, you can selectively execute or skip tasks based on their tags when you run :ref:`ansible-playbook`. Ansible runs or skips all tasks with tags that match the tags you pass at the command line. If you have added a tag at the block or play level, with ``roles``, or with an import, that tag applies to every task within the block, play, role, or imported role or file. If you have a role with lots of tags and you want to call subsets of the role at different times, either :ref:`use it with dynamic includes <selective_reuse>`, or split the role into multiple roles.
 
-:ref:`ansible-playbook` offers five tag-related command-line options:
+:ref:`ansible-playbook` offers six tag-related command-line options:
 
 * ``--tags all`` - run all tasks, ignore tags (default behavior)
-* ``--tags [tag1, tag2]`` - run only tasks with the tags ``tag1`` and ``tag2``
-* ``--skip-tags [tag3, tag4]`` - run all tasks except those with the tags ``tag3`` and ``tag4``
+* ``--tags "tag1, tag2"`` - run only tasks with the tags ``tag1`` and ``tag2``
+* ``--skip-tags "tag3, tag4"`` - run all tasks except those with the tags ``tag3`` and ``tag4``
 * ``--tags tagged`` - run only tasks with at least one tag
 * ``--tags untagged`` - run only tasks with no tags
+* ``--tags "tag1|tag2"`` - run tasks with the tags ``tag1`` and ``tag2`` both.
 
 For example, to run only tasks and blocks tagged ``configuration`` and ``packages`` in a very long playbook:
 

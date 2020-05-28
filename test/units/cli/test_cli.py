@@ -379,3 +379,17 @@ class TestCliSetupVaultSecrets(unittest.TestCase):
         self.assertIsInstance(res, list)
         match = vault.match_secrets(res, ['some_vault_id'])[0][1]
         self.assertEqual(match.bytes, b'prompt1_password')
+
+
+class TestCliParseTags(unittest.TestCase):
+    def test_parse_single_tag(self):
+        ret = cli.CLI._parse_tags(['all'])
+        self.assertEqual(ret, [set(['all'])])
+
+    def test_parse_multiple_tags(self):
+        ret = cli.CLI._parse_tags(['all', 'tag1, tag2'])
+        self.assertEqual(ret, [set(['all', 'tag1', 'tag2'])])
+
+    def test_parse_combined_tags(self):
+        ret = cli.CLI._parse_tags(['all', 'tag1, tag2 | tag3'])
+        self.assertEqual(ret, [set(['all', 'tag1', 'tag2']), set(['tag3'])])

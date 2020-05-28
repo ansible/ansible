@@ -269,7 +269,7 @@ class PullCLI(CLI):
         if context.CLIARGS['skip_tags']:
             cmd += ' --skip-tags "%s"' % to_native(u','.join(context.CLIARGS['skip_tags']))
         if context.CLIARGS['tags']:
-            cmd += ' -t "%s"' % to_native(u','.join(context.CLIARGS['tags']))
+            cmd += ' -t "%s"' % to_native(u'|'.join(u','.join(t) for t in context.CLIARGS['tags']))
         if context.CLIARGS['subset']:
             cmd += ' -l "%s"' % context.CLIARGS['subset']
         else:

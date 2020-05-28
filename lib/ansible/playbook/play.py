@@ -91,7 +91,7 @@ class Play(Base, Taggable, CollectionSearch):
         self._removed_hosts = []
         self.ROLE_CACHE = {}
 
-        self.only_tags = set(context.CLIARGS.get('tags', [])) or frozenset(('all',))
+        self.only_tags = list(context.CLIARGS.get('tags', []) or frozenset(('all',)))
         self.skip_tags = set(context.CLIARGS.get('skip_tags', []))
 
     def __repr__(self):

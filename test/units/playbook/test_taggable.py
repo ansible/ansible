@@ -100,3 +100,12 @@ class TestTaggable(unittest.TestCase):
 
     def test_evaluate_tags_with_repeated_tags(self):
         self.assert_evaluate_equal(False, ['tag', 'tag'], [], ['tag'])
+
+    def test_evaluate_tags_with_some_combined_conditions_not_match(self):
+        self.assert_evaluate_equal(False, ['tag1', 'tag2'], [['tag1'], ['tag_not_exist']], [])
+
+    def test_evaluate_tags_with_all_combined_conditions_match(self):
+        self.assert_evaluate_equal(True, ['tag1', 'tag2'], [['tag1'], ['tag2']], [])
+
+    def test_evaluate_tags_with_set(self):
+        self.assert_evaluate_equal(True, ['tag1', 'tag2'], set(['tag1']), [])

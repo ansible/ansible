@@ -293,6 +293,21 @@ class CLI(with_metaclass(ABCMeta, object)):
         """
         self.parser = opt_help.create_base_parser(os.path.basename(self.args[0]), usage=usage, desc=desc, epilog=epilog, )
 
+    @staticmethod
+    def _parse_tags(tags):
+        tags_unified = list()
+
+        tags_in_one = u','.join(t for t in tags)
+        for tag_str in tags_in_one.split(u'|'):
+            tag_set = set()
+            for tag in tag_str.split(u','):
+                tag_set.add(tag.strip())
+
+            if tag_set:
+                tags_unified.append(tag_set)
+
+        return tags_unified
+
     @abstractmethod
     def post_process_args(self, options):
         """Process the command line args
@@ -317,11 +332,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             # optparse defaults does not do what's expected
             options.tags = ['all']
         if hasattr(options, 'tags') and options.tags:
-            tags = set()
-            for tag_set in options.tags:
-                for tag in tag_set.split(u','):
-                    tags.add(tag.strip())
-            options.tags = list(tags)
+            options.tags = self._parse_tags(options.tags)
 
         # process skip_tags
         if hasattr(options, 'skip_tags') and options.skip_tags:
