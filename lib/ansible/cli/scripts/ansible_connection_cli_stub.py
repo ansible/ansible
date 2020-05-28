@@ -100,7 +100,9 @@ class ConnectionProcess(object):
                 self.play_context.private_key_file = os.path.join(self.original_path, self.play_context.private_key_file)
             self.connection = connection_loader.get(self.play_context.connection, self.play_context, '/dev/null',
                                                     task_uuid=self._task_uuid, ansible_playbook_pid=self._ansible_playbook_pid)
-            self.connection.set_options(var_options=variables)
+            # TODO: Change this when we stop routing password through play_context
+            task_keys = dict(password=self.play_context.password)
+            self.connection.set_options(task_keys=task_keys, var_options=variables)
 
             self.connection._socket_path = self.socket_path
             self.srv.register(self.connection)
@@ -302,7 +304,9 @@ def main():
             else:
                 messages.append(('vvvv', 'found existing local domain socket, using it!'))
                 conn = Connection(socket_path)
-                conn.set_options(var_options=variables)
+                # TODO: Change this when we stop routing password through play_context
+                task_keys = dict(password=self.play_context.password)
+                conn.set_options(task_keys=task_keys, var_options=variables)
                 pc_data = to_text(init_data)
                 try:
                     conn.update_play_context(pc_data)
