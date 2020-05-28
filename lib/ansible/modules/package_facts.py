@@ -116,7 +116,7 @@ ansible_facts:
             ...
           }
         }
-      sample_rpm:
+        # Sample rpm
         {
           "packages": {
             "kernel": [
@@ -183,7 +183,7 @@ ansible_facts:
             ],
           }
         }
-      sample_deb:
+        # Sample deb
         {
           "packages": {
             "libbz2-1.0": [
