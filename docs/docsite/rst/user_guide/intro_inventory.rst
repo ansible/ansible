@@ -422,7 +422,7 @@ By default variables are merged/flattened to the specific host before a play is 
 - child group
 - host
 
-By default Ansible merges groups at the same parent/child level alphabetically, and the last group loaded overwrites the previous groups. For example, an a_group will be merged with b_group and b_group vars that match will overwrite the ones in a_group.
+By default Ansible merges groups at the same parent/child level in ASCII order, and the last group loaded overwrites the previous groups. For example, an a_group will be merged with b_group and b_group vars that match will overwrite the ones in a_group.
 
 You can change this behavior by setting the group variable ``ansible_group_priority`` to change the merge order for groups of the same level (after the parent/child order is resolved). The larger the number, the later it will be merged, giving it higher priority. This variable defaults to ``1`` if not set. For example:
 
@@ -485,7 +485,7 @@ You can target this inventory directory simply like this:
 
 It can be useful to control the merging order of the inventory sources if there's variable
 conflicts or group of groups dependencies to the other inventory sources. The inventories
-are merged in alphabetical order according to the filenames so the result can
+are merged in ASCII order according to the filenames so the result can
 be controlled by adding prefixes to the files:
 
 .. code-block:: text
