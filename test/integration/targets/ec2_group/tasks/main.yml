@@ -519,6 +519,7 @@
       assert:
         that:
           - result.changed
+          - result.warning is not defined
           - result.ip_permissions|length == 2
           - result.ip_permissions[0].user_id_group_pairs or
             result.ip_permissions[1].user_id_group_pairs
@@ -626,6 +627,7 @@
         that:
            - 'result.changed'
            - 'result.group_id.startswith("sg-")'
+           - result.warning is not defined
 
     # ============================================================
     - name: test adding a range of ports and ports given as strings (expected changed=true) (CHECK MODE)

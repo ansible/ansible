@@ -51,6 +51,10 @@
         - 60
         - 80
 
+    - assert:
+        that:
+          - result.warning is not defined
+
     - name: Create a group with only the default rule
       ec2_group:
         name: '{{ec2_group_name}}-auto-create-1'
@@ -87,6 +91,10 @@
         state: present
       register: result
 
+    - assert:
+        that:
+          - result.warning is not defined
+
     - name: Create a 4th group
       ec2_group:
         name: '{{ec2_group_name}}-auto-create-4'
@@ -112,6 +120,10 @@
           group_name: '{{ec2_group_name}}-auto-create-4'
         <<: *aws_connection_info
         state: present
+
+    - assert:
+        that:
+          - result.warning is not defined
 
   always:
     - name: tidy up egress rule test security group
