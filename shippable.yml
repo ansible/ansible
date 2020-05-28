@@ -110,6 +110,8 @@ matrix:
     - env: T=fallaxy/2.7/1
     - env: T=fallaxy/3.6/1
 
+    - env: T=generic/1
+
     - env: T=i/osx/10.11
     - env: T=i/rhel/7.8
     - env: T=i/rhel/8.2

@@ -38,6 +38,8 @@ namespace Ansible.Basic
         public delegate void WriteLineHandler(string line);
         public static WriteLineHandler WriteLine = new WriteLineHandler(WriteLineModule);
 
+        public static bool _DebugArgSpec = false;
+
         private static List<string> BOOLEANS_TRUE = new List<string>() { "y", "yes", "on", "1", "true", "t", "1.0" };
         private static List<string> BOOLEANS_FALSE = new List<string>() { "n", "no", "off", "0", "false", "f", "0.0" };
 
@@ -193,12 +195,30 @@ namespace Ansible.Basic
             try
             {
                 ValidateArgumentSpec(argumentSpec);
+
+                // Used by ansible-test to retrieve the module argument spec, not designed for public use.
+                if (_DebugArgSpec)
+                {
+                    // Cannot call exit here because it will be caught with the catch (Exception e) below. Instead
+                    // just throw a new exception with a specific message and the exception block will handle it.
+                    ScriptBlock.Create("Set-Variable -Name ansibleTestArgSpec -Value $args[0] -Scope Global"
+                        ).Invoke(argumentSpec);
+                    throw new Exception("ansible-test validate-modules check");
+                }
+
+                // Now make sure all the metadata keys are set to their defaults, this must be done after we've
+                // potentially output the arg spec for ansible-test.
+                SetArgumentSpecDefaults(argumentSpec);
+
                 Params = GetParams(args);
                 aliases = GetAliases(argumentSpec, Params);
                 SetNoLogValues(argumentSpec, Params);
             }
             catch (Exception e)
             {
+                if (e.Message == "ansible-test validate-modules check")
+                    Exit(0);
+
                 Dictionary<string, object> result = new Dictionary<string, object>
                 {
                     { "failed", true },
@@ -657,8 +677,10 @@ namespace Ansible.Basic
             // Outside of the spec iterator, change the values that were casted above
             foreach (KeyValuePair<string, object> changedValue in changedValues)
                 argumentSpec[changedValue.Key] = changedValue.Value;
+        }
 
-            // Now make sure all the metadata keys are set to their defaults
+        private void SetArgumentSpecDefaults(IDictionary argumentSpec)
+        {
             foreach (KeyValuePair<string, List<object>> metadataEntry in specDefaults)
             {
                 List<object> defaults = metadataEntry.Value;
@@ -668,6 +690,22 @@ namespace Ansible.Basic
 
                 if (!argumentSpec.Contains(metadataEntry.Key))
                     argumentSpec[metadataEntry.Key] = defaultValue;
+            }
+
+            // Recursively set the defaults for any inner options.
+            foreach (DictionaryEntry entry in argumentSpec)
+            {
+                if (entry.Value == null || entry.Key.ToString() != "options")
+                    continue;
+
+                IDictionary optionsSpec = (IDictionary)entry.Value;
+                foreach (DictionaryEntry optionEntry in optionsSpec)
+                {
+                    optionsContext.Add((string)optionEntry.Key);
+                    IDictionary optionMeta = (IDictionary)optionEntry.Value;
+                    SetArgumentSpecDefaults(optionMeta);
+                    optionsContext.RemoveAt(optionsContext.Count - 1);
+                }
             }
         }
 
