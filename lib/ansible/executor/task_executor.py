@@ -562,9 +562,12 @@ class TaskExecutor:
             if not self._task.evaluate_conditional(templar, variables):
                 display.debug("when evaluation is False, skipping this task")
                 return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
-        except AnsibleError:
+        except AnsibleError as e:
             # loop error takes precedence
             if self._loop_eval_error is not None:
+                # Display the error from the conditional as well to prevent
+                # losing information useful for debugging.
+                display.v(to_text(e))
                 raise self._loop_eval_error  # pylint: disable=raising-bad-type
             raise
 
