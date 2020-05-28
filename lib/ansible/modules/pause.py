@@ -50,19 +50,19 @@ notes:
 '''
 
 EXAMPLES = '''
-# Pause for 5 minutes to build app cache.
-- pause:
+- name: Pause for 5 minutes to build app cache
+  pause:
     minutes: 5
 
-# Pause until you can verify updates to an application were successful.
-- pause:
+- name: Pause until you can verify updates to an application were successful
+  pause:
 
-# A helpful reminder of what to look out for post-update.
-- pause:
+- name: A helpful reminder of what to look out for post-update
+  pause:
     prompt: "Make sure org.foo.FooOverload exception is not present"
 
-# Pause to get some sensitive input.
-- pause:
+- name: Pause to get some sensitive input
+  pause:
     prompt: "Enter a secret"
     echo: no
 '''

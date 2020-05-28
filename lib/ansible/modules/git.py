@@ -196,45 +196,44 @@ notes:
 '''
 
 EXAMPLES = '''
-# Example git checkout from Ansible Playbooks
-- git:
+- name: Git checkout
+  git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     version: release-0.22
 
-# Example read-write git checkout from github
-- git:
+- name: Read-write git checkout from github
+  git:
     repo: git@github.com:mylogin/hello.git
     dest: /home/mylogin/hello
 
-# Example just ensuring the repo checkout exists
-- git:
+- name: Just ensuring the repo checkout exists
+  git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     update: no
 
-# Example just get information about the repository whether or not it has
-# already been cloned locally.
-- git:
+- name: Just get information about the repository whether or not it has already been cloned locally
+  git:
     repo: 'https://foosball.example.org/path/to/repo.git'
     dest: /srv/checkout
     clone: no
     update: no
 
-# Example checkout a github repo and use refspec to fetch all pull requests
-- git:
+- name: Checkout a github repo and use refspec to fetch all pull requests
+  git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     refspec: '+refs/pull/*:refs/heads/*'
 
-# Example Create git archive from repo
-- git:
+- name: Create git archive from repo
+  git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     archive: /tmp/ansible-examples.zip
 
-# Example clone a repo with separate git directory
-- git:
+- name: Clone a repo with separate git directory
+  git:
     repo: https://github.com/ansible/ansible-examples.git
     dest: /src/ansible-examples
     separate_git_dir: /src/ansible-examples.git

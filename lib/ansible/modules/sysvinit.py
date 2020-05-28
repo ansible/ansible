@@ -71,13 +71,13 @@ requirements:
 '''
 
 EXAMPLES = '''
-- name: make sure apache2 is started
+- name: Make sure apache2 is started
   sysvinit:
       name: apache2
       state: started
       enabled: yes
 
-- name: make sure apache2 is started on runlevels 3 and 5
+- name: Make sure apache2 is started on runlevels 3 and 5
   sysvinit:
       name: apache2
       state: started

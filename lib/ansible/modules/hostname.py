@@ -38,7 +38,8 @@ options:
 '''
 
 EXAMPLES = '''
-- hostname:
+- name: Set a hostname
+  hostname:
     name: web01
 '''
 

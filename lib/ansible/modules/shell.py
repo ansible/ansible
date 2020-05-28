@@ -103,23 +103,23 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: Execute the command in remote shell; stdout goes to the specified file on the remote.
+- name: Execute the command in remote shell; stdout goes to the specified file on the remote
   shell: somescript.sh >> somelog.txt
 
-- name: Change the working directory to somedir/ before executing the command.
+- name: Change the working directory to somedir/ before executing the command
   shell: somescript.sh >> somelog.txt
   args:
     chdir: somedir/
 
 # You can also use the 'args' form to provide the options.
-- name: This command will change the working directory to somedir/ and will only run when somedir/somelog.txt doesn't exist.
+- name: This command will change the working directory to somedir/ and will only run when somedir/somelog.txt doesn't exist
   shell: somescript.sh >> somelog.txt
   args:
     chdir: somedir/
     creates: somelog.txt
 
 # You can also use the 'cmd' parameter instead of free form format.
-- name: This command will change the working directory to somedir/.
+- name: This command will change the working directory to somedir/
   shell:
     cmd: ls -l | grep log
     chdir: somedir/
@@ -153,7 +153,7 @@ EXAMPLES = r'''
   delegate_to: localhost
 
 # Disabling warnings
-- name: Using curl to connect to a host via SOCKS proxy (unsupported in uri). Ordinarily this would throw a warning.
+- name: Using curl to connect to a host via SOCKS proxy (unsupported in uri). Ordinarily this would throw a warning
   shell: curl --socks5 localhost:9000 http://www.ansible.com
   args:
     warn: no

@@ -371,7 +371,7 @@ EXAMPLES = r'''
     jump: ACCEPT
   become: yes
 
-- name: Allow new incoming SYN packets on TCP port 22 (SSH).
+- name: Allow new incoming SYN packets on TCP port 22 (SSH)
   iptables:
     chain: INPUT
     protocol: tcp
@@ -438,13 +438,13 @@ EXAMPLES = r'''
         - SYN
         - FIN
 
-- name: iptables flush filter
+- name: Iptables flush filter
   iptables:
     chain: "{{ item }}"
     flush: yes
   with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
 
-- name: iptables flush nat
+- name: Iptables flush nat
   iptables:
     table: nat
     chain: '{{ item }}'

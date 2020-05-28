@@ -49,18 +49,18 @@ notes:
     - For Windows targets, use the M(win_package) module instead.
 '''
 EXAMPLES = '''
-- name: install ntpdate
+- name: Install ntpdate
   package:
     name: ntpdate
     state: present
 
 # This uses a variable as this changes per distribution.
-- name: remove the apache package
+- name: Remove the apache package
   package:
     name: "{{ apache }}"
     state: absent
 
-- name: install the latest version of Apache and MariaDB
+- name: Install the latest version of Apache and MariaDB
   package:
     name:
       - httpd

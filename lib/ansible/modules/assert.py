@@ -77,7 +77,7 @@ EXAMPLES = r'''
       - my_param >= 0
     msg: "'my_param' must be between 0 and 100"
 
-- name: use quiet to avoid verbose output
+- name: Use quiet to avoid verbose output
   assert:
     that:
       - my_param <= 100

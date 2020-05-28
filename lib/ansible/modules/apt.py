@@ -236,7 +236,7 @@ EXAMPLES = '''
     pkg: foo
     state: build-dep
 
-- name: Install a .deb package from the internet.
+- name: Install a .deb package from the internet
   apt:
     deb: https://example.com/python-ppq_0.1-1_all.deb
 

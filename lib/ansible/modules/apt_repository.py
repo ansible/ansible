@@ -82,34 +82,33 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Add specified repository into sources list.
-- apt_repository:
+- name: Add specified repository into sources list
+  apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: present
 
-# Add specified repository into sources list using specified filename.
-- apt_repository:
+- name: Add specified repository into sources list using specified filename
+  apt_repository:
     repo: deb http://dl.google.com/linux/chrome/deb/ stable main
     state: present
     filename: google-chrome
 
-# Add source repository into sources list.
-- apt_repository:
+- name: Add source repository into sources list
+  apt_repository:
     repo: deb-src http://archive.canonical.com/ubuntu hardy partner
     state: present
 
-# Remove specified repository from sources list.
-- apt_repository:
+- name: Remove specified repository from sources list
+  apt_repository:
     repo: deb http://archive.canonical.com/ubuntu hardy partner
     state: absent
 
-# Add nginx stable repository from PPA and install its signing key.
-# On Ubuntu target:
-- apt_repository:
+- name: Add nginx stable repository from PPA and install its signing key on Ubuntu target
+  apt_repository:
     repo: ppa:nginx/stable
 
-# On Debian target
-- apt_repository:
+- name: Add nginx stable repository from PPA and install its signing key on Debian target
+  apt_repository:
     repo: 'ppa:nginx/stable'
     codename: trusty
 '''

@@ -35,7 +35,7 @@ author:
 '''
 
 EXAMPLES = '''
-- name: populate service facts
+- name: Populate service facts
   service_facts:
 
 - debug:

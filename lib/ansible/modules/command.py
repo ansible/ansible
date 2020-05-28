@@ -104,28 +104,28 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: return motd to registered var
+- name: Return motd to registered var
   command: cat /etc/motd
   register: mymotd
 
 # free-form (string) arguments, all arguments on one line
-- name: Run command if /path/to/database does not exist (without 'args').
+- name: Run command if /path/to/database does not exist (without 'args')
   command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
 
 # free-form (string) arguments, some arguments on separate lines with the 'args' keyword
 # 'args' is a task keyword, passed at the same level as the module
-- name: Run command if /path/to/database does not exist (with 'args' keyword).
+- name: Run command if /path/to/database does not exist (with 'args' keyword)
   command: /usr/bin/make_database.sh db_user db_name
   args:
     creates: /path/to/database
 
 # 'cmd' is module parameter
-- name: Run command if /path/to/database does not exist (with 'cmd' parameter).
+- name: Run command if /path/to/database does not exist (with 'cmd' parameter)
   command:
     cmd: /usr/bin/make_database.sh db_user db_name
     creates: /path/to/database
 
-- name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist.
+- name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist
   command: /usr/bin/make_database.sh db_user db_name
   become: yes
   become_user: db_owner
@@ -143,7 +143,7 @@ EXAMPLES = r'''
       - dbname with whitespace
     creates: /path/to/database
 
-- name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
+- name: Safely use templated variable to run command. Always use the quote filter to avoid injection issues
   command: cat {{ myfile|quote }}
   register: myoutput
 '''
