@@ -28,12 +28,20 @@ Ansible has several mailing lists.  Your first post to the mailing list will be 
 
 To subscribe to a group from a non-Google account, you can send an email to the subscription address requesting the subscription. For example: ``ansible-devel+subscribe@googlegroups.com``
 
+.. _communication_irc:
+
 IRC channels
 ============
 
 Ansible has several IRC channels on `Freenode <https://freenode.net/>`_.
 
 Our IRC channels may require you to register your nickname. If you receive an error when you connect, see `Freenode's Nickname Registration guide <https://freenode.net/kb/answer/registration>`_ for instructions.
+
+To find all ``ansible`` specific channels on a freenode network, use the following command in your IRC client::
+
+   /msg alis LIST #ansible* -min 5
+
+as described in `freenode docs <https://freenode.net/kb/answer/findingchannels>`_.
 
 General channels
 ----------------
