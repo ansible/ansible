@@ -384,8 +384,8 @@ def deprecation_schema(for_collection):
     version_schema.update(main_fields)
 
     return Any(
-        Schema(date_schema, extra=PREVENT_EXTRA),
         Schema(version_schema, extra=PREVENT_EXTRA),
+        Schema(date_schema, extra=PREVENT_EXTRA),
     )
 
 
