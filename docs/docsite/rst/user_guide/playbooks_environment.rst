@@ -113,6 +113,9 @@ Some language-specific version managers (such as rbenv and nvm) require you to s
 .. note::
    The example above uses ``ansible_env`` as part of the PATH. Basing variables on ``ansible_env`` is risky. Ansible populates ``ansible_env`` values by gathering facts, so the value of the variables depends on the remote_user or become_user Ansible used when gathering those facts. If you change remote_user/become_user the values in ``ansible-env`` may not be the ones you expect.
 
+.. warning::
+    Environment variables are normally passed in clear text (shell plugin dependent) so they are not a recommended way of passing secrets to the module being executed.
+
 You can also specify the environment at the task level::
 
     ---
