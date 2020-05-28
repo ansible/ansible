@@ -18,7 +18,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsiblePluginRemovedError
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils.common._collections_compat import Sequence
@@ -191,7 +191,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         if key in module_args:
                             module_args[key] = self._connection._shell._unquote(module_args[key])
 
-            module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type, collection_list=self._task.collections)
+            result = self._shared_loader_obj.module_loader.find_plugin_with_context(module_name, mod_type, collection_list=self._task.collections)
+
+            if not result.resolved:
+                if result.redirect_list and len(result.redirect_list) > 1:
+                    # take the last one in the redirect list, we may have successfully jumped through N other redirects
+                    target_module_name = result.redirect_list[-1]
+
+                    raise AnsibleError("The module {0} was redirected to {1}, which could not be loaded.".format(module_name, target_module_name))
+
+            module_path = result.plugin_resolved_path
             if module_path:
                 break
         else:  # This is a for-else: http://bit.ly/1ElPkyg

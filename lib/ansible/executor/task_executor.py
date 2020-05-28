@@ -911,7 +911,7 @@ class TaskExecutor:
 
         # load connection
         conn_type = connection_name
-        connection = self._shared_loader_obj.connection_loader.get(
+        connection, plugin_load_context = self._shared_loader_obj.connection_loader.get_with_context(
             conn_type,
             self._play_context,
             self._new_stdin,
@@ -920,6 +920,8 @@ class TaskExecutor:
         )
 
         if not connection:
+            print(plugin_load_context.redirect_list)
+            print(plugin_load_context.resolved)
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
         # load become plugin if needed
