@@ -256,6 +256,7 @@
     multi_line: "{{ 'hello\nworld' | regex_search('^world', multiline=true) }}"
     named_groups: "{{ 'goodbye' | regex_search('(?P<first>good)(?P<second>bye)', '\\g<second>', '\\g<first>') }}"
     numbered_groups: "{{ 'goodbye' | regex_search('(good)(bye)', '\\2', '\\1') }}"
+    groupdict: "{{ 'user:x:1000:1000:John Doe:/home/user:/bin/bash' | regex_search('^(?P<id>[^:]*):[^:]*:(?P<uid>[^:]*)', groupdict=True) }}"
 
 - name: regex_search unknown argument (failure expected)
   set_fact:
@@ -273,6 +274,18 @@
       - named_groups == ['bye', 'good']
       - numbered_groups == ['bye', 'good']
       - failure is failed
+      - "groupdict == {'id': 'user', 'uid': '1000'}"
+
+- name: regex_findall check
+  set_fact:
+    findall_groupdict: "{{ passwd_content | regex_findall('^(?P<id>[^:]*):[^:]*:(?P<uid>[^:]*):(?P<gid>[^:]*)[\\n]?', groupdict=True, multiline=True) }}"
+  failed_when:
+    - findall_groupdict | selectattr('uid', '==', '1000') | map(attribute='id') | list != ['user'] or
+      findall_groupdict | selectattr('id', '==', 'root') | map(attribute='uid') | list != ['0']
+  vars:
+    passwd_content: |
+      root:x:0:0:root:/root:/bin/bash
+      user:x:1000:1000:John Doe:/home/user:/bin/bash
 
 - name: Verify to_bool
   assert:
