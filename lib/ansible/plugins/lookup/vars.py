@@ -9,7 +9,7 @@ DOCUMENTATION = """
     version_added: "2.5"
     short_description: Lookup templated value of variables
     description:
-      - Retrieves the value of an Ansible variable.
+      - 'Retrieves the value of an Ansible variable. Note: Only returns top level variable names.'
     options:
       _terms:
         description: The variable names to look up.
@@ -22,7 +22,7 @@ DOCUMENTATION = """
 
 EXAMPLES = """
 - name: Show value of 'variablename'
-  debug: msg="{{ lookup('vars', 'variabl' + myvar)}}"
+  debug: msg="{{ lookup('vars', 'variabl' + myvar) }}"
   vars:
     variablename: hello
     myvar: ename
@@ -42,6 +42,14 @@ EXAMPLES = """
 
 - name: find several related variables
   debug: msg="{{ lookup('vars', 'ansible_play_hosts', 'ansible_play_batch', 'ansible_play_hosts_all') }}"
+
+- name: Access nested variables
+  debug: msg="{{ lookup('vars', 'variabl' + myvar).sub_var }}"
+  ignore_errors: True
+  vars:
+    variablename:
+        sub_var: 12
+    myvar: ename
 
 - name: alternate way to find some 'prefixed vars' in loop
   debug: msg="{{ lookup('vars', 'ansible_play_' + item) }}"
