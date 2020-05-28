@@ -308,7 +308,7 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 
 .. warning::
 
-   Embedding credentials into a SCM URL is not secure. Make sure to use safe auth options for security reasons. For example, use SSH, netrc or http.extraHeader/url.<base>.pushInsteadOf in Git config to prevent your creds from being exposed in logs.
+   Embedding credentials into a SCM URL is not secure. Make sure to use safe auth options for security reasons. For example, use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_, `netrc <https://linux.die.net/man/5/netrc>`_ or `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in Git config to prevent your creds from being exposed in logs.
 
 Installing roles and collections from the same requirements.yml file
 ---------------------------------------------------------------------
