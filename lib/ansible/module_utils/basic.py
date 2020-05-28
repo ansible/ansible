@@ -1613,7 +1613,7 @@ class AnsibleModule(object):
     def safe_eval(self, value, locals=None, include_exceptions=False):
         return safe_eval(value, locals, include_exceptions)
 
-    def _check_type_str(self, value, param=None):
+    def _check_type_str(self, value, param=None, prefix=''):
         opts = {
             'error': False,
             'warn': False,
@@ -1628,9 +1628,14 @@ class AnsibleModule(object):
             common_msg = 'quote the entire value to ensure it does not change.'
             from_msg = '{0!r}'.format(value)
             to_msg = '{0!r}'.format(to_text(value))
+
             if param is not None:
+                if prefix:
+                    param = '{0}{1}'.format(prefix, param)
+
                 from_msg = '{0}: {1!r}'.format(param, value)
                 to_msg = '{0}: {1!r}'.format(param, to_text(value))
+
             if self._string_conversion_action == 'error':
                 msg = common_msg.capitalize()
                 raise TypeError(to_native(msg))
@@ -1721,7 +1726,7 @@ class AnsibleModule(object):
 
                     if not self.bypass_checks:
                         self._check_required_arguments(spec, param)
-                        self._check_argument_types(spec, param)
+                        self._check_argument_types(spec, param, new_prefix)
                         self._check_argument_values(spec, param)
 
                         self._check_required_together(v.get('required_together', None), param)
@@ -1774,7 +1779,7 @@ class AnsibleModule(object):
                 self.fail_json(msg=msg)
         return validated_params
 
-    def _check_argument_types(self, spec=None, param=None):
+    def _check_argument_types(self, spec=None, param=None, prefix=''):
         ''' ensure all arguments have the requested type '''
 
         if spec is None:
@@ -1796,6 +1801,10 @@ class AnsibleModule(object):
             kwargs = {}
             if wanted_name == 'str':
                 kwargs['param'] = list(param.keys())[0]
+
+                # Get the name of the parent key if this is a nested option
+                if prefix:
+                    kwargs['prefix'] = prefix
 
             try:
                 param[k] = type_checker(value, **kwargs)
