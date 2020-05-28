@@ -292,7 +292,8 @@ In a playbook, you can control the collections Ansible searches for modules and 
 
      - hosts: all
        collections:
-        - my_namespace.my_collection
+         - my_namespace.my_collection
+
        tasks:
          - import_role:
              name: role1
