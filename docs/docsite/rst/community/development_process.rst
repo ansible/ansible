@@ -140,7 +140,8 @@ Changelogs
 ----------
 
 Changelogs help users and developers keep up with changes to Ansible.
-Ansible builds a changelog for each release from fragments. You **must** add a changelog fragment to any PR that changes functionality or fixes a bug.
+Ansible builds a changelog for each release from fragments.
+You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-base.
 You don't have to add a changelog fragment for PRs that add new
 modules and plugins, because our tooling does that for you automatically.
 
@@ -161,14 +162,16 @@ and not by yaml (or escaped for both yaml and rst if that's your
 desire).  Each PR **must** use a new fragment file rather than adding to
 an existing one, so we can trace the change back to the PR that introduced it.
 
-To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
+To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of corresponding repository.
+The file name should include the PR number and a description of the change.
+It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
 
 A single changelog fragment may contain multiple sections but most will only contain one section.
 The toplevel keys (bugfixes, major_changes, and so on) are defined in the
 `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our release note tool. Here are the valid sections and a description of each:
 
 **major_changes**
-    Major changes to Ansible itself. Generally does not include module or plugin changes.
+  Major changes to Ansible itself. Generally does not include module or plugin changes.
 
 **minor_changes**
   Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters.
@@ -180,33 +183,37 @@ The toplevel keys (bugfixes, major_changes, and so on) are defined in the
   Features that were previously deprecated and are now removed.
 
 **bugfixes**
-  Fixes that resolve issues. If there is a specific issue related to this bugfix, add a link in the changelog entry.
+  Fixes that resolve issues.
 
 **known_issues**
   Known issues that are currently not fixed or will not be fixed.
 
-Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and include a link to the related issue if one exists.
+Each changelog entry must contain a link to its issue between parentheses at the end.
+If there is no corresponding issue, the entry must contain a link to the PR itself.
+
+Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and the following sentence with a lowercase letter.
 
 Here are some examples:
 
 .. code-block:: yaml
 
   bugfixes:
-    - win_updates - fixed issue where running win_updates on async fails without any error
+    - apt_repository - fix crash caused by ``cache.update()`` raising an ``IOError``
+      due to a timeout in ``apt update`` (https://github.com/ansible/ansible/issues/51995).
 
 .. code-block:: yaml
 
   minor_changes:
-    - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443)
+    - lineinfile - add warning when using an empty regexp (https://github.com/ansible/ansible/issues/29443).
 
 .. code-block:: yaml
 
   bugfixes:
     - copy module - The copy module was attempting to change the mode of files for
-   remote_src=True even if mode was not set as a parameter.  This failed on
-   filesystems which do not have permission bits.
+      remote_src=True even if mode was not set as a parameter.  This failed on
+      filesystems which do not have permission bits (https://github.com/ansible/ansible/issues/29444).
 
-You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.6/changelogs/fragments>`_ for the 2.6 release. You can also find documentation of the format, including hints on embedding rst in the yaml, in the `reno documentation <https://docs.openstack.org/reno/latest/user/usage.html#editing-a-release-note>`_.
+You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.9/changelogs/fragments>`_ for the 2.9 release.
 
 Once you've written the changelog fragment for your PR, commit the file and include it with the pull request.
 
