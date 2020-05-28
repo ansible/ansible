@@ -118,7 +118,7 @@ author:
 '''
 
 EXAMPLES = r'''
-- name: sleep for 300 seconds and continue with play
+- name: Sleep for 300 seconds and continue with play
   wait_for:
     timeout: 300
   delegate_to: localhost

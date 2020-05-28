@@ -51,36 +51,36 @@ author:
 '''
 
 EXAMPLES = '''
-# get root user info
-- getent:
+- name: Get root user info
+  getent:
     database: passwd
     key: root
 - debug:
     var: getent_passwd
 
-# get all groups
-- getent:
+- name: Get all groups
+  getent:
     database: group
     split: ':'
 - debug:
     var: getent_group
 
-# get all hosts, split by tab
-- getent:
+- name: Get all hosts, split by tab
+  getent:
     database: hosts
 - debug:
     var: getent_hosts
 
-# get http service info, no error if missing
-- getent:
+- name: Get http service info, no error if missing
+  getent:
     database: services
     key: http
     fail_key: False
 - debug:
     var: getent_services
 
-# get user password hash (requires sudo/root)
-- getent:
+- name: Get user password hash (requires sudo/root)
+  getent:
     database: shadow
     key: www-data
     split: ':'
