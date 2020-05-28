@@ -258,89 +258,30 @@ def run_module():
 
         result['changed'] = True
 
-    def powerstate_do_nothing():
-        pass
-
-    def powerstate_absent():
-        instance_power_action(
-            module.params['name'], api_client, Action.ABSENT)
-
-    def powerstate_stop():
-        instance_power_action(
-            module.params['name'], api_client, Action.STOPPED)
-
-    def powerstate_shutdown():
-        instance_power_action(
-            module.params['name'], api_client, Action.SHUTDOWN)
-
-    def powerstate_start():
-        instance_power_action(
-            module.params['name'], api_client, Action.STARTED)
-
-    def powerstate_restart():
-        instance_power_action(
-            module.params['name'], api_client, Action.RESTARTED)
-
-    def powerstate_force_restart():
-        instance_power_action(
-            module.params['name'], api_client, Action.FORCE_RESTARTED)
-
-    def powerstate_pause():
-        instance_power_action(
-            module.params['name'], api_client, Action.PAUSED)
-
-    def powerstate_resume():
-        instance_power_action(
-            module.params['name'], api_client, Action.RESUMED)
-
-    def powerstate_resume_shutdown():
-        instance_power_action(
-            module.params['name'], api_client, Action.RESUMED)
-        instance_power_action(
-            module.params['name'], api_client, Action.SHUTDOWN)
-
-    def powerstate_resume_restart():
-        instance_power_action(
-            module.params['name'], api_client, Action.RESUMED)
-        instance_power_action(
-            module.params['name'], api_client, Action.RESTARTED)
-
-    def powerstate_resume_force_restart():
-        instance_power_action(
-            module.params['name'], api_client, Action.RESUMED)
-        instance_power_action(
-            module.params['name'], api_client, Action.FORCE_RESTARTED)
-
-    def powerstate_start_pause():
-        instance_power_action(
-            module.params['name'], api_client, Action.STARTED)
-        instance_power_action(
-            module.params['name'], api_client, Action.PAUSED)
-
     # Current state is first dimension
     # Specified state is second dimension
     power_state_dict = {
-        (State.RUNNING, Action.STARTED): powerstate_do_nothing,
-        (State.RUNNING, Action.SHUTDOWN): powerstate_shutdown,
-        (State.RUNNING, Action.STOPPED): powerstate_stop,
-        (State.RUNNING, Action.RESTARTED): powerstate_restart,
-        (State.RUNNING, Action.FORCE_RESTARTED): powerstate_force_restart,
-        (State.RUNNING, Action.PAUSED): powerstate_pause,
-        (State.RUNNING, Action.ABSENT): powerstate_absent,
-        (State.SHUTDOWN, Action.STARTED): powerstate_start,
-        (State.SHUTDOWN, Action.SHUTDOWN): powerstate_do_nothing,
-        (State.SHUTDOWN, Action.STOPPED): powerstate_do_nothing,
-        (State.SHUTDOWN, Action.RESTARTED): powerstate_start,
-        (State.SHUTDOWN, Action.FORCE_RESTARTED): powerstate_start,
-        (State.SHUTDOWN, Action.PAUSED): powerstate_start_pause,
-        (State.SHUTDOWN, Action.ABSENT): powerstate_absent,
-        (State.PAUSED, Action.STARTED): powerstate_resume,
-        (State.PAUSED, Action.SHUTDOWN): powerstate_resume_shutdown,
-        (State.PAUSED, Action.STOPPED): powerstate_stop,
-        (State.PAUSED, Action.RESTARTED): powerstate_resume_restart,
-        (State.PAUSED, Action.FORCE_RESTARTED): powerstate_resume_force_restart,
-        (State.PAUSED, Action.PAUSED): powerstate_do_nothing,
-        (State.PAUSED, Action.ABSENT): powerstate_absent
+        (State.RUNNING, Action.STARTED): [],
+        (State.RUNNING, Action.SHUTDOWN): [Action.SHUTDOWN],
+        (State.RUNNING, Action.STOPPED): [Action.STOPPED],
+        (State.RUNNING, Action.RESTARTED): [Action.RESTARTED],
+        (State.RUNNING, Action.FORCE_RESTARTED): [Action.FORCE_RESTARTED],
+        (State.RUNNING, Action.PAUSED): [Action.PAUSED],
+        (State.RUNNING, Action.ABSENT): [Action.ABSENT],
+        (State.SHUTDOWN, Action.STARTED): [Action.STARTED],
+        (State.SHUTDOWN, Action.SHUTDOWN): [],
+        (State.SHUTDOWN, Action.STOPPED): [],
+        (State.SHUTDOWN, Action.RESTARTED): [Action.STARTED],
+        (State.SHUTDOWN, Action.FORCE_RESTARTED): [Action.STARTED],
+        (State.SHUTDOWN, Action.PAUSED): [Action.STARTED, Action.PAUSED],
+        (State.SHUTDOWN, Action.ABSENT): [Action.ABSENT],
+        (State.PAUSED, Action.STARTED): [Action.RESUMED],
+        (State.PAUSED, Action.SHUTDOWN): [Action.RESUMED, Action.SHUTDOWN],
+        (State.PAUSED, Action.STOPPED): [Action.STOPPED],
+        (State.PAUSED, Action.RESTARTED): [Action.RESUMED, Action.RESTARTED],
+        (State.PAUSED, Action.FORCE_RESTARTED): [Action.RESUMED, Action.FORCE_RESTARTED],
+        (State.PAUSED, Action.PAUSED): [],
+        (State.PAUSED, Action.ABSENT): [Action.ABSENT]
     }
 
     # Return the inputs for debugging purposes
@@ -366,7 +307,8 @@ def run_module():
         current_state = instance_properties['status']
     else:
         if module.params['state'] == 'absent':
-            powerstate_absent()
+            instance_power_action(
+                module.params['name'], api_client, Action.ABSENT)
         else:
             # Application does not exist yet, so create it
             instance_params = generate_instance_params(module)
@@ -374,7 +316,9 @@ def run_module():
             current_state = State.SHUTDOWN
 
     if current_state in [State.RUNNING, State.SHUTDOWN, State.PAUSED]:
-        power_state_dict[(current_state, desired_state)]()
+        for power_action in power_state_dict[(current_state, desired_state)]:
+            instance_power_action(
+                module.params['name'], api_client, power_action)
 
     # AnsibleModule.fail_json() to pass in the message and the result
 

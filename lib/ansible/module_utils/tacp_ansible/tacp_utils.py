@@ -21,7 +21,7 @@ class ApiResource(object):
         self._api_client = api_client
 
     def get_all(self, *args, **kwargs):
-        all_instances = self._get_all(*args, **kwargs)
+        all_instances = self._get_all(args, kwargs)
         return all_instances
 
     def get_uuid_by_name(self, name):
@@ -56,7 +56,10 @@ class ApplicationResource(ApiResource):
     model = tacp.ApplicationsApi
 
     def _get_all(self, *args, **kwargs):
-        return self._api.get_applications_using_get(*args, filters=**kwargs)
+        if kwargs:
+            return self._api.get_applications_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_applications_using_get()
 
     def _get_by_uuid(self, uuid):
         return self._api.get_application_using_get(uuid)
@@ -84,7 +87,7 @@ class ApplicationResource(ApiResource):
 
         api_response = power_action_dict[power_action](uuid)
         wait_for_action_to_complete(
-                api_response.action_uuid, self._api_client)
+            api_response.action_uuid, self._api_client)
         return True
 
 
@@ -93,14 +96,17 @@ class VlanResource(ApiResource):
     model = tacp.VlansApi
 
     def _get_all(self, *args, **kwargs):
-        return self._api.get_vlans_using_get(*args, filters=**kwargs)
+        if kwargs:
+            return self._api.get_vlans_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_vlans_using_get()
 
     def _get_by_uuid(self, uuid):
         return self._api.get_vlan_using_get(uuid)
 
     def _create(self, body):
         return self._api.create_vlan_using_post(body)
-        
+
     def _delete(self, uuid):
         return self._api.delete_vlan_using_delete(uuid)
 
@@ -110,7 +116,10 @@ class VnetResource(ApiResource):
     model = tacp.VnetsApi
 
     def _get_all(self, *args, **kwargs):
-        return self._api.get_vnets_using_get(*args, filters=**kwargs)
+        if kwargs:
+            return self._api.get_vnets_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_vnets_using_get()
 
     def _get_by_uuid(self, uuid):
         return self._api.get_vnet_using_get(uuid)
@@ -120,7 +129,7 @@ class VnetResource(ApiResource):
 
     def _delete(self, uuid):
         return self._api.delete_vnet_using_delete(uuid)
-        
+
 
 def get_component_fields_by_name(name, component,
                                  api_client, fields=['name', 'uuid']):
