@@ -30,10 +30,10 @@ LONG_TEMPLATE = """
 {% set latest_ver = (versions | sort(attribute='ver_obj'))[-1] %}
 
 To: ansible-devel@googlegroups.com, ansible-project@googlegroups.com, ansible-announce@googlegroups.com
-Subject: New Ansible release{% if plural %}s{% endif %} {{ version_str }}
+Subject: New ansible-base release{% if plural %}s{% endif %} {{ version_str }}
 
 {% filter wordwrap %}
-Hi all- we're happy to announce that the general release of Ansible {{ version_str }}{% if plural %} are{%- else %} is{%- endif %} now available!
+Hi all- we're happy to announce that the general release of ansible-base {{ version_str }}{% if plural %} are{%- else %} is{%- endif %} now available!
 {% endfilter %}
 
 
@@ -42,7 +42,7 @@ How do you get it?
 ------------------
 
 {% for version in versions %}
-$ pip install ansible=={{ version }} --user
+$ pip install ansible-base=={{ version }} --user
 {% if not loop.last %}
 or
 {% endif %}
@@ -52,7 +52,7 @@ The tar.gz of the release{% if plural %}s{% endif %} can be found here:
 
 {% for version in versions %}
 * {{ version }}
-  https://releases.ansible.com/ansible/ansible-{{ version }}.tar.gz
+  https://releases.ansible.com/ansible-base/ansible-base-{{ version }}.tar.gz
   SHA256: {{ hashes[version] }}
 {% endfor %}
 
@@ -98,7 +98,7 @@ If you discover any errors or if any of your working playbooks break when you up
   https://github.com/ansible/ansible/issues/new/choose
 
 {% filter wordwrap %}
-In your issue, be sure to mention the Ansible version that works and the one that doesn't.
+In your issue, be sure to mention the ansible-base version that works and the one that doesn't.
 {% endfilter %}
 
 
@@ -125,8 +125,8 @@ them
 {% else %}
 it
 {% endif %}
-on PyPI: pip install ansible=={{ (versions|sort(attribute='ver_obj'))[-1] }},
-https://releases.ansible.com/ansible/, the Ansible PPA on Launchpad, or GitHub.  Happy automating!
+on PyPI: pip install ansible-base=={{ (versions|sort(attribute='ver_obj'))[-1] }},
+https://releases.ansible.com/ansible-base/, the Ansible PPA on Launchpad, or GitHub.  Happy automating!
 """  # noqa for E501 (line length).
 # jinja2 is horrid about getting rid of extra newlines so we have to have a single per paragraph for
 # proper wrapping to occur
@@ -143,7 +143,7 @@ JINJA_ENV = Environment(
 
 
 async def calculate_hash_from_tarball(session, version):
-    tar_url = f'https://releases.ansible.com/ansible/ansible-{version}.tar.gz'
+    tar_url = f'https://releases.ansible.com/ansible-base/ansible-base-{version}.tar.gz'
     tar_task = asyncio.create_task(session.get(tar_url))
     tar_response = await tar_task
 
@@ -158,8 +158,8 @@ async def calculate_hash_from_tarball(session, version):
 
 
 async def parse_hash_from_file(session, version):
-    filename = f'ansible-{version}.tar.gz'
-    hash_url = f'https://releases.ansible.com/ansible/{filename}.sha'
+    filename = f'ansible-base-{version}.tar.gz'
+    hash_url = f'https://releases.ansible.com/ansible-base/{filename}.sha'
     hash_task = asyncio.create_task(session.get(hash_url))
     hash_response = await hash_task
 
@@ -176,7 +176,7 @@ async def get_hash(session, version):
     precreated_hash = await parse_hash_from_file(session, version)
 
     if calculated_hash != precreated_hash:
-        raise ValueError(f'Hash in file ansible-{version}.tar.gz.sha {precreated_hash} does not'
+        raise ValueError(f'Hash in file ansible-base-{version}.tar.gz.sha {precreated_hash} does not'
                          f' match hash of tarball {calculated_hash}')
 
     return calculated_hash
