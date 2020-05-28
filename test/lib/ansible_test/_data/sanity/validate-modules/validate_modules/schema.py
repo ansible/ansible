@@ -362,7 +362,7 @@ def deprecation_schema(for_collection):
     }
 
     date_schema = {
-        Required('removed_at_date'): Any(isodate),
+        Required('removed_at_date'): date(tagged='always'),
     }
     date_schema.update(main_fields)
 

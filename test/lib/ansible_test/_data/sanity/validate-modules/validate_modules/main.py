@@ -44,7 +44,7 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-from ansible.utils.plugin_docs import BLACKLIST, tag_versions, add_fragments, get_docstring
+from ansible.utils.plugin_docs import BLACKLIST, tag_versions_and_dates, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
@@ -990,7 +990,7 @@ class ModuleValidator(Validator):
                     self.name, 'DOCUMENTATION'
                 )
                 if doc:
-                    tag_versions(doc, '%s:' % (self.collection_name, ), is_module=True)
+                    tag_versions_and_dates(doc, '%s:' % (self.collection_name, ), is_module=True)
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
@@ -1167,8 +1167,10 @@ class ModuleValidator(Validator):
                 # Make sure they give the same version or date.
                 routing_date = routing_deprecation.get('removal_date')
                 routing_version = routing_deprecation.get('removal_version')
-                documentation_date = doc_deprecation.get('removed_at_date')
-                documentation_version = doc_deprecation.get('removed_in')
+                # The versions and dates in the module documentation are auto-tagged, so remove the tag
+                # to make comparison possible and to avoid confusing the user.
+                documentation_date = self._extract_version_from_tag_for_msg(doc_deprecation.get('removed_at_date'))
+                documentation_version = self._extract_version_from_tag_for_msg(doc_deprecation.get('removed_in'))
                 if routing_date != documentation_date:
                     self.reporter.error(
                         path=self.object_path,

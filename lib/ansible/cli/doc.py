@@ -31,7 +31,7 @@ from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import BLACKLIST, untag_versions, get_docstring, get_versioned_doclink
+from ansible.utils.plugin_docs import BLACKLIST, untag_versions_and_dates, get_docstring, get_versioned_doclink
 
 display = Display()
 
@@ -358,7 +358,7 @@ class DocCLI(CLI):
             raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
 
         doc['filename'] = filename
-        untag_versions(doc, '%s:' % (collection_name, ), is_module=(plugin_type == 'module'))
+        untag_versions_and_dates(doc, '%s:' % (collection_name, ), is_module=(plugin_type == 'module'))
         return doc, plainexamples, returndocs, metadata
 
     @staticmethod
