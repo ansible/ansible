@@ -37,7 +37,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
-from ansible.plugins.loader import module_loader, module_utils_loader
+from ansible.plugins.loader import module_utils_loader
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 
 # Must import strategy and use write_locks from there
@@ -1358,11 +1358,6 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
                 redirected_group = redirect_action_groups.get(fqcr, redirect_action_groups.get(group, {})).get('redirect')
                 if redirected_group:
                     tmp_args.update((module_defaults.get('group/{0}'.format(redirected_group), {})))
-
-        # deal with configured group defaults first
-        if action in C.config.module_defaults_groups:
-            for group in C.config.module_defaults_groups.get(action, []):
-                tmp_args.update((module_defaults.get('group/{0}'.format(group)) or {}).copy())
 
         # handle specific action defaults
         # Original, resolved FQCN of original if it was just a resource, and any redirects (including the resolved name)
