@@ -255,12 +255,15 @@ class ModuleValidator(Validator):
         self.analyze_arg_spec = analyze_arg_spec
 
         self.Version = LooseVersion
+        self.StrictVersion = StrictVersion
 
         self.collection = collection
+        if self.collection:
+            self.Version = SemanticVersion
+            self.StrictVersion = SemanticVersion
         self.routing = routing
         self.collection_version = None
         if collection_version is not None:
-            self.Version = SemanticVersion
             self.collection_version_str = collection_version
             self.collection_version = self.Version(collection_version)
 
@@ -942,10 +945,12 @@ class ModuleValidator(Validator):
                     )
         else:
             # We are testing a collection
-            if self.routing and self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {}):
-                # meta/runtime.yml says this is deprecated
-                routing_says_deprecated = True
-                deprecated = True
+            if self.routing:
+                routing_deprecation = self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {})
+                if routing_deprecation:
+                    # meta/runtime.yml says this is deprecated
+                    routing_says_deprecated = True
+                    deprecated = True
 
         if not removed:
             if not bool(doc_info['DOCUMENTATION']['value']):
@@ -1008,6 +1013,7 @@ class ModuleValidator(Validator):
 
                     if 'deprecated' in doc and doc.get('deprecated'):
                         doc_deprecated = True
+                        doc_deprecation = doc['deprecated']
                     else:
                         doc_deprecated = False
 
@@ -1020,6 +1026,7 @@ class ModuleValidator(Validator):
                                 os.readlink(self.object_path).split('.')[0],
                                 version_added=not bool(self.collection),
                                 deprecated_module=deprecated,
+                                for_collection=bool(self.collection),
                             ),
                             'DOCUMENTATION',
                             'invalid-documentation',
@@ -1032,6 +1039,7 @@ class ModuleValidator(Validator):
                                 self.object_name.split('.')[0],
                                 version_added=not bool(self.collection),
                                 deprecated_module=deprecated,
+                                for_collection=bool(self.collection),
                             ),
                             'DOCUMENTATION',
                             'invalid-documentation',
@@ -1129,6 +1137,27 @@ class ModuleValidator(Validator):
                     code='deprecation-mismatch',
                     msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree.'
                 )
+            elif routing_says_deprecated:
+                # Both DOCUMENTATION.deprecated and meta/runtime.yml agree that the module is deprecated.
+                # Make sure they give the same version or date.
+                routing_date = routing_deprecation.get('removal_date')
+                routing_version = routing_deprecation.get('removal_version')
+                documentation_date = doc_deprecation.get('removed_at_date')
+                documentation_version = doc_deprecation.get('removed_in')
+                if routing_date != documentation_date:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='deprecation-mismatch',
+                        msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree on removal date: %r vs. %r' % (
+                            routing_date, documentation_date)
+                    )
+                if routing_version != documentation_version:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='deprecation-mismatch',
+                        msg='"meta/runtime.yml" and DOCUMENTATION.deprecation do not agree on removal version: %r vs. %r' % (
+                            routing_version, documentation_version)
+                    )
 
             # In the future we should error if ANSIBLE_METADATA exists in a collection
 
@@ -1137,7 +1166,7 @@ class ModuleValidator(Validator):
     def _check_version_added(self, doc, existing_doc):
         version_added_raw = doc.get('version_added')
         try:
-            version_added = StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
+            version_added = self.StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
             if self._is_new_module() or version_added != 'historical':
@@ -1160,7 +1189,7 @@ class ModuleValidator(Validator):
             return
 
         should_be = '.'.join(ansible_version.split('.')[:2])
-        strict_ansible_version = StrictVersion(should_be)
+        strict_ansible_version = self.StrictVersion(should_be)
 
         if (version_added < strict_ansible_version or
                 strict_ansible_version < version_added):
@@ -1972,12 +2001,12 @@ class ModuleValidator(Validator):
                 return
 
         try:
-            mod_version_added = StrictVersion()
+            mod_version_added = self.StrictVersion()
             mod_version_added.parse(
                 str(existing_doc.get('version_added', '0.0'))
             )
         except ValueError:
-            mod_version_added = StrictVersion('0.0')
+            mod_version_added = self.StrictVersion('0.0')
 
         if self.base_branch and 'stable-' in self.base_branch:
             metadata.pop('metadata_version', None)
@@ -1992,7 +2021,7 @@ class ModuleValidator(Validator):
         options = doc.get('options', {}) or {}
 
         should_be = '.'.join(ansible_version.split('.')[:2])
-        strict_ansible_version = StrictVersion(should_be)
+        strict_ansible_version = self.StrictVersion(should_be)
 
         for option, details in options.items():
             try:
@@ -2018,7 +2047,7 @@ class ModuleValidator(Validator):
                 continue
 
             try:
-                version_added = StrictVersion()
+                version_added = self.StrictVersion()
                 version_added.parse(
                     str(details.get('version_added', '0.0'))
                 )
@@ -2103,13 +2132,34 @@ class ModuleValidator(Validator):
             if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict) and 'removed' in ast.literal_eval(doc_info['ANSIBLE_METADATA']['value'])['status']:
                 end_of_deprecation_should_be_removed_only = True
             elif docs and 'deprecated' in docs and docs['deprecated'] is not None:
-                try:
-                    removed_in = StrictVersion(str(docs.get('deprecated')['removed_in']))
-                except ValueError:
-                    end_of_deprecation_should_be_removed_only = False
-                else:
-                    strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
-                    end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                end_of_deprecation_should_be_removed_only = False
+                if 'removed_at_date' in docs['deprecated']:
+                    try:
+                        removed_at_date = docs['deprecated']['removed_at_date']
+                        if parse_isodate(removed_at_date) < datetime.date.today():
+                            msg = "Module's deprecated.removed_at_date date '%s' is before today" % removed_at_date
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='deprecated-date',
+                                msg=msg,
+                            )
+                    except ValueError:
+                        # Already checked during schema validation
+                        pass
+                if 'removed_in' in docs['deprecated']:
+                    try:
+                        removed_in = self.StrictVersion(str(docs['deprecated']['removed_in']))
+                    except ValueError:
+                        end_of_deprecation_should_be_removed_only = False
+                    else:
+                        if not self.collection:
+                            strict_ansible_version = self.StrictVersion('.'.join(ansible_version.split('.')[:2]))
+                            end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                        elif self.collection_version:
+                            strict_ansible_version = self.collection_version
+                            end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                        else:
+                            end_of_deprecation_should_be_removed_only = False
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_removed_only:
             self._validate_ansible_module_call(docs)
