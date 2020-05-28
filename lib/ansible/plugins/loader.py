@@ -49,7 +49,11 @@ try:
     imp = None
 except ImportError:
     import imp
-    ModuleNotFoundError = None
+
+if not hasattr(__builtins__, 'ModuleNotFoundError'):
+    # this was introduced in Python 3.6
+    class ModuleNotFoundError(ImportError):
+        pass
 
 display = Display()
 
