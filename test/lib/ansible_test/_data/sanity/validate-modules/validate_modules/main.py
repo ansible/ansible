@@ -2024,7 +2024,7 @@ class ModuleValidator(Validator):
         try:
             mod_version_added = self.StrictVersion()
             mod_version_added.parse(
-                str(existing_doc.get('version_added', '0.0'))
+                self._extract_version_from_tag_for_msg(str(existing_doc.get('version_added', '0.0')))
             )
         except ValueError:
             mod_version_added = self.StrictVersion('0.0')
@@ -2071,7 +2071,7 @@ class ModuleValidator(Validator):
             try:
                 version_added = self.StrictVersion()
                 version_added.parse(
-                    str(details.get('version_added', '0.0'))
+                    self._extract_version_from_tag_for_msg(str(details.get('version_added', '0.0')))
                 )
             except ValueError:
                 # already reported during schema validation
