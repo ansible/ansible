@@ -2062,7 +2062,7 @@ class ModuleValidator(Validator):
                     self.reporter.error(
                         path=self.object_path,
                         code='option-incorrect-version-added',
-                        msg=('version_added for new option (%s) should '
+                        msg=('version_added for existing option (%s) should '
                              'be %r. Currently %r' %
                              (option, existing_version, current_version))
                     )
