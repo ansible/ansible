@@ -2701,6 +2701,301 @@ test_no_log - Invoked with:
         $actual.Length | Assert-Equals -Expected 1
         $actual[0] | Assert-DictionaryEquals -Expected @{"abc" = "def"}
     }
+
+    "Spec with fragments" = {
+        $spec = @{
+            options = @{
+                option1 = @{ type = "str" }
+            }
+        }
+        $fragment1 = @{
+            options = @{
+                option2 = @{ type = "str" }
+            }
+        }
+
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            option1 = "option1"
+            option2 = "option2"
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec, @($fragment1))
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $actual.changed | Assert-Equals -Expected $false
+        $actual.invocation | Assert-DictionaryEquals -Expected @{module_args = $complex_args}
+    }
+
+    "Fragment spec that with a deprecated alias" = {
+        $spec = @{
+            options = @{
+                option1 = @{
+                    aliases = @("alias1_spec")
+                    type = "str"
+                    deprecated_aliases = @(
+                        @{name = "alias1_spec"; version = "2.0"}
+                    )
+                }
+                option2 = @{
+                    aliases = @("alias2_spec")
+                    deprecated_aliases = @(
+                        @{name = "alias2_spec"; version = "2.0"}
+                    )
+                }
+            }
+        }
+        $fragment1 = @{
+            options = @{
+                option1 = @{
+                    aliases = @("alias1")
+                    deprecated_aliases = @()  # Makes sure it doesn't overwrite the spec, just adds to it.
+                }
+                option2 = @{
+                    aliases = @("alias2")
+                    deprecated_aliases = @(
+                        @{name = "alias2"; version = "2.0"}
+                    )
+                    type = "str"
+                }
+            }
+        }
+
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            alias1_spec = "option1"
+            alias2 = "option2"
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec, @($fragment1))
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $actual.deprecations.Count | Assert-Equals -Expected 2
+        $actual.deprecations[0] | Assert-DictionaryEquals -Expected @{
+            msg = "Alias 'alias1_spec' is deprecated. See the module docs for more information"; version = "2.0"
+        }
+        $actual.deprecations[1] | Assert-DictionaryEquals -Expected @{
+            msg = "Alias 'alias2' is deprecated. See the module docs for more information"; version = "2.0"
+        }
+        $actual.changed | Assert-Equals -Expected $false
+        $actual.invocation | Assert-DictionaryEquals -Expected @{
+            module_args = @{
+                option1 = "option1"
+                alias1_spec = "option1"
+                option2 = "option2"
+                alias2 = "option2"
+            }
+        }
+    }
+
+    "Fragment spec with mutual args" = {
+        $spec = @{
+            options = @{
+                option1 = @{ type = "str" }
+                option2 = @{ type = "str" }
+            }
+            mutually_exclusive = @(
+                ,@('option1', 'option2')
+            )
+        }
+        $fragment1 = @{
+            options = @{
+                fragment1_1 = @{ type = "str" }
+                fragment1_2 = @{ type = "str" }
+            }
+            mutually_exclusive = @(
+                ,@('fragment1_1', 'fragment1_2')
+            )
+        }
+        $fragment2 = @{
+            options = @{
+                fragment2 = @{ type = "str" }
+            }
+        }
+
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            option1 = "option1"
+            fragment1_1 = "fragment1_1"
+            fragment1_2 = "fragment1_2"
+            fragment2 = "fragment2"
+        }
+
+        $failed = $false
+        try {
+            [Ansible.Basic.AnsibleModule]::Create(@(), $spec, @($fragment1, $fragment2))
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 1"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $actual.changed | Assert-Equals -Expected $false
+        $actual.failed | Assert-Equals -Expected $true
+        $actual.msg | Assert-Equals -Expected "parameters are mutually exclusive: fragment1_1, fragment1_2"
+        $actual.invocation | Assert-DictionaryEquals -Expected @{ module_args = $complex_args }
+    }
+
+    "Fragment spec with no_log" = {
+        $spec = @{
+            options = @{
+                option1 = @{
+                    aliases = @("alias")
+                }
+            }
+        }
+        $fragment1 = @{
+            options = @{
+                option1 = @{
+                    no_log = $true  # Makes sure that a value set in the fragment but not in the spec is respected.
+                    type = "str"
+                }
+            }
+        }
+
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            alias = "option1"
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec, @($fragment1))
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $actual.changed | Assert-Equals -Expected $false
+        $actual.invocation | Assert-DictionaryEquals -Expected @{
+            module_args = @{
+                option1 = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+                alias = "VALUE_SPECIFIED_IN_NO_LOG_PARAMETER"
+            }
+        }
+    }
+
+    "Catch invalid fragment spec format" = {
+        $spec = @{
+            options = @{
+                option1 = @{ type = "str" }
+            }
+        }
+        $fragment = @{
+            options = @{}
+            invalid = "will fail"
+        }
+
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            option1 = "option1"
+        }
+
+        $failed = $false
+        try {
+            [Ansible.Basic.AnsibleModule]::Create(@(), $spec, @($fragment))
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 1"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $actual.failed | Assert-Equals -Expected $true
+        $actual.msg.StartsWith("internal error: argument spec entry contains an invalid key 'invalid', valid keys: ") | Assert-Equals -Expected $true
+    }
+
+    "Spec with different list types" = {
+        $spec = @{
+            options = @{
+                # Single element of the same list type not in a list
+                option1 = @{
+                    aliases = "alias1"
+                    deprecated_aliases = @{name="alias1";version="2.0"}
+                }
+
+                # Arrays
+                option2 = @{
+                    aliases = ,"alias2"
+                    deprecated_aliases = ,@{name="alias2";version="2.0"}
+                }
+
+                # ArrayList
+                option3 = @{
+                    aliases = [System.Collections.ArrayList]@("alias3")
+                    deprecated_aliases = [System.Collections.ArrayList]@(@{name="alias3";version="2.0"})
+                }
+
+                # Generic.List[Object]
+                option4 = @{
+                    aliases = [System.Collections.Generic.List[Object]]@("alias4")
+                    deprecated_aliases = [System.Collections.Generic.List[Object]]@(@{name="alias4";version="2.0"})
+                }
+
+                # Generic.List[T]
+                option5 = @{
+                    aliases = [System.Collections.Generic.List[String]]@("alias5")
+                    deprecated_aliases = [System.Collections.Generic.List[Hashtable]]@()
+                }
+            }
+        }
+        $spec.options.option5.deprecated_aliases.Add(@{name="alias5";version="2.0"})
+
+        Set-Variable -Name complex_args -Scope Global -Value @{
+            alias1 = "option1"
+            alias2 = "option2"
+            alias3 = "option3"
+            alias4 = "option4"
+            alias5 = "option5"
+        }
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $actual.changed | Assert-Equals -Expected $false
+        $actual.deprecations.Count | Assert-Equals -Expected 5
+        foreach ($dep in $actual.deprecations) {
+            $dep.msg -like "Alias 'alias?' is deprecated. See the module docs for more information" | Assert-Equals -Expected $true
+            $dep.version | Assert-Equals -Expected '2.0'
+        }
+        $actual.invocation | Assert-DictionaryEquals -Expected @{
+            module_args = @{
+                alias1 = "option1"
+                option1 = "option1"
+                alias2 = "option2"
+                option2 = "option2"
+                alias3 = "option3"
+                option3 = "option3"
+                alias4 = "option4"
+                option4 = "option4"
+                alias5 = "option5"
+                option5 = "option5"
+            }
+        }
+    }
 }
 
 try {
@@ -2730,4 +3025,3 @@ try {
 }
 
 Exit-Module
-

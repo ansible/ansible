@@ -423,9 +423,8 @@ $tests = [Ordered]@{
             }
             mutually_exclusive = @(,@('url', 'test'))
         }
-        $spec = Merge-WebRequestSpec -ModuleSpec $spec
 
-        $testModule = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $testModule = [Ansible.Basic.AnsibleModule]::Create(@(), $spec, @(Get-AnsibleWebRequestSpec))
         $r = Get-AnsibleWebRequest -Url $testModule.Params.url -Module $testModule
 
         $actual = Invoke-WithWebRequest -Module $testModule -Request $r -Script {
