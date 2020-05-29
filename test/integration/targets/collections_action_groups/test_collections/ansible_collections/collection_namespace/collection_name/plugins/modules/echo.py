@@ -25,6 +25,7 @@ import json
 from ansible.module_utils import basic
 from ansible.module_utils.basic import _load_params, AnsibleModule
 
+
 def main():
     p = _load_params()
     d = json.loads(basic._ANSIBLE_ARGS)

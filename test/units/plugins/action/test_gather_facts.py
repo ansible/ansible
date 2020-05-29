@@ -48,8 +48,8 @@ class TestNetworkFacts(unittest.TestCase):
     def test_network_gather_facts(self):
         self.task_vars = {'ansible_network_os': 'ios'}
         self.task.action = 'gather_facts'
-        self.task.ansible_internal_redirect_list = []
         self.task.async_val = False
+        self.task._ansible_internal_redirect_list = []
         self.task.args = {'gather_subset': 'min'}
         self.task.module_defaults = [{'ios_facts': {'gather_subset': 'min'}}]
 
@@ -69,7 +69,7 @@ class TestNetworkFacts(unittest.TestCase):
     def test_network_gather_facts_fqcn(self, mock_collection_metadata):
         self.fqcn_task_vars = {'ansible_network_os': 'cisco.ios.ios'}
         self.task.action = 'gather_facts'
-        self.task.ansible_internal_redirect_list = ['cisco.ios.ios_facts']
+        self.task._ansible_internal_redirect_list = ['cisco.ios.ios_facts']
         self.task.async_val = False
         self.task.args = {'gather_subset': 'min'}
         self.task.module_defaults = [{'cisco.ios.ios_facts': {'gather_subset': 'min'}}]

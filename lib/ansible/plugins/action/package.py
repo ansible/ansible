@@ -67,7 +67,7 @@ class ActionModule(ActionBase):
 
                     # get defaults for specific module
                     new_module_args = get_action_args_with_defaults(
-                        module, new_module_args, self._task.module_defaults, self._templar, self._task.ansible_internal_redirect_list
+                        module, new_module_args, self._task.module_defaults, self._templar, self._task._ansible_internal_redirect_list
                     )
 
                     display.vvvv("Running %s" % module)

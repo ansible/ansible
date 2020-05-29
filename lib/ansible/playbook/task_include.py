@@ -44,7 +44,7 @@ class TaskInclude(Task):
     VALID_ARGS = BASE.union(OTHER_ARGS)  # all valid args
     VALID_INCLUDE_KEYWORDS = frozenset(('action', 'args', 'collections', 'debugger', 'ignore_errors', 'loop', 'loop_control',
                                         'loop_with', 'name', 'no_log', 'register', 'run_once', 'tags', 'vars',
-                                        'when', 'ansible_internal_redirect_list'))
+                                        'when'))
 
     # =================================================================================
     # ATTRIBUTES
