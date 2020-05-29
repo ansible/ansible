@@ -207,6 +207,10 @@ To start a new collection:
 
     collection_dir#> ansible-galaxy collection init my_namespace.my_collection
 
+.. note::
+
+	Both the namespace and collection names have strict requirements. See `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for details.
+
 Once the skeleton exists, you can populate the directories with the content you want inside the collection. See `ansible-collections <https://github.com/ansible-collections/>`_ GitHub Org to get a better idea of what you can place inside a collection.
 
 .. _creating_collections:
