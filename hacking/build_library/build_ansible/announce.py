@@ -235,7 +235,7 @@ def is_ansible_base(version):
     ver_split = []
     for component in version.split('.'):
         if not component.isdigit():
-            # Take everything up into the first non-numeric component
+            # Take everything up until the first non-numeric component
             break
         ver_split.append(int(component))
     return tuple(ver_split) >= (2, 10, 0)
