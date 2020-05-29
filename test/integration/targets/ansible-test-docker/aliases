@@ -1,0 +1,1 @@
+shippable/generic/group1  # Runs in the default test container so access to tools like pwsh
