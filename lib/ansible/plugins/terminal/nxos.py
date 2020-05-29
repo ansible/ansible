@@ -57,8 +57,6 @@ class TerminalModule(TerminalBase):
 
         out = self._exec_cli_command('show privilege')
         out = to_text(out, errors='surrogate_then_replace').strip()
-        if 'Disabled' in out:
-            raise AnsibleConnectionFailure('Feature privilege is not enabled')
 
         # if already at privilege level 15 return
         if '15' in out:
@@ -66,6 +64,9 @@ class TerminalModule(TerminalBase):
 
         if self.validate_user_role():
             return
+
+        if 'Disabled' in out:
+            raise AnsibleConnectionFailure('Feature privilege is not enabled')
 
         cmd = {u'command': u'enable'}
         if passwd:
