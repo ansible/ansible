@@ -337,7 +337,7 @@ Module
     * ``library/<ansible_network_os>_<resource>.py``.
     * Imports the ``module_utils`` resource package and calls ``execute_module`` API
 
-    .. code-block:: python
+    .. code-block:: text
 
       def main():
           result = <resource_package>(module).execute_module()
