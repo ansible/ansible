@@ -35,7 +35,7 @@ MSGS = {
               "Display.deprecated or AnsibleModule.deprecate",
               "ansible-invalid-deprecated-version",
               "Used when a call to Display.deprecated specifies an invalid "
-              "Ansible version number",
+              "tagged Ansible version number",
               {'minversion': (2, 6)}),
     'E9504': ("Deprecated version (%r) found in call to Display.deprecated "
               "or AnsibleModule.deprecate",
@@ -48,29 +48,58 @@ MSGS = {
               "Display.deprecated or AnsibleModule.deprecate",
               "collection-invalid-deprecated-version",
               "Used when a call to Display.deprecated specifies an invalid "
-              "collection version number",
+              "tagged collection version number",
               {'minversion': (2, 6)}),
-    'E9506': ("Expired date (%r) found in call to Display.deprecated "
+    'E9506': ("Invalid tagged version (%r) found in call to "
+              "Display.deprecated or AnsibleModule.deprecate",
+              "invalid-tagged-version",
+              "Used when a call to Display.deprecated specifies a version "
+              "number which has no collection name tag, for example "
+              "`community.general:1.2.3` or `ansible.builtin:2.10`",
+              {'minversion': (2, 6)}),
+    'E9507': ("Version tag for wrong collection (%r) found in call to "
+              "Display.deprecated or AnsibleModule.deprecate",
+              "wrong-collection-deprecated-version-tag",
+              "Deprecation versions must be prefixed with the name of this "
+              "collection (`ansible.builtin:` for Ansible-base)",
+              {'minversion': (2, 6)}),
+    'E9508': ("Expired date (%r) found in call to Display.deprecated "
               "or AnsibleModule.deprecate",
               "ansible-deprecated-date",
               "Used when a call to Display.deprecated specifies a date "
               "before today",
               {'minversion': (2, 6)}),
-    'E9507': ("Invalid deprecated date (%r) found in call to "
+    'E9509': ("Invalid deprecated date (%r) found in call to "
               "Display.deprecated or AnsibleModule.deprecate",
               "ansible-invalid-deprecated-date",
               "Used when a call to Display.deprecated specifies an invalid "
-              "date. It must be a string in format YYYY-MM-DD (ISO 8601)",
+              "date. It must be a string in format `namespace.name:YYYY-MM-DD` "
+              "(collection identifier followed by ISO 8601)",
               {'minversion': (2, 6)}),
-    'E9508': ("Both version and date found in call to "
+    'E9510': ("Both version and date found in call to "
               "Display.deprecated or AnsibleModule.deprecate",
               "ansible-deprecated-both-version-and-date",
               "Only one of version and date must be specified",
+              {'minversion': (2, 6)}),
+    'E9511': ("Invalid tagged date (%r) found in call to "
+              "Display.deprecated or AnsibleModule.deprecate",
+              "invalid-tagged-date",
+              "Used when a call to Display.deprecated specifies a date "
+              "which has no collection name tag, for example "
+              "`community.general:2020-01-01` or `ansible.builtin:2020-12-31`",
+              {'minversion': (2, 6)}),
+    'E9512': ("Date tag for wrong collection (%r) found in call to "
+              "Display.deprecated or AnsibleModule.deprecate",
+              "wrong-collection-deprecated-date-tag",
+              "Deprecation dates must be prefixed with the name of this "
+              "collection (`ansible.builtin:` for Ansible-base)",
               {'minversion': (2, 6)}),
 }
 
 
 ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version_raw.split('.')[:3]))
+
+TAGGED_VERSION_RE = re.compile('^([^.]+.[^.]+):(.*)$')
 
 
 def _get_expr_name(node):
@@ -109,11 +138,11 @@ class AnsibleDeprecatedChecker(BaseChecker):
     msgs = MSGS
 
     options = (
-        ('is-collection', {
-            'default': False,
-            'type': 'yn',
-            'metavar': '<y_or_n>',
-            'help': 'Whether this is a collection or not.',
+        ('collection-name', {
+            'default': None,
+            'type': 'string',
+            'metavar': '<name>',
+            'help': 'The collection\'s name used to check tagged version numbers in deprecations.',
         }),
         ('collection-version', {
             'default': None,
@@ -125,17 +154,71 @@ class AnsibleDeprecatedChecker(BaseChecker):
 
     def __init__(self, *args, **kwargs):
         self.collection_version = None
-        self.is_collection = False
-        self.version_constructor = LooseVersion
+        self.collection_name = None
         super(AnsibleDeprecatedChecker, self).__init__(*args, **kwargs)
 
     def set_option(self, optname, value, action=None, optdict=None):
         super(AnsibleDeprecatedChecker, self).set_option(optname, value, action, optdict)
         if optname == 'collection-version' and value is not None:
-            self.version_constructor = SemanticVersion
-            self.collection_version = self.version_constructor(self.config.collection_version)
-        if optname == 'is-collection':
-            self.is_collection = self.config.is_collection
+            self.collection_version = SemanticVersion(self.config.collection_version)
+        if optname == 'collection-name' and value is not None:
+            self.collection_name = self.config.collection_name
+
+    def _check_date(self, node, date):
+        if not isinstance(date, str):
+            self.add_message('invalid-tagged-date', node=node, args=(date,))
+            return
+
+        matcher = TAGGED_VERSION_RE.match(date)
+        if not matcher:
+            self.add_message('invalid-tagged-date', node=node, args=(date,))
+            return
+
+        collection = matcher.group(1)
+        date_str = matcher.group(2)
+
+        if collection != (self.collection_name or 'ansible.builtin'):
+            self.add_message('wrong-collection-deprecated-date-tag', node=node, args=(date,))
+
+        try:
+            if parse_isodate(date_str) < datetime.date.today():
+                self.add_message('ansible-deprecated-date', node=node, args=(date,))
+        except ValueError:
+            self.add_message('ansible-invalid-deprecated-date', node=node, args=(date,))
+
+    def _check_version(self, node, version):
+        if not isinstance(version, str):
+            self.add_message('invalid-tagged-version', node=node, args=(version,))
+            return
+
+        matcher = TAGGED_VERSION_RE.match(version)
+        if not matcher:
+            self.add_message('invalid-tagged-version', node=node, args=(version,))
+            return
+
+        collection = matcher.group(1)
+        version_no = matcher.group(2)
+
+        if collection != (self.collection_name or 'ansible.builtin'):
+            self.add_message('wrong-collection-deprecated-version-tag', node=node, args=(version,))
+
+        if collection == 'ansible.builtin':
+            # Ansible-base
+            try:
+                loose_version = LooseVersion(str(version_no))
+                if ANSIBLE_VERSION >= loose_version:
+                    self.add_message('ansible-deprecated-version', node=node, args=(version,))
+            except ValueError:
+                self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
+        else:
+            # Collections
+            try:
+                semantic_version = SemanticVersion(version_no)
+                if collection == self.collection_name and self.collection_version is not None:
+                    if self.collection_version >= semantic_version:
+                        self.add_message('collection-deprecated-version', node=node, args=(version,))
+            except ValueError:
+                self.add_message('collection-invalid-deprecated-version', node=node, args=(version,))
 
     @check_messages(*(MSGS.keys()))
     def visit_call(self, node):
@@ -169,26 +252,11 @@ class AnsibleDeprecatedChecker(BaseChecker):
                     self.add_message('ansible-deprecated-both-version-and-date', node=node)
                     return
 
-                if version:
-                    try:
-                        loose_version = self.version_constructor(str(version))
-                        if self.is_collection and self.collection_version is not None:
-                            if self.collection_version >= loose_version:
-                                self.add_message('collection-deprecated-version', node=node, args=(version,))
-                        if not self.is_collection and ANSIBLE_VERSION >= loose_version:
-                            self.add_message('ansible-deprecated-version', node=node, args=(version,))
-                    except ValueError:
-                        if self.is_collection:
-                            self.add_message('collection-invalid-deprecated-version', node=node, args=(version,))
-                        else:
-                            self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
-
                 if date:
-                    try:
-                        if parse_isodate(date) < datetime.date.today():
-                            self.add_message('ansible-deprecated-date', node=node, args=(date,))
-                    except ValueError:
-                        self.add_message('ansible-invalid-deprecated-date', node=node, args=(date,))
+                    self._check_date(node, date)
+
+                if version:
+                    self._check_version(node, version)
         except AttributeError:
             # Not the type of node we are interested in
             pass

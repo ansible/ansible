@@ -97,7 +97,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             display.deprecated(
                 msg="The 'cache' option is deprecated for the script inventory plugin. "
                 "External scripts implement their own caching and this option has never been used",
-                version="2.12"
+                version="ansible.builtin:2.12"
             )
 
         # Support inventory scripts that are not prefixed with some

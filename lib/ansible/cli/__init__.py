@@ -353,7 +353,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             verbosity_arg = next(iter([arg for arg in self.args if arg.startswith('-v')]), None)
             if verbosity_arg:
                 display.deprecated("Setting verbosity before the arg sub command is deprecated, set the verbosity "
-                                   "after the sub command", "2.13")
+                                   "after the sub command", "ansible.builtin:2.13")
                 options.verbosity = verbosity_arg.count('v')
 
         return options

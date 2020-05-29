@@ -449,10 +449,10 @@ def main():
     )
 
     if module.params.get('thirsty'):
-        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='2.13')
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='ansible.builtin:2.13')
 
     if module.params.get('sha256sum'):
-        module.deprecate('The parameter "sha256sum" has been deprecated and will be removed, use "checksum" instead', version='2.14')
+        module.deprecate('The parameter "sha256sum" has been deprecated and will be removed, use "checksum" instead', version='ansible.builtin:2.14')
 
     url = module.params['url']
     dest = module.params['dest']

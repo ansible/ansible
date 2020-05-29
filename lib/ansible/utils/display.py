@@ -26,6 +26,7 @@ import locale
 import logging
 import os
 import random
+import re
 import subprocess
 import sys
 import textwrap
@@ -36,8 +37,8 @@ from termios import TIOCGWINSZ
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six import with_metaclass
+from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.six import with_metaclass, string_types
 from ansible.utils.color import stringc
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
@@ -48,6 +49,9 @@ try:
 except NameError:
     # Python 3, we already have raw_input
     pass
+
+
+TAGGED_VERSION_RE = re.compile('^([^.]+.[^.]+):(.*)$')
 
 
 class FilterBlackList(logging.Filter):
@@ -258,9 +262,34 @@ class Display(with_metaclass(Singleton, object)):
 
         if not removed:
             if date:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a release after %s." % (msg, date)
+                m = None
+                if isinstance(date, string_types):
+                    version = to_native(date)
+                    m = TAGGED_VERSION_RE.match(date)
+                if m:
+                    collection = m.group(1)
+                    date = m.group(2)
+                    if collection == 'ansible.builtin':
+                        collection = 'Ansible-base'
+                    new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a release of %s after %s." % (
+                        msg, collection, date)
+                else:
+                    new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a release after %s." % (
+                        msg, date)
             elif version:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
+                m = None
+                if isinstance(version, string_types):
+                    version = to_native(version)
+                    m = TAGGED_VERSION_RE.match(version)
+                if m:
+                    collection = m.group(1)
+                    version = m.group(2)
+                    if collection == 'ansible.builtin':
+                        collection = 'Ansible-base'
+                    new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s of %s." % (msg, version,
+                                                                                                                collection)
+                else:
+                    new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
             else:
                 new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
             new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"

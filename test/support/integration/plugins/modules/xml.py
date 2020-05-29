@@ -885,7 +885,8 @@ def main():
     # Report wrongly used attribute parameter when using content=attribute
     # TODO: Remove this in Ansible v2.12 (and reinstate strict parameter test above) and remove the integration test example
     if content == 'attribute' and attribute is not None:
-        module.deprecate("Parameter 'attribute=%s' is ignored when using 'content=attribute' only 'xpath' is used. Please remove entry." % attribute, '2.12')
+        module.deprecate("Parameter 'attribute=%s' is ignored when using 'content=attribute' only 'xpath' is used. Please remove entry." % attribute,
+                         'ansible.builtin:2.12')
 
     # Check if the file exists
     if xml_string:

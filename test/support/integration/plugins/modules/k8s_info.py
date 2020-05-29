@@ -142,7 +142,7 @@ class KubernetesInfoModule(KubernetesAnsibleModule):
                                          supports_check_mode=True,
                                          **kwargs)
         if self._name == 'k8s_facts':
-            self.deprecate("The 'k8s_facts' module has been renamed to 'k8s_info'", version='2.13')
+            self.deprecate("The 'k8s_facts' module has been renamed to 'k8s_info'", version='ansible.builtin:2.13')
 
     def execute_module(self):
         self.client = self.get_api_client()

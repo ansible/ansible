@@ -41,10 +41,10 @@ import yaml
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-from ansible.utils.plugin_docs import BLACKLIST, add_fragments, get_docstring
+from ansible.utils.plugin_docs import BLACKLIST, tag_versions_and_dates, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
@@ -258,9 +258,12 @@ class ModuleValidator(Validator):
         self.StrictVersion = StrictVersion
 
         self.collection = collection
+        self.collection_name = 'ansible.builtin'
         if self.collection:
             self.Version = SemanticVersion
             self.StrictVersion = SemanticVersion
+            collection_namespace_path, collection_name = os.path.split(self.collection)
+            self.collection_name = '%s.%s' % (os.path.basename(collection_namespace_path), collection_name)
         self.routing = routing
         self.collection_version = None
         if collection_version is not None:
@@ -873,6 +876,8 @@ class ModuleValidator(Validator):
         for error in errors:
             path = [str(p) for p in error.path]
 
+            local_error_code = getattr(error, 'ansible_error_code', error_code)
+
             if isinstance(error.data, dict):
                 error_message = humanize_error(error.data, error)
             else:
@@ -885,9 +890,27 @@ class ModuleValidator(Validator):
 
             self.reporter.error(
                 path=self.object_path,
-                code=error_code,
+                code=local_error_code,
                 msg='%s: %s' % (combined_path, error_message)
             )
+
+    @staticmethod
+    def _split_tagged_version(version_str):
+        if not isinstance(version_str, string_types):
+            raise ValueError('Tagged version must be string')
+        version_str = to_native(version_str)
+        if ':' not in version_str:
+            raise ValueError('Tagged version must have ":"')
+        return version_str.split(':', 1)
+
+    @staticmethod
+    def _extract_version_from_tag_for_msg(version_str):
+        if not isinstance(version_str, string_types):
+            return version_str
+        version_str = to_native(version_str)
+        if ':' not in version_str:
+            return version_str
+        return version_str.split(':', 1)[1]
 
     def _validate_docs(self):
         doc_info = self._get_docs()
@@ -966,6 +989,8 @@ class ModuleValidator(Validator):
                     doc_info['DOCUMENTATION']['lineno'],
                     self.name, 'DOCUMENTATION'
                 )
+                if doc:
+                    tag_versions_and_dates(doc, '%s:' % (self.collection_name, ), is_module=True)
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
@@ -981,7 +1006,8 @@ class ModuleValidator(Validator):
                     missing_fragment = False
                     with CaptureStd():
                         try:
-                            get_docstring(self.path, fragment_loader, verbose=True)
+                            get_docstring(self.path, fragment_loader, verbose=True,
+                                          collection_name=self.collection_name, is_module=True)
                         except AssertionError:
                             fragment = doc['extends_documentation_fragment']
                             self.reporter.error(
@@ -1002,7 +1028,7 @@ class ModuleValidator(Validator):
                             )
 
                     if not missing_fragment:
-                        add_fragments(doc, self.object_path, fragment_loader=fragment_loader)
+                        add_fragments(doc, self.object_path, fragment_loader=fragment_loader, is_module=True)
 
                     if 'options' in doc and doc['options'] is None:
                         self.reporter.error(
@@ -1024,9 +1050,8 @@ class ModuleValidator(Validator):
                             doc,
                             doc_schema(
                                 os.readlink(self.object_path).split('.')[0],
-                                version_added=not bool(self.collection),
-                                deprecated_module=deprecated,
                                 for_collection=bool(self.collection),
+                                deprecated_module=deprecated,
                             ),
                             'DOCUMENTATION',
                             'invalid-documentation',
@@ -1037,9 +1062,8 @@ class ModuleValidator(Validator):
                             doc,
                             doc_schema(
                                 self.object_name.split('.')[0],
-                                version_added=not bool(self.collection),
-                                deprecated_module=deprecated,
                                 for_collection=bool(self.collection),
+                                deprecated_module=deprecated,
                             ),
                             'DOCUMENTATION',
                             'invalid-documentation',
@@ -1088,7 +1112,8 @@ class ModuleValidator(Validator):
                 data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                                   doc_info['RETURN']['lineno'],
                                                   self.name, 'RETURN')
-                self._validate_docs_schema(data, return_schema, 'RETURN', 'return-syntax-error')
+                self._validate_docs_schema(data, return_schema(for_collection=bool(self.collection)),
+                                           'RETURN', 'return-syntax-error')
 
                 for error in errors:
                     self.reporter.error(
@@ -1142,8 +1167,10 @@ class ModuleValidator(Validator):
                 # Make sure they give the same version or date.
                 routing_date = routing_deprecation.get('removal_date')
                 routing_version = routing_deprecation.get('removal_version')
-                documentation_date = doc_deprecation.get('removed_at_date')
-                documentation_version = doc_deprecation.get('removed_in')
+                # The versions and dates in the module documentation are auto-tagged, so remove the tag
+                # to make comparison possible and to avoid confusing the user.
+                documentation_date = self._extract_version_from_tag_for_msg(doc_deprecation.get('removed_at_date'))
+                documentation_version = self._extract_version_from_tag_for_msg(doc_deprecation.get('removed_in'))
                 if routing_date != documentation_date:
                     self.reporter.error(
                         path=self.object_path,
@@ -1166,23 +1193,26 @@ class ModuleValidator(Validator):
     def _check_version_added(self, doc, existing_doc):
         version_added_raw = doc.get('version_added')
         try:
-            version_added = self.StrictVersion(str(doc.get('version_added', '0.0') or '0.0'))
+            version_added = self.StrictVersion(self._extract_version_from_tag_for_msg(str(doc.get('version_added', '0.0') or '0.0')))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
-            if self._is_new_module() or version_added != 'historical':
-                self.reporter.error(
-                    path=self.object_path,
-                    code='module-invalid-version-added',
-                    msg='version_added is not a valid version number: %r' % version_added
-                )
+            if self._is_new_module() or version_added != 'ansible.builtin:historical':
+                # already reported during schema validation, except:
+                if version_added == 'ansible.builtin:historical':
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='module-invalid-version-added',
+                        msg='version_added is not a valid version number: %r' % 'historical'
+                    )
                 return
 
         if existing_doc and str(version_added_raw) != str(existing_doc.get('version_added')):
             self.reporter.error(
                 path=self.object_path,
                 code='module-incorrect-version-added',
-                msg='version_added should be %r. Currently %r' % (existing_doc.get('version_added'),
-                                                                  version_added_raw)
+                msg='version_added should be %r. Currently %r' % (
+                    self._extract_version_from_tag_for_msg(existing_doc.get('version_added')),
+                    self._extract_version_from_tag_for_msg(version_added_raw))
             )
 
         if not self._is_new_module():
@@ -1196,10 +1226,11 @@ class ModuleValidator(Validator):
             self.reporter.error(
                 path=self.object_path,
                 code='module-incorrect-version-added',
-                msg='version_added should be %r. Currently %r' % (should_be, version_added_raw)
+                msg='version_added should be %r. Currently %r' % (
+                    should_be, self._extract_version_from_tag_for_msg(version_added_raw))
             )
 
-    def _validate_ansible_module_call(self, docs):
+    def _validate_ansible_module_call(self, docs, dates_tagged=True):
         try:
             spec, args, kwargs = get_argument_spec(self.path, self.collection)
         except AnsibleModuleNotInitialized:
@@ -1221,7 +1252,9 @@ class ModuleValidator(Validator):
             )
             return
 
-        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema(), 'AnsibleModule', 'invalid-ansiblemodule-schema')
+        self._validate_docs_schema(kwargs, ansible_module_kwargs_schema(for_collection=bool(self.collection),
+                                                                        dates_tagged=dates_tagged),
+                                   'AnsibleModule', 'invalid-ansiblemodule-schema')
 
         self._validate_argument_spec(docs, spec, kwargs)
 
@@ -1433,7 +1466,7 @@ class ModuleValidator(Validator):
 
         try:
             if not context:
-                add_fragments(docs, self.object_path, fragment_loader=fragment_loader)
+                add_fragments(docs, self.object_path, fragment_loader=fragment_loader, is_module=True)
         except Exception:
             # Cannot merge fragments
             return
@@ -1497,7 +1530,8 @@ class ModuleValidator(Validator):
             removed_at_date = data.get('removed_at_date', None)
             if removed_at_date is not None:
                 try:
-                    if parse_isodate(removed_at_date) < datetime.date.today():
+                    date = self._extract_version_from_tag_for_msg(removed_at_date)
+                    if parse_isodate(date) < datetime.date.today():
                         msg = "Argument '%s' in argument_spec" % arg
                         if context:
                             msg += " found in %s" % " -> ".join(context)
@@ -1517,7 +1551,8 @@ class ModuleValidator(Validator):
                 for deprecated_alias in deprecated_aliases:
                     if 'name' in deprecated_alias and 'date' in deprecated_alias:
                         try:
-                            if parse_isodate(deprecated_alias['date']) < datetime.date.today():
+                            date = self._extract_version_from_tag_for_msg(deprecated_alias['date'])
+                            if parse_isodate(date) < datetime.date.today():
                                 msg = "Argument '%s' in argument_spec" % arg
                                 if context:
                                     msg += " found in %s" % " -> ".join(context)
@@ -1549,7 +1584,8 @@ class ModuleValidator(Validator):
                 removed_in_version = data.get('removed_in_version', None)
                 if removed_in_version is not None:
                     try:
-                        if compare_version >= self.Version(str(removed_in_version)):
+                        collection_name, removed_in_version = self._split_tagged_version(removed_in_version)
+                        if collection_name == self.collection_name and compare_version >= self.Version(str(removed_in_version)):
                             msg = "Argument '%s' in argument_spec" % arg
                             if context:
                                 msg += " found in %s" % " -> ".join(context)
@@ -1561,22 +1597,15 @@ class ModuleValidator(Validator):
                                 msg=msg,
                             )
                     except ValueError:
-                        msg = "Argument '%s' in argument_spec" % arg
-                        if context:
-                            msg += " found in %s" % " -> ".join(context)
-                        msg += " has an invalid removed_in_version '%s'," % removed_in_version
-                        msg += " i.e. %s" % version_parser_error
-                        self.reporter.error(
-                            path=self.object_path,
-                            code=code_prefix + '-invalid-version',
-                            msg=msg,
-                        )
+                        # Has been caught in schema validation
+                        pass
 
                 if deprecated_aliases is not None:
                     for deprecated_alias in deprecated_aliases:
                         if 'name' in deprecated_alias and 'version' in deprecated_alias:
                             try:
-                                if compare_version >= self.Version(str(deprecated_alias['version'])):
+                                collection_name, version = self._split_tagged_version(deprecated_alias['version'])
+                                if collection_name == self.collection_name and compare_version >= self.Version(str(version)):
                                     msg = "Argument '%s' in argument_spec" % arg
                                     if context:
                                         msg += " found in %s" % " -> ".join(context)
@@ -1589,17 +1618,8 @@ class ModuleValidator(Validator):
                                         msg=msg,
                                     )
                             except ValueError:
-                                msg = "Argument '%s' in argument_spec" % arg
-                                if context:
-                                    msg += " found in %s" % " -> ".join(context)
-                                msg += " has aliases '%s' with removal in invalid version '%s'," % (
-                                    deprecated_alias['name'], deprecated_alias['version'])
-                                msg += " i.e. %s" % version_parser_error
-                                self.reporter.error(
-                                    path=self.object_path,
-                                    code=code_prefix + '-invalid-version',
-                                    msg=msg,
-                                )
+                                # Has been caught in schema validation
+                                pass
 
             aliases = data.get('aliases', [])
             if arg in aliases:
@@ -1978,7 +1998,8 @@ class ModuleValidator(Validator):
 
         with CaptureStd():
             try:
-                existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(self.base_module, fragment_loader, verbose=True)
+                existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(
+                    self.base_module, fragment_loader, verbose=True, collection_name=self.collection_name, is_module=True)
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -2031,6 +2052,7 @@ class ModuleValidator(Validator):
                 continue
 
             if any(name in existing_options for name in names):
+                # The option already existed. Make sure version_added didn't change.
                 for name in names:
                     existing_version = existing_options.get(name, {}).get('version_added')
                     if existing_version:
@@ -2052,19 +2074,7 @@ class ModuleValidator(Validator):
                     str(details.get('version_added', '0.0'))
                 )
             except ValueError:
-                version_added = details.get('version_added', '0.0')
-                self.reporter.error(
-                    path=self.object_path,
-                    code='module-invalid-version-added-number',
-                    msg=('version_added for new option (%s) '
-                         'is not a valid version number: %r' %
-                         (option, version_added))
-                )
-                continue
-            except Exception:
-                # If there is any other exception it should have been caught
-                # in schema validation, so we won't duplicate errors by
-                # listing it again
+                # already reported during schema validation
                 continue
 
             if (strict_ansible_version != mod_version_added and
@@ -2148,7 +2158,16 @@ class ModuleValidator(Validator):
                         pass
                 if 'removed_in' in docs['deprecated']:
                     try:
-                        removed_in = self.StrictVersion(str(docs['deprecated']['removed_in']))
+                        collection_name, version = self._split_tagged_version(docs['deprecated']['removed_in'])
+                        if collection_name != self.collection_name:
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='invalid-module-deprecation-source',
+                                msg=('The deprecation version for a module must be added in this collection')
+                            )
+                            # Treat the module as not to be removed:
+                            raise ValueError('')
+                        removed_in = self.StrictVersion(str(version))
                     except ValueError:
                         end_of_deprecation_should_be_removed_only = False
                     else:
@@ -2182,7 +2201,8 @@ class ModuleValidator(Validator):
             if re.search(pattern, self.text) and self.object_name not in self.PS_ARG_VALIDATE_BLACKLIST:
                 with ModuleValidator(docs_path, base_branch=self.base_branch, git_cache=self.git_cache) as docs_mv:
                     docs = docs_mv._validate_docs()[1]
-                    self._validate_ansible_module_call(docs)
+                    # Don't expect tagged dates!
+                    self._validate_ansible_module_call(docs, dates_tagged=False)
 
         self._check_gpl3_header()
         if not self._just_docs() and not end_of_deprecation_should_be_removed_only:

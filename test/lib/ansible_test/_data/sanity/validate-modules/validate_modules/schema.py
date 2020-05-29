@@ -9,9 +9,13 @@ __metaclass__ = type
 import datetime
 import re
 
+from functools import partial
+
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
+from ansible.utils.version import SemanticVersion
+from distutils.version import StrictVersion
 
 from .utils import parse_isodate
 
@@ -26,6 +30,86 @@ any_string_types = Any(*string_types)
 #     "Michael DeHaan" - nop
 #     "Name (!UNKNOWN)" - For the few untraceable authors
 author_line = re.compile(r'^\w.*(\(@([\w-]+)\)|!UNKNOWN)(?![\w.])|^Ansible Core Team$|^Michael DeHaan$')
+
+
+def _add_ansible_error_code(exception, error_code):
+    setattr(exception, 'ansible_error_code', error_code)
+    return exception
+
+
+def semantic_version(v, error_code=None):
+    if not isinstance(v, string_types):
+        raise _add_ansible_error_code(Invalid('Semantic version must be a string'), error_code or 'collection-invalid-version')
+    try:
+        SemanticVersion(v)
+    except ValueError as e:
+        raise _add_ansible_error_code(Invalid(str(e)), error_code or 'collection-invalid-version')
+    return v
+
+
+def ansible_version(v, error_code=None):
+    # Assumes argument is a string or float
+    if 'historical' == v:
+        return v
+    try:
+        StrictVersion(str(v))
+    except ValueError as e:
+        raise _add_ansible_error_code(Invalid(str(e)), error_code or 'ansible-invalid-version')
+    return v
+
+
+def isodate(v, error_code=None):
+    try:
+        parse_isodate(v)
+    except ValueError as e:
+        raise _add_ansible_error_code(Invalid(str(e)), error_code or 'ansible-invalid-date')
+    return v
+
+
+TAGGED_VERSION_RE = re.compile('^([^.]+.[^.]+):(.*)$')
+
+
+def tagged_version(v, error_code=None):
+    if not isinstance(v, string_types):
+        # Should never happen to versions tagged by code
+        raise _add_ansible_error_code(Invalid('Tagged version must be a string'), 'invalid-tagged-version')
+    m = TAGGED_VERSION_RE.match(v)
+    if not m:
+        # Should never happen to versions tagged by code
+        raise _add_ansible_error_code(Invalid('Tagged version does not match format'), 'invalid-tagged-version')
+    collection = m.group(1)
+    version = m.group(2)
+    if collection != 'ansible.builtin':
+        semantic_version(version, error_code=error_code)
+    else:
+        ansible_version(version, error_code=error_code)
+    return v
+
+
+def tagged_isodate(v, error_code=None):
+    if not isinstance(v, string_types):
+        # Should never happen to dates tagged by code
+        raise _add_ansible_error_code(Invalid('Tagged date must be a string'), 'invalid-tagged-date')
+    m = TAGGED_VERSION_RE.match(v)
+    if not m:
+        # Should never happen to dates tagged by code
+        raise _add_ansible_error_code(Invalid('Tagged date does not match format'), 'invalid-tagged-date')
+    isodate(m.group(2), error_code=error_code)
+    return v
+
+
+def version(for_collection=False, tagged='never', error_code=None):
+    if tagged == 'always':
+        return Any(partial(tagged_version, error_code=error_code))
+    if for_collection:
+        return Any(partial(semantic_version, error_code=error_code))
+    return All(Any(float, *string_types), partial(ansible_version, error_code=error_code))
+
+
+def date(tagged='never', error_code=None):
+    if tagged == 'always':
+        return Any(partial(tagged_isodate, error_code=error_code))
+    return Any(isodate)
 
 
 def is_callable(v):
@@ -101,15 +185,8 @@ def options_with_apply_defaults(v):
     return v
 
 
-def isodate(v):
-    try:
-        parse_isodate(v)
-    except ValueError as e:
-        raise Invalid(str(e))
-    return v
-
-
-def argument_spec_schema():
+def argument_spec_schema(for_collection, dates_tagged=True):
+    dates_tagged = 'always' if dates_tagged else 'never'
     any_string_types = Any(*string_types)
     schema = {
         any_string_types: {
@@ -125,17 +202,17 @@ def argument_spec_schema():
             'no_log': bool,
             'aliases': Any(list_string_types, tuple(list_string_types)),
             'apply_defaults': bool,
-            'removed_in_version': Any(float, *string_types),
-            'removed_at_date': Any(isodate),
+            'removed_in_version': version(for_collection, tagged='always'),
+            'removed_at_date': date(tagged=dates_tagged),
             'options': Self,
             'deprecated_aliases': Any([Any(
                 {
                     Required('name'): Any(*string_types),
-                    Required('date'): Any(isodate),
+                    Required('date'): date(tagged=dates_tagged),
                 },
                 {
                     Required('name'): Any(*string_types),
-                    Required('version'): Any(float, *string_types),
+                    Required('version'): version(for_collection, tagged='always'),
                 },
             )]),
         }
@@ -150,9 +227,9 @@ def argument_spec_schema():
     return Schema(schemas)
 
 
-def ansible_module_kwargs_schema():
+def ansible_module_kwargs_schema(for_collection, dates_tagged=True):
     schema = {
-        'argument_spec': argument_spec_schema(),
+        'argument_spec': argument_spec_schema(for_collection, dates_tagged=dates_tagged),
         'bypass_checks': bool,
         'no_log': bool,
         'check_invalid_arguments': Any(None, bool),
@@ -172,48 +249,49 @@ json_value = Schema(Any(
 ))
 
 
-suboption_schema = Schema(
-    {
-        Required('description'): Any(list_string_types, *string_types),
-        'required': bool,
-        'choices': list,
-        'aliases': Any(list_string_types),
-        'version_added': Any(float, *string_types),
-        'default': json_value,
-        # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-        # in case of type='list' elements define type of individual item in list
-        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-        # Recursive suboptions
-        'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
-    },
-    extra=PREVENT_EXTRA
-)
+def list_dict_option_schema(for_collection):
+    suboption_schema = Schema(
+        {
+            Required('description'): Any(list_string_types, *string_types),
+            'required': bool,
+            'choices': list,
+            'aliases': Any(list_string_types),
+            'version_added': version(for_collection, tagged='always', error_code='option-invalid-version-added'),
+            'default': json_value,
+            # Note: Types are strings, not literal bools, such as True or False
+            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+            # in case of type='list' elements define type of individual item in list
+            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+            # Recursive suboptions
+            'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
+        },
+        extra=PREVENT_EXTRA
+    )
 
-# This generates list of dicts with keys from string_types and suboption_schema value
-# for example in Python 3: {str: suboption_schema}
-list_dict_suboption_schema = [{str_type: suboption_schema} for str_type in string_types]
+    # This generates list of dicts with keys from string_types and suboption_schema value
+    # for example in Python 3: {str: suboption_schema}
+    list_dict_suboption_schema = [{str_type: suboption_schema} for str_type in string_types]
 
-option_schema = Schema(
-    {
-        Required('description'): Any(list_string_types, *string_types),
-        'required': bool,
-        'choices': list,
-        'aliases': Any(list_string_types),
-        'version_added': Any(float, *string_types),
-        'default': json_value,
-        'suboptions': Any(None, *list_dict_suboption_schema),
-        # Note: Types are strings, not literal bools, such as True or False
-        'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-        # in case of type='list' elements define type of individual item in list
-        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-    },
-    extra=PREVENT_EXTRA
-)
+    option_schema = Schema(
+        {
+            Required('description'): Any(list_string_types, *string_types),
+            'required': bool,
+            'choices': list,
+            'aliases': Any(list_string_types),
+            'version_added': version(for_collection, tagged='always', error_code='option-invalid-version-added'),
+            'default': json_value,
+            'suboptions': Any(None, *list_dict_suboption_schema),
+            # Note: Types are strings, not literal bools, such as True or False
+            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+            # in case of type='list' elements define type of individual item in list
+            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+        },
+        extra=PREVENT_EXTRA
+    )
 
-# This generates list of dicts with keys from string_types and option_schema value
-# for example in Python 3: {str: option_schema}
-list_dict_option_schema = [{str_type: option_schema} for str_type in string_types]
+    # This generates list of dicts with keys from string_types and option_schema value
+    # for example in Python 3: {str: option_schema}
+    return [{str_type: option_schema} for str_type in string_types]
 
 
 def return_contains(v):
@@ -228,51 +306,52 @@ def return_contains(v):
     return v
 
 
-return_contains_schema = Any(
-    All(
-        Schema(
-            {
-                Required('description'): Any(list_string_types, *string_types),
-                'returned': Any(*string_types),  # only returned on top level
-                Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
-                'version_added': Any(float, *string_types),
-                'sample': json_value,
-                'example': json_value,
-                'contains': Any(None, *list({str_type: Self} for str_type in string_types)),
-                # in case of type='list' elements define type of individual item in list
-                'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
-            }
-        ),
-        Schema(return_contains)
-    ),
-    Schema(type(None)),
-)
-
-# This generates list of dicts with keys from string_types and return_contains_schema value
-# for example in Python 3: {str: return_contains_schema}
-list_dict_return_contains_schema = [{str_type: return_contains_schema} for str_type in string_types]
-
-return_schema = Any(
-    All(
-        Schema(
-            {
-                any_string_types: {
+def return_schema(for_collection):
+    return_contains_schema = Any(
+        All(
+            Schema(
+                {
                     Required('description'): Any(list_string_types, *string_types),
-                    Required('returned'): Any(*string_types),
+                    'returned': Any(*string_types),  # only returned on top level
                     Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
-                    'version_added': Any(float, *string_types),
+                    'version_added': version(for_collection, error_code='return-invalid-version-added'),
                     'sample': json_value,
                     'example': json_value,
-                    'contains': Any(None, *list_dict_return_contains_schema),
+                    'contains': Any(None, *list({str_type: Self} for str_type in string_types)),
                     # in case of type='list' elements define type of individual item in list
                     'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
                 }
-            }
+            ),
+            Schema(return_contains)
         ),
-        Schema({any_string_types: return_contains})
-    ),
-    Schema(type(None)),
-)
+        Schema(type(None)),
+    )
+
+    # This generates list of dicts with keys from string_types and return_contains_schema value
+    # for example in Python 3: {str: return_contains_schema}
+    list_dict_return_contains_schema = [{str_type: return_contains_schema} for str_type in string_types]
+
+    return Any(
+        All(
+            Schema(
+                {
+                    any_string_types: {
+                        Required('description'): Any(list_string_types, *string_types),
+                        Required('returned'): Any(*string_types),
+                        Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
+                        'version_added': version(for_collection, error_code='return-invalid-version-added'),
+                        'sample': json_value,
+                        'example': json_value,
+                        'contains': Any(None, *list_dict_return_contains_schema),
+                        # in case of type='list' elements define type of individual item in list
+                        'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+                    }
+                }
+            ),
+            Schema({any_string_types: return_contains})
+        ),
+        Schema(type(None)),
+    )
 
 
 def deprecation_schema(for_collection):
@@ -283,13 +362,13 @@ def deprecation_schema(for_collection):
     }
 
     date_schema = {
-        Required('removed_at_date'): Any(isodate),
+        Required('removed_at_date'): date(tagged='always'),
     }
     date_schema.update(main_fields)
 
     if for_collection:
         version_schema = {
-            Required('removed_in'): Any(float, *string_types),
+            Required('removed_in'): version(for_collection, tagged='always'),
         }
     else:
         version_schema = {
@@ -297,13 +376,16 @@ def deprecation_schema(for_collection):
             # Deprecation cycle changed at 2.4 (though not retroactively)
             # 2.3 -> removed_in: "2.5" + n for docs stub
             # 2.4 -> removed_in: "2.8" + n for docs stub
-            Required('removed_in'): Any("2.2", "2.3", "2.4", "2.5", "2.6", "2.8", "2.9", "2.10", "2.11", "2.12", "2.13", "2.14"),
+            Required('removed_in'): Any(
+                "ansible.builtin:2.2", "ansible.builtin:2.3", "ansible.builtin:2.4", "ansible.builtin:2.5",
+                "ansible.builtin:2.6", "ansible.builtin:2.8", "ansible.builtin:2.9", "ansible.builtin:2.10",
+                "ansible.builtin:2.11", "ansible.builtin:2.12", "ansible.builtin:2.13", "ansible.builtin:2.14"),
         }
     version_schema.update(main_fields)
 
     return Any(
-        Schema(date_schema, extra=PREVENT_EXTRA),
         Schema(version_schema, extra=PREVENT_EXTRA),
+        Schema(date_schema, extra=PREVENT_EXTRA),
     )
 
 
@@ -318,7 +400,7 @@ def author(value):
             raise Invalid("Invalid author")
 
 
-def doc_schema(module_name, version_added=True, deprecated_module=False, for_collection=False):
+def doc_schema(module_name, for_collection=False, deprecated_module=False):
 
     if module_name.startswith('_'):
         module_name = module_name[1:]
@@ -332,15 +414,17 @@ def doc_schema(module_name, version_added=True, deprecated_module=False, for_col
         'seealso': Any(None, seealso_schema),
         'requirements': list_string_types,
         'todo': Any(None, list_string_types, *string_types),
-        'options': Any(None, *list_dict_option_schema),
+        'options': Any(None, *list_dict_option_schema(for_collection)),
         'extends_documentation_fragment': Any(list_string_types, *string_types)
     }
 
-    if version_added:
-        doc_schema_dict[Required('version_added')] = Any(float, *string_types)
-    else:
+    if for_collection:
         # Optional
-        doc_schema_dict['version_added'] = Any(float, *string_types)
+        doc_schema_dict['version_added'] = version(
+            for_collection=True, tagged='always', error_code='module-invalid-version-added')
+    else:
+        doc_schema_dict[Required('version_added')] = version(
+            for_collection=False, tagged='always', error_code='module-invalid-version-added')
 
     if deprecated_module:
         deprecation_required_scheme = {
