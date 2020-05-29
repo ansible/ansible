@@ -81,16 +81,16 @@ namespace Ansible.Basic
             { "default", new List<object>() { null, null } },
             { "deprecated_aliases", new List<object>() { typeof(List<Hashtable>), typeof(List<Hashtable>) } },
             { "elements", new List<object>() { null, null } },
-            { "mutually_exclusive", new List<object>() { typeof(List<List<string>>), null } },
+            { "mutually_exclusive", new List<object>() { typeof(List<List<string>>), typeof(List<object>) } },
             { "no_log", new List<object>() { false, typeof(bool) } },
             { "options", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "removed_in_version", new List<object>() { null, typeof(string) } },
             { "removed_at_date", new List<object>() { null, typeof(DateTime) } },
             { "required", new List<object>() { false, typeof(bool) } },
             { "required_by", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
-            { "required_if", new List<object>() { typeof(List<List<object>>), null } },
-            { "required_one_of", new List<object>() { typeof(List<List<string>>), null } },
-            { "required_together", new List<object>() { typeof(List<List<string>>), null } },
+            { "required_if", new List<object>() { typeof(List<List<object>>), typeof(List<object>) } },
+            { "required_one_of", new List<object>() { typeof(List<List<string>>), typeof(List<object>) } },
+            { "required_together", new List<object>() { typeof(List<List<string>>), typeof(List<object>) } },
             { "supports_check_mode", new List<object>() { false, typeof(bool) } },
             { "type", new List<object>() { "str", null } },
         };
@@ -187,7 +187,7 @@ namespace Ansible.Basic
             }
         }
 
-        public AnsibleModule(string[] args, IDictionary argumentSpec)
+        public AnsibleModule(string[] args, IDictionary argumentSpec, IDictionary[] fragments = null)
         {
             // NoLog is not set yet, we cannot rely on FailJson to sanitize the output
             // Do the minimum amount to get this running before we actually parse the params
@@ -195,6 +195,16 @@ namespace Ansible.Basic
             try
             {
                 ValidateArgumentSpec(argumentSpec);
+
+                // Merge the fragments if present into the main arg spec.
+                if (fragments != null)
+                {
+                    foreach (IDictionary fragment in fragments)
+                    {
+                        ValidateArgumentSpec(fragment);
+                        MergeFragmentSpec(argumentSpec, fragment);
+                    }
+                }
 
                 // Used by ansible-test to retrieve the module argument spec, not designed for public use.
                 if (_DebugArgSpec)
@@ -252,9 +262,9 @@ namespace Ansible.Basic
                 LogEvent(String.Format("Invoked with:\r\n  {0}", FormatLogData(Params, 2)), sanitise: false);
         }
 
-        public static AnsibleModule Create(string[] args, IDictionary argumentSpec)
+        public static AnsibleModule Create(string[] args, IDictionary argumentSpec, IDictionary[] fragments = null)
         {
-            return new AnsibleModule(args, argumentSpec);
+            return new AnsibleModule(args, argumentSpec, fragments);
         }
 
         public void Debug(string message)
@@ -608,13 +618,19 @@ namespace Ansible.Basic
                     {
                         // verify the actual type is not just a single value of the list type
                         Type entryType = optionType.GetGenericArguments()[0];
+                        object[] arrayElementTypes = new object[]
+                        {
+                            null,  // ArrayList does not have an ElementType
+                            entryType,
+                            typeof(object),  // Hope the object is actually entryType or it can at least be casted.
+                        };
 
-                        bool isArray = actualType.IsArray && (actualType.GetElementType() == entryType || actualType.GetElementType() == typeof(object));
+                        bool isArray = entry.Value is IList && arrayElementTypes.Contains(actualType.GetElementType());
                         if (actualType == entryType || isArray)
                         {
-                            object[] rawArray;
+                            object rawArray;
                             if (isArray)
-                                rawArray = (object[])entry.Value;
+                                rawArray = entry.Value;
                             else
                                 rawArray = new object[1] { entry.Value };
 
@@ -677,6 +693,32 @@ namespace Ansible.Basic
             // Outside of the spec iterator, change the values that were casted above
             foreach (KeyValuePair<string, object> changedValue in changedValues)
                 argumentSpec[changedValue.Key] = changedValue.Value;
+        }
+
+        private void MergeFragmentSpec(IDictionary argumentSpec, IDictionary fragment)
+        {
+            foreach (DictionaryEntry fragmentEntry in fragment)
+            {
+                string fragmentKey = fragmentEntry.Key.ToString();
+
+                if (argumentSpec.Contains(fragmentKey))
+                {
+                    // We only want to add new list entries and merge dictionary new keys and values. Leave the other
+                    // values as is in the argument spec as that takes priority over the fragment.
+                    if (fragmentEntry.Value is IDictionary)
+                    {
+                        MergeFragmentSpec((IDictionary)argumentSpec[fragmentKey], (IDictionary)fragmentEntry.Value);
+                    }
+                    else if (fragmentEntry.Value is IList)
+                    {
+                        IList specValue = (IList)argumentSpec[fragmentKey];
+                        foreach (object fragmentValue in (IList)fragmentEntry.Value)
+                            specValue.Add(fragmentValue);
+                    }
+                }
+                else
+                    argumentSpec[fragmentKey] = fragmentEntry.Value;
+            }
         }
 
         private void SetArgumentSpecDefaults(IDictionary argumentSpec)

@@ -40,9 +40,7 @@ $spec = @{
     )
     supports_check_mode = $true
 }
-$spec = Merge-WebRequestSpec -ModuleSpec $spec
-
-$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec, @(Get-AnsibleWebRequestSpec))
 
 $url = $module.Params.url
 $dest = $module.Params.dest
@@ -274,4 +272,3 @@ if ((-not $module.Result.ContainsKey("checksum_dest")) -and (Test-Path -LiteralP
 }
 
 $module.ExitJson()
-
