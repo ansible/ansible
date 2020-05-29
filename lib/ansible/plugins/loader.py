@@ -130,7 +130,7 @@ class PluginLoadContext(object):
         self.deprecation_warnings = []
         self.resolved = False
 
-    def record_deprecation(self, name, deprecation):
+    def record_deprecation(self, name, deprecation, collection_name):
         if not deprecation:
             return self
 
@@ -142,11 +142,14 @@ class PluginLoadContext(object):
             removal_version = None
         if not warning_text:
             if removal_date:
-                warning_text = '{0} has been deprecated and will be removed in a release after {1}'.format(name, removal_date)
+                warning_text = '{0} has been deprecated and will be removed in a release of {2} after {1}'.format(
+                    name, removal_date, collection_name)
             elif removal_version:
-                warning_text = '{0} has been deprecated and will be removed in version {1}'.format(name, removal_version)
+                warning_text = '{0} has been deprecated and will be removed in version {1} of {2}'.format(
+                    name, removal_version, collection_name)
             else:
-                warning_text = '{0} has been deprecated and will be removed in a future release'.format(name)
+                warning_text = '{0} has been deprecated and will be removed in a future release of {2}'.format(
+                    name, collection_name)
 
         self.deprecated = True
         if removal_date:
@@ -374,7 +377,7 @@ class PluginLoader:
             if type_name in C.CONFIGURABLE_PLUGINS:
                 dstring = AnsibleLoader(getattr(module, 'DOCUMENTATION', ''), file_name=path).get_single_data()
                 if dstring:
-                    add_fragments(dstring, path, fragment_loader=fragment_loader)
+                    add_fragments(dstring, path, fragment_loader=fragment_loader, is_module=(type_name == 'module'))
 
                 if dstring and 'options' in dstring and isinstance(dstring['options'], dict):
                     C.config.initialize_plugin_configuration_definitions(type_name, name, dstring['options'])
@@ -444,7 +447,7 @@ class PluginLoader:
             deprecation = routing_metadata.get('deprecation', None)
 
             # this will no-op if there's no deprecation metadata for this plugin
-            plugin_load_context.record_deprecation(fq_name, deprecation)
+            plugin_load_context.record_deprecation(fq_name, deprecation, acr.collection)
 
             tombstone = routing_metadata.get('tombstone', None)
 
@@ -453,12 +456,12 @@ class PluginLoader:
                 removal_date = tombstone.get('removal_date')
                 removal_version = tombstone.get('removal_version')
                 if removal_date:
-                    removed_msg = '{0} was removed on {1}'.format(fq_name, removal_date)
+                    removed_msg = '{0} was removed from {2} on {1}'.format(fq_name, removal_date, acr.collection)
                     removal_version = None
                 elif removal_version:
-                    removed_msg = '{0} was removed in version {1}'.format(fq_name, removal_version)
+                    removed_msg = '{0} was removed in version {1} of {2}'.format(fq_name, removal_version, acr.collection)
                 else:
-                    removed_msg = '{0} was removed in a previous release'.format(fq_name)
+                    removed_msg = '{0} was removed in a previous release of {1}'.format(fq_name, acr.collection)
                 plugin_load_context.removal_date = removal_date
                 plugin_load_context.removal_version = removal_version
                 plugin_load_context.resolved = True

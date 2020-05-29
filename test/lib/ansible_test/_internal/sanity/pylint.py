@@ -239,12 +239,10 @@ class PylintTest(SanitySingleVersion):
         ] + paths
 
         if data_context().content.collection:
-            cmd.extend(['--is-collection', 'yes'])
+            cmd.extend(['--collection-name', data_context().content.collection.full_name])
 
             if collection_detail and collection_detail.version:
                 cmd.extend(['--collection-version', collection_detail.version])
-        else:
-            cmd.extend(['--enable', 'ansible-deprecated-version'])
 
         append_python_path = [plugin_dir]
 

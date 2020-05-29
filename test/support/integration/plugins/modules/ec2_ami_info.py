@@ -270,7 +270,7 @@ def main():
 
     module = AnsibleAWSModule(argument_spec=argument_spec, supports_check_mode=True)
     if module._module._name == 'ec2_ami_facts':
-        module._module.deprecate("The 'ec2_ami_facts' module has been renamed to 'ec2_ami_info'", version='2.13')
+        module._module.deprecate("The 'ec2_ami_facts' module has been renamed to 'ec2_ami_info'", version='ansible.builtin:2.13')
 
     ec2_client = module.client('ec2')
 

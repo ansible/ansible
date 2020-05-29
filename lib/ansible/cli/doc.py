@@ -31,7 +31,7 @@ from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import BLACKLIST, get_docstring, get_versioned_doclink
+from ansible.utils.plugin_docs import BLACKLIST, untag_versions_and_dates, get_docstring, get_versioned_doclink
 
 display = Display()
 
@@ -218,7 +218,7 @@ class DocCLI(CLI):
             plugin_docs = {}
             for plugin in context.CLIARGS['args']:
                 try:
-                    doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, loader, search_paths)
+                    doc, plainexamples, returndocs, metadata = DocCLI._get_plugin_doc(plugin, plugin_type, loader, search_paths)
                 except PluginNotFound:
                     display.warning("%s %s not found in:\n%s\n" % (plugin_type, plugin, search_paths))
                     continue
@@ -281,8 +281,13 @@ class DocCLI(CLI):
         if filename is None:
             raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
 
+        collection_name = 'ansible.builtin'
+        if plugin_name.startswith('ansible_collections.'):
+            collection_name = '.'.join(plugin_name.split('.')[1:3])
+
         try:
-            doc, __, __, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
+            doc, __, __, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
+                                                  collection_name=collection_name, is_module=(plugin_type == 'module'))
         except Exception:
             display.vvv(traceback.format_exc())
             raise AnsibleError(
@@ -319,13 +324,20 @@ class DocCLI(CLI):
         return clean_ns
 
     @staticmethod
-    def _get_plugin_doc(plugin, loader, search_paths):
+    def _get_plugin_doc(plugin, plugin_type, loader, search_paths):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
-        filename = loader.find_plugin(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-        if filename is None:
+        result = loader.find_plugin_with_context(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+        if result is None:
             raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
+        plugin_name, filename = result.plugin_resolved_name, result.plugin_resolved_path
 
-        doc, plainexamples, returndocs, metadata = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0))
+        collection_name = 'ansible.builtin'
+        if plugin_name.startswith('ansible_collections.'):
+            collection_name = '.'.join(plugin_name.split('.')[1:3])
+
+        doc, plainexamples, returndocs, metadata = get_docstring(
+            filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
+            collection_name=collection_name, is_module=(plugin_type == 'module'))
 
         # If the plugin existed but did not have a DOCUMENTATION element and was not removed, it's
         # an error
@@ -346,6 +358,7 @@ class DocCLI(CLI):
             raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
 
         doc['filename'] = filename
+        untag_versions_and_dates(doc, '%s:' % (collection_name, ), is_module=(plugin_type == 'module'))
         return doc, plainexamples, returndocs, metadata
 
     @staticmethod
