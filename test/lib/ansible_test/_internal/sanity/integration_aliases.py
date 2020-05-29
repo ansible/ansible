@@ -225,6 +225,12 @@ class IntegrationAliasesTest(SanityVersionNeutral):
             find_incidental=['shippable/posix/incidental/'],
         )
 
+        messages += self.check_ci_group(
+            targets=tuple(filter_targets(posix_targets, ['shippable/generic/'], include=True, directories=False,
+                                         errors=False)),
+            find=self.format_shippable_group_alias('generic'),
+        )
+
         for cloud in clouds:
             messages += self.check_ci_group(
                 targets=tuple(filter_targets(posix_targets, ['cloud/%s/' % cloud], include=True, directories=False, errors=False)),
