@@ -1,4 +1,4 @@
-- hosts: vyos-1-1-8
+- hosts: vyos
   connection: ansible.netcommon.network_cli
   become: true
   gather_facts: false
