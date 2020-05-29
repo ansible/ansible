@@ -62,6 +62,8 @@ VALID_SPECS = (
     ({'arg': {'type': 'list', 'elements': 'str'}}, {'arg': ['42', '32']}, ['42', '32']),
     # Type is implicit, converts to string
     ({'arg': {'type': 'str'}}, {'arg': 42}, '42'),
+    # Type=str_strict converts but warns
+    ({'arg': {'type': 'str_strict'}}, {'arg': 99}, '99'),
     # Type=list elements=str implicit converts to string
     ({'arg': {'type': 'list', 'elements': 'str'}}, {'arg': [42, 32]}, ['42', '32']),
     # parameter is required
@@ -215,6 +217,8 @@ def test_validator_basic_types(argspec, expected, stdin):
     if 'type' in argspec['arg']:
         if argspec['arg']['type'] == 'int':
             type_ = integer_types
+        elif argspec['arg']['type'] == 'str_strict':
+            type_ = str
         else:
             type_ = getattr(builtins, argspec['arg']['type'])
     else:
@@ -245,6 +249,48 @@ def test_validate_basic_auth_arg(mocker, stdin):
     assert isinstance(am.params['api_password'], string_types)
     assert isinstance(am.params['api_url'], string_types)
     assert isinstance(am.params['validate_certs'], bool)
+
+
+@pytest.mark.parametrize(
+    'stdin, action',
+    (
+        ({'arg': 24}, ''),
+        ({'arg': 24, '_ansible_string_conversion_action': 'error'}, 'error'),
+        ({'arg': 24, '_ansible_string_conversion_action': 'warn'}, 'warn'),
+        ({'arg': 24, '_ansible_string_conversion_action': 'ignore'}, 'ignore'),
+        ({'arg': 24, '_ansible_string_conversion_action': 'BOGUS'}, 'BOGUS'),
+    ),
+    indirect=['stdin']
+)
+def test_str_strict(stdin, action, mocker, capsys):
+    argspec = {'arg': {'type': 'str_strict'}}
+
+    if action == 'error':
+        with pytest.raises(SystemExit):
+            basic.AnsibleModule(argspec)
+        out, err = capsys.readouterr()
+        data = json.loads(out)
+
+        assert data['failed'] is True
+        assert 'argument arg is of type' in data['msg']
+
+    elif action == 'warn':
+        module = basic.AnsibleModule(argspec)
+        assert module.params['arg'] == '24'
+        assert isinstance(module.params['arg'], string_types)
+        assert 'strict string field was converted' in get_warning_messages()[0]
+
+    elif action == 'ignore':
+        module = basic.AnsibleModule(argspec)
+        assert module.params['arg'] == '24'
+        assert isinstance(module.params['arg'], string_types)
+        assert len(get_warning_messages()) == 0
+
+    else:
+        module = basic.AnsibleModule(argspec)
+        assert module.params['arg'] == '24'
+        assert isinstance(module.params['arg'], string_types)
+        assert len(get_warning_messages()) == 0
 
 
 @pytest.mark.parametrize('stdin', RATE_LIMIT_VALID_ARGS, indirect=['stdin'])
