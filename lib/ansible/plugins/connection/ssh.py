@@ -397,9 +397,10 @@ def _ssh_retry(func):
     def wrapped(self, *args, **kwargs):
         remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
         cmd_summary = u"%s..." % to_text(args[0])
+        conn_password = self.get_option('password') or self._play_context.password
         for attempt in range(remaining_tries):
             cmd = args[0]
-            if attempt != 0 and self.get_option('password') and isinstance(cmd, list):
+            if attempt != 0 and conn_password and isinstance(cmd, list):
                 # If this is a retry, the fd/pipe for sshpass is closed, and we need a new one
                 self.sshpass_pipe = os.pipe()
                 cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
@@ -417,7 +418,7 @@ def _ssh_retry(func):
                 except (AnsibleControlPersistBrokenPipeError):
                     # Retry one more time because of the ControlPersist broken pipe (see #16731)
                     cmd = args[0]
-                    if self.get_option('password') and isinstance(cmd, list):
+                    if conn_password and isinstance(cmd, list):
                         # This is a retry, so the fd/pipe for sshpass is closed, and we need a new one
                         self.sshpass_pipe = os.pipe()
                         cmd[1] = b'-d' + to_bytes(self.sshpass_pipe[0], nonstring='simplerepr', errors='surrogate_or_strict')
@@ -564,6 +565,7 @@ class Connection(ConnectionBase):
         '''
 
         b_command = []
+        conn_password = self.get_option('password') or self._play_context.password
 
         #
         # First, the command to invoke
@@ -572,7 +574,7 @@ class Connection(ConnectionBase):
         # If we want to use password authentication, we have to set up a pipe to
         # write the password to sshpass.
 
-        if self.get_option('password'):
+        if conn_password:
             if not self._sshpass_available():
                 raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
 
@@ -597,7 +599,7 @@ class Connection(ConnectionBase):
         # sftp batch mode does not prompt for passwords so it must be disabled
         # if not using controlpersist and using sshpass
         if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
-            if self.get_option('password'):
+            if conn_password:
                 b_args = [b'-o', b'BatchMode=no']
                 self._add_args(b_command, b_args, u'disable batch mode for sshpass')
             b_command += [b'-b', b'-']
@@ -631,7 +633,7 @@ class Connection(ConnectionBase):
             b_args = (b"-o", b'IdentityFile="' + to_bytes(os.path.expanduser(key), errors='surrogate_or_strict') + b'"')
             self._add_args(b_command, b_args, u"ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set")
 
-        if not self.get_option('password'):
+        if not conn_password:
             self._add_args(
                 b_command, (
                     b"-o", b"KbdInteractiveAuthentication=no",
@@ -799,11 +801,13 @@ class Connection(ConnectionBase):
         else:
             cmd = list(map(to_bytes, cmd))
 
+        conn_password = self.get_option('password') or self._play_context.password
+
         if not in_data:
             try:
                 # Make sure stdin is a proper pty to avoid tcgetattr errors
                 master, slave = pty.openpty()
-                if PY3 and self.get_option('password'):
+                if PY3 and conn_password:
                     # pylint: disable=unexpected-keyword-arg
                     p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
                 else:
@@ -814,7 +818,7 @@ class Connection(ConnectionBase):
                 p = None
 
         if not p:
-            if PY3 and self.get_option('password'):
+            if PY3 and conn_password:
                 # pylint: disable=unexpected-keyword-arg
                 p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, pass_fds=self.sshpass_pipe)
             else:
@@ -824,10 +828,10 @@ class Connection(ConnectionBase):
         # If we are using SSH password authentication, write the password into
         # the pipe we opened in _build_command.
 
-        if self.get_option('password'):
+        if conn_password:
             os.close(self.sshpass_pipe[0])
             try:
-                os.write(self.sshpass_pipe[1], to_bytes(self.get_option('password')) + b'\n')
+                os.write(self.sshpass_pipe[1], to_bytes(conn_password) + b'\n')
             except OSError as e:
                 # Ignore broken pipe errors if the sshpass process has exited.
                 if e.errno != errno.EPIPE or p.poll() is None:
