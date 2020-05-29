@@ -533,9 +533,9 @@ plugin_routing:
     cloudscale_volume:
       redirect: community.general.cloudscale_volume
     cs_instance_facts:
-      redirect: ngine_io.cloudstack.cs_instance_facts
+      redirect: ngine_io.cloudstack.cs_instance_info
     cs_zone_facts:
-      redirect: ngine_io.cloudstack.cs_zone_facts
+      redirect: ngine_io.cloudstack.cs_zone_info
     cs_account:
       redirect: ngine_io.cloudstack.cs_account
     cs_affinitygroup:
@@ -1033,23 +1033,23 @@ plugin_routing:
     one_vm:
       redirect: community.general.one_vm
     os_flavor_facts:
-      redirect: community.general.os_flavor_facts
+      redirect: openstack.cloud.os_flavor_info
     os_image_facts:
-      redirect: community.general.os_image_facts
+      redirect: openstack.cloud.os_image_facts
     os_keystone_domain_facts:
-      redirect: community.general.os_keystone_domain_facts
+      redirect: openstack.cloud.os_keystone_domain_info
     os_networks_facts:
-      redirect: community.general.os_networks_facts
+      redirect: openstack.cloud.os_networks_info
     os_port_facts:
-      redirect: community.general.os_port_facts
+      redirect: openstack.cloud.os_port_info
     os_project_facts:
-      redirect: community.general.os_project_facts
+      redirect: openstack.cloud.os_project_info
     os_server_facts:
-      redirect: community.general.os_server_facts
+      redirect: openstack.cloud.os_server_info
     os_subnets_facts:
-      redirect: community.general.os_subnets_facts
+      redirect: openstack.cloud.os_subnets_info
     os_user_facts:
-      redirect: community.general.os_user_facts
+      redirect: openstack.cloud.os_user_info
     oci_vcn:
       redirect: community.general.oci_vcn
     ovh_ip_failover:
@@ -1269,29 +1269,29 @@ plugin_routing:
     vr_user:
       redirect: ngine_io.vultr.vultr_user
     vultr_account_facts:
-      redirect: ngine_io.vultr.vultr_account_facts
+      redirect: ngine_io.vultr.vultr_account_info
     vultr_block_storage_facts:
-      redirect: ngine_io.vultr.vultr_block_storage_facts
+      redirect: ngine_io.vultr.vultr_block_storage_info
     vultr_dns_domain_facts:
-      redirect: ngine_io.vultr.vultr_dns_domain_facts
+      redirect: ngine_io.vultr.vultr_dns_domain_info
     vultr_firewall_group_facts:
-      redirect: ngine_io.vultr.vultr_firewall_group_facts
+      redirect: ngine_io.vultr.vultr_firewall_group_info
     vultr_network_facts:
-      redirect: ngine_io.vultr.vultr_network_facts
+      redirect: ngine_io.vultr.vultr_network_info
     vultr_os_facts:
-      redirect: ngine_io.vultr.vultr_os_facts
+      redirect: ngine_io.vultr.vultr_os_info
     vultr_plan_facts:
-      redirect: ngine_io.vultr.vultr_plan_facts
+      redirect: ngine_io.vultr.vultr_plan_info
     vultr_region_facts:
-      redirect: ngine_io.vultr.vultr_region_facts
+      redirect: ngine_io.vultr.vultr_region_info
     vultr_server_facts:
-      redirect: ngine_io.vultr.vultr_server_facts
+      redirect: ngine_io.vultr.vultr_server_info
     vultr_ssh_key_facts:
-      redirect: ngine_io.vultr.vultr_ssh_key_facts
+      redirect: ngine_io.vultr.vultr_ssh_key_info
     vultr_startup_script_facts:
-      redirect: ngine_io.vultr.vultr_startup_script_facts
+      redirect: ngine_io.vultr.vultr_startup_script_info
     vultr_user_facts:
-      redirect: ngine_io.vultr.vultr_user_facts
+      redirect: ngine_io.vultr.vultr_user_info
     vultr_account_info:
       redirect: ngine_io.vultr.vultr_account_info
     vultr_block_storage:
@@ -6707,11 +6707,11 @@ plugin_routing:
     ovirt_vnic_profile_info:
       redirect: ovirt.ovirt.ovirt_vnic_profile_info
     dellos10_command:
-      redirect: dellemc_networking.os10.dellos10_command
+      redirect: dellemc_networking.os10.os10_command
     dellos10_facts:
-      redirect: dellemc_networking.os10.dellos10_facts
+      redirect: dellemc_networking.os10.os10_facts
     dellos10_config:
-      redirect: dellemc_networking.os10.dellos10_config
+      redirect: dellemc_networking.os10.os10_config
     dellos9_facts:
       redirect: dellemc_networking.os9.dellos9_facts
     dellos9_command:
@@ -6783,9 +6783,9 @@ plugin_routing:
     skydive_node:
       redirect: skydive.skydive.skydive_node
     cyberark_authentication:
-      redirect: cyberark.bizdev.cyberark_authentication
+      redirect: cyberark.pas.cyberark_authentication
     cyberark_user:
-      redirect: cyberark.bizdev.cyberark_user
+      redirect: cyberark.pas.cyberark_user
     gcp_appengine_firewall_rule:
       redirect: google.cloud.gcp_appengine_firewall_rule
     gcp_appengine_firewall_rule_info:
@@ -7586,7 +7586,7 @@ plugin_routing:
     cloudscale:
       redirect: community.general.cloudscale
     cloudstack:
-      redirect: community.general.cloudstack
+      redirect: ngine_io.cloudstack.cloudstack
     database:
       redirect: community.general.database
     digital_ocean:
@@ -7596,9 +7596,9 @@ plugin_routing:
     swarm:
       redirect: community.general.swarm
     exoscale:
-      redirect: community.network.exoscale
+      redirect: community.general.exoscale
     f5_utils:
-      redirect: community.general.f5_utils
+      redirect: community.network.f5_utils
     firewalld:
       redirect: community.general.firewalld
     gcdns:
@@ -7648,19 +7648,19 @@ plugin_routing:
     aireos:
       redirect: community.network.aireos
     aos:
-      redirect: community.general.aos
+      redirect: community.network.aos
     apconos:
       redirect: community.network.apconos
     aruba:
       redirect: community.network.aruba
     ansible_utils:
-      redirect: community.general.ansible_utils
+      redirect: community.network.ansible_utils
     avi:
       redirect: community.network.avi
     avi_api:
       redirect: community.network.avi_api
     bigswitch:
-      redirect: community.general.bigswitch
+      redirect: community.network.bigswitch
     ce:
       redirect: community.network.ce
     cnos:
@@ -7694,21 +7694,21 @@ plugin_routing:
     utils:
       redirect: vyos.vyos.utils
     iworkflow:
-      redirect: community.general.iworkflow
+      redirect: community.network.iworkflow
     legacy:
-      redirect: community.general.legacy
+      redirect: community.network.legacy
     urls:
       redirect: amazon.aws.urls
     fortianalyzer:
-      redirect: community.general.fortianalyzer
+      redirect: community.network.fortianalyzer
     configuration:
-      redirect: community.general.configuration
+      redirect: community.network.configuration
     device:
-      redirect: community.general.device
+      redirect: community.network.device
     fdm_swagger_client:
-      redirect: community.general.fdm_swagger_client
+      redirect: community.network.fdm_swagger_client
     operation:
-      redirect: community.general.operation
+      redirect: community.network.operation
     icx:
       redirect: community.network.icx
     ironware:
@@ -7790,7 +7790,7 @@ plugin_routing:
     crypto:
       redirect: community.crypto.crypto
     VmwareRestModule:
-      redirect: vmware.vmware_rest.VmwareRestModule
+      redirect: vmware.vmware_rest.vmware_httpapi
     vca:
       redirect: community.vmware.vca
     vmware:
@@ -7918,7 +7918,7 @@ plugin_routing:
     ovirt:
       redirect: ovirt.ovirt.ovirt
     dellos10:
-      redirect: dellemc_networking.os10.dellos10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc_networking.os9.dellos9
     dellos6:
@@ -7993,7 +7993,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.dellos10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc_networking.os9.dellos9
     dellos6:
@@ -8056,7 +8056,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.dellos10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc_networking.os9.dellos9
     dellos6:
@@ -8174,7 +8174,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.dellos10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc_networking.os9.dellos9
     dellos6:
@@ -8316,7 +8316,7 @@ plugin_routing:
     enos:
       redirect: community.network.enos
     exoscale:
-      redirect: community.network.exoscale
+      redirect: community.general.exoscale
     gcp:
       redirect: google.cloud.gcp
     hetzner:
@@ -8486,13 +8486,13 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     tower:
-      redirect: awx.awx.tower
+      redirect: awx.awx.auth
     ovirt:
       redirect: ovirt.ovirt.ovirt
     ovirt_info:
       redirect: ovirt.ovirt.ovirt_info
     dellos10:
-      redirect: dellemc_networking.os10.dellos10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc_networking.os9.dellos9
     dellos6:
@@ -8573,7 +8573,7 @@ plugin_routing:
     exos:
       redirect: community.network.exos
     fortianalyzer:
-      redirect: community.general.fortianalyzer # FIXME, why in c.network?
+      redirect: community.network.fortianalyzer
     fortimanager:
       redirect: fortinet.fortimanager.fortimanager
     ftd:
@@ -8673,7 +8673,7 @@ plugin_routing:
     flattened:
       redirect: community.general.flattened
     gcp_storage_file:
-      redirect: google.cloud.gcp_storage_file
+      redirect: community.general.gcp_storage_file
     hashi_vault:
       redirect: community.general.hashi_vault
     hiera:
