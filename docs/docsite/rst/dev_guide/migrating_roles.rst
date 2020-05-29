@@ -211,7 +211,7 @@ If any of your custom modules use a custom module utility, once you migrate to a
 
 When coding with ``module_utils`` in a collection, the Python import statement needs to take into account the :abbr:`FQCN (Fully Qualified Collection Name)` along with the ``ansible_collections`` convention. The resulting Python import looks similar to the following example:
 
-.. code-block:: python
+.. code-block:: text
 
   from ansible_collections.{namespace}.{collectionname}.plugins.module_utils.{util} import {something}
 
@@ -223,7 +223,7 @@ The following example code snippets show a Python and a PowerShell module using 
 
 In the Python example the ``module_utils`` is ``helper`` and the :abbr:`FQCN (Fully Qualified Collection Name)` is ``ansible_example.community.plugins.module_utils.helper``:
 
-.. code-block:: python
+.. code-block:: text
 
   from ansible.module_utils.basic import AnsibleModule
   from ansible.module_utils._text import to_text
