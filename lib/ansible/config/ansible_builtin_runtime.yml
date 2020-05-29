@@ -1899,23 +1899,23 @@ plugin_routing:
     bigmon_policy:
       redirect: community.network.bigmon_policy
     checkpoint_access_layer_facts:
-      redirect: checkpoint.mgmt.access_layer_factsaccess_layer_facts
+      redirect: checkpoint.mgmt.checkpoint_access_layer_facts
     checkpoint_access_rule:
-      redirect: checkpoint.mgmt.access_layer_factsaccess_rule
+      redirect: checkpoint.mgmt.checkpoint_access_rule
     checkpoint_access_rule_facts:
-      redirect: checkpoint.mgmt.access_layer_factsaccess_rule_facts
+      redirect: checkpoint.mgmt.checkpoint_access_rule_facts
     checkpoint_host:
-      redirect: checkpoint.mgmt.access_layer_factshost
+      redirect: checkpoint.mgmt.checkpoint_host
     checkpoint_host_facts:
-      redirect: checkpoint.mgmt.access_layer_factshost_facts
+      redirect: checkpoint.mgmt.checkpoint_host_facts
     checkpoint_object_facts:
-      redirect: checkpoint.mgmt.access_layer_factsobject_facts
+      redirect: checkpoint.mgmt.checkpoint_object_facts
     checkpoint_run_script:
-      redirect: checkpoint.mgmt.access_layer_factsrun_script
+      redirect: checkpoint.mgmt.checkpoint_run_script
     checkpoint_session:
-      redirect: checkpoint.mgmt.access_layer_factssession
+      redirect: checkpoint.mgmt.checkpoint_session
     checkpoint_task_facts:
-      redirect: checkpoint.mgmt.access_layer_factstask_facts
+      redirect: checkpoint.mgmt.checkpoint_task_facts
     cp_publish:
       redirect: community.network.cp_publish
     ce_aaa_server:
@@ -2177,7 +2177,7 @@ plugin_routing:
     bigip_traffic_group:
       redirect: f5networks.f5_nodules.bigip_traffic_group
     bigiq_device_facts:
-      redirect: community.general.bigiq_device_facts
+      redirect: f5networks.f5_modules.bigiq_device_info
     faz_device:
       redirect: community.network.faz_device
     fmgr_device:
@@ -2593,23 +2593,23 @@ plugin_routing:
     routeros_facts:
       redirect: community.network.routeros_facts
     slxos_command:
-      redirect: community.general.slxos_command
+      redirect: community.network.slxos_command
     slxos_config:
-      redirect: community.general.slxos_config
+      redirect: community.network.slxos_config
     slxos_facts:
-      redirect: community.general.slxos_facts
+      redirect: community.network.slxos_facts
     slxos_interface:
-      redirect: community.general.slxos_interface
+      redirect: community.network.slxos_interface
     slxos_l2_interface:
-      redirect: community.general.slxos_l2_interface
+      redirect: community.network.slxos_l2_interface
     slxos_l3_interface:
-      redirect: community.general.slxos_l3_interface
+      redirect: community.network.slxos_l3_interface
     slxos_linkagg:
-      redirect: community.general.slxos_linkagg
+      redirect: community.network.slxos_linkagg
     slxos_lldp:
-      redirect: community.general.slxos_lldp
+      redirect: community.network.slxos_lldp
     slxos_vlan:
-      redirect: community.general.slxos_vlan
+      redirect: community.network.slxos_vlan
     sros_command:
       redirect: community.network.sros_command
     sros_config:
@@ -2798,8 +2798,6 @@ plugin_routing:
       redirect: community.general.hponcfg
     imc_rest:
       redirect: community.general.imc_rest
-    intersight_info:
-      redirect: community.general.intersight_info
     ipmi_boot:
       redirect: community.general.ipmi_boot
     ipmi_power:
@@ -3001,57 +2999,57 @@ plugin_routing:
     netapp_e_alerts:
       redirect: netapp_eseries.santricity.netapp_e__alerts
     netapp_e_amg:
-      redirect: netapp_eseries.santricity.netapp_e__amg
+      redirect: netapp_eseries.santricity.netapp_e_amg
     netapp_e_amg_role:
       redirect: netapp_eseries.santricity.netapp_e_amg_role
     netapp_e_amg_sync:
-      redirect: netapp_eseries.santricity.netapp_e__amg_sync
+      redirect: netapp_eseries.santricity.netapp_e_amg_sync
     netapp_e_asup:
-      redirect: netapp_eseries.santricity.netapp_e__asup
+      redirect: netapp_eseries.santricity.netapp_e_asup
     netapp_e_auditlog:
-      redirect: netapp_eseries.santricity.netapp_e__auditlog
+      redirect: netapp_eseries.santricity.netapp_e_auditlog
     netapp_e_auth:
-      redirect: netapp_eseries.santricity.netapp_e__auth
+      redirect: netapp_eseries.santricity.netapp_e_auth
     netapp_e_drive_firmware:
-      redirect: netapp_eseries.santricity.netapp_e__drive_firmware
+      redirect: netapp_eseries.santricity.netapp_e_drive_firmware
     netapp_e_facts:
-      redirect: netapp_eseries.santricity.netapp_e__facts
+      redirect: netapp_eseries.santricity.netapp_e_facts
     netapp_e_firmware:
-      redirect: netapp_eseries.santricity.netapp_e__firmware
+      redirect: netapp_eseries.santricity.netapp_e_firmware
     netapp_e_flashcache:
-      redirect: netapp_eseries.santricity.netapp_e__flashcache
+      redirect: netapp_eseries.santricity.netapp_e_flashcache
     netapp_e_global:
-      redirect: netapp_eseries.santricity.netapp_e__global
+      redirect: netapp_eseries.santricity.netapp_e_global
     netapp_e_host:
-      redirect: netapp_eseries.santricity.netapp_e__host
+      redirect: netapp_eseries.santricity.netapp_e_host
     netapp_e_hostgroup:
-      redirect: netapp_eseries.santricity.netapp_e__hostgroup
+      redirect: netapp_eseries.santricity.netapp_e_hostgroup
     netapp_e_iscsi_interface:
-      redirect: netapp_eseries.santricity.netapp_e__iscsi_interface
+      redirect: netapp_eseries.santricity.netapp_e_iscsi_interface
     netapp_e_iscsi_target:
-      redirect: netapp_eseries.santricity.netapp_e__iscsi_target
+      redirect: netapp_eseries.santricity.netapp_e_iscsi_target
     netapp_e_ldap:
-      redirect: netapp_eseries.santricity.netapp_e__ldap
+      redirect: netapp_eseries.santricity.netapp_e_ldap
     netapp_e_lun_mapping:
-      redirect: netapp_eseries.santricity.netapp_e__lun_mapping
+      redirect: netapp_eseries.santricity.netapp_e_lun_mapping
     netapp_e_mgmt_interface:
-      redirect: netapp_eseries.santricity.netapp_e__mgmt_interface
+      redirect: netapp_eseries.santricity.netapp_e_mgmt_interface
     netapp_e_snapshot_group:
-      redirect: netapp_eseries.santricity.netapp_e__snapshot_group
+      redirect: netapp_eseries.santricity.netapp_e_snapshot_group
     netapp_e_snapshot_images:
-      redirect: netapp_eseries.santricity.netapp_e__snapshot_images
+      redirect: netapp_eseries.santricity.netapp_e_snapshot_images
     netapp_e_snapshot_volume:
-      redirect: netapp_eseries.santricity.netapp_e__snapshot_volume
+      redirect: netapp_eseries.santricity.netapp_e_snapshot_volume
     netapp_e_storage_system:
-      redirect: netapp_eseries.santricity.netapp_e__storage_system
+      redirect: netapp_eseries.santricity.netapp_e_storage_system
     netapp_e_storagepool:
-      redirect: netapp_eseries.santricity.netapp_e__storagepool
+      redirect: netapp_eseries.santricity.netapp_e_storagepool
     netapp_e_syslog:
-      redirect: netapp_eseries.santricity.netapp_e__syslog
+      redirect: netapp_eseries.santricity.netapp_e_syslog
     netapp_e_volume:
-      redirect: netapp_eseries.santricity.netapp_e__volume
+      redirect: netapp_eseries.santricity.netapp_e_volume
     netapp_e_volume_copy:
-      redirect: netapp_eseries.santricity.netapp_e__volume_copy
+      redirect: netapp_eseries.santricity.netapp_e_volume_copy
     purefa_facts:
       redirect: community.general.purefa_facts
     purefb_facts:
@@ -3127,7 +3125,7 @@ plugin_routing:
     modprobe:
       redirect: community.general.modprobe
     nosh:
-      redirect: community.network.nosh
+      redirect: community.general.nosh
     ohai:
       redirect: community.general.ohai
     open_iscsi:
@@ -7734,7 +7732,7 @@ plugin_routing:
     routeros:
       redirect: community.network.routeros
     slxos:
-      redirect: community.general.slxos
+      redirect: community.network.slxos
     sros:
       redirect: community.network.sros
     voss:
@@ -7979,7 +7977,7 @@ plugin_routing:
     routeros:
       redirect: community.network.routeros
     slxos:
-      redirect: community.general.slxos
+      redirect: community.network.slxos
     voss:
       redirect: community.network.voss
     eos:
@@ -8038,7 +8036,7 @@ plugin_routing:
     routeros:
       redirect: community.network.routeros
     slxos:
-      redirect: community.general.slxos
+      redirect: community.network.slxos
     sros:
       redirect: community.network.sros
     voss:
@@ -8092,7 +8090,7 @@ plugin_routing:
     onyx_config:
       redirect: community.network.onyx_config
     slxos:
-      redirect: community.general.slxos
+      redirect: community.network.slxos
     sros:
       redirect: community.network.sros
     voss:
@@ -8302,7 +8300,7 @@ plugin_routing:
     cloudscale:
       redirect: community.general.cloudscale
     cloudstack:
-      redirect: community.general.cloudstack
+      redirect: ngine_io.cloudstack.cloudstack
     cnos:
       redirect: community.network.cnos
     digital_ocean:
