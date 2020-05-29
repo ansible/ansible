@@ -219,7 +219,8 @@ class IntegrationAliasesTest(SanityVersionNeutral):
                     messages.append(SanityMessage('invalid alias `%s`' % alias, '%s/aliases' % target.path))
 
         messages += self.check_ci_group(
-            targets=tuple(filter_targets(posix_targets, ['cloud/'], include=False, directories=False, errors=False)),
+            targets=tuple(filter_targets(posix_targets, ['cloud/', 'shippable/generic/'], include=False,
+                                         directories=False, errors=False)),
             find=self.format_shippable_group_alias('linux').replace('linux', 'posix'),
             find_incidental=['shippable/posix/incidental/'],
         )
