@@ -283,3 +283,10 @@ intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../pytho
                        'ansible_2_6': ('https://docs.ansible.com/ansible/2.6/', (None, '../ansible_2_6.inv')),
                        'ansible_2_5': ('https://docs.ansible.com/ansible/2.5/', (None, '../ansible_2_5.inv')),
                        }
+
+# linckchecker settings
+linkcheck_ignore = [
+    r'http://irc\.freenode\.net',
+]
+linkcheck_workers = 25
+# linkcheck_anchors = False
