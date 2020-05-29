@@ -49,6 +49,11 @@ try:
     imp = None
 except ImportError:
     import imp
+
+try:
+    ModuleNotFoundError
+except NameError:
+    # this was introduced in Python 3.6
     ModuleNotFoundError = None
 
 display = Display()
