@@ -24,7 +24,7 @@ plugin_routing:
     kubectl:
       redirect: community.kubernetes.kubectl
     libvirt_lxc:
-      redirect: community.general.libvirt_lxc
+      redirect: community.libvirt.libvirt_lxc
     lxc:
       redirect: community.general.lxc
     lxd:
@@ -533,115 +533,115 @@ plugin_routing:
     cloudscale_volume:
       redirect: community.general.cloudscale_volume
     cs_instance_facts:
-      redirect: community.general.cs_instance_facts
+      redirect: ngine_io.cloudstack.cs_instance_info
     cs_zone_facts:
-      redirect: community.general.cs_zone_facts
+      redirect: ngine_io.cloudstack.cs_zone_info
     cs_account:
-      redirect: community.general.cs_account
+      redirect: ngine_io.cloudstack.cs_account
     cs_affinitygroup:
-      redirect: community.general.cs_affinitygroup
+      redirect: ngine_io.cloudstack.cs_affinitygroup
     cs_cluster:
-      redirect: community.general.cs_cluster
+      redirect: ngine_io.cloudstack.cs_cluster
     cs_configuration:
-      redirect: community.general.cs_configuration
+      redirect: ngine_io.cloudstack.cs_configuration
     cs_disk_offering:
-      redirect: community.general.cs_disk_offering
+      redirect: ngine_io.cloudstack.cs_disk_offering
     cs_domain:
-      redirect: community.general.cs_domain
+      redirect: ngine_io.cloudstack.cs_domain
     cs_facts:
-      redirect: community.general.cs_facts
+      redirect: ngine_io.cloudstack.cs_facts
     cs_firewall:
-      redirect: community.general.cs_firewall
+      redirect: ngine_io.cloudstack.cs_firewall
     cs_host:
-      redirect: community.general.cs_host
+      redirect: ngine_io.cloudstack.cs_host
     cs_image_store:
-      redirect: community.general.cs_image_store
+      redirect: ngine_io.cloudstack.cs_image_store
     cs_instance:
-      redirect: community.general.cs_instance
+      redirect: ngine_io.cloudstack.cs_instance
     cs_instance_info:
-      redirect: community.general.cs_instance_info
+      redirect: ngine_io.cloudstack.cs_instance_info
     cs_instance_nic:
-      redirect: community.general.cs_instance_nic
+      redirect: ngine_io.cloudstack.cs_instance_nic
     cs_instance_nic_secondaryip:
-      redirect: community.general.cs_instance_nic_secondaryip
+      redirect: ngine_io.cloudstack.cs_instance_nic_secondaryip
     cs_instance_password_reset:
-      redirect: community.general.cs_instance_password_reset
+      redirect: ngine_io.cloudstack.cs_instance_password_reset
     cs_instancegroup:
-      redirect: community.general.cs_instancegroup
+      redirect: ngine_io.cloudstack.cs_instancegroup
     cs_ip_address:
-      redirect: community.general.cs_ip_address
+      redirect: ngine_io.cloudstack.cs_ip_address
     cs_iso:
-      redirect: community.general.cs_iso
+      redirect: ngine_io.cloudstack.cs_iso
     cs_loadbalancer_rule:
-      redirect: community.general.cs_loadbalancer_rule
+      redirect: ngine_io.cloudstack.cs_loadbalancer_rule
     cs_loadbalancer_rule_member:
-      redirect: community.general.cs_loadbalancer_rule_member
+      redirect: ngine_io.cloudstack.cs_loadbalancer_rule_member
     cs_network:
-      redirect: community.general.cs_network
+      redirect: ngine_io.cloudstack.cs_network
     cs_network_acl:
-      redirect: community.general.cs_network_acl
+      redirect: ngine_io.cloudstack.cs_network_acl
     cs_network_acl_rule:
-      redirect: community.general.cs_network_acl_rule
+      redirect: ngine_io.cloudstack.cs_network_acl_rule
     cs_network_offering:
-      redirect: community.general.cs_network_offering
+      redirect: ngine_io.cloudstack.cs_network_offering
     cs_physical_network:
-      redirect: community.general.cs_physical_network
+      redirect: ngine_io.cloudstack.cs_physical_network
     cs_pod:
-      redirect: community.general.cs_pod
+      redirect: ngine_io.cloudstack.cs_pod
     cs_portforward:
-      redirect: community.general.cs_portforward
+      redirect: ngine_io.cloudstack.cs_portforward
     cs_project:
-      redirect: community.general.cs_project
+      redirect: ngine_io.cloudstack.cs_project
     cs_region:
-      redirect: community.general.cs_region
+      redirect: ngine_io.cloudstack.cs_region
     cs_resourcelimit:
-      redirect: community.general.cs_resourcelimit
+      redirect: ngine_io.cloudstack.cs_resourcelimit
     cs_role:
-      redirect: community.general.cs_role
+      redirect: ngine_io.cloudstack.cs_role
     cs_role_permission:
-      redirect: community.general.cs_role_permission
+      redirect: ngine_io.cloudstack.cs_role_permission
     cs_router:
-      redirect: community.general.cs_router
+      redirect: ngine_io.cloudstack.cs_router
     cs_securitygroup:
-      redirect: community.general.cs_securitygroup
+      redirect: ngine_io.cloudstack.cs_securitygroup
     cs_securitygroup_rule:
-      redirect: community.general.cs_securitygroup_rule
+      redirect: ngine_io.cloudstack.cs_securitygroup_rule
     cs_service_offering:
-      redirect: community.general.cs_service_offering
+      redirect: ngine_io.cloudstack.cs_service_offering
     cs_snapshot_policy:
-      redirect: community.general.cs_snapshot_policy
+      redirect: ngine_io.cloudstack.cs_snapshot_policy
     cs_sshkeypair:
-      redirect: community.general.cs_sshkeypair
+      redirect: ngine_io.cloudstack.cs_sshkeypair
     cs_staticnat:
-      redirect: community.general.cs_staticnat
+      redirect: ngine_io.cloudstack.cs_staticnat
     cs_storage_pool:
-      redirect: community.general.cs_storage_pool
+      redirect: ngine_io.cloudstack.cs_storage_pool
     cs_template:
-      redirect: community.general.cs_template
+      redirect: ngine_io.cloudstack.cs_template
     cs_traffic_type:
-      redirect: community.general.cs_traffic_type
+      redirect: ngine_io.cloudstack.cs_traffic_type
     cs_user:
-      redirect: community.general.cs_user
+      redirect: ngine_io.cloudstack.cs_user
     cs_vlan_ip_range:
-      redirect: community.general.cs_vlan_ip_range
+      redirect: ngine_io.cloudstack.cs_vlan_ip_range
     cs_vmsnapshot:
-      redirect: community.general.cs_vmsnapshot
+      redirect: ngine_io.cloudstack.cs_vmsnapshot
     cs_volume:
-      redirect: community.general.cs_volume
+      redirect: ngine_io.cloudstack.cs_volume
     cs_vpc:
-      redirect: community.general.cs_vpc
+      redirect: ngine_io.cloudstack.cs_vpc
     cs_vpc_offering:
-      redirect: community.general.cs_vpc_offering
+      redirect: ngine_io.cloudstack.cs_vpc_offering
     cs_vpn_connection:
-      redirect: community.general.cs_vpn_connection
+      redirect: ngine_io.cloudstack.cs_vpn_connection
     cs_vpn_customer_gateway:
-      redirect: community.general.cs_vpn_customer_gateway
+      redirect: ngine_io.cloudstack.cs_vpn_customer_gateway
     cs_vpn_gateway:
-      redirect: community.general.cs_vpn_gateway
+      redirect: ngine_io.cloudstack.cs_vpn_gateway
     cs_zone:
-      redirect: community.general.cs_zone
+      redirect: ngine_io.cloudstack.cs_zone
     cs_zone_info:
-      redirect: community.general.cs_zone_info
+      redirect: ngine_io.cloudstack.cs_zone_info
     digital_ocean:
       redirect: community.general.digital_ocean
     digital_ocean_account_facts:
@@ -767,7 +767,7 @@ plugin_routing:
     gce:
       redirect: community.general.gce
     gcp_backend_service:
-      redirect: community.general.gcp_backend_service
+      redirect: google.cloud.gcp_backend_service
     gcp_bigquery_dataset_facts:
       redirect: google.cloud.gcp_bigquery_dataset_info
     gcp_bigquery_table_facts:
@@ -847,9 +847,9 @@ plugin_routing:
     gcp_dns_resource_record_set_facts:
       redirect: google.cloud.gcp_dns_resource_record_set_info
     gcp_forwarding_rule:
-      redirect: community.general.gcp_forwarding_rule
+      redirect: google.cloud.gcp_forwarding_rule
     gcp_healthcheck:
-      redirect: community.general.gcp_healthcheck
+      redirect: google.cloud.gcp_healthcheck
     gcp_iam_role_facts:
       redirect: google.cloud.gcp_iam_role_info
     gcp_iam_service_account_facts:
@@ -907,9 +907,9 @@ plugin_routing:
     gce_tag:
       redirect: community.general.gce_tag
     gcpubsub:
-      redirect: community.general.gcpubsub
+      redirect: google.cloud.gcpubsub
     gcpubsub_info:
-      redirect: community.general.gcpubsub_info
+      redirect: google.cloud.gcpubsub_info
     heroku_collaborator:
       redirect: community.general.heroku_collaborator
     hwc_ecs_instance:
@@ -993,11 +993,11 @@ plugin_routing:
     terraform:
       redirect: community.general.terraform
     virt:
-      redirect: community.general.virt
+      redirect: community.libvirt.virt
     virt_net:
-      redirect: community.general.virt_net
+      redirect: community.libvirt.virt_net
     virt_pool:
-      redirect: community.general.virt_pool
+      redirect: community.libvirt.virt_pool
     xenserver_facts:
       redirect: community.general.xenserver_facts
     oneandone_firewall_policy:
@@ -1033,23 +1033,23 @@ plugin_routing:
     one_vm:
       redirect: community.general.one_vm
     os_flavor_facts:
-      redirect: community.general.os_flavor_facts
+      redirect: openstack.cloud.os_flavor_info
     os_image_facts:
-      redirect: community.general.os_image_facts
+      redirect: openstack.cloud.os_image_facts
     os_keystone_domain_facts:
-      redirect: community.general.os_keystone_domain_facts
+      redirect: openstack.cloud.os_keystone_domain_info
     os_networks_facts:
-      redirect: community.general.os_networks_facts
+      redirect: openstack.cloud.os_networks_info
     os_port_facts:
-      redirect: community.general.os_port_facts
+      redirect: openstack.cloud.os_port_info
     os_project_facts:
-      redirect: community.general.os_project_facts
+      redirect: openstack.cloud.os_project_info
     os_server_facts:
-      redirect: community.general.os_server_facts
+      redirect: openstack.cloud.os_server_info
     os_subnets_facts:
-      redirect: community.general.os_subnets_facts
+      redirect: openstack.cloud.os_subnets_info
     os_user_facts:
-      redirect: community.general.os_user_facts
+      redirect: openstack.cloud.os_user_info
     oci_vcn:
       redirect: community.general.oci_vcn
     ovh_ip_failover:
@@ -1251,91 +1251,91 @@ plugin_routing:
     udm_user:
       redirect: community.general.udm_user
     vr_account_facts:
-      redirect: community.general.vr_account_facts
+      redirect: ngine_io.vultr.vultr_account_facts
     vr_dns_domain:
-      redirect: community.general.vr_dns_domain
+      redirect: ngine_io.vultr.vultr_dns_domain
     vr_dns_record:
-      redirect: community.general.vr_dns_record
+      redirect: ngine_io.vultr.vultr_dns_record
     vr_firewall_group:
-      redirect: community.general.vr_firewall_group
+      redirect: ngine_io.vultr.vultr_firewall_group
     vr_firewall_rule:
-      redirect: community.general.vr_firewall_rule
+      redirect: ngine_io.vultr.vultr_firewall_rule
     vr_server:
-      redirect: community.general.vr_server
+      redirect: ngine_io.vultr.vultr_server
     vr_ssh_key:
-      redirect: community.general.vr_ssh_key
+      redirect: ngine_io.vultr.vultr_ssh_key
     vr_startup_script:
-      redirect: community.general.vr_startup_script
+      redirect: ngine_io.vultr.vultr_startup_script
     vr_user:
-      redirect: community.general.vr_user
+      redirect: ngine_io.vultr.vultr_user
     vultr_account_facts:
-      redirect: community.general.vultr_account_facts
+      redirect: ngine_io.vultr.vultr_account_info
     vultr_block_storage_facts:
-      redirect: community.general.vultr_block_storage_facts
+      redirect: ngine_io.vultr.vultr_block_storage_info
     vultr_dns_domain_facts:
-      redirect: community.general.vultr_dns_domain_facts
+      redirect: ngine_io.vultr.vultr_dns_domain_info
     vultr_firewall_group_facts:
-      redirect: community.general.vultr_firewall_group_facts
+      redirect: ngine_io.vultr.vultr_firewall_group_info
     vultr_network_facts:
-      redirect: community.general.vultr_network_facts
+      redirect: ngine_io.vultr.vultr_network_info
     vultr_os_facts:
-      redirect: community.general.vultr_os_facts
+      redirect: ngine_io.vultr.vultr_os_info
     vultr_plan_facts:
-      redirect: community.general.vultr_plan_facts
+      redirect: ngine_io.vultr.vultr_plan_info
     vultr_region_facts:
-      redirect: community.general.vultr_region_facts
+      redirect: ngine_io.vultr.vultr_region_info
     vultr_server_facts:
-      redirect: community.general.vultr_server_facts
+      redirect: ngine_io.vultr.vultr_server_info
     vultr_ssh_key_facts:
-      redirect: community.general.vultr_ssh_key_facts
+      redirect: ngine_io.vultr.vultr_ssh_key_info
     vultr_startup_script_facts:
-      redirect: community.general.vultr_startup_script_facts
+      redirect: ngine_io.vultr.vultr_startup_script_info
     vultr_user_facts:
-      redirect: community.general.vultr_user_facts
+      redirect: ngine_io.vultr.vultr_user_info
     vultr_account_info:
-      redirect: community.general.vultr_account_info
+      redirect: ngine_io.vultr.vultr_account_info
     vultr_block_storage:
-      redirect: community.general.vultr_block_storage
+      redirect: ngine_io.vultr.vultr_block_storage
     vultr_block_storage_info:
-      redirect: community.general.vultr_block_storage_info
+      redirect: ngine_io.vultr.vultr_block_storage_info
     vultr_dns_domain:
-      redirect: community.general.vultr_dns_domain
+      redirect: ngine_io.vultr.vultr_dns_domain
     vultr_dns_domain_info:
-      redirect: community.general.vultr_dns_domain_info
+      redirect: ngine_io.vultr.vultr_dns_domain_info
     vultr_dns_record:
-      redirect: community.general.vultr_dns_record
+      redirect: ngine_io.vultr.vultr_dns_record
     vultr_firewall_group:
-      redirect: community.general.vultr_firewall_group
+      redirect: ngine_io.vultr.vultr_firewall_group
     vultr_firewall_group_info:
-      redirect: community.general.vultr_firewall_group_info
+      redirect: ngine_io.vultr.vultr_firewall_group_info
     vultr_firewall_rule:
-      redirect: community.general.vultr_firewall_rule
+      redirect: ngine_io.vultr.vultr_firewall_rule
     vultr_network:
-      redirect: community.general.vultr_network
+      redirect: ngine_io.vultr.vultr_network
     vultr_network_info:
-      redirect: community.general.vultr_network_info
+      redirect: ngine_io.vultr.vultr_network_info
     vultr_os_info:
-      redirect: community.general.vultr_os_info
+      redirect: ngine_io.vultr.vultr_os_info
     vultr_plan_info:
-      redirect: community.general.vultr_plan_info
+      redirect: ngine_io.vultr.vultr_plan_info
     vultr_region_info:
-      redirect: community.general.vultr_region_info
+      redirect: ngine_io.vultr.vultr_region_info
     vultr_server:
-      redirect: community.general.vultr_server
+      redirect: ngine_io.vultr.vultr_server
     vultr_server_info:
-      redirect: community.general.vultr_server_info
+      redirect: ngine_io.vultr.vultr_server_info
     vultr_ssh_key:
-      redirect: community.general.vultr_ssh_key
+      redirect: ngine_io.vultr.vultr_ssh_key
     vultr_ssh_key_info:
-      redirect: community.general.vultr_ssh_key_info
+      redirect: ngine_io.vultr.vultr_ssh_key_info
     vultr_startup_script:
-      redirect: community.general.vultr_startup_script
+      redirect: ngine_io.vultr.vultr_startup_script
     vultr_startup_script_info:
-      redirect: community.general.vultr_startup_script_info
+      redirect: ngine_io.vultr.vultr_startup_script_info
     vultr_user:
-      redirect: community.general.vultr_user
+      redirect: ngine_io.vultr.vultr_user
     vultr_user_info:
-      redirect: community.general.vultr_user_info
+      redirect: ngine_io.vultr.vultr_user_info
     webfaction_app:
       redirect: community.general.webfaction_app
     webfaction_db:
@@ -1529,25 +1529,25 @@ plugin_routing:
     opendj_backendprop:
       redirect: community.general.opendj_backendprop
     rabbitmq_binding:
-      redirect: community.general.rabbitmq_binding
+      redirect: community.rabbitmq.rabbitmq_binding
     rabbitmq_exchange:
-      redirect: community.general.rabbitmq_exchange
+      redirect: community.rabbitmq.rabbitmq_exchange
     rabbitmq_global_parameter:
-      redirect: community.general.rabbitmq_global_parameter
+      redirect: community.rabbitmq.rabbitmq_global_parameter
     rabbitmq_parameter:
-      redirect: community.general.rabbitmq_parameter
+      redirect: community.rabbitmq.rabbitmq_parameter
     rabbitmq_plugin:
-      redirect: community.general.rabbitmq_plugin
+      redirect: community.rabbitmq.rabbitmq_plugin
     rabbitmq_policy:
-      redirect: community.general.rabbitmq_policy
+      redirect: community.rabbitmq.rabbitmq_policy
     rabbitmq_queue:
-      redirect: community.general.rabbitmq_queue
+      redirect: community.rabbitmq.rabbitmq_queue
     rabbitmq_user:
-      redirect: community.general.rabbitmq_user
+      redirect: community.rabbitmq.rabbitmq_user
     rabbitmq_vhost:
-      redirect: community.general.rabbitmq_vhost
+      redirect: community.rabbitmq.rabbitmq_vhost
     rabbitmq_vhost_limits:
-      redirect: community.general.rabbitmq_vhost_limits
+      redirect: community.rabbitmq.rabbitmq_vhost_limits
     airbrake_deployment:
       redirect: community.general.airbrake_deployment
     bigpanda:
@@ -1729,901 +1729,901 @@ plugin_routing:
     snmp_facts:
       redirect: community.general.snmp_facts
     a10_server:
-      redirect: community.general.a10_server
+      redirect: community.network.a10_server
     a10_server_axapi3:
-      redirect: community.general.a10_server_axapi3
+      redirect: community.network.a10_server_axapi3
     a10_service_group:
-      redirect: community.general.a10_service_group
+      redirect: community.network.a10_service_group
     a10_virtual_server:
-      redirect: community.general.a10_virtual_server
+      redirect: community.network.a10_virtual_server
     aci_intf_policy_fc:
-      redirect: community.general.aci_intf_policy_fc
+      redirect: community.network.aci_intf_policy_fc
     aci_intf_policy_l2:
-      redirect: community.general.aci_intf_policy_l2
+      redirect: community.network.aci_intf_policy_l2
     aci_intf_policy_lldp:
-      redirect: community.general.aci_intf_policy_lldp
+      redirect: community.network.aci_intf_policy_lldp
     aci_intf_policy_mcp:
-      redirect: community.general.aci_intf_policy_mcp
+      redirect: community.network.aci_intf_policy_mcp
     aci_intf_policy_port_channel:
-      redirect: community.general.aci_intf_policy_port_channel
+      redirect: community.network.aci_intf_policy_port_channel
     aci_intf_policy_port_security:
-      redirect: community.general.aci_intf_policy_port_security
+      redirect: community.network.aci_intf_policy_port_security
     mso_schema_template_external_epg_contract:
-      redirect: community.general.mso_schema_template_external_epg_contract
+      redirect: cisco.mso.mso_schema_template_external_epg_contract
     mso_schema_template_external_epg_subnet:
-      redirect: community.general.mso_schema_template_external_epg_subnet
+      redirect: cisco.mso.mso_schema_template_external_epg_subnet
     aireos_command:
-      redirect: community.general.aireos_command
+      redirect: community.network.aireos_command
     aireos_config:
-      redirect: community.general.aireos_config
+      redirect: community.network.aireos_config
     apconos_command:
-      redirect: community.general.apconos_command
+      redirect: community.network.apconos_command
     aruba_command:
-      redirect: community.general.aruba_command
+      redirect: community.network.aruba_command
     aruba_config:
-      redirect: community.general.aruba_config
+      redirect: community.network.aruba_config
     avi_actiongroupconfig:
-      redirect: community.general.avi_actiongroupconfig
+      redirect: community.network.avi_actiongroupconfig
     avi_alertconfig:
-      redirect: community.general.avi_alertconfig
+      redirect: community.network.avi_alertconfig
     avi_alertemailconfig:
-      redirect: community.general.avi_alertemailconfig
+      redirect: community.network.avi_alertemailconfig
     avi_alertscriptconfig:
-      redirect: community.general.avi_alertscriptconfig
+      redirect: community.network.avi_alertscriptconfig
     avi_alertsyslogconfig:
-      redirect: community.general.avi_alertsyslogconfig
+      redirect: community.network.avi_alertsyslogconfig
     avi_analyticsprofile:
-      redirect: community.general.avi_analyticsprofile
+      redirect: community.network.avi_analyticsprofile
     avi_api_session:
-      redirect: community.general.avi_api_session
+      redirect: community.network.avi_api_session
     avi_api_version:
-      redirect: community.general.avi_api_version
+      redirect: community.network.avi_api_version
     avi_applicationpersistenceprofile:
-      redirect: community.general.avi_applicationpersistenceprofile
+      redirect: community.network.avi_applicationpersistenceprofile
     avi_applicationprofile:
-      redirect: community.general.avi_applicationprofile
+      redirect: community.network.avi_applicationprofile
     avi_authprofile:
-      redirect: community.general.avi_authprofile
+      redirect: community.network.avi_authprofile
     avi_autoscalelaunchconfig:
-      redirect: community.general.avi_autoscalelaunchconfig
+      redirect: community.network.avi_autoscalelaunchconfig
     avi_backup:
-      redirect: community.general.avi_backup
+      redirect: community.network.avi_backup
     avi_backupconfiguration:
-      redirect: community.general.avi_backupconfiguration
+      redirect: community.network.avi_backupconfiguration
     avi_certificatemanagementprofile:
-      redirect: community.general.avi_certificatemanagementprofile
+      redirect: community.network.avi_certificatemanagementprofile
     avi_cloud:
-      redirect: community.general.avi_cloud
+      redirect: community.network.avi_cloud
     avi_cloudconnectoruser:
-      redirect: community.general.avi_cloudconnectoruser
+      redirect: community.network.avi_cloudconnectoruser
     avi_cloudproperties:
-      redirect: community.general.avi_cloudproperties
+      redirect: community.network.avi_cloudproperties
     avi_cluster:
-      redirect: community.general.avi_cluster
+      redirect: community.network.avi_cluster
     avi_clusterclouddetails:
-      redirect: community.general.avi_clusterclouddetails
+      redirect: community.network.avi_clusterclouddetails
     avi_controllerproperties:
-      redirect: community.general.avi_controllerproperties
+      redirect: community.network.avi_controllerproperties
     avi_customipamdnsprofile:
-      redirect: community.general.avi_customipamdnsprofile
+      redirect: community.network.avi_customipamdnsprofile
     avi_dnspolicy:
-      redirect: community.general.avi_dnspolicy
+      redirect: community.network.avi_dnspolicy
     avi_errorpagebody:
-      redirect: community.general.avi_errorpagebody
+      redirect: community.network.avi_errorpagebody
     avi_errorpageprofile:
-      redirect: community.general.avi_errorpageprofile
+      redirect: community.network.avi_errorpageprofile
     avi_gslb:
-      redirect: community.general.avi_gslb
+      redirect: community.network.avi_gslb
     avi_gslbgeodbprofile:
-      redirect: community.general.avi_gslbgeodbprofile
+      redirect: community.network.avi_gslbgeodbprofile
     avi_gslbservice:
-      redirect: community.general.avi_gslbservice
+      redirect: community.network.avi_gslbservice
     avi_gslbservice_patch_member:
-      redirect: community.general.avi_gslbservice_patch_member
+      redirect: community.network.avi_gslbservice_patch_member
     avi_hardwaresecuritymodulegroup:
-      redirect: community.general.avi_hardwaresecuritymodulegroup
+      redirect: community.network.avi_hardwaresecuritymodulegroup
     avi_healthmonitor:
-      redirect: community.general.avi_healthmonitor
+      redirect: community.network.avi_healthmonitor
     avi_httppolicyset:
-      redirect: community.general.avi_httppolicyset
+      redirect: community.network.avi_httppolicyset
     avi_ipaddrgroup:
-      redirect: community.general.avi_ipaddrgroup
+      redirect: community.network.avi_ipaddrgroup
     avi_ipamdnsproviderprofile:
-      redirect: community.general.avi_ipamdnsproviderprofile
+      redirect: community.network.avi_ipamdnsproviderprofile
     avi_l4policyset:
-      redirect: community.general.avi_l4policyset
+      redirect: community.network.avi_l4policyset
     avi_microservicegroup:
-      redirect: community.general.avi_microservicegroup
+      redirect: community.network.avi_microservicegroup
     avi_network:
-      redirect: community.general.avi_network
+      redirect: community.network.avi_network
     avi_networkprofile:
-      redirect: community.general.avi_networkprofile
+      redirect: community.network.avi_networkprofile
     avi_networksecuritypolicy:
-      redirect: community.general.avi_networksecuritypolicy
+      redirect: community.network.avi_networksecuritypolicy
     avi_pkiprofile:
-      redirect: community.general.avi_pkiprofile
+      redirect: community.network.avi_pkiprofile
     avi_pool:
-      redirect: community.general.avi_pool
+      redirect: community.network.avi_pool
     avi_poolgroup:
-      redirect: community.general.avi_poolgroup
+      redirect: community.network.avi_poolgroup
     avi_poolgroupdeploymentpolicy:
-      redirect: community.general.avi_poolgroupdeploymentpolicy
+      redirect: community.network.avi_poolgroupdeploymentpolicy
     avi_prioritylabels:
-      redirect: community.general.avi_prioritylabels
+      redirect: community.network.avi_prioritylabels
     avi_role:
-      redirect: community.general.avi_role
+      redirect: community.network.avi_role
     avi_scheduler:
-      redirect: community.general.avi_scheduler
+      redirect: community.network.avi_scheduler
     avi_seproperties:
-      redirect: community.general.avi_seproperties
+      redirect: community.network.avi_seproperties
     avi_serverautoscalepolicy:
-      redirect: community.general.avi_serverautoscalepolicy
+      redirect: community.network.avi_serverautoscalepolicy
     avi_serviceengine:
-      redirect: community.general.avi_serviceengine
+      redirect: community.network.avi_serviceengine
     avi_serviceenginegroup:
-      redirect: community.general.avi_serviceenginegroup
+      redirect: community.network.avi_serviceenginegroup
     avi_snmptrapprofile:
-      redirect: community.general.avi_snmptrapprofile
+      redirect: community.network.avi_snmptrapprofile
     avi_sslkeyandcertificate:
-      redirect: community.general.avi_sslkeyandcertificate
+      redirect: community.network.avi_sslkeyandcertificate
     avi_sslprofile:
-      redirect: community.general.avi_sslprofile
+      redirect: community.network.avi_sslprofile
     avi_stringgroup:
-      redirect: community.general.avi_stringgroup
+      redirect: community.network.avi_stringgroup
     avi_systemconfiguration:
-      redirect: community.general.avi_systemconfiguration
+      redirect: community.network.avi_systemconfiguration
     avi_tenant:
-      redirect: community.general.avi_tenant
+      redirect: community.network.avi_tenant
     avi_trafficcloneprofile:
-      redirect: community.general.avi_trafficcloneprofile
+      redirect: community.network.avi_trafficcloneprofile
     avi_user:
-      redirect: community.general.avi_user
+      redirect: community.network.avi_user
     avi_useraccount:
-      redirect: community.general.avi_useraccount
+      redirect: community.network.avi_useraccount
     avi_useraccountprofile:
-      redirect: community.general.avi_useraccountprofile
+      redirect: community.network.avi_useraccountprofile
     avi_virtualservice:
-      redirect: community.general.avi_virtualservice
+      redirect: community.network.avi_virtualservice
     avi_vrfcontext:
-      redirect: community.general.avi_vrfcontext
+      redirect: community.network.avi_vrfcontext
     avi_vsdatascriptset:
-      redirect: community.general.avi_vsdatascriptset
+      redirect: community.network.avi_vsdatascriptset
     avi_vsvip:
-      redirect: community.general.avi_vsvip
+      redirect: community.network.avi_vsvip
     avi_webhook:
-      redirect: community.general.avi_webhook
+      redirect: community.network.avi_webhook
     bcf_switch:
-      redirect: community.general.bcf_switch
+      redirect: community.network.bcf_switch
     bigmon_chain:
-      redirect: community.general.bigmon_chain
+      redirect: community.network.bigmon_chain
     bigmon_policy:
-      redirect: community.general.bigmon_policy
+      redirect: community.network.bigmon_policy
     checkpoint_access_layer_facts:
-      redirect: community.general.checkpoint_access_layer_facts
+      redirect: checkpoint.mgmt.checkpoint_access_layer_facts
     checkpoint_access_rule:
-      redirect: community.general.checkpoint_access_rule
+      redirect: checkpoint.mgmt.checkpoint_access_rule
     checkpoint_access_rule_facts:
-      redirect: community.general.checkpoint_access_rule_facts
+      redirect: checkpoint.mgmt.checkpoint_access_rule_facts
     checkpoint_host:
-      redirect: community.general.checkpoint_host
+      redirect: checkpoint.mgmt.checkpoint_host
     checkpoint_host_facts:
-      redirect: community.general.checkpoint_host_facts
+      redirect: checkpoint.mgmt.checkpoint_host_facts
     checkpoint_object_facts:
-      redirect: community.general.checkpoint_object_facts
+      redirect: checkpoint.mgmt.checkpoint_object_facts
     checkpoint_run_script:
-      redirect: community.general.checkpoint_run_script
+      redirect: checkpoint.mgmt.checkpoint_run_script
     checkpoint_session:
-      redirect: community.general.checkpoint_session
+      redirect: checkpoint.mgmt.checkpoint_session
     checkpoint_task_facts:
-      redirect: community.general.checkpoint_task_facts
+      redirect: checkpoint.mgmt.checkpoint_task_facts
     cp_publish:
-      redirect: community.general.cp_publish
+      redirect: community.network.cp_publish
     ce_aaa_server:
-      redirect: community.general.ce_aaa_server
+      redirect: community.network.ce_aaa_server
     ce_aaa_server_host:
-      redirect: community.general.ce_aaa_server_host
+      redirect: community.network.ce_aaa_server_host
     ce_acl:
-      redirect: community.general.ce_acl
+      redirect: community.network.ce_acl
     ce_acl_advance:
-      redirect: community.general.ce_acl_advance
+      redirect: community.network.ce_acl_advance
     ce_acl_interface:
-      redirect: community.general.ce_acl_interface
+      redirect: community.network.ce_acl_interface
     ce_bfd_global:
-      redirect: community.general.ce_bfd_global
+      redirect: community.network.ce_bfd_global
     ce_bfd_session:
-      redirect: community.general.ce_bfd_session
+      redirect: community.network.ce_bfd_session
     ce_bfd_view:
-      redirect: community.general.ce_bfd_view
+      redirect: community.network.ce_bfd_view
     ce_bgp:
-      redirect: community.general.ce_bgp
+      redirect: community.network.ce_bgp
     ce_bgp_af:
-      redirect: community.general.ce_bgp_af
+      redirect: community.network.ce_bgp_af
     ce_bgp_neighbor:
-      redirect: community.general.ce_bgp_neighbor
+      redirect: community.network.ce_bgp_neighbor
     ce_bgp_neighbor_af:
-      redirect: community.general.ce_bgp_neighbor_af
+      redirect: community.network.ce_bgp_neighbor_af
     ce_command:
-      redirect: community.general.ce_command
+      redirect: community.network.ce_command
     ce_config:
-      redirect: community.general.ce_config
+      redirect: community.network.ce_config
     ce_dldp:
-      redirect: community.general.ce_dldp
+      redirect: community.network.ce_dldp
     ce_dldp_interface:
-      redirect: community.general.ce_dldp_interface
+      redirect: community.network.ce_dldp_interface
     ce_eth_trunk:
-      redirect: community.general.ce_eth_trunk
+      redirect: community.network.ce_eth_trunk
     ce_evpn_bd_vni:
-      redirect: community.general.ce_evpn_bd_vni
+      redirect: community.network.ce_evpn_bd_vni
     ce_evpn_bgp:
-      redirect: community.general.ce_evpn_bgp
+      redirect: community.network.ce_evpn_bgp
     ce_evpn_bgp_rr:
-      redirect: community.general.ce_evpn_bgp_rr
+      redirect: community.network.ce_evpn_bgp_rr
     ce_evpn_global:
-      redirect: community.general.ce_evpn_global
+      redirect: community.network.ce_evpn_global
     ce_facts:
-      redirect: community.general.ce_facts
+      redirect: community.network.ce_facts
     ce_file_copy:
-      redirect: community.general.ce_file_copy
+      redirect: community.network.ce_file_copy
     ce_info_center_debug:
-      redirect: community.general.ce_info_center_debug
+      redirect: community.network.ce_info_center_debug
     ce_info_center_global:
-      redirect: community.general.ce_info_center_global
+      redirect: community.network.ce_info_center_global
     ce_info_center_log:
-      redirect: community.general.ce_info_center_log
+      redirect: community.network.ce_info_center_log
     ce_info_center_trap:
-      redirect: community.general.ce_info_center_trap
+      redirect: community.network.ce_info_center_trap
     ce_interface:
-      redirect: community.general.ce_interface
+      redirect: community.network.ce_interface
     ce_interface_ospf:
-      redirect: community.general.ce_interface_ospf
+      redirect: community.network.ce_interface_ospf
     ce_ip_interface:
-      redirect: community.general.ce_ip_interface
+      redirect: community.network.ce_ip_interface
     ce_is_is_instance:
-      redirect: community.general.ce_is_is_instance
+      redirect: community.network.ce_is_is_instance
     ce_is_is_interface:
-      redirect: community.general.ce_is_is_interface
+      redirect: community.network.ce_is_is_interface
     ce_is_is_view:
-      redirect: community.general.ce_is_is_view
+      redirect: community.network.ce_is_is_view
     ce_lacp:
-      redirect: community.general.ce_lacp
+      redirect: community.network.ce_lacp
     ce_link_status:
-      redirect: community.general.ce_link_status
+      redirect: community.network.ce_link_status
     ce_lldp:
-      redirect: community.general.ce_lldp
+      redirect: community.network.ce_lldp
     ce_lldp_interface:
-      redirect: community.general.ce_lldp_interface
+      redirect: community.network.ce_lldp_interface
     ce_mdn_interface:
-      redirect: community.general.ce_mdn_interface
+      redirect: community.network.ce_mdn_interface
     ce_mlag_config:
-      redirect: community.general.ce_mlag_config
+      redirect: community.network.ce_mlag_config
     ce_mlag_interface:
-      redirect: community.general.ce_mlag_interface
+      redirect: community.network.ce_mlag_interface
     ce_mtu:
-      redirect: community.general.ce_mtu
+      redirect: community.network.ce_mtu
     ce_multicast_global:
-      redirect: community.general.ce_multicast_global
+      redirect: community.network.ce_multicast_global
     ce_multicast_igmp_enable:
-      redirect: community.general.ce_multicast_igmp_enable
+      redirect: community.network.ce_multicast_igmp_enable
     ce_netconf:
-      redirect: community.general.ce_netconf
+      redirect: community.network.ce_netconf
     ce_netstream_aging:
-      redirect: community.general.ce_netstream_aging
+      redirect: community.network.ce_netstream_aging
     ce_netstream_export:
-      redirect: community.general.ce_netstream_export
+      redirect: community.network.ce_netstream_export
     ce_netstream_global:
-      redirect: community.general.ce_netstream_global
+      redirect: community.network.ce_netstream_global
     ce_netstream_template:
-      redirect: community.general.ce_netstream_template
+      redirect: community.network.ce_netstream_template
     ce_ntp:
-      redirect: community.general.ce_ntp
+      redirect: community.network.ce_ntp
     ce_ntp_auth:
-      redirect: community.general.ce_ntp_auth
+      redirect: community.network.ce_ntp_auth
     ce_ospf:
-      redirect: community.general.ce_ospf
+      redirect: community.network.ce_ospf
     ce_ospf_vrf:
-      redirect: community.general.ce_ospf_vrf
+      redirect: community.network.ce_ospf_vrf
     ce_reboot:
-      redirect: community.general.ce_reboot
+      redirect: community.network.ce_reboot
     ce_rollback:
-      redirect: community.general.ce_rollback
+      redirect: community.network.ce_rollback
     ce_sflow:
-      redirect: community.general.ce_sflow
+      redirect: community.network.ce_sflow
     ce_snmp_community:
-      redirect: community.general.ce_snmp_community
+      redirect: community.network.ce_snmp_community
     ce_snmp_contact:
-      redirect: community.general.ce_snmp_contact
+      redirect: community.network.ce_snmp_contact
     ce_snmp_location:
-      redirect: community.general.ce_snmp_location
+      redirect: community.network.ce_snmp_location
     ce_snmp_target_host:
-      redirect: community.general.ce_snmp_target_host
+      redirect: community.network.ce_snmp_target_host
     ce_snmp_traps:
-      redirect: community.general.ce_snmp_traps
+      redirect: community.network.ce_snmp_traps
     ce_snmp_user:
-      redirect: community.general.ce_snmp_user
+      redirect: community.network.ce_snmp_user
     ce_startup:
-      redirect: community.general.ce_startup
+      redirect: community.network.ce_startup
     ce_static_route:
-      redirect: community.general.ce_static_route
+      redirect: community.network.ce_static_route
     ce_static_route_bfd:
-      redirect: community.general.ce_static_route_bfd
+      redirect: community.network.ce_static_route_bfd
     ce_stp:
-      redirect: community.general.ce_stp
+      redirect: community.network.ce_stp
     ce_switchport:
-      redirect: community.general.ce_switchport
+      redirect: community.network.ce_switchport
     ce_vlan:
-      redirect: community.general.ce_vlan
+      redirect: community.network.ce_vlan
     ce_vrf:
-      redirect: community.general.ce_vrf
+      redirect: community.network.ce_vrf
     ce_vrf_af:
-      redirect: community.general.ce_vrf_af
+      redirect: community.network.ce_vrf_af
     ce_vrf_interface:
-      redirect: community.general.ce_vrf_interface
+      redirect: community.network.ce_vrf_interface
     ce_vrrp:
-      redirect: community.general.ce_vrrp
+      redirect: community.network.ce_vrrp
     ce_vxlan_arp:
-      redirect: community.general.ce_vxlan_arp
+      redirect: community.network.ce_vxlan_arp
     ce_vxlan_gateway:
-      redirect: community.general.ce_vxlan_gateway
+      redirect: community.network.ce_vxlan_gateway
     ce_vxlan_global:
-      redirect: community.general.ce_vxlan_global
+      redirect: community.network.ce_vxlan_global
     ce_vxlan_tunnel:
-      redirect: community.general.ce_vxlan_tunnel
+      redirect: community.network.ce_vxlan_tunnel
     ce_vxlan_vap:
-      redirect: community.general.ce_vxlan_vap
+      redirect: community.network.ce_vxlan_vap
     cv_server_provision:
-      redirect: community.general.cv_server_provision
+      redirect: community.network.cv_server_provision
     cnos_backup:
-      redirect: community.general.cnos_backup
+      redirect: community.network.cnos_backup
     cnos_banner:
-      redirect: community.general.cnos_banner
+      redirect: community.network.cnos_banner
     cnos_bgp:
-      redirect: community.general.cnos_bgp
+      redirect: community.network.cnos_bgp
     cnos_command:
-      redirect: community.general.cnos_command
+      redirect: community.network.cnos_command
     cnos_conditional_command:
-      redirect: community.general.cnos_conditional_command
+      redirect: community.network.cnos_conditional_command
     cnos_conditional_template:
-      redirect: community.general.cnos_conditional_template
+      redirect: community.network.cnos_conditional_template
     cnos_config:
-      redirect: community.general.cnos_config
+      redirect: community.network.cnos_config
     cnos_factory:
-      redirect: community.general.cnos_factory
+      redirect: community.network.cnos_factory
     cnos_facts:
-      redirect: community.general.cnos_facts
+      redirect: community.network.cnos_facts
     cnos_image:
-      redirect: community.general.cnos_image
+      redirect: community.network.cnos_image
     cnos_interface:
-      redirect: community.general.cnos_interface
+      redirect: community.network.cnos_interface
     cnos_l2_interface:
-      redirect: community.general.cnos_l2_interface
+      redirect: community.network.cnos_l2_interface
     cnos_l3_interface:
-      redirect: community.general.cnos_l3_interface
+      redirect: community.network.cnos_l3_interface
     cnos_linkagg:
-      redirect: community.general.cnos_linkagg
+      redirect: community.network.cnos_linkagg
     cnos_lldp:
-      redirect: community.general.cnos_lldp
+      redirect: community.network.cnos_lldp
     cnos_logging:
-      redirect: community.general.cnos_logging
+      redirect: community.network.cnos_logging
     cnos_reload:
-      redirect: community.general.cnos_reload
+      redirect: community.network.cnos_reload
     cnos_rollback:
-      redirect: community.general.cnos_rollback
+      redirect: community.network.cnos_rollback
     cnos_save:
-      redirect: community.general.cnos_save
+      redirect: community.network.cnos_save
     cnos_showrun:
-      redirect: community.general.cnos_showrun
+      redirect: community.network.cnos_showrun
     cnos_static_route:
-      redirect: community.general.cnos_static_route
+      redirect: community.network.cnos_static_route
     cnos_system:
-      redirect: community.general.cnos_system
+      redirect: community.network.cnos_system
     cnos_template:
-      redirect: community.general.cnos_template
+      redirect: community.network.cnos_template
     cnos_user:
-      redirect: community.general.cnos_user
+      redirect: community.network.cnos_user
     cnos_vlag:
-      redirect: community.general.cnos_vlag
+      redirect: community.network.cnos_vlag
     cnos_vlan:
-      redirect: community.general.cnos_vlan
+      redirect: community.network.cnos_vlan
     cnos_vrf:
-      redirect: community.general.cnos_vrf
+      redirect: community.network.cnos_vrf
     nclu:
-      redirect: community.general.nclu
+      redirect: community.network.nclu
     edgeos_command:
-      redirect: community.general.edgeos_command
+      redirect: community.network.edgeos_command
     edgeos_config:
-      redirect: community.general.edgeos_config
+      redirect: community.network.edgeos_config
     edgeos_facts:
-      redirect: community.general.edgeos_facts
+      redirect: community.network.edgeos_facts
     edgeswitch_facts:
-      redirect: community.general.edgeswitch_facts
+      redirect: community.network.edgeswitch_facts
     edgeswitch_vlan:
-      redirect: community.general.edgeswitch_vlan
+      redirect: community.network.edgeswitch_vlan
     enos_command:
-      redirect: community.general.enos_command
+      redirect: community.network.enos_command
     enos_config:
-      redirect: community.general.enos_config
+      redirect: community.network.enos_config
     enos_facts:
-      redirect: community.general.enos_facts
+      redirect: community.network.enos_facts
     eric_eccli_command:
-      redirect: community.general.eric_eccli_command
+      redirect: community.network.eric_eccli_command
     exos_command:
-      redirect: community.general.exos_command
+      redirect: community.network.exos_command
     exos_config:
-      redirect: community.general.exos_config
+      redirect: community.network.exos_config
     exos_facts:
-      redirect: community.general.exos_facts
+      redirect: community.network.exos_facts
     exos_l2_interfaces:
-      redirect: community.general.exos_l2_interfaces
+      redirect: community.network.exos_l2_interfaces
     exos_lldp_global:
-      redirect: community.general.exos_lldp_global
+      redirect: community.network.exos_lldp_global
     exos_lldp_interfaces:
-      redirect: community.general.exos_lldp_interfaces
+      redirect: community.network.exos_lldp_interfaces
     exos_vlans:
-      redirect: community.general.exos_vlans
+      redirect: community.network.exos_vlans
     bigip_asm_policy:
-      redirect: community.general.bigip_asm_policy
+      redirect: f5networks.f5_nodules.bigip_asm_policy
     bigip_device_facts:
-      redirect: community.general.bigip_device_facts
+      redirect: f5networks.f5_nodules.bigip_device_facts
     bigip_facts:
-      redirect: community.general.bigip_facts
+      redirect: f5networks.f5_nodules.bigip_facts
     bigip_gtm_facts:
-      redirect: community.general.bigip_gtm_facts
+      redirect: f5networks.f5_nodules.bigip_gtm_facts
     bigip_iapplx_package:
-      redirect: community.general.bigip_iapplx_package
+      redirect: f5networks.f5_nodules.bigip_iapplx_package
     bigip_security_address_list:
-      redirect: community.general.bigip_security_address_list
+      redirect: f5networks.f5_nodules.bigip_security_address_list
     bigip_security_port_list:
-      redirect: community.general.bigip_security_port_list
+      redirect: f5networks.f5_nodules.bigip_security_port_list
     bigip_traffic_group:
-      redirect: community.general.bigip_traffic_group
+      redirect: f5networks.f5_nodules.bigip_traffic_group
     bigiq_device_facts:
-      redirect: community.general.bigiq_device_facts
+      redirect: f5networks.f5_modules.bigiq_device_info
     faz_device:
-      redirect: community.general.faz_device
+      redirect: community.network.faz_device
     fmgr_device:
-      redirect: community.general.fmgr_device
+      redirect: community.network.fmgr_device
     fmgr_device_config:
-      redirect: community.general.fmgr_device_config
+      redirect: community.network.fmgr_device_config
     fmgr_device_group:
-      redirect: community.general.fmgr_device_group
+      redirect: community.network.fmgr_device_group
     fmgr_device_provision_template:
-      redirect: community.general.fmgr_device_provision_template
+      redirect: community.network.fmgr_device_provision_template
     fmgr_fwobj_address:
-      redirect: community.general.fmgr_fwobj_address
+      redirect: community.network.fmgr_fwobj_address
     fmgr_fwobj_ippool:
-      redirect: community.general.fmgr_fwobj_ippool
+      redirect: community.network.fmgr_fwobj_ippool
     fmgr_fwobj_ippool6:
-      redirect: community.general.fmgr_fwobj_ippool6
+      redirect: community.network.fmgr_fwobj_ippool6
     fmgr_fwobj_service:
-      redirect: community.general.fmgr_fwobj_service
+      redirect: community.network.fmgr_fwobj_service
     fmgr_fwobj_vip:
-      redirect: community.general.fmgr_fwobj_vip
+      redirect: community.network.fmgr_fwobj_vip
     fmgr_fwpol_ipv4:
-      redirect: community.general.fmgr_fwpol_ipv4
+      redirect: community.network.fmgr_fwpol_ipv4
     fmgr_fwpol_package:
-      redirect: community.general.fmgr_fwpol_package
+      redirect: community.network.fmgr_fwpol_package
     fmgr_ha:
-      redirect: community.general.fmgr_ha
+      redirect: community.network.fmgr_ha
     fmgr_provisioning:
-      redirect: community.general.fmgr_provisioning
+      redirect: community.network.fmgr_provisioning
     fmgr_query:
-      redirect: community.general.fmgr_query
+      redirect: community.network.fmgr_query
     fmgr_script:
-      redirect: community.general.fmgr_script
+      redirect: community.network.fmgr_script
     fmgr_secprof_appctrl:
-      redirect: community.general.fmgr_secprof_appctrl
+      redirect: community.network.fmgr_secprof_appctrl
     fmgr_secprof_av:
-      redirect: community.general.fmgr_secprof_av
+      redirect: community.network.fmgr_secprof_av
     fmgr_secprof_dns:
-      redirect: community.general.fmgr_secprof_dns
+      redirect: community.network.fmgr_secprof_dns
     fmgr_secprof_ips:
-      redirect: community.general.fmgr_secprof_ips
+      redirect: community.network.fmgr_secprof_ips
     fmgr_secprof_profile_group:
-      redirect: community.general.fmgr_secprof_profile_group
+      redirect: community.network.fmgr_secprof_profile_group
     fmgr_secprof_proxy:
-      redirect: community.general.fmgr_secprof_proxy
+      redirect: community.network.fmgr_secprof_proxy
     fmgr_secprof_spam:
-      redirect: community.general.fmgr_secprof_spam
+      redirect: community.network.fmgr_secprof_spam
     fmgr_secprof_ssl_ssh:
-      redirect: community.general.fmgr_secprof_ssl_ssh
+      redirect: community.network.fmgr_secprof_ssl_ssh
     fmgr_secprof_voip:
-      redirect: community.general.fmgr_secprof_voip
+      redirect: community.network.fmgr_secprof_voip
     fmgr_secprof_waf:
-      redirect: community.general.fmgr_secprof_waf
+      redirect: community.network.fmgr_secprof_waf
     fmgr_secprof_wanopt:
-      redirect: community.general.fmgr_secprof_wanopt
+      redirect: community.network.fmgr_secprof_wanopt
     fmgr_secprof_web:
-      redirect: community.general.fmgr_secprof_web
+      redirect: community.network.fmgr_secprof_web
     ftd_configuration:
-      redirect: community.general.ftd_configuration
+      redirect: community.network.ftd_configuration
     ftd_file_download:
-      redirect: community.general.ftd_file_download
+      redirect: community.network.ftd_file_download
     ftd_file_upload:
-      redirect: community.general.ftd_file_upload
+      redirect: community.network.ftd_file_upload
     ftd_install:
-      redirect: community.general.ftd_install
+      redirect: community.network.ftd_install
     icx_banner:
-      redirect: community.general.icx_banner
+      redirect: community.network.icx_banner
     icx_command:
-      redirect: community.general.icx_command
+      redirect: community.network.icx_command
     icx_config:
-      redirect: community.general.icx_config
+      redirect: community.network.icx_config
     icx_copy:
-      redirect: community.general.icx_copy
+      redirect: community.network.icx_copy
     icx_facts:
-      redirect: community.general.icx_facts
+      redirect: community.network.icx_facts
     icx_interface:
-      redirect: community.general.icx_interface
+      redirect: community.network.icx_interface
     icx_l3_interface:
-      redirect: community.general.icx_l3_interface
+      redirect: community.network.icx_l3_interface
     icx_linkagg:
-      redirect: community.general.icx_linkagg
+      redirect: community.network.icx_linkagg
     icx_lldp:
-      redirect: community.general.icx_lldp
+      redirect: community.network.icx_lldp
     icx_logging:
-      redirect: community.general.icx_logging
+      redirect: community.network.icx_logging
     icx_ping:
-      redirect: community.general.icx_ping
+      redirect: community.network.icx_ping
     icx_static_route:
-      redirect: community.general.icx_static_route
+      redirect: community.network.icx_static_route
     icx_system:
-      redirect: community.general.icx_system
+      redirect: community.network.icx_system
     icx_user:
-      redirect: community.general.icx_user
+      redirect: community.network.icx_user
     icx_vlan:
-      redirect: community.general.icx_vlan
+      redirect: community.network.icx_vlan
     dladm_etherstub:
-      redirect: community.general.dladm_etherstub
+      redirect: community.network.dladm_etherstub
     dladm_iptun:
-      redirect: community.general.dladm_iptun
+      redirect: community.network.dladm_iptun
     dladm_linkprop:
-      redirect: community.general.dladm_linkprop
+      redirect: community.network.dladm_linkprop
     dladm_vlan:
-      redirect: community.general.dladm_vlan
+      redirect: community.network.dladm_vlan
     dladm_vnic:
-      redirect: community.general.dladm_vnic
+      redirect: community.network.dladm_vnic
     flowadm:
-      redirect: community.general.flowadm
+      redirect: community.network.flowadm
     ipadm_addr:
-      redirect: community.general.ipadm_addr
+      redirect: community.network.ipadm_addr
     ipadm_addrprop:
-      redirect: community.general.ipadm_addrprop
+      redirect: community.network.ipadm_addrprop
     ipadm_if:
-      redirect: community.general.ipadm_if
+      redirect: community.network.ipadm_if
     ipadm_ifprop:
-      redirect: community.general.ipadm_ifprop
+      redirect: community.network.ipadm_ifprop
     ipadm_prop:
-      redirect: community.general.ipadm_prop
+      redirect: community.network.ipadm_prop
     ig_config:
-      redirect: community.general.ig_config
+      redirect: community.network.ig_config
     ig_unit_information:
-      redirect: community.general.ig_unit_information
+      redirect: community.network.ig_unit_information
     ironware_command:
-      redirect: community.general.ironware_command
+      redirect: community.network.ironware_command
     ironware_config:
-      redirect: community.general.ironware_config
+      redirect: community.network.ironware_config
     ironware_facts:
-      redirect: community.general.ironware_facts
+      redirect: community.network.ironware_facts
     iap_start_workflow:
-      redirect: community.general.iap_start_workflow
+      redirect: community.network.iap_start_workflow
     iap_token:
-      redirect: community.general.iap_token
+      redirect: community.network.iap_token
     netact_cm_command:
-      redirect: community.general.netact_cm_command
+      redirect: community.network.netact_cm_command
     netscaler_cs_action:
-      redirect: community.general.netscaler_cs_action
+      redirect: community.network.netscaler_cs_action
     netscaler_cs_policy:
-      redirect: community.general.netscaler_cs_policy
+      redirect: community.network.netscaler_cs_policy
     netscaler_cs_vserver:
-      redirect: community.general.netscaler_cs_vserver
+      redirect: community.network.netscaler_cs_vserver
     netscaler_gslb_service:
-      redirect: community.general.netscaler_gslb_service
+      redirect: community.network.netscaler_gslb_service
     netscaler_gslb_site:
-      redirect: community.general.netscaler_gslb_site
+      redirect: community.network.netscaler_gslb_site
     netscaler_gslb_vserver:
-      redirect: community.general.netscaler_gslb_vserver
+      redirect: community.network.netscaler_gslb_vserver
     netscaler_lb_monitor:
-      redirect: community.general.netscaler_lb_monitor
+      redirect: community.network.netscaler_lb_monitor
     netscaler_lb_vserver:
-      redirect: community.general.netscaler_lb_vserver
+      redirect: community.network.netscaler_lb_vserver
     netscaler_nitro_request:
-      redirect: community.general.netscaler_nitro_request
+      redirect: community.network.netscaler_nitro_request
     netscaler_save_config:
-      redirect: community.general.netscaler_save_config
+      redirect: community.network.netscaler_save_config
     netscaler_server:
-      redirect: community.general.netscaler_server
+      redirect: community.network.netscaler_server
     netscaler_service:
-      redirect: community.general.netscaler_service
+      redirect: community.network.netscaler_service
     netscaler_servicegroup:
-      redirect: community.general.netscaler_servicegroup
+      redirect: community.network.netscaler_servicegroup
     netscaler_ssl_certkey:
-      redirect: community.general.netscaler_ssl_certkey
+      redirect: community.network.netscaler_ssl_certkey
     pn_cluster:
-      redirect: community.general.pn_cluster
+      redirect: community.network.pn_cluster
     pn_ospf:
-      redirect: community.general.pn_ospf
+      redirect: community.network.pn_ospf
     pn_ospfarea:
-      redirect: community.general.pn_ospfarea
+      redirect: community.network.pn_ospfarea
     pn_show:
-      redirect: community.general.pn_show
+      redirect: community.network.pn_show
     pn_trunk:
-      redirect: community.general.pn_trunk
+      redirect: community.network.pn_trunk
     pn_vlag:
-      redirect: community.general.pn_vlag
+      redirect: community.network.pn_vlag
     pn_vlan:
-      redirect: community.general.pn_vlan
+      redirect: community.network.pn_vlan
     pn_vrouter:
-      redirect: community.general.pn_vrouter
+      redirect: community.network.pn_vrouter
     pn_vrouterbgp:
-      redirect: community.general.pn_vrouterbgp
+      redirect: community.network.pn_vrouterbgp
     pn_vrouterif:
-      redirect: community.general.pn_vrouterif
+      redirect: community.network.pn_vrouterif
     pn_vrouterlbif:
-      redirect: community.general.pn_vrouterlbif
+      redirect: community.network.pn_vrouterlbif
     pn_access_list:
-      redirect: community.general.pn_access_list
+      redirect: community.network.pn_access_list
     pn_access_list_ip:
-      redirect: community.general.pn_access_list_ip
+      redirect: community.network.pn_access_list_ip
     pn_admin_service:
-      redirect: community.general.pn_admin_service
+      redirect: community.network.pn_admin_service
     pn_admin_session_timeout:
-      redirect: community.general.pn_admin_session_timeout
+      redirect: community.network.pn_admin_session_timeout
     pn_admin_syslog:
-      redirect: community.general.pn_admin_syslog
+      redirect: community.network.pn_admin_syslog
     pn_connection_stats_settings:
-      redirect: community.general.pn_connection_stats_settings
+      redirect: community.network.pn_connection_stats_settings
     pn_cpu_class:
-      redirect: community.general.pn_cpu_class
+      redirect: community.network.pn_cpu_class
     pn_cpu_mgmt_class:
-      redirect: community.general.pn_cpu_mgmt_class
+      redirect: community.network.pn_cpu_mgmt_class
     pn_dhcp_filter:
-      redirect: community.general.pn_dhcp_filter
+      redirect: community.network.pn_dhcp_filter
     pn_dscp_map:
-      redirect: community.general.pn_dscp_map
+      redirect: community.network.pn_dscp_map
     pn_dscp_map_pri_map:
-      redirect: community.general.pn_dscp_map_pri_map
+      redirect: community.network.pn_dscp_map_pri_map
     pn_fabric_local:
-      redirect: community.general.pn_fabric_local
+      redirect: community.network.pn_fabric_local
     pn_igmp_snooping:
-      redirect: community.general.pn_igmp_snooping
+      redirect: community.network.pn_igmp_snooping
     pn_ipv6security_raguard:
-      redirect: community.general.pn_ipv6security_raguard
+      redirect: community.network.pn_ipv6security_raguard
     pn_ipv6security_raguard_port:
-      redirect: community.general.pn_ipv6security_raguard_port
+      redirect: community.network.pn_ipv6security_raguard_port
     pn_ipv6security_raguard_vlan:
-      redirect: community.general.pn_ipv6security_raguard_vlan
+      redirect: community.network.pn_ipv6security_raguard_vlan
     pn_log_audit_exception:
-      redirect: community.general.pn_log_audit_exception
+      redirect: community.network.pn_log_audit_exception
     pn_port_config:
-      redirect: community.general.pn_port_config
+      redirect: community.network.pn_port_config
     pn_port_cos_bw:
-      redirect: community.general.pn_port_cos_bw
+      redirect: community.network.pn_port_cos_bw
     pn_port_cos_rate_setting:
-      redirect: community.general.pn_port_cos_rate_setting
+      redirect: community.network.pn_port_cos_rate_setting
     pn_prefix_list:
-      redirect: community.general.pn_prefix_list
+      redirect: community.network.pn_prefix_list
     pn_prefix_list_network:
-      redirect: community.general.pn_prefix_list_network
+      redirect: community.network.pn_prefix_list_network
     pn_role:
-      redirect: community.general.pn_role
+      redirect: community.network.pn_role
     pn_snmp_community:
-      redirect: community.general.pn_snmp_community
+      redirect: community.network.pn_snmp_community
     pn_snmp_trap_sink:
-      redirect: community.general.pn_snmp_trap_sink
+      redirect: community.network.pn_snmp_trap_sink
     pn_snmp_vacm:
-      redirect: community.general.pn_snmp_vacm
+      redirect: community.network.pn_snmp_vacm
     pn_stp:
-      redirect: community.general.pn_stp
+      redirect: community.network.pn_stp
     pn_stp_port:
-      redirect: community.general.pn_stp_port
+      redirect: community.network.pn_stp_port
     pn_switch_setup:
-      redirect: community.general.pn_switch_setup
+      redirect: community.network.pn_switch_setup
     pn_user:
-      redirect: community.general.pn_user
+      redirect: community.network.pn_user
     pn_vflow_table_profile:
-      redirect: community.general.pn_vflow_table_profile
+      redirect: community.network.pn_vflow_table_profile
     pn_vrouter_bgp:
-      redirect: community.general.pn_vrouter_bgp
+      redirect: community.network.pn_vrouter_bgp
     pn_vrouter_bgp_network:
-      redirect: community.general.pn_vrouter_bgp_network
+      redirect: community.network.pn_vrouter_bgp_network
     pn_vrouter_interface_ip:
-      redirect: community.general.pn_vrouter_interface_ip
+      redirect: community.network.pn_vrouter_interface_ip
     pn_vrouter_loopback_interface:
-      redirect: community.general.pn_vrouter_loopback_interface
+      redirect: community.network.pn_vrouter_loopback_interface
     pn_vrouter_ospf:
-      redirect: community.general.pn_vrouter_ospf
+      redirect: community.network.pn_vrouter_ospf
     pn_vrouter_ospf6:
-      redirect: community.general.pn_vrouter_ospf6
+      redirect: community.network.pn_vrouter_ospf6
     pn_vrouter_packet_relay:
-      redirect: community.general.pn_vrouter_packet_relay
+      redirect: community.network.pn_vrouter_packet_relay
     pn_vrouter_pim_config:
-      redirect: community.general.pn_vrouter_pim_config
+      redirect: community.network.pn_vrouter_pim_config
     pn_vtep:
-      redirect: community.general.pn_vtep
+      redirect: community.network.pn_vtep
     nos_command:
-      redirect: community.general.nos_command
+      redirect: community.network.nos_command
     nos_config:
-      redirect: community.general.nos_config
+      redirect: community.network.nos_config
     nos_facts:
-      redirect: community.general.nos_facts
+      redirect: community.network.nos_facts
     nso_action:
-      redirect: community.general.nso_action
+      redirect: community.network.nso_action
     nso_config:
-      redirect: community.general.nso_config
+      redirect: community.network.nso_config
     nso_query:
-      redirect: community.general.nso_query
+      redirect: community.network.nso_query
     nso_show:
-      redirect: community.general.nso_show
+      redirect: community.network.nso_show
     nso_verify:
-      redirect: community.general.nso_verify
+      redirect: community.network.nso_verify
     nuage_vspk:
-      redirect: community.general.nuage_vspk
+      redirect: community.network.nuage_vspk
     onyx_aaa:
-      redirect: community.general.onyx_aaa
+      redirect: community.network.onyx_aaa
     onyx_bfd:
-      redirect: community.general.onyx_bfd
+      redirect: community.network.onyx_bfd
     onyx_bgp:
-      redirect: community.general.onyx_bgp
+      redirect: community.network.onyx_bgp
     onyx_buffer_pool:
-      redirect: community.general.onyx_buffer_pool
+      redirect: community.network.onyx_buffer_pool
     onyx_command:
-      redirect: community.general.onyx_command
+      redirect: community.network.onyx_command
     onyx_config:
-      redirect: community.general.onyx_config
+      redirect: community.network.onyx_config
     onyx_facts:
-      redirect: community.general.onyx_facts
+      redirect: community.network.onyx_facts
     onyx_igmp:
-      redirect: community.general.onyx_igmp
+      redirect: community.network.onyx_igmp
     onyx_igmp_interface:
-      redirect: community.general.onyx_igmp_interface
+      redirect: community.network.onyx_igmp_interface
     onyx_igmp_vlan:
-      redirect: community.general.onyx_igmp_vlan
+      redirect: community.network.onyx_igmp_vlan
     onyx_interface:
-      redirect: community.general.onyx_interface
+      redirect: community.network.onyx_interface
     onyx_l2_interface:
-      redirect: community.general.onyx_l2_interface
+      redirect: community.network.onyx_l2_interface
     onyx_l3_interface:
-      redirect: community.general.onyx_l3_interface
+      redirect: community.network.onyx_l3_interface
     onyx_linkagg:
-      redirect: community.general.onyx_linkagg
+      redirect: community.network.onyx_linkagg
     onyx_lldp:
-      redirect: community.general.onyx_lldp
+      redirect: community.network.onyx_lldp
     onyx_lldp_interface:
-      redirect: community.general.onyx_lldp_interface
+      redirect: community.network.onyx_lldp_interface
     onyx_magp:
-      redirect: community.general.onyx_magp
+      redirect: community.network.onyx_magp
     onyx_mlag_ipl:
-      redirect: community.general.onyx_mlag_ipl
+      redirect: community.network.onyx_mlag_ipl
     onyx_mlag_vip:
-      redirect: community.general.onyx_mlag_vip
+      redirect: community.network.onyx_mlag_vip
     onyx_ntp:
-      redirect: community.general.onyx_ntp
+      redirect: community.network.onyx_ntp
     onyx_ntp_servers_peers:
-      redirect: community.general.onyx_ntp_servers_peers
+      redirect: community.network.onyx_ntp_servers_peers
     onyx_ospf:
-      redirect: community.general.onyx_ospf
+      redirect: community.network.onyx_ospf
     onyx_pfc_interface:
-      redirect: community.general.onyx_pfc_interface
+      redirect: community.network.onyx_pfc_interface
     onyx_protocol:
-      redirect: community.general.onyx_protocol
+      redirect: community.network.onyx_protocol
     onyx_ptp_global:
-      redirect: community.general.onyx_ptp_global
+      redirect: community.network.onyx_ptp_global
     onyx_ptp_interface:
-      redirect: community.general.onyx_ptp_interface
+      redirect: community.network.onyx_ptp_interface
     onyx_qos:
-      redirect: community.general.onyx_qos
+      redirect: community.network.onyx_qos
     onyx_snmp:
-      redirect: community.general.onyx_snmp
+      redirect: community.network.onyx_snmp
     onyx_snmp_hosts:
-      redirect: community.general.onyx_snmp_hosts
+      redirect: community.network.onyx_snmp_hosts
     onyx_snmp_users:
-      redirect: community.general.onyx_snmp_users
+      redirect: community.network.onyx_snmp_users
     onyx_syslog_files:
-      redirect: community.general.onyx_syslog_files
+      redirect: community.network.onyx_syslog_files
     onyx_syslog_remote:
-      redirect: community.general.onyx_syslog_remote
+      redirect: community.network.onyx_syslog_remote
     onyx_traffic_class:
-      redirect: community.general.onyx_traffic_class
+      redirect: community.network.onyx_traffic_class
     onyx_username:
-      redirect: community.general.onyx_username
+      redirect: community.network.onyx_username
     onyx_vlan:
-      redirect: community.general.onyx_vlan
+      redirect: community.network.onyx_vlan
     onyx_vxlan:
-      redirect: community.general.onyx_vxlan
+      redirect: community.network.onyx_vxlan
     onyx_wjh:
-      redirect: community.general.onyx_wjh
+      redirect: community.network.onyx_wjh
     opx_cps:
-      redirect: community.general.opx_cps
+      redirect: community.network.opx_cps
     ordnance_config:
-      redirect: community.general.ordnance_config
+      redirect: community.network.ordnance_config
     ordnance_facts:
-      redirect: community.general.ordnance_facts
+      redirect: community.network.ordnance_facts
     panos_admin:
-      redirect: community.general.panos_admin
+      redirect: community.network.panos_admin
     panos_admpwd:
-      redirect: community.general.panos_admpwd
+      redirect: community.network.panos_admpwd
     panos_cert_gen_ssh:
-      redirect: community.general.panos_cert_gen_ssh
+      redirect: community.network.panos_cert_gen_ssh
     panos_check:
-      redirect: community.general.panos_check
+      redirect: community.network.panos_check
     panos_commit:
-      redirect: community.general.panos_commit
+      redirect: community.network.panos_commit
     panos_dag:
-      redirect: community.general.panos_dag
+      redirect: community.network.panos_dag
     panos_dag_tags:
-      redirect: community.general.panos_dag_tags
+      redirect: community.network.panos_dag_tags
     panos_import:
-      redirect: community.general.panos_import
+      redirect: community.network.panos_import
     panos_interface:
-      redirect: community.general.panos_interface
+      redirect: community.network.panos_interface
     panos_lic:
-      redirect: community.general.panos_lic
+      redirect: community.network.panos_lic
     panos_loadcfg:
-      redirect: community.general.panos_loadcfg
+      redirect: community.network.panos_loadcfg
     panos_match_rule:
-      redirect: community.general.panos_match_rule
+      redirect: community.network.panos_match_rule
     panos_mgtconfig:
-      redirect: community.general.panos_mgtconfig
+      redirect: community.network.panos_mgtconfig
     panos_nat_rule:
-      redirect: community.general.panos_nat_rule
+      redirect: community.network.panos_nat_rule
     panos_object:
-      redirect: community.general.panos_object
+      redirect: community.network.panos_object
     panos_op:
-      redirect: community.general.panos_op
+      redirect: community.network.panos_op
     panos_pg:
-      redirect: community.general.panos_pg
+      redirect: community.network.panos_pg
     panos_query_rules:
-      redirect: community.general.panos_query_rules
+      redirect: community.network.panos_query_rules
     panos_restart:
-      redirect: community.general.panos_restart
+      redirect: community.network.panos_restart
     panos_sag:
-      redirect: community.general.panos_sag
+      redirect: community.network.panos_sag
     panos_security_rule:
-      redirect: community.general.panos_security_rule
+      redirect: community.network.panos_security_rule
     panos_set:
-      redirect: community.general.panos_set
+      redirect: community.network.panos_set
     vdirect_commit:
-      redirect: community.general.vdirect_commit
+      redirect: community.network.vdirect_commit
     vdirect_file:
-      redirect: community.general.vdirect_file
+      redirect: community.network.vdirect_file
     vdirect_runnable:
-      redirect: community.general.vdirect_runnable
+      redirect: community.network.vdirect_runnable
     routeros_command:
-      redirect: community.general.routeros_command
+      redirect: community.network.routeros_command
     routeros_facts:
-      redirect: community.general.routeros_facts
+      redirect: community.network.routeros_facts
     slxos_command:
-      redirect: community.general.slxos_command
+      redirect: community.network.slxos_command
     slxos_config:
-      redirect: community.general.slxos_config
+      redirect: community.network.slxos_config
     slxos_facts:
-      redirect: community.general.slxos_facts
+      redirect: community.network.slxos_facts
     slxos_interface:
-      redirect: community.general.slxos_interface
+      redirect: community.network.slxos_interface
     slxos_l2_interface:
-      redirect: community.general.slxos_l2_interface
+      redirect: community.network.slxos_l2_interface
     slxos_l3_interface:
-      redirect: community.general.slxos_l3_interface
+      redirect: community.network.slxos_l3_interface
     slxos_linkagg:
-      redirect: community.general.slxos_linkagg
+      redirect: community.network.slxos_linkagg
     slxos_lldp:
-      redirect: community.general.slxos_lldp
+      redirect: community.network.slxos_lldp
     slxos_vlan:
-      redirect: community.general.slxos_vlan
+      redirect: community.network.slxos_vlan
     sros_command:
-      redirect: community.general.sros_command
+      redirect: community.network.sros_command
     sros_config:
-      redirect: community.general.sros_config
+      redirect: community.network.sros_config
     sros_rollback:
-      redirect: community.general.sros_rollback
+      redirect: community.network.sros_rollback
     voss_command:
-      redirect: community.general.voss_command
+      redirect: community.network.voss_command
     voss_config:
-      redirect: community.general.voss_config
+      redirect: community.network.voss_config
     voss_facts:
-      redirect: community.general.voss_facts
+      redirect: community.network.voss_facts
     osx_say:
-      redirect: community.general.osx_say
+      redirect: community.general.say
     bearychat:
       redirect: community.general.bearychat
     campfire:
@@ -2661,7 +2661,7 @@ plugin_routing:
     pushover:
       redirect: community.general.pushover
     rabbitmq_publish:
-      redirect: community.general.rabbitmq_publish
+      redirect: community.rabbitmq.rabbitmq_publish
     rocketchat:
       redirect: community.general.rocketchat
     say:
@@ -2901,7 +2901,7 @@ plugin_routing:
     github_hooks:
       redirect: community.general.github_hooks
     github_webhook_facts:
-      redirect: community.general.github_webhook_facts
+      redirect: community.general.github_webhook_info
     github_deploy_key:
       redirect: community.general.github_deploy_key
     github_issue:
@@ -2915,7 +2915,7 @@ plugin_routing:
     github_webhook_info:
       redirect: community.general.github_webhook_info
     gitlab_hooks:
-      redirect: community.general.gitlab_hooks
+      redirect: community.general.gitlab_hook
     gitlab_deploy_key:
       redirect: community.general.gitlab_deploy_key
     gitlab_group:
@@ -2935,7 +2935,7 @@ plugin_routing:
     emc_vnx_sg_member:
       redirect: community.general.emc_vnx_sg_member
     gluster_heal_facts:
-      redirect: community.general.gluster_heal_facts
+      redirect: community.general.gluster_heal_info
     gluster_heal_info:
       redirect: community.general.gluster_heal_info
     gluster_peer:
@@ -2997,59 +2997,59 @@ plugin_routing:
     sf_volume_manager:
       redirect: community.general.sf_volume_manager
     netapp_e_alerts:
-      redirect: community.general.netapp_e_alerts
+      redirect: netapp_eseries.santricity.netapp_e__alerts
     netapp_e_amg:
-      redirect: community.general.netapp_e_amg
+      redirect: netapp_eseries.santricity.netapp_e_amg
     netapp_e_amg_role:
-      redirect: community.general.netapp_e_amg_role
+      redirect: netapp_eseries.santricity.netapp_e_amg_role
     netapp_e_amg_sync:
-      redirect: community.general.netapp_e_amg_sync
+      redirect: netapp_eseries.santricity.netapp_e_amg_sync
     netapp_e_asup:
-      redirect: community.general.netapp_e_asup
+      redirect: netapp_eseries.santricity.netapp_e_asup
     netapp_e_auditlog:
-      redirect: community.general.netapp_e_auditlog
+      redirect: netapp_eseries.santricity.netapp_e_auditlog
     netapp_e_auth:
-      redirect: community.general.netapp_e_auth
+      redirect: netapp_eseries.santricity.netapp_e_auth
     netapp_e_drive_firmware:
-      redirect: community.general.netapp_e_drive_firmware
+      redirect: netapp_eseries.santricity.netapp_e_drive_firmware
     netapp_e_facts:
-      redirect: community.general.netapp_e_facts
+      redirect: netapp_eseries.santricity.netapp_e_facts
     netapp_e_firmware:
-      redirect: community.general.netapp_e_firmware
+      redirect: netapp_eseries.santricity.netapp_e_firmware
     netapp_e_flashcache:
-      redirect: community.general.netapp_e_flashcache
+      redirect: netapp_eseries.santricity.netapp_e_flashcache
     netapp_e_global:
-      redirect: community.general.netapp_e_global
+      redirect: netapp_eseries.santricity.netapp_e_global
     netapp_e_host:
-      redirect: community.general.netapp_e_host
+      redirect: netapp_eseries.santricity.netapp_e_host
     netapp_e_hostgroup:
-      redirect: community.general.netapp_e_hostgroup
+      redirect: netapp_eseries.santricity.netapp_e_hostgroup
     netapp_e_iscsi_interface:
-      redirect: community.general.netapp_e_iscsi_interface
+      redirect: netapp_eseries.santricity.netapp_e_iscsi_interface
     netapp_e_iscsi_target:
-      redirect: community.general.netapp_e_iscsi_target
+      redirect: netapp_eseries.santricity.netapp_e_iscsi_target
     netapp_e_ldap:
-      redirect: community.general.netapp_e_ldap
+      redirect: netapp_eseries.santricity.netapp_e_ldap
     netapp_e_lun_mapping:
-      redirect: community.general.netapp_e_lun_mapping
+      redirect: netapp_eseries.santricity.netapp_e_lun_mapping
     netapp_e_mgmt_interface:
-      redirect: community.general.netapp_e_mgmt_interface
+      redirect: netapp_eseries.santricity.netapp_e_mgmt_interface
     netapp_e_snapshot_group:
-      redirect: community.general.netapp_e_snapshot_group
+      redirect: netapp_eseries.santricity.netapp_e_snapshot_group
     netapp_e_snapshot_images:
-      redirect: community.general.netapp_e_snapshot_images
+      redirect: netapp_eseries.santricity.netapp_e_snapshot_images
     netapp_e_snapshot_volume:
-      redirect: community.general.netapp_e_snapshot_volume
+      redirect: netapp_eseries.santricity.netapp_e_snapshot_volume
     netapp_e_storage_system:
-      redirect: community.general.netapp_e_storage_system
+      redirect: netapp_eseries.santricity.netapp_e_storage_system
     netapp_e_storagepool:
-      redirect: community.general.netapp_e_storagepool
+      redirect: netapp_eseries.santricity.netapp_e_storagepool
     netapp_e_syslog:
-      redirect: community.general.netapp_e_syslog
+      redirect: netapp_eseries.santricity.netapp_e_syslog
     netapp_e_volume:
-      redirect: community.general.netapp_e_volume
+      redirect: netapp_eseries.santricity.netapp_e_volume
     netapp_e_volume_copy:
-      redirect: community.general.netapp_e_volume_copy
+      redirect: netapp_eseries.santricity.netapp_e_volume_copy
     purefa_facts:
       redirect: community.general.purefa_facts
     purefb_facts:
@@ -3313,23 +3313,23 @@ plugin_routing:
     ecs_certificate:
       redirect: community.crypto.ecs_certificate
     mongodb_parameter:
-      redirect: community.mongo.mongodb_parameter
+      redirect: community.mongodb.mongodb_parameter
     mongodb_info:
-      redirect: community.mongo.mongodb_info
+      redirect: community.mongodb.mongodb_info
     mongodb_replicaset:
-      redirect: community.mongo.mongodb_replicaset
+      redirect: community.mongodb.mongodb_replicaset
     mongodb_user:
-      redirect: community.mongo.mongodb_user
+      redirect: community.mongodb.mongodb_user
     mongodb_shard:
-      redirect: community.mongo.mongodb_shard
+      redirect: community.mongodb.mongodb_shard
     vmware_appliance_access_info:
-      redirect: community.vmware_rest.vmware_appliance_access_info
+      redirect: vmware.vmware_rest.vmware_appliance_access_info
     vmware_appliance_health_info:
-      redirect: community.vmware_rest.vmware_appliance_health_info
+      redirect: vmware.vmware_rest.vmware_appliance_health_info
     vmware_cis_category_info:
-      redirect: community.vmware_rest.vmware_cis_category_info
+      redirect: vmware.vmware_rest.vmware_cis_category_info
     vmware_core_info:
-      redirect: community.vmware_rest.vmware_core_info
+      redirect: vmware.vmware_rest.vmware_core_info
     vcenter_extension_facts:
       redirect: community.vmware.vcenter_extension_facts
     vmware_about_facts:
@@ -5637,9 +5637,7 @@ plugin_routing:
     asa_command:
       redirect: cisco.asa.asa_command
     intersight_facts:
-      redirect: cisco.intersight.intersight_info
-    intersight_info:
-      redirect: community.general.intersight_info
+      redirect: cisco.intersight.intersight_facts
     intersight_rest_api:
       redirect: cisco.intersight.intersight_rest_api
     ios_l3_interfaces:
@@ -6709,11 +6707,11 @@ plugin_routing:
     ovirt_vnic_profile_info:
       redirect: ovirt.ovirt.ovirt_vnic_profile_info
     dellos10_command:
-      redirect: dellemc_networking.os10.dellos10_command
+      redirect: dellemc_networking.os10.os10_command
     dellos10_facts:
-      redirect: dellemc_networking.os10.dellos10_facts
+      redirect: dellemc_networking.os10.os10_facts
     dellos10_config:
-      redirect: dellemc_networking.os10.dellos10_config
+      redirect: dellemc_networking.os10.os10_config
     dellos9_facts:
       redirect: dellemc_networking.os9.dellos9_facts
     dellos9_command:
@@ -7588,7 +7586,7 @@ plugin_routing:
     cloudscale:
       redirect: community.general.cloudscale
     cloudstack:
-      redirect: community.general.cloudstack
+      redirect: ngine_io.cloudstack.cloudstack
     database:
       redirect: community.general.database
     digital_ocean:
@@ -7600,7 +7598,7 @@ plugin_routing:
     exoscale:
       redirect: community.general.exoscale
     f5_utils:
-      redirect: community.general.f5_utils
+      redirect: community.network.f5_utils
     firewalld:
       redirect: community.general.firewalld
     gcdns:
@@ -7608,7 +7606,7 @@ plugin_routing:
     gce:
       redirect: community.general.gce
     gcp:
-      redirect: community.general.gcp
+      redirect: google.cloud.gcp
     gitlab:
       redirect: community.general.gitlab
     heroku:
@@ -7646,41 +7644,41 @@ plugin_routing:
     api:
       redirect: skydive.skydive.api
     a10:
-      redirect: community.general.a10
+      redirect: community.network.a10
     aireos:
-      redirect: community.general.aireos
+      redirect: community.network.aireos
     aos:
-      redirect: community.general.aos
+      redirect: community.network.aos
     apconos:
-      redirect: community.general.apconos
+      redirect: community.network.apconos
     aruba:
-      redirect: community.general.aruba
+      redirect: community.network.aruba
     ansible_utils:
-      redirect: community.general.ansible_utils
+      redirect: community.network.ansible_utils
     avi:
-      redirect: community.general.avi
+      redirect: community.network.avi
     avi_api:
-      redirect: community.general.avi_api
+      redirect: community.network.avi_api
     bigswitch:
-      redirect: community.general.bigswitch
+      redirect: community.network.bigswitch
     ce:
-      redirect: community.general.ce
+      redirect: community.network.ce
     cnos:
-      redirect: community.general.cnos
+      redirect: community.network.cnos
     cnos_devicerules:
-      redirect: community.general.cnos_devicerules
+      redirect: community.network.cnos_devicerules
     cnos_errorcodes:
-      redirect: community.general.cnos_errorcodes
+      redirect: community.network.cnos_errorcodes
     edgeos:
-      redirect: community.general.edgeos
+      redirect: community.network.edgeos
     edgeswitch:
-      redirect: community.general.edgeswitch
+      redirect: community.network.edgeswitch
     edgeswitch_interface:
-      redirect: community.general.edgeswitch_interface
+      redirect: community.network.edgeswitch_interface
     enos:
-      redirect: community.general.enos
+      redirect: community.network.enos
     eric_eccli:
-      redirect: community.general.eric_eccli
+      redirect: community.network.eric_eccli
     facts:
       redirect: vyos.vyos.facts
     l2_interfaces:
@@ -7692,53 +7690,53 @@ plugin_routing:
     vlans:
       redirect: junipernetworks.junos.vlans
     exos:
-      redirect: community.general.exos
+      redirect: community.network.exos
     utils:
       redirect: vyos.vyos.utils
     iworkflow:
-      redirect: community.general.iworkflow
+      redirect: community.network.iworkflow
     legacy:
-      redirect: community.general.legacy
+      redirect: community.network.legacy
     urls:
       redirect: amazon.aws.urls
     fortianalyzer:
-      redirect: community.general.fortianalyzer
+      redirect: community.network.fortianalyzer
     configuration:
-      redirect: community.general.configuration
+      redirect: community.network.configuration
     device:
-      redirect: community.general.device
+      redirect: community.network.device
     fdm_swagger_client:
-      redirect: community.general.fdm_swagger_client
+      redirect: community.network.fdm_swagger_client
     operation:
-      redirect: community.general.operation
+      redirect: community.network.operation
     icx:
-      redirect: community.general.icx
+      redirect: community.network.icx
     ironware:
-      redirect: community.general.ironware
+      redirect: community.network.ironware
     netscaler:
-      redirect: community.general.netscaler
+      redirect: community.network.netscaler
     netvisor:
-      redirect: community.general.netvisor
+      redirect: community.network.netvisor
     pn_nvos:
-      redirect: community.general.pn_nvos
+      redirect: community.network.pn_nvos
     nos:
-      redirect: community.general.nos
+      redirect: community.network.nos
     nso:
-      redirect: community.general.nso
+      redirect: community.network.nso
     onyx:
-      redirect: community.general.onyx
+      redirect: community.network.onyx
     ordnance:
-      redirect: community.general.ordnance
+      redirect: community.network.ordnance
     panos:
-      redirect: community.general.panos
+      redirect: community.network.panos
     routeros:
-      redirect: community.general.routeros
+      redirect: community.network.routeros
     slxos:
-      redirect: community.general.slxos
+      redirect: community.network.slxos
     sros:
-      redirect: community.general.sros
+      redirect: community.network.sros
     voss:
-      redirect: community.general.voss
+      redirect: community.network.voss
     oneandone:
       redirect: community.general.oneandone
     oneview:
@@ -7754,7 +7752,7 @@ plugin_routing:
     pure:
       redirect: community.general.pure
     rabbitmq:
-      redirect: community.general.rabbitmq
+      redirect: community.rabbitmq.rabbitmq
     rax:
       redirect: community.general.rax
     redfish_utils:
@@ -7780,7 +7778,7 @@ plugin_routing:
     vexata:
       redirect: community.general.vexata
     vultr:
-      redirect: community.general.vultr
+      redirect: ngine_io.vultr.vultr
     xenserver:
       redirect: community.general.xenserver
     raw:
@@ -7792,7 +7790,7 @@ plugin_routing:
     crypto:
       redirect: community.crypto.crypto
     VmwareRestModule:
-      redirect: community.vmware_rest.VmwareRestModule
+      redirect: vmware.vmware_rest.vmware_httpapi
     vca:
       redirect: community.vmware.vca
     vmware:
@@ -7843,6 +7841,8 @@ plugin_routing:
       redirect: ansible.netcommon.restconf
     ismount:
       redirect: ansible.posix.ismount
+#    Ansible.Service:
+#      redirect: ansible.windows.Ansible.Service
     fortimanager:
       redirect: fortinet.fortios.fortimanager
     system:
@@ -7918,7 +7918,7 @@ plugin_routing:
     ovirt:
       redirect: ovirt.ovirt.ovirt
     dellos10:
-      redirect: dellemc_networking.os10.dellos10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc_networking.os9.dellos9
     dellos6:
@@ -7945,41 +7945,41 @@ plugin_routing:
     frr:
       redirect: frr.frr.frr
     aireos:
-      redirect: community.general.aireos
+      redirect: community.network.aireos
     apconos:
-      redirect: community.general.apconos
+      redirect: community.network.apconos
     aruba:
-      redirect: community.general.aruba
+      redirect: community.network.aruba
     ce:
-      redirect: community.general.ce
+      redirect: community.network.ce
     cnos:
-      redirect: community.general.cnos
+      redirect: community.network.cnos
     edgeos:
-      redirect: community.general.edgeos
+      redirect: community.network.edgeos
     edgeswitch:
-      redirect: community.general.edgeswitch
+      redirect: community.network.edgeswitch
     enos:
-      redirect: community.general.enos
+      redirect: community.network.enos
     eric_eccli:
-      redirect: community.general.eric_eccli
+      redirect: community.network.eric_eccli
     exos:
-      redirect: community.general.exos
+      redirect: community.network.exos
     icx:
-      redirect: community.general.icx
+      redirect: community.network.icx
     ironware:
-      redirect: community.general.ironware
+      redirect: community.network.ironware
     netvisor:
-      redirect: community.general.netvisor
+      redirect: community.network.netvisor
     nos:
-      redirect: community.general.nos
+      redirect: community.network.nos
     onyx:
-      redirect: community.general.onyx
+      redirect: community.network.onyx
     routeros:
-      redirect: community.general.routeros
+      redirect: community.network.routeros
     slxos:
-      redirect: community.general.slxos
+      redirect: community.network.slxos
     voss:
-      redirect: community.general.voss
+      redirect: community.network.voss
     eos:
       redirect: arista.eos.eos
     asa:
@@ -7993,7 +7993,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.dellos10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc_networking.os9.dellos9
     dellos6:
@@ -8004,43 +8004,43 @@ plugin_routing:
     frr:
       redirect: frr.frr.frr
     aireos:
-      redirect: community.general.aireos
+      redirect: community.network.aireos
     apconos:
-      redirect: community.general.apconos
+      redirect: community.network.apconos
     aruba:
-      redirect: community.general.aruba
+      redirect: community.network.aruba
     ce:
-      redirect: community.general.ce
+      redirect: community.network.ce
     cnos:
-      redirect: community.general.cnos
+      redirect: community.network.cnos
     edgeos:
-      redirect: community.general.edgeos
+      redirect: community.network.edgeos
     edgeswitch:
-      redirect: community.general.edgeswitch
+      redirect: community.network.edgeswitch
     enos:
-      redirect: community.general.enos
+      redirect: community.network.enos
     eric_eccli:
-      redirect: community.general.eric_eccli
+      redirect: community.network.eric_eccli
     exos:
-      redirect: community.general.exos
+      redirect: community.network.exos
     icx:
-      redirect: community.general.icx
+      redirect: community.network.icx
     ironware:
-      redirect: community.general.ironware
+      redirect: community.network.ironware
     netvisor:
-      redirect: community.general.netvisor
+      redirect: community.network.netvisor
     nos:
-      redirect: community.general.nos
+      redirect: community.network.nos
     onyx:
-      redirect: community.general.onyx
+      redirect: community.network.onyx
     routeros:
-      redirect: community.general.routeros
+      redirect: community.network.routeros
     slxos:
-      redirect: community.general.slxos
+      redirect: community.network.slxos
     sros:
-      redirect: community.general.sros
+      redirect: community.network.sros
     voss:
-      redirect: community.general.voss
+      redirect: community.network.voss
     eos:
       redirect: arista.eos.eos
     asa:
@@ -8056,7 +8056,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.dellos10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc_networking.os9.dellos9
     dellos6:
@@ -8068,33 +8068,33 @@ plugin_routing:
     uses_redirected_action:
       redirect: testns.testcoll.subclassed_norm
     aireos:
-      redirect: community.general.aireos
+      redirect: community.network.aireos
     aruba:
-      redirect: community.general.aruba
+      redirect: community.network.aruba
     ce:
-      redirect: community.general.ce
+      redirect: community.network.ce
     ce_template:
-      redirect: community.general.ce_template
+      redirect: community.network.ce_template
     cnos:
-      redirect: community.general.cnos
+      redirect: community.network.cnos
     edgeos_config:
-      redirect: community.general.edgeos_config
+      redirect: community.network.edgeos_config
     enos:
-      redirect: community.general.enos
+      redirect: community.network.enos
     exos:
-      redirect: community.general.exos
+      redirect: community.network.exos
     ironware:
-      redirect: community.general.ironware
+      redirect: community.network.ironware
     nos_config:
-      redirect: community.general.nos_config
+      redirect: community.network.nos_config
     onyx_config:
-      redirect: community.general.onyx_config
+      redirect: community.network.onyx_config
     slxos:
-      redirect: community.general.slxos
+      redirect: community.network.slxos
     sros:
-      redirect: community.general.sros
+      redirect: community.network.sros
     voss:
-      redirect: community.general.voss
+      redirect: community.network.voss
     aws_s3:
       redirect: amazon.aws.aws_s3
     cli_command:
@@ -8174,7 +8174,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.dellos10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc_networking.os9.dellos9
     dellos6:
@@ -8210,7 +8210,7 @@ plugin_routing:
     yaml:
       redirect: community.general.yaml
     mongodb:
-      redirect: community.mongo.mongodb
+      redirect: community.mongodb.mongodb
   callback:
     actionable:
       redirect: community.general.actionable
@@ -8284,25 +8284,25 @@ plugin_routing:
       redirect: theforeman.foreman.foreman
   doc_fragments:
     a10:
-      redirect: community.general.a10
+      redirect: community.network.a10
     aireos:
-      redirect: community.general.aireos
+      redirect: community.network.aireos
     alicloud:
       redirect: community.general.alicloud
     aruba:
-      redirect: community.general.aruba
+      redirect: community.network.aruba
     auth_basic:
       redirect: community.general.auth_basic
     avi:
-      redirect: community.general.avi
+      redirect: community.network.avi
     ce:
-      redirect: community.general.ce
+      redirect: community.network.ce
     cloudscale:
       redirect: community.general.cloudscale
     cloudstack:
-      redirect: community.general.cloudstack
+      redirect: ngine_io.cloudstack.cloudstack
     cnos:
-      redirect: community.general.cnos
+      redirect: community.network.cnos
     digital_ocean:
       redirect: community.general.digital_ocean
     dimensiondata:
@@ -8314,11 +8314,11 @@ plugin_routing:
     emc:
       redirect: community.general.emc
     enos:
-      redirect: community.general.enos
+      redirect: community.network.enos
     exoscale:
       redirect: community.general.exoscale
     gcp:
-      redirect: community.general.gcp
+      redirect: google.cloud.gcp
     hetzner:
       redirect: community.general.hetzner
     hpe3par:
@@ -8332,11 +8332,11 @@ plugin_routing:
     influxdb:
       redirect: community.general.influxdb
     ingate:
-      redirect: community.general.ingate
+      redirect: community.network.ingate
     ipa:
       redirect: community.general.ipa
     ironware:
-      redirect: community.general.ironware
+      redirect: community.network.ironware
     keycloak:
       redirect: community.general.keycloak
     kubevirt_common_options:
@@ -8352,17 +8352,17 @@ plugin_routing:
     mysql:
       redirect: community.general.mysql
     netscaler:
-      redirect: community.general.netscaler
+      redirect: community.network.netscaler
     nios:
       redirect: community.general.nios
     nso:
-      redirect: community.general.nso
+      redirect: community.network.nso
     oneview:
       redirect: community.general.oneview
     online:
       redirect: community.general.online
     onyx:
-      redirect: community.general.onyx
+      redirect: community.network.onyx
     opennebula:
       redirect: community.general.opennebula
     openswitch:
@@ -8382,7 +8382,7 @@ plugin_routing:
     ovirt_facts:
       redirect: community.general.ovirt_facts
     panos:
-      redirect: community.general.panos
+      redirect: community.network.panos
     postgres:
       redirect: community.general.postgres
     proxysql:
@@ -8390,19 +8390,19 @@ plugin_routing:
     purestorage:
       redirect: community.general.purestorage
     rabbitmq:
-      redirect: community.general.rabbitmq
+      redirect: community.rabbitmq.rabbitmq
     rackspace:
       redirect: community.general.rackspace
     scaleway:
       redirect: community.general.scaleway
     sros:
-      redirect: community.general.sros
+      redirect: community.network.sros
     utm:
       redirect: community.general.utm
     vexata:
       redirect: community.general.vexata
     vultr:
-      redirect: community.general.vultr
+      redirect: ngine_io.vultr.vultr
     xenserver:
       redirect: community.general.xenserver
     zabbix:
@@ -8422,13 +8422,13 @@ plugin_routing:
     ecs_credential:
       redirect: community.crypto.ecs_credential
     VmwareRestModule:
-      redirect: community.vmware_rest.VmwareRestModule
+      redirect: vmware.vmware_rest.VmwareRestModule
     VmwareRestModule_filters:
-      redirect: community.vmware_rest.VmwareRestModule_filters
+      redirect: vmware.vmware_rest.VmwareRestModule_filters
     VmwareRestModule_full:
-      redirect: community.vmware_rest.VmwareRestModule_full
+      redirect: vmware.vmware_rest.VmwareRestModule_full
     VmwareRestModule_state:
-      redirect: community.vmware_rest.VmwareRestModule_state
+      redirect: vmware.vmware_rest.VmwareRestModule_state
     vca:
       redirect: community.vmware.vca
     vmware:
@@ -8486,13 +8486,13 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     tower:
-      redirect: awx.awx.tower
+      redirect: awx.awx.auth
     ovirt:
       redirect: ovirt.ovirt.ovirt
     ovirt_info:
       redirect: ovirt.ovirt.ovirt_info
     dellos10:
-      redirect: dellemc_networking.os10.dellos10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc_networking.os9.dellos9
     dellos6:
@@ -8571,13 +8571,13 @@ plugin_routing:
       redirect: ansible.netcommon.vlan_parser
   httpapi:
     exos:
-      redirect: community.general.exos
+      redirect: community.network.exos
     fortianalyzer:
-      redirect: community.general.fortianalyzer
+      redirect: community.network.fortianalyzer
     fortimanager:
-      redirect: community.general.fortimanager
+      redirect: fortinet.fortimanager.fortimanager
     ftd:
-      redirect: community.general.ftd
+      redirect: community.network.ftd
     vmware:
       redirect: community.vmware.vmware
     restconf:
@@ -8619,7 +8619,7 @@ plugin_routing:
     virtualbox:
       redirect: community.general.virtualbox
     vultr:
-      redirect: community.general.vultr
+      redirect: ngine_io.vultr.vultr
     k8s:
       redirect: community.kubernetes.k8s
     openshift:
@@ -8649,7 +8649,7 @@ plugin_routing:
     formerly_core_lookup:
       redirect: testns.testcoll.mylookup
     avi:
-      redirect: community.general.avi
+      redirect: community.network.avi
     cartesian:
       redirect: community.general.cartesian
     chef_databag:
@@ -8699,7 +8699,7 @@ plugin_routing:
     passwordstore:
       redirect: community.general.passwordstore
     rabbitmq:
-      redirect: community.general.rabbitmq
+      redirect: community.rabbitmq.rabbitmq
     redis:
       redirect: community.general.redis
     shelvefile:
@@ -8711,7 +8711,7 @@ plugin_routing:
     k8s:
       redirect: community.kubernetes.k8s
     mongodb:
-      redirect: community.mongo.mongodb
+      redirect: community.mongodb.mongodb
     laps_password:
       redirect: community.windows.laps_password
     aws_account_attribute:
@@ -8730,9 +8730,9 @@ plugin_routing:
       redirect: wti.remote.cpm_status
   netconf:
     ce:
-      redirect: community.general.ce
+      redirect: community.network.ce
     sros:
-      redirect: community.general.sros
+      redirect: community.network.sros
     default:
       redirect: ansible.netcommon.default
     iosxr:
