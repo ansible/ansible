@@ -327,7 +327,7 @@ class DocCLI(CLI):
     def _get_plugin_doc(plugin, plugin_type, loader, search_paths):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
         result = loader.find_plugin_with_context(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-        if result is None:
+        if not result.resolved:
             raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
         plugin_name, filename = result.plugin_resolved_name, result.plugin_resolved_path
 
