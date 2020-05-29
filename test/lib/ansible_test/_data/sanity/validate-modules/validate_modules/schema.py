@@ -320,9 +320,9 @@ def list_dict_option_schema(for_collection):
             'version_added_collection': collection_name,
             'default': json_value,
             # Note: Types are strings, not literal bools, such as True or False
-            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str', 'str_strict'),
             # in case of type='list' elements define type of individual item in list
-            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str', 'str_strict'),
             # Recursive suboptions
             'suboptions': Any(None, *list({str_type: Self} for str_type in string_types)),
         },
@@ -344,9 +344,9 @@ def list_dict_option_schema(for_collection):
             'default': json_value,
             'suboptions': Any(None, *list_dict_suboption_schema),
             # Note: Types are strings, not literal bools, such as True or False
-            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+            'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str', 'str_strict'),
             # in case of type='list' elements define type of individual item in list
-            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
+            'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str', 'str_strict'),
         },
         extra=PREVENT_EXTRA
     )

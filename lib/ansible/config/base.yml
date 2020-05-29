@@ -2051,8 +2051,8 @@ NETCONF_SSH_CONFIG:
 STRING_CONVERSION_ACTION:
   version_added: '2.8'
   description:
-    - Action to take when a module parameter value is converted to a string (this does not affect variables).
-      For string parameters, values such as '1.00', "['a', 'b',]", and 'yes', 'y', etc.
+    - Action to take when a strict string module parameter value is converted to a string (this does not affect variables).
+      For strict string parameters, values such as '1.00', "['a', 'b',]", and 'yes', 'y', etc.
       will be converted by the YAML parser unless fully quoted.
     - Valid options are 'error', 'warn', and 'ignore'.
     - Since 2.8, this option defaults to 'warn' but will change to 'error' in 2.12.
