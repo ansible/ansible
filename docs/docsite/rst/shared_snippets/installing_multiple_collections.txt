@@ -13,7 +13,11 @@ You can also setup a ``requirements.yml`` file to install multiple collections i
      version: 'version range identifiers (default: ``*``)'
      source: 'The Galaxy URL to pull the collection from (default: ``--api-server`` from cmdline)'
 
-The ``version`` key can take in the same range identifier format documented above.
+The supported keys for collection requirement entries are ``name``, ``version``, ``source``, and ``type``.
+
+The ``version`` key can take in the same range identifier format documented above. If you're installing a collection from a git repository instead of a built collection artifact, the ``version`` key refers to a `git commit-ish <https://git-scm.com/docs/gitglossary#def_commit-ish>`_.
+
+The ``type`` key can be set to ``galaxy``, ``url``, ``file``, and ``git``. If ``type`` is omitted, the ``name`` key is used to implicitly determine the source of the collection.
 
 Roles can also be specified and placed under the ``roles`` key. The values follow the same format as a requirements
 file used in older Ansible releases.

@@ -1,0 +1,15 @@
+- name: test installing one collection
+  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#collection_2'
+
+- name: list installed collections
+  command: 'ansible-galaxy collection list'
+  register: installed_collections
+
+- assert:
+    that:
+      - "'amazon.aws' not in installed_collections.stdout"
+      - "'ansible_test.collection_1' not in installed_collections.stdout"
+      - "'ansible_test.collection_2' in installed_collections.stdout"
+
+- include_tasks: ./empty_installed_collections.yml
+  when: cleanup

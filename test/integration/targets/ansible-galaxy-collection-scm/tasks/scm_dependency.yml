@@ -1,0 +1,14 @@
+- name: test installing one collection that has a SCM dep
+  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#/collection_1/'
+
+- name: list installed collections
+  command: 'ansible-galaxy collection list'
+  register: installed_collections
+
+- assert:
+    that:
+      - "'ansible_test.collection_1' in installed_collections.stdout"
+      - "'ansible_test.collection_2' in installed_collections.stdout"
+
+- include_tasks: ./empty_installed_collections.yml
+  when: cleanup
