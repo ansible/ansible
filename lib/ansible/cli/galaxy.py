@@ -518,6 +518,7 @@ class GalaxyCLI(CLI):
             - name: namespace.collection
               version: version identifier, multiple identifiers are separated by ','
               source: the URL or a predefined source name that relates to C.GALAXY_SERVER_LIST
+              type: git|file|url|galaxy
 
         :param requirements_file: The path to the requirements file.
         :param allow_old_format: Will fail if a v1 requirements file is found and this is set to False.
@@ -590,6 +591,10 @@ class GalaxyCLI(CLI):
                     if req_name is None:
                         raise AnsibleError("Collections requirement entry should contain the key name.")
 
+                    req_type = collection_req.get('type')
+                    if req_type not in ('file', 'galaxy', 'git', 'url', None):
+                        raise AnsibleError("The collection requirement entry key 'type' must be one of file, galaxy, git, or url.")
+
                     req_version = collection_req.get('version', '*')
                     req_source = collection_req.get('source', None)
                     if req_source:
@@ -601,9 +606,9 @@ class GalaxyCLI(CLI):
                                                     req_source,
                                                     validate_certs=not context.CLIARGS['ignore_certs']))
 
-                    requirements['collections'].append((req_name, req_version, req_source))
+                    requirements['collections'].append((req_name, req_version, req_source, req_type))
                 else:
-                    requirements['collections'].append((collection_req, '*', None))
+                    requirements['collections'].append((collection_req, '*', None, None))
 
         return requirements
 
@@ -705,12 +710,13 @@ class GalaxyCLI(CLI):
             for collection_input in collections:
                 requirement = None
                 if os.path.isfile(to_bytes(collection_input, errors='surrogate_or_strict')) or \
-                        urlparse(collection_input).scheme.lower() in ['http', 'https']:
+                        urlparse(collection_input).scheme.lower() in ['http', 'https'] or \
+                        collection_input.startswith(('git+', 'git@')):
                     # Arg is a file path or URL to a collection
                     name = collection_input
                 else:
                     name, dummy, requirement = collection_input.partition(':')
-                requirements['collections'].append((name, requirement or '*', None))
+                requirements['collections'].append((name, requirement or '*', None, None))
         return requirements
 
     ############################

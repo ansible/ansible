@@ -83,6 +83,10 @@ Downloading a collection for offline use
 
 .. include:: ../shared_snippets/download_tarball_collections.txt
 
+Installing a collection from a git repository
+---------------------------------------------
+
+.. include:: ../shared_snippets/installing_collections_git_repo.txt
 
 Listing installed collections
 -----------------------------
@@ -301,6 +305,10 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
+
+.. warning::
+
+   Embedding credentials into a SCM URL is not secure. Make sure to use safe auth options for security reasons. For example, use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_, `netrc <https://linux.die.net/man/5/netrc>`_ or `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in Git config to prevent your creds from being exposed in logs.
 
 Installing roles and collections from the same requirements.yml file
 ---------------------------------------------------------------------
