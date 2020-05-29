@@ -28,6 +28,15 @@ class ImmutableDict(Hashable, Mapping):
     def __hash__(self):
         return hash(frozenset(self.items()))
 
+    def __eq__(self, other):
+        try:
+            if self.__hash__() == hash(other):
+                return True
+        except TypeError:
+            pass
+
+        return False
+
     def __repr__(self):
         return 'ImmutableDict({0})'.format(repr(self._store))
 
