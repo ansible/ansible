@@ -3,11 +3,11 @@
   gather_facts: no
   tasks:
 
-  - name: test the module's default value
-    collection_namespace.collection_name.example_module:
+  - name: test the module without any module_defaults
+    collection_namespace.collection_name.echo:
     register: result
   - assert:
-      that: "result.option == 'default_value'"
+      that: "result.args_in == {}"
 
   - name: test module_defaults with action groups defined in collections
 
@@ -19,16 +19,16 @@
       - collection_namespace.collection_name
 
     block:
-      - example_module:
+      - echo:
         register: result
       - assert:
-          that: "result.option == 'value'"
+          that: "result.args_in == {'option': 'value'}"
 
-      - example_module:
+      - echo:
           option: updated_value
         register: result
       - assert:
-          that: "result.option == 'updated_value'"
+          that: "result.args_in == {'option': 'updated_value'}"
 
   - name: test module_defaults with action groups defined in collections using FQCN
 
@@ -37,16 +37,16 @@
         option: value
 
     block:
-      - collection_namespace.collection_name.example_module:
+      - collection_namespace.collection_name.echo:
         register: result
       - assert:
-          that: "result.option == 'value'"
+          that: "result.args_in == {'option': 'value'}"
 
-      - collection_namespace.collection_name.example_module:
+      - collection_namespace.collection_name.echo:
           option: updated_value
         register: result
       - assert:
-          that: "result.option == 'updated_value'"
+          that: "result.args_in == {'option': 'updated_value'}"
 
   - name: test module_defaults with redirected actions groups
 
@@ -55,26 +55,90 @@
         option: value
 
     block:
-      - collection_namespace.collection_name.example_module:
+      - collection_namespace.collection_name.echo:
         register: result
       - assert:
-          that: "result.option == 'value'"
+          that: "result.args_in == {'option': 'value'}"
 
-      - collection_namespace.collection_name.example_module:
+      - collection_namespace.collection_name.echo:
           option: updated_value
         register: result
       - assert:
-          that: "result.option == 'updated_value'"
+          that: "result.args_in == {'option': 'updated_value'}"
 
-      - example_module:
+      - echo:
         register: result
         collections: collection_namespace.collection_name
       - assert:
-          that: "result.option == 'value'"
+          that: "result.args_in == {'option': 'value'}"
 
-      - example_module:
+      - echo:
           option: updated_value
         register: result
         collections: collection_namespace.collection_name
       - assert:
-          that: "result.option == 'updated_value'"
+          that: "result.args_in == {'option': 'updated_value'}"
+
+  - name: test an action plugin which calls a module with a different name with an action group in module_defaults
+
+    module_defaults:
+      group/collection_namespace.collection_name.action_plugins:
+        option: value
+
+    block:
+
+      - collection_namespace.collection_name.share_options:
+        register: result
+      - assert:
+          that: "result.args_in == {'option': 'value'}"
+
+      - collection_namespace.collection_name.share_options:
+          option: updated_value
+        register: result
+      - assert:
+          that: "result.args_in == {'option': 'updated_value'}"
+
+      - share_options:
+        collections: collection_namespace.collection_name
+        register: result
+      - assert:
+          that: "result.args_in == {'option': 'value'}"
+
+      - share_options:
+          option: updated_value
+        collections: collection_namespace.collection_name
+        register: result
+      - assert:
+          that: "result.args_in == {'option': 'updated_value'}"
+
+  - name: test an action plugin which calls a module with a different name with a different action group in module_defaults
+
+    module_defaults:
+      group/collection_namespace.collection_name.test_group:
+        option: value
+
+    block:
+
+      - collection_namespace.collection_name.share_options:
+        register: result
+      - assert:
+          that: "result.args_in == {}"
+
+      - collection_namespace.collection_name.share_options:
+          option: updated_value
+        register: result
+      - assert:
+          that: "result.args_in == {'option': 'updated_value'}"
+
+      - share_options:
+        collections: collection_namespace.collection_name
+        register: result
+      - assert:
+          that: "result.args_in == {}"
+
+      - share_options:
+          option: updated_value
+        collections: collection_namespace.collection_name
+        register: result
+      - assert:
+          that: "result.args_in == {'option': 'updated_value'}"

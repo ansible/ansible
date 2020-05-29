@@ -294,17 +294,30 @@ class ModuleArgsParser:
 
         # walk the filtered input dictionary to see if we recognize a module name
         for item, value in iteritems(non_task_ds):
-            if item in BUILTIN_TASKS or skip_action_validation or action_loader.has_plugin(item, collection_list=self._collection_list) or \
-                    module_loader.has_plugin(item, collection_list=self._collection_list):
-                # finding more than one module name is a problem
+
+            # finding more than one module name is a problem
+            update = False
+            if item in BUILTIN_TASKS:
+                update = True
+            elif skip_action_validation:
+                update = True
+            else:
+                # If the plugin is resolved and redirected smuggle the list of candidate names via the task attribute 'ansible_internal_redirect_list'
+                context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                if not context.resolved:
+                    context = module_loader.find_plugin_with_context(item, collection_list=self._collection_list)
+                    if context.resolved and context.redirect_list:
+                        self._task_ds['ansible_internal_redirect_list'] = context.redirect_list
+                elif context.redirect_list:
+                    self._task_ds['ansible_internal_redirect_list'] = context.redirect_list
+
+                update = 'ansible_internal_redirect_list' in self._task_ds
+
+            if update:
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)
                 action = item
                 thing = value
-
-                context = module_loader.find_plugin_with_context(item, check_aliases=True, collection_list=self._collection_list)
-                if context.resolved and context.redirect_list:
-                    self._task_ds['ansible_internal_redirect_list'] = context.redirect_list
 
                 action, args = self._normalize_parameters(thing, action=action, additional_args=additional_args)
 

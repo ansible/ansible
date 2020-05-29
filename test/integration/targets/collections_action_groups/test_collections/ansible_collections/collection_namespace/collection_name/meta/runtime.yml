@@ -1,6 +1,8 @@
 action_groups:
   test_group:
-    - example_module
+    - echo
+  action_plugins:
+    - share_options
 action_groups_redirection:
   test_group:
     redirect: collection_namespace.collection_name.redirected_group
