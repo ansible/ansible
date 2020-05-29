@@ -684,7 +684,7 @@ class DocCLI(CLI):
             elif isinstance(doc[k], (list, tuple)):
                 text.append('%s: %s' % (k.upper(), ', '.join(doc[k])))
             else:
-                text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, opt_indent))
+                text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, ''))
             del doc[k]
         text.append('')
 
