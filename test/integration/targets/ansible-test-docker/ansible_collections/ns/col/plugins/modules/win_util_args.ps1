@@ -11,8 +11,6 @@ $spec = @{
       my_opt = @{ type = "str"; required = $true }
     }
 }
-$util_spec = Get-PSUtilSpec
-$spec.options += $util_spec.options
 
-$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec)
+$module = [Ansible.Basic.AnsibleModule]::Create($args, $spec, @(Get-PSUtilSpec))
 $module.ExitJson()

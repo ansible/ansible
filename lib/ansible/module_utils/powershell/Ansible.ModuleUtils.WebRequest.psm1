@@ -84,8 +84,7 @@ Function Get-AnsibleWebRequest {
     $spec = @{
         options = @{}
     }
-    $spec.options += $ansible_web_request_options
-    $module = Ansible.Basic.AnsibleModule]::Create($args, $spec)
+    $module = Ansible.Basic.AnsibleModule]::Create($args, $spec, @(Get-AnsibleWebRequestSpec))
 
     $web_request = Get-AnsibleWebRequest -Module $module
     #>
@@ -371,8 +370,7 @@ Function Invoke-WithWebRequest {
             path = @{ type = "path"; required = $true }
         }
     }
-    $spec.options += $ansible_web_request_options
-    $module = Ansible.Basic.AnsibleModule]::Create($args, $spec)
+    $module = Ansible.Basic.AnsibleModule]::Create($args, $spec, @(Get-AnsibleWebRequestSpec))
 
     $web_request = Get-AnsibleWebRequest -Module $module
 
@@ -467,58 +465,23 @@ Function Invoke-WithWebRequest {
     }
 }
 
-Function Merge-WebRequestSpec {
+Function Get-AnsibleWebRequestSpec {
     <#
     .SYNOPSIS
-    Merges a modules spec definition with extra options supplied by this module_util. Options from the module take
-    priority over the module util spec.
+    Used by modules to get the argument spec fragment for AnsibleModule.
 
-    .PARAMETER ModuleSpec
-    The root $spec of a module option definition to merge with.
-
-    .EXAMPLE
+    .EXAMPLES
     $spec = @{
-        options = @{
-            name = @{ type = "str" }
-        }
-        supports_check_mode = $true
+        options = @{}
     }
-    $spec = Merge-WebRequestSpec -ModuleSpec $spec
+    $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec, @(Get-AnsibleWebRequestSpec))
     #>
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$true)]
-        [System.Collections.IDictionary]
-        $ModuleSpec,
-
-        [System.Collections.IDictionary]
-        $SpecToMerge = @{ options = $ansible_web_request_options }
-    )
-
-    foreach ($option_kvp in $SpecToMerge.GetEnumerator()) {
-        $k = $option_kvp.Key
-        $v = $option_kvp.Value
-
-        if ($ModuleSpec.Contains($k)) {
-            if ($v -is [System.Collections.IDictionary]) {
-                $ModuleSpec[$k] = Merge-WebRequestSpec -ModuleSpec $ModuleSpec[$k] -SpecToMerge $v
-            } elseif ($v -is [Array] -or $v -is [System.Collections.IList]) {
-                $sourceList = [System.Collections.Generic.List[Object]]$ModuleSpec[$k]
-                foreach ($entry in $v) {
-                    $sourceList.Add($entry)
-                }
-
-                $ModuleSpec[$k] = $sourceList
-            }
-        } else {
-            $ModuleSpec[$k] = $v
-        }
-    }
-
-    $ModuleSpec
+    @{ options = $ansible_web_request_options }
 }
 
 # See lib/ansible/plugins/doc_fragments/url_windows.py
+# Kept here for backwards compat as this variable was added in Ansible 2.9. Ultimately this util should be removed
+# once the deprecation period has been added.
 $ansible_web_request_options = @{
     method = @{ type="str" }
     follow_redirects = @{ type="str"; choices=@("all","none","safe"); default="safe" }
@@ -545,7 +508,7 @@ $ansible_web_request_options = @{
 }
 
 $export_members = @{
-    Function = "Get-AnsibleWebRequest", "Invoke-WithWebRequest", "Merge-WebRequestSpec"
+    Function = "Get-AnsibleWebRequest", "Get-AnsibleWebRequestSpec", "Invoke-WithWebRequest"
     Variable = "ansible_web_request_options"
 }
 Export-ModuleMember @export_members
