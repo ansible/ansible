@@ -280,9 +280,15 @@
   set_fact:
     findall_groupdict: "{{ passwd_content | regex_findall('^(?P<id>[^:]*):[^:]*:(?P<uid>[^:]*):(?P<gid>[^:]*)[\\n]?', groupdict=True, multiline=True) }}"
   failed_when:
-    - findall_groupdict | selectattr('uid', '==', '1000') | map(attribute='id') | list != ['user'] or
-      findall_groupdict | selectattr('id', '==', 'root') | map(attribute='uid') | list != ['0']
+    - findall_groupdict != passwd_parsed
   vars:
+    passwd_parsed:
+      - id: root
+        uid: "0"
+        gid: "0"
+      - id: user
+        uid: "1000"
+        gid: "1000"
     passwd_content: |
       root:x:0:0:root:/root:/bin/bash
       user:x:1000:1000:John Doe:/home/user:/bin/bash
