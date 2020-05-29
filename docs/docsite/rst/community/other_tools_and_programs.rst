@@ -70,6 +70,13 @@ An open-source, free command-line text editor. Useful vim plugins include:
 
 * `Ansible vim <https://github.com/pearofducks/ansible-vim>`_  - vim syntax plugin for Ansible 2.x, it supports YAML playbooks, Jinja2 templates, and Ansible's hosts files.
 
+JetBrains
+=========
+
+An open-source Community edition and closed-source Enterprise edition, integrated development environments based on IntelliJ's framework including IDEA, AppCode, CLion, GoLand, PhpStorm, PyCharm and others. Useful JetBrains platform plugins include:
+
+* `Ansible Vault Editor <https://plugins.jetbrains.com/plugin/14278-ansible-vault-editor>`_ - Ansible Vault Editor with auto encryption/decryption.
+
 
 *****************
 Development Tools
