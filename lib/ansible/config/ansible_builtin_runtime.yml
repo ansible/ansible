@@ -5436,6 +5436,8 @@ plugin_routing:
       redirect: check_point.mgmt.cp_mgmt_wildcard
     cp_mgmt_wildcard_facts:
       redirect: check_point.mgmt.cp_mgmt_wildcard_facts
+    eos_ospfv2:
+      redirect: arista.eos.eos_ospfv2
     eos_static_route:
       redirect: arista.eos.eos_static_route
     eos_acls:
@@ -5640,6 +5642,8 @@ plugin_routing:
       redirect: cisco.intersight.intersight_facts
     intersight_rest_api:
       redirect: cisco.intersight.intersight_rest_api
+    ios_ospfv2:
+      redirect: cisco.ios.ios_ospfv2
     ios_l3_interfaces:
       redirect: cisco.ios.ios_l3_interfaces
     ios_lldp:
@@ -5700,6 +5704,8 @@ plugin_routing:
       redirect: cisco.ios.ios_acls
     ios_interfaces:
       redirect: cisco.ios.ios_interfaces
+    iosxr_ospfv2:
+      redirect: cisco.iosxr.iosxr_ospfv2
     iosxr_bgp:
       redirect: cisco.iosxr.iosxr_bgp
     iosxr_lldp_interfaces:
@@ -5854,6 +5860,8 @@ plugin_routing:
       redirect: cisco.nxos.nxos_bfd_interfaces
     nxos_ospf:
       redirect: cisco.nxos.nxos_ospf
+    nxos_ospfv2:
+      redirect: cisco.nxos.nxos_ospfv2
     nxos_system:
       redirect: cisco.nxos.nxos_system
     nxos_l3_interface:
@@ -5862,6 +5870,8 @@ plugin_routing:
       redirect: cisco.nxos.nxos_smu
     nxos_reboot:
       redirect: cisco.nxos.nxos_reboot
+    nxos_static_routes:
+      redirect: cisco.nxos.nxos_static_routes
     nxos_static_route:
       redirect: cisco.nxos.nxos_static_route
     nxos_acl_interfaces:
@@ -6490,6 +6500,12 @@ plugin_routing:
       redirect: openstack.cloud.volume_snapshot
     os_zone:
       redirect: openstack.cloud.dns_zone
+    junos_acls:
+      redirect: junipernetworks.junos.junos_acls
+    junos_acl_interfaces:
+      redirect: junipernetworks.junos.junos_acl_interfaces
+    junos_ospfv2:
+      redirect: junipernetworks.junos.junos_ospfv2
     junos_user:
       redirect: junipernetworks.junos.junos_user
     junos_l2_interface:
@@ -7500,6 +7516,8 @@ plugin_routing:
       redirect: openvswitch.openvswitch.openvswitch_db
     openvswitch_bridge:
       redirect: openvswitch.openvswitch.openvswitch_bridge
+    vyos_ospfv2:
+      redirect: vyos.vyos.vyos_ospfv2
     vyos_l3_interface:
       redirect: vyos.vyos.vyos_l3_interface
     vyos_banner:
