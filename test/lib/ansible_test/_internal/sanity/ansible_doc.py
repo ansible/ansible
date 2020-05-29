@@ -103,32 +103,36 @@ class AnsibleDocTest(SanitySingleVersion):
         error_messages = []
 
         for doc_type in sorted(doc_targets):
-            cmd = ['ansible-doc', '-t', doc_type] + sorted(doc_targets[doc_type])
+            for format_option in [None, '--json']:
+                cmd = ['ansible-doc', '-t', doc_type]
+                if format_option is not None:
+                    cmd.append(format_option)
+                cmd.extend(sorted(doc_targets[doc_type]))
 
-            try:
-                with coverage_context(args):
-                    stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
+                try:
+                    with coverage_context(args):
+                        stdout, stderr = intercept_command(args, cmd, target_name='ansible-doc', env=env, capture=True, python_version=python_version)
 
-                status = 0
-            except SubprocessError as ex:
-                stdout = ex.stdout
-                stderr = ex.stderr
-                status = ex.status
+                    status = 0
+                except SubprocessError as ex:
+                    stdout = ex.stdout
+                    stderr = ex.stderr
+                    status = ex.status
 
-            if status:
-                summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
-                return SanityFailure(self.name, summary=summary)
+                if status:
+                    summary = u'%s' % SubprocessError(cmd=cmd, status=status, stderr=stderr)
+                    return SanityFailure(self.name, summary=summary)
 
-            if stdout:
-                display.info(stdout.strip(), verbosity=3)
+                if stdout:
+                    display.info(stdout.strip(), verbosity=3)
 
-            if stderr:
-                # ignore removed module/plugin warnings
-                stderr = re.sub(r'\[WARNING\]: [^ ]+ [^ ]+ has been removed\n', '', stderr).strip()
+                if stderr:
+                    # ignore removed module/plugin warnings
+                    stderr = re.sub(r'\[WARNING\]: [^ ]+ [^ ]+ has been removed\n', '', stderr).strip()
 
-            if stderr:
-                summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
-                return SanityFailure(self.name, summary=summary)
+                if stderr:
+                    summary = u'Output on stderr from ansible-doc is considered an error.\n\n%s' % SubprocessError(cmd, stderr=stderr)
+                    return SanityFailure(self.name, summary=summary)
 
         if args.explain:
             return SanitySuccess(self.name)
