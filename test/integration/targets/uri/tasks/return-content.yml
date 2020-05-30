@@ -15,6 +15,7 @@
     url: http://does/not/exist
     return_content: yes
   register: result
+  ignore_errors: true
 
 - name: Assert content exists when return_content is yes and request fails
   assert:
@@ -39,6 +40,7 @@
     url: http://does/not/exist
     return_content: no
   register: result
+  ignore_errors: true
 
 - name: Assert content does not exist when return_content is no and request fails
   assert:
