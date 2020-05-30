@@ -54,18 +54,18 @@ This table lists common patterns for targeting inventory hosts and groups.
 
    One group              webservers
 
-   Multiple groups        webservers:dbservers             all hosts in webservers plus all hosts in dbservers
+   Multiple groups        'webservers:dbservers'             all hosts in webservers plus all hosts in dbservers
 
-   Excluding groups       webservers:!atlanta              all hosts in webservers except those in atlanta
+   Excluding groups       'webservers:!atlanta'              all hosts in webservers except those in atlanta
 
-   Intersection of groups webservers:&staging              any hosts in webservers that are also in staging
+   Intersection of groups 'webservers:&staging'              any hosts in webservers that are also in staging
    ====================== ================================ ===================================================
 
 .. note:: You can use either a comma (``,``) or a colon (``:``) to separate a list of hosts. The comma is preferred when dealing with ranges and IPv6 addresses.
 
-Once you know the basic patterns, you can combine them. This example::
+Once you know the basic patterns, you can combine them. Include them in Singtel quotes. This example::
 
-    webservers:dbservers:&staging:!phoenix
+    'webservers:dbservers:&staging:!phoenix'
 
 targets all machines in the groups 'webservers' and 'dbservers' that are also in
 the group 'staging', except any machines in the group 'phoenix'.
@@ -78,7 +78,7 @@ You can use wildcard patterns with FQDNs or IP addresses, as long as the hosts a
 
 You can mix wildcard patterns and groups at the same time::
 
-    one*.com:dbservers
+    'one*.com:dbservers'
 
 Limitations of patterns
 -----------------------
