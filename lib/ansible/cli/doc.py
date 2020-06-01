@@ -593,7 +593,7 @@ class DocCLI(CLI):
             for subkey, subdata in suboptions:
                 text.append('')
                 text.append("%s%s:\n" % (opt_indent, subkey.upper()))
-                DocCLI.add_fields(text, subdata, limit, opt_indent + '    ', opt_indent)
+                DocCLI.add_fields(text, subdata, limit, opt_indent + '    ', return_values, opt_indent)
             if not suboptions:
                 text.append('')
 
@@ -705,6 +705,6 @@ class DocCLI(CLI):
             if isinstance(doc['returndocs'], string_types):
                 text.append(doc.pop('returndocs'))
             else:
-                text.append(yaml.dump(doc.pop('returndocs'), indent=2, default_flow_style=False))
+                DocCLI.add_fields(text, doc.pop('returndocs'), limit, opt_indent)
 
         return "\n".join(text)
