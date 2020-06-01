@@ -1,0 +1,3 @@
+bugfixes:
+- uri - Don't return the body even if it failed
+  (https://github.com/ansible/ansible/issues/21003)
