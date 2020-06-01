@@ -145,16 +145,17 @@ class PluginLoadContext(object):
         # If both removal_date and removal_version are specified, use removal_date
         if removal_date is not None:
             removal_version = None
-        if not warning_text:
-            if removal_date:
-                warning_text = '{0} has been deprecated and will be removed in a release of {2} after {1}'.format(
-                    name, removal_date, collection_name)
-            elif removal_version:
-                warning_text = '{0} has been deprecated and will be removed in version {1} of {2}'.format(
-                    name, removal_version, collection_name)
-            else:
-                warning_text = '{0} has been deprecated and will be removed in a future release of {2}'.format(
-                    name, collection_name)
+        if removal_date:
+            warning_text_res = '{0} has been deprecated and will be removed in a release of {2} after {1}'.format(
+                name, removal_date, collection_name)
+        elif removal_version:
+            warning_text_res = '{0} has been deprecated and will be removed in version {1} of {2}'.format(
+                name, removal_version, collection_name)
+        else:
+            warning_text_res = '{0} has been deprecated and will be removed in a future release of {2}'.format(
+                name, collection_name)
+        if warning_text:
+            warning_text_res = '{0}. {1}'.format(warning_text_res, warning_text)
 
         self.deprecated = True
         if removal_date:
