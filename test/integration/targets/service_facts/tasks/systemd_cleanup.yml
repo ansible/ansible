@@ -1,0 +1,32 @@
+- name: remove the systemd unit file
+  file:
+    path: /usr/lib/systemd/system/ansible_test.service
+    state: absent
+  register: remove_systemd_result
+
+- name: assert that the systemd unit file was removed
+  assert:
+    that:
+    - "remove_systemd_result.path == '/usr/lib/systemd/system/ansible_test.service'"
+    - "remove_systemd_result.state == 'absent'"
+
+- name: remove python systemd test script file
+  file:
+    path: /usr/sbin/ansible_test_service
+    state: absent
+  register: remove_systemd_binary_result
+
+- name: assert that python systemd test script file was removed
+  assert:
+    that:
+    - "remove_systemd_binary_result.path == '/usr/sbin/ansible_test_service'"
+    - "remove_systemd_binary_result.state == 'absent'"
+
+- name: make sure systemd is reloaded
+  shell: systemctl daemon-reload
+  register: restart_systemd_result
+
+- name: assert that systemd was reloaded
+  assert:
+    that:
+    - "restart_systemd_result.rc == 0"
