@@ -595,3 +595,6 @@
 
 - name: Check unexpected failures
   import_tasks: unexpected-failures.yml
+
+- name: Check return-content
+  import_tasks: return-content.yml
