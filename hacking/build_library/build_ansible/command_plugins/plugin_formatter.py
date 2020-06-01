@@ -337,6 +337,8 @@ def too_old(added):
     if not added:
         return False
     try:
+        if isinstance(added, string_types) and added.startswith('ansible.builtin'):
+            added = added.split(":")[1]
         added_tokens = str(added).split(".")
         readded = added_tokens[0] + "." + added_tokens[1]
         added_float = float(readded)
