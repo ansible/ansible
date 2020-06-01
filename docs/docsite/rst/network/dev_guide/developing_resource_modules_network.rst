@@ -8,8 +8,11 @@ Developing network resource modules
 .. contents::
    :local:
 
-Network and Security Resource Module Definition (Domain Specific)
-==================================================================
+Network and Security Resource Modules
+=======================================
+
+Network and security devices separate configuration into sections (such as interfaces, VLANS, and so on) that apply to a network or security service. Ansible resource modules take advantage of this to allow you to configure subsections or resources within the device configuration. Resource modules provide a consistent experience across different network and security devices.
+
 
 Resource modules defined as Ansible module which manages the configuration of logical network function or configuration stanza for eg. interfaces, VLANs etc on a network device in a structured format and supports fetching of the same configuration data that it manages from the network device as Ansible facts in the same structural hierarchical format as defined by Ansible resource module argument specification.
 
@@ -33,12 +36,14 @@ The state key should have values merged, replaced, overridden, deleted, parsed, 
 
 	The states I(rendered), I(gathered) and I(parsed) do not perform any change on the device.
 
-More resources:
+.. seealso::
 
-:ref:`Network features in 2.9 <https://www.ansible.com/blog/network-features-coming-soon-in-ansible-engine-2.9>`_
+  :ref:`Network features in 2.9 <https://www.ansible.com/blog/network-features-coming-soon-in-ansible-engine-2.9>`_
+	   Introduction to resource modules
 
-Network and Security Resource Module Development (Domain Specific)
-==================================================================
+
+Developing network and security resource modules
+=================================================
 
 The Ansible Engineering team ensures the module design and code pattern is uniform across resources and across platforms to give a vendor-agnostic feel and deliver good quality code. To achieve this we have developed a resource module scaffolding tool :ref:`resource module builder <https://github.com/ansible-network/resource_module_builder>`_.
 
@@ -50,8 +55,6 @@ Before writing code for the resource module ensure the model design is shared in
 .. end of cut n paste ***********************
 .. *********************************************
 
-.. contents::
-  :local:
 
 The resource module builder is an Ansible Playbook that helps developers scaffold and maintain an Ansible network resource module.
 

@@ -196,8 +196,8 @@ The following table shows:
       <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
     <tr>
-      <td><a href="https://galaxy.ansible.com/splunk/enterprise_security">splunk.enterprise_security</a></td>
-      <td>community.enterprise_security</td>
+      <td><a href="https://github.com/ansible-collections/splunk.es">splunk.es</a></td>
+      <td>community.es</td>
       <td><a href="https://github.com/ansible/community/wiki/Security-Automation">Security</a></td>
       <td>✓</td>
       <td></td>
