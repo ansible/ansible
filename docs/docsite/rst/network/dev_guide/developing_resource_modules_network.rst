@@ -8,55 +8,78 @@ Developing network resource modules
 .. contents::
    :local:
 
-Network and Security Resource Modules
-=======================================
+Understanding network and security resource modules
+===================================================
 
-Network and security devices separate configuration into sections (such as interfaces, VLANS, and so on) that apply to a network or security service. Ansible resource modules take advantage of this to allow you to configure subsections or resources within the device configuration. Resource modules provide a consistent experience across different network and security devices.
+Network and security devices separate configuration into sections (such as interfaces, VLANs, and so on) that apply to a network or security service. Ansible resource modules take advantage of this to allow users to configure subsections or resources within the device configuration. Resource modules provide a consistent experience across different network and security devices. For example, a network resource module may only update the configuration for a specific portion of the network interfaces, VLANs, ACLs, and so on, for a network device. The resource module:
+
+#. Fetches a piece of the configuration (fact gathering), for example, the interfaces configuration.
+#. Converts the returned configuration into key-value pairs.
+#. Places those key-value pairs into an internal agnostic structured data format.
+
+Now that the configuration data is normalized, the user can update and modify the data and then use the resource module to send the configuration data back to the device. This results in a full round trip configuration update without the need for manual parsing, data manipulation, and data model management.
+
+The resource module has two top-level keys - ``config`` and ``state``.
+
+``config`` defines the resource configuration data model as a key-value pair.  The type of the ``config`` option can be ``dict`` or ``list of dict`` based on the resource managed.  That is, if the device has a single global configuration, it should be a ``dict`` (for example, a global LLDP configuration). If the device has multiple instances of configuration, it should be of type ``list`` with each element in the list of type ``dict``. (for example, interfaces configuration).
 
 
-Resource modules defined as Ansible module which manages the configuration of logical network function or configuration stanza for eg. interfaces, VLANs etc on a network device in a structured format and supports fetching of the same configuration data that it manages from the network device as Ansible facts in the same structural hierarchical format as defined by Ansible resource module argument specification.
+``state`` defines the action the resource module takes on the end device.
+The ``state`` for a new resource module should support the following values (as applicable for the devices that support them):
 
-The resource module should have two top-level keys namely config and state.
+merged
+  Ansible merges the on-device configuration with the provided configuration in the task.
 
-The config key should define the resource configuration data model as a key-value pair, the type of config option can be dict or list of dict based on the resource managed that is if the device has a single global configuration it should be a dict (eg. global lldp configuration) and if it has multiple instances of configuration it should be of type list with each element in list as dict. (eg. interfaces configuration).
+replaced
+  Ansible replaces the on-device configuration subsection with the provided configuration subsection in the task.
 
-The state key should have values merged, replaced, overridden, deleted, parsed, gathered and rendered.
+overridden
+  Ansible overrides the on-device configuration for the resource with the provided configuration in the task. Use caution with this state as you could remove your access to the device (for example, by overriding the management interface configuration).
+
+deleted
+  Ansible deletes the on-device configuration subsection and restores any default settings.
+
+gathered
+  Ansible displays the resource details gathered from the network device and accessed with the ``gathered`` key in the result.
+
+rendered
+  Ansible renders the provided configuration in the task in the device-native format (for example, Cisco IOS CLI). Ansible returns this rendered configuration in the ``rendered`` key in the result. Note this state does not communicate with the network device and can be used offline.
+
+parsed
+  Ansible parses the configuration from the ``running_configuration`` option into Ansible structured data in the ``parsed`` key in the result. Note this does not gather the configuration from the network device so this state can be used offline.
 
 
-
-1. merged: configuration merged with the provided configuration (<span style="text-decoration:underline;">default</span>)
-2. replaced: configuration of provided resources will be replaced with the provided configuration
-3. overridden: The configuration of the provided resources will be replaced with the provided configuration, extraneous resource instances will be removed
-4. deleted: The configuration of the provided resources will be deleted/defaulted.
-5. rendered: Will transform the configuration in C(config) option to platform-specific CLI commands which will be returned in the I(rendered) key within the result. For state I(rendered) active connection to the remote host is not required.
-6. gathered: will fetch the running configuration from the device and transform it into structured data in the format as per the resource module argspec and the value is returned in the I(gathered) key within the result.
-7. parsed: reads the configuration from C(running_config) option and transforms it into JSON format as per the resource module parameters and the value is returned in the I(parsed) key within the result. The value of C(running_config) option should be the same format as the output of show command executed to get configuration of resource on the device. For state, I(parsed) active connection to the remote host is not required.
+A new module that does not have these state values (and has instead present and absent) should be proposed as part of the associated community collection, not part of an Ansible-maintained collection.
 
 .. note::
 
-	The states I(rendered), I(gathered) and I(parsed) do not perform any change on the device.
+	The states ``rendered``, ``gathered``, and ``parsed`` do not perform any change on the device.
 
 .. seealso::
 
-  :ref:`Network features in 2.9 <https://www.ansible.com/blog/network-features-coming-soon-in-ansible-engine-2.9>`_
-	   Introduction to resource modules
+  `Deep Dive on VLANs Resource Modules for Network Automation <https://www.ansible.com/blog/deep-dive-on-vlans-resource-modules-for-network-automation>`_
+	   Walkthrough of how state values are implemented for VLANs.
 
 
 Developing network and security resource modules
 =================================================
 
-The Ansible Engineering team ensures the module design and code pattern is uniform across resources and across platforms to give a vendor-agnostic feel and deliver good quality code. To achieve this we have developed a resource module scaffolding tool :ref:`resource module builder <https://github.com/ansible-network/resource_module_builder>`_.
-
-Though it is not mandatory to use this tool while developing a resource module it highly recommends to use it though. Since this tool is under active development and we strive to ensure the scaffolded code is optimized and reduce module development time it is subject to change in future.
-
-Before writing code for the resource module ensure the model design is shared in the :ref:`resource module models repo <https://github.com/ansible-network/resource_module_models>`_ in form of PR for review.
+The Ansible Engineering team ensures the module design and code pattern  within Ansible-maintained collections is uniform across resources and across platforms to give a vendor-agnostic feel and deliver good quality code. We recommend you use the `resource module builder <https://github.com/ansible-network/resource_module_builder>`_ to  develop a resource module.
 
 
-.. end of cut n paste ***********************
-.. *********************************************
+The highlevel process for developing a resource module is:
 
+#. Download the latest version of the `resource module builder <https://github.com/ansible-network/resource_module_builder>`_.
+#. Create and share a resource model design in the `resource module models repository <https://github.com/ansible-network/resource_module_models>`_ as a PR for review.
+#. Create a collection scaffold from your approved resource model.
+#. Write the code to implement your resource module.
+#. Develop integration and unit tests to verify your resource module.
+#. Create a PR to the appropriate collection that you want to add your new resource module to. See :ref:`contributing_maintained_collections` for details on determining the correct collection for your module.
 
-The resource module builder is an Ansible Playbook that helps developers scaffold and maintain an Ansible network resource module.
+Understanding the resource module builder
+-----------------------------------------
+
+The resource module builder is an Ansible Playbook that helps developers scaffold and maintain an Ansible resource module.
 
 The resource module builder has the following capabilities:
 
@@ -68,7 +91,7 @@ The resource module builder has the following capabilities:
 - Generates working sample modules for both ``<network_os>_<resource>`` and ``<network_os>_facts``.
 
 Accessing the resource module builder
-=====================================
+-------------------------------------
 
 To access the resource module builder:
 
@@ -85,7 +108,7 @@ To access the resource module builder:
     pip install -r requirements.txt
 
 Creating a model
-================
+-----------------
 
 You must create a model for your new resource. The resource module builder uses this model to create:
 
@@ -168,12 +191,14 @@ For example, the resource model builder includes the ``myos_interfaces.yml`` sam
 
 Notice that you should include examples for each of the states that the resource supports. The resource module builder also includes these in the sample model.
 
+Share this model as a PR for review at `resource module models repository <https://github.com/ansible-network/resource_module_models>`_.
+
 See `Ansible network resource models  <https://github.com/ansible-network/resource_module_models>`_ for more examples.
 
-Using the resource module builder
-=================================
+Creating a collection scaffold from a resource module
+----------------------------------------------------
 
-To use the resource module builder to create a collection scaffold from your resource model:
+To use the resource module builder to create a collection scaffold from your approved resource model:
 
 .. code-block:: bash
 
@@ -423,16 +448,16 @@ The tests rely on a role generated by the resource module builder. After changes
 
 .. _testing_resource_modules:
 
-Integration test
-================
+Resource module integration tests
+==================================
 
-See the :ref:`network test details <https://github.com/ansible/community/blob/master/group-network/network_test.rst>`_.
+See the `network test details <https://github.com/ansible/community/blob/master/group-network/network_test.rst>`_.
 
 
 Requirements to be met:
 
 
-1. Every state should have a testcase, Apat from testcases for every state, additional testcases should be written to test the behavior of the module when empty config is given (empty_config.yaml)
+1. Every state should have a testcase, Apart from testcases for every state, additional testcases should be written to test the behavior of the module when empty config is given (empty_config.yaml)
 2. Round Trip Testcase should be added. This involves, a merge operation, followed by gather_facts, a merge update with additional config and reverting back to the base config using the previously gathered facts and state as overridden.
 3. Wherever applicable, assertions should check after and before dicts against hard coded Source of Truth.
 
