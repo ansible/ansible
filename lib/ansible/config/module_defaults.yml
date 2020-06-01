@@ -1,5 +1,7 @@
 version: '1.0'
 groupings:
+  aws_acm:
+  - aws
   aws_acm_facts:
   - aws
   aws_acm_info:
@@ -82,6 +84,10 @@ groupings:
   - aws
   aws_ses_rule_set:
   - aws
+  aws_step_functions_state_machine:
+  - aws
+  aws_step_functions_state_machine_execution:
+  - aws
   aws_sgw_facts:
   - aws
   aws_sgw_info:
@@ -99,6 +105,8 @@ groupings:
   aws_waf_web_acl:
   - aws
   cloudformation:
+  - aws
+  cloudformation_exports_info:
   - aws
   cloudformation_facts:
   - aws
@@ -233,6 +241,8 @@ groupings:
   ec2_snapshot_info:
   - aws
   ec2_tag:
+  - aws
+  ec2_tag_info:
   - aws
   ec2_transit_gateway:
   - aws
