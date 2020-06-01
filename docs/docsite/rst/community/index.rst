@@ -70,6 +70,7 @@ If you prefer to read the entire Community Guide, here's a list of the pages in 
    documentation_contributions
    communication
    development_process
+   contributing_maintained_collections
    contributor_license_agreement
    triage_process
    other_tools_and_programs

@@ -85,7 +85,6 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    developing_rebasing
    developing_module_utilities
    developing_collections
-   contributing_maintained_collections
    migrating_roles
    collections_galaxy_meta
    migrating_roles
