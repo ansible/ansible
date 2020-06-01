@@ -1,0 +1,2 @@
+bugfixes:
+  - ansiballz - remove '' and '.' from sys.path to fix a permissions issue on OpenBSD with pipelining (#69320)

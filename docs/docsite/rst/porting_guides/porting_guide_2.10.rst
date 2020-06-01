@@ -138,6 +138,7 @@ Noteworthy module changes
 * The parameter ``message`` in :ref:`grafana_dashboard <grafana_dashboard_module>` module is renamed to ``commit_message`` since ``message`` is used by Ansible Core engine internally.
 * The parameter ``message`` in :ref:`datadog_monitor <datadog_monitor_module>` module is renamed to ``notification_message`` since ``message`` is used by Ansible Core engine internally.
 * The parameter ``message`` in :ref:`bigpanda <bigpanda_module>` module is renamed to ``deployment_message`` since ``message`` is used by Ansible Core engine internally.
+* Ansible no longer looks for Python modules in the current working directory (typically the ``remote_user``'s home directory) when an Ansible module is run. This is to fix becoming an unprivileged user on OpenBSD and to mitigate any attack vector if the current working directory is writable by a malicious user. Install any Python modules needed to run the Ansible modules on the managed node in a system-wide location or in another directory which is in the ``remote_user``'s ``$PYTHONPATH`` and readable by the ``become_user``.
 
 
 Plugins

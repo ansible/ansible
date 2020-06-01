@@ -143,8 +143,10 @@ def _ansiballz_main():
         # OSX raises OSError if using abspath() in a directory we don't have
         # permission to read (realpath calls abspath)
         pass
-    if scriptdir is not None:
-        sys.path = [p for p in sys.path if p != scriptdir]
+
+    # Strip cwd from sys.path to avoid potential permissions issues
+    excludes = set(('', '.', scriptdir))
+    sys.path = [p for p in sys.path if p not in excludes]
 
     import base64
     import runpy
