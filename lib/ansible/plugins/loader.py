@@ -226,7 +226,7 @@ class PluginLoader:
             parts = self.package.split('.')[1:]
             for parent_mod in parts:
                 m = getattr(m, parent_mod)
-            self.package_path = os.path.dirname(m.__file__)
+            self.package_path = to_text(os.path.dirname(m.__file__), errors='surrogate_or_strict')
         if subdirs:
             return self._all_directories(self.package_path)
         return [self.package_path]
@@ -245,12 +245,15 @@ class PluginLoader:
         # look in any configured plugin paths, allow one level deep for subcategories
         if self.config is not None:
             for path in self.config:
-                path = os.path.realpath(os.path.expanduser(path))
+                path = os.path.abspath(os.path.expanduser(path))
                 if subdirs:
                     contents = glob.glob("%s/*" % path) + glob.glob("%s/*/*" % path)
                     for c in contents:
-                        if os.path.isdir(c) and c not in ret:
+                        c = to_text(c, errors='surrogate_or_strict')
+                        if os.path.isdir(to_bytes(c)) and c not in ret:
                             ret.append(c)
+
+                path = to_text(path, errors='surrogate_or_strict')
                 if path not in ret:
                     ret.append(path)
 
