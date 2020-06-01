@@ -29,6 +29,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
 from ansible.utils.collection_loader import resource_from_fqcr
+from ansible.utils.collection_loader._collection_finder import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
@@ -163,6 +164,24 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             use_vars = task_vars
 
+        # handle collection priority
+        coll_list = ['ansible.legacy']
+        names = getattr(self, '_redirected_names', [])
+        if names:
+            current = names[-1]
+            if current in ('normal', 'ansible.builtin.normal', 'ansible.legacy.normal'):
+                coll_list = self._task.collections
+            elif AnsibleCollectionRef.is_valid_fqcr(current):
+
+                    current_collection = AnsibleCollectionRef.from_fqcr(current, 'action').collection
+                    # if self collection is not first, rearrange list to ensure 'self priority'
+                    if not coll_list:
+                        coll_list = [current_collection]
+                    elif coll_list[0] != current_collection:
+                        if current_collection in coll_list:
+                            coll_list.remove(current_collection)
+                        coll_list.insert(0, current_collection)
+
         # Search module path(s) for named module.
         for mod_type in self._connection.module_implementation_preferences:
             # Check to determine if PowerShell modules are supported, and apply
@@ -187,7 +206,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         if key in module_args:
                             module_args[key] = self._connection._shell._unquote(module_args[key])
 
-            result = self._shared_loader_obj.module_loader.find_plugin_with_context(module_name, mod_type, collection_list=self._task.collections)
+            result = self._shared_loader_obj.module_loader.find_plugin_with_context(module_name, mod_type, collection_list=coll_list)
 
             if not result.resolved:
                 if result.redirect_list and len(result.redirect_list) > 1:
@@ -210,12 +229,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if self._connection.become:
             become_kwargs['become'] = True
             become_kwargs['become_method'] = self._connection.become.name
-            become_kwargs['become_user'] = self._connection.become.get_option('become_user',
-                                                                              playcontext=self._play_context)
-            become_kwargs['become_password'] = self._connection.become.get_option('become_pass',
-                                                                                  playcontext=self._play_context)
-            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
-                                                                               playcontext=self._play_context)
+            become_kwargs['become_user'] = self._connection.become.get_option('become_user', playcontext=self._play_context)
+            become_kwargs['become_password'] = self._connection.become.get_option('become_pass', playcontext=self._play_context)
+            become_kwargs['become_flags'] = self._connection.become.get_option('become_flags', playcontext=self._play_context)
 
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
