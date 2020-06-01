@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-doc - return values will be properly formatted (https://github.com/ansible/ansible/pull/69796)."
