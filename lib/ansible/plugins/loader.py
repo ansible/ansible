@@ -50,12 +50,6 @@ try:
 except ImportError:
     import imp
 
-try:
-    ModuleNotFoundError
-except NameError:
-    # this was introduced in Python 3.6
-    ModuleNotFoundError = None
-
 display = Display()
 
 _tombstones = None
@@ -493,7 +487,7 @@ class PluginLoader:
             # FIXME: there must be cheaper/safer way to do this
             try:
                 pkg = import_module(acr.n_python_package_name)
-            except (ImportError, ModuleNotFoundError):
+            except ImportError:
                 return plugin_load_context.nope('Python package {0} not found'.format(acr.n_python_package_name))
 
         pkg_path = os.path.dirname(pkg.__file__)
