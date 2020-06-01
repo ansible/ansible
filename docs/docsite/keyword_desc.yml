@@ -49,7 +49,7 @@ module_defaults: Specifies default parameter values for modules.
 name: "Identifier. Can be used for documentation, in or tasks/handlers."
 no_log: Boolean that controls information disclosure.
 notify: "List of handlers to notify when the task returns a 'changed=True' status."
-order: Controls the sorting of hosts as they are used for executing the play. Possible values are inventory (default), sorted, reverse_sorted, reverse_inventory and shuffle.
+order: Controls the sorting of hosts as they are used for executing the play. Possible values are inventory (default), sorted, reverse_sorted, backward_sorted, backward_reverse_sorted, reverse_inventory and shuffle.
 poll: Sets the polling interval in seconds for async tasks (default 10s).
 port: Used to override the default port used in a connection.
 post_tasks: A list of tasks to execute after the :term:`tasks` section.

@@ -11,12 +11,14 @@ cleanup () {
     done
 }
 
-for EXTRA in '{"inputlist": ["hostB", "hostA", "hostD", "hostC"]}' \
-             '{"myorder": "inventory", "inputlist": ["hostB", "hostA", "hostD", "hostC"]}' \
-             '{"myorder": "sorted", "inputlist": ["hostA", "hostB", "hostC", "hostD"]}'  \
-             '{"myorder": "reverse_sorted", "inputlist": ["hostD", "hostC", "hostB", "hostA"]}' \
-             '{"myorder": "reverse_inventory", "inputlist": ["hostC", "hostD", "hostA", "hostB"]}' \
-             '{"myorder": "shuffle", "inputlist": ["hostC", "hostD", "hostA", "hostB"]}'
+for EXTRA in '{"inputlist": ["host-dc1-02", "host-dc2-01", "host-dc1-01", "host-dc2-02"]}' \
+             '{"myorder": "inventory", "inputlist": ["host-dc1-02", "host-dc2-01", "host-dc1-01", "host-dc2-02"]}' \
+             '{"myorder": "sorted", "inputlist": ["host-dc1-01", "host-dc1-02", "host-dc2-01", "host-dc2-02"]}'  \
+             '{"myorder": "reverse_sorted", "inputlist": ["host-dc2-02", "host-dc2-01", "host-dc1-02", "host-dc1-01"]}' \
+             '{"myorder": "backward_sorted", "inputlist": ["host-dc1-01", "host-dc2-01", "host-dc1-02", "host-dc2-02"]}'  \
+             '{"myorder": "backward_reverse_sorted", "inputlist": ["host-dc2-02", "host-dc1-02", "host-dc2-01", "host-dc1-01"]}' \
+             '{"myorder": "reverse_inventory", "inputlist": ["host-dc2-02", "host-dc1-01", "host-dc2-01", "host-dc1-02"]}' \
+             '{"myorder": "shuffle", "inputlist": ["host-dc2-02", "host-dc1-01", "host-dc2-01", "host-dc1-02"]}'
 do
     cleanup
     ansible-playbook order.yml --forks 1 -i inventory -e "$EXTRA" "$@"

@@ -155,6 +155,10 @@ sorted:
     Sorted alphabetically sorted by name
 reverse_sorted:
     Sorted by name in reverse alphabetical order
+backward_sorted:
+    Sorted by reversed name in alphabetical order
+backward_reverse_sorted:
+    Sorted by reversed name in reverse alphabetical order
 shuffle:
     Randomly ordered on each run
 

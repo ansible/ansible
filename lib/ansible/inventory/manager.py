@@ -400,6 +400,10 @@ class InventoryManager(object):
             # sort hosts list if needed (should only happen when called from strategy)
             if order in ['sorted', 'reverse_sorted']:
                 hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
+            elif order in ['backward_sorted', 'backward_reverse_sorted']:
+                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:],
+                               key=lambda elem: attrgetter('name')(elem)[::-1],
+                               reverse=(order == 'backward_reverse_sorted'))
             elif order == 'reverse_inventory':
                 hosts = self._hosts_patterns_cache[pattern_hash][::-1]
             else:

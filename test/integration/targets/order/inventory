@@ -1,8 +1,8 @@
 [incremental]
-hostB
-hostA
-hostD
-hostC
+host-dc1-02
+host-dc2-01
+host-dc1-01
+host-dc2-02
 
 [incremental:vars]
 ansible_connection=local
