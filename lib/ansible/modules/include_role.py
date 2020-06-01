@@ -94,8 +94,9 @@ EXAMPLES = r'''
 - name: Pass variables to role
   include_role:
     name: myrole
-  vars:
-    rolevar1: value from task
+    apply:
+      vars:
+        rolevar1: value from task
 
 - name: Use role in loop
   include_role:
