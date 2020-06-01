@@ -54,7 +54,8 @@ try:
     ModuleNotFoundError
 except NameError:
     # this was introduced in Python 3.6
-    ModuleNotFoundError = None
+    class ModuleNotFoundError(ImportError):
+        pass
 
 display = Display()
 
