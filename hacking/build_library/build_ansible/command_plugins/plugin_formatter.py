@@ -335,7 +335,7 @@ def jinja2_environment(template_dir, typ, plugin_type):
 
 
 def process_version_added(version_added):
-    if not isinstance(version_added, str):
+    if not isinstance(version_added, string_types):
         return version_added
     if ':' not in version_added:
         return version_added
