@@ -56,10 +56,18 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                         if isinstance(child.value, ast.Dict):
                             data[varkey] = ast.literal_eval(child.value)
                         else:
-                            if theid in ['EXAMPLES', 'RETURN']:
-                                # examples 'can' be yaml, return must be, but even if so, we dont want to parse as such here
+                            if theid == 'EXAMPLES':
+                                # examples 'can' be yaml, but even if so, we dont want to parse as such here
                                 # as it can create undesired 'objects' that don't display well as docs.
                                 data[varkey] = to_text(child.value.s)
+                            if theid == 'RETURN':
+                                # string *should* be yaml as well
+                                try:
+                                    data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
+                                except Exception:  # pylint: disable=broad-except
+                                    # Should not happen, but the old code didn't even try to parse,
+                                    # so we'll better accept it here.
+                                    data[varkey] = to_text(child.value.s)
                             else:
                                 # string should be yaml if already not a dict
                                 data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
