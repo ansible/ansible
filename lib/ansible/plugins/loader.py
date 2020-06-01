@@ -152,7 +152,7 @@ class PluginLoadContext(object):
             warning_text_res = '{0} has been deprecated and will be removed in version {1} of {2}'.format(
                 name, removal_version, collection_name)
         else:
-            warning_text_res = '{0} has been deprecated and will be removed in a future release of {2}'.format(
+            warning_text_res = '{0} has been deprecated and will be removed in a future release of {1}'.format(
                 name, collection_name)
         if warning_text:
             warning_text_res = '{0}. {1}'.format(warning_text_res, warning_text)
