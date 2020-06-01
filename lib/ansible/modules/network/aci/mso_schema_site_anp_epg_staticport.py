@@ -58,6 +58,15 @@ options:
     description:
     - The leaf of the static port.
     type: str
+  fex_port:
+    description:
+    - The path of the static port exists on a connected fex.
+    type: str
+    choices: [true, false]
+    default: false
+  fex:
+    description:
+    - The fex of the static port.
   path:
     description:
     - The path of the static port.
@@ -115,6 +124,27 @@ EXAMPLES = r'''
     path: eth1/1
     vlan: 126
     deployment_immediacy: immediate
+    state: present
+  delegate_to: localhost
+
+- name: Add a new static fex port to a site EPG
+  mso_schema_site_anp_epg_staticport:
+    host: mso_host
+    username: admin
+    password: SomeSecretPassword
+    schema: Schema1
+    site: Site1
+    template: Template1
+    anp: ANP1
+    epg: EPG1
+    type: port
+    pod: pod-1
+    leaf: 101
+    fex_port: true
+    fex: 151
+    path: eth1/1
+    vlan: 126
+    deployment_immediacy: lazy
     state: present
   delegate_to: localhost
 
@@ -185,6 +215,8 @@ def main():
         type=dict(type='str', default='port', choices=['port']),
         pod=dict(type='str'),  # This parameter is not required for querying all objects
         leaf=dict(type='str'),  # This parameter is not required for querying all objects
+        fex_port=dict(type='str', default='false', choices=['true', 'false']),   # This parameter is not required for querying all objects
+        fex=dict(type='str'),    # This parameter is not required for querying all objects
         path=dict(type='str'),  # This parameter is not required for querying all objects
         vlan=dict(type='int'),  # This parameter is not required for querying all objects
         deployment_immediacy=dict(type='str', choices=['immediate', 'lazy']),
@@ -198,6 +230,7 @@ def main():
         required_if=[
             ['state', 'absent', ['type', 'pod', 'leaf', 'path', 'vlan']],
             ['state', 'present', ['type', 'pod', 'leaf', 'path', 'vlan']],
+            ['fex_port', 'true', ['type', 'pod', 'leaf', 'fex', 'path', 'vlan']],
         ],
     )
 
@@ -209,13 +242,18 @@ def main():
     path_type = module.params['type']
     pod = module.params['pod']
     leaf = module.params['leaf']
+    fex_port = module.params['fex_port']
+    fex = module.params['fex']
     path = module.params['path']
     vlan = module.params['vlan']
     deployment_immediacy = module.params['deployment_immediacy']
     mode = module.params['mode']
     state = module.params['state']
 
-    if path_type == 'port':
+    if path_type == 'port' and fex_port == 'true':
+        # Select port path for fex if fex_port is true
+        portpath = 'topology/{0}/paths-{1}/extpaths-{2}/pathep-[{3}]'.format(pod, leaf, fex, path)
+    else:
         portpath = 'topology/{0}/paths-{1}/pathep-[{2}]'.format(pod, leaf, path)
 
     mso = MSOModule(module)
