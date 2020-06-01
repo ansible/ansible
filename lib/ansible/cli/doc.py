@@ -517,7 +517,7 @@ class DocCLI(CLI):
                                                    Dumper=AnsibleDumper).split('\n')]))
 
     @staticmethod
-    def add_fields(text, fields, limit, opt_indent, base_indent=''):
+    def add_fields(text, fields, limit, opt_indent, return_values=False, base_indent=''):
 
         for o in sorted(fields):
             opt = fields[o]
@@ -554,8 +554,9 @@ class DocCLI(CLI):
                     choices = "(Choices: " + ", ".join(to_text(i) for i in opt['choices']) + ")"
                 del opt['choices']
             default = ''
-            if 'default' in opt or not required:
-                default = "[Default: %s" % to_text(opt.pop('default', '(null)')) + "]"
+            if not return_values:
+                if 'default' in opt or not required:
+                    default = "[Default: %s" % to_text(opt.pop('default', '(null)')) + "]"
 
             text.append(textwrap.fill(DocCLI.tty_ify(aliases + choices + default), limit,
                                       initial_indent=opt_indent, subsequent_indent=opt_indent))
@@ -705,6 +706,6 @@ class DocCLI(CLI):
             if isinstance(doc['returndocs'], string_types):
                 text.append(doc.pop('returndocs'))
             else:
-                DocCLI.add_fields(text, doc.pop('returndocs'), limit, opt_indent)
+                DocCLI.add_fields(text, doc.pop('returndocs'), limit, opt_indent, return_values=True)
 
         return "\n".join(text)
