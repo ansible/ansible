@@ -536,6 +536,7 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
                     doc['returndocs'] = None
             else:
                 # They have already been parsed: simply process them
+                doc['returndocs'] = module_map[module]['returndocs']
                 process_returndocs(doc['returndocs'])
         else:
             doc['returndocs'] = None
