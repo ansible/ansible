@@ -237,10 +237,11 @@ class DocCLI(CLI):
             if do_json:
                 # Some changes to how json docs are formatted
                 for plugin, doc_data in plugin_docs.items():
-                    try:
-                        doc_data['return'] = yaml.safe_load(doc_data['return'])
-                    except Exception:
-                        pass
+                    if isinstance(doc_data['return'], string_types):
+                        try:
+                            doc_data['return'] = yaml.safe_load(doc_data['return'])
+                        except Exception:
+                            pass
 
                 jdump(plugin_docs)
 
