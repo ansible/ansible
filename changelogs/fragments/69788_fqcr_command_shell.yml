@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "Use fqcr from command module invocation using shell module. Fixes https://github.com/ansible/ansible/issues/69788"
