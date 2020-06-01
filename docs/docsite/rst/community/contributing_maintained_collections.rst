@@ -76,7 +76,7 @@ The following table shows:
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/ansible/netcommon">ansible.netcommon**</a></td>
-      <td><a href="https://galaxy.ansible.com/community/netcommon">community.netcommon</a></td>
+      <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
       <td>✓</td>
       <td>✓</td>
@@ -108,8 +108,8 @@ The following table shows:
       <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/developing_modules_general_windows.html#developing-modules-general-windows">Windows guide</a></td>
     </tr>
     <tr>
-      <td><a href="https://galaxy.ansible.com/ansible/eos">ansible.eos</a></td>
-      <td><a href="https://galaxy.ansible.com/community/eos">community.eos</a></td>
+      <td><a href="https://galaxy.ansible.com/arista/eos">arista.eos</a></td>
+      <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
       <td>✓</td>
       <td>✓</td>
@@ -120,8 +120,8 @@ The following table shows:
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/cisco/asa">cisco.asa</a></td>
-      <td><a href="https://galaxy.ansible.com/community/asa">community.asa</a></td>
-      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>community.asa</td>
+      <td><a href="https://github.com/ansible/community/wiki/Security-Automation">Security</a></td>
       <td>✓</td>
       <td>✓</td>
       <td>✓</td>
@@ -164,8 +164,8 @@ The following table shows:
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/ibm/qradar">ibm.qradar</a></td>
-      <td><a href="https://galaxy.ansible.com/community/qradar">community.qradar</a></td>
-      <td><a href="https://github.com/ansible/community/wiki/Security">Security</a></td>
+      <td>community.qradar</td>
+      <td><a href="https://github.com/ansible/community/wiki/Security-Automation">Security</a></td>
       <td>✓</td>
       <td></td>
       <td>✓</td>
@@ -197,8 +197,8 @@ The following table shows:
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/splunk/enterprise_security">splunk.enterprise_security</a></td>
-      <td><a href="https://galaxy.ansible.com/community/enterprise_security">community.enterprise_security</a></td>
-      <td><a href="https://github.com/ansible/community/wiki/Security">Security</a></td>
+      <td>community.enterprise_security</td>
+      <td><a href="https://github.com/ansible/community/wiki/Security-Automation">Security</a></td>
       <td>✓</td>
       <td></td>
       <td>✓</td>
