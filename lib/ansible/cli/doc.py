@@ -21,7 +21,7 @@ from ansible.cli.arguments import option_helpers as opt_help
 from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
-from ansible.module_utils.common._collections_compat import Container, Sequence
+from ansible.module_utils.common._collections_compat import Container, MutableMapping, Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import string_types
 from ansible.parsing.plugin_docs import read_docstub
@@ -346,6 +346,8 @@ class DocCLI(CLI):
         # TODO: do we really want this?
         # add_collection_to_versions_and_dates(doc, '(unknown)', is_module=(plugin_type == 'module'))
         # remove_current_collection_from_versions_and_dates(doc, collection_name, is_module=(plugin_type == 'module'))
+        # remove_current_collection_from_versions_and_dates(
+        #     returndocs, collection_name, is_module=(plugin_type == 'module'), return_docs=True)
 
         # assign from other sections
         doc['plainexamples'] = plainexamples

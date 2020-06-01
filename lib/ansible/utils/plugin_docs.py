@@ -210,6 +210,11 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False,
         # add fragments to documentation
         add_fragments(data['doc'], filename, fragment_loader=fragment_loader, is_module=is_module)
 
+    if isinstance(data.get('returndocs'), MutableMapping):
+        # tag version_added
+        if collection_name is not None:
+            add_collection_to_versions_and_dates(data['returndocs'], collection_name, is_module=is_module, return_docs=True)
+
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
 
 
