@@ -35,7 +35,7 @@ author:
 '''
 
 EXAMPLES = '''
-- name: populate service facts
+- name: Populate service facts
   service_facts:
 
 - debug:
@@ -218,7 +218,11 @@ class SystemctlScanService(BaseService):
             except IndexError:
                 self.module.fail_json(msg="Malformed output discovered from systemd list-unit-files: {0}".format(line))
             if service_name not in services:
-                services[service_name] = {"name": service_name, "state": "unknown", "status": status_val, "source": "systemd"}
+                rc, stdout, stderr = self.module.run_command("%s show %s --property=ActiveState" % (systemctl_path, service_name), use_unsafe_shell=True)
+                state = 'unknown'
+                if not rc and stdout != '':
+                    state = stdout.replace('ActiveState=', '').rstrip()
+                services[service_name] = {"name": service_name, "state": state, "status": status_val, "source": "systemd"}
             else:
                 services[service_name]["status"] = status_val
         return services
