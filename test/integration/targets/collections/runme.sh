@@ -76,14 +76,22 @@ echo "--- validating inventory"
 # test collection inventories
 ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
 
-# run playbook from collection, test default again, but with FQCN
-ansible-playbook -i "${INVENTORY_PATH}" testns.testcoll.default_collection_playbook.yml "$@"
+if [[ ${INVENTORY_PATH} != *.winrm ]]; then
+	# base invocation tests
+	ansible-playbook -i "${INVENTORY_PATH}" -v invocation_tests.yml "$@"
 
-# run playbook from collection, test default again, but with FQCN and no extension
-ansible-playbook -i "${INVENTORY_PATH}" testns.testcoll.default_collection_playbook "$@"
+	# run playbook from collection, test default again, but with FQCN
+	ansible-playbook -i "${INVENTORY_PATH}" testns.testcoll.default_collection_playbook.yml "$@"
 
-# run playbook taht imports from collection
-ansible-playbook -i "${INVENTORY_PATH}" import_collection_pb.yml "$@"
+	# run playbook from collection, test default again, but with FQCN and no extension
+	ansible-playbook -i "${INVENTORY_PATH}" testns.testcoll.default_collection_playbook "$@"
+
+	# run playbook that imports from collection
+	ansible-playbook -i "${INVENTORY_PATH}" import_collection_pb.yml "$@"
+fi
+
+# test collection inventories
+ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
 
 # test adjacent with --playbook-dir
 export ANSIBLE_COLLECTIONS_PATH=''
