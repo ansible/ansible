@@ -34,7 +34,7 @@
 
     - import_tasks: get_boot_time.yml
 
-    - name: Reboot with all options
+    - name: Reboot with all options except reboot_command
       reboot:
         connect_timeout: 30
         search_paths: /usr/local/bin
@@ -43,6 +43,33 @@
         pre_reboot_delay: 61
         test_command: uptime
         reboot_timeout: 500
+      register: reboot_result
+
+    - import_tasks: check_reboot.yml
+
+    - import_tasks: get_boot_time.yml
+
+    - name: Reboot with custom reboot_command relative path
+      reboot:
+        reboot_command: reboot
+      register: reboot_result
+
+    - import_tasks: check_reboot.yml
+
+    - import_tasks: get_boot_time.yml
+
+    - name: Reboot with custom reboot_command absolute path
+      reboot:
+        reboot_command: /sbin/reboot
+      register: reboot_result
+
+    - import_tasks: check_reboot.yml
+
+    - import_tasks: get_boot_time.yml
+
+    - name: Reboot with custom reboot_command with parameters
+      reboot:
+        reboot_command: shutdown -r now
       register: reboot_result
 
     - import_tasks: check_reboot.yml

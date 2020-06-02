@@ -70,6 +70,16 @@ options:
     type: str
     default: 'cat /proc/sys/kernel/random/boot_id'
     version_added: '2.10'
+
+  reboot_command:
+    description:
+      - Command to run that reboots the system, including any parameters passed to the command.
+      - Can be an absolute path to the command or just the command name. If an absolute path to the
+        command is not given, C(search_paths) on the target system will be searched to find the absolute path.
+      - This will cause C(pre_reboot_delay), C(post_reboot_delay), and C(msg) to be ignored.
+    type: str
+    default: '[determined based on target OS]'
+    version_added: '2.11'
 seealso:
 - module: ansible.windows.win_reboot
 author:
@@ -89,6 +99,12 @@ EXAMPLES = r'''
   reboot:
     search_paths:
      - '/lib/molly-guard'
+
+- name: Reboot machine using a custom reboot command
+  reboot:
+    reboot_command: launchctl reboot userspace
+    boot_time_command: uptime | cut -d ' ' -f 5
+
 '''
 
 RETURN = r'''
