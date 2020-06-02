@@ -1,2 +1,0 @@
-bugfixes:
-- mysql - dont mask ``mysql_connect`` function errors from modules (https://github.com/ansible/ansible/issues/64560).
