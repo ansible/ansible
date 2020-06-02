@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# (c) 2017, Ansible Project
+# Copyright: (c) 2017, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # originally copied from AWX's scan_services module to bring this functionality
@@ -13,7 +13,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'core'}
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: service_facts
 short_description: Return service state information as fact data
@@ -34,7 +34,7 @@ author:
   - Adam Miller (@maxamillion)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Populate service facts
   service_facts:
 
@@ -43,7 +43,7 @@ EXAMPLES = '''
 
 '''
 
-RETURN = '''
+RETURN = r'''
 ansible_facts:
   description: Facts to add to ansible_facts about the services on the system
   returned: always
@@ -55,17 +55,23 @@ ansible_facts:
       type: complex
       contains:
         source:
-          description: Init system of the service. One of C(systemd), C(sysv), C(upstart).
+          description:
+          - Init system of the service.
+          - One of C(systemd), C(sysv), C(upstart).
           returned: always
           type: str
           sample: sysv
         state:
-          description: State of the service. Either C(running), C(stopped), or C(unknown).
+          description:
+          - State of the service.
+          - Either C(running), C(stopped), or C(unknown).
           returned: always
           type: str
           sample: running
         status:
-          description: State of the service. Either C(enabled), C(disabled), or C(unknown).
+          description:
+          - State of the service.
+          - Either C(enabled), C(disabled), C(static), C(indirect) or C(unknown).
           returned: systemd systems or RedHat/SUSE flavored sysvinit/upstart
           type: str
           sample: enabled
