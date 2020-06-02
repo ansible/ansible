@@ -1,5 +1,37 @@
 # Copyright (c) 2020 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+action_groups_redirection:
+  aws:
+    redirect:
+      - amazon.aws.aws
+      - community.aws.aws
+  azure:
+    redirect:
+      - azure.azcollection.azure
+  acme:
+    redirect:
+      - community.crypto.acme
+  docker:
+    redirect:
+      - community.general.docker
+  k8s:
+    redirect:
+      - community.kubernetes.k8s
+  vmware:
+    redirect:
+      - community.vmware.vmware
+  gcp:
+    redirect:
+      - google.cloud.gcp
+  os:
+    redirect:
+      - openstack.cloud.os
+  ovirt:
+    redirect:
+      - ovirt.ovirt.ovirt
+  cpm:
+    redirect:
+      - wti.remote.cpm
 plugin_routing:
   connection:
     # test entry

@@ -37,6 +37,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
+from ansible.module_utils.six import string_types
 from ansible.plugins.loader import module_utils_loader
 from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 
@@ -1341,23 +1342,18 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
 
             collection_name = collection_ref.collection
             resource = collection_ref.resource
+            collection_routing = _get_collection_metadata(collection_name).get('action_groups', {})
 
-            collection_routing = _get_collection_metadata(collection_name)
-            collection_groups = collection_routing.get('action_groups', {})
-            redirect_action_groups = collection_routing.get('action_groups_redirection', {})
-
-            action_groups = collection_groups.get(resolved_name, collection_groups.get(action, collection_groups.get(resource, [])))
-            for group in action_groups:
+            my_action_groups = []
+            for group in collection_routing.get(resolved_name, collection_routing.get(resource, [])):
                 if AnsibleCollectionRef.is_valid_fqcr(group):
                     fqcr = group
                 else:
                     fqcr = '%s.%s' % (collection_name, group)
+                my_action_groups.append(fqcr)
 
-                tmp_args.update((module_defaults.get('group/{0}'.format(fqcr)) or {}).copy())
-
-                redirected_group = redirect_action_groups.get(fqcr, redirect_action_groups.get(group, {})).get('redirect')
-                if redirected_group:
-                    tmp_args.update((module_defaults.get('group/{0}'.format(redirected_group), {})))
+            for group in my_action_groups:
+                tmp_args.update((module_defaults.get('group/{0}'.format(group)) or {}).copy())
 
         # handle specific action defaults
         # Original, resolved FQCN of original if it was just a resource, and any redirects (including the resolved name)

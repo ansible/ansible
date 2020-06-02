@@ -273,8 +273,8 @@ The ``runtime.yml`` file supports the top level keys:
   .. code:: yaml
 
      action_groups_redirection:
-       group_name:
-         redirect: common_group
+       original_group_name:
+         redirect: namespace.collection.new_group_name
 
   For example, if a collection ``original_namespace.original_collection`` defines an action group ``original_group_name`` for a set of modules which are being moved to ``new_namespace.new_collection``, the new collection should also define an action group for the modules:
 

@@ -51,7 +51,7 @@
   - name: test module_defaults with redirected actions groups
 
     module_defaults:
-      group/redirected:
+      group/collection_namespace.collection_name.redirected_group:
         option: value
 
     block:

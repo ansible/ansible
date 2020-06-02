@@ -21,6 +21,7 @@ from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, Ansible
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.parsing.dataloader import DataLoader
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 from ansible.utils.vars import combine_vars, isidentifier, get_unique_id
@@ -272,6 +273,42 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if key not in valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
 
+    def _get_resolved_group_names(self, group, redirected, index=None):
+        if not index:
+            index = group
+
+        if index not in redirected:
+            redirected[index] = []
+
+        if AnsibleCollectionRef.is_valid_fqcr(group):
+            collection_name = '%s.%s' % (group.split('.')[0], group.split('.')[1])
+            resource = group.split('.')[-1]
+            try:
+                collection_routing = _get_collection_metadata(collection_name).get('action_groups_redirection', {})
+            except ValueError as e:
+                # Handle errors gracefully since module_defaults weren't previously validated
+                display.warning("Unable to resolve matching redirected groups for '%s': %s" % (group, e))
+                collection_routing = {}
+        else:
+            resource = group
+            collection_routing = _get_collection_metadata('ansible.builtin').get('action_groups_redirection', {})
+
+        redirected_groups = collection_routing.get(group, collection_routing.get(resource, {})).get('redirect', [])
+        if redirected_groups:
+            if isinstance(redirected_groups, string_types):
+                redirected_groups = [redirected_groups]
+            elif not isinstance(redirected_groups, list):
+                display.warning(
+                    "Bad format in the collection's runtime.ym. Expected a list for action_groups_redirection, but got type '%s': %s." % (
+                        type(redirected_groups), redirected_groups
+                    )
+                )
+                redirected_groups = []
+            for group_name in redirected_groups:
+                if group_name not in redirected[index]:
+                    redirected[index].append(group_name)
+                    self._get_resolved_group_names(group_name, redirected, index)
+
     def _validate_module_defaults(self, attr, name, value):
         if hasattr(self, 'collections') and self.collections:
             namespace = self.collections[0] + '.'
@@ -287,11 +324,16 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
 
         module_defaults = {}
         action_groups = {}
+        redirected_groups = {}
 
         for module_default in value:
             temp_module_default = {}
             for action in module_default:
                 if action.startswith('group/'):
+                    group_name = action.split('group/')[-1]
+                    self._get_resolved_group_names(group_name, redirected_groups)
+                    for matching_group in redirected_groups[group_name]:
+                        temp_module_default['group/%s' % matching_group] = module_default[action]
                     temp_module_default[action] = module_default[action]
                     continue
 
