@@ -17,6 +17,16 @@ current_out="$(ansible-doc --playbook-dir ./ test_docs_suboptions)"
 expected_out="$(cat test_docs_suboptions.output)"
 test "$current_out" == "$expected_out"
 
+# test module with return values
+current_out="$(ansible-doc --playbook-dir ./ test_docs_returns)"
+expected_out="$(cat test_docs_returns.output)"
+test "$current_out" == "$expected_out"
+
+# test module with broken return values (YAML parsing fails)
+current_out="$(ansible-doc --playbook-dir ./ test_docs_returns_broken)"
+expected_out="$(cat test_docs_returns_broken.output)"
+test "$current_out" == "$expected_out"
+
 # test listing diff plugin types from collection
 for ptype in cache inventory lookup vars
 do

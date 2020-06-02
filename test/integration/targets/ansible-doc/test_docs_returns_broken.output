@@ -1,0 +1,25 @@
+> TEST_DOCS    (/home/felix/projects/code/github-cloned/ansible/test/integration/targets/ansible-doc/library/test_docs_returns_broken.py)
+
+        Test module
+
+  * This module is maintained by The Ansible Core Team
+AUTHOR: Ansible Core Team
+        METADATA:
+          status:
+          - stableinterface
+          supported_by: core
+        
+
+EXAMPLES:
+
+
+
+
+RETURN VALUES:
+
+test:
+    description: A test return value.
+   type: str
+
+broken_key: [
+
