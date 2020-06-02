@@ -210,61 +210,7 @@ privileges.
 Network Tests
 =============
 
-Starting with Ansible 2.4, all network modules MUST include unit tests that cover all functionality. You must add unit tests for each new network module and for each added feature. Please submit the unit tests and the code in a single PR. Integration tests are also strongly encouraged.
-
-Writing network integration tests
----------------------------------
-
-For guidance on writing network test see the `adding tests for Network modules guide <https://github.com/ansible/community/blob/master/group-network/network_test.rst>`_.
-
-
-Running network integration tests locally
------------------------------------------
-
-Ansible uses Shippable to run an integration test suite on every PR, including new tests introduced by that PR. To find and fix problems in network modules, run the network integration test locally before you submit a PR.
-
-To run the network integration tests, use a command in the form::
-
-    ansible-test network-integration --inventory /path/to/inventory tests_to_run
-
-First, define a network inventory file::
-
-    cd test/integration
-    cp inventory.network.template inventory.networking
-    ${EDITOR:-vi} inventory.networking
-    # Add in machines for the platform(s) you wish to test
-
-To run all Network tests for a particular platform::
-
-    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_.*
-
-This example will run against all vyos modules. Note that ``vyos_.*`` is a regex match, not a bash wildcard - include the `.` if you modify this example.
-
-
-To run integration tests for a specific module::
-
-    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_vlan
-
-To run a single test case on a specific module::
-
-    # Only run vyos_vlan/tests/cli/basic.yaml
-    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_vlan --testcase basic
-
-To run integration tests for a specific transport::
-
-    # Only run nxapi test
-    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking  --tags="nxapi" nxos_.*
-
-    # Skip any cli tests
-    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking  --skip-tags="cli" nxos_.*
-
-See `test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible/ansible/blob/devel/test/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests.
-
-For more options::
-
-    ansible-test network-integration --help
-
-If you need additional help or feedback, reach out in ``#ansible-network`` on Freenode.
+For guidance on writing network test see :ref:`testing_resource_modules`.
 
 
 Where to find out more
