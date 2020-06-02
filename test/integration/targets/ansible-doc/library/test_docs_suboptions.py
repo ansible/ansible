@@ -29,7 +29,7 @@ options:
                     a_suboption:
                         description: A sub-suboption.
                         type: str
-            a_first: 
+            a_first:
                 description: The first suboption.
                 type: str
 '''
