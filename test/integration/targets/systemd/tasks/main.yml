@@ -47,4 +47,29 @@
               - 'not systemd_test0.changed'
               - 'systemd_test0.state == "started"'
 
+    - name: the module must fail when a service is not found
+      systemd:
+          name: '{{ fake_service }}'
+          state: stopped
+      register: result
+      ignore_errors: yes
+
+    - assert:
+          that:
+              - result is failed
+              - result is search("Could not find the requested service {{ fake_service }}")
+
+    - name: the module must fail in check_mode as well when a service is not found
+      systemd:
+          name: '{{ fake_service }}'
+          state: stopped
+      register: result
+      check_mode: yes
+      ignore_errors: yes
+
+    - assert:
+          that:
+              - result is failed
+              - result is search("Could not find the requested service {{ fake_service }}")
+
   when: 'systemctl_check.rc == 0'
