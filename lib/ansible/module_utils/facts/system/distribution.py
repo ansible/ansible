@@ -71,6 +71,7 @@ class DistributionFiles:
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
+        {'path': '/etc/flatcar/update.conf', 'name': 'Flatcar'},
         {'path': '/etc/os-release', 'name': 'NA'},
     )
 
@@ -402,6 +403,21 @@ class DistributionFiles:
 
         return True, coreos_facts
 
+    def parse_distribution_file_Flatcar(self, name, data, path, collected_facts):
+        flatcar_facts = {}
+        distro = get_distribution()
+
+        if distro.lower() == 'flatcar':
+            if not data:
+                return False, flatcar_facts
+            release = re.search("^GROUP=(.*)", data)
+            if release:
+                flatcar_facts['distribution_release'] = release.group(1).strip('"')
+        else:
+            return False, flatcar_facts
+
+        return True, flatcar_facts
+
     def parse_distribution_file_ClearLinux(self, name, data, path, collected_facts):
         clear_facts = {}
         if "clearlinux" not in name.lower():
@@ -453,6 +469,7 @@ class Distribution(object):
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
+        {'path': '/etc/flatcar/update.conf', 'name': 'Flatcar'},
         {'path': '/etc/os-release', 'name': 'NA'},
     )
 

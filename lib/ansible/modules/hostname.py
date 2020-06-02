@@ -677,6 +677,12 @@ class CoreosHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class FlatcarHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Flatcar'
+    strategy_class = SystemdStrategy
+
+
 class ScientificHostname(Hostname):
     platform = 'Linux'
     distribution = 'Scientific'
