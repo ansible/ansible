@@ -1,2 +1,0 @@
-minor_changes:
-- "win_firewall_rule - add parameter to support ICMP Types and Codes (https://github.com/ansible/ansible/issues/46809)"
