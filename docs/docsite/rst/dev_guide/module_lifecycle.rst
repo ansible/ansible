@@ -28,6 +28,7 @@ To deprecate a module, you must:
 5. Add ``deprecated:`` to the documentation with the following sub-values:
 
   :removed_in: A ``string``, such as ``"2.9"``; the version of Ansible where the module will be replaced with a docs-only module stub. Usually current release +4.
+  :removed_at_date: - An optional replacement for ``:removed_in:`` for collections. An ISO 8601 formatted date, usually 2 years from the date the module is marked as deprecated.
   :why: Optional string that used to detail why this has been removed.
   :alternative: Inform users they should do instead, i.e. ``Use M(whatmoduletouseinstead) instead.``.
 
