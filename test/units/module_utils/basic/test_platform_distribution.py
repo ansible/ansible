@@ -70,6 +70,9 @@ class TestGetDistribution:
         with patch('ansible.module_utils.distro.id', return_value="debian"):
             assert get_distribution() == "Debian"
 
+        with patch('ansible.module_utils.distro.id', return_value="flatcar"):
+            assert get_distribution() == "Flatcar"
+
         with patch('ansible.module_utils.distro.id', return_value="linuxmint"):
             assert get_distribution() == "Linuxmint"
 
