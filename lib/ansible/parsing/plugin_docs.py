@@ -64,7 +64,8 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                                 # string *should* be yaml as well
                                 try:
                                     data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
-                                except Exception:  # pylint: disable=broad-except
+                                except Exception as exc:  # pylint: disable=broad-except
+                                    display.warning("Failed to parse RETURN as YAML for %s: %s" % (filename, exc))
                                     # Should not happen, but the old code didn't even try to parse,
                                     # so we'll better accept it here.
                                     data[varkey] = to_text(child.value.s)
