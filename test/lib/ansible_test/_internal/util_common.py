@@ -150,18 +150,20 @@ def get_parameterized_completion(cache, name):
     :rtype: dict[str, dict[str, str]]
     """
     if not cache:
+        if data_context().content.collection:
+            context = 'collection'
+        else:
+            context = 'ansible-base'
+
         images = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', '%s.txt' % name), remove_blank_lines=True)
 
-        cache.update(dict(kvp for kvp in [parse_parameterized_completion(i) for i in images] if kvp))
+        cache.update(dict(kvp for kvp in [parse_parameterized_completion(i) for i in images] if kvp and kvp[1].get('context', context) == context))
 
     return cache
 
 
-def parse_parameterized_completion(value):
-    """
-    :type value: str
-    :rtype: tuple[str, dict[str, str]]
-    """
+def parse_parameterized_completion(value):  # type: (str) -> t.Optional[t.Tuple[str, t.Dict[str, str]]]
+    """Parse the given completion entry, returning the entry name and a dictionary of key/value settings."""
     values = value.split()
 
     if not values:
