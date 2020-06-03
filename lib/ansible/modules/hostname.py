@@ -641,6 +641,12 @@ class ManjaroHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class ManjaroARMHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Manjaro-arm'
+    strategy_class = SystemdStrategy
+
+
 class RHELHostname(Hostname):
     platform = 'Linux'
     distribution = 'Redhat'
