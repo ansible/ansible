@@ -156,7 +156,17 @@ def run_module():
 
     resource = resource_dict[module.params['resource']](api_client)
 
-    result[module.params['resource']] = resource.get_all()
+    all_resources = resource.get_all()
+
+    if module.params['resource'] == 'migration_zone':
+        for resource in all_resources:
+            if 'applications' in resource:
+                applicationResource = tacp_utils.ApplicationResource(api_client)
+                for application in resource['applications']:
+                    application['name'] = applicationResource.get_by_uuid(application['uuid'])['name']
+
+    result[module.params['resource']] = all_resources
+    
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results
