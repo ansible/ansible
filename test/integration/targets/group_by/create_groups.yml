@@ -20,6 +20,14 @@
 
 - name: group by genus
   group_by: key={{ genus }}
+  register: grouped_by_genus
+
+- debug: var=grouped_by_genus
+
+- name: ensure we reflect 'changed' on change
+  assert:
+    that:
+      - grouped_by_genus is changed
 
 - name: group by first three letters of genus with key in quotes
   group_by: key="{{ genus[:3] }}"
