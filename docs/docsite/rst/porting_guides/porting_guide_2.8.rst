@@ -68,6 +68,8 @@ Command line facts
 
 ``cmdline`` facts returned in system will be deprecated in favor of ``proc_cmdline``. This change handles special case where Kernel command line parameter contains multiple values with the same key.
 
+.. _bare_variables_in_conditionals:
+
 Bare variables in conditionals
 ------------------------------
 

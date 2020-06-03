@@ -28,7 +28,7 @@ Playbook
 * A new fact, ``ansible_processor_nproc`` reflects the number of vcpus
   available to processes (falls back to the number of vcpus available to
   the scheduler).
-
+* ``conditional_bare_variables`` now defaults to ``false`` (so that ``when: result`` will always default to ``true`` if ``result`` is a non-empty string, even if that string is ``false``). See the :ref:`2.8 porting guide note <bare_variables_in_conditionals>` for more details.
 
 Command Line
 ============
