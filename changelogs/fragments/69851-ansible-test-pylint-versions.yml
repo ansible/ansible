@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-test pylint sanity test - do not crash when ``version`` specified to ``AnsibleModule.deprecate()`` or ``Display.deprecated()`` contains string components, f.ex. tagged version numbers for Ansible 2.10."
