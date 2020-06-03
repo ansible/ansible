@@ -528,16 +528,6 @@ class StrategyBase:
                     self._tqm.send_callback('v2_runner_item_on_ok', task_result)
                 continue
 
-            if original_task.register:
-                host_list = self.get_task_hosts(iterator, original_host, original_task)
-
-                clean_copy = strip_internal_keys(module_response_deepcopy(task_result._result))
-                if 'invocation' in clean_copy:
-                    del clean_copy['invocation']
-
-                for target_host in host_list:
-                    self._variable_manager.set_nonpersistent_facts(target_host, {original_task.register: clean_copy})
-
             # all host status messages contain 2 entries: (msg, task_result)
             role_ran = False
             if task_result.is_failed():
@@ -714,6 +704,17 @@ class StrategyBase:
                 # finally, send the ok for this task
                 self._tqm.send_callback('v2_runner_on_ok', task_result)
 
+            # register final results
+            if original_task.register:
+                host_list = self.get_task_hosts(iterator, original_host, original_task)
+
+                clean_copy = strip_internal_keys(module_response_deepcopy(task_result._result))
+                if 'invocation' in clean_copy:
+                    del clean_copy['invocation']
+
+                for target_host in host_list:
+                    self._variable_manager.set_nonpersistent_facts(target_host, {original_task.register: clean_copy})
+
             if do_handlers:
                 self._pending_handler_results -= 1
             else:
@@ -864,7 +865,6 @@ class StrategyBase:
             self._inventory.reconcile_inventory()
 
         result_item['changed'] = changed
-        return changed
 
     def _copy_included_file(self, included_file):
         '''
