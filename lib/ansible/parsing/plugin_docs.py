@@ -64,7 +64,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                                 # string should be yaml if already not a dict
                                 data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
 
-                        display.debug('assigned :%s' % varkey)
+                        display.debug('assigned: %s' % varkey)
 
     except Exception:
         if verbose:
