@@ -355,13 +355,9 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
 
     Return (tempfile, info about the request)
     """
-    if module.check_mode:
-        method = 'HEAD'
-    else:
-        method = 'GET'
 
     start = datetime.datetime.utcnow()
-    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers, method=method)
+    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers)
     elapsed = (datetime.datetime.utcnow() - start).seconds
 
     if info['status'] == 304:
