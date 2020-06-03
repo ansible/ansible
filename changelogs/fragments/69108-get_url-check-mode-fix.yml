@@ -1,0 +1,2 @@
+minor_changes:
+  - get_url - perform GET request (instead of HEAD) and compare file checksums when using check mode
