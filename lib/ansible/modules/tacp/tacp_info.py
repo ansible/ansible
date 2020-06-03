@@ -164,7 +164,19 @@ def run_module():
                 applicationResource = tacp_utils.ApplicationResource(api_client)
                 for application in resource['applications']:
                     application['name'] = applicationResource.get_by_uuid(application['uuid'])['name']
-
+            if 'allocations' in resource:
+                if 'categories' in resource['allocations']:
+                    categoryResource = tacp_utils.CategoryResource(
+                        api_client)
+                    for category in resource['allocations']['categories']:
+                        category['name'] = categoryResource.get_by_uuid(category['category_uuid'])[
+                        'name']
+                if 'datacenters' in resource['allocations']:
+                    datacenterResource = tacp_utils.DatacenterResource(
+                        api_client)
+                    for datacenter in resource['allocations']['datacenters']:
+                        datacenter['name'] = datacenterResource.get_by_uuid(datacenter['datacenter_uuid'])[
+                            'name']
     result[module.params['resource']] = all_resources
     
 
