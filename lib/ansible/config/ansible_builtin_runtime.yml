@@ -2160,6 +2160,10 @@ plugin_routing:
       redirect: community.network.exos_lldp_interfaces
     exos_vlans:
       redirect: community.network.exos_vlans
+    bigip_asm_policy:
+      tombstone:
+        removal_date: 2019-11-06
+        warning_text: bigip_asm_policy has been removed please use bigip_asm_policy_manage instead.
     bigip_device_facts:
       redirect: f5networks.f5_modules.bigip_device_info
     bigip_iapplx_package:
