@@ -1,0 +1,2 @@
+minor_changes:
+  - Added toggle (ERROR_ON_VAULT_SECRET) to allow vault decryption errors to become warnings.
