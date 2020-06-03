@@ -656,7 +656,7 @@ High-level unit test requirements that new resource modules should follow:
 
 Unit test cases are run as part of the Zuul CI. Unit test suites are run on the latest python version supported by the CI setup.
 
-Use the :ref:`same procedure <using_zuul_resource_modules>` as the integration tests to view the Zull unit tests reports and logs.
+Use the :ref:`same procedure <using_zuul_resource_modules>` as the integration tests to view the Zuul unit tests reports and logs.
 
 See  :ref:`unit module testing <testing_units_modules>` for general unit test details.
 
