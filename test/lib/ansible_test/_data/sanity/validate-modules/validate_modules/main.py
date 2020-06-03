@@ -41,7 +41,7 @@ import yaml
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_native
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible.utils.plugin_docs import BLACKLIST, tag_versions_and_dates, add_fragments, get_docstring
@@ -2082,13 +2082,45 @@ class ModuleValidator(Validator):
 
             # See if current version => deprecated.removed_in, ie, should be docs only
             if docs and 'deprecated' in docs and docs['deprecated'] is not None:
-                try:
-                    removed_in = StrictVersion(str(docs.get('deprecated')['removed_in']))
-                except ValueError:
-                    end_of_deprecation_should_be_removed_only = False
-                else:
-                    strict_ansible_version = StrictVersion('.'.join(ansible_version.split('.')[:2]))
-                    end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                end_of_deprecation_should_be_removed_only = False
+
+                if 'removed_in' in docs['deprecated']:
+                    try:
+                        collection_name, version = self._split_tagged_version(docs['deprecated']['removed_in'])
+                        if collection_name != self.collection_name:
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='invalid-module-deprecation-source',
+                                msg=('The deprecation version for a module must be added in this collection')
+                            )
+
+                            end_of_deprecation_should_be_removed_only = False
+                        else:
+                            removed_in = self.StrictVersion(str(version))
+
+                    except ValueError:
+                        end_of_deprecation_should_be_removed_only = False
+
+                    else:
+                        if not self.collection:
+                            strict_ansible_version = self.StrictVersion('.'.join(ansible_version.split('.')[:2]))
+                            end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                        elif self.collection_version:
+                            strict_ansible_version = self.collection_version
+                            end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                        else:
+                            end_of_deprecation_should_be_removed_only = False
+
+                # handle deprecation by date
+                elif 'removed_at_date' in docs['deprecated']:
+                    try:
+                        removed_at_date = docs['deprecated']['removed_at_date']
+                        if parse_isodate(removed_at_date) < datetime.date.today():
+                            msg = "Module's deprecated.removed_at_date date '%s' is before today" % removed_at_date
+                            self.reporter.error(path=self.object_path, code='deprecated-date', msg=msg)
+                    except ValueError:
+                        # Already checked during schema validation
+                        pass
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_removed_only:
             self._validate_ansible_module_call(docs)
