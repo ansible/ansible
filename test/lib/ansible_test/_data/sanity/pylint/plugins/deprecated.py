@@ -87,6 +87,11 @@ class AnsibleDeprecatedChecker(BaseChecker):
                         self.add_message('ansible-deprecated-version', node=node, args=(version,))
                 except ValueError:
                     self.add_message('ansible-invalid-deprecated-version', node=node, args=(version,))
+                except TypeError:
+                    # This happens if version starts with string components, and LooseVersion
+                    # comparison tries to compare int with str. This can happen for tagged
+                    # versions from Ansible 2.10.
+                    pass
         except AttributeError:
             # Not the type of node we are interested in
             pass
