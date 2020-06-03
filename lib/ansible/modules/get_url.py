@@ -28,6 +28,8 @@ description:
        your proxy environment for both protocols is correct.
      - From Ansible 2.4 when run with C(--check), it will do a HEAD request to validate the URL but
        will not download the entire file or verify it against hashes.
+     - From Ansible 2.10, when run with C(--check) it will perform a full GET request and verify it 
+       against hashes.
      - For Windows targets, use the M(win_get_url) module instead.
 version_added: '0.6'
 options:
