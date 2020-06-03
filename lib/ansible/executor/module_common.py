@@ -1322,7 +1322,8 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
     if not redirected_names:
         redirected_names = [action]
 
-    resolved_name = redirected_names[-1]
+    collection_name = ''
+    resource = resolved_name = redirected_names[-1]
 
     tmp_args = {}
     module_defaults = {}
@@ -1343,17 +1344,19 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
             collection_name = collection_ref.collection
             resource = collection_ref.resource
             collection_routing = _get_collection_metadata(collection_name).get('action_groups', {})
+        else:
+            collection_routing = _get_collection_metadata('ansible.builtin').get('action_groups', {})
 
-            my_action_groups = []
-            for group in collection_routing.get(resolved_name, collection_routing.get(resource, [])):
-                if AnsibleCollectionRef.is_valid_fqcr(group):
-                    fqcr = group
-                else:
-                    fqcr = '%s.%s' % (collection_name, group)
-                my_action_groups.append(fqcr)
+        my_action_groups = []
+        for group in collection_routing.get(resolved_name, collection_routing.get(resource, [])):
+            if not AnsibleCollectionRef.is_valid_fqcr(group) and collection_name:
+                fqcr = '%s.%s' % (collection_name, group)
+            else:
+                fqcr = group
+            my_action_groups.append(fqcr)
 
-            for group in my_action_groups:
-                tmp_args.update((module_defaults.get('group/{0}'.format(group)) or {}).copy())
+        for group in my_action_groups:
+            tmp_args.update((module_defaults.get('group/{0}'.format(group)) or {}).copy())
 
         # handle specific action defaults
         # Original, resolved FQCN of original if it was just a resource, and any redirects (including the resolved name)

@@ -1,5 +1,31 @@
 # Copyright (c) 2020 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# These are used by a few incidental_ integration tests and can be removed with test/support/integration/plugins/modules/
+action_groups:
+  aws:
+    - aws_az_info
+    - aws_step_functions_state_machine_execution
+    - aws_step_functions_state_machine
+    - cloudformation
+    - cloudformation_info
+    - ec2_ami_info
+    - ec2_eni
+    - ec2_eni_info
+    - ec2_group
+    - ec2_instance
+    - ec2_instance_info
+    - ec2_key
+    - ec2_vpc_igw
+    - ec2_vpc_net
+    - ec2_vpc_route_table
+    - ec2_vpc_subnet
+    - iam_role
+  vmware:
+    - vmware_guest_custom_attributes
+    - vmware_guest
+    - vmware_host_hyperthreading
+
 action_groups_redirection:
   aws:
     redirect:
