@@ -239,6 +239,157 @@ class VnetResource(Resource):
         return self.api.delete_vnet_using_delete(uuid)
 
 
+class StoragePoolResource(ApiResource):
+
+    model = tacp.FlashPoolsApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_flash_pools_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_flash_pools_using_get()
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_flash_pool_using_get(uuid)
+
+
+class DatacenterResource(ApiResource):
+
+    model = tacp.DatacentersApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_datacenters_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_datacenters_using_get()
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_datacenter_using_get(uuid)
+
+
+class UserResource(ApiResource):
+
+    model = tacp.UsersApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_users_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_users_using_get()
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_user_using_get(uuid)
+
+
+class SiteResource(ApiResource):
+
+    model = tacp.LocationsApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_locations_for_organization_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_locations_for_organization_using_get()
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_location_information_using_get(uuid)
+
+
+class TemplateResource(ApiResource):
+
+    model = tacp.TemplatesApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_templates_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_templates_using_get()
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_template_using_get(uuid)
+
+
+class TagResource(ApiResource):
+
+    model = tacp.TagsApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_tags_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_tags_using_get()
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_tag_using_get(uuid)
+
+
+class MigrationZoneResource(ApiResource):
+
+    model = tacp.MigrationZonesApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_migration_zones_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_migration_zones_using_get()
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_migration_zone_using_get(uuid)
+
+
+class MarketplaceTemplateResource(ApiResource):
+
+    model = tacp.MarketplaceTemplatesApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_marketplace_templates_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_marketplace_templates_using_get()
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_marketplace_template_using_get(uuid)
+
+
+class ApplicationGroupResource(ApiResource):
+
+    model = tacp.ApplicationGroupsApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_application_group_list_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_application_group_list_using_get()
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_application_group_information_using_get(uuid)
+
+
+class CategoryResource(ApiResource):
+
+    model = tacp.CategoriesApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_categories_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_categories_using_get()
+
+    def _get_by_uuid(self, uuid):
+        return self._api.get_category_using_get(uuid)
+
+
+class FirewallProfileResource(ApiResource):
+
+    model = tacp.FirewallProfilesApi
+
+    def _get_all(self, *args, **kwargs):
+        if kwargs:
+            return self._api.get_firewall_profiles_using_get(filters=";".join(kwargs))
+        else:
+            return self._api.get_firewall_profiles_using_get()
+
+
 def get_component_fields_by_name(name, component,
                                  api_client, fields=['name', 'uuid']):
     """
