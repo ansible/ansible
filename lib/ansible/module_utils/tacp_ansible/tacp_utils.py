@@ -96,7 +96,8 @@ class Resource(object):
             if isinstance(v, (list, tuple)):
                 op, value = v
                 if op not in allowed:
-                    continue
+                    raise Exception('Invalid operator "{}". '
+                                    'Allowed: {}'.format(op, allowed))
             else:
                 op = '=='
                 value = v
