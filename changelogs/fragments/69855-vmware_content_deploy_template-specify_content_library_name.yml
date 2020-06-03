@@ -1,0 +1,3 @@
+minor_changes:
+  - vmware_content_deploy_template - added new field "content_library" to search template inside the specified content library.
+  - vmware_rest_client - Added a new definition get_library_item_from_content_library_name.
