@@ -40,6 +40,10 @@ def _add_ansible_error_code(exception, error_code):
 def semantic_version(v, error_code=None):
     if not isinstance(v, string_types):
         raise _add_ansible_error_code(Invalid('Semantic version must be a string'), error_code or 'collection-invalid-version')
+    if not v:
+        raise _add_ansible_error_code(
+            Invalid('Empty string is not a valid semantic version'),
+            error_code or 'collection-invalid-version')
     try:
         SemanticVersion(v)
     except ValueError as e:

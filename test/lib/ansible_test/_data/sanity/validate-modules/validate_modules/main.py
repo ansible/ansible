@@ -254,21 +254,21 @@ class ModuleValidator(Validator):
 
         self.analyze_arg_spec = analyze_arg_spec
 
-        self.Version = LooseVersion
-        self.StrictVersion = StrictVersion
+        self._Version = LooseVersion
+        self._StrictVersion = StrictVersion
 
         self.collection = collection
         self.collection_name = 'ansible.builtin'
         if self.collection:
-            self.Version = SemanticVersion
-            self.StrictVersion = SemanticVersion
+            self._Version = SemanticVersion
+            self._StrictVersion = SemanticVersion
             collection_namespace_path, collection_name = os.path.split(self.collection)
             self.collection_name = '%s.%s' % (os.path.basename(collection_namespace_path), collection_name)
         self.routing = routing
         self.collection_version = None
         if collection_version is not None:
             self.collection_version_str = collection_version
-            self.collection_version = self.Version(collection_version)
+            self.collection_version = SemanticVersion(collection_version)
 
         self.base_branch = base_branch
         self.git_cache = git_cache or GitCache()
@@ -287,6 +287,16 @@ class ModuleValidator(Validator):
             self.base_module = self._get_base_file()
         else:
             self.base_module = None
+
+    def _create_version(self, v):
+        if not v:
+            raise ValueError('Empty string is not a valid version')
+        return self._Version(v)
+
+    def _create_strict_version(self, v):
+        if not v:
+            raise ValueError('Empty string is not a valid version')
+        return self._StrictVersion(v)
 
     def __enter__(self):
         return self
@@ -1193,7 +1203,8 @@ class ModuleValidator(Validator):
     def _check_version_added(self, doc, existing_doc):
         version_added_raw = doc.get('version_added')
         try:
-            version_added = self.StrictVersion(self._extract_version_from_tag_for_msg(str(doc.get('version_added', '0.0') or '0.0')))
+            version_added = self._create_strict_version(
+                self._extract_version_from_tag_for_msg(str(doc.get('version_added', '0.0') or '0.0')))
         except ValueError:
             version_added = doc.get('version_added', '0.0')
             if self._is_new_module() or version_added != 'ansible.builtin:historical':
@@ -1219,7 +1230,7 @@ class ModuleValidator(Validator):
             return
 
         should_be = '.'.join(ansible_version.split('.')[:2])
-        strict_ansible_version = self.StrictVersion(should_be)
+        strict_ansible_version = self._create_strict_version(should_be)
 
         if (version_added < strict_ansible_version or
                 strict_ansible_version < version_added):
@@ -1585,7 +1596,7 @@ class ModuleValidator(Validator):
                 if removed_in_version is not None:
                     try:
                         collection_name, removed_in_version = self._split_tagged_version(removed_in_version)
-                        if collection_name == self.collection_name and compare_version >= self.Version(str(removed_in_version)):
+                        if collection_name == self.collection_name and compare_version >= self._create_version(str(removed_in_version)):
                             msg = "Argument '%s' in argument_spec" % arg
                             if context:
                                 msg += " found in %s" % " -> ".join(context)
@@ -1605,7 +1616,7 @@ class ModuleValidator(Validator):
                         if 'name' in deprecated_alias and 'version' in deprecated_alias:
                             try:
                                 collection_name, version = self._split_tagged_version(deprecated_alias['version'])
-                                if collection_name == self.collection_name and compare_version >= self.Version(str(version)):
+                                if collection_name == self.collection_name and compare_version >= self._create_version(str(version)):
                                     msg = "Argument '%s' in argument_spec" % arg
                                     if context:
                                         msg += " found in %s" % " -> ".join(context)
@@ -2022,12 +2033,10 @@ class ModuleValidator(Validator):
                 return
 
         try:
-            mod_version_added = self.StrictVersion()
-            mod_version_added.parse(
-                self._extract_version_from_tag_for_msg(str(existing_doc.get('version_added', '0.0')))
-            )
+            mod_version_added = self._create_strict_version(
+                self._extract_version_from_tag_for_msg(str(existing_doc.get('version_added', '0.0'))))
         except ValueError:
-            mod_version_added = self.StrictVersion('0.0')
+            mod_version_added = self._create_strict_version('0.0')
 
         if self.base_branch and 'stable-' in self.base_branch:
             metadata.pop('metadata_version', None)
@@ -2042,7 +2051,7 @@ class ModuleValidator(Validator):
         options = doc.get('options', {}) or {}
 
         should_be = '.'.join(ansible_version.split('.')[:2])
-        strict_ansible_version = self.StrictVersion(should_be)
+        strict_ansible_version = self._create_strict_version(should_be)
 
         for option, details in options.items():
             try:
@@ -2069,10 +2078,8 @@ class ModuleValidator(Validator):
                 continue
 
             try:
-                version_added = self.StrictVersion()
-                version_added.parse(
-                    self._extract_version_from_tag_for_msg(str(details.get('version_added', '0.0')))
-                )
+                version_added = self._create_strict_version(
+                    self._extract_version_from_tag_for_msg(str(details.get('version_added', '0.0'))))
             except ValueError:
                 # already reported during schema validation
                 continue
@@ -2167,12 +2174,12 @@ class ModuleValidator(Validator):
                             )
                             # Treat the module as not to be removed:
                             raise ValueError('')
-                        removed_in = self.StrictVersion(str(version))
+                        removed_in = self._create_strict_version(str(version))
                     except ValueError:
                         end_of_deprecation_should_be_removed_only = False
                     else:
                         if not self.collection:
-                            strict_ansible_version = self.StrictVersion('.'.join(ansible_version.split('.')[:2]))
+                            strict_ansible_version = self._create_strict_version('.'.join(ansible_version.split('.')[:2]))
                             end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
                         elif self.collection_version:
                             strict_ansible_version = self.collection_version
