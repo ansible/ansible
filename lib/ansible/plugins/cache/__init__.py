@@ -140,7 +140,7 @@ class BaseFileCacheModule(BaseCacheModule):
     def _get_cache_file_name(self, key):
         prefix = self.get_option('_prefix')
         if prefix:
-            cachefile = "%s/%s_%s" % (self._cache_dir, prefix, key)
+            cachefile = "%s/%s%s" % (self._cache_dir, prefix, key)
         else:
             cachefile = "%s/%s" % (self._cache_dir, key)
         return cachefile
