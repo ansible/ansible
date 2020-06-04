@@ -275,7 +275,7 @@ You can link from your module documentation to other module docs, other resource
 
 * ``L()`` for links with a heading. For example: ``See L(Ansible Tower,https://www.ansible.com/products/tower).`` As of Ansible 2.10, do not use ``L()`` for relative links to other Ansible documentation. Use ``R()`` instead.
 * ``U()`` for URLs. For example: ``See U(https://www.ansible.com/products/tower) for an overview.``
-* ``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See Cisco IOS Platform Guide,ios_platform_options).`` Use the ``.rst`` section label for the cross-reference.
+* ``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See Cisco IOS Platform Guide,ios_platform_options).`` Use the RST section label for the cross-reference.
 * ``I()`` for option names. For example: ``Required if I(state=present).``
 * ``C()`` for files and option values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.``
 * ``M()`` for module names. For example: ``See also M(win_copy) or M(win_template).``
