@@ -244,7 +244,7 @@ The following scenarios use the ``arista.eos`` to help explain when to contribut
 2. You want to add a new Ansible module for Arista. Your options are one of the following:
 
     * Place the new module in the  ``arista.eos`` collection or a new collection in the ``arista`` namespace (Either option requires approval from Arista and Red Hat).
-    *  Place the new module in the ``community.network`` collection (requires network community approval) or your own collection in your own namespace (no approvals required).
+    * Place the new module in the ``community.network`` collection (requires network community approval) or your own collection in your own namespace (no approvals required).
 
 Most new content should go into either a related community collection or your own collection first so that is well established in the community before you can propose adding it to the  ``arista`` namespace, where inclusion and maintenance criteria are much higher.
 
@@ -259,7 +259,8 @@ Your PR must meet the following requirements before it can merge into an Ansible
 
 #. Is in the intended scope of the collection. Communicate with the appropriate Ansible sponsor listed in the :ref:`Ansible-maintained collection table <ansible-collection-table>` for help.
 #. For network and security domains, the PR follows the :ref:`resource module development principles <developing_resource_modules>`.
-#. Passes sanity, unit, and integration tests, as listed in the :ref:`Ansible-maintained collection table <ansible-collection-table>` and described in :ref:`testing_resource_modules`.
+#. Passes :ref:`sanity tests and tox <tox_resource_modules>`.
+#. Passes unit, and integration tests, as listed in the :ref:`Ansible-maintained collection table <ansible-collection-table>` and described in :ref:`testing_resource_modules`.
 #. Follows Ansible :ref:`developing_modules`  and :ref:`developing_collections` guidelines.
 #. Addresses all review comments.
 #. Includes an appropriate :ref:`changelog <community_changelogs>`.
