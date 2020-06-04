@@ -1,0 +1,2 @@
+bugfixes:
+    - assemble module - fix documentation - the remote_src property specified a default value of no but it's actually yes.
