@@ -85,6 +85,6 @@ class ActionModule(ActionBase):
             if k not in special_args:
                 host_vars[k] = self._task.args[k]
 
-        result['changed'] = True
+        result['changed'] = False
         result['add_host'] = dict(host_name=name, groups=new_groups, host_vars=host_vars)
         return result
