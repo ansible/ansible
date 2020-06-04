@@ -5,8 +5,8 @@
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.tacp_ansible import tacp_utils
-from ansible.module_utils.tacp_ansible import tacp_exceptions
-
+from ansible.module_utils.tacp_ansible.tacp_exceptions import ActionTimedOutException, InvalidActionUuidException
+from ansible.module_utils.tacp_ansible.tacp_constants import State, Action
 
 
 import json
@@ -77,25 +77,11 @@ message:
     type: str
     returned: always
 '''
-STATE_running = "Running"
-STATE_shutdown = "Shut down"
-STATE_paused = "Paused"
-STATE_restarting = "Restarting"
-STATE_resuming = "Resuming"
-STATE_creating = "Creating"
-STATE_deleting = "Deleting"
 
-ACTION_started = "started"
-ACTION_shutdown = "shutdown"
-ACTION_stopped = "stopped"
-ACTION_restarted = "restarted"
-ACTION_force_restarted = "force-restarted"
-ACTION_paused = "paused"
-ACTION_absent = "absent"
 
-STATE_ACTIONS = [ACTION_started, ACTION_shutdown, ACTION_stopped,
-                 ACTION_restarted, ACTION_force_restarted, ACTION_paused,
-                 ACTION_absent]
+STATE_ACTIONS = [Action.STARTED, Action.SHUTDOWN, Action.STOPPED,
+                 Action.RESTARTED, Action.FORCE_RESTARTED, Action.PAUSED,
+                 Action.ABSENT]
 
 
 def run_module():
@@ -196,9 +182,6 @@ def run_module():
                         vnic_name = boot_order_item.name
 
             else:
-                # TODO - his will eventually need to be modified so that any
-                # boot order is possible for any extra NICs
-
                 vnic_uuid = str(uuid4())
                 vnic_boot_order = len(boot_order) + i
 
@@ -234,10 +217,7 @@ def run_module():
             return instance_params
 
     def create_instance(instance_params, api_client):
-        api_instance = tacp.ApplicationsApi(api_client)
-
-        # Need to create boot disk ahead of time and provide it in the
-        # ApiCreateApplicationPayload parameters
+        application_resource = tacp_utils.ApplicationResource(api_client)
 
         body = tacp.ApiCreateApplicationPayload(
             name=instance_params['instance_name'],
@@ -257,148 +237,51 @@ def run_module():
 
         if module._verbosity >= 3:
             result['api_request_body'] = str(body)
-        try:
-            # Create an application from a template
-            api_response = api_instance.create_application_from_template_using_post(
-                body)
-            if module._verbosity >= 3:
-                result['api_response'] = str(api_response)
-        except ApiException as e:
-            return "Exception when calling ApplicationsApi->create_application_from_template_using_post: %s\n" % e
 
-        try:
-            tacp_utils.wait_for_action_to_complete(
-                api_response.action_uuid, api_client)
-        except ActionTimedOutException:
-            fail_with_reason(
-                "Exception when waiting for action to complete, action timed out.")
-        except InvalidActionUuidException:
-            fail_with_reason(
-                "Exception when waiting for action to complete, invalid action UUID.")
-        result['ansible_module_results'] = tacp_utils.get_resource_by_uuid(
-            api_response.object_uuid, 'application', api_client)
+        response = application_resource.create(body)
+
+        result['ansible_module_results'] = application_resource.get_by_uuid(
+            response.object_uuid
+        )
         result['changed'] = True
 
     def instance_power_action(name, api_client, action):
-        instance_uuid = tacp_utils.get_component_fields_by_name(
-            module.params['name'], 'application', api_client)
-        api_instance = tacp.ApplicationsApi(api_client)
+        assert action in STATE_ACTIONS + [Action.RESUMED]
 
-        actions = {"start": api_instance.start_application_using_put,
-                   "stop": api_instance.stop_application_using_put,
-                   "force-restart": api_instance.force_restart_application_using_put,
-                   "restart": api_instance.restart_application_using_put,
-                   "shutdown": api_instance.shutdown_application_using_put,
-                   "pause": api_instance.pause_application_using_put,
-                   "resume": api_instance.resume_application_using_put,
-                   "delete": api_instance.delete_application_using_delete}
+        application_resource = tacp_utils.ApplicationResource(api_client)
 
-        try:
-            api_response = actions[action](
-                instance_uuid)
-            if module._verbosity >= 3:
-                result['api_response'] = str(api_response)
-        except ApiException as e:
-            response_dict = tacp_utils.api_response_to_dict(e)
-            result['changed'] = False
-            result['failed'] = True
-            fail_with_reason(response_dict['message'])
+        instance_uuid = application_resource.get_uuid_by_name(name)
 
-        try:
-            tacp_utils.wait_for_action_to_complete(
-                api_response.action_uuid, api_client)
-        except ActionTimedOutException:
-            fail_with_reason(
-                "Exception when waiting for action to complete, action timed out.")
-        except InvalidActionUuidException:
-            fail_with_reason(
-                "Exception when waiting for action to complete, invalid action UUID.")
+        application_resource.power_action_on_instance_by_uuid(
+            instance_uuid, action
+        )
+
         result['changed'] = True
-
-    def powerstate_absent():
-        instance_power_action(module.params['name'], api_client, "delete")
-
-    def powerstate_do_nothing():
-        pass
-
-    def powerstate_absent():
-        instance_power_action(module.params['name'], api_client, "delete")
-
-    def powerstate_stop():
-        instance_power_action(module.params['name'], api_client, "stop")
-
-    def powerstate_shutdown():
-        instance_power_action(
-            module.params['name'], api_client, "shutdown")
-
-    def powerstate_start():
-        instance_power_action(
-            module.params['name'], api_client, "start")
-
-    def powerstate_restart():
-        instance_power_action(
-            module.params['name'], api_client, "restart")
-
-    def powerstate_force_restart():
-        instance_power_action(
-            module.params['name'], api_client, "force-restart")
-
-    def powerstate_pause():
-        instance_power_action(
-            module.params['name'], api_client, "pause")
-
-    def powerstate_resume():
-        instance_power_action(
-            module.params['name'], api_client, "resume")
-
-    def powerstate_resume_shutdown():
-        instance_power_action(
-            module.params['name'], api_client, "resume")
-        instance_power_action(
-            module.params['name'], api_client, "shutdown")
-
-    def powerstate_resume_restart():
-        instance_power_action(
-            module.params['name'], api_client, "resume")
-        instance_power_action(
-            module.params['name'], api_client, "restart")
-
-    def powerstate_resume_force_restart():
-        instance_power_action(
-            module.params['name'], api_client, "resume")
-        instance_power_action(
-            module.params['name'], api_client, "force-restart")
-
-    def powerstate_start_pause():
-        instance_power_action(
-            module.params['name'], api_client, "start")
-        instance_power_action(
-            module.params['name'], api_client, "pause")
 
     # Current state is first dimension
     # Specified state is second dimension
     power_state_dict = {
-        (STATE_running, ACTION_started): powerstate_do_nothing,
-        (STATE_running, ACTION_shutdown): powerstate_shutdown,
-        (STATE_running, ACTION_stopped): powerstate_stop,
-        (STATE_running, ACTION_restarted): powerstate_restart,
-        (STATE_running, ACTION_force_restarted): powerstate_force_restart,
-        (STATE_running, ACTION_paused): powerstate_pause,
-        (STATE_running, ACTION_absent): powerstate_absent,
-        (STATE_shutdown, ACTION_started): powerstate_start,
-        (STATE_shutdown, ACTION_shutdown): powerstate_do_nothing,
-        (STATE_shutdown, ACTION_stopped): powerstate_do_nothing,
-        (STATE_shutdown, ACTION_restarted): powerstate_start,
-        (STATE_shutdown, ACTION_force_restarted): powerstate_start,
-        (STATE_shutdown, ACTION_paused): powerstate_start_pause,
-        (STATE_shutdown, ACTION_absent): powerstate_absent,
-        (STATE_paused, ACTION_started): powerstate_resume,
-        (STATE_paused, ACTION_shutdown): powerstate_resume_shutdown,
-        (STATE_paused, ACTION_stopped): powerstate_stop,
-        (STATE_paused, ACTION_restarted): powerstate_resume_restart,
-        (STATE_paused, ACTION_force_restarted): powerstate_resume_force_restart,
-        (STATE_paused, ACTION_paused): powerstate_do_nothing,
-        (STATE_paused, ACTION_absent): powerstate_absent
+        (State.RUNNING, Action.STARTED): [],
+        (State.RUNNING, Action.SHUTDOWN): [Action.SHUTDOWN],
+        (State.RUNNING, Action.STOPPED): [Action.STOPPED],
+        (State.RUNNING, Action.RESTARTED): [Action.RESTARTED],
+        (State.RUNNING, Action.FORCE_RESTARTED): [Action.FORCE_RESTARTED],
+        (State.RUNNING, Action.PAUSED): [Action.PAUSED],
+        (State.RUNNING, Action.ABSENT): [Action.ABSENT],
+        (State.SHUTDOWN, Action.STARTED): [Action.STARTED],
+        (State.SHUTDOWN, Action.SHUTDOWN): [],
+        (State.SHUTDOWN, Action.STOPPED): [],
+        (State.SHUTDOWN, Action.RESTARTED): [Action.STARTED],
+        (State.SHUTDOWN, Action.FORCE_RESTARTED): [Action.STARTED],
+        (State.SHUTDOWN, Action.PAUSED): [Action.STARTED, Action.PAUSED],
+        (State.SHUTDOWN, Action.ABSENT): [Action.ABSENT],
+        (State.PAUSED, Action.STARTED): [Action.RESUMED],
+        (State.PAUSED, Action.SHUTDOWN): [Action.RESUMED, Action.SHUTDOWN],
+        (State.PAUSED, Action.STOPPED): [Action.STOPPED],
+        (State.PAUSED, Action.RESTARTED): [Action.RESUMED, Action.RESTARTED],
+        (State.PAUSED, Action.FORCE_RESTARTED): [Action.RESUMED, Action.FORCE_RESTARTED],
+        (State.PAUSED, Action.PAUSED): [],
+        (State.PAUSED, Action.ABSENT): [Action.ABSENT]
     }
 
     # Return the inputs for debugging purposes
@@ -411,43 +294,30 @@ def run_module():
     configuration.api_key['Authorization'] = module.params['api_key']
     api_client = tacp.ApiClient(configuration)
 
-    instance_uuid = tacp_utils.get_component_fields_by_name(
-        module.params['name'], 'application', api_client)
-    if instance_uuid:
-        instance_is_present = True
-    else:
-        instance_is_present = False
+    application_resource = tacp_utils.ApplicationResource(api_client)
+    instance_uuid = application_resource.get_uuid_by_name(
+        module.params['name'])
 
     desired_state = module.params['state']
 
-    if instance_is_present:
-        instance_properties = tacp_utils.get_resource_by_uuid(
-            instance_uuid, 'application', api_client)
-
+    if instance_uuid:
+        instance_properties = application_resource.get_by_uuid(
+            instance_uuid)
         current_state = instance_properties['status']
-
-        if current_state in [STATE_running, STATE_shutdown, STATE_paused]:
-            power_state_dict[(current_state, desired_state)]()
-
     else:
-        if module.params['state'] != 'absent':
+        if module.params['state'] == 'absent':
+            instance_power_action(
+                module.params['name'], api_client, Action.ABSENT)
+        else:
             # Application does not exist yet, so create it
             instance_params = generate_instance_params(module)
             create_instance(instance_params, api_client)
-            
-            instance_uuid = tacp_utils.get_component_fields_by_name(
-                module.params['name'], 'application', api_client)
+            current_state = State.SHUTDOWN
 
-            instance_properties = tacp_utils.get_resource_by_uuid(
-                instance_uuid, 'application', api_client)
-
-            current_state = instance_properties['status']
-
-            power_state_dict[(STATE_shutdown, desired_state)]()
-        else:
-            powerstate_absent()
-
-    module.exit_json(**result)
+    if current_state in [State.RUNNING, State.SHUTDOWN, State.PAUSED]:
+        for power_action in power_state_dict[(current_state, desired_state)]:
+            instance_power_action(
+                module.params['name'], api_client, power_action)
 
     # AnsibleModule.fail_json() to pass in the message and the result
 
