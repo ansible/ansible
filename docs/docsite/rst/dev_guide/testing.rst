@@ -66,7 +66,7 @@ When Shippable detects an error and it can be linked back to a file that has bee
 
    lib/ansible/modules/network/foo/bar.py:509:17: E265 block comment should start with '# '
 
-   The test `ansible-test sanity --test validate-modules` failed with the following errors:
+   The test `ansible-test sanity --test validate-modules` failed with the following error:
    lib/ansible/modules/network/foo/bar.py:0:0: E307 version_added should be 2.4. Currently 2.3
 
 From the above example we can see that ``--test pep8`` and ``--test validate-modules`` have identified an issue. The commands given allow you to run the same tests locally to ensure you've fixed all issues without having to push your changes to GitHub and wait for Shippable, for example:
