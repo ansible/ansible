@@ -22,7 +22,7 @@ def main():
 
     ansible_path = os.path.dirname(os.path.dirname(ansible.__file__))
     temp_path = os.environ['SANITY_TEMP_PATH'] + os.path.sep
-    external_python = os.environ.get('SANITY_EXTERNAL_PYTHON')
+    external_python = os.environ.get('SANITY_EXTERNAL_PYTHON') or sys.executable
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
     collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATHS')
 
@@ -43,7 +43,6 @@ def main():
     if collection_full_name:
         # allow importing code from collections when testing a collection
         from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
-        from ansible.utils.collection_loader import AnsibleCollectionConfig
         from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
         from ansible.utils.collection_loader import _collection_finder
 
@@ -77,7 +76,9 @@ def main():
         collection_loader = _AnsibleCollectionFinder(paths=[collection_root])
         collection_loader._install()  # pylint: disable=protected-access
         nuke_modules = list(m for m in sys.modules if m.partition('.')[0] == 'ansible')
-        map(sys.modules.pop, nuke_modules)
+
+        for m in nuke_modules:
+            sys.modules.pop(m)
 
     else:
         # do not support collection loading when not testing a collection
@@ -374,6 +375,7 @@ def main():
         blacklist = ImportBlacklist(path, name)
 
         sys.meta_path.insert(0, blacklist)
+        sys.path_importer_cache.clear()
 
         try:
             yield
@@ -383,6 +385,8 @@ def main():
 
             while blacklist in sys.meta_path:
                 sys.meta_path.remove(blacklist)
+
+            sys.path_importer_cache.clear()
 
     @contextlib.contextmanager
     def monitor_sys_modules(path, messages):
