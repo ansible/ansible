@@ -51,6 +51,7 @@ class IncludedFile:
         return (other._filename == self._filename and
                 other._args == self._args and
                 other._vars == self._vars and
+                other._task._uuid == self._task._uuid and
                 other._task._parent._uuid == self._task._parent._uuid)
 
     def __repr__(self):
