@@ -200,6 +200,14 @@ EXAMPLES = r'''
     regexp: '^%ADMIN ALL='
     line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
     validate: /usr/sbin/visudo -cf %s
+
+# See https://docs.python.org/3/library/re.html for further details on syntax
+- name: Use backrefs with alternative group syntax to avoid conflicts with variable values
+  lineinfile:
+    path: /tmp/config
+    regexp: ^(host=).*
+    line: \g<1>{{ hostname }}
+    backrefs: yes
 '''
 
 import os
