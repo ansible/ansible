@@ -55,7 +55,7 @@ options:
     - If C(no), it will search for src at originating/master machine.
     - If C(yes), it will go to the remote/target machine for the src.
     type: bool
-    default: no
+    default: yes
     version_added: '1.4'
   regexp:
     description:
@@ -183,7 +183,7 @@ def main():
             delimiter=dict(type='str'),
             dest=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
-            remote_src=dict(type='bool', default=False),
+            remote_src=dict(type='bool', default=True),
             regexp=dict(type='str'),
             ignore_hidden=dict(type='bool', default=False),
             validate=dict(type='str'),
