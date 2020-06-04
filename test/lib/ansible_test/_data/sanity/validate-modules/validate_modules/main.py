@@ -2077,12 +2077,12 @@ class ModuleValidator(Validator):
             return
 
         end_of_deprecation_should_be_removed_only = False
-        if self._python_module():
+        if self._python_module(): # TODO: plugins?
             doc_info, docs = self._validate_docs()
 
             # See if current version => deprecated.removed_in, ie, should be docs only
-            if docs and 'deprecated' in docs and docs['deprecated'] is not None:
-                end_of_deprecation_should_be_removed_only = False
+            if docs.get('deprecated', False):
+                error_msg = ''
 
                 if 'removed_in' in docs['deprecated']:
                     try:
@@ -2093,23 +2093,20 @@ class ModuleValidator(Validator):
                                 code='invalid-module-deprecation-source',
                                 msg=('The deprecation version for a module must be added in this collection')
                             )
-
-                            end_of_deprecation_should_be_removed_only = False
                         else:
                             removed_in = self.StrictVersion(str(version))
 
-                    except ValueError:
-                        end_of_deprecation_should_be_removed_only = False
+                    except ValueError as e:
+                        error_msg = 'Error in accessing provided deprecation field "removed_in": $s' % str(e)
 
-                    else:
+                    if not error_msg:
                         if not self.collection:
                             strict_ansible_version = self.StrictVersion('.'.join(ansible_version.split('.')[:2]))
                             end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
                         elif self.collection_version:
                             strict_ansible_version = self.collection_version
                             end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
-                        else:
-                            end_of_deprecation_should_be_removed_only = False
+
 
                 # handle deprecation by date
                 elif 'removed_at_date' in docs['deprecated']:
@@ -2118,9 +2115,14 @@ class ModuleValidator(Validator):
                         if parse_isodate(removed_at_date) < datetime.date.today():
                             msg = "Module's deprecated.removed_at_date date '%s' is before today" % removed_at_date
                             self.reporter.error(path=self.object_path, code='deprecated-date', msg=msg)
-                    except ValueError:
-                        # Already checked during schema validation
-                        pass
+                    except ValueError as e:
+                        error_msg = 'Error in accessing provided deprecation field "removed_at_date": $s' % str(e)
+                else:
+                    error_msg = 'We have deprecation but are missing either removed_in or removed_at_date'.
+
+                if error_msg:
+                   # this should not really happen if schema validator is doing it's job, but here JIC
+                   raise Exception(error_msg)
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_removed_only:
             self._validate_ansible_module_call(docs)
