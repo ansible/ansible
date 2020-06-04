@@ -2081,9 +2081,10 @@ class ModuleValidator(Validator):
             doc_info, docs = self._validate_docs()
 
             # See if current version => deprecated.removed_in, ie, should be docs only
-            if docs.get('deprecated', False):
+            if docs and docs.get('deprecated', False):
 
                 if 'removed_in' in docs['deprecated']:
+                    removed_in = None
                     try:
                         collection_name, version = self._split_tagged_version(docs['deprecated']['removed_in'])
                         if collection_name != self.collection_name:
@@ -2101,12 +2102,13 @@ class ModuleValidator(Validator):
                             tracebk=traceback.format_exc()
                         )
 
-                    if not self.collection:
-                        strict_ansible_version = self.StrictVersion('.'.join(ansible_version.split('.')[:2]))
-                        end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
-                    elif self.collection_version:
-                        strict_ansible_version = self.collection_version
-                        end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                    if removed_in:
+                        if not self.collection:
+                            strict_ansible_version = self.StrictVersion('.'.join(ansible_version.split('.')[:2]))
+                            end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
+                        elif self.collection_version:
+                            strict_ansible_version = self.collection_version
+                            end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
 
 
                 # handle deprecation by date
