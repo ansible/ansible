@@ -315,7 +315,6 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         '''
         return value
 
-
     def _post_validate_environment(self, attr, value, templar):
         '''
         Override post validation of vars on the play, as we don't want to
