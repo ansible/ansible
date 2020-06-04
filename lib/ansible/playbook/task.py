@@ -82,6 +82,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     _notify = FieldAttribute(isa='list')
     _poll = FieldAttribute(isa='int', default=C.DEFAULT_POLL_INTERVAL)
     _register = FieldAttribute(isa='string', static=True)
+    _projection = FieldAttribute(isa='string', static=True)
     _retries = FieldAttribute(isa='int', default=3)
     _until = FieldAttribute(isa='list', default=list)
 
@@ -313,6 +314,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         specially in the TaskExecutor class when evaluating loops.
         '''
         return value
+
 
     def _post_validate_environment(self, attr, value, templar):
         '''

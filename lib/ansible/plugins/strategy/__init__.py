@@ -730,6 +730,16 @@ class StrategyBase:
                 if 'invocation' in clean_copy:
                     del clean_copy['invocation']
 
+                if original_task.projection:
+                    if original_task.projection[0] != '.':
+                        raise AnsibleError('"projection" must be a raw jinja2 statement, starting with "." representing the result to process')
+                    template = '{{ _projection%s }}' % original_task.projection[1:]
+                    all_vars = self._variable_manager.get_vars(play=iterator._play, host=original_host, task=original_task,
+                                                               _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
+                    all_vars['_projection'] = clean_copy
+                    templar = Templar(loader=self._loader, variables=all_vars)
+                    clean_copy = templar.template(template)
+
                 for target_host in host_list:
                     self._variable_manager.set_nonpersistent_facts(target_host, {original_task.register: clean_copy})
 
