@@ -204,6 +204,20 @@ options:
       - Has an effect only if I(download_only) is specified.
     type: str
     version_added: "2.8"
+  install_repoquery:
+    description:
+      - If repoquery is not available, install yum-utils. If the system is
+        registered to RHN or an RHN Satellite, repoquery allows for querying
+        all channels assigned to the system. It is also required to use the
+        'list' parameter.
+      - "NOTE: This will run and be logged as a separate yum transation which
+        takes place before any other installation or removal."
+      - "NOTE: This will use the system's default enabled repositories without
+        regard for disablerepo/enablerepo given to the module."
+    required: false
+    version_added: "1.5"
+    default: "yes"
+    type: bool
 notes:
   - When used with a `loop:` each package will be processed individually,
     it is much more efficient to pass the list directly to the `name` option.
