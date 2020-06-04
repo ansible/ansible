@@ -22,23 +22,34 @@ def wait_to_complete(method):
     """ Decorator to be used against methods that perform async operations.
 
     Returns the decorated method returned value. Decorated methods should
-    return the api response.
+    return the api response and could have the following named arguments:
 
-    Raises `ActionTimedOutException` or `InvalidActionUuidException`
+        _wait (bool): Wait for the action to be performed, defaults to True.
+        _wait_timeout (int): How long before wait gives up, in seconds.
+
+    Raises:
+        ActionTimedOutException: if the action timed out
+        InvalidActionUuidException: if the action uuid cant be found on the
+            decorated method returned value
     """
     @wraps(method)
     def wrapper(self, *a, **kws):
+        wait = kws.pop('_wait', True)
+        wait_timeout = kws.pop('_wait_timeout', 60)
+
         method_api_response = method.__get__(self, type(self))(*a, **kws)
+
+        if not wait:
+            return method_api_response
 
         action_uuid = getattr(method_api_response, 'action_uuid', None)
 
         if action_uuid:
             api_instance = tacp.ActionsApi(self._api_client)
 
-            timeout = 60
             time_spent = 0
 
-            while time_spent < timeout:
+            while time_spent < wait_timeout:
                 api_response = api_instance.get_action_using_get(action_uuid)
                 if api_response.status == 'Completed':
                     return method_api_response
