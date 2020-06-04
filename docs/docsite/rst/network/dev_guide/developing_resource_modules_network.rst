@@ -651,7 +651,7 @@ To run integration tests for a specific transport:
   # Skip any cli tests
    ansible-test network-integration --inventory  /path/to-collection-module/test/integration/inventory.networking  --skip-tags="cli" nxos_.*
 
-See `test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests.
+See `test/integration/targets/nxos_bgp/tasks/main.yaml<https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests.
 
 For more options:
 
@@ -668,7 +668,7 @@ High-level unit test requirements that new resource modules should follow:
 
 #. Write test cases for all the states with all possible combinations of config values.
 #. Write test cases to test the error conditions ( negative scenarios).
-#. Check the  value of ‘changed’ and ‘commands’ keys a in every test case.
+#. Check the  value of ``changed`` and ``commands`` keys a in every test case.
 
 Unit test cases are run as part of the Zuul CI. Unit test suites are run on the latest python version supported by the CI setup.
 
