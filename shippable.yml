@@ -27,7 +27,6 @@ matrix:
     - env: T=windows/2016/1
     - env: T=windows/2019/1
 
-    - env: T=aix/7.2/1
     - env: T=osx/10.11/1
     - env: T=rhel/7.8/1
     - env: T=rhel/8.2/1
@@ -44,7 +43,6 @@ matrix:
     - env: T=linux/ubuntu1804/1
     - env: T=power/centos/7/1
 
-    - env: T=aix/7.2/2
     - env: T=osx/10.11/2
     - env: T=rhel/7.8/2
     - env: T=rhel/8.2/2
@@ -61,7 +59,6 @@ matrix:
     - env: T=linux/ubuntu1804/2
     - env: T=power/centos/7/2
 
-    - env: T=aix/7.2/3
     - env: T=osx/10.11/3
     - env: T=rhel/7.8/3
     - env: T=rhel/8.2/3
@@ -78,7 +75,6 @@ matrix:
     - env: T=linux/ubuntu1804/3
     - env: T=power/centos/7/3
 
-    - env: T=aix/7.2/4
     - env: T=osx/10.11/4
     - env: T=rhel/7.8/4
     - env: T=rhel/8.2/4
@@ -95,7 +91,6 @@ matrix:
     - env: T=linux/ubuntu1804/4
     - env: T=power/centos/7/4
 
-    - env: T=aix/7.2/5
     - env: T=osx/10.11/5
     - env: T=rhel/7.8/5
     - env: T=rhel/8.2/5
@@ -115,7 +110,6 @@ matrix:
     - env: T=fallaxy/2.7/1
     - env: T=fallaxy/3.6/1
 
-    - env: T=i/aix/7.2
     - env: T=generic/2.7/1
     - env: T=generic/3.6/1
 
