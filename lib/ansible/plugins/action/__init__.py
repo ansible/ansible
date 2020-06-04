@@ -173,14 +173,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 coll_list = self._task.collections
             elif AnsibleCollectionRef.is_valid_fqcr(current):
 
-                    current_collection = AnsibleCollectionRef.from_fqcr(current, 'action').collection
-                    # if self collection is not first, rearrange list to ensure 'self priority'
-                    if not coll_list:
-                        coll_list = [current_collection]
-                    elif coll_list[0] != current_collection:
-                        if current_collection in coll_list:
-                            coll_list.remove(current_collection)
-                        coll_list.insert(0, current_collection)
+                current_collection = AnsibleCollectionRef.from_fqcr(current, 'action').collection
+                # if self collection is not first, rearrange list to ensure 'self priority'
+                if not coll_list:
+                    coll_list = [current_collection]
+                elif coll_list[0] != current_collection:
+                    if current_collection in coll_list:
+                        coll_list.remove(current_collection)
+                    coll_list.insert(0, current_collection)
 
         # Search module path(s) for named module.
         for mod_type in self._connection.module_implementation_preferences:
