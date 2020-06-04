@@ -69,6 +69,11 @@ class Resource(object):
         self.api = self.resource_class(client)
         self._api_client = client
 
+    FILTER_OPERATORS = [
+        '==', '!=', '=lt=', '<', '=le=', '<=', '=gt=', '>', '=ge=', '>=',
+        '=in=', '=out='
+    ]
+
     def get_filters_query_string(self, **kws):
         """
         Returns a string used as filters query string
@@ -98,10 +103,8 @@ class Resource(object):
         if not kws:
             return ''
 
-        allowed = ['==', '!=', '=lt=', '<', '=le=', '<=', '=gt=', '>', '=ge=',
-                   '>=', '=in=', '=out=']
-
         filters = []
+        allowed = self.FILTER_OPERATORS
 
         for k, v in kws.items():
             if isinstance(v, (list, tuple)):
