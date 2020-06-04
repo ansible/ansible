@@ -283,7 +283,7 @@ class DocCLI(CLI):
                                             collection_name=collection_name, is_module=(plugin_type == 'module'))
         except Exception:
             display.vvv(traceback.format_exc())
-            raise AnsibleError("%s %s at %s has a documentation error formatting or is missing documentation." % (plugin_type, plugin_name, filename))
+            raise AnsibleError("%s %s at %s has a documentation formatting error or is missing documentation." % (plugin_type, plugin_name, filename))
 
         if doc is None:
             # Removed plugins don't have any documentation
