@@ -1,0 +1,19 @@
+- hosts: all
+  strategy: free
+  gather_facts: false
+  tasks:
+    - include_role:
+        name: random_sleep
+    - block:
+      - name: set a fact (1)
+        include_role:
+          name: set_a_fact
+          tasks_from: fact1.yml
+      - name: set a fact (2)
+        include_role:
+          name: set_a_fact
+          tasks_from: fact2.yml
+    - name: include didn't run
+      fail:
+        msg: "set_a_fact didn't run fact1 {{ fact1 | default('not defined')}} fact2: {{ fact2 | default('not defined') }}"
+      when: (fact1 is not defined or fact2 is not defined)
