@@ -6,148 +6,220 @@
 import json
 import re
 import tacp
+
+from functools import wraps
+
 from tacp.rest import ApiException
 
-from ansible.module_utils.tacp_ansible.tacp_exceptions import ActionTimedOutException, InvalidActionUuidException
+from ansible.module_utils.tacp_ansible.tacp_exceptions import (
+    ActionTimedOutException, InvalidActionUuidException
+)
 from ansible.module_utils.tacp_ansible.tacp_constants import Action
-from uuid import UUID, uuid4
 from time import sleep
 
 
-class ApiResource(object):
+def wait_to_complete(method):
+    """ Decorator to be used against methods that perform async operations.
 
-    def __init__(self, api_client):
-        self._api = self.model(api_client)
-        self._api_client = api_client
+    Returns the decorated method returned value. Decorated methods should
+    return the api response and could have the following named arguments:
 
-    def get_all(self, *args, **kwargs):
-        all_instances = self._get_all(args, kwargs)
-        return all_instances
+        _wait (bool): Wait for the action to be performed, defaults to True.
+        _wait_timeout (int): How long before wait gives up, in seconds.
 
-    def get_uuid_by_name(self, name):
-        """ Return the UUID of an appplication instance if it exists
-            given the name of the instance, None otherwise
-        """
-        all_instances = self._get_all()
-        for instance in all_instances:
-            if instance.name == name:
-                return instance.uuid
-        return None
+    Raises:
+        ActionTimedOutException: if the action timed out
+        InvalidActionUuidException: if the action uuid cant be found on the
+            decorated method returned value
+    """
+    @wraps(method)
+    def wrapper(self, *a, **kws):
+        wait = kws.pop('_wait', True)
+        wait_timeout = kws.pop('_wait_timeout', 60)
 
-    def get_by_uuid(self, uuid):
-        return self._get_by_uuid(uuid).to_dict()
+        method_api_response = method.__get__(self, type(self))(*a, **kws)
 
-    def create(self, body):
-        api_response = self._create(
-            body)
-        wait_for_action_to_complete(
-            api_response.action_uuid)
-        return api_response.object_uuid
+        if not wait:
+            return method_api_response
 
-    def delete(self, uuid):
-        api_response = self._delete(uuid)
-        wait_for_action_to_complete(
-            api_response.action_uuid)
-        return True
+        action_uuid = getattr(method_api_response, 'action_uuid', None)
 
-    def wait_for_action_to_complete(self, action_uuid):
         if action_uuid:
             api_instance = tacp.ActionsApi(self._api_client)
-            action_incomplete = True
 
-            timeout = 60
             time_spent = 0
 
-            while action_incomplete and time_spent < timeout:
+            while time_spent < wait_timeout:
                 api_response = api_instance.get_action_using_get(action_uuid)
                 if api_response.status == 'Completed':
-                    action_incomplete = False
-                    return True
-                else:
-                    sleep(1)
-                    time_spent += 1
+                    return method_api_response
+
+                sleep(1)
+                time_spent += 1
             raise ActionTimedOutException
         raise InvalidActionUuidException
+    return wrapper
 
 
-class ApplicationResource(ApiResource):
+class Resource(object):
+    resource_class = None
 
-    model = tacp.ApplicationsApi
+    def __init__(self, client):
+        assert self.resource_class is not None
+        self.api = self.resource_class(client)
+        self._api_client = client
 
-    def _get_all(self, *args, **kwargs):
-        if kwargs:
-            return self._api.get_applications_using_get(filters=";".join(kwargs))
-        else:
-            return self._api.get_applications_using_get()
+    FILTER_OPERATORS = [
+        '==', '!=', '=lt=', '<', '=le=', '<=', '=gt=', '>', '=ge=', '>=',
+        '=in=', '=out='
+    ]
 
-    def _get_by_uuid(self, uuid):
-        return self._api.get_application_using_get(uuid)
+    def get_filters_query_string(self, **kws):
+        """
+        Returns a string used as filters query string
 
-    def _create(self, body):
-        return self._api.create_application_from_template_using_post(body)
+        To use operators provide the value of a kwarg as two item tuple:
+            (operator, actual_value)
 
-    def _delete(self, uuid):
-        return self._api.delete_application_using_delete(uuid)
+        If the value of a kwarg is not a two item tuple then the default `==`
+        operator is used.
 
+        Operators:
+            - Equal to: ==
+            - Not equal to: !=
+            - Less than: =lt= or <
+            - Less than or equal to: =le= or <=
+            - Greater than operator: =gt= or >
+            - Greater than or equal to: =ge= or >=
+            - In: =in=
+            - Not in: =out=
+
+        The following:
+            name='some name'
+
+        Is the same as:
+            name=('==', 'some name')
+        """
+        if not kws:
+            return ''
+
+        filters = []
+        allowed = self.FILTER_OPERATORS
+
+        for k, v in kws.items():
+            if isinstance(v, (list, tuple)):
+                op, value = v
+                if op not in allowed:
+                    raise Exception('Invalid operator "{}". '
+                                    'Allowed: {}'.format(op, allowed))
+            else:
+                op = '=='
+                value = v
+
+            filters.append('{}{}"{}"'.format(k, op, value))
+
+        return ';'.join(filters)
+
+    def get_filters_kws(self, **filters):
+        query_string = self.get_filters_query_string(**filters)
+        if query_string:
+            return {'filters': query_string}
+        return {}
+
+    def get_uuid_by_name(self, name):
+        instances = self.filter(name=name)
+        if instances:
+            return instances[0].uuid
+        return None
+
+    def filter(self, **filters):
+        raise NotImplementedError
+
+    def get_by_uuid(self, uuid):
+        raise NotImplementedError
+
+    def create(self, body):
+        raise NotImplementedError
+
+    def delete(self, uuid):
+        raise NotImplementedError
+
+
+class ApplicationResource(Resource):
+    resource_class = tacp.ApplicationsApi
+
+    def filter(self, **filters):
+        return self.api.get_applications_using_get(
+            **self.get_filters_kws(**filters)
+        )
+
+    def get_by_uuid(self, uuid):
+        return self.api.get_application_using_get(uuid)
+
+    @wait_to_complete
+    def create(self, body):
+        return self.api.create_application_from_template_using_post(body)
+
+    @wait_to_complete
+    def delete(self, uuid):
+        return self.api.delete_application_using_delete(uuid)
+
+    @wait_to_complete
     def power_action_on_instance_by_uuid(self, uuid, power_action):
         """ Performs a specified power operation on an application instance
-            specified by UUID, returns bool of success/failure
+            specified by UUID
         """
         power_action_dict = {
-            Action.STARTED: self._api.start_application_using_put,
-            Action.SHUTDOWN: self._api.shutdown_application_using_put,
-            Action.STOPPED: self._api.stop_application_using_put,
-            Action.RESTARTED: self._api.restart_application_using_put,
-            Action.FORCE_RESTARTED: self._api.force_restart_application_using_put,
-            Action.PAUSED: self._api.pause_application_using_put,
-            Action.ABSENT: self._api.delete_application_using_delete,
-            Action.RESUMED: self._api.resume_application_using_put
+            Action.STARTED: self.api.start_application_using_put,
+            Action.SHUTDOWN: self.api.shutdown_application_using_put,
+            Action.STOPPED: self.api.stop_application_using_put,
+            Action.RESTARTED: self.api.restart_application_using_put,
+            Action.FORCE_RESTARTED: self.api.force_restart_application_using_put,  # noqa
+            Action.PAUSED: self.api.pause_application_using_put,
+            Action.ABSENT: self.api.delete_application_using_delete,
+            Action.RESUMED: self.api.resume_application_using_put
         }
-
-        api_response = power_action_dict[power_action](uuid)
-        self.wait_for_action_to_complete(
-            api_response.action_uuid)
-        return True
+        return power_action_dict[power_action](uuid)
 
 
-class VlanResource(ApiResource):
+class VlanResource(Resource):
+    resource_class = tacp.VlansApi
 
-    model = tacp.VlansApi
+    def filter(self, **filters):
+        return self.api.get_vlans_using_get(
+            **self.get_filters_kws(**filters)
+        )
 
-    def _get_all(self, *args, **kwargs):
-        if kwargs:
-            return self._api.get_vlans_using_get(filters=";".join(kwargs))
-        else:
-            return self._api.get_vlans_using_get()
+    def get_by_uuid(self, uuid):
+        return self.api.get_vlan_using_get(uuid)
 
-    def _get_by_uuid(self, uuid):
-        return self._api.get_vlan_using_get(uuid)
+    @wait_to_complete
+    def create(self, body):
+        return self.api.create_vlan_using_post(body)
 
-    def _create(self, body):
-        return self._api.create_vlan_using_post(body)
-
-    def _delete(self, uuid):
-        return self._api.delete_vlan_using_delete(uuid)
+    @wait_to_complete
+    def delete(self, uuid):
+        return self.api.delete_vlan_using_delete(uuid)
 
 
-class VnetResource(ApiResource):
+class VnetResource(Resource):
+    resource_class = tacp.VnetsApi
 
-    model = tacp.VnetsApi
+    def filter(self, **filters):
+        return self.api.get_vnets_using_get(
+            **self.get_filters_kws(**filters)
+        )
 
-    def _get_all(self, *args, **kwargs):
-        if kwargs:
-            return self._api.get_vnets_using_get(filters=";".join(kwargs))
-        else:
-            return self._api.get_vnets_using_get()
+    def get_by_uuid(self, uuid):
+        return self.api.get_vnet_using_get(uuid)
 
-    def _get_by_uuid(self, uuid):
-        return self._api.get_vnet_using_get(uuid)
+    @wait_to_complete
+    def create(self, body):
+        return self.api.create_vnet_using_post(body)
 
-    def _create(self, body):
-        return self._api.create_vnet_using_post(body)
-
-    def _delete(self, uuid):
-        return self._api.delete_vnet_using_delete(uuid)
+    @wait_to_complete
+    def delete(self, uuid):
+        return self.api.delete_vnet_using_delete(uuid)
 
 
 def get_component_fields_by_name(name, component,

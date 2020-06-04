@@ -217,8 +217,7 @@ def run_module():
             return instance_params
 
     def create_instance(instance_params, api_client):
-        applicationResource = tacp_utils.ApplicationResource(
-            api_client)
+        application_resource = tacp_utils.ApplicationResource(api_client)
 
         body = tacp.ApiCreateApplicationPayload(
             name=instance_params['instance_name'],
@@ -238,23 +237,24 @@ def run_module():
 
         if module._verbosity >= 3:
             result['api_request_body'] = str(body)
-        created_instance_uuid = applicationResource.create(body)
 
-        result['ansible_module_results'] = applicationResource.get_by_uuid(
-            created_instance_uuid)
+        response = application_resource.create(body)
+
+        result['ansible_module_results'] = application_resource.get_by_uuid(
+            response.object_uuid
+        )
         result['changed'] = True
 
     def instance_power_action(name, api_client, action):
-        assert action in [Action.STARTED, Action.SHUTDOWN, Action.STOPPED,
-                          Action.RESTARTED, Action.FORCE_RESTARTED,
-                          Action.PAUSED, Action.ABSENT, Action.RESUMED]
+        assert action in STATE_ACTIONS + [Action.RESUMED]
 
-        applicationResource = tacp_utils.ApplicationResource(
-            api_client)
-        instance_uuid = applicationResource.get_uuid_by_name(name)
+        application_resource = tacp_utils.ApplicationResource(api_client)
 
-        applicationResource.power_action_on_instance_by_uuid(
-            instance_uuid, action)
+        instance_uuid = application_resource.get_uuid_by_name(name)
+
+        application_resource.power_action_on_instance_by_uuid(
+            instance_uuid, action
+        )
 
         result['changed'] = True
 
@@ -294,15 +294,14 @@ def run_module():
     configuration.api_key['Authorization'] = module.params['api_key']
     api_client = tacp.ApiClient(configuration)
 
-    applicationResource = tacp_utils.ApplicationResource(
-        api_client)
-    instance_uuid = applicationResource.get_uuid_by_name(
+    application_resource = tacp_utils.ApplicationResource(api_client)
+    instance_uuid = application_resource.get_uuid_by_name(
         module.params['name'])
 
     desired_state = module.params['state']
 
     if instance_uuid:
-        instance_properties = applicationResource.get_by_uuid(
+        instance_properties = application_resource.get_by_uuid(
             instance_uuid)
         current_state = instance_properties['status']
     else:
