@@ -2107,9 +2107,8 @@ class ModuleValidator(Validator):
                             strict_ansible_version = self.collection_version
                             end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
 
-
                 # handle deprecation by date
-                elif 'removed_at_date' in docs['deprecated']:
+                if 'removed_at_date' in docs['deprecated']:
                     try:
                         removed_at_date = docs['deprecated']['removed_at_date']
                         if parse_isodate(removed_at_date) < datetime.date.today():
