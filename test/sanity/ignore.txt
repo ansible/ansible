@@ -180,12 +180,10 @@ lib/ansible/modules/package_facts.py validate-modules:doc-missing-type
 lib/ansible/modules/package_facts.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/rpm_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum.py pylint:blacklisted-name
-lib/ansible/modules/yum.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/yum.py validate-modules:doc-missing-type
 lib/ansible/modules/yum.py validate-modules:parameter-invalid
 lib/ansible/modules/yum.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/yum.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/yum.py validate-modules:undocumented-parameter
 lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/yum_repository.py validate-modules:doc-missing-type
 lib/ansible/modules/yum_repository.py validate-modules:parameter-list-no-elements
