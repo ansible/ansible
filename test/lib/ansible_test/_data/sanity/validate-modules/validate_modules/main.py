@@ -2097,10 +2097,7 @@ class ModuleValidator(Validator):
                             removed_in = self.StrictVersion(str(version))
 
                     except ValueError:
-                        self.reporter.trace(
-                            path=self.object_path,
-                            tracebk=traceback.format_exc()
-                        )
+                        pass # ignore and hope we previouslly reported
 
                     if removed_in:
                         if not self.collection:
@@ -2119,11 +2116,7 @@ class ModuleValidator(Validator):
                             msg = "Module's deprecated.removed_at_date date '%s' is before today" % removed_at_date
                             self.reporter.error(path=self.object_path, code='deprecated-date', msg=msg)
                     except ValueError:
-                        self.reporter.trace(
-                            path=self.object_path,
-                            tracebk=traceback.format_exc()
-                        )
-
+                        pass # ignore and hope we previouslly reported
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_removed_only:
             self._validate_ansible_module_call(docs)
