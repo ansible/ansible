@@ -5,17 +5,18 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-import yaml
 
 from ansible.module_utils._text import to_text
-from ansible.parsing.metadata import extract_metadata
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.utils.display import Display
 
 display = Display()
 
 
+# NOTE: should move to just reading the variable as we do in plugin_loader since we already load as a 'module'
+# which is much faster than ast parsing ourselves.
 def read_docstring(filename, verbose=True, ignore_errors=True):
+
     """
     Search for assignment of the DOCUMENTATION and EXAMPLES variables in the given file.
     Parse DOCUMENTATION from YAML and return the YAML doc or None together with EXAMPLES, as plain text.
@@ -25,7 +26,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
         'doc': None,
         'plainexamples': None,
         'returndocs': None,
-        'metadata': None,
+        'metadata': None,  # NOTE: not used anymore, kept for compat
         'seealso': None,
     }
 
@@ -33,6 +34,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
         'DOCUMENTATION': 'doc',
         'EXAMPLES': 'plainexamples',
         'RETURN': 'returndocs',
+        'ANSIBLE_METADATA': 'metadata',  # NOTE: now unused, but kept for backwards compat
     }
 
     try:
@@ -54,33 +56,16 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                         if isinstance(child.value, ast.Dict):
                             data[varkey] = ast.literal_eval(child.value)
                         else:
-                            if theid == 'DOCUMENTATION':
-                                # string should be yaml
-                                data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
-                            else:
-                                # not yaml, should be a simple string
+                            if theid in ['EXAMPLES', 'RETURN']:
+                                # examples 'can' be yaml, return must be, but even if so, we dont want to parse as such here
+                                # as it can create undesired 'objects' that don't display well as docs.
                                 data[varkey] = to_text(child.value.s)
-                        display.debug('assigned :%s' % varkey)
+                            else:
+                                # string should be yaml if already not a dict
+                                data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
 
-        # Metadata is per-file and a dict rather than per-plugin/function and yaml
-        data['metadata'] = extract_metadata(module_ast=M)[0]
+                        display.debug('assigned: %s' % varkey)
 
-        if data['metadata']:
-            # remove version
-            for field in ('version', 'metadata_version'):
-                if field in data['metadata']:
-                    del data['metadata'][field]
-
-            if 'supported_by' not in data['metadata']:
-                data['metadata']['supported_by'] = 'community'
-
-            if 'status' not in data['metadata']:
-                data['metadata']['status'] = ['preview']
-
-        else:
-            # Add default metadata
-            data['metadata'] = {'supported_by': 'community',
-                                'status': ['preview']}
     except Exception:
         if verbose:
             display.error("unable to parse %s" % filename)
