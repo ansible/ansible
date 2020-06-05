@@ -104,7 +104,9 @@ class CLI(with_metaclass(ABCMeta, object)):
                 alt = ''
             ver = deprecated[1].get('version')
             date = deprecated[1].get('date')
-            display.deprecated("%s option, %s %s" % (name, why, alt), version=ver, date=date)
+            collection_name = deprecated[1].get('collection_name')
+            display.deprecated("%s option, %s %s" % (name, why, alt),
+                               version=ver, date=date, collection_name=collection_name)
 
     @staticmethod
     def split_vault_id(vault_id):
