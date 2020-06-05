@@ -493,7 +493,10 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
 
         if collection_name == 'ansible.builtin':
             # ansible.builtin is a synthetic collection, get its routing config from the Ansible distro
-            raw_routing = pkgutil.get_data('ansible.config', 'ansible_builtin_runtime.yml')
+            ansible_pkg_path = os.path.dirname(import_module('ansible').__file__)
+            metadata_path = os.path.join(ansible_pkg_path, 'config/ansible_builtin_runtime.yml')
+            with open(to_bytes(metadata_path), 'rb') as fd:
+                raw_routing = fd.read()
         else:
             b_routing_meta_path = to_bytes(os.path.join(module.__path__[0], 'meta/runtime.yml'))
             if os.path.isfile(b_routing_meta_path):
