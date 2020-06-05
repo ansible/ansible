@@ -44,7 +44,7 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils._text import to_native
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
-from ansible.utils.plugin_docs import BLACKLIST, tag_versions_and_dates, add_fragments, get_docstring
+from ansible.utils.plugin_docs import BLACKLIST, add_collection_to_versions_and_dates, add_fragments, get_docstring
 from ansible.utils.version import SemanticVersion
 
 from .module_args import AnsibleModuleImportError, AnsibleModuleNotInitialized, get_argument_spec
@@ -945,7 +945,7 @@ class ModuleValidator(Validator):
                     self.name, 'DOCUMENTATION'
                 )
                 if doc:
-                    tag_versions_and_dates(doc, '%s:' % (self.collection_name, ), is_module=True)
+                    add_collection_to_versions_and_dates(doc, self.collection_name, is_module=True)
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,

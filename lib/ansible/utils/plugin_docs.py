@@ -43,23 +43,23 @@ def merge_fragment(target, source):
 def _process_versions_and_dates(fragment, is_module, callback):
     def process_deprecation(deprecation):
         if is_module and 'removed_in' in deprecation:  # used in module deprecations
-            callback(deprecation, 'removed_in')
+            callback(deprecation, 'removed_in', 'removed_from_collection')
         if 'removed_at_date' in deprecation:
-            callback(deprecation, 'removed_at_date')
+            callback(deprecation, 'removed_at_date', 'removed_from_collection')
         if not is_module and 'version' in deprecation:  # used in plugin option deprecations
-            callback(deprecation, 'version')
+            callback(deprecation, 'version', 'removed_from_collection')
 
     def process_option_specifiers(specifiers):
         for specifier in specifiers:
             if 'version_added' in specifier:
-                callback(specifier, 'version_added')
+                callback(specifier, 'version_added', 'version_added_collection')
             if isinstance(specifier.get('deprecated'), dict):
                 process_deprecation(specifier['deprecated'])
 
     def process_options(options):
         for option in options.values():
             if 'version_added' in option:
-                callback(option, 'version_added')
+                callback(option, 'version_added', 'version_added_collection')
             if not is_module:
                 if isinstance(option.get('env'), list):
                     process_option_specifiers(option['env'])
@@ -73,34 +73,32 @@ def _process_versions_and_dates(fragment, is_module, callback):
     def process_return_values(return_values):
         for return_value in return_values.values():
             if 'version_added' in return_value:
-                callback(return_value, 'version_added')
+                callback(return_value, 'version_added', 'version_added_collection')
             if isinstance(return_value.get('contains'), dict):
                 process_return_values(return_value['contains'])
 
     if 'version_added' in fragment:
-        callback(fragment, 'version_added')
+        callback(fragment, 'version_added', 'version_added_collection')
     if isinstance(fragment.get('deprecated'), dict):
         process_deprecation(fragment['deprecated'])
     if isinstance(fragment.get('options'), dict):
         process_options(fragment['options'])
 
 
-def tag_versions_and_dates(fragment, prefix, is_module):
-    def tag(options, option):
-        options[option] = '%s%s' % (prefix, options[option])
+def add_collection_to_versions_and_dates(fragment, collection_name, is_module):
+    def add(options, option, collection_name_field):
+        if collection_name_field not in options:
+            options[collection_name_field] = collection_name
 
-    _process_versions_and_dates(fragment, is_module, tag)
+    _process_versions_and_dates(fragment, is_module, add)
 
 
-def untag_versions_and_dates(fragment, prefix, is_module):
-    def untag(options, option):
-        v = options[option]
-        if isinstance(v, string_types):
-            v = to_native(v)
-            if v.startswith(prefix):
-                options[option] = v[len(prefix):]
+def remove_current_collection_from_versions_and_dates(fragment, collection_name, is_module):
+    def remove(options, option, collection_name_field):
+        if options.get(collection_name_field) == collection_name:
+            del options[collection_name_field]
 
-    _process_versions_and_dates(fragment, is_module, untag)
+    _process_versions_and_dates(fragment, is_module, remove)
 
 
 def add_fragments(doc, filename, fragment_loader, is_module=False):
@@ -147,7 +145,7 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
         real_fragment_name = getattr(fragment_class, '_load_name')
         if real_fragment_name.startswith('ansible_collections.'):
             real_collection_name = '.'.join(real_fragment_name.split('.')[1:3])
-        tag_versions_and_dates(fragment, '%s:' % (real_collection_name, ), is_module=is_module)
+        add_collection_to_versions_and_dates(fragment, real_collection_name, is_module=is_module)
 
         if 'notes' in fragment:
             notes = fragment.pop('notes')
@@ -195,7 +193,7 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False,
     if data.get('doc', False):
         # tag version_added
         if collection_name is not None:
-            tag_versions_and_dates(data['doc'], '%s:' % (collection_name, ), is_module=is_module)
+            add_collection_to_versions_and_dates(data['doc'], collection_name, is_module=is_module)
 
         # add fragments to documentation
         add_fragments(data['doc'], filename, fragment_loader=fragment_loader, is_module=is_module)
