@@ -42,7 +42,7 @@ class ActionModule(ActionBase):
         mod_args = dict((k, v) for k, v in mod_args.items() if v is not None)
 
         # handle module defaults
-        mod_args = get_action_args_with_defaults(fact_module, mod_args, self._task.module_defaults, self._templar)
+        mod_args = get_action_args_with_defaults(fact_module, mod_args, self._task.module_defaults, self._templar, self._task._ansible_internal_redirect_list)
 
         return mod_args
 

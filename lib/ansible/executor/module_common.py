@@ -38,7 +38,7 @@ from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredE
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader
-from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -1319,7 +1319,25 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     return (b_module_data, module_style, shebang)
 
 
-def get_action_args_with_defaults(action, args, defaults, templar):
+def get_action_args_with_defaults(action, args, defaults, templar, redirected_names=None):
+    collection_groups = {
+        'amazon.aws': 'aws',
+        'community.aws': 'aws',
+        'azure.azcollection': 'azure',
+        'wti.remote': 'cpm',
+        'community.general': 'docker',
+        'google.cloud': 'gcp',
+        'community.kubernetes': 'k8s',
+        'openstack.cloud': 'os',
+        'ovirt.ovirt': 'ovirt',
+        'community.vmware': 'vmware',
+    }
+
+    if not redirected_names:
+        redirected_names = [action]
+
+    collection_name = ''
+    resource = resolved_name = redirected_names[-1]
 
     tmp_args = {}
     module_defaults = {}
@@ -1334,9 +1352,19 @@ def get_action_args_with_defaults(action, args, defaults, templar):
         module_defaults = templar.template(module_defaults)
 
         # deal with configured group defaults first
-        if action in C.config.module_defaults_groups:
-            for group in C.config.module_defaults_groups.get(action, []):
-                tmp_args.update((module_defaults.get('group/{0}'.format(group)) or {}).copy())
+        if AnsibleCollectionRef.is_valid_fqcr(resolved_name):
+
+            collection_ref = AnsibleCollectionRef.from_fqcr(resolved_name, 'modules')
+
+            collection_name = collection_ref.collection
+            resource = collection_ref.resource
+
+            group_name = collection_groups.get(collection_name)
+            if 'group/%s' % group_name in module_defaults:
+                collection_routing = _get_collection_metadata(collection_name).get('action_groups', {})
+
+                if resolved_name in collection_routing or resource in collection_routing:
+                    tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
 
         # handle specific action defaults
         if action in module_defaults:
