@@ -9,7 +9,6 @@ import json
 import os
 import sqlite3
 import sys
-import yaml
 
 DATABASE_PATH = os.path.expanduser('~/.ansible/report.db')
 BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')) + '/'
@@ -81,7 +80,6 @@ def populate_modules():
     module_dir = os.path.join(BASE_PATH, 'lib/ansible/modules/')
 
     modules_rows = []
-    module_statuses_rows = []
 
     for root, dir_names, file_names in os.walk(module_dir):
         for file_name in file_names:
@@ -99,28 +97,14 @@ def populate_modules():
 
             result = read_docstring(path)
 
-            metadata = result['metadata']
             doc = result['doc']
-
-            if not metadata:
-                if module == 'async_wrapper':
-                    continue
-
-                raise Exception('no metadata for: %s' % path)
 
             modules_rows.append(dict(
                 module=module,
                 namespace=namespace,
                 path=path.replace(BASE_PATH, ''),
-                supported_by=metadata['supported_by'],
                 version_added=str(doc.get('version_added', '')) if doc else '',
             ))
-
-            for status in metadata['status']:
-                module_statuses_rows.append(dict(
-                    module=module,
-                    status=status,
-                ))
 
     populate_data(dict(
         modules=dict(
@@ -129,14 +113,7 @@ def populate_modules():
                 ('module', 'TEXT'),
                 ('namespace', 'TEXT'),
                 ('path', 'TEXT'),
-                ('supported_by', 'TEXT'),
                 ('version_added', 'TEXT'),
-            )),
-        module_statuses=dict(
-            rows=module_statuses_rows,
-            schema=(
-                ('module', 'TEXT'),
-                ('status', 'TEXT'),
             )),
     ))
 
