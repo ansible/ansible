@@ -641,7 +641,7 @@ class StrategyBase:
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
                         new_host_info = result_item.get('add_host', dict())
-                        self._add_host(new_host_info, iterator)
+                        self._add_host(new_host_info, result_item)
 
                     elif 'add_group' in result_item:
                         # this task added a new group (group_by module)
@@ -792,10 +792,12 @@ class StrategyBase:
 
         return ret_results
 
-    def _add_host(self, host_info, iterator):
+    def _add_host(self, host_info, result_item):
         '''
         Helper function to add a new host to inventory based on a task result.
         '''
+
+        changed = False
 
         if host_info:
             host_name = host_info.get('host_name')
@@ -804,20 +806,30 @@ class StrategyBase:
             if host_name not in self._inventory.hosts:
                 self._inventory.add_host(host_name, 'all')
                 self._hosts_cache_all.append(host_name)
+                changed = True
             new_host = self._inventory.hosts.get(host_name)
 
             # Set/update the vars for this host
-            new_host.vars = combine_vars(new_host.get_vars(), host_info.get('host_vars', dict()))
+            new_host_vars = new_host.get_vars()
+            new_host_combined_vars = combine_vars(new_host_vars, host_info.get('host_vars', dict()))
+            if new_host_vars != new_host_combined_vars:
+                new_host.vars = new_host_combined_vars
+                changed = True
 
             new_groups = host_info.get('groups', [])
             for group_name in new_groups:
                 if group_name not in self._inventory.groups:
                     group_name = self._inventory.add_group(group_name)
+                    changed = True
                 new_group = self._inventory.groups[group_name]
-                new_group.add_host(self._inventory.hosts[host_name])
+                if new_group.add_host(self._inventory.hosts[host_name]):
+                    changed = True
 
             # reconcile inventory, ensures inventory rules are followed
-            self._inventory.reconcile_inventory()
+            if changed:
+                self._inventory.reconcile_inventory()
+
+            result_item['changed'] = changed
 
     def _add_group(self, host, result_item):
         '''
