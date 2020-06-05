@@ -1,30 +1,13 @@
 #
-#  Copyright 2018 Red Hat | Ansible
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# Copyright: (c) 2018, Red Hat | Ansible
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import (absolute_import, division, print_function)
-
 __metaclass__ = type
 
-DOCUMENTATION = """
+DOCUMENTATION = r"""
     lookup: k8s
-
     version_added: "2.5"
-
     short_description: Query the K8s API
 
     description:
@@ -132,7 +115,7 @@ DOCUMENTATION = """
         additional information visit https://github.com/openshift/openshift-restclient-python"
 """
 
-EXAMPLES = """
+EXAMPLES = r"""
 - name: Fetch a list of namespaces
   set_fact:
     projects: "{{ lookup('k8s', api_version='v1', kind='Namespace') }}"
@@ -168,7 +151,7 @@ EXAMPLES = """
     service: "{{ lookup('k8s', src='service.yml') }}"
 """
 
-RETURN = """
+RETURN = r"""
   _list:
     description:
       - One ore more object definitions returned from the API.
@@ -196,12 +179,12 @@ RETURN = """
         type: complex
 """
 
+
+from ansible.errors import AnsibleError
+from ansible.module_utils.common._collections_compat import KeysView
 from ansible.plugins.lookup import LookupBase
 
 from ansible.module_utils.k8s.common import K8sAnsibleMixin
-
-from ansible.errors import AnsibleError
-
 
 try:
     from openshift.dynamic import DynamicClient
@@ -255,6 +238,8 @@ class KubernetesLookup(K8sAnsibleMixin):
         if cluster_info == 'version':
             return [self.client.version]
         if cluster_info == 'api_groups':
+            if isinstance(self.client.resources.api_groups, KeysView):
+                return [list(self.client.resources.api_groups)]
             return [self.client.resources.api_groups]
 
         self.kind = kwargs.get('kind')
