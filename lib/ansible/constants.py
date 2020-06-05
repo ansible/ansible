@@ -12,11 +12,13 @@ from ast import literal_eval
 from jinja2 import Template
 from string import ascii_letters, digits
 
+from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import Sequence
+from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
-from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
+from ansible.utils.ssh_functions import check_for_controlpersist
 
 
 def _warning(msg):
@@ -196,6 +198,19 @@ for setting in config.data.get_settings():
         value = ensure_type(value, setting.type)
 
     set_constant(setting.name, value)
+
+
+# deal with 'smart' connection .. one time ..
+if DEFAULT_TRANSPORT == 'smart':
+    # TODO: check if we can deprecate this as ssh w/o control persist should
+    # not be as common anymore.
+
+    # see if SSH can support ControlPersist if not use paramiko
+    if not check_for_controlpersist(ANSIBLE_SSH_EXECUTABLE) and paramiko is not None:
+        DEFAULT_TRANSPORT = "paramiko"
+    else:
+        DEFAULT_TRANSPORT = "ssh"
+
 
 for warn in config.WARNINGS:
     _warning(warn)
