@@ -271,11 +271,12 @@ class Display(with_metaclass(Singleton, object)):
         if collection_name == 'ansible.builtin':
             collection_name = 'ansible-base'
 
-        header = '[DEPRECATED]: {0}'.format(msg)
         if removed:
+            header = '[DEPRECATED]: {0}'.format(msg)
             removal_fragment = 'This feature was removed'
             help_text = 'Please update your playbooks.'
         else:
+            header = '[DEPRECATION WARNING]: {0}'.format(msg)
             removal_fragment = 'This feature will be removed'
             # FUTURE: make this a standalone warning so it only shows up once?
             help_text = 'Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.'
