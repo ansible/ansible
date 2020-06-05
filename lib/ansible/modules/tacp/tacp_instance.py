@@ -103,7 +103,12 @@ def run_module():
         auto_recovery_enabled=dict(type='bool', default=True, required=False),
         description=dict(type='str', required=False),
         vm_mode=dict(type='str', default='Enhanced', choices=['enhanced', 'Enhanced',
-                                                              'compatibility', 'Compatibility'])
+                                                              'compatibility', 'Compatibility']),
+        application_group={
+            'type': 'str',
+            'required': False,
+        },
+
     )
 
     # seed the result dict in the object
@@ -203,18 +208,30 @@ def run_module():
             )
             network_payloads.append(network_payload)
 
-            instance_params['boot_order'] = boot_order
-            instance_params['networks'] = network_payloads
-            instance_params['vnics'] = vnic_payloads
-            instance_params['vcpus'] = module.params['vcpu_cores']
-            instance_params['memory'] = tacp_utils.convert_memory_abbreviation_to_bytes(
-                module.params['memory'])
-            instance_params['vm_mode'] = module.params['vm_mode'].capitalize()
-            instance_params['vtx_enabled'] = module.params['vtx_enabled']
-            instance_params['auto_recovery_enabled'] = module.params['auto_recovery_enabled']
-            instance_params['description'] = module.params['description']
+        instance_params['boot_order'] = boot_order
+        instance_params['networks'] = network_payloads
+        instance_params['vnics'] = vnic_payloads
+        instance_params['vcpus'] = module.params['vcpu_cores']
+        instance_params['memory'] = tacp_utils.convert_memory_abbreviation_to_bytes(
+            module.params['memory'])
+        instance_params['vm_mode'] = module.params['vm_mode'].capitalize()
+        instance_params['vtx_enabled'] = module.params['vtx_enabled']
+        instance_params['auto_recovery_enabled'] = module.params['auto_recovery_enabled']
+        instance_params['description'] = module.params['description']
 
-            return instance_params
+        if module.params['application_group']:
+            ag_resource = tacp_utils.ApplicationGroupResource(api_client)
+            uuid = ag_resource.get_uuid_by_name(
+                module.params['application_group']
+            )
+            if uuid is None:
+                resp = ag_resource.create(module.params['application_group'],
+                                          instance_params['datacenter_uuid'])
+                uuid = resp.object_uuid
+
+            instance_params['application_group_uuid'] = uuid
+
+        return instance_params
 
     def create_instance(instance_params, api_client):
         application_resource = tacp_utils.ApplicationResource(api_client)
@@ -233,7 +250,9 @@ def run_module():
             boot_order=instance_params['boot_order'],
             hardware_assisted_virtualization_enabled=instance_params['vtx_enabled'],
             enable_automatic_recovery=instance_params['auto_recovery_enabled'],
-            description=instance_params['description'])
+            description=instance_params['description'],
+            application_group_uuid=instance_params.get('application_group_uuid')
+        )
 
         if module._verbosity >= 3:
             result['api_request_body'] = str(body)

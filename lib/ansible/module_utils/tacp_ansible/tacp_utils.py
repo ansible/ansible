@@ -182,6 +182,23 @@ class ApplicationResource(Resource):
         return power_action_dict[power_action](uuid)
 
 
+class ApplicationGroupResource(Resource):
+    resource_class = tacp.ApplicationGroupsApi
+
+    def filter(self, **filters):
+        return self.api.get_application_group_list_using_get(
+            **self.get_filters_kws(**filters)
+        )
+
+    @wait_to_complete
+    def create(self, name, datacenter_uuid):
+        return self.api.create_application_group_using_post(
+            tacp.ApiCreateApplicationGroupPayload(
+                name=name, datacenter_uuid=datacenter_uuid
+            )
+        )
+
+
 class VlanResource(Resource):
     resource_class = tacp.VlansApi
 
