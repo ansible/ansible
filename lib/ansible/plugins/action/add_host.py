@@ -43,12 +43,17 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
+        if '_raw_params' in self._task.args:
+            args = self._task.args.get('_raw_params')
+        else:
+            args = self._task.args
+
         # Parse out any hostname:port patterns
-        new_name = self._task.args.get('name', self._task.args.get('hostname', self._task.args.get('host', None)))
+        new_name = args.get('name', args.get('hostname', args.get('host', None)))
 
         if new_name is None:
             result['failed'] = True
-            result['msg'] = 'name or hostname arg needs to be provided'
+            result['msg'] = 'name, host or hostname arg needs to be provided'
             return result
 
         display.vv("creating host via 'add_host': hostname=%s" % new_name)
@@ -61,9 +66,9 @@ class ActionModule(ActionBase):
             port = None
 
         if port:
-            self._task.args['ansible_ssh_port'] = port
+            args['ansible_ssh_port'] = port
 
-        groups = self._task.args.get('groupname', self._task.args.get('groups', self._task.args.get('group', '')))
+        groups = args.get('groupname', args.get('groups', args.get('group', '')))
         # add it to the group if that was specified
         new_groups = []
         if groups:
@@ -81,9 +86,9 @@ class ActionModule(ActionBase):
         # Add any variables to the new_host
         host_vars = dict()
         special_args = frozenset(('name', 'hostname', 'groupname', 'groups'))
-        for k in self._task.args.keys():
+        for k in args.keys():
             if k not in special_args:
-                host_vars[k] = self._task.args[k]
+                host_vars[k] = args[k]
 
         result['changed'] = False
         result['add_host'] = dict(host_name=name, groups=new_groups, host_vars=host_vars)
