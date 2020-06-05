@@ -147,3 +147,13 @@
       - "'testhost01' in groups['testhostgroup']"
       - "'testhost02' in groups['testhostgroup']"
       - hostvars['testhost01']['foo'] == 'bar'
+
+- name: Give invalid input
+  add_host: namenewdynamichost groupsnewdynamicgroup a_varfromadd_host
+  ignore_errors: true
+  register: badinput
+
+- name: verify we detected bad input
+  assert:
+    that:
+      - badinput is failed
