@@ -56,7 +56,7 @@ class ActionModule(ActionBase):
         # Parse out any hostname:port patterns
         new_name = args.get('name', args.get('hostname', args.get('host', None)))
         if new_name is None:
-            raise AnsibleActionFAil('name, host or hostname needs to be provided')
+            raise AnsibleActionFail('name, host or hostname needs to be provided')
 
         display.vv("creating host via 'add_host': hostname=%s" % new_name)
 
