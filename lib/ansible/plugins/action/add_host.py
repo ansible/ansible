@@ -43,10 +43,10 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        if '_raw_params' in self._task.args:
-            args = self._task.args.get('_raw_params')
-        else:
-            args = self._task.args
+        # TODO: create 'conflict' detection in base class to deal with repeats and aliases and warn user
+        args = self._task.args
+        raw = args.pop('_raw_params', {})
+        args = combine_vars(raw, args)
 
         # Parse out any hostname:port patterns
         new_name = args.get('name', args.get('hostname', args.get('host', None)))
