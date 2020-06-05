@@ -22,9 +22,9 @@ def test_warn(am, capfd):
 @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
 def test_deprecate(am, capfd):
     am.deprecate('deprecation1')
-    am.deprecate('deprecation2', '2.3')
-    am.deprecate('deprecation3', version='2.4')
-    am.deprecate('deprecation4', date='2020-03-10')
+    am.deprecate('deprecation2', '2.3')  # pylint: disable=ansible-deprecated-no-collection-name
+    am.deprecate('deprecation3', version='2.4')  # pylint: disable=ansible-deprecated-no-collection-name
+    am.deprecate('deprecation4', date='2020-03-10')  # pylint: disable=ansible-deprecated-no-collection-name
     am.deprecate('deprecation5', collection_name='ansible.builtin')
     am.deprecate('deprecation6', '2.3', collection_name='ansible.builtin')
     am.deprecate('deprecation7', version='2.4', collection_name='ansible.builtin')
