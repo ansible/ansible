@@ -197,6 +197,5 @@ for setting in config.data.get_settings():
 
     set_constant(setting.name, value)
 
-
 for warn in config.WARNINGS:
     _warning(warn)
