@@ -2,7 +2,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 plugin_routing:
   connection:
-    # test entry
+    # test entries
     redirected_local:
       redirect: ansible.builtin.local
     buildah:

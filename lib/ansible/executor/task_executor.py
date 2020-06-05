@@ -911,7 +911,7 @@ class TaskExecutor:
 
         # load connection
         conn_type = connection_name
-        connection = self._shared_loader_obj.connection_loader.get(
+        connection, plugin_load_context = self._shared_loader_obj.connection_loader.get_with_context(
             conn_type,
             self._play_context,
             self._new_stdin,
