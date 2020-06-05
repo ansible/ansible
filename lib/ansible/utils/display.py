@@ -263,7 +263,7 @@ class Display(with_metaclass(Singleton, object)):
                 collection_name = parts[0]
 
         if version and isinstance(version, string_types):
-            parts = to_native(version.strip()).split(':')
+            parts = to_native(version.strip()).split(':', 1)
             version = parts[-1]
             if len(parts) == 2 and not collection_name:
                 collection_name = parts[0]
