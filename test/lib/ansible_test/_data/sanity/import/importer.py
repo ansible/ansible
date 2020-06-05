@@ -11,6 +11,7 @@ def main():
     """
     import ansible
     import contextlib
+    import datetime
     import json
     import os
     import re
@@ -42,12 +43,30 @@ def main():
 
     if collection_full_name:
         # allow importing code from collections when testing a collection
-        from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
+        from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native, text_type
         from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
         from ansible.utils.collection_loader import _collection_finder
 
         yaml_to_json_path = os.path.join(os.path.dirname(__file__), 'yaml_to_json.py')
         yaml_to_dict_cache = {}
+
+        # unique ISO date marker matching the one present in yaml_to_json.py
+        iso_date_marker = 'isodate:f23983df-f3df-453c-9904-bcd08af468cc:'
+        iso_date_re = re.compile('^%s([0-9]{4})-([0-9]{2})-([0-9]{2})$' % iso_date_marker)
+
+        def parse_value(value):
+            """Custom value parser for JSON deserialization that recognizes our internal ISO date format."""
+            if isinstance(value, text_type):
+                match = iso_date_re.search(value)
+
+                if match:
+                    value = datetime.date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
+
+            return value
+
+        def object_hook(data):
+            """Object hook for custom ISO date deserialization from JSON."""
+            return dict((key, parse_value(value)) for key, value in data.items())
 
         def yaml_to_dict(yaml, content_id):
             """
@@ -65,7 +84,7 @@ def main():
                 if proc.returncode != 0:
                     raise Exception('command %s failed with return code %d: %s' % ([to_native(c) for c in cmd], proc.returncode, to_native(stderr_bytes)))
 
-                data = yaml_to_dict_cache[content_id] = json.loads(to_text(stdout_bytes))
+                data = yaml_to_dict_cache[content_id] = json.loads(to_text(stdout_bytes), object_hook=object_hook)
 
                 return data
             except Exception as ex:
