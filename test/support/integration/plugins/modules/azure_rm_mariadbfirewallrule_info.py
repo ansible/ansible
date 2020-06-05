@@ -142,7 +142,7 @@ class AzureRMMariaDbFirewallRuleInfo(AzureRMModuleBase):
         is_old_facts = self.module._name == 'azure_rm_mariadbfirewallrule_facts'
         if is_old_facts:
             self.module.deprecate("The 'azure_rm_mariadbfirewallrule_facts' module has been renamed to 'azure_rm_mariadbfirewallrule_info'",
-                                  version='ansible.builtin:2.13')
+                                  version='2.13', collection_name='ansible.builtin')
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])

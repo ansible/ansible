@@ -1141,7 +1141,7 @@ test_no_log - Invoked with:
 
     "Deprecate and warn with version" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        $m.Deprecate("message", "2.8")
+        $m.Deprecate("message", "2.8", "ansible.bulitin")
         $actual_deprecate_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
         $m.Warn("warning")
         $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
@@ -1166,14 +1166,14 @@ test_no_log - Invoked with:
                 module_args = @{}
             }
             warnings = @("warning")
-            deprecations = @(@{msg = "message"; version = "2.8"})
+            deprecations = @(@{msg = "message"; version = "2.8"' collection_name = "ansible.builtin"})
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }
 
     "Deprecate and warn with date" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        $m.Deprecate("message", [DateTime]"2020-01-02")
+        $m.Deprecate("message", [DateTime]"2020-01-02", "ansible.builtin")
         $actual_deprecate_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
         $m.Warn("warning")
         $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
@@ -1198,7 +1198,7 @@ test_no_log - Invoked with:
                 module_args = @{}
             }
             warnings = @("warning")
-            deprecations = @(@{msg = "message"; date = "2020-01-02"})
+            deprecations = @(@{msg = "message"; date = "2020-01-02", collection_name = "ansible.builtin"})
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }

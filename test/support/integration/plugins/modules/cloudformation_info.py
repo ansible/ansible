@@ -302,7 +302,8 @@ def main():
     is_old_facts = module._name == 'cloudformation_facts'
     if is_old_facts:
         module.deprecate("The 'cloudformation_facts' module has been renamed to 'cloudformation_info', "
-                         "and the renamed one no longer returns ansible_facts", version='ansible.builtin:2.13')
+                         "and the renamed one no longer returns ansible_facts",
+                         version='2.13', collection_name='ansible.builtin')
 
     service_mgr = CloudFormationServiceManager(module)
 
