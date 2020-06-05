@@ -3,10 +3,6 @@
 plugin_routing:
   connection:
     # test entries
-    telnet:
-      tombstone:
-        removal_version: 0.1
-        warning_text: What are you kidding me? Use something secure FFS!
     redirected_local:
       redirect: ansible.builtin.local
     redirected_missing_valid_ns:
@@ -17,7 +13,7 @@ plugin_routing:
       redirect: bogusns.boguscoll.bogusconn
     redirect_to_removed:
       redirect: ansible.builtin.removedconn
-    removedconn:
+    removed_conn:
       tombstone:
         removal_date: 2020-05-01
     buildah:

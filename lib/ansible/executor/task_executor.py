@@ -920,8 +920,6 @@ class TaskExecutor:
         )
 
         if not connection:
-            print(plugin_load_context.redirect_list)
-            print(plugin_load_context.resolved)
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
         # load become plugin if needed
