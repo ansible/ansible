@@ -142,7 +142,7 @@ class PluginLoadContext(object):
         if not warning_text:
             warning_text = '{0} has been deprecated'.format(name)
 
-        display.deprecated(warning_text, date=removal_date, version=removal_version)
+        display.deprecated(warning_text, date=removal_date, version=removal_version, collection_name=collection_name)
 
         self.deprecated = True
         if removal_date:

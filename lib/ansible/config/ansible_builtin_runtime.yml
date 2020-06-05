@@ -5,17 +5,6 @@ plugin_routing:
     # test entries
     redirected_local:
       redirect: ansible.builtin.local
-    redirected_missing_valid_ns:
-      redirect: testns.boguscoll.bogusconn
-    redirected_missing_valid_coll:
-      redirect: testns.testcoll.bogusconn
-    redirected_missing:
-      redirect: bogusns.boguscoll.bogusconn
-    redirect_to_removed:
-      redirect: ansible.builtin.removedconn
-    removed_conn:
-      tombstone:
-        removal_date: 2020-05-01
     buildah:
       redirect: containers.podman.buildah
     podman:
@@ -64,15 +53,6 @@ plugin_routing:
     # test entry
     formerly_core_ping:
       redirect: testns.testcoll.ping
-    formerly_core_missing:
-      redirect: bogusns.boguscoll.bogusmod
-    formerly_core_missing_with_valid_ns:
-      redirect: testns.boguscoll.bogusmod
-    formerly_core_missing_with_valid_coll:
-      redirect: testns.testcoll.bogusmod
-    formerly_core_removed:
-      tombstone:
-        removal_version: 1.2.3
     # test entry
     uses_redirected_action:
       redirect: ansible.builtin.ping
@@ -8548,17 +8528,7 @@ plugin_routing:
   filter:
     # test entries
     formerly_core_filter:
-      deprecation:
-        removal_date: '2021-01-01'
       redirect: ansible.builtin.bool
-    formerly_core_missing_filter:
-      deprecation:
-        removal_date: '2021-01-01'
-      redirect: bogus.coll.notafilter
-    formerly_core_removed_filter:
-      tombstone:
-        removal_date: '2021-01-01'
-        removal_version: '1.2.3'
     formerly_core_masked_filter:
       redirect: ansible.builtin.bool
     gcp_kms_encrypt:

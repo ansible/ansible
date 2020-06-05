@@ -391,7 +391,7 @@ class JinjaPluginIntercept(MutableMapping):
                 if not warning_text:
                     warning_text = '{0} "{1}" is deprecated'.format(self._dirname, key)
 
-                display.deprecated(warning_text, version=removal_version, date=removal_date)
+                display.deprecated(warning_text, version=removal_version, date=removal_date, collection_name=acr.collection)
 
             tombstone_entry = routing_entry.get('tombstone')
 
@@ -403,7 +403,8 @@ class JinjaPluginIntercept(MutableMapping):
                 if not warning_text:
                     warning_text = '{0} "{1}" has been removed'.format(self._dirname, key)
 
-                exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date, removed=True)
+                exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
+                                                          collection_name=acr.collection, removed=True)
 
                 raise AnsiblePluginRemovedError(exc_msg)
 
