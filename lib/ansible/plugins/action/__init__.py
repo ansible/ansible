@@ -306,8 +306,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             is_enabled = self._play_context.pipelining
 
         # winrm supports async pipeline
-        # TODO: make other class property 'has_async_pipelining', default False
-        always_pipeline =  self._connection.always_pipeline_modules or self._connection.always_pipeline_modules
+        # TODO: make other class property 'has_async_pipelining' to separate cases
+        always_pipeline =  self._connection.always_pipeline_modules
 
         # su does not work with pipelining
         # TODO: add has_pipelining class prop to become plugins
@@ -316,7 +316,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # any of these require a true
         conditions =  [
             self._connection.has_pipelining,   # connection class supports it
-            is_enabled,                        # enabled via config
+            is_enabled or always_pipeline,     # enabled via config or forced via connection (eg winrm)
             module_style == "new",             # old style modules do not support pipelining
             not C.DEFAULT_KEEP_REMOTE_FILES,   # user wants remote files
             not wrap_async or always_pipeline, # async does not normally support pipelining unless it does (eg winrm)
