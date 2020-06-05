@@ -1,0 +1,2 @@
+bugfixes:
+  - Clear all connection related settings for the next loop iteration (https://github.com/ansible/ansible/issues/58787)

@@ -96,6 +96,8 @@ class BecomeModule(BecomeBase):
             if flags:  # this could be simplified, but kept as is for now for backwards string matching
                 flags = flags.replace('-n', '')
             prompt = '-p "%s"' % (self.prompt)
+        else:
+            self.prompt = ''
 
         user = self.get_option('become_user') or ''
         if user:
