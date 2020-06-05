@@ -19,7 +19,7 @@ DOCUMENTATION = """
 """
 
 EXAMPLES = """
-- debug: msg="the value of foo.txt is {{lookup('vault', '/etc/foo.txt')|to_string }}"
+- debug: msg="the value of foo.txt is {{lookup('unvault', '/etc/foo.txt')|to_string }}"
 """
 
 RETURN = """
