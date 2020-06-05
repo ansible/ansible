@@ -252,7 +252,7 @@ class Display(with_metaclass(Singleton, object)):
     def get_deprecation_message(self, msg, version=None, removed=False, date=None, collection_name=None):
         ''' used to print out a deprecation message.'''
         msg = msg.strip()
-        if msg[-1] not in ['!', '?', '.']:
+        if msg and msg[-1] not in ['!', '?', '.']:
             msg += '.'
 
         # split composite collection info (if any) off date/version and use it if not otherwise spec'd
