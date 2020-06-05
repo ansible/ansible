@@ -21,7 +21,7 @@ ANSIBLE_METADATA = {
 
 DOCUMENTATION = '''
 ---
-module: tacp_instance
+module: tacp_info
 
 short_description: This is my test module
 
@@ -156,7 +156,7 @@ def run_module():
 
     resource = resource_dict[module.params['resource']](api_client)
 
-    all_resources = resource.get_all()
+    all_resources = resource.filter()
 
     if module.params['resource'] == 'migration_zone':
         for resource in all_resources:
@@ -177,6 +177,8 @@ def run_module():
                     for datacenter in resource['allocations']['datacenters']:
                         datacenter['name'] = datacenterResource.get_by_uuid(datacenter['datacenter_uuid'])[
                             'name']
+    
+
     result[module.params['resource']] = all_resources
     
 
