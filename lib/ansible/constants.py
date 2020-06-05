@@ -206,7 +206,7 @@ if DEFAULT_TRANSPORT == 'smart':
     # not be as common anymore.
 
     # see if SSH can support ControlPersist if not use paramiko
-    if not check_for_controlpersist(ANSIBLE_SSH_EXECUTABLE) and paramiko is not None:
+    if not check_for_controlpersist(ANSIBLE_SSH_EXECUTABLE) and paramiko is not None:  # pylint: disable=undefined-variable
         DEFAULT_TRANSPORT = "paramiko"
     else:
         DEFAULT_TRANSPORT = "ssh"
