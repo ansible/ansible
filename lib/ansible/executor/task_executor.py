@@ -414,6 +414,8 @@ class TaskExecutor:
             results.append(res)
             del task_vars[loop_var]
 
+            # needed for winrm/pspr before clearing the connection
+            self._connection.close()
             # clear the connection for the next iteration that may have different options set
             self._connection = None
 
