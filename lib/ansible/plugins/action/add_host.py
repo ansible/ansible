@@ -20,11 +20,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleActionFail
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
 from ansible.parsing.utils.addresses import parse_address
 from ansible.utils.display import Display
+from ansible.utils.vars import combine_vars
 
 display = Display()
 
@@ -43,10 +45,13 @@ class ActionModule(ActionBase):
         result = super(ActionModule, self).run(tmp, task_vars)
         del tmp  # tmp no longer has any effect
 
-        # TODO: create 'conflict' detection in base class to deal with repeats and aliases and warn user
         args = self._task.args
         raw = args.pop('_raw_params', {})
-        args = combine_vars(raw, args)
+        if isinstance(raw, Mapping):
+            # TODO: create 'conflict' detection in base class to deal with repeats and aliases and warn user
+            args = combine_vars(raw, args)
+        else:
+            raise AnsibleActionFail('Invalid raw parameters passed, requires a dictonary/mapping got a  %s' % type(raw))
 
         # Parse out any hostname:port patterns
         new_name = args.get('name', args.get('hostname', args.get('host', None)))
@@ -77,7 +82,7 @@ class ActionModule(ActionBase):
             elif isinstance(groups, string_types):
                 group_list = groups.split(",")
             else:
-                raise AnsibleError("Groups must be specified as a list.", obj=self._task)
+                raise AnsibleActionFail("Groups must be specified as a list.", obj=self._task)
 
             for group_name in group_list:
                 if group_name not in new_groups:
