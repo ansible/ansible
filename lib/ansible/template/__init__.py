@@ -862,9 +862,6 @@ class Templar:
 
         If using ANSIBLE_JINJA2_NATIVE we bypass this and return the actual value always
         '''
-        if USE_JINJA2_NATIVE:
-            return thing
-
         if _is_rolled(thing):
             # Auto unroll a generator, so that users are not required to
             # explicitly use ``|list`` to unroll
@@ -873,6 +870,9 @@ class Templar:
             # of a template. See ``_unroll_iterator`` for the other case. This is probably
             # unncessary
             return list(thing)
+
+        if USE_JINJA2_NATIVE:
+            return thing
 
         return thing if thing is not None else ''
 
