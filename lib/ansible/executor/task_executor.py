@@ -487,7 +487,7 @@ class TaskExecutor:
                                 'Invoking "%s" only once while using a loop via squash_actions is deprecated. '
                                 'Instead of using a loop to supply multiple items and specifying `%s: "%s"`, '
                                 'please use `%s: %s` and remove the loop' % (self._task.action, found, name, found, value_text),
-                                version='ansible.builtin:2.11'
+                                version='2.11', collection_name='ansible.builtin'
                             )
                             for item in items:
                                 variables[loop_var] = item
