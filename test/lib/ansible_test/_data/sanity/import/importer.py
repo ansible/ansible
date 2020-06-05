@@ -75,10 +75,9 @@ def main():
 
         collection_loader = _AnsibleCollectionFinder(paths=[collection_root])
         collection_loader._install()  # pylint: disable=protected-access
-        nuke_modules = list(m for m in sys.modules if m.partition('.')[0] == 'ansible')
 
-        for m in nuke_modules:
-            sys.modules.pop(m)
+        # remove all modules under the ansible package
+        list(map(sys.modules.pop, (m for m in sys.modules if m.partition('.')[0] == 'ansible')))
 
     else:
         # do not support collection loading when not testing a collection
