@@ -177,7 +177,25 @@ def run_module():
                     for datacenter in resource['allocations']['datacenters']:
                         datacenter['name'] = datacenterResource.get_by_uuid(datacenter['datacenter_uuid'])[
                             'name']
-    
+    elif module.params['resource'] == 'datacenter':
+        for resource in all_resources:
+            if 'networks' in resource:
+                vnetResource = tacp_utils.VnetResource(api_client)
+                vlanResource = tacp_utils.VlanResource(api_client)
+                for network in resource['networks']:
+                    try:
+                        network['name'] = vnetResource.get_by_uuid(network['uuid'])['name']
+                        network['network_type'] = 'vnet'
+
+                    except Exception:
+                        network['name'] = vlanResource.get_by_uuid(network['uuid'])[
+                            'name']
+                        network['network_type'] = 'vlan'
+                        
+            if 'tags' in resource:
+                tagResource = tacp_utils.TagResource(api_client)
+                for tag in resource['tags']:
+                    tag['name'] = tagResource.get_by_uuid(tag['uuid'])['name']
 
     result[module.params['resource']] = all_resources
     
