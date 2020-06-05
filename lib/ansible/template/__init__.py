@@ -42,7 +42,7 @@ from jinja2.loaders import FileSystemLoader
 from jinja2.runtime import Context, StrictUndefined
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable, AnsibleAssertionError
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsiblePluginRemovedError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils.six import iteritems, string_types, text_type
 from ansible.module_utils._text import to_native, to_text, to_bytes
 from ansible.module_utils.common._collections_compat import Sequence, Mapping, MutableMapping
@@ -364,26 +364,61 @@ class JinjaPluginIntercept(MutableMapping):
                 if func:
                     return func
 
-                ts = _get_collection_metadata('ansible.builtin')
-
-                # TODO: implement support for collection-backed redirect (currently only builtin)
-                # TODO: implement cycle detection (unified across collection redir as well)
-                redirect_fqcr = ts.get('plugin_routing', {}).get(self._dirname, {}).get(key, {}).get('redirect', None)
-                if redirect_fqcr:
-                    acr = AnsibleCollectionRef.from_fqcr(ref=redirect_fqcr, ref_type=self._dirname)
-                    display.vvv('redirecting {0} {1} to {2}.{3}'.format(self._dirname, key, acr.collection, acr.resource))
-                    key = redirect_fqcr
-                # TODO: handle recursive forwarding (not necessary for builtin, but definitely for further collection redirs)
-
-            func = self._collection_jinja_func_cache.get(key)
-
-            if func:
-                return func
+                # didn't find it in the pre-built Jinja env, assume it's a former builtin and follow the normal routing path
+                leaf_key = key
+                key = 'ansible.builtin.' + key
+            else:
+                leaf_key = key.split('.')[-1]
 
             acr = AnsibleCollectionRef.try_parse_fqcr(key, self._dirname)
 
             if not acr:
                 raise KeyError('invalid plugin name: {0}'.format(key))
+
+            ts = _get_collection_metadata(acr.collection)
+
+            # TODO: implement support for collection-backed redirect (currently only builtin)
+            # TODO: implement cycle detection (unified across collection redir as well)
+
+            routing_entry = ts.get('plugin_routing', {}).get(self._dirname, {}).get(leaf_key, {})
+
+            deprecation_entry = routing_entry.get('deprecation')
+            if deprecation_entry:
+                warning_text = deprecation_entry.get('warning_text')
+                removal_date = deprecation_entry.get('removal_date')
+                removal_version = deprecation_entry.get('removal_version')
+
+                if not warning_text:
+                    warning_text = '{0} "{1}" is deprecated'.format(self._dirname, key)
+
+                display.deprecated(warning_text, version=removal_version, date=removal_date, collection_name=acr.collection)
+
+            tombstone_entry = routing_entry.get('tombstone')
+
+            if tombstone_entry:
+                warning_text = tombstone_entry.get('warning_text')
+                removal_date = tombstone_entry.get('removal_date')
+                removal_version = tombstone_entry.get('removal_version')
+
+                if not warning_text:
+                    warning_text = '{0} "{1}" has been removed'.format(self._dirname, key)
+
+                exc_msg = display.get_deprecation_message(warning_text, version=removal_version, date=removal_date,
+                                                          collection_name=acr.collection, removed=True)
+
+                raise AnsiblePluginRemovedError(exc_msg)
+
+            redirect_fqcr = routing_entry.get('redirect', None)
+            if redirect_fqcr:
+                acr = AnsibleCollectionRef.from_fqcr(ref=redirect_fqcr, ref_type=self._dirname)
+                display.vvv('redirecting {0} {1} to {2}.{3}'.format(self._dirname, key, acr.collection, acr.resource))
+                key = redirect_fqcr
+            # TODO: handle recursive forwarding (not necessary for builtin, but definitely for further collection redirs)
+
+            func = self._collection_jinja_func_cache.get(key)
+
+            if func:
+                return func
 
             try:
                 pkg = import_module(acr.n_python_package_name)
@@ -415,12 +450,14 @@ class JinjaPluginIntercept(MutableMapping):
 
             function_impl = self._collection_jinja_func_cache[key]
             return function_impl
+        except AnsiblePluginRemovedError as apre:
+            raise TemplateSyntaxError(to_native(apre), 0)
         except KeyError:
             raise
         except Exception as ex:
             display.warning('an unexpected error occurred during Jinja2 environment setup: {0}'.format(to_native(ex)))
             display.vvv('exception during Jinja2 environment setup: {0}'.format(format_exc()))
-            raise
+            raise TemplateSyntaxError(to_native(ex), 0)
 
     def __setitem__(self, key, value):
         return self._delegatee.__setitem__(key, value)

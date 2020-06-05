@@ -552,7 +552,8 @@ class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
         return path_list
 
     def _get_subpackage_search_paths(self, candidate_paths):
-        collection_meta = _get_collection_metadata('.'.join(self._split_name[1:3]))
+        collection_name = '.'.join(self._split_name[1:3])
+        collection_meta = _get_collection_metadata(collection_name)
 
         # check for explicit redirection, as well as ancestor package-level redirection (only load the actual code once!)
         redirect = None
@@ -578,7 +579,6 @@ class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
             self._redirect_module = import_module(redirect)
             if explicit_redirect and hasattr(self._redirect_module, '__path__') and self._redirect_module.__path__:
                 # if the import target looks like a package, store its name so we can rewrite future descendent loads
-                # FIXME: shouldn't this be in a shared location? This is currently per loader instance, so
                 self._redirected_package_map[self._fullname] = redirect
 
             # if we redirected, don't do any further custom package logic

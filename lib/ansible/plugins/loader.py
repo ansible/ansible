@@ -13,10 +13,10 @@ import os.path
 import sys
 import warnings
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemoved, AnsibleCollectionUnsupportedVersionError
+from ansible.errors import AnsibleError, AnsiblePluginCircularRedirect, AnsiblePluginRemovedError, AnsibleCollectionUnsupportedVersionError
 from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.module_utils.compat.importlib import import_module
 from ansible.module_utils.six import string_types
@@ -52,7 +52,7 @@ except ImportError:
 
 display = Display()
 
-_tombstones = None
+get_with_context_result = namedtuple('get_with_context_result', ['object', 'plugin_load_context'])
 
 
 def get_all_plugin_loaders():
@@ -140,15 +140,9 @@ class PluginLoadContext(object):
         if removal_date is not None:
             removal_version = None
         if not warning_text:
-            if removal_date:
-                warning_text = '{0} has been deprecated and will be removed in a release of {2} after {1}'.format(
-                    name, removal_date, collection_name)
-            elif removal_version:
-                warning_text = '{0} has been deprecated and will be removed in version {1} of {2}'.format(
-                    name, removal_version, collection_name)
-            else:
-                warning_text = '{0} has been deprecated and will be removed in a future release of {2}'.format(
-                    name, collection_name)
+            warning_text = '{0} has been deprecated'.format(name)
+
+        display.deprecated(warning_text, date=removal_date, version=removal_version, collection_name=collection_name)
 
         self.deprecated = True
         if removal_date:
@@ -450,22 +444,19 @@ class PluginLoader:
 
             tombstone = routing_metadata.get('tombstone', None)
 
+            # FIXME: clean up text gen
             if tombstone:
-                redirect = tombstone.get('redirect', None)
                 removal_date = tombstone.get('removal_date')
                 removal_version = tombstone.get('removal_version')
-                if removal_date:
-                    removed_msg = '{0} was removed from {2} on {1}'.format(fq_name, removal_date, acr.collection)
-                    removal_version = None
-                elif removal_version:
-                    removed_msg = '{0} was removed in version {1} of {2}'.format(fq_name, removal_version, acr.collection)
-                else:
-                    removed_msg = '{0} was removed in a previous release of {1}'.format(fq_name, acr.collection)
+                warning_text = tombstone.get('warning_text') or '{0} has been removed.'.format(fq_name)
+                removed_msg = display.get_deprecation_message(msg=warning_text, version=removal_version,
+                                                              date=removal_date, removed=True,
+                                                              collection_name=acr.collection)
                 plugin_load_context.removal_date = removal_date
                 plugin_load_context.removal_version = removal_version
                 plugin_load_context.resolved = True
                 plugin_load_context.exit_reason = removed_msg
-                return plugin_load_context
+                raise AnsiblePluginRemovedError(removed_msg, plugin_load_context=plugin_load_context)
 
             redirect = routing_metadata.get('redirect', None)
 
@@ -545,10 +536,11 @@ class PluginLoader:
 
         # TODO: display/return import_error_list? Only useful for forensics...
 
-        if plugin_load_context.deprecated and C.config.get_config_value('DEPRECATION_WARNINGS'):
-            for dw in plugin_load_context.deprecation_warnings:
-                # TODO: need to smuggle these to the controller if we're in a worker context
-                display.warning('[DEPRECATION WARNING] ' + dw)
+        # FIXME: store structured deprecation data in PluginLoadContext and use display.deprecate
+        # if plugin_load_context.deprecated and C.config.get_config_value('DEPRECATION_WARNINGS'):
+        #     for dw in plugin_load_context.deprecation_warnings:
+        #         # TODO: need to smuggle these to the controller if we're in a worker context
+        #         display.warning('[DEPRECATION WARNING] ' + dw)
 
         return plugin_load_context
 
@@ -597,7 +589,7 @@ class PluginLoader:
                         plugin_load_context = self._find_fq_plugin(candidate_name, suffix, plugin_load_context=plugin_load_context)
                     if plugin_load_context.resolved or plugin_load_context.pending_redirect:  # if we got an answer or need to chase down a redirect, return
                         return plugin_load_context
-                except (AnsiblePluginRemoved, AnsiblePluginCircularRedirect, AnsibleCollectionUnsupportedVersionError):
+                except (AnsiblePluginRemovedError, AnsiblePluginCircularRedirect, AnsibleCollectionUnsupportedVersionError):
                     # these are generally fatal, let them fly
                     raise
                 except ImportError as ie:
@@ -757,6 +749,9 @@ class PluginLoader:
         setattr(obj, '_redirected_names', redirected_names or [])
 
     def get(self, name, *args, **kwargs):
+        return self.get_with_context(name, *args, **kwargs).object
+
+    def get_with_context(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
         found_in_cache = True
@@ -767,7 +762,7 @@ class PluginLoader:
         plugin_load_context = self.find_plugin_with_context(name, collection_list=collection_list)
         if not plugin_load_context.resolved or not plugin_load_context.plugin_resolved_path:
             # FIXME: this is probably an error (eg removed plugin)
-            return None
+            return get_with_context_result(None, plugin_load_context)
 
         name = plugin_load_context.plugin_resolved_name
         path = plugin_load_context.plugin_resolved_path
@@ -787,9 +782,9 @@ class PluginLoader:
             try:
                 plugin_class = getattr(module, self.base_class)
             except AttributeError:
-                return None
+                return get_with_context_result(None, plugin_load_context)
             if not issubclass(obj, plugin_class):
-                return None
+                return get_with_context_result(None, plugin_load_context)
 
         # FIXME: update this to use the load context
         self._display_plugin_load(self.class_name, name, self._searched_paths, path, found_in_cache=found_in_cache, class_only=class_only)
@@ -806,11 +801,11 @@ class PluginLoader:
                 if "abstract" in e.args[0]:
                     # Abstract Base Class.  The found plugin file does not
                     # fully implement the defined interface.
-                    return None
+                    return get_with_context_result(None, plugin_load_context)
                 raise
 
         self._update_object(obj, name, path, redirected_names)
-        return obj
+        return get_with_context_result(obj, plugin_load_context)
 
     def _display_plugin_load(self, class_name, name, searched_paths, path, found_in_cache=None, class_only=None):
         ''' formats data to display debug info for plugin loading, also avoids processing unless really needed '''

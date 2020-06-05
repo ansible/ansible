@@ -18,7 +18,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import datetime
 import errno
 import fcntl
 import getpass
@@ -26,7 +25,6 @@ import locale
 import logging
 import os
 import random
-import re
 import subprocess
 import sys
 import textwrap
@@ -49,9 +47,6 @@ try:
 except NameError:
     # Python 3, we already have raw_input
     pass
-
-
-TAGGED_VERSION_RE = re.compile('^([^.]+.[^.]+):(.*)$')
 
 
 class FilterBlackList(logging.Filter):
@@ -254,54 +249,69 @@ class Display(with_metaclass(Singleton, object)):
             else:
                 self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
-    def deprecated(self, msg, version=None, removed=False, date=None):
+    def get_deprecation_message(self, msg, version=None, removed=False, date=None, collection_name=None):
         ''' used to print out a deprecation message.'''
+        msg = msg.strip()
+        if msg and msg[-1] not in ['!', '?', '.']:
+            msg += '.'
 
+        # split composite collection info (if any) off date/version and use it if not otherwise spec'd
+        if date and isinstance(date, string_types):
+            parts = to_native(date.strip()).split(':', 1)
+            date = parts[-1]
+            if len(parts) == 2 and not collection_name:
+                collection_name = parts[0]
+
+        if version and isinstance(version, string_types):
+            parts = to_native(version.strip()).split(':', 1)
+            version = parts[-1]
+            if len(parts) == 2 and not collection_name:
+                collection_name = parts[0]
+
+        if collection_name == 'ansible.builtin':
+            collection_name = 'ansible-base'
+
+        if removed:
+            header = '[DEPRECATED]: {0}'.format(msg)
+            removal_fragment = 'This feature was removed'
+            help_text = 'Please update your playbooks.'
+        else:
+            header = '[DEPRECATION WARNING]: {0}'.format(msg)
+            removal_fragment = 'This feature will be removed'
+            # FUTURE: make this a standalone warning so it only shows up once?
+            help_text = 'Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.'
+
+        if collection_name:
+            from_fragment = 'from {0}'.format(collection_name)
+        else:
+            from_fragment = ''
+
+        if date:
+            when = 'in a release after {0}.'.format(date)
+        elif version:
+            when = 'in version {0}.'.format(version)
+        else:
+            when = 'in a future release.'
+
+        message_text = ' '.join(f for f in [header, removal_fragment, from_fragment, when, help_text] if f)
+
+        return message_text
+
+    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
-        if not removed:
-            if date:
-                m = None
-                if isinstance(date, string_types):
-                    version = to_native(date)
-                    m = TAGGED_VERSION_RE.match(date)
-                if m:
-                    collection = m.group(1)
-                    date = m.group(2)
-                    if collection == 'ansible.builtin':
-                        collection = 'Ansible-base'
-                    new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a release of %s after %s." % (
-                        msg, collection, date)
-                else:
-                    new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a release after %s." % (
-                        msg, date)
-            elif version:
-                m = None
-                if isinstance(version, string_types):
-                    version = to_native(version)
-                    m = TAGGED_VERSION_RE.match(version)
-                if m:
-                    collection = m.group(1)
-                    version = m.group(2)
-                    if collection == 'ansible.builtin':
-                        collection = 'Ansible-base'
-                    new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s of %s." % (msg, version,
-                                                                                                                collection)
-                else:
-                    new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
-            else:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
-            new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
-        else:
-            raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
+        message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
 
-        wrapped = textwrap.wrap(new_msg, self.columns, drop_whitespace=False)
-        new_msg = "\n".join(wrapped) + "\n"
+        if removed:
+            raise AnsibleError(message_text)
 
-        if new_msg not in self._deprecations:
-            self.display(new_msg.strip(), color=C.COLOR_DEPRECATE, stderr=True)
-            self._deprecations[new_msg] = 1
+        wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
+        message_text = "\n".join(wrapped) + "\n"
+
+        if message_text not in self._deprecations:
+            self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
+            self._deprecations[message_text] = 1
 
     def warning(self, msg, formatted=False):
 
