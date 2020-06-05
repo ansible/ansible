@@ -257,7 +257,7 @@ class Display(with_metaclass(Singleton, object)):
 
         # split composite collection info (if any) off date/version and use it if not otherwise spec'd
         if date and isinstance(date, string_types):
-            parts = to_native(date.strip()).split(':')
+            parts = to_native(date.strip()).split(':', 1)
             date = parts[-1]
             if len(parts) == 2 and not collection_name:
                 collection_name = parts[0]
