@@ -6,16 +6,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import datetime
 import re
-
-from functools import partial
 
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
-from ansible.utils.version import SemanticVersion
-from distutils.version import StrictVersion
 
 from .utils import parse_isodate
 
@@ -37,31 +32,6 @@ def _add_ansible_error_code(exception, error_code):
     return exception
 
 
-def semantic_version(v, error_code=None):
-    if not isinstance(v, string_types):
-        raise _add_ansible_error_code(Invalid('Semantic version must be a string'), error_code or 'collection-invalid-version')
-    if not v:
-        raise _add_ansible_error_code(
-            Invalid('Empty string is not a valid semantic version'),
-            error_code or 'collection-invalid-version')
-    try:
-        SemanticVersion(v)
-    except ValueError as e:
-        raise _add_ansible_error_code(Invalid(str(e)), error_code or 'collection-invalid-version')
-    return v
-
-
-def ansible_version(v, error_code=None):
-    # Assumes argument is a string or float
-    if 'historical' == v:
-        return v
-    try:
-        StrictVersion(str(v))
-    except ValueError as e:
-        raise _add_ansible_error_code(Invalid(str(e)), error_code or 'ansible-invalid-version')
-    return v
-
-
 def isodate(v, error_code=None):
     try:
         parse_isodate(v)
@@ -70,50 +40,29 @@ def isodate(v, error_code=None):
     return v
 
 
-TAGGED_VERSION_RE = re.compile('^([^.]+.[^.]+):(.*)$')
+COLLECTION_NAME_RE = re.compile('^([^.]+.[^.]+)$')
 
 
-def tagged_version(v, error_code=None):
+def collection_name(v, error_code=None):
     if not isinstance(v, string_types):
-        # Should never happen to versions tagged by code
-        raise _add_ansible_error_code(Invalid('Tagged version must be a string'), 'invalid-tagged-version')
-    m = TAGGED_VERSION_RE.match(v)
+        raise _add_ansible_error_code(
+            Invalid('Collection name must be a string'), error_code or 'collection-invalid-name')
+    m = COLLECTION_NAME_RE.match(v)
     if not m:
-        # Should never happen to versions tagged by code
-        raise _add_ansible_error_code(Invalid('Tagged version does not match format'), 'invalid-tagged-version')
-    collection = m.group(1)
-    version = m.group(2)
-    if collection != 'ansible.builtin':
-        semantic_version(version, error_code=error_code)
-    else:
-        ansible_version(version, error_code=error_code)
+        raise _add_ansible_error_code(
+            Invalid('Collection name must be of format `<namespace>.<name>`'), error_code or 'collection-invalid-name')
     return v
 
 
-def tagged_isodate(v, error_code=None):
-    if not isinstance(v, string_types):
-        # Should never happen to dates tagged by code
-        raise _add_ansible_error_code(Invalid('Tagged date must be a string'), 'invalid-tagged-date')
-    m = TAGGED_VERSION_RE.match(v)
-    if not m:
-        # Should never happen to dates tagged by code
-        raise _add_ansible_error_code(Invalid('Tagged date does not match format'), 'invalid-tagged-date')
-    isodate(m.group(2), error_code=error_code)
-    return v
-
-
-def version(for_collection=False, tagged='never', error_code=None):
-    if tagged == 'always':
-        return Any(partial(tagged_version, error_code=error_code))
+def version(for_collection=False):
     if for_collection:
-        return Any(partial(semantic_version, error_code=error_code))
-    return All(Any(float, *string_types), partial(ansible_version, error_code=error_code))
+        # We do not accept floats for versions in collections
+        return Any(*string_types)
+    return Any(float, *string_types)
 
 
-def date(tagged='never', error_code=None):
-    if tagged == 'always':
-        return Any(partial(tagged_isodate, error_code=error_code))
-    return Any(isodate)
+def date(error_code=None):
+    return Any(isodate, error_code=error_code)
 
 
 def is_callable(v):
@@ -189,8 +138,24 @@ def options_with_apply_defaults(v):
     return v
 
 
-def argument_spec_schema(for_collection, dates_tagged=True):
-    dates_tagged = 'always' if dates_tagged else 'never'
+def option_deprecation(v):
+    if v.get('removed_in_version') or v.get('removed_at_date'):
+        if v.get('removed_in_version') and v.get('removed_at_date'):
+            raise _add_ansible_error_code(
+                Invalid('Only one of removed_in_version and removed_at_date must be specified'),
+                error_code='deprecation-either-date-or-version')
+        if not v.get('removed_from_collection'):
+            raise _add_ansible_error_code(
+                Invalid('If removed_in_version or removed_at_date is specified, '
+                        'removed_from_collection must be specified as well'),
+                error_code='deprecation-collection-missing')
+        return
+    if v.get('removed_from_collection'):
+        raise Invalid('removed_from_collection cannot be specified without either '
+                      'removed_in_version or removed_at_date')
+
+
+def argument_spec_schema(for_collection):
     any_string_types = Any(*string_types)
     schema = {
         any_string_types: {
@@ -206,17 +171,20 @@ def argument_spec_schema(for_collection, dates_tagged=True):
             'no_log': bool,
             'aliases': Any(list_string_types, tuple(list_string_types)),
             'apply_defaults': bool,
-            'removed_in_version': version(for_collection, tagged='always'),
-            'removed_at_date': date(tagged=dates_tagged),
+            'removed_in_version': version(for_collection),
+            'removed_at_date': date(),
+            'removed_from_collection': collection_name,
             'options': Self,
             'deprecated_aliases': Any([Any(
                 {
                     Required('name'): Any(*string_types),
-                    Required('date'): date(tagged=dates_tagged),
+                    Required('date'): date(),
+                    Required('collection'): collection_name,
                 },
                 {
                     Required('name'): Any(*string_types),
-                    Required('version'): version(for_collection, tagged='always'),
+                    Required('version'): version(for_collection),
+                    Required('collection'): collection_name,
                 },
             )]),
         }
@@ -227,13 +195,14 @@ def argument_spec_schema(for_collection, dates_tagged=True):
         Schema({any_string_types: no_required_with_default}),
         Schema({any_string_types: elements_with_list}),
         Schema({any_string_types: options_with_apply_defaults}),
+        Schema({any_string_types: option_deprecation}),
     )
     return Schema(schemas)
 
 
-def ansible_module_kwargs_schema(for_collection, dates_tagged=True):
+def ansible_module_kwargs_schema(for_collection):
     schema = {
-        'argument_spec': argument_spec_schema(for_collection, dates_tagged=dates_tagged),
+        'argument_spec': argument_spec_schema(for_collection),
         'bypass_checks': bool,
         'no_log': bool,
         'check_invalid_arguments': Any(None, bool),
@@ -260,7 +229,8 @@ def list_dict_option_schema(for_collection):
             'required': bool,
             'choices': list,
             'aliases': Any(list_string_types),
-            'version_added': version(for_collection, tagged='always', error_code='option-invalid-version-added'),
+            'version_added': version(for_collection),
+            'version_added_collection': collection_name,
             'default': json_value,
             # Note: Types are strings, not literal bools, such as True or False
             'type': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
@@ -282,7 +252,8 @@ def list_dict_option_schema(for_collection):
             'required': bool,
             'choices': list,
             'aliases': Any(list_string_types),
-            'version_added': version(for_collection, tagged='always', error_code='option-invalid-version-added'),
+            'version_added': version(for_collection),
+            'version_added_collection': collection_name,
             'default': json_value,
             'suboptions': Any(None, *list_dict_suboption_schema),
             # Note: Types are strings, not literal bools, such as True or False
@@ -318,7 +289,8 @@ def return_schema(for_collection):
                     Required('description'): Any(list_string_types, *string_types),
                     'returned': Any(*string_types),  # only returned on top level
                     Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
-                    'version_added': version(for_collection, error_code='return-invalid-version-added'),
+                    'version_added': version(for_collection),
+                    'version_added_collection': collection_name,
                     'sample': json_value,
                     'example': json_value,
                     'contains': Any(None, *list({str_type: Self} for str_type in string_types)),
@@ -343,7 +315,8 @@ def return_schema(for_collection):
                         Required('description'): Any(list_string_types, *string_types),
                         Required('returned'): Any(*string_types),
                         Required('type'): Any('bool', 'complex', 'dict', 'float', 'int', 'list', 'str'),
-                        'version_added': version(for_collection, error_code='return-invalid-version-added'),
+                        'version_added': version(for_collection),
+                        'version_added_collection': collection_name,
                         'sample': json_value,
                         'example': json_value,
                         'contains': Any(None, *list_dict_return_contains_schema),
@@ -362,17 +335,18 @@ def deprecation_schema(for_collection):
     main_fields = {
         Required('why'): Any(*string_types),
         Required('alternative'): Any(*string_types),
+        Required('removed_from_collection'): collection_name,
         'removed': Any(True),
     }
 
     date_schema = {
-        Required('removed_at_date'): date(tagged='always'),
+        Required('removed_at_date'): date(),
     }
     date_schema.update(main_fields)
 
     if for_collection:
         version_schema = {
-            Required('removed_in'): version(for_collection, tagged='always'),
+            Required('removed_in'): version(for_collection),
         }
     else:
         version_schema = {
@@ -419,16 +393,15 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
         'requirements': list_string_types,
         'todo': Any(None, list_string_types, *string_types),
         'options': Any(None, *list_dict_option_schema(for_collection)),
-        'extends_documentation_fragment': Any(list_string_types, *string_types)
+        'extends_documentation_fragment': Any(list_string_types, *string_types),
+        'version_added_collection': collection_name,
     }
 
     if for_collection:
         # Optional
-        doc_schema_dict['version_added'] = version(
-            for_collection=True, tagged='always', error_code='module-invalid-version-added')
+        doc_schema_dict['version_added'] = version(for_collection=True)
     else:
-        doc_schema_dict[Required('version_added')] = version(
-            for_collection=False, tagged='always', error_code='module-invalid-version-added')
+        doc_schema_dict[Required('version_added')] = version(for_collection=False)
 
     if deprecated_module:
         deprecation_required_scheme = {
