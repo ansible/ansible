@@ -53,12 +53,6 @@ For example, the resource model builder includes the ``myos_interfaces.yml`` sam
 
   ---
   GENERATOR_VERSION: '1.0'
-  ANSIBLE_METADATA: |
-      {
-          'metadata_version': '1.1',
-          'status': ['preview'],
-          'supported_by': '<support_group>'
-      }
   NETWORK_OS: myos
   RESOURCE: interfaces
   COPYRIGHT: Copyright 2019 Red Hat

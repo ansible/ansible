@@ -442,32 +442,6 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
     )
 
 
-def metadata_1_0_schema(deprecated):
-    valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
-    if deprecated:
-        valid_status = Any('deprecated')
-
-    return Schema(
-        {
-            Required('status'): [valid_status],
-            Required('metadata_version'): '1.0',
-            Required('supported_by'): Any('core', 'community', 'curated')
-        }
-    )
-
-
-def metadata_1_1_schema():
-    valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
-
-    return Schema(
-        {
-            Required('status'): [valid_status],
-            Required('metadata_version'): '1.1',
-            Required('supported_by'): Any('core', 'community', 'certified', 'network')
-        }
-    )
-
-
 # Things to add soon
 ####################
 # 1) Recursively validate `type: complex` fields
