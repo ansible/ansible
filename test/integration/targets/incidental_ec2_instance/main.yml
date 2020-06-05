@@ -9,7 +9,7 @@
   gather_facts: no
   tasks:
   - module_defaults:
-      group/aws:
+      ec2_ami_info:
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
         security_token: "{{ security_token | default(omit) }}"

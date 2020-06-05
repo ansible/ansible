@@ -220,7 +220,7 @@ class VcenterEnvironment(CloudEnvironment):
             env_vars=env_vars,
             ansible_vars=ansible_vars,
             module_defaults={
-                'group/vmware': {
+                'vmware_guest': {
                     'hostname': ansible_vars['vcenter_hostname'],
                     'username': ansible_vars['vcenter_username'],
                     'password': ansible_vars['vcenter_password'],
