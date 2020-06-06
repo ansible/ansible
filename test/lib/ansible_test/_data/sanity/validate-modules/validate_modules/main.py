@@ -2094,7 +2094,7 @@ class ModuleValidator(Validator):
                                 msg=('The deprecation version for a module must be added in this collection')
                             )
                         else:
-                            removed_in = self.StrictVersion(str(version))
+                            removed_in = self._create_strict_version(str(version))
 
                     except ValueError:
                         # ignore and hope we previouslly reported
@@ -2102,7 +2102,7 @@ class ModuleValidator(Validator):
 
                     if removed_in:
                         if not self.collection:
-                            strict_ansible_version = self.StrictVersion('.'.join(ansible_version.split('.')[:2]))
+                            strict_ansible_version = self._create_strict_version('.'.join(ansible_version.split('.')[:2]))
                             end_of_deprecation_should_be_removed_only = strict_ansible_version >= removed_in
                         elif self.collection_version:
                             strict_ansible_version = self.collection_version
