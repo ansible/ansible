@@ -14,6 +14,7 @@ module: hostname
 author:
     - Adrian Likins (@alikins)
     - Hideki Saito (@saito-hideki)
+    - Abhijeet Kasurde (@Akasurde)
 version_added: "1.4"
 short_description: Manage hostname
 requirements: [ hostname ]
@@ -200,10 +201,10 @@ class GenericStrategy(object):
         pass
 
 
-class DebianStrategy(GenericStrategy):
+class HostnameCliStrategy(GenericStrategy):
     """
-    This is a Debian family Hostname manipulation strategy class - it edits
-    the /etc/hostname file.
+    Hostname manipulation strategy based upon GenericStrategy and
+    editing /etc/hostname file and its variants.
     """
 
     HOSTNAME_FILE = '/etc/hostname'
@@ -237,40 +238,30 @@ class DebianStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-class SLESStrategy(GenericStrategy):
+class DebianStrategy(HostnameCliStrategy):
+    """
+    This is a Debian family Hostname manipulation strategy class - it edits
+    the /etc/hostname file.
+    """
+
+    HOSTNAME_FILE = '/etc/hostname'
+
+
+class SLESStrategy(HostnameCliStrategy):
     """
     This is a SLES Hostname strategy class - it edits the
     /etc/HOSTNAME file.
     """
     HOSTNAME_FILE = '/etc/HOSTNAME'
 
-    def get_permanent_hostname(self):
-        if not os.path.isfile(self.HOSTNAME_FILE):
-            try:
-                open(self.HOSTNAME_FILE, "a").write("")
-            except IOError as e:
-                self.module.fail_json(msg="failed to write file: %s" %
-                                          to_native(e), exception=traceback.format_exc())
-        try:
-            f = open(self.HOSTNAME_FILE)
-            try:
-                return f.read().strip()
-            finally:
-                f.close()
-        except Exception as e:
-            self.module.fail_json(msg="failed to read hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
 
-    def set_permanent_hostname(self, name):
-        try:
-            f = open(self.HOSTNAME_FILE, 'w+')
-            try:
-                f.write("%s\n" % name)
-            finally:
-                f.close()
-        except Exception as e:
-            self.module.fail_json(msg="failed to update hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+class OpenBSDStrategy(HostnameCliStrategy):
+    """
+    This is a OpenBSD family Hostname manipulation strategy class - it edits
+    the /etc/myname file.
+    """
+
+    HOSTNAME_FILE = '/etc/myname'
 
 
 class RedHatStrategy(GenericStrategy):
@@ -320,7 +311,7 @@ class RedHatStrategy(GenericStrategy):
                                       to_native(e), exception=traceback.format_exc())
 
 
-class AlpineStrategy(GenericStrategy):
+class AlpineStrategy(HostnameCliStrategy):
     """
     This is a Alpine Linux Hostname manipulation strategy class - it edits
     the /etc/hostname file then run hostname -F /etc/hostname.
@@ -332,34 +323,6 @@ class AlpineStrategy(GenericStrategy):
         self.update_permanent_hostname()
         self.update_current_hostname()
         return self.changed
-
-    def get_permanent_hostname(self):
-        if not os.path.isfile(self.HOSTNAME_FILE):
-            try:
-                open(self.HOSTNAME_FILE, "a").write("")
-            except IOError as e:
-                self.module.fail_json(msg="failed to write file: %s" %
-                                          to_native(e), exception=traceback.format_exc())
-        try:
-            f = open(self.HOSTNAME_FILE)
-            try:
-                return f.read().strip()
-            finally:
-                f.close()
-        except Exception as e:
-            self.module.fail_json(msg="failed to read hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
-
-    def set_permanent_hostname(self, name):
-        try:
-            f = open(self.HOSTNAME_FILE, 'w+')
-            try:
-                f.write("%s\n" % name)
-            finally:
-                f.close()
-        except Exception as e:
-            self.module.fail_json(msg="failed to update hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
 
     def set_current_hostname(self, name):
         cmd = [self.hostname_cmd, '-F', self.HOSTNAME_FILE]
@@ -454,43 +417,6 @@ class OpenRCStrategy(GenericStrategy):
                                           to_native(e), exception=traceback.format_exc())
         finally:
             f.close()
-
-
-class OpenBSDStrategy(GenericStrategy):
-    """
-    This is a OpenBSD family Hostname manipulation strategy class - it edits
-    the /etc/myname file.
-    """
-
-    HOSTNAME_FILE = '/etc/myname'
-
-    def get_permanent_hostname(self):
-        if not os.path.isfile(self.HOSTNAME_FILE):
-            try:
-                open(self.HOSTNAME_FILE, "a").write("")
-            except IOError as e:
-                self.module.fail_json(msg="failed to write file: %s" %
-                                          to_native(e), exception=traceback.format_exc())
-        try:
-            f = open(self.HOSTNAME_FILE)
-            try:
-                return f.read().strip()
-            finally:
-                f.close()
-        except Exception as e:
-            self.module.fail_json(msg="failed to read hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
-
-    def set_permanent_hostname(self, name):
-        try:
-            f = open(self.HOSTNAME_FILE, 'w+')
-            try:
-                f.write("%s\n" % name)
-            finally:
-                f.close()
-        except Exception as e:
-            self.module.fail_json(msg="failed to update hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
 
 
 class SolarisStrategy(GenericStrategy):

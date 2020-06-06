@@ -1,0 +1,2 @@
+minor_changes:
+- hostname - refactor code for DebianStrategy and GenericStrategy.
