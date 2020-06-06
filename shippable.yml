@@ -41,7 +41,6 @@ matrix:
     - env: T=linux/opensuse15/1
     - env: T=linux/ubuntu1604/1
     - env: T=linux/ubuntu1804/1
-    - env: T=power/centos/7/1
 
     - env: T=osx/10.11/2
     - env: T=rhel/7.8/2
@@ -57,7 +56,6 @@ matrix:
     - env: T=linux/opensuse15/2
     - env: T=linux/ubuntu1604/2
     - env: T=linux/ubuntu1804/2
-    - env: T=power/centos/7/2
 
     - env: T=osx/10.11/3
     - env: T=rhel/7.8/3
@@ -73,7 +71,6 @@ matrix:
     - env: T=linux/opensuse15/3
     - env: T=linux/ubuntu1604/3
     - env: T=linux/ubuntu1804/3
-    - env: T=power/centos/7/3
 
     - env: T=osx/10.11/4
     - env: T=rhel/7.8/4
@@ -89,7 +86,6 @@ matrix:
     - env: T=linux/opensuse15/4
     - env: T=linux/ubuntu1604/4
     - env: T=linux/ubuntu1804/4
-    - env: T=power/centos/7/4
 
     - env: T=osx/10.11/5
     - env: T=rhel/7.8/5
@@ -105,7 +101,6 @@ matrix:
     - env: T=linux/opensuse15/5
     - env: T=linux/ubuntu1604/5
     - env: T=linux/ubuntu1804/5
-    - env: T=power/centos/7/5
 
     - env: T=fallaxy/2.7/1
     - env: T=fallaxy/3.6/1
@@ -127,7 +122,6 @@ matrix:
     - env: T=i/linux/opensuse15
     - env: T=i/linux/ubuntu1604
     - env: T=i/linux/ubuntu1804
-    - env: T=i/power/centos/7
 
     - env: T=i/windows/2012
     - env: T=i/windows/2012-R2
