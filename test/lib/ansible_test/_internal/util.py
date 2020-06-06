@@ -306,7 +306,7 @@ def generate_pip_command(python):
     :type python: str
     :rtype: list[str]
     """
-    return [python, '-m', 'pip.__main__']
+    return [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'quiet_pip.py')]
 
 
 def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
