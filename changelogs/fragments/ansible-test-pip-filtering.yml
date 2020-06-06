@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test now filters out unnecessary warnings and messages from pip when installing its own requirements
