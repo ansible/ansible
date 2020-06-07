@@ -2,18 +2,7 @@
 
         Test module
 
-  * This module is maintained by The Ansible Core Team
 AUTHOR: Ansible Core Team
-        METADATA:
-          status:
-          - stableinterface
-          supported_by: core
-        
-
-EXAMPLES:
-
-
-
 
 RETURN VALUES:
 
@@ -22,4 +11,3 @@ test:
    type: str
 
 broken_key: [
-
