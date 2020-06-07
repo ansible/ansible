@@ -86,6 +86,7 @@ namespace Ansible.Basic
             { "options", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "removed_in_version", new List<object>() { null, typeof(string) } },
             { "removed_at_date", new List<object>() { null, typeof(DateTime) } },
+            { "removed_from_collection", new List<object>() { null, typeof(string) } },
             { "required", new List<object>() { false, typeof(bool) } },
             { "required_by", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "required_if", new List<object>() { typeof(List<List<object>>), typeof(List<object>) } },
@@ -273,14 +274,29 @@ namespace Ansible.Basic
                 LogEvent(String.Format("[DEBUG] {0}", message));
         }
 
-        public void Deprecate(string message, string version, string collectionName = null)
+        public void Deprecate(string message, string version)
+        {
+            deprecations.Add(new Dictionary<string, string>() {
+                { "msg", message }, { "version", version }, { "collection_name", null } });
+            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
+        }
+
+        public void Deprecate(string message, string version, string collectionName)
         {
             deprecations.Add(new Dictionary<string, string>() {
                 { "msg", message }, { "version", version }, { "collection_name", collectionName } });
             LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
         }
 
-        public void Deprecate(string message, DateTime date, string collectionName = null)
+        public void Deprecate(string message, DateTime date)
+        {
+            string isoDate = date.ToString("yyyy-MM-dd");
+            deprecations.Add(new Dictionary<string, string>() {
+                { "msg", message }, { "date", isoDate }, { "collection_name", null } });
+            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, isoDate));
+        }
+
+        public void Deprecate(string message, DateTime date, string collectionName)
         {
             string isoDate = date.ToString("yyyy-MM-dd");
             deprecations.Add(new Dictionary<string, string>() {
@@ -844,9 +860,9 @@ namespace Ansible.Basic
                         noLogValues.Add(noLogString);
                 }
                 string collectionName = null;
-                if (depInfo.ContainsKey("removed_from_collection"))
+                if (v.ContainsKey("removed_from_collection"))
                 {
-                    collectionName = (string)depInfo["removed_from_collection"];
+                    collectionName = (string)v["removed_from_collection"];
                 }
 
                 object removedInVersion = v["removed_in_version"];

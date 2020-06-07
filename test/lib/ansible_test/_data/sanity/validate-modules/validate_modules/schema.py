@@ -400,9 +400,7 @@ def deprecation_schema(for_collection):
             # 2.3 -> removed_in: "2.5" + n for docs stub
             # 2.4 -> removed_in: "2.8" + n for docs stub
             Required('removed_in'): Any(
-                "ansible.builtin:2.2", "ansible.builtin:2.3", "ansible.builtin:2.4", "ansible.builtin:2.5",
-                "ansible.builtin:2.6", "ansible.builtin:2.8", "ansible.builtin:2.9", "ansible.builtin:2.10",
-                "ansible.builtin:2.11", "ansible.builtin:2.12", "ansible.builtin:2.13", "ansible.builtin:2.14"),
+                "2.2", "2.3", "2.4", "2.5", "2.6", "2.8", "2.9", "2.10", "2.11", "2.12", "2.13", "2.14"),
         }
     version_schema.update(main_fields)
 
