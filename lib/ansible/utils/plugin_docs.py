@@ -42,6 +42,8 @@ def merge_fragment(target, source):
 
 def _process_versions_and_dates(fragment, is_module, return_docs, callback):
     def process_deprecation(deprecation):
+        if not isinstance(deprecation, MutableMapping):
+            return
         if is_module and 'removed_in' in deprecation:  # used in module deprecations
             callback(deprecation, 'removed_in', 'removed_from_collection')
         if 'removed_at_date' in deprecation:
@@ -51,13 +53,17 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
 
     def process_option_specifiers(specifiers):
         for specifier in specifiers:
+            if not isinstance(specifier, MutableMapping):
+                continue
             if 'version_added' in specifier:
                 callback(specifier, 'version_added', 'version_added_collection')
-            if isinstance(specifier.get('deprecated'), dict):
+            if isinstance(specifier.get('deprecated'), MutableMapping):
                 process_deprecation(specifier['deprecated'])
 
     def process_options(options):
         for option in options.values():
+            if not isinstance(option, MutableMapping):
+                continue
             if 'version_added' in option:
                 callback(option, 'version_added', 'version_added_collection')
             if not is_module:
@@ -67,14 +73,16 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
                     process_option_specifiers(option['ini'])
                 if isinstance(option.get('vars'), list):
                     process_option_specifiers(option['vars'])
-            if isinstance(option.get('suboptions'), dict):
+            if isinstance(option.get('suboptions'), MutableMapping):
                 process_options(option['suboptions'])
 
     def process_return_values(return_values):
         for return_value in return_values.values():
+            if not isinstance(return_value, MutableMapping):
+                continue
             if 'version_added' in return_value:
                 callback(return_value, 'version_added', 'version_added_collection')
-            if isinstance(return_value.get('contains'), dict):
+            if isinstance(return_value.get('contains'), MutableMapping):
                 process_return_values(return_value['contains'])
 
     if return_docs:
@@ -83,9 +91,9 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
 
     if 'version_added' in fragment:
         callback(fragment, 'version_added', 'version_added_collection')
-    if isinstance(fragment.get('deprecated'), dict):
+    if isinstance(fragment.get('deprecated'), MutableMapping):
         process_deprecation(fragment['deprecated'])
-    if isinstance(fragment.get('options'), dict):
+    if isinstance(fragment.get('options'), MutableMapping):
         process_options(fragment['options'])
 
 
