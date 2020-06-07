@@ -667,9 +667,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             fixed = ''
 
         if build_dep:
-            cmd = "%s -y %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, check_arg, packages)
+            cmd = "%s -y --no-remove %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, check_arg, packages)
         else:
-            cmd = "%s -y %s %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, check_arg, packages)
+            cmd = "%s -y --no-remove %s %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -942,8 +942,8 @@ def upgrade(m, mode="yes", force=False, default_release=None,
                             "to have APTITUDE in path or use 'force_apt_get=True'")
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
-    cmd = '%s -y %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, allow_unauthenticated,
-                                    check_arg, upgrade_command)
+    cmd = '%s -y --no-remove %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, allow_unauthenticated,
+                                                check_arg, upgrade_command)
 
     if default_release:
         cmd += " -t '%s'" % (default_release,)
