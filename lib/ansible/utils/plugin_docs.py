@@ -40,7 +40,7 @@ def merge_fragment(target, source):
         target[key] = value
 
 
-def _process_versions_and_dates(fragment, is_module, callback):
+def _process_versions_and_dates(fragment, is_module, return_docs, callback):
     def process_deprecation(deprecation):
         if is_module and 'removed_in' in deprecation:  # used in module deprecations
             callback(deprecation, 'removed_in', 'removed_from_collection')
@@ -77,6 +77,10 @@ def _process_versions_and_dates(fragment, is_module, callback):
             if isinstance(return_value.get('contains'), dict):
                 process_return_values(return_value['contains'])
 
+    if return_docs:
+        process_return_values(fragment)
+        return
+
     if 'version_added' in fragment:
         callback(fragment, 'version_added', 'version_added_collection')
     if isinstance(fragment.get('deprecated'), dict):
@@ -85,20 +89,20 @@ def _process_versions_and_dates(fragment, is_module, callback):
         process_options(fragment['options'])
 
 
-def add_collection_to_versions_and_dates(fragment, collection_name, is_module):
+def add_collection_to_versions_and_dates(fragment, collection_name, is_module, return_docs=False):
     def add(options, option, collection_name_field):
         if collection_name_field not in options:
             options[collection_name_field] = collection_name
 
-    _process_versions_and_dates(fragment, is_module, add)
+    _process_versions_and_dates(fragment, is_module, return_docs, add)
 
 
-def remove_current_collection_from_versions_and_dates(fragment, collection_name, is_module):
+def remove_current_collection_from_versions_and_dates(fragment, collection_name, is_module, return_docs=False):
     def remove(options, option, collection_name_field):
         if options.get(collection_name_field) == collection_name:
             del options[collection_name_field]
 
-    _process_versions_and_dates(fragment, is_module, remove)
+    _process_versions_and_dates(fragment, is_module, return_docs, remove)
 
 
 def add_fragments(doc, filename, fragment_loader, is_module=False):

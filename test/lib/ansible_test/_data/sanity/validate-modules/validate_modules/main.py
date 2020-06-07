@@ -1065,6 +1065,8 @@ class ModuleValidator(Validator):
                 data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                                   doc_info['RETURN']['lineno'],
                                                   self.name, 'RETURN')
+                if data:
+                    add_collection_to_versions_and_dates(data, self.collection_name, is_module=True, return_docs=True)
                 self._validate_docs_schema(data, return_schema(for_collection=bool(self.collection)),
                                            'RETURN', 'return-syntax-error')
 
