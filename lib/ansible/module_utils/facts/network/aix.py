@@ -133,7 +133,13 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
     # AIX 'ifconfig -a' does not inform about MTU, so remove current_if['mtu'] here
     def parse_interface_line(self, words):
         device = words[0][0:-1]
-        current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
+        current_if = {
+            'device': device,
+            'ipv4': [],
+            'ipv6': [],
+            'type': 'unknown',
+            'addresses': { 'ipv4': [], 'ipv6': [] },
+        }
         current_if['flags'] = self.get_options(words[1])
         current_if['macaddress'] = 'unknown'    # will be overwritten later
         return current_if

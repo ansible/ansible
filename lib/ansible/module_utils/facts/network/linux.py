@@ -162,6 +162,8 @@ class LinuxNetwork(Network):
                 promisc_mode = (data & 0x0100 > 0)
                 interfaces[device]['promisc'] = promisc_mode
 
+            interfaces[device]['addresses'] = { 'ipv4': [], 'ipv6': [] }
+
             # TODO: determine if this needs to be in a nested scope/closure
             def parse_ip_output(output, secondary=False):
                 for line in output.splitlines():
@@ -186,33 +188,44 @@ class LinuxNetwork(Network):
                         # NOTE: device is ref to outside scope
                         # NOTE: interfaces is also ref to outside scope
                         if iface != device:
-                            interfaces[iface] = {}
+                            interfaces[iface] = { 'addresses': { 'ipv4': [], 'ipv6': [] } }
+
                         if not secondary and "ipv4" not in interfaces[iface]:
-                            interfaces[iface]['ipv4'] = {'address': address,
-                                                         'broadcast': broadcast,
-                                                         'netmask': netmask,
-                                                         'network': network}
-                        else:
-                            if "ipv4_secondaries" not in interfaces[iface]:
-                                interfaces[iface]["ipv4_secondaries"] = []
-                            interfaces[iface]["ipv4_secondaries"].append({
+                            interfaces[iface]['ipv4'] = {
                                 'address': address,
                                 'broadcast': broadcast,
                                 'netmask': netmask,
                                 'network': network,
-                            })
+                                'is_primary': not secondary,
+                            }
+                            interfaces[iface]['addresses']['ipv4'].append(interfaces[iface]['ipv4'])
+                        else:
+                            if "ipv4_secondaries" not in interfaces[iface]:
+                                interfaces[iface]["ipv4_secondaries"] = []
+                            address_dict = {
+                                'address': address,
+                                'broadcast': broadcast,
+                                'netmask': netmask,
+                                'network': network,
+                                'is_primary': not secondary,
+                            }
+                            interfaces[iface]["ipv4_secondaries"].append(address_dict)
+                            interfaces[iface]["addresses"]["ipv4"].append(address_dict)
 
                         # add this secondary IP to the main device
                         if secondary:
                             if "ipv4_secondaries" not in interfaces[device]:
                                 interfaces[device]["ipv4_secondaries"] = []
                             if device != iface:
-                                interfaces[device]["ipv4_secondaries"].append({
+                                address_dict = {
                                     'address': address,
                                     'broadcast': broadcast,
                                     'netmask': netmask,
                                     'network': network,
-                                })
+                                    'is_primary': not secondary,
+                                }
+                                interfaces[device]["ipv4_secondaries"].append(address_dict)
+                                interfaces[device]["addresses"]["ipv4"].append(address_dict)
 
                         # NOTE: default_ipv4 is ref to outside scope
                         # If this is the default address, update default_ipv4
@@ -237,11 +250,14 @@ class LinuxNetwork(Network):
                             scope = words[3]
                         if 'ipv6' not in interfaces[device]:
                             interfaces[device]['ipv6'] = []
-                        interfaces[device]['ipv6'].append({
+                        address_dict = {
                             'address': address,
                             'prefix': prefix,
-                            'scope': scope
-                        })
+                            'scope': scope,
+                            'is_primary': not secondary,
+                        }
+                        interfaces[device]['ipv6'].append(address_dict)
+                        interfaces[device]['addresses']['ipv6'].append(address_dict)
                         # If this is the default address, update default_ipv6
                         if 'address' in default_ipv6 and default_ipv6['address'] == address:
                             default_ipv6['prefix'] = prefix

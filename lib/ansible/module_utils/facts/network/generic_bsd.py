@@ -155,7 +155,13 @@ class GenericBsdIfconfigNetwork(Network):
 
     def parse_interface_line(self, words):
         device = words[0][0:-1]
-        current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
+        current_if = {
+            'device': device,
+            'ipv4': [],  # Deprecated, to be removed in 2.14
+            'ipv6': [],  # Deprecated, to be removed in 2.14
+            'type': 'unknown',
+            'addresses': { 'ipv4': [], 'ipv6': [] },
+        }
         current_if['flags'] = self.get_options(words[1])
         if 'LOOPBACK' in current_if['flags']:
             current_if['type'] = 'loopback'
@@ -244,6 +250,7 @@ class GenericBsdIfconfigNetwork(Network):
         if not words[1].startswith('127.'):
             ips['all_ipv4_addresses'].append(address['address'])
         current_if['ipv4'].append(address)
+        current_if['addresses']['ipv4'].append(address)
 
     def parse_inet6_line(self, words, current_if, ips):
         address = {'address': words[1]}
@@ -267,6 +274,7 @@ class GenericBsdIfconfigNetwork(Network):
         if address['address'] not in localhost6:
             ips['all_ipv6_addresses'].append(address['address'])
         current_if['ipv6'].append(address)
+        current_if['addresses']['ipv6'].append(address)
 
     def parse_tunnel_line(self, words, current_if, ips):
         current_if['type'] = 'tunnel'

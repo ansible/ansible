@@ -33,6 +33,43 @@
             # - 'ansible_selinux|default("UNDEF") == "UNDEF"'
             # - 'ansible_pkg_mgr|default("UNDEF") == "UNDEF"'
 
+- name: more network tests for `addresses` field
+  hosts: facthost21
+  tags: [ 'fact_network', foo ]
+  connection: local
+  gather_subset: ["!all", "network", "system"]
+  gather_facts: yes
+  tasks:
+    - set_fact:
+        addresses: "{{ ansible_facts[ansible_facts['default_ipv4']['interface']]['addresses'] }}"
+    - assert:
+        that:
+          - "'ipv4' in addresses"
+          - "'ipv6' in addresses"
+          - True in (addresses['ipv4'] | map(attribute='is_primary'))
+
+    - block:
+        - name: Add a secondary IP to our primary interface
+          command: ifconfig {{ ansible_facts['default_ipv4']['interface'] }} 127.0.0.99 netmask 255.255.255.255 alias
+
+        - setup:
+            gather_subset: network
+
+        - set_fact:
+            addresses2: "{{ ansible_facts[ansible_facts['default_ipv4']['interface']]['addresses'] }}"
+
+        - assert:
+            that:
+              - "'127.0.0.99' in [x['address'] for x in addresses['ipv4']]"
+
+      # Ideally also run this on a host with `iputils` that isn't in a
+      # container so we can test outcome there too... In a container we can't
+      # add the IP due to permissions.
+      when: ansible_distribution == 'FreeBSD'
+      always:
+        - name: Remove secondary IP
+          command: ifconfig {{ ansible_facts['default_ipv4']['interface'] }} 127.0.0.99 netmask 255.255.255.255 delete
+
 - name: min and hardware test for platform added
   hosts: facthost22
   tags: [ 'fact_hardware' ]
