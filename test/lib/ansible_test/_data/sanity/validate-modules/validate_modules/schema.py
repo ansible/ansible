@@ -8,9 +8,12 @@ __metaclass__ = type
 
 import re
 
+from distutils.version import StrictVersion
+
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common.collections import is_iterable
+from ansible.utils.version import SemanticVersion
 
 from .utils import parse_isodate
 
@@ -222,6 +225,39 @@ json_value = Schema(Any(
 ))
 
 
+def version_added(v):
+    if 'version_added' in v:
+        version_added = v.get('version_added')
+        if isinstance(version_added, string_types):
+            # If it is not a string, schema validation will have already complained
+            # - or we have a float and we are in ansible/ansible, in which case we're
+            # also happy.
+            if v.get('version_added_collection') == 'ansible.builtin':
+                try:
+                    version = StrictVersion()
+                    version.parse(version_added)
+                except ValueError as exc:
+                    raise _add_ansible_error_code(
+                        Invalid('version_added (%r) is not a valid ansible-base version: '
+                                '%s' % (version_added, exc)),
+                        error_code='deprecation-either-date-or-version')
+            else:
+                try:
+                    version = SemanticVersion()
+                    version.parse(version_added)
+                except ValueError as exc:
+                    raise _add_ansible_error_code(
+                        Invalid('version_added (%r) is not a valid collection version '
+                                '(see specification at https://semver.org/): '
+                                '%s' % (version_added, exc)),
+                        error_code='deprecation-either-date-or-version')
+    elif 'version_added_collection' in v:
+        # Must have been manual intervention, since version_added_collection is only
+        # added automatically when version_added is present
+        raise Invalid('version_added_collection cannot be specified without version_added')
+    return v
+
+
 def list_dict_option_schema(for_collection):
     suboption_schema = Schema(
         {
@@ -264,9 +300,16 @@ def list_dict_option_schema(for_collection):
         extra=PREVENT_EXTRA
     )
 
+    option_version_added = Schema(
+        All({
+            'suboptions': Any(None, *[{str_type: Self} for str_type in string_types]),
+        }, version_added),
+        extra=ALLOW_EXTRA
+    )
+
     # This generates list of dicts with keys from string_types and option_schema value
     # for example in Python 3: {str: option_schema}
-    return [{str_type: option_schema} for str_type in string_types]
+    return [{str_type: All(option_schema, option_version_added)} for str_type in string_types]
 
 
 def return_contains(v):
@@ -298,7 +341,8 @@ def return_schema(for_collection):
                     'elements': Any(None, 'bits', 'bool', 'bytes', 'dict', 'float', 'int', 'json', 'jsonarg', 'list', 'path', 'raw', 'sid', 'str'),
                 }
             ),
-            Schema(return_contains)
+            Schema(return_contains),
+            Schema(version_added),
         ),
         Schema(type(None)),
     )
@@ -325,7 +369,8 @@ def return_schema(for_collection):
                     }
                 }
             ),
-            Schema({any_string_types: return_contains})
+            Schema({any_string_types: return_contains}),
+            Schema({any_string_types: version_added}),
         ),
         Schema(type(None)),
     )

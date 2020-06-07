@@ -1518,94 +1518,97 @@ class ModuleValidator(Validator):
                             # time.
                             pass
 
-            if not self.collection or self.collection_version is not None:
-                if self.collection:
-                    compare_version = self.collection_version
-                    version_of_what = "this collection (%s)" % self.collection_version_str
-                    code_prefix = 'collection'
-                else:
-                    compare_version = LOOSE_ANSIBLE_VERSION
-                    version_of_what = "Ansible (%s)" % ansible_version
-                    code_prefix = 'ansible'
+            has_version = False
+            if self.collection and self.collection_version is not None:
+                compare_version = self.collection_version
+                version_of_what = "this collection (%s)" % self.collection_version_str
+                code_prefix = 'collection'
+                has_version = True
+            elif not self.collection:
+                compare_version = LOOSE_ANSIBLE_VERSION
+                version_of_what = "Ansible (%s)" % ansible_version
+                code_prefix = 'ansible'
+                has_version = True
 
-                removed_in_version = data.get('removed_in_version', None)
-                if removed_in_version is not None:
-                    try:
-                        collection_name = data.get('removed_from_collection')
-                        if collection_name == self.collection_name and compare_version >= self._create_version(str(removed_in_version)):
+            removed_in_version = data.get('removed_in_version', None)
+            if removed_in_version is not None:
+                try:
+                    collection_name = data.get('removed_from_collection')
+                    removed_in = self._create_version(str(removed_in_version), collection_name=collection_name)
+                    if has_version and collection_name == self.collection_name and compare_version >= removed_in:
+                        msg = "Argument '%s' in argument_spec" % arg
+                        if context:
+                            msg += " found in %s" % " -> ".join(context)
+                        msg += " has a deprecated removed_in_version %r," % removed_in_version
+                        msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
+                        self.reporter.error(
+                            path=self.object_path,
+                            code=code_prefix + '-deprecated-version',
+                            msg=msg,
+                        )
+                except ValueError as e:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " has an invalid removed_in_version number %r: %s" % (removed_in_version, e)
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='invalid-deprecated-version',
+                        msg=msg,
+                    )
+                except TypeError:
+                    msg = "Argument '%s' in argument_spec" % arg
+                    if context:
+                        msg += " found in %s" % " -> ".join(context)
+                    msg += " has an invalid removed_in_version number %r: " % (removed_in_version, )
+                    msg += " error while comparing to version of %s" % version_of_what
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='invalid-deprecated-version',
+                        msg=msg,
+                    )
+
+            if deprecated_aliases is not None:
+                for deprecated_alias in deprecated_aliases:
+                    if 'name' in deprecated_alias and 'version' in deprecated_alias:
+                        try:
+                            collection_name = deprecated_alias.get('collection')
+                            version = self._create_version(str(deprecated_alias['version']), collection_name=collection_name)
+                            if has_version and collection_name == self.collection_name and compare_version >= version:
+                                msg = "Argument '%s' in argument_spec" % arg
+                                if context:
+                                    msg += " found in %s" % " -> ".join(context)
+                                msg += " has deprecated aliases '%s' with removal in version %r," % (
+                                    deprecated_alias['name'], deprecated_alias['version'])
+                                msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
+                                self.reporter.error(
+                                    path=self.object_path,
+                                    code=code_prefix + '-deprecated-version',
+                                    msg=msg,
+                                )
+                        except ValueError as e:
                             msg = "Argument '%s' in argument_spec" % arg
                             if context:
                                 msg += " found in %s" % " -> ".join(context)
-                            msg += " has a deprecated removed_in_version %r," % removed_in_version
-                            msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
+                            msg += " has deprecated aliases '%s' with invalid removal version %r: %s" % (
+                                deprecated_alias['name'], deprecated_alias['version'], e)
                             self.reporter.error(
                                 path=self.object_path,
-                                code=code_prefix + '-deprecated-version',
+                                code='invalid-deprecated-version',
                                 msg=msg,
                             )
-                    except ValueError as e:
-                        msg = "Argument '%s' in argument_spec" % arg
-                        if context:
-                            msg += " found in %s" % " -> ".join(context)
-                        msg += " has an invalid removed_in_version number %r: %s" % (removed_in_version, e)
-                        self.reporter.error(
-                            path=self.object_path,
-                            code='invalid-deprecated-version',
-                            msg=msg,
-                        )
-                    except TypeError:
-                        msg = "Argument '%s' in argument_spec" % arg
-                        if context:
-                            msg += " found in %s" % " -> ".join(context)
-                        msg += " has an invalid removed_in_version number %r: " % (removed_in_version, )
-                        msg += " error while versions"
-                        self.reporter.error(
-                            path=self.object_path,
-                            code='invalid-deprecated-version',
-                            msg=msg,
-                        )
-
-                if deprecated_aliases is not None:
-                    for deprecated_alias in deprecated_aliases:
-                        if 'name' in deprecated_alias and 'version' in deprecated_alias:
-                            try:
-                                collection_name = deprecated_alias.get('collection')
-                                version = deprecated_alias['version']
-                                if compare_version >= self._create_version(str(version)):
-                                    msg = "Argument '%s' in argument_spec" % arg
-                                    if context:
-                                        msg += " found in %s" % " -> ".join(context)
-                                    msg += " has deprecated aliases '%s' with removal in version %r," % (
-                                        deprecated_alias['name'], deprecated_alias['version'])
-                                    msg += " i.e. the version is less than or equal to the current version of %s" % version_of_what
-                                    self.reporter.error(
-                                        path=self.object_path,
-                                        code=code_prefix + '-deprecated-version',
-                                        msg=msg,
-                                    )
-                            except ValueError as e:
-                                msg = "Argument '%s' in argument_spec" % arg
-                                if context:
-                                    msg += " found in %s" % " -> ".join(context)
-                                msg += " has deprecated aliases '%s' with invalid removal version %r: %s" % (
-                                    deprecated_alias['name'], deprecated_alias['version'], e)
-                                self.reporter.error(
-                                    path=self.object_path,
-                                    code='invalid-deprecated-version',
-                                    msg=msg,
-                                )
-                            except TypeError:
-                                msg = "Argument '%s' in argument_spec" % arg
-                                if context:
-                                    msg += " found in %s" % " -> ".join(context)
-                                msg += " has deprecated aliases '%s' with invalid removal version %r:" % (
-                                    deprecated_alias['name'], deprecated_alias['version'])
-                                msg += " error while versions"
-                                self.reporter.error(
-                                    path=self.object_path,
-                                    code='invalid-deprecated-version',
-                                    msg=msg,
-                                )
+                        except TypeError:
+                            msg = "Argument '%s' in argument_spec" % arg
+                            if context:
+                                msg += " found in %s" % " -> ".join(context)
+                            msg += " has deprecated aliases '%s' with invalid removal version %r:" % (
+                                deprecated_alias['name'], deprecated_alias['version'])
+                            msg += " error while comparing to version of %s" % version_of_what
+                            self.reporter.error(
+                                path=self.object_path,
+                                code='invalid-deprecated-version',
+                                msg=msg,
+                            )
 
             aliases = data.get('aliases', [])
             if arg in aliases:
