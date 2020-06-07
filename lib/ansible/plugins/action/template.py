@@ -103,8 +103,8 @@ class ActionModule(ActionBase):
             # Get vault decrypted tmp file
             try:
                 tmp_source = self._loader.get_real_file(source)
-            except AnsibleFileNotFound as e:
-                raise AnsibleActionFail("could not find src=%s, %s" % (source, to_text(e)))
+            except AnsibleFileNotFound:
+                raise AnsibleActionFail("could not find src=%s" % source)
             b_tmp_source = to_bytes(tmp_source, errors='surrogate_or_strict')
 
             # template the source data locally & get ready to transfer
