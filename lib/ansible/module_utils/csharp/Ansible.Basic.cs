@@ -242,10 +242,22 @@ namespace Ansible.Basic
                 LogEvent(String.Format("[DEBUG] {0}", message));
         }
 
-        public void Deprecate(string message, string version)
+        public void Deprecate(string message, string version, string collectionName = null)
         {
+            // `collectionName` is a Ansible 2.10 parameter. We accept and ignore it,
+            // to avoid modules/plugins from 2.10 conformant collections to break with
+            // new enough versions of Ansible 2.9.
             deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", version } });
             LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
+        }
+
+        public void Deprecate(string message, DateTime date, string collectionName = null)
+        {
+            // This function is only available for Ansible 2.10. We still accept and ignore it,
+            // to avoid modules/plugins from 2.10 conformant collections to break with new enough
+            // versions of Ansible 2.9.
+            deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", null } });
+            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, null));
         }
 
         public void ExitJson()
