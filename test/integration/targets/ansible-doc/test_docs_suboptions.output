@@ -2,7 +2,6 @@
 
         Test module
 
-  * This module is maintained by The Ansible Community
 OPTIONS (= is mandatory):
 
 - with_suboptions
@@ -37,11 +36,6 @@ OPTIONS (= is mandatory):
 
 
 AUTHOR: Ansible Core Team
-        METADATA:
-          status:
-          - preview
-          supported_by: community
-        
 
 EXAMPLES:
 
@@ -49,5 +43,4 @@ EXAMPLES:
 
 
 RETURN VALUES:
-
 
