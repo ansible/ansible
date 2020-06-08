@@ -34,6 +34,24 @@ Playbook
 
 * Fixed a bug on boolean keywords that made random strings return 'False', now they should return an error if they are not a proper boolean
   Example: ``diff: yes-`` was returning ``False``.
+  This applies for every keyword that would take a boolean as a value (check_mode, no_log, become, run_once, ...), but not conditionals (`*when:`).
+  Some playbooks would have seemed to be working as random strings would evaluate as `True`.
+
+.. code::
+
+      - debug:
+          copy: src=test.txt dest=/path/test.txt
+        diff: not dont_show_diff
+        vars:
+          dont_show_diff: false
+
+  This looked like the value was being templated, but this was not the case. It evaluated to `True` not because the expression `not dont_show_diff` would be so in Jinja, but becuase it is a 'non empty string' and that is 'truthy' in Python and Jinja.  The expression `diff: dont_show_diff` would also be `True` previouslly.
+
+
+.. note::
+    When there is an error templating with `no_log` it defaults to `True`, to be on the safe side, so this might obscure the issue is due to this change.
+
+
 * A new fact, ``ansible_processor_nproc`` reflects the number of vcpus
   available to processes (falls back to the number of vcpus available to
   the scheduler).
