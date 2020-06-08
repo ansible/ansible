@@ -49,7 +49,7 @@ Playbook
 
 
 .. note::
-    When there is an error templating with `no_log` it defaults to `True`, to be on the safe side, so this might obscure the issue is due to this change.
+    When there is an error templating with ``no_log`` it defaults to ``True`` to be on the safe side, so this might obscure that real the issue is due to this change.
 
 
 * A new fact, ``ansible_processor_nproc`` reflects the number of vcpus
