@@ -128,6 +128,14 @@ def regex(value='', pattern='', ignorecase=False, multiline=False, match_type='s
     return bool(getattr(_re, match_type, 'search')(value))
 
 
+def vault_encrypted(value):
+    """Evaulate whether a variable is a single vault encrypted value
+
+    .. versionadded:: 2.10
+    """
+    return getattr(value, '__ENCRYPTED__', False) and value.is_encrypted()
+
+
 def match(value, pattern='', ignorecase=False, multiline=False):
     ''' Perform a `re.match` returning a boolean '''
     return regex(value, pattern, ignorecase, multiline, 'match')
@@ -236,4 +244,7 @@ class TestModule(object):
             # truthiness
             'truthy': truthy,
             'falsy': falsy,
+
+            # vault
+            'vault_encrypted': vault_encrypted,
         }

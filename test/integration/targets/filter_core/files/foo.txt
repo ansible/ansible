@@ -65,5 +65,5 @@ regex_replace = bar
 #bar
 #bart
 regex_search = 0001
-regex_findall = "['car', 'tar', 'bar']"
+regex_findall = ["car", "tar", "bar"]
 regex_escape = \^f\.\*o\(\.\*\)\$

@@ -58,5 +58,5 @@ regex_replace = {{ 'foo' | regex_replace('^foo', 'bar') }}
 # Check regex_replace with multiline
 {{ '#foo\n#foot' | regex_replace('^#foo', '#bar', multiline=True) }}
 regex_search = {{ 'test_value_0001' | regex_search('([0-9]+)$')}}
-regex_findall = "{{ 'car\ntar\nfoo\nbar\n' | regex_findall('^.ar$', multiline=True) }}"
+regex_findall = {{ 'car\ntar\nfoo\nbar\n' | regex_findall('^.ar$', multiline=True)|to_json }}
 regex_escape = {{ '^f.*o(.*)$' | regex_escape() }}
