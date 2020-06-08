@@ -46,7 +46,12 @@
         that:
           - "'ipv4' in addresses"
           - "'ipv6' in addresses"
+
+    - assert:
+        that:
           - True in (addresses['ipv4'] | map(attribute='is_primary'))
+      # Limit this to Linux - BSDs don't seem to report primary vs secondary IPs
+      when: ansible_distribution in ['RedHat', 'Fedora', 'CentOS', 'Ubuntu', 'Debian']
 
     - block:
         - name: Add a secondary IP to our primary interface
