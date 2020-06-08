@@ -7,9 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
 
 DOCUMENTATION = '''
 ---
@@ -674,6 +671,12 @@ class CloudlinuxHostname(Hostname):
 class CoreosHostname(Hostname):
     platform = 'Linux'
     distribution = 'Coreos'
+    strategy_class = SystemdStrategy
+
+
+class FlatcarHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Flatcar'
     strategy_class = SystemdStrategy
 
 

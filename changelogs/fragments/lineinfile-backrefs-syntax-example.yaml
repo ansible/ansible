@@ -1,0 +1,2 @@
+bugfixes:
+  - lineinfile - add example of using alternative backrefs syntax (https://github.com/ansible/ansible/issues/42794)

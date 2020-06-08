@@ -1,2 +1,0 @@
-bugfixes:
-- win_domain_computer - Fix idempotence checks when ``sAMAccountName`` is different from ``name``

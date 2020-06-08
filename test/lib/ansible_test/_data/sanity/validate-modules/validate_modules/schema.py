@@ -40,6 +40,10 @@ def _add_ansible_error_code(exception, error_code):
 def semantic_version(v, error_code=None):
     if not isinstance(v, string_types):
         raise _add_ansible_error_code(Invalid('Semantic version must be a string'), error_code or 'collection-invalid-version')
+    if not v:
+        raise _add_ansible_error_code(
+            Invalid('Empty string is not a valid semantic version'),
+            error_code or 'collection-invalid-version')
     try:
         SemanticVersion(v)
     except ValueError as e:
@@ -435,32 +439,6 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
     return Schema(
         doc_schema_dict,
         extra=PREVENT_EXTRA
-    )
-
-
-def metadata_1_0_schema(deprecated):
-    valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
-    if deprecated:
-        valid_status = Any('deprecated')
-
-    return Schema(
-        {
-            Required('status'): [valid_status],
-            Required('metadata_version'): '1.0',
-            Required('supported_by'): Any('core', 'community', 'curated')
-        }
-    )
-
-
-def metadata_1_1_schema():
-    valid_status = Any('stableinterface', 'preview', 'deprecated', 'removed')
-
-    return Schema(
-        {
-            Required('status'): [valid_status],
-            Required('metadata_version'): '1.1',
-            Required('supported_by'): Any('core', 'community', 'certified', 'network')
-        }
     )
 
 

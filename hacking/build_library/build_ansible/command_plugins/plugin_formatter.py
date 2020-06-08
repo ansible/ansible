@@ -222,7 +222,8 @@ def get_plugin_info(module_dir, limit_to=None, verbose=False):
         show_progress(module_index)
 
         # use ansible core library to parse out doc metadata YAML and plaintext examples
-        doc, examples, returndocs, metadata = plugin_docs.get_docstring(module_path, fragment_loader, verbose=verbose)
+        doc, examples, returndocs, metadata = plugin_docs.get_docstring(
+            module_path, fragment_loader, verbose=verbose, collection_name='ansible.builtin')
 
         if metadata and 'removed' in metadata.get('status', []):
             continue
@@ -333,6 +334,17 @@ def jinja2_environment(template_dir, typ, plugin_type):
     return templates
 
 
+def process_version_added(version_added):
+    if not isinstance(version_added, string_types):
+        return version_added
+    if ':' not in version_added:
+        return version_added
+    # Strip tag from version_added. It suffices to do this here since
+    # this is only used for ansible-base, and there the only valid tag
+    # is `ansible.builtin:`.
+    return version_added[version_added.index(':') + 1:]
+
+
 def too_old(added):
     if not added:
         return False
@@ -377,8 +389,10 @@ def process_options(module, options, full_key=None):
                 raise AnsibleError("Invalid required value '%s' for parameter '%s' in '%s' (must be truthy)" % (required_value, k, module))
 
             # Strip old version_added information for options
-            if 'version_added' in v and too_old(v['version_added']):
-                del v['version_added']
+            if 'version_added' in v:
+                v['version_added'] = process_version_added(v['version_added'])
+                if too_old(v['version_added']):
+                    del v['version_added']
 
             if 'suboptions' in v and v['suboptions']:
                 if isinstance(v['suboptions'], dict):
@@ -402,6 +416,12 @@ def process_returndocs(returndocs, full_key=None):
             # Make sure that "full key" is contained
             full_key_k = full_key + [k]
             v['full_key'] = full_key_k
+
+            # Strip old version_added information for options
+            if 'version_added' in v:
+                v['version_added'] = process_version_added(v['version_added'])
+                if too_old(v['version_added']):
+                    del v['version_added']
 
             # Process suboptions
             suboptions = v.get('contains')
@@ -435,7 +455,7 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
         # add some defaults for plugins that dont have most of the info
         doc['module'] = doc.get('module', module)
-        doc['version_added'] = doc.get('version_added', 'historical')
+        doc['version_added'] = process_version_added(doc.get('version_added', 'historical'))
 
         doc['plugin_type'] = plugin_type
 
@@ -462,6 +482,7 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
             doc['description'] = []
 
         if 'version_added' not in doc:
+            # Will never happen, since it has been explicitly inserted above.
             raise AnsibleError("*** ERROR: missing version_added in: %s ***\n" % module)
 
         #

@@ -205,6 +205,8 @@ class AnsibleDeprecatedChecker(BaseChecker):
         if collection == 'ansible.builtin':
             # Ansible-base
             try:
+                if not version_no:
+                    raise ValueError('Version string should not be empty')
                 loose_version = LooseVersion(str(version_no))
                 if ANSIBLE_VERSION >= loose_version:
                     self.add_message('ansible-deprecated-version', node=node, args=(version,))
@@ -213,6 +215,8 @@ class AnsibleDeprecatedChecker(BaseChecker):
         else:
             # Collections
             try:
+                if not version_no:
+                    raise ValueError('Version string should not be empty')
                 semantic_version = SemanticVersion(version_no)
                 if collection == self.collection_name and self.collection_version is not None:
                     if self.collection_version >= semantic_version:

@@ -1,0 +1,2 @@
+minor_changes:
+- service_facts - Added undocumented 'indirect' and 'static' as service status (https://github.com/ansible/ansible/issues/69752).

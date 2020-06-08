@@ -194,3 +194,32 @@
     that:
       - "remove_result.path == '/usr/sbin/ansible_test_service'"
       - "remove_result.state == 'absent'"
+
+- name: the module must fail when a service is not found
+  service:
+    name: 'nonexisting'
+    state: stopped
+  register: result
+  ignore_errors: yes
+  when: ansible_distribution != 'FreeBSD'
+
+- assert:
+    that:
+      - result is failed
+      - result is search("Could not find the requested service nonexisting")
+  when: ansible_distribution != 'FreeBSD'
+
+- name: the module must fail in check_mode as well when a service is not found
+  service:
+    name: 'nonexisting'
+    state: stopped
+  register: result
+  check_mode: yes
+  ignore_errors: yes
+  when: ansible_distribution != 'FreeBSD'
+
+- assert:
+    that:
+      - result is failed
+      - result is search("Could not find the requested service nonexisting")
+  when: ansible_distribution != 'FreeBSD'

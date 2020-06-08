@@ -493,7 +493,10 @@ class _AnsibleCollectionPkgLoader(_AnsibleCollectionPkgLoaderBase):
 
         if collection_name == 'ansible.builtin':
             # ansible.builtin is a synthetic collection, get its routing config from the Ansible distro
-            raw_routing = pkgutil.get_data('ansible.config', 'ansible_builtin_runtime.yml')
+            ansible_pkg_path = os.path.dirname(import_module('ansible').__file__)
+            metadata_path = os.path.join(ansible_pkg_path, 'config/ansible_builtin_runtime.yml')
+            with open(to_bytes(metadata_path), 'rb') as fd:
+                raw_routing = fd.read()
         else:
             b_routing_meta_path = to_bytes(os.path.join(module.__path__[0], 'meta/runtime.yml'))
             if os.path.isfile(b_routing_meta_path):
@@ -549,7 +552,8 @@ class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
         return path_list
 
     def _get_subpackage_search_paths(self, candidate_paths):
-        collection_meta = _get_collection_metadata('.'.join(self._split_name[1:3]))
+        collection_name = '.'.join(self._split_name[1:3])
+        collection_meta = _get_collection_metadata(collection_name)
 
         # check for explicit redirection, as well as ancestor package-level redirection (only load the actual code once!)
         redirect = None
@@ -575,7 +579,6 @@ class _AnsibleCollectionLoader(_AnsibleCollectionPkgLoaderBase):
             self._redirect_module = import_module(redirect)
             if explicit_redirect and hasattr(self._redirect_module, '__path__') and self._redirect_module.__path__:
                 # if the import target looks like a package, store its name so we can rewrite future descendent loads
-                # FIXME: shouldn't this be in a shared location? This is currently per loader instance, so
                 self._redirected_package_map[self._fullname] = redirect
 
             # if we redirected, don't do any further custom package logic

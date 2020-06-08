@@ -10,4 +10,4 @@ class FilterModule(object):
         }
 
 
-raise Exception('This is a broken filter plugin')
+raise Exception('This is a broken filter plugin.')
