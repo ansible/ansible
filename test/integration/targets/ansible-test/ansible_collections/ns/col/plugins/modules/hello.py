@@ -17,7 +17,7 @@ author:
 '''
 
 EXAMPLES = '''
-- minimal:
+- hello:
 '''
 
 RETURN = ''''''
