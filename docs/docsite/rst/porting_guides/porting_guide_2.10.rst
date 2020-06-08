@@ -45,7 +45,7 @@ Playbook
         vars:
           dont_show_diff: false
 
-  This looked like the value was being templated, but this was not the case. It evaluated to `True` not because the expression `not dont_show_diff` would be so in Jinja, but becuase it is a 'non empty string' and that is 'truthy' in Python and Jinja.  The expression `diff: dont_show_diff` would also be `True` previouslly.
+  This looked like the value was being templated, but this was not the case. It evaluated to `True` not because the expression `not dont_show_diff` would be so in Jinja, instead it was due to a 'non empty string', which is 'truthy' in Python and Jinja.  The expression `diff: dont_show_diff` would also be `True` previouslly.
 
 
 .. note::
