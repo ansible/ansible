@@ -160,7 +160,7 @@ class GenericBsdIfconfigNetwork(Network):
             'ipv4': [],  # Deprecated, to be removed in 2.14
             'ipv6': [],  # Deprecated, to be removed in 2.14
             'type': 'unknown',
-            'addresses': { 'ipv4': [], 'ipv6': [] },
+            'addresses': {'ipv4': [], 'ipv6': []},
         }
         current_if['flags'] = self.get_options(words[1])
         if 'LOOPBACK' in current_if['flags']:
@@ -208,10 +208,19 @@ class GenericBsdIfconfigNetwork(Network):
         #  lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 33184
         #         inet 127.0.0.1 netmask 0xff000000
         #         inet alias 127.1.1.1 netmask 0xff000000
+        #
+        # The above is no longer true, see:
+        # https://github.com/netbsd/src/commit/0c503d768b1dc184ad9b7895395bddbae87b6f47
+
+        # We mark this as null in output, indicating that we can't determine it.
+        # BSDs seem to no longer provide this information, but let's keep the
+        # key in output for consistency.
+        address = {'is_primary': None}
+
         if words[1] == 'alias':
             del words[1]
 
-        address = {'address': words[1]}
+        address['address'] = words[1]
         # cidr style ip address (eg, 127.0.0.1/24) in inet line
         # used in netbsd ifconfig -e output after 7.1
         if '/' in address['address']:
@@ -253,7 +262,7 @@ class GenericBsdIfconfigNetwork(Network):
         current_if['addresses']['ipv4'].append(address)
 
     def parse_inet6_line(self, words, current_if, ips):
-        address = {'address': words[1]}
+        address = {'address': words[1], 'is_primary': None}
 
         # using cidr style addresses, ala NetBSD ifconfig post 7.1
         if '/' in address['address']:

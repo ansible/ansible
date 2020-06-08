@@ -35,7 +35,7 @@
 
 - name: more network tests for `addresses` field
   hosts: facthost21
-  tags: [ 'fact_network', foo ]
+  tags: [ 'fact_network' ]
   connection: local
   gather_subset: ["!all", "network", "system"]
   gather_facts: yes

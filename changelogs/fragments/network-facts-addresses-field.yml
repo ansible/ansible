@@ -1,5 +1,5 @@
 major_changes:
-  - ``ansible_facts.ansible_[interface].ipv4`` and
+  - "``ansible_facts.ansible_[interface].ipv4`` and
     ``ansible_facts.ansible_[interface].ipv6`` have been deprecated in favor of
     ``ansible_facts.ansible_[interface].addresses`` which is consistent across
-    all supported OSes.
+    all supported OSes."

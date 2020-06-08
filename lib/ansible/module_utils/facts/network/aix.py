@@ -135,10 +135,10 @@ class AIXNetwork(GenericBsdIfconfigNetwork):
         device = words[0][0:-1]
         current_if = {
             'device': device,
-            'ipv4': [],
-            'ipv6': [],
+            'ipv4': [],  # Deprecated, to be removed in 2.14
+            'ipv6': [],  # Deprecated, to be removed in 2.14
             'type': 'unknown',
-            'addresses': { 'ipv4': [], 'ipv6': [] },
+            'addresses': {'ipv4': [], 'ipv6': []},
         }
         current_if['flags'] = self.get_options(words[1])
         current_if['macaddress'] = 'unknown'    # will be overwritten later

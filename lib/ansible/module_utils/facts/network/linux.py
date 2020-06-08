@@ -162,7 +162,7 @@ class LinuxNetwork(Network):
                 promisc_mode = (data & 0x0100 > 0)
                 interfaces[device]['promisc'] = promisc_mode
 
-            interfaces[device]['addresses'] = { 'ipv4': [], 'ipv6': [] }
+            interfaces[device]['addresses'] = {'ipv4': [], 'ipv6': []}
 
             # TODO: determine if this needs to be in a nested scope/closure
             def parse_ip_output(output, secondary=False):
@@ -188,7 +188,7 @@ class LinuxNetwork(Network):
                         # NOTE: device is ref to outside scope
                         # NOTE: interfaces is also ref to outside scope
                         if iface != device:
-                            interfaces[iface] = { 'addresses': { 'ipv4': [], 'ipv6': [] } }
+                            interfaces[iface] = {'addresses': {'ipv4': [], 'ipv6': []}}
 
                         if not secondary and "ipv4" not in interfaces[iface]:
                             interfaces[iface]['ipv4'] = {
