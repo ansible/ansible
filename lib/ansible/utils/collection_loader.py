@@ -14,6 +14,7 @@ from types import ModuleType
 
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.six import iteritems, string_types, with_metaclass
+from ansible.utils.path import cs_isfile
 from ansible.utils.singleton import Singleton
 
 # HACK: keep Python 2.6 controller tests happy in CI until they're properly split
@@ -269,6 +270,8 @@ class AnsibleCollectionLoader(with_metaclass(Singleton, object)):
         return os.path.join(path, ns_path_add)
 
     def get_data(self, filename):
+        if not cs_isfile(filename):
+            raise IOError('could not find {0}'.format(filename))
         with open(filename, 'rb') as fd:
             return fd.read()
 

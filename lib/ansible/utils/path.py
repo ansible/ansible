@@ -25,7 +25,12 @@ from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
-__all__ = ['unfrackpath', 'makedirs_safe']
+__all__ = ['unfrackpath', 'makedirs_safe', 'cs_exists', 'cs_isdir', 'cs_isfile']
+
+if not os.path.exists(__file__):
+    raise Exception('unable to determine filesystem case-sensitivity ({0} does not exist)'.format(__file__))
+
+_is_case_insensitive_fs = os.path.exists(__file__.upper())
 
 
 def unfrackpath(path, follow=True, basedir=None):
@@ -155,3 +160,42 @@ def is_subpath(child, parent):
         pass
 
     return test
+
+
+def cs_exists(path):
+    """
+    A replacement for os.path.exists that behaves case-sensitive on case-insensitive filesystems
+    :param path: a bytes or text path string to check for existence
+    :return: True if the path exists and the paths pass a case-sensitive comparison
+    """
+    raw_exists = os.path.exists(path)
+    if not _is_case_insensitive_fs or not raw_exists:
+        return raw_exists
+
+    # we're on a case-insensitive filesystem and the file exists, verify its case matches
+    parent, leaf = os.path.split(path)
+
+    if not leaf:
+        # root directory or '.', of course it exists
+        return True
+
+    # ensure that the leaf matches, and that the parent dirs match (recursively)
+    return any(p for p in os.listdir(parent) if p == leaf) and cs_isdir(parent)
+
+
+def cs_isdir(path):
+    """
+    A replacement for os.path.isdir that behaves case-sensitive on case-insensitive filesystems
+    :param path: a bytes or text path string to check if isdir
+    :return: True if the path is a dir (or resolves to one) and the paths pass a case-sensitive comparison
+    """
+    return os.path.isdir(path) and cs_exists(path)
+
+
+def cs_isfile(path):
+    """
+    A replacement for os.path.isfile that behaves case-sensitive on case-insensitive filesystems
+    :param path: a bytes or text path string to check if isfile
+    :return: True if the path is a file (or resolves to one) and the paths pass a case-sensitive comparison
+    """
+    return os.path.isfile(path) and cs_exists(path)
