@@ -60,7 +60,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                                 # examples 'can' be yaml, but even if so, we dont want to parse as such here
                                 # as it can create undesired 'objects' that don't display well as docs.
                                 data[varkey] = to_text(child.value.s)
-                            if theid == 'RETURN':
+                            elif theid == 'RETURN':
                                 # string *should* be yaml as well
                                 try:
                                     data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
