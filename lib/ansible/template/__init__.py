@@ -980,7 +980,7 @@ class Templar:
             # Adds Ansible custom filters and tests
             myenv.filters.update(self._get_filters())
             for k in myenv.filters:
-                 myenv.filters[k] = _unroll_iterator(myenv.filters[k])
+                myenv.filters[k] = _unroll_iterator(myenv.filters[k])
             myenv.tests.update(self._get_tests())
 
             if escape_backslashes:
