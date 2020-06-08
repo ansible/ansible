@@ -12,6 +12,11 @@ current_out="$(ansible-doc --playbook-dir ./ testns.testcol.fakemodule)"
 expected_out="$(cat fakemodule.output)"
 test "$current_out" == "$expected_out"
 
+# test module docs from collection
+current_out="$(ansible-doc --playbook-dir ./ test_docs_suboptions)"
+expected_out="$(cat test_docs_suboptions.output)"
+test "$current_out" == "$expected_out"
+
 # test listing diff plugin types from collection
 for ptype in cache inventory lookup vars
 do

@@ -503,7 +503,7 @@ class DocCLI(CLI):
                                                    Dumper=AnsibleDumper).split('\n')]))
 
     @staticmethod
-    def add_fields(text, fields, limit, opt_indent):
+    def add_fields(text, fields, limit, opt_indent, base_indent=''):
 
         for o in sorted(fields):
             opt = fields[o]
@@ -516,7 +516,7 @@ class DocCLI(CLI):
             else:
                 opt_leadin = "-"
 
-            text.append("%s %s" % (opt_leadin, o))
+            text.append("%s%s %s" % (base_indent, opt_leadin, o))
 
             if isinstance(opt['description'], list):
                 for entry_idx, entry in enumerate(opt['description'], 1):
@@ -546,13 +546,10 @@ class DocCLI(CLI):
             text.append(textwrap.fill(DocCLI.tty_ify(aliases + choices + default), limit,
                                       initial_indent=opt_indent, subsequent_indent=opt_indent))
 
-            if 'options' in opt:
-                text.append("%soptions:\n" % opt_indent)
-                DocCLI.add_fields(text, opt.pop('options'), limit, opt_indent + opt_indent)
-
-            if 'spec' in opt:
-                text.append("%sspec:\n" % opt_indent)
-                DocCLI.add_fields(text, opt.pop('spec'), limit, opt_indent + opt_indent)
+            suboptions = []
+            for subkey in ('options', 'suboptions', 'contains', 'spec'):
+                if subkey in opt:
+                    suboptions.append((subkey, opt.pop(subkey)))
 
             conf = {}
             for config in ('env', 'ini', 'yaml', 'vars', 'keywords'):
@@ -578,7 +575,13 @@ class DocCLI(CLI):
                     text.append(DocCLI.tty_ify('%s%s: %s' % (opt_indent, k, ', '.join(opt[k]))))
                 else:
                     text.append(DocCLI._dump_yaml({k: opt[k]}, opt_indent))
-            text.append('')
+
+            for subkey, subdata in suboptions:
+                text.append('')
+                text.append("%s%s:\n" % (opt_indent, subkey.upper()))
+                DocCLI.add_fields(text, subdata, limit, opt_indent + '    ', opt_indent)
+            if not suboptions:
+                text.append('')
 
     @staticmethod
     def get_man_text(doc):
