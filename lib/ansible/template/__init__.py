@@ -572,6 +572,15 @@ class Templar:
             loader=FileSystemLoader(self._basedir),
         )
 
+        # jinja2 global is inconsistent across versions, this normalizes them
+        self.environment.globals['dict'] = dict
+
+        # Custom globals
+        self.environment.globals['lookup'] = self._lookup
+        self.environment.globals['query'] = self.environment.globals['q'] = self._query_lookup
+        self.environment.globals['now'] = self._now_datetime
+        self.environment.globals['finalize'] = self._finalize
+
         # the current rendering context under which the templar class is working
         self.cur_context = None
 
@@ -997,18 +1006,8 @@ class Templar:
                 else:
                     return data
 
-            # jinja2 global is inconsistent across versions, this normalizes them
-            t.globals['dict'] = dict
-
             if disable_lookups:
                 t.globals['query'] = t.globals['q'] = t.globals['lookup'] = self._fail_lookup
-            else:
-                t.globals['lookup'] = self._lookup
-                t.globals['query'] = t.globals['q'] = self._query_lookup
-
-            t.globals['now'] = self._now_datetime
-
-            t.globals['finalize'] = self._finalize
 
             jvars = AnsibleJ2Vars(self, t.globals)
 
