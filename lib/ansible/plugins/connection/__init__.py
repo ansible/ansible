@@ -90,8 +90,25 @@ class ConnectionBase(AnsiblePlugin):
 
         self.become = None
 
+    def __hash__(self):
+
+        if self._hash is None:
+            # prime self, with own options
+            super(ConnectionBase, self).__hash__()
+
+            # also shell
+            self._hash = self._hash + hash(self._shell)
+
+            # and become if we have it
+            if self.become:
+                self._hash = self._hash + hash(self.become)
+
+        return self._hash
+
     def set_become_plugin(self, plugin):
         self.become = plugin
+        # reset hash jic
+        self._hash = None
 
     @property
     def connected(self):

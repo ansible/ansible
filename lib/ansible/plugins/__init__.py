@@ -57,6 +57,15 @@ class AnsiblePlugin(ABC):
 
     def __init__(self):
         self._options = {}
+        self._hash = None
+
+    def __hash__(self):
+        if self._hash is None:
+            self._hash = self._load_name + hash(self._options)
+        return self._hash
+
+    def __eq__(self, other):
+        return other == self._hash
 
     def get_option(self, option, hostvars=None):
         if option not in self._options:
