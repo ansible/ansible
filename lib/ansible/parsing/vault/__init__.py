@@ -599,6 +599,10 @@ class VaultLib:
         self.cipher_name = None
         self.b_version = b'1.2'
 
+    @staticmethod
+    def is_encrypted(vaulttext):
+        return is_encrypted(vaulttext)
+
     def encrypt(self, plaintext, secret=None, vault_id=None):
         """Vault encrypt a piece of data.
 

@@ -61,6 +61,30 @@ To match strings against a substring or a regular expression, use the ``match``,
 
 ``match`` succeeds if it finds the pattern at the beginning of the string, while ``search`` succeeds if it finds the pattern anywhere within string. By default, ``regex`` works like ``search``, but ``regex`` can be configured to perform other tests as well.
 
+.. _testing_vault:
+
+Vault
+=====
+
+.. versionadded:: 2.10
+
+You can test whether a variable is an inline single vault encrypted value using the ``vault_encrypted`` test.
+
+.. code-block:: yaml
+
+    vars:
+      variable: !vault |
+        $ANSIBLE_VAULT;1.2;AES256;dev
+        61323931353866666336306139373937316366366138656131323863373866376666353364373761
+        3539633234313836346435323766306164626134376564330a373530313635343535343133316133
+        36643666306434616266376434363239346433643238336464643566386135356334303736353136
+        6565633133366366360a326566323363363936613664616364623437336130623133343530333739
+        3039
+
+    tasks:
+      - debug:
+          msg: '{{ (variable is vault_encrypted) | ternary("Vault encrypted", "Not vault encrypted") }}'
+
 .. _testing_truthiness:
 
 Testing truthiness
