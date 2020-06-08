@@ -49,7 +49,7 @@ options:
     env:
         - name: ANSIBLE_LOOKUP_URL_FORCE
     ini:
-        - section: plugin_lookup_url
+        - section: url_lookup
         - key: force
   timeout:
     description: How long to wait for the server to send data before giving up
@@ -61,7 +61,7 @@ options:
     env:
         - name: ANSIBLE_LOOKUP_URL_TIMEOUT
     ini:
-        - section: plugin_lookup_url
+        - section: url_lookup
         - key: timeout
   http_agent:
     description: User-Agent to use in the request
@@ -72,7 +72,7 @@ options:
     env:
         - name: ANSIBLE_LOOKUP_URL_AGENT
     ini:
-        - section: plugin_lookup_url
+        - section: url_lookup
         - key: agent
   force_basic_auth:
     description: Force basic authentication
@@ -84,7 +84,7 @@ options:
     env:
         - name: ANSIBLE_LOOKUP_URL_AGENT
     ini:
-        - section: plugin_lookup_url
+        - section: url_lookup
         - key: agent
   follow_redirects:
     description: String of urllib2, all/yes, safe, none to determine how redirects are followed, see RedirectHandlerFactory for more information
@@ -96,7 +96,7 @@ options:
     env:
         - name: ANSIBLE_LOOKUP_URL_FOLLOW_REDIRECTS
     ini:
-        - section: plugin_lookup_url
+        - section: url_lookup
         - key: follow_redirects
   use_gssapi:
     description: Use GSSAPI handler of requests
@@ -108,7 +108,7 @@ options:
     env:
         - name: ANSIBLE_LOOKUP_URL_USE_GSSAPI
     ini:
-        - section: plugin_lookup_url
+        - section: url_lookup
         - key: use_gssapi
   unix_socket:
     description: String of file system path to unix socket file to use when establishing connection to the provided url
@@ -119,7 +119,7 @@ options:
     env:
         - name: ANSIBLE_LOOKUP_URL_UNIX_SOCKET
     ini:
-        - section: plugin_lookup_url
+        - section: url_lookup
         - key: unix_socket
   ca_path:
     description: String of file system path to CA cert bundle to use
@@ -130,7 +130,7 @@ options:
     env:
         - name: ANSIBLE_LOOKUP_URL_CA_PATH
     ini:
-        - section: plugin_lookup_url
+        - section: url_lookup
         - key: ca_path
   unredirected_headers:
     description: A list of headers to not attach on a redirected request
@@ -141,7 +141,7 @@ options:
     env:
         - name: ANSIBLE_LOOKUP_URL_UNREDIR_HEADERS
     ini:
-        - section: plugin_lookup_url
+        - section: url_lookup
         - key: unredirected_headers
 """
 
