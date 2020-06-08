@@ -143,6 +143,9 @@ class CallbackBase(AnsiblePlugin):
     '''
 
     def __init__(self, display=None, options=None):
+
+        super(CallbackBase, self).__init__()
+
         if display:
             self._display = display
         else:
