@@ -1677,9 +1677,9 @@ class VmsModule(BaseModule):
 
     def __get_cd_id(self):
         disks_service = self._connection.system_service().disks_service()
-        disks = disks_service.list(search='name="{}"'.format(self.param('cd_iso')))
+        disks = disks_service.list(search='name="{0}"'.format(self.param('cd_iso')))
         if len(disks) > 1:
-            raise ValueError('Found mutiple disks with same name "{}" please use \
+            raise ValueError('Found mutiple disks with same name "{0}" please use \
                 disk ID in "cd_iso" to specify which disk should be used.'.format(self.param('cd_iso')))
         if not disks:
             # The `cd_iso` is valid disk ID returning to _attach_cd
