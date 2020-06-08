@@ -1,0 +1,5 @@
+minor_changes:
+- Templating - Add globals to the jinja2 environment at ``Templar``
+  instantiation, instead of customizing the template object.
+  Only customize the template object, to disable lookups.
+  (https://github.com/ansible/ansible/pull/69278)
