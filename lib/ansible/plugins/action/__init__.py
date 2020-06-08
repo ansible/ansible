@@ -323,7 +323,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             become_exception,
         ]
 
-        return all(*conditions)
+        return all(conditions)
 
     def _get_admin_users(self):
         '''
