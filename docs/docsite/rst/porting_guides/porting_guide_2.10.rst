@@ -47,6 +47,15 @@ Playbook
 
   This looked like the value was being templated, but this was not the case. It evaluated to ``True`` not because the expression ``not dont_show_diff`` was evaluated by Jinja, but instead due to a 'non-empty string', which is 'truthy' in Python and Jinja.  The expression ``diff: dont_show_diff`` would also be ``True`` previously.
 
+  You always needed to have the expression templated as we show here:
+.. code::
+
+      - debug:
+          copy: src=test.txt dest=/path/test.txt
+        diff: '{{not dont_show_diff}}'
+        vars:
+          dont_show_diff: false
+
 
 .. note::
     When there is an error templating with ``no_log`` it defaults to ``True`` to be on the safe side, so this might obscure that real the issue is due to this change.
