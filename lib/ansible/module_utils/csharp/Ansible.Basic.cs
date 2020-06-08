@@ -738,8 +738,8 @@ namespace Ansible.Basic
                 if (removedInVersion != null && parameters.Contains(k))
                     Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), removedInVersion.ToString());
 
-                object removedInVersion = v["removed_at_date"];
-                if (removedInVersion != null && parameters.Contains(k))
+                object removedAtDate = v["removed_at_date"];
+                if (removedAtDate != null && parameters.Contains(k))
                     Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), (string)null);
             }
         }
