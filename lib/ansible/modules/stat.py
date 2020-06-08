@@ -89,21 +89,8 @@ EXAMPLES = r'''
   register: sym
 
 - debug:
-    msg: "islnk isn't defined (path doesn't exist)"
-  when: sym.stat.islnk is not defined
-
-- debug:
-    msg: "islnk is defined (path must exist)"
-  when: sym.stat.islnk is defined
-
-- debug:
-    msg: "Path exists and is a symlink"
-  when: sym.stat.islnk is defined and sym.stat.islnk
-
-- debug:
-    msg: "Path exists and isn't a symlink"
-  when: sym.stat.islnk is defined and sym.stat.islnk == False
-
+    msg: "Path is a symlink"
+  when: sym.stat.islnk|default(false)
 
 # Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
