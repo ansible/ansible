@@ -1,0 +1,2 @@
+jinja2  # ansible-base requirement
+pyyaml
