@@ -83,7 +83,7 @@ namespace Ansible.Basic
             { "no_log", new List<object>() { false, typeof(bool) } },
             { "options", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "removed_in_version", new List<object>() { null, typeof(string) } },
-            { "removed_at_date", new List<object>() { null, typeof(string) } },  // Ansible 2.10 compatibility
+            { "removed_at_date", new List<object>() { null, typeof(DateTime) } },  // Ansible 2.10 compatibility
             { "removed_from_collection", new List<object>() { null, typeof(string) } },  // Ansible 2.10 compatibility
             { "required", new List<object>() { false, typeof(bool) } },
             { "required_by", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
