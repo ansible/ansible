@@ -648,7 +648,7 @@ class CollectionModuleInfo(ModuleInfo):
             self._package_name = '.'.join(path.split('/'))
             try:
                 self.get_source()
-            except FileNotFoundError:
+            except IOError:
                 pass
             else:
                 self.path = os.path.join(path, self._mod_name) + '.py'
