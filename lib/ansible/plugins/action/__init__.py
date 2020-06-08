@@ -315,11 +315,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # any of these require a true
         conditions = [
-            self._connection.has_pipelining,   # connection class supports it
-            is_enabled or always_pipeline,     # enabled via config or forced via connection (eg winrm)
-            module_style == "new",             # old style modules do not support pipelining
-            not C.DEFAULT_KEEP_REMOTE_FILES,   # user wants remote files
-            not wrap_async or always_pipeline, # async does not normally support pipelining unless it does (eg winrm)
+            self._connection.has_pipelining,    # connection class supports it
+            is_enabled or always_pipeline,      # enabled via config or forced via connection (eg winrm)
+            module_style == "new",              # old style modules do not support pipelining
+            not C.DEFAULT_KEEP_REMOTE_FILES,    # user wants remote files
+            not wrap_async or always_pipeline,  # async does not normally support pipelining unless it does (eg winrm)
             become_exception,
         ]
 
