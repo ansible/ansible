@@ -35,7 +35,7 @@ Playbook
 * Fixed a bug on boolean keywords that made random strings return 'False', now they should return an error if they are not a proper boolean
   Example: ``diff: yes-`` was returning ``False``.
   This applies for every keyword that would take a boolean as a value (check_mode, no_log, become, run_once, ...), but not conditionals (`*when:`).
-  Some playbooks would have seemed to be working as random strings would evaluate as `True`.
+  Some playbooks would have seemed to be working as random strings would evaluate as ``True``.
 
 .. code::
 
