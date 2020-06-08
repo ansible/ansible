@@ -80,6 +80,7 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
     def __init__(self):
         self._options = {}
         self._defs = None
+        self._hash = None
 
     @property
     def extras_prefix(self):
@@ -111,6 +112,14 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
         Only for use by the `AnsiblePlugin` base class.
         """
         return _plugin_info.get_plugin_info(self)
+
+    def __hash__(self):
+        if self._hash is None:
+            self._hash = self._load_name + hash(self._options)
+        return self._hash
+
+    def __eq__(self, other):
+        return other == self._hash
 
     def get_option(self, option, hostvars=None):
 
