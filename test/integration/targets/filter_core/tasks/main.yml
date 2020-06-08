@@ -557,3 +557,19 @@
   assert:
     that:
       - '"foo"|type_debug == "str"'
+
+- name: Assert that a jinja2 filter that produces a map is auto unrolled
+  assert:
+    that:
+      - thing|map(attribute="bar")|first == 123
+      - thing_result|first == 123
+      - thing_items|first|last == 123
+      - thing_range == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  vars:
+    thing:
+      - bar: 123
+    thing_result: '{{ thing|map(attribute="bar") }}'
+    thing_dict:
+      bar: 123
+    thing_items: '{{ thing_dict.items() }}'
+    thing_range: '{{ range(10) }}'
