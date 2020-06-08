@@ -252,7 +252,7 @@ def _unroll_iterator(func):
     """
     def wrapper(*args, **kwargs):
         ret = func(*args, **kwargs)
-        if not USE_JINJA2_NATIVE and _is_rolled(ret):
+        if _is_rolled(ret):
             return list(ret)
         return ret
 
