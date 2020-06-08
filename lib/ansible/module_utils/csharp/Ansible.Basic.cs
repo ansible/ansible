@@ -83,6 +83,8 @@ namespace Ansible.Basic
             { "no_log", new List<object>() { false, typeof(bool) } },
             { "options", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "removed_in_version", new List<object>() { null, typeof(string) } },
+            { "removed_at_date", new List<object>() { null, typeof(string) } },  // Ansible 2.10 compatibility
+            { "removed_from_collection", new List<object>() { null, typeof(string) } },  // Ansible 2.10 compatibility
             { "required", new List<object>() { false, typeof(bool) } },
             { "required_by", new List<object>() { typeof(Hashtable), typeof(Hashtable) } },
             { "required_if", new List<object>() { typeof(List<List<object>>), null } },
@@ -242,7 +244,13 @@ namespace Ansible.Basic
                 LogEvent(String.Format("[DEBUG] {0}", message));
         }
 
-        public void Deprecate(string message, string version, string collectionName = null)
+        public void Deprecate(string message, string version)
+        {
+            deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", version } });
+            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
+        }
+
+        public void Deprecate(string message, string version, string collectionName)
         {
             // `collectionName` is a Ansible 2.10 parameter. We accept and ignore it,
             // to avoid modules/plugins from 2.10 conformant collections to break with
@@ -251,7 +259,16 @@ namespace Ansible.Basic
             LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
         }
 
-        public void Deprecate(string message, DateTime date, string collectionName = null)
+        public void Deprecate(string message, DateTime date)
+        {
+            // This function is only available for Ansible 2.10. We still accept and ignore it,
+            // to avoid modules/plugins from 2.10 conformant collections to break with new enough
+            // versions of Ansible 2.9.
+            deprecations.Add(new Dictionary<string, string>() { { "msg", message }, { "version", null } });
+            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, null));
+        }
+
+        public void Deprecate(string message, DateTime date, string collectionName)
         {
             // This function is only available for Ansible 2.10. We still accept and ignore it,
             // to avoid modules/plugins from 2.10 conformant collections to break with new enough
@@ -720,6 +737,10 @@ namespace Ansible.Basic
                 object removedInVersion = v["removed_in_version"];
                 if (removedInVersion != null && parameters.Contains(k))
                     Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), removedInVersion.ToString());
+
+                object removedInVersion = v["removed_at_date"];
+                if (removedInVersion != null && parameters.Contains(k))
+                    Deprecate(String.Format("Param '{0}' is deprecated. See the module docs for more information", k), (string)null);
             }
         }
 
