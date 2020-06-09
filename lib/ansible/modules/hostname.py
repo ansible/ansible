@@ -53,6 +53,7 @@ from ansible.module_utils.basic import (
 )
 from ansible.module_utils.common.sys_info import get_platform_subclass
 from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollector
+from ansible.module_utils.facts.utils import get_file_content, get_file_lines
 from ansible.module_utils._text import to_native
 
 STRATS = {'generic': 'Generic', 'debian': 'Debian', 'sles': 'SLES', 'redhat': 'RedHat', 'alpine': 'Alpine',
@@ -183,22 +184,24 @@ class GenericStrategy(object):
 
     def get_current_hostname(self):
         cmd = [self.hostname_cmd]
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd)
         return to_native(out).strip()
 
     def set_current_hostname(self, name):
         cmd = [self.hostname_cmd, name]
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd)
 
     def get_permanent_hostname(self):
         return 'UNKNOWN'
 
     def set_permanent_hostname(self, name):
         pass
+
+    def exec_command(self, cmd, use_unsafe_shell=False):
+        rc, out, err = self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        return (rc, out, err)
 
 
 class HostnameCliStrategy(GenericStrategy):
@@ -216,23 +219,13 @@ class HostnameCliStrategy(GenericStrategy):
             except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
                                           to_native(e), exception=traceback.format_exc())
-        try:
-            f = open(self.HOSTNAME_FILE)
-            try:
-                return f.read().strip()
-            finally:
-                f.close()
-        except Exception as e:
-            self.module.fail_json(msg="failed to read hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+
+        return get_file_content(self.HOSTNAME_FILE)
 
     def set_permanent_hostname(self, name):
         try:
-            f = open(self.HOSTNAME_FILE, 'w+')
-            try:
+            with open(self.HOSTNAME_FILE, 'w+') as f:
                 f.write("%s\n" % name)
-            finally:
-                f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
                                       to_native(e), exception=traceback.format_exc())
@@ -272,40 +265,27 @@ class RedHatStrategy(GenericStrategy):
     NETWORK_FILE = '/etc/sysconfig/network'
 
     def get_permanent_hostname(self):
-        try:
-            f = open(self.NETWORK_FILE, 'rb')
-            try:
-                for line in f.readlines():
-                    if line.startswith('HOSTNAME'):
-                        k, v = line.split('=')
-                        return v.strip()
-            finally:
-                f.close()
-        except Exception as e:
-            self.module.fail_json(msg="failed to read hostname: %s" %
-                                      to_native(e), exception=traceback.format_exc())
+        for line in get_file_lines(self.NETWORK_FILE, strip=False):
+            if line.startswith('HOSTNAME'):
+                k, v = line.split('=')
+                return v.strip()
 
     def set_permanent_hostname(self, name):
-        try:
-            lines = []
-            found = False
-            f = open(self.NETWORK_FILE, 'rb')
-            try:
-                for line in f.readlines():
-                    if line.startswith('HOSTNAME'):
-                        lines.append("HOSTNAME=%s\n" % name)
-                        found = True
-                    else:
-                        lines.append(line)
-            finally:
-                f.close()
-            if not found:
+        lines = []
+        found = False
+        for line in get_file_lines(self.NETWORK_FILE, strip=False):
+            if line.startswith('HOSTNAME'):
                 lines.append("HOSTNAME=%s\n" % name)
-            f = open(self.NETWORK_FILE, 'w+')
-            try:
+                found = True
+            else:
+                lines.append(line)
+
+        if not found:
+            lines.append("HOSTNAME=%s\n" % name)
+
+        try:
+            with open(self.NETWORK_FILE, 'w+') as f:
                 f.writelines(lines)
-            finally:
-                f.close()
         except Exception as e:
             self.module.fail_json(msg="failed to update hostname: %s" %
                                       to_native(e), exception=traceback.format_exc())
@@ -326,9 +306,7 @@ class AlpineStrategy(HostnameCliStrategy):
 
     def set_current_hostname(self, name):
         cmd = [self.hostname_cmd, '-F', self.HOSTNAME_FILE]
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd)
 
 
 class SystemdStrategy(GenericStrategy):
@@ -339,37 +317,27 @@ class SystemdStrategy(GenericStrategy):
 
     def get_current_hostname(self):
         cmd = [self.hostname_cmd, '--transient', 'status']
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd)
         return to_native(out).strip()
 
     def set_current_hostname(self, name):
         if len(name) > 64:
             self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
         cmd = [self.hostname_cmd, '--transient', 'set-hostname', name]
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd)
 
     def get_permanent_hostname(self):
         cmd = [self.hostname_cmd, '--static', 'status']
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd)
         return to_native(out).strip()
 
     def set_permanent_hostname(self, name):
         if len(name) > 64:
             self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
         cmd = [self.hostname_cmd, '--pretty', 'set-hostname', name]
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd)
         cmd = [self.hostname_cmd, '--static', 'set-hostname', name]
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd)
 
 
 class OpenRCStrategy(GenericStrategy):
@@ -382,41 +350,25 @@ class OpenRCStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
         name = 'UNKNOWN'
-        try:
-            try:
-                f = open(self.HOSTNAME_FILE, 'r')
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('hostname='):
-                        name = line[10:].strip('"')
-                        break
-            except Exception as e:
-                self.module.fail_json(msg="failed to read hostname: %s" %
-                                          to_native(e), exception=traceback.format_exc())
-        finally:
-            f.close()
-
+        for line in get_file_lines(self.HOSTNAME_FILE):
+            if line.startswith('hostname='):
+                name = line[10:].strip('"')
+                break
         return name
 
     def set_permanent_hostname(self, name):
+        lines = get_file_lines(self.HOSTNAME_FILE)
+        for i, line in enumerate(lines):
+            if line.startswith('hostname='):
+                lines[i] = 'hostname="%s"' % name
+                break
+
         try:
-            try:
-                f = open(self.HOSTNAME_FILE, 'r')
-                lines = [x.strip() for x in f]
-
-                for i, line in enumerate(lines):
-                    if line.startswith('hostname='):
-                        lines[i] = 'hostname="%s"' % name
-                        break
-                f.close()
-
-                f = open(self.HOSTNAME_FILE, 'w')
+            with open(self.HOSTNAME_FILE, 'w') as f:
                 f.write('\n'.join(lines) + '\n')
-            except Exception as e:
-                self.module.fail_json(msg="failed to update hostname: %s" %
-                                          to_native(e), exception=traceback.format_exc())
-        finally:
-            f.close()
+        except Exception as e:
+            self.module.fail_json(msg="failed to update hostname: %s" % to_native(e),
+                                  exception=traceback.format_exc())
 
 
 class SolarisStrategy(GenericStrategy):
@@ -428,24 +380,18 @@ class SolarisStrategy(GenericStrategy):
     def set_current_hostname(self, name):
         cmd_option = '-t'
         cmd = [self.hostname_cmd, cmd_option, name]
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd)
 
     def get_permanent_hostname(self):
         fmri = 'svc:/system/identity:node'
         pattern = 'config/nodename'
         cmd = '/usr/sbin/svccfg -s %s listprop -o value %s' % (fmri, pattern)
-        rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd, use_unsafe_shell=True)
         return to_native(out).strip()
 
     def set_permanent_hostname(self, name):
         cmd = [self.hostname_cmd, name]
-        rc, out, err = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" % (rc, out, err))
+        rc, out, err = self.exec_command(cmd)
 
 
 class FreeBSDStrategy(GenericStrategy):
@@ -465,41 +411,27 @@ class FreeBSDStrategy(GenericStrategy):
             except IOError as e:
                 self.module.fail_json(msg="failed to write file: %s" %
                                           to_native(e), exception=traceback.format_exc())
-        try:
-            try:
-                f = open(self.HOSTNAME_FILE, 'r')
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('hostname='):
-                        name = line[10:].strip('"')
-                        break
-            except Exception as e:
-                self.module.fail_json(msg="failed to read hostname: %s" %
-                                          to_native(e), exception=traceback.format_exc())
-        finally:
-            f.close()
+
+        for line in get_file_lines(self.HOSTNAME_FILE):
+            if line.startswith('hostname='):
+                name = line[10:].strip('"')
+                break
 
         return name
 
     def set_permanent_hostname(self, name):
+        lines = get_file_lines(self.HOSTNAME_FILE)
+        for i, line in enumerate(lines):
+            if line.startswith('hostname='):
+                lines[i] = 'hostname="%s"' % name
+                break
+
         try:
-            try:
-                f = open(self.HOSTNAME_FILE, 'r')
-                lines = [x.strip() for x in f]
-
-                for i, line in enumerate(lines):
-                    if line.startswith('hostname='):
-                        lines[i] = 'hostname="%s"' % name
-                        break
-                f.close()
-
-                f = open(self.HOSTNAME_FILE, 'w')
+            with open(self.HOSTNAME_FILE, 'w') as f:
                 f.write('\n'.join(lines) + '\n')
-            except Exception as e:
-                self.module.fail_json(msg="failed to update hostname: %s" %
-                                          to_native(e), exception=traceback.format_exc())
-        finally:
-            f.close()
+        except Exception as e:
+            self.module.fail_json(msg="failed to update hostname: %s" % to_native(e),
+                                  exception=traceback.format_exc())
 
 
 class FedoraHostname(Hostname):
