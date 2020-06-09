@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import abc
 import functools
+import pickle
 import types
 import typing as t
 
@@ -115,7 +116,8 @@ class AnsiblePlugin(_AnsiblePluginInfoMixin, _ConfigurablePlugin, metaclass=abc.
 
     def __hash__(self):
         if self._hash is None:
-            self._hash = self._load_name + hash(self._options)
+            s_options = pickle.dumps(self._options)
+            self._hash = self._load_name + hash(s_options)
         return self._hash
 
     def __eq__(self, other):
