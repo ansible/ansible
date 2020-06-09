@@ -57,7 +57,8 @@ COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
                   ('display_ok_hosts', True),
                   ('show_custom_stats', C.SHOW_CUSTOM_STATS),
                   ('display_failed_stderr', False),
-                  ('check_mode_markers', False),)
+                  ('check_mode_markers', False),
+                  ('show_per_host_start', False),)
 
 
 class CallbackModule(CallbackBase):
@@ -253,7 +254,7 @@ class CallbackModule(CallbackBase):
         self._task_start(task, prefix='RUNNING HANDLER')
 
     def v2_runner_on_start(self, host, task):
-        if self.get_option('show_per_host_start'):
+        if self.show_per_host_start:
             self._display.display(" [started %s on %s]" % (task, host), color=C.COLOR_OK)
 
     def v2_playbook_on_play_start(self, play):
