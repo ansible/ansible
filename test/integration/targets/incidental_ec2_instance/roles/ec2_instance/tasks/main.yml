@@ -17,13 +17,27 @@
 #  - EC2_REGION -> AWS_REGION
 #
 
-- name: "Wrap up all tests and setup AWS credentials"
-  module_defaults:
-    group/aws:
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       security_token: "{{ security_token | default(omit) }}"
       region: "{{ aws_region }}"
+  no_log: yes
+
+- name: "Wrap up all tests and setup AWS credentials"
+  module_defaults:
+    ec2_instance:
+      <<: *aws_connection_info
+    ec2_instance_info:
+      <<: *aws_connection_info
+    ec2_key:
+      <<: *aws_connection_info
+    ec2_eni:
+      <<: *aws_connection_info
+    iam_role:
+      <<: *aws_connection_info
   block:
     - debug:
         msg: "{{ inventory_hostname }} start: {{ lookup('pipe','date') }}"
