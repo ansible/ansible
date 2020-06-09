@@ -16,6 +16,38 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+# See https://github.com/ansible/ansible/issues/36045
+- set_fact:
+    inventory_data:
+      ansible_ssh_common_args: "-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+      # ansible_ssh_host: "127.0.0.3"
+      ansible_host: "127.0.0.3"
+      ansible_ssh_pass: "foobar"
+      # ansible_ssh_port: "2222"
+      ansible_port: "2222"
+      ansible_ssh_private_key_file: "/tmp/inventory-cloudj9cGz5/identity"
+      ansible_ssh_user: "root"
+      hostname: "newdynamichost2"
+
+- name: Show inventory_data for 36045
+  debug:
+    msg: "{{ inventory_data }}"
+
+- name: Add host from dict 36045
+  add_host: "{{ inventory_data }}"
+
+- name: show newly added host
+  debug:
+    msg: "{{hostvars['newdynamichost2'].group_names}}"
+
+- name: ensure that dynamically-added newdynamichost2 is visible via hostvars, groups 36045
+  assert:
+    that:
+    - hostvars['newdynamichost2'] is defined
+    - hostvars['newdynamichost2'].group_names is defined
+
+#  end of https://github.com/ansible/ansible/issues/36045 related tests
+
 - name: add a host to the runtime inventory
   add_host:
     name: newdynamichost
@@ -115,3 +147,13 @@
       - "'testhost01' in groups['testhostgroup']"
       - "'testhost02' in groups['testhostgroup']"
       - hostvars['testhost01']['foo'] == 'bar'
+
+- name: Give invalid input
+  add_host: namenewdynamichost groupsnewdynamicgroup a_varfromadd_host
+  ignore_errors: true
+  register: badinput
+
+- name: verify we detected bad input
+  assert:
+    that:
+      - badinput is failed
