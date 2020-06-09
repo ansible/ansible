@@ -2,7 +2,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ..module_utils.echo_impl import do_echo
+from ansible_collections.testns.testcoll.plugins.module_utils.echo_impl import do_echo
 
 
 def main():
