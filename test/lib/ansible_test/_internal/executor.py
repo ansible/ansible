@@ -292,6 +292,9 @@ def install_command_requirements(args, python_version=None, context=None, enable
 
     commands = [cmd for cmd in commands if cmd]
 
+    if not commands:
+        return  # no need to detect changes or run pip check since we are not making any changes
+
     # only look for changes when more than one requirements file is needed
     detect_pip_changes = len(commands) > 1
 
