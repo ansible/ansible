@@ -42,7 +42,9 @@ from ansible import context
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
+from ansible.utils.display import Display
 
+display = Display()
 
 # These values use ansible.constants for historical reasons, mostly to allow
 # unmodified derivative plugins to work. However, newer options added to the
