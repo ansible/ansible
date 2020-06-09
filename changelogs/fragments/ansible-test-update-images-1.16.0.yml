@@ -1,0 +1,2 @@
+minor_changes:
+  - update ansible-test images to 1.16.0, which includes system updates and pins CentOS versions
