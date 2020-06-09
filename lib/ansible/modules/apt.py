@@ -153,7 +153,7 @@ options:
     description:
       - Only download packages. Do not install them now.
     type: bool
-    default: 'no'
+    default: no
     version_added: "2.10"
 requirements:
    - python-apt (python 2)
