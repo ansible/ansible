@@ -216,11 +216,12 @@ def get_cryptography_requirement(args, python_version):  # type: (EnvironmentCon
     return cryptography
 
 
-def install_command_requirements(args, python_version=None, context=None):
+def install_command_requirements(args, python_version=None, context=None, enable_pyyaml_check=False):
     """
     :type args: EnvironmentConfig
     :type python_version: str | None
     :type context: str | None
+    :type enable_pyyaml_check: bool
     """
     if not args.explain:
         make_dirs(ResultType.COVERAGE.path)
@@ -299,6 +300,10 @@ def install_command_requirements(args, python_version=None, context=None):
                 display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
             else:
                 raise
+
+    if enable_pyyaml_check:
+        # pyyaml may have been one of the requirements that was installed, so perform an optional check for it
+        check_pyyaml(args, python_version, required=False)
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
