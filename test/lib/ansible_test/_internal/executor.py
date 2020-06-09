@@ -255,17 +255,18 @@ def install_command_requirements(args, python_version=None, context=None):
     # virtualenvs created by older distributions may include very old pip versions, such as those created in the centos6 test container (pip 6.0.8)
     run_command(args, generate_pip_install(pip, 'ansible-test', use_constraints=False))
 
-    # make sure setuptools is available before trying to install cryptography
-    # the installed version of setuptools affects the version of cryptography to install
-    run_command(args, generate_pip_install(pip, 'setuptools', packages=['setuptools']))
+    if args.command != 'sanity':
+        # make sure setuptools is available before trying to install cryptography
+        # the installed version of setuptools affects the version of cryptography to install
+        run_command(args, generate_pip_install(pip, 'setuptools', packages=['setuptools']))
 
-    # install the latest cryptography version that the current requirements can support
-    # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
-    # if not installed here later install commands may try to install an unsupported version due to the presence of older setuptools
-    # this is done instead of upgrading setuptools to allow tests to function with older distribution provided versions of setuptools
-    run_command(args, generate_pip_install(pip, 'cryptography',
-                                           packages=[get_cryptography_requirement(args, python_version)],
-                                           constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
+        # install the latest cryptography version that the current requirements can support
+        # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
+        # if not installed here later install commands may try to install an unsupported version due to the presence of older setuptools
+        # this is done instead of upgrading setuptools to allow tests to function with older distribution provided versions of setuptools
+        run_command(args, generate_pip_install(pip, 'cryptography',
+                                               packages=[get_cryptography_requirement(args, python_version)],
+                                               constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
 
     commands = [generate_pip_install(pip, args.command, packages=packages, context=context)]
 
