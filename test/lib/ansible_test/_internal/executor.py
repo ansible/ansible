@@ -216,10 +216,11 @@ def get_cryptography_requirement(args, python_version):  # type: (EnvironmentCon
     return cryptography
 
 
-def install_command_requirements(args, python_version=None):
+def install_command_requirements(args, python_version=None, context=None):
     """
     :type args: EnvironmentConfig
     :type python_version: str | None
+    :type context: str | None
     """
     if not args.explain:
         make_dirs(ResultType.COVERAGE.path)
@@ -266,7 +267,7 @@ def install_command_requirements(args, python_version=None):
                                            packages=[get_cryptography_requirement(args, python_version)],
                                            constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
 
-    commands = [generate_pip_install(pip, args.command, packages=packages)]
+    commands = [generate_pip_install(pip, args.command, packages=packages, context=context)]
 
     if isinstance(args, IntegrationConfig):
         for cloud_platform in get_cloud_platforms(args):
@@ -377,26 +378,29 @@ License: GPLv3+
     write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
-def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True):
+def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True, context=None):
     """
     :type pip: list[str]
     :type command: str
     :type packages: list[str] | None
     :type constraints: str | None
     :type use_constraints: bool
+    :type context: str | None
     :rtype: list[str] | None
     """
     constraints = constraints or os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
-    requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % command)
+    requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % ('%s.%s' % (command, context) if context else command))
 
     options = []
 
     if os.path.exists(requirements) and os.path.getsize(requirements):
         options += ['-r', requirements]
 
-    if data_context().content.is_ansible:
-        if command == 'sanity':
-            options += ['-r', os.path.join(data_context().content.root, 'test', 'sanity', 'requirements.txt')]
+    if command == 'sanity' and data_context().content.is_ansible:
+        requirements = os.path.join(data_context().content.sanity_path, 'code-smell', '%s.requirements.txt' % context)
+
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
 
     if command == 'units':
         requirements = os.path.join(data_context().content.unit_path, 'requirements.txt')
