@@ -212,7 +212,10 @@ def check_pyyaml(args, version):
     cloader = result['cloader']
 
     if not yaml:
-        display.warning('PyYAML is not installed for interpreter: %s' % python)
+        # do not warn about missing pyyaml
+        # if it is required by tests they will fail with an error message that should be descriptive enough
+        # warning here assumes all tests require pyyaml, which is not the case for many sanity tests
+        pass
     elif not cloader:
         display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)
 
