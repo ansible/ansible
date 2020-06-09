@@ -82,7 +82,7 @@ class ImportTest(SanityMultipleVersion):
             # hack to make sure that virtualenv is available under Python 2.x
             # on Python 3.x we can use the built-in venv
             pip = generate_pip_command(python)
-            run_command(args, generate_pip_install(pip, 'sanity.import', packages=['virtualenv']), capture=capture_pip)
+            run_command(args, generate_pip_install(pip, '', packages=['virtualenv']), capture=capture_pip)
 
         settings = self.load_processor(args, python_version)
 
@@ -127,8 +127,8 @@ class ImportTest(SanityMultipleVersion):
 
         # make sure coverage is available in the virtual environment if needed
         if args.coverage:
-            run_command(args, generate_pip_install(virtualenv_pip, 'sanity.import', packages=['setuptools']), env=env, capture=capture_pip)
-            run_command(args, generate_pip_install(virtualenv_pip, 'sanity.import', packages=['coverage']), env=env, capture=capture_pip)
+            run_command(args, generate_pip_install(virtualenv_pip, '', packages=['setuptools']), env=env, capture=capture_pip)
+            run_command(args, generate_pip_install(virtualenv_pip, '', packages=['coverage']), env=env, capture=capture_pip)
 
         try:
             # In some environments pkg_resources is installed as a separate pip package which needs to be removed.
