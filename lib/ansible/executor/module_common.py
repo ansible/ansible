@@ -1356,7 +1356,7 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
 
             group_name = default.split('group/')[-1]
 
-            for collection_name in group_collection_map[group_name]:
+            for collection_name in group_collection_map.get(group_name, []):
                 try:
                     action_group = _get_collection_metadata(collection_name).get('action_groups', {})
                 except ValueError:
