@@ -276,9 +276,7 @@ namespace Ansible.Basic
 
         public void Deprecate(string message, string version)
         {
-            deprecations.Add(new Dictionary<string, string>() {
-                { "msg", message }, { "version", version }, { "collection_name", null } });
-            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, version));
+            Deprecate(message, version, null)
         }
 
         public void Deprecate(string message, string version, string collectionName)
@@ -290,10 +288,7 @@ namespace Ansible.Basic
 
         public void Deprecate(string message, DateTime date)
         {
-            string isoDate = date.ToString("yyyy-MM-dd");
-            deprecations.Add(new Dictionary<string, string>() {
-                { "msg", message }, { "date", isoDate }, { "collection_name", null } });
-            LogEvent(String.Format("[DEPRECATION WARNING] {0} {1}", message, isoDate));
+            Deprecate(message, date, null)
         }
 
         public void Deprecate(string message, DateTime date, string collectionName)
