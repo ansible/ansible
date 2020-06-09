@@ -661,7 +661,7 @@ class Templar:
     def set_available_variables(self, variables):
         display.deprecated(
             'set_available_variables is being deprecated. Use "@available_variables.setter" instead.',
-            version='ansible.builtin:2.13'
+            version='2.13', collection_name='ansible.builtin'
         )
         self.available_variables = variables
 

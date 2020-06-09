@@ -163,7 +163,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
         new_ds['loop_with'] = loop_name
         new_ds['loop'] = v
-        # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="ansible.builtin:2.10")
+        # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead",
+        #                    version="2.10", collection_name='ansible.builtin')
 
     def preprocess_data(self, ds):
         '''
@@ -258,7 +259,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                 if action in ('include',) and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
                                        " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
-                                       " for currently supported syntax regarding included files and variables", version="ansible.builtin:2.12")
+                                       " for currently supported syntax regarding included files and variables",
+                                       version="2.12", collection_name='ansible.builtin')
                     new_ds['vars'][k] = v
                 elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
                     new_ds[k] = v

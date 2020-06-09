@@ -237,28 +237,28 @@ class ConnectionBase(AnsiblePlugin):
     def check_become_success(self, b_output):
         display.deprecated(
             "Connection.check_become_success is deprecated, calling code should be using become plugins instead",
-            version="ansible.builtin:2.12"
+            version="2.12", collection_name='ansible.builtin'
         )
         return self.become.check_success(b_output)
 
     def check_password_prompt(self, b_output):
         display.deprecated(
             "Connection.check_password_prompt is deprecated, calling code should be using become plugins instead",
-            version="ansible.builtin:2.12"
+            version="2.12", collection_name='ansible.builtin'
         )
         return self.become.check_password_prompt(b_output)
 
     def check_incorrect_password(self, b_output):
         display.deprecated(
             "Connection.check_incorrect_password is deprecated, calling code should be using become plugins instead",
-            version="ansible.builtin:2.12"
+            version="2.12", collection_name='ansible.builtin'
         )
         return self.become.check_incorrect_password(b_output)
 
     def check_missing_password(self, b_output):
         display.deprecated(
             "Connection.check_missing_password is deprecated, calling code should be using become plugins instead",
-            version="ansible.builtin:2.12"
+            version="2.12", collection_name='ansible.builtin'
         )
         return self.become.check_missing_password(b_output)
 

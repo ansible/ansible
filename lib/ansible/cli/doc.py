@@ -30,7 +30,12 @@ from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import BLACKLIST, untag_versions_and_dates, get_docstring, get_versioned_doclink
+from ansible.utils.plugin_docs import (
+    BLACKLIST,
+    remove_current_collection_from_versions_and_dates,
+    get_docstring,
+    get_versioned_doclink,
+)
 
 display = Display()
 
@@ -330,11 +335,18 @@ class DocCLI(CLI):
             raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
 
         doc['filename'] = filename
-        untag_versions_and_dates(doc, '%s:' % (collection_name, ), is_module=(plugin_type == 'module'))
         return doc, plainexamples, returndocs, metadata
 
     @staticmethod
     def format_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
+        collection_name = 'ansible.builtin'
+        if plugin.startswith('ansible_collections.'):
+            collection_name = '.'.join(plugin.split('.')[1:3])
+
+        # TODO: do we really want this?
+        # add_collection_to_versions_and_dates(doc, '(unknown)', is_module=(plugin_type == 'module'))
+        # remove_current_collection_from_versions_and_dates(doc, collection_name, is_module=(plugin_type == 'module'))
+
         # assign from other sections
         doc['plainexamples'] = plainexamples
         doc['returndocs'] = returndocs

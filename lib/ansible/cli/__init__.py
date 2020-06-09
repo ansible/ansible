@@ -104,7 +104,9 @@ class CLI(with_metaclass(ABCMeta, object)):
                 alt = ''
             ver = deprecated[1].get('version')
             date = deprecated[1].get('date')
-            display.deprecated("%s option, %s %s" % (name, why, alt), version=ver, date=date)
+            collection_name = deprecated[1].get('collection_name')
+            display.deprecated("%s option, %s %s" % (name, why, alt),
+                               version=ver, date=date, collection_name=collection_name)
 
     @staticmethod
     def split_vault_id(vault_id):
@@ -353,7 +355,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             verbosity_arg = next(iter([arg for arg in self.args if arg.startswith('-v')]), None)
             if verbosity_arg:
                 display.deprecated("Setting verbosity before the arg sub command is deprecated, set the verbosity "
-                                   "after the sub command", "ansible.builtin:2.13")
+                                   "after the sub command", "2.13", collection_name='ansible.builtin')
                 options.verbosity = verbosity_arg.count('v')
 
         return options

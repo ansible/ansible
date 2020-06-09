@@ -2654,7 +2654,7 @@ def main():
             if provider == 'assertonly':
                 module.deprecate("The 'assertonly' provider is deprecated; please see the examples of "
                                  "the 'openssl_certificate' module on how to replace it with other modules",
-                                 version='ansible.builtin:2.13')
+                                 version='2.13', collection_name='ansible.builtin')
             elif provider == 'selfsigned':
                 if module.params['privatekey_path'] is None and module.params['privatekey_content'] is None:
                     module.fail_json(msg='One of privatekey_path and privatekey_content must be specified for the selfsigned provider.')
@@ -2702,7 +2702,8 @@ def main():
                     except AttributeError:
                         module.fail_json(msg='You need to have PyOpenSSL>=0.15')
 
-                module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='ansible.builtin:2.13')
+                module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated',
+                                 version='2.13', collection_name='ansible.builtin')
                 if provider == 'selfsigned':
                     certificate = SelfSignedCertificate(module)
                 elif provider == 'acme':

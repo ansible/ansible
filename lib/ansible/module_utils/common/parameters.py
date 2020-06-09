@@ -140,12 +140,14 @@ def list_deprecations(argument_spec, params, prefix=''):
             if arg_opts.get('removed_at_date') is not None:
                 deprecations.append({
                     'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
-                    'date': arg_opts.get('removed_at_date')
+                    'date': arg_opts.get('removed_at_date'),
+                    'collection_name': arg_opts.get('removed_from_collection'),
                 })
             elif arg_opts.get('removed_in_version') is not None:
                 deprecations.append({
                     'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
-                    'version': arg_opts.get('removed_in_version')
+                    'version': arg_opts.get('removed_in_version'),
+                    'collection_name': arg_opts.get('removed_from_collection'),
                 })
             # Check sub-argument spec
             sub_argument_spec = arg_opts.get('options')

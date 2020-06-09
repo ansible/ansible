@@ -845,7 +845,8 @@ def main():
             except AttributeError:
                 module.fail_json(msg='You need to have PyOpenSSL>=0.15')
 
-            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='ansible.builtin:2.13')
+            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated',
+                             version='2.13', collection_name='ansible.builtin')
             certificate = CertificateInfoPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:

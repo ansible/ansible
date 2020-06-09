@@ -118,7 +118,8 @@ def main():
         supports_check_mode=True,
     )
     if module._name == 'python_requirements_facts':
-        module.deprecate("The 'python_requirements_facts' module has been renamed to 'python_requirements_info'", version='ansible.builtin:2.13')
+        module.deprecate("The 'python_requirements_facts' module has been renamed to 'python_requirements_info'",
+                         version='2.13', collection_name='ansible.builtin')
     if not HAS_DISTUTILS:
         module.fail_json(
             msg='Could not import "distutils" and "pkg_resources" libraries to introspect python environment.',

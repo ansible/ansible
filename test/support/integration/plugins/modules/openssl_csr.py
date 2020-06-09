@@ -1091,7 +1091,8 @@ def main():
 
     if module.params['version'] != 1:
         module.deprecate('The version option will only support allowed values from Ansible 2.14 on. '
-                         'Currently, only the value 1 is allowed by RFC 2986', version='ansible.builtin:2.14')
+                         'Currently, only the value 1 is allowed by RFC 2986',
+                         version='2.14', collection_name='ansible.builtin')
 
     base_dir = os.path.dirname(module.params['path']) or '.'
     if not os.path.isdir(base_dir):
@@ -1125,7 +1126,8 @@ def main():
             except AttributeError:
                 module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
 
-            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='ansible.builtin:2.13')
+            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated',
+                             version='2.13', collection_name='ansible.builtin')
             csr = CertificateSigningRequestPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:

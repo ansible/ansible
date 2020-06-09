@@ -86,7 +86,8 @@ def main():
 
     module = AnsibleAWSModule(argument_spec=argument_spec)
     if module._name == 'aws_az_facts':
-        module.deprecate("The 'aws_az_facts' module has been renamed to 'aws_az_info'", version='ansible.builtin:2.14')
+        module.deprecate("The 'aws_az_facts' module has been renamed to 'aws_az_info'",
+                         version='2.14', collection_name='ansible.builtin')
 
     connection = module.client('ec2', retry_decorator=AWSRetry.jittered_backoff())
 

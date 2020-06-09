@@ -611,7 +611,8 @@ def main():
     )
 
     if module.params.get('thirsty'):
-        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead', version='ansible.builtin:2.13')
+        module.deprecate('The alias "thirsty" has been deprecated and will be removed, use "force" instead',
+                         version='2.13', collection_name='ansible.builtin')
 
     url = module.params['url']
     body = module.params['body']
