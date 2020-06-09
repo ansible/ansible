@@ -1,0 +1,3 @@
+bugfixes:
+  - module_defaults - support short group names for content relocated to collections
+  - module_defaults - support candidate action names for relocated content

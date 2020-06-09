@@ -38,7 +38,7 @@ from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredE
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader
-from ansible.utils.collection_loader._collection_finder import _get_collection_metadata
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
 
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
@@ -1319,7 +1319,23 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     return (b_module_data, module_style, shebang)
 
 
-def get_action_args_with_defaults(action, args, defaults, templar):
+def get_action_args_with_defaults(action, args, defaults, templar, redirected_names=None):
+    group_collection_map = {
+        'acme': ['community.crypto'],
+        'aws': ['amazon.aws', 'community.aws'],
+        'azure': ['azure.azcollection'],
+        'cpm': ['wti.remote'],
+        'docker': ['community.general'],
+        'gcp': ['google.cloud'],
+        'k8s': ['community.kubernetes', 'community.general'],
+        'os': ['openstack.cloud'],
+        'ovirt': ['ovirt.ovirt', 'community.general'],
+        'vmware': ['community.vmware'],
+        'testgroup': ['testns.testcoll', 'testns.othercoll', 'testns.boguscoll']
+    }
+
+    if not redirected_names:
+        redirected_names = [action]
 
     tmp_args = {}
     module_defaults = {}
@@ -1334,13 +1350,26 @@ def get_action_args_with_defaults(action, args, defaults, templar):
         module_defaults = templar.template(module_defaults)
 
         # deal with configured group defaults first
-        if action in C.config.module_defaults_groups:
-            for group in C.config.module_defaults_groups.get(action, []):
-                tmp_args.update((module_defaults.get('group/{0}'.format(group)) or {}).copy())
+        for default in module_defaults:
+            if not default.startswith('group/'):
+                continue
+
+            group_name = default.split('group/')[-1]
+
+            for collection_name in group_collection_map.get(group_name, []):
+                try:
+                    action_group = _get_collection_metadata(collection_name).get('action_groups', {})
+                except ValueError:
+                    # The collection may not be installed
+                    continue
+
+                if any(name for name in redirected_names if name in action_group):
+                    tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
 
         # handle specific action defaults
-        if action in module_defaults:
-            tmp_args.update(module_defaults[action].copy())
+        for action in redirected_names:
+            if action in module_defaults:
+                tmp_args.update(module_defaults[action].copy())
 
     # direct args override all
     tmp_args.update(args)

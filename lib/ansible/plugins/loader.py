@@ -587,6 +587,10 @@ class PluginLoader:
                     else:
                         # 'ansible.builtin' should be handled here. This means only internal, or builtin, paths are searched.
                         plugin_load_context = self._find_fq_plugin(candidate_name, suffix, plugin_load_context=plugin_load_context)
+
+                        if candidate_name != plugin_load_context.original_name and candidate_name not in plugin_load_context.redirect_list:
+                            plugin_load_context.redirect_list.append(candidate_name)
+
                     if plugin_load_context.resolved or plugin_load_context.pending_redirect:  # if we got an answer or need to chase down a redirect, return
                         return plugin_load_context
                 except (AnsiblePluginRemovedError, AnsiblePluginCircularRedirect, AnsibleCollectionUnsupportedVersionError):
