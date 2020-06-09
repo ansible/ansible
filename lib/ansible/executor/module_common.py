@@ -663,7 +663,7 @@ class CollectionModuleInfo(ModuleInfo):
         # FIXME (nitz): need this in py2 for some reason TBD, but we shouldn't (get_data delegates
         # to wrong loader without it)
         pkg = import_module(self._package_name)
-        data = pkgutil.get_data(to_native(self._package_name), to_native(self._mod_name + '.py'))
+        data = pkgutil.get_data(to_native(pkg.__package__), to_native(self._mod_name + '.py'))
         return data
 
 

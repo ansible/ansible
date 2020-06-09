@@ -1,0 +1,4 @@
+bigfixes:
+- Collection Loader - Properly build the path to the collection resource,
+  using the python calculated package
+  (https://github.com/ansible/ansible/issues/68361)
