@@ -21,8 +21,6 @@ from .executor import (
     start_httptester,
     get_python_interpreter,
     get_python_version,
-    get_docker_completion,
-    get_remote_completion,
 )
 
 from .config import (
@@ -60,6 +58,8 @@ from .util_common import (
     run_command,
     ResultType,
     create_interpreter_wrapper,
+    get_docker_completion,
+    get_remote_completion,
 )
 
 from .docker_util import (
