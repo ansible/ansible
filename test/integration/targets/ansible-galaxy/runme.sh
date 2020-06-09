@@ -244,9 +244,9 @@ f_ansible_galaxy_status \
 role_testdir=$(mktemp -d)
 pushd "${role_testdir}"
 
-    ansible-galaxy role info notaroll 2>&1 | tee out.txt || echo "expected failed"
+    ansible-galaxy role info notaroll | tee out.txt
 
-    grep 'Bad Request' out.txt
+    grep -- '- the role notaroll was not found' out.txt
 
 f_ansible_galaxy_status \
     "role info description offline"
