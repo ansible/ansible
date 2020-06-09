@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
 import fnmatch
 import json
 import operator
@@ -1387,7 +1388,11 @@ def _extract_tar_dir(tar, dirname, b_dest):
     b_dir_path = os.path.join(b_dest, to_bytes(dirname, errors='surrogate_or_strict'))
 
     b_parent_path = os.path.dirname(b_dir_path)
-    os.makedirs(b_parent_path, mode=0o0755, exist_ok=True)
+    try:
+        os.makedirs(b_parent_path, mode=0o0755)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
 
     if tar_member.type == tarfile.SYMTYPE:
         b_link_path = to_bytes(tar_member.linkname, errors='surrogate_or_strict')
@@ -1398,7 +1403,7 @@ def _extract_tar_dir(tar, dirname, b_dest):
         os.symlink(b_link_path, b_dir_path)
 
     else:
-        os.mkdir(b_dir_path, mode=0o0755)
+        os.mkdir(b_dir_path, 0o0755)
 
 
 def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
