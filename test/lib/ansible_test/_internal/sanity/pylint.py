@@ -56,6 +56,7 @@ class PylintTest(SanitySingleVersion):
         super(PylintTest, self).__init__()
         self.optional_error_codes.update([
             'ansible-deprecated-date',
+            'too-complex',
         ])
 
     @property
