@@ -558,7 +558,7 @@ def test_build_with_symlink_inside_collection(collection_input):
 
         linked_file = [m for m in members if m.path == 'docs/README.md']
         assert len(linked_file) == 1
-        assert linked_file[0].isreg()
+        assert linked_file[0].type == tarfile.SYMTYPE
 
         linked_file_obj = actual.extractfile(linked_file[0].name)
         actual_file = secure_hash_s(linked_file_obj.read())
@@ -957,7 +957,8 @@ def test_get_tar_file_member(tmp_tarfile):
 
     temp_dir, tfile, filename, checksum = tmp_tarfile
 
-    with collection._get_tar_file_member(tfile, filename) as tar_file_obj:
+    with collection._get_tar_file_member(tfile, filename) as (tar_file_member, tar_file_obj):
+        assert isinstance(tar_file_member, tarfile.TarInfo)
         assert isinstance(tar_file_obj, tarfile.ExFileObject)
 
 

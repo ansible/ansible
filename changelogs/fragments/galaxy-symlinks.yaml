@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-galaxy - Preserve file symlinks when building and installing a collection
