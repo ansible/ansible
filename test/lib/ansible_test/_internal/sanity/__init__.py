@@ -109,8 +109,6 @@ def command_sanity(args):
     total = 0
     failed = []
 
-    requirements_installed = set()  # type: t.Set[str]
-
     for test in tests:
         if args.list_tests:
             display.info(test.name)
@@ -148,8 +146,6 @@ def command_sanity(args):
                 display.warning("Skipping sanity test '%s' on Python %s due to missing interpreter." % (test.name, version))
                 result = SanitySkipped(test.name, skip_version)
             else:
-                check_pyyaml(args, version)
-
                 if test.supported_python_versions:
                     display.info("Running sanity test '%s' with Python %s" % (test.name, version))
                 else:
@@ -183,9 +179,8 @@ def command_sanity(args):
                 sanity_targets = SanityTargets(tuple(all_targets), tuple(usable_targets))
 
                 if usable_targets or test.no_targets:
-                    if version not in requirements_installed:
-                        requirements_installed.add(version)
-                        install_command_requirements(args, version)
+                    install_command_requirements(args, version, context=test.name)
+                    check_pyyaml(args, version)
 
                     if isinstance(test, SanityCodeSmellTest):
                         result = test.test(args, sanity_targets, version)
