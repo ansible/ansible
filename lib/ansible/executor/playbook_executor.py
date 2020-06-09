@@ -31,7 +31,7 @@ from ansible.playbook import Playbook
 from ansible.template import Templar
 from ansible.utils.helpers import pct_to_int
 from ansible.utils.path import makedirs_safe
-from ansible.utils.ssh_functions import check_for_controlpersist
+from ansible.utils.ssh_functions import set_default_transport
 from ansible.utils.display import Display
 
 display = Display()
@@ -70,7 +70,7 @@ class PlaybookExecutor:
         # in inventory is also cached.  We can't do this caching at the point
         # where it is used (in task_executor) because that is post-fork and
         # therefore would be discarded after every task.
-        check_for_controlpersist(C.ANSIBLE_SSH_EXECUTABLE)
+        set_default_transport()
 
     def run(self):
         '''
