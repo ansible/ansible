@@ -20,7 +20,7 @@ __metaclass__ = type
 import os
 import shutil
 
-from errno import EEXIST
+from errno import EEXIST, ENOENT
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
@@ -177,6 +177,27 @@ def _explicit_case_sensitive_exists(path):
 
     # ensure that the leaf matches, and that the parent dirs match (recursively)
     return any(p for p in os.listdir(parent) if p == leaf) and cs_isdir(parent)
+
+
+def cs_open(file, *args, **kwargs):
+    """
+    A replacement for open that behaves case-sensitively on case-insensitive filesystems (passes through all args to underlying platform open)
+    :param file: a bytes or text path string to open
+    :return: a file descriptor if the file exists and the path passes a case-sensitive comparison
+    """
+    fd = open(file, *args, **kwargs)
+    try:
+        if _is_case_insensitive_fs and not _explicit_case_sensitive_exists(file):
+            try:
+                extype = FileNotFoundError
+            except NameError:
+                extype = IOError
+            raise extype(ENOENT, os.strerror(ENOENT), file)
+    except Exception:
+        fd.close()
+        raise
+
+    return fd
 
 
 def cs_exists(path):

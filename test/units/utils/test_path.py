@@ -6,7 +6,8 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import os
-from ansible.utils.path import cs_exists, cs_isdir, cs_isfile
+import pytest
+from ansible.utils.path import cs_exists, cs_isdir, cs_isfile, cs_open
 
 
 def iter_parent_paths(path):
@@ -17,6 +18,15 @@ def iter_parent_paths(path):
             break
         else:
             yield parent
+
+
+def test_cs_open():
+    with open(__file__) as fd:
+        with cs_open(__file__) as csfd:
+            assert fd.read() == csfd.read()
+
+    with pytest.raises(IOError):
+        cs_open(__file__.upper())
 
 
 def test_cs_isfile():
