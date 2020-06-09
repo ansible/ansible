@@ -638,6 +638,10 @@ class Templar:
         self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
                                          ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
+    @property
+    def jinja2_native(self):
+        return not isinstance(self.environment, AnsibleEnvironment)
+
     def copy_with_new_env(self, environment_class=AnsibleEnvironment, **kwargs):
         r"""Creates a new copy of Templar with a new environment. The new environment is based on
         given environment class and kwargs.
@@ -845,7 +849,7 @@ class Templar:
                             disable_lookups=disable_lookups,
                         )
 
-                        if not USE_JINJA2_NATIVE:
+                        if not self.jinja2_native:
                             unsafe = hasattr(result, '__UNSAFE__')
                             if convert_data and not self._no_type_regex.match(variable):
                                 # if this looks like a dictionary or list, convert it to such using the safe_eval method
@@ -968,7 +972,7 @@ class Templar:
             # unncessary
             return list(thing)
 
-        if USE_JINJA2_NATIVE:
+        if self.jinja2_native:
             return thing
 
         return thing if thing is not None else ''
@@ -1047,7 +1051,7 @@ class Templar:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
     def do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, disable_lookups=False):
-        if USE_JINJA2_NATIVE and not isinstance(data, string_types):
+        if self.jinja2_native and not isinstance(data, string_types):
             return data
 
         # For preserving the number of input newlines in the output (used
@@ -1103,7 +1107,7 @@ class Templar:
             rf = t.root_render_func(new_context)
 
             try:
-                if USE_JINJA2_NATIVE:
+                if self.jinja2_native:
                     res = ansible_native_concat(rf)
                 else:
                     res = j2_concat(rf)
@@ -1118,7 +1122,7 @@ class Templar:
                     display.debug("failing because of a type error, template data is: %s" % to_text(data))
                     raise AnsibleError("Unexpected templating type error occurred on (%s): %s" % (to_native(data), to_native(te)))
 
-            if USE_JINJA2_NATIVE and not isinstance(res, string_types):
+            if self.jinja2_native and not isinstance(res, string_types):
                 return res
 
             if preserve_trailing_newlines:
