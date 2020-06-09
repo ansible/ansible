@@ -12,11 +12,11 @@ from ast import literal_eval
 from jinja2 import Template
 from string import ascii_letters, digits
 
+from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
-from ansible.config.manager import ConfigManager, ensure_type, get_ini_config_value
 
 
 def _warning(msg):
