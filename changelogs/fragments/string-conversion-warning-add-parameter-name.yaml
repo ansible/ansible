@@ -1,0 +1,2 @@
+bugfixes:
+  - add parameter name to warning message when values are converted to strings (https://github.com/ansible/ansible/pull/57145)
