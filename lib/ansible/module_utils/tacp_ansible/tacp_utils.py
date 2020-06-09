@@ -37,12 +37,12 @@ def wait_to_complete(method):
         wait = kws.pop('_wait', True)
         wait_timeout = kws.pop('_wait_timeout', 60)
 
-        methodapi_response = method.__get__(self, type(self))(*a, **kws)
+        method_api_response = method.__get__(self, type(self))(*a, **kws)
 
         if not wait:
-            return methodapi_response
+            return method_api_response
 
-        action_uuid = getattr(methodapi_response, 'action_uuid', None)
+        action_uuid = getattr(method_api_response, 'action_uuid', None)
 
         if action_uuid:
             api_instance = tacp.ActionsApi(self.api_client)
@@ -52,7 +52,7 @@ def wait_to_complete(method):
             while time_spent < wait_timeout:
                 api_response = api_instance.get_action_using_get(action_uuid)
                 if api_response.status == 'Completed':
-                    return methodapi_response
+                    return method_api_response
 
                 sleep(1)
                 time_spent += 1
