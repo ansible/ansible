@@ -8,15 +8,15 @@ import sys
 from . import types as t
 
 from .util import (
-    docker_qualify_image,
     find_python,
     generate_pip_command,
-    get_docker_completion,
-    get_remote_completion,
     ApplicationError,
 )
 
 from .util_common import (
+    docker_qualify_image,
+    get_docker_completion,
+    get_remote_completion,
     CommonConfig,
 )
 

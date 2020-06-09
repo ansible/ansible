@@ -12,11 +12,11 @@ from .util import (
     cmd_quote,
     display,
     ANSIBLE_TEST_DATA_ROOT,
-    get_network_settings,
 )
 
 from .util_common import (
     intercept_command,
+    get_network_settings,
     run_command,
 )
 

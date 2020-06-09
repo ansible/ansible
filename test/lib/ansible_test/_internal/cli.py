@@ -18,9 +18,6 @@ from .util import (
     ApplicationError,
     display,
     raw_command,
-    get_docker_completion,
-    get_network_completion,
-    get_remote_completion,
     generate_pip_command,
     read_lines_without_comments,
     MAXFD,
@@ -91,6 +88,9 @@ from .data import (
 )
 
 from .util_common import (
+    get_docker_completion,
+    get_network_completion,
+    get_remote_completion,
     CommonConfig,
 )
 
