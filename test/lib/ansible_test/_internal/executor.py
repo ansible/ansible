@@ -59,9 +59,6 @@ from .util import (
     get_available_port,
     generate_pip_command,
     find_python,
-    get_docker_completion,
-    get_network_settings,
-    get_remote_completion,
     cmd_quote,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
@@ -74,6 +71,9 @@ from .util import (
 )
 
 from .util_common import (
+    get_docker_completion,
+    get_network_settings,
+    get_remote_completion,
     get_python_path,
     intercept_command,
     named_temporary_file,

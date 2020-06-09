@@ -206,7 +206,7 @@ class ShippableAuthHelper(OpenSSLAuthHelper):
 
 class ShippableChanges:
     """Change information for Shippable build."""
-    def __init__(self, args):  # type: (CommonConfig) -> None
+    def __init__(self, args):  # type: (TestConfig) -> None
         self.args = args
         self.git = Git()
 

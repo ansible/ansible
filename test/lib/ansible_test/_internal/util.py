@@ -62,9 +62,6 @@ except AttributeError:
     C = None
 
 
-DOCKER_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
-REMOTE_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
-NETWORK_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
 PYTHON_PATHS = {}  # type: t.Dict[str, str]
 
 try:
@@ -120,57 +117,6 @@ SUPPORTED_PYTHON_VERSIONS = (
     '3.8',
     '3.9',
 )
-
-
-def get_docker_completion():
-    """
-    :rtype: dict[str, dict[str, str]]
-    """
-    return get_parameterized_completion(DOCKER_COMPLETION, 'docker')
-
-
-def get_remote_completion():
-    """
-    :rtype: dict[str, dict[str, str]]
-    """
-    return get_parameterized_completion(REMOTE_COMPLETION, 'remote')
-
-
-def get_network_completion():
-    """
-    :rtype: dict[str, dict[str, str]]
-    """
-    return get_parameterized_completion(NETWORK_COMPLETION, 'network')
-
-
-def get_parameterized_completion(cache, name):
-    """
-    :type cache: dict[str, dict[str, str]]
-    :type name: str
-    :rtype: dict[str, dict[str, str]]
-    """
-    if not cache:
-        images = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', '%s.txt' % name), remove_blank_lines=True)
-
-        cache.update(dict(kvp for kvp in [parse_parameterized_completion(i) for i in images] if kvp))
-
-    return cache
-
-
-def parse_parameterized_completion(value):
-    """
-    :type value: str
-    :rtype: tuple[str, dict[str, str]]
-    """
-    values = value.split()
-
-    if not values:
-        return None
-
-    name = values[0]
-    data = dict((kvp[0], kvp[1] if len(kvp) > 1 else '') for kvp in [item.split('=', 1) for item in values[1:]])
-
-    return name, data
 
 
 def remove_file(path):
@@ -743,40 +689,6 @@ class MissingEnvironmentVariable(ApplicationError):
         super(MissingEnvironmentVariable, self).__init__('Missing environment variable: %s' % name)
 
         self.name = name
-
-
-class NetworkPlatformSettings:
-    """Settings required for provisioning a network platform."""
-    def __init__(self, collection, inventory_vars):  # type: (str, t.Type[str, str]) -> None
-        self.collection = collection
-        self.inventory_vars = inventory_vars
-
-
-def get_network_settings(args, platform, version):  # type: (NetworkIntegrationConfig, str, str) -> NetworkPlatformSettings
-    """Returns settings for the given network platform and version."""
-    platform_version = '%s/%s' % (platform, version)
-    completion = get_network_completion().get(platform_version, {})
-    collection = args.platform_collection.get(platform, completion.get('collection'))
-
-    settings = NetworkPlatformSettings(
-        collection,
-        dict(
-            ansible_connection=args.platform_connection.get(platform, completion.get('connection')),
-            ansible_network_os='%s.%s' % (collection, platform) if collection else platform,
-        )
-    )
-
-    return settings
-
-
-def docker_qualify_image(name):
-    """
-    :type name: str
-    :rtype: str
-    """
-    config = get_docker_completion().get(name, {})
-
-    return config.get('name', name)
 
 
 def parse_to_list_of_dict(pattern, value):

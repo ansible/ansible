@@ -164,7 +164,7 @@ class InvalidBranch(ApplicationError):
 
 class LocalChanges:
     """Change information for local work."""
-    def __init__(self, args):  # type: (CommonConfig) -> None
+    def __init__(self, args):  # type: (TestConfig) -> None
         self.args = args
         self.git = Git()
 
