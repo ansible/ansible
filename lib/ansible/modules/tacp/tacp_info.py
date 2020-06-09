@@ -165,10 +165,7 @@ def run_module():
             api_client)
         datacenter_resource = tacp_utils.DatacenterResource(
             api_client)
-        vnet_resource = tacp_utils.VnetResource(api_client)
-        vlan_resource = tacp_utils.VlanResource(api_client)
         for item in items:
-
             if 'applications' in item:
                 for application in item['applications']:
                     application['name'] = application_resource.get_by_uuid(
@@ -186,6 +183,9 @@ def run_module():
                             datacenter['datacenter_uuid'])['name']
 
     elif module.params['resource'] == 'datacenter':
+        vnet_resource = tacp_utils.VnetResource(api_client)
+        vlan_resource = tacp_utils.VlanResource(api_client)
+        tag_resource = tacp_utils.TagResource(api_client)
         for item in items:
             if 'networks' in item:
                 for network in item['networks']:
@@ -198,7 +198,6 @@ def run_module():
                             network['uuid'])['name']
                         network['network_type'] = 'vlan'
             if 'tags' in item:
-                tag_resource = tacp_utils.TagResource(api_client)
                 for tag in item['tags']:
                     tag['name'] = tag_resource.get_by_uuid(
                         tag['uuid'])['name']
