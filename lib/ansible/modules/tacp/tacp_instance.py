@@ -12,6 +12,7 @@ from ansible.module_utils.tacp_ansible.tacp_constants import State, Action
 import json
 import tacp
 import sys
+from uuid import uuid4
 from tacp.rest import ApiException
 from pprint import pprint
 
