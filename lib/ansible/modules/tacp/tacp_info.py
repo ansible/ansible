@@ -7,11 +7,9 @@ from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.tacp_ansible import tacp_utils
 
 
-import json
 import tacp
-import sys
 from tacp.rest import ApiException
-from pprint import pprint
+
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
