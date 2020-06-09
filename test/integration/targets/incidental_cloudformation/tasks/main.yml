@@ -1,17 +1,25 @@
 ---
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key | default(omit) }}"
+      aws_secret_key: "{{ aws_secret_key | default(omit) }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region | default(omit) }}"
+  no_log: yes
 
 - module_defaults:
-    group/aws:
-      aws_access_key: '{{ aws_access_key | default(omit) }}'
-      aws_secret_key: '{{ aws_secret_key | default(omit) }}'
-      security_token: '{{ security_token | default(omit) }}'
-      region: '{{ aws_region | default(omit) }}'
+    cloudformation:
+      <<: *aws_connection_info
+    cloudformation_info:
+      <<: *aws_connection_info
 
   block:
 
     # ==== Env setup ==========================================================
     - name: list available AZs
       aws_az_info:
+        <<: *aws_connection_info
       register: region_azs
 
     - name: pick an AZ for testing
@@ -24,6 +32,7 @@
         cidr_block: "{{ vpc_cidr }}"
         tags:
           Name: Cloudformation testing
+        <<: *aws_connection_info
       register: testing_vpc
 
     - name: Create a test subnet
@@ -31,6 +40,7 @@
         vpc_id: "{{ testing_vpc.vpc.id }}"
         cidr: "{{ subnet_cidr }}"
         az: "{{ availability_zone }}"
+        <<: *aws_connection_info
       register: testing_subnet
 
     - name: Find AMI to use
@@ -38,6 +48,7 @@
         owners: 'amazon'
         filters:
           name: '{{ ec2_ami_name }}'
+        <<: *aws_connection_info
       register: ec2_amis
 
     - name: Set fact with latest AMI
@@ -453,6 +464,7 @@
         vpc_id: "{{ testing_vpc.vpc.id }}"
         cidr: "{{ subnet_cidr }}"
         state: absent
+        <<: *aws_connection_info
       ignore_errors: yes
 
     - name: Delete test VPC
@@ -460,4 +472,5 @@
         name: "{{ vpc_name }}"
         cidr_block: "{{ vpc_cidr }}"
         state: absent
+        <<: *aws_connection_info
       ignore_errors: yes
