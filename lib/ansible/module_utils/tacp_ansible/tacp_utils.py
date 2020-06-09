@@ -45,7 +45,7 @@ def wait_to_complete(method):
         action_uuid = getattr(method_api_response, 'action_uuid', None)
 
         if action_uuid:
-            api_instance = tacp.ActionsApi(self.api_client)
+            api_instance = tacp.ActionsApi(self._api_client)
 
             time_spent = 0
 
@@ -67,7 +67,7 @@ class Resource(object):
     def __init__(self, client):
         assert self.resource_class is not None
         self.api = self.resource_class(client)
-        self.api_client = client
+        self._api_client = client
 
     FILTER_OPERATORS = [
         '==', '!=', '=lt=', '<', '=le=', '<=', '=gt=', '>', '=ge=', '>=',
