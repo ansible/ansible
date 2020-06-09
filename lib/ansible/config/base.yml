@@ -135,7 +135,7 @@ ANSIBLE_SSH_CONTROL_PATH_DIR:
   - {key: control_path_dir, section: ssh_connection}
   yaml: {key: ssh_connection.control_path_dir}
 ANSIBLE_SSH_EXECUTABLE:
-  # TODO: move to ssh plugin
+  # TODO: move to ssh plugin, note that ssh_utils  refs this and needs to be updated if removed
   default: ssh
   description:
     - This defines the location of the ssh binary. It defaults to `ssh` which will use the first ssh binary available in $PATH.
@@ -1162,6 +1162,7 @@ DEFAULT_TIMEOUT:
   - {key: timeout, section: defaults}
   type: integer
 DEFAULT_TRANSPORT:
+  # note that ssh_utils refs this and needs to be updated if removed
   name: Connection plugin
   default: smart
   description: "Default connection plugin to use, the 'smart' option will toggle between 'ssh' and 'paramiko' depending on controller OS and ssh versions"

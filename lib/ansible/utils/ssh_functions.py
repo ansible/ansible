@@ -22,7 +22,9 @@ __metaclass__ = type
 
 import subprocess
 
+from ansible import constants as C
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.compat.paramiko import paramiko
 
 
 _HAS_CONTROLPERSIST = {}
@@ -47,3 +49,17 @@ def check_for_controlpersist(ssh_executable):
 
     _HAS_CONTROLPERSIST[ssh_executable] = has_cp
     return has_cp
+
+
+def set_default_transport():
+
+    # deal with 'smart' connection .. one time ..
+    if C.DEFAULT_TRANSPORT == 'smart':
+        # TODO: check if we can deprecate this as ssh w/o control persist should
+        # not be as common anymore.
+
+        # see if SSH can support ControlPersist if not use paramiko
+        if not check_for_controlpersist(C.ANSIBLE_SSH_EXECUTABLE) and paramiko is not None:
+            C.DEFAULT_TRANSPORT = "paramiko"
+        else:
+            C.DEFAULT_TRANSPORT = "ssh"
