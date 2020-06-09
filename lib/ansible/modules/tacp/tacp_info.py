@@ -79,25 +79,26 @@ message:
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
-    module_args = dict(
-        api_key=dict(type='str', required=True),
-        resource=dict(type='str', required=True,
-                      choices=[
-                          "application",
-                          "application_group",
-                          "category",
-                          "datacenter",
-                          "firewall_profile",
-                          "marketplace_template",
-                          "migration_zone",
-                          "site",
-                          "storage_pool",
-                          "tag",
-                          "template",
-                          "user",
-                          "vlan",
-                          "vnet"])
-    )
+    module_args = {
+        "api_key": {"type": 'str', "required": True},
+        "resource": {"type": 'str', "required": True,
+                     "choices": [
+                         "application",
+                         "application_group",
+                         "category",
+                         "datacenter",
+                         "firewall_profile",
+                         "instance",
+                         "marketplace_template",
+                         "migration_zone",
+                         "site",
+                         "storage_pool",
+                         "tag",
+                         "template",
+                         "user",
+                         "vlan",
+                         "vnet"]}
+    }
 
     # seed the result dict in the object
     # we primarily care about changed and state
@@ -143,6 +144,7 @@ def run_module():
                      "category": tacp_utils.CategoryResource,
                      "datacenter": tacp_utils.DatacenterResource,
                      "firewall_profile": tacp_utils.FirewallProfileResource,
+                     "instance": tacp_utils.ApplicationResource,
                      "marketplace_template": tacp_utils.MarketplaceTemplateResource,
                      "migration_zone": tacp_utils.MigrationZoneResource,
                      "site": tacp_utils.SiteResource,
@@ -156,49 +158,54 @@ def run_module():
 
     resource = resource_dict[module.params['resource']](api_client)
 
-    all_resources = resource.filter()
+    items = resource.filter(as_dict=True)
 
     if module.params['resource'] == 'migration_zone':
-        for resource in all_resources:
-            if 'applications' in resource:
-                applicationResource = tacp_utils.ApplicationResource(api_client)
-                for application in resource['applications']:
-                    application['name'] = applicationResource.get_by_uuid(application['uuid'])['name']
-            if 'allocations' in resource:
-                if 'categories' in resource['allocations']:
-                    categoryResource = tacp_utils.CategoryResource(
-                        api_client)
-                    for category in resource['allocations']['categories']:
-                        category['name'] = categoryResource.get_by_uuid(category['category_uuid'])[
-                        'name']
-                if 'datacenters' in resource['allocations']:
-                    datacenterResource = tacp_utils.DatacenterResource(
-                        api_client)
-                    for datacenter in resource['allocations']['datacenters']:
-                        datacenter['name'] = datacenterResource.get_by_uuid(datacenter['datacenter_uuid'])[
-                            'name']
+        application_resource = tacp_utils.ApplicationResource(
+            api_client)
+        category_resource = tacp_utils.CategoryResource(
+            api_client)
+        datacenter_resource = tacp_utils.DatacenterResource(
+            api_client)
+        vnet_resource = tacp_utils.VnetResource(api_client)
+        vlan_resource = tacp_utils.VlanResource(api_client)
+        for item in items:
+
+            if 'applications' in item:
+                for application in item['applications']:
+                    application['name'] = application_resource.get_by_uuid(
+                        application['uuid'])['name']
+
+            if 'allocations' in item:
+                if 'categories' in item['allocations']:
+                    for category in item['allocations']['categories']:
+                        category['name'] = category_resource.get_by_uuid(
+                            category['category_uuid'])['name']
+
+                if 'datacenters' in item['allocations']:
+                    for datacenter in item['allocations']['datacenters']:
+                        datacenter['name'] = datacenter_resource.get_by_uuid(
+                            datacenter['datacenter_uuid'])['name']
+
     elif module.params['resource'] == 'datacenter':
-        for resource in all_resources:
-            if 'networks' in resource:
-                vnetResource = tacp_utils.VnetResource(api_client)
-                vlanResource = tacp_utils.VlanResource(api_client)
-                for network in resource['networks']:
+        for item in items:
+            if 'networks' in item:
+                for network in item['networks']:
                     try:
-                        network['name'] = vnetResource.get_by_uuid(network['uuid'])['name']
+                        network['name'] = vnet_resource.get_by_uuid(
+                            network['uuid'])['name']
                         network['network_type'] = 'vnet'
-
                     except Exception:
-                        network['name'] = vlanResource.get_by_uuid(network['uuid'])[
-                            'name']
+                        network['name'] = vlan_resource.get_by_uuid(
+                            network['uuid'])['name']
                         network['network_type'] = 'vlan'
-                        
-            if 'tags' in resource:
-                tagResource = tacp_utils.TagResource(api_client)
-                for tag in resource['tags']:
-                    tag['name'] = tagResource.get_by_uuid(tag['uuid'])['name']
+            if 'tags' in item:
+                tag_resource = tacp_utils.TagResource(api_client)
+                for tag in item['tags']:
+                    tag['name'] = tag_resource.get_by_uuid(
+                        tag['uuid'])['name']
 
-    result[module.params['resource']] = all_resources
-    
+    result[module.params['resource']] = items
 
     # in the event of a successful module execution, you will want to
     # simple AnsibleModule.exit_json(), passing the key/value results

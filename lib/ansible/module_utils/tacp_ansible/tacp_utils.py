@@ -148,10 +148,13 @@ class Resource(object):
 class ApplicationResource(Resource):
     resource_class = tacp.ApplicationsApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_applications_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_applications_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in
+                    results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_application_using_get(uuid).to_dict()
@@ -185,10 +188,13 @@ class ApplicationResource(Resource):
 class VlanResource(Resource):
     resource_class = tacp.VlansApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_vlans_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_vlans_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in
+                    results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_vlan_using_get(uuid).to_dict()
@@ -205,10 +211,13 @@ class VlanResource(Resource):
 class VnetResource(Resource):
     resource_class = tacp.VnetsApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_vnets_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_vnets_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in
+                    results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_vnet_using_get(uuid).to_dict()
@@ -226,10 +235,12 @@ class StoragePoolResource(Resource):
 
     resource_class = tacp.FlashPoolsApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_flash_pools_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_flash_pools_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_flash_pool_using_get(uuid).to_dict()
@@ -239,10 +250,12 @@ class DatacenterResource(Resource):
 
     resource_class = tacp.DatacentersApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_datacenters_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_datacenters_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_datacenter_using_get(uuid).to_dict()
@@ -252,10 +265,12 @@ class UserResource(Resource):
 
     resource_class = tacp.UsersApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_users_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_users_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_user_using_get(uuid).to_dict()
@@ -265,10 +280,12 @@ class SiteResource(Resource):
 
     resource_class = tacp.LocationsApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_locations_for_organization_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_locations_for_organization_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_location_information_using_get(uuid).to_dict()
@@ -278,10 +295,12 @@ class TemplateResource(Resource):
 
     resource_class = tacp.TemplatesApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_templates_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_templates_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_template_using_get(uuid).to_dict()
@@ -291,10 +310,12 @@ class TagResource(Resource):
 
     resource_class = tacp.TagsApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_tags_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_tags_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_tag_using_get(uuid).to_dict()
@@ -304,10 +325,12 @@ class MigrationZoneResource(Resource):
 
     resource_class = tacp.MigrationZonesApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_migration_zones_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_migration_zones_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_migration_zone_using_get(uuid).to_dict()
@@ -317,10 +340,12 @@ class MarketplaceTemplateResource(Resource):
 
     resource_class = tacp.MarketplaceTemplatesApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_marketplace_templates_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_marketplace_templates_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_marketplace_template_using_get(uuid).to_dict()
@@ -330,10 +355,12 @@ class ApplicationGroupResource(Resource):
 
     resource_class = tacp.ApplicationGroupsApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_application_group_list_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_application_group_list_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_application_group_information_using_get(uuid).to_dict()
@@ -343,10 +370,12 @@ class CategoryResource(Resource):
 
     resource_class = tacp.CategoriesApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_categories_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_categories_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
     def get_by_uuid(self, uuid):
         return self.api.get_category_using_get(uuid).to_dict()
@@ -356,10 +385,12 @@ class FirewallProfileResource(Resource):
 
     resource_class = tacp.FirewallProfilesApi
 
-    def filter(self, **filters):
-        return [result.to_dict() for result in
-                self.api.get_firewall_profiles_using_get(
-                    **self.get_filters_kws(**filters))]
+    def filter(self, as_dict=False, **filters):
+        results = self.api.get_firewall_profiles_using_get(
+            **self.get_filters_kws(**filters))
+        if as_dict:
+            return [result.to_dict() for result in results]
+        return results
 
 
 def get_component_fields_by_name(name, component,
