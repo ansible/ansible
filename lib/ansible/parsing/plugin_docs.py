@@ -60,15 +60,6 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
                                 # examples 'can' be yaml, but even if so, we dont want to parse as such here
                                 # as it can create undesired 'objects' that don't display well as docs.
                                 data[varkey] = to_text(child.value.s)
-                            elif theid == 'RETURN':
-                                # string *should* be yaml as well
-                                try:
-                                    data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()
-                                except Exception as exc:  # pylint: disable=broad-except
-                                    display.warning("Failed to parse RETURN as YAML for %s: %s" % (filename, exc))
-                                    # Should not happen, but the old code didn't even try to parse,
-                                    # so we'll better accept it here.
-                                    data[varkey] = to_text(child.value.s)
                             else:
                                 # string should be yaml if already not a dict
                                 data[varkey] = AnsibleLoader(child.value.s, file_name=filename).get_single_data()

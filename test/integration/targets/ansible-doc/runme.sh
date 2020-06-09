@@ -23,11 +23,12 @@ expected_out="$(cat test_docs_returns.output)"
 test "$current_out" == "$expected_out"
 
 # test module with broken return values (YAML parsing fails)
-current_out="$(ansible-doc --playbook-dir ./ test_docs_returns_broken)"
+set +e
 current_err="$(ansible-doc --playbook-dir ./ test_docs_returns_broken 2>&1 > /dev/null)"
-expected_out="$(cat test_docs_returns_broken.output)"
-test "$current_out" == "$expected_out"
-[[ "$current_err" =~ .*"Failed to parse RETURN as YAML for".* ]]
+RC=$?
+set -e
+test $RC == 1
+[[ "$current_err" =~ .*"ERROR! module test_docs_returns_broken missing documentation (or could not parse documentation)".* ]]
 
 # test listing diff plugin types from collection
 for ptype in cache inventory lookup vars

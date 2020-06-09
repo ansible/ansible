@@ -527,17 +527,8 @@ def process_plugins(module_map, templates, outputname, output_dir, ansible_versi
 
         display.vvvvv(pp.pformat(module_map[module]))
         if module_map[module]['returndocs']:
-            if isinstance(module_map[module]['returndocs'], string_types):
-                try:
-                    doc['returndocs'] = yaml.safe_load(module_map[module]['returndocs'])
-                    process_returndocs(doc['returndocs'])
-                except Exception as e:
-                    print("%s:%s:yaml error:%s:returndocs=%s" % (fname, module, e, module_map[module]['returndocs']))
-                    doc['returndocs'] = None
-            else:
-                # They have already been parsed: simply process them
-                doc['returndocs'] = module_map[module]['returndocs']
-                process_returndocs(doc['returndocs'])
+            doc['returndocs'] = module_map[module]['returndocs']
+            process_returndocs(doc['returndocs'])
         else:
             doc['returndocs'] = None
 

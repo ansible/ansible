@@ -235,14 +235,6 @@ class DocCLI(CLI):
                 plugin_docs[plugin] = {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
 
             if do_json:
-                # Some changes to how json docs are formatted
-                for plugin, doc_data in plugin_docs.items():
-                    if isinstance(doc_data['return'], string_types):
-                        try:
-                            doc_data['return'] = yaml.safe_load(doc_data['return'])
-                        except Exception:
-                            pass
-
                 jdump(plugin_docs)
 
             else:
@@ -704,9 +696,6 @@ class DocCLI(CLI):
 
         if doc.get('returndocs', False):
             text.append("RETURN VALUES:")
-            if isinstance(doc['returndocs'], string_types):
-                text.append(doc.pop('returndocs'))
-            else:
-                DocCLI.add_fields(text, doc.pop('returndocs'), limit, opt_indent, return_values=True)
+            DocCLI.add_fields(text, doc.pop('returndocs'), limit, opt_indent, return_values=True)
 
         return "\n".join(text)
