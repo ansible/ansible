@@ -309,6 +309,9 @@
   - REÅDMÈ.md-link
   - docs/REÅDMÈ.md
   - plugins/REÅDMÈ.md
+  - REÅDMÈ.md-outside-link
+  - docs-link
+  - docs-link/REÅDMÈ.md
 
 - name: assert install collection with symlink - {{ test_name }}
   assert:
@@ -320,3 +323,8 @@
     - install_symlink_actual.results[1].stat.lnk_target == '../REÅDMÈ.md'
     - install_symlink_actual.results[2].stat.islnk
     - install_symlink_actual.results[2].stat.lnk_target == '../REÅDMÈ.md'
+    - install_symlink_actual.results[3].stat.isreg
+    - install_symlink_actual.results[4].stat.islnk
+    - install_symlink_actual.results[4].stat.lnk_target == 'docs'
+    - install_symlink_actual.results[5].stat.islnk
+    - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'

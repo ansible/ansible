@@ -269,8 +269,10 @@ class CollectionRequirement:
                     if file_info['ftype'] == 'file':
                         _extract_tar_file(collection_tar, file_name, b_collection_path, b_temp_path,
                                           expected_hash=file_info['chksum_sha256'])
+
                     else:
-                        os.makedirs(os.path.join(b_collection_path, to_bytes(file_name, errors='surrogate_or_strict')), mode=0o0755)
+                        _extract_tar_dir(collection_tar, file_name, b_collection_path)
+
         except Exception:
             # Ensure we don't leave the dir behind in case of a failure.
             shutil.rmtree(b_collection_path)
@@ -966,7 +968,8 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
 
                 manifest['files'].append(manifest_entry)
 
-                _walk(b_abs_path, b_top_level_dir)
+                if not os.path.islink(b_abs_path):
+                    _walk(b_abs_path, b_top_level_dir)
             else:
                 if any(fnmatch.fnmatch(b_rel_path, b_pattern) for b_pattern in b_ignore_patterns):
                     display.vvv("Skipping '%s' for collection build" % to_text(b_abs_path))
@@ -1378,7 +1381,28 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
     return b_file_path
 
 
+def _extract_tar_dir(tar, dirname, b_dest):
+    """ Extracts a directory from a collection tar. """
+    tar_member = tar.getmember(to_native(dirname, errors='surrogate_or_strict'))
+    b_dir_path = os.path.join(b_dest, to_bytes(dirname, errors='surrogate_or_strict'))
+
+    b_parent_path = os.path.dirname(b_dir_path)
+    os.makedirs(b_parent_path, mode=0o0755, exist_ok=True)
+
+    if tar_member.type == tarfile.SYMTYPE:
+        b_link_path = to_bytes(tar_member.linkname, errors='surrogate_or_strict')
+        if not _is_child_path(b_link_path, b_dest, link_name=b_dir_path):
+            raise AnsibleError("Cannot extract symlink '%s' in collection: path points to location outside of "
+                               "collection '%s'" % (to_native(dirname), b_link_path))
+
+        os.symlink(b_link_path, b_dir_path)
+
+    else:
+        os.mkdir(b_dir_path, mode=0o0755)
+
+
 def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
+    """ Extracts a file from a collection tar. """
     with _get_tar_file_member(tar, filename) as (tar_member, tar_obj):
         if tar_member.type == tarfile.SYMTYPE:
             actual_hash = _consume_file(tar_obj)
@@ -1403,9 +1427,12 @@ def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
             os.makedirs(b_parent_dir, mode=0o0755)
 
         if tar_member.type == tarfile.SYMTYPE:
-            # TODO: Should we validate the link name is inside the collection. We already check the hash matches the
-            # manifest which typically fails because the file wasn't known at build time.
-            os.symlink(to_bytes(tar_member.linkname, errors='surrogate_or_strict'), b_dest_filepath)
+            b_link_path = to_bytes(tar_member.linkname, errors='surrogate_or_strict')
+            if not _is_child_path(b_link_path, b_dest, link_name=b_dest_filepath):
+                raise AnsibleError("Cannot extract symlink '%s' in collection: path points to location outside of "
+                                   "collection '%s'" % (to_native(filename), b_link_path))
+
+            os.symlink(b_link_path, b_dest_filepath)
 
         else:
             shutil.move(to_bytes(tmpfile_obj.name, errors='surrogate_or_strict'), b_dest_filepath)
@@ -1451,9 +1478,15 @@ def _get_tar_file_hash(b_path, filename):
             return _consume_file(tar_obj)
 
 
-def _is_child_path(path, parent_path):
+def _is_child_path(path, parent_path, link_name=None):
     """ Checks that path is a path within the parent_path specified. """
     b_path = to_bytes(path, errors='surrogate_or_strict')
+
+    if link_name and not os.path.isabs(b_path):
+        # If link_name is specified, path is the source of the link and we need to resolve the absolute path.
+        b_link_dir = os.path.dirname(to_bytes(link_name, errors='surrogate_or_strict'))
+        b_path = os.path.abspath(os.path.join(b_link_dir, b_path))
+
     b_parent_path = to_bytes(parent_path, errors='surrogate_or_strict')
     return b_path == b_parent_path or b_path.startswith(b_parent_path + to_bytes(os.path.sep))
 
