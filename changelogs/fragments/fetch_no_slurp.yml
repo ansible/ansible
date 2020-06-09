@@ -1,2 +1,2 @@
-bugfixes:
+security_fixes:
     - In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2020-1735.
