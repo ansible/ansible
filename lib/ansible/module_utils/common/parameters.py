@@ -134,7 +134,7 @@ def list_deprecations(argument_spec, params, prefix=''):
                 sub_prefix = '%s["%s"]' % (prefix, arg_name)
             else:
                 sub_prefix = arg_name
-            if arg_opts.get('removed_in_version') is not None:
+            if arg_opts.get('removed_in_version') is not None or arg_opts.get('removed_at_date') is not None:
                 deprecations.append({
                     'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
                     'version': arg_opts.get('removed_in_version')
