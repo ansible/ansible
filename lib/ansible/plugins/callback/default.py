@@ -42,9 +42,6 @@ from ansible import context
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
-from ansible.utils.display import Display
-
-display = Display()
 
 # These values use ansible.constants for historical reasons, mostly to allow
 # unmodified derivative plugins to work. However, newer options added to the
@@ -91,7 +88,7 @@ class CallbackModule(CallbackBase):
             try:
                 value = self.get_option(option)
             except (AttributeError, KeyError):
-                display.deprecated("'%s' is subclassing DefaultCallback without the corresponding doc_fragment." % self._load_name,
+                self._display.deprecated("'%s' is subclassing DefaultCallback without the corresponding doc_fragment." % self._load_name,
                                    version='2.14')
                 value = constant
             setattr(self, option, value)
