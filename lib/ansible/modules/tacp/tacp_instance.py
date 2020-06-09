@@ -179,6 +179,11 @@ def run_module():
 
             mac_address = nic.get('mac_address')
             automatic_mac_address = not bool(mac_address)
+            if 'firewall_override' in nic:
+                firewall_override_uuid = tacp_utils.get_component_fields_by_name(
+                    nic['firewall_override'], 'firewall_override', api_client)
+            else:
+                firewall_override_uuid = None
 
             if i == 0:
                 for boot_order_item in boot_order:
@@ -193,6 +198,7 @@ def run_module():
                 vnic_payload = tacp.ApiAddVnicPayload(
                     automatic_mac_address=automatic_mac_address,
                     name=vnic_name,
+                    firewall_override_uuid=firewall_override_uuid,
                     network_uuid=network_uuid,
                     boot_order=vnic_boot_order,
                     mac_address=mac_address
@@ -202,6 +208,7 @@ def run_module():
             network_payload = tacp.ApiCreateOrEditApplicationNetworkOptionsPayload(
                 name=vnic_name,
                 automatic_mac_assignment=automatic_mac_address,
+                firewall_override_uuid=firewall_override_uuid,
                 network_uuid=network_uuid,
                 vnic_uuid=vnic_uuid,
                 mac_address=mac_address
