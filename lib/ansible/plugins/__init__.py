@@ -21,6 +21,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import pickle
+
 from abc import ABC
 
 import types
@@ -61,7 +63,8 @@ class AnsiblePlugin(ABC):
 
     def __hash__(self):
         if self._hash is None:
-            self._hash = self._load_name + hash(self._options)
+            s_options = pickle.dumps(self._options)
+            self._hash = self._load_name + hash(s_options)
         return self._hash
 
     def __eq__(self, other):
