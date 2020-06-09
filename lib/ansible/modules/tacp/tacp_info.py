@@ -122,11 +122,7 @@ def run_module():
     # state with no modifications
     if module.check_mode:
         module.exit_json(**result)
-
-    def fail_with_reason(reason):
-        result['msg'] = reason
-        module.fail_json(**result)
-
+        
     # Return the inputs for debugging purposes
     result['args'] = module.params
 
@@ -204,8 +200,6 @@ def run_module():
 
     result[module.params['resource']] = items
 
-    # in the event of a successful module execution, you will want to
-    # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
 
 
