@@ -36,6 +36,7 @@ Playbook
 * A new fact, ``ansible_processor_nproc`` reflects the number of vcpus
   available to processes (falls back to the number of vcpus available to
   the scheduler).
+* The ``jinja2_native`` setting now does not affect the template module which implicitly returns strings. The template lookup and the rest of the Jinja2 expressions still operate based on the ``jinja2_native`` setting.
 
 
 Command Line
