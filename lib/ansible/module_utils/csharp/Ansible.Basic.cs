@@ -276,7 +276,7 @@ namespace Ansible.Basic
 
         public void Deprecate(string message, string version)
         {
-            Deprecate(message, version, null)
+            Deprecate(message, version, null);
         }
 
         public void Deprecate(string message, string version, string collectionName)
@@ -288,7 +288,7 @@ namespace Ansible.Basic
 
         public void Deprecate(string message, DateTime date)
         {
-            Deprecate(message, date, null)
+            Deprecate(message, date, null);
         }
 
         public void Deprecate(string message, DateTime date, string collectionName)
