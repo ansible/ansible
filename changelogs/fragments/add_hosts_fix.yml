@@ -1,0 +1,2 @@
+bugfixes:
+  - Correctly process raw_params in add_hosts.
