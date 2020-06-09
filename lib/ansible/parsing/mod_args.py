@@ -298,11 +298,11 @@ class ModuleArgsParser:
 
         # walk the filtered input dictionary to see if we recognize a module name
         for item, value in iteritems(non_task_ds):
-            update = False
+            is_action_candidate = False
             if item in BUILTIN_TASKS:
-                update = True
+                is_action_candidate = True
             elif skip_action_validation:
-                update = True
+                is_action_candidate = True
             else:
                 # If the plugin is resolved and redirected smuggle the list of candidate names via the task attribute 'internal_redirect_list'
                 context = action_loader.find_plugin_with_context(item, collection_list=self._collection_list)
@@ -313,9 +313,9 @@ class ModuleArgsParser:
                 elif context.redirect_list:
                     self.internal_redirect_list = context.redirect_list
 
-                update = bool(self.internal_redirect_list)
+                is_action_candidate = bool(self.internal_redirect_list)
 
-            if update:
+            if is_action_candidate:
                 # finding more than one module name is a problem
                 if action is not None:
                     raise AnsibleParserError("conflicting action statements: %s, %s" % (action, item), obj=self._task_ds)

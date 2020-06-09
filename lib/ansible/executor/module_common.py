@@ -1320,7 +1320,7 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
 
 
 def get_action_args_with_defaults(action, args, defaults, templar, redirected_names=None):
-    collection_groups = {
+    group_collection_map = {
         'acme': ['community.crypto'],
         'aws': ['amazon.aws', 'community.aws'],
         'azure': ['azure.azcollection'],
@@ -1331,7 +1331,7 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
         'os': ['openstack.cloud'],
         'ovirt': ['ovirt.ovirt', 'community.general'],
         'vmware': ['community.vmware'],
-        'testgroup': ['testns.testcoll']
+        'testgroup': ['testns.testcoll', 'testns.othercoll', 'testns.boguscoll']
     }
 
     if not redirected_names:
@@ -1350,16 +1350,21 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
         module_defaults = templar.template(module_defaults)
 
         # deal with configured group defaults first
-        for group_name in collection_groups:
-            if 'group/%s' % group_name not in module_defaults:
+        for default in module_defaults:
+            if not default.startswith('group/'):
                 continue
 
-            for collection_name in collection_groups[group_name]:
-                collection_routing = _get_collection_metadata(collection_name).get('action_groups', {})
+            group_name = default.split('group/')[-1]
 
-                for candidate_name in redirected_names:
-                    if candidate_name in collection_routing:
-                        tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
+            for collection_name in group_collection_map[group_name]:
+                try:
+                    action_group = _get_collection_metadata(collection_name).get('action_groups', {})
+                except ValueError:
+                    # The collection may not be installed
+                    continue
+
+                if any(name for name in redirected_names if name in action_group):
+                    tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
 
         # handle specific action defaults
         for action in redirected_names:
