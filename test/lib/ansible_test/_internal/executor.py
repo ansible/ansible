@@ -267,11 +267,9 @@ def install_command_requirements(args, python_version=None, context=None, enable
 
     installed_packages.update(packages)
 
-    # make sure basic ansible-test requirements are met, including making sure that pip is recent enough to support constraints
-    # virtualenvs created by older distributions may include very old pip versions, such as those created in the centos6 test container (pip 6.0.8)
-    run_command(args, generate_pip_install(pip, 'ansible-test', use_constraints=False))
-
     if args.command != 'sanity':
+        install_ansible_test_requirements(args, pip)
+
         # make sure setuptools is available before trying to install cryptography
         # the installed version of setuptools affects the version of cryptography to install
         run_command(args, generate_pip_install(pip, '', packages=['setuptools']))
@@ -299,6 +297,7 @@ def install_command_requirements(args, python_version=None, context=None, enable
     detect_pip_changes = len(commands) > 1
 
     # first pass to install requirements, changes expected unless environment is already set up
+    install_ansible_test_requirements(args, pip)
     changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
     if changes:
@@ -322,6 +321,23 @@ def install_command_requirements(args, python_version=None, context=None, enable
     if enable_pyyaml_check:
         # pyyaml may have been one of the requirements that was installed, so perform an optional check for it
         check_pyyaml(args, python_version, required=False)
+
+
+def install_ansible_test_requirements(args, pip):  # type: (EnvironmentConfig, t.List[str]) -> None
+    """Install requirements for ansible-test for the given pip if not already installed."""
+    try:
+        installed = install_command_requirements.installed
+    except AttributeError:
+        installed = install_command_requirements.installed = set()
+
+    if tuple(pip) in installed:
+        return
+
+    # make sure basic ansible-test requirements are met, including making sure that pip is recent enough to support constraints
+    # virtualenvs created by older distributions may include very old pip versions, such as those created in the centos6 test container (pip 6.0.8)
+    run_command(args, generate_pip_install(pip, 'ansible-test', use_constraints=False))
+
+    installed.add(tuple(pip))
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
