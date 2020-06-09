@@ -1321,23 +1321,21 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
 
 def get_action_args_with_defaults(action, args, defaults, templar, redirected_names=None):
     collection_groups = {
-        'amazon.aws': 'aws',
-        'community.aws': 'aws',
-        'azure.azcollection': 'azure',
-        'wti.remote': 'cpm',
-        'community.general': 'docker',
-        'google.cloud': 'gcp',
-        'community.kubernetes': 'k8s',
-        'openstack.cloud': 'os',
-        'ovirt.ovirt': 'ovirt',
-        'community.vmware': 'vmware',
+        'acme': ['community.crypto'],
+        'aws': ['amazon.aws', 'community.aws'],
+        'azure': ['azure.azcollection'],
+        'cpm': ['wti.remote'],
+        'docker': ['community.general'],
+        'gcp': ['google.cloud'],
+        'k8s': ['community.kubernetes', 'community.general'],
+        'os': ['openstack.cloud'],
+        'ovirt': ['ovirt.ovirt', 'community.general'],
+        'vmware': ['community.vmware'],
+        'testgroup': ['testns.testcoll']
     }
 
     if not redirected_names:
         redirected_names = [action]
-
-    collection_name = ''
-    resource = resolved_name = redirected_names[-1]
 
     tmp_args = {}
     module_defaults = {}
@@ -1352,23 +1350,21 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
         module_defaults = templar.template(module_defaults)
 
         # deal with configured group defaults first
-        if AnsibleCollectionRef.is_valid_fqcr(resolved_name):
+        for group_name in collection_groups:
+            if 'group/%s' % group_name not in module_defaults:
+                continue
 
-            collection_ref = AnsibleCollectionRef.from_fqcr(resolved_name, 'modules')
-
-            collection_name = collection_ref.collection
-            resource = collection_ref.resource
-
-            group_name = collection_groups.get(collection_name)
-            if 'group/%s' % group_name in module_defaults:
+            for collection_name in collection_groups[group_name]:
                 collection_routing = _get_collection_metadata(collection_name).get('action_groups', {})
 
-                if resolved_name in collection_routing or resource in collection_routing:
-                    tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
+                for candidate_name in redirected_names:
+                    if candidate_name in collection_routing:
+                        tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
 
         # handle specific action defaults
-        if action in module_defaults:
-            tmp_args.update(module_defaults[action].copy())
+        for action in redirected_names:
+            if action in module_defaults:
+                tmp_args.update(module_defaults[action].copy())
 
     # direct args override all
     tmp_args.update(args)
