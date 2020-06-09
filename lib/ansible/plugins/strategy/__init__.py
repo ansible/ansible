@@ -71,7 +71,7 @@ def SharedPluginLoaderObj():
     '''This only exists for backwards compat, do not use.
     '''
     display.deprecated('SharedPluginLoaderObj is deprecated, please directly use ansible.plugins.loader',
-                       version='ansible.builtin:2.11')
+                       version='2.11', collection_name='ansible.builtin')
     return plugin_loader
 
 
@@ -918,7 +918,7 @@ class StrategyBase:
                                              "Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
                                              obj=included_file._task._ds)
                 display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option",
-                                   version='ansible.builtin:2.12')
+                                   version='2.12', collection_name='ansible.builtin')
                 included_file._task.tags = tags
 
             block_list = load_list_of_blocks(

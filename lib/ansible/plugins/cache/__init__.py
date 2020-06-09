@@ -50,7 +50,7 @@ class FactCache(RealFactCache):
                            ' ansible.vars.fact_cache.FactCache.  If you are looking for the class'
                            ' to subclass for a cache plugin, you want'
                            ' ansible.plugins.cache.BaseCacheModule or one of its subclasses.',
-                           version='ansible.builtin:2.12')
+                           version='2.12', collection_name='ansible.builtin')
         super(FactCache, self).__init__(*args, **kwargs)
 
 
@@ -62,7 +62,8 @@ class BaseCacheModule(AnsiblePlugin):
     def __init__(self, *args, **kwargs):
         # Third party code is not using cache_loader to load plugin - fall back to previous behavior
         if not hasattr(self, '_load_name'):
-            display.deprecated('Rather than importing custom CacheModules directly, use ansible.plugins.loader.cache_loader', version='ansible.builtin:2.14')
+            display.deprecated('Rather than importing custom CacheModules directly, use ansible.plugins.loader.cache_loader',
+                               version='2.14', collection_name='ansible.builtin')
             self._load_name = self.__module__.split('.')[-1]
             self._load_name = resource_from_fqcr(self.__module__)
         super(BaseCacheModule, self).__init__()

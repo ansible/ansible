@@ -886,7 +886,7 @@ def main():
     # TODO: Remove this in Ansible v2.12 (and reinstate strict parameter test above) and remove the integration test example
     if content == 'attribute' and attribute is not None:
         module.deprecate("Parameter 'attribute=%s' is ignored when using 'content=attribute' only 'xpath' is used. Please remove entry." % attribute,
-                         'ansible.builtin:2.12')
+                         '2.12', collection_name='ansible.builtin')
 
     # Check if the file exists
     if xml_string:

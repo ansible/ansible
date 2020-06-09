@@ -342,7 +342,7 @@ class PlayContext(Base):
         """ helper function to create privilege escalation commands """
         display.deprecated(
             "PlayContext.make_become_cmd should not be used, the calling code should be using become plugins instead",
-            version="ansible.builtin:2.12"
+            version="2.12", collection_name='ansible.builtin'
         )
 
         if not cmd or not self.become:

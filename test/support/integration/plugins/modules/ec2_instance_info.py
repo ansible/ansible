@@ -552,7 +552,8 @@ def main():
                            supports_check_mode=True
                            )
     if module._name == 'ec2_instance_facts':
-        module.deprecate("The 'ec2_instance_facts' module has been renamed to 'ec2_instance_info'", version='ansible.builtin:2.13')
+        module.deprecate("The 'ec2_instance_facts' module has been renamed to 'ec2_instance_info'",
+                         version='2.13', collection_name='ansible.builtin')
 
     if not HAS_BOTO3:
         module.fail_json(msg='boto3 required for this module')

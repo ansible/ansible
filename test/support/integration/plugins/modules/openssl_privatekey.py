@@ -908,7 +908,8 @@ def main():
             if not PYOPENSSL_FOUND:
                 module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
                                  exception=PYOPENSSL_IMP_ERR)
-            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='ansible.builtin:2.13')
+            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated',
+                             version='2.13', collection_name='ansible.builtin')
             private_key = PrivateKeyPyOpenSSL(module)
         elif backend == 'cryptography':
             if not CRYPTOGRAPHY_FOUND:

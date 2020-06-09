@@ -831,7 +831,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 msg = "Setting the async dir from the environment keyword " \
                       "ANSIBLE_ASYNC_DIR is deprecated. Set the async_dir " \
                       "shell option instead"
-                self._display.deprecated(msg, "ansible.builtin:2.12")
+                self._display.deprecated(msg, "2.12", collection_name='ansible.builtin')
             else:
                 # ANSIBLE_ASYNC_DIR is not set on the task, we get the value
                 # from the shell option and temporarily add to the environment

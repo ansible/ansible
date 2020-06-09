@@ -757,10 +757,12 @@ test_no_log - Invoked with:
             options = @{
                 removed1 = @{removed_in_version = "2.1"}
                 removed2 = @{removed_in_version = "2.2"}
+                removed3 = @{removed_in_version = "2.3"; removed_from_collection = "ansible.builtin"}
             }
         }
         Set-Variable -Name complex_args -Scope Global -Value @{
             removed1 = "value"
+            removed3 = "value"
         }
 
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
@@ -781,12 +783,19 @@ test_no_log - Invoked with:
                 module_args = @{
                     removed1 = "value"
                     removed2 = $null
+                    removed3 = "value"
                 }
             }
             deprecations = @(
                 @{
+                    msg = "Param 'removed3' is deprecated. See the module docs for more information"
+                    version = "2.3"
+                    collection_name = "ansible.builtin"
+                },
+                @{
                     msg = "Param 'removed1' is deprecated. See the module docs for more information"
                     version = "2.1"
+                    collection_name = $null
                 }
             )
         }
@@ -798,10 +807,12 @@ test_no_log - Invoked with:
             options = @{
                 removed1 = @{removed_at_date = [DateTime]"2020-03-10"}
                 removed2 = @{removed_at_date = [DateTime]"2020-03-11"}
+                removed3 = @{removed_at_date = [DateTime]"2020-06-07"; removed_from_collection = "ansible.builtin"}
             }
         }
         Set-Variable -Name complex_args -Scope Global -Value @{
             removed1 = "value"
+            removed3 = "value"
         }
 
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
@@ -822,12 +833,19 @@ test_no_log - Invoked with:
                 module_args = @{
                     removed1 = "value"
                     removed2 = $null
+                    removed3 = "value"
                 }
             }
             deprecations = @(
                 @{
+                    msg = "Param 'removed3' is deprecated. See the module docs for more information"
+                    date = "2020-06-07"
+                    collection_name = "ansible.builtin"
+                },
+                @{
                     msg = "Param 'removed1' is deprecated. See the module docs for more information"
                     date = "2020-03-10"
+                    collection_name = $null
                 }
             )
         }
@@ -844,12 +862,16 @@ test_no_log - Invoked with:
                     options = @{
                         option1 = @{ type = "str"; aliases = "alias1"; deprecated_aliases = @(@{name = "alias1"; version = "2.10"}) }
                         option2 = @{ type = "str"; aliases = "alias2"; deprecated_aliases = @(@{name = "alias2"; version = "2.11"}) }
-                        option3 = @{ type = "str"; aliases = "alias3"; deprecated_aliases = @(@{name = "alias3"; date = [DateTime]"2020-03-11"}) }
-                        option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = [DateTime]"2020-03-09"}) }
+                        option3 = @{ type = "str"; aliases = "alias3"; deprecated_aliases = @(@{name = "alias3"; version = "2.12"; collection_name = "ansible.builtin"}) }
+                        option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = [DateTime]"2020-03-11"}) }
+                        option5 = @{ type = "str"; aliases = "alias5"; deprecated_aliases = @(@{name = "alias5"; date = [DateTime]"2020-03-09"}) }
+                        option6 = @{ type = "str"; aliases = "alias6"; deprecated_aliases = @(@{name = "alias6"; date = [DateTime]"2020-06-01"; collection_name = "ansible.builtin"}) }
                     }
                 }
                 option4 = @{ type = "str"; aliases = "alias4"; deprecated_aliases = @(@{name = "alias4"; date = [DateTime]"2020-03-10"}) }
                 option5 = @{ type = "str"; aliases = "alias5"; deprecated_aliases = @(@{name = "alias5"; date = [DateTime]"2020-03-12"}) }
+                option6 = @{ type = "str"; aliases = "alias6"; deprecated_aliases = @(@{name = "alias6"; version = "2.12"; collection_name = "ansible.builtin"}) }
+                option7 = @{ type = "str"; aliases = "alias7"; deprecated_aliases = @(@{name = "alias7"; date = [DateTime]"2020-06-07"; collection_name = "ansible.builtin"}) }
             }
         }
 
@@ -859,11 +881,15 @@ test_no_log - Invoked with:
             option3 = @{
                 option1 = "option1"
                 alias2 = "alias2"
-                option3 = "option3"
-                alias4 = "alias4"
+                alias3 = "alias3"
+                option4 = "option4"
+                alias5 = "alias5"
+                alias6 = "alias6"
             }
             option4 = "option4"
             alias5 = "alias5"
+            alias6 = "alias6"
+            alias7 = "alias7"
         }
 
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
@@ -888,31 +914,63 @@ test_no_log - Invoked with:
                         option1 = "option1"
                         option2 = "alias2"
                         alias2 = "alias2"
-                        option3 = "option3"
-                        option4 = "alias4"
-                        alias4 = "alias4"
+                        option3 = "alias3"
+                        alias3 = "alias3"
+                        option4 = "option4"
+                        option5 = "alias5"
+                        alias5 = "alias5"
+                        option6 = "alias6"
+                        alias6 = "alias6"
                     }
                     option4 = "option4"
                     option5 = "alias5"
                     alias5 = "alias5"
+                    option6 = "alias6"
+                    alias6 = "alias6"
+                    option7 = "alias7"
+                    alias7 = "alias7"
                 }
             }
             deprecations = @(
                 @{
+                    msg = "Alias 'alias7' is deprecated. See the module docs for more information"
+                    date = "2020-06-07"
+                    collection_name = "ansible.builtin"
+                },
+                @{
                     msg = "Alias 'alias1' is deprecated. See the module docs for more information"
                     version = "2.10"
+                    collection_name = $null
                 },
                 @{
                     msg = "Alias 'alias5' is deprecated. See the module docs for more information"
                     date = "2020-03-12"
-                }
+                    collection_name = $null
+                },
+                @{
+                    msg = "Alias 'alias6' is deprecated. See the module docs for more information"
+                    version = "2.12"
+                    collection_name = "ansible.builtin"
+                },
                 @{
                     msg = "Alias 'alias2' is deprecated. See the module docs for more information - found in option3"
                     version = "2.11"
-                }
+                    collection_name = $null
+                },
                 @{
-                    msg = "Alias 'alias4' is deprecated. See the module docs for more information - found in option3"
+                    msg = "Alias 'alias5' is deprecated. See the module docs for more information - found in option3"
                     date = "2020-03-09"
+                    collection_name = $null
+                },
+                @{
+                    msg = "Alias 'alias3' is deprecated. See the module docs for more information - found in option3"
+                    version = "2.12"
+                    collection_name = "ansible.builtin"
+                },
+                @{
+                    msg = "Alias 'alias6' is deprecated. See the module docs for more information - found in option3"
+                    date = "2020-06-01"
+                    collection_name = "ansible.builtin"
                 }
             )
         }
@@ -1141,12 +1199,15 @@ test_no_log - Invoked with:
 
     "Deprecate and warn with version" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        $m.Deprecate("message", "2.8")
-        $actual_deprecate_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        $m.Deprecate("message", "2.7")
+        $actual_deprecate_event_1 = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        $m.Deprecate("message w collection", "2.8", "ansible.builtin")
+        $actual_deprecate_event_2 = Get-EventLog -LogName Application -Source Ansible -Newest 1
         $m.Warn("warning")
         $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
 
-        $actual_deprecate_event.Message | Assert-Equals -Expected "undefined win module - [DEPRECATION WARNING] message 2.8"
+        $actual_deprecate_event_1.Message | Assert-Equals -Expected "undefined win module - [DEPRECATION WARNING] message 2.7"
+        $actual_deprecate_event_2.Message | Assert-Equals -Expected "undefined win module - [DEPRECATION WARNING] message w collection 2.8"
         $actual_warn_event.EntryType | Assert-Equals -Expected "Warning"
         $actual_warn_event.Message | Assert-Equals -Expected "undefined win module - [WARNING] warning"
 
@@ -1166,19 +1227,25 @@ test_no_log - Invoked with:
                 module_args = @{}
             }
             warnings = @("warning")
-            deprecations = @(@{msg = "message"; version = "2.8"})
+            deprecations = @(
+                @{msg = "message"; version = "2.7"; collection_name = $null},
+                @{msg = "message w collection"; version = "2.8"; collection_name = "ansible.builtin"}
+            )
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }
 
     "Deprecate and warn with date" = {
         $m = [Ansible.Basic.AnsibleModule]::Create(@(), @{})
-        $m.Deprecate("message", [DateTime]"2020-01-02")
-        $actual_deprecate_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        $m.Deprecate("message", [DateTime]"2020-01-01")
+        $actual_deprecate_event_1 = Get-EventLog -LogName Application -Source Ansible -Newest 1
+        $m.Deprecate("message w collection", [DateTime]"2020-01-02", "ansible.builtin")
+        $actual_deprecate_event_2 = Get-EventLog -LogName Application -Source Ansible -Newest 1
         $m.Warn("warning")
         $actual_warn_event = Get-EventLog -LogName Application -Source Ansible -Newest 1
 
-        $actual_deprecate_event.Message | Assert-Equals -Expected "undefined win module - [DEPRECATION WARNING] message 2020-01-02"
+        $actual_deprecate_event_1.Message | Assert-Equals -Expected "undefined win module - [DEPRECATION WARNING] message 2020-01-01"
+        $actual_deprecate_event_2.Message | Assert-Equals -Expected "undefined win module - [DEPRECATION WARNING] message w collection 2020-01-02"
         $actual_warn_event.EntryType | Assert-Equals -Expected "Warning"
         $actual_warn_event.Message | Assert-Equals -Expected "undefined win module - [WARNING] warning"
 
@@ -1198,7 +1265,10 @@ test_no_log - Invoked with:
                 module_args = @{}
             }
             warnings = @("warning")
-            deprecations = @(@{msg = "message"; date = "2020-01-02"})
+            deprecations = @(
+                @{msg = "message"; date = "2020-01-01"; collection_name = $null},
+                @{msg = "message w collection"; date = "2020-01-02"; collection_name = "ansible.builtin"}
+            )
         }
         $actual | Assert-DictionaryEquals -Expected $expected
     }
@@ -1627,8 +1697,8 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
         $expected_msg += "aliases, choices, default, deprecated_aliases, elements, mutually_exclusive, no_log, options, "
-        $expected_msg += "removed_in_version, removed_at_date, required, required_by, required_if, required_one_of, "
-        $expected_msg += "required_together, supports_check_mode, type"
+        $expected_msg += "removed_in_version, removed_at_date, removed_from_collection, required, required_by, required_if, "
+        $expected_msg += "required_one_of, required_together, supports_check_mode, type"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
@@ -1660,8 +1730,8 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
         $expected_msg += "aliases, choices, default, deprecated_aliases, elements, mutually_exclusive, no_log, options, "
-        $expected_msg += "removed_in_version, removed_at_date, required, required_by, required_if, required_one_of, "
-        $expected_msg += "required_together, supports_check_mode, type - found in option_key -> sub_option_key"
+        $expected_msg += "removed_in_version, removed_at_date, removed_from_collection, required, required_by, required_if, "
+        $expected_msg += "required_one_of, required_together, supports_check_mode, type - found in option_key -> sub_option_key"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
@@ -2747,7 +2817,7 @@ test_no_log - Invoked with:
                 option2 = @{
                     aliases = @("alias2_spec")
                     deprecated_aliases = @(
-                        @{name = "alias2_spec"; version = "2.0"}
+                        @{name = "alias2_spec"; version = "2.0"; collection_name = "ansible.builtin"}
                     )
                 }
             }
@@ -2761,7 +2831,7 @@ test_no_log - Invoked with:
                 option2 = @{
                     aliases = @("alias2")
                     deprecated_aliases = @(
-                        @{name = "alias2"; version = "2.0"}
+                        @{name = "alias2"; version = "2.0"; collection_name = "foo.bar"}
                     )
                     type = "str"
                 }
@@ -2786,10 +2856,10 @@ test_no_log - Invoked with:
 
         $actual.deprecations.Count | Assert-Equals -Expected 2
         $actual.deprecations[0] | Assert-DictionaryEquals -Expected @{
-            msg = "Alias 'alias1_spec' is deprecated. See the module docs for more information"; version = "2.0"
+            msg = "Alias 'alias1_spec' is deprecated. See the module docs for more information"; version = "2.0"; collection_name = $null
         }
         $actual.deprecations[1] | Assert-DictionaryEquals -Expected @{
-            msg = "Alias 'alias2' is deprecated. See the module docs for more information"; version = "2.0"
+            msg = "Alias 'alias2' is deprecated. See the module docs for more information"; version = "2.0"; collection_name = "foo.bar"
         }
         $actual.changed | Assert-Equals -Expected $false
         $actual.invocation | Assert-DictionaryEquals -Expected @{
@@ -2926,25 +2996,25 @@ test_no_log - Invoked with:
                 # Single element of the same list type not in a list
                 option1 = @{
                     aliases = "alias1"
-                    deprecated_aliases = @{name="alias1";version="2.0"}
+                    deprecated_aliases = @{name="alias1";version="2.0";collection_name="foo.bar"}
                 }
 
                 # Arrays
                 option2 = @{
                     aliases = ,"alias2"
-                    deprecated_aliases = ,@{name="alias2";version="2.0"}
+                    deprecated_aliases = ,@{name="alias2";version="2.0";collection_name="foo.bar"}
                 }
 
                 # ArrayList
                 option3 = @{
                     aliases = [System.Collections.ArrayList]@("alias3")
-                    deprecated_aliases = [System.Collections.ArrayList]@(@{name="alias3";version="2.0"})
+                    deprecated_aliases = [System.Collections.ArrayList]@(@{name="alias3";version="2.0";collection_name="foo.bar"})
                 }
 
                 # Generic.List[Object]
                 option4 = @{
                     aliases = [System.Collections.Generic.List[Object]]@("alias4")
-                    deprecated_aliases = [System.Collections.Generic.List[Object]]@(@{name="alias4";version="2.0"})
+                    deprecated_aliases = [System.Collections.Generic.List[Object]]@(@{name="alias4";version="2.0";collection_name="foo.bar"})
                 }
 
                 # Generic.List[T]
@@ -2954,7 +3024,7 @@ test_no_log - Invoked with:
                 }
             }
         }
-        $spec.options.option5.deprecated_aliases.Add(@{name="alias5";version="2.0"})
+        $spec.options.option5.deprecated_aliases.Add(@{name="alias5";version="2.0";collection_name="foo.bar"})
 
         Set-Variable -Name complex_args -Scope Global -Value @{
             alias1 = "option1"
@@ -2980,6 +3050,7 @@ test_no_log - Invoked with:
         foreach ($dep in $actual.deprecations) {
             $dep.msg -like "Alias 'alias?' is deprecated. See the module docs for more information" | Assert-Equals -Expected $true
             $dep.version | Assert-Equals -Expected '2.0'
+            $dep.collection_name | Assert-Equals -Expected 'foo.bar'
         }
         $actual.invocation | Assert-DictionaryEquals -Expected @{
             module_args = @{
