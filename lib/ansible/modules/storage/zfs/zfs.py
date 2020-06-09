@@ -192,10 +192,15 @@ class Zfs(object):
             self.module.fail_json(msg=err)
 
     def set_properties_if_changed(self):
+        diff = { 'before': {}, 'after': {} }
         current_properties = self.get_current_properties()
         for prop, value in self.properties.items():
-            if current_properties.get(prop, None) != value:
+            current_value = current_properties.get(prop, None)
+            if current_value != value:
                 self.set_property(prop, value)
+                diff['before'][prop] = current_value
+                diff['after' ][prop] = value
+        return diff
 
     def get_current_properties(self):
         cmd = [self.zfs_cmd, 'get', '-H']
@@ -205,7 +210,7 @@ class Zfs(object):
         rc, out, err = self.module.run_command(" ".join(cmd))
         properties = dict()
         for prop, value, source in [l.split('\t')[1:4] for l in out.splitlines()]:
-            if source == 'local':
+            if source == 'local' or source == 'received':
                 properties[prop] = value
         # Add alias for enhanced sharing properties
         if self.enhanced_sharing:
@@ -251,13 +256,21 @@ def main():
 
     if state == 'present':
         if zfs.exists():
-            zfs.set_properties_if_changed()
+            result['diff'] = zfs.set_properties_if_changed()
         else:
             zfs.create()
+            result['diff'] = {
+                'before': { 'state': 'absent'  },
+                'after':  { 'state': 'present' }
+            }
 
     elif state == 'absent':
         if zfs.exists():
             zfs.destroy()
+            result['diff'] = {
+                'before': { 'state': 'present' },
+                'after':  { 'state': 'absent'  }
+            }
 
     result.update(zfs.properties)
     result['changed'] = zfs.changed
