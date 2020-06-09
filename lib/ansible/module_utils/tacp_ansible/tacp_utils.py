@@ -36,7 +36,7 @@ def wait_to_complete(method):
     @wraps(method)
     def wrapper(self, *a, **kws):
         wait = kws.pop('_wait', True)
-        wait_timeout = kws.pop('_wait_timeout', 60)
+        wait_timeout = kws.pop('_wait_timeout', 120)
 
         method_api_response = method.__get__(self, type(self))(*a, **kws)
 
