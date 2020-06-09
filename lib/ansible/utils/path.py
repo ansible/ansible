@@ -20,12 +20,17 @@ __metaclass__ = type
 import os
 import shutil
 
-from errno import EEXIST
+from errno import EEXIST, ENOENT
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
-__all__ = ['unfrackpath', 'makedirs_safe']
+__all__ = ['unfrackpath', 'makedirs_safe', 'cs_exists', 'cs_isdir', 'cs_isfile']
+
+if not os.path.exists(__file__):
+    raise Exception('unable to determine filesystem case-sensitivity ({0} does not exist)'.format(__file__))
+
+_is_case_insensitive_fs = os.path.exists(__file__.upper())
 
 
 def unfrackpath(path, follow=True, basedir=None):
@@ -155,3 +160,73 @@ def is_subpath(child, parent):
         pass
 
     return test
+
+
+def _explicit_case_sensitive_exists(path):
+    """
+    Standalone case-sensitive existence check for case-insensitive filesystems. This assumes the parent
+    dir exists and is otherwise accessible by the caller.
+    :param path: a bytes or text path string to check for existence
+    :return: True if the path exists and the paths pass a case-sensitive comparison
+    """
+    parent, leaf = os.path.split(path)
+
+    if not leaf:
+        # root directory or '.', of course it exists
+        return True
+
+    # ensure that the leaf matches, and that the parent dirs match (recursively)
+    return any(p for p in os.listdir(parent) if p == leaf) and cs_isdir(parent)
+
+
+def cs_open(file, *args, **kwargs):
+    """
+    A replacement for open that behaves case-sensitively on case-insensitive filesystems (passes through all args to underlying platform open)
+    :param file: a bytes or text path string to open
+    :return: a file descriptor if the file exists and the path passes a case-sensitive comparison
+    """
+    fd = open(file, *args, **kwargs)
+    try:
+        if _is_case_insensitive_fs and not _explicit_case_sensitive_exists(file):
+            try:
+                extype = FileNotFoundError
+            except NameError:
+                extype = IOError
+            raise extype(ENOENT, os.strerror(ENOENT), file)
+    except Exception:
+        fd.close()
+        raise
+
+    return fd
+
+
+def cs_exists(path):
+    """
+    A replacement for os.path.exists that behaves case-sensitive on case-insensitive filesystems
+    :param path: a bytes or text path string to check for existence
+    :return: True if the path exists and the paths pass a case-sensitive comparison
+    """
+    raw_exists = os.path.exists(path)
+    if not _is_case_insensitive_fs or not raw_exists:
+        return raw_exists
+
+    # we're on a case-insensitive filesystem and the file exists, verify its case matches
+    return _explicit_case_sensitive_exists(path)
+
+
+def cs_isdir(path):
+    """
+    A replacement for os.path.isdir that behaves case-sensitive on case-insensitive filesystems
+    :param path: a bytes or text path string to check if isdir
+    :return: True if the path is a dir (or resolves to one) and the paths pass a case-sensitive comparison
+    """
+    return os.path.isdir(path) and (not _is_case_insensitive_fs or _explicit_case_sensitive_exists(path))
+
+
+def cs_isfile(path):
+    """
+    A replacement for os.path.isfile that behaves case-sensitive on case-insensitive filesystems
+    :param path: a bytes or text path string to check if isfile
+    :return: True if the path is a file (or resolves to one) and the paths pass a case-sensitive comparison
+    """
+    return os.path.isfile(path) and (not _is_case_insensitive_fs or _explicit_case_sensitive_exists(path))
