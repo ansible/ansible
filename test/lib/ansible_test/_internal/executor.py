@@ -252,6 +252,21 @@ def install_command_requirements(args, python_version=None, context=None, enable
 
     pip = generate_pip_command(find_python(python_version))
 
+    # skip packages which have aleady been installed for python_version
+
+    try:
+        package_cache = install_command_requirements.package_cache
+    except AttributeError:
+        package_cache = install_command_requirements.package_cache = {}
+
+    installed_packages = package_cache.setdefault(python_version, set())
+    skip_packages = [package for package in packages if package in installed_packages]
+
+    for package in skip_packages:
+        packages.remove(package)
+
+    installed_packages.update(packages)
+
     # make sure basic ansible-test requirements are met, including making sure that pip is recent enough to support constraints
     # virtualenvs created by older distributions may include very old pip versions, such as those created in the centos6 test container (pip 6.0.8)
     run_command(args, generate_pip_install(pip, 'ansible-test', use_constraints=False))
