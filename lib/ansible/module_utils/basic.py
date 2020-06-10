@@ -2063,7 +2063,7 @@ class AnsibleModule(object):
                         self.deprecate(d[0], version=d[1])
                     elif isinstance(d, Mapping):
                         self.deprecate(d['msg'], version=d.get('version'), date=d.get('date'),
-                                       collection_name=d.get('date'))
+                                       collection_name=d.get('collection_name'))
                     else:
                         self.deprecate(d)  # pylint: disable=ansible-deprecated-no-version
             else:
