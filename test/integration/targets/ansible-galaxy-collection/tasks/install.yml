@@ -287,3 +287,44 @@
   file:
     path: '{{ galaxy_dir }}/ansible_collections'
     state: absent
+
+- name: install collection with symlink - {{ test_name }}
+  command: ansible-galaxy collection install symlink.symlink -s '{{ test_server }}' {{ galaxy_verbosity }}
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+  register: install_symlink
+
+- find:
+    paths: '{{ galaxy_dir }}/ansible_collections/symlink/symlink'
+    recurse: yes
+    file_type: any
+
+- name: get result of install collection with symlink - {{ test_name }}
+  stat:
+    path: '{{ galaxy_dir }}/ansible_collections/symlink/symlink/{{ path }}'
+  register: install_symlink_actual
+  loop_control:
+    loop_var: path
+  loop:
+  - REÅDMÈ.md-link
+  - docs/REÅDMÈ.md
+  - plugins/REÅDMÈ.md
+  - REÅDMÈ.md-outside-link
+  - docs-link
+  - docs-link/REÅDMÈ.md
+
+- name: assert install collection with symlink - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''symlink.symlink:1.0.0'' to" in install_symlink.stdout'
+    - install_symlink_actual.results[0].stat.islnk
+    - install_symlink_actual.results[0].stat.lnk_target == 'REÅDMÈ.md'
+    - install_symlink_actual.results[1].stat.islnk
+    - install_symlink_actual.results[1].stat.lnk_target == '../REÅDMÈ.md'
+    - install_symlink_actual.results[2].stat.islnk
+    - install_symlink_actual.results[2].stat.lnk_target == '../REÅDMÈ.md'
+    - install_symlink_actual.results[3].stat.isreg
+    - install_symlink_actual.results[4].stat.islnk
+    - install_symlink_actual.results[4].stat.lnk_target == 'docs'
+    - install_symlink_actual.results[5].stat.islnk
+    - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'
