@@ -1,4 +1,5 @@
 {
+    "intercept": true,
     "prefixes": [
         "changelogs/fragments/"
     ],
