@@ -321,8 +321,13 @@ def run_module():
 
     if instance_uuid:
         instance_properties = application_resource.get_by_uuid(
+<<<<<<< HEAD
             instance_uuid)
         current_state = instance_properties.to_dict()['status']
+=======
+            instance_uuid).to_dict()
+        current_state = instance_properties['status']
+>>>>>>> 1c1a4440f8... Update tacp_instance.py
     else:
         if module.params['state'] == 'absent':
             instance_power_action(
