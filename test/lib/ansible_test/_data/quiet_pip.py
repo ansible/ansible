@@ -10,7 +10,7 @@ import warnings
 BUILTIN_FILTERER_FILTER = logging.Filterer.filter
 
 LOGGING_MESSAGE_FILTER = re.compile("^("
-                                    "WARNING: Running pip install with root privileges is generally not a good idea. .*|"  # custom Fedora patch [1]
+                                    ".*Running pip install with root privileges is generally not a good idea.*|"  # custom Fedora patch [1]
                                     "DEPRECATION: Python 2.7 will reach the end of its life .*|"  # pip 19.2.3
                                     "Ignoring .*: markers .* don't match your environment|"
                                     "Requirement already satisfied.*"
