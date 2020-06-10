@@ -30,6 +30,9 @@ from ansible.playbook.base import Base
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
+from ansible.utils.display import Display
+
+display = Display()
 
 
 class PlaybookInclude(Base, Conditional, Taggable):
@@ -144,8 +147,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if len(items) == 0:
             raise AnsibleParserError("import_playbook statements must specify the file name to import", obj=ds)
         else:
-            new_ds['import_playbook'] = items[0]
+            new_ds['import_playbook'] = items[0].strip()
             if len(items) > 1:
+                display.warning('Additional parameters in import_playbook statements are not supported. This will be an error in version 2.14')
                 # rejoin the parameter portion of the arguments and
                 # then use parse_kv() to get a dict of params back
                 params = parse_kv(" ".join(items[1:]))
