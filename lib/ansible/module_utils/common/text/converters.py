@@ -306,9 +306,6 @@ def _container_to_string(to_func, obj, **kwargs):
 
     .. version_added:: 2.10
     """
-    if obj is None:
-        return obj
-
     if isinstance(obj, (text_type, binary_type)):
         obj = to_func(obj, **kwargs)
     elif isinstance(obj, dict):
