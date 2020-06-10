@@ -226,6 +226,18 @@ rm -fr "${role_testdir}"
 
 # Galaxy role info tests
 
+# Get info about role that is not installed
+
+f_ansible_galaxy_status "role info"
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
+    ansible-galaxy role info samdoran.fish | tee out.txt
+
+    [[ $(grep -c 'not found' out.txt ) -eq 0 ]]
+    [[ $(grep -c 'Role:.*samdoran\.fish' out.txt ) -eq 1 ]]
+
+popd # ${galaxy_testdir}
+
 f_ansible_galaxy_status \
     "role info non-existant role"
 
