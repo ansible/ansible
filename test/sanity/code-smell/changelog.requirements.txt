@@ -1,2 +1,2 @@
 # changelog build requires python 3.6+
-antsibull-changelog==0.2.0 ; python_version >= '3.6'
+antsibull-changelog==0.2.1 ; python_version >= '3.6'
