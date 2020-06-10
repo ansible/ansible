@@ -927,9 +927,6 @@ class GalaxyCLI(CLI):
 
             role_info = {'path': roles_path}
             gr = GalaxyRole(self.galaxy, self.api, role)
-            if not gr._exists:
-                data = u"- the role %s was not found" % role
-                break
 
             install_info = gr.install_info
             if install_info:
@@ -938,12 +935,24 @@ class GalaxyCLI(CLI):
                     del install_info['version']
                 role_info.update(install_info)
 
-            remote_data = False
             if not context.CLIARGS['offline']:
-                remote_data = self.api.lookup_role_by_name(role, False)
+                remote_data = None
+                try:
+                    remote_data = self.api.lookup_role_by_name(role, False)
+                except AnsibleError as e:
+                    if e.http_code == 400 and 'Bad Request' in e.message:
+                        # Role does not exist in Ansible Galaxy
+                        data = u"- the role %s was not found" % role
+                        break
 
-            if remote_data:
-                role_info.update(remote_data)
+                    raise AnsibleError("Unable to find info about '%s': %s" % (role, e))
+
+                if remote_data:
+                    role_info.update(remote_data)
+
+            elif context.CLIARGS['offline'] and not gr._exists:
+                data = u"- the role %s was not found" % role
+                break
 
             if gr.metadata:
                 role_info.update(gr.metadata)
