@@ -264,15 +264,16 @@ EXAMPLES = '''
 
 # Defining a specific quota while creating a disk image:
 # Since Ansible 2.5
-- ovirt_quotas_facts:
+- ovirt_quotas_info:
     data_center: Default
     name: myquota
+  register: quota
 - ovirt_disk:
     name: mydisk
     size: 10GiB
     storage_domain: data
     description: somedescriptionhere
-    quota_id: "{{ ovirt_quotas[0]['id'] }}"
+    quota_id: "{{ quota.ovirt_quotas[0]['id'] }}"
 
 # Upload an ISO image
 # Since Ansible 2.8
