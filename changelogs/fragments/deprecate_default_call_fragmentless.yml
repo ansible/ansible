@@ -1,0 +1,4 @@
+deprecated_features:
+  - Using the DefaultCallback without the correspodning doc_fragment or copying the documentation.
+bugfixes:
+  - added new option for default callback to compat variable to avoid old 3rd party plugins from erroring out.
