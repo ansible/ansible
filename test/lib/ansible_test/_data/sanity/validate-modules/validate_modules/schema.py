@@ -182,12 +182,12 @@ def argument_spec_schema(for_collection):
                 {
                     Required('name'): Any(*string_types),
                     Required('date'): date(),
-                    Required('collection'): collection_name,
+                    Required('collection_name'): collection_name,
                 },
                 {
                     Required('name'): Any(*string_types),
                     Required('version'): version(for_collection),
-                    Required('collection'): collection_name,
+                    Required('collection_name'): collection_name,
                 },
             )]),
         }
