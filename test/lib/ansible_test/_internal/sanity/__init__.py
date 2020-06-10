@@ -34,6 +34,7 @@ from ..util import (
 
 from ..util_common import (
     run_command,
+    intercept_command,
     handle_layout_messages,
 )
 
@@ -690,6 +691,7 @@ class SanityCodeSmellTest(SanityTest):
             self.files = self.config.get('files')  # type: t.List[str]
             self.text = self.config.get('text')  # type: t.Optional[bool]
             self.ignore_self = self.config.get('ignore_self')  # type: bool
+            self.intercept = self.config.get('intercept')  # type: bool
 
             self.__all_targets = self.config.get('all_targets')  # type: bool
             self.__no_targets = self.config.get('no_targets')  # type: bool
@@ -702,6 +704,7 @@ class SanityCodeSmellTest(SanityTest):
             self.files = []
             self.text = None  # type: t.Optional[bool]
             self.ignore_self = False
+            self.intercept = False
 
             self.__all_targets = False
             self.__no_targets = True
@@ -805,7 +808,11 @@ class SanityCodeSmellTest(SanityTest):
                 display.info(data, verbosity=4)
 
         try:
-            stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
+            if self.intercept:
+                stdout, stderr = intercept_command(args, cmd, target_name='sanity.%s' % self.name, data=data, env=env, capture=True, disable_coverage=True)
+            else:
+                stdout, stderr = run_command(args, cmd, data=data, env=env, capture=True)
+
             status = 0
         except SubprocessError as ex:
             stdout = ex.stdout
