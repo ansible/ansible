@@ -235,7 +235,7 @@ class BaseFileCacheModule(BaseCacheModule):
         except KeyError:
             pass
         try:
-            os.remove("%s/%s" % (self._cache_dir, key))
+            os.remove(self._get_cache_file_name(key))
         except (OSError, IOError):
             pass  # TODO: only pass on non existing?
 
