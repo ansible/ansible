@@ -171,11 +171,6 @@ def get_python_path(args, interpreter):
     :type interpreter: str
     :rtype: str
     """
-    # When the python interpreter is already named "python" its directory can simply be added to the path.
-    # Using another level of indirection is only required when the interpreter has a different name.
-    if os.path.basename(interpreter) == 'python':
-        return os.path.dirname(interpreter)
-
     python_path = PYTHON_PATHS.get(interpreter)
 
     if python_path:
