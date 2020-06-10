@@ -98,32 +98,19 @@ def run_module():
                          "vnet"]}
     }
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # change is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
         args=[]
     )
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
     if module.check_mode:
         module.exit_json(**result)
         
-    # Return the inputs for debugging purposes
     result['args'] = module.params
 
     # Define configuration
@@ -152,8 +139,8 @@ def run_module():
 
     resource = resource_dict[module.params['resource']](api_client)
 
-    items = resource.filter(as_dict=True)
-
+    items = [item.to_dict() for item in resource.filter()]
+    
     if module.params['resource'] == 'migration_zone':
         application_resource = tacp_utils.ApplicationResource(
             api_client)
@@ -165,18 +152,18 @@ def run_module():
             if 'applications' in item:
                 for application in item['applications']:
                     application['name'] = application_resource.get_by_uuid(
-                        application['uuid'])['name']
+                        application['uuid']).to_dict()['name']
 
             if 'allocations' in item:
                 if 'categories' in item['allocations']:
                     for category in item['allocations']['categories']:
                         category['name'] = category_resource.get_by_uuid(
-                            category['category_uuid'])['name']
+                            category['category_uuid']).to_dict()['name']
 
                 if 'datacenters' in item['allocations']:
                     for datacenter in item['allocations']['datacenters']:
                         datacenter['name'] = datacenter_resource.get_by_uuid(
-                            datacenter['datacenter_uuid'])['name']
+                            datacenter['datacenter_uuid']).to_dict()['name']
 
     elif module.params['resource'] == 'datacenter':
         vnet_resource = tacp_utils.VnetResource(api_client)
@@ -187,16 +174,16 @@ def run_module():
                 for network in item['networks']:
                     try:
                         network['name'] = vnet_resource.get_by_uuid(
-                            network['uuid'])['name']
+                            network['uuid']).to_dict()['name']
                         network['network_type'] = 'vnet'
                     except Exception:
                         network['name'] = vlan_resource.get_by_uuid(
-                            network['uuid'])['name']
+                            network['uuid']).to_dict()['name']
                         network['network_type'] = 'vlan'
             if 'tags' in item:
                 for tag in item['tags']:
                     tag['name'] = tag_resource.get_by_uuid(
-                        tag['uuid'])['name']
+                        tag['uuid']).to_dict()['name']
 
     result[module.params['resource']] = items
 

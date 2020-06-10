@@ -261,7 +261,7 @@ def run_module():
 
         result['ansible_module_results'] = application_resource.get_by_uuid(
             response.object_uuid
-        )
+        ).to_dict()
         result['changed'] = True
 
     def instance_power_action(name, api_client, action):
@@ -322,7 +322,7 @@ def run_module():
     if instance_uuid:
         instance_properties = application_resource.get_by_uuid(
             instance_uuid)
-        current_state = instance_properties['status']
+        current_state = instance_properties.to_dict()['status']
     else:
         if module.params['state'] == 'absent':
             instance_power_action(

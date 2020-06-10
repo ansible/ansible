@@ -12,7 +12,8 @@ from functools import wraps
 from tacp.rest import ApiException
 
 from ansible.module_utils.tacp_ansible.tacp_exceptions import (
-    ActionTimedOutException, InvalidActionUuidException
+    ActionTimedOutException, InvalidActionUuidException,
+    InvalidPowerActionException, UuidNotFoundException
 )
 from ansible.module_utils.tacp_ansible.tacp_constants import Action
 from time import sleep
@@ -132,8 +133,16 @@ class Resource(object):
             return instances[0].uuid
         return None
 
+    filter_method = None
+
     def filter(self, **filters):
-        raise NotImplementedError
+        if self.filter_method is None:
+            raise Exception('Invalid self.filter_method')
+        method = getattr(self.api, self.filter_method, None)
+        if method is None:
+            raise Exception('Invalid self.filter_method')
+
+        return method(**self.get_filters_kws(**filters))
 
     def get_by_uuid(self, uuid):
         raise NotImplementedError
@@ -148,16 +157,10 @@ class Resource(object):
 class ApplicationResource(Resource):
     resource_class = tacp.ApplicationsApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_applications_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in
-                    results]
-        return results
+    filter_method = "get_applications_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_application_using_get(uuid).to_dict()
+        return self.api.get_application_using_get(uuid)
 
     @wait_to_complete
     def create(self, body):
@@ -165,7 +168,7 @@ class ApplicationResource(Resource):
 
     @wait_to_complete
     def delete(self, uuid):
-        return self.api.delete_application_using_delete(uuid).to_dict()
+        return self.api.delete_application_using_delete(uuid)
 
     @wait_to_complete
     def power_action_on_instance_by_uuid(self, uuid, power_action):
@@ -177,27 +180,23 @@ class ApplicationResource(Resource):
             Action.SHUTDOWN: self.api.shutdown_application_using_put,
             Action.STOPPED: self.api.stop_application_using_put,
             Action.RESTARTED: self.api.restart_application_using_put,
-            Action.FORCE_RESTARTED: self.api.force_restart_application_using_put,  # noqa
+            Action.FORCE_RESTARTED: self.api.force_restart_application_using_put,
             Action.PAUSED: self.api.pause_application_using_put,
             Action.ABSENT: self.api.delete_application_using_delete,
             Action.RESUMED: self.api.resume_application_using_put
         }
-        return power_action_dict[power_action](uuid).to_dict()
+        if power_action not in power_action_dict:
+            raise InvalidPowerActionException
+        return power_action_dict[power_action](uuid)
 
 
 class VlanResource(Resource):
     resource_class = tacp.VlansApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_vlans_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in
-                    results]
-        return results
+    filter_method = "get_vlans_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_vlan_using_get(uuid).to_dict()
+        return self.api.get_vlan_using_get(uuid)
 
     @wait_to_complete
     def create(self, body):
@@ -205,22 +204,16 @@ class VlanResource(Resource):
 
     @wait_to_complete
     def delete(self, uuid):
-        return self.api.delete_vlan_using_delete(uuid).to_dict()
+        return self.api.delete_vlan_using_delete(uuid)
 
 
 class VnetResource(Resource):
     resource_class = tacp.VnetsApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_vnets_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in
-                    results]
-        return results
+    filter_method = "get_vnets_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_vnet_using_get(uuid).to_dict()
+        return self.api.get_vnet_using_get(uuid)
 
     @wait_to_complete
     def create(self, body):
@@ -228,169 +221,114 @@ class VnetResource(Resource):
 
     @wait_to_complete
     def delete(self, uuid):
-        return self.api.delete_vnet_using_delete(uuid).to_dict()
+        return self.api.delete_vnet_using_delete(uuid)
 
 
 class StoragePoolResource(Resource):
 
     resource_class = tacp.FlashPoolsApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_flash_pools_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_flash_pools_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_flash_pool_using_get(uuid).to_dict()
+        return self.api.get_flash_pool_using_get(uuid)
 
 
 class DatacenterResource(Resource):
 
     resource_class = tacp.DatacentersApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_datacenters_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_datacenters_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_datacenter_using_get(uuid).to_dict()
+        return self.api.get_datacenter_using_get(uuid)
 
 
 class UserResource(Resource):
 
     resource_class = tacp.UsersApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_users_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_users_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_user_using_get(uuid).to_dict()
+        return self.api.get_user_using_get(uuid)
 
 
 class SiteResource(Resource):
 
     resource_class = tacp.LocationsApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_locations_for_organization_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_locations_for_organization_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_location_information_using_get(uuid).to_dict()
+        return self.api.get_location_information_using_get(uuid)
 
 
 class TemplateResource(Resource):
 
     resource_class = tacp.TemplatesApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_templates_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_templates_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_template_using_get(uuid).to_dict()
+        return self.api.get_template_using_get(uuid)
 
 
 class TagResource(Resource):
 
     resource_class = tacp.TagsApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_tags_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_tags_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_tag_using_get(uuid).to_dict()
+        return self.api.get_tag_using_get(uuid)
 
 
 class MigrationZoneResource(Resource):
 
     resource_class = tacp.MigrationZonesApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_migration_zones_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_migration_zones_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_migration_zone_using_get(uuid).to_dict()
+        return self.api.get_migration_zone_using_get(uuid)
 
 
 class MarketplaceTemplateResource(Resource):
 
     resource_class = tacp.MarketplaceTemplatesApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_marketplace_templates_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_marketplace_templates_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_marketplace_template_using_get(uuid).to_dict()
+        return self.api.get_marketplace_template_using_get(uuid)
 
 
 class ApplicationGroupResource(Resource):
 
     resource_class = tacp.ApplicationGroupsApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_application_group_list_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_application_group_list_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_application_group_information_using_get(uuid).to_dict()
+        return self.api.get_application_group_information_using_get(uuid)
 
 
 class CategoryResource(Resource):
 
     resource_class = tacp.CategoriesApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_categories_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_categories_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_category_using_get(uuid).to_dict()
+        return self.api.get_category_using_get(uuid)
 
 
 class FirewallProfileResource(Resource):
 
     resource_class = tacp.FirewallProfilesApi
 
-    def filter(self, as_dict=False, **filters):
-        results = self.api.get_firewall_profiles_using_get(
-            **self.get_filters_kws(**filters))
-        if as_dict:
-            return [result.to_dict() for result in results]
-        return results
+    filter_method = "get_firewall_profiles_using_get"
 
 
 def get_component_fields_by_name(name, component,
