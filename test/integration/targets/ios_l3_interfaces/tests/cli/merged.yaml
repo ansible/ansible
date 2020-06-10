@@ -8,6 +8,9 @@
     - name: Merge provided configuration with device configuration
       ios_l3_interfaces: &merged
         config:
+          - name: Loopback999
+            ipv4:
+              - address: 192.0.2.1/24
           - name: GigabitEthernet0/1
             ipv4:
             - address: dhcp

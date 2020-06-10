@@ -15,7 +15,7 @@ __metaclass__ = type
 from ansible.module_utils.network.common.cfg.base import ConfigBase
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.network.ios.facts.facts import Facts
-from ansible.module_utils.network.ios.utils.utils import dict_to_set
+from ansible.module_utils.network.ios.utils.utils import dict_to_set, normalize_interface
 from ansible.module_utils.network.ios.utils.utils import remove_command_from_config_list, add_command_to_config_list
 from ansible.module_utils.network.ios.utils.utils import filter_dict_having_none_value, remove_duplicate_interface
 from ansible.module_utils.network.ios.utils.utils import validate_n_expand_ipv4, validate_ipv6
@@ -80,7 +80,12 @@ class L3_Interfaces(ConfigBase):
         :returns: the commands necessary to migrate the current configuration
                   to the desired configuration
         """
-        want = self._module.params['config']
+        config = self._module.params.get("config")
+        want = []
+        if config:
+            for each in config:
+                each.update({"name": normalize_interface(each["name"])})
+                want.append(each)
         have = existing_l3_interfaces_facts
         resp = self.set_state(want, have)
         return to_list(resp)
