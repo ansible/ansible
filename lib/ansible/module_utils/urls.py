@@ -1529,7 +1529,7 @@ def url_argument_spec():
     return dict(
         url=dict(type='str'),
         force=dict(type='bool', default=False, aliases=['thirsty'],
-                   deprecated_aliases=[dict(name='thirsty', version='2.13', collection='ansible.builtin')]),
+                   deprecated_aliases=[dict(name='thirsty', version='2.13', collection_name='ansible.builtin')]),
         http_agent=dict(type='str', default='ansible-httpget'),
         use_proxy=dict(type='bool', default=True),
         validate_certs=dict(type='bool', default=True),
