@@ -18,9 +18,7 @@ ansible-playbook -i inventory "$@" set_fact_cached_1.yml
 ansible-playbook -i inventory "$@" set_fact_cached_2.yml
 
 # check contents of the fact cache directory before flushing it
-CACHEFILE="$(find "${MYTMPDIR}" -type f)"
-STARTSWITH="${MYTMPDIR}/prefix_*"
-if [[ ${CACHEFILE} != "${STARTSWITH}" ]]; then
+if [[ "$(find "${MYTMPDIR}" -type f)" != $MYTMPDIR/prefix_* ]]; then
     echo "Unexpected cache file"
     exit 1
 fi
