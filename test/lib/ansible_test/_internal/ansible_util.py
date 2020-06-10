@@ -192,10 +192,12 @@ def get_ansible_python_path():  # type: () -> str
     return python_path
 
 
-def check_pyyaml(args, version):
+def check_pyyaml(args, version, required=True, quiet=False):
     """
     :type args: EnvironmentConfig
     :type version: str
+    :type required: bool
+    :type quiet: bool
     """
     try:
         return CHECK_YAML_VERSIONS[version]
@@ -206,18 +208,21 @@ def check_pyyaml(args, version):
     stdout, _dummy = run_command(args, [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'yamlcheck.py')],
                                  capture=True, always=True)
 
-    CHECK_YAML_VERSIONS[version] = result = json.loads(stdout)
+    result = json.loads(stdout)
 
     yaml = result['yaml']
     cloader = result['cloader']
 
-    if not yaml:
-        # do not warn about missing pyyaml
-        # if it is required by tests they will fail with an error message that should be descriptive enough
-        # warning here assumes all tests require pyyaml, which is not the case for many sanity tests
-        pass
-    elif not cloader:
-        display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)
+    if yaml or required:
+        # results are cached only if pyyaml is required or present
+        # it is assumed that tests will not uninstall/re-install pyyaml -- if they do, those changes will go undetected
+        CHECK_YAML_VERSIONS[version] = result
+
+    if not quiet:
+        if not yaml and required:
+            display.warning('PyYAML is not installed for interpreter: %s' % python)
+        elif not cloader:
+            display.warning('PyYAML will be slow due to installation without libyaml support for interpreter: %s' % python)
 
     return result
 

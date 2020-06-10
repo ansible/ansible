@@ -39,7 +39,6 @@ from ..util_common import (
 
 from ..ansible_util import (
     ansible_environment,
-    check_pyyaml,
 )
 
 from ..target import (
@@ -179,8 +178,7 @@ def command_sanity(args):
                 sanity_targets = SanityTargets(tuple(all_targets), tuple(usable_targets))
 
                 if usable_targets or test.no_targets:
-                    install_command_requirements(args, version, context=test.name)
-                    check_pyyaml(args, version)
+                    install_command_requirements(args, version, context=test.name, enable_pyyaml_check=True)
 
                     if isinstance(test, SanityCodeSmellTest):
                         result = test.test(args, sanity_targets, version)
