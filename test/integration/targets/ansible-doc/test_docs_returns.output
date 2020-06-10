@@ -1,8 +1,13 @@
-> TEST_DOCS    (/home/felix/projects/code/github-cloned/ansible/test/integration/targets/ansible-doc/library/test_docs_returns.py)
+> TEST_DOCS_RETURNS    (library/test_docs_returns.py)
 
         Test module
 
 AUTHOR: Ansible Core Team
+
+EXAMPLES:
+
+
+
 
 RETURN VALUES:
 - a_first

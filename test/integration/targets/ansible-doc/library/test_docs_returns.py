@@ -5,7 +5,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
 ---
-module: test_docs
+module: test_docs_returns
 short_description: Test module
 description:
     - Test module
