@@ -88,8 +88,6 @@ class CallbackModule(CallbackBase):
             try:
                 value = self.get_option(option)
             except (AttributeError, KeyError):
-                self._display.deprecated("'%s' is subclassing DefaultCallback without the corresponding doc_fragment." % self._load_name,
-                                   version='2.14')
                 value = constant
             setattr(self, option, value)
 
