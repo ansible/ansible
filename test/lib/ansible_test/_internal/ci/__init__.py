@@ -154,6 +154,49 @@ class AuthHelper(ABC):
         """Generate a new key pair, publishing the public key and returning the private key."""
 
 
+class CryptographyAuthHelper(AuthHelper, ABC):  # pylint: disable=abstract-method
+    """Cryptography based public key based authentication helper for Ansible Core CI."""
+    def sign_bytes(self, payload_bytes):  # type: (bytes) -> bytes
+        """Sign the given payload and return the signature, initializing a new key pair if required."""
+        # import cryptography here to avoid overhead and failures in environments which do not use/provide it
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import ec
+        from cryptography.hazmat.primitives.serialization import load_pem_private_key
+
+        private_key_pem = self.initialize_private_key()
+        private_key = load_pem_private_key(to_bytes(private_key_pem), None, default_backend())
+
+        signature_raw_bytes = private_key.sign(payload_bytes, ec.ECDSA(hashes.SHA256()))
+
+        return signature_raw_bytes
+
+    def generate_private_key(self):  # type: () -> str
+        """Generate a new key pair, publishing the public key and returning the private key."""
+        # import cryptography here to avoid overhead and failures in environments which do not use/provide it
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import ec
+
+        private_key = ec.generate_private_key(ec.SECP384R1(), default_backend())
+        public_key = private_key.public_key()
+
+        private_key_pem = to_text(private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        ))
+
+        public_key_pem = to_text(public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ))
+
+        self.publish_public_key(public_key_pem)
+
+        return private_key_pem
+
+
 class OpenSSLAuthHelper(AuthHelper, ABC):  # pylint: disable=abstract-method
     """OpenSSL based public key based authentication helper for Ansible Core CI."""
     def sign_bytes(self, payload_bytes):  # type: (bytes) -> bytes
