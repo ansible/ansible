@@ -213,7 +213,7 @@ from ansible.module_utils._text import to_bytes, to_native
 
 def write_changes(module, b_lines, dest):
 
-    tmpfd, tmpfile = tempfile.mkstemp()
+    tmpfd, tmpfile = tempfile.mkstemp(dir=module.tmpdir)
     with os.fdopen(tmpfd, 'wb') as f:
         f.writelines(b_lines)
 
