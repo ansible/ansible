@@ -60,7 +60,7 @@ EXAMPLES = '''
 
 # Gather information about all VMs which relate to a storage domain and
 # are unregistered:
-- ovirt_vms_info:
+- ovirt_storage_vm_info:
     unregistered=True
   register: result
 - debug:
