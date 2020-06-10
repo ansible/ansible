@@ -203,18 +203,6 @@ class TaskExecutor:
         and returns the items result.
         '''
 
-        # save the play context variables to a temporary dictionary,
-        # so that we can modify the job vars without doing a full copy
-        # and later restore them to avoid modifying things too early
-        play_context_vars = dict()
-        self._play_context.update_vars(play_context_vars)
-
-        old_vars = dict()
-        for k in play_context_vars:
-            if k in self._job_vars:
-                old_vars[k] = self._job_vars[k]
-            self._job_vars[k] = play_context_vars[k]
-
         # get search path for this task to pass to lookup plugins
         self._job_vars['ansible_search_path'] = self._task.get_search_path()
 
@@ -263,15 +251,6 @@ class TaskExecutor:
                     " Hint: If you passed a list/dict of just one element,"
                     " try adding wantlist=True to your lookup invocation or use q/query instead of lookup." % items
                 )
-
-        # now we restore any old job variables that may have been modified,
-        # and delete them if they were in the play context vars but not in
-        # the old variables dictionary
-        for k in play_context_vars:
-            if k in old_vars:
-                self._job_vars[k] = old_vars[k]
-            else:
-                del self._job_vars[k]
 
         return items
 
