@@ -1574,7 +1574,7 @@ class ModuleValidator(Validator):
                 for deprecated_alias in deprecated_aliases:
                     if 'name' in deprecated_alias and 'version' in deprecated_alias:
                         try:
-                            collection_name = deprecated_alias.get('collection')
+                            collection_name = deprecated_alias.get('collection_name')
                             version = self._create_version(str(deprecated_alias['version']), collection_name=collection_name)
                             if has_version and collection_name == self.collection_name and compare_version >= version:
                                 msg = "Argument '%s' in argument_spec" % arg
