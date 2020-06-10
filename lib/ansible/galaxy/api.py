@@ -435,6 +435,7 @@ class GalaxyAPI:
         form = [
             part_boundary,
             b"Content-Disposition: form-data; name=\"sha256\"",
+            b"",
             to_bytes(secure_hash_s(data, hash_func=hashlib.sha256), errors='surrogate_or_strict'),
             part_boundary,
             b"Content-Disposition: file; name=\"file\"; filename=\"%s\"" % b_file_name,
