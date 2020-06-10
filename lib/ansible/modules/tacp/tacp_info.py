@@ -110,7 +110,7 @@ def run_module():
 
     if module.check_mode:
         module.exit_json(**result)
-        
+
     result['args'] = module.params
 
     # Define configuration
@@ -140,7 +140,7 @@ def run_module():
     resource = resource_dict[module.params['resource']](api_client)
 
     items = [item.to_dict() for item in resource.filter()]
-    
+
     if module.params['resource'] == 'migration_zone':
         application_resource = tacp_utils.ApplicationResource(
             api_client)
