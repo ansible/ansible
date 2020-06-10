@@ -263,9 +263,8 @@ class InventoryCLI(CLI):
     @staticmethod
     def _show_vars(dump, depth):
         result = []
-        if context.CLIARGS['show_vars']:
-            for (name, val) in sorted(dump.items()):
-                result.append(InventoryCLI._graph_name('{%s = %s}' % (name, val), depth))
+        for (name, val) in sorted(dump.items()):
+            result.append(InventoryCLI._graph_name('{%s = %s}' % (name, val), depth))
         return result
 
     @staticmethod
@@ -284,9 +283,11 @@ class InventoryCLI(CLI):
         if group.name != 'all':
             for host in sorted(group.hosts, key=attrgetter('name')):
                 result.append(self._graph_name(host.name, depth))
-                result.extend(self._show_vars(self._get_host_variables(host), depth + 1))
+                if context.CLIARGS['show_vars']:
+                    result.extend(self._show_vars(self._get_host_variables(host), depth + 1))
 
-        result.extend(self._show_vars(self._get_group_variables(group), depth))
+        if context.CLIARGS['show_vars']:
+            result.extend(self._show_vars(self._get_group_variables(group), depth))
 
         return result
 
