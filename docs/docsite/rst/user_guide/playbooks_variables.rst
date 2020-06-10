@@ -18,7 +18,7 @@ Once you understand the concepts and examples on this page, read about :ref:`Ans
 Creating valid variable names
 =============================
 
-Not all strings are valid Ansible variable names. A variable name can only include letters, numbers, and underscores. `Python keywords`_ and :ref:`playbook keywords<playbook_keywords>` and :ref:`playbook keywords<playbook_keywords>` are not valid variable names. A variable name cannot begin with a number.
+Not all strings are valid Ansible variable names. A variable name can only include letters, numbers, and underscores. `Python keywords`_ and :ref:`playbook keywords<playbook_keywords>` are not valid variable names. A variable name cannot begin with a number.
 
 Variable names can begin with an underscore. In many programming languages, variables that begin with an underscore are private. This is not true in Ansible. Variables that begin with an underscore are treated exactly the same as any other variable. Do not rely on this convention for privacy or security.
 
