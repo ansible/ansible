@@ -89,7 +89,7 @@ class CallbackModule(CallbackBase):
                 value = self.get_option(option)
             except (AttributeError, KeyError):
                 self._display.deprecated("'%s' is subclassing DefaultCallback without the corresponding doc_fragment." % self._load_name,
-                                   version='2.14')
+                                         version='2.14', collection_name='ansible.builtin')
                 value = constant
             setattr(self, option, value)
 
