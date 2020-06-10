@@ -201,7 +201,7 @@
     state: absent
 
 - name: install collection with symlink - {{ test_name }}
-  command: ansible-galaxy collection install symlink.symlink -s '{{ test_server }}' {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install symlink.symlink -s '{{ test_server }}'
   environment:
     ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
   register: install_symlink
