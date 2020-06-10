@@ -17,8 +17,8 @@ ansible -m include_role -a name=role1 localhost
 ## Import (static)
 
 # Playbook
-ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook.yml -i inventory "$@"
-ANSIBLE_STRATEGY='free' ansible-playbook playbook/test_import_playbook.yml -i inventory "$@"
+test "$(ansible-playbook -i ../../inventory playbook/test_import_playbook.yml "$@" 2>&1 | grep -c '\[WARNING\]: Additional parameters in import_playbook')" = 1
+
 ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.yml -i inventory "$@" --tags canary1,canary22,validate --skip-tags skipme
 
 # Tasks
