@@ -531,7 +531,7 @@ The build process for docs.ansible.com will know where to find the module docs.
 Testing collections
 ===================
 
-The main tool for testing collections is ``ansible-test``, Ansible's testing tool described in :ref:`developing_testing`. You can run several compile and sanity checks, as well as run unit and integration tests for plugins using ``ansible-test``.
+The main tool for testing collections is ``ansible-test``, Ansible's testing tool described in :ref:`developing_testing`. You can run several compile and sanity checks, as well as run unit and integration tests for plugins using ``ansible-test``. When you test collections, test against the ansible-base version(s) you are targeting.
 
 You must always execute ``ansible-test`` from the root directory of a collection. You can run ``ansible-test`` in Docker containers without installing any special requirements. The Ansible team uses this approach in Shippable both in the ansible/ansible GitHub repository and in the large community collections such as `community.general <https://github.com/ansible-collections/community.general/>`_ and `community.network <https://github.com/ansible-collections/community.network/>`_. The examples below demonstrate running tests in Docker containers.
 

@@ -4,7 +4,7 @@
 Testing Ansible
 ***************
 
-.. contents:: Topics
+.. contents::
    :local:
 
 
@@ -17,7 +17,7 @@ Ansible users who understand how to write playbooks and roles should be able to 
 
 Read on to learn how Ansible is tested, how to test your contributions locally, and how to extend testing capabilities.
 
-If you want to learn on how testing collections, you should read :ref:`testing_collections`
+If you want to learn about testing collections, read :ref:`testing_collections`
 
 
 
@@ -183,7 +183,7 @@ Example::
 
 If the PR does not resolve the issue, or if you see any failures from the unit/integration tests, just include that output instead:
 
-   | This doesn't work for me.
+   | This change causes errors for me.
    |
    | When I ran this Ubuntu 16.04 it failed with the following:
    |
