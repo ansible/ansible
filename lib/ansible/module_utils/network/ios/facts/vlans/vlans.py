@@ -65,6 +65,8 @@ class VlansFacts(object):
                 vlan_info = 'Type'
             elif 'Remote' in conf:
                 vlan_info = 'Remote'
+            elif "AREHops" in conf or "STEHops" in conf:
+                vlan_info = "Hops"
             if conf and ' ' not in filter(None, conf.split('-')):
                 obj = self.render_config(self.generated_spec, conf, vlan_info)
                 if 'mtu' in obj:
