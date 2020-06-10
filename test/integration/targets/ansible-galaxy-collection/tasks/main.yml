@@ -138,6 +138,11 @@
     - namespace: fail_dep2
       name: name
 
+    # Symlink tests
+    - namespace: symlink
+      name: symlink
+      use_symlink: yes
+
 - name: run ansible-galaxy collection install tests for {{ test_name }}
   include_tasks: install.yml
   vars:

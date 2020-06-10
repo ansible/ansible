@@ -15,13 +15,14 @@ import uuid
 
 from hashlib import sha256
 from io import BytesIO
-from units.compat.mock import MagicMock
+from units.compat.mock import MagicMock, mock_open, patch
 
 from ansible import context
 from ansible.cli.galaxy import GalaxyCLI
 from ansible.errors import AnsibleError
 from ansible.galaxy import api, collection, token
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.six.moves import builtins
 from ansible.utils import context_objects as co
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
@@ -112,6 +113,60 @@ def galaxy_server():
     galaxy_api = api.GalaxyAPI(None, 'test_server', 'https://galaxy.ansible.com',
                                token=token.GalaxyToken(token='key'))
     return galaxy_api
+
+
+@pytest.fixture()
+def manifest_template():
+    def get_manifest_info(namespace='ansible_namespace', name='collection', version='0.1.0'):
+        return {
+            "collection_info": {
+                "namespace": namespace,
+                "name": name,
+                "version": version,
+                "authors": [
+                    "shertel"
+                ],
+                "readme": "README.md",
+                "tags": [
+                    "test",
+                    "collection"
+                ],
+                "description": "Test",
+                "license": [
+                    "MIT"
+                ],
+                "license_file": None,
+                "dependencies": {},
+                "repository": "https://github.com/{0}/{1}".format(namespace, name),
+                "documentation": None,
+                "homepage": None,
+                "issues": None
+            },
+            "file_manifest_file": {
+                "name": "FILES.json",
+                "ftype": "file",
+                "chksum_type": "sha256",
+                "chksum_sha256": "files_manifest_checksum",
+                "format": 1
+            },
+            "format": 1
+        }
+
+    return get_manifest_info
+
+
+@pytest.fixture()
+def manifest_info(manifest_template):
+    return manifest_template()
+
+
+@pytest.fixture()
+def manifest(manifest_info):
+    b_data = to_bytes(json.dumps(manifest_info))
+
+    with patch.object(builtins, 'open', mock_open(read_data=b_data)) as m:
+        with open('MANIFEST.json', mode='rb') as fake_file:
+            yield fake_file, sha256(b_data).hexdigest()
 
 
 def test_build_collection_no_galaxy_yaml():
@@ -337,14 +392,9 @@ def test_build_copy_symlink_target_inside_collection(collection_input):
     actual = collection._build_files_manifest(to_bytes(input_dir), 'namespace', 'collection')
 
     linked_entries = [e for e in actual['files'] if e['name'].startswith('playbooks/roles/linked')]
-    assert len(linked_entries) == 3
+    assert len(linked_entries) == 1
     assert linked_entries[0]['name'] == 'playbooks/roles/linked'
     assert linked_entries[0]['ftype'] == 'dir'
-    assert linked_entries[1]['name'] == 'playbooks/roles/linked/tasks'
-    assert linked_entries[1]['ftype'] == 'dir'
-    assert linked_entries[2]['name'] == 'playbooks/roles/linked/tasks/main.yml'
-    assert linked_entries[2]['ftype'] == 'file'
-    assert linked_entries[2]['chksum_sha256'] == '9c97a1633c51796999284c62236b8d5462903664640079b80c37bf50080fcbc3'
 
 
 def test_build_with_symlink_inside_collection(collection_input):
@@ -372,25 +422,15 @@ def test_build_with_symlink_inside_collection(collection_input):
     with tarfile.open(output_artifact, mode='r') as actual:
         members = actual.getmembers()
 
-        linked_members = [m for m in members if m.path.startswith('playbooks/roles/linked/tasks')]
-        assert len(linked_members) == 2
-        assert linked_members[0].name == 'playbooks/roles/linked/tasks'
-        assert linked_members[0].isdir()
+        linked_folder = next(m for m in members if m.path == 'playbooks/roles/linked')
+        assert linked_folder.type == tarfile.SYMTYPE
+        assert linked_folder.linkname == '../../roles/linked'
 
-        assert linked_members[1].name == 'playbooks/roles/linked/tasks/main.yml'
-        assert linked_members[1].isreg()
+        linked_file = next(m for m in members if m.path == 'docs/README.md')
+        assert linked_file.type == tarfile.SYMTYPE
+        assert linked_file.linkname == '../README.md'
 
-        linked_task = actual.extractfile(linked_members[1].name)
-        actual_task = secure_hash_s(linked_task.read())
-        linked_task.close()
-
-        assert actual_task == 'f4dcc52576b6c2cd8ac2832c52493881c4e54226'
-
-        linked_file = [m for m in members if m.path == 'docs/README.md']
-        assert len(linked_file) == 1
-        assert linked_file[0].isreg()
-
-        linked_file_obj = actual.extractfile(linked_file[0].name)
+        linked_file_obj = actual.extractfile(linked_file.name)
         actual_file = secure_hash_s(linked_file_obj.read())
         linked_file_obj.close()
 
@@ -585,3 +625,41 @@ def test_extract_tar_file_outside_dir(tmp_path_factory):
     with tarfile.open(tar_file, 'r') as tfile:
         with pytest.raises(AnsibleError, match=expected):
             collection._extract_tar_file(tfile, tar_filename, os.path.join(temp_dir, to_bytes(filename)), temp_dir)
+
+
+def test_consume_file(manifest):
+
+    manifest_file, checksum = manifest
+    assert checksum == collection._consume_file(manifest_file)
+
+
+def test_consume_file_and_write_contents(manifest, manifest_info):
+
+    manifest_file, checksum = manifest
+
+    write_to = BytesIO()
+    actual_hash = collection._consume_file(manifest_file, write_to)
+
+    write_to.seek(0)
+    assert to_bytes(json.dumps(manifest_info)) == write_to.read()
+    assert actual_hash == checksum
+
+
+def test_get_tar_file_member(tmp_tarfile):
+
+    temp_dir, tfile, filename, checksum = tmp_tarfile
+
+    with collection._get_tar_file_member(tfile, filename) as (tar_file_member, tar_file_obj):
+        assert isinstance(tar_file_member, tarfile.TarInfo)
+        assert isinstance(tar_file_obj, tarfile.ExFileObject)
+
+
+def test_get_nonexistent_tar_file_member(tmp_tarfile):
+    temp_dir, tfile, filename, checksum = tmp_tarfile
+
+    file_does_not_exist = filename + 'nonexistent'
+
+    with pytest.raises(AnsibleError) as err:
+        collection._get_tar_file_member(tfile, file_does_not_exist)
+
+    assert to_text(err.value.message) == "Collection tar at '%s' does not contain the expected file '%s'." % (to_text(tfile.name), file_does_not_exist)
