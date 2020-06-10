@@ -18,7 +18,7 @@ def main():
         if ext not in allowed_extensions:
             print('%s:%d:%d: extension must be one of: %s' % (path, 0, 0, ', '.join(allowed_extensions)))
 
-    cmd = ['antsibull-changelog', 'lint'] + paths
+    cmd = [sys.executable, '-m', 'antsibull_changelog', 'lint'] + paths
     subprocess.check_call(cmd)
 
 
