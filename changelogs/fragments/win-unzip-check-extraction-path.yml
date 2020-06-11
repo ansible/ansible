@@ -1,4 +1,4 @@
-bugfixes:
+security_fixes:
   - >
     **security issue** win_unzip - normalize paths in archive to ensure extracted
     files do not escape from the target directory (CVE-2020-1737)

@@ -1,2 +1,2 @@
-bugfixes:
+security_fixes:
     - Ensure we get an error when creating a remote tmp if it already exists. CVE-2020-1733
