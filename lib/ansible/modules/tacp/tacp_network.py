@@ -125,7 +125,7 @@ def run_module():
         module.exit_json(**result)
 
     def fail_with_reason(reason):
-        module.fail_json(**result, msg=reason)
+        module.fail_json(msg=reason, **result)
 
     def get_site_list():
         api_instance = tacp.LocationsApi(api_client)
