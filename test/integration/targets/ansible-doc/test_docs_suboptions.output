@@ -1,4 +1,4 @@
-> TEST_DOCS_SUBOPTIONS    (/home/felix/projects/code/github-cloned/ansible/test/integration/targets/ansible-doc/library/test_docs_suboptions.py)
+> TEST_DOCS_SUBOPTIONS    (library/test_docs_suboptions.py)
 
         Test module
 
@@ -40,7 +40,4 @@ AUTHOR: Ansible Core Team
 EXAMPLES:
 
 
-
-
-RETURN VALUES:
 

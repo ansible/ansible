@@ -85,6 +85,9 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
             if isinstance(return_value.get('contains'), MutableMapping):
                 process_return_values(return_value['contains'])
 
+    if not fragment:
+        return
+
     if return_docs:
         process_return_values(fragment)
         return
@@ -203,12 +206,17 @@ def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False,
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
 
     if data.get('doc', False):
-        # tag version_added
+        # add collection name to versions and dates
         if collection_name is not None:
             add_collection_to_versions_and_dates(data['doc'], collection_name, is_module=is_module)
 
         # add fragments to documentation
         add_fragments(data['doc'], filename, fragment_loader=fragment_loader, is_module=is_module)
+
+    if data.get('returndocs', False):
+        # add collection name to versions and dates
+        if collection_name is not None:
+            add_collection_to_versions_and_dates(data['returndocs'], collection_name, is_module=is_module, return_docs=True)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
 
