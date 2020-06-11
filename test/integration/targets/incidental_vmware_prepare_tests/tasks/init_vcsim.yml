@@ -40,5 +40,9 @@
   vmware_guest:
     name: "{{ item.name }}"
     state: poweredoff
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
   with_items: "{{ virtual_machines + virtual_machines_in_cluster }}"
   register: poweroff_d1_c1_f0
