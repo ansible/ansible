@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-test - added new ``changelog`` test, which runs if a `antsibull-changelog <https://pypi.org/project/antsibull-changelog/>`_ configuration or files in ``changelogs/fragments/`` are found (https://github.com/ansible/ansible/pull/69313)."

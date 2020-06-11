@@ -195,7 +195,7 @@ sdist_upload: clean docs
 
 .PHONY: changelog
 changelog:
-	PYTHONPATH=./lib packaging/release/changelogs/changelog.py release -vv && PYTHONPATH=./lib packaging/release/changelogs/changelog.py generate -vv
+	PYTHONPATH=./lib antsibull-changelog release -vv --use-ansible-doc && PYTHONPATH=./lib antsibull-changelog generate -vv --use-ansible-doc
 
 .PHONY: debian
 debian: sdist
