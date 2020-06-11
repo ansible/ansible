@@ -1,0 +1,2 @@
+bugfixes:
+  - ensure we pass on interpreter discovery values to delegated host.

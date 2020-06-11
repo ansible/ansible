@@ -1,0 +1,8 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+  - command: ls
+    delegate_to: "{{ item }}"
+    with_items:
+    - localhost
+    - "{{ inventory_hostname }}"

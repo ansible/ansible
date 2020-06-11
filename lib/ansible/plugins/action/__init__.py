@@ -252,6 +252,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     task_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
                     # preserve this so _execute_module can propagate back to controller as a fact
                     self._discovered_interpreter_key = discovered_key
+                else:
+                    task_vars['ansible_delegated_vars'][self._task.delegate_to]
+                    if task_vars['ansible_delegated_vars'][self._task.delegate_to].get('ansible_facts') is None:
+                        task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'] = {}
+                    task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'][discovered_key] = self._discovered_interpreter
 
         return (module_style, module_shebang, module_data, module_path)
 
