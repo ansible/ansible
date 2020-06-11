@@ -56,7 +56,7 @@ def main():
 
     # plugin_routing schema
 
-    deprecation_schema = Any(Schema(
+    deprecation_tombstoning_schema = Any(Schema(
         {
             Required('removal_date'): Any(*string_types),
             'warning_text': Any(*string_types),
@@ -72,9 +72,10 @@ def main():
 
     plugin_routing_schema = Any(
         Schema({
-            ('deprecation'): Any(deprecation_schema),
+            ('deprecation'): Any(deprecation_tombstoning_schema),
+            ('tombstone'): Any(deprecation_tombstoning_schema),
             ('redirect'): Any(*string_types),
-        }, extra=PREVENT_EXTRA)
+        }, extra=PREVENT_EXTRA),
     )
 
     list_dict_plugin_routing_schema = [{str_type: plugin_routing_schema}
