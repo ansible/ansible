@@ -1,5 +1,0 @@
-docutils
-jinja2  # ansible-base requirement
-packaging
-pyyaml
-rstcheck

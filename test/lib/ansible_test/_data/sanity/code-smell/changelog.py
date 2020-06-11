@@ -12,13 +12,31 @@ def main():
 
     allowed_extensions = ('.yml', '.yaml')
 
+    has_config = False
+    paths_to_check = []
     for path in paths:
+        if path == 'changelogs/config.yaml':
+            has_config = True
+            continue
+
+        if path.startswith('changelogs/fragments/.'):
+            continue
+
         ext = os.path.splitext(path)[1]
 
         if ext not in allowed_extensions:
             print('%s:%d:%d: extension must be one of: %s' % (path, 0, 0, ', '.join(allowed_extensions)))
 
-    cmd = ['packaging/release/changelogs/changelog.py', 'lint'] + paths
+        paths_to_check.append(path)
+
+    if not has_config:
+        print('changelogs/config.yaml:0:0: config file does not exist')
+        return
+
+    if not paths_to_check:
+        return
+
+    cmd = [sys.executable, '-m', 'antsibull_changelog', 'lint'] + paths_to_check
     subprocess.check_call(cmd)
 
 

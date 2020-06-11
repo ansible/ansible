@@ -43,6 +43,9 @@ botocore >= 1.10.0 ; python_version >= '2.7' # adds support for the following AW
 setuptools < 37 ; python_version == '2.6' # setuptools 37 and later require python 2.7 or later
 setuptools < 45 ; python_version == '2.7' # setuptools 45 and later require python 3.5 or later
 
+# freeze antsibull-changelog for consistent test results
+antsibull-changelog == 0.3.1
+
 # freeze pylint and its requirements for consistent test results
 astroid == 2.2.5
 isort == 4.3.15
