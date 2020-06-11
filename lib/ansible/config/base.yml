@@ -234,8 +234,10 @@ COLLECTIONS_PATHS:
   type: pathspec
   env:
   - {name: ANSIBLE_COLLECTIONS_PATHS}
+  - {name: ANSIBLE_COLLECTIONS_PATH}
   ini:
   - {key: collections_paths, section: defaults}
+  - {key: collections_path, section: defaults}
 COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH:
   name: Defines behavior when loading a collection that does not support the current Ansible version
   description:
