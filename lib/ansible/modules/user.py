@@ -187,7 +187,7 @@ options:
         description:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
             - Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
-            - Since Ansible 2.6 you can remove the expiry time specify a negative value.
+            - Since Ansible 2.6 you can remove the expiry time by specifying a negative value.
               Currently supported on GNU/Linux and FreeBSD.
         type: float
         version_added: "1.9"
@@ -241,13 +241,15 @@ options:
     password_expire_max:
         description:
             - Maximum number of days between password change.
+            - Supported on Linux Environment only.
         type: int
-        version_added: "2.10"
+        version_added: "2.11"
     password_expire_min:
         description:
             - Minimum number of days between password change.
+            - Supported on Linux Environment only.
         type: int
-        version_added: "2.10"
+        version_added: "2.11"
 
 notes:
   - There are specific requirements per platform on user management utilities. However
@@ -420,7 +422,7 @@ uid:
   type: int
   sample: 1044
 password_expire_max:
-  description: Maximum number of days between password change
+  description: Maximum number of days during which a password is valid.
   returned: When user exists
   type: int
   sample: 20
