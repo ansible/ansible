@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    inventory: statichost
+    inventory: testns.testcol.statichost
     short_description: Add a single host
     description: Add a single host
     extends_documentation_fragment:
