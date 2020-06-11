@@ -89,29 +89,6 @@ STATE_ACTIONS = [Action.STARTED, Action.SHUTDOWN, Action.STOPPED,
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
-<<<<<<< HEAD
-    module_args = dict(
-        api_key=dict(type='str', required=True),
-        portal_url=dict(type='str', required=False,
-                        default="https://manage.cp.lenovo.com"),
-        name=dict(type='str', required=True),
-        state=dict(type='str', required=True,
-                   choices=STATE_ACTIONS),
-        datacenter=dict(type='str', required=False),
-        migration_zone=dict(type='str', required=False),
-        storage_pool=dict(type='str', required=False),
-        template=dict(type='str', required=False),
-        vcpu_cores=dict(type='int', required=False),
-        memory=dict(type='str', required=False),
-        disks=dict(type='list', required=False),
-        nics=dict(type='list', required=False),
-        vtx_enabled=dict(type='bool', default=True, required=False),
-        auto_recovery_enabled=dict(type='bool', default=True, required=False),
-        description=dict(type='str', required=False),
-        vm_mode=dict(type='str', default='Enhanced', choices=['enhanced', 'Enhanced',
-                                                              'compatibility', 'Compatibility']),
-        application_group={
-=======
     module_args = {
         "api_key": {'type': 'str', 'required': True},
         "portal_url": {'type': 'str', 'required': False,
@@ -136,7 +113,6 @@ def run_module():
                     'choices': ['enhanced', 'Enhanced',
                                 'compatibility', 'Compatibility']},
         "application_group": {
->>>>>>> 2da364a8e4... OL-9822 Convert dict() syntax to {} for module_args and result declarations
             'type': 'str',
             'required': False,
         },
@@ -160,10 +136,6 @@ def run_module():
         result['msg'] = reason
         module.fail_json(**result)
 
-<<<<<<< HEAD
-    # manipulate or modify the state as needed (this is going to be the
-    # part where your module will do what it needs to do)
-=======
     def get_boot_order(module, template_dict):
 
         # Get boot devices uuids and order from the template
@@ -222,7 +194,6 @@ def run_module():
             instance_boot_order[order - 1] = payload
         # sys.stdout.write(str(instance_boot_order))
         return instance_boot_order
->>>>>>> 2da364a8e4... OL-9822 Convert dict() syntax to {} for module_args and result declarations
 
     def generate_instance_params(module):
         # VM does not exist yet, so we must create it
@@ -234,13 +205,8 @@ def run_module():
             component_uuid = tacp_utils.get_component_fields_by_name(
                 module.params[component], component, api_client)
             if not component_uuid:
-<<<<<<< HEAD
-                reason = "%s %s does not exist, cannot continue." % component.capitalize(
-                ) % module.params[component]
-=======
                 reason = "{} {} does not exist, cannot continue.".format(
                     component.capitalize(), module.params[component])
->>>>>>> 2da364a8e4... OL-9822 Convert dict() syntax to {} for module_args and result declarations
                 fail_with_reason(reason)
             instance_params['{}_uuid'.format(component)] = component_uuid
 

@@ -124,9 +124,8 @@ class Resource(object):
                                     'Allowed: {}'.format(op, allowed))
 
                 if op in ('=in=', '=out='):
-                    if len(value) > 0:
-                        value = ','.join(map(str, value))
-                        value = '({})'.format(value)
+                    value = ','.join(map(str, value))
+                    value = '({})'.format(value)
                 else:
                     value = value[0]
             else:
