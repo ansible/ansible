@@ -10,4 +10,4 @@ else
 
 fi
 
-ANSIBLE_COLLECTIONS_PATHS="${PWD}/collection_root" ansible-playbook "${TEST_PLAYBOOK}" -i "${INVENTORY_PATH}" "$@"
+ANSIBLE_COLLECTIONS_PATH="${PWD}/collection_root" ansible-playbook "${TEST_PLAYBOOK}" -i "${INVENTORY_PATH}" "$@"
