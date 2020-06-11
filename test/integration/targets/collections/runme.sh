@@ -66,6 +66,11 @@ fi
 
 CACHEFILE="$(find ./inventory_cache -type f ! -path './inventory_cache/.keep')"
 
+if [[ $CACHEFILE != ./inventory_cache/prefix_* ]]; then
+    echo "Unexpected cache file"
+    exit 1
+fi
+
 # Check the cache for the expected hosts
 
 if [[ "$(grep -wc "cache_host_a" "$CACHEFILE")" -ne "1" ]]; then
