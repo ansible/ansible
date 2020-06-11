@@ -301,7 +301,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         try:
-            is_enabled = self._connection.get_options('pipelining')
+            is_enabled = self._connection.get_option('pipelining')
         except (KeyError, AttributeError, ValueError):
             is_enabled = self._play_context.pipelining
 
