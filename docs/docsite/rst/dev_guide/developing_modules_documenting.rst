@@ -282,7 +282,7 @@ You can link from your module documentation to other module docs, other resource
 
 .. note::
 
-  For modules in a collection, you can only use ``L()`` and ``M()`` for content within that collection. Use ``U()`` to refer to content in a different collection, or ``R()`` for cross-references to other Ansible documentation, based on the anchor for the page or section of the ``.rst`` file.
+  For modules in a collection, you can only use ``L()`` and ``M()`` for content within that collection. Use ``U()`` to refer to content in a different collection, or ``R()`` for cross-references to other Ansible documentation, based on the anchor for the page or section of the ``.rst`` file. See :ref:`adding_anchors_rst` for details.
 
 
 
