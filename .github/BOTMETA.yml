@@ -1393,7 +1393,7 @@ files:
   $modules/network/eric_eccli/: itercheng
   $modules/network/exos/: rdvencioneck $team_extreme
   $modules/network/f5/:
-    ignored: Etienne-Carriere mhite mryanlam perzizzle srvg JoeReifel $team_networking
+    ignored: Etienne-Carriere mhite mryanlam perzizzle srgvg JoeReifel $team_networking
     maintainers: caphrim007 wojtek0806
   $modules/network/f5/bigip_apm_acl.py:
     migrated_to: f5networks.f5_modules
