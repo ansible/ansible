@@ -2,7 +2,7 @@
 
 set -eux
 
-export ANSIBLE_COLLECTIONS_PATHS=$PWD/collection_root_user:$PWD/collection_root_sys
+export ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_user:$PWD/collection_root_sys
 export ANSIBLE_GATHERING=explicit
 export ANSIBLE_GATHER_SUBSET=minimal
 export ANSIBLE_HOST_PATTERN_MISMATCH=error
@@ -52,7 +52,7 @@ fi
 ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
 
 # test adjacent with --playbook-dir
-export ANSIBLE_COLLECTIONS_PATHS=''
+export ANSIBLE_COLLECTIONS_PATH=''
 ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=1 ansible-inventory --list --export --playbook-dir=. -v "$@"
 
 # use an inventory source with caching enabled

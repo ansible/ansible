@@ -1092,7 +1092,7 @@ def start_connection(play_context, variables, task_uuid):
         # can.
         'ANSIBLE_BECOME_PLUGINS': become_loader.print_paths(),
         'ANSIBLE_CLICONF_PLUGINS': cliconf_loader.print_paths(),
-        'ANSIBLE_COLLECTIONS_PATHS': to_native(os.pathsep.join(AnsibleCollectionConfig.collection_paths)),
+        'ANSIBLE_COLLECTIONS_PATH': to_native(os.pathsep.join(AnsibleCollectionConfig.collection_paths)),
         'ANSIBLE_CONNECTION_PLUGINS': connection_loader.print_paths(),
         'ANSIBLE_HTTPAPI_PLUGINS': httpapi_loader.print_paths(),
         'ANSIBLE_NETCONF_PLUGINS': netconf_loader.print_paths(),
