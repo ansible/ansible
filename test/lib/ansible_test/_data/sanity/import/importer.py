@@ -25,7 +25,7 @@ def main():
     temp_path = os.environ['SANITY_TEMP_PATH'] + os.path.sep
     external_python = os.environ.get('SANITY_EXTERNAL_PYTHON') or sys.executable
     collection_full_name = os.environ.get('SANITY_COLLECTION_FULL_NAME')
-    collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATHS')
+    collection_root = os.environ.get('ANSIBLE_COLLECTIONS_PATH')
 
     try:
         # noinspection PyCompatibility

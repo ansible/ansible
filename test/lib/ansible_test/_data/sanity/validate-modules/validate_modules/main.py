@@ -2251,7 +2251,7 @@ class PythonPackageValidator(Validator):
 
 
 def setup_collection_loader():
-    collections_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATHS', '').split(os.pathsep)
+    collections_paths = os.environ.get('ANSIBLE_COLLECTIONS_PATH', '').split(os.pathsep)
     _AnsibleCollectionFinder(collections_paths)
 
 
@@ -2290,7 +2290,7 @@ def run():
     parser.add_argument('--collection',
                         help='Specifies the path to the collection, when '
                              'validating files within a collection. Ensure '
-                             'that ANSIBLE_COLLECTIONS_PATHS is set so the '
+                             'that ANSIBLE_COLLECTIONS_PATH is set so the '
                              'contents of the collection can be located')
     parser.add_argument('--collection-version',
                         help='The collection\'s version number used to check '

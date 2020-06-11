@@ -17,7 +17,7 @@ grep '"adj_var": "value"' out.txt
 
 # Test vars plugin in a collection path
 export ANSIBLE_VARS_ENABLED=testns.testcoll.custom_vars
-export ANSIBLE_COLLECTIONS_PATHS=$PWD/collection_root_user:$PWD/collection_root_sys
+export ANSIBLE_COLLECTIONS_PATH=$PWD/collection_root_user:$PWD/collection_root_sys
 
 ansible-inventory -i a.statichost.yml --list --playbook-dir=./ | tee out.txt
 
@@ -46,7 +46,7 @@ grep -v '"whitelisted": true' out.txt
 
 # Test plugins in plugin paths that opt-in to require whitelisting
 unset ANSIBLE_VARS_ENABLED
-unset ANSIBLE_COLLECTIONS_PATHS
+unset ANSIBLE_COLLECTIONS_PATH
 
 ANSIBLE_VARS_ENABLED=vars_req_whitelist ansible-inventory -i a.statichost.yml --list --playbook-dir=./ | tee out.txt
 
