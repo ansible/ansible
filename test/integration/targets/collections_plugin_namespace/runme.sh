@@ -2,4 +2,4 @@
 
 set -eux
 
-ANSIBLE_COLLECTIONS_PATHS="${PWD}/collection_root" ansible-playbook test.yml -i ../../inventory "$@"
+ANSIBLE_COLLECTIONS_PATH="${PWD}/collection_root" ansible-playbook test.yml -i ../../inventory "$@"

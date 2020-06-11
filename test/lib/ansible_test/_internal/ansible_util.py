@@ -107,7 +107,7 @@ def ansible_environment(args, color=True, ansible_config=None):
 
     if data_context().content.collection:
         env.update(dict(
-            ANSIBLE_COLLECTIONS_PATHS=data_context().content.collection.root,
+            ANSIBLE_COLLECTIONS_PATH=data_context().content.collection.root,
         ))
 
     if data_context().content.is_ansible:
@@ -127,7 +127,7 @@ def configure_plugin_paths(args):  # type: (CommonConfig) -> t.Dict[str, str]
     collection_root = os.path.join(support_path, 'collections')
 
     env = dict(
-        ANSIBLE_COLLECTIONS_PATHS=collection_root,
+        ANSIBLE_COLLECTIONS_PATH=collection_root,
     )
 
     # provide private copies of plugins for integration tests

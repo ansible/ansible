@@ -205,7 +205,7 @@ popd # ${galaxy_testdir}
 # https://github.com/ansible/ansible/issues/60167#issuecomment-585460706
 
 f_ansible_galaxy_status \
-    "list specific role not in the first path in ANSIBLE_ROLES_PATHS"
+    "list specific role not in the first path in ANSIBLE_ROLES_PATH"
 
 role_testdir=$(mktemp -d)
 pushd "${role_testdir}"
@@ -352,7 +352,7 @@ ansible-galaxy collection install ansible_test-zoo-2.5.0.tar.gz -p ./local
 ansible-galaxy collection init "ansible_test.development"
 mv ./ansible_test/development "${galaxy_testdir}/local/ansible_collections/ansible_test/"
 
-export ANSIBLE_COLLECTIONS_PATHS=~/.ansible/collections:${galaxy_testdir}/local
+export ANSIBLE_COLLECTIONS_PATH=~/.ansible/collections:${galaxy_testdir}/local
 
 f_ansible_galaxy_status \
     "collection list all collections"
@@ -413,7 +413,7 @@ f_ansible_galaxy_status \
 
     rmdir emptydir
 
-unset ANSIBLE_COLLECTIONS_PATHS
+unset ANSIBLE_COLLECTIONS_PATH
 
 ## end ansible-galaxy collection list
 

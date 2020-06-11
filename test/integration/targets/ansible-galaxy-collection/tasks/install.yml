@@ -7,7 +7,7 @@
 - name: install simple collection with implicit path - {{ test_name }}
   command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}' {{ galaxy_verbosity }}
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_normal
 
 - name: get installed files of install simple collection with implicit path - {{ test_name }}
@@ -34,7 +34,7 @@
 - name: install existing without --force - {{ test_name }}
   command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}' {{ galaxy_verbosity }}
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_existing_no_force
 
 - name: assert install existing without --force - {{ test_name }}
@@ -98,7 +98,7 @@
   args:
     chdir: '{{ galaxy_dir }}/ansible_collections'
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
   register: install_multiple_with_dep
 
@@ -140,7 +140,7 @@
   command: ansible-galaxy collection install '{{ galaxy_dir }}/namespace3.tar.gz' {{ galaxy_verbosity }}
   register: install_tarball
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
 
 - name: get result of install collection from a tarball - {{ test_name }}
   slurp:
@@ -161,7 +161,7 @@
   register: fail_bad_tar
   failed_when: fail_bad_tar.rc != 1 and "Cannot extract tar entry '../../outside.sh' as it will be placed outside the collection directory" not in fail_bad_tar.stderr
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
 
 - name: get result of failed collection install - {{ test_name }}
   stat:
@@ -177,7 +177,7 @@
   command: ansible-galaxy collection install '{{ test_server }}custom/collections/namespace4-name-1.0.0.tar.gz' {{ galaxy_verbosity }}
   register: install_uri
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
 
 - name: get result of install collection from a URI - {{ test_name }}
   slurp:
@@ -201,7 +201,7 @@
   command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' {{ galaxy_verbosity }}
   register: install_empty_server_list
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
     ANSIBLE_GALAXY_SERVER_LIST: ''
 
 - name: get result of a collection with an empty server list - {{ test_name }}
@@ -230,7 +230,7 @@
   command: ansible-galaxy collection install -r '{{ galaxy_dir }}/ansible_collections/requirements-with-role.yml' -s '{{ test_server }}' -vvv
   register: install_req_collection
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
 
 - name: get result of install collections only with requirements-with-roles.yml - {{ test_name }}
   slurp:
@@ -263,7 +263,7 @@
   command: ansible-galaxy install -r '{{ galaxy_dir }}/ansible_collections/requirements.yaml' -s '{{ test_server }}'
   register: install_req
   environment:
-    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
 
 - name: get result of install collections with ansible-galaxy install - {{ test_name }}
   slurp:
