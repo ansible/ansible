@@ -1,2 +1,2 @@
-bugfixes:
+security_fixes:
     - "**security_issue** - create temporary vault file with strict permissions when editing and prevent race condition (CVE-2020-1740)"
