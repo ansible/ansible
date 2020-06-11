@@ -30,6 +30,7 @@ from ..util import (
     is_subdir,
     paths_to_dirs,
     get_ansible_version,
+    str_to_version,
 )
 
 from ..util_common import (
@@ -692,6 +693,7 @@ class SanityCodeSmellTest(SanityTest):
             self.text = self.config.get('text')  # type: t.Optional[bool]
             self.ignore_self = self.config.get('ignore_self')  # type: bool
             self.intercept = self.config.get('intercept')  # type: bool
+            self.minimum_python_version = self.config.get('minimum_python_version')  # type: t.Optional[str]
 
             self.__all_targets = self.config.get('all_targets')  # type: bool
             self.__no_targets = self.config.get('no_targets')  # type: bool
@@ -705,6 +707,7 @@ class SanityCodeSmellTest(SanityTest):
             self.text = None  # type: t.Optional[bool]
             self.ignore_self = False
             self.intercept = False
+            self.minimum_python_version = None  # type: t.Optional[str]
 
             self.__all_targets = False
             self.__no_targets = True
@@ -782,6 +785,12 @@ class SanityCodeSmellTest(SanityTest):
         :type python_version: str
         :rtype: TestResult
         """
+        if self.minimum_python_version:
+            if str_to_version(python_version) < str_to_version(self.minimum_python_version):
+                display.warning("Skipping sanity test '%s' on unsupported Python %s; requires Python %s or newer." % (
+                    self.name, python_version, self.minimum_python_version))
+                return SanitySkipped(self.name, 'Test requires Python %s or newer' % (self.minimum_python_version, ))
+
         cmd = [find_python(python_version), self.path]
 
         env = ansible_environment(args, color=False)

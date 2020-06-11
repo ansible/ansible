@@ -37,7 +37,7 @@ def assemble_files_to_ship(complete_file_list):
     ignore_files = frozenset((
         # Developer-only tools
         'changelogs/config.yaml',
-        'changelogs/.changes.yaml',
+        'changelogs/changelog.yaml',
         'hacking/README.md',
         'hacking/ansible-profile',
         'hacking/cgroup_perf_recap_graph.py',
