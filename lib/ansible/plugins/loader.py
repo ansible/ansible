@@ -308,7 +308,7 @@ class PluginLoader:
 
         if directory is not None:
             if with_subdir:
-                directory = os.path.join(directory, self.subdir)
+                directory = to_text(os.path.join(directory, self.subdir), errors='surrogate_or_strict')
             if directory not in self._extra_dirs:
                 # append the directory and invalidate the path cache
                 self._extra_dirs.append(directory)
