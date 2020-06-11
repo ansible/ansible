@@ -5,6 +5,7 @@
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.tacp_ansible import tacp_utils
+from ansible.module_utils.tacp_ansible.tacp_exceptions import UuidNotFoundException  # noqa
 
 
 import tacp
@@ -126,7 +127,7 @@ def run_module():
                      "datacenter": tacp_utils.DatacenterResource,
                      "firewall_profile": tacp_utils.FirewallProfileResource,
                      "instance": tacp_utils.ApplicationResource,
-                     "marketplace_template": tacp_utils.MarketplaceTemplateResource,
+                     "marketplace_template": tacp_utils.MarketplaceTemplateResource,  # noqa
                      "migration_zone": tacp_utils.MigrationZoneResource,
                      "site": tacp_utils.SiteResource,
                      "storage_pool": tacp_utils.StoragePoolResource,
@@ -142,28 +143,40 @@ def run_module():
     items = [item.to_dict() for item in resource.filter()]
 
     if module.params['resource'] == 'migration_zone':
-        application_resource = tacp_utils.ApplicationResource(
-            api_client)
-        category_resource = tacp_utils.CategoryResource(
-            api_client)
-        datacenter_resource = tacp_utils.DatacenterResource(
-            api_client)
+        application_resource = tacp_utils.ApplicationResource(api_client)
+        category_resource = tacp_utils.CategoryResource(api_client)
+        datacenter_resource = tacp_utils.DatacenterResource(api_client)
         for item in items:
             if 'applications' in item:
+                uuids = [application['uuid'] for application in item['applications']]  # noqa
+                application_list = [application.to_dict() for application in
+                                    application_resource.filter(uuid=('=in=', *uuids))]  # noqa
                 for application in item['applications']:
-                    application['name'] = application_resource.get_by_uuid(
-                        application['uuid']).to_dict()['name']
+                    for app in application_list:
+                        if application['uuid'] == app['uuid']:
+                            application['name'] = app['name']
+                            break
 
             if 'allocations' in item:
                 if 'categories' in item['allocations']:
+                    uuids = [category['uuid'] for category in item['categories']]  # noqa
+                    category_list = [category.to_dict() for category in
+                                    category_resource.filter(uuid=('=in=', *uuids))]  # noqa
                     for category in item['allocations']['categories']:
-                        category['name'] = category_resource.get_by_uuid(
-                            category['category_uuid']).to_dict()['name']
+                        for cat in category_list:
+                            if category['uuid'] == cat['uuid']:
+                                category['name'] = cat['name']
+                                break
 
                 if 'datacenters' in item['allocations']:
+                    uuids = [datacenter['uuid'] for datacenter in item['datacenters']]  # noqa
+                    datacenter_list = [datacenter.to_dict() for datacenter in
+                                    datacenter_resource.filter(uuid=('=in=', *uuids))]  # noqa
                     for datacenter in item['allocations']['datacenters']:
-                        datacenter['name'] = datacenter_resource.get_by_uuid(
-                            datacenter['datacenter_uuid']).to_dict()['name']
+                        for dc in datacenter_list:
+                            if datacenter['uuid'] == dc['uuid']:
+                                datacenter['name'] = dc['name']
+                                break
 
     elif module.params['resource'] == 'datacenter':
         vnet_resource = tacp_utils.VnetResource(api_client)
@@ -171,19 +184,29 @@ def run_module():
         tag_resource = tacp_utils.TagResource(api_client)
         for item in items:
             if 'networks' in item:
+                # Networks is just a list of UUIDs, it is not clear whether
+                # the network is a VNET or a VLAN - so we will get a list
+                # of all VLAN and VNET networks and find the corresponding
+                #  name for the network UUID this way
+                uuids = [network['uuid'] for network in item['networks']]  # noqa
+                network_list = [vlan.to_dict() for vlan in
+                                    vlan_resource.filter(uuid=('=in=', *uuids))]  # noqa
+                network_list.extend([vnet.to_dict() for vnet in
+                                    vnet_resource.filter(uuid=('=in=', *uuids))])  # noqa
                 for network in item['networks']:
-                    try:
-                        network['name'] = vnet_resource.get_by_uuid(
-                            network['uuid']).to_dict()['name']
-                        network['network_type'] = 'vnet'
-                    except Exception:
-                        network['name'] = vlan_resource.get_by_uuid(
-                            network['uuid']).to_dict()['name']
-                        network['network_type'] = 'vlan'
+                    for net in network_list:
+                        if network['uuid'] == net['uuid']:
+                            network['name'] = net['name']
+                            break
             if 'tags' in item:
+                uuids = [tag['uuid'] for tag in item['tags']]
+                tag_list = [tag.to_dict() for tag in
+                                    tag_resource.filter(uuid=('=in=', *uuids))]  # noqa
                 for tag in item['tags']:
-                    tag['name'] = tag_resource.get_by_uuid(
-                        tag['uuid']).to_dict()['name']
+                    for tag_item in tag_list:
+                        if tag['uuid'] == tag_item['uuid']:
+                            tag['name'] = tag_item['name']
+                            break
 
     result[module.params['resource']] = items
 

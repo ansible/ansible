@@ -6,6 +6,7 @@
 import json
 import re
 import tacp
+import sys
 
 from functools import wraps
 
@@ -115,14 +116,14 @@ class Resource(object):
                                     'Allowed: {}'.format(op, allowed))
 
                 if op in ('=in=', '=out='):
-                    value = ','.join(map(str, value))
-                    value = '({})'.format(value)
+                    if len(value) > 0:
+                        value = ','.join(map(str, value))
+                        value = '({})'.format(value)
                 else:
                     value = value[0]
             else:
                 op = '=='
                 value = v
-
             filters.append('{}{}{}'.format(k, op, value))
 
         return ';'.join(filters)
@@ -166,7 +167,10 @@ class ApplicationResource(Resource):
     filter_method = "get_applications_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_application_using_get(uuid)
+        resource = self.api.get_application_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
     @wait_to_complete
     def create(self, body):
@@ -202,7 +206,10 @@ class VlanResource(Resource):
     filter_method = "get_vlans_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_vlan_using_get(uuid)
+        resource = self.api.get_vlan_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
     @wait_to_complete
     def create(self, body):
@@ -219,7 +226,10 @@ class VnetResource(Resource):
     filter_method = "get_vnets_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_vnet_using_get(uuid)
+        resource = self.api.get_vnet_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
     @wait_to_complete
     def create(self, body):
@@ -237,7 +247,10 @@ class StoragePoolResource(Resource):
     filter_method = "get_flash_pools_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_flash_pool_using_get(uuid)
+        resource = self.api.get_flash_pool_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
 
 class DatacenterResource(Resource):
@@ -247,7 +260,10 @@ class DatacenterResource(Resource):
     filter_method = "get_datacenters_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_datacenter_using_get(uuid)
+        resource = self.api.get_datacenter_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
 
 class UserResource(Resource):
@@ -257,7 +273,10 @@ class UserResource(Resource):
     filter_method = "get_users_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_user_using_get(uuid)
+        resource = self.api.get_user_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
 
 class SiteResource(Resource):
@@ -267,7 +286,10 @@ class SiteResource(Resource):
     filter_method = "get_locations_for_organization_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_location_information_using_get(uuid)
+        resource = self.api.get_location_information_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
 
 class TemplateResource(Resource):
@@ -277,7 +299,10 @@ class TemplateResource(Resource):
     filter_method = "get_templates_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_template_using_get(uuid)
+        resource = self.api.get_template_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
 
 class TagResource(Resource):
@@ -287,7 +312,10 @@ class TagResource(Resource):
     filter_method = "get_tags_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_tag_using_get(uuid)
+        resource = self.api.get_tag_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
 
 class MigrationZoneResource(Resource):
@@ -297,7 +325,10 @@ class MigrationZoneResource(Resource):
     filter_method = "get_migration_zones_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_migration_zone_using_get(uuid)
+        resource = self.api.get_migration_zone_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
 
 class MarketplaceTemplateResource(Resource):
@@ -307,7 +338,10 @@ class MarketplaceTemplateResource(Resource):
     filter_method = "get_marketplace_templates_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_marketplace_template_using_get(uuid)
+        resource = self.api.get_marketplace_template_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
 
 class ApplicationGroupResource(Resource):
@@ -317,7 +351,10 @@ class ApplicationGroupResource(Resource):
     filter_method = "get_application_group_list_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_application_group_information_using_get(uuid)
+        resource = self.api.get_application_group_information_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
 
 class CategoryResource(Resource):
@@ -327,7 +364,10 @@ class CategoryResource(Resource):
     filter_method = "get_categories_using_get"
 
     def get_by_uuid(self, uuid):
-        return self.api.get_category_using_get(uuid)
+        resource = self.api.get_category_using_get(uuid)
+        if not resource:
+            raise UuidNotFoundException
+        return resource
 
 
 class FirewallProfileResource(Resource):
