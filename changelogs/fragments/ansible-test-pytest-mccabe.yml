@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test now includes the ``pylint`` plugin ``mccabe`` in optional sanity tests enabled with ``--enable-optional-errors``
