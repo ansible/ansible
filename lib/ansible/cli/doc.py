@@ -235,13 +235,6 @@ class DocCLI(CLI):
                 plugin_docs[plugin] = {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
 
             if do_json:
-                # Some changes to how json docs are formatted
-                for plugin, doc_data in plugin_docs.items():
-                    try:
-                        doc_data['return'] = yaml.safe_load(doc_data['return'])
-                    except Exception:
-                        pass
-
                 jdump(plugin_docs)
 
             else:
@@ -346,6 +339,8 @@ class DocCLI(CLI):
         # TODO: do we really want this?
         # add_collection_to_versions_and_dates(doc, '(unknown)', is_module=(plugin_type == 'module'))
         # remove_current_collection_from_versions_and_dates(doc, collection_name, is_module=(plugin_type == 'module'))
+        # remove_current_collection_from_versions_and_dates(
+        #     returndocs, collection_name, is_module=(plugin_type == 'module'), return_docs=True)
 
         # assign from other sections
         doc['plainexamples'] = plainexamples
@@ -515,7 +510,7 @@ class DocCLI(CLI):
                                                    Dumper=AnsibleDumper).split('\n')]))
 
     @staticmethod
-    def add_fields(text, fields, limit, opt_indent, base_indent=''):
+    def add_fields(text, fields, limit, opt_indent, return_values=False, base_indent=''):
 
         for o in sorted(fields):
             opt = fields[o]
@@ -552,8 +547,9 @@ class DocCLI(CLI):
                     choices = "(Choices: " + ", ".join(to_text(i) for i in opt['choices']) + ")"
                 del opt['choices']
             default = ''
-            if 'default' in opt or not required:
-                default = "[Default: %s" % to_text(opt.pop('default', '(null)')) + "]"
+            if not return_values:
+                if 'default' in opt or not required:
+                    default = "[Default: %s" % to_text(opt.pop('default', '(null)')) + "]"
 
             text.append(textwrap.fill(DocCLI.tty_ify(aliases + choices + default), limit,
                                       initial_indent=opt_indent, subsequent_indent=opt_indent))
@@ -591,7 +587,7 @@ class DocCLI(CLI):
             for subkey, subdata in suboptions:
                 text.append('')
                 text.append("%s%s:\n" % (opt_indent, subkey.upper()))
-                DocCLI.add_fields(text, subdata, limit, opt_indent + '    ', opt_indent)
+                DocCLI.add_fields(text, subdata, limit, opt_indent + '    ', return_values, opt_indent)
             if not suboptions:
                 text.append('')
 
@@ -705,9 +701,6 @@ class DocCLI(CLI):
 
         if doc.get('returndocs', False):
             text.append("RETURN VALUES:")
-            if isinstance(doc['returndocs'], string_types):
-                text.append(doc.pop('returndocs'))
-            else:
-                text.append(yaml.dump(doc.pop('returndocs'), indent=2, default_flow_style=False))
+            DocCLI.add_fields(text, doc.pop('returndocs'), limit, opt_indent, return_values=True)
 
         return "\n".join(text)
