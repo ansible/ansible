@@ -109,15 +109,21 @@ class Resource(object):
 
         for k, v in kws.items():
             if isinstance(v, (list, tuple)):
-                op, value = v
+                op, *value = v
                 if op not in allowed:
                     raise Exception('Invalid operator "{}". '
                                     'Allowed: {}'.format(op, allowed))
+
+                if op in ('=in=', '=out='):
+                    value = ','.join(map(str, value))
+                    value = '({})'.format(value)
+                else:
+                    value = value[0]
             else:
                 op = '=='
                 value = v
 
-            filters.append('{}{}"{}"'.format(k, op, value))
+            filters.append('{}{}{}'.format(k, op, value))
 
         return ';'.join(filters)
 
