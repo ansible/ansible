@@ -88,7 +88,7 @@ EXAMPLES = """
   vars:
     params:
       files:
-        - '{{ansible_os_distribution}}.yml'
+        - '{{ansible_distribution}}.yml'
         - '{{ansible_os_family}}.yml'
         - default.yml
       paths:
