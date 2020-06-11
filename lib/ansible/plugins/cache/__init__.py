@@ -138,6 +138,14 @@ class BaseFileCacheModule(BaseCacheModule):
                     raise AnsibleError("error in '%s' cache, configured path (%s) does not have necessary permissions (rwx), disabling plugin" % (
                         self.plugin_name, self._cache_dir))
 
+    def _get_cache_file_name(self, key):
+        prefix = self.get_option('_prefix')
+        if prefix:
+            cachefile = "%s/%s%s" % (self._cache_dir, prefix, key)
+        else:
+            cachefile = "%s/%s" % (self._cache_dir, key)
+        return cachefile
+
     def get(self, key):
         """ This checks the in memory cache first as the fact was not expired at 'gather time'
         and it would be problematic if the key did expire after some long running tasks and
@@ -148,7 +156,7 @@ class BaseFileCacheModule(BaseCacheModule):
             if self.has_expired(key) or key == "":
                 raise KeyError
 
-            cachefile = "%s/%s" % (self._cache_dir, key)
+            cachefile = self._get_cache_file_name(key)
             try:
                 value = self._load(cachefile)
                 self._cache[key] = value
@@ -170,7 +178,7 @@ class BaseFileCacheModule(BaseCacheModule):
 
         self._cache[key] = value
 
-        cachefile = "%s/%s" % (self._cache_dir, key)
+        cachefile = self._get_cache_file_name(key)
         try:
             self._dump(value, cachefile)
         except (OSError, IOError) as e:
@@ -181,7 +189,7 @@ class BaseFileCacheModule(BaseCacheModule):
         if self._timeout == 0:
             return False
 
-        cachefile = "%s/%s" % (self._cache_dir, key)
+        cachefile = self._get_cache_file_name(key)
         try:
             st = os.stat(cachefile)
         except (OSError, IOError) as e:
@@ -206,7 +214,7 @@ class BaseFileCacheModule(BaseCacheModule):
         return keys
 
     def contains(self, key):
-        cachefile = "%s/%s" % (self._cache_dir, key)
+        cachefile = self._get_cache_file_name(key)
 
         if key in self._cache:
             return True
@@ -228,7 +236,7 @@ class BaseFileCacheModule(BaseCacheModule):
         except KeyError:
             pass
         try:
-            os.remove("%s/%s" % (self._cache_dir, key))
+            os.remove(self._get_cache_file_name(key))
         except (OSError, IOError):
             pass  # TODO: only pass on non existing?
 
