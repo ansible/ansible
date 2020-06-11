@@ -1,0 +1,2 @@
+bugfixes:
+  - Update NX-OS cliconf to accomodate MDS (https://github.com/ansible-collections/cisco.nxos/pull/78).
