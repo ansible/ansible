@@ -3,16 +3,33 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import datetime
 import os
 import re
 import sys
 import yaml
 
 from voluptuous import Any, MultipleInvalid, PREVENT_EXTRA
-from voluptuous import Required, Schema
+from voluptuous import Required, Schema, Invalid
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import string_types
+
+
+def isodate(v):
+    """Validate a datetime.date or ISO 8601 date string."""
+    # datetime.date objects come from YAML dates, these are ok
+    if isinstance(v, datetime.date):
+        return v
+    # make sure we have a string
+    msg = 'Expected ISO 8601 date string (YYYY-MM-DD), or YAML date'
+    if not isinstance(v, string_types):
+        raise Invalid(msg)
+    try:
+        datetime.datetime.strptime(v, '%Y-%m-%d').date()
+    except ValueError:
+        raise Invalid(msg)
+    return v
 
 
 def main():
@@ -58,7 +75,7 @@ def main():
 
     deprecation_tombstoning_schema = Any(Schema(
         {
-            Required('removal_date'): Any(*string_types),
+            Required('removal_date'): Any(isodate),
             'warning_text': Any(*string_types),
         },
         extra=PREVENT_EXTRA
