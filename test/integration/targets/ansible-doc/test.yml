@@ -73,3 +73,14 @@
     - assert:
         that:
           - result is failed
+
+    - name: deprecated module with both removed date and version (date should get precedence)
+      command: ansible-doc test_docs_removed_precedence
+      register: result
+
+    - assert:
+        that:
+          - '"DEPRECATED" in result.stdout'
+          - '"Reason: Updated module released with more functionality" in result.stdout'
+          - '"Will be removed in a release after 2022-06-01" in result.stdout'
+          - '"Alternatives: new_module" in result.stdout'
