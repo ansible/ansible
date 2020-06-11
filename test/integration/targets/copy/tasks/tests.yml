@@ -2189,3 +2189,73 @@
        - "stat_remote_dir_src_link_file12_before.stat.gr_name == stat_remote_dir_src_link_file12_after.stat.gr_name"
        - "stat_remote_dir_src_link_file12_before.stat.path == stat_remote_dir_src_link_file12_after.stat.path"
        - "stat_remote_dir_src_link_file12_before.stat.mode == stat_remote_dir_src_link_file12_after.stat.mode"
+
+# Test for issue 69783: copy with remote_src=yes and src='dir/' preserves all permissions
+- block:
+   - name: Create directory structure
+     file:
+        path: "{{ local_temp_dir }}/test69783/{{ item }}"
+        state: directory
+     loop:
+        - "src/dir"
+        - "dest"
+
+   - name: Create source file structure
+     file:
+        path: "{{ local_temp_dir }}/test69783/src/{{ item.name }}"
+        state: touch
+        mode: "{{ item.mode }}"
+     loop:
+        - { name: 'readwrite', mode: '0644' }
+        - { name: 'executable', mode: '0755' }
+        - { name: 'readonly', mode: '0444' }
+        - { name: 'dir/readwrite', mode: '0644' }
+        - { name: 'dir/executable', mode: '0755' }
+        - { name: 'dir/readonly', mode: '0444' }
+
+   - name: Recursive remote copy with preserve
+     copy:
+        src: "{{ local_temp_dir }}/test69783/src/"
+        dest: "{{ local_temp_dir }}/test69783/dest/"
+        remote_src: yes
+        mode: preserve
+
+   - name: Stat dest 'readwrite' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/readwrite"
+     register: dest_readwrite_stat
+
+   - name: Stat dest 'executable' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/executable"
+     register: dest_executable_stat
+
+   - name: Stat dest 'readonly' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/readonly"
+     register: dest_readonly_stat
+
+   - name: Stat dest 'dir/readwrite' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/dir/readwrite"
+     register: dest_dir_readwrite_stat
+
+   - name: Stat dest 'dir/executable' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/dir/executable"
+     register: dest_dir_executable_stat
+
+   - name: Stat dest 'dir/readonly' file
+     stat:
+        path: "{{ local_temp_dir}}/test69783/dest/dir/readonly"
+     register: dest_dir_readonly_stat
+
+   - name: Assert modes are preserved
+     assert:
+       that:
+         - "dest_readwrite_stat.stat.mode == '0644'"
+         - "dest_executable_stat.stat.mode == '0755'"
+         - "dest_readonly_stat.stat.mode == '0444'"
+         - "dest_dir_readwrite_stat.stat.mode == '0644'"
+         - "dest_dir_executable_stat.stat.mode == '0755'"
+         - "dest_dir_readonly_stat.stat.mode == '0444'"
