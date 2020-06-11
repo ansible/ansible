@@ -11,12 +11,13 @@ def main():
     paths = sys.argv[1:] or sys.stdin.read().splitlines()
 
     allowed_extensions = ('.yml', '.yaml')
+    config_path = 'changelogs/config.yaml'
 
-    has_config = False
+    # config must be detected independent of the file list since the file list only contains files under test (changed)
+    has_config = os.path.exists(config_path)
     paths_to_check = []
     for path in paths:
-        if path == 'changelogs/config.yaml':
-            has_config = True
+        if path == config_path:
             continue
 
         if path.startswith('changelogs/fragments/.'):
