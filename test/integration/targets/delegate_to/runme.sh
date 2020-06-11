@@ -69,3 +69,4 @@ ln -s python firstpython
 ln -s python secondpython
 )
 ansible-playbook verify_interpreter.yml -i inventory_interpreters -v "$@"
+ansible-playbook discovery_applied.yml -i inventory -v "$@"
