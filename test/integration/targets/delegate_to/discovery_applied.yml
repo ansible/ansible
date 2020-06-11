@@ -1,7 +1,7 @@
 - hosts: testhost
   gather_facts: no
   tasks:
-  - command: hostname
+  - command: ls
     delegate_to: "{{ item }}"
     with_items:
     - localhost
