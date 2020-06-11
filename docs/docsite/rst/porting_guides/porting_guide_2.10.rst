@@ -57,8 +57,7 @@ Playbook
           dont_show_diff: false
 
 
-.. note::
-    When there is an error templating with ``no_log`` it defaults to ``True`` to be on the safe side, so this might obscure that real the issue is due to this change.
+* The ``no_log`` keyword has been modified to act in a more secure manner, if there is a value assigned and a templating or type conversion error happens, it defaults to ``True`` instead of it' snormal ``False``. This is done to avoid accidental disclosure when a user impoperly sets a template or mispells the boolean values. This might alter the behaviour of playbooks that seemingly 'worked' but were not really processing the option correctly.
 
 
 * A new fact, ``ansible_processor_nproc`` reflects the number of vcpus
