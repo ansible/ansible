@@ -1,0 +1,2 @@
+bugfixes:
+  - match docs for ssh and ensure pipelining is configurable per connection plugin.

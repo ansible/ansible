@@ -200,12 +200,12 @@ DOCUMENTATION = '''
               which is why this feature is disabled by default.
           env:
             - name: ANSIBLE_PIPELINING
-            #- name: ANSIBLE_SSH_PIPELINING
+            - name: ANSIBLE_SSH_PIPELINING
           ini:
             - section: defaults
               key: pipelining
-            #- section: ssh_connection
-            #  key: pipelining
+            - section: ssh_connection
+              key: pipelining
           type: boolean
           vars:
             - name: ansible_pipelining
