@@ -20,6 +20,14 @@ from ansible.module_utils.tacp_ansible.tacp_constants import Action
 from time import sleep
 
 
+def get_configuration(api_key, portal_url="https://manage.cp.lenovo.com"):
+    configuration = tacp.Configuration()
+    configuration.host = portal_url
+    configuration.api_key_prefix['Authorization'] = 'Bearer'
+    configuration.api_key['Authorization'] = api_key
+    return configuration
+
+
 def wait_to_complete(method):
     """ Decorator to be used against methods that perform async operations.
 
