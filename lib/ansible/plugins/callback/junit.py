@@ -86,6 +86,15 @@ from ansible.plugins.callback import CallbackBase
 
 try:
     from junit_xml import TestSuite, TestCase
+
+    # the junit_xml API is changing in version 2.0.0
+    # TestSuite.to_xml_string is being replaced with to_xml_report_string
+    # see: https://github.com/kyrus/python-junit-xml/blob/63db26da353790500642fd02cae1543eb41aab8b/junit_xml/__init__.py#L249-L261
+    try:
+        from junit_xml import to_xml_report_string
+    except ImportError:
+        to_xml_report_string = TestSuite.to_xml_string
+
     HAS_JUNIT_XML = True
 except ImportError:
     HAS_JUNIT_XML = False
@@ -288,7 +297,7 @@ class CallbackModule(CallbackBase):
                 test_cases.append(self._build_test_case(task_data, host_data))
 
         test_suite = TestSuite(self._playbook_name, test_cases)
-        report = TestSuite.to_xml_string([test_suite])
+        report = to_xml_report_string([test_suite])
 
         output_file = os.path.join(self._output_dir, '%s-%s.xml' % (self._playbook_name, time.time()))
 
