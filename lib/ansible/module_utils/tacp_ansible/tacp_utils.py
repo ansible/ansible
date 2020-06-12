@@ -486,3 +486,18 @@ def convert_memory_abbreviation_to_bytes(value):
         amount_in_bytes = amount * 1024 * 1024 * 1024 * 1024
 
     return amount_in_bytes
+
+    def fill_in_missing_names_by_uuid(item, api_resource, key_name):
+        if key_name == "applications":
+            uuid_name = 'uuid'
+        elif key_name == "categories":
+            uuid_name = 'category_uuid'
+        else:
+            uuid_name = key_name[:-1] + "_uuid"
+        uuids = [resource[uuid_name] for resource in item[key_name]]  # noqa
+        resource_list = {resource.uuid: resource.name for resource in  # noqa
+                            api_resource.filter(uuid=('=in=', *uuids))}  # noqa
+        for resource in item[key_name]:
+            resource['name'] = resource_list[resource[uuid_name]]
+
+        return item

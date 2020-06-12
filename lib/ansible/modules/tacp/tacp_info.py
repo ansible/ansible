@@ -143,37 +143,22 @@ def run_module():
 
     items = [item.to_dict() for item in resource.filter()]
 
-    def fill_in_missing_names_by_uuid(item, api_resource, key_name):
-        if key_name == "applications":
-            uuid_name = 'uuid'
-        elif key_name == "categories":
-            uuid_name = 'category_uuid'
-        else:
-            uuid_name = key_name[:-1] + "_uuid"
-        uuids = [resource[uuid_name] for resource in item[key_name]]  # noqa
-        resource_list = {resource.uuid: resource.name for resource in  # noqa
-                            api_resource.filter(uuid=('=in=', *uuids))}  # noqa
-        for resource in item[key_name]:
-            resource['name'] = resource_list[resource[uuid_name]]
-
-        return item
-
     if module.params['resource'] == 'migration_zone':
         application_resource = tacp_utils.ApplicationResource(api_client)
         category_resource = tacp_utils.CategoryResource(api_client)
         datacenter_resource = tacp_utils.DatacenterResource(api_client)
         for item in items:
             if item.get('applications'):
-                item = fill_in_missing_names_by_uuid(
+                item = tacp_utils.fill_in_missing_names_by_uuid(
                     item, application_resource, 'applications')
 
             if item.get('allocations'):
                 if item['allocations'].get('categories'):
-                    item['allocations'] = fill_in_missing_names_by_uuid(
+                    item['allocations'] = tacp_utils.fill_in_missing_names_by_uuid(  # noqa
                         item['allocations'], category_resource, 'categories')
 
                 if item['allocations'].get('datacenters'):
-                    item['allocations'] = fill_in_missing_names_by_uuid(
+                    item['allocations'] = tacp_utils.fill_in_missing_names_by_uuid(  # noqa
                         item['allocations'], datacenter_resource, 'datacenters')  # noqa
 
     elif module.params['resource'] == 'datacenter':
@@ -186,7 +171,7 @@ def run_module():
                 # the network is a VNET or a VLAN - so we will get a list
                 # of all VLAN and VNET networks and find the corresponding
                 # name for the network UUID this way, not using the
-                # fill_in_missing_names_by_uuid function
+                # ill_in_missing_names_by_uuid function
                 uuids = [network['uuid'] for network in item['networks']]  # noqa
                 network_list = {vlan.uuid: vlan.name for vlan in
                                     vlan_resource.filter(uuid=('=in=', *uuids))}  # noqa
@@ -195,7 +180,7 @@ def run_module():
                 for network in item['networks']:
                     network['name'] = network_list[network['uuid']]
             if item.get('tags'):
-                item['tags'] = fill_in_missing_names_by_uuid(
+                item['tags'] = tacp_utils.fill_in_missing_names_by_uuid(
                     item['tags'], tag_resource, 'tags')
 
     result[module.params['resource']] = items
