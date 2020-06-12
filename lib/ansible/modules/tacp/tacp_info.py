@@ -143,32 +143,38 @@ def run_module():
 
     items = [item.to_dict() for item in resource.filter()]
 
+    def fill_in_missing_names_by_uuid(item, api_resource, key_name):
+        if key_name == "applications":
+            uuid_name = 'uuid'
+        elif key_name == "categories":
+            uuid_name = 'category_uuid'
+        else:
+            uuid_name = key_name[:-1] + "_uuid"
+        uuids = [resource[uuid_name] for resource in item[key_name]]  # noqa
+        resource_list = {resource.uuid: resource.name for resource in  # noqa
+                            api_resource.filter(uuid=('=in=', *uuids))}  # noqa
+        for resource in item[key_name]:
+            resource['name'] = resource_list[resource[uuid_name]]
+
+        return item
+
     if module.params['resource'] == 'migration_zone':
         application_resource = tacp_utils.ApplicationResource(api_client)
         category_resource = tacp_utils.CategoryResource(api_client)
         datacenter_resource = tacp_utils.DatacenterResource(api_client)
         for item in items:
             if item.get('applications'):
-                uuids = [application['uuid'] for application in item['applications']]  # noqa
-                application_list = {application.uuid: application.name for application in  # noqa
-                                    application_resource.filter(uuid=('=in=', *uuids))}  # noqa
-                for application in item['applications']:
-                    application['name'] = application_list[application['uuid']]
+                item = fill_in_missing_names_by_uuid(
+                    item, application_resource, 'applications')
 
             if item.get('allocations'):
                 if item['allocations'].get('categories'):
-                    uuids = [category['uuid'] for category in item['categories']]  # noqa
-                    category_list = {category.uuid: category.name for category in  # noqa
-                                    category_resource.filter(uuid=('=in=', *uuids))}  # noqa
-                    for category in item['allocations']['categories']:
-                        category['name'] = category_list[category['uuid']]
+                    item['allocations'] = fill_in_missing_names_by_uuid(
+                        item['allocations'], category_resource, 'categories')
 
                 if item['allocations'].get('datacenters'):
-                    uuids = [datacenter['uuid'] for datacenter in item['datacenters']]  # noqa
-                    datacenter_list = {datacenter.uuid: datacenter.name for datacenter in  # noqa
-                                    datacenter_resource.filter(uuid=('=in=', *uuids))}  # noqa
-                    for datacenter in item['allocations']['datacenters']:
-                        datacenter['name'] = datacenter_list[datacenter['uuid']]  # noqa
+                    item['allocations'] = fill_in_missing_names_by_uuid(
+                        item['allocations'], datacenter_resource, 'datacenters')  # noqa
 
     elif module.params['resource'] == 'datacenter':
         vnet_resource = tacp_utils.VnetResource(api_client)
@@ -179,7 +185,8 @@ def run_module():
                 # Networks is just a list of UUIDs, it is not clear whether
                 # the network is a VNET or a VLAN - so we will get a list
                 # of all VLAN and VNET networks and find the corresponding
-                #  name for the network UUID this way
+                # name for the network UUID this way, not using the
+                # fill_in_missing_names_by_uuid function
                 uuids = [network['uuid'] for network in item['networks']]  # noqa
                 network_list = {vlan.uuid: vlan.name for vlan in
                                     vlan_resource.filter(uuid=('=in=', *uuids))}  # noqa
@@ -188,11 +195,8 @@ def run_module():
                 for network in item['networks']:
                     network['name'] = network_list[network['uuid']]
             if item.get('tags'):
-                uuids = [tag['uuid'] for tag in item['tags']]
-                tag_list = {tag.uuid: tag.name for tag in
-                                    tag_resource.filter(uuid=('=in=', *uuids))}  # noqa
-                for tag in item['tags']:
-                    tag['name'] = tag_list[tag['uuid']]
+                item['tags'] = fill_in_missing_names_by_uuid(
+                    item['tags'], tag_resource, 'tags')
 
     result[module.params['resource']] = items
 
