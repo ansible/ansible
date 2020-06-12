@@ -1,5 +1,4 @@
 {
-    "all_targets": true,
     "prefixes": [
         "lib/ansible/config/ansible_builtin_runtime.yml",
         "meta/routing.yml",

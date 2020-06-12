@@ -16,57 +16,35 @@ from voluptuous.humanize import humanize_error
 from ansible.module_utils.six import string_types
 
 
-def isodate(v):
+def isodate(value):
     """Validate a datetime.date or ISO 8601 date string."""
     # datetime.date objects come from YAML dates, these are ok
-    if isinstance(v, datetime.date):
-        return v
+    if isinstance(value, datetime.date):
+        return value
     # make sure we have a string
     msg = 'Expected ISO 8601 date string (YYYY-MM-DD), or YAML date'
-    if not isinstance(v, string_types):
+    if not isinstance(value, string_types):
         raise Invalid(msg)
     try:
-        datetime.datetime.strptime(v, '%Y-%m-%d').date()
+        datetime.datetime.strptime(value, '%Y-%m-%d').date()
     except ValueError:
         raise Invalid(msg)
-    return v
+    return value
 
 
-def main():
-    """Validate runtime"""
-    ansible_builtin_runtime = 'lib/ansible/config/ansible_builtin_runtime.yml'
-    collection_legacy_file = 'meta/routing.yml'
-    collection_runtime_file = 'meta/runtime.yml'
-    path = ''
-
-    # Check if the correct routing files can be found
-
-    if os.path.isfile(ansible_builtin_runtime):
-        # We are in side an ansible-base checkout, so validate ansible_builtin_runtime
-        path = ansible_builtin_runtime
-    elif os.path.isfile(collection_runtime_file):
-        # We are in a collection, so validate meta/routing.yml
-        path = collection_runtime_file
-
-    if os.path.isfile(collection_legacy_file):
-        # Collection contains old name, renamed in #67684
-        print('%s:%d:%d: %s' % (collection_legacy_file, 0, 0, ("Should be called '%s'" % collection_runtime_file)))
-
-    if not path:
-        # In a collection, though no meta/routing
-        sys.exit(0)
-
+def validate_metadata_file(path):
+    """Validate explicit runtime metadata file"""
     try:
         with open(path, 'r') as f_path:
             routing = yaml.safe_load(f_path)
     except yaml.error.MarkedYAMLError as ex:
         print('%s:%d:%d: YAML load failed: %s' % (path, ex.context_mark.line +
                                                   1, ex.context_mark.column + 1, re.sub(r'\s+', ' ', str(ex))))
-        sys.exit()
+        return
     except Exception as ex:  # pylint: disable=broad-except
         print('%s:%d:%d: YAML load failed: %s' %
               (path, 0, 0, re.sub(r'\s+', ' ', str(ex))))
-        sys.exit()
+        return
 
     # Updates to schema MUST also be reflected in the documentation
     # ~https://docs.ansible.com/ansible/devel/dev_guide/developing_collections.html
@@ -151,6 +129,21 @@ def main():
         for error in ex.errors:
             # No way to get line/column numbers
             print('%s:%d:%d: %s' % (path, 0, 0, humanize_error(routing, error)))
+
+
+def main():
+    """Validate runtime metadata"""
+    paths = sys.argv[1:] or sys.stdin.read().splitlines()
+
+    collection_legacy_file = 'meta/routing.yml'
+    collection_runtime_file = 'meta/runtime.yml'
+
+    for path in paths:
+        if path == collection_legacy_file:
+            print('%s:%d:%d: %s' % (path, 0, 0, ("Should be called '%s'" % collection_runtime_file)))
+            continue
+
+        validate_metadata_file(path)
 
 
 if __name__ == '__main__':
