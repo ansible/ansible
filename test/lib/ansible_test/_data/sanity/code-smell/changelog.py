@@ -38,7 +38,7 @@ def main():
         return
 
     cmd = [sys.executable, '-m', 'antsibull_changelog', 'lint'] + paths_to_check
-    subprocess.check_call(cmd)
+    subprocess.call(cmd)  # ignore the return code, rely on the output instead
 
 
 if __name__ == '__main__':
