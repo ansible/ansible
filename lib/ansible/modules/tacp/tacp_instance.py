@@ -195,6 +195,65 @@ def run_module():
         # sys.stdout.write(str(instance_boot_order))
         return instance_boot_order
 
+    def get_boot_order(module, template_dict):
+
+        # Get boot devices uuids and order from the template
+        template_boot_order = template_dict['boot_order']
+
+        # sys.stdout.write(str(boot_order_dict))
+        template_boot_device_names = [boot_device['name'] for
+                                      boot_device in template_boot_order]
+
+        # Make sure all disks and nics have a boot_order assigned
+        if not all([bool(device.get('boot_order')) for device in
+                    module.params['disks'] + module.params['nics']]):
+            fail_with_reason(
+                "All disks and NICs must have a boot_order specified, starting with 1.")  # noqa
+
+        playbook_devices = [dev for dev in module.params['disks']
+                            + module.params['nics']]
+        disks_and_nics_names = [dev['name'] for dev in playbook_devices]
+
+        # Make sure that all template boot devices are present
+        #  in disks_and_nics_names
+        if not all([template_device in disks_and_nics_names for
+                    template_device in template_boot_device_names]):
+            fail_with_reason("All devices for template {} must be present in disks and nics fields: [{}]".format(  # noqa
+                template_dict['name'], ', '.join(template_boot_device_names)))
+
+        # sys.stdout.write(str(disks_and_nics_names))
+
+        # initialize the boot order with blank entries times the
+        # number of disks + nics
+        instance_boot_order = [None] * len(disks_and_nics_names)
+
+        # Now set the boot device into the correct order by the index provided
+        for boot_device in playbook_devices:
+            if boot_device['name'] in template_boot_device_names:
+                order = boot_device['boot_order']
+                boot_device_dict = [device for device
+                                    in template_boot_order
+                                    if boot_device['name'] == device['name']][0]  # noqa
+                disk_uuid = boot_device_dict['disk_uuid']
+                name = boot_device_dict['name']
+                vnic_uuid = boot_device_dict['vnic_uuid']
+            else:
+                if boot_device in [disk['name'] for disk in module.params['disks']]:  # noqa
+                    disk_uuid = str(uuid4())
+                    vnic_uuid = None
+                else:
+                    disk_uuid = None
+                    vnic_uuid = None #str(uuid4())
+                name = boot_device['name']
+                order = boot_device['boot_order']
+            payload = tacp.ApiBootOrderPayload(disk_uuid=disk_uuid,
+                                               name=name,
+                                               order=order,
+                                               vnic_uuid=vnic_uuid)
+            instance_boot_order[order - 1] = payload
+        # sys.stdout.write(str(instance_boot_order))
+        return instance_boot_order
+
     def generate_instance_params(module):
         # VM does not exist yet, so we must create it
         instance_params = {}
@@ -210,55 +269,61 @@ def run_module():
                 fail_with_reason(reason)
             instance_params['{}_uuid'.format(component)] = component_uuid
 
+        template_resource = tacp_utils.TemplateResource(api_client)
+
         # Check if template exists, it must in order to continue
-        template_uuid = tacp_utils.get_component_fields_by_name(
-            module.params['template'], 'template', api_client)
+        template_results = template_resource.filter(
+            name=("==", module.params['template']))
+
+        # There should only be one template returned if it exists
+        template_dict = template_results[0].to_dict()
+
+        template_uuid = template_dict['uuid']
+
         if template_uuid:
             instance_params['template_uuid'] = template_uuid
-            boot_order = tacp_utils.get_component_fields_by_name(
-                module.params['template'], 'template', api_client, fields=['name', 'uuid', 'bootOrder'])
+            boot_order = get_boot_order(module, template_dict)
         else:
             # Template does not exist - must fail the task
-            reason = "Template %s does not exist, cannot continue." % module.params[
+            reason = "Template %s does not exist, cannot continue." % module.params[  # noqa
                 'template']
             fail_with_reason(reason)
 
         network_payloads = []
         vnic_payloads = []
-        for i, nic in enumerate(module.params['nics']):
-            network_uuid = tacp_utils.get_component_fields_by_name(
-                nic['network'], nic['type'].lower(), api_client)
+        vlan_resource = tacp_utils.VlanResource(api_client)
+        vnet_resource = tacp_utils.VnetResource(api_client)
+        for nic in module.params['nics']:
+            if nic['type'].lower() == 'vlan':
+                network_uuid = vlan_resource.filter(
+                    name=("==", nic['network']))[0].uuid
+            else:
+                network_uuid = vnet_resource.filter(
+                    name=("==", nic['network']))[0].uuid
 
             mac_address = nic.get('mac_address')
             automatic_mac_address = not bool(mac_address)
+            name = nic['name']
+            vnic_uuid = [device.vnic_uuid for device in boot_order if
+                         (device.vnic_uuid and
+                          device.name == name)][0]
 
-            firewall_override_uuid = None
-            if 'firewall_override' in nic:
-                firewall_override_uuid = tacp_utils.get_component_fields_by_name(
-                    nic['firewall_override'], 'firewall_override', api_client)
-
-            if i == 0:
-                for boot_order_item in boot_order:
-                    if boot_order_item.vnic_uuid:
-                        vnic_uuid = boot_order_item.vnic_uuid
-                        vnic_name = boot_order_item.name
-
-            else:
-                vnic_uuid = str(uuid4())
-                vnic_boot_order = len(boot_order) + i
-
+            if vnic_uuid not in [device['vnic_uuid'] for device
+                                 in template_dict['boot_order']]:
+                vnic_boot_order = [device.order for device in boot_order if
+                                   (device.vnic_uuid and
+                                    device.name == name)][0]
                 vnic_payload = tacp.ApiAddVnicPayload(
                     automatic_mac_address=automatic_mac_address,
-                    name=vnic_name,
-                    firewall_override_uuid=firewall_override_uuid,
+                    name=name,
                     network_uuid=network_uuid,
                     boot_order=vnic_boot_order,
                     mac_address=mac_address
                 )
                 vnic_payloads.append(vnic_payload)
 
-            network_payload = tacp.ApiCreateOrEditApplicationNetworkOptionsPayload(
-                name=vnic_name,
+            network_payload = tacp.ApiCreateOrEditApplicationNetworkOptionsPayload(  # noqa
+                name=name,
                 automatic_mac_assignment=automatic_mac_address,
                 firewall_override_uuid=firewall_override_uuid,
                 network_uuid=network_uuid,
@@ -271,11 +336,11 @@ def run_module():
         instance_params['networks'] = network_payloads
         instance_params['vnics'] = vnic_payloads
         instance_params['vcpus'] = module.params['vcpu_cores']
-        instance_params['memory'] = tacp_utils.convert_memory_abbreviation_to_bytes(
+        instance_params['memory'] = tacp_utils.convert_memory_abbreviation_to_bytes(  # noqa
             module.params['memory'])
         instance_params['vm_mode'] = module.params['vm_mode'].capitalize()
         instance_params['vtx_enabled'] = module.params['vtx_enabled']
-        instance_params['auto_recovery_enabled'] = module.params['auto_recovery_enabled']
+        instance_params['auto_recovery_enabled'] = module.params['auto_recovery_enabled']  # noqa
         instance_params['description'] = module.params['description']
 
         if module.params['application_group']:
@@ -290,6 +355,7 @@ def run_module():
 
             instance_params['application_group_uuid'] = uuid
 
+        sys.stdout.write(str(instance_params))
         return instance_params
 
     def create_instance(instance_params, api_client):
@@ -307,7 +373,7 @@ def run_module():
             networks=instance_params['networks'],
             vnics=instance_params['vnics'],
             boot_order=instance_params['boot_order'],
-            hardware_assisted_virtualization_enabled=instance_params['vtx_enabled'],
+            hardware_assisted_virtualization_enabled=instance_params['vtx_enabled'],  # noqa
             enable_automatic_recovery=instance_params['auto_recovery_enabled'],
             description=instance_params['description'],
             application_group_uuid=instance_params.get(
@@ -318,6 +384,9 @@ def run_module():
             result['api_request_body'] = str(body)
 
         response = application_resource.create(body)
+
+        # if more disks than in the template, add them to the new instance,
+        # and modify boot order after instance creation
 
         result['ansible_module_results'] = application_resource.get_by_uuid(
             response.object_uuid
@@ -358,7 +427,7 @@ def run_module():
         (State.PAUSED, Action.SHUTDOWN): [Action.RESUMED, Action.SHUTDOWN],
         (State.PAUSED, Action.STOPPED): [Action.STOPPED],
         (State.PAUSED, Action.RESTARTED): [Action.RESUMED, Action.RESTARTED],
-        (State.PAUSED, Action.FORCE_RESTARTED): [Action.RESUMED, Action.FORCE_RESTARTED],
+        (State.PAUSED, Action.FORCE_RESTARTED): [Action.RESUMED, Action.FORCE_RESTARTED],  # noqa
         (State.PAUSED, Action.PAUSED): [],
         (State.PAUSED, Action.ABSENT): [Action.ABSENT]
     }

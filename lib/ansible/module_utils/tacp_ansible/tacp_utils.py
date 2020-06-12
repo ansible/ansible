@@ -8,6 +8,11 @@ import re
 import tacp
 import sys
 
+try:
+    from urllib.parse import quote
+except ImportError:
+    from urllib import quote
+
 from functools import wraps
 
 from tacp.rest import ApiException
@@ -130,8 +135,8 @@ class Resource(object):
                     value = value[0]
             else:
                 op = '=='
-                value = v
-            filters.append('{}{}{}'.format(k, op, value))
+                value = quote(v)
+            filters.append('{}{}"{}"'.format(k, op, value))
 
         return ';'.join(filters)
 
