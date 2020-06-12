@@ -37,7 +37,7 @@ def _add_ansible_error_code(exception, error_code):
 
 def isodate(v, error_code=None):
     try:
-        parse_isodate(v)
+        parse_isodate(v, allow_date=True)
     except ValueError as e:
         raise _add_ansible_error_code(Invalid(str(e)), error_code or 'ansible-invalid-date')
     return v
