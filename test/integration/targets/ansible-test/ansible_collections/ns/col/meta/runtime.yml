@@ -1,0 +1,4 @@
+plugin_routing:
+  modules:
+    hi:
+      redirect: hello
