@@ -75,13 +75,12 @@ message:
     returned: always
 '''
 
-
-def run_module():
-    # define available arguments/parameters a user can pass to the module
-    module_args = {
-        "api_key": {"type": 'str', "required": True},
-        "resource": {"type": 'str', "required": True,
-                     "choices": [
+module_args = {
+    "api_key": {"type": 'str', "required": True},
+    "portal_url": {"type": 'str', "required": False,
+                   "default": "https://manage.cp.lenovo.com"},
+    "resource": {"type": 'str', "required": True,
+                 "choices": [
                          "application",
                          "application_group",
                          "category",
@@ -97,7 +96,28 @@ def run_module():
                          "user",
                          "vlan",
                          "vnet"]}
-    }
+}
+
+resource_dict = {"application": tacp_utils.ApplicationResource,
+                 "application_group": tacp_utils.ApplicationGroupResource,
+                 "category": tacp_utils.CategoryResource,
+                 "datacenter": tacp_utils.DatacenterResource,
+                 "firewall_profile": tacp_utils.FirewallProfileResource,
+                 "instance": tacp_utils.ApplicationResource,
+                 "marketplace_template": tacp_utils.MarketplaceTemplateResource,  # noqa
+                 "migration_zone": tacp_utils.MigrationZoneResource,
+                 "site": tacp_utils.SiteResource,
+                 "storage_pool": tacp_utils.StoragePoolResource,
+                 "tag": tacp_utils.TagResource,
+                 "template": tacp_utils.TemplateResource,
+                 "user": tacp_utils.UserResource,
+                 "vlan": tacp_utils.VlanResource,
+                 "vnet": tacp_utils.VnetResource
+                }
+
+
+def run_module():
+    # define available arguments/parameters a user can pass to the module
 
     result = dict(
         changed=False,
@@ -115,28 +135,9 @@ def run_module():
     result['args'] = module.params
 
     # Define configuration
-    configuration = tacp.Configuration()
-    configuration.host = "https://manage.cp.lenovo.com"
-    configuration.api_key_prefix['Authorization'] = 'Bearer'
-    configuration.api_key['Authorization'] = module.params['api_key']
+    configuration = tacp_utils.get_configuration(module.params['api_key'],
+                                                 module.params['portal_url'])
     api_client = tacp.ApiClient(configuration)
-
-    resource_dict = {"application": tacp_utils.ApplicationResource,
-                     "application_group": tacp_utils.ApplicationGroupResource,
-                     "category": tacp_utils.CategoryResource,
-                     "datacenter": tacp_utils.DatacenterResource,
-                     "firewall_profile": tacp_utils.FirewallProfileResource,
-                     "instance": tacp_utils.ApplicationResource,
-                     "marketplace_template": tacp_utils.MarketplaceTemplateResource,  # noqa
-                     "migration_zone": tacp_utils.MigrationZoneResource,
-                     "site": tacp_utils.SiteResource,
-                     "storage_pool": tacp_utils.StoragePoolResource,
-                     "tag": tacp_utils.TagResource,
-                     "template": tacp_utils.TemplateResource,
-                     "user": tacp_utils.UserResource,
-                     "vlan": tacp_utils.VlanResource,
-                     "vnet": tacp_utils.VnetResource
-                     }
 
     resource = resource_dict[module.params['resource']](api_client)
 

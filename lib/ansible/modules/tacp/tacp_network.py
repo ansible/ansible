@@ -81,6 +81,8 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         api_key=dict(type='str', required=True),
+        portal_url=dict(type='str', required=False,
+                        default="https://manage.cp.lenovo.com"),
         name=dict(type='str', required=True),
         state=dict(type='str', default='present',
                    choices=['present', 'absent']),
@@ -416,10 +418,8 @@ def run_module():
     result['args'] = module.params
 
     # Define configuration
-    configuration = tacp.Configuration()
-    configuration.host = "https://manage.cp.lenovo.com"
-    configuration.api_key_prefix['Authorization'] = 'Bearer'
-    configuration.api_key['Authorization'] = module.params['api_key']
+    configuration = tacp_utils.get_configuration(module.params['api_key'],
+                                                 module.params['portal_url'])
     api_client = tacp.ApiClient(configuration)
 
     if module.params['network_type'].upper() == 'VLAN':
