@@ -151,7 +151,15 @@ class TestResult:
             ),
         ]
 
-        report = self.junit.TestSuite.to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')
+        # the junit_xml API is changing in version 2.0.0
+        # TestSuite.to_xml_string is being replaced with to_xml_report_string
+        # see: https://github.com/kyrus/python-junit-xml/blob/63db26da353790500642fd02cae1543eb41aab8b/junit_xml/__init__.py#L249-L261
+        try:
+            to_xml_string = self.junit.to_xml_report_string
+        except AttributeError:
+            to_xml_string = self.junit.TestSuite.to_xml_string
+
+        report = to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')
 
         if args.explain:
             return
