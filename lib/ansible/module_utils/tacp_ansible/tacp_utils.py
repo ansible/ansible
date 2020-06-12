@@ -169,7 +169,7 @@ class ApplicationResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_application_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
     @wait_to_complete
@@ -208,7 +208,7 @@ class VlanResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_vlan_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
     @wait_to_complete
@@ -228,7 +228,7 @@ class VnetResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_vnet_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
     @wait_to_complete
@@ -249,7 +249,7 @@ class StoragePoolResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_flash_pool_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
 
@@ -262,7 +262,7 @@ class DatacenterResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_datacenter_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
 
@@ -275,7 +275,7 @@ class UserResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_user_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
 
@@ -288,7 +288,7 @@ class SiteResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_location_information_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
 
@@ -301,7 +301,7 @@ class TemplateResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_template_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
 
@@ -314,7 +314,7 @@ class TagResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_tag_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
 
@@ -327,7 +327,7 @@ class MigrationZoneResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_migration_zone_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
 
@@ -340,7 +340,7 @@ class MarketplaceTemplateResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_marketplace_template_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
 
@@ -353,7 +353,7 @@ class ApplicationGroupResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_application_group_information_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
 
@@ -366,7 +366,7 @@ class CategoryResource(Resource):
     def get_by_uuid(self, uuid):
         resource = self.api.get_category_using_get(uuid)
         if not resource:
-            raise UuidNotFoundException
+            return None
         return resource
 
 
