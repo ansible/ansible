@@ -34,6 +34,25 @@
       - '{} is falsy'
       - '{"key": "value"} is not falsy'
 
+- name: jinja 2.10 tests
+  # tests from https://github.com/pallets/jinja/pull/665
+  assert:
+    that:
+      - 2 is eq 2
+      - 2 is not eq 3
+      - 2 is ne 3
+      - 2 is not ne 2
+      - 2 is lt 3
+      - 2 is not lt 2
+      - 2 is le 2
+      - 2 is not le 1
+      - 2 is gt 1
+      - 2 is not gt 2
+      - 2 is ge 2
+      - 2 is not ge 3
+      - 5 is in [5, 6, 7]
+      - 8 is not in [5, 6, 7]
+
 - name: jinja 2.11 tests
   # tests from https://github.com/pallets/jinja/pull/824
   assert:
