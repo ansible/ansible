@@ -1,0 +1,3 @@
+bugfixes:
+    - ansible-test - avoid use of deprecated junit_xml method
+    - junit callback - avoid use of deprecated junit_xml method
