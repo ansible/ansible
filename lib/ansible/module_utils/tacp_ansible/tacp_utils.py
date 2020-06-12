@@ -141,7 +141,8 @@ class Resource(object):
         return None
 
     filter_method = None
-
+    uuid_method = None
+    
     def filter(self, **filters):
         if self.filter_method is None:
             raise Exception('Invalid self.filter_method')
@@ -152,7 +153,16 @@ class Resource(object):
         return method(**self.get_filters_kws(**filters))
 
     def get_by_uuid(self, uuid):
-        raise NotImplementedError
+        if self.uuid_method is None:
+            raise Exception('Invalid self.uuid_method')
+        method = getattr(self.api, self.uuid_method, None)
+        if method is None:
+            raise Exception('Invalid self.uuid_method')
+
+        resource = method(uuid)
+        if not resource:
+            return None
+        return resource
 
     def create(self, body):
         raise NotImplementedError
@@ -165,12 +175,7 @@ class ApplicationResource(Resource):
     resource_class = tacp.ApplicationsApi
 
     filter_method = "get_applications_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_application_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_application_using_get"
 
     @wait_to_complete
     def create(self, body):
@@ -190,7 +195,7 @@ class ApplicationResource(Resource):
             Action.SHUTDOWN: self.api.shutdown_application_using_put,
             Action.STOPPED: self.api.stop_application_using_put,
             Action.RESTARTED: self.api.restart_application_using_put,
-            Action.FORCE_RESTARTED: self.api.force_restart_application_using_put,
+            Action.FORCE_RESTARTED: self.api.force_restart_application_using_put,  # noqa
             Action.PAUSED: self.api.pause_application_using_put,
             Action.ABSENT: self.api.delete_application_using_delete,
             Action.RESUMED: self.api.resume_application_using_put
@@ -204,12 +209,7 @@ class VlanResource(Resource):
     resource_class = tacp.VlansApi
 
     filter_method = "get_vlans_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_vlan_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_vlan_using_get"
 
     @wait_to_complete
     def create(self, body):
@@ -224,12 +224,7 @@ class VnetResource(Resource):
     resource_class = tacp.VnetsApi
 
     filter_method = "get_vnets_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_vnet_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_vnet_using_get"
 
     @wait_to_complete
     def create(self, body):
@@ -245,12 +240,7 @@ class StoragePoolResource(Resource):
     resource_class = tacp.FlashPoolsApi
 
     filter_method = "get_flash_pools_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_flash_pool_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_flash_pool_using_get"
 
 
 class DatacenterResource(Resource):
@@ -258,12 +248,7 @@ class DatacenterResource(Resource):
     resource_class = tacp.DatacentersApi
 
     filter_method = "get_datacenters_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_datacenter_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_datacenter_using_get"
 
 
 class UserResource(Resource):
@@ -271,12 +256,7 @@ class UserResource(Resource):
     resource_class = tacp.UsersApi
 
     filter_method = "get_users_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_user_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_user_using_get"
 
 
 class SiteResource(Resource):
@@ -284,12 +264,7 @@ class SiteResource(Resource):
     resource_class = tacp.LocationsApi
 
     filter_method = "get_locations_for_organization_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_location_information_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_location_information_using_get"
 
 
 class TemplateResource(Resource):
@@ -297,12 +272,7 @@ class TemplateResource(Resource):
     resource_class = tacp.TemplatesApi
 
     filter_method = "get_templates_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_template_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_template_using_get"
 
 
 class TagResource(Resource):
@@ -310,12 +280,7 @@ class TagResource(Resource):
     resource_class = tacp.TagsApi
 
     filter_method = "get_tags_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_tag_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_tag_using_get"
 
 
 class MigrationZoneResource(Resource):
@@ -323,12 +288,7 @@ class MigrationZoneResource(Resource):
     resource_class = tacp.MigrationZonesApi
 
     filter_method = "get_migration_zones_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_migration_zone_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_migration_zone_using_get"
 
 
 class MarketplaceTemplateResource(Resource):
@@ -336,12 +296,7 @@ class MarketplaceTemplateResource(Resource):
     resource_class = tacp.MarketplaceTemplatesApi
 
     filter_method = "get_marketplace_templates_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_marketplace_template_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_marketplace_template_using_get"
 
 
 class ApplicationGroupResource(Resource):
@@ -349,12 +304,7 @@ class ApplicationGroupResource(Resource):
     resource_class = tacp.ApplicationGroupsApi
 
     filter_method = "get_application_group_list_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_application_group_information_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_application_group_information_using_get"
 
 
 class CategoryResource(Resource):
@@ -362,12 +312,7 @@ class CategoryResource(Resource):
     resource_class = tacp.CategoriesApi
 
     filter_method = "get_categories_using_get"
-
-    def get_by_uuid(self, uuid):
-        resource = self.api.get_category_using_get(uuid)
-        if not resource:
-            return None
-        return resource
+    uuid_method = "get_category_using_get"
 
 
 class FirewallProfileResource(Resource):
@@ -409,7 +354,7 @@ def get_component_fields_by_name(name, component,
             api_response = api_instance.get_applications_using_get(
                 fields=fields)
         except ApiException as e:
-            return "Exception when calling get_applications_using_get: %s\n" % e
+            return "Exception when calling get_applications_using_get: %s\n" % e  # noqa
     elif component == "template":
         api_instance = tacp.TemplatesApi(api_client)
         try:
@@ -433,7 +378,7 @@ def get_component_fields_by_name(name, component,
             api_response = api_instance.get_migration_zones_using_get(
                 fields=fields)
         except ApiException as e:
-            return "Exception when calling get_migration_zones_using_get: %s\n" % e
+            return "Exception when calling get_migration_zones_using_get: %s\n" % e  # noqa
     elif component == "vlan":
         api_instance = tacp.VlansApi(api_client)
         try:
@@ -457,7 +402,7 @@ def get_component_fields_by_name(name, component,
             api_response = api_instance.get_firewall_profiles_using_get(
                 fields=fields)
         except ApiException as e:
-            return "Exception when calling get_firewall_profiles_using_get: %s\n" % e
+            return "Exception when calling get_firewall_profiles_using_get: %s\n" % e  # noqa
     elif component == "firewall_override":
         # Need to get all datacenter UUIDs first
         api_instance = tacp.DatacentersApi(api_client)
@@ -473,7 +418,7 @@ def get_component_fields_by_name(name, component,
             api_instance = tacp.DatacentersApi(api_client)
             try:
                 # View Firewall profiles for an organization
-                api_response += api_instance.get_datacenter_firewall_overrides_using_get(
+                api_response += api_instance.get_datacenter_firewall_overrides_using_get(  # noqa
                     uuid=datacenter.uuid, fields=fields)
             except ApiException as e:
                 return "Exception when calling get_firewall_profiles_using_get"
