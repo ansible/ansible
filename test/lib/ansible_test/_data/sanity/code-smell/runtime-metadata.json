@@ -1,0 +1,11 @@
+{
+    "prefixes": [
+        "lib/ansible/config/ansible_builtin_runtime.yml",
+        "meta/routing.yml",
+        "meta/runtime.yml"
+    ],
+    "extensions": [
+        ".yml"
+    ],
+    "output": "path-line-column-message"
+}
