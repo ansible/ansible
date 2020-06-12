@@ -142,7 +142,7 @@ class Resource(object):
 
     filter_method = None
     uuid_method = None
-    
+
     def filter(self, **filters):
         if self.filter_method is None:
             raise Exception('Invalid self.filter_method')
@@ -335,7 +335,7 @@ def get_component_fields_by_name(name, component,
 
     valid_components = ["storage_pool", "application",
                         "template", "datacenter", "migration_zone",
-                        "vnet", "vlan", "firewall_profile", "firewall_override"]
+                        "vnet", "vlan", "firewall_profile", "firewall_override"]  # noqa
 
     if component not in valid_components:
         return "Invalid component"
@@ -438,15 +438,15 @@ def get_component_fields_by_name(name, component,
 
                         json_dict = json.loads(str_dict)
 
-                        disk_uuid = json_dict['disk_uuid'] if json_dict['disk_uuid'] else None
+                        disk_uuid = json_dict['disk_uuid'] if json_dict['disk_uuid'] else None  # noqa
                         name = json_dict['name'] if json_dict['name'] else None
-                        order = json_dict['order'] if json_dict['order'] else None
-                        vnic_uuid = json_dict['vnic_uuid'] if json_dict['vnic_uuid'] else None
+                        order = json_dict['order'] if json_dict['order'] else None  # noqa
+                        vnic_uuid = json_dict['vnic_uuid'] if json_dict['vnic_uuid'] else None  # noqa
 
-                        boot_order_payload = tacp.ApiBootOrderPayload(disk_uuid=disk_uuid,
-                                                                      name=name,
-                                                                      order=order,
-                                                                      vnic_uuid=vnic_uuid)
+                        boot_order_payload = tacp.ApiBootOrderPayload(disk_uuid=disk_uuid,  # noqa
+                                                                      name=name,            # noqa
+                                                                      order=order,          # noqa
+                                                                      vnic_uuid=vnic_uuid)  # noqa
                         boot_order.append(boot_order_payload)
                     return boot_order
         if 'nfvInstanceUuid' in fields:
