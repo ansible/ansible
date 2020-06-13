@@ -1737,17 +1737,17 @@ plugin_routing:
     a10_virtual_server:
       redirect: community.network.a10_virtual_server
     aci_intf_policy_fc:
-      redirect: community.network.aci_intf_policy_fc
+      redirect: cisco.aci.aci_interface_policy_fc
     aci_intf_policy_l2:
-      redirect: community.network.aci_intf_policy_l2
+      redirect: cisco.aci.aci_interface_policy_l2
     aci_intf_policy_lldp:
-      redirect: community.network.aci_intf_policy_lldp
+      redirect: cisco.aci.aci_interface_policy_lldp
     aci_intf_policy_mcp:
-      redirect: community.network.aci_intf_policy_mcp
+      redirect: cisco.aci.aci_interface_policy_mcp
     aci_intf_policy_port_channel:
-      redirect: community.network.aci_intf_policy_port_channel
+      redirect: cisco.aci.aci_interface_policy_channel
     aci_intf_policy_port_security:
-      redirect: community.network.aci_intf_policy_port_security
+      redirect: cisco.aci.aci_interface_policy_security
     mso_schema_template_external_epg_contract:
       redirect: cisco.mso.mso_schema_template_external_epg_contract
     mso_schema_template_external_epg_subnet:
