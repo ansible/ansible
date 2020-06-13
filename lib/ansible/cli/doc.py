@@ -511,11 +511,16 @@ class DocCLI(CLI):
 
     @staticmethod
     def add_fields(text, fields, limit, opt_indent, return_values=False, base_indent=''):
+        customized_output_fields = (
+            'required', 'description', 'aliases', 'choices', 'default',
+            'options', 'suboptions', 'contains', 'spec',
+            'env', 'ini', 'yaml', 'vars', 'keywords',
+        )
 
         for o in sorted(fields):
             opt = fields[o]
 
-            required = opt.pop('required', False)
+            required = opt.get('required', False)
             if not isinstance(required, bool):
                 raise AnsibleError("Incorrect value for 'Required', a boolean is needed.: %s" % required)
             if required:
@@ -534,45 +539,44 @@ class DocCLI(CLI):
                 if not isinstance(opt['description'], string_types):
                     raise AnsibleError("Expected string in description of %s, got %s" % (o, type(opt['description'])))
                 text.append(textwrap.fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
-            del opt['description']
 
             aliases = ''
             if 'aliases' in opt:
                 if len(opt['aliases']) > 0:
                     aliases = "(Aliases: " + ", ".join(to_text(i) for i in opt['aliases']) + ")"
-                del opt['aliases']
             choices = ''
             if 'choices' in opt:
                 if len(opt['choices']) > 0:
                     choices = "(Choices: " + ", ".join(to_text(i) for i in opt['choices']) + ")"
-                del opt['choices']
             default = ''
             if not return_values:
                 if 'default' in opt or not required:
-                    default = "[Default: %s" % to_text(opt.pop('default', '(null)')) + "]"
+                    default = "[Default: %s" % to_text(opt.get('default', '(null)')) + "]"
 
             text.append(textwrap.fill(DocCLI.tty_ify(aliases + choices + default), limit,
                                       initial_indent=opt_indent, subsequent_indent=opt_indent))
 
-            suboptions = []
-            for subkey in ('options', 'suboptions', 'contains', 'spec'):
-                if subkey in opt:
-                    suboptions.append((subkey, opt.pop(subkey)))
-
             conf = {}
             for config in ('env', 'ini', 'yaml', 'vars', 'keywords'):
                 if config in opt and opt[config]:
-                    conf[config] = opt.pop(config)
-                    for ignore in DocCLI.IGNORE:
-                        for item in conf[config]:
-                            if ignore in item:
-                                del item[ignore]
+                    # Convert [
+                    #   {"section": "s1", "key": "v", "version_added": "2.9"},
+                    #   {"section": "s2", "key": "v", "version_added": "2.8"},
+                    # ]
+                    # to [
+                    #   {"section": "s1", "key": "v"},
+                    #   {"section": "s2", "key": "v"},
+                    # ]
+                    conf[config] = [
+                        dict((k, v) for k, v in i.items() if k not in DocCLI.IGNORE)
+                        for i in opt[config]
+                    ]
 
             if conf:
                 text.append(DocCLI._dump_yaml({'set_via': conf}, opt_indent))
 
             for k in sorted(opt):
-                if k.startswith('_'):
+                if k in customized_output_fields or k.startswith('_'):
                     continue
                 if isinstance(opt[k], string_types):
                     text.append('%s%s: %s' % (opt_indent, k,
@@ -584,28 +588,36 @@ class DocCLI(CLI):
                 else:
                     text.append(DocCLI._dump_yaml({k: opt[k]}, opt_indent))
 
-            for subkey, subdata in suboptions:
-                text.append('')
-                text.append("%s%s:\n" % (opt_indent, subkey.upper()))
-                DocCLI.add_fields(text, subdata, limit, opt_indent + '    ', return_values, opt_indent)
-            if not suboptions:
+            add_blank = True
+            for subkey in ('options', 'suboptions', 'contains', 'spec'):
+                if subkey in opt:
+                    add_blank = False
+                    text.append('')
+                    text.append("%s%s:\n" % (opt_indent, subkey.upper()))
+                    DocCLI.add_fields(text, opt[subkey], limit, opt_indent + '    ', return_values, opt_indent)
+            if add_blank:
                 text.append('')
 
     @staticmethod
     def get_man_text(doc):
 
         DocCLI.IGNORE = DocCLI.IGNORE + (context.CLIARGS['type'],)
+        customized_output_fields = (
+            'filename', 'description', 'deprecated', 'action', 'options',
+            'notes', 'seealso', 'requirements',
+        )
+
         opt_indent = "        "
         text = []
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
-        text.append("> %s    (%s)\n" % (doc.get(context.CLIARGS['type'], doc.get('plugin_type')).upper(), doc.pop('filename')))
+        text.append("> %s    (%s)\n" % (doc.get(context.CLIARGS['type'], doc.get('plugin_type')).upper(), doc['filename']))
 
         if isinstance(doc['description'], list):
-            desc = " ".join(doc.pop('description'))
+            desc = " ".join(doc['description'])
         else:
-            desc = doc.pop('description')
+            desc = doc['description']
 
         text.append("%s\n" % textwrap.fill(DocCLI.tty_ify(desc), limit, initial_indent=opt_indent,
                                            subsequent_indent=opt_indent))
@@ -615,22 +627,22 @@ class DocCLI(CLI):
             if isinstance(doc['deprecated'], dict):
                 if 'removed_at_date' in doc['deprecated']:
                     text.append(
-                        "\tReason: %(why)s\n\tWill be removed in a release after %(removed_at_date)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated')
+                        "\tReason: %(why)s\n\tWill be removed in a release after %(removed_at_date)s\n\tAlternatives: %(alternative)s" % doc['deprecated']
                     )
                 else:
                     if 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
                         doc['deprecated']['removed_in'] = doc['deprecated']['version']
-                    text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
+                    text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc['deprecated'])
             else:
-                text.append("%s" % doc.pop('deprecated'))
+                text.append("%s" % doc['deprecated'])
             text.append("\n")
 
-        if doc.pop('action', False):
+        if doc.get('action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
 
         if doc.get('options', False):
             text.append("OPTIONS (= is mandatory):\n")
-            DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)
+            DocCLI.add_fields(text, doc['options'], limit, opt_indent)
             text.append('')
 
         if doc.get('notes', False):
@@ -640,7 +652,6 @@ class DocCLI(CLI):
                                           initial_indent=opt_indent[:-2] + "* ", subsequent_indent=opt_indent))
             text.append('')
             text.append('')
-            del doc['notes']
 
         if doc.get('seealso', False):
             text.append("SEE ALSO:")
@@ -669,15 +680,14 @@ class DocCLI(CLI):
 
             text.append('')
             text.append('')
-            del doc['seealso']
 
         if doc.get('requirements', False):
-            req = ", ".join(doc.pop('requirements'))
+            req = ", ".join(doc['requirements'])
             text.append("REQUIREMENTS:%s\n" % textwrap.fill(DocCLI.tty_ify(req), limit - 16, initial_indent="  ", subsequent_indent=opt_indent))
 
         # Generic handler
         for k in sorted(doc):
-            if k in DocCLI.IGNORE or not doc[k]:
+            if k in DocCLI.IGNORE or k in customized_output_fields or not doc[k]:
                 continue
             if isinstance(doc[k], string_types):
                 text.append('%s: %s' % (k.upper(), textwrap.fill(DocCLI.tty_ify(doc[k]), limit - (len(k) + 2), subsequent_indent=opt_indent)))
@@ -686,21 +696,20 @@ class DocCLI(CLI):
             else:
                 # use empty indent since this affects the start of the yaml doc, not it's keys
                 text.append(DocCLI._dump_yaml({k.upper(): doc[k]}, ''))
-            del doc[k]
             text.append('')
 
         if doc.get('plainexamples', False):
             text.append("EXAMPLES:")
             text.append('')
             if isinstance(doc['plainexamples'], string_types):
-                text.append(doc.pop('plainexamples').strip())
+                text.append(doc['plainexamples'].strip())
             else:
-                text.append(yaml.dump(doc.pop('plainexamples'), indent=2, default_flow_style=False))
+                text.append(yaml.dump(doc['plainexamples'], indent=2, default_flow_style=False))
             text.append('')
             text.append('')
 
         if doc.get('returndocs', False):
             text.append("RETURN VALUES:")
-            DocCLI.add_fields(text, doc.pop('returndocs'), limit, opt_indent, return_values=True)
+            DocCLI.add_fields(text, doc['returndocs'], limit, opt_indent, return_values=True)
 
         return "\n".join(text)

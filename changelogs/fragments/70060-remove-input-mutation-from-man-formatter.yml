@@ -1,0 +1,4 @@
+bugfixes:
+- ansible-doc - remove input mutation from the man page formatting process to
+  avoid problems when YAML anchors are used
+  (https://github.com/ansible/ansible/pull/70060).
