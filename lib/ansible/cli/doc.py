@@ -526,16 +526,17 @@ class DocCLI(CLI):
 
             text.append("%s%s %s" % (base_indent, opt_leadin, o))
 
-            if isinstance(opt['description'], list):
-                for entry_idx, entry in enumerate(opt['description'], 1):
-                    if not isinstance(entry, string_types):
-                        raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
-                    text.append(textwrap.fill(DocCLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
-            else:
-                if not isinstance(opt['description'], string_types):
-                    raise AnsibleError("Expected string in description of %s, got %s" % (o, type(opt['description'])))
-                text.append(textwrap.fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
-            del opt['description']
+            if 'description' in opt:
+                if isinstance(opt['description'], list):
+                    for entry_idx, entry in enumerate(opt['description'], 1):
+                        if not isinstance(entry, string_types):
+                            raise AnsibleError("Expected string in description of %s at index %s, got %s" % (o, entry_idx, type(entry)))
+                        text.append(textwrap.fill(DocCLI.tty_ify(entry), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                else:
+                    if not isinstance(opt['description'], string_types):
+                        raise AnsibleError("Expected string in description of %s, got %s" % (o, type(opt['description'])))
+                    text.append(textwrap.fill(DocCLI.tty_ify(opt['description']), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
+                del opt['description']
 
             aliases = ''
             if 'aliases' in opt:
