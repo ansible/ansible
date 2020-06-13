@@ -47,3 +47,6 @@ export LC_ALL=en_US.UTF-8
 # Run templated tags
 [ "$("${COMMAND[@]}" --tags tag3 | grep -F Task_with | xargs)" = \
 "Task_with_always_tag TAGS: [always] Task_with_templated_tags TAGS: [tag3]" ]
+
+# Test wildcard tags
+ansible-playbook -i ../../inventory test_wildcard_tags.yml -t 'test*' --skip-tags 'nope*'

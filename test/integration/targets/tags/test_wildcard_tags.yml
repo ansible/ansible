@@ -1,0 +1,50 @@
+---
+- name: verify tags work as expected (called with -t test* --skip-tags nope*)
+  hosts: testhost
+  gather_facts: False
+  tasks:
+    - debug: msg="This should NOT run"
+      register: one
+    - debug: msg="This should run"
+      register: two
+      tags:
+      - test1
+      - foo
+    - debug: msg="This should NOT run"
+      register: three
+      tags:
+      - monkey
+      - bartest1
+      - nopebye
+    - debug: msg="This should run"
+      register: four
+      tags:
+      - testhaha
+    - debug: msg="This should NOT run"
+      register: five
+      tags:
+      - nope
+      - nope:testnope
+    - debug: msg="This should run"
+      register: six
+      tags:
+      - haha
+      - what
+      - test494
+      - bye
+    - debug: msg="This has nope3 AND test8 - and should NOT run"
+      register: seven
+      tags:
+      - nope3
+      - test8
+    - assert:
+        that:
+          - one is not defined
+          - two is defined
+          - three is not defined
+          - four is defined
+          - five is not defined
+          - six is defined
+          - seven is not defined
+      tags:
+        - always
