@@ -1136,7 +1136,7 @@ class ModuleValidator(Validator):
                 # to make comparison possible and to avoid confusing the user.
                 documentation_date = doc_deprecation.get('removed_at_date')
                 documentation_version = doc_deprecation.get('removed_in')
-                if compare_dates(routing_date, documentation_date):
+                if not compare_dates(routing_date, documentation_date):
                     self.reporter.error(
                         path=self.object_path,
                         code='deprecation-mismatch',
