@@ -23,6 +23,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
+import fnmatch
 
 
 class Taggable:
@@ -74,9 +75,16 @@ class Taggable:
                 should_run = True
             else:
                 should_run = False
+                # Do this last mainly for efficiency because it ends up being
+                # O(n^2) even though it only looks like O(n) here.
+                for wanted_tag in only_tags:
+                    if fnmatch.filter(tags, wanted_tag):
+                        should_run = True
+                        # If we find a match, we're done, no need to continue
+                        # looping.
+                        break
 
         if should_run and skip_tags:
-
             # Check for tags that we need to skip
             if 'all' in skip_tags:
                 if 'always' not in tags or 'always' in skip_tags:
@@ -85,5 +93,12 @@ class Taggable:
                 should_run = False
             elif 'tagged' in skip_tags and tags != self.untagged:
                 should_run = False
-
+            else:
+                # Like above, do this last
+                for unwanted_tag in skip_tags:
+                    if fnmatch.filter(tags, unwanted_tag):
+                        should_run = False
+                        # If we find a match, we're done, no need to continue
+                        # looping.
+                        break
         return should_run
