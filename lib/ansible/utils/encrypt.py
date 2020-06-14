@@ -15,7 +15,7 @@ from collections import namedtuple
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils.six import text_type
-from ansible.module_utils._text import to_text, to_bytes
+from ansible.module_utils._text import to_text, to_bytes, to_native
 from ansible.utils.display import Display
 
 PASSLIB_AVAILABLE = False
@@ -72,6 +72,13 @@ class BaseHash(object):
     def __init__(self, algorithm):
         self.algorithm = algorithm
 
+    def _clean_salt(self, salt, has_raw_salt=False):
+        if not salt:
+            return None
+        elif has_raw_salt:
+            return to_bytes(salt, encoding='ascii', errors='strict')
+        else:
+            return to_native(to_text(salt, encoding='ascii', errors='strict'))
 
 class CryptHash(BaseHash):
     def __init__(self, algorithm):
@@ -91,7 +98,10 @@ class CryptHash(BaseHash):
 
     def _salt(self, salt, salt_size):
         salt_size = salt_size or self.algo_data.salt_size
-        return salt or random_salt(salt_size)
+        if salt:
+            return self._clean_salt(salt)
+        else:
+            return self._clean_salt(random_salt(salt_size))
 
     def _rounds(self, rounds):
         if rounds == self.algo_data.implicit_rounds:
@@ -130,17 +140,9 @@ class PasslibHash(BaseHash):
             raise AnsibleError("passlib does not support '%s' algorithm" % algorithm)
 
     def hash(self, secret, salt=None, salt_size=None, rounds=None):
-        salt = self._clean_salt(salt)
+        salt = self._clean_salt(salt, has_raw_salt=issubclass(self.crypt_algo, HasRawSalt))
         rounds = self._clean_rounds(rounds)
         return self._hash(secret, salt=salt, salt_size=salt_size, rounds=rounds)
-
-    def _clean_salt(self, salt):
-        if not salt:
-            return None
-        elif issubclass(self.crypt_algo, HasRawSalt):
-            return to_bytes(salt, encoding='ascii', errors='strict')
-        else:
-            return to_text(salt, encoding='ascii', errors='strict')
 
     def _clean_rounds(self, rounds):
         algo_data = self.algorithms.get(self.algorithm)
