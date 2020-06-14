@@ -51,15 +51,6 @@ Modules
 
 	Links on this page may not point to the most recent versions of modules. We will update them when we can.
 
-Modules removed
----------------
-
-The following modules no longer exist:
-
-(most of them)
-
-
-
 Deprecation notices
 -------------------
 
