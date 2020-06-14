@@ -80,6 +80,7 @@ class BaseHash(object):
         else:
             return to_native(to_text(salt, encoding='ascii', errors='strict'))
 
+
 class CryptHash(BaseHash):
     def __init__(self, algorithm):
         super(CryptHash, self).__init__(algorithm)
