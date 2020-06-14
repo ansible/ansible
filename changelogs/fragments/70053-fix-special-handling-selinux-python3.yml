@@ -1,0 +1,2 @@
+bugfixes:
+  - Basic module utils - Change find_mount_point() to always return string to fix special filesystem handling of SELinux in Python 3
