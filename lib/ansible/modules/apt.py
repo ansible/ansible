@@ -669,7 +669,8 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if build_dep:
             cmd = "%s -y --no-remove %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, check_arg, packages)
         else:
-            cmd = "%s -y --no-remove %s %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, check_arg, packages)
+            cmd = "%s -y --no-remove %s %s %s %s %s %s install %s" % \
+                  (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
