@@ -2,9 +2,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import io
 import os
-import tarfile
 import tempfile
 import uuid
 
@@ -37,11 +35,15 @@ ANSIBLE_CONTENT_HOSTNAME='http://pulp:80/pulp/content'
 TOKEN_AUTH_DISABLED=True
 '''
 
-SET_ADMIN_PASSWORD = b'''#!/usr/bin/execlineb -P
-export DJANGO_SETTINGS_MODULE pulpcore.app.settings
-export PULP_SETTINGS /etc/pulp/settings.py
-if { /usr/local/bin/django-admin reset-admin-password --password password }
-if { s6-svc -d /var/run/s6/services/x_admin_pass/ }
+SET_ADMIN_PASSWORD = b'''#!/usr/bin/execlineb -S0
+foreground {
+  redirfd -w 1 /dev/null
+  redirfd -w 2 /dev/null
+  export DJANGO_SETTINGS_MODULE pulpcore.app.settings
+  export PULP_CONTENT_ORIGIN localhost
+  s6-setuidgid postgres
+  /usr/local/bin/django-admin reset-admin-password --password password
+}
 '''
 
 
@@ -60,8 +62,8 @@ class GalaxyProvider(CloudProvider):
         """
         super(GalaxyProvider, self).__init__(args)
 
-        self.fallaxy = os.environ.get('ANSIBLE_FALLAXY_CONTAINER', 'quay.io/ansible/fallaxy-test-container:2.0.0')
-        self.pulp = os.environ.get('ANSIBLE_PULP_CONTAINER', 'docker.io/mattclay/pulp-oci-images:latest')
+        self.fallaxy = os.environ.get('ANSIBLE_FALLAXY_CONTAINER', 'quay.io/ansible/fallaxy-test-container:2.0.1')
+        self.pulp = os.environ.get('ANSIBLE_PULP_CONTAINER', 'docker.io/pulp/pulp-fedora31:latest')
 
         self.containers = []
 
@@ -177,15 +179,14 @@ class GalaxyProvider(CloudProvider):
             finally:
                 os.unlink(settings.name)
 
-            # Inject a oneshot script to set the admin password
-            with io.BytesIO() as admin_pass:
-                # Use a tar file, because that is the only way to create intermediate
-                # directories using docker cp
-                with tarfile.open(mode='w', fileobj=admin_pass) as tar:
-                    member = tarfile.TarInfo(name='/etc/services.d/x_admin_pass/run')
-                    member.size = len(SET_ADMIN_PASSWORD)
-                    tar.addfile(member, fileobj=io.BytesIO(SET_ADMIN_PASSWORD))
-                docker_command(self.args, ['cp', '-', '%s:/' % pulp_id], data=admin_pass.getvalue())
+            try:
+                # Inject our settings.py file
+                with tempfile.NamedTemporaryFile(delete=False) as admin_pass:
+                    admin_pass.write(SET_ADMIN_PASSWORD)
+                docker_command(self.args, ['cp', admin_pass.name, '%s:/etc/cont-init.d/111-postgres' % pulp_id])
+            finally:
+                os.unlink(admin_pass.name)
+
 
             # Start the container
             docker_start(self.args, 'pulp', [])

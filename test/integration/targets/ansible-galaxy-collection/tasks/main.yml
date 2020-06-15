@@ -195,11 +195,9 @@
     v3: true
   - name: pulp_v2
     server: '{{ pulp_v2_server }}'
-  # pulp_ansible v3 doesn't construct download_url properly
-  # https://pulp.plan.io/issues/6510
-  # - name: pulp_v3
-  #   server: '{{ pulp_v3_server }}'
-  #   v3: true
+  - name: pulp_v3
+    server: '{{ pulp_v3_server }}'
+    v3: true
 
 - name: run ansible-galaxy collection download tests
   include_tasks: download.yml
