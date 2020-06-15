@@ -210,7 +210,7 @@ EXAMPLES = r'''
 '''
 RETURN = r'''
 dest:
-    description: Destination file/path, equal to the path argument
+    description: Destination file/path, equal to the value passed to I(path)
     returned: state=touch, state=hard, state=link
     type: str
     sample: /path/to/file.txt
