@@ -597,7 +597,7 @@ DEFAULT_CALLBACK_PLUGIN_PATH:
   - {key: callback_plugins, section: defaults}
   type: pathspec
   yaml: {key: plugins.callback.path}
-DEFAULT_CALLBACK_ENABLE:
+DEFAULT_CALLBACK_ENABLED:
   name: Callback Whitelist
   default: []
   description:
