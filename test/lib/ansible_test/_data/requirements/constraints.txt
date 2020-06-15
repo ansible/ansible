@@ -28,6 +28,7 @@ openshift >= 0.6.2, < 0.9.0 # merge_type support
 virtualenv < 16.0.0 ; python_version < '2.7' # virtualenv 16.0.0 and later require python 2.7 or later
 pathspec < 0.6.0 ; python_version < '2.7' # pathspec 0.6.0 and later require python 2.7 or later
 pyopenssl < 18.0.0 ; python_version < '2.7' # pyOpenSSL 18.0.0 and later require python 2.7 or later
+pyparsing < 3.0.0 ; python_version < '3.5' # pyparsing 3 and later require python 3.5 or later
 pyfmg == 0.6.1 # newer versions do not pass current unit tests
 pyyaml < 5.1 ; python_version < '2.7' # pyyaml 5.1 and later require python 2.7 or later
 pycparser < 2.19 ; python_version < '2.7' # pycparser 2.19 and later require python 2.7 or later
