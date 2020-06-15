@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix content encoding/decoding and do not fail when key based auth is used (https://github.com/ansible-collections/cisco.nxos/pull/59/).
