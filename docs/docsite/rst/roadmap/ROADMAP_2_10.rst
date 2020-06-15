@@ -16,7 +16,7 @@ PRs must be raised well in advance of the dates below to have a chance of being 
 .. note:: There is no Alpha phase in 2.10.
 .. note:: Dates subject to change.
 
-- 2020-06-12 Beta 1 **Feature freeze**
+- 2020-06-16 Beta 1 **Feature freeze**
   No new functionality (including modules/plugins) to any code
 
 - 2020-07-14 Release Candidate 1
