@@ -187,7 +187,6 @@ class GalaxyProvider(CloudProvider):
             finally:
                 os.unlink(admin_pass.name)
 
-
             # Start the container
             docker_start(self.args, 'pulp', [])
 
