@@ -1,9 +1,16 @@
+# (c) 2020 Ansible Project
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import pkgutil
 import pytest
 import sys
 
 from units.compat.mock import MagicMock, NonCallableMagicMock, patch
+
 
 def reset_internal_vendor_package():
     import ansible
@@ -34,7 +41,9 @@ def test_no_vendored():
         assert sys.path == previous_path
 
 
-def test_vendored(vendored_pkg_names=['boguspkg']):
+def test_vendored(vendored_pkg_names=None):
+    if not vendored_pkg_names:
+        vendored_pkg_names = ['boguspkg']
     reset_internal_vendor_package()
     with patch.object(pkgutil, 'iter_modules', return_value=list((None, p, None) for p in vendored_pkg_names)):
         previous_path = list(sys.path)
