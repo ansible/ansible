@@ -1,0 +1,2 @@
+minor_changes:
+  - Added 'ansible-galaxy collection info' subcommand to print metadata about an installed collection.
