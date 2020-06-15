@@ -215,7 +215,7 @@ dest:
     type: str
     sample: /path/to/file.txt
 path:
-    description: Destination file/path, equal to the path argument
+    description: Destination file/path, equal to the value passed to I(path)
     returned: state=absent, state=directory, state=file
     type: str
     sample: /path/to/file.txt
