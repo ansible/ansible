@@ -62,8 +62,14 @@ class GalaxyProvider(CloudProvider):
         """
         super(GalaxyProvider, self).__init__(args)
 
-        self.fallaxy = os.environ.get('ANSIBLE_FALLAXY_CONTAINER', 'quay.io/ansible/fallaxy-test-container:2.0.1')
-        self.pulp = os.environ.get('ANSIBLE_PULP_CONTAINER', 'docker.io/pulp/pulp-fedora31:latest')
+        self.fallaxy = os.environ.get(
+            'ANSIBLE_FALLAXY_CONTAINER',
+            'quay.io/ansible/fallaxy-test-container:2.0.1'
+        )
+        self.pulp = os.environ.get(
+            'ANSIBLE_PULP_CONTAINER',
+            'docker.io/pulp/pulp-fedora31@sha256:71054f92fc9c986ba823d86b68631bafc84ae61b7832ce0be1f8e74423e56f64'
+        )
 
         self.containers = []
 
