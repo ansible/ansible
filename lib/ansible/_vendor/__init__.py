@@ -40,7 +40,7 @@ def _ensure_vendored_path_entry():
 
         if already_loaded_vendored_modules:
             warnings.warn('One or more Python packages bundled by this ansible-base distribution were already '
-                          'loaded ({0}). This may result in undefined behavior.'.format(', '.join(already_loaded_vendored_modules)))
+                          'loaded ({0}). This may result in undefined behavior.'.format(', '.join(sorted(already_loaded_vendored_modules))))
 
 
 _ensure_vendored_path_entry()

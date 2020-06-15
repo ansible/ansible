@@ -17,6 +17,12 @@ def reset_internal_vendor_package():
             del sys.modules[pkg]
 
 
+def test_package_path_masking():
+    from ansible import _vendor
+
+    assert hasattr(_vendor, '__path__') and _vendor.__path__ == []
+
+
 def test_no_vendored():
     reset_internal_vendor_package()
     with patch.object(pkgutil, 'iter_modules', return_value=[]):
@@ -28,9 +34,9 @@ def test_no_vendored():
         assert sys.path == previous_path
 
 
-def test_vendored(vendored_pkg_name='boguspkg'):
+def test_vendored(vendored_pkg_names=['boguspkg']):
     reset_internal_vendor_package()
-    with patch.object(pkgutil, 'iter_modules', return_value=[(None, vendored_pkg_name, None)]):
+    with patch.object(pkgutil, 'iter_modules', return_value=list((None, p, None) for p in vendored_pkg_names)):
         previous_path = list(sys.path)
         import ansible
         ansible_vendor_path = os.path.join(os.path.dirname(ansible.__file__), '_vendor')
@@ -45,5 +51,6 @@ def test_vendored(vendored_pkg_name='boguspkg'):
 def test_vendored_conflict():
     with pytest.warns(UserWarning) as w:
         import pkgutil
-        test_vendored(vendored_pkg_name='pkgutil')  # pass a real package we know is already loaded
-        assert 'pkgutil' in str(w[0].message)
+        import sys
+        test_vendored(vendored_pkg_names=['sys', 'pkgutil'])  # pass a real package we know is already loaded
+        assert 'pkgutil, sys' in str(w[0].message)  # ensure both conflicting modules are listed and sorted
