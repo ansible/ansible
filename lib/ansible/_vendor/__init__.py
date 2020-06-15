@@ -27,9 +27,7 @@ def _ensure_vendored_path_entry():
     """
     # patch our vendored dir onto sys.path
     vendored_path_entry = os.path.dirname(__file__)
-
     vendored_module_names = set(m[1] for m in pkgutil.iter_modules([vendored_path_entry], ''))  # m[1] == m.name
-    already_loaded_vendored_modules = set(sys.modules.keys()).intersection(vendored_module_names)
 
     if vendored_module_names:
         # patch us early to load vendored deps transparently
@@ -37,6 +35,8 @@ def _ensure_vendored_path_entry():
             # handle reload case by removing the existing entry, wherever it might be
             sys.path.remove(vendored_path_entry)
         sys.path.insert(0, vendored_path_entry)
+
+        already_loaded_vendored_modules = set(sys.modules.keys()).intersection(vendored_module_names)
 
         if already_loaded_vendored_modules:
             warnings.warn('One or more Python packages bundled by this ansible-base distribution were already '
