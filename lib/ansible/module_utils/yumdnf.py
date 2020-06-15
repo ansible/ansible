@@ -86,7 +86,6 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.releasever = self.module.params['releasever']
         self.security = self.module.params['security']
         self.skip_broken = self.module.params['skip_broken']
-        self.nobest = self.module.params['nobest']
         self.state = self.module.params['state']
         self.update_only = self.module.params['update_only']
         self.update_cache = self.module.params['update_cache']
