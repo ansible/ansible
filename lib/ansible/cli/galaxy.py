@@ -721,6 +721,9 @@ class GalaxyCLI(CLI):
         artifact_info = collection.artifact_info(collection.b_path)
         collection_info = artifact_info['manifest_file']['collection_info']
 
+        # Add the installation path to the metadata
+        collection_info['install_path'] = to_text(collection.b_path)
+
         text = [u"", u"Collection: %s" % to_text(collection)]
         for k in sorted(collection_info.keys()):
             if isinstance(collection_info[k], dict):
