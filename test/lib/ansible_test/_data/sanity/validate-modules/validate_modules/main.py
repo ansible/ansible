@@ -1623,9 +1623,9 @@ class ModuleValidator(Validator):
             # See if current version => deprecated.removed_in, ie, should be docs only
             if isinstance(doc_info['ANSIBLE_METADATA']['value'], ast.Dict) and 'removed' in ast.literal_eval(doc_info['ANSIBLE_METADATA']['value'])['status']:
                 end_of_deprecation_should_be_removed_only = True
-            elif docs and 'deprecated' in docs and docs['deprecated'] is not None:
+            elif docs and 'deprecated' in docs and docs['deprecated'] is not None and 'removed_in' in docs['deprecated']:
                 try:
-                    removed_in = StrictVersion(str(docs.get('deprecated')['removed_in']))
+                    removed_in = StrictVersion(str(docs['deprecated']['removed_in']))
                 except ValueError:
                     end_of_deprecation_should_be_removed_only = False
                 else:
