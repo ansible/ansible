@@ -81,36 +81,6 @@ def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwid
     ))
 
 
-def _display_collection_info(collection):
-    artifact_info = collection.artifact_info(collection.b_path)
-    collection_info = artifact_info['manifest_file']['collection_info']
-
-    data = """Collection Info
----------------
-Namespace: {namespace}
-Name: {name}
-Version: {version}
-Authors: {authors}
-Licenses: {licenses}
-Repository: {repository}
-Documentation: {documentation}
-Homepage: {homepage}
-Issues: {issues}
-    """.format(
-    namespace=collection.namespace,
-    name=collection.name,
-    version=collection.latest_version,
-    authors=", ".join(collection_info['authors']),
-    licenses=", ".join(collection_info['license']),
-    repository=collection_info['repository'],
-    documentation=collection_info['documentation'],
-    homepage=collection_info['homepage'],
-    issues=collection_info['issues'],
-    )
-
-    display.display("%s" % data)
-
-
 def _get_collection_widths(collections):
     if is_iterable(collections):
         fqcn_set = set(to_text(c) for c in collections)
@@ -743,6 +713,25 @@ class GalaxyCLI(CLI):
 
         return meta_value
 
+    def _display_collection_info(self, collection):
+        """Display information for the given collection.
+
+        Note: This mimics the `role info` output.
+        """
+        artifact_info = collection.artifact_info(collection.b_path)
+        collection_info = artifact_info['manifest_file']['collection_info']
+
+        text = [u"", u"Collection: %s" % to_text(collection)]
+        for k in sorted(collection_info.keys()):
+            if isinstance(collection_info[k], dict):
+                for key in sorted(collection_info[k].keys()):
+                    text.append(u"\t%s:" % (k))
+                    text.append(u"\t\t%s: %s" % (key, collection_info[k][key]))
+            else:
+                text.append(u"\t%s: %s" % (k, collection_info[k]))
+
+        display.display(u'\n'.join(text))
+
     def _require_one_of_collections_requirements(self, collections, requirements_file):
         if collections and requirements_file:
             raise AnsibleError("The positional collection_name arg and --requirements-file are mutually exclusive.")
@@ -962,18 +951,14 @@ class GalaxyCLI(CLI):
         display.display("- %s %s was created successfully" % (galaxy_type.title(), obj_name))
 
     def execute_info(self):
-        """
-        Show info for an installed collection or role
-        """
         if context.CLIARGS['type'] == 'role':
             self.execute_info_role()
         elif context.CLIARGS['type'] == 'collection':
             self.execute_info_collection()
 
     def execute_info_collection(self):
-        """
-        Print out information about an installed collection.
-        """
+        """Find and display the metadata for a given collection."""
+
         collection_name = context.CLIARGS['args'][0]
         collections_search_paths = set(context.CLIARGS['collections_path'])
         default_collections_path = C.config.get_configuration_definition('COLLECTIONS_PATHS').get('default')
@@ -1013,7 +998,7 @@ class GalaxyCLI(CLI):
 
             collection_found = True
             collection = CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=True)
-            _display_collection_info(collection)
+            self._display_collection_info(collection)
             break
 
         # Do not warn if the specific collection was found in any of the search paths
