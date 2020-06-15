@@ -89,6 +89,8 @@
       - flat_out.mu_result == 'thingtocall in leaf'
       - from_out.mu_result == 'thingtocall in leaf'
       - from_out.mu2_result == 'thingtocall in secondary'
+      - from_out.mu3_result == 'thingtocall in subpkg.submod'
+      - from_out.mu4_result == 'thingtocall in subpkg_with_init'
       - from_nested_func.mu_result == 'hello from nested_same'
       - from_nested_module.mu_result == 'hello from nested_same'
 
