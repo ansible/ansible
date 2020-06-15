@@ -1384,7 +1384,23 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
 
 def _extract_tar_dir(tar, dirname, b_dest):
     """ Extracts a directory from a collection tar. """
-    tar_member = tar.getmember(to_native(dirname, errors='surrogate_or_strict'))
+    member_names = [to_native(dirname, errors='surrogate_or_strict')]
+
+    # Create list of members with and without trailing separator
+    if not member_names[-1].endswith(os.path.sep):
+        member_names.append(member_names[-1] + os.path.sep)
+
+    # Try all of the member names and stop on the first one that are able to successfully get
+    for member in member_names:
+        try:
+            tar_member = tar.getmember(member)
+        except KeyError:
+            continue
+        break
+    else:
+        # If we still can't find the member, raise a nice error.
+        raise AnsibleError("Unable to extract '%s' from collection" % to_native(member, errors='surrogate_or_strict'))
+
     b_dir_path = os.path.join(b_dest, to_bytes(dirname, errors='surrogate_or_strict'))
 
     b_parent_path = os.path.dirname(b_dir_path)
@@ -1403,7 +1419,8 @@ def _extract_tar_dir(tar, dirname, b_dest):
         os.symlink(b_link_path, b_dir_path)
 
     else:
-        os.mkdir(b_dir_path, 0o0755)
+        if not os.path.isdir(b_dir_path):
+            os.mkdir(b_dir_path, 0o0755)
 
 
 def _extract_tar_file(tar, filename, b_dest, b_temp_path, expected_hash=None):
