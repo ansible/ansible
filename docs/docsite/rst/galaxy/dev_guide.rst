@@ -141,7 +141,7 @@ By default the command will wait for Galaxy to complete the import process, disp
       Successfully submitted import request 41
       Starting import 41: role_name=myrole repo=githubuser/ansible-role-repo ref=
       Retrieving GitHub repo githubuser/ansible-role-repo
-      Accessing branch: master
+      Accessing branch: devel
       Parsing and validating meta/main.yml
       Parsing galaxy_tags
       Parsing platforms

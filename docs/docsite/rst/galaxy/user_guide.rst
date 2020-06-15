@@ -160,7 +160,7 @@ This returns everything found in Galaxy for the role:
         scm: None
         src: username.repo_name
         stargazers_count: 0
-        travis_status_url: https://travis-ci.org/username/repo_name.svg?branch=master
+        travis_status_url: https://travis-ci.org/username/repo_name.svg?branch=main
         version:
         watchers_count: 1
 
@@ -279,7 +279,7 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
     # from GitHub, overriding the name and specifying a specific tag
     - name: nginx_role
       src: https://github.com/bennojoy/nginx
-      version: master
+      version: main
 
     # from GitHub, specifying a specific commit hash
     - src: https://github.com/bennojoy/nginx
@@ -287,15 +287,15 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 
     # from a webserver, where the role is packaged in a tar.gz
     - name: http-role-gz
-      src: https://some.webserver.example.com/files/master.tar.gz
+      src: https://some.webserver.example.com/files/main.tar.gz
 
     # from a webserver, where the role is packaged in a tar.bz2
     - name: http-role-bz2
-      src: https://some.webserver.example.com/files/master.tar.bz2
+      src: https://some.webserver.example.com/files/main.tar.bz2
 
     # from a webserver, where the role is packaged in a tar.xz (Python 3.x only)
     - name: http-role-xz
-      src: https://some.webserver.example.com/files/master.tar.xz
+      src: https://some.webserver.example.com/files/main.tar.xz
 
     # from Bitbucket
     - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
