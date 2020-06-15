@@ -1492,7 +1492,7 @@ class ModuleValidator(Validator):
             removed_at_date = data.get('removed_at_date', None)
             if removed_at_date is not None:
                 try:
-                    if parse_isodate(removed_at_date) < datetime.date.today():
+                    if parse_isodate(removed_at_date, allow_date=False) < datetime.date.today():
                         msg = "Argument '%s' in argument_spec" % arg
                         if context:
                             msg += " found in %s" % " -> ".join(context)
@@ -1513,7 +1513,7 @@ class ModuleValidator(Validator):
                     if 'name' in deprecated_alias and 'date' in deprecated_alias:
                         try:
                             date = deprecated_alias['date']
-                            if parse_isodate(date) < datetime.date.today():
+                            if parse_isodate(date, allow_date=False) < datetime.date.today():
                                 msg = "Argument '%s' in argument_spec" % arg
                                 if context:
                                     msg += " found in %s" % " -> ".join(context)
