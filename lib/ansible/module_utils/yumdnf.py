@@ -37,7 +37,7 @@ yumdnf_argument_spec = dict(
         install_repoquery=dict(type='bool', default=True),
         install_weak_deps=dict(type='bool', default=True),
         list=dict(type='str'),
-        name=dict(type='list', aliases=['pkg'], default=[]),
+        name=dict(type='list', elements='str', aliases=['pkg'], default=[]),
         releasever=dict(default=None),
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),

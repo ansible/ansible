@@ -1,0 +1,2 @@
+bugfixes:
+  - yum/dnf - check type of elements in a name

@@ -28,6 +28,8 @@ options:
     required: true
     aliases:
         - pkg
+    type: list
+    elements: str
 
   list:
     description:
