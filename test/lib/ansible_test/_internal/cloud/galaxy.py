@@ -53,7 +53,7 @@ class GalaxyProvider(CloudProvider):
     Sets up fallaxy and pulp (ansible-galaxy) servers for tests.
 
     The fallaxy source itself resides at: https://github.com/ansible/fallaxy-test-container
-    The pulp source itself resides at: https://github.com/ansible/pulp-test-container
+    The pulp source itself resides at: https://github.com/pulp/pulp-oci-images
     """
 
     def __init__(self, args):

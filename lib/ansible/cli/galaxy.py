@@ -450,8 +450,8 @@ class GalaxyCLI(CLI):
             available_api_versions = None
             v3 = server_options.pop('v3', None)
             if v3:
-                # This allows a user to explicitly indicate the servers uses the /v3 API
-                # This was added for testing agains pulp_ansible and I'm not sure it has
+                # This allows a user to explicitly indicate the server uses the /v3 API
+                # This was added for testing against pulp_ansible and I'm not sure it has
                 # a practical purpose outside of this use case. As such, this option is not
                 # documented as of now
                 server_options['available_api_versions'] = {'v3': '/v3'}
