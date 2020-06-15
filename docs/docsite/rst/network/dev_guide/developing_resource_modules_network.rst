@@ -20,12 +20,13 @@ Network and security devices separate configuration into sections (such as inter
 
 Now that the configuration data is normalized, the user can update and modify the data and then use the resource module to send the configuration data back to the device. This results in a full round trip configuration update without the need for manual parsing, data manipulation, and data model management.
 
-The resource module has two top-level keys - ``config`` and ``state``.
+The resource module has two top-level keys - ``config`` and ``state``:
 
-``config`` defines the resource configuration data model as a key-value pair.  The type of the ``config`` option can be ``dict`` or ``list of dict`` based on the resource managed.  That is, if the device has a single global configuration, it should be a ``dict`` (for example, a global LLDP configuration). If the device has multiple instances of configuration, it should be of type ``list`` with each element in the list of type ``dict``. (for example, interfaces configuration).
+* ``config`` defines the resource configuration data model as key-value pairs.  The type of the ``config`` option can be ``dict`` or ``list of dict`` based on the resource managed.  That is, if the device has a single global configuration, it should be a ``dict`` (for example, a global LLDP configuration). If the device has multiple instances of configuration, it should be of type ``list`` with each element in the list of type ``dict`` (for example, interfaces configuration).
 
 
-``state`` defines the action the resource module takes on the end device.
+* ``state`` defines the action the resource module takes on the end device.
+
 The ``state`` for a new resource module should support the following values (as applicable for the devices that support them):
 
 merged
@@ -403,7 +404,7 @@ The resource module structure includes the following components:
 
 Module
     * ``library/<ansible_network_os>_<resource>.py``.
-    * Imports the ``module_utils`` resource package and calls ``execute_module`` API
+    * Imports the ``module_utils`` resource package and calls ``execute_module`` API:
 
     .. code-block:: text
 
@@ -436,12 +437,13 @@ Utils
 Running  ``ansible-test sanity`` and ``tox`` on resource modules
 ================================================================
 
+You should run ``ansible-test sanity`` and ``tox -elinters`` from the collection root directory before pushing your PR to an Ansible-maintained collection. The CI runs both and will fail if these tests fail. See :ref:`developing_testing` for details on ``ansible-test sanity``.
+
 To install the necessary packages:
 
 #. Ensure you have a valid Ansible development environment configured. See :ref:`environment_setup` for details.
 #. Run ``pip install -r requirements.txt`` from the collection root directory.
 
-You should run ``ansible-test sanity`` and ``tox -elinters`` from the collection root directory before pushing your PR to an Ansible-maintained collection. The CI runs both and  will fail if these tests fail. See :ref:`developing_testing` for details on ``ansible-test sanity``.
 
  Running ``tox -elinters``:
 
@@ -480,10 +482,15 @@ High-level integration test requirements for new resource modules are as follows
 We use Zuul CI to run the integration test.
 
 * To view the report, click :guilabel:`Details` on the CI comment in the PR
-* To view a failure report,  click :guilabel:`ansible/check-> details ->  failure job -> Logs -> controller -> ara-report`.
-* To view ansible run logs (debug test failures), click :guilabel:`ansible/check-> details ->  failure job -> Logs -> controller -> ansible-debug.txt or ansible-debug.html`.
+* To view a failure report,  click :guilabel:`ansible/check` and select the failed test.
 * To view logs while the test is running, check for your PR number in the `Zull status board <https://dashboard.zuul.ansible.com/t/ansible/status>`_.
 * To fix static test failure locally, run the  :command:`tox -e black` **inside the root folder of collection**.
+
+To view The Ansible run logs and debug test failures:
+
+#. Click the failed job to get the summary, and click :guilabel:`Logs` for the log.
+#. Click :guilabel:`console` and scroll down to find the failed test.
+#. Click :guilabel:`>` next to the failed test for complete details.
 
 
 Integration test structure
@@ -491,8 +498,8 @@ Integration test structure
 
 Each test case should generally follow this pattern:
 
-* setup —> test —> assert —> test again (idempotent) —> assert —> teardown (if needed) -> done. This keeps test playbooks from becoming monolithic and difficult to troubleshoot.
-* Include a name for each task that is not an assertion. You can add names to assertions too, but it is easier to identify the broken task within a failed test if you add a name for each task.
+* setup —> test —> assert —> test again (for idempotency) —> assert —> tear down (if needed) -> done. This keeps test playbooks from becoming monolithic and difficult to troubleshoot.
+* Include a name for each task that is not an assertion. You can add names to assertions as well, but it is easier to identify the broken task within a failed test if you add a name for each task.
 * Files containing test cases must end in ``.yaml``
 
 Implementation
@@ -586,32 +593,42 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
 Detecting test resources at runtime
 ...................................
 
-Your tests to detect resources (such as interfaces) at runtime rather than hard-coding them into the test. This allows the test to run on a variety of systems.
+Your tests should detect resources (such as interfaces) at runtime rather than hard-coding them into the test. This allows the test to run on a variety of systems.
 
-See an example of this at https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/prepare_nxos_tests/tasks/main.yml#L23.
+For example:
+
+.. code-block:: yaml
+
+  - name: Collect interface list
+    connection: ansible.netcommon.network_cli
+    register: intout
+    cisco.nxos.nxos_command:
+      commands:
+        - show interface brief | json
+
+  - set_fact:
+      intdataraw: "{{ intout.stdout_lines[0]['TABLE_interface']['ROW_interface'] }}"
+
+  - set_fact:
+      nxos_int1: '{{ intdataraw[1].interface }}'
+
+  - set_fact:
+      nxos_int2: '{{ intdataraw[2].interface }}'
+
+  - set_fact:
+      nxos_int3: '{{ intdataraw[3].interface }}'
+
+
+See the complete test example of this at https://github.com/ansible-collections/cisco.nxos/blob/master/tests/integration/targets/prepare_nxos_tests/tasks/main.yml.
 
 
 Running network integration tests
 ..................................
 
-Create an inventory file that points to your test machines. The inventory group should match the platform name (for example, ``eos``, ``ios``).
-
-To run these tests:
-
-.. code-block:: console
-
-   ansible-test network-integration  --inventory ~/myinventory -vvv vyos_facts
-   ansible-test network-integration  --inventory ~/myinventory -vvv vyos_.*
-
 Ansible uses Zuul to run an integration test suite on every PR, including new tests introduced by that PR. To find and fix problems in network modules, run the network integration test locally before you submit a PR.
 
-To run the network integration tests, use a command in the form:
 
-.. code-block:: bash
-
-    ansible-test network-integration --inventory /path/to/inventory tests_to_run
-
-First, define a network inventory file:
+First, create an inventory file that points to your test machines. The inventory group should match the platform name (for example, ``eos``, ``ios``):
 
 .. code-block:: bash
 
@@ -620,13 +637,22 @@ First, define a network inventory file:
    ${EDITOR:-vi} inventory.networking
    # Add in machines for the platform(s) you wish to test
 
+To run these network integration tests, use ``ansible-test network-integration --inventory </path/to/inventory> <tests_to_run>``:
+
+.. code-block:: console
+
+   ansible-test network-integration  --inventory ~/myinventory -vvv vyos_facts
+   ansible-test network-integration  --inventory ~/myinventory -vvv vyos_.*
+
+
+
 To run all network tests for a particular platform:
 
 .. code-block:: bash
 
    ansible-test network-integration --inventory  /path/to-collection-module/test/integration/inventory.networking vyos_.*
 
-This example will run against all vyos modules. Note that ``vyos_.*`` is a regex match, not a bash wildcard - include the `.` if you modify this example.
+This example will run against all ``vyos`` modules. Note that ``vyos_.*`` is a regex match, not a bash wildcard - include the `.` if you modify this example.
 
 To run integration tests for a specific module:
 
@@ -668,7 +694,7 @@ High-level unit test requirements that new resource modules should follow:
 
 #. Write test cases for all the states with all possible combinations of config values.
 #. Write test cases to test the error conditions ( negative scenarios).
-#. Check the  value of ``changed`` and ``commands`` keys a in every test case.
+#. Check the  value of ``changed`` and ``commands`` keys in every test case.
 
 Unit test cases are run as part of the Zuul CI. Unit test suites are run on the latest python version supported by the CI setup.
 
@@ -689,17 +715,12 @@ modules.
 See :ref:`testing_units` and :ref:`testing_units_modules` for general documentation on Ansible unit tests for modules.
 Please read those pages first to understand unit tests and why and when you should use them.
 
-.. note::
-
-   The structure of the unit tests matches
-   the structure of the code base, so the tests that reside in the :file:`test/units/modules/network` directory
-   are organized by module groups.
 
 Using mock objects to unit test Ansible network resource modules
 ----------------------------------------------------------------
 
 
-Mock objects (from https://docs.python.org/3/library/unittest.mock.html) can be very
+`Mock objects <https://docs.python.org/3/library/unittest.mock.html>`_ can be very
 useful in building unit tests for special or difficult cases, but they can also
 lead to complex and confusing coding situations.  One good use for mocks would be to
 simulate an API. The ``mock`` Python package is bundled with Ansible (use

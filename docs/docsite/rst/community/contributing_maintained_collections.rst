@@ -5,7 +5,7 @@
 Contributing to Ansible-maintained Collections
 ***********************************************
 
-The Ansible team welcomes community contributions to the collections maintained by Red Hat Ansible Engineering. This section describes how to open issue and create PRs with the required testing to speed merging your contributions.
+The Ansible team welcomes community contributions to the collections maintained by Red Hat Ansible Engineering. This section describes how you can open issues and create PRs with the required testing before your PR can be merged.
 
 .. contents::
    :local:
@@ -239,7 +239,7 @@ We welcome contributions to Ansible-maintained collections. Because these collec
 The following scenarios use the ``arista.eos`` to help explain when to contribute to the Ansible-maintained collection, and when to propose your change or idea to the related community collection:
 
 
-1. You want to fix a problem in the ``arista.eos`` Ansible-maintained collection. Create the PR directly in the `arista.eos collection GitHub repository <https://github.com/ansible-collections/arista.eos>`_. It must meet the :ref:`ansible_collection_merge_requirements`.
+1. You want to fix a problem in the ``arista.eos`` Ansible-maintained collection. Create the PR directly in the `arista.eos collection GitHub repository <https://github.com/ansible-collections/arista.eos>`_. Apply all the :ref:`merge requirements <ansible_collection_merge_requirements>`.
 
 2. You want to add a new Ansible module for Arista. Your options are one of the following:
 
@@ -257,7 +257,7 @@ Requirements to merge your PR
 Your PR must meet the following requirements before it can merge into an Ansible-maintained collection:
 
 
-#. Is in the intended scope of the collection. Communicate with the appropriate Ansible sponsor listed in the :ref:`Ansible-maintained collection table <ansible-collection-table>` for help.
+#. The PR is in the intended scope of the collection. Communicate with the appropriate Ansible sponsor listed in the :ref:`Ansible-maintained collection table <ansible-collection-table>` for help.
 #. For network and security domains, the PR follows the :ref:`resource module development principles <developing_resource_modules>`.
 #. Passes :ref:`sanity tests and tox <tox_resource_modules>`.
 #. Passes unit, and integration tests, as listed in the :ref:`Ansible-maintained collection table <ansible-collection-table>` and described in :ref:`testing_resource_modules`.
