@@ -728,37 +728,36 @@ simulate an API. The ``mock`` Python package is bundled with Ansible (use
 
 You can mock the device connection and output from the device as follows:
 
-
 .. code-block:: python
 
-   self.mock_get_config = patch( "ansible_collections.ansible.netcommon.plugins.module_utils.network.common.network.Config.get_config"
-   )
-   self.get_config = self.mock_get_config.start()
+  self.mock_get_config = patch( "ansible_collections.ansible.netcommon.plugins.module_utils.network.common.network.Config.get_config"
+  )
+  self.get_config = self.mock_get_config.start()
 
-   self.mock_load_config = patch(
-   "ansible_collections.ansible.netcommon.plugins.module_utils.network.common.network.Config.load_config"
-   )
-   self.load_config = self.mock_load_config.start()
+  self.mock_load_config = patch(
+  "ansible_collections.ansible.netcommon.plugins.module_utils.network.common.network.Config.load_config"
+  )
+  self.load_config = self.mock_load_config.start()
 
-   self.mock_get_resource_connection_config = patch(
+  self.mock_get_resource_connection_config = patch(
   "ansible_collections.ansible.netcommon.plugins.module_utils.network.common.cfg.base.get_resource_connection"
-   )
-   self.get_resource_connection_config = (self.mock_get_resource_connection_config.start())
+  )
+  self.get_resource_connection_config = (self.mock_get_resource_connection_config.start())
 
-   self.mock_get_resource_connection_facts = patch(
+  self.mock_get_resource_connection_facts = patch(
   "ansible_collections.ansible.netcommon.plugins.module_utils.network.common.facts.facts.get_resource_connection"
-   )
-   self.get_resource_connection_facts = (self.mock_get_resource_connection_facts.start())
+  )
+  self.get_resource_connection_facts = (self.mock_get_resource_connection_facts.start())
 
-   self.mock_edit_config = patch(
+  self.mock_edit_config = patch(
   "ansible_collections.arista.eos.plugins.module_utils.network.eos.providers.providers.CliProvider.edit_config"
-   )
-   self.edit_config = self.mock_edit_config.start()
+  )
+  self.edit_config = self.mock_edit_config.start()
 
-   self.mock_execute_show_command = patch(
+  self.mock_execute_show_command = patch(
   "ansible_collections.arista.eos.plugins.module_utils.network.eos.facts.l2_interfaces.l2_interfaces.L2_interfacesFacts.get_device_data"
-   )
-   self.execute_show_command = self.mock_execute_show_command.start()
+  )
+  self.execute_show_command = self.mock_execute_show_command.start()
 
 
 The facts file of the module now includes a new method, ``get_device_data``. Call ``get_device_data`` here to emulate the device output.
