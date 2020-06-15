@@ -18,7 +18,7 @@ Network and security devices separate configuration into sections (such as inter
 #. Converts the returned configuration into key-value pairs.
 #. Places those key-value pairs into an internal agnostic structured data format.
 
-Now that the configuration data is normalized, the user can update and modify the data and then use the resource module to send the configuration data back to the device. This results in a full round trip configuration update without the need for manual parsing, data manipulation, and data model management.
+Now that the configuration data is normalized, the user can update and modify the data and then use the resource module to send the configuration data back to the device. This results in a full round-trip configuration update without the need for manual parsing, data manipulation, and data model management.
 
 The resource module has two top-level keys - ``config`` and ``state``:
 
@@ -51,7 +51,7 @@ parsed
   Ansible parses the configuration from the ``running_configuration`` option into Ansible structured data in the ``parsed`` key in the result. Note this does not gather the configuration from the network device so this state can be used offline.
 
 
-A new module that does not have these state values (and has instead present and absent) should be proposed as part of the associated community collection, not part of an Ansible-maintained collection.
+Modules in Ansible-maintained collections must support these state values. If you develop a module with only "present" and "absent" for state, you may submit it to a community collection.
 
 .. note::
 
@@ -71,17 +71,18 @@ The Ansible Engineering team ensures the module design and code pattern  within 
 
 The highlevel process for developing a resource module is:
 
-#. Download the latest version of the `resource module builder <https://github.com/ansible-network/resource_module_builder>`_.
 #. Create and share a resource model design in the `resource module models repository <https://github.com/ansible-network/resource_module_models>`_ as a PR for review.
-#. Create a collection scaffold from your approved resource model.
+#. Download the latest version of the `resource module builder <https://github.com/ansible-network/resource_module_builder>`_.
+#. Run the ``resource module builder`` to create a collection scaffold from your approved resource model.
 #. Write the code to implement your resource module.
 #. Develop integration and unit tests to verify your resource module.
 #. Create a PR to the appropriate collection that you want to add your new resource module to. See :ref:`contributing_maintained_collections` for details on determining the correct collection for your module.
 
-Understanding the resource module builder
------------------------------------------
 
-The resource module builder is an Ansible Playbook that helps developers scaffold and maintain an Ansible resource module.
+Understanding the model and resource module builder
+-----------------------------------------------------
+
+The resource module builder is an Ansible Playbook that helps developers scaffold and maintain an Ansible resource module. It uses a model as the single source of truth for the module. This model is a ``yaml`` file that is used for the module DOCUMENTATION section and the argument spec.
 
 The resource module builder has the following capabilities:
 
@@ -112,13 +113,13 @@ To access the resource module builder:
 Creating a model
 -----------------
 
-You must create a model for your new resource. The resource module builder uses this model to create:
+You must create a model for your new resource. The model is the single source of truth for both the argspec and docstring, keeping them in sync. Once your model is approved, you can use the resource module builder to generate three items based on the model:
 
 * The scaffold for a new module
 * The argspec for the new module
 * The docstring for the new module
 
-The model is then the single source of truth for both the argspec and docstring, keeping them in sync. Use the resource module builder to generate this scaffolding. For any subsequent updates to the module, update the model first and use the resource module builder to update the module argspec and docstring.
+For any subsequent changes to the functionality, update the model first and use the resource module builder to update the module argspec and docstring.
 
 For example, the resource model builder includes the ``myos_interfaces.yml`` sample in the :file:`models` directory, as seen below:
 
@@ -479,7 +480,7 @@ High-level integration test requirements for new resource modules are as follows
 
 .. _using_zuul_resource_modules:
 
-We use Zuul CI to run the integration test.
+We use Zuul as the CI to run the integration test.
 
 * To view the report, click :guilabel:`Details` on the CI comment in the PR
 * To view a failure report,  click :guilabel:`ansible/check` and select the failed test.
@@ -696,9 +697,9 @@ High-level unit test requirements that new resource modules should follow:
 #. Write test cases to test the error conditions ( negative scenarios).
 #. Check the  value of ``changed`` and ``commands`` keys in every test case.
 
-Unit test cases are run as part of the Zuul CI. Unit test suites are run on the latest python version supported by the CI setup.
+We run all unit test cases on our Zuul test suite, on the latest python version supported by our CI setup.
 
-Use the :ref:`same procedure <using_zuul_resource_modules>` as the integration tests to view the Zuul unit tests reports and logs.
+Use the :ref:`same procedure <using_zuul_resource_modules>` as the integration tests to view Zuul unit tests reports and logs.
 
 See  :ref:`unit module testing <testing_units_modules>` for general unit test details.
 
@@ -785,8 +786,6 @@ for a practical example.
 
 .. seealso::
 
-   :ref:`testing_units`
-       Ansible unit tests documentation
    :ref:`testing_units`
        Deep dive into developing unit tests for Ansible modules
    :ref:`testing_running_locally`

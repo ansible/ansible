@@ -18,7 +18,7 @@ The following table shows:
 *  **Ansible-maintained collection** -  Click the link to the collection on Galaxy, then click the ``repo`` button in Galaxy to find the GitHub repository for this collection.
 * **Related community collection** - Collection that holds community-created content (modules, roles, and so on) that may also be of interest to a user of the Ansible-maintained collection. You can, for example, add new modules to the community collection as a technical preview before the content is moved to the Ansible-maintained collection.
 * **Sponsor** - Working group that manages the collections. You can join the meetings to discuss important proposed changes and enhancements to the collections.
-* **Test requirements** - Testing required for any new or changed content for the collection.
+* **Test requirements** - Testing required for any new or changed content for the Ansible-maintained collection.
 * **Developer details** - Describes whether the Ansible-maintained collection accepts direct community issues and PRs for existing collection content, as well as more specific developer guidelines based on the collection type.
 
 
@@ -49,7 +49,7 @@ The following table shows:
   <table id="ansible-collection-table">
     <tr>
       <th colspan="3">Collection details</th>
-      <th colspan="4">Test requirements</th>
+      <th colspan="4">Test requirements: Ansible collections</th>
       <th colspan="2">Developer details</th>
     </tr>
     <tr>
@@ -231,8 +231,8 @@ The following table shows:
 
 .. _which_collection:
 
-Deciding which collection to contribute to
-==============================================
+Deciding where your contribution belongs
+=========================================
 
 We welcome contributions to Ansible-maintained collections. Because these collections are part of a downstream supported Red Hat product, the criteria for contribution, testing, and release may be higher than other community collections. The related community collections (such as ``community.general`` and ``community.network``) have less-stringent requirements and are a great place for new functionality that may become part of the Ansible-maintained collection in a future release.
 
@@ -243,9 +243,12 @@ The following scenarios use the ``arista.eos`` to help explain when to contribut
 
 2. You want to add a new Ansible module for Arista. Your options are one of the following:
 
-    * Place the new module in the  ``arista.eos`` collection or a new collection in the ``arista`` namespace (Either option requires approval from Arista and Red Hat).
-    * Place the new module in the ``community.network`` collection (requires network community approval) or your own collection in your own namespace (no approvals required).
+    * Propose a new module in the ``arista.eos`` collection (requires approval from Arista and Red Hat).
+    * Propose a new collection in the ``arista`` namespace (requires approval from Arista and Red Hat).
+    * Propose a new module in the ``community.network`` collection (requires network community approval).
+    * Place your new module in a collection in your own namespace (no approvals required).
 
+  
 Most new content should go into either a related community collection or your own collection first so that is well established in the community before you can propose adding it to the  ``arista`` namespace, where inclusion and maintenance criteria are much higher.
 
 
@@ -261,6 +264,6 @@ Your PR must meet the following requirements before it can merge into an Ansible
 #. For network and security domains, the PR follows the :ref:`resource module development principles <developing_resource_modules>`.
 #. Passes :ref:`sanity tests and tox <tox_resource_modules>`.
 #. Passes unit, and integration tests, as listed in the :ref:`Ansible-maintained collection table <ansible-collection-table>` and described in :ref:`testing_resource_modules`.
-#. Follows Ansible :ref:`developing_modules`  and :ref:`developing_collections` guidelines.
+#. Follows Ansible  guidelines. See :ref:`developing_modules`  and :ref:`developing_collections`.
 #. Addresses all review comments.
 #. Includes an appropriate :ref:`changelog <community_changelogs>`.
