@@ -81,6 +81,36 @@ def _display_collection(collection, cwidth=10, vwidth=7, min_cwidth=10, min_vwid
     ))
 
 
+def _display_collection_info(collection):
+    artifact_info = collection.artifact_info(collection.b_path)
+    collection_info = artifact_info['manifest_file']['collection_info']
+
+    data = """Collection Info
+---------------
+Namespace: {namespace}
+Name: {name}
+Version: {version}
+Authors: {authors}
+Licenses: {licenses}
+Repository: {repository}
+Documentation: {documentation}
+Homepage: {homepage}
+Issues: {issues}
+    """.format(
+    namespace=collection.namespace,
+    name=collection.name,
+    version=collection.latest_version,
+    authors=", ".join(collection_info['authors']),
+    licenses=", ".join(collection_info['license']),
+    repository=collection_info['repository'],
+    documentation=collection_info['documentation'],
+    homepage=collection_info['homepage'],
+    issues=collection_info['issues'],
+    )
+
+    display.display("%s" % data)
+
+
 def _get_collection_widths(collections):
     if is_iterable(collections):
         fqcn_set = set(to_text(c) for c in collections)
@@ -175,6 +205,7 @@ class GalaxyCLI(CLI):
         self.add_install_options(collection_parser, parents=[common, force])
         self.add_list_options(collection_parser, parents=[common, collections_path])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
+        self.add_info_options(collection_parser, parents=[common, collections_path])
 
         # Add sub parser for the Galaxy role actions
         role = type_parser.add_parser('role', help='Manage an Ansible Galaxy role.')
@@ -312,10 +343,15 @@ class GalaxyCLI(CLI):
                                   help='Identify with github token rather than username and password.')
 
     def add_info_options(self, parser, parents=None):
-        info_parser = parser.add_parser('info', parents=parents, help='View more details about a specific role.')
-        info_parser.set_defaults(func=self.execute_info)
+        galaxy_type = 'role'
+        metavar = 'role_name[,version]'
+        if parser.metavar == 'COLLECTION_ACTION':
+            galaxy_type = 'collection'
+            metavar = 'collection_name'
 
-        info_parser.add_argument('args', nargs='+', help='role', metavar='role_name[,version]')
+        info_parser = parser.add_parser('info', parents=parents, help='View more details about a specific {0}.'.format(galaxy_type))
+        info_parser.set_defaults(func=self.execute_info)
+        info_parser.add_argument('args', nargs='+', help='{0}'.format(galaxy_type), metavar=metavar)
 
     def add_verify_options(self, parser, parents=None):
         galaxy_type = 'collection'
@@ -927,7 +963,74 @@ class GalaxyCLI(CLI):
 
     def execute_info(self):
         """
-        prints out detailed information about an installed role as well as info available from the galaxy API.
+        Show info for an installed collection or role
+        """
+        if context.CLIARGS['type'] == 'role':
+            self.execute_info_role()
+        elif context.CLIARGS['type'] == 'collection':
+            self.execute_info_collection()
+
+    def execute_info_collection(self):
+        """
+        Print out information about an installed collection.
+        """
+        collection_name = context.CLIARGS['args'][0]
+        collections_search_paths = set(context.CLIARGS['collections_path'])
+        default_collections_path = C.config.get_configuration_definition('COLLECTIONS_PATHS').get('default')
+
+        warnings = []
+        path_found = False
+        collection_found = False
+
+        for path in collections_search_paths:
+            collection_path = GalaxyCLI._resolve_path(path)
+            if not os.path.exists(path):
+                if path in default_collections_path:
+                    # don't warn for missing default paths
+                    continue
+                warnings.append("- the configured path {0} does not exist.".format(collection_path))
+                continue
+
+            if not os.path.isdir(collection_path):
+                warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
+                continue
+
+            path_found = True
+
+            validate_collection_name(collection_name)
+            namespace, collection = collection_name.split('.')
+
+            collection_path = validate_collection_path(collection_path)
+            b_collection_path = to_bytes(os.path.join(collection_path, namespace, collection), errors='surrogate_or_strict')
+
+            if not os.path.exists(b_collection_path):
+                warnings.append("- unable to find {0} in collection paths".format(collection_name))
+                continue
+
+            if not os.path.isdir(collection_path):
+                warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
+                continue
+
+            collection_found = True
+            collection = CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=True)
+            _display_collection_info(collection)
+            break
+
+        # Do not warn if the specific collection was found in any of the search paths
+        if collection_found:
+            warnings = []
+
+        for w in warnings:
+            display.warning(w)
+
+        if not path_found:
+            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --collections-path")
+
+        return 0
+
+    def execute_info_role(self):
+        """
+        Prints out detailed information about an installed role as well as info available from the galaxy API.
         """
 
         roles_path = context.CLIARGS['roles_path']
