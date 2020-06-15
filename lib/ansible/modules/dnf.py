@@ -198,6 +198,13 @@ options:
     type: bool
     default: "no"
     version_added: "2.10"
+  nobest:
+    description:
+      - Set best option to False, so that transactions are not limited to best candidates only.
+    required: false
+    type: bool
+    default: "no"
+    version_added: "2.10"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -571,6 +578,10 @@ class DnfModule(YumDnf):
         # Set skip_broken (in dnf this is strict=0)
         if self.skip_broken:
             conf.strict = 0
+
+        # Set best
+        if self.nobest:
+        	conf.best = 0
 
         if self.download_only:
             conf.downloadonly = True

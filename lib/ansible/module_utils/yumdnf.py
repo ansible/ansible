@@ -41,6 +41,7 @@ yumdnf_argument_spec = dict(
         releasever=dict(default=None),
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),
+        nobest=dict(type='bool', default=False),
         # removed==absent, installed==present, these are accepted as aliases
         state=dict(type='str', default=None, choices=['absent', 'installed', 'latest', 'present', 'removed']),
         update_cache=dict(type='bool', default=False, aliases=['expire-cache']),
@@ -86,6 +87,7 @@ class YumDnf(with_metaclass(ABCMeta, object)):
         self.releasever = self.module.params['releasever']
         self.security = self.module.params['security']
         self.skip_broken = self.module.params['skip_broken']
+        self.nobest = self.module.params['nobest']
         self.state = self.module.params['state']
         self.update_only = self.module.params['update_only']
         self.update_cache = self.module.params['update_cache']
