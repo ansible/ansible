@@ -41,7 +41,6 @@ yumdnf_argument_spec = dict(
         releasever=dict(default=None),
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),
-        nobest=dict(type='bool', default=False),
         # removed==absent, installed==present, these are accepted as aliases
         state=dict(type='str', default=None, choices=['absent', 'installed', 'latest', 'present', 'removed']),
         update_cache=dict(type='bool', default=False, aliases=['expire-cache']),

@@ -336,6 +336,7 @@ class DnfModule(YumDnf):
 
         # DNF specific args that are not part of YumDnf
         self.allowerasing = self.module.params['allowerasing']
+        self.nobest = self.module.params['nobest']
 
     def is_lockfile_pid_valid(self):
         # FIXME? it looks like DNF takes care of invalid lock files itself?
@@ -581,7 +582,7 @@ class DnfModule(YumDnf):
 
         # Set best
         if self.nobest:
-        	conf.best = 0
+            conf.best = 0
 
         if self.download_only:
             conf.downloadonly = True
