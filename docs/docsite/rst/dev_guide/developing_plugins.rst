@@ -219,7 +219,7 @@ but with an extra option so you can see how configuration works in Ansible versi
     callback: timer
     callback_type: aggregate
     requirements:
-      - whitelist in configuration
+      - enable in configuration
     short_description: Adds time to play stats
     version_added: "2.0"
     description:
@@ -248,7 +248,7 @@ but with an extra option so you can see how configuration works in Ansible versi
       CALLBACK_NAME = 'namespace.collection_name.timer'
 
       # only needed if you ship it and don't want to enable by default
-      CALLBACK_NEEDS_WHITELIST = True
+      CALLBACK_NEEDS_ENABLING = True
 
       def __init__(self):
 
@@ -451,12 +451,12 @@ This ``get_vars`` method just needs to return a dictionary structure with the va
 
 Since Ansible version 2.4, vars plugins only execute as needed when preparing to execute a task. This avoids the costly 'always execute' behavior that occurred during inventory construction in older versions of Ansible. Since Ansible version 2.10, vars plugin execution can be toggled by the user to run when preparing to execute a task or after importing an inventory source.
 
-Since Ansible 2.10, vars plugins can require whitelisting. Vars plugins that don't require whitelisting will run by default. To require whitelisting for your plugin set the class variable ``REQUIRES_WHITELIST``:
+Since Ansible 2.10, vars plugins can require enabling. Vars plugins that don't require enabling will run by default. To require enabling for your plugin set the class variable ``REQUIRES_ENABLING``:
 
 .. code-block:: python
 
     class VarsModule(BaseVarsPlugin):
-        REQUIRES_WHITELIST = True
+        REQUIRES_ENABLING = True
 
 Include the ``vars_plugin_staging`` documentation fragment to allow users to determine when vars plugins run.
 
@@ -478,7 +478,7 @@ Include the ``vars_plugin_staging`` documentation fragment to allow users to det
           - vars_plugin_staging
     '''
 
-Also since Ansible 2.10, vars plugins can reside in collections. Vars plugins in collections must require whitelisting to be functional.
+Also since Ansible 2.10, vars plugins can reside in collections. Vars plugins in collections must require enabling to be functional.
 
 For example vars plugins, see the source code for the `vars plugins included with Ansible Core
 <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/vars>`_.
