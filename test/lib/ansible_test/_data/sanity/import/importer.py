@@ -19,6 +19,7 @@ def main():
     import subprocess
     import sys
     import traceback
+    import types
     import warnings
 
     ansible_path = os.path.dirname(os.path.dirname(ansible.__file__))
@@ -94,13 +95,22 @@ def main():
 
         collection_loader = _AnsibleCollectionFinder(paths=[collection_root])
         collection_loader._install()  # pylint: disable=protected-access
-
-        # remove all modules under the ansible package
-        list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == 'ansible']))
-
     else:
         # do not support collection loading when not testing a collection
         collection_loader = None
+
+    # remove all modules under the ansible package
+    list(map(sys.modules.pop, [m for m in sys.modules if m.partition('.')[0] == ansible.__name__]))
+
+    # pre-load an empty ansible package to prevent unwanted code in __init__.py from loading
+    # this more accurately reflects the environment that AnsiballZ runs modules under
+    # it also avoids issues with imports in the ansible package that are not allowed
+    ansible_module = types.ModuleType(ansible.__name__)
+    ansible_module.__file__ = ansible.__file__
+    ansible_module.__path__ = ansible.__path__
+    ansible_module.__package__ = ansible.__package__
+
+    sys.modules[ansible.__name__] = ansible_module
 
     class ImporterAnsibleModuleException(Exception):
         """Exception thrown during initialization of ImporterAnsibleModule."""
@@ -133,7 +143,7 @@ def main():
                 if is_name_in_namepace(fullname, ['ansible.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
 
-                if os.path.exists(convert_ansible_name_to_absolute_path(fullname)):
+                if any(os.path.exists(candidate_path) for candidate_path in convert_ansible_name_to_absolute_paths(fullname)):
                     return self  # blacklist ansible files that exist
 
                 return None  # ansible file does not exist, do not blacklist
@@ -318,12 +328,15 @@ def main():
         for module in sorted(changed):
             report_message(path, 0, 0, 'reload', 'reloading of "%s" in sys.modules is not supported' % module, messages)
 
-    def convert_ansible_name_to_absolute_path(name):
+    def convert_ansible_name_to_absolute_paths(name):
         """Calculate the module path from the given name.
         :type name: str
-        :rtype: str
+        :rtype: list[str]
         """
-        return os.path.join(ansible_path, name.replace('.', os.path.sep))
+        return [
+            os.path.join(ansible_path, name.replace('.', os.path.sep)),
+            os.path.join(ansible_path, name.replace('.', os.path.sep)) + '.py',
+        ]
 
     def convert_relative_path_to_name(path):
         """Calculate the module name from the given path.
