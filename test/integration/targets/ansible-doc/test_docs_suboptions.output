@@ -1,0 +1,43 @@
+> TEST_DOCS_SUBOPTIONS    (library/test_docs_suboptions.py)
+
+        Test module
+
+OPTIONS (= is mandatory):
+
+- with_suboptions
+        An option with suboptions.
+        Use with care.
+        [Default: (null)]
+        type: dict
+
+        SUBOPTIONS:
+
+        - a_first
+            The first suboption.
+            [Default: (null)]
+            type: str
+
+        - m_middle
+            The suboption in the middle.
+            Has its own suboptions.
+            [Default: (null)]
+
+            SUBOPTIONS:
+
+            - a_suboption
+                A sub-suboption.
+                [Default: (null)]
+                type: str
+
+        - z_last
+            The last suboption.
+            [Default: (null)]
+            type: str
+
+
+AUTHOR: Ansible Core Team
+
+EXAMPLES:
+
+
+

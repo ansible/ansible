@@ -2,7 +2,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    vars: noop_vars_plugin
+    vars: testns.testcol.noop_vars_plugin
     short_description: Do NOT load host and group vars
     description: don't test loading host and group vars from a collection
     options:

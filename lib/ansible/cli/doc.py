@@ -30,7 +30,12 @@ from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
-from ansible.utils.plugin_docs import BLACKLIST, untag_versions_and_dates, get_docstring, get_versioned_doclink
+from ansible.utils.plugin_docs import (
+    BLACKLIST,
+    remove_current_collection_from_versions_and_dates,
+    get_docstring,
+    get_versioned_doclink,
+)
 
 display = Display()
 
@@ -230,13 +235,6 @@ class DocCLI(CLI):
                 plugin_docs[plugin] = {'doc': doc, 'examples': plainexamples, 'return': returndocs, 'metadata': metadata}
 
             if do_json:
-                # Some changes to how json docs are formatted
-                for plugin, doc_data in plugin_docs.items():
-                    try:
-                        doc_data['return'] = yaml.safe_load(doc_data['return'])
-                    except Exception:
-                        pass
-
                 jdump(plugin_docs)
 
             else:
@@ -330,11 +328,20 @@ class DocCLI(CLI):
             raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
 
         doc['filename'] = filename
-        untag_versions_and_dates(doc, '%s:' % (collection_name, ), is_module=(plugin_type == 'module'))
         return doc, plainexamples, returndocs, metadata
 
     @staticmethod
     def format_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
+        collection_name = 'ansible.builtin'
+        if plugin.startswith('ansible_collections.'):
+            collection_name = '.'.join(plugin.split('.')[1:3])
+
+        # TODO: do we really want this?
+        # add_collection_to_versions_and_dates(doc, '(unknown)', is_module=(plugin_type == 'module'))
+        # remove_current_collection_from_versions_and_dates(doc, collection_name, is_module=(plugin_type == 'module'))
+        # remove_current_collection_from_versions_and_dates(
+        #     returndocs, collection_name, is_module=(plugin_type == 'module'), return_docs=True)
+
         # assign from other sections
         doc['plainexamples'] = plainexamples
         doc['returndocs'] = returndocs
@@ -503,7 +510,7 @@ class DocCLI(CLI):
                                                    Dumper=AnsibleDumper).split('\n')]))
 
     @staticmethod
-    def add_fields(text, fields, limit, opt_indent):
+    def add_fields(text, fields, limit, opt_indent, return_values=False, base_indent=''):
 
         for o in sorted(fields):
             opt = fields[o]
@@ -516,7 +523,7 @@ class DocCLI(CLI):
             else:
                 opt_leadin = "-"
 
-            text.append("%s %s" % (opt_leadin, o))
+            text.append("%s%s %s" % (base_indent, opt_leadin, o))
 
             if isinstance(opt['description'], list):
                 for entry_idx, entry in enumerate(opt['description'], 1):
@@ -540,19 +547,17 @@ class DocCLI(CLI):
                     choices = "(Choices: " + ", ".join(to_text(i) for i in opt['choices']) + ")"
                 del opt['choices']
             default = ''
-            if 'default' in opt or not required:
-                default = "[Default: %s" % to_text(opt.pop('default', '(null)')) + "]"
+            if not return_values:
+                if 'default' in opt or not required:
+                    default = "[Default: %s" % to_text(opt.pop('default', '(null)')) + "]"
 
             text.append(textwrap.fill(DocCLI.tty_ify(aliases + choices + default), limit,
                                       initial_indent=opt_indent, subsequent_indent=opt_indent))
 
-            if 'options' in opt:
-                text.append("%soptions:\n" % opt_indent)
-                DocCLI.add_fields(text, opt.pop('options'), limit, opt_indent + opt_indent)
-
-            if 'spec' in opt:
-                text.append("%sspec:\n" % opt_indent)
-                DocCLI.add_fields(text, opt.pop('spec'), limit, opt_indent + opt_indent)
+            suboptions = []
+            for subkey in ('options', 'suboptions', 'contains', 'spec'):
+                if subkey in opt:
+                    suboptions.append((subkey, opt.pop(subkey)))
 
             conf = {}
             for config in ('env', 'ini', 'yaml', 'vars', 'keywords'):
@@ -578,7 +583,13 @@ class DocCLI(CLI):
                     text.append(DocCLI.tty_ify('%s%s: %s' % (opt_indent, k, ', '.join(opt[k]))))
                 else:
                     text.append(DocCLI._dump_yaml({k: opt[k]}, opt_indent))
-            text.append('')
+
+            for subkey, subdata in suboptions:
+                text.append('')
+                text.append("%s%s:\n" % (opt_indent, subkey.upper()))
+                DocCLI.add_fields(text, subdata, limit, opt_indent + '    ', return_values, opt_indent)
+            if not suboptions:
+                text.append('')
 
     @staticmethod
     def get_man_text(doc):
@@ -602,9 +613,14 @@ class DocCLI(CLI):
         if doc.get('deprecated', False):
             text.append("DEPRECATED: \n")
             if isinstance(doc['deprecated'], dict):
-                if 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
-                    doc['deprecated']['removed_in'] = doc['deprecated']['version']
-                text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
+                if 'removed_at_date' in doc['deprecated']:
+                    text.append(
+                        "\tReason: %(why)s\n\tWill be removed in a release after %(removed_at_date)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated')
+                    )
+                else:
+                    if 'version' in doc['deprecated'] and 'removed_in' not in doc['deprecated']:
+                        doc['deprecated']['removed_in'] = doc['deprecated']['version']
+                    text.append("\tReason: %(why)s\n\tWill be removed in: Ansible %(removed_in)s\n\tAlternatives: %(alternative)s" % doc.pop('deprecated'))
             else:
                 text.append("%s" % doc.pop('deprecated'))
             text.append("\n")
@@ -685,9 +701,6 @@ class DocCLI(CLI):
 
         if doc.get('returndocs', False):
             text.append("RETURN VALUES:")
-            if isinstance(doc['returndocs'], string_types):
-                text.append(doc.pop('returndocs'))
-            else:
-                text.append(yaml.dump(doc.pop('returndocs'), indent=2, default_flow_style=False))
+            DocCLI.add_fields(text, doc.pop('returndocs'), limit, opt_indent, return_values=True)
 
         return "\n".join(text)

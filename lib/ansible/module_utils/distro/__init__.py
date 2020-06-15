@@ -23,13 +23,12 @@ __metaclass__ = type
 Compat distro library.
 '''
 # The following makes it easier for us to script updates of the bundled code
-_BUNDLED_METADATA = {"pypi_name": "distro", "version": "1.4.0"}
+_BUNDLED_METADATA = {"pypi_name": "distro", "version": "1.5.0"}
 
 # The following additional changes have been made:
-# * The import of argparse has been moved to __main__ (py2.6 compat)
+# * Remove optparse since it is not needed for our use.
 # * A format string including {} has been changed to {0} (py2.6 compat)
-# * Port two calls from subprocess.check_output to subprocess.Popen().communicate()
-#   (py2.6 compat)
+# * Port two calls from subprocess.check_output to subprocess.Popen().communicate() (py2.6 compat)
 
 
 import sys

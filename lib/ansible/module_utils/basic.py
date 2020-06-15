@@ -725,10 +725,10 @@ class AnsibleModule(object):
         warn(warning)
         self.log('[WARNING] %s' % warning)
 
-    def deprecate(self, msg, version=None, date=None):
+    def deprecate(self, msg, version=None, date=None, collection_name=None):
         if version is not None and date is not None:
             raise AssertionError("implementation error -- version and date must not both be set")
-        deprecate(msg, version=version, date=date)
+        deprecate(msg, version=version, date=date, collection_name=collection_name)
         # For compatibility, we accept that neither version nor date is set,
         # and treat that the same as if version would haven been set
         if date is not None:
@@ -1414,7 +1414,8 @@ class AnsibleModule(object):
         for deprecation in deprecated_aliases:
             if deprecation['name'] in param.keys():
                 deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
-                          version=deprecation.get('version'), date=deprecation.get('date'))
+                          version=deprecation.get('version'), date=deprecation.get('date'),
+                          collection_name=deprecation.get('collection_name'))
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
@@ -1430,7 +1431,8 @@ class AnsibleModule(object):
                                "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
 
         for message in list_deprecations(spec, param):
-            deprecate(message['msg'], version=message.get('version'), date=message.get('date'))
+            deprecate(message['msg'], version=message.get('version'), date=message.get('date'),
+                      collection_name=message.get('collection_name'))
 
     def _check_arguments(self, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
@@ -1613,7 +1615,7 @@ class AnsibleModule(object):
     def safe_eval(self, value, locals=None, include_exceptions=False):
         return safe_eval(value, locals, include_exceptions)
 
-    def _check_type_str(self, value):
+    def _check_type_str(self, value, param=None, prefix=''):
         opts = {
             'error': False,
             'warn': False,
@@ -1626,12 +1628,22 @@ class AnsibleModule(object):
             return check_type_str(value, allow_conversion)
         except TypeError:
             common_msg = 'quote the entire value to ensure it does not change.'
+            from_msg = '{0!r}'.format(value)
+            to_msg = '{0!r}'.format(to_text(value))
+
+            if param is not None:
+                if prefix:
+                    param = '{0}{1}'.format(prefix, param)
+
+                from_msg = '{0}: {1!r}'.format(param, value)
+                to_msg = '{0}: {1!r}'.format(param, to_text(value))
+
             if self._string_conversion_action == 'error':
                 msg = common_msg.capitalize()
                 raise TypeError(to_native(msg))
             elif self._string_conversion_action == 'warn':
-                msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
-                       'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
+                msg = ('The value "{0}" (type {1.__class__.__name__}) was converted to "{2}" (type string). '
+                       'If this does not look like what you expect, {3}').format(from_msg, value, to_msg, common_msg)
                 self.warn(to_native(msg))
                 return to_native(value, errors='surrogate_or_strict')
 
@@ -1716,7 +1728,7 @@ class AnsibleModule(object):
 
                     if not self.bypass_checks:
                         self._check_required_arguments(spec, param)
-                        self._check_argument_types(spec, param)
+                        self._check_argument_types(spec, param, new_prefix)
                         self._check_argument_values(spec, param)
 
                         self._check_required_together(v.get('required_together', None), param)
@@ -1751,9 +1763,16 @@ class AnsibleModule(object):
     def _handle_elements(self, wanted, param, values):
         type_checker, wanted_name = self._get_wanted_type(wanted, param)
         validated_params = []
+        # Get param name for strings so we can later display this value in a useful error message if needed
+        kwargs = {}
+        if wanted_name == 'str':
+            if isinstance(param, string_types):
+                kwargs['param'] = param
+            elif isinstance(param, dict):
+                kwargs['param'] = list(param.keys())[0]
         for value in values:
             try:
-                validated_params.append(type_checker(value))
+                validated_params.append(type_checker(value, **kwargs))
             except (TypeError, ValueError) as e:
                 msg = "Elements value for option %s" % param
                 if self._options_context:
@@ -1762,7 +1781,7 @@ class AnsibleModule(object):
                 self.fail_json(msg=msg)
         return validated_params
 
-    def _check_argument_types(self, spec=None, param=None):
+    def _check_argument_types(self, spec=None, param=None, prefix=''):
         ''' ensure all arguments have the requested type '''
 
         if spec is None:
@@ -1780,8 +1799,17 @@ class AnsibleModule(object):
                 continue
 
             type_checker, wanted_name = self._get_wanted_type(wanted, k)
+            # Get param name for strings so we can later display this value in a useful error message if needed
+            kwargs = {}
+            if wanted_name == 'str':
+                kwargs['param'] = list(param.keys())[0]
+
+                # Get the name of the parent key if this is a nested option
+                if prefix:
+                    kwargs['prefix'] = prefix
+
             try:
-                param[k] = type_checker(value)
+                param[k] = type_checker(value, **kwargs)
                 wanted_elements = v.get('elements', None)
                 if wanted_elements:
                     if wanted != 'list' or not isinstance(param[k], list):
@@ -2034,7 +2062,8 @@ class AnsibleModule(object):
                     if isinstance(d, SEQUENCETYPE) and len(d) == 2:
                         self.deprecate(d[0], version=d[1])
                     elif isinstance(d, Mapping):
-                        self.deprecate(d['msg'], version=d.get('version', None), date=d.get('date', None))
+                        self.deprecate(d['msg'], version=d.get('version'), date=d.get('date'),
+                                       collection_name=d.get('collection_name'))
                     else:
                         self.deprecate(d)  # pylint: disable=ansible-deprecated-no-version
             else:

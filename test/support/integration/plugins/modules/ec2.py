@@ -1695,7 +1695,7 @@ def main():
         module.deprecate(
             msg='Support for passing both group and group_id has been deprecated. '
             'Currently group_id is ignored, in future passing both will result in an error',
-            version='ansible.builtin:2.14')
+            version='2.14', collection_name='ansible.builtin')
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')

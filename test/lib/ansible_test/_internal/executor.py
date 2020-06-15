@@ -59,9 +59,6 @@ from .util import (
     get_available_port,
     generate_pip_command,
     find_python,
-    get_docker_completion,
-    get_network_settings,
-    get_remote_completion,
     cmd_quote,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
@@ -74,6 +71,9 @@ from .util import (
 )
 
 from .util_common import (
+    get_docker_completion,
+    get_network_settings,
+    get_remote_completion,
     get_python_path,
     intercept_command,
     named_temporary_file,
@@ -216,10 +216,12 @@ def get_cryptography_requirement(args, python_version):  # type: (EnvironmentCon
     return cryptography
 
 
-def install_command_requirements(args, python_version=None):
+def install_command_requirements(args, python_version=None, context=None, enable_pyyaml_check=False):
     """
     :type args: EnvironmentConfig
     :type python_version: str | None
+    :type context: str | None
+    :type enable_pyyaml_check: bool
     """
     if not args.explain:
         make_dirs(ResultType.COVERAGE.path)
@@ -250,23 +252,37 @@ def install_command_requirements(args, python_version=None):
 
     pip = generate_pip_command(find_python(python_version))
 
-    # make sure basic ansible-test requirements are met, including making sure that pip is recent enough to support constraints
-    # virtualenvs created by older distributions may include very old pip versions, such as those created in the centos6 test container (pip 6.0.8)
-    run_command(args, generate_pip_install(pip, 'ansible-test', use_constraints=False))
+    # skip packages which have aleady been installed for python_version
 
-    # make sure setuptools is available before trying to install cryptography
-    # the installed version of setuptools affects the version of cryptography to install
-    run_command(args, generate_pip_install(pip, 'setuptools', packages=['setuptools']))
+    try:
+        package_cache = install_command_requirements.package_cache
+    except AttributeError:
+        package_cache = install_command_requirements.package_cache = {}
 
-    # install the latest cryptography version that the current requirements can support
-    # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
-    # if not installed here later install commands may try to install an unsupported version due to the presence of older setuptools
-    # this is done instead of upgrading setuptools to allow tests to function with older distribution provided versions of setuptools
-    run_command(args, generate_pip_install(pip, 'cryptography',
-                                           packages=[get_cryptography_requirement(args, python_version)],
-                                           constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
+    installed_packages = package_cache.setdefault(python_version, set())
+    skip_packages = [package for package in packages if package in installed_packages]
 
-    commands = [generate_pip_install(pip, args.command, packages=packages)]
+    for package in skip_packages:
+        packages.remove(package)
+
+    installed_packages.update(packages)
+
+    if args.command != 'sanity':
+        install_ansible_test_requirements(args, pip)
+
+        # make sure setuptools is available before trying to install cryptography
+        # the installed version of setuptools affects the version of cryptography to install
+        run_command(args, generate_pip_install(pip, '', packages=['setuptools']))
+
+        # install the latest cryptography version that the current requirements can support
+        # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
+        # if not installed here later install commands may try to install an unsupported version due to the presence of older setuptools
+        # this is done instead of upgrading setuptools to allow tests to function with older distribution provided versions of setuptools
+        run_command(args, generate_pip_install(pip, '',
+                                               packages=[get_cryptography_requirement(args, python_version)],
+                                               constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
+
+    commands = [generate_pip_install(pip, args.command, packages=packages, context=context)]
 
     if isinstance(args, IntegrationConfig):
         for cloud_platform in get_cloud_platforms(args):
@@ -274,10 +290,14 @@ def install_command_requirements(args, python_version=None):
 
     commands = [cmd for cmd in commands if cmd]
 
+    if not commands:
+        return  # no need to detect changes or run pip check since we are not making any changes
+
     # only look for changes when more than one requirements file is needed
     detect_pip_changes = len(commands) > 1
 
     # first pass to install requirements, changes expected unless environment is already set up
+    install_ansible_test_requirements(args, pip)
     changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
     if changes:
@@ -297,6 +317,27 @@ def install_command_requirements(args, python_version=None):
                 display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
             else:
                 raise
+
+    if enable_pyyaml_check:
+        # pyyaml may have been one of the requirements that was installed, so perform an optional check for it
+        check_pyyaml(args, python_version, required=False)
+
+
+def install_ansible_test_requirements(args, pip):  # type: (EnvironmentConfig, t.List[str]) -> None
+    """Install requirements for ansible-test for the given pip if not already installed."""
+    try:
+        installed = install_command_requirements.installed
+    except AttributeError:
+        installed = install_command_requirements.installed = set()
+
+    if tuple(pip) in installed:
+        return
+
+    # make sure basic ansible-test requirements are met, including making sure that pip is recent enough to support constraints
+    # virtualenvs created by older distributions may include very old pip versions, such as those created in the centos6 test container (pip 6.0.8)
+    run_command(args, generate_pip_install(pip, 'ansible-test', use_constraints=False))
+
+    installed.add(tuple(pip))
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
@@ -377,26 +418,29 @@ License: GPLv3+
     write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
-def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True):
+def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True, context=None):
     """
     :type pip: list[str]
     :type command: str
     :type packages: list[str] | None
     :type constraints: str | None
     :type use_constraints: bool
+    :type context: str | None
     :rtype: list[str] | None
     """
     constraints = constraints or os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
-    requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % command)
+    requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % ('%s.%s' % (command, context) if context else command))
 
     options = []
 
     if os.path.exists(requirements) and os.path.getsize(requirements):
         options += ['-r', requirements]
 
-    if data_context().content.is_ansible:
-        if command == 'sanity':
-            options += ['-r', os.path.join(data_context().content.root, 'test', 'sanity', 'requirements.txt')]
+    if command == 'sanity' and data_context().content.is_ansible:
+        requirements = os.path.join(data_context().content.sanity_path, 'code-smell', '%s.requirements.txt' % context)
+
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
 
     if command == 'units':
         requirements = os.path.join(data_context().content.unit_path, 'requirements.txt')

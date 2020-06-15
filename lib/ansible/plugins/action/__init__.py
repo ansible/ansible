@@ -252,6 +252,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     task_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
                     # preserve this so _execute_module can propagate back to controller as a fact
                     self._discovered_interpreter_key = discovered_key
+                else:
+                    task_vars['ansible_delegated_vars'][self._task.delegate_to]
+                    if task_vars['ansible_delegated_vars'][self._task.delegate_to].get('ansible_facts') is None:
+                        task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'] = {}
+                    task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'][discovered_key] = self._discovered_interpreter
 
         return (module_style, module_shebang, module_data, module_path)
 
@@ -300,20 +305,30 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Determines if we are required and can do pipelining
         '''
 
-        # any of these require a true
-        for condition in [
-            self._connection.has_pipelining,
-            self._play_context.pipelining or self._connection.always_pipeline_modules,  # pipelining enabled for play or connection requires it (eg winrm)
-            module_style == "new",                     # old style modules do not support pipelining
-            not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
-            not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
-            (self._connection.become.name if self._connection.become else '') != 'su',  # su does not work with pipelining,
-            # FIXME: we might need to make become_method exclusion a configurable list
-        ]:
-            if not condition:
-                return False
+        try:
+            is_enabled = self._connection.get_option('pipelining')
+        except (KeyError, AttributeError, ValueError):
+            is_enabled = self._play_context.pipelining
 
-        return True
+        # winrm supports async pipeline
+        # TODO: make other class property 'has_async_pipelining' to separate cases
+        always_pipeline = self._connection.always_pipeline_modules
+
+        # su does not work with pipelining
+        # TODO: add has_pipelining class prop to become plugins
+        become_exception = (self._connection.become.name if self._connection.become else '') != 'su'
+
+        # any of these require a true
+        conditions = [
+            self._connection.has_pipelining,    # connection class supports it
+            is_enabled or always_pipeline,      # enabled via config or forced via connection (eg winrm)
+            module_style == "new",              # old style modules do not support pipelining
+            not C.DEFAULT_KEEP_REMOTE_FILES,    # user wants remote files
+            not wrap_async or always_pipeline,  # async does not normally support pipelining unless it does (eg winrm)
+            become_exception,
+        ]
+
+        return all(conditions)
 
     def _get_admin_users(self):
         '''
@@ -831,7 +846,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 msg = "Setting the async dir from the environment keyword " \
                       "ANSIBLE_ASYNC_DIR is deprecated. Set the async_dir " \
                       "shell option instead"
-                self._display.deprecated(msg, "ansible.builtin:2.12")
+                self._display.deprecated(msg, "2.12", collection_name='ansible.builtin')
             else:
                 # ANSIBLE_ASYNC_DIR is not set on the task, we get the value
                 # from the shell option and temporarily add to the environment

@@ -6,7 +6,7 @@ import os
 import sys
 
 # set by ansible-test to a single directory, rather than a list of directories as supported by Ansible itself
-ANSIBLE_COLLECTIONS_PATH = os.path.join(os.environ['ANSIBLE_COLLECTIONS_PATHS'], 'ansible_collections')
+ANSIBLE_COLLECTIONS_PATH = os.path.join(os.environ['ANSIBLE_COLLECTIONS_PATH'], 'ansible_collections')
 
 
 def collection_pypkgpath(self):

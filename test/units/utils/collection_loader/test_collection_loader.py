@@ -367,7 +367,7 @@ def test_import_from_collection(monkeypatch):
 
     # define the collection root before any ansible code has been loaded
     # otherwise config will have already been loaded and changing the environment will have no effect
-    monkeypatch.setenv('ANSIBLE_COLLECTIONS_PATHS', collection_root)
+    monkeypatch.setenv('ANSIBLE_COLLECTIONS_PATH', collection_root)
 
     finder = _AnsibleCollectionFinder(paths=[collection_root])
     reset_collections_loader_state(finder)

@@ -637,7 +637,8 @@ def main():
 
     if module.params.get('purge_policies') is None:
         module.deprecate('In Ansible 2.14 the default value of purge_policies will change from true to false.'
-                         '  To maintain the existing behaviour explicity set purge_policies=true', version='ansible.builtin:2.14')
+                         '  To maintain the existing behaviour explicity set purge_policies=true',
+                         version='2.14', collection_name='ansible.builtin')
 
     if module.params.get('boundary'):
         if module.params.get('create_instance_profile'):

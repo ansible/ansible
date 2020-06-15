@@ -83,7 +83,7 @@ class UnsafeProxy(object):
         from ansible.utils.display import Display
         Display().deprecated(
             'UnsafeProxy is being deprecated. Use wrap_var or AnsibleUnsafeBytes/AnsibleUnsafeText directly instead',
-            version='ansible.builtin:2.13'
+            version='2.13', collection_name='ansible.builtin'
         )
         # In our usage we should only receive unicode strings.
         # This conditional and conversion exists to sanity check the values

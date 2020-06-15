@@ -99,7 +99,7 @@ class FactCache(MutableMapping):
             display.deprecated('Calling FactCache().update(key, value) is deprecated.  Use'
                                ' FactCache().first_order_merge(key, value) if you want the old'
                                ' behaviour or use FactCache().update({key: value}) if you want'
-                               ' dict-like behaviour.', version='ansible.builtin:2.12')
+                               ' dict-like behaviour.', version='2.12', collection_name='ansible.builtin')
             return self.first_order_merge(*args)
 
         elif len(args) == 1:

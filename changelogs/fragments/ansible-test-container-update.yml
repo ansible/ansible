@@ -1,0 +1,4 @@
+minor_changes:
+    - ansible-test - Upgrade from default-test-container 2.1 to 2.2
+    - ansible-test - Upgrade from ansible-base-test-container 1.1 to 2.2
+    - ansible-test - Upgrade distro test containers from 1.16.0 to 1.17.0

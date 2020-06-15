@@ -18,9 +18,6 @@ from .util import (
     ApplicationError,
     display,
     raw_command,
-    get_docker_completion,
-    get_network_completion,
-    get_remote_completion,
     generate_pip_command,
     read_lines_without_comments,
     MAXFD,
@@ -91,6 +88,9 @@ from .data import (
 )
 
 from .util_common import (
+    get_docker_completion,
+    get_network_completion,
+    get_remote_completion,
     CommonConfig,
 )
 
@@ -205,7 +205,7 @@ def parse_args():
         # install argparse without using constraints since pip may be too old to support them
         # not using the ansible-test requirements file since this install is for sys.executable rather than the delegated python (which may be different)
         # argparse has no special requirements, so upgrading pip is not required here
-        raw_command(generate_pip_install(generate_pip_command(sys.executable), 'argparse', packages=['argparse'], use_constraints=False))
+        raw_command(generate_pip_install(generate_pip_command(sys.executable), '', packages=['argparse'], use_constraints=False))
         import argparse
 
     try:

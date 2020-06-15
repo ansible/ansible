@@ -199,8 +199,13 @@ class NoArgsAnsibleModule(AnsibleModule):
         self.params = {'_ansible_selinux_special_fs': [], '_ansible_remote_tmp': '/tmp', '_ansible_keep_remote_files': False, '_ansible_check_mode': False}
 
 
-def parse_isodate(v):
-    msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
+def parse_isodate(v, allow_date):
+    if allow_date:
+        if isinstance(v, datetime.date):
+            return v
+        msg = 'Expected ISO 8601 date string (YYYY-MM-DD) or YAML date'
+    else:
+        msg = 'Expected ISO 8601 date string (YYYY-MM-DD)'
     if not isinstance(v, string_types):
         raise ValueError(msg)
     # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,

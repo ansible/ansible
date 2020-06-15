@@ -1,0 +1,2 @@
+minor_changes:
+- "ansible-doc - improve suboptions formatting (https://github.com/ansible/ansible/pull/69795)."
