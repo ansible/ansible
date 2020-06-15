@@ -1,0 +1,3 @@
+bugfixes:
+    - ansible-test - The ``import`` sanity test now correctly blocks access to python modules, not just packages, in the ``ansible`` package.
+    - ansible-test - The ``import`` sanity test now correctly provides an empty ``ansible`` package.
