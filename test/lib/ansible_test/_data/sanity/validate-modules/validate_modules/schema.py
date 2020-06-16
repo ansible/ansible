@@ -19,8 +19,9 @@ any_string_types = Any(*string_types)
 #   author: First Last (@name) [optional anything]
 #     "Ansible Core Team" - Used by the Bot
 #     "Michael DeHaan" - nop
+#     "OpenStack Ansible SIG" - OpenStack does not use GitHub
 #     "Name (!UNKNOWN)" - For the few untraceable authors
-author_line = re.compile(r'^\w.*(\(@([\w-]+)\)|!UNKNOWN)(?![\w.])|^Ansible Core Team$|^Michael DeHaan$')
+author_line = re.compile(r'^\w.*(\(@([\w-]+)\)|!UNKNOWN)(?![\w.])|^Ansible Core Team$|^Michael DeHaan$|^OpenStack Ansible SIG$')
 
 
 def sequence_of_sequences(min=None, max=None):
