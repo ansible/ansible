@@ -141,6 +141,7 @@ def docker_run(args, image, options, cmd=None, create_only=False):
     :type image: str
     :type options: list[str] | None
     :type cmd: list[str] | None
+    :type create_only[bool] | False
     :rtype: str | None, str | None
     """
     if not options:
@@ -165,12 +166,9 @@ def docker_run(args, image, options, cmd=None, create_only=False):
     raise ApplicationError('Failed to run docker image "%s".' % image)
 
 
-def docker_start(args, container_id, options):
+def docker_start(args, container_id, options):  # type: (EnvironmentConfig, str, t.List[str]) -> (t.Optional[str], t.Optional[str])
     """
-    :type args: EnvironmentConfig
-    :type container_id: str
-    :type options: list[str] | None
-    :rtype: str | None, str | None
+    Start a docker container by name or ID
     """
     if not options:
         options = []
@@ -309,6 +307,7 @@ def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=Fal
     :type stdin: file | None
     :type stdout: file | None
     :type always: bool
+    :type data: str | None
     :rtype: str | None, str | None
     """
     env = docker_environment()
