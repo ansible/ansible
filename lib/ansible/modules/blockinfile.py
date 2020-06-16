@@ -35,7 +35,7 @@ options:
   marker:
     description:
     - The marker line template.
-    - C({mark}) will be replaced with the values C(in marker_begin) (default="BEGIN") and C(marker_end) (default="END").
+    - C({mark}) will be replaced with the values in C(marker_begin) (default="BEGIN") and C(marker_end) (default="END").
     - Using a custom marker without the C({mark}) variable may result in the block being repeatedly inserted on subsequent playbook runs.
     type: str
     default: '# {mark} ANSIBLE MANAGED BLOCK'
@@ -48,7 +48,7 @@ options:
     aliases: [ content ]
   insertafter:
     description:
-    - If specified, the block will be inserted after the last match of specified regular expression.
+    - If specified and no begin/ending C(marker) lines are found, the block will be inserted after the last match of specified regular expression.
     - A special value is available; C(EOF) for inserting the block at the end of the file.
     - If specified regular expression has no matches, C(EOF) will be used instead.
     type: str
@@ -56,7 +56,7 @@ options:
     default: EOF
   insertbefore:
     description:
-    - If specified, the block will be inserted before the last match of specified regular expression.
+    - If specified and no begin/ending C(marker) lines are found, the block will be inserted before the last match of specified regular expression.
     - A special value is available; C(BOF) for inserting the block at the beginning of the file.
     - If specified regular expression has no matches, the block will be inserted at the end of the file.
     type: str
