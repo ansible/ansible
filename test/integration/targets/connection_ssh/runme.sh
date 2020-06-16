@@ -36,7 +36,7 @@ if command -v sshpass > /dev/null; then
             -e ansible_password=foo \
             -e ansible_user=definitelynotroot \
 	    -i test_connection.inventory \
-            ssh-pipelining | grep 'customized password prompts'
+            ssh-pipelining 2>&1 | grep 'customized password prompts'
         ret=$?
         [[ $ret -eq 0 ]] || exit $ret
     fi
