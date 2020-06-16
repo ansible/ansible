@@ -718,7 +718,7 @@ class GalaxyCLI(CLI):
 
         Note: This mimics the `role info` output.
         """
-        collection_info = collection.collection_info(collection.b_path)['manifest_file']['collection_info']
+        collection_info = collection.collection_info(collection.b_path, fallback_metadata=True)['manifest_file']['collection_info']
 
         # Add the installation path to the metadata
         collection_info['install_path'] = to_text(collection.b_path)
