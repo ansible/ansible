@@ -28,7 +28,8 @@ ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback,formerly_core_callback a
 ANSIBLE_CALLBACK_WHITELIST=charlie.gomez.notme ansible localhost -m debug 2>&1 | grep -- "Skipping 'charlie.gomez.notme'"
 unset ANSIBLE_LOAD_CALLBACK_PLUGINS
 # adhoc normally shouldn't load non-default plugins- let's be sure
-ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m debug | grep -L "usercallback says ok"
+output=$(ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m debug)
+if [[ "${output}" =~ "usercallback says ok" ]]; then echo fail; exit 1; fi
 
 echo "--- validating docs"
 # test documentation
