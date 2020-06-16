@@ -72,7 +72,6 @@ def wait_to_complete(method):
                 sleep(1)
                 time_spent += 1
             raise ActionTimedOutException
-        raise InvalidActionUuidException
     return wrapper
 
 
@@ -332,6 +331,19 @@ class FirewallProfileResource(Resource):
     resource_class = tacp.FirewallProfilesApi
 
     filter_method = "get_firewall_profiles_using_get"
+
+
+class EditApplicationResource(Resource):
+
+    resource_class = tacp.EditApplicationsApi
+
+    @wait_to_complete
+    def create_disk_for_application(self, body, uuid):
+        return self.api.create_application_disk_using_post(body, uuid)
+
+    @wait_to_complete
+    def create_vnic_for_application(self, body, uuid):
+        return self.api.create_application_vnic_using_post(body, uuid)
 
 
 def get_component_fields_by_name(name, component,

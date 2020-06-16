@@ -14,6 +14,7 @@ from ansible.module_utils.tacp_ansible.tacp_constants import State, Action
 import json
 import tacp
 import sys
+from time import sleep
 from uuid import uuid4
 from tacp.rest import ApiException
 from pprint import pprint
@@ -184,66 +185,7 @@ def run_module():
                     vnic_uuid = None
                 else:
                     disk_uuid = None
-                    vnic_uuid = None  # str(uuid4())
-                name = boot_device['name']
-                order = boot_device['boot_order']
-            payload = tacp.ApiBootOrderPayload(disk_uuid=disk_uuid,
-                                               name=name,
-                                               order=order,
-                                               vnic_uuid=vnic_uuid)
-            instance_boot_order[order - 1] = payload
-        # sys.stdout.write(str(instance_boot_order))
-        return instance_boot_order
-
-    def get_boot_order(module, template_dict):
-
-        # Get boot devices uuids and order from the template
-        template_boot_order = template_dict['boot_order']
-
-        # sys.stdout.write(str(boot_order_dict))
-        template_boot_device_names = [boot_device['name'] for
-                                      boot_device in template_boot_order]
-
-        # Make sure all disks and nics have a boot_order assigned
-        if not all([bool(device.get('boot_order')) for device in
-                    module.params['disks'] + module.params['nics']]):
-            fail_with_reason(
-                "All disks and NICs must have a boot_order specified, starting with 1.")  # noqa
-
-        playbook_devices = [dev for dev in module.params['disks']
-                            + module.params['nics']]
-        disks_and_nics_names = [dev['name'] for dev in playbook_devices]
-
-        # Make sure that all template boot devices are present
-        #  in disks_and_nics_names
-        if not all([template_device in disks_and_nics_names for
-                    template_device in template_boot_device_names]):
-            fail_with_reason("All devices for template {} must be present in disks and nics fields: [{}]".format(  # noqa
-                template_dict['name'], ', '.join(template_boot_device_names)))
-
-        # sys.stdout.write(str(disks_and_nics_names))
-
-        # initialize the boot order with blank entries times the
-        # number of disks + nics
-        instance_boot_order = [None] * len(disks_and_nics_names)
-
-        # Now set the boot device into the correct order by the index provided
-        for boot_device in playbook_devices:
-            if boot_device['name'] in template_boot_device_names:
-                order = boot_device['boot_order']
-                boot_device_dict = [device for device
-                                    in template_boot_order
-                                    if boot_device['name'] == device['name']][0]  # noqa
-                disk_uuid = boot_device_dict['disk_uuid']
-                name = boot_device_dict['name']
-                vnic_uuid = boot_device_dict['vnic_uuid']
-            else:
-                if boot_device in [disk['name'] for disk in module.params['disks']]:  # noqa
-                    disk_uuid = str(uuid4())
-                    vnic_uuid = None
-                else:
-                    disk_uuid = None
-                    vnic_uuid = None #str(uuid4())
+                    vnic_uuid = str(uuid4())
                 name = boot_device['name']
                 order = boot_device['boot_order']
             payload = tacp.ApiBootOrderPayload(disk_uuid=disk_uuid,
@@ -282,7 +224,8 @@ def run_module():
 
         if template_uuid:
             instance_params['template_uuid'] = template_uuid
-            boot_order = get_boot_order(module, template_dict)
+            # boot_order = get_boot_order(module, template_dict)
+            boot_order = template_results[0].boot_order
         else:
             # Template does not exist - must fail the task
             reason = "Template %s does not exist, cannot continue." % module.params[  # noqa
@@ -307,20 +250,6 @@ def run_module():
             vnic_uuid = [device.vnic_uuid for device in boot_order if
                          (device.vnic_uuid and
                           device.name == name)][0]
-
-            if vnic_uuid not in [device['vnic_uuid'] for device
-                                 in template_dict['boot_order']]:
-                vnic_boot_order = [device.order for device in boot_order if
-                                   (device.vnic_uuid and
-                                    device.name == name)][0]
-                vnic_payload = tacp.ApiAddVnicPayload(
-                    automatic_mac_address=automatic_mac_address,
-                    name=name,
-                    network_uuid=network_uuid,
-                    boot_order=vnic_boot_order,
-                    mac_address=mac_address
-                )
-                vnic_payloads.append(vnic_payload)
 
             network_payload = tacp.ApiCreateOrEditApplicationNetworkOptionsPayload(  # noqa
                 name=name,
@@ -355,7 +284,7 @@ def run_module():
 
             instance_params['application_group_uuid'] = uuid
 
-        sys.stdout.write(str(instance_params))
+        #sys.stdout.write(str(instance_params))
         return instance_params
 
     def create_instance(instance_params, api_client):
@@ -393,6 +322,8 @@ def run_module():
         ).to_dict()
         result['changed'] = True
 
+        return response.object_uuid
+
     def instance_power_action(name, api_client, action):
         assert action in STATE_ACTIONS + [Action.RESUMED]
 
@@ -405,6 +336,47 @@ def run_module():
         )
 
         result['changed'] = True
+
+    def add_vnics_and_disks_and_update_boot_order(module, instance_uuid, boot_order):  # noqa
+        app_resource = tacp_utils.ApplicationResource(api_client)
+        edit_app_resource = tacp_utils.EditApplicationResource(api_client)
+        # edit_app_resource = tacp.EditApplicationsApi(api_client)
+
+        instance = app_resource.filter(uuid=("==", instance_uuid))[0]
+
+        for disk in module.params['disks']:
+            if disk['name'] in [instance_disk.name for instance_disk
+                                in instance.disks]:
+                continue
+
+            disk_uuid = [boot_order_disk.disk_uuid for boot_order_disk in
+                         boot_order if boot_order_disk.name == disk['name']][0]
+            name = disk['name']
+            bandwidth_limit = disk['bandwidth_limit'] if 'bandwidth_limit' in disk else None  # noqa
+            if bandwidth_limit:
+                if int(bandwidth_limit) < 5000000:
+                    fail_with_reason("The bandwidth limit for a disk must be at least 5 MBps (5000000).")
+            iops_limit = disk['iops_limit'] if 'iops_limit' in disk else None
+            if iops_limit:
+                if int(iops_limit) < 50:
+                    fail_with_reason(
+                        "The total IOPS limit for a disk must be at least 50.")
+            size = tacp_utils.convert_memory_abbreviation_to_bytes(str(disk['size_gb']) + "GB")  # noqa
+            body = tacp.ApiDiskSizeAndLimitPayload(bandwidth_limit=bandwidth_limit,  # noqa
+                                                   iops_limit=iops_limit,
+                                                   name=name,
+                                                   size=size,
+                                                   uuid=disk_uuid
+                                                   )
+            # if module._verbosity >= 3:
+            #     sys.stdout.write("add disk body : " + str(body))
+            #     response = edit_app_resource.create_application_disk_using_post(body, instance_uuid)
+            #     sys.stdout.write("add disk response : " + str(response))
+            edit_app_resource.create_disk_for_application(body=body,  # noqa
+                                                          uuid=instance_uuid)  # noqa
+
+        #edit_app_resource.create_application_vnic_using_post()
+        
 
     # Current state is first dimension
     # Specified state is second dimension
@@ -457,8 +429,24 @@ def run_module():
         else:
             # Application does not exist yet, so create it
             instance_params = generate_instance_params(module)
-            create_instance(instance_params, api_client)
+
+            # Create instance with disks + vnics from the template ONLY
+            created_instance_uuid = create_instance(instance_params, api_client)
             current_state = State.SHUTDOWN
+
+            # Add vnics + disks from playbook specification
+            # and modify boot order to match
+            template_resource = tacp_utils.TemplateResource(api_client)
+            template_results = template_resource.filter(
+                name=("==", module.params['template']))
+            # There should only be one template returned if it exists
+            template_dict = template_results[0].to_dict()
+
+            boot_order = get_boot_order(module, template_dict)
+
+            if len(boot_order) > len(template_dict['boot_order']):
+                add_vnics_and_disks_and_update_boot_order(module,
+                                                          created_instance_uuid, boot_order)  # noqa
 
     if current_state in [State.RUNNING, State.SHUTDOWN, State.PAUSED]:
         for power_action in power_state_dict[(current_state, desired_state)]:
