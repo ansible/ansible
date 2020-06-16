@@ -1653,9 +1653,9 @@ plugin_routing:
     dnsmadeeasy:
       redirect: community.general.dnsmadeeasy
     exo_dns_domain:
-      redirect: community.general.exo_dns_domain
+      redirect: ngine_io.exoscale.exo_dns_domain
     exo_dns_record:
-      redirect: community.general.exo_dns_record
+      redirect: ngine_io.exoscale.exo_dns_record
     haproxy:
       redirect: community.general.haproxy
     hetzner_failover_ip:
