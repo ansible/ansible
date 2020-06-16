@@ -51,4 +51,8 @@ EXAMPLES = r'''
     key: el{{ ansible_distribution_major_version }}-{{ ansible_architecture }}
     parents:
       - el{{ ansible_distribution_major_version }}
+
+# Add all active hosts to a static group
+- group_by:
+    key: done
 '''
