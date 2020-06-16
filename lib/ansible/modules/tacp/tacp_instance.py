@@ -5,7 +5,9 @@
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.tacp_ansible import tacp_utils
-from ansible.module_utils.tacp_ansible.tacp_exceptions import ActionTimedOutException, InvalidActionUuidException
+from ansible.module_utils.tacp_ansible.tacp_exceptions import (
+    ActionTimedOutException, InvalidActionUuidException
+)
 from ansible.module_utils.tacp_ansible.tacp_constants import State, Action
 
 
@@ -87,6 +89,7 @@ STATE_ACTIONS = [Action.STARTED, Action.SHUTDOWN, Action.STOPPED,
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
+<<<<<<< HEAD
     module_args = dict(
         api_key=dict(type='str', required=True),
         portal_url=dict(type='str', required=False,
@@ -108,34 +111,48 @@ def run_module():
         vm_mode=dict(type='str', default='Enhanced', choices=['enhanced', 'Enhanced',
                                                               'compatibility', 'Compatibility']),
         application_group={
+=======
+    module_args = {
+        "api_key": {'type': 'str', 'required': True},
+        "portal_url": {'type': 'str', 'required': False,
+                       'default': 'https://manage.cp.lenovo.com'},
+        "name": {'type': 'str', 'required': True},
+        "state": {'type': 'str', 'required': True,
+                  'choices': STATE_ACTIONS},
+        "datacenter": {'type': 'str', 'required': False},
+        "migration_zone": {'type': 'str', 'required': False},
+        "storage_pool": {'type': 'str', 'required': False},
+        "template": {'type': 'str', 'required': False},
+        "vcpu_cores": {'type': 'int', 'required': False},
+        "memory": {'type': 'str', 'required': False},
+        "disks": {'type': 'list', 'required': False},
+        "nics": {'type': 'list', 'required': False},
+        "boot_order": {'type': 'list', 'required': False},
+        "vtx_enabled": {'type': 'bool', 'default': True, 'required': False},
+        "auto_recovery_enabled": {'type': 'bool', 'default': True,
+                                  'required': False},
+        "description": {'type': 'str', 'required': False},
+        "vm_mode": {'type': 'str', 'default': 'Enhanced',
+                    'choices': ['enhanced', 'Enhanced',
+                                'compatibility', 'Compatibility']},
+        "application_group": {
+>>>>>>> 2da364a8e4... OL-9822 Convert dict() syntax to {} for module_args and result declarations
             'type': 'str',
             'required': False,
         },
 
-    )
+    }
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # change is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
-    result = dict(
-        changed=False,
-        args=[]
-    )
+    result = {
+        "changed": False,
+        "args": []
+    }
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
     if module.check_mode:
         module.exit_json(**result)
 
@@ -143,8 +160,69 @@ def run_module():
         result['msg'] = reason
         module.fail_json(**result)
 
+<<<<<<< HEAD
     # manipulate or modify the state as needed (this is going to be the
     # part where your module will do what it needs to do)
+=======
+    def get_boot_order(module, template_dict):
+
+        # Get boot devices uuids and order from the template
+        template_boot_order = template_dict['boot_order']
+
+        # sys.stdout.write(str(boot_order_dict))
+        template_boot_device_names = [boot_device['name'] for
+                                      boot_device in template_boot_order]
+
+        # Make sure all disks and nics have a boot_order assigned
+        if not all([bool(device.get('boot_order')) for device in
+                    module.params['disks'] + module.params['nics']]):
+            fail_with_reason(
+                "All disks and NICs must have a boot_order specified, starting with 1.")  # noqa
+
+        playbook_devices = [dev for dev in module.params['disks']
+                            + module.params['nics']]
+        disks_and_nics_names = [dev['name'] for dev in playbook_devices]
+
+        # Make sure that all template boot devices are present
+        #  in disks_and_nics_names
+        if not all([template_device in disks_and_nics_names for
+                    template_device in template_boot_device_names]):
+            fail_with_reason("All devices for template {} must be present in disks and nics fields: [{}]".format(  # noqa
+                template_dict['name'], ', '.join(template_boot_device_names)))
+
+        # sys.stdout.write(str(disks_and_nics_names))
+
+        # initialize the boot order with blank entries times the
+        # number of disks + nics
+        instance_boot_order = [None] * len(disks_and_nics_names)
+
+        # Now set the boot device into the correct order by the index provided
+        for boot_device in playbook_devices:
+            if boot_device['name'] in template_boot_device_names:
+                order = boot_device['boot_order']
+                boot_device_dict = [device for device
+                                    in template_boot_order
+                                    if boot_device['name'] == device['name']][0]  # noqa
+                disk_uuid = boot_device_dict['disk_uuid']
+                name = boot_device_dict['name']
+                vnic_uuid = boot_device_dict['vnic_uuid']
+            else:
+                if boot_device in [disk['name'] for disk in module.params['disks']]:  # noqa
+                    disk_uuid = str(uuid4())
+                    vnic_uuid = None
+                else:
+                    disk_uuid = None
+                    vnic_uuid = None  # str(uuid4())
+                name = boot_device['name']
+                order = boot_device['boot_order']
+            payload = tacp.ApiBootOrderPayload(disk_uuid=disk_uuid,
+                                               name=name,
+                                               order=order,
+                                               vnic_uuid=vnic_uuid)
+            instance_boot_order[order - 1] = payload
+        # sys.stdout.write(str(instance_boot_order))
+        return instance_boot_order
+>>>>>>> 2da364a8e4... OL-9822 Convert dict() syntax to {} for module_args and result declarations
 
     def generate_instance_params(module):
         # VM does not exist yet, so we must create it
@@ -156,8 +234,13 @@ def run_module():
             component_uuid = tacp_utils.get_component_fields_by_name(
                 module.params[component], component, api_client)
             if not component_uuid:
+<<<<<<< HEAD
                 reason = "%s %s does not exist, cannot continue." % component.capitalize(
                 ) % module.params[component]
+=======
+                reason = "{} {} does not exist, cannot continue.".format(
+                    component.capitalize(), module.params[component])
+>>>>>>> 2da364a8e4... OL-9822 Convert dict() syntax to {} for module_args and result declarations
                 fail_with_reason(reason)
             instance_params['{}_uuid'.format(component)] = component_uuid
 
