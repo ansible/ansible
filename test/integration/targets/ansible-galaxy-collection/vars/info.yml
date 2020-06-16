@@ -1,0 +1,19 @@
+info_collection1: fake_namespace.fake_name1
+info_collection1_manifest: '{
+"collection_info": {
+  "namespace": "fake_namespace",
+  "name": "fake_name1",
+  "version": "1.0.0",
+  "dependencies": {},
+}}'
+info_collection2: fake_namespace.fake_name2
+info_collection2_galaxy: "
+namespace: fake_namespace\n
+name: fake_name2\n
+version: 1.0.0\n
+dependencies:\n
+authors:\n
+  - Ansible\n
+readme: README.md\n
+"
+info_collection3: fake_namespace.fake_name3

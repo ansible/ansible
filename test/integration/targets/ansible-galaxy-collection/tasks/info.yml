@@ -1,0 +1,57 @@
+---
+- include_vars:
+    file: info.yml
+
+- name: Create directories for fake installed collections
+  file:
+     path: "{{ item }}"
+     state: directory
+  loop:
+     - "{{ galaxy_dir }}/ansible_collections/fake_namespace/fake_name1"
+     - "{{ galaxy_dir }}/ansible_collections/fake_namespace/fake_name2"
+     - "{{ galaxy_dir }}/ansible_collections/fake_namespace/fake_name3"
+
+- name: "Create MANIFEST.json for {{ collection1 }}"
+  copy:
+     content: "{{ info_collection1_manifest }}"
+     dest: "{{ galaxy_dir }}/ansible_collections/fake_namespace/fake_name1/MANIFEST.json"
+
+- name: "Create galaxy.yml for {{ collection2 }}"
+  copy:
+     content: "{{ info_collection2_galaxy }}"
+     dest: "{{ galaxy_dir }}/ansible_collections/fake_namespace/fake_name2/galaxy.yml"
+
+- name: Get info on collection with MANIFEST.json
+  command: "ansible-galaxy collection info {{ info_collection1 }}"
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  register: collection1_output
+
+- name: Get info on collection with galaxy.yml
+  command: "ansible-galaxy collection info {{ info_collection2 }}"
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  register: collection2_output
+
+- name: Get info on collection with neither MANIFEST.json nor galaxy.yml
+  command: "ansible-galaxy collection info {{ info_collection3 }}"
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  register: collection3_output
+
+- name: Assert collection output
+  assert:
+    that:
+      - '"Collection: {{ info_collection1 }}" in collection1_output.stdout'
+      - '"version: 1.0.0" in collection1_output.stdout'
+      - '"namespace: fake_namespace" in collection1_output.stdout'
+      - '"name: fake_name1" in collection1_output.stdout'
+      - '"install_path:" in collection1_output.stdout'
+
+      - '"Collection: {{ info_collection2 }}" in collection2_output.stdout'
+      - '"version: 1.0.0" in collection2_output.stdout'
+      - '"namespace: fake_namespace" in collection2_output.stdout'
+      - '"name: fake_name2" in collection2_output.stdout'
+      - '"install_path:" in collection2_output.stdout'
+
+      - '"does not have a galaxy.yml or a MANIFEST.json" in collection3_output.stderr'

@@ -205,3 +205,6 @@
     apply:
       environment:
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+- name: run ansible-galaxy collection info tests
+  include_tasks: info.yml
