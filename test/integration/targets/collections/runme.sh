@@ -12,8 +12,18 @@ export ANSIBLE_HOST_PATTERN_MISMATCH=error
 ipath=../../$(basename "${INVENTORY_PATH:-../../inventory}")
 export INVENTORY_PATH="$ipath"
 
-# test callback
-ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m ping | grep "usercallback says ok"
+# CALLBACK VALIDATION
+# validate FQ callbacks
+ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m debug | grep "usercallback says ok"
+# validate redirected callback
+ANSIBLE_CALLBACK_WHITELIST=formerly_core_callback ansible localhost -m debug 2>&1 | grep -- "usercallback says ok"
+# validate missing redirected callback
+ANSIBLE_CALLBACK_WHITELIST=formerly_core_missing_callback ansible localhost -m debug 2>&1 | grep -- "Skipping 'formerly_core_missing_callback'"
+# validate redirected + removed callback (fatal)
+ANSIBLE_CALLBACK_WHITELIST=formerly_core_removed_callback ansible localhost -m debug 2>&1 | grep -- "testns.testcoll.removedcallback has been removed"
+# ensure non existing callback does not crash ansible
+ANSIBLE_CALLBACK_WHITELIST=charlie.gomez.notme ansible localhost -m debug 2>&1 | grep -- "Skipping 'charlie.gomez.notme'"
+
 
 # test documentation
 ansible-doc testns.testcoll.testmodule -vvv | grep -- "- normal_doc_frag"
@@ -85,5 +95,3 @@ fi
 
 ./vars_plugin_tests.sh
 
-# ensure non existing callback does not crash ansible
-ANSIBLE_CALLBACK_WHITELIST=charlie.gomez.notme ansible -m ping localhost
