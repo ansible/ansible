@@ -31,7 +31,8 @@ options:
     aliases: [ group, groupname ]
 notes:
 - This module bypasses the play host loop and only runs once for all the hosts in the play, if you need it
-  to iterate use a with-loop construct.
+  to iterate use a C(loop) construct. If you need to dynamically add all hosts targeted by a playbook for
+  later use, the C(group_by) module is potentially a better choice.
 - The alias C(host) of the parameter C(name) is only available on Ansible 2.4 and newer.
 - Since Ansible 2.4, the C(inventory_dir) variable is now set to C(None) instead of the 'global inventory source',
   because you can now have multiple sources.  An example was added that shows how to partially restore the previous behaviour.
@@ -77,4 +78,10 @@ EXAMPLES = r'''
   add_host:
     hostname: charlie
     inventory_dir: '{{ inventory_dir }}'
+
+- name: Add all hosts running this playbook to the done group
+  add_host:
+    name: '{{ item }}'
+    groups: done
+  loop: "{{ ansible_play_hosts }}"
 '''
