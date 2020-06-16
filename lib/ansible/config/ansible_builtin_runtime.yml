@@ -3668,10 +3668,6 @@ plugin_routing:
       redirect: community.windows.win_audit_policy_system
     win_audit_rule:
       redirect: community.windows.win_audit_rule
-    win_auto_logon:
-      redirect: community.windows.win_auto_logon
-    win_certificate_info:
-      redirect: community.windows.win_certificate_info
     win_chocolatey:
       redirect: chocolatey.chocolatey.win_chocolatey
     win_chocolatey_config:
@@ -3682,12 +3678,8 @@ plugin_routing:
       redirect: chocolatey.chocolatey.win_chocolatey_feature
     win_chocolatey_source:
       redirect: chocolatey.chocolatey.win_chocolatey_source
-    win_computer_description:
-      redirect: community.windows.win_computer_description
     win_credential:
       redirect: community.windows.win_credential
-    win_data_deduplication:
-      redirect: community.windows.win_data_deduplication
     win_defrag:
       redirect: community.windows.win_defrag
     win_disk_facts:
@@ -3702,8 +3694,6 @@ plugin_routing:
       redirect: community.windows.win_domain_group
     win_domain_group_membership:
       redirect: community.windows.win_domain_group_membership
-    win_domain_object_info:
-      redirect: community.windows.win_domain_object_info
     win_domain_user:
       redirect: community.windows.win_domain_user
     win_dotnet_ngen:
@@ -3712,8 +3702,6 @@ plugin_routing:
       redirect: community.windows.win_eventlog
     win_eventlog_entry:
       redirect: community.windows.win_eventlog_entry
-    win_file_compression:
-      redirect: community.windows.win_file_compression
     win_file_version:
       redirect: community.windows.win_file_version
     win_firewall:
@@ -3768,8 +3756,6 @@ plugin_routing:
       redirect: community.windows.win_psmodule
     win_psrepository:
       redirect: community.windows.win_psrepository
-    win_psrepository_info:
-      redirect: community.windows.win_psrepository_info
     win_rabbitmq_plugin:
       redirect: community.windows.win_rabbitmq_plugin
     win_rds_cap:
@@ -4170,8 +4156,6 @@ plugin_routing:
       redirect: ansible.windows.win_regedit
     win_service:
       redirect: ansible.windows.win_service
-    win_service_info:
-      redirect: ansible.windows.win_service_info
     win_share:
       redirect: ansible.windows.win_share
     win_shell:
