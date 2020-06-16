@@ -2,4 +2,4 @@ destructive
 needs/root
 needs/ssh
 needs/target/setup_pexpect
-shippable/posix/group4
+shippable/posix/group3
