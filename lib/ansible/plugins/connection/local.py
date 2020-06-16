@@ -90,6 +90,12 @@ class Connection(ConnectionBase):
         )
         display.debug("done running command with Popen()")
 
+        # Buffer the output while resolving the become procedure.
+        # This will be appended to final stdout/stderr of subprocess otherwise it will be lost.
+        # BECOME-SUCCESS message will be stripped by upper layers
+        become_stdout = b''
+        become_stderr = b''
+
         if self.become and self.become.expect_prompt() and sudoable:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
@@ -97,28 +103,33 @@ class Connection(ConnectionBase):
             selector.register(p.stdout, selectors.EVENT_READ)
             selector.register(p.stderr, selectors.EVENT_READ)
 
-            become_output = b''
             try:
-                while not self.become.check_success(become_output) and not self.become.check_password_prompt(become_output):
+                while not self.become.check_success(become_stdout) and not self.become.check_password_prompt(become_stderr):
                     events = selector.select(self._play_context.timeout)
                     if not events:
                         stdout, stderr = p.communicate()
-                        raise AnsibleError('timeout waiting for privilege escalation password prompt:\n' + to_native(become_output))
+                        raise AnsibleError('timeout waiting for privilege escalation password prompt:\n'
+                                           '[STDOUT]\n{0}\n[STDERR]\n{1}'.format(to_native(become_stdout), to_native(become_stderr)))
 
+                    chunk_stdout = b''
+                    chunk_stderr = b''
                     for key, event in events:
                         if key.fileobj == p.stdout:
-                            chunk = p.stdout.read()
+                            chunk_stdout = p.stdout.read()
                         elif key.fileobj == p.stderr:
-                            chunk = p.stderr.read()
+                            chunk_stderr = p.stderr.read()
 
-                    if not chunk:
+                    if not chunk_stdout and not chunk_stderr:
                         stdout, stderr = p.communicate()
-                        raise AnsibleError('privilege output closed while waiting for password prompt:\n' + to_native(become_output))
-                    become_output += chunk
+                        raise AnsibleError('privilege output closed while waiting for password prompt:\n'
+                                           '[STDOUT]\n{0}\n[STDERR]\n{1}'.format(to_native(become_stdout), to_native(become_stderr)))
+                    become_stdout += chunk_stdout
+                    become_stderr += chunk_stderr
             finally:
                 selector.close()
+                display.debug("done becomming")
 
-            if not self.become.check_success(become_output):
+            if not self.become.check_success(become_stdout):
                 become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
                 p.stdin.write(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
@@ -129,7 +140,7 @@ class Connection(ConnectionBase):
         display.debug("done communicating")
 
         display.debug("done with local.exec_command()")
-        return (p.returncode, stdout, stderr)
+        return (p.returncode, become_stdout + stdout, become_stderr + stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
