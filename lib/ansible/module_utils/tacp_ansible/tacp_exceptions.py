@@ -4,3 +4,11 @@ class ActionTimedOutException(Exception):
 
 class InvalidActionUuidException(Exception):
     pass
+
+
+class InvalidPowerActionException(Exception):
+    pass
+
+
+class UuidNotFoundException(Exception):
+    pass

@@ -88,6 +88,8 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         api_key=dict(type='str', required=True),
+        portal_url=dict(type='str', required=False,
+                        default="https://manage.cp.lenovo.com"),
         name=dict(type='str', required=True),
         state=dict(type='str', required=True,
                    choices=STATE_ACTIONS),
@@ -251,7 +253,8 @@ def run_module():
             hardware_assisted_virtualization_enabled=instance_params['vtx_enabled'],
             enable_automatic_recovery=instance_params['auto_recovery_enabled'],
             description=instance_params['description'],
-            application_group_uuid=instance_params.get('application_group_uuid')
+            application_group_uuid=instance_params.get(
+                'application_group_uuid')
         )
 
         if module._verbosity >= 3:
@@ -261,7 +264,7 @@ def run_module():
 
         result['ansible_module_results'] = application_resource.get_by_uuid(
             response.object_uuid
-        )
+        ).to_dict()
         result['changed'] = True
 
     def instance_power_action(name, api_client, action):
@@ -307,10 +310,8 @@ def run_module():
     result['args'] = module.params
 
     # Define configuration
-    configuration = tacp.Configuration()
-    configuration.host = "https://manage.cp.lenovo.com"
-    configuration.api_key_prefix['Authorization'] = 'Bearer'
-    configuration.api_key['Authorization'] = module.params['api_key']
+    configuration = tacp_utils.get_configuration(module.params['api_key'],
+                                                 module.params['portal_url'])
     api_client = tacp.ApiClient(configuration)
 
     application_resource = tacp_utils.ApplicationResource(api_client)
@@ -323,6 +324,7 @@ def run_module():
         instance_properties = application_resource.get_by_uuid(
             instance_uuid).to_dict()
         current_state = instance_properties['status']
+
     else:
         if module.params['state'] == 'absent':
             instance_power_action(
