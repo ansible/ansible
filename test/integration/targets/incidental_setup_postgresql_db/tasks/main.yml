@@ -158,12 +158,19 @@
     line: 'postgresql_enable="YES"'
   when: ansible_os_family == "FreeBSD"
 
-- name: start postgresql service
-  # work-around for issue on FreeBSD where service won't restart if currently stopped
-  service: name={{ postgresql_service }} state=started
+- name: stop postgresql service
+  service:
+    name: "{{ postgresql_service }}"
+    state: stopped
 
-- name: restart postgresql service
-  service: name={{ postgresql_service }} state=restarted
+- name: pause between stop and start of postgresql service
+  pause:
+    seconds: 3
+
+- name: start postgresql service
+  service:
+    name: "{{ postgresql_service }}"
+    state: started
 
 ########################
 # Setup dummy extension:
