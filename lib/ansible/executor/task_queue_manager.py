@@ -153,6 +153,7 @@ class TaskQueueManager:
             elif callback_name == 'tree' and self._run_tree:
                 # special case for ansible cli option
                 pass
+            # eg, ad-hoc doesn't allow non-default callbacks
             elif not self._run_additional_callbacks or (callback_needs_whitelist and (
                     C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                 # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
@@ -163,21 +164,23 @@ class TaskQueueManager:
             callback_obj.set_options()
             self._callback_plugins.append(callback_obj)
 
-        # Second pass over everything in the whitelist we haven't already loaded, try to explicitly load. This will catch
-        # collection-hosted callbacks, as well as formerly-core callbacks that have been redirected to collections.
-        for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if c not in loaded_callbacks):
-            # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
-            callback_obj, plugin_load_context = callback_loader.get_with_context(callback_plugin_name)
-            if callback_obj:
-                loaded_as_name = callback_obj._redirected_names[-1]
-                if loaded_as_name in loaded_callbacks:
-                    display.warning("Skipping callback '%s', already loaded as '%s'." % (callback_plugin_name, loaded_as_name))
-                    continue
-                loaded_callbacks.add(loaded_as_name)
-                callback_obj.set_options()
-                self._callback_plugins.append(callback_obj)
-            else:
-                display.warning("Skipping '%s', unable to load or use as a callback" % callback_plugin_name)
+        # eg, ad-hoc doesn't allow non-default callbacks
+        if self._run_additional_callbacks:
+            # Second pass over everything in the whitelist we haven't already loaded, try to explicitly load. This will catch
+            # collection-hosted callbacks, as well as formerly-core callbacks that have been redirected to collections.
+            for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if c not in loaded_callbacks):
+                # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
+                callback_obj, plugin_load_context = callback_loader.get_with_context(callback_plugin_name)
+                if callback_obj:
+                    loaded_as_name = callback_obj._redirected_names[-1]
+                    if loaded_as_name in loaded_callbacks:
+                        display.warning("Skipping callback '%s', already loaded as '%s'." % (callback_plugin_name, loaded_as_name))
+                        continue
+                    loaded_callbacks.add(loaded_as_name)
+                    callback_obj.set_options()
+                    self._callback_plugins.append(callback_obj)
+                else:
+                    display.warning("Skipping '%s', unable to load or use as a callback" % callback_plugin_name)
 
         self._callbacks_loaded = True
 

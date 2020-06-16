@@ -12,8 +12,10 @@ ipath=../../$(basename "${INVENTORY_PATH:-../../inventory}")
 export INVENTORY_PATH="$ipath"
 
 echo "--- validating callbacks"
-# validate FQ callbacks
-ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m debug | grep "usercallback says ok"
+# validate FQ callbacks in ansible-playbook
+ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible-playbook noop.yml | grep "usercallback says ok"
+# use adhoc for the rest of these tests, must force it to load other callbacks
+export ANSIBLE_LOAD_CALLBACK_PLUGINS=1
 # validate redirected callback
 ANSIBLE_CALLBACK_WHITELIST=formerly_core_callback ansible localhost -m debug 2>&1 | grep -- "usercallback says ok"
 # validate missing redirected callback
@@ -24,6 +26,9 @@ ANSIBLE_CALLBACK_WHITELIST=formerly_core_removed_callback ansible localhost -m d
 ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback,formerly_core_callback ansible localhost -m debug 2>&1 | grep -- "Skipping callback 'formerly_core_callback'"
 # ensure non existing callback does not crash ansible
 ANSIBLE_CALLBACK_WHITELIST=charlie.gomez.notme ansible localhost -m debug 2>&1 | grep -- "Skipping 'charlie.gomez.notme'"
+unset ANSIBLE_LOAD_CALLBACK_PLUGINS
+# adhoc normally shouldn't load non-default plugins- let's be sure
+ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m debug | grep -L "usercallback says ok"
 
 echo "--- validating docs"
 # test documentation
