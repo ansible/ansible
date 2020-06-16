@@ -1,5 +1,5 @@
 setup/always/setup_passlib
-shippable/posix/group2
+shippable/posix/group1
 skip/aix
 skip/osx
 destructive

@@ -1,4 +1,4 @@
 command
-shippable/posix/group2
+shippable/posix/group1
 shell
 skip/aix
