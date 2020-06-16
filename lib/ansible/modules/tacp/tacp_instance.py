@@ -332,9 +332,6 @@ def run_module():
         instance_properties = application_resource.get_by_uuid(
             instance_uuid).to_dict()
         current_state = instance_properties['status']
-
-            instance_uuid).to_dict()
-        current_state = instance_properties['status']
     else:
         if module.params['state'] == 'absent':
             instance_power_action(
