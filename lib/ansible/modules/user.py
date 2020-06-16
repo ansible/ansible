@@ -328,7 +328,7 @@ groups:
   description: List of groups of which the user is a member
   returned: When C(groups) is not empty and C(state) is 'present'
   type: str
-  sample: 'chrony,apache'
+  sample: ['chrony','apache']
 home:
   description: "Path to user's home directory"
   returned: When C(state) is 'present'
