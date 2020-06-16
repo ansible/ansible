@@ -7,12 +7,11 @@ export ANSIBLE_GATHERING=explicit
 export ANSIBLE_GATHER_SUBSET=minimal
 export ANSIBLE_HOST_PATTERN_MISMATCH=error
 
-
 # FUTURE: just use INVENTORY_PATH as-is once ansible-test sets the right dir
 ipath=../../$(basename "${INVENTORY_PATH:-../../inventory}")
 export INVENTORY_PATH="$ipath"
 
-# CALLBACK VALIDATION
+echo "--- validating callbacks"
 # validate FQ callbacks
 ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback ansible localhost -m debug | grep "usercallback says ok"
 # validate redirected callback
@@ -26,7 +25,7 @@ ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback,formerly_core_callback a
 # ensure non existing callback does not crash ansible
 ANSIBLE_CALLBACK_WHITELIST=charlie.gomez.notme ansible localhost -m debug 2>&1 | grep -- "Skipping 'charlie.gomez.notme'"
 
-
+echo "--- validating docs"
 # test documentation
 ansible-doc testns.testcoll.testmodule -vvv | grep -- "- normal_doc_frag"
 # same with symlink
@@ -35,13 +34,15 @@ ansible-doc testns.testcoll2.testmodule2 -vvv | grep "Test module"
 # now test we can list with symlink
 ansible-doc -l -vvv| grep "testns.testcoll2.testmodule2"
 
-# test adhoc default collection resolution (use unqualified collection module with playbook dir under its collection)
-echo "testing adhoc default collection support with explicit playbook dir"
-ANSIBLE_PLAYBOOK_DIR=./collection_root_user/ansible_collections/testns/testcoll ansible localhost -m testmodule
-
 echo "testing bad doc_fragments (expected ERROR message follows)"
 # test documentation failure
 ansible-doc testns.testcoll.testmodule_bad_docfrags -vvv 2>&1 | grep -- "unknown doc_fragment"
+
+echo "--- validating default collection"
+# test adhoc default collection resolution (use unqualified collection module with playbook dir under its collection)
+
+echo "testing adhoc default collection support with explicit playbook dir"
+ANSIBLE_PLAYBOOK_DIR=./collection_root_user/ansible_collections/testns/testcoll ansible localhost -m testmodule
 
 # we need multiple plays, and conditional import_playbook is noisy and causes problems, so choose here which one to use...
 if [[ ${INVENTORY_PATH} == *.winrm ]]; then
@@ -53,6 +54,7 @@ else
   ansible-playbook -i "${INVENTORY_PATH}" collection_root_user/ansible_collections/testns/testcoll/playbooks/default_collection_playbook.yml "$@"
 fi
 
+echo "--- validating collections support in playbooks/roles"
 # run test playbooks
 ansible-playbook -i "${INVENTORY_PATH}" -v "${TEST_PLAYBOOK}" "$@"
 
@@ -60,6 +62,7 @@ if [[ ${INVENTORY_PATH} != *.winrm ]]; then
 	ansible-playbook -i "${INVENTORY_PATH}" -v invocation_tests.yml "$@"
 fi
 
+echo "--- validating inventory"
 # test collection inventories
 ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
 
