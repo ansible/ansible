@@ -169,6 +169,24 @@ In YAML:
       webservers:
         hosts:
           www[01:50].example.com:
+          
+You can specify a stride (increments between sequence numbers) when defining a numeric range of hosts:
+
+In INI:
+
+.. code-block:: text
+
+    [webservers]
+    www[01:50:2].example.com
+
+In YAML:
+
+.. code-block:: yaml
+
+    ...
+      webservers:
+        hosts:
+          www[01:50:2].example.com:
 
 For numeric patterns, leading zeros can be included or removed, as desired. Ranges are inclusive. You can also define alphabetic ranges:
 
