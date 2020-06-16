@@ -1,0 +1,14 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - block:
+        - name: EXPECTED FAILURE
+          fail:
+            msg: Initial failure
+      rescue:
+        - debug:
+            msg: Rescued
+      always:
+        - name: EXPECTED FAILURE
+          fail:
+            msg: Failure in always

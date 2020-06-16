@@ -39,3 +39,10 @@ env python -c \
 [ "$(grep -c 'TEST COMPLETE' block_test.out)" = "$(grep -E '^[0-9]+ plays in' block_test_wo_colors.out | cut -f1 -d' ')" ]
 
 ansible-playbook -vv block_rescue_vars.yml
+
+# https://github.com/ansible/ansible/issues/70000
+set +e
+exit_code=0
+ansible-playbook -vv always_failure_rc.yml || exit_code=$?
+set -e
+[ $exit_code -eq 2 ]
