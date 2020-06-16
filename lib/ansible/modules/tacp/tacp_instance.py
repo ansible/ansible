@@ -89,6 +89,8 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         api_key=dict(type='str', required=True),
+        portal_url=dict(type='str', required=False,
+                        default="https://manage.cp.lenovo.com"),
         name=dict(type='str', required=True),
         state=dict(type='str', required=True,
                    choices=STATE_ACTIONS),
@@ -316,10 +318,8 @@ def run_module():
     result['args'] = module.params
 
     # Define configuration
-    configuration = tacp.Configuration()
-    configuration.host = "https://manage.cp.lenovo.com"
-    configuration.api_key_prefix['Authorization'] = 'Bearer'
-    configuration.api_key['Authorization'] = module.params['api_key']
+    configuration = tacp_utils.get_configuration(module.params['api_key'],
+                                                 module.params['portal_url'])
     api_client = tacp.ApiClient(configuration)
 
     application_resource = tacp_utils.ApplicationResource(api_client)
@@ -330,13 +330,11 @@ def run_module():
 
     if instance_uuid:
         instance_properties = application_resource.get_by_uuid(
-<<<<<<< HEAD
-            instance_uuid)
-        current_state = instance_properties.to_dict()['status']
-=======
             instance_uuid).to_dict()
         current_state = instance_properties['status']
->>>>>>> 1c1a4440f8... Update tacp_instance.py
+
+            instance_uuid).to_dict()
+        current_state = instance_properties['status']
     else:
         if module.params['state'] == 'absent':
             instance_power_action(

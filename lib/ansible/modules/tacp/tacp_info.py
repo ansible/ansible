@@ -5,6 +5,7 @@
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.tacp_ansible import tacp_utils
+from ansible.module_utils.tacp_ansible.tacp_exceptions import UuidNotFoundException  # noqa
 
 
 import tacp
@@ -74,13 +75,12 @@ message:
     returned: always
 '''
 
-
-def run_module():
-    # define available arguments/parameters a user can pass to the module
-    module_args = {
-        "api_key": {"type": 'str', "required": True},
-        "resource": {"type": 'str', "required": True,
-                     "choices": [
+module_args = {
+    "api_key": {"type": 'str', "required": True},
+    "portal_url": {"type": 'str', "required": False,
+                   "default": "https://manage.cp.lenovo.com"},
+    "resource": {"type": 'str', "required": True,
+                 "choices": [
                          "application",
                          "application_group",
                          "category",
@@ -96,7 +96,28 @@ def run_module():
                          "user",
                          "vlan",
                          "vnet"]}
-    }
+}
+
+resource_dict = {"application": tacp_utils.ApplicationResource,
+                 "application_group": tacp_utils.ApplicationGroupResource,
+                 "category": tacp_utils.CategoryResource,
+                 "datacenter": tacp_utils.DatacenterResource,
+                 "firewall_profile": tacp_utils.FirewallProfileResource,
+                 "instance": tacp_utils.ApplicationResource,
+                 "marketplace_template": tacp_utils.MarketplaceTemplateResource,  # noqa
+                 "migration_zone": tacp_utils.MigrationZoneResource,
+                 "site": tacp_utils.SiteResource,
+                 "storage_pool": tacp_utils.StoragePoolResource,
+                 "tag": tacp_utils.TagResource,
+                 "template": tacp_utils.TemplateResource,
+                 "user": tacp_utils.UserResource,
+                 "vlan": tacp_utils.VlanResource,
+                 "vnet": tacp_utils.VnetResource
+                }
+
+
+def run_module():
+    # define available arguments/parameters a user can pass to the module
 
     result = dict(
         changed=False,
@@ -114,76 +135,53 @@ def run_module():
     result['args'] = module.params
 
     # Define configuration
-    configuration = tacp.Configuration()
-    configuration.host = "https://manage.cp.lenovo.com"
-    configuration.api_key_prefix['Authorization'] = 'Bearer'
-    configuration.api_key['Authorization'] = module.params['api_key']
+    configuration = tacp_utils.get_configuration(module.params['api_key'],
+                                                 module.params['portal_url'])
     api_client = tacp.ApiClient(configuration)
-
-    resource_dict = {"application": tacp_utils.ApplicationResource,
-                     "application_group": tacp_utils.ApplicationGroupResource,
-                     "category": tacp_utils.CategoryResource,
-                     "datacenter": tacp_utils.DatacenterResource,
-                     "firewall_profile": tacp_utils.FirewallProfileResource,
-                     "instance": tacp_utils.ApplicationResource,
-                     "marketplace_template": tacp_utils.MarketplaceTemplateResource,
-                     "migration_zone": tacp_utils.MigrationZoneResource,
-                     "site": tacp_utils.SiteResource,
-                     "storage_pool": tacp_utils.StoragePoolResource,
-                     "tag": tacp_utils.TagResource,
-                     "template": tacp_utils.TemplateResource,
-                     "user": tacp_utils.UserResource,
-                     "vlan": tacp_utils.VlanResource,
-                     "vnet": tacp_utils.VnetResource
-                     }
 
     resource = resource_dict[module.params['resource']](api_client)
 
     items = [item.to_dict() for item in resource.filter()]
 
     if module.params['resource'] == 'migration_zone':
-        application_resource = tacp_utils.ApplicationResource(
-            api_client)
-        category_resource = tacp_utils.CategoryResource(
-            api_client)
-        datacenter_resource = tacp_utils.DatacenterResource(
-            api_client)
+        application_resource = tacp_utils.ApplicationResource(api_client)
+        category_resource = tacp_utils.CategoryResource(api_client)
+        datacenter_resource = tacp_utils.DatacenterResource(api_client)
         for item in items:
-            if 'applications' in item:
-                for application in item['applications']:
-                    application['name'] = application_resource.get_by_uuid(
-                        application['uuid']).to_dict()['name']
+            if item.get('applications'):
+                item = tacp_utils.fill_in_missing_names_by_uuid(
+                    item, application_resource, 'applications')
 
-            if 'allocations' in item:
-                if 'categories' in item['allocations']:
-                    for category in item['allocations']['categories']:
-                        category['name'] = category_resource.get_by_uuid(
-                            category['category_uuid']).to_dict()['name']
+            if item.get('allocations'):
+                if item['allocations'].get('categories'):
+                    item['allocations'] = tacp_utils.fill_in_missing_names_by_uuid(  # noqa
+                        item['allocations'], category_resource, 'categories')
 
-                if 'datacenters' in item['allocations']:
-                    for datacenter in item['allocations']['datacenters']:
-                        datacenter['name'] = datacenter_resource.get_by_uuid(
-                            datacenter['datacenter_uuid']).to_dict()['name']
+                if item['allocations'].get('datacenters'):
+                    item['allocations'] = tacp_utils.fill_in_missing_names_by_uuid(  # noqa
+                        item['allocations'], datacenter_resource, 'datacenters')  # noqa
 
     elif module.params['resource'] == 'datacenter':
         vnet_resource = tacp_utils.VnetResource(api_client)
         vlan_resource = tacp_utils.VlanResource(api_client)
         tag_resource = tacp_utils.TagResource(api_client)
         for item in items:
-            if 'networks' in item:
+            if item.get('networks'):
+                # Networks is just a list of UUIDs, it is not clear whether
+                # the network is a VNET or a VLAN - so we will get a list
+                # of all VLAN and VNET networks and find the corresponding
+                # name for the network UUID this way, not using the
+                # ill_in_missing_names_by_uuid function
+                uuids = [network['uuid'] for network in item['networks']]  # noqa
+                network_list = {vlan.uuid: vlan.name for vlan in
+                                    vlan_resource.filter(uuid=('=in=', *uuids))}  # noqa
+                network_list.update({vnet.uuid: vnet.name for vnet in
+                                    vnet_resource.filter(uuid=('=in=', *uuids))})  # noqa
                 for network in item['networks']:
-                    try:
-                        network['name'] = vnet_resource.get_by_uuid(
-                            network['uuid']).to_dict()['name']
-                        network['network_type'] = 'vnet'
-                    except Exception:
-                        network['name'] = vlan_resource.get_by_uuid(
-                            network['uuid']).to_dict()['name']
-                        network['network_type'] = 'vlan'
-            if 'tags' in item:
-                for tag in item['tags']:
-                    tag['name'] = tag_resource.get_by_uuid(
-                        tag['uuid']).to_dict()['name']
+                    network['name'] = network_list[network['uuid']]
+            if item.get('tags'):
+                item['tags'] = tacp_utils.fill_in_missing_names_by_uuid(
+                    item['tags'], tag_resource, 'tags')
 
     result[module.params['resource']] = items
 
