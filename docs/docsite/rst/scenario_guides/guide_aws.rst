@@ -11,7 +11,7 @@ section is to explain how to put Ansible modules together (and use inventory scr
 
 Requirements for the AWS modules are minimal.
 
-All of the modules require and are tested against recent versions of boto - check the module documentation for the minimum required version for each module.  You'll need the boto Python module installed on your control machine. Boto can be installed from your OS distribution or python's "pip install boto".
+All of the modules require and are tested against recent versions of boto, usually boto3. Check the module documentation for the minimum required version for each module. You must have the boto3 Python module installed on your control machine. You may also need the original boto package. You can install these modules from your OS distribution or using the python package installer: ``pip install boto3``.
 
 Whereas classically Ansible will execute tasks in its host loop against multiple remote machines, most cloud-control steps occur on your local machine with reference to the regions to control.
 
