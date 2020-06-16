@@ -180,11 +180,11 @@ def run_module():
 
             mac_address = nic.get('mac_address')
             automatic_mac_address = not bool(mac_address)
+
+            firewall_override_uuid = None
             if 'firewall_override' in nic:
                 firewall_override_uuid = tacp_utils.get_component_fields_by_name(
                     nic['firewall_override'], 'firewall_override', api_client)
-            else:
-                firewall_override_uuid = None
 
             if i == 0:
                 for boot_order_item in boot_order:
@@ -259,7 +259,8 @@ def run_module():
             hardware_assisted_virtualization_enabled=instance_params['vtx_enabled'],
             enable_automatic_recovery=instance_params['auto_recovery_enabled'],
             description=instance_params['description'],
-            application_group_uuid=instance_params.get('application_group_uuid')
+            application_group_uuid=instance_params.get(
+                'application_group_uuid')
         )
 
         if module._verbosity >= 3:
