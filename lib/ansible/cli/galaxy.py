@@ -726,8 +726,8 @@ class GalaxyCLI(CLI):
         text = [u"", u"Collection: %s" % to_text(collection)]
         for k in sorted(collection_info.keys()):
             if isinstance(collection_info[k], dict):
+                text.append(u"\t%s:" % (k))
                 for key in sorted(collection_info[k].keys()):
-                    text.append(u"\t%s:" % (k))
                     text.append(u"\t\t%s: %s" % (key, collection_info[k][key]))
             else:
                 text.append(u"\t%s: %s" % (k, collection_info[k]))
