@@ -7,9 +7,14 @@
 """
 CLI tool that analyses a Shippable run's test result and re-balances the test targets into new groups.
 
-Before running this script you must run download.py like
+Before running this script you must run download.py like:
 
-./download.py https://app.shippable.com/github/<team>/<repo>/runs/<run_num> --test-results --job-number x --job-number y
+    ./download.py https://app.shippable.com/github/<team>/<repo>/runs/<run_num> --test-results --job-number x --job-number y
+
+Or to get all job results from a run:
+
+    ./download.py https://app.shippable.com/github/<team>/<repo>/runs/<run_num> --test-results --all
+
 
 Set the dir <team>/<repo>/<run_num> as the value of '-p/--test-path' for this script.
 """
