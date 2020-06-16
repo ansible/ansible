@@ -86,15 +86,18 @@ def get_raw_test_targets(args, test_path):
                 continue
 
             info = json.loads(test['contents'])
+            targets = info.get('targets')
 
-            for target_name, target_info in info.get('targets', {}).items():
-                target_runtime = int(target_info.get('run_time_seconds', 0))
+            targets = info.get('targets')
+            if isinstance(targets, dict):
+                for target_name, target_info in info.get('targets', {}).items():
+                    target_runtime = int(target_info.get('run_time_seconds', 0))
 
-                # If that target already is found and has a higher runtime than the current one, ignore this entry.
-                if target_times.get(target_name, 0) > target_runtime:
-                    continue
+                    # If that target already is found and has a higher runtime than the current one, ignore this entry.
+                    if target_times.get(target_name, 0) > target_runtime:
+                        continue
 
-                target_times[target_name] = target_runtime
+                    target_times[target_name] = target_runtime
 
     return dict([(k, v) for k, v in sorted(target_times.items(), key=lambda i: i[1], reverse=True)])
 
