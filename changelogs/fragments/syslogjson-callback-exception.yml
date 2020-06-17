@@ -1,0 +1,2 @@
+bugfixes:
+  - syslog_json callback - fix plugin exception when running (https://github.com/ansible-collections/community.general/issues/407).
