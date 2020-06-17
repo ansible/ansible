@@ -8290,6 +8290,13 @@ plugin_routing:
       redirect: ansible.posix.timer
     foreman:
       redirect: theforeman.foreman.foreman
+    # 'collections' integration test entries, do not remove
+    formerly_core_callback:
+      redirect: testns.testcoll.usercallback
+    formerly_core_removed_callback:
+      redirect: testns.testcoll.removedcallback
+    formerly_core_missing_callback:
+      redirect: bogusns.boguscoll.boguscallback
   doc_fragments:
     a10:
       redirect: community.network.a10
