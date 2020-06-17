@@ -327,7 +327,7 @@ def run_module():
         ).to_dict()
         result['changed'] = True
 
-        return response.object_uuid
+        return response
 
     def instance_power_action(name, api_client, action):
         assert action in STATE_ACTIONS + [Action.RESUMED]
@@ -358,6 +358,7 @@ def run_module():
             if disk['name'] in [instance_disk.name for instance_disk
                                 in instance.disks]:
                 # Here is where we could edit the existing disk's properties
+                
                 continue
 
             disk_uuid = [boot_order_disk.disk_uuid for boot_order_disk in
@@ -434,6 +435,37 @@ def run_module():
 
             edit_app_resource.create_vnic_for_application(body=body,
                                                           uuid=instance_uuid)  # noqa
+        existing_boot_order = app_resource.filter(
+            uuid=("==", instance_uuid))[0].boot_order
+
+        new_boot_order = []
+        # Create ApiEditApplicationPayload to update boot order
+        for device in existing_boot_order:
+            name = device.name
+
+            if device.vnic_uuid:
+                vnic_uuid = device.vnic_uuid
+                disk_uuid = None
+                playbook_nic = [nic for nic in module.params['nics']
+                                if nic['name'] == name][0]
+                order = playbook_nic['boot_order']
+            else:
+                vnic_uuid = None
+                disk_uuid = device.disk_uuid
+                playbook_disk = [disk for disk in module.params['disks']
+                                 if disk['name'] == name][0]
+                order = playbook_disk['boot_order']
+
+            boot_order_payload = tacp.ApiBootOrderPayload(disk_uuid=disk_uuid,
+                                                          name=name,
+                                                          order=order,
+                                                          vnic_uuid=vnic_uuid)
+            new_boot_order.append(boot_order_payload)
+
+        new_boot_order = sorted(new_boot_order, key=lambda payload: payload.order)  # noqa
+        body = tacp.ApiEditApplicationPayload(boot_order=new_boot_order)
+
+        edit_app_resource.edit_boot_order_for_application(body, instance_uuid)
 
     # Current state is first dimension
     # Specified state is second dimension
@@ -489,7 +521,7 @@ def run_module():
 
             # Create instance with disks + vnics from the template ONLY
             created_instance_uuid = create_instance(
-                instance_params, api_client)
+                instance_params, api_client).object_uuid
             current_state = State.SHUTDOWN
 
             # Add vnics + disks from playbook specification
@@ -497,8 +529,12 @@ def run_module():
             template_resource = tacp_utils.TemplateResource(api_client)
             template_results = template_resource.filter(
                 name=("==", module.params['template']))
-            # There should only be one template returned if it exists
-            template_dict = template_results[0].to_dict()
+
+            if template_results:
+                template_dict = template_results[0].to_dict()
+            else:
+                fail_with_reason("Template {} is not present.".format(
+                    module.params['template']))
 
             boot_order = get_boot_order(module, template_dict)
 
@@ -511,10 +547,6 @@ def run_module():
             instance_power_action(
                 module.params['name'], api_client, power_action)
 
-    # AnsibleModule.fail_json() to pass in the message and the result
-
-    # in the event of a successful module execution, you will want to
-    # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
 
 
