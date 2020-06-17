@@ -224,7 +224,6 @@ def run_module():
 
         if template_uuid:
             instance_params['template_uuid'] = template_uuid
-            # boot_order = get_boot_order(module, template_dict)
             boot_order = template_results[0].boot_order
         else:
             # Template does not exist - must fail the task
@@ -237,6 +236,15 @@ def run_module():
         vlan_resource = tacp_utils.VlanResource(api_client)
         vnet_resource = tacp_utils.VnetResource(api_client)
         for nic in module.params['nics']:
+
+            vnic_uuids = [device.vnic_uuid for device in boot_order if
+                          (device.vnic_uuid and
+                           device.name == nic['name'])]
+            if not vnic_uuids:
+                # The vnic is not in the template, so move on
+                continue
+            vnic_uuid = vnic_uuids[0]
+
             if nic['type'].lower() == 'vlan':
                 network_uuid = vlan_resource.filter(
                     name=("==", nic['network']))[0].uuid
@@ -247,9 +255,6 @@ def run_module():
             mac_address = nic.get('mac_address')
             automatic_mac_address = not bool(mac_address)
             name = nic['name']
-            vnic_uuid = [device.vnic_uuid for device in boot_order if
-                         (device.vnic_uuid and
-                          device.name == name)][0]
 
             network_payload = tacp.ApiCreateOrEditApplicationNetworkOptionsPayload(  # noqa
                 name=name,
@@ -284,7 +289,7 @@ def run_module():
 
             instance_params['application_group_uuid'] = uuid
 
-        #sys.stdout.write(str(instance_params))
+        # sys.stdout.write(str(instance_params))
         return instance_params
 
     def create_instance(instance_params, api_client):
@@ -340,13 +345,19 @@ def run_module():
     def add_vnics_and_disks_and_update_boot_order(module, instance_uuid, boot_order):  # noqa
         app_resource = tacp_utils.ApplicationResource(api_client)
         edit_app_resource = tacp_utils.EditApplicationResource(api_client)
-        # edit_app_resource = tacp.EditApplicationsApi(api_client)
+        vlan_resource = tacp_utils.VlanResource(api_client)
+        vnet_resource = tacp_utils.VnetResource(api_client)
+
+        # We need this to be the tacp version of DatacenterResource
+        # so we can easily fetch firewall overrides
+        datacenter_api = tacp.DatacentersApi(api_client)
 
         instance = app_resource.filter(uuid=("==", instance_uuid))[0]
 
         for disk in module.params['disks']:
             if disk['name'] in [instance_disk.name for instance_disk
                                 in instance.disks]:
+                # Here is where we could edit the existing disk's properties
                 continue
 
             disk_uuid = [boot_order_disk.disk_uuid for boot_order_disk in
@@ -355,7 +366,8 @@ def run_module():
             bandwidth_limit = disk['bandwidth_limit'] if 'bandwidth_limit' in disk else None  # noqa
             if bandwidth_limit:
                 if int(bandwidth_limit) < 5000000:
-                    fail_with_reason("The bandwidth limit for a disk must be at least 5 MBps (5000000).")
+                    fail_with_reason(
+                        "The bandwidth limit for a disk must be at least 5 MBps (5000000).")  # noqa
             iops_limit = disk['iops_limit'] if 'iops_limit' in disk else None
             if iops_limit:
                 if int(iops_limit) < 50:
@@ -368,15 +380,60 @@ def run_module():
                                                    size=size,
                                                    uuid=disk_uuid
                                                    )
-            # if module._verbosity >= 3:
-            #     sys.stdout.write("add disk body : " + str(body))
-            #     response = edit_app_resource.create_application_disk_using_post(body, instance_uuid)
-            #     sys.stdout.write("add disk response : " + str(response))
+
             edit_app_resource.create_disk_for_application(body=body,  # noqa
                                                           uuid=instance_uuid)  # noqa
 
-        #edit_app_resource.create_application_vnic_using_post()
-        
+        for vnic in module.params['nics']:
+
+            if vnic['name'] in [instance_vnic.name for instance_vnic
+                                in instance.boot_order if instance_vnic.vnic_uuid]:  # noqa
+                continue
+            vnic_uuid = [boot_order_vnic.vnic_uuid for boot_order_vnic in
+                         boot_order if boot_order_vnic.name == vnic['name']][0]
+            name = vnic['name']
+            mac_address = vnic.get('mac_address')
+            automatic_mac_address = not bool(mac_address)
+
+            if vnic['type'].lower() == 'vlan':
+                resource = vlan_resource
+            else:
+                resource = vnet_resource
+
+            networks = resource.filter(name=('==', vnic['network']))
+            if not networks:
+                fail_with_reason("Invalid network specified : {} for NIC {}".format(  # noqa
+                    vnic['network'], vnic['name']))
+            network_uuid = networks[0].uuid
+
+            if vnic['firewall_override']:
+                datacenter = datacenter_api.get_datacenters_using_get(
+                    filters="name=='{}'".format(module.params['datacenter']))  # noqa
+                if datacenter:
+                    datacenter_uuid = datacenter[0].uuid  # noqa
+                else:
+                    fail_with_reason("An invalid datacenter name was specified: {}".format(  # noqa
+                        module.params['datacenter']))
+
+                firewall_override = datacenter_api.get_datacenter_firewall_overrides_using_get(  # noqa
+                    uuid=datacenter_uuid, filters="name=='{}'".format(  # noqa
+                        vnic['firewall_override']))
+                if firewall_override:
+                    firewall_override_uuid = firewall_override[0].uuid  # noqa
+                else:
+                    fail_with_reason("An invalid firewall override name was specified: {}".format(  # noqa
+                        vnic['firewall_override']))
+
+            body = tacp.ApiCreateOrEditApplicationNetworkOptionsPayload(
+                automatic_mac_assignment=automatic_mac_address,
+                firewall_override_uuid=firewall_override_uuid,
+                mac_address=mac_address,
+                name=name,
+                network_uuid=network_uuid,
+                vnic_uuid=vnic_uuid)
+
+            edit_app_resource.create_vnic_for_application(body=body,
+                                                          uuid=instance_uuid)  # noqa
 
     # Current state is first dimension
     # Specified state is second dimension
@@ -431,7 +488,8 @@ def run_module():
             instance_params = generate_instance_params(module)
 
             # Create instance with disks + vnics from the template ONLY
-            created_instance_uuid = create_instance(instance_params, api_client)
+            created_instance_uuid = create_instance(
+                instance_params, api_client)
             current_state = State.SHUTDOWN
 
             # Add vnics + disks from playbook specification
