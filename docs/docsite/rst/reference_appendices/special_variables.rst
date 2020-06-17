@@ -64,6 +64,12 @@ ansible_role_names
     The names of the roles currently imported into the current play, or roles referenced as dependencies of the roles
     imported into the current play.
 
+ansible_role_name
+    The fully qualified collection role name, in the format of ``namespace.collection.role_name``
+
+ansible_collection_name
+    The name of the collection the task that is executing is a part of. In the format of ``namespace.collection``
+
 ansible_run_tags
     Contents of the ``--tags`` CLI option, which specifies which tags will be included for the current run.
 
