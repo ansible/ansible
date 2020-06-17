@@ -216,16 +216,32 @@ class Interfaces(ConfigBase):
             build_child_xml_node(intf, 'name', config['name'])
 
             intf_fields = ['description']
-            if not config['name'].startswith('lo'):
+            if not any(
+                [
+                    config['name'].startswith('gr'),
+                    config['name'].startswith('lo'),
+                ]
+            ):
                 intf_fields.append('speed')
 
-            if not any([config['name'].startswith('fxp'), config['name'].startswith('lo')]):
+            if not any(
+                [
+                    config['name'].startswith('gr'),
+                    config['name'].startswith('fxp'),
+                    config['name'].startswith('lo')
+                ]
+            ):
                 intf_fields.append('mtu')
 
             for field in intf_fields:
                 build_child_xml_node(intf, field, None, {'delete': 'delete'})
 
-            if not config['name'].startswith('lo'):
+            if not any(
+                    [
+                        config['name'].startswith('gr'),
+                        config['name'].startswith('lo')
+                    ]
+            ):
                 build_child_xml_node(intf, 'link-mode', None, {'delete': 'delete'})
 
             build_child_xml_node(intf, 'disable', None, {'delete': 'delete'})
