@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now enables color ``ls`` on a remote host only if the host supports the feature

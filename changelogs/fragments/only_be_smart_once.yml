@@ -1,2 +1,0 @@
-bugfixes:
-  - optimize 'smart' detection from being run over and over and preferably do it at config time.

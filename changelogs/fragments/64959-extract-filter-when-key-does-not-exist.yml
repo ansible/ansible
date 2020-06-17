@@ -1,3 +1,0 @@
-bugfixes:
-  - core filters - fix ``extract()`` filter when key does not exist in container
-    (https://github.com/ansible/ansible/issues/64957)

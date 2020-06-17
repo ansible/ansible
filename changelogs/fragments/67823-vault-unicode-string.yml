@@ -1,6 +1,0 @@
-bugfixes:
-- Vault - Make the single vaulted value ``AnsibleVaultEncryptedUnicode`` class
-  work more like a string by replicating the behavior of ``collections.UserString``
-  from Python. These changes don't allow it to be considered a string, but
-  most common python string actions will now work as expected.
-  (https://github.com/ansible/ansible/pull/67823)

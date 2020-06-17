@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test provisioning of network devices for ``network-integration`` has been updated to use collections.

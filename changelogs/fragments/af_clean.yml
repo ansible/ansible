@@ -1,2 +1,0 @@
-bugfixes:
-    - Ensure we don't allow ansible_facts subkey of ansible_facts to override top level, also fix 'deprefixing' to prevent key transforms.

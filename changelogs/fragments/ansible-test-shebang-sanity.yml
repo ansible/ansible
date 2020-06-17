@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test - The shebang sanity test now correctly identifies modules in subdirectories in collections.

@@ -1,2 +1,0 @@
-bugfixes:
-  - cron cronvar - only run ``get_bin_path()`` once

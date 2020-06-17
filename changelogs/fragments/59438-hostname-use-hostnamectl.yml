@@ -1,2 +1,0 @@
-bugfixes:
-    - Use hostnamectl command to get current hostname for host while using systemd strategy (https://github.com/ansible/ansible/issues/59438).

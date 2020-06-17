@@ -1,2 +1,0 @@
-bugfixes:
-  - paramiko_ssh - improve authentication error message so it is less confusing

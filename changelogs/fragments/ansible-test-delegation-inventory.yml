@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now correctly includes inventory files ignored by git when running tests with the ``--docker`` option

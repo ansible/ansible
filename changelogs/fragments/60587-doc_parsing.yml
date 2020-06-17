@@ -1,2 +1,0 @@
-bugfixes:
-  - Handle exception encountered while parsing the argument description in module when invoked via ansible-doc command (https://github.com/ansible/ansible/issues/60587).

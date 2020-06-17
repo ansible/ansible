@@ -1,2 +1,0 @@
-bugfixes:
-    - Ensure that keywords defined as booleans are correctly interpreting their input, before patch any random string would be interpreted as False

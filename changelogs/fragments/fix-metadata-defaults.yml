@@ -1,5 +1,0 @@
-bugfixes:
-- Plugin Metadata is supposed to have default values.  When the metadata was
-  missing entirely, we were properly setting the defaults.  Fixed the metadata
-  parsing so that the defaults are also set when we were missing just a few
-  fields.

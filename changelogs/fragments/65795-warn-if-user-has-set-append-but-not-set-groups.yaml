@@ -1,2 +1,0 @@
-minor_changes:
-  - 'user - usage of ``append: True`` without setting a list of groups. This is currently a no-op with a warning, and will change to an error in 2.14. (https://github.com/ansible/ansible/pull/65795)'

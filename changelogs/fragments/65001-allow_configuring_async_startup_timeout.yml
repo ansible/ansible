@@ -1,3 +1,0 @@
-minor_changes:
-  - Add a new config parameter, WIN_ASYNC_STARTUP_TIMEOUT, which allows configuration of the named pipe connection
-    timeout under Windows when launching async tasks.

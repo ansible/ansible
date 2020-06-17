@@ -1,2 +1,0 @@
-minor_changes:
-- ansible-galaxy - Add ``download`` option for ``ansible-galaxy collection`` to download collections and their dependencies for an offline install

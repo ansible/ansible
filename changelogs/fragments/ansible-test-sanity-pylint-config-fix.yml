@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test - Disabled the ``duplicate-code`` and ``cyclic-import`` checks for the ``pylint`` sanity test due to inconsistent results.

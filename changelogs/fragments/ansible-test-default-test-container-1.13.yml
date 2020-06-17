@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test has been updated to use ``default-test-container:1.13`` which includes fewer Python requirements now that most modules and tests have been migrated to collections.

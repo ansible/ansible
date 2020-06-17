@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now uses GNU tar format instead of the Python default when creating payloads for remote systems

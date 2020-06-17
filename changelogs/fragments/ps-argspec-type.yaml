@@ -1,2 +1,0 @@
-bugfixes:
-- validate-modules - Fix hang when inspecting module with a delegate args spec type

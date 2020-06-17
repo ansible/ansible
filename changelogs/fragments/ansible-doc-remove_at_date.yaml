@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-doc - Allow and give precedence to `removed_at_date` for deprecated modules. 

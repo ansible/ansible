@@ -1,2 +1,0 @@
-security_fixes:
-  - '**security issue** - properly hide parameters marked with ``no_log`` in suboptions when invalid parameters are passed to the module (CVE-2019-14858)'

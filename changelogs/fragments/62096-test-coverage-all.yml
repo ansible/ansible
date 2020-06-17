@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-test coverage - Fix the ``--all`` argument when generating coverage reports - https://github.com/ansible/ansible/issues/62096

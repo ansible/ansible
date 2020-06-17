@@ -1,4 +1,0 @@
-bugfixes:
-  - Fix issue git module ignores remote_tmp (https://github.com/ansible/ansible/issues/33947).
-  - Fix issue git module cannot use custom `key_file` or `ssh_opts` as non-root user on system with noexec `/tmp` (https://github.com/ansible/ansible/issues/30064).
-  - By passing the module_tmpdir as a parameter in the write_ssh_wrapper function instead of initalizing module_tmpdir via get_module_path()

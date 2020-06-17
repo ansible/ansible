@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-galaxy - Fix url building to not truncate the URL (https://github.com/ansible/ansible/issues/61624)

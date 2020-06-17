@@ -1,2 +1,0 @@
-bugfixes:
-  - collection loader - ensure Jinja function cache is fully-populated before lookup

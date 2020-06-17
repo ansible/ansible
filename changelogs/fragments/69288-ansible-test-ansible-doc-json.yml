@@ -1,2 +1,0 @@
-minor_changes:
-- "ansible-test - also run the ``ansible-doc`` sanity test with ``--json`` to ensure that the documentation does not contain something that cannot be exported as JSON (https://github.com/ansible/ansible/issues/69238)."

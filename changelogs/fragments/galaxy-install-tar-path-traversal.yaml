@@ -1,2 +1,0 @@
-security_fixes:
-- ansible-galaxy - Error when install finds a tar with a file that will be extracted outside the collection install directory - CVE-2020-10691

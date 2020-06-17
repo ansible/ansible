@@ -1,2 +1,0 @@
-bugfixes:
-  - file - change ``_diff_peek`` in argument spec to be the correct type, which is ``bool`` (https://github.com/ansible/ansible/issues/59433)

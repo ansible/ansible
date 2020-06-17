@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now properly sets PYTHONPATH for tests when running from an Ansible installation

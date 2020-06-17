@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now properly activates virtual environments created using the --venv option

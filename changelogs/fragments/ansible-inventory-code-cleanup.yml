@@ -1,3 +1,0 @@
-bugfixes:
-  - Use ``sys.exit`` instead of ``exit`` in ``ansible-inventory``.
-  - Remove unused Python imports in ``ansible-inventory``.

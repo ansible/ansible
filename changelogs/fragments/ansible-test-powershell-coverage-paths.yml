@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now correctly rewrites coverage paths for PowerShell files when testing collections

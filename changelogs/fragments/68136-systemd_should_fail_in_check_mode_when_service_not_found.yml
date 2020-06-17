@@ -1,2 +1,0 @@
-bugfixes:
-- systemd - the module should fail in check_mode when service not found on host (https://github.com/ansible/ansible/pull/68136).

@@ -1,2 +1,0 @@
-major_changes:
-    - ansible-test now uses a different ``default`` test container for Ansible Collections

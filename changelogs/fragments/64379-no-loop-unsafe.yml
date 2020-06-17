@@ -1,5 +1,0 @@
-bugfixes:
-- loops - Do not indiscriminately mark loop items as unsafe, only apply unsafe
-  to ``with_`` style loops. The items from ``loop`` should not be explicitly
-  wrapped in unsafe. The underlying templating mechanism should dictate this.
-  (https://github.com/ansible/ansible/issues/64379)

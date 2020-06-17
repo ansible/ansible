@@ -1,2 +1,0 @@
-bugfixes:
-  - yum - fix bug that caused ``enablerepo`` to not be honored when used with disablerepo all wildcard/glob (https://github.com/ansible/ansible/issues/66549)

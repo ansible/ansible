@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-test windows coverage - Ensure coverage reports are UTF-8 encoded without a BOM

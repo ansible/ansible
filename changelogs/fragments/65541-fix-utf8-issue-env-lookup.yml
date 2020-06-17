@@ -1,2 +1,0 @@
-bugfixes:
-  - env lookup plugin - Fix handling of environment variables values containing utf-8 characters. (https://github.com/ansible/ansible/issues/65298)

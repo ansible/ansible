@@ -1,2 +1,0 @@
-bugfixes:
-  - "Prevent templating unused variables for {% include %} (https://github.com/ansible/ansible/issues/68699)"

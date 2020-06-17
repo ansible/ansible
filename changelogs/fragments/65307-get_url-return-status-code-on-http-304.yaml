@@ -1,2 +1,0 @@
-bugfixes:
-- "On HTTP status code 304, return status_code"

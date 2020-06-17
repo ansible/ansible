@@ -1,3 +1,0 @@
----
-minor_changes:
-  - dnf - Properly handle module AppStreams that don't define stream (https://github.com/ansible/ansible/issues/63683)

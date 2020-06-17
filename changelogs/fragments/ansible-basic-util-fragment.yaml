@@ -1,2 +1,0 @@
-minor_changes:
-- Ansible.Basic - Added the ability to specify multiple fragments to load in a generic way for modules that use a module_util with fragment options

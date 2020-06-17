@@ -1,4 +1,0 @@
-bugfixes:
-  - free strategy - Include failed hosts when filtering notified hosts for handlers. The strategy base should
-    determine whether or not to run handlers on those hosts depending on whether forcing handlers is enabled
-    (https://github.com/ansible/ansible/issues/65254).

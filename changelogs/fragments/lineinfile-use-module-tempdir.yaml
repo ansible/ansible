@@ -1,2 +1,0 @@
-bugfixes:
-  - lineinfile - use ``module.tmpdir`` to allow configuration of the remote temp directory (https://github.com/ansible/ansible/issues/68218)

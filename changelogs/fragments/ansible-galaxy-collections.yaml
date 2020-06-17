@@ -1,5 +1,0 @@
-bugfixes:
-- ansible-galaxy - Remove uneeded verbose messages when accessing local token file
-- ansible-galaxy - Display proper error when invalid token is used for Galaxy servers
-- ansible-galaxy - Send SHA256 hashes when publishing a collection
-- ansible-galaxy - Fix up pagination searcher for collection versions on Automation Hub

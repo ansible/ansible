@@ -1,2 +1,0 @@
-bugfixes:
-  - "make ``no_log=False`` on a module option silence the ``no_log`` warning (https://github.com/ansible/ansible/issues/49465 https://github.com/ansible/ansible/issues/64656)"

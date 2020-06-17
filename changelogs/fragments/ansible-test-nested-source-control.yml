@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-test now ignores version control within subdirectories of collections. Previously this condition was an error.

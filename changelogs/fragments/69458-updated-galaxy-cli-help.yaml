@@ -1,3 +1,0 @@
----
-bugfixes:
-  - "ansible-galaxy- On giving an invalid subcommand to ansible-galaxy, the help would be shown only for role subcommand (collection subcommand help is not shown). With this change, the entire help for ansible-galaxy (same as ansible-galaxy --help) is displayed along with the help for role subcommand. (https://github.com/ansible/ansible/issues/69009)"

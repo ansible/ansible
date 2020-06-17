@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now correctly excludes the test results temporary directory when copying files from the remote test system to the local system

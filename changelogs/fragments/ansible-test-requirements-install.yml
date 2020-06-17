@@ -1,5 +1,0 @@
-bugfixes:
-    - ansible-test can now install argparse with ``--requirements`` or delegation when the pip version in use is older than version 7.1
-    - ansible-test now upgrades ``pip`` with `--requirements`` or delegation as needed when the pip version in use is older than version 7.1
-    - ansible-test now installs the correct version of ``cryptography`` with ``--requirements`` or delegation when setuptools is older than version 18.5
-    - ansible-test now limits the version of ``setuptools`` on Python 2.6 to versions older than 37

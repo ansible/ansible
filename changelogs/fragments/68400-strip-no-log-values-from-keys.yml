@@ -1,2 +1,0 @@
-bugfixes:
-- Strip no log values from module response keys (https://github.com/ansible/ansible/issues/68400)

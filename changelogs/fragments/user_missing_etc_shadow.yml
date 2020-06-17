@@ -1,2 +1,0 @@
-bugfixes:
-- Handle exception when /etc/shadow file is missing or not found, while operating user operation in user module (https://github.com/ansible/ansible/issues/63490).

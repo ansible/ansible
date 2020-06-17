@@ -1,3 +1,0 @@
-bugfixes:
-- get_url - Don't treat no checksum as a checksum match
-  (https://github.com/ansible/ansible/issues/61978)

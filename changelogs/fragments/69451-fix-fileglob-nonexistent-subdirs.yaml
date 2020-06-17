@@ -1,4 +1,0 @@
-bugfixes:
-- Fix an issue with the ``fileglob`` plugin where passing a subdirectory of
-  non-existent directory would cause it to fail -
-  https://github.com/ansible/ansible/issues/69450

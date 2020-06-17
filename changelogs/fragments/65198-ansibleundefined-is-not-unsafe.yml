@@ -1,4 +1,0 @@
-bugfixes:
-- >-
-  ``AnsibleUnsafe``/``AnsibleContext``/``Templar`` - Do not treat ``AnsibleUndefined`` as being "unsafe"
-  (https://github.com/ansible/ansible/issues/65198)

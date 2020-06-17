@@ -1,4 +1,0 @@
-bugfixes:
-  - >
-    ansible-galaxy - hide warning during collection installation if other installed collections
-    do not contain a ``MANIFEST.json`` (https://github.com/ansible/ansible/issues/67490)
