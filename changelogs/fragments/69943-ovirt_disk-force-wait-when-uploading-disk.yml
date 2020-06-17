@@ -1,0 +1,2 @@
+bugfixes:
+- "ovirt_disk: force wait when uploading disk"
