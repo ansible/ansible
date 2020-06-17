@@ -385,6 +385,16 @@ def to_permission(rule):
 
 
 def rule_from_group_permission(perm):
+    """
+    Returns a rule dict from an existing security group.
+
+    When using a security group as a target all 3 fields (OwnerId, GroupId, and
+    GroupName) need to exist in the target. This ensures consistency of the
+    values that will be compared to desired_ingress or desired_egress
+    in wait_for_rule_propagation().
+    GroupId is preferred as it is more specific except when targeting 'amazon-'
+    prefixed security groups (such as EC2 Classic ELBs).
+    """
     def ports_from_permission(p):
         if 'FromPort' not in p and 'ToPort' not in p:
             return (None, None)
@@ -410,24 +420,28 @@ def rule_from_group_permission(perm):
     if 'UserIdGroupPairs' in perm and perm['UserIdGroupPairs']:
         for pair in perm['UserIdGroupPairs']:
             target = (
-                pair.get('UserId', None),
+                pair.get('UserId', current_account_id),
                 pair.get('GroupId', None),
-                pair.get('GroupName', None),
+                None,
             )
             if pair.get('UserId', '').startswith('amazon-'):
                 # amazon-elb and amazon-prefix rules don't need
                 # group-id specified, so remove it when querying
                 # from permission
                 target = (
-                    target[0],
+                    pair.get('UserId', None),
                     None,
-                    target[2],
+                    pair.get('GroupName', None),
                 )
-            elif 'VpcPeeringConnectionId' in pair or pair['UserId'] != current_account_id:
+            elif 'VpcPeeringConnectionId' not in pair and pair['UserId'] != current_account_id:
+                # EC2-Classic cross-account
+                pass
+            elif 'VpcPeeringConnectionId' in pair:
+                # EC2-VPC cross-account VPC peering
                 target = (
                     pair.get('UserId', None),
                     pair.get('GroupId', None),
-                    pair.get('GroupName', None),
+                    None,
                 )
 
             yield Rule(
@@ -439,7 +453,7 @@ def rule_from_group_permission(perm):
             )
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['InvalidGroup.NotFound'])
 def get_security_groups_with_backoff(connection, **kwargs):
     return connection.describe_security_groups(**kwargs)
 
@@ -494,8 +508,14 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     AWS accepts an ip range or a security group as target of a rule. This
     function validate the rule specification and return either a non-None
     group_id or a non-None ip range.
+
+    When using a security group as a target all 3 fields (OwnerId, GroupId, and
+    GroupName) need to exist in the target. This ensures consistency of the
+    values that will be compared to current_rules (from current_ingress and
+    current_egress) in wait_for_rule_propagation().
     """
     FOREIGN_SECURITY_GROUP_REGEX = r'^([^/]+)/?(sg-\S+)?/(\S+)'
+    owner_id = current_account_id
     group_id = None
     group_name = None
     target_group_created = False
@@ -503,16 +523,22 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     validate_rule(module, rule)
     if rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
         # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
+        # Matches on groups like amazon-elb/sg-5a9c116a/amazon-elb-sg, amazon-elb/amazon-elb-sg,
+        # and peer-VPC groups like 0987654321/sg-1234567890/example
         owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
         group_instance = dict(UserId=owner_id, GroupId=group_id, GroupName=group_name)
         groups[group_id] = group_instance
         groups[group_name] = group_instance
-        # group_id/group_name are mutually exclusive - give group_id more precedence as it is more specific
         if group_id and group_name:
-            group_name = None
+            if group_name.startswith('amazon-'):
+                # amazon-elb and amazon-prefix rules don't need group_id specified,
+                group_id = None
+            else:
+                # group_id/group_name are mutually exclusive - give group_id more precedence as it is more specific
+                group_name = None
         return 'group', (owner_id, group_id, group_name), False
     elif 'group_id' in rule:
-        return 'group', rule['group_id'], False
+        return 'group', (owner_id, rule['group_id'], None), False
     elif 'group_name' in rule:
         group_name = rule['group_name']
         if group_name == name:
@@ -571,7 +597,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
                 groups[group_id] = auto_group
                 groups[group_name] = auto_group
             target_group_created = True
-        return 'group', group_id, target_group_created
+        return 'group', (owner_id, group_id, None), target_group_created
     elif 'cidr_ip' in rule:
         return 'ipv4', validate_ip(module, rule['cidr_ip']), False
     elif 'cidr_ipv6' in rule:
