@@ -28,6 +28,8 @@ import operator
 import os
 import re
 
+from glob import glob
+
 try:
     import argcomplete
 except ImportError:
@@ -77,31 +79,31 @@ def get_raw_test_targets(args, test_path):
     target_times = {}
 
     for job_id in os.listdir(test_path):
-        json_path = os.path.join(test_path, job_id, 'test.json')
-        if not os.path.isfile(json_path):
-            if args.verbose:
-                print("The test json file '%s' does not exist or is not a file, skipping test job run" % json_path)
+        json_path = os.path.join(test_path, job_id, 'test', 'testresults', 'data')
+
+        # Some tests to do not have a data directory
+        if not os.path.exists(json_path):
             continue
 
-        with open(json_path, mode='rb') as fd:
+        json_file = glob(os.path.join(json_path, '*integration-*.json'))[0]
+        if not os.path.isfile(json_file):
+            if args.verbose:
+                print("The test json file '%s' does not exist or is not a file, skipping test job run" % json_file)
+            continue
+
+        with open(json_file, mode='rb') as fd:
             test_info = json.loads(fd.read().decode('utf-8'))
 
-        for test in test_info:
-            if not test.get('path', '').endswith('.json') or 'contents' not in test.keys():
+        targets = test_info.get('targets', {})
+
+        for target_name, target_info in targets.items():
+            target_runtime = int(target_info.get('run_time_seconds', 0))
+
+            # If that target already is found and has a higher runtime than the current one, ignore this entry.
+            if target_times.get(target_name, 0) > target_runtime:
                 continue
 
-            info = json.loads(test['contents'])
-
-            targets = info.get('targets')
-            if isinstance(targets, dict):
-                for target_name, target_info in info.get('targets', {}).items():
-                    target_runtime = int(target_info.get('run_time_seconds', 0))
-
-                    # If that target already is found and has a higher runtime than the current one, ignore this entry.
-                    if target_times.get(target_name, 0) > target_runtime:
-                        continue
-
-                    target_times[target_name] = target_runtime
+            target_times[target_name] = target_runtime
 
     return dict([(k, v) for k, v in sorted(target_times.items(), key=lambda i: i[1], reverse=True)])
 
