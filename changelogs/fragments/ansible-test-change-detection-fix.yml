@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now ignores empty ``*.py`` files when analyzing module_utils imports for change detection
