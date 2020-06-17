@@ -1,0 +1,2 @@
+bugfixes:
+- "ovirt_disk fix activate (https://github.com/oVirt/ovirt-ansible-collection/pull/61)"
