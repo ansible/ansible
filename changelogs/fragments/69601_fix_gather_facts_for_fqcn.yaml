@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix gather_facts not working for network platforms when network_os is in FQCN format (https://github.com/ansible/ansible/pull/69601).
