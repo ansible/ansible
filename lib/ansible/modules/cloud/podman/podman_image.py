@@ -573,7 +573,7 @@ class PodmanImageManager(object):
             args.extend(['--format', push_format])
 
         if self.push_args.get('remove_signatures'):
-            args.append('--remove_signatures')
+            args.append('--remove-signatures')
 
         sign_by_key = self.push_args.get('sign_by')
         if sign_by_key:
