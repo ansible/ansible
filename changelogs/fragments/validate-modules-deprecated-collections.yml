@@ -1,2 +1,0 @@
-minor_changes:
-    - validate-modules checks for deprecated in collections against meta/runtime.yml

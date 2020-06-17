@@ -1,6 +1,0 @@
-bugfixes:
-  - >
-    ansible-galaxy - fix a bug where listing a specific role if it was not in the first
-    path failed to find the role
-
-  - ansible-galaxy - properly show the role description when running offline (https://github.com/ansible/ansible/issues/60167)

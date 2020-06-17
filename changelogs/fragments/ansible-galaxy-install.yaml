@@ -1,3 +1,0 @@
-minor_changes:
-- ansible-galaxy - Install both collections and roles with ``ansible-galaxy install -r requirements.yml`` in certain scenarios.
-- ansible-galaxy - Display message if both collections and roles are specified in a requirements file but can't be installed together.

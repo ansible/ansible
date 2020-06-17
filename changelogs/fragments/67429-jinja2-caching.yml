@@ -1,2 +1,0 @@
-bugfixes:
-- "Templating - Ansible was caching results of Jinja2 expressions in some cases where these expressions could have dynamic results, like password generation (https://github.com/ansible/ansible/issues/34144)."

@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test now supports provisioning of network resources when testing network collections

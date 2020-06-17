@@ -1,2 +1,0 @@
-bugfixes:
-  - service_facts - Now correctly parses systemd list-unit-files for systemd >=245

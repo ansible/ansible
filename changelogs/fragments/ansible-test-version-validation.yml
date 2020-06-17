@@ -1,2 +1,0 @@
-minor_changes:
-- "ansible-test - ``validate-modules`` now validates all version numbers in documentation and argument spec. Version numbers for collections are checked for being valid semantic versioning version number strings."

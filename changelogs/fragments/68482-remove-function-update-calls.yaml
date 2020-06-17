@@ -1,2 +1,0 @@
-bugfixes:
-- dnf - remove custom ``fetch_rpm_from_url`` method in favor of more general ``ansible.module_utils.urls.fetch_file``.

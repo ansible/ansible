@@ -1,2 +1,0 @@
-bugfixes:
-- Create an ``import_module`` compat util, for use across the codebase, to allow collection loading to work properly on Python26

@@ -1,2 +1,0 @@
-bugfixes:
-  - collection_loader - sort Windows modules below other plugin types so the correct builtin plugin inside a role is selected (https://github.com/ansible/ansible/issues/65298)

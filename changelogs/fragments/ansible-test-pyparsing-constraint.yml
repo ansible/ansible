@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test add pyparsing constraint for Python 2.x to avoid compatibility issues with the upcoming pyparsing 3 release

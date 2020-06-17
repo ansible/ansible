@@ -1,2 +1,0 @@
-bugfixes:
-  - blockinfile - preserve line endings on update (https://github.com/ansible/ansible/issues/64966)

@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test no longer fails when downloading test results for a collection without a ``tests`` directory when using the ``--docker`` option.

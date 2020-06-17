@@ -1,2 +1,0 @@
-bugfixes:
-  - git - when force=True, apply --force flag to git fetches as well

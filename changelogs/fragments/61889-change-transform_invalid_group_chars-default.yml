@@ -1,2 +1,0 @@
-minor_changes:
-  - Remove the deprecation message for the ``TRANSFORM_INVALID_GROUP_CHARS`` setting. (https://github.com/ansible/ansible/issues/61889)

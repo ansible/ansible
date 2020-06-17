@@ -1,4 +1,0 @@
-minor_changes:
-- "ansible-test - add ``validate-modules`` tests for ``removed_in_version`` and ``deprecated_aliases`` (https://github.com/ansible/ansible/pull/66920/)."
-- "ansible-test - enable deprecated version testing for modules and ``module.deprecate()`` calls (https://github.com/ansible/ansible/pull/66920/)."
-- "ansible-test - allow sanity tests to check for optional errors by specifying ``--enable-optional-errors`` (https://github.com/ansible/ansible/pull/66920/)."

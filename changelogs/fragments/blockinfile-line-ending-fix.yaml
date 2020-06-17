@@ -1,4 +1,0 @@
-bugfixes:
-  - >
-    blockinfile - fix regression that results in incorrect block in file when the
-    block to be inserted does not end in a line separator (https://github.com/ansible/ansible/pull/69734)

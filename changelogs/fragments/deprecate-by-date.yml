@@ -1,2 +1,0 @@
-minor_changes:
-- "Ansible now allows deprecation by date instead of deprecation by version. This is possible for plugins and modules (``meta/runtime.yml`` and ``deprecated.removed_at_date`` in ``DOCUMENTATION``, instead of ``deprecated.removed_in``), for plugin options (``deprecated.date`` instead of ``deprecated.version`` in ``DOCUMENTATION``), for module options (``removed_at_date`` instead of ``removed_in_version`` in argument spec), and for module option aliases (``deprecated_aliases.date`` instead of ``deprecated_aliases.version`` in argument spec)."

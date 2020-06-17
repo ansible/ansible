@@ -1,3 +1,0 @@
-minor_changes:
-- Templating - Add support to auto unroll generators produced by jinja2 filters, to prevent the need of explicit use of ``|list``
-  (https://github.com/ansible/ansible/pull/68014)
