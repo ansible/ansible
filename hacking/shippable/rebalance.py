@@ -91,7 +91,6 @@ def get_raw_test_targets(args, test_path):
                 continue
 
             info = json.loads(test['contents'])
-            targets = info.get('targets')
 
             targets = info.get('targets')
             if isinstance(targets, dict):
