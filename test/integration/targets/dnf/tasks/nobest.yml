@@ -23,12 +23,12 @@
     that:
     - not dnf_result is failed
 
-- name: Uninstall docker-ce
+- name: Cleanup packages
   dnf:
-    name: docker-ce
+    name: docker-ce, dnf-plugins-core
     state: absent
 
-- name: Remove docker-ce repo
+- name: Cleanup manually added repos
   file:
     name: "/etc/yum.repos.d/docker-ce.repo"
     state: absent
