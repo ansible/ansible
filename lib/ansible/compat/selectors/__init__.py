@@ -27,4 +27,5 @@ move to ansible.module_utils for code backwards compatibility.
 '''
 import sys
 from ansible.module_utils.compat import selectors
+_BUNDLED_METADATA = selectors._BUNDLED_METADATA
 sys.modules['ansible.compat.selectors'] = selectors
