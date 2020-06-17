@@ -144,7 +144,9 @@ class ActionModule(ActionBase):
         filecontent = to_bytes(filecontent, errors='surrogate_or_strict')
         local_filehash = hashlib.md5(filecontent).hexdigest()
 
-        if local_filehash == remote_filehash:
+        decoded_rhash = remote_filehash.decode("UTF-8")
+
+        if local_filehash == decoded_rhash:
             return True
         else:
             return False
@@ -152,6 +154,7 @@ class ActionModule(ActionBase):
     def remote_file_exists(self, remote_file, file_system):
         command = 'dir {0}/{1}'.format(file_system, remote_file)
         body = self.conn.exec_command(command)
+
         if 'No such file' in body:
             return False
         else:
@@ -239,7 +242,7 @@ class ActionModule(ActionBase):
         self.results['failed'] = False
         nxos_hostname = self.play_context.remote_addr
         nxos_username = self.play_context.remote_user
-        nxos_password = self.play_context.password
+        nxos_password = self.play_context.password or ""
         port = self.playvals['connect_ssh_port']
 
         # Build copy command components that will be used to initiate copy from the nxos device.
@@ -318,8 +321,10 @@ class ActionModule(ActionBase):
                 outcome['existing_file_with_same_name'] = True
                 return outcome
             elif index in [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]:
-                before = session.before.strip().replace(' \x08', '')
-                after = session.after.strip().replace(' \x08', '')
+                decoded_before = session.before.decode("UTF-8")
+                decoded_after = session.after.decode("UTF-8")
+                before = decoded_before.strip().replace(" \x08", "")
+                after = decoded_after.strip().replace(" \x08", "")
                 outcome['error'] = True
                 outcome['error_data'] = 'COMMAND {0} ERROR {1}'.format(before, after)
                 return outcome
