@@ -345,6 +345,35 @@ class EditApplicationResource(Resource):
     def create_vnic_for_application(self, body, uuid):
         return self.api.create_application_vnic_using_post(body, uuid)
 
+    @wait_to_complete
+    def edit_boot_order_for_application(self, body, uuid):
+        return self.api.edit_application_boot_order_using_put(body, uuid)
+
+    @wait_to_complete
+    def edit_disk_name_for_application(self, disk_uuid, uuid, disk_name=None):
+        if disk_name:
+            body = tacp.ApiDiskSizePayload(name=disk_name, uuid=disk_uuid)
+            return self.api.edit_application_disk_name_using_put(body, disk_uuid, uuid)  # noqa
+
+    @wait_to_complete
+    def edit_disk_size_for_application(self, disk_uuid, uuid, disk_size=None):
+        if disk_size:
+            body = tacp.ApiDiskSizePayload(size=disk_size, uuid=disk_uuid)
+            return self.api.edit_application_disk_size_using_put(body, disk_uuid, uuid)  # noqa
+
+    @wait_to_complete
+    def edit_disk_bw_limit_for_application(self, disk_uuid, uuid, bw_limit=None):  # noqa
+        if bw_limit:
+            body = tacp.ApiDiskBandwidthPayload(
+                bandwidth_limit=bw_limit, uuid=disk_uuid)
+            return self.api.edit_application_disk_bandwidth_limit_using_put(body, disk_uuid, uuid)  # noqa
+
+    @wait_to_complete
+    def edit_disk_iops_limit_for_application(self, disk_uuid, uuid, iops_limit=None):  # noqa
+        if iops_limit:
+            body = tacp.ApiDiskIopsPayload(iops_limit=iops_limit, uuid=disk_uuid)  # noqa
+            return self.api.edit_application_disk_iops_limit_using_put(body, disk_uuid, uuid)  # noqa
+
 
 def get_component_fields_by_name(name, component,
                                  api_client, fields=['name', 'uuid']):

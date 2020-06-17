@@ -357,8 +357,31 @@ def run_module():
         for disk in module.params['disks']:
             if disk['name'] in [instance_disk.name for instance_disk
                                 in instance.disks]:
-                # Here is where we could edit the existing disk's properties
-                
+                # This will edit the existing disks that came with the template
+                existing_disk = [
+                    instance_disk for instance_disk in instance.disks if instance_disk.name == disk['name']][0]  # noqa
+
+                disk_config = [playbook_disk for playbook_disk in module.params['disks']  # noqa
+                               if disk['name'] == playbook_disk['name']][0]
+                if 'size_gb' in disk_config:
+                    existing_disk_size = existing_disk.size  # noqa
+                    playbook_disk_size = tacp_utils.convert_memory_abbreviation_to_bytes(  # noqa
+                        str(disk_config['size_gb']) + 'GB')
+
+                    if playbook_disk_size < existing_disk_size:
+                        fail_with_reason("Cannot update disk size for disk {}. Provided disk size must be greater than or equal to the existing disk size of {} GB".format(  # noqa
+                            disk['name'], existing_disk_size / 1024 / 1024 / 1024))  # noqa
+                    edit_app_resource.edit_disk_size_for_application(
+                        existing_disk.uuid, instance_uuid, playbook_disk_size)
+
+                if 'bandwidth_limit' in disk_config:
+                    edit_app_resource.edit_disk_bw_limit_for_application(
+                        existing_disk.uuid, instance_uuid, disk_config['bandwidth_limit'])  # noqa
+
+                if 'iops_limit' in disk_config:
+                    edit_app_resource.edit_disk_iops_limit_for_application(
+                        existing_disk.uuid, instance_uuid, disk_config['iops_limit'])  # noqa
+
                 continue
 
             disk_uuid = [boot_order_disk.disk_uuid for boot_order_disk in
@@ -379,8 +402,7 @@ def run_module():
                                                    iops_limit=iops_limit,
                                                    name=name,
                                                    size=size,
-                                                   uuid=disk_uuid
-                                                   )
+                                                   uuid=disk_uuid)
 
             edit_app_resource.create_disk_for_application(body=body,  # noqa
                                                           uuid=instance_uuid)  # noqa
