@@ -42,3 +42,6 @@ ansible-playbook -i "${INVENTORY_PATH}"  -i ./a.statichost.yml -v "${TEST_PLAYBO
 # test adjacent with --playbook-dir
 export ANSIBLE_COLLECTIONS_PATHS=''
 ANSIBLE_INVENTORY_ANY_UNPARSED_IS_FAILED=1 ansible-inventory -i a.statichost.yml --list --export --playbook-dir=. -v "$@"
+
+# ensure non existing callback does not crash ansible
+ANSIBLE_CALLBACK_WHITELIST=charlie.gomez.notme ansible -m ping localhost
