@@ -1,2 +1,0 @@
-minor_changes:
-- "ansible-test - added a ``--no-pip-check`` option"

@@ -1,2 +1,0 @@
-bugfixes:
-- Using --start-at-task would fail when it attempted to skip over tasks with no name.

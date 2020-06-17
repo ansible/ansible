@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible command now correctly sends v2_playbook_on_start to callbacks

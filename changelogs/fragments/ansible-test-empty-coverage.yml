@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test no longer errors reporting coverage when no Python coverage exists. This fixes issues reporting on PowerShell only coverage from collections.

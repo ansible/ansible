@@ -1,2 +1,0 @@
-bugfixes:
-  - "ansible-test - Fix traceback in validate-modules test when argument_spec is None."

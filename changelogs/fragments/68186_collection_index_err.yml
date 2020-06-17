@@ -1,2 +1,0 @@
-bugfixes:
-- Handle empty roles and empty collections in requirements.yml in ansible-galaxy install command (https://github.com/ansible/ansible/issues/68186).

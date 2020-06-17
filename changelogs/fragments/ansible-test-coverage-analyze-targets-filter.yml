@@ -1,2 +1,0 @@
-minor_changes:
-    - "ansible-test - Added a ``ansible-test coverage analyze targets filter`` command to filter aggregated coverage reports by path and/or target name."

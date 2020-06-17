@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now ignores warnings when comparing pip versions before and after integration tests run

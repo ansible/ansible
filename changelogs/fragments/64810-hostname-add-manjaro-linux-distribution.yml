@@ -1,2 +1,0 @@
-bugfixes:
-  - hostname - make module work on Manjaro Linux (https://github.com/ansible/ansible/issues/61382)

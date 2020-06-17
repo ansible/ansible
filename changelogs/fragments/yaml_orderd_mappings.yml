@@ -1,2 +1,0 @@
-minor_changes:
-    - Use OrderedDict by default when importing mappings from YAML.

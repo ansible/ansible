@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test - Updated the default test containers to include Python 3.9.0b3.

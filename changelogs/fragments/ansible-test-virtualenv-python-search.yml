@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now properly searches for ``pythonX.Y`` instead of ``python`` when looking for the real python that created a ``virtualenv``

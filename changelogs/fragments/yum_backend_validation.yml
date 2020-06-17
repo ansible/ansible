@@ -1,2 +1,0 @@
-bugfixes:
-- yum - yum tasks can no longer end up running non-yum modules

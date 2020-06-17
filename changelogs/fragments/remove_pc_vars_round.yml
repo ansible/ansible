@@ -1,2 +1,0 @@
-bugfixes:
-  - remove update/restore of vars from play_context as it is now redundant.

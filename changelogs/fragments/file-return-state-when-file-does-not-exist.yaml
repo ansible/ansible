@@ -1,2 +1,0 @@
-bugfixes:
-  - "file - return ``'state': 'absent'`` when a file does not exist (https://github.com/ansible/ansible/issues/66171)"

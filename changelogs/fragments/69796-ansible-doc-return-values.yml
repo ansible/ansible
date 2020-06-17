@@ -1,4 +1,0 @@
-minor_changes:
-- "ansible-doc - return values will be properly formatted (https://github.com/ansible/ansible/pull/69796)."
-major_changes:
-- "Both ansible-doc and ansible-console's help command will error for modules and plugins whose return documentation cannot be parsed as YAML. All modules and plugins passing ``ansible-test sanity --test yamllint`` will not be affected by this."

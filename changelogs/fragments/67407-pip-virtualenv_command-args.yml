@@ -1,4 +1,0 @@
-bugfixes:
-  - pip - The virtualenv_command option can now include arguments without
-    requiring the full path to the binary.
-    (https://github.com/ansible/ansible/issues/52275)

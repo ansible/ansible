@@ -1,2 +1,0 @@
-minor_changes:
-- ssh - connection plugin now supports a new variable ``sshpass_prompt`` which gets passed to ``sshpass`` allowing the user to set a custom substring to search for a password prompt (requires sshpass 1.06+)

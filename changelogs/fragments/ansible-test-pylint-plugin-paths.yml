@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now properly recognizes modules and module_utils in collections when using the ``blacklist`` plugin for the ``pylint`` sanity test

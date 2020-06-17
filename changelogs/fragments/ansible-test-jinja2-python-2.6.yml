@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now limits Jinja2 installs to version 2.10 and earlier on Python 2.6

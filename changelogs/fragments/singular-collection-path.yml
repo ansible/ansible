@@ -1,3 +1,0 @@
-minor_changes:
-- config - accept singular version of ``collections_path`` ini setting and
-  ``ANSIBLE_COLLECTIONS_PATH`` environment variable setting

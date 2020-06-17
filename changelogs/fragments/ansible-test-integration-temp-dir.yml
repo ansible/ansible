@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now creates its integration test temporary directory within the collection so ansible-playbook can properly detect the default collection

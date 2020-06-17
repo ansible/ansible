@@ -1,4 +1,0 @@
-minor_changes:
-  - ansible-galaxy - Allow installing collections from git repositories.
-  - ansible-galaxy - Requirement entries for collections now support a 'type' key to indicate whether the collection is a galaxy artifact, file, url, or git repo.
-  - ansible-galaxy - Support both 'galaxy.yml' and 'galaxy.yaml' files for collections.

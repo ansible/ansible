@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-galaxy - add ``--token`` argument which is the same as ``--api-key`` (https://github.com/ansible/ansible/issues/65955)

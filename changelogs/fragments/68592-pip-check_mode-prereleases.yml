@@ -1,2 +1,0 @@
-bugfixes:
-  - "pip - check_mode with ``state: present`` now returns the correct state for pre-release versioned packages"

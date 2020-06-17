@@ -1,2 +1,0 @@
-bugfixes:
-- allow external collections to be created in the 'ansible' collection namespace (https://github.com/ansible/ansible/issues/59988)

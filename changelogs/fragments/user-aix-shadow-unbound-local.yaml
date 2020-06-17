@@ -1,2 +1,0 @@
-bugfixes:
-  - user - fix stack trace on AIX when attempting to parse shadow file that does not exist (https://github.com/ansible/ansible/issues/62510)

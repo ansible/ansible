@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now loads the collection loader plugin early enough for ansible_collections imports to work in unit test conftest.py modules

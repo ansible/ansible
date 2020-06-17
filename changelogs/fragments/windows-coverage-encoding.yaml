@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-test windows coverage - Output temp files as UTF-8 with BOM to standardise against non coverage runs

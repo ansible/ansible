@@ -1,4 +1,0 @@
-minor_changes:
-  - >
-    rename ``_find_existing_collections()`` to ``find_existing_collections()`` to reflect
-    its use across multiple files

@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now shows sanity test doc links when installed (previously the links were only visible when running from source)

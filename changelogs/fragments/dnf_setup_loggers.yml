@@ -1,2 +1,0 @@
-bugfixes:
-    - dnf - enable logging using setup_loggers() API in dnf-4.2.17-6 or later

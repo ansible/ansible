@@ -1,6 +1,0 @@
-bugfixes:
-- Allow tasks to notify a fqcn handler name (https://github.com/ansible/ansible/issues/68181)
-minor_changes:
-- Add new magic variable ``ansible_collection`` that contains the collection name
-- Add new magic variable ``ansible_role_name`` that contains the FQCN of the role
-- Updates ``ansible_role_names``, ``ansible_play_role_names``, and ``ansible_dependent_role_names`` to include the FQCN

@@ -1,2 +1,0 @@
-bugfixes:
-- sysvinit - Add missing parameter ``module`` in call to ``daemonize()``.

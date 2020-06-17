@@ -1,2 +1,0 @@
-bugfixes:
-  - get_url pass incorrect If-Modified-Since header (https://github.com/ansible/ansible/issues/67417)

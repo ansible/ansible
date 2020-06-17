@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test - Refactored CI related logic into a basic provider abstraction.

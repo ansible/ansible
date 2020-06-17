@@ -1,3 +1,0 @@
-bugfixes:
-  - ansible-galaxy - Handle the different task resource urls in API responses from publishing
-    collection artifacts to galaxy servers using v2 and v3 APIs.

@@ -1,2 +1,0 @@
-minor_changes:
-- "ansible-test - allow delegation config to specify equivalents to the ``--no-pip-check``, ``--disable-httptester`` and `--no-temp-unicode`` options"

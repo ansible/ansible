@@ -1,3 +1,0 @@
-bugfixes:
-- ansible-test - Fix PowerShell module util analysis to properly detect the names of a util when running in a collection
-- ansible-test - Do not warn on missing PowerShell or C# util that are in other collections

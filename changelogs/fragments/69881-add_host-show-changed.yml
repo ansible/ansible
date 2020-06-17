@@ -1,2 +1,0 @@
-bugfixes:
-  - add_host action now correctly shows idempotency/changed status

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-galaxy - add ``collection list`` command for listing installed collections (https://github.com/ansible/ansible/pull/65022)

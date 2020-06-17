@@ -1,2 +1,0 @@
-minor_changes:
-  - get_url - Remove deprecated string format support for the headers option (https://github.com/ansible/ansible/issues/61891)

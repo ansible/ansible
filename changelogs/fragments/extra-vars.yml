@@ -1,2 +1,0 @@
-bugfixes:
-    - Handle empty extra vars in ansible cli (https://github.com/ansible/ansible/issues/61497).

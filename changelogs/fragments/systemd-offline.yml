@@ -1,3 +1,0 @@
-bugfixes:
-- systemd - don't require systemd to be running to enable/disable or mask/unmask
-  units

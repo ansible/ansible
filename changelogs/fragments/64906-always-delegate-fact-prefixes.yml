@@ -1,4 +1,0 @@
-bugfixes:
-- Fact Delegation - Add ability to indicate which facts must always be delegated. Primarily
-  for ``discovered_interpreter_python`` right now, but extensible later.
-  (https://github.com/ansible/ansible/issues/61002)

@@ -1,2 +1,0 @@
-minor_changes:
-  - to_uuid - add a named parameter to let the user optionally set a custom namespace
