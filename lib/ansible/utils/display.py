@@ -249,8 +249,12 @@ class Display(with_metaclass(Singleton, object)):
             else:
                 self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
-    def deprecated(self, msg, version=None, removed=False):
+    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
         ''' used to print out a deprecation message.'''
+
+        # `date` and `collection_name` are Ansible 2.10 parameters. We accept and ignore them,
+        # to avoid modules/plugins from 2.10 conformant collections to break with new enough
+        # versions of Ansible 2.9.
 
         if not removed and not C.DEPRECATION_WARNINGS:
             return

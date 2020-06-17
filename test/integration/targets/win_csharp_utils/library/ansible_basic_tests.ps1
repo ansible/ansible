@@ -1469,7 +1469,8 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
         $expected_msg += "aliases, choices, default, elements, mutually_exclusive, no_log, options, removed_in_version, "
-        $expected_msg += "required, required_by, required_if, required_one_of, required_together, supports_check_mode, type"
+        $expected_msg += "removed_at_date, removed_from_collection, required, required_by, required_if, required_one_of, "
+        $expected_msg += "required_together, supports_check_mode, type"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
@@ -1501,8 +1502,8 @@ test_no_log - Invoked with:
 
         $expected_msg = "internal error: argument spec entry contains an invalid key 'invalid', valid keys: apply_defaults, "
         $expected_msg += "aliases, choices, default, elements, mutually_exclusive, no_log, options, removed_in_version, "
-        $expected_msg += "required, required_by, required_if, required_one_of, required_together, supports_check_mode, type - "
-        $expected_msg += "found in option_key -> sub_option_key"
+        $expected_msg += "removed_at_date, removed_from_collection, required, required_by, required_if, required_one_of, "
+        $expected_msg += "required_together, supports_check_mode, type - found in option_key -> sub_option_key"
 
         $actual.Keys.Count | Assert-Equals -Expected 3
         $actual.failed | Assert-Equals -Expected $true
@@ -2406,6 +2407,60 @@ test_no_log - Invoked with:
         $actual -is [Array] | Assert-Equals -Expected $true
         $actual.Length | Assert-Equals -Expected 1
         $actual[0] | Assert-DictionaryEquals -Expected @{"abc" = "def"}
+    }
+
+    "Ansible 2.10 compatibility" = {
+        $spec = @{
+            options = @{
+                removed1 = @{removed_at_date = [DateTime]"2020-01-01"; removed_from_collection = "foo.bar"}
+            }
+        }
+        $complex_args = @{
+            removed1 = "value"
+        }
+
+        $m = [Ansible.Basic.AnsibleModule]::Create(@(), $spec)
+        $m.Deprecate("version w collection", "2.10", "foo.bar")
+        $m.Deprecate("date w/o collection", [DateTime]"2020-01-01")
+        $m.Deprecate("date w collection", [DateTime]"2020-01-01", "foo.bar")
+
+        $failed = $false
+        try {
+            $m.ExitJson()
+        } catch [System.Management.Automation.RuntimeException] {
+            $failed = $true
+            $_.Exception.Message | Assert-Equals -Expected "exit: 0"
+            $actual = [Ansible.Basic.AnsibleModule]::FromJson($_.Exception.InnerException.Output)
+        }
+        $failed | Assert-Equals -Expected $true
+
+        $expected = @{
+            changed = $false
+            invocation = @{
+                module_args = @{
+                    removed1 = "value"
+                }
+            }
+            deprecations = @(
+                @{
+                    msg = "Param 'removed1' is deprecated. See the module docs for more information"
+                    version = $null
+                },
+                @{
+                    msg = "version w collection"
+                    version = "2.10"
+                },
+                @{
+                    msg = "date w/o collection"
+                    version = $null
+                },
+                @{
+                    msg = "date w collection"
+                    version = $null
+                }
+            )
+        }
+        $actual | Assert-DictionaryEquals -Expected $expected
     }
 }
 

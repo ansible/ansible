@@ -752,7 +752,10 @@ class AnsibleModule(object):
         else:
             raise TypeError("warn requires a string not a %s" % type(warning))
 
-    def deprecate(self, msg, version=None):
+    def deprecate(self, msg, version=None, date=None, collection_name=None):
+        # `date` and `collection_name` are Ansible 2.10 parameters. We accept and ignore them,
+        # to avoid modules/plugins from 2.10 conformant collections to break with new enough
+        # versions of Ansible 2.9.
         if isinstance(msg, string_types):
             self._deprecations.append({
                 'msg': msg,
@@ -1438,7 +1441,7 @@ class AnsibleModule(object):
             if deprecation['name'] in param.keys():
                 self._deprecations.append(
                     {'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
-                     'version': deprecation['version']})
+                     'version': deprecation.get('version')})
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):

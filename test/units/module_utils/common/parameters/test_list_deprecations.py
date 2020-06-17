@@ -25,11 +25,14 @@ def test_list_deprecations():
         'old': {'type': 'str', 'removed_in_version': '2.5'},
         'foo': {'type': 'dict', 'options': {'old': {'type': 'str', 'removed_in_version': 1.0}}},
         'bar': {'type': 'list', 'elements': 'dict', 'options': {'old': {'type': 'str', 'removed_in_version': '2.10'}}},
+        # Ansible 2.10 compatibility:
+        'compat': {'type': 'str', 'removed_at_date': '2020-01-01', 'removed_from_collection': 'foo.bar'},
     }
 
     params = {
         'name': 'rod',
         'old': 'option',
+        'old2': 'option2',
         'foo': {'old': 'value'},
         'bar': [{'old': 'value'}, {}],
     }
