@@ -134,7 +134,7 @@ class TestEosEapiModule(TestEosModule):
 
     def test_eos_eapi_vrf(self):
         set_module_args(dict(vrf='test'))
-        commands = ['management api http-commands', 'vrf test', 'no shutdown']
+        commands = ['management api http-commands', 'no shutdown', 'vrf test', 'no shutdown']
         self.start_unconfigured(changed=True, commands=commands)
 
     def test_eos_eapi_change_from_default_vrf(self):
