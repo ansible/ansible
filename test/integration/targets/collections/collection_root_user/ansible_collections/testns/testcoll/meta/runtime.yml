@@ -2,6 +2,10 @@ plugin_routing:
   action:
     uses_redirected_action:
       redirect: testns.testcoll.subclassed_normal
+  callback:
+    removedcallback:
+      tombstone:
+        removal_date: '2020-01-01'
   connection:
     redirected_local:
       redirect: ansible.builtin.local
