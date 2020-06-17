@@ -1080,8 +1080,20 @@ def main():
                 apt_pkg.config['APT::Default-Release'] = p['default_release']
             except AttributeError:
                 apt_pkg.Config['APT::Default-Release'] = p['default_release']
-            # reopen cache w/ modified config
-            cache.open(progress=None)
+
+            # If default_release is provided and for some reason the apt cache
+            # is not up-to-date cache.open fails with apt_pkg.Error.
+            #
+            # This can happen if a new repository is added with a new release
+            # (such as 'buster-backports') and 'apt-get update' has not been
+            # executed yet (i.e. missing related files in /var/lib/apt/lists).
+            try:
+                # reopen cache w/ modified config
+                cache.open(progress=None)
+            except apt_pkg.Error:
+                # In that case the cache is forced to be updated in next block.
+                p['update_cache'] = True
+                p['cache_valid_time'] = 0
 
         mtimestamp, updated_cache_time = get_updated_cache_time()
         # Cache valid time is default 0, which will update the cache if
