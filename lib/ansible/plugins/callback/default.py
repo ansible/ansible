@@ -43,7 +43,6 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
 
-
 # These values use ansible.constants for historical reasons, mostly to allow
 # unmodified derivative plugins to work. However, newer options added to the
 # plugin are not also added to ansible.constants, so authors of derivative
@@ -57,7 +56,8 @@ COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
                   ('display_ok_hosts', True),
                   ('show_custom_stats', C.SHOW_CUSTOM_STATS),
                   ('display_failed_stderr', False),
-                  ('check_mode_markers', False),)
+                  ('check_mode_markers', False),
+                  ('show_per_host_start', False))
 
 
 class CallbackModule(CallbackBase):
