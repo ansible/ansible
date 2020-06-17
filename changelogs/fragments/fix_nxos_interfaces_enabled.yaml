@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix nxos_interfaces enabled not working properly because of broken system default dict generation (https://github.com/ansible-collections/cisco.nxos/pull/56).
