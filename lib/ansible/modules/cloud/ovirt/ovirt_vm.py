@@ -306,6 +306,7 @@ options:
     cd_iso:
         description:
             - ISO file from ISO storage domain which should be attached to Virtual Machine.
+            - If you have multiple ISO disks with the same name use disk ID to specify which should be used.
             - If you pass empty string the CD will be ejected from VM.
             - If used with C(state) I(running) or I(present) and VM is running the CD will be attached to VM.
             - If used with C(state) I(running) or I(present) and VM is down the CD will be attached to VM persistently.
@@ -1676,20 +1677,33 @@ class VmsModule(BaseModule):
         self._wait_for_UP(vm_service)
         self._attach_cd(vm_service.get())
 
+    def __get_cd_id(self):
+        disks_service = self._connection.system_service().disks_service()
+        disks = disks_service.list(search='name="{0}"'.format(self.param('cd_iso')))
+        if len(disks) > 1:
+            raise ValueError('Found mutiple disks with same name "{0}" please use \
+                disk ID in "cd_iso" to specify which disk should be used.'.format(self.param('cd_iso')))
+        if not disks:
+            # The `cd_iso` is valid disk ID returning to _attach_cd
+            return disks_service.disk_service(self.param('cd_iso')).get().id
+        return disks[0].id
+
     def _attach_cd(self, entity):
-        cd_iso = self.param('cd_iso')
-        if cd_iso is not None:
+        cd_iso_id = self.param('cd_iso')
+        if cd_iso_id is not None:
+            if cd_iso_id:
+                cd_iso_id = self.__get_cd_id()
             vm_service = self._service.service(entity.id)
             current = vm_service.get().status == otypes.VmStatus.UP and self.param('state') == 'running'
             cdroms_service = vm_service.cdroms_service()
             cdrom_device = cdroms_service.list()[0]
             cdrom_service = cdroms_service.cdrom_service(cdrom_device.id)
             cdrom = cdrom_service.get(current=current)
-            if getattr(cdrom.file, 'id', '') != cd_iso:
+            if getattr(cdrom.file, 'id', '') != cd_iso_id:
                 if not self._module.check_mode:
                     cdrom_service.update(
                         cdrom=otypes.Cdrom(
-                            file=otypes.File(id=cd_iso)
+                            file=otypes.File(id=cd_iso_id)
                         ),
                         current=current,
                     )
