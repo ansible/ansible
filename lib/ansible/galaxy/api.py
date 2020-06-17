@@ -168,7 +168,8 @@ class CollectionVersionMetadata:
 class GalaxyAPI:
     """ This class is meant to be used as a API client for an Ansible Galaxy server """
 
-    def __init__(self, galaxy, name, url, username=None, password=None, token=None, validate_certs=True):
+    def __init__(self, galaxy, name, url, username=None, password=None, token=None, validate_certs=True,
+                 available_api_versions=None):
         self.galaxy = galaxy
         self.name = name
         self.username = username
@@ -176,7 +177,7 @@ class GalaxyAPI:
         self.token = token
         self.api_server = url
         self.validate_certs = validate_certs
-        self._available_api_versions = {}
+        self._available_api_versions = available_api_versions or {}
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
 
@@ -478,8 +479,16 @@ class GalaxyAPI:
         wait = 2
 
         while timeout == 0 or (time.time() - start) < timeout:
-            data = self._call_galaxy(full_url, method='GET', auth_required=True,
-                                     error_context_msg='Error when getting import task results at %s' % full_url)
+            try:
+                data = self._call_galaxy(full_url, method='GET', auth_required=True,
+                                         error_context_msg='Error when getting import task results at %s' % full_url)
+            except GalaxyError as e:
+                if e.http_code != 404:
+                    raise
+                # The import job may not have started, and as such, the task url may not yet exist
+                display.vvv('Galaxy import process has not started, wait %s seconds before trying again' % wait)
+                time.sleep(wait)
+                continue
 
             state = data.get('state', 'waiting')
 
@@ -545,12 +554,10 @@ class GalaxyAPI:
         relative_link = False
         if 'v3' in self.available_api_versions:
             api_path = self.available_api_versions['v3']
-            results_key = 'data'
             pagination_path = ['links', 'next']
             relative_link = True  # AH pagination results are relative an not an absolute URI.
         else:
             api_path = self.available_api_versions['v2']
-            results_key = 'results'
             pagination_path = ['next']
 
         n_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/')
@@ -558,6 +565,14 @@ class GalaxyAPI:
         error_context_msg = 'Error when getting available collection versions for %s.%s from %s (%s)' \
                             % (namespace, name, self.name, self.api_server)
         data = self._call_galaxy(n_url, error_context_msg=error_context_msg)
+
+        if 'data' in data:
+            # v3 automation-hub is the only known API that uses `data`
+            # since v3 pulp_ansible does not, we cannot rely on version
+            # to indicate which key to use
+            results_key = 'data'
+        else:
+            results_key = 'results'
 
         versions = []
         while True:

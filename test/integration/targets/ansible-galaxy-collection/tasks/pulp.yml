@@ -1,0 +1,154 @@
+# These tasks configure pulp/pulp_ansible so that we can use the container
+# This will also reset pulp between iterations
+
+# The pulp container has a long start up time
+# The first task to interact with pulp needs to wait until it responds appropriately
+- name: list pulp distributions
+  uri:
+    url: '{{ pulp_api }}/pulp/api/v3/distributions/ansible/ansible/'
+    status_code:
+      - 200
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
+  register: pulp_distributions
+  until: pulp_distributions is successful
+  delay: 1
+  retries: 60
+
+- when: pulp_distributions.json.count > 0
+  block:
+    - name: delete pulp distributions
+      uri:
+        url: '{{ pulp_api }}{{ distribution.pulp_href }}'
+        method: DELETE
+        status_code:
+          - 202
+        user: '{{ pulp_user }}'
+        password: '{{ pulp_password }}'
+        force_basic_auth: true
+      register: pulp_distribution_delete_tasks
+      loop: '{{ pulp_distributions.json.results }}'
+      loop_control:
+        loop_var: distribution
+        label: '{{ distribution.name }}'
+
+    - name: wait for distribution delete
+      uri:
+        url: '{{ pulp_api }}{{ task.json.task }}'
+        method: GET
+        status_code:
+          - 200
+        user: '{{ pulp_user }}'
+        password: '{{ pulp_password }}'
+        force_basic_auth: true
+      register: pulp_distribution_delete
+      until: pulp_distribution_delete is successful and pulp_distribution_delete.json.state|default("MISSING") == "completed"
+      delay: 1
+      retries: 25
+      loop: '{{ pulp_distribution_delete_tasks.results }}'
+      loop_control:
+        loop_var: task
+        label: '{{ task.json.task }}'
+
+    - name: delete pulp repository
+      uri:
+        url: '{{ pulp_api }}{{ distribution.repository }}'
+        method: DELETE
+        status_code:
+          - 202
+        user: '{{ pulp_user }}'
+        password: '{{ pulp_password }}'
+        force_basic_auth: true
+      register: pulp_repository_delete_tasks
+      loop: '{{ pulp_distributions.json.results }}'
+      loop_control:
+        loop_var: distribution
+        label: '{{ distribution.name }}'
+
+    - name: wait for repository delete
+      uri:
+        url: '{{ pulp_api }}{{ task.json.task }}'
+        method: GET
+        status_code:
+          - 200
+        user: '{{ pulp_user }}'
+        password: '{{ pulp_password }}'
+        force_basic_auth: true
+      register: pulp_repository_delete
+      until: pulp_repository_delete is successful and pulp_repository_delete.json.state|default("MISSING") == "completed"
+      delay: 1
+      retries: 25
+      loop: '{{ pulp_repository_delete_tasks.results }}'
+      loop_control:
+        loop_var: task
+        label: '{{ task.json.task }}'
+
+    - name: delete pulp orphans
+      uri:
+        url: '{{ pulp_api }}/pulp/api/v3/orphans/'
+        method: DELETE
+        status_code:
+          - 202
+        user: '{{ pulp_user }}'
+        password: '{{ pulp_password }}'
+        force_basic_auth: true
+      register: pulp_orphans_delete_task
+
+    - name: wait for orphan delete
+      uri:
+        url: '{{ pulp_api }}{{ pulp_orphans_delete_task.json.task }}'
+        method: GET
+        status_code:
+          - 200
+        user: '{{ pulp_user }}'
+        password: '{{ pulp_password }}'
+        force_basic_auth: true
+      register: pulp_orphans_delete
+      until: pulp_orphans_delete is successful and pulp_orphans_delete.json.state|default("MISSING") == "completed"
+      delay: 1
+      retries: 25
+
+- name: create pulp repo
+  uri:
+    url: '{{ pulp_api }}/pulp/api/v3/repositories/ansible/ansible/'
+    method: POST
+    body_format: json
+    body:
+      name: ansible_ci
+    status_code:
+      - 201
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
+  register: pulp_repo
+
+- name: create pulp distribution
+  uri:
+    url: '{{ pulp_api }}/pulp/api/v3/distributions/ansible/ansible/'
+    method: POST
+    body_format: json
+    body:
+      name: ansible_ci
+      base_path: ansible_ci
+      repository: '{{ pulp_api }}{{ pulp_repo.json.pulp_href }}'
+    status_code:
+      - 202
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
+  register: pulp_distribution_task
+
+- name: wait for distribution creation
+  uri:
+    url: '{{ pulp_api }}{{ pulp_distribution_task.json.task }}'
+    method: GET
+    status_code:
+      - 200
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
+  until: pulp_distribution is successful and pulp_distribution.json.state|default("MISSING") == "completed"
+  delay: 1
+  retries: 25
+  register: pulp_distribution
