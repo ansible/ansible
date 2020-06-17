@@ -1,0 +1,2 @@
+bugfixes:
+  - zfs_delegate_admin - add missing choices diff/hold/release to the permissions parameter (https://github.com/ansible-collections/community.general/pull/278)
