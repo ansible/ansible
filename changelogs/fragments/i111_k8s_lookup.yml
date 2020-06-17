@@ -1,0 +1,2 @@
+bugfixes:
+- k8s - Handle set object retrieved from lookup plugin.
