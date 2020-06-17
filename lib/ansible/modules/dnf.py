@@ -204,7 +204,7 @@ options:
     required: false
     type: bool
     default: "no"
-    version_added: "2.10"
+    version_added: "2.11"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
