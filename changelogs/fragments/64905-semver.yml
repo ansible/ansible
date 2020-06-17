@@ -1,4 +1,0 @@
-minor_changes:
-- Add ``--pre`` flag to ``ansible-galaxy collection install``
-  to allow pulling in the most recent pre-release version of a collection
-  (https://github.com/ansible/ansible/issues/64905)

@@ -1,2 +1,0 @@
-bugfixes:
-- Fix collection install error that happened if a dependency specified dependencies to be null (https://github.com/ansible/ansible/issues/67574).

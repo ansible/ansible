@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test no longer tries to install ``coverage`` 5.0+ since those versions are unsupported

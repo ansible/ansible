@@ -1,2 +1,0 @@
-minor_changes:
-- "ansible-test - improve module validation so that ``default``, ``sample`` and ``example`` contain JSON values and not arbitrary YAML values, like ``datetime`` objects or dictionaries with non-string keys."

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-galaxy - add ``validate_collection_path()`` utility function ()

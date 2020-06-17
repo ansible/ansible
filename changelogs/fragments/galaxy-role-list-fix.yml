@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - fix regression that prenented roles from being listed

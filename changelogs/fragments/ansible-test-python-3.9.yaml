@@ -1,3 +1,0 @@
-minor_changes:
-  - ansible-test - Add support for Python 3.9.
-  - ansible-test - Update ``default-test-container`` to version 1.11, which includes Python 3.9.0a4.

@@ -1,5 +1,0 @@
-bugfixes:
-- "ansible-test - during module validation, improve alias handling."
-- "ansible-test - during module validation, handle add_file_common_args only for top-level arguments."
-minor_changes:
-- "ansible-test - extend alias validation."

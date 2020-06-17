@@ -1,3 +1,0 @@
-bugfixes:
-- ansible-galaxy - Fix ``multipart/form-data`` body to include extra CRLF
-  (https://github.com/ansible/ansible/pull/67942)

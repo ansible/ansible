@@ -1,2 +1,0 @@
-bugfixes:
-- TaskQueueManager - Explicitly set the mutliprocessing start method to ``fork`` to avoid issues with the default on macOS now being ``spawn``.

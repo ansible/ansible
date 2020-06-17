@@ -1,2 +1,0 @@
-bugfixes:
-- Fix label lookup in the default callback for includes (https://github.com/ansible/ansible/issues/65904)

@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test now validates the schema of ansible_builtin_runtime.yml and a collections meta/runtime.yml file.

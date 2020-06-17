@@ -1,4 +1,0 @@
-bugfixes:
-- Prevent a race condition when running handlers using a combination of the free strategy and include_role.
-minor_changes:
-- The results queue and counter for results are now split for standard / handler results. This allows the governing strategy to be truly independent from the handler strategy, which basically follows the linear methodology.

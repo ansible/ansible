@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test once again properly collects code coverage for ``ansible-connection``

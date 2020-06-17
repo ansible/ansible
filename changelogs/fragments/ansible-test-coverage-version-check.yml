@@ -1,3 +1,0 @@
-minor_changes:
-    - ansible-test now checks for the minimum and maximum supported versions when importing ``coverage``
-    - ansible-test now provides a more helpful error when loading coverage files created by ``coverage`` version 5 or later

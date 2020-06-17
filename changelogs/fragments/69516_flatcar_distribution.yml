@@ -1,2 +1,0 @@
-bugfixes:
-  - Added support for Flatcar Container Linux in distribution and hostname modules. (https://github.com/ansible/ansible/pull/69627)

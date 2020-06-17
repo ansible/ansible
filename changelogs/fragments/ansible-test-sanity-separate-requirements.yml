@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now installs sanity test requirements specific to each test instead of installing requirements for all sanity tests

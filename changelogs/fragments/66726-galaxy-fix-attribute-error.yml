@@ -1,2 +1,0 @@
-bugfixes:
-    - galaxy - Fix an AttributeError on ansible-galaxy install with an empty requirements.yml (https://github.com/ansible/ansible/issues/66725).

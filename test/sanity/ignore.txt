@@ -61,6 +61,7 @@ lib/ansible/executor/playbook_executor.py pylint:blacklisted-name
 lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
+lib/ansible/executor/task_executor.py pylint:ansible-deprecated-version
 lib/ansible/executor/task_queue_manager.py pylint:blacklisted-name
 lib/ansible/galaxy/collection.py compile-2.6!skip # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/module_utils/_text.py future-import-boilerplate
@@ -210,6 +211,7 @@ lib/ansible/modules/service.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/setup.py validate-modules:doc-missing-type
 lib/ansible/modules/setup.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/setup.py validate-modules:parameter-type-not-in-doc
+lib/ansible/modules/systemd.py pylint:ansible-deprecated-version
 lib/ansible/modules/systemd.py validate-modules:parameter-invalid
 lib/ansible/modules/systemd.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/systemd.py validate-modules:return-syntax-error
@@ -233,6 +235,7 @@ lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
+lib/ansible/plugins/callback/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/doc_fragments/backup.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/backup.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/constructed.py future-import-boilerplate
@@ -256,6 +259,7 @@ lib/ansible/plugins/doc_fragments/url.py metaclass-boilerplate
 lib/ansible/plugins/doc_fragments/validate.py future-import-boilerplate
 lib/ansible/plugins/doc_fragments/validate.py metaclass-boilerplate
 lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
+lib/ansible/plugins/strategy/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
 lib/ansible/vars/hostvars.py pylint:blacklisted-name

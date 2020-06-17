@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - --docker flag now has an associated --docker-terminate flag which controls if and when the docker container is removed following tests

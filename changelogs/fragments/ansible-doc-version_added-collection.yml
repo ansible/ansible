@@ -1,2 +1,0 @@
-minor_changes:
-- "ansible-doc - now indicates if an option is added by a doc fragment from another collection by prepending the collection name, or ``ansible.builtin`` for ansible-base, to the version number."

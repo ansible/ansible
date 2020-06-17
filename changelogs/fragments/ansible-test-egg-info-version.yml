@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test is now able to find its ``egg-info`` directory when it contains the Ansible version number

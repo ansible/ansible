@@ -1,2 +1,0 @@
-bugfixes:
-  - copy - Fix copy modes when using remote_src=yes and src is a directory with trailing slash. 
