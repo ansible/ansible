@@ -231,7 +231,7 @@ def find_ini_config_file(warnings=None):
             if os.path.exists(cwd_cfg):
                 warn_cmd_public = True
         else:
-            potential_paths.append(cwd_cfg)
+            potential_paths.append(to_text(cwd_cfg, errors='surrogate_or_strict'))
     except OSError:
         # If we can't access cwd, we'll simply skip it as a possible config source
         pass

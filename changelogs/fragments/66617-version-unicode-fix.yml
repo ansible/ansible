@@ -1,0 +1,2 @@
+bugfixes:
+  - Ensure that ``--version`` works with non-ascii ansible project paths (https://github.com/ansible/ansible/issues/66617)
