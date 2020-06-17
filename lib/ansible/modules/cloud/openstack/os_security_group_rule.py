@@ -321,6 +321,7 @@ def main():
         secgroup = cloud.get_security_group(security_group, filters=filters)
 
         if remote_group:
+            filters.pop('tenant_id')
             remotegroup = cloud.get_security_group(remote_group,
                                                    filters=filters)
         else:
