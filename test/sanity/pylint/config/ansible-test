@@ -3,6 +3,8 @@
 disable=
     invalid-name,
     no-self-use,
+    cyclic-import,  # consistent results require running with --jobs 1 and testing all files
+    duplicate-code,  # consistent results require running with --jobs 1 and testing all files
     too-few-public-methods,
     too-many-arguments,
     too-many-branches,
