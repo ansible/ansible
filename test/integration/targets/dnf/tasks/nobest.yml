@@ -27,3 +27,8 @@
   dnf:
     name: docker-ce
     state: absent
+
+- name: Remove docker-ce repo
+  file:
+    name: "/etc/yum.repos.d/docker-ce.repo"
+    state: absent
