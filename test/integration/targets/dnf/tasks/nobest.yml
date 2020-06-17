@@ -22,3 +22,8 @@
   assert:
     that:
     - not dnf_result is failed
+
+- name: Uninstall docker-ce
+  dnf:
+    name: docker-ce
+    state: absent
