@@ -733,7 +733,7 @@ def main():
         if state in ('present', 'detached', 'attached'):
             # Always activate disk when its being created
             if vm_service is not None and disk is None:
-                module.params['activate'] = True
+                module.params['activate'] = module.params['activate'] is None or module.params['activate']
             ret = disks_module.create(
                 entity=disk if not force_create else None,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
