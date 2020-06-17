@@ -426,7 +426,7 @@ class GalaxyCLI(CLI):
                 'required': required,
             }
         server_def = [('url', True), ('username', False), ('password', False), ('token', False),
-                      ('auth_url', False)]
+                      ('auth_url', False), ('v3', False)]
 
         validate_certs = not context.CLIARGS['ignore_certs']
 
@@ -447,6 +447,14 @@ class GalaxyCLI(CLI):
             auth_url = server_options.pop('auth_url', None)
             token_val = server_options['token'] or NoTokenSentinel
             username = server_options['username']
+            available_api_versions = None
+            v3 = server_options.pop('v3', None)
+            if v3:
+                # This allows a user to explicitly indicate the server uses the /v3 API
+                # This was added for testing against pulp_ansible and I'm not sure it has
+                # a practical purpose outside of this use case. As such, this option is not
+                # documented as of now
+                server_options['available_api_versions'] = {'v3': '/v3'}
 
             # default case if no auth info is provided.
             server_options['token'] = None

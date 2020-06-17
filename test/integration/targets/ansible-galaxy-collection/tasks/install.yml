@@ -131,9 +131,14 @@
   register: fail_dep_mismatch
   failed_when: '"Cannot meet dependency requirement ''fail_dep2.name:<0.0.5'' for collection fail_namespace.fail_collection" not in fail_dep_mismatch.stderr'
 
+- name: Find artifact url
+  uri:
+    url: '{{ test_server }}{{ vX }}collections/namespace3/name/versions/1.0.0/'
+  register: artifact_url_response
+
 - name: download a collection for an offline install - {{ test_name }}
   get_url:
-    url: '{{ test_server }}custom/collections/namespace3-name-1.0.0.tar.gz'
+    url: '{{ artifact_url_response.json.download_url }}'
     dest: '{{ galaxy_dir }}/namespace3.tar.gz'
 
 - name: install a collection from a tarball - {{ test_name }}
@@ -173,8 +178,13 @@
     that:
     - not fail_bad_tar_actual.stat.exists
 
+- name: Find artifact url
+  uri:
+    url: '{{ test_server }}{{ vX }}collections/namespace4/name/versions/1.0.0/'
+  register: artifact_url_response
+
 - name: install a collection from a URI - {{ test_name }}
-  command: ansible-galaxy collection install '{{ test_server }}custom/collections/namespace4-name-1.0.0.tar.gz' {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install {{ artifact_url_response.json.download_url}} {{ galaxy_verbosity }}
   register: install_uri
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'

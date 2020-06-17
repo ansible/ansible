@@ -5,6 +5,7 @@
     chdir: '{{ galaxy_dir }}'
   register: fail_no_token
   failed_when: '"HTTP Code: 401" not in fail_no_token.stderr'
+  when: not is_pulp
 
 - name: fail to publish with invalid token - {{ test_name }}
   command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token fail {{ galaxy_verbosity }}
@@ -12,12 +13,24 @@
     chdir: '{{ galaxy_dir }}'
   register: fail_invalid_token
   failed_when: '"HTTP Code: 401" not in fail_invalid_token.stderr'
+  when: not is_pulp
 
 - name: publish collection - {{ test_name }}
   command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ fallaxy_token }} {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
-  register: publish_collection
+  register: fallaxy_publish_collection
+  when: not is_pulp
+
+- name: publish collection - {{ test_name }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: pulp_publish_collection
+  when: is_pulp
+
+- set_fact:
+    publish_collection: '{{ pulp_publish_collection if pulp_publish_collection is not skipped else fallaxy_publish_collection }}'
 
 - name: get result of publish collection - {{ test_name }}
   uri:
@@ -29,9 +42,9 @@
   assert:
     that:
     - '"Collection has been successfully published and imported to the Galaxy server" in publish_collection.stdout'
-    - publish_collection_actual.json.metadata.name == 'my_collection'
-    - publish_collection_actual.json.metadata.namespace == 'ansible_test'
-    - publish_collection_actual.json.metadata.version == '1.0.0'
+    - publish_collection_actual.json.collection.name == 'my_collection'
+    - publish_collection_actual.json.namespace.name == 'ansible_test'
+    - publish_collection_actual.json.version == '1.0.0'
 
 - name: fail to publish existing collection version - {{ test_name }}
   command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ fallaxy_token }} {{ galaxy_verbosity }}
@@ -39,8 +52,22 @@
     chdir: '{{ galaxy_dir }}'
   register: fail_publish_existing
   failed_when: '"Artifact already exists" not in fail_publish_existing.stderr'
+  when: not is_pulp
+
+- name: fail to publish existing collection version - {{ test_name }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: fail_publish_existing
+  failed_when: fail_publish_existing is not failed
+  when: is_pulp
 
 - name: reset published collections - {{ test_name }}
   uri:
     url: '{{ test_server }}custom/reset/'
     method: POST
+  when: not is_pulp
+
+- name: reset published collections - {{ test_name }}
+  include_tasks: pulp.yml
+  when: is_pulp
