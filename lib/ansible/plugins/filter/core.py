@@ -467,11 +467,11 @@ def b64decode(string, encoding='utf-8'):
     return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')), encoding=encoding)
 
 
-def flatten(mylist, levels=None):
+def flatten(mylist, levels=None, skip_nulls=True):
 
     ret = []
     for element in mylist:
-        if element in (None, 'None', 'null'):
+        if skip_nulls and element in (None, 'None', 'null'):
             # ignore undefined items
             continue
         elif is_sequence(element):
