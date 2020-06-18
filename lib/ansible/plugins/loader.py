@@ -981,7 +981,7 @@ class Jinja2Loader(PluginLoader):
 
         # We have to instantiate a list of all plugins so that we can reverse it.  We reverse it so
         # that calling code will deduplicate this correctly.
-        plugins = [p for p in super(Jinja2Loader, self).all(*args, **kwargs)]
+        plugins = list(super(Jinja2Loader, self).all(*args, **kwargs))
         plugins.reverse()
 
         return plugins
