@@ -184,6 +184,26 @@ popd # ${galaxy_testdir}
 rm -fr "${galaxy_testdir}"
 
 
+# Galaxy install test case
+#
+# Ensure that proper error message is thrown for non-existent role
+#
+
+f_ansible_galaxy_status \
+    "install a non-existant role"
+
+galaxy_testdir=$(mktemp -d)
+pushd "${galaxy_testdir}"
+
+    ansible-galaxy install notaroll,1.0 --ignore-errors | tee out.txt
+    
+     # Test that the proper error/warning message was thrown
+    [[ $(grep -c '- notaroll 1.0 was NOT installed successfully' out.txt ) -eq 0 ]]
+
+popd # ${galaxy_testdir}
+rm -fr "${galaxy_testdir}"
+
+
 # Galaxy role list tests
 #
 # Basic tests to ensure listing roles works
