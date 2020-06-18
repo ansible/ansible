@@ -1,2 +1,0 @@
-bugfixes:
-  - ansible-galaxy - properly list roles when the role name also happens to be in the role path (https://github.com/ansible/ansible/issues/67365)

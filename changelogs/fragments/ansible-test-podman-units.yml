@@ -1,2 +1,0 @@
-minor_changes:
-  - ansible-test - fixed ``units`` command with ``--docker`` to (mostly) work under podman

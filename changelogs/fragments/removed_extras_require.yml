@@ -1,2 +1,0 @@
-minor_changes:
-- Removed extras_require support from setup.py (and [azure] extra). Requirements will float with the collections, so it's not appropriate for ansible-base to host requirements for them any longer.

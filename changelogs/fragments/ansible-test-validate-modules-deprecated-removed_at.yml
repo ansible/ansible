@@ -1,3 +1,0 @@
-minor_changes:
-- "ansible-test - ``validate-modules`` now also accepts an ISO 8601 formatted date as ``deprecated.removed_at_date``, instead of requiring a version number in ``deprecated.removed_in``."
-- "ansible-test - ``validate-modules`` now makes sure that module documentation deprecation removal version and/or date matches with removal version and/or date in meta/runtime.yml."

@@ -21,17 +21,6 @@ case "${group}" in
     5) options=(                                                                                                                 --test validate-modules) ;;
 esac
 
-# allow collection migration sanity tests for groups 3 and 4 to pass without updating this script during migration
-network_path="lib/ansible/modules/network/"
-
-if [ -d "${network_path}" ]; then
-    if [ "${group}" -eq 3 ]; then
-        options+=(--exclude "${network_path}")
-    elif [ "${group}" -eq 4 ]; then
-        options+=("${network_path}")
-    fi
-fi
-
 # shellcheck disable=SC2086
 ansible-test sanity --color -v --junit ${COVERAGE:+"$COVERAGE"} ${CHANGED:+"$CHANGED"} \
     --docker --docker-keep-git --base-branch "${base_branch}" \

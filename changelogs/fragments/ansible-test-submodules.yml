@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now correctly enumerates submodules when a collection resides below the repository root

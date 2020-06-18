@@ -1,2 +1,0 @@
-minor_changes:
-- Added the ability to set ``DEFAULT_NO_TARGET_SYSLOG`` through the ``ansible_no_target_syslog`` variable on a task

@@ -1,2 +1,0 @@
-bugfixes:
-- 'Ansible.ModuleUtils.WebRequest - actually set no proxy when ``use_proxy: no`` is set on a Windows module - https://github.com/ansible/ansible/issues/68528'

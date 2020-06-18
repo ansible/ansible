@@ -1,4 +1,0 @@
-bugfixes:
-- collections - Handle errors better for filters and tests in collections,
-  where a non-existent collection is specified, or importing the plugin
-  results in an exception (https://github.com/ansible/ansible/issues/66721)

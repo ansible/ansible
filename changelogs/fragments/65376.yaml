@@ -1,2 +1,0 @@
-bugfixes:
-  - packaging_yum - replace legacy file handling with a file manager.

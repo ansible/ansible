@@ -1,3 +1,0 @@
-bugfixes:
-    - interpreter discovery will now use correct vars (from delegated host) when in delegate_to task.
-    - discovery will NOT update incorrect host anymore when in delegate_to task.

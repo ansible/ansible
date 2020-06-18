@@ -1,4 +1,0 @@
-bugfixes:
-  - facts - introduce fact "ansible_processor_nproc" which reflects the
-    number of vcpus available to processes (falls back to the number of
-    vcpus available to the scheduler)

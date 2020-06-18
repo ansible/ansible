@@ -143,6 +143,8 @@ All internal links should use the ``:ref:`` syntax.
 Every page should have at least one anchor to support internal ``:ref:`` links.
 Long pages, or pages with multiple levels of headers, can also include a local TOC.
 
+.. _adding_anchors_rst:
+
 Adding anchors
 ^^^^^^^^^^^^^^
 

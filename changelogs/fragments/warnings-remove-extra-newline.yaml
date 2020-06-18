@@ -1,2 +1,0 @@
-bugfixes:
-  - display - remove extra new line after warnings (https://github.com/ansible/ansible/pull/65199)

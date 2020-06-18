@@ -1,4 +1,0 @@
-minor_changes:
-  - callbacks - Allow modules to return `None` as before/after entries for diff.
-    This should make it easier for modules to report the "not existing" state of
-    the entity they touched.

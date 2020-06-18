@@ -1,3 +1,0 @@
-bugfixes:
-- Fixed a bug with the copy action plugin where mode=preserve was being passed on
-  symlink files and causing a traceback (https://github.com/ansible/ansible/issues/68471).

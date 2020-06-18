@@ -1,3 +1,0 @@
-minor_changes:
-- uri/galaxy - Add new ``prepare_multipart`` helper function for creating a ``multipart/form-data`` body
-  (https://github.com/ansible/ansible/pull/69376)

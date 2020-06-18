@@ -1,2 +1,0 @@
-bugfixes:
-    - now correclty merge and not just overwrite facts when gathering using multiple modules.

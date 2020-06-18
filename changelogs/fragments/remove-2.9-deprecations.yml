@@ -1,4 +1,0 @@
-bugfixes:
-- "ansible-test - improve ``deprecate()`` call checker."
-removed_features:
-- "core - remove support for ``check_invalid_arguments`` in ``AnsibleModule``, ``AzureModule`` and ``UTMModule``."

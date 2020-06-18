@@ -1,4 +1,0 @@
----
-bugfixes:
-- virtual facts - detect generic container environment based on non-empty
-  "container" env var

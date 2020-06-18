@@ -1,2 +1,0 @@
-minor_changes:
-  - validation - Sort missing parameters in exception message thrown by check_required_arguments

@@ -1,2 +1,0 @@
-bugfixes:
-- "ansible-test - for local change detection, allow to specify branch to compare to with ``--base-branch`` for all types of tests (https://github.com/ansible/ansible/pull/69508)."

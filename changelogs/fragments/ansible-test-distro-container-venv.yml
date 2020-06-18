@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test - Update Ubuntu 18.04 test container to version 1.13 which includes ``venv``

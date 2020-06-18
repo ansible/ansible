@@ -1,5 +1,0 @@
-bugfixes:
-- Collections - Allow a collection role to call a stand alone role, without
-  needing to explicitly add ``ansible.legacy`` to the collection search
-  order within the collection role.
-  (https://github.com/ansible/ansible/issues/69101)

@@ -1,2 +1,0 @@
-minor_changes:
-- Openstack inventory script is migrated to ansible-openstack-collection, adjusted the link in documentation accordingly.

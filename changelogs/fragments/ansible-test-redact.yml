@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test defaults to redacting sensitive values (disable with the ``--no-redact`` option)

@@ -1,2 +1,0 @@
-bugfixes:
-  - display - Improve method of removing extra new line after warnings so it does not break Tower/Runner (https://github.com/ansible/ansible/pull/68517)
