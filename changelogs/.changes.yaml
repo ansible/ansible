@@ -1414,6 +1414,75 @@ releases:
     - win_partition-var.yaml
     - xml-deprecated-functions.yml
     release_date: '2019-11-13'
+  2.9.10:
+    codename: Immigrant Song
+    fragments:
+    - 37_ios_vlans_vtp_issue.yaml
+    - 412-docker-machine-add-ip-fallback.yaml
+    - 45_ios_l3_loopback_issue.yaml
+    - 47050-copy_ensure-_original_basename-is-set.yaml
+    - 61067-lxd_container-enables-to-set-keys-not-present-in-existing-config.yml
+    - 61570-netcli-put-get.yaml
+    - 61889-change-transform_invalid_group_chars-default.yml
+    - 64895-fix-archive-empty-file.yml
+    - 65058-fix-fd-out-of-range-in-select.yml
+    - 66006-RoleRequirement-include-stderr-error-msg.yaml
+    - 66617-version-unicode-fix.yml
+    - 66943-handle-unicode-in-safe_eval.yml
+    - 67790_frr_remove_unused_import.yaml
+    - 67942-fix-galaxy-multipart.yml
+    - 67965_podman_image.yml
+    - 68181-fqcn-handler-notification.yml
+    - 68550-ansible-test-docs-changelogs.yml
+    - 69271-ignore-git-file-when-building-collection.yaml
+    - 69357_optimize_inventory_graph_wo_vars.yml
+    - 69449_ovirt_update_os_options.yml
+    - 69457-free-strategy-handler-race.yml
+    - 69521-free-strategy-include-fix.yml
+    - 69563_profile_tasks.yml
+    - 69571-ce_modify_the_parse_mode.yml
+    - 69601_fix_gather_facts_for_fqcn.yaml
+    - 69691-ovirt_disk-fix-upload-download-of-image.yml
+    - 69726-os-security-group-rule-fix.yml
+    - 69773_add_platform_guide.yaml
+    - 69851-ansible-test-pylint-versions.yml
+    - 69935-2.10-deprecation-support.yml
+    - 69940-ovirt_storage_vm_info-fix-example.yml
+    - 69941-ovirt_vm-fix-cd_iso-search-by-name.yml
+    - 69942-ovirt_vm-fix-quotas-example.yml
+    - 69943-ovirt_disk-force-wait-when-uploading-disk.yml
+    - 69962-zfs_delegate_admin_add_diff_hold_release.yml
+    - 70114-ovirt_disk-fix-activate.yml
+    - add_prefix_to_cache.yml
+    - ansible-doc-remove_at_date.yaml
+    - ansible-test-egg-info-version.yml
+    - ansible-test-path-to-python.yml
+    - ansible-test-sanity-pylint-config-fix.yml
+    - ansible-test-shebang-sanity.yml
+    - case_insensitive_fix.yml
+    - community.general-227-sesu-use-defined-prompt.yaml
+    - deprecate_default_call_fragmentless.yml
+    - discovery_delegation_fix.yml
+    - dnf_setup_loggers.yml
+    - ensure_discovery_delegate.yml
+    - file-return-state-when-file-does-not-exist.yaml
+    - fix_nxos_facts_with_vdc.yaml
+    - fix_nxos_file_copy.yaml
+    - fix_nxos_interfaces_enabled.yaml
+    - fix_nxos_terminal_plugin_order.yaml
+    - galaxy-symlinks.yaml
+    - i111_k8s_lookup.yml
+    - lineinfile-use-module-tempdir.yaml
+    - no_fatal_bad_cb.yml
+    - nxos_l2_interfaces_replaced.yaml
+    - purge-empty-block.yml
+    - py26-collection-loader.yml
+    - syslogjson-callback-exception.yml
+    - update_nxos_cliconf_for_mds.yaml
+    - v2.9.10_summary.yaml
+    - validate-include-args-in-handlers.yml
+    - yum-dnf-elements-type-in-name-list.yml
+    release_date: '2020-06-18'
   2.9.2:
     codename: Immigrant Song
     fragments:

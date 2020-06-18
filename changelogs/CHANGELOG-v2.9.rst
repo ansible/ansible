@@ -5,6 +5,98 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.10
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-06-18
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Add new magic variable ``ansible_collection`` that contains the collection name
+- Add new magic variable ``ansible_role_name`` that contains the FQCN of the role
+- Added missing platform guide for FRR (https://github.com/ansible/ansible/pull/69773).
+- Fix a typo in remove_signature flag in podman_image module (https://github.com/ansible/ansible/issues/67965).
+- Remove the deprecation message for the ``TRANSFORM_INVALID_GROUP_CHARS`` setting. (https://github.com/ansible/ansible/issues/61889)
+- The results queue and counter for results are now split for standard / handler results. This allows the governing strategy to be truly independent from the handler strategy, which basically follows the linear methodology.
+- Updates ``ansible_role_names``, ``ansible_play_role_names``, and ``ansible_dependent_role_names`` to include the FQCN
+- ``Display.deprecated()``, ``AnsibleModule.deprecate()`` and ``Ansible.Basic.Deprecate()`` now also accept the deprecation-by-date parameters and collection name parameters from Ansible 2.10, so plugins and modules in collections that conform to Ansible 2.10 will run with newer versions of Ansible 2.9.
+- ovirt: update operating system options
+- ovirt_storage_vm_info: fix example
+- ovirt_vm: fix quotas example
+
+Deprecated Features
+-------------------
+
+- Using the DefaultCallback without the correspodning doc_fragment or copying the documentation.
+
+Bugfixes
+--------
+
+- Allow tasks to notify a fqcn handler name (https://github.com/ansible/ansible/issues/68181)
+- Avoid bare select() for running commands to avoid too large file descriptor numbers failing tasks
+- Avoid running subfunctions that are passed to show_vars function when it will be a noop.
+- Create an ``import_module`` compat util, for use across the codebase, to allow collection loading to work properly on Python26
+- Do not keep empty blocks in PlayIterator after skipping tasks with tags.
+- Ensure that ``--version`` works with non-ascii ansible project paths (https://github.com/ansible/ansible/issues/66617)
+- Fix content encoding/decoding and do not fail when key based auth is used (https://github.com/ansible-collections/cisco.nxos/pull/59/).
+- Fix gather_facts not working for network platforms when network_os is in FQCN format (https://github.com/ansible/ansible/pull/69601).
+- Fix issue with nxos_l2_interfaces where replaced doesn't remove superfluous config (https://github.com/ansible-collections/cisco.nxos/pull/55)
+- Fix nxos_facts with VDC having no interfaces (https://github.com/ansible-collections/cisco.nxos/pull/68).
+- Fix nxos_interfaces enabled not working properly because of broken system default dict generation (https://github.com/ansible-collections/cisco.nxos/pull/56).
+- Fix the issue when OS secgroup rule couldn't be imported from a different tenant https://github.com/ansible/ansible/issues/69673
+- Fixed the equality check for IncludedFiles to ensure they are not accidently merged when process_include_results runs.
+- Prevent a race condition when running handlers using a combination of the free strategy and include_role.
+- Properly handle unicode in ``safe_eval``. (https://github.com/ansible/ansible/issues/66943)
+- Remove unused and invalid import from FRR cliconf plugin (https://github.com/ansible/ansible/pull/67790).
+- RoleRequirement - include stderr in the error message if a scm command fails (https://github.com/ansible/ansible/issues/41336)
+- To fix ios_l3_interfaces Loopback issue (https://github.com/ansible-collections/cisco.ios/pull/45)
+- To fix ios_vlans vtp version 2 issue (https://github.com/ansible-collections/cisco.ios/pull/38)
+- Update NX-OS cliconf to accomodate MDS (https://github.com/ansible-collections/cisco.nxos/pull/78).
+- Update terminal plugin to check feature privilege only when escalation is needed (https://github.com/ansible-collections/cisco.nxos/pull/61).
+- Validate include args in handlers.
+- added 'unimplemented' prefix to file based caching
+- added new option for default callback to compat variable to avoid old 3rd party plugins from erroring out.
+- ansible-doc - Allow and give precedence to `removed_at_date` for deprecated modules.
+- ansible-galaxy - Fix ``multipart/form-data`` body to include extra CRLF (https://github.com/ansible/ansible/pull/67942)
+- ansible-galaxy - Preserve symlinks when building and installing a collection
+- ansible-galaxy collection build - Command did not ignore .git files, which had the potential to cause troubles later on (for example, when importing into Automation Hub) (https://github.com/ansible/ansible/issues/68731).
+- ansible-test - Disabled the ``duplicate-code`` and ``cyclic-import`` checks for the ``pylint`` sanity test due to inconsistent results.
+- ansible-test - The shebang sanity test now correctly identifies modules in subdirectories in collections.
+- ansible-test change detection - Run only sanity tests on ``docs/`` and ``changelogs/`` in collections, to avoid triggering full CI runs of integration and unit tests when files in these directories change.
+- ansible-test is now able to find its ``egg-info`` directory when it contains the Ansible version number
+- ansible-test no longer optimizes setting ``PATH`` by prepending the directory containing the selected Python interpreter when it is named ``python``. This avoids unintentionally making other programs available on ``PATH``, including an already installed version of Ansible.
+- ansible-test pylint sanity test - do not crash when ``version`` specified to ``AnsibleModule.deprecate()`` or ``Display.deprecated()`` contains string components, f.ex. tagged version numbers for Ansible 2.10.
+- archive - fix issue with empty file exclusion from archive
+- avoid fatal traceback when a bad FQCN for a callback is supplied in the whitelist (#69401).
+- ce - Modify the way of parsing NETCONF XML message in ce.py (https://github.com/ansible/ansible/pull/69571  https://github.com/ansible-collections/community.network/pull/39).
+- collection loader - fix file/module/class confusion issues on case-insensitive filesystems
+- copy - Fixed copy module not working in case that remote_src is enabled and dest ends in a / (https://github.com/ansible/ansible/pull/47238)
+- discovery will NOT update incorrect host anymore when in delegate_to task.
+- dnf - enable logging using setup_loggers() API in dnf-4.2.17-6 or later
+- docker_machine - fallback to ip subcommand output if IPAddress is missing (https://github.com/ansible-collections/community.general/issues/412).
+- ensure we pass on interpreter discovery values to delegated host.
+- file - return ``'state': 'absent'`` when a file does not exist (https://github.com/ansible/ansible/issues/66171)
+- fixed issues when using net_get & net_put before the persistent connection has been started
+- interpreter discovery will now use correct vars (from delegated host) when in delegate_to task.
+- k8s - Handle set object retrieved from lookup plugin.
+- lineinfile - use ``module.tmpdir`` to allow configuration of the remote temp directory (https://github.com/ansible/ansible/issues/68218)
+- lxd_container - enables to set keys not present in existing config
+- ovirt_disk fix activate (https://github.com/oVirt/ovirt-ansible-collection/pull/61)
+- ovirt_disk: fix upload/download of images for ovirt 4.4
+- ovirt_disk: force wait when uploading disk
+- ovirt_vm: fix cd_iso search by name
+- profile_tasks - typecast results before using it (https://github.com/ansible/ansible/issues/69563).
+- sesu - make use of the prompt specified in the code
+- syslog_json callback - fix plugin exception when running (https://github.com/ansible-collections/community.general/issues/407).
+- yum/dnf - check type of elements in a name
+- zfs_delegate_admin - add missing choices diff/hold/release to the permissions parameter (https://github.com/ansible-collections/community.general/pull/278)
+
 v2.9.9
 ======
 
