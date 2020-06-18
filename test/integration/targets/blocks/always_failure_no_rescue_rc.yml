@@ -4,11 +4,10 @@
     - block:
         - name: EXPECTED FAILURE
           fail:
-            msg: Initial failure
-      rescue:
-        - debug:
-            msg: Rescued
+            msg: Failure in block
       always:
         - name: EXPECTED FAILURE
           fail:
             msg: Failure in always
+    - debug:
+        msg: DID NOT RUN
