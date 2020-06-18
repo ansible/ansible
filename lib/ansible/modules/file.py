@@ -558,7 +558,7 @@ def execute_touch(path, follow, timestamps):
             changed = module.set_fs_attributes_if_different(file_args, changed, diff, expand=False)
             changed |= update_timestamp_for_file(file_args['path'], mtime, atime, diff)
         except SystemExit as e:
-            if e.code:
+            if e.code:  # this is the exit code passed to sys.exit, not a constant -- pylint: disable=using-constant-test
                 # We take this to mean that fail_json() was called from
                 # somewhere in basic.py
                 if prev_state == 'absent':
