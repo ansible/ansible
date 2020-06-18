@@ -13,8 +13,12 @@ from ansible.module_utils.tacp_ansible.tacp_constants import State, Action
 
 import json
 import tacp
+<<<<<<< HEAD
 import sys
 from time import sleep
+=======
+
+>>>>>>> f84617e268... OL-9822  Remove sys import and stdout.write debug lines
 from uuid import uuid4
 from tacp.rest import ApiException
 from pprint import pprint
@@ -142,7 +146,6 @@ def run_module():
         # Get boot devices uuids and order from the template
         template_boot_order = template_dict['boot_order']
 
-        # sys.stdout.write(str(boot_order_dict))
         template_boot_device_names = [boot_device['name'] for
                                       boot_device in template_boot_order]
 
@@ -162,8 +165,6 @@ def run_module():
                     template_device in template_boot_device_names]):
             fail_with_reason("All devices for template {} must be present in disks and nics fields: [{}]".format(  # noqa
                 template_dict['name'], ', '.join(template_boot_device_names)))
-
-        # sys.stdout.write(str(disks_and_nics_names))
 
         # initialize the boot order with blank entries times the
         # number of disks + nics
@@ -193,7 +194,7 @@ def run_module():
                                                order=order,
                                                vnic_uuid=vnic_uuid)
             instance_boot_order[order - 1] = payload
-        # sys.stdout.write(str(instance_boot_order))
+
         return instance_boot_order
 
     def generate_instance_params(module):
@@ -289,7 +290,6 @@ def run_module():
 
             instance_params['application_group_uuid'] = uuid
 
-        # sys.stdout.write(str(instance_params))
         return instance_params
 
     def create_instance(instance_params, api_client):
