@@ -181,6 +181,7 @@ class TaskQueueManager:
                 if cb_class not in callback_list:
                     callback_list.append(cb_class)
 
+        #for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)):
         # for each callback in the list see if we should add it to 'active callbacks' used in the play
         for callback_plugin in callback_list:
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
