@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Report the correct line number in the ``yamllint`` sanity test when reporting ``libyaml`` parse errors in module documentation.
