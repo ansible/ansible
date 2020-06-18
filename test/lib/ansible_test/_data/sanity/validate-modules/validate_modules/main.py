@@ -41,7 +41,6 @@ import yaml
 from ansible import __version__ as ansible_version
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.module_utils.common._collections_compat import Mapping
-from ansible.module_utils._text import to_native
 from ansible.plugins.loader import fragment_loader
 from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 from ansible.utils.plugin_docs import REJECTLIST, add_collection_to_versions_and_dates, add_fragments, get_docstring
@@ -238,9 +237,9 @@ class Validator(with_metaclass(abc.ABCMeta, object)):
 class ModuleValidator(Validator):
     REJECTLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md', '*.rst', '*.txt')
     REJECTLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
-                                 'shippable.yml',
-                                 '.gitattributes', '.gitmodules', 'COPYING',
-                                 '__init__.py', 'VERSION', 'test-docs.sh'))
+                                  'shippable.yml',
+                                  '.gitattributes', '.gitmodules', 'COPYING',
+                                  '__init__.py', 'VERSION', 'test-docs.sh'))
     REJECTLIST = REJECTLIST_FILES.union(REJECTLIST['MODULE'])
 
     PS_DOC_REJECTLIST = frozenset((
@@ -248,9 +247,9 @@ class ModuleValidator(Validator):
         'slurp.ps1',
         'setup.ps1'
     ))
-    PS_ARG_VALIDATE_REJECTLIST = frozenset((
-        'win_dsc.ps1',  # win_dsc is a dynamic arg spec, the docs won't ever match
-    ))
+
+    # win_dsc is a dynamic arg spec, the docs won't ever match
+    PS_ARG_VALIDATE_REJECTLIST = frozenset(('win_dsc.ps1', ))
 
     ACCEPTLIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
