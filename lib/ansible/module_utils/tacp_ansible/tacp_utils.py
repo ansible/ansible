@@ -6,7 +6,6 @@
 import json
 import re
 import tacp
-import sys
 
 try:
     from urllib.parse import quote
