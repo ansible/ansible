@@ -33,7 +33,7 @@ from units.mock.path import mock_unfrackpath_noop
 class TestPlayIterator(unittest.TestCase):
 
     def test_host_state(self):
-        hs = HostState(blocks=[x for x in range(0, 10)])
+        hs = HostState(blocks=list(range(0, 10)))
         hs.tasks_child_state = HostState(blocks=[0])
         hs.rescue_child_state = HostState(blocks=[1])
         hs.always_child_state = HostState(blocks=[2])

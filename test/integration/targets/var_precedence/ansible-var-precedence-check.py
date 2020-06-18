@@ -455,7 +455,7 @@ def main():
             if f not in features:
                 print('%s is not a valid feature' % f)
                 sys.exit(1)
-        features = [x for x in options.feature]
+        features = list(options.feature)
 
     fdesc = {
         'ini_host': 'host var inside the ini',
