@@ -173,7 +173,7 @@ stdout:
   description: The command standard output
   returned: always
   type: str
-  sample: ' 20:45:08 up 19 days,  9:39,  2 users,  load average: 0.90, 1.04, 1.39'
+  sample: 'Clustering node rabbit@slave1 with rabbit@master …'
 stderr:
   description: The command standard error
   returned: always
@@ -195,7 +195,7 @@ stdout_lines:
   description: The command standard output split in lines
   returned: always
   type: list
-  sample: [u' 20:45:08 up 19 days,  9:39,  2 users,  load average: 0.90, 1.04, 1.39']
+  sample: [u'Clustering node rabbit@slave1 with rabbit@master …']
 stderr_lines:
   description: The command standard error split in lines
   returned: always
