@@ -26,9 +26,6 @@ class Connection(ConnectionBase):
 
         raise AnsibleError('an error with {{ some Jinja }}')
 
-    def transport(self):
-        pass
-
     def _connect(self):
         pass
 
