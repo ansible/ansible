@@ -171,40 +171,49 @@ class TaskQueueManager:
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
-        loaded_callbacks = []
-
         # get all configured callbacks and add whitelisted callbacks that refer to collections, which don't appear in normal listing
-        callback_list = list(callback_loader.all(class_only=True))
-        for cb in C.DEFAULT_CALLBACK_WHITELIST:
-            if is_collection_ref(cb):
-                cb_class = callback_loader.get(cb, class_only=True)
-                if cb_class not in callback_list:
-                    callback_list.append(cb_class)
+        callback_list = list(callback_loader.all(class_only=True) + (callback_loader.get(c) for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)))
 
-        #for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)):
         # for each callback in the list see if we should add it to 'active callbacks' used in the play
         for callback_plugin in callback_list:
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
-            (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+
+            # try to get colleciotn world name first
+            cnames = getattr(callback_plugin, '_redirected_names', [])
+            if cnames:
+                callback_name = cnames[-1]
+            else:
+                # fallback to 'old loader name'
+                (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+
             if callback_type == 'stdout':
                 # we only allow one callback of type 'stdout' to be loaded,
                 if callback_name != self._stdout_callback or stdout_callback_loaded:
+                    display.vv("Skipping callback '%s', as we already have a stdout callback." % (callback_plugin))
                     continue
                 stdout_callback_loaded = True
             elif callback_name == 'tree' and self._run_tree:
-                # special case for ansible cli option
+                # TODO: remove special case for tree, which is an adhoc cli option --tree
                 pass
-            # eg, ad-hoc doesn't allow non-default callbacks
+
+            # only run if not adhoc, or adhoc was specifically configured to run + check enabled list
             elif not self._run_additional_callbacks or (callback_needs_whitelist and (
                     C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                 # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
                 continue
 
-            callback_obj = callback_plugin()
-            loaded_callbacks.add(callback_name)  # mark as loaded so we skip in second pass
-            callback_obj.set_options()
-            self._callback_plugins.append(callback_obj)
+            try:
+                callback_obj = callback_plugin()
+                if callback_obj:
+                    if callback_obj not in self._callback_plugins:
+                        callback_obj.set_options()
+                        self._callback_plugins.append(callback_obj)
+                    else:
+                        display.vv("Skipping callback '%s', already loaded as '%s'." % (callback_plugin, callback_name))
+            except Exception as e:
+                display.warning("Skipping callback '%s', unable to load due to: %s" % (to_native(e)))
+                continue
 
         self._callbacks_loaded = True
 
