@@ -96,7 +96,7 @@ def get_raw_test_targets(args, test_path):
 
                 target_times[target_name] = target_runtime
 
-    return dict([(k, v) for k, v in sorted(target_times.items(), key=lambda i: i[1], reverse=True)])
+    return dict(sorted(target_times.items(), key=lambda i: i[1], reverse=True))
 
 
 def print_test_runtime(target_times):
