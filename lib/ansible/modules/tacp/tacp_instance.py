@@ -408,6 +408,10 @@ def run_module():
                                                           uuid=instance_uuid)  # noqa
 
         for vnic in module.params['nics']:
+            if vnic['name'] in [instance_nic.name for instance_nic
+                                in instance.nics]:
+                # This nic was already configured, skip it
+                continue
             vnic_uuid = [boot_order_vnic.vnic_uuid for boot_order_vnic in
                          boot_order if boot_order_vnic.name == vnic['name']][0]
             name = vnic['name']
