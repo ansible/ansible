@@ -1,0 +1,2 @@
+bugfixes:
+- win setup - Fix redirection path for the windows setup module
