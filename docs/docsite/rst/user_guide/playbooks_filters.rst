@@ -76,7 +76,7 @@ Defining different values for true/false/null
 
 You can create a test, then define one value to use when the test returns true and another when the test returns false (new in version 1.9)::
 
-    {{ (name == "John") | ternary('Mr','Ms') }}
+    {{ (status == "needs_restart") | ternary('restart', 'continue') }}
 
 In addition, you can define a one value to use on true, one value on false and a third value on null (new in version 2.8)::
 
