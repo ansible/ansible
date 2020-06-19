@@ -511,9 +511,9 @@ For platforms that support ``connection: local`` *and* ``connection: network_cli
 * Name the :file:`targets/` directories after the module name.
 * The :file:`main.yaml` file should just reference the transport.
 
-The following example walks through the integration tests for the ``vyos.vyos.vyos_banner`` module in the `vyos.vyos <https://github.com/ansible-collections/vyos.vyos/tree/master/tests/integration>`_ collection:
+The following example walks through the integration tests for the ``vyos.vyos.vyos_l3_interfaces`` module in the `vyos.vyos <https://github.com/ansible-collections/vyos.vyos/tree/master/tests/integration>`_ collection:
 
-``test/integration/targets/vyos_banner/tasks/main.yaml``
+``test/integration/targets/vyos_l3_interfaces/tasks/main.yaml``
 
 .. code-block:: yaml
 
@@ -522,7 +522,7 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
      tags:
        - cli
 
-``test/integration/targets/vyos_banner/tasks/cli.yaml``
+``test/integration/targets/vyos_l3_interfaces/tasks/cli.yaml``
 
 .. code-block:: yaml
 
@@ -549,46 +549,71 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
      loop_control:
        loop_var: test_case_to_run
 
-``test/integration/targets/vyos_banner/tests/cli/basic-no-login.yaml``
+``test/integration/targets/vyos_l3_interfaces/tests/cli/overridden.yaml``
 
 .. code-block:: yaml
 
-   ---
-   - debug:
-       msg: "cli/basic-no-login.yaml on connection={{ ansible_connection }}"
+  ---
+  - debug:
+   msg: START vyos_l3_interfaces merged integration tests on connection={{ ansible_connection
+     }}
 
-   - name: Setup
-     vyos_banner:
-       banner: pre-login
-       text: |
-         Junk pre-login banner
-         over multiple lines
-       state: present
+  - include_tasks: _remove_config.yaml
 
-   - name: remove pre-login
-     vyos_banner:
-       banner: pre-login
-       state: absent
+  - block:
+
+   - include_tasks: _populate.yaml
+
+   - name: Overrides all device configuration with provided configuration
      register: result
+     vyos.vyos.vyos_l3_interfaces: &id001
+       config:
 
-   - debug:
-       msg: "{{ result }}"
+         - name: eth0
+           ipv4:
 
-   - assert:
+             - address: dhcp
+
+         - name: eth1
+           ipv4:
+
+             - address: 192.0.2.15/24
+       state: overridden
+
+   - name: Assert that before dicts were correctly generated
+     assert:
        that:
-         - "result.changed == true"
-         - "'delete system login banner pre-login' in result.commands"
+         - "{{ populate | symmetric_difference(result['before']) |length == 0 }}"
 
-   - name: remove pre-login (idempotent)
-     vyos_banner:
-       banner: pre-login
-       state: absent
+   - name: Assert that correct commands were generated
+     assert:
+       that:
+         - "{{ overridden['commands'] | symmetric_difference(result['commands'])\
+           \ |length == 0 }}"
+
+   - name: Assert that after dicts were correctly generated
+     assert:
+       that:
+         - "{{ overridden['after'] | symmetric_difference(result['after']) |length\
+           \ == 0 }}"
+
+   - name: Overrides all device configuration with provided configurations (IDEMPOTENT)
      register: result
+     vyos.vyos.vyos_l3_interfaces: *id001
 
-   - assert:
+   - name: Assert that the previous task was idempotent
+     assert:
        that:
-         - "result.changed == false"
-         - "result.commands | length == 0"
+         - result['changed'] == false
+
+   - name: Assert that before dicts were correctly generated
+     assert:
+       that:
+         - "{{ overridden['after'] | symmetric_difference(result['before']) |length\
+           \ == 0 }}"
+  always:
+
+   - include_tasks: _remove_config.yaml
 
 
 Detecting test resources at runtime
@@ -659,14 +684,14 @@ To run integration tests for a specific module:
 
 .. code-block:: bash
 
-  ansible-test network-integration --inventory  /path/to-collection-module/test/integration/inventory.networking vyos_vlan
+  ansible-test network-integration --inventory  /path/to-collection-module/test/integration/inventory.networking vyos_l3_interfaces
 
 To run a single test case on a specific module:
 
 .. code-block:: bash
 
-   # Only run vyos_vlan/tests/cli/basic.yaml
-   ansible-test network-integration --inventory  /path/to-collection-module/test/integration/inventory.networking vyos_vlan --testcase basic
+   # Only run vyos_l3_interfaces/tests/cli/gathered.yaml
+   ansible-test network-integration --inventory  /path/to-collection-module/test/integration/inventory.networking vyos_l3_interfaces --testcase gathered
 
 To run integration tests for a specific transport:
 
