@@ -4096,11 +4096,11 @@ plugin_routing:
       redirect: ansible.posix.selinux
     sysctl:
       redirect: ansible.posix.sysctl
-    async_status:
+    async_status.ps1:
       redirect: ansible.windows.async_status
     setup.ps1:
-      redirect: ansible.windows.setup.ps1
-    slurp:
+      redirect: ansible.windows.setup
+    slurp.ps1:
       redirect: ansible.windows.slurp
     win_acl:
       redirect: ansible.windows.win_acl
