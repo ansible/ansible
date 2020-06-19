@@ -171,8 +171,11 @@ class TaskQueueManager:
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
-        # get all configured callbacks and add whitelisted callbacks that refer to collections, which don't appear in normal listing
-        callback_list = list(callback_loader.all(class_only=True)) + list((callback_loader.get(c) for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)))
+        # get all configured loadable callbacks (adjacent, builtin)
+        callback_list = list(callback_loader.all(class_only=True))
+
+        # add whitelisted callbacks that refer to collections, which don't appear in normal listing
+        callback_list.extend(list((callback_loader.get(c) for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c))))
 
         # for each callback in the list see if we should add it to 'active callbacks' used in the play
         for callback_plugin in callback_list:
