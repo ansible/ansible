@@ -198,7 +198,7 @@ pushd "${galaxy_testdir}"
     ansible-galaxy install notaroll,1.0 --ignore-errors | tee out.txt
     
      # Test that the proper error/warning message was thrown
-    [[ $(grep -c '- notaroll 1.0 was NOT installed successfully' out.txt ) -eq 0 ]]
+    [[ $(grep -c '^- notaroll 1.0 was NOT installed successfully' out.txt ) -eq 0 ]]
 
 popd # ${galaxy_testdir}
 rm -fr "${galaxy_testdir}"
