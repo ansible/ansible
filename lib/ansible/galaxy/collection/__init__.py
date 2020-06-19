@@ -162,7 +162,7 @@ class CollectionRequirement:
         return info
 
     @staticmethod
-    def galaxy_metadata(b_path):
+    def galaxy_metadata(b_path, require_mandatory_keys=True):
         """Generate the manifest data from the galaxy.yml file.
         If the galaxy.yml exists, return a dictionary containing the keys 'files_file' and 'manifest_file'.
 
@@ -171,17 +171,17 @@ class CollectionRequirement:
         b_galaxy_path = get_galaxy_metadata_path(b_path)
         info = {}
         if os.path.exists(b_galaxy_path):
-            collection_meta = _get_galaxy_yml(b_galaxy_path)
+            collection_meta = _get_galaxy_yml(b_galaxy_path, require_mandatory_keys)
             info['files_file'] = _build_files_manifest(b_path, collection_meta['namespace'], collection_meta['name'], collection_meta['build_ignore'])
             info['manifest_file'] = _build_manifest(**collection_meta)
         return info
 
     @staticmethod
-    def collection_info(b_path, fallback_metadata=False):
+    def collection_info(b_path, fallback_metadata=False, require_mandatory_keys=True):
         info = CollectionRequirement.artifact_info(b_path)
         if info or not fallback_metadata:
             return info
-        return CollectionRequirement.galaxy_metadata(b_path)
+        return CollectionRequirement.galaxy_metadata(b_path, require_mandatory_keys)
 
     def add_requirement(self, parent, requirement):
         self.required_by.append((parent, requirement))
@@ -465,8 +465,8 @@ class CollectionRequirement:
                                      metadata=meta, files=files, allow_pre_releases=allow_pre_release)
 
     @staticmethod
-    def from_path(b_path, force, parent=None, fallback_metadata=False, skip=True):
-        info = CollectionRequirement.collection_info(b_path, fallback_metadata)
+    def from_path(b_path, force, parent=None, fallback_metadata=False, skip=True, require_mandatory_keys=True):
+        info = CollectionRequirement.collection_info(b_path, fallback_metadata, require_mandatory_keys)
 
         allow_pre_release = False
         if 'manifest_file' in info:
@@ -869,8 +869,7 @@ def _display_progress(msg=None):
     finally:
         display = old_display
 
-
-def _get_galaxy_yml(b_galaxy_yml_path):
+def _get_galaxy_yml(b_galaxy_yml_path, require_mandatory_keys=True):
     meta_info = get_collections_galaxy_meta_info()
 
     mandatory_keys = set()
@@ -898,16 +897,17 @@ def _get_galaxy_yml(b_galaxy_yml_path):
         raise AnsibleError("Failed to parse the galaxy.yml at '%s' with the following error:\n%s"
                            % (to_native(b_galaxy_yml_path), to_native(err)))
 
-    set_keys = set(galaxy_yml.keys())
-    missing_keys = mandatory_keys.difference(set_keys)
-    if missing_keys:
-        raise AnsibleError("The collection galaxy.yml at '%s' is missing the following mandatory keys: %s"
-                           % (to_native(b_galaxy_yml_path), ", ".join(sorted(missing_keys))))
+    if require_mandatory_keys:
+        set_keys = set(galaxy_yml.keys())
+        missing_keys = mandatory_keys.difference(set_keys)
+        if missing_keys:
+            raise AnsibleError("The collection galaxy.yml at '%s' is missing the following mandatory keys: %s"
+                               % (to_native(b_galaxy_yml_path), ", ".join(sorted(missing_keys))))
 
-    extra_keys = set_keys.difference(all_keys)
-    if len(extra_keys) > 0:
-        display.warning("Found unknown keys in collection galaxy.yml at '%s': %s"
-                        % (to_text(b_galaxy_yml_path), ", ".join(extra_keys)))
+        extra_keys = set_keys.difference(all_keys)
+        if len(extra_keys) > 0:
+            display.warning("Found unknown keys in collection galaxy.yml at '%s': %s"
+                            % (to_text(b_galaxy_yml_path), ", ".join(extra_keys)))
 
     # Add the defaults if they have not been set
     for optional_string in string_keys:
@@ -1151,7 +1151,7 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
         os.chmod(dest_file, mode)
 
 
-def find_existing_collections(path, fallback_metadata=False):
+def find_existing_collections(path, fallback_metadata=False, require_mandatory_keys=True):
     collections = []
 
     b_path = to_bytes(path, errors='surrogate_or_strict')
@@ -1163,7 +1163,11 @@ def find_existing_collections(path, fallback_metadata=False):
         for b_collection in os.listdir(b_namespace_path):
             b_collection_path = os.path.join(b_namespace_path, b_collection)
             if os.path.isdir(b_collection_path):
-                req = CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=fallback_metadata)
+                req = CollectionRequirement.from_path(
+                    b_collection_path,
+                    False,
+                    fallback_metadata=fallback_metadata,
+                    require_mandatory_keys=require_mandatory_keys)
                 display.vvv("Found installed collection %s:%s at '%s'" % (to_text(req), req.latest_version,
                                                                           to_text(b_collection_path)))
                 collections.append(req)
