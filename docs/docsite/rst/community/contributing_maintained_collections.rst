@@ -67,15 +67,15 @@ The following table shows:
       <td><a href="https://galaxy.ansible.com/amazon/aws">amazon.aws</a></td>
       <td><a href="https://galaxy.ansible.com/community/aws">community.aws</a></td>
       <td><a href="https://github.com/ansible/community/tree/master/group-aws">Cloud</a></td>
-      <td>✓</td>
-      <td>✓</td>
+      <td>✓**</td>
+      <td>**</td>
       <td>✓</td>
       <td>Shippable</td>
       <td>✓</td>
       <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/platforms/aws_guidelines.html">AWS guide</a></td>
     </tr>
     <tr>
-      <td><a href="https://galaxy.ansible.com/ansible/netcommon">ansible.netcommon**</a></td>
+      <td><a href="https://galaxy.ansible.com/ansible/netcommon">ansible.netcommon***</a></td>
       <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
       <td>✓</td>
@@ -101,7 +101,7 @@ The following table shows:
       <td><a href="https://galaxy.ansible.com/community/windows">community.windows</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Windows">Windows</a></td>
       <td>✓</td>
-      <td>✓***</td>
+      <td>✓****</td>
       <td>✓</td>
       <td>Shippable</td>
       <td>✓</td>
@@ -224,9 +224,11 @@ The following table shows:
 
   \* A ✓  under **Open to PRs** means the collection welcomes GitHub issues and PRs for any changes to existing collection content (plugins, roles, and so on).
 
-  \*\* ``ansible.netcommon`` contains all foundational components for enabling many network and security :ref:`platform <platform_options>` collections. It contains all connection and filter plugins required, and installs as a dependency when you install the the platform collection.
+  \*\* Integration tests are required and unit tests are welcomed but not required for the AWS collections.  An exception to this is made in cases where integration tests are logistically not feasible due to external requirements.  An example of this is AWS Direct Connect, as this service can not be functionally tested without the establishment of network peering connections.  Unit tests are therefore required for modules that interact with AWS Direct Connect.  Exceptions to ``amazon.aws`` must be approved by Red Hat, and exceptions to ``community.aws`` must be approved by the AWS community.
 
-  \*\*\* Unit tests for Windows PowerShell modules are an exception to testing, but unit tests are valid and required for the remainder of the collection, including Ansible-side plugins.
+  \*\*\* ``ansible.netcommon`` contains all foundational components for enabling many network and security :ref:`platform <platform_options>` collections. It contains all connection and filter plugins required, and installs as a dependency when you install the the platform collection.
+
+  \*\*\*\* Unit tests for Windows PowerShell modules are an exception to testing, but unit tests are valid and required for the remainder of the collection, including Ansible-side plugins.
 
 
 .. _which_collection:
