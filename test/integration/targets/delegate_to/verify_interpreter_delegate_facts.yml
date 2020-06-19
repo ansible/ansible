@@ -1,0 +1,8 @@
+- hosts: testhost
+  gather_facts: yes
+  tasks:
+    - detect_interpreter:
+      delegate_to: testhost3
+      delegate_facts: yes
+      vars:
+        ansible_python_interpreter: auto
