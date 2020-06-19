@@ -120,7 +120,7 @@ The following table shows:
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/cisco/asa">cisco.asa</a></td>
-      <td>community.asa</td>
+      <td><a href="https://github.com/ansible-collections/community.asa">community.asa</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Security-Automation">Security</a></td>
       <td>✓</td>
       <td>✓</td>
@@ -164,7 +164,7 @@ The following table shows:
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/ibm/qradar">ibm.qradar</a></td>
-      <td>community.qradar</td>
+      <td><a href="https://github.com/ansible-collections/community.qradar">community.qradar</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Security-Automation">Security</a></td>
       <td>✓</td>
       <td></td>
@@ -197,7 +197,7 @@ The following table shows:
     </tr>
     <tr>
       <td><a href="https://github.com/ansible-collections/splunk.es">splunk.es</a></td>
-      <td>community.es</td>
+      <td><a href="https://github.com/ansible-collections/community.es">community.es</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Security-Automation">Security</a></td>
       <td>✓</td>
       <td></td>
@@ -250,7 +250,7 @@ The following scenarios use the ``arista.eos`` to help explain when to contribut
     * Propose a new module in the ``community.network`` collection (requires network community approval).
     * Place your new module in a collection in your own namespace (no approvals required).
 
-  
+
 Most new content should go into either a related community collection or your own collection first so that is well established in the community before you can propose adding it to the  ``arista`` namespace, where inclusion and maintenance criteria are much higher.
 
 
