@@ -1764,8 +1764,9 @@ class AnsibleModule(object):
         type_checker, wanted_name = self._get_wanted_type(wanted, param)
         validated_params = []
         # Get param name for strings so we can later display this value in a useful error message if needed
+        # Only pass 'kwargs' to our checkers and ignore custom callable checkers
         kwargs = {}
-        if wanted_name == 'str':
+        if wanted_name == 'str' and isinstance(wanted, string_types):
             if isinstance(param, string_types):
                 kwargs['param'] = param
             elif isinstance(param, dict):
@@ -1800,8 +1801,9 @@ class AnsibleModule(object):
 
             type_checker, wanted_name = self._get_wanted_type(wanted, k)
             # Get param name for strings so we can later display this value in a useful error message if needed
+            # Only pass 'kwargs' to our checkers and ignore custom callable checkers
             kwargs = {}
-            if wanted_name == 'str':
+            if wanted_name == 'str' and isinstance(type_checker, string_types):
                 kwargs['param'] = list(param.keys())[0]
 
                 # Get the name of the parent key if this is a nested option

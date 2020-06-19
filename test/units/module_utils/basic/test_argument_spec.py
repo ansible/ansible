@@ -15,7 +15,7 @@ import pytest
 from units.compat.mock import MagicMock
 from ansible.module_utils import basic
 from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
-from ansible.module_utils.six import integer_types
+from ansible.module_utils.six import integer_types, string_types
 from ansible.module_utils.six.moves import builtins
 
 
@@ -101,6 +101,7 @@ def complex_argspec():
         baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
         bar1=dict(type='bool'),
         bar3=dict(type='list', elements='path'),
+        bar_str=dict(type='list', elements=str),
         zardoz=dict(choices=['one', 'two']),
         zardoz2=dict(type='list', choices=['one', 'two', 'three']),
         zardoz3=dict(type='str', aliases=['zodraz'], deprecated_aliases=[dict(name='zodraz', version='9.99')]),
@@ -210,6 +211,16 @@ def test_validator_function(mocker, stdin):
 
     assert isinstance(am.params['arg'], integer_types)
     assert am.params['arg'] == 27
+
+
+@pytest.mark.parametrize('stdin', [{'arg': '123'}, {'arg': 123}], indirect=['stdin'])
+def test_validator_string_type(mocker, stdin):
+    # Custom callable that is 'str'
+    argspec = {'arg': {'type': str}}
+    am = basic.AnsibleModule(argspec)
+
+    assert isinstance(am.params['arg'], string_types)
+    assert am.params['arg'] == '123'
 
 
 @pytest.mark.parametrize('argspec, expected, stdin', [(s[0], s[2], s[1]) for s in INVALID_SPECS],
@@ -341,6 +352,16 @@ class TestComplexArgSpecs:
 
         assert "Alias 'zodraz' is deprecated." in get_deprecation_messages()[0]['msg']
         assert get_deprecation_messages()[0]['version'] == '9.99'
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar_str': [867, '5309']}], indirect=['stdin'])
+    def test_list_with_elements_callable_str(self, capfd, mocker, stdin, complex_argspec):
+        """Test choices with list"""
+        am = basic.AnsibleModule(**complex_argspec)
+        assert isinstance(am.params['bar_str'], list)
+        assert isinstance(am.params['bar_str'][0], string_types)
+        assert isinstance(am.params['bar_str'][1], string_types)
+        assert am.params['bar_str'][0] == '867'
+        assert am.params['bar_str'][1] == '5309'
 
 
 class TestComplexOptions:
