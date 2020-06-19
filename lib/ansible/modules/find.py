@@ -43,6 +43,7 @@ options:
               in undesirable ways.
         type: list
         aliases: [ pattern ]
+        elements: str
     excludes:
         description:
             - One or more (shell or regex) patterns, which type is controlled by C(use_regex) option.
@@ -51,6 +52,7 @@ options:
         type: list
         aliases: [ exclude ]
         version_added: "2.5"
+        elements: str
     contains:
         description:
             - A regular expression or pattern which should be matched against the file content.
@@ -61,6 +63,7 @@ options:
         type: list
         required: true
         aliases: [ name, path ]
+        elements: str
     file_type:
         description:
             - Type of file to select.
@@ -80,6 +83,7 @@ options:
             - Unqualified values are in bytes but b, k, m, g, and t can be appended to specify
               bytes, kilobytes, megabytes, gigabytes, and terabytes, respectively.
             - Size is not evaluated for directories.
+        type: str
     age_stamp:
         description:
             - Choose the file property against which we compare age.
@@ -355,9 +359,9 @@ def statinfo(st):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            paths=dict(type='list', required=True, aliases=['name', 'path']),
-            patterns=dict(type='list', default=['*'], aliases=['pattern']),
-            excludes=dict(type='list', aliases=['exclude']),
+            paths=dict(type='list', required=True, aliases=['name', 'path'], elements='str'),
+            patterns=dict(type='list', default=['*'], aliases=['pattern'], elements='str'),
+            excludes=dict(type='list', aliases=['exclude'], elements='str'),
             contains=dict(type='str'),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
             age=dict(type='str'),
