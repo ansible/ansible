@@ -87,10 +87,16 @@
                   path "{{ vault_base_path }}/secret3" {
                     capabilities = ["deny"]
                   }
+                  path "{{ vault_base_path }}/secret4" {
+                    capabilities = ["read", "update"]
+                  }
 
             - name: 'Create secrets'
               command: '{{ vault_cmd }} kv put {{ vault_base_path_kv }}/secret{{ item }} value=foo{{ item }}'
-              loop: [1, 2, 3]
+              loop: [1, 2, 3, 4]
+
+            - name: 'Update KV v2 secret4 with new value to create version'
+              command: '{{ vault_cmd }} kv put {{ vault_base_path_kv }}/secret4 value=foo5'
 
             - name: setup approle auth
               import_tasks: approle_setup.yml
