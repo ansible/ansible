@@ -172,7 +172,7 @@ class TaskQueueManager:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
         # get all configured callbacks and add whitelisted callbacks that refer to collections, which don't appear in normal listing
-        callback_list = list(callback_loader.all(class_only=True) + (callback_loader.get(c) for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)))
+        callback_list = list(callback_loader.all(class_only=True)) + list((callback_loader.get(c) for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)))
 
         # for each callback in the list see if we should add it to 'active callbacks' used in the play
         for callback_plugin in callback_list:
@@ -187,18 +187,18 @@ class TaskQueueManager:
                 # fallback to 'old loader name'
                 (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
 
+            display.vvvvv("Attempting to use '%s' callback." % (callback_name))
             if callback_type == 'stdout':
                 # we only allow one callback of type 'stdout' to be loaded,
                 if callback_name != self._stdout_callback or stdout_callback_loaded:
-                    display.vv("Skipping callback '%s', as we already have a stdout callback." % (callback_plugin))
+                    display.vv("Skipping callback '%s', as we already have a stdout callback." % (callback_name))
                     continue
                 stdout_callback_loaded = True
             elif callback_name == 'tree' and self._run_tree:
                 # TODO: remove special case for tree, which is an adhoc cli option --tree
                 pass
-
-            # only run if not adhoc, or adhoc was specifically configured to run + check enabled list
             elif not self._run_additional_callbacks or (callback_needs_whitelist and (
+                # only run if not adhoc, or adhoc was specifically configured to run + check enabled list
                     C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                 # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
                 continue
