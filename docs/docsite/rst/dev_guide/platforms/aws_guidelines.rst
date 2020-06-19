@@ -638,7 +638,7 @@ available during the test run. Second putting the test in a test group causing i
 continuous integration build.
 
 Tests for new modules should be added to the same group as existing AWS tests. In general just copy
-an existing aliases file such as the `aws_s3 tests aliases file <https://github.com/ansible/ansible/blob/devel/test/integration/targets/aws_s3/aliases>`_.
+an existing aliases file such as the `aws_s3 tests aliases file <https://github.com/ansible-collections/amazon.aws/blob/master/tests/integration/targets/aws_s3/aliases>`_.
 
 AWS Credentials for Integration Tests
 -------------------------------------
