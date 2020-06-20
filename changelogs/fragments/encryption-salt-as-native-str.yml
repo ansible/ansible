@@ -1,0 +1,2 @@
+bugfixes:
+  - transform a salt into the native str type to prevent passing unicode to the underlying encryption module

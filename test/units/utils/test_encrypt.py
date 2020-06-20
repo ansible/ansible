@@ -20,6 +20,7 @@ import sys
 import pytest
 
 from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.module_utils.six import PY3, binary_type, text_type
 from ansible.plugins.filter.core import get_encrypted_password
 from ansible.utils import encrypt
 
@@ -163,3 +164,19 @@ def test_random_salt():
     assert len(res) == 8
     for res_char in res:
         assert res_char in expected_salt_candidate_chars
+
+
+def test_clean_salt_no_passlib():
+    with passlib_off():
+        if PY3:
+            salt = encrypt.BaseHash('md5_crypt')._clean_salt('123', has_raw_salt=False)
+            assert isinstance(salt, text_type)
+
+            salt = encrypt.BaseHash('md5_crypt')._clean_salt(b'123', has_raw_salt=False)
+            assert isinstance(salt, text_type)
+        else:
+            salt = encrypt.BaseHash('md5_crypt')._clean_salt('123', has_raw_salt=False)
+            assert isinstance(salt, binary_type)
+
+            salt = encrypt.BaseHash('md5_crypt')._clean_salt(u'123', has_raw_salt=False)
+            assert isinstance(salt, binary_type)
