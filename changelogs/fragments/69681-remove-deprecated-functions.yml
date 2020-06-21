@@ -1,0 +1,2 @@
+deprecated_features:
+  - lib/ansible/constants.py - Removed deprecated constants and functions.
