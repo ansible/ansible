@@ -613,6 +613,19 @@ Now you can use this checkout of ``community.general`` in playbooks and roles wi
 
 For collections hosted in the ``ansible_collections`` GitHub org, create a branch and commit your changes on the branch. When you are done (remember to add tests, see :ref:`testing_collections`), push your changes to your fork of the collection and create a Pull Request. For other collections, especially for collections not hosted on GitHub, check the ``README.md`` of the collection for information on contributing to it.
 
+Generating changelogs for a collection
+======================================
+
+We recommend that you use the `antsibull-changelog <https://github.com/ansible-community/antsibull-changelog>`_ tool to generate Ansible-compatible changelogs for your collection. The Ansible changelog uses the output of this tool to collate all the collections included in an Ansible release into one omnibus changelog for the release.
+
+.. note::
+
+	Ansible here refers to the Ansible 2.10 or later release that includes a curated set of collections that rec
+
+Understanding antsibull-changelog
+---------------------------------
+
+The ``antsibull-changelog`` tool allows you to create and update changelogs for Ansible collections that are compatible with the combined Ansible changelogs.
 
 .. seealso::
 
