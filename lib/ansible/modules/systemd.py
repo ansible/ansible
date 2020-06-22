@@ -54,13 +54,6 @@ options:
         default: no
         aliases: [ daemon-reexec ]
         version_added: "2.8"
-    user:
-        description:
-            - (deprecated) run ``systemctl`` talking to the service manager of the calling user, rather than the service manager
-              of the system.
-            - This option is deprecated and will eventually be removed in 2.11. The ``scope`` option should be used instead.
-        type: bool
-        default: no
     scope:
         description:
             - run systemctl within a given service manager scope, either as the default system scope (system),
@@ -329,7 +322,6 @@ def main():
             masked=dict(type='bool'),
             daemon_reload=dict(type='bool', default=False, aliases=['daemon-reload']),
             daemon_reexec=dict(type='bool', default=False, aliases=['daemon-reexec']),
-            user=dict(type='bool'),
             scope=dict(type='str', default='system', choices=['system', 'user', 'global']),
             no_block=dict(type='bool', default=False),
         ),
@@ -340,7 +332,6 @@ def main():
             enabled=('name', ),
             masked=('name', ),
         ),
-        mutually_exclusive=[['scope', 'user']],
     )
 
     unit = module.params['name']
@@ -355,14 +346,6 @@ def main():
         os.environ['XDG_RUNTIME_DIR'] = '/run/user/%s' % os.geteuid()
 
     ''' Set CLI options depending on params '''
-    if module.params['user'] is not None:
-        # handle user deprecation, mutually exclusive with scope
-        module.deprecate("The 'user' option is being replaced by 'scope'", version='2.11', collection_name='ansible.builtin')
-        if module.params['user']:
-            module.params['scope'] = 'user'
-        else:
-            module.params['scope'] = 'system'
-
     # if scope is 'system' or None, we can ignore as there is no extra switch.
     # The other choices match the corresponding switch
     if module.params['scope'] != 'system':
@@ -486,7 +469,6 @@ def main():
             elif rc == 1:
                 # if not a user or global user service and both init script and unit file exist stdout should have enabled/disabled, otherwise use rc entries
                 if module.params['scope'] == 'system' and \
-                        not module.params['user'] and \
                         is_initd and \
                         not out.strip().endswith('disabled') and \
                         sysv_is_enabled(unit):
