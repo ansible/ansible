@@ -383,17 +383,17 @@ class DocCLI(CLI):
 
         if collection is not None:
             # get all 'physical plugins'
-            plugins = [x for x,y in _iter_modules_impl([path])]
-            #TODO: check why it is not getting subdirs
+            plugins = [x for x, y in _iter_modules_impl([path])]
+            # TODO: check why it is not getting subdirs
 
             # consult meta
-            #meta = _get_collection_metadata(collection)
+            # meta = _get_collection_metadata(collection)
         else:
             plugins = os.listdir(path)
             #meta = _get_collection_metadata('ansible.builtin')
 
-        #TODO: merge meta
-        #print(meta.get('plugin_routing', {}).get(ptype, {}))
+        # TODO: merge meta
+        # print(meta.get('plugin_routing', {}).get(ptype, {}))
 
         bkey = ptype.upper()
         for plugin in plugins:
