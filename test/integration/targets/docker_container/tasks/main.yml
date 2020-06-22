@@ -12,7 +12,7 @@
 # Install netaddr
 - name: Install netaddr for ipaddr filter
   pip:
-    name: netaddr
+    name: netaddr==0.7.19
 
 # Run the tests
 - block:
