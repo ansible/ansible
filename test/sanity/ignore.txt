@@ -1,11 +1,3 @@
-docs/bin/find-plugin-refs.py future-import-boilerplate
-docs/bin/find-plugin-refs.py metaclass-boilerplate
-docs/docsite/_extensions/pygments_lexer.py future-import-boilerplate
-docs/docsite/_extensions/pygments_lexer.py metaclass-boilerplate
-docs/docsite/_themes/sphinx_rtd_theme/__init__.py future-import-boilerplate
-docs/docsite/_themes/sphinx_rtd_theme/__init__.py metaclass-boilerplate
-docs/docsite/rst/conf.py future-import-boilerplate
-docs/docsite/rst/conf.py metaclass-boilerplate
 docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
 examples/play.yml shebang
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
