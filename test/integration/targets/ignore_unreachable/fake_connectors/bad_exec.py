@@ -1,3 +1,6 @@
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import ansible.plugins.connection.local as ansible_local
 from ansible.errors import AnsibleConnectionFailure
 
