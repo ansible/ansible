@@ -1,0 +1,2 @@
+bugfixes:
+  - gcp_dns_resource_record_set_facts - fixed issue when trying to gather facts on existing records
