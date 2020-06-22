@@ -192,7 +192,6 @@ class TestTaskExecutor(unittest.TestCase):
         res = te._run_loop(items)
         self.assertEqual(len(res), 3)
 
-
     def test_task_executor_get_action_handler(self):
         te = TaskExecutor(
             host=MagicMock(),
