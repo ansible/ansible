@@ -18,7 +18,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.collections.list import list_collection_dirs
+from ansible.collections.list import list_valid_collection_paths, get_existing_collections
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Container, Sequence
@@ -28,7 +28,7 @@ from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.plugins.loader import action_loader, fragment_loader
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
+from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path, _get_collection_metadata, _iter_modules_impl
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import (
     BLACKLIST,
@@ -49,13 +49,13 @@ def jdump(text):
 
 def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
 
-    # TODO: take into account runtime.yml once implemented
-    b_colldirs = list_collection_dirs(coll_filter=coll_filter)
-    for b_path in b_colldirs:
-        path = to_text(b_path, errors='surrogate_or_strict')
-        collname = _get_collection_name_from_path(b_path)
-        ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
-        plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), False, plugin_type, collection=collname))
+    collections = []
+    ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
+
+    # get existing collections
+    colls = get_existing_collections()
+    for name, b_path in colls.items():
+        plugin_list.update(DocCLI.find_plugins(os.path.join(to_native(b_path), 'plugins', ptype), plugin_type, collection=name))
 
 
 class PluginNotFound(Exception):
@@ -381,8 +381,22 @@ class DocCLI(CLI):
             display.vvvv("%s is not a directory" % path)
             return plugin_list
 
+        if collection is not None:
+            # get all 'physical plugins'
+            plugins = [x for x,y in _iter_modules_impl([path])]
+            #TODO: check why it is not getting subdirs
+
+            # consult meta
+            #meta = _get_collection_metadata(collection)
+        else:
+            plugins = os.listdir(path)
+            #meta = _get_collection_metadata('ansible.builtin')
+
+        #TODO: merge meta
+        #print(meta.get('plugin_routing', {}).get(ptype, {}))
+
         bkey = ptype.upper()
-        for plugin in os.listdir(path):
+        for plugin in plugins:
             display.vvvv("Found %s" % plugin)
             full_path = '/'.join([path, plugin])
 

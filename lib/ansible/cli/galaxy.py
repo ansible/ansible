@@ -18,6 +18,7 @@ import ansible.constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
+from ansible.collections.list import validate_collection_path
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
@@ -29,7 +30,6 @@ from ansible.galaxy.collection import (
     install_collections,
     publish_collection,
     validate_collection_name,
-    validate_collection_path,
     verify_collections
 )
 from ansible.galaxy.login import GalaxyLogin

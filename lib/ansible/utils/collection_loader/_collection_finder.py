@@ -863,8 +863,7 @@ def _get_collection_name_from_path(path):
     :return: collection name or None
     """
 
-    # FIXME: mess with realpath canonicalization or not?
-    path = to_native(path)
+    path = to_native(os.path.abspath(path))
 
     path_parts = path.split('/')
     if path_parts.count('ansible_collections') != 1:

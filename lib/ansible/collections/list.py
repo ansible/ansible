@@ -10,10 +10,25 @@ from collections import defaultdict
 
 from ansible.collections import is_collection_path
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.six import string_types
 from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader._collection_finder import AnsibleCollectionRef, _get_collection_name_from_path
 from ansible.utils.display import Display
 
 display = Display()
+
+
+def validate_collection_path(collection_path):
+    """Ensure a given path ends with 'ansible_collections'
+
+    :param collection_path: The path that should end in 'ansible_collections'
+    :return: collection_path ending in 'ansible_collections' if it does not already.
+    """
+
+    if os.path.split(collection_path)[1] != 'ansible_collections':
+        return os.path.join(collection_path, 'ansible_collections')
+
+    return collection_path
 
 
 def list_valid_collection_paths(search_paths=None, warn=False):
@@ -26,6 +41,8 @@ def list_valid_collection_paths(search_paths=None, warn=False):
 
     if search_paths is None:
         search_paths = []
+    elif isinstance(search_paths, string_types):
+        raise TypeError("'search_paths' is string and expected list")
 
     search_paths.extend(AnsibleCollectionConfig.collection_paths)
 
@@ -46,7 +63,7 @@ def list_valid_collection_paths(search_paths=None, warn=False):
         yield path
 
 
-def list_collection_dirs(search_paths=None, coll_filter=None):
+def list_collection_dirs(search_paths, coll_filter=None):
     """
     Return paths for the specific collections found in passed or configured search paths
     :param search_paths: list of text-string paths, if none load default config
@@ -59,7 +76,7 @@ def list_collection_dirs(search_paths=None, coll_filter=None):
 
         b_path = to_bytes(path)
         if os.path.isdir(b_path):
-            b_coll_root = to_bytes(os.path.join(path, 'ansible_collections'))
+            b_coll_root = to_bytes(validate_collection_path(path))
 
             if os.path.exists(b_coll_root) and os.path.isdir(b_coll_root):
                 coll = None
@@ -91,3 +108,24 @@ def list_collection_dirs(search_paths=None, coll_filter=None):
                                 if is_collection_path(b_coll_dir):
                                     collections[ns][collection] = b_coll_dir
                                     yield b_coll_dir
+
+
+def get_existing_collections(search_paths=None, warn=True):
+    '''
+    Return a list of collections for given a path
+
+    :param path: OS path where collections should exist
+
+    :return: a dict with collection name: path key pairs
+    '''
+
+    collections = {}
+
+    for b_path in list_collection_dirs(search_paths):
+        cname = _get_collection_name_from_path(b_path)
+
+        # ensure we skip masked by precedence
+        if cname not in collections:
+                collections[cname] = b_path
+
+    return collections

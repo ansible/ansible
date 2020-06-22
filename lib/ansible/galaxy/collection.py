@@ -31,6 +31,8 @@ except ImportError:
     import Queue as queue  # Python 2
 
 import ansible.constants as C
+
+from ansible.collections.list import list_collection_dirs
 from ansible.errors import AnsibleError
 from ansible.galaxy import get_collections_galaxy_meta_info
 from ansible.galaxy.api import CollectionVersionMetadata, GalaxyError
@@ -700,19 +702,6 @@ def validate_collection_name(name):
                        "characters from [a-zA-Z0-9_] only." % name)
 
 
-def validate_collection_path(collection_path):
-    """Ensure a given path ends with 'ansible_collections'
-
-    :param collection_path: The path that should end in 'ansible_collections'
-    :return: collection_path ending in 'ansible_collections' if it does not already.
-    """
-
-    if os.path.split(collection_path)[1] != 'ansible_collections':
-        return os.path.join(collection_path, 'ansible_collections')
-
-    return collection_path
-
-
 def verify_collections(collections, search_paths, apis, validate_certs, ignore_errors, allow_pre_release=False):
 
     with _display_progress():
@@ -1129,21 +1118,19 @@ def _build_collection_dir(b_collection_path, b_collection_output, collection_man
 
 
 def find_existing_collections(path, fallback_metadata=False):
+    '''
+    Return a list of collections for a given path
+
+    :param path: OS path where collections should exist
+    :param fallback_metadata: if True we will try using galaxy.yml if MANIFEST.json is missing
+    :return: a list of CollectionRequirement objects
+    '''
     collections = []
 
-    b_path = to_bytes(path, errors='surrogate_or_strict')
-    for b_namespace in os.listdir(b_path):
-        b_namespace_path = os.path.join(b_path, b_namespace)
-        if os.path.isfile(b_namespace_path):
-            continue
-
-        for b_collection in os.listdir(b_namespace_path):
-            b_collection_path = os.path.join(b_namespace_path, b_collection)
-            if os.path.isdir(b_collection_path):
-                req = CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=fallback_metadata)
-                display.vvv("Found installed collection %s:%s at '%s'" % (to_text(req), req.latest_version,
-                                                                          to_text(b_collection_path)))
-                collections.append(req)
+    for b_path in list_collection_dirs([path]):
+        req = CollectionRequirement.from_path(b_path, False, fallback_metadata=fallback_metadata)
+        display.vvv("Found installed collection %s:%s at '%s'" % (to_text(req), req.latest_version, to_text(b_path)))
+        collections.append(req)
 
     return collections
 
@@ -1192,7 +1179,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
 
 def _collections_from_scm(collection, requirement, b_temp_path, force, parent=None):
     """Returns a list of collections found in the repo. If there is a galaxy.yml in the collection then just return
-    the specific collection. Otherwise, check each top-level directory for a galaxy.yml.
+    tH specific collection. Otherwise, check each top-level directory for a galaxy.yml.
 
     :param collection: URI to a git repo
     :param requirement: The version of the artifact
