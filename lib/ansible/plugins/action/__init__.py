@@ -160,7 +160,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         if task_vars is None:
-            use_vars = dict()
+            task_vars = {}
 
         if self._task.delegate_to:
             use_vars = task_vars.get('ansible_delegated_vars')[self._task.delegate_to]
@@ -248,15 +248,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 if not self._task.delegate_to or self._task.delegate_facts:
                     # store in local task_vars facts collection for the retry and any other usages in this worker
                     if use_vars.get('ansible_facts') is None:
-                        task_vars['ansible_facts'] = {}
-                    task_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
+                        task_vars['ansible_facts'] = use_vars['ansible_facts'] = {}
+                    task_vars['ansible_facts'][discovered_key] = use_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
                     # preserve this so _execute_module can propagate back to controller as a fact
                     self._discovered_interpreter_key = discovered_key
                 else:
-                    task_vars['ansible_delegated_vars'][self._task.delegate_to]
                     if task_vars['ansible_delegated_vars'][self._task.delegate_to].get('ansible_facts') is None:
                         task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'] = {}
+                        use_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'] = {}
                     task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'][discovered_key] = self._discovered_interpreter
+                    use_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'][discovered_key] = self._discovered_interpreter
 
         return (module_style, module_shebang, module_data, module_path)
 

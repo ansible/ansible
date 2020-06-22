@@ -1,0 +1,11 @@
+- hosts: testhost
+  gather_facts: yes
+  tasks:
+    - detect_interpreter:
+      delegate_to: "{{ item }}"
+      delegate_facts: yes
+      vars:
+        ansible_python_interpreter: auto
+      loop:
+        - testhost3
+        - testhost4
