@@ -16,6 +16,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # for __setstate__/__getstate__ tests
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import pickle
 
 from units.compat import unittest
