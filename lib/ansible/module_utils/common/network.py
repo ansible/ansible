@@ -3,6 +3,9 @@
 
 # General networking tools that may be used by all modules
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import re
 from struct import pack
 from socket import inet_ntoa
