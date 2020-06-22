@@ -282,6 +282,37 @@ def test_missing_required_galaxy_key(galaxy_yml):
         collection._get_galaxy_yml(galaxy_yml)
 
 
+@pytest.mark.parametrize('galaxy_yml', [b'namespace: test_namespace'], indirect=True)
+def test_galaxy_yaml_no_mandatory_keys(galaxy_yml):
+    expected = {
+        'authors': [],
+        'build_ignore': [],
+        'dependencies': {},
+        'description': None,
+        'documentation': None,
+        'homepage': None,
+        'issues': None,
+        'license_file': None,
+        'license_ids': [],
+        'name': None,
+        'namespace': 'test_namespace',
+        'readme': None,
+        'repository': None,
+        'tags': [],
+        'version': None
+    }
+
+    assert collection._get_galaxy_yml(galaxy_yml, False) == expected
+
+
+@pytest.mark.parametrize('galaxy_yml', [b'My life story is so very interesting'], indirect=True)
+def test_galaxy_yaml_no_mandatory_keys_bad_yaml(galaxy_yml):
+    expected = "The collection galaxy.yml at '%s' is incorrectly formatted." % to_native(galaxy_yml)
+
+    with pytest.raises(AnsibleError, match=expected):
+        collection._get_galaxy_yml(galaxy_yml, False)
+
+
 @pytest.mark.parametrize('galaxy_yml', [b"""
 namespace: namespace
 name: collection

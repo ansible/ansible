@@ -40,6 +40,7 @@ from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils import six
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.utils.collection_loader import AnsibleCollectionRef
+from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.utils.display import Display
 from ansible.utils.galaxy import scm_archive_collection
 from ansible.utils.hashing import secure_hash, secure_hash_s
@@ -869,6 +870,7 @@ def _display_progress(msg=None):
     finally:
         display = old_display
 
+
 def _get_galaxy_yml(b_galaxy_yml_path, require_mandatory_keys=True):
     meta_info = get_collections_galaxy_meta_info()
 
@@ -896,6 +898,10 @@ def _get_galaxy_yml(b_galaxy_yml_path, require_mandatory_keys=True):
     except YAMLError as err:
         raise AnsibleError("Failed to parse the galaxy.yml at '%s' with the following error:\n%s"
                            % (to_native(b_galaxy_yml_path), to_native(err)))
+
+    # Sanity test on the contents of the galaxy.yml file
+    if not isinstance(galaxy_yml, MutableMapping):
+        raise AnsibleError("The collection galaxy.yml at '%s' is incorrectly formatted." % to_native(b_galaxy_yml_path))
 
     if require_mandatory_keys:
         set_keys = set(galaxy_yml.keys())
