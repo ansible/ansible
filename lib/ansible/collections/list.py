@@ -12,23 +12,10 @@ from ansible.collections import is_collection_path
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import string_types
 from ansible.utils.collection_loader import AnsibleCollectionConfig
-from ansible.utils.collection_loader._collection_finder import AnsibleCollectionRef, _get_collection_name_from_path
+from ansible.utils.collection_loader._collection_finder import AnsibleCollectionRef, _get_collection_name_from_path, validated_collection_path
 from ansible.utils.display import Display
 
 display = Display()
-
-
-def validate_collection_path(collection_path):
-    """Ensure a given path ends with 'ansible_collections'
-
-    :param collection_path: The path that should end in 'ansible_collections'
-    :return: collection_path ending in 'ansible_collections' if it does not already.
-    """
-
-    if os.path.split(collection_path)[1] != 'ansible_collections':
-        return os.path.join(collection_path, 'ansible_collections')
-
-    return collection_path
 
 
 def list_valid_collection_paths(search_paths=None, warn=False):
@@ -76,7 +63,7 @@ def list_collection_dirs(search_paths, coll_filter=None):
 
         b_path = to_bytes(path)
         if os.path.isdir(b_path):
-            b_coll_root = to_bytes(validate_collection_path(path))
+            b_coll_root = to_bytes(validated_collection_path(path))
 
             if os.path.exists(b_coll_root) and os.path.isdir(b_coll_root):
                 coll = None

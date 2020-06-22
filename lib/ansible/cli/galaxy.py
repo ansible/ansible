@@ -18,7 +18,7 @@ import ansible.constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.collections.list import validate_collection_path
+from ansible.collections.list import validated_collection_path
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
@@ -1001,7 +1001,7 @@ class GalaxyCLI(CLI):
 
         requirements = self._require_one_of_collections_requirements(collections, requirements_file)['collections']
 
-        resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
+        resolved_paths = [validated_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
 
         verify_collections(requirements, resolved_paths, self.api_servers, (not ignore_certs), ignore_errors,
                            allow_pre_release=True)
@@ -1095,7 +1095,7 @@ class GalaxyCLI(CLI):
                             "collections paths '%s'. The installed collection won't be picked up in an Ansible "
                             "run." % (to_text(path), to_text(":".join(collections_path))))
 
-        output_path = validate_collection_path(path)
+        output_path = validated_collection_path(path)
         b_output_path = to_bytes(output_path, errors='surrogate_or_strict')
         if not os.path.exists(b_output_path):
             os.makedirs(b_output_path)
@@ -1305,7 +1305,7 @@ class GalaxyCLI(CLI):
                 validate_collection_name(collection_name)
                 namespace, collection = collection_name.split('.')
 
-                collection_path = validate_collection_path(collection_path)
+                collection_path = validated_collection_path(collection_path)
                 b_collection_path = to_bytes(os.path.join(collection_path, namespace, collection), errors='surrogate_or_strict')
 
                 if not os.path.exists(b_collection_path):
@@ -1325,7 +1325,7 @@ class GalaxyCLI(CLI):
 
             else:
                 # list all collections
-                collection_path = validate_collection_path(path)
+                collection_path = validated_collection_path(path)
                 if os.path.isdir(collection_path):
                     display.vvv("Searching {0} for collections".format(collection_path))
                     collections = find_existing_collections(collection_path, fallback_metadata=True)

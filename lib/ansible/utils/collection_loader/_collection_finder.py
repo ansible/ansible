@@ -58,10 +58,7 @@ class _AnsibleCollectionFinder:
             for path in sys.path:
                 if (
                         path not in paths and
-                        os.path.isdir(to_bytes(
-                            os.path.join(path, 'ansible_collections'),
-                            errors='surrogate_or_strict',
-                        ))
+                        os.path.isdir(to_bytes(validated_collection_path(path), errors='surrogate_or_strict'))
                 ):
                     paths.append(path)
 
@@ -967,3 +964,16 @@ def _get_collection_metadata(collection_name):
         raise ValueError('collection metadata was not loaded for collection {0}'.format(collection_name))
 
     return _collection_meta
+
+
+def validated_collection_path(collection_path):
+    """Ensure a given path ends with 'ansible_collections'
+
+    :param collection_path: The path that should end in 'ansible_collections'
+    :return: collection_path ending in 'ansible_collections' if it does not already.
+    """
+
+    if os.path.split(collection_path)[1] != 'ansible_collections':
+        return os.path.join(collection_path, 'ansible_collections')
+
+    return collection_path

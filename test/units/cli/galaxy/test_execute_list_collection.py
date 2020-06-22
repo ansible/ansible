@@ -45,7 +45,7 @@ def cliargs(collections_paths=None, collection_name=None):
 @pytest.fixture
 def mock_collection_objects(mocker):
     mocker.patch('ansible.cli.galaxy.GalaxyCLI._resolve_path', side_effect=['/root/.ansible/collections', '/usr/share/ansible/collections'])
-    mocker.patch('ansible.cli.galaxy.validate_collection_path',
+    mocker.patch('ansible.cli.galaxy.validated_collection_path',
                  side_effect=['/root/.ansible/collections/ansible_collections', '/usr/share/ansible/collections/ansible_collections'])
 
     collection_args = (
