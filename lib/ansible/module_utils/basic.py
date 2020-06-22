@@ -617,7 +617,12 @@ class AnsibleModule(object):
         self._options_context = list()
         self._tmpdir = None
 
+        self._created_files = []
+
+        # This may not be necessary if looking for 'mode' in 'argument_spec' is sufficient
+        self._uses_common_file_args = False
         if add_file_common_args:
+            self._uses_common_file_args = True
             for k, v in FILE_COMMON_ARGUMENTS.items():
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
@@ -1036,6 +1041,9 @@ class AnsibleModule(object):
 
     def set_mode_if_different(self, path, mode, changed, diff=None, expand=True):
 
+        # Remove paths
+        self._created_files[:] = [p for p in self._created_files if p != path]
+
         if mode is None:
             return changed
 
@@ -1333,6 +1341,10 @@ class AnsibleModule(object):
 
     def set_file_attributes_if_different(self, file_args, changed, diff=None, expand=True):
         return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
+
+    def add_atomic_move_warnings(self):
+        for path in self._created_files:
+            self.warn("File '%s' created with default permissions. Specify 'mode' to avoid this warning." % to_native(path))
 
     def add_path_info(self, kwargs):
         '''
@@ -2053,6 +2065,7 @@ class AnsibleModule(object):
 
     def _return_formatted(self, kwargs):
 
+        self.add_atomic_move_warnings()
         self.add_path_info(kwargs)
 
         if 'invocation' not in kwargs:
@@ -2348,6 +2361,17 @@ class AnsibleModule(object):
                         self.cleanup(b_tmp_dest_name)
 
         if creating:
+            # Keep track of what files we create so later we can see if the permissions are set properly
+            # by calling set_mode_if_different().
+            #
+            # Only bother warning if the module accepts 'mode' parameter so the user can take action.
+            # If the module doesn not allow the user to set 'mode', then the warning is useless to the
+            # user since it provides no actionable information.
+            #
+            # Maybe just check for 'mode' in 'argument_spec' instead of using a new attribute
+            if self._uses_common_file_args:
+                self._created_files.append(dest)
+
             # make sure the file has the correct permissions
             # based on the current value of umask
             umask = os.umask(0)
