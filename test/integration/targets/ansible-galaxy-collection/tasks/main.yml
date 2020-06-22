@@ -47,7 +47,7 @@
 # We use a module for this so we can speed up the test time.
 - name: setup test collections for install and download test
   loop:
-    - '{{ fallaxy_galaxy_server }}'
+    # - '{{ fallaxy_galaxy_server }}'
     - pulp_v2
   environment:
     ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
@@ -188,11 +188,11 @@
     test_server: '{{ item.server }}'
     vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
   with_items:
-  - name: galaxy
-    server: '{{ fallaxy_galaxy_server }}'
-  - name: automation_hub
-    server: '{{ fallaxy_ah_server }}'
-    v3: true
+  # - name: galaxy
+  #   server: '{{ fallaxy_galaxy_server }}'
+  # - name: automation_hub
+  #   server: '{{ fallaxy_ah_server }}'
+  #   v3: true
   - name: pulp_v2
     server: '{{ pulp_v2_server }}'
   - name: pulp_v3
