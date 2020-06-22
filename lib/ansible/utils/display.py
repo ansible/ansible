@@ -37,7 +37,7 @@ from termios import TIOCGWINSZ
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text, to_native
-from ansible.module_utils.six import with_metaclass, string_types, text_type
+from ansible.module_utils.six import with_metaclass, text_type
 from ansible.utils.color import stringc
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
