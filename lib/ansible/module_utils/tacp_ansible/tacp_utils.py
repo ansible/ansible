@@ -497,7 +497,7 @@ def fill_in_missing_names_by_uuid(item, api_resource, key_name):
         uuid_name = key_name[:-1] + "_uuid"
     uuids = [resource[uuid_name] for resource in item[key_name]]  # noqa
     resource_list = {resource.uuid: resource.name for resource in  # noqa
-                        api_resource.filter(uuid=('=in=', *uuids))}  # noqa
+                        api_resource.filter(uuid=('=in=', uuids))}  # noqa
     for resource in item[key_name]:
         resource['name'] = resource_list[resource[uuid_name]]
 
