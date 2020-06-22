@@ -1,3 +1,4 @@
 shippable/posix/group3
 needs/ssh
 needs/root  # only on macOS and FreeBSD to configure network interfaces
+non_local # workaround to allow override of ansible_python_interpreter; disables coverage on this integration target
