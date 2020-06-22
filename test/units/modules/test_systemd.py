@@ -1,3 +1,5 @@
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 from units.compat import unittest
 from ansible.modules.systemd import parse_systemctl_show
