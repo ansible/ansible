@@ -9,6 +9,8 @@ and the current ansible_facts regarding the distribution version.
 This assumes a working ansible version in the path.
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import os.path
 import subprocess
