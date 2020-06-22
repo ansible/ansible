@@ -64,18 +64,9 @@ lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/task_executor.py pylint:ansible-deprecated-version
 lib/ansible/executor/task_queue_manager.py pylint:blacklisted-name
 lib/ansible/galaxy/collection.py compile-2.6!skip # 'ansible-galaxy collection' requires 2.7+
-lib/ansible/module_utils/_text.py future-import-boilerplate
-lib/ansible/module_utils/_text.py metaclass-boilerplate
-lib/ansible/module_utils/api.py future-import-boilerplate
-lib/ansible/module_utils/api.py metaclass-boilerplate
-lib/ansible/module_utils/basic.py metaclass-boilerplate
-lib/ansible/module_utils/common/network.py future-import-boilerplate
-lib/ansible/module_utils/common/network.py metaclass-boilerplate
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py pylint:blacklisted-name
-lib/ansible/module_utils/connection.py future-import-boilerplate
-lib/ansible/module_utils/connection.py metaclass-boilerplate
 lib/ansible/module_utils/distro/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/distro/_distro.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/distro/_distro.py metaclass-boilerplate # ignore bundled
@@ -83,15 +74,7 @@ lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
 lib/ansible/module_utils/facts/network/linux.py pylint:blacklisted-name
-lib/ansible/module_utils/facts/sysctl.py future-import-boilerplate
-lib/ansible/module_utils/facts/sysctl.py metaclass-boilerplate
 lib/ansible/module_utils/facts/system/distribution.py pylint:ansible-bad-function
-lib/ansible/module_utils/facts/utils.py future-import-boilerplate
-lib/ansible/module_utils/facts/utils.py metaclass-boilerplate
-lib/ansible/module_utils/json_utils.py future-import-boilerplate
-lib/ansible/module_utils/json_utils.py metaclass-boilerplate
-lib/ansible/module_utils/parsing/convert_bool.py future-import-boilerplate
-lib/ansible/module_utils/parsing/convert_bool.py metaclass-boilerplate
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSProvideCommentHelp # need to agree on best format for comment location
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSUseApprovedVerbs
@@ -100,11 +83,7 @@ lib/ansible/module_utils/powershell/Ansible.ModuleUtils.FileUtil.psm1 pslint:PSP
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSCustomUseLiteralPath
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.Legacy.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.LinkUtil.psm1 pslint:PSUseApprovedVerbs
-lib/ansible/module_utils/pycompat24.py future-import-boilerplate
-lib/ansible/module_utils/pycompat24.py metaclass-boilerplate
 lib/ansible/module_utils/pycompat24.py no-get-exception
-lib/ansible/module_utils/service.py future-import-boilerplate
-lib/ansible/module_utils/service.py metaclass-boilerplate
 lib/ansible/module_utils/six/__init__.py empty-init # breaks namespacing, bundled, do not override
 lib/ansible/module_utils/six/__init__.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/six/__init__.py metaclass-boilerplate # ignore bundled
@@ -113,14 +92,8 @@ lib/ansible/module_utils/six/__init__.py no-dict-iteritems
 lib/ansible/module_utils/six/__init__.py no-dict-iterkeys
 lib/ansible/module_utils/six/__init__.py no-dict-itervalues
 lib/ansible/module_utils/six/__init__.py replace-urlopen
-lib/ansible/module_utils/splitter.py future-import-boilerplate
-lib/ansible/module_utils/splitter.py metaclass-boilerplate
-lib/ansible/module_utils/urls.py future-import-boilerplate
-lib/ansible/module_utils/urls.py metaclass-boilerplate
 lib/ansible/module_utils/urls.py pylint:blacklisted-name
 lib/ansible/module_utils/urls.py replace-urlopen
-lib/ansible/module_utils/yumdnf.py future-import-boilerplate
-lib/ansible/module_utils/yumdnf.py metaclass-boilerplate
 lib/ansible/modules/command.py validate-modules:doc-missing-type
 lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/command.py validate-modules:parameter-list-no-elements
@@ -234,35 +207,11 @@ lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
 lib/ansible/plugins/callback/__init__.py pylint:ansible-deprecated-version
-lib/ansible/plugins/doc_fragments/backup.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/backup.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/constructed.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/constructed.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/decrypt.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/decrypt.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/default_callback.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/default_callback.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/files.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/files.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/inventory_cache.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/inventory_cache.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/return_common.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/return_common.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/shell_common.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/shell_common.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/shell_windows.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/shell_windows.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/url.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/url.py metaclass-boilerplate
-lib/ansible/plugins/doc_fragments/validate.py future-import-boilerplate
-lib/ansible/plugins/doc_fragments/validate.py metaclass-boilerplate
 lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
 lib/ansible/vars/hostvars.py pylint:blacklisted-name
-setup.py future-import-boilerplate
-setup.py metaclass-boilerplate
 test/integration/targets/ansible-runner/files/adhoc_example1.py future-import-boilerplate
 test/integration/targets/ansible-runner/files/adhoc_example1.py metaclass-boilerplate
 test/integration/targets/ansible-runner/files/playbook_example1.py future-import-boilerplate
