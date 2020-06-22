@@ -175,10 +175,18 @@ class TaskQueueManager:
         callback_list = list(callback_loader.all(class_only=True))
 
         # add whitelisted callbacks that refer to collections, which don't appear in normal listing
-        callback_list.extend(list((callback_loader.get(c) for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c))))
+        for c in C.DEFAULT_CALLBACK_WHITELIST:
+            if AnsibleCollectionRef.is_valid_fqcr(c):
+                # only deal with collection ones right now, rest should already be loaded
+                plugin = callback_loader.get(c)
+                if plugin:
+                    callback_list.append(plugin)
+                else:
+                    display.warning("Skipping callback plugin '%s', unable to load" % c)
 
         # for each callback in the list see if we should add it to 'active callbacks' used in the play
         for callback_plugin in callback_list:
+
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
 
