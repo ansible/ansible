@@ -3765,7 +3765,7 @@ files:
   $plugins/action/onyx_config.py:
     maintainers: $team_onyx
     labels: networking
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   $plugins/action/sros:
     maintainers: $team_networking
     labels: networking
@@ -3872,7 +3872,7 @@ files:
     migrated_to: cisco.nxos
   $plugins/cliconf/onyx.py:
     maintainers: $team_onyx
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   $plugins/cliconf/routeros.py:
     maintainers: heuels
     migrated_to: community.general
@@ -4289,7 +4289,7 @@ files:
     migrated_to: cisco.nxos
   $plugins/terminal/onyx.py:
     maintainers: $team_onyx
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   $plugins/terminal/routeros.py:
     maintainers: heuels
     migrated_to: community.general
@@ -7163,7 +7163,7 @@ files:
   lib/ansible/plugins/doc_fragments/online.py:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/onyx.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/plugins/doc_fragments/opennebula.py:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/openswitch.py:
@@ -7697,9 +7697,9 @@ files:
   lib/ansible/module_utils/network/nso/nso.py:
     migrated_to: community.general
   lib/ansible/module_utils/network/onyx/__init__.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/module_utils/network/onyx/onyx.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/module_utils/network/ordnance/__init__.py:
     migrated_to: community.general
   lib/ansible/module_utils/network/ordnance/ordnance.py:
@@ -9665,79 +9665,79 @@ files:
   lib/ansible/modules/network/nuage/nuage_vspk.py:
     migrated_to: community.general
   lib/ansible/modules/network/onyx/onyx_aaa.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_bfd.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_bgp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_buffer_pool.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_command.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_config.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_facts.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_igmp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_igmp_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_igmp_vlan.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_l2_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_l3_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_linkagg.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_lldp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_lldp_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_magp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_mlag_ipl.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_mlag_vip.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_ntp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_ntp_servers_peers.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_ospf.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_pfc_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_protocol.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_ptp_global.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_ptp_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_qos.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_snmp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_snmp_hosts.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_snmp_users.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_syslog_files.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_syslog_remote.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_traffic_class.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_username.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_vlan.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_vxlan.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/onyx/onyx_wjh.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   lib/ansible/modules/network/opx/opx_cps.py:
     migrated_to: community.general
   lib/ansible/modules/network/ordnance/ordnance_config.py:
@@ -11833,187 +11833,187 @@ files:
   test/units/modules/network/nuage/nuage_module.py:
     migrated_to: community.general
   test/units/modules/network/onyx/test_onyx_aaa.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_buffer_pool.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_mlag_ipl_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_dcb_ets_interface.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_ip_igmp_snooping.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_aaa.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/show_qos_interface_ethernet.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_logging_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_wjh_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_magp_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_port_channel_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_command_show_version.txt:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_logging_config_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_lldp_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_vlan_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_facts_show_version.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_snmp_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_lldp_interface_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_interfaces_status.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_interfaces_nve_detail.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_config_src.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_pfc_interface_disabled.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_igmp_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_mlag_vip_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_mlag_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_ospf_interfaces_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_l3_interface_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_ntp_servers_peers_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_mlag_port_channel_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_ptp_interface.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_bgp_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_l2_interface_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_l3_vlan_interface_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_username_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_facts_show_interfaces_ethernet.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_protocols_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_interfaces_nve.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_interfaces_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_snmp_hosts.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_pfc_interface_enabled.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_interfaces_rates.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_igmp_interfaces.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_config_config.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_interface_congestion_control.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_ospf_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_bfd.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_facts_show_module.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_ntp_show.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_ntp_configured.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_ip_igmp_snooping_querier.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_ip_igmp_snooping_groups.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_ptp_clock.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/fixtures/onyx_show_snmp_users.cfg:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/onyx_module.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/__init__.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_bfd.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_bgp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_buffer_pool.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_command.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_config.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_facts.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_igmp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_igmp_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_igmp_vlan.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_l2_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_l3_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_linkagg.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_lldp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_lldp_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_magp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_mlag_ipl.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_mlag_vip.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_ntp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_ntp_servers_peers.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_ospf.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_pfc_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_protocol.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_ptp_global.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_ptp_interface.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_qos.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_snmp.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_snmp_hosts.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_snmp_users.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_syslog_files.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_syslog_remote.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_traffic_class.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_username.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_vlan.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_vxlan.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/onyx/test_onyx_wjh.py:
-    migrated_to: community.general
+    migrated_to: mellanox.onyx
   test/units/modules/network/opx/test_opx_cps.py:
     migrated_to: community.general
   test/units/modules/network/opx/fixtures/opx_operation_get.cfg:
