@@ -250,6 +250,7 @@ options:
       field is used in optimistic locking.
     required: false
     type: str
+    version_added: 2.9
   enable_cdn:
     description:
     - If true, enable Cloud CDN for this BackendService.
