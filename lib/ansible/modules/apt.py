@@ -1055,7 +1055,7 @@ def main():
             dpkg_options=dict(type='str', default=DPKG_OPTIONS),
             autoremove=dict(type='bool', default=False),
             autoclean=dict(type='bool', default=False),
-            no_remove=dict(type='bool', aliases=['no-remove']),
+            no_remove=dict(type='bool', default=False, aliases=['no-remove']),
             policy_rc_d=dict(type='int', default=None),
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
@@ -1183,8 +1183,7 @@ def main():
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
                         allow_unauthenticated=allow_unauthenticated,
-                        no_remove=no_remove,
-                        force=force_yes, dpkg_options=p['dpkg_options'])
+                        force=force_yes, no_remove=no_remove, dpkg_options=p['dpkg_options'])
 
         unfiltered_packages = p['package'] or ()
         packages = [package.strip() for package in unfiltered_packages if package != '*']
