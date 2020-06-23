@@ -1173,7 +1173,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, allow_unauthenticated)
+            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, no_remove, allow_unauthenticated)
 
         if p['deb']:
             if p['state'] != 'present':
@@ -1193,7 +1193,7 @@ def main():
         if latest and all_installed:
             if packages:
                 module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
-            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, no_remove, autoremove, allow_unauthenticated)
+            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, no_remove, allow_unauthenticated)
 
         if packages:
             for package in packages:
