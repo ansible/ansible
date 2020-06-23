@@ -578,7 +578,7 @@ class TaskExecutor:
         try:
             self._task.post_validate(templar=templar)
         except Exception:
-            return dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=traceback.format_exc())
+            return dict(changed=False, failed=True, _ansible_no_log=self._play_context.no_log, exception=to_text(traceback.format_exc()))
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
