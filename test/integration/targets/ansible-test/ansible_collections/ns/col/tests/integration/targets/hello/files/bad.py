@@ -9,8 +9,8 @@ except ImportError:
     urllib2 = None
 
 try:
-    from collections import MappingView  # intentionally trigger pylint ansible-bad-import-from error
+    from urllib2 import Request  # intentionally trigger pylint ansible-bad-import-from error
 except ImportError:
-    MappingView = None
+    Request = None
 
 tempfile.mktemp()  # intentionally trigger pylint ansible-bad-function error
