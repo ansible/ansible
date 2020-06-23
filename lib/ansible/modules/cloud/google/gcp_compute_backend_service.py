@@ -728,6 +728,7 @@ def main():
             ),
             connection_draining=dict(type='dict', options=dict(draining_timeout_sec=dict(default=300, type='int'))),
             description=dict(type='str'),
+            fingerprint=dict(type='str'),
             enable_cdn=dict(type='bool'),
             health_checks=dict(required=True, type='list', elements='str'),
             iap=dict(
@@ -756,6 +757,7 @@ def main():
     if fetch:
         if state == 'present':
             if is_different(module, fetch):
+                module.params['fingerprint'] = fetch['fingerprint']
                 update(module, self_link(module), kind, fetch)
                 fetch = fetch_resource(module, self_link(module), kind)
                 changed = True
@@ -806,6 +808,7 @@ def delete(module, link, kind):
 
 def resource_to_request(module):
     request = {
+        u'fingerprint': module.params.get('fingerprint'),
         u'kind': 'compute#backendService',
         u'affinityCookieTtlSec': module.params.get('affinity_cookie_ttl_sec'),
         u'backends': BackendServiceBackendsArray(module.params.get('backends', []), module).to_request(),
