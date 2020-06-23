@@ -1323,6 +1323,7 @@ def get_action_args_with_defaults(action, args, defaults, templar, redirected_na
     group_collection_map = {
         'acme': ['community.crypto'],
         'aws': ['amazon.aws', 'community.aws'],
+        'awx': ['ansible.tower', 'awx.awx'],
         'azure': ['azure.azcollection'],
         'cpm': ['wti.remote'],
         'docker': ['community.general'],

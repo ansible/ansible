@@ -89,6 +89,8 @@ Ansible 2.7 adds a preview-status feature to group together modules that share c
 +=========+===========================+=================+
 | aws     | Amazon Web Services       | 2.7             |
 +---------+---------------------------+-----------------+
+| awx     | Ansible Tower / AWX       | 2.11            |
++---------+---------------------------+-----------------+
 | azure   | Azure                     | 2.7             |
 +---------+---------------------------+-----------------+
 | gcp     | Google Cloud Platform     | 2.7             |
