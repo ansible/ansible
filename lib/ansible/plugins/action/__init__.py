@@ -242,22 +242,25 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # we'll propagate back to the controller in the task result
                 discovered_key = 'discovered_interpreter_%s' % idre.interpreter_name
 
+                # update the local vars copy for the retry
+                if use_vars.get('ansible_facts') is None:
+                    use_vars['ansible_facts'] = {}
+                use_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
+
                 # TODO: this condition prevents 'wrong host' from being updated
                 # but in future we would want to be able to update 'delegated host facts'
                 # irrespective of task settings
                 if not self._task.delegate_to or self._task.delegate_facts:
                     # store in local task_vars facts collection for the retry and any other usages in this worker
-                    if use_vars.get('ansible_facts') is None:
-                        task_vars['ansible_facts'] = use_vars['ansible_facts'] = {}
-                    task_vars['ansible_facts'][discovered_key] = use_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
+                    if task_vars.get('ansible_facts') is None:
+                        task_vars['ansible_facts'] = {}
+                    task_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
                     # preserve this so _execute_module can propagate back to controller as a fact
                     self._discovered_interpreter_key = discovered_key
                 else:
                     if task_vars['ansible_delegated_vars'][self._task.delegate_to].get('ansible_facts') is None:
                         task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'] = {}
-                        use_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'] = {}
                     task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'][discovered_key] = self._discovered_interpreter
-                    use_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'][discovered_key] = self._discovered_interpreter
 
         return (module_style, module_shebang, module_data, module_path)
 
