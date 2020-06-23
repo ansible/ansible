@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Changed the internal name of the custom plugin used to identify use of unwanted imports and functions.
