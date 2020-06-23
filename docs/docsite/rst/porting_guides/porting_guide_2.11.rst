@@ -37,8 +37,24 @@ No notable changes
 Modules
 =======
 
-* The ``apt_key`` module has explicitly defined ``file`` as mutually exclusive with ``data``, ``keyserver`` and ``url``. They cannot be used together anymore.
+Change to Default File Permissions
+----------------------------------
 
+To address CVE-2020-1736, the default permissions for certain files created by Ansible using ``atomic_move()`` were changed from ``0o666`` to ``0o600``. The default permissions vaule was only used for the temporary file before it was moved into its place or newly created files. If the file existed when the new temporary file was moved into place, Ansible would use the permissions of the existing file. If there was no existing file, Ansible would retain the default file permissions of the temporary file.
+
+Most modules that call ``atomic_move()`` also call ``set_fs_attributes_if_different()``, which will set the permissions of the file to what is specified in the task.
+
+A new warning will be displayed when all of the following conditions are true:
+
+    - The file at the final destination, not the temporary file, does not exist
+    - A module supports setting ``mode`` but it was not specified for the task
+    - The module calls ``atomic_move()`` but does not later call ``set_fs_attributes_if_different()``
+
+The following modules call ``atomic_move()`` but do not call ``set_fs_attributes_if_different()`` and do not support setting ``mode``. This means for files they create, the default permissions have changed and there is no indication:
+
+    - [insert modules here]
+
+* The ``apt_key`` module has explicitly defined ``file`` as mutually exclusive with ``data``, ``keyserver`` and ``url``. They cannot be used together anymore.
 
 Modules removed
 ---------------
