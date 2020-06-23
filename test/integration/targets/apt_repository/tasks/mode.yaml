@@ -56,7 +56,7 @@
 
 - name: Assert no_mode_stat is correct
   assert:
-    that: "no_mode_stat.stat.mode == '0640'"
+    that: "no_mode_stat.stat.mode == '0600'"
 
 - name: Mode specified as string 0600
   apt_repository:
