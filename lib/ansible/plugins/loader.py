@@ -385,10 +385,16 @@ class PluginLoader:
             if with_subdir:
                 directory = os.path.join(directory, self.subdir)
             if directory not in self._extra_dirs:
-                # append the directory and invalidate the path cache
-                self._extra_dirs.append(directory)
-                self._clear_caches()
-                display.debug('Added %s to loader search path' % (directory))
+                if os.path.exists(directory):
+                    if os.path.isdir(directory):
+                        # append the directory and invalidate the path cache
+                        self._extra_dirs.append(directory)
+                        self._clear_caches()
+                        display.debug('Added %s to loader search path' % (directory))
+                    else:
+                        display.debug("Skipped adding  %s to loader search path as it isn't a directory" % (directory))
+                else:
+                    display.debug("Skipped adding  %s to loader search path as it doesn't exist" % (directory))
 
     def _query_collection_routing_meta(self, acr, plugin_type, extension=None):
         collection_pkg = import_module(acr.n_python_collection_package_name)
@@ -639,7 +645,7 @@ class PluginLoader:
         #       we need to make sure we don't want to add additional directories
         #       (add_directory()) once we start using the iterator.
         #       We can use _get_paths() since add_directory() forces a cache refresh.
-        for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
+        for path in (p for p in self._get_paths() if p not in self._searched_paths):
             display.debug('trying %s' % path)
             plugin_load_context.load_attempts.append(path)
             try:
