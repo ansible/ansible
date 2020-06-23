@@ -435,13 +435,9 @@ EXAMPLES = '''
 
 RETURN = '''
 instance:
-    description: The final state of the application instance
+    description: The final state of the application instance if it still exists.
     type: str
-    returned: sometimes
-message:
-    description: 
-    type: str
-    returned: alw
+    returned: success
 '''
 
 
