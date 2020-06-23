@@ -248,7 +248,7 @@ options:
     description:
     - Fingerprint of this resource. A hash of the contents stored in this object. This
       field is used in optimistic locking.
-	required: false
+    required: false
     type: str
   enable_cdn:
     description:
