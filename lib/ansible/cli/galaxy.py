@@ -653,6 +653,8 @@ class GalaxyCLI(CLI):
             else:
                 text.append(u"\t%s: %s" % (k, role_info[k]))
 
+        # make sure we have a trailing newline returned
+        text.append(u"")
         return u'\n'.join(text)
 
     @staticmethod
@@ -970,7 +972,7 @@ class GalaxyCLI(CLI):
             if role_spec:
                 role_info.update(role_spec)
 
-            data = self._display_role_info(role_info)
+            data += self._display_role_info(role_info)
 
         self.pager(data)
 
