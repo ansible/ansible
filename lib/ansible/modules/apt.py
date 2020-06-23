@@ -143,7 +143,7 @@ options:
     aliases: ['no-remove']
     type: bool
     default: 'no'
-    version_added: "2.10"
+    version_added: "2.11"
   force_apt_get:
     description:
       - Force usage of apt-get instead of aptitude
@@ -203,7 +203,7 @@ EXAMPLES = '''
     default_release: squeeze-backports
     update_cache: yes
 
-- name: Install foo, but if there are some packages to be removed, this task will fail.
+- name: Install foo with ensuring no packages will be removed.
   apt:
     name: foo
     state: latest
