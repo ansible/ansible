@@ -185,6 +185,17 @@ def fail_and_rollback_instance_creation(reason, instance_uuid):
 
 
 def get_parameters_to_create_new_application(playbook_instance):
+    """Given the input configuration for an instance, generate
+        parameters for creating the appropriate payload elsewhere.
+
+    Args:
+        playbook_instance (dict)): The specified instance configuration from
+        the playbook input
+
+    Returns:
+        dict: The parameters to be provided to an ApiCreateApplicationPayload
+            object.
+    """
     parameters_to_create_new_application = {}
     parameters_to_create_new_application['instance_name'] = playbook_instance['name']  # noqa
 
@@ -263,6 +274,16 @@ def get_parameters_to_create_new_application(playbook_instance):
 
 
 def get_create_new_instance_payload(parameters_to_create_new_application):
+    """Create a ApiCreateApplicationPayload with the input parameters.
+
+    Args:
+        parameters_to_create_new_application (dict): All the parameters
+            necessary to populate an ApiCreateApplicationPayload.
+
+    Returns:
+        ApiCreateApplicationPayload: A populated payload for creating
+            a new application instance.
+    """
     create_new_instance_payload = tacp.ApiCreateApplicationPayload(
         name=parameters_to_create_new_application.get('instance_name'),
         datacenter_uuid=parameters_to_create_new_application.get(
@@ -291,8 +312,17 @@ def get_create_new_instance_payload(parameters_to_create_new_application):
 
 
 def create_instance(playbook_instance):
+    """Create an application instance and return the API response object.
+
+    Args:
+        playbook_instance (dict): The specified instance configuration from
+        the playbook input
+
+    Returns:
+        ApiResponsePayload: The response from the create application request.
+    """
     parameters_to_create_new_application = get_parameters_to_create_new_application(  # noqa
-        MODULE.params)
+        playbook_instance)
     create_new_instance_payload = get_create_new_instance_payload(
         parameters_to_create_new_application)
 
@@ -353,6 +383,14 @@ def update_instance_state(instance_uuid, current_state, target_state):
 
 
 def add_playbook_vnics(playbook_vnics, instance_uuid):
+    """Given a list of vnics as dicts, add them to the given instance if they
+        are not already part of the instance template, since they would
+        necessarily already be part of the instance at creation time.
+
+    Args:
+        playbook_vnics (list): The vNICs from the playbook to be added.
+        instance_uuid (str): UUID of the instance
+    """
     playbook_template = get_template_for_instance(instance_uuid)
     template_boot_order = playbook_template.boot_order
 
@@ -369,9 +407,8 @@ def add_vnic_to_instance(playbook_vnic, instance_uuid):
         present in that instance.
 
     Args:
-        network_payload (ApiCreateOrEditApplicationNetworkOptionsPayload): The
-            payload for the new vNIC that will be added to the application
-            instance.
+        playbook_vnic (dict): The vNIC configuration as given by the Ansible
+            playbook.
         instance_uuid (str): The UUID of the application instance to which the
             vNIC will be added.
     """
@@ -394,6 +431,7 @@ def add_vnic_to_instance(playbook_vnic, instance_uuid):
 
     if failure_reason:
         fail_and_rollback_instance_creation(failure_reason, instance_uuid)
+
     vnic_payload = get_add_vnic_payload(parameters_to_create_vnic)
     vnic_uuid = str(uuid4())
     network_payload = get_add_network_payload(vnic_payload, vnic_uuid)
@@ -402,12 +440,23 @@ def add_vnic_to_instance(playbook_vnic, instance_uuid):
 
 def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
                                   template_order=None):
-    """[summary]
+    """Generates a dict of the parameters necessary to create an
+        ApiAddVnicPayload.
 
     Args:
-        datacenter_uuid (str): The UUI of the datacenter the vNIC will be in.
-        playbook_vnic (dict): The vNIC entry as specified in the Ansible
-            playbook.
+        datacenter_uuid (str): UUID of the vNIC's instance's datacenter
+        playbook_vnic (dict): Configuration of vNIC from Ansible playbook.
+        template_order (int, optional): The boot order number from the template
+            if applicable. Defaults to None.
+
+    Raises:
+        tacp_exceptions.InvalidVnicNameException
+        tacp_exceptions.InvalidNetworkTypeException
+        tacp_exceptions.InvalidNetworkNameException
+        tacp_exceptions.InvalidFirewallOverrideNameException
+
+    Returns:
+        dict: The parameters necessary to create an ApiAddVnicPayload.
     """
     parameters_to_create_vnic = {}
 
@@ -481,7 +530,7 @@ def get_add_vnic_payload(parameters_to_create_vnic):
         ApiCreateOrEditApplicationNetworkOptionsPayload.
 
     Args:
-        parameters_to_create_vnic (dict): The UUID of the datacenter 
+        parameters_to_create_vnic (dict): The UUID of the datacenter
             the vNIC will be in.
 
     Returns:
@@ -502,14 +551,17 @@ def get_add_vnic_payload(parameters_to_create_vnic):
 
 def get_add_network_payload(vnic_payload, vnic_uuid):
     """Create an API Network payload based on a provided ApiAddVnicPayload
-        payload
+        payload and UUID.
 
     Args:
-        vnic (ApiAddVnicPayload): A payload for adding a vNIC to a new
+        vnic_payload (ApiAddVnicPayload): A payload for adding a vNIC to a new
             application instance.
 
+        vnic_uuid (str): The UUID of the corresponding vNIC
+
     Returns:
-        ApiCreateOrEditApplicationNetworkOptionsPayload:
+        ApiCreateOrEditApplicationNetworkOptionsPayload: The object provided
+            to actually run the create vNIC operation.
 
     """
 
@@ -526,6 +578,14 @@ def get_add_network_payload(vnic_payload, vnic_uuid):
 
 
 def add_playbook_disks(playbook_disks, instance_uuid):
+    """Given a list of disks from the Ansible playbook, add them to the
+        specified instance.
+
+    Args:
+        playbook_disks (list): The list of dicts of disk configurations
+            specified in the Ansible playbook.
+        instance_uuid (str): The UUID of the instance.
+    """
     playbook_template = get_template_for_instance(instance_uuid)
     template_boot_order = playbook_template.boot_order
 
@@ -542,13 +602,14 @@ def add_disk_to_instance(playbook_disk, instance_uuid):
         is not already present in that instance.
 
     Args:
-        disk_payload (ApiDiskSizeAndLimitPayload): [description]
-        instance_uuid (str): [description]
-    """
+        playbook_disk (dict): The configuration of a single disk from the
+            Ansible playbook
+        instance_uuid (str): The UUID of the instance.
+    """    
     failure_reason = None
 
     try:
-        disk_payload = create_disk_payload(playbook_disk)
+        disk_payload = get_disk_payload(playbook_disk)
     except tacp_exceptions.InvalidDiskNameException:
         failure_reason = 'Could not add disk to instance; disks must have a name provided.'  # noqa
     except tacp_exceptions.InvalidDiskIopsLimitException:
@@ -564,12 +625,22 @@ def add_disk_to_instance(playbook_disk, instance_uuid):
     RESOURCES['update_app'].create_disk(body=disk_payload, uuid=instance_uuid)
 
 
-def create_disk_payload(playbook_disk):
-    """
+def get_disk_payload(playbook_disk):
+    """Generates a payload for creating a new disk in an application.
 
     Args:
-        playbook_disk (dict): The disk entry as specified in the Ansible
-            playbook.
+        playbook_disk (dict): The configuration of a single disk from the
+            Ansible playbook
+
+    Raises:
+        tacp_exceptions.InvalidDiskBandwidthLimitException
+        tacp_exceptions.InvalidDiskIopsLimitException
+        tacp_exceptions.InvalidDiskSizeException
+        tacp_exceptions.InvalidDiskNameException
+
+    Returns:
+        ApiDiskSizeAndLimitPayload: The populated payload object to be provided
+            to the function that actually creates the disk.
     """
     bandwidth_limit = playbook_disk.get('bandwidth_limit')
     if bandwidth_limit:
@@ -601,6 +672,13 @@ def create_disk_payload(playbook_disk):
 
 
 def update_boot_order(playbook_instance):
+    """Updates the boot order of an instance using the boot order information
+        provided in the Ansible playbook input.
+
+    Args:
+        playbook_instance (dict): The specified instance configuration from
+        the playbook input
+    """
     boot_order_payload = get_full_boot_order_payload_for_playbook(
         playbook_instance)
     instance_uuid = get_instance_by_name(playbook_instance['name']).uuid
@@ -609,6 +687,17 @@ def update_boot_order(playbook_instance):
 
 
 def get_full_boot_order_payload_for_playbook(playbook_instance):
+    """Given the playbook input, generate a payload to update the boot order
+        for the created instance.
+
+    Args:
+        playbook_instance (dict): The specified instance configuration from
+        the playbook input
+
+    Returns:
+        ApiEditApplicationPayload: A payload object containing all the boot
+            order objects needed to perform the update operation.
+    """    
     playbook_devices = {}
     playbook_devices['disks'] = playbook_instance['disks']
     playbook_devices['nics'] = playbook_instance['nics']
@@ -633,6 +722,19 @@ def get_full_boot_order_payload_for_playbook(playbook_instance):
 
 
 def get_new_boot_order_entry_for_device(boot_device, playbook_devices):
+    """Generates a dict of values necessary to populate an ApiBootOrderPayload
+        object for updating the boot order.
+
+    Args:
+        boot_device (ApiBootOrderPayload): The preexisting boot device
+            in the instance in question.
+        playbook_devices (list): A list of the vNICs and disks as provided
+            in the Ansible playbook, especially indicating the desired boot
+            order.
+
+    Returns:
+        dict: [description]
+    """
     new_boot_order_entry = {}
 
     name = boot_device.name
