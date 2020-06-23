@@ -182,7 +182,6 @@ lib/ansible/playbook/helpers.py pylint:blacklisted-name
 lib/ansible/playbook/role/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/action/normal.py action-plugin-docs # default action plugin for modules without a dedicated action plugin
 lib/ansible/plugins/cache/base.py ansible-doc!skip  # not a plugin, but a stub for backwards compatibility
-lib/ansible/plugins/callback/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
