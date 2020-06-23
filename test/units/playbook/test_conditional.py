@@ -5,7 +5,6 @@ from units.compat import unittest
 from units.mock.loader import DictDataLoader
 from units.compat.mock import MagicMock
 
-from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.template import Templar
 from ansible import errors
 
@@ -16,7 +15,6 @@ class TestConditional(unittest.TestCase):
     def setUp(self):
         self.loader = DictDataLoader({})
         self.cond = conditional.Conditional(loader=self.loader)
-        self.shared_loader = SharedPluginLoaderObj()
         self.templar = Templar(loader=self.loader, variables={})
 
     def _eval_con(self, when=None, variables=None):
