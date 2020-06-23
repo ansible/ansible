@@ -201,3 +201,35 @@ def test_parent_group_templating_error(inventory_module):
     )
     # assert group was never added with invalid parent
     assert 'betsy' not in inventory_module.inventory.groups
+
+
+def test_compose_host_var(inventory_module):
+    inventory_module.inventory.add_host('cow')
+    inventory_module.inventory.set_variable('cow', 'nickname', 'betsy')
+    host = inventory_module.inventory.get_host('cow')
+    compose = {'new_var': 'nickname'}
+
+    inventory_module._set_composite_vars(compose, host.vars, host.name, strict=True)
+    assert inventory_module.inventory.get_host('cow').vars['new_var'] == 'betsy'
+
+
+def test_compose_nested_host_var(inventory_module):
+    inventory_module.inventory.add_host('cow')
+    inventory_module.inventory.set_variable('cow', 'nickname', 'betsy')
+    inventory_module.inventory.set_variable('cow', 'sound', 'mmmmmmmmmm')
+    host = inventory_module.inventory.get_host('cow')
+    compose = {'attributes': {'name': 'nickname', 'sound': 'sound'}}
+
+    inventory_module._set_composite_vars(compose, host.vars, host.name, strict=True)
+    assert inventory_module.inventory.get_host('cow').vars['attributes'] == {'name': 'betsy', 'sound': 'mmmmmmmmmm'}
+
+
+def test_compose_list_host_var(inventory_module):
+    inventory_module.inventory.add_host('cow')
+    inventory_module.inventory.set_variable('cow', 'nickname', 'betsy')
+    inventory_module.inventory.set_variable('cow', 'sound', 'mmmmmmmmmm')
+    host = inventory_module.inventory.get_host('cow')
+    compose = {'attributes': ['nickname', 'sound']}
+
+    inventory_module._set_composite_vars(compose, host.vars, host.name, strict=True)
+    assert inventory_module.inventory.get_host('cow').vars['attributes'] == ['betsy', 'mmmmmmmmmm']

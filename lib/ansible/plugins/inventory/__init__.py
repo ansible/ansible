@@ -29,7 +29,7 @@ from ansible.parsing.utils.addresses import parse_address
 from ansible.plugins import AnsiblePlugin
 from ansible.plugins.cache import CachePluginAdjudicator as CacheObject
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
@@ -351,18 +351,26 @@ class Cacheable(object):
 
 class Constructable(object):
 
-    def _compose(self, template, variables):
+    def _compose(self, template, variables, allow_nested=False):
         ''' helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars'''
-        t = self.templar
-        t.available_variables = variables
-        return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
+        if allow_nested and isinstance(template, MutableMapping):
+            result = {}
+            for k, v in template.items():
+                result[k] = self._compose(v, variables, allow_nested)
+        elif allow_nested and isinstance(template, list):
+            result = [self._compose(t, variables, allow_nested) for t in template]
+        else:
+            t = self.templar
+            t.available_variables = variables
+            result = t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
+        return result
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
         ''' loops over compose entries to create vars for hosts '''
         if compose and isinstance(compose, dict):
             for varname in compose:
                 try:
-                    composite = self._compose(compose[varname], variables)
+                    composite = self._compose(compose[varname], variables, allow_nested=True)
                 except Exception as e:
                     if strict:
                         raise AnsibleError("Could not set %s for host %s: %s" % (varname, host, to_native(e)))

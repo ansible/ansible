@@ -34,6 +34,14 @@ EXAMPLES = r'''
         # this variable will only be set if I have a persistent fact cache enabled (and have non expired facts)
         # `strict: False` will skip this instead of producing an error if it is missing facts.
         server_type: "ansible_hostname | regex_replace ('(.{6})(.{2}).*', '\\2')"
+
+        # create a new dictionary variable with subkeys
+        other_info:
+          application: tags.Application
+          security_group_ids:
+            - security_groups[0].group_id
+            - security_groups[1].group_id
+
     groups:
         # simple name matching
         webservers: inventory_hostname.startswith('web')
