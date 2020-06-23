@@ -2463,79 +2463,79 @@ plugin_routing:
     nuage_vspk:
       redirect: community.network.nuage_vspk
     onyx_aaa:
-      redirect: community.network.onyx_aaa
+      redirect: mellanox.onyx.onyx_aaa
     onyx_bfd:
-      redirect: community.network.onyx_bfd
+      redirect: mellanox.onyx.onyx_bfd
     onyx_bgp:
-      redirect: community.network.onyx_bgp
+      redirect: mellanox.onyx.onyx_bgp
     onyx_buffer_pool:
-      redirect: community.network.onyx_buffer_pool
+      redirect: mellanox.onyx.onyx_buffer_pool
     onyx_command:
-      redirect: community.network.onyx_command
+      redirect: mellanox.onyx.onyx_command
     onyx_config:
-      redirect: community.network.onyx_config
+      redirect: mellanox.onyx.onyx_config
     onyx_facts:
-      redirect: community.network.onyx_facts
+      redirect: mellanox.onyx.onyx_facts
     onyx_igmp:
-      redirect: community.network.onyx_igmp
+      redirect: mellanox.onyx.onyx_igmp
     onyx_igmp_interface:
-      redirect: community.network.onyx_igmp_interface
+      redirect: mellanox.onyx.onyx_igmp_interface
     onyx_igmp_vlan:
-      redirect: community.network.onyx_igmp_vlan
+      redirect: mellanox.onyx.onyx_igmp_vlan
     onyx_interface:
-      redirect: community.network.onyx_interface
+      redirect: mellanox.onyx.onyx_interface
     onyx_l2_interface:
-      redirect: community.network.onyx_l2_interface
+      redirect: mellanox.onyx.onyx_l2_interface
     onyx_l3_interface:
-      redirect: community.network.onyx_l3_interface
+      redirect: mellanox.onyx.onyx_l3_interface
     onyx_linkagg:
-      redirect: community.network.onyx_linkagg
+      redirect: mellanox.onyx.onyx_linkagg
     onyx_lldp:
-      redirect: community.network.onyx_lldp
+      redirect: mellanox.onyx.onyx_lldp
     onyx_lldp_interface:
-      redirect: community.network.onyx_lldp_interface
+      redirect: mellanox.onyx.onyx_lldp_interface
     onyx_magp:
-      redirect: community.network.onyx_magp
+      redirect: mellanox.onyx.onyx_magp
     onyx_mlag_ipl:
-      redirect: community.network.onyx_mlag_ipl
+      redirect: mellanox.onyx.onyx_mlag_ipl
     onyx_mlag_vip:
-      redirect: community.network.onyx_mlag_vip
+      redirect: mellanox.onyx.onyx_mlag_vip
     onyx_ntp:
-      redirect: community.network.onyx_ntp
+      redirect: mellanox.onyx.onyx_ntp
     onyx_ntp_servers_peers:
-      redirect: community.network.onyx_ntp_servers_peers
+      redirect: mellanox.onyx.onyx_ntp_servers_peers
     onyx_ospf:
-      redirect: community.network.onyx_ospf
+      redirect: mellanox.onyx.onyx_ospf
     onyx_pfc_interface:
-      redirect: community.network.onyx_pfc_interface
+      redirect: mellanox.onyx.onyx_pfc_interface
     onyx_protocol:
-      redirect: community.network.onyx_protocol
+      redirect: mellanox.onyx.onyx_protocol
     onyx_ptp_global:
-      redirect: community.network.onyx_ptp_global
+      redirect: mellanox.onyx.onyx_ptp_global
     onyx_ptp_interface:
-      redirect: community.network.onyx_ptp_interface
+      redirect: mellanox.onyx.onyx_ptp_interface
     onyx_qos:
-      redirect: community.network.onyx_qos
+      redirect: mellanox.onyx.onyx_qos
     onyx_snmp:
-      redirect: community.network.onyx_snmp
+      redirect: mellanox.onyx.onyx_snmp
     onyx_snmp_hosts:
-      redirect: community.network.onyx_snmp_hosts
+      redirect: mellanox.onyx.onyx_snmp_hosts
     onyx_snmp_users:
-      redirect: community.network.onyx_snmp_users
+      redirect: mellanox.onyx.onyx_snmp_users
     onyx_syslog_files:
-      redirect: community.network.onyx_syslog_files
+      redirect: mellanox.onyx.onyx_syslog_files
     onyx_syslog_remote:
-      redirect: community.network.onyx_syslog_remote
+      redirect: mellanox.onyx.onyx_syslog_remote
     onyx_traffic_class:
-      redirect: community.network.onyx_traffic_class
+      redirect: mellanox.onyx.onyx_traffic_class
     onyx_username:
-      redirect: community.network.onyx_username
+      redirect: mellanox.onyx.onyx_username
     onyx_vlan:
-      redirect: community.network.onyx_vlan
+      redirect: mellanox.onyx.onyx_vlan
     onyx_vxlan:
-      redirect: community.network.onyx_vxlan
+      redirect: mellanox.onyx.onyx_vxlan
     onyx_wjh:
-      redirect: community.network.onyx_wjh
+      redirect: mellanox.onyx.onyx_wjh
     opx_cps:
       redirect: community.network.opx_cps
     ordnance_config:
@@ -8096,7 +8096,7 @@ plugin_routing:
     nos_config:
       redirect: community.network.nos_config
     onyx_config:
-      redirect: community.network.onyx_config
+      redirect: mellanox.onyx.onyx_config
     slxos:
       redirect: community.network.slxos
     sros:
