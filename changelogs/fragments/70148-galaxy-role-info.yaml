@@ -1,2 +1,2 @@
 bugfixes:
-  - Fixes 'nsible-galaxy role info' to support multiple roles on the command line.
+  - Fixes ``ansible-galaxy role info`` to support multiple roles on the command line (https://github.com/ansible/ansible/pull/70148)
