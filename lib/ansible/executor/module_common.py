@@ -482,14 +482,6 @@ class ModuleDepFinder(ast.NodeVisitor):
                             visitor = self.generic_visit
                             visit_map[item.__class__.__name__] = self.generic_visit
                         visitor(item)
-            elif isinstance(value, ast.AST):
-                if isinstance(value, ast.IfExp):
-                    print(vars(value))
-                    print(vars(value.body))
-                    try:
-                        print(value.body[0].name)
-                    except:
-                        pass
 
     def visit_Import(self, node):
         """
