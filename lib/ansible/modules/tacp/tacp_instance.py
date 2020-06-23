@@ -132,9 +132,9 @@ options:
                 type: float
             boot_order:
                 description:
-                    - The place in the boot order for the disk. The overall boot
-                      order must begin at 1, and every NIC and disk must have
-                      an order provided.
+                    - The place in the boot order for the disk. The overall
+                      boot order must begin at 1, and every NIC and disk must
+                      have an order provided.
                 required: true
                 type: int
             bandwidth_limit:
@@ -217,14 +217,14 @@ options:
         type: bool
     auto_recovery_enabled:
         description:
-            - Whether or not the instance should be restarted on a different 
+            - Whether or not the instance should be restarted on a different
               host node in the event that its host node fails. Defaults to
               true.
         required: false
         type: bool
     description:
         description:
-            - A textual description of the instance. Defaults to any 
+            - A textual description of the instance. Defaults to any
               description that the source template come with.
         required: false
         type: str
@@ -247,7 +247,7 @@ options:
         type: str
     application_group:
         description:
-            - The name of an application group that the instance will be put 
+            - The name of an application group that the instance will be put
               in. Creates it in the virtual datacenter if it does not yet exist
               .
         required: false
@@ -258,32 +258,190 @@ author:
 '''
 
 EXAMPLES = '''
-# Pass in a message
-- name: Test with a message
+- name: Create a basic VM on ThinkAgile CP
   tacp_instance:
-    name: hello world
+      api_key: "{{ api_key }}"
+      name: Basic_VM1
+      state: started
+      datacenter: Datacenter1
+      migration_zone: Zone1
+      template: CentOS 7.5 (64-bit) - Lenovo Template
+      storage_pool: Pool1
+      vcpu_cores: 1
+      memory: 4096GB
+      disks:
+      - name: Disk 0
+          size_gb: 50
+          boot_order: 1
+      nics:
+      - name: vNIC 0
+          type: VNET
+          network: VNET-TEST
+          boot_order: 2
 
-# pass in a message and have changed true
-- name: Test with a message and changed output
+- name: Create a shutdown VM with multiple disks and set its NIC to the first 
+        boot device
   tacp_instance:
-    name: hello world
-    new: true
+      api_key: "{{ api_key }}"
+      name: Basic_VM2
+      state: started
+      datacenter: Datacenter1
+      migration_zone: Zone1
+      template: RHEL 7.4 (Minimal) - Lenovo Template
+      storage_pool: Pool1
+      vcpu_cores: 1
+      memory: 8G
+      disks:
+      - name: Disk 0
+          size_gb: 50
+          boot_order: 2
+      - name: Disk 1
+          size_gb: 200
+          boot_order: 3
+      nics:
+      - name: vNIC 0
+          type: VLAN
+          network: VLAN-300
+          boot_order: 1
 
-# fail the module
-- name: Test failure of the module
+- name: Create a VM with multiple disks with limits, and two NICs with static
+        MAC addresses, and don't power it on after creation
   tacp_instance:
-    name: fail me
+      api_key: "{{ api_key }}"
+      name: Basic_VM3
+      state: shutdown
+      datacenter: Datacenter1
+      migration_zone: Zone1
+      template: RHEL 7.4 (Minimal) - Lenovo Template
+      storage_pool: Pool1
+      vcpu_cores: 1
+      memory: 8GB
+      disks:
+      - name: Disk 0
+          size_gb: 50
+          boot_order: 2
+          iops_limit: 200
+      - name: Disk 1
+          size_gb: 200
+          boot_order: 3
+          bandwidth_limit: 10000000
+      nics:
+      - name: vNIC 0
+          type: VLAN
+          network: VLAN-300
+          boot_order: 4
+          firewall_override: Allow-All
+      - name: vNIC 1
+          type: VNET
+          network: PXE-VNET
+          boot_order: 1
+          mac_address: b4:d1:35:00:00:01
+
+- name: Create a VM from a custom template without virtio drivers
+  tacp_instance:
+      api_key: "{{ api_key }}"
+      name: Custom_VM
+      state: started
+      datacenter: Datacenter1
+      migration_zone: Zone1
+      template: MyCustomTemplate
+      storage_pool: Pool1
+      vcpu_cores: 1
+      memory: 4G
+      vm_mode: Compatibility
+      disks:
+      - name: Disk 0
+          size_gb: 50
+          boot_order: 1
+      nics:
+      - name: vNIC 0
+          type: VNET
+          network: VNET-TEST
+          boot_order: 2
+
+- name: Pause Basic_VM1 on ThinkAgile CP
+  tacp_instance:
+      api_key: "{{ api_key }}"
+      name: Basic_VM1
+      state: paused
+
+- name: Restart all of my Basic_VMs on ThinkAgile CP
+  tacp_instance:
+      api_key: "{{ api_key }}"
+      name: "{{ instance }}"
+      state: restarted
+  loop:
+    - Basic_VM1
+    - Basic_VM2
+    - Basic_VM3
+  loop_control:
+    loop_var: instance
+
+- name: Delete Basic_VM1 from ThinkAgile CP
+  tacp_instance:
+      api_key: "{{ api_key }}"
+      name: Basic_VM1
+      state: absent
+
+- name: Create a variety of VMs on TACP in a loop
+  tacp_instance:
+      api_key: "{{ api_key }}"
+      name: "{{ instance.name }}"
+      state: "{{ instance.state }}"
+      datacenter: Datacenter2
+      migration_zone: Zone2
+      template: "{{ instance.template }}"
+      storage_pool: Pool2
+      vcpu_cores: "{{ instance.vcpu_cores }}"
+      memory: "{{ instance.memory }}"
+      disks:
+        - name: Disk 0
+          size_gb: 100
+          boot_order: 1
+      nics:
+        - name: vNIC 0
+          type: "{{ instance.network_type }}"
+          network: "{{ instance.network_name }}"
+          mac_address: "{{ instance.mac_address }}"
+          boot_order: 2
+  loop:
+      - { name: CentOS VM 1,
+          state: started,
+          template: "CentOS 7.5 (64-bit) - Lenovo Template",
+          vcpu_cores: 2,
+          memory: 4096MB,
+          network_type: VLAN,
+          network_name: VLAN-15,
+          mac_address: b4:d1:35:00:0f:f0 }
+      - { name: RHEL VM 11,
+          state: stopped,
+          template: "RHEL 7.4 (Minimal) - Lenovo Template",
+          vcpu_cores: 6,
+          memory: 6g,
+          network_type: VNET,
+          network_name: Production-VNET,
+          mac_address: b4:d1:35:00:0f:f1 }
+      - { name: Windows Server 2019 VM 1,
+          state: started,
+          template: "Windows Server 2019 Standard - Lenovo Template",
+          vcpu_cores: 8,
+          memory: 16GB,
+          network_type: VNET,
+          network_name: Internal-VNET,
+          mac_address: b4:d1:35:00:0f:f2 }
+  loop_control:
+      loop_var: instance
 '''
 
 RETURN = '''
-original_message:
-    description: The original name param that was passed in
+instance:
+    description: The final state of the application instance
     type: str
-    returned: always
+    returned: sometimes
 message:
-    description: The output message that the test module generates
+    description: 
     type: str
-    returned: always
+    returned: alw
 '''
 
 
