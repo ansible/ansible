@@ -244,6 +244,12 @@ options:
     - An optional description of this resource.
     required: false
     type: str
+  fingerprint:
+    description:
+    - Fingerprint of this resource. A hash of the contents stored in this object. This
+      field is used in optimistic locking.
+	required: false
+    type: str
   enable_cdn:
     description:
     - If true, enable Cloud CDN for this BackendService.
