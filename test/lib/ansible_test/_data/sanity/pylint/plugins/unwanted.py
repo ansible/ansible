@@ -14,8 +14,8 @@ ANSIBLE_TEST_MODULES_PATH = os.environ['ANSIBLE_TEST_MODULES_PATH']
 ANSIBLE_TEST_MODULE_UTILS_PATH = os.environ['ANSIBLE_TEST_MODULE_UTILS_PATH']
 
 
-class BlacklistEntry:
-    """Defines a import blacklist entry."""
+class UnwantedEntry:
+    """Defines an unwanted import."""
     def __init__(self, alternative, modules_only=False, names=None, ignore_paths=None):
         """
         :type alternative: str
@@ -58,11 +58,11 @@ def is_module_path(path):
     return path.startswith(ANSIBLE_TEST_MODULES_PATH) or path.startswith(ANSIBLE_TEST_MODULE_UTILS_PATH)
 
 
-class AnsibleBlacklistChecker(BaseChecker):
-    """Checker for blacklisted imports and functions."""
+class AnsibleUnwantedChecker(BaseChecker):
+    """Checker for unwanted imports and functions."""
     __implements__ = (IAstroidChecker,)
 
-    name = 'blacklist'
+    name = 'unwanted'
 
     BAD_IMPORT = 'ansible-bad-import'
     BAD_IMPORT_FROM = 'ansible-bad-import-from'
@@ -84,58 +84,58 @@ class AnsibleBlacklistChecker(BaseChecker):
                'Identifies imports which should not be used.'),
     )
 
-    blacklist_imports = dict(
+    unwanted_imports = dict(
         # Additional imports that we may want to start checking:
-        # boto=BlacklistEntry('boto3', modules_only=True),
-        # requests=BlacklistEntry('ansible.module_utils.urls', modules_only=True),
-        # urllib=BlacklistEntry('ansible.module_utils.urls', modules_only=True),
+        # boto=UnwantedEntry('boto3', modules_only=True),
+        # requests=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
+        # urllib=UnwantedEntry('ansible.module_utils.urls', modules_only=True),
 
         # see https://docs.python.org/2/library/urllib2.html
-        urllib2=BlacklistEntry('ansible.module_utils.urls',
-                               ignore_paths=(
-                                   '/lib/ansible/module_utils/urls.py',
-                               )),
+        urllib2=UnwantedEntry('ansible.module_utils.urls',
+                              ignore_paths=(
+                                  '/lib/ansible/module_utils/urls.py',
+                              )),
 
         # see https://docs.python.org/3.7/library/collections.abc.html
-        collections=BlacklistEntry('ansible.module_utils.common._collections_compat',
-                                   ignore_paths=(
-                                       '/lib/ansible/module_utils/common/_collections_compat.py',
-                                   ),
-                                   names=(
-                                       'MappingView',
-                                       'ItemsView',
-                                       'KeysView',
-                                       'ValuesView',
-                                       'Mapping', 'MutableMapping',
-                                       'Sequence', 'MutableSequence',
-                                       'Set', 'MutableSet',
-                                       'Container',
-                                       'Hashable',
-                                       'Sized',
-                                       'Callable',
-                                       'Iterable',
-                                       'Iterator',
-                                   )),
+        collections=UnwantedEntry('ansible.module_utils.common._collections_compat',
+                                  ignore_paths=(
+                                      '/lib/ansible/module_utils/common/_collections_compat.py',
+                                  ),
+                                  names=(
+                                      'MappingView',
+                                      'ItemsView',
+                                      'KeysView',
+                                      'ValuesView',
+                                      'Mapping', 'MutableMapping',
+                                      'Sequence', 'MutableSequence',
+                                      'Set', 'MutableSet',
+                                      'Container',
+                                      'Hashable',
+                                      'Sized',
+                                      'Callable',
+                                      'Iterable',
+                                      'Iterator',
+                                  )),
     )
 
-    blacklist_functions = {
+    unwanted_functions = {
         # see https://docs.python.org/2/library/tempfile.html#tempfile.mktemp
-        'tempfile.mktemp': BlacklistEntry('tempfile.mkstemp'),
+        'tempfile.mktemp': UnwantedEntry('tempfile.mkstemp'),
 
-        'sys.exit': BlacklistEntry('exit_json or fail_json',
-                                   ignore_paths=(
-                                       '/lib/ansible/module_utils/basic.py',
-                                       '/lib/ansible/modules/async_wrapper.py',
-                                       '/lib/ansible/module_utils/common/removed.py',
-                                   ),
-                                   modules_only=True),
+        'sys.exit': UnwantedEntry('exit_json or fail_json',
+                                  ignore_paths=(
+                                      '/lib/ansible/module_utils/basic.py',
+                                      '/lib/ansible/modules/async_wrapper.py',
+                                      '/lib/ansible/module_utils/common/removed.py',
+                                  ),
+                                  modules_only=True),
 
-        'builtins.print': BlacklistEntry('module.log or module.debug',
-                                         ignore_paths=(
-                                             '/lib/ansible/module_utils/basic.py',
-                                             '/lib/ansible/module_utils/common/removed.py',
-                                         ),
-                                         modules_only=True),
+        'builtins.print': UnwantedEntry('module.log or module.debug',
+                                        ignore_paths=(
+                                            '/lib/ansible/module_utils/basic.py',
+                                            '/lib/ansible/module_utils/common/removed.py',
+                                        ),
+                                        modules_only=True),
     }
 
     def visit_import(self, node):
@@ -163,7 +163,7 @@ class AnsibleBlacklistChecker(BaseChecker):
 
         module = last_child.name
 
-        entry = self.blacklist_imports.get(module)
+        entry = self.unwanted_imports.get(module)
 
         if entry and entry.names:
             if entry.applies_to(self.linter.current_file, node.attrname):
@@ -183,7 +183,7 @@ class AnsibleBlacklistChecker(BaseChecker):
                 if not func:
                     continue
 
-                entry = self.blacklist_functions.get(func)
+                entry = self.unwanted_functions.get(func)
 
                 if entry and entry.applies_to(self.linter.current_file):
                     self.add_message(self.BAD_FUNCTION, args=(entry.alternative, func), node=node)
@@ -197,7 +197,7 @@ class AnsibleBlacklistChecker(BaseChecker):
         """
         self._check_module_import(node, modname)
 
-        entry = self.blacklist_imports.get(modname)
+        entry = self.unwanted_imports.get(modname)
 
         if not entry:
             return
@@ -213,7 +213,7 @@ class AnsibleBlacklistChecker(BaseChecker):
         """
         self._check_module_import(node, modname)
 
-        entry = self.blacklist_imports.get(modname)
+        entry = self.unwanted_imports.get(modname)
 
         if not entry:
             return
@@ -239,4 +239,4 @@ class AnsibleBlacklistChecker(BaseChecker):
 
 def register(linter):
     """required method to auto register this checker """
-    linter.register_checker(AnsibleBlacklistChecker(linter))
+    linter.register_checker(AnsibleUnwantedChecker(linter))

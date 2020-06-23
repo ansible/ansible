@@ -190,6 +190,9 @@ lib/ansible/plugins/strategy/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
 lib/ansible/vars/hostvars.py pylint:blacklisted-name
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function
 test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
