@@ -3,16 +3,15 @@
 # Copyright: (c) 2020, Lenovo
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from ansible.module_utils.tacp_ansible.tacp_exceptions import (
-    ActionTimedOutException, InvalidActionUuidException
-)
+from ansible.module_utils.basic import AnsibleModule
+
 from ansible.module_utils.tacp_ansible.tacp_constants import (
     Playbook_State, API_State)
-
+from ansible.module_utils.tacp_ansible import tacp_exceptions
 from ansible.module_utils.tacp_ansible import tacp_utils
-from ansible.module_utils.basic import AnsibleModule
-from tacp.rest import ApiException
+
 import tacp
+from tacp.rest import ApiException
 from uuid import uuid4
 
 ANSIBLE_METADATA = {
@@ -177,6 +176,12 @@ RESOURCES = {
 def fail_with_reason(reason):
     RESULT['msg'] = reason
     MODULE.fail_json(**RESULT)
+
+
+def fail_and_rollback_instance_creation(reason, instance_uuid):
+    RESULT['msg'] = reason + "\n Rolled back application instance creation."
+    RESOURCES['app'].delete(instance_uuid)
+    MODULE.fail_json()
 
 
 def get_parameters_to_create_new_application(playbook_instance):
@@ -372,8 +377,23 @@ def add_vnic_to_instance(playbook_vnic, instance_uuid):
     """
     datacenter_uuid = RESOURCES['app'].filter(
         uuid=instance_uuid)[0].datacenter_uuid
-    parameters_to_create_vnic = get_parameters_to_create_vnic(datacenter_uuid,
-                                                              playbook_vnic)
+
+    failure_reason = None
+    try:
+        parameters_to_create_vnic = get_parameters_to_create_vnic(
+            datacenter_uuid,
+            playbook_vnic)
+    except tacp_exceptions.InvalidVnicNameException:
+        failure_reason = 'Failed to create vNIC payload; an invalid name was provided for a vNIC.'  # noqa
+    except tacp_exceptions.InvalidNetworkNameException:
+        failure_reason = 'Failed to create vNIC payload; an invalid network name was provided.'  # noqa
+    except tacp_exceptions.InvalidNetworkTypeException:
+        failure_reason = 'Failed to create vNIC payload; vNICs must have a type of "VNET" or "VLAN"'  # noqa
+    except tacp_exceptions.InvalidFirewallOverrideNameException:
+        failure_reason = 'Failed to create vNIC payload; an invalid firewall override name was provided for a vNIC'  # noqa
+
+    if failure_reason:
+        fail_and_rollback_instance_creation(failure_reason, instance_uuid)
     vnic_payload = get_add_vnic_payload(parameters_to_create_vnic)
     vnic_uuid = str(uuid4())
     network_payload = get_add_network_payload(vnic_payload, vnic_uuid)
@@ -393,8 +413,8 @@ def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
 
     name = playbook_vnic.get('name')
     if not name:
-        fail_with_reason(
-            'Failed to create vNIC payload; vNICs must have a name provided.')  # noqa
+        raise tacp_exceptions.InvalidVnicNameException
+
     parameters_to_create_vnic['name'] = name
 
     mac_address = playbook_vnic.get('mac_address')
@@ -405,16 +425,14 @@ def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
 
     network_type = playbook_vnic.get('type').lower()
     if network_type not in ['vnet', 'vlan']:
-        fail_with_reason(
-            'Failed to create vNIC payload; vNICs must have a type provided: VNET or VLAN.')  # noqa
+        raise tacp_exceptions.InvalidNetworkTypeException
 
     network_resource = RESOURCES[network_type]
 
     networks = network_resource.filter(name=playbook_vnic['network'])
     if not networks:
-        fail_with_reason(
-            'Failed to create vNIC payload; an invalid network name was provided for vNIC {}'.format(  # noqa
-                playbook_vnic['network']))
+        raise tacp_exceptions.InvalidNetworkNameException
+
     network_uuid = networks[0].uuid
     parameters_to_create_vnic['network_uuid'] = network_uuid
 
@@ -424,9 +442,7 @@ def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
             datacenter_uuid,
             firewall_override_name)
         if not firewall_override_uuid:
-            fail_with_reason(
-                'Failed to create vNIC payload; an invalid firewall override name was provided for vNIC {}'.format(  # noqa
-                    playbook_vnic['network']))
+            raise tacp_exceptions.InvalidFirewallOverrideNameException
     else:
         firewall_override_uuid = None
     parameters_to_create_vnic['firewall_override_uuid'] = firewall_override_uuid  # noqa
@@ -440,7 +456,7 @@ def get_firewall_override_uuid(datacenter_uuid, firewall_override_name):
     """Get the UUID for a firewall override for the provided datacenter.
 
     Args:
-        datacenter_uuid (str): The UUID of the datacenter that the firewall 
+        datacenter_uuid (str): The UUID of the datacenter that the firewall
             override is a part of.
         firewall_override_name (str): The name of the firewall override.
 
@@ -454,8 +470,8 @@ def get_firewall_override_uuid(datacenter_uuid, firewall_override_name):
     if firewall_overrides:
         firewall_override_uuid = firewall_overrides[0].uuid
     else:
-        fail_with_reason('An invalid firewall override name was specified: {}'.format(  # noqa
-            firewall_override_name))
+        firewall_override_uuid = None
+
     return firewall_override_uuid
 
 
@@ -529,7 +545,22 @@ def add_disk_to_instance(playbook_disk, instance_uuid):
         disk_payload (ApiDiskSizeAndLimitPayload): [description]
         instance_uuid (str): [description]
     """
-    disk_payload = create_disk_payload(playbook_disk)
+    failure_reason = None
+
+    try:
+        disk_payload = create_disk_payload(playbook_disk)
+    except tacp_exceptions.InvalidDiskNameException:
+        failure_reason = 'Could not add disk to instance; disks must have a name provided.'  # noqa
+    except tacp_exceptions.InvalidDiskIopsLimitException:
+        failure_reason = 'Could not add disk to instance; disks must have a total IOPS limit of at least 50.'  # noqa
+    except tacp_exceptions.InvalidDiskBandwidthLimitException:
+        failure_reason = 'Could not add disk to instance; disks must have a bandwidth limit of at least 5 MBps (5000000).'  # noqa
+    except tacp_exceptions.InvalidDiskSizeException:
+        failure_reason = 'Could not add disk to instance; disks must have a positive size in GB provided.'  # noqa
+
+    if failure_reason:
+        fail_and_rollback_instance_creation()
+
     RESOURCES['update_app'].create_disk(body=disk_payload, uuid=instance_uuid)
 
 
@@ -543,25 +574,22 @@ def create_disk_payload(playbook_disk):
     bandwidth_limit = playbook_disk.get('bandwidth_limit')
     if bandwidth_limit:
         if int(bandwidth_limit) < MINIMUM_BW_FIVE_MBPS_IN_BYTES:
-            fail_with_reason(
-                'Could not add disk to instance; disks must have a bandwidth limit of at least 5 MBps (5000000).')  # noqa
+            raise tacp_exceptions.InvalidDiskBandwidthLimitException
 
     iops_limit = playbook_disk.get('iops_limit')
     if iops_limit:
         if int(iops_limit) < MINIMUM_IOPS:
-            fail_with_reason(
-                'Could not add disk to instance; disks must have a total IOPS limit of at least 50.')  # noqa
+            raise tacp_exceptions.InvalidDiskIopsLimitException
 
     size_gb = playbook_disk.get('size_gb')
     if not size_gb:
-        fail_with_reason(
-            'Could not add disk to instance; disks must have a size in GB provided.')  # noqa
+        raise tacp_exceptions.InvalidDiskSizeException
+
     size_bytes = tacp_utils.convert_memory_abbreviation_to_bytes(str(playbook_disk['size_gb']) + 'GB')  # noqa
 
     name = playbook_disk.get('name')
     if not name:
-        fail_with_reason(
-            'Could not add disk to instance; disks must have a name provided.')
+        raise tacp_exceptions.InvalidDiskNameException
 
     disk_payload = tacp.ApiDiskSizeAndLimitPayload(bandwidth_limit=bandwidth_limit,  # noqa
                                             iops_limit=iops_limit,
