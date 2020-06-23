@@ -135,6 +135,15 @@ options:
     type: bool
     default: 'no'
     version_added: "2.1"
+  no_remove:
+    description:
+      - 'Corresponds to the C(--no-remove) option for I(apt).'
+      - 'If C(yes), it is ensured that no packages will be removed or the task will fail.'
+      - 'C(no_remove) is only supported with state except I(absent)'
+    aliases: ['no-remove']
+    type: bool
+    default: 'no'
+    version_added: "2.10"
   force_apt_get:
     description:
       - Force usage of apt-get instead of aptitude
@@ -193,6 +202,12 @@ EXAMPLES = '''
     state: latest
     default_release: squeeze-backports
     update_cache: yes
+
+- name: Install foo, but if there are some packages to be removed, this task will fail.
+  apt:
+    name: foo
+    state: latest
+    no_remove: yes
 
 - name: Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
   apt:
@@ -613,7 +628,7 @@ def mark_installed_manually(m, packages):
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
-            build_dep=False, fixed=False, autoremove=False, only_upgrade=False,
+            build_dep=False, fixed=False, autoremove=False, no_remove=False, only_upgrade=False,
             allow_unauthenticated=False):
     pkg_list = []
     packages = ""
@@ -656,6 +671,11 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             autoremove = ''
 
+        if no_remove:
+            no_remove = '--auto-remove'
+        else:
+            no_remove = ''
+
         if only_upgrade:
             only_upgrade = '--only-upgrade'
         else:
@@ -667,10 +687,10 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             fixed = ''
 
         if build_dep:
-            cmd = "%s -y --no-remove %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, check_arg, packages)
+            cmd = "%s -y %s %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, no_remove, check_arg, packages)
         else:
-            cmd = "%s -y --no-remove %s %s %s %s %s %s install %s" % \
-                  (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, check_arg, packages)
+            cmd = "%s -y %s %s %s %s %s %s %s install %s" % \
+                  (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, no_remove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -720,7 +740,7 @@ def get_field_of_deb(m, deb_file, field="Version"):
     return to_native(stdout).strip('\n')
 
 
-def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated, dpkg_options):
+def install_deb(m, debs, cache, force, no_remove, install_recommends, allow_unauthenticated, dpkg_options):
     changed = False
     deps_to_install = []
     pkgs_to_install = []
@@ -762,6 +782,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
     if deps_to_install:
         (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
                                      install_recommends=install_recommends,
+                                     no_remove=no_remove,
                                      allow_unauthenticated=allow_unauthenticated,
                                      dpkg_options=expand_dpkg_options(dpkg_options))
         if not success:
@@ -891,7 +912,7 @@ def cleanup(m, purge=False, force=False, operation=None,
 
 def upgrade(m, mode="yes", force=False, default_release=None,
             use_apt_get=False,
-            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False,
+            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False, no_remove=False,
             allow_unauthenticated=False,
             ):
 
@@ -933,6 +954,11 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         force_yes = ''
 
+    if no_remove:
+        no_remove = '--no-remove'
+    else:
+        no_remove = ''
+
     allow_unauthenticated = '--allow-unauthenticated' if allow_unauthenticated else ''
 
     if apt_cmd is None:
@@ -943,7 +969,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
                             "to have APTITUDE in path or use 'force_apt_get=True'")
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
-    cmd = '%s -y %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, allow_unauthenticated, check_arg, upgrade_command)
+    cmd = '%s -y %s %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, no_remove, allow_unauthenticated, check_arg, upgrade_command)
 
     if default_release:
         cmd += " -t '%s'" % (default_release,)
@@ -1029,6 +1055,7 @@ def main():
             dpkg_options=dict(type='str', default=DPKG_OPTIONS),
             autoremove=dict(type='bool', default=False),
             autoclean=dict(type='bool', default=False),
+            no_remove=dict(type='bool', aliases=['no-remove']),
             policy_rc_d=dict(type='int', default=None),
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
@@ -1084,6 +1111,7 @@ def main():
     allow_unauthenticated = p['allow_unauthenticated']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
+    no_remove = p['no_remove']
     autoclean = p['autoclean']
 
     # Get the cache object
@@ -1155,6 +1183,7 @@ def main():
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
                         allow_unauthenticated=allow_unauthenticated,
+                        no_remove=no_remove,
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
         unfiltered_packages = p['package'] or ()
@@ -1165,7 +1194,7 @@ def main():
         if latest and all_installed:
             if packages:
                 module.fail_json(msg='unable to install additional packages when upgrading all installed packages')
-            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, allow_unauthenticated)
+            upgrade(module, 'yes', force_yes, p['default_release'], use_apt_get, dpkg_options, no_remove, autoremove, allow_unauthenticated)
 
         if packages:
             for package in packages:
@@ -1203,6 +1232,7 @@ def main():
                 build_dep=state_builddep,
                 fixed=state_fixed,
                 autoremove=autoremove,
+                no_remove=no_remove,
                 only_upgrade=p['only_upgrade'],
                 allow_unauthenticated=allow_unauthenticated
             )
