@@ -273,6 +273,13 @@ f_ansible_galaxy_status \
     ansible-galaxy role info -p ./testroles --offline testdesc | tee out.txt
     grep 'description: Top level' out.txt
 
+    # test multiple role listing
+    ansible-galaxy role init otherrole --init-path ./testroles
+    ansible-galaxy role info -p ./testroles --offline testdesc otherrole | tee out.txt
+    grep 'Role: testdesc' out.txt
+    grep 'Role: otherrole' out.txt
+
+
 popd # ${role_testdir}
 rm -fr "${role_testdir}"
 
