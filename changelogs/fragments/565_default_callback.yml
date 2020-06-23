@@ -1,0 +1,2 @@
+minor_changes:
+- default_callback - moving 'check_mode_markers' documentation in default_callback doc_fragment (https://github.com/ansible-collections/community.general/issues/565).
