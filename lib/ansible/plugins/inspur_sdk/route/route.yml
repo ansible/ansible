@@ -1,0 +1,27 @@
+SA5112M5:
+    common: NF5180M5
+NF5180M5:
+    common: NF5180M5
+SA5212M5:
+    common: NF5280M5
+    blackstone: NF5280M5_436
+    4.34: NF5280M5_435
+    4.35: NF5280M5_435
+    4.36: NF5280M5_436
+    4.37: NF5280M5_436
+    4.38: NF5280M5_436
+NF5280M5:
+    common: NF5280M5
+    blackstone: NF5280M5_436
+    4.34: NF5280M5_435
+    4.35: NF5280M5_435
+    4.36: NF5280M5_436
+    4.37: NF5280M5_436
+    4.38: NF5280M5_436
+SP7-2104P:
+    common: NF5180M5
+
+
+
+    
+    

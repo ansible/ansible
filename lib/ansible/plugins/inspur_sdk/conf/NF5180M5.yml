@@ -1,0 +1,98 @@
+﻿systems:
+    getcapabilities: capabilities
+    getcpu:
+    getmemory: memoryM2
+    powercontrol: powercontrolM2
+    gethealth: 
+    getsysboot:
+    geteventlog:
+    downloadtfalog:
+    gethealthevent:
+    getraid:
+    getldisk:
+    clearsel:
+    getnic:
+    setsysboot:
+    powerctrldisk:
+    powerctrlpcie:
+    getbios:
+    setbios:
+    setbiospwd:
+    getbiossetting:
+    getbiosresult:
+    getbiosdebug:
+    clearbiospwd:
+    restorebios:
+    setbiosdebug:
+    mountvmm:
+    setthreshold:
+    downloadfandiag:
+    downloadsol:
+    sethsc:
+chassis:
+    getproduct:
+    setproductserial:
+    getfru:
+    getfan:
+    fancontrol:
+    getsensor:
+    gettemp:
+    getvolt:
+    getthreshold:
+    getpwrcap:
+    getpsu:
+    recoverypsu:
+    getpdisk:
+    getpcie:
+    locateserver:
+    locatedisk:
+Managers:
+    getip:
+    getdns:
+    gettrap:
+    restorebmc:
+    collect:
+    settime:
+    settimezone:
+    resetbmc:
+    setip:
+    setvlan:
+    getvnc:
+    setvnc:
+    getservice:
+    setservice:
+    getmgmtport:
+    getserialport:
+    setserialport:
+    setadaptiveport:
+    settrapcom:
+    settrapdest:
+    triggernmi:
+    exportbmccfg:
+    importbmccfg:
+    exportbioscfg:
+    importbioscfg:
+    delvncsession:
+    sendipmirawcmd:
+AccountService:
+    getuser:
+    adduser:
+    deluser:
+    setpwd:
+    setpriv:
+updateservice:
+    getfw:
+    getupdatestate:
+    fwupdate:
+EventServices:
+    geteventsub:
+    addeventsub:
+    deleventsub:
+TaskService:
+    gettaskstate:
+    cancletask:
+       
+    
+    
+    
+     

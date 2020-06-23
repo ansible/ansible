@@ -1,0 +1,114 @@
+﻿systems:
+    capabilities: capabilities
+    cpu: cpuM1     
+    memory: getfru
+    powercontrol: powercontrolM5
+    health: none
+    sysboot:
+    log:
+        eventlog: eventlogM1
+        downloadtfalog:
+        healthevent:
+        clearsel:
+    raid:
+    ldisk:
+    nic:
+    setsysboot:
+    powerctrldisk:
+    powerctrlpcie:
+    bios:
+        bios:
+        setbios:
+        setbiospwd:
+        biossetting:
+        biosresult:
+        biosdebug:
+        clearbiospwd:
+        restorebios:
+        setbiosdebug:
+    mountvmm:
+    threshold:
+        threshold:
+        setthreshold:
+    downloadfandiag:    
+    downloadsol:
+    sethsc:
+chassis:
+    product:
+        fru:
+        product:
+        setproductserial:
+    fan:
+        fan:
+        fancontrol:
+    sensor:
+        sensor:
+        temp:
+        volt:
+    pwrcap:
+    psu:
+        psu:
+        recoverypsu:
+    pdisk:
+        pdisk:
+        locatedisk:
+    pcie:
+    locateserver:     
+managers:
+    ip:                              
+    dns:
+    bmc:
+        restorebmc:
+        resetbmc:
+    collect:
+    ntp:
+        settime:
+        settimezone:
+    setip:
+    setvlan:
+    vnc:
+        vnc:
+        setvnc:
+        delvncsession:
+    service:
+        service:
+        setservice:
+    mgmtport:
+    serialport:
+        serialport:    
+        setserialport:
+    setadaptiveport:
+    trap:
+        trap:
+        settrapcom:
+        settrapdest:
+    triggernmi:
+    export:
+        exportbmccfg:
+        importbmccfg:
+        exportbioscfg:
+        importbioscfg:
+    sendipmirawcmd:
+accountService:
+    user:
+        user:
+        adduser:
+        deluser:
+        setpwd:
+        setpriv:
+updateservice:
+    fw:
+    updatestate:
+    fwupdate:
+eventServices:
+    eventsub:
+    addeventsub:
+    deleventsub:
+taskService:
+    taskstate:
+    cancletask:
+       
+    
+    
+    
+     
