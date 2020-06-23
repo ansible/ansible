@@ -1,18 +1,8 @@
-docs/bin/find-plugin-refs.py future-import-boilerplate
-docs/bin/find-plugin-refs.py metaclass-boilerplate
-docs/docsite/_extensions/pygments_lexer.py future-import-boilerplate
-docs/docsite/_extensions/pygments_lexer.py metaclass-boilerplate
-docs/docsite/_themes/sphinx_rtd_theme/__init__.py future-import-boilerplate
-docs/docsite/_themes/sphinx_rtd_theme/__init__.py metaclass-boilerplate
-docs/docsite/rst/conf.py future-import-boilerplate
-docs/docsite/rst/conf.py metaclass-boilerplate
 docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
 examples/play.yml shebang
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
-examples/scripts/uptime.py future-import-boilerplate
-examples/scripts/uptime.py metaclass-boilerplate
 hacking/build-ansible.py shebang # only run by release engineers, Python 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.7!skip # release process only, 3.6+ required
@@ -41,18 +31,6 @@ hacking/build_library/build_ansible/command_plugins/release_announcement.py comp
 hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.6!skip # release process and docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-2.7!skip # release process and docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/update_intersphinx.py compile-3.5!skip # release process and docs build only, 3.6+ required
-hacking/fix_test_syntax.py future-import-boilerplate
-hacking/fix_test_syntax.py metaclass-boilerplate
-hacking/get_library.py future-import-boilerplate
-hacking/get_library.py metaclass-boilerplate
-hacking/report.py future-import-boilerplate
-hacking/report.py metaclass-boilerplate
-hacking/return_skeleton_generator.py future-import-boilerplate
-hacking/return_skeleton_generator.py metaclass-boilerplate
-hacking/test-module.py future-import-boilerplate
-hacking/test-module.py metaclass-boilerplate
-hacking/tests/gen_distribution_version_testcase.py future-import-boilerplate
-hacking/tests/gen_distribution_version_testcase.py metaclass-boilerplate
 lib/ansible/cli/console.py pylint:blacklisted-name
 lib/ansible/cli/scripts/ansible_cli_stub.py shebang
 lib/ansible/cli/scripts/ansible_connection_cli_stub.py shebang
@@ -212,39 +190,19 @@ lib/ansible/plugins/strategy/__init__.py pylint:ansible-deprecated-version
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
 lib/ansible/vars/hostvars.py pylint:blacklisted-name
-test/integration/targets/ansible-runner/files/adhoc_example1.py future-import-boilerplate
-test/integration/targets/ansible-runner/files/adhoc_example1.py metaclass-boilerplate
-test/integration/targets/ansible-runner/files/playbook_example1.py future-import-boilerplate
-test/integration/targets/ansible-runner/files/playbook_example1.py metaclass-boilerplate
 test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
-test/integration/targets/async/library/async_test.py future-import-boilerplate
-test/integration/targets/async/library/async_test.py metaclass-boilerplate
-test/integration/targets/async_fail/library/async_test.py future-import-boilerplate
-test/integration/targets/async_fail/library/async_test.py metaclass-boilerplate
-test/integration/targets/collections_plugin_namespace/collection_root/ansible_collections/my_ns/my_col/plugins/lookup/lookup_no_future_boilerplate.py future-import-boilerplate
+test/integration/targets/collections_plugin_namespace/collection_root/ansible_collections/my_ns/my_col/plugins/lookup/lookup_no_future_boilerplate.py future-import-boilerplate  # testing Python 2.x implicit relative imports
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util2.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/module_utils/my_util3.py pylint:relative-beyond-top-level
 test/integration/targets/collections_relative_imports/collection_root/ansible_collections/my_ns/my_col/plugins/modules/my_module.py pylint:relative-beyond-top-level
-test/integration/targets/expect/files/test_command.py future-import-boilerplate
-test/integration/targets/expect/files/test_command.py metaclass-boilerplate
 test/integration/targets/gathering_facts/library/bogus_facts shebang
 test/integration/targets/gathering_facts/library/facts_one shebang
 test/integration/targets/gathering_facts/library/facts_two shebang
-test/integration/targets/get_url/files/testserver.py future-import-boilerplate
-test/integration/targets/get_url/files/testserver.py metaclass-boilerplate
-test/integration/targets/group/files/gidget.py future-import-boilerplate
-test/integration/targets/group/files/gidget.py metaclass-boilerplate
-test/integration/targets/ignore_unreachable/fake_connectors/bad_exec.py future-import-boilerplate
-test/integration/targets/ignore_unreachable/fake_connectors/bad_exec.py metaclass-boilerplate
-test/integration/targets/ignore_unreachable/fake_connectors/bad_put_file.py future-import-boilerplate
-test/integration/targets/ignore_unreachable/fake_connectors/bad_put_file.py metaclass-boilerplate
-test/integration/targets/incidental_script_inventory_vmware_inventory/vmware_inventory.py future-import-boilerplate
-test/integration/targets/incidental_script_inventory_vmware_inventory/vmware_inventory.py metaclass-boilerplate
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xSetReboot/ANSIBLE_xSetReboot.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/DSCResources/ANSIBLE_xTestResource/ANSIBLE_xTestResource.psm1 pslint!skip
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.0/xTestDsc.psd1 pslint!skip
@@ -255,65 +213,20 @@ test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!
 test/integration/targets/lookup_ini/lookup-8859-15.ini no-smart-quotes
 test/integration/targets/module_precedence/lib_with_extension/a.ini shebang
 test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
-test/integration/targets/module_precedence/lib_with_extension/ping.py future-import-boilerplate
-test/integration/targets/module_precedence/lib_with_extension/ping.py metaclass-boilerplate
-test/integration/targets/module_precedence/multiple_roles/bar/library/ping.py future-import-boilerplate
-test/integration/targets/module_precedence/multiple_roles/bar/library/ping.py metaclass-boilerplate
-test/integration/targets/module_precedence/multiple_roles/foo/library/ping.py future-import-boilerplate
-test/integration/targets/module_precedence/multiple_roles/foo/library/ping.py metaclass-boilerplate
 test/integration/targets/module_precedence/roles_with_extension/foo/library/a.ini shebang
 test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.ini shebang
-test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.py future-import-boilerplate
-test/integration/targets/module_precedence/roles_with_extension/foo/library/ping.py metaclass-boilerplate
-test/integration/targets/module_utils/library/test.py future-import-boilerplate
-test/integration/targets/module_utils/library/test.py metaclass-boilerplate
-test/integration/targets/module_utils/library/test_env_override.py future-import-boilerplate
-test/integration/targets/module_utils/library/test_env_override.py metaclass-boilerplate
-test/integration/targets/module_utils/library/test_failure.py future-import-boilerplate
-test/integration/targets/module_utils/library/test_failure.py metaclass-boilerplate
-test/integration/targets/module_utils/library/test_override.py future-import-boilerplate
-test/integration/targets/module_utils/library/test_override.py metaclass-boilerplate
+test/integration/targets/module_utils/library/test.py future-import-boilerplate # allow testing of Python 2.x implicit relative imports
 test/integration/targets/module_utils/module_utils/bar0/foo.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/foo.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/sub/bar/__init__.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/sub/bar/bar.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/yak/zebra/foo.py pylint:blacklisted-name
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
-test/integration/targets/pause/test-pause.py future-import-boilerplate
-test/integration/targets/pause/test-pause.py metaclass-boilerplate
-test/integration/targets/pip/files/ansible_test_pip_chdir/__init__.py future-import-boilerplate
-test/integration/targets/pip/files/ansible_test_pip_chdir/__init__.py metaclass-boilerplate
-test/integration/targets/pip/files/setup.py future-import-boilerplate
-test/integration/targets/pip/files/setup.py metaclass-boilerplate
-test/integration/targets/run_modules/library/test.py future-import-boilerplate
-test/integration/targets/run_modules/library/test.py metaclass-boilerplate
-test/integration/targets/script/files/no_shebang.py future-import-boilerplate
-test/integration/targets/script/files/no_shebang.py metaclass-boilerplate
-test/integration/targets/service/files/ansible_test_service.py future-import-boilerplate
-test/integration/targets/service/files/ansible_test_service.py metaclass-boilerplate
-test/integration/targets/setup_rpm_repo/files/create-repo.py future-import-boilerplate
-test/integration/targets/setup_rpm_repo/files/create-repo.py metaclass-boilerplate
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
 test/integration/targets/template/files/foo.dos.txt line-endings
-test/integration/targets/template/role_filter/filter_plugins/myplugin.py future-import-boilerplate
-test/integration/targets/template/role_filter/filter_plugins/myplugin.py metaclass-boilerplate
 test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
-test/integration/targets/infra/library/test.py future-import-boilerplate
-test/integration/targets/infra/library/test.py metaclass-boilerplate
 test/integration/targets/unicode/unicode.yml no-smart-quotes
-test/integration/targets/uri/files/testserver.py future-import-boilerplate
-test/integration/targets/uri/files/testserver.py metaclass-boilerplate
-test/integration/targets/var_precedence/ansible-var-precedence-check.py future-import-boilerplate
-test/integration/targets/var_precedence/ansible-var-precedence-check.py metaclass-boilerplate
-test/integration/targets/builtin_vars_prompt/test-vars_prompt.py future-import-boilerplate
-test/integration/targets/builtin_vars_prompt/test-vars_prompt.py metaclass-boilerplate
-test/integration/targets/vault/test-vault-client.py future-import-boilerplate
-test/integration/targets/vault/test-vault-client.py metaclass-boilerplate
-test/integration/targets/wait_for/files/testserver.py future-import-boilerplate
-test/integration/targets/wait_for/files/testserver.py metaclass-boilerplate
-test/integration/targets/want_json_modules_posix/library/helloworld.py future-import-boilerplate
-test/integration/targets/want_json_modules_posix/library/helloworld.py metaclass-boilerplate
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_exec_wrapper/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quote support for env vars
 test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
