@@ -1046,23 +1046,6 @@ DEFAULT_SFTP_BATCH_MODE:
   - {key: sftp_batch_mode, section: ssh_connection}
   type: boolean
   yaml: {key: ssh_connection.sftp_batch_mode}
-DEFAULT_SQUASH_ACTIONS:
-  name: Squashable actions
-  default: apk, apt, dnf, homebrew, openbsd_pkg, pacman, pip, pkgng, yum, zypper
-  description:
-    - Ansible can optimise actions that call modules that support list parameters when using ``with_`` looping.
-      Instead of calling the module once for each item, the module is called once with the full list.
-    - The default value for this setting is only for certain package managers, but it can be used for any module.
-    - Currently, this is only supported for modules that have a name or pkg parameter, and only when the item is the only thing being passed to the parameter.
-  env: [{name: ANSIBLE_SQUASH_ACTIONS}]
-  ini:
-  - {key: squash_actions, section: defaults}
-  type: list
-  version_added: "2.0"
-  deprecated:
-    why: Loop squashing is deprecated and this configuration will no longer be used
-    version: "2.11"
-    alternatives: a list directly with the module argument
 DEFAULT_SSH_TRANSFER_METHOD:
   # TODO: move to ssh plugin
   default:

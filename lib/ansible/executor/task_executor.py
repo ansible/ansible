@@ -80,10 +80,6 @@ class TaskExecutor:
     class.
     '''
 
-    # Modules that we optimize by squashing loop items into a single call to
-    # the module
-    SQUASH_ACTIONS = frozenset(C.DEFAULT_SQUASH_ACTIONS)
-
     def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q):
         self._host = host
         self._task = task
@@ -295,9 +291,6 @@ class TaskExecutor:
                             u" to something else to avoid variable collisions and unexpected behavior." % loop_var)
 
         ran_once = False
-        if self._task.loop_with:
-            # Only squash with 'with_:' not with the 'loop:', 'magic' squashing can be removed once with_ loops are
-            items = self._squash_items(items, loop_var, task_vars)
 
         no_log = False
         items_len = len(items)
@@ -410,90 +403,6 @@ class TaskExecutor:
         self._task.no_log = no_log
 
         return results
-
-    def _squash_items(self, items, loop_var, variables):
-        '''
-        Squash items down to a comma-separated list for certain modules which support it
-        (typically package management modules).
-        '''
-        name = None
-        try:
-            # _task.action could contain templatable strings (via action: and
-            # local_action:)  Template it before comparing.  If we don't end up
-            # optimizing it here, the templatable string might use template vars
-            # that aren't available until later (it could even use vars from the
-            # with_items loop) so don't make the templated string permanent yet.
-            templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
-            task_action = self._task.action
-            if templar.is_template(task_action):
-                task_action = templar.template(task_action, fail_on_undefined=False)
-
-            if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
-                if all(isinstance(o, string_types) for o in items):
-                    final_items = []
-
-                    found = None
-                    for allowed in ['name', 'pkg', 'package']:
-                        name = self._task.args.pop(allowed, None)
-                        if name is not None:
-                            found = allowed
-                            break
-
-                    # This gets the information to check whether the name field
-                    # contains a template that we can squash for
-                    template_no_item = template_with_item = None
-                    if name:
-                        if templar.is_template(name):
-                            variables[loop_var] = '\0$'
-                            template_no_item = templar.template(name, variables, cache=False)
-                            variables[loop_var] = '\0@'
-                            template_with_item = templar.template(name, variables, cache=False)
-                            del variables[loop_var]
-
-                        # Check if the user is doing some operation that doesn't take
-                        # name/pkg or the name/pkg field doesn't have any variables
-                        # and thus the items can't be squashed
-                        if template_no_item != template_with_item:
-                            if self._task.loop_with and self._task.loop_with not in ('items', 'list'):
-                                value_text = "\"{{ query('%s', %r) }}\"" % (self._task.loop_with, self._task.loop)
-                            else:
-                                value_text = '%r' % self._task.loop
-                            # Without knowing the data structure well, it's easiest to strip python2 unicode
-                            # literals after stringifying
-                            value_text = re.sub(r"\bu'", "'", value_text)
-
-                            display.deprecated(
-                                'Invoking "%s" only once while using a loop via squash_actions is deprecated. '
-                                'Instead of using a loop to supply multiple items and specifying `%s: "%s"`, '
-                                'please use `%s: %s` and remove the loop' % (self._task.action, found, name, found, value_text),
-                                version='2.11', collection_name='ansible.builtin'
-                            )
-                            for item in items:
-                                variables[loop_var] = item
-                                if self._task.evaluate_conditional(templar, variables):
-                                    new_item = templar.template(name, cache=False)
-                                    final_items.append(new_item)
-                            self._task.args['name'] = final_items
-                            # Wrap this in a list so that the calling function loop
-                            # executes exactly once
-                            return [final_items]
-                        else:
-                            # Restore the name parameter
-                            self._task.args['name'] = name
-                # elif:
-                    # Right now we only optimize single entries.  In the future we
-                    # could optimize more types:
-                    # * lists can be squashed together
-                    # * dicts could squash entries that match in all cases except the
-                    #   name or pkg field.
-        except Exception:
-            # Squashing is an optimization.  If it fails for any reason,
-            # simply use the unoptimized list of items.
-
-            # Restore the name parameter
-            if name is not None:
-                self._task.args['name'] = name
-        return items
 
     def _execute(self, variables=None):
         '''

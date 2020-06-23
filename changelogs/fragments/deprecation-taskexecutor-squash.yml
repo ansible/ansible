@@ -1,0 +1,2 @@
+removed_features:
+  - "`with_*` loops are no longer optimized for modules whose `name` parameters can take lists (mostly package managers). Use `name` instead of looping over individual names with `with_items` and friends."
