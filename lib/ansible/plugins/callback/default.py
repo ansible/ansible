@@ -16,25 +16,7 @@ DOCUMENTATION = '''
       - default_callback
     requirements:
       - set as stdout in configuration
-    options:
-      check_mode_markers:
-        name: Show markers when running in check mode
-        description:
-        - "Toggle to control displaying markers when running in check mode. The markers are C(DRY RUN)
-        at the beggining and ending of playbook execution (when calling C(ansible-playbook --check))
-        and C(CHECK MODE) as a suffix at every play and task that is run in check mode."
-        type: bool
-        default: no
-        version_added: 2.9
-        env:
-          - name: ANSIBLE_CHECK_MODE_MARKERS
-        ini:
-          - key: check_mode_markers
-            section: defaults
 '''
-
-# NOTE: check_mode_markers functionality is also implemented in the following derived plugins:
-#       debug.py, yaml.py, dense.py. Maybe their documentation needs updating, too.
 
 
 from ansible import constants as C
