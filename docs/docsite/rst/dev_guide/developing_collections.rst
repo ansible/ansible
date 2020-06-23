@@ -469,16 +469,51 @@ Collection versions use `Semantic Versioning <https://semver.org/>`_ for version
 
 .. _migrate_to_collection:
 
-Migrating Ansible content to a collection
-=========================================
+Migrating Ansible content to a different collection
+====================================================
 
-You can experiment with migrating existing modules into a collection using the `content_collector tool <https://github.com/ansible/content_collector>`_. The ``content_collector`` is a playbook that helps you migrate content from an Ansible distribution into a collection.
+To migrate content from one collection to another, you need to create three PRs as follows:
 
-.. warning::
+#. Create a PR against the old collection to remove the content.
+#. Create a PR against the new collection to add the files removed in step 1.
+#. Update the ``ansible/ansible:devel`` branch entries for all files moved.
 
-	This tool is in active development and is provided only for experimentation and feedback at this point.
 
-See the `content_collector README <https://github.com/ansible/content_collector>`_ for full details and usage guidelines.
+Removing the content from the old collection
+----------------------------------------------
+
+Create a PR against the old collection repo to remove the modules, module_utils, plugins, and docs_fragments related to this migration:
+
+#. If you are moving an action plugin, include the corresponding module with documentation.
+#. If you are moving a module, move any corresponding action plugin that should stay with it.
+#. Ensure ``meta/`` has updates to ``action_groups.yml`` and ``runtime.yml`` if they did in step #1.
+#. Remove sanity ignore lines from ``tests/sanity/ignore\*.txt``
+#. Remove associated integration tests from ``tests/integrations/targets/`` and unit tests from ``tests/units/plugins/``.
+#. if you are moving from content from ``community.general``, remove entries from ``.github/BOTMETA.yml``.
+#. Carefully review ``meta/runtime.yml`` for any entries, in particular deprecated entries.
+#. Update ``meta/runtime.yml`` to contain redirects for EVERY PLUGIN, pointing to the new collection name.
+
+
+Adding the content to the new collection
+-----------------------------------------
+
+Create a PR in the new collection to:
+
+#. Add ALL the files removed in first PR (from the old collection).
+#. If it is an action plugin, include the corresponding module with documentation.
+#. If it is a module, check if it has a corresponding action plugin that should move with it.
+#. Check ``meta/ `` for relevant updates to ``action_groups.yml`` and ``runtime.yml`` if they exist.
+#. Carefully check ``tests/integration`` and ``tests/units``.
+#. Review ``tests/sanity/ignore-\*.txt`` entries.
+#. Update ``meta/runtime.yml``.
+
+Updating ``ansible/ansible:devel`` branch entries for all files moved
+----------------------------------------------------------------------
+
+Create a third PR on ``ansible/ansible`` repository to:
+
+#. Update ``lib/ansible/config/ansible_builtin_runtime.yml`` (the redirect entry).
+#. Update ``.github/BOTMETA.yml`` (the migrated_to entry)
 
 BOTMETA.yml
 -----------
@@ -486,7 +521,6 @@ BOTMETA.yml
 The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ in the ansible/ansible GitHub repository is the source of truth for:
 
 * ansibullbot
-* the docs build for collections-based modules
 
 Ansibulbot will know how to redirect existing issues and PRs to the new repo.
 The build process for docs.ansible.com will know where to find the module docs.
