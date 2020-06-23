@@ -244,7 +244,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
                 # update the local vars copy for the retry
                 if use_vars.get('ansible_facts') is None:
-                     use_vars['ansible_facts'] = {}
+                    use_vars['ansible_facts'] = {}
                 use_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
 
                 # TODO: this condition prevents 'wrong host' from being updated
