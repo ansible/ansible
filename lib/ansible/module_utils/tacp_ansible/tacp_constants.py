@@ -1,4 +1,4 @@
-class State:
+class API_State:
     RUNNING = "Running"
     SHUTDOWN = "Shut down"
     PAUSED = "Paused"
@@ -8,7 +8,7 @@ class State:
     DELETING = "Deleting"
 
 
-class Action:
+class Playbook_State:
     STARTED = "started"
     SHUTDOWN = "shutdown"
     STOPPED = "stopped"

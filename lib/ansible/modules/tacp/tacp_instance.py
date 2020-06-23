@@ -22,9 +22,14 @@ from uuid import uuid4
 =======
     ActionTimedOutException, InvalidActionUuidException)
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 0648ccf6c0... OL-9822 Do some major refactoring - don't push this yet
 =======
 from ansible.module_utils.tacp_ansible.tacp_constants import Action, State
+=======
+from ansible.module_utils.tacp_ansible.tacp_constants import (
+    Playbook_State, API_State)
+>>>>>>> 51394307ce... OL-9822 Everything working as expected now, refactor completed, need to rebase with devel.
 from ansible.module_utils.tacp_ansible import tacp_utils
 from ansible.module_utils.basic import AnsibleModule
 
@@ -98,33 +103,39 @@ message:
 '''
 
 
-STATE_ACTIONS = [Action.STARTED, Action.SHUTDOWN, Action.STOPPED,
-                 Action.RESTARTED, Action.FORCE_RESTARTED, Action.PAUSED,
-                 Action.ABSENT]
+PLAYBOOK_STATES = [Playbook_State.STARTED, Playbook_State.SHUTDOWN,
+                   Playbook_State.STOPPED, Playbook_State.RESTARTED,
+                   Playbook_State.FORCE_RESTARTED, Playbook_State.PAUSED,
+                   Playbook_State.ABSENT]
 
-STATE_CHANGE_ACTIONS = {
-    (State.RUNNING, Action.STARTED): [],
-    (State.RUNNING, Action.SHUTDOWN): [Action.SHUTDOWN],
-    (State.RUNNING, Action.STOPPED): [Action.STOPPED],
-    (State.RUNNING, Action.RESTARTED): [Action.RESTARTED],
-    (State.RUNNING, Action.FORCE_RESTARTED): [Action.FORCE_RESTARTED],
-    (State.RUNNING, Action.PAUSED): [Action.PAUSED],
-    (State.RUNNING, Action.ABSENT): [Action.ABSENT],
-    (State.SHUTDOWN, Action.STARTED): [Action.STARTED],
-    (State.SHUTDOWN, Action.SHUTDOWN): [],
-    (State.SHUTDOWN, Action.STOPPED): [],
-    (State.SHUTDOWN, Action.RESTARTED): [Action.STARTED],
-    (State.SHUTDOWN, Action.FORCE_RESTARTED): [Action.STARTED],
-    (State.SHUTDOWN, Action.PAUSED): [Action.STARTED, Action.PAUSED],
-    (State.SHUTDOWN, Action.ABSENT): [Action.ABSENT],
-    (State.PAUSED, Action.STARTED): [Action.RESUMED],
-    (State.PAUSED, Action.SHUTDOWN): [Action.RESUMED, Action.SHUTDOWN],
-    (State.PAUSED, Action.STOPPED): [Action.STOPPED],
-    (State.PAUSED, Action.RESTARTED): [Action.RESUMED, Action.RESTARTED],
-    (State.PAUSED, Action.FORCE_RESTARTED):
-        [Action.RESUMED, Action.FORCE_RESTARTED],
-    (State.PAUSED, Action.PAUSED): [],
-    (State.PAUSED, Action.ABSENT): [Action.ABSENT]
+STATE_CHANGES = {
+    (API_State.RUNNING, Playbook_State.STARTED): [],
+    (API_State.RUNNING, Playbook_State.SHUTDOWN): [Playbook_State.SHUTDOWN],
+    (API_State.RUNNING, Playbook_State.STOPPED): [Playbook_State.STOPPED],
+    (API_State.RUNNING, Playbook_State.RESTARTED): [Playbook_State.RESTARTED],
+    (API_State.RUNNING, Playbook_State.FORCE_RESTARTED): [
+        Playbook_State.FORCE_RESTARTED],
+    (API_State.RUNNING, Playbook_State.PAUSED): [Playbook_State.PAUSED],
+    (API_State.RUNNING, Playbook_State.ABSENT): [Playbook_State.ABSENT],
+    (API_State.SHUTDOWN, Playbook_State.STARTED): [Playbook_State.STARTED],
+    (API_State.SHUTDOWN, Playbook_State.SHUTDOWN): [],
+    (API_State.SHUTDOWN, Playbook_State.STOPPED): [],
+    (API_State.SHUTDOWN, Playbook_State.RESTARTED): [Playbook_State.STARTED],
+    (API_State.SHUTDOWN, Playbook_State.FORCE_RESTARTED): [
+        Playbook_State.STARTED],
+    (API_State.SHUTDOWN, Playbook_State.PAUSED): [
+        Playbook_State.STARTED, Playbook_State.PAUSED],
+    (API_State.SHUTDOWN, Playbook_State.ABSENT): [Playbook_State.ABSENT],
+    (API_State.PAUSED, Playbook_State.STARTED): [Playbook_State.RESUMED],
+    (API_State.PAUSED, Playbook_State.SHUTDOWN): [
+        Playbook_State.RESUMED, Playbook_State.SHUTDOWN],
+    (API_State.PAUSED, Playbook_State.STOPPED): [Playbook_State.STOPPED],
+    (API_State.PAUSED, Playbook_State.RESTARTED): [
+        Playbook_State.RESUMED, Playbook_State.RESTARTED],
+    (API_State.PAUSED, Playbook_State.FORCE_RESTARTED):
+        [Playbook_State.RESUMED, Playbook_State.FORCE_RESTARTED],
+    (API_State.PAUSED, Playbook_State.PAUSED): [],
+    (API_State.PAUSED, Playbook_State.ABSENT): [Playbook_State.ABSENT]
 }
 
 MODULE_ARGS = {
@@ -133,7 +144,7 @@ MODULE_ARGS = {
                    'default': 'https://manage.cp.lenovo.com'},
     'name': {'type': 'str', 'required': True},
     'state': {'type': 'str', 'required': True,
-              'choices': STATE_ACTIONS},
+              'choices': PLAYBOOK_STATES},
     'datacenter': {'type': 'str', 'required': False},
     'migration_zone': {'type': 'str', 'required': False},
     'storage_pool': {'type': 'str', 'required': False},
@@ -168,8 +179,6 @@ MODULE = AnsibleModule(
     argument_spec=MODULE_ARGS,
     supports_check_mode=True
 )
-
-RESULT['args'] = MODULE.params
 
 # Define configuration
 CONFIGURATION = tacp_utils.get_configuration(MODULE.params['api_key'],
@@ -218,7 +227,8 @@ def get_parameters_to_create_new_application(playbook_instance):
             resource)] = resource_uuid
 
         if resource == 'template':
-            parameters_to_create_new_application['boot_order'] = resource_list[0].boot_order  # noqa
+            template_boot_order = resource_list[0].boot_order
+            parameters_to_create_new_application['boot_order'] = template_boot_order  # noqa
 
     if playbook_instance['application_group']:
         uuid = RESOURCES['app_group'].get_uuid_by_name(
@@ -233,15 +243,28 @@ def get_parameters_to_create_new_application(playbook_instance):
 
     network_payloads = []
     vnic_payloads = []
-    for vnic in playbook_instance['nics']:
-        if vnic['name'] in [boot_device.name for boot_device
-                            in parameters_to_create_new_application['boot_order']  # noqa
-                            if boot_device.vnic_uuid]:
-            vnic_payload = get_add_vnic_payload()
+    template_vnics = [boot_device for boot_device
+                      in template_boot_order if boot_device.vnic_uuid]
 
-        network_payload = get_add_network_payload(vnic)
-        vnic_payloads.append(vnic_payload)
-        network_payloads.append(network_payload)
+    for playbook_vnic in playbook_instance['nics']:
+        if playbook_vnic['name'] in [vnic.name for vnic in template_vnics]:  # noqa
+            corresponding_template_vnic = [vnic for vnic in
+                                            template_vnics if
+                                            vnic.name == playbook_vnic['name']][0]  # noqa
+
+            vnic_uuid = corresponding_template_vnic.vnic_uuid
+            template_order = corresponding_template_vnic.order
+
+            parameters_to_create_new_vnic = get_parameters_to_create_vnic(
+                datacenter_uuid=parameters_to_create_new_application['datacenter_uuid'],  # noqa
+                playbook_vnic=playbook_vnic,
+                template_order=template_order
+            )
+
+            add_vnic_payload = get_add_vnic_payload(parameters_to_create_new_vnic)  # noqa
+            add_network_payload = get_add_network_payload(
+                add_vnic_payload, vnic_uuid)
+            network_payloads.append(add_network_payload)
 
     parameters_to_create_new_application['networks'] = network_payloads
     parameters_to_create_new_application['vnics'] = vnic_payloads
@@ -249,11 +272,8 @@ def get_parameters_to_create_new_application(playbook_instance):
     parameters_to_create_new_application['memory'] = tacp_utils.convert_memory_abbreviation_to_bytes(  # noqa
         playbook_instance['memory'])
     parameters_to_create_new_application['vm_mode'] = playbook_instance.get(
-        'vm_mode')
-    vtx_enabled = playbook_instance.get('vtx_enabled')
-    if vtx_enabled:
-        vtx_enabled = vtx_enabled.capitalize()
-    parameters_to_create_new_application['vtx_enabled'] = vtx_enabled
+        'vm_mode').capitalize()
+    parameters_to_create_new_application['vtx_enabled'] = playbook_instance.get('vtx_enabled')  # noqa
     parameters_to_create_new_application['auto_recovery_enabled'] = playbook_instance.get('auto_recovery_enabled')  # noqa
     parameters_to_create_new_application['description'] = playbook_instance.get(  # noqa
         'description')
@@ -262,7 +282,7 @@ def get_parameters_to_create_new_application(playbook_instance):
 
 
 def get_create_new_instance_payload(parameters_to_create_new_application):
-    create_instance_payload = tacp.ApiCreateApplicationPayload(
+    create_new_instance_payload = tacp.ApiCreateApplicationPayload(
         name=parameters_to_create_new_application.get('instance_name'),
         datacenter_uuid=parameters_to_create_new_application.get(
             'datacenter_uuid'),
@@ -286,7 +306,7 @@ def get_create_new_instance_payload(parameters_to_create_new_application):
             'application_group_uuid')
     )
 
-    return create_instance_payload
+    return create_new_instance_payload
 
 
 def create_instance(playbook_instance):
@@ -295,7 +315,7 @@ def create_instance(playbook_instance):
     create_new_instance_payload = get_create_new_instance_payload(
         parameters_to_create_new_application)
 
-    created_instance_response = RESOURCES['app'].create(create_instance_payload)  # noqa
+    created_instance_response = RESOURCES['app'].create(create_new_instance_payload)  # noqa
 
     return created_instance_response
 
@@ -319,8 +339,7 @@ def get_instance_uuid(instance_name):
         found_instance = instance_list[0]
         instance_uuid = found_instance.uuid
         return instance_uuid
-
-    fail_with_reason("Instance {} does not exist.".format(instance_name))
+    return None
 
 
 def instance_exists(instance_name):
@@ -344,12 +363,10 @@ def get_current_instance_state(instance_uuid):
 
 
 def update_instance_state(instance_uuid, current_state, target_state):
-    if target_state == State.ABSENT:
-        RESOURCES['app'].delete(instance_uuid)
-        RESULT['changed'] = True
-
-    if current_state in [State.RUNNING, State.SHUTDOWN, State.PAUSED]:
-        for power_action in STATE_CHANGE_ACTIONS[(current_state, target_state)]:  # noqa
+    if current_state in [API_State.RUNNING,
+                         API_State.SHUTDOWN,
+                         API_State.PAUSED]:
+        for power_action in STATE_CHANGES[(current_state, target_state)]:
             instance_power_action(instance_uuid, power_action)
         RESULT['changed'] = True
 
@@ -359,10 +376,10 @@ def add_playbook_vnics(playbook_vnics, instance_uuid):
     template_boot_order = playbook_template.boot_order
 
     template_vnics = [
-        device for device in template_boot_order if device.vnic_uuid]
+        device.name for device in template_boot_order if device.vnic_uuid]
 
     for playbook_vnic in playbook_vnics:
-        if playbook_vnic.name not in template_vnics:
+        if playbook_vnic['name'] not in template_vnics:
             add_vnic_to_instance(playbook_vnic, instance_uuid)
 
 
@@ -382,11 +399,13 @@ def add_vnic_to_instance(playbook_vnic, instance_uuid):
     parameters_to_create_vnic = get_parameters_to_create_vnic(datacenter_uuid,
                                                               playbook_vnic)
     vnic_payload = get_add_vnic_payload(parameters_to_create_vnic)
-    network_payload = get_add_network_payload(vnic_payload)
+    vnic_uuid = str(uuid4())
+    network_payload = get_add_network_payload(vnic_payload, vnic_uuid)
     RESOURCES['update_app'].create_vnic(body=network_payload, uuid=instance_uuid)  # noqa
 
 
-def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic):
+def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
+                                  template_order=None):
     """[summary]
 
     Args:
@@ -423,7 +442,7 @@ def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic):
     network_uuid = networks[0].uuid
     parameters_to_create_vnic['network_uuid'] = network_uuid
 
-    firewall_override_name = playbook_vnic.get(['firewall_override'])
+    firewall_override_name = playbook_vnic.get('firewall_override')
     if firewall_override_name:
         firewall_override_uuid = get_firewall_override_uuid(
             datacenter_uuid,
@@ -436,6 +455,8 @@ def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic):
         firewall_override_uuid = None
     parameters_to_create_vnic['firewall_override_uuid'] = firewall_override_uuid  # noqa
 
+    parameters_to_create_vnic['boot_order'] = template_order
+
     return parameters_to_create_vnic
 
 
@@ -443,7 +464,8 @@ def get_firewall_override_uuid(datacenter_uuid, firewall_override_name):
     """Get the UUID for a firewall override for the provided datacenter.
 
     Args:
-        datacenter_uuid (str): The UUID of the datacenter that the firewall override is a part of.
+        datacenter_uuid (str): The UUID of the datacenter that the firewall 
+            override is a part of.
         firewall_override_name (str): The name of the firewall override.
 
     Returns:
@@ -467,7 +489,8 @@ def get_add_vnic_payload(parameters_to_create_vnic):
         ApiCreateOrEditApplicationNetworkOptionsPayload.
 
     Args:
-        parameters_to_create_vnic (dict): The UUI of the datacenter the vNIC will be in.
+        parameters_to_create_vnic (dict): The UUID of the datacenter 
+            the vNIC will be in.
 
     Returns:
         ApiAddVnicPayload: The payload that can be used in the 'vnics' field
@@ -475,7 +498,8 @@ def get_add_vnic_payload(parameters_to_create_vnic):
     """
 
     vnic_payload = tacp.ApiAddVnicPayload(
-        automatic_mac_assignment=parameters_to_create_vnic['automatic_mac_address'],  # noqa
+        boot_order=parameters_to_create_vnic['boot_order'],
+        automatic_mac_address=parameters_to_create_vnic['automatic_mac_address'],  # noqa
         firewall_override_uuid=parameters_to_create_vnic['firewall_override_uuid'],  # noqa
         mac_address=parameters_to_create_vnic['mac_address'],
         name=parameters_to_create_vnic['name'],
@@ -484,14 +508,16 @@ def get_add_vnic_payload(parameters_to_create_vnic):
     return vnic_payload
 
 
-def get_add_network_payload(vnic_payload):
-    """Create an API Network payload based on a provided ApiAddVnicPayload payload
+def get_add_network_payload(vnic_payload, vnic_uuid):
+    """Create an API Network payload based on a provided ApiAddVnicPayload
+        payload
 
     Args:
-        vnic (ApiAddVnicPayload): A payload for adding a vNIC to a new application instance.
+        vnic (ApiAddVnicPayload): A payload for adding a vNIC to a new
+            application instance.
 
     Returns:
-        ApiCreateOrEditApplicationNetworkOptionsPayload: 
+        ApiCreateOrEditApplicationNetworkOptionsPayload:
 
     """
 
@@ -501,7 +527,7 @@ def get_add_network_payload(vnic_payload):
         mac_address=vnic_payload.mac_address,
         name=vnic_payload.name,
         network_uuid=vnic_payload.network_uuid,
-        vnic_uuid=str(uuid4())
+        vnic_uuid=vnic_uuid
     )
 
     return network_payload
@@ -601,10 +627,10 @@ def add_playbook_disks(playbook_disks, instance_uuid):
 >>>>>>> 5febb4e0fc... OL-9822 Perform major refactoring, run_module is now very concise, most functionality has been broken out into small functions, constants taken outside the run_module scope
 
     template_disks = [
-        device for device in template_boot_order if device.disk_uuid]
+        device.name for device in template_boot_order if device.disk_uuid]
 
     for playbook_disk in playbook_disks:
-        if playbook_disk not in template_disks:
+        if playbook_disk['name'] not in template_disks:
             add_disk_to_instance(playbook_disk, instance_uuid)
 
 
@@ -637,13 +663,13 @@ def create_disk_payload(playbook_disk):
     if iops_limit:
         if int(iops_limit) < MINIMUM_IOPS:
             fail_with_reason(
-                'Could not add disk to instance; disks must have a total IOPS limit of at least 50.')
+                'Could not add disk to instance; disks must have a total IOPS limit of at least 50.')  # noqa
 
     size_gb = playbook_disk.get('size_gb')
     if not size_gb:
         fail_with_reason(
-            'Could not add disk to instance; disks must have a size in GB provided.')
-    size_bytes = tacp_utils.convert_memory_abbreviation_to_bytes(str(disk['size_gb']) + 'GB')  # noqa
+            'Could not add disk to instance; disks must have a size in GB provided.')  # noqa
+    size_bytes = tacp_utils.convert_memory_abbreviation_to_bytes(str(playbook_disk['size_gb']) + 'GB')  # noqa
 
     name = playbook_disk.get('name')
     if not name:
@@ -800,10 +826,10 @@ def get_new_boot_order_entry_for_device(boot_device, playbook_devices):
 
 def get_boot_order_payload(boot_order_entry):
     boot_order_payload = tacp.ApiBootOrderPayload(
-        disk_uuid=boot_order_entry.disk_uuid,
-        name=boot_order_entry.name,
-        order=boot_order_entry.order,
-        vnic_uuid=boot_order_entry.vnic_uuid)
+        disk_uuid=boot_order_entry['disk_uuid'],
+        name=boot_order_entry['name'],
+        order=boot_order_entry['order'],
+        vnic_uuid=boot_order_entry['vnic_uuid'])
 
     return boot_order_payload
 
@@ -832,9 +858,13 @@ def run_module():
         instance_uuid = get_instance_uuid(instance_name)
 
     current_state = get_current_instance_state(instance_uuid)
-    target_state = MODULE.params['state']
+    target_state = playbook_instance['state']
 
-    update_instance_state(current_state, target_state)
+    update_instance_state(instance_uuid, current_state, target_state)
+
+    if target_state != Playbook_State.ABSENT:
+        final_instance = RESOURCES['app'].filter(uuid=instance_uuid)[0]
+        RESULT['instance'] = final_instance.to_dict()
 
     MODULE.exit_json(**RESULT)
 
