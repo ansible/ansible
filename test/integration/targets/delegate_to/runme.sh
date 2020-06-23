@@ -73,3 +73,5 @@ ansible-playbook discovery_applied.yml -i inventory -v "$@"
 
 # https://github.com/ansible/ansible/issues/70168
 ansible-playbook verify_interpreter_delegate_facts.yml -i inventory -v "$@"
+
+ansible-playbook verify_interpreter_auto_delegate_to.yml -i inventory -v "$@"
