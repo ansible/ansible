@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader

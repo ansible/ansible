@@ -3,6 +3,9 @@
 From https://github.com/ryan-roemer/sphinx-bootstrap-theme.
 
 """
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from os import path
 
 __version__ = '0.2.5b2'

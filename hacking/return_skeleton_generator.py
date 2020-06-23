@@ -26,7 +26,9 @@
 # You will likely want to adjust this to remove sensitive data or
 # ensure the `returns` value is correct, and to write a useful description
 
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from collections import OrderedDict
 import json
 import sys
