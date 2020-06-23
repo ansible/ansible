@@ -672,7 +672,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             autoremove = ''
 
         if no_remove:
-            no_remove = '--auto-remove'
+            no_remove = '--no-remove'
         else:
             no_remove = ''
 
