@@ -476,7 +476,7 @@ def flatten(mylist, levels=None, skip_nulls=True):
             continue
         elif is_sequence(element):
             if levels is None:
-                ret.extend(flatten(element))
+                ret.extend(flatten(element, skip_nulls=skip_nulls))
             elif levels >= 1:
                 # decrement as we go down the stack
                 ret.extend(flatten(element, levels=(int(levels) - 1)))
