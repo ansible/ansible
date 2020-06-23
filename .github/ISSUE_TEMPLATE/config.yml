@@ -20,7 +20,7 @@ contact_links:
   about: Please ask and answer usage questions here
 - name: ⚡ Working groups
   url: https://github.com/ansible/community/wiki
-  about: Interedted in improving a specific area? Become a part of a working group!
+  about: Interested in improving a specific area? Become a part of a working group!
 - name: 💼 For Enterprise
   url: https://www.ansible.com/products/engine?utm_medium=github&utm_source=issue_template_chooser
-  about: Red Hat offers supported builds of Ansible Engine
+  about: Red Hat offers support for the Ansible Automation Platform
