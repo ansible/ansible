@@ -464,6 +464,33 @@ class ModuleDepFinder(ast.NodeVisitor):
         self.submodules = set()
         self.module_fqn = module_fqn
 
+        self._visit_map = {
+            'Import': self.visit_Import,
+            'ImportFrom': self.visit_ImportFrom,
+        }
+
+    def generic_visit(self, node):
+        """Called if no explicit visitor function exists for a node."""
+        visit_map = self._visit_map
+        for field, value in ast.iter_fields(node):
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, ast.AST):
+                        try:
+                            visitor = visit_map[item.__class__.__name__]
+                        except KeyError:
+                            visitor = self.generic_visit
+                            visit_map[item.__class__.__name__] = self.generic_visit
+                        visitor(item)
+            elif isinstance(value, ast.AST):
+                if isinstance(value, ast.IfExp):
+                    print(vars(value))
+                    print(vars(value.body))
+                    try:
+                        print(value.body[0].name)
+                    except:
+                        pass
+
     def visit_Import(self, node):
         """
         Handle import ansible.module_utils.MODLIB[.MODLIBn] [as asname]
@@ -710,12 +737,12 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
     """
     # Parse the module and find the imports of ansible.module_utils
     try:
-        tree = ast.parse(data)
+        tree = compile(data, '<unknown>', 'exec', ast.PyCF_ONLY_AST)
     except (SyntaxError, IndentationError) as e:
         raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
 
     finder = ModuleDepFinder(module_fqn)
-    finder.visit(tree)
+    finder.generic_visit(tree)
 
     #
     # Determine what imports that we've found are modules (vs class, function.
