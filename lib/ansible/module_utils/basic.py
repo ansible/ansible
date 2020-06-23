@@ -617,10 +617,8 @@ class AnsibleModule(object):
         self._options_context = list()
         self._tmpdir = None
 
-        self._created_files = []
+        self._created_files = set()
 
-        # This may not be necessary if looking for 'mode' in 'argument_spec' is sufficient
-        self._uses_common_file_args = False
         if add_file_common_args:
             self._uses_common_file_args = True
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1041,8 +1039,12 @@ class AnsibleModule(object):
 
     def set_mode_if_different(self, path, mode, changed, diff=None, expand=True):
 
-        # Remove paths
-        self._created_files[:] = [p for p in self._created_files if p != path]
+        # Remove paths so we do not warn about creating with default permissions
+        # since we are calling this method on the path and setting the specified mode.
+        try:
+            self._created_files.remove(path)
+        except KeyError:
+            pass
 
         if mode is None:
             return changed
@@ -1343,8 +1345,9 @@ class AnsibleModule(object):
         return self.set_fs_attributes_if_different(file_args, changed, diff, expand)
 
     def add_atomic_move_warnings(self):
-        for path in self._created_files:
-            self.warn("File '%s' created with default permissions. Specify 'mode' to avoid this warning." % to_native(path))
+        for path in sorted(self._created_files):
+            self.warn("File '{0}' created with default permissions '{1:o}'. The previous default was '666'. "
+                      "Specify 'mode' to avoid this warning.".format(to_native(path), DEFAULT_PERM))
 
     def add_path_info(self, kwargs):
         '''
@@ -2361,16 +2364,15 @@ class AnsibleModule(object):
                         self.cleanup(b_tmp_dest_name)
 
         if creating:
-            # Keep track of what files we create so later we can see if the permissions are set properly
-            # by calling set_mode_if_different().
+            # Keep track of what files we create here with default permissions so later we can see if the permissions
+            # are explicitly set with a follow up call to set_mode_if_different().
             #
-            # Only bother warning if the module accepts 'mode' parameter so the user can take action.
-            # If the module doesn not allow the user to set 'mode', then the warning is useless to the
+            # Only warn if the module accepts 'mode' parameter so the user can take action.
+            # If the module does not allow the user to set 'mode', then the warning is useless to the
             # user since it provides no actionable information.
             #
-            # Maybe just check for 'mode' in 'argument_spec' instead of using a new attribute
-            if self._uses_common_file_args:
-                self._created_files.append(dest)
+            if self.argument_spec.get('mode') and self.params.get('mode') is None:
+                self._created_files.add(dest)
 
             # make sure the file has the correct permissions
             # based on the current value of umask
