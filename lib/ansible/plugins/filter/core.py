@@ -479,7 +479,7 @@ def flatten(mylist, levels=None, skip_nulls=True):
                 ret.extend(flatten(element, skip_nulls=skip_nulls))
             elif levels >= 1:
                 # decrement as we go down the stack
-                ret.extend(flatten(element, levels=(int(levels) - 1)))
+                ret.extend(flatten(element, levels=(int(levels) - 1), skip_nulls=skip_nulls))
             else:
                 ret.append(element)
         else:
