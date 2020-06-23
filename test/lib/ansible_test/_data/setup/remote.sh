@@ -70,6 +70,9 @@ elif [ "${platform}" = "rhel" ]; then
 
         install_pip
     fi
+
+    # pin packaging and pyparsing to match the downstream vendored versions
+    "${python_interpreter}" -m pip install packaging==20.4 pyparsing==2.4.7 --disable-pip-version-check
 elif [ "${platform}" = "centos" ]; then
     while true; do
         yum install -q -y \
