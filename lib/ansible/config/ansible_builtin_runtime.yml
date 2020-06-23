@@ -8670,7 +8670,7 @@ plugin_routing:
     chef_databag:
       redirect: community.general.chef_databag
     conjur_variable:
-      redirect: community.general.conjur_variable
+      redirect: cyberark.conjur.conjur_variable
     consul_kv:
       redirect: community.general.consul_kv
     credstash:
