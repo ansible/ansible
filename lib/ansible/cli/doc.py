@@ -383,46 +383,54 @@ class DocCLI(CLI):
 
         if collection is not None:
             # get all 'physical plugins'
-            plugins = [x for x, y in _iter_modules_impl([path])]
-            # TODO: check why it is not getting subdirs
+            plugins = [x for x, y in _iter_modules_impl([path], exclude_symlinks=True)]
 
             # consult meta
-            # meta = _get_collection_metadata(collection)
+            meta = _get_collection_metadata('ansible.builtin')
         else:
             plugins = os.listdir(path)
-            #meta = _get_collection_metadata('ansible.builtin')
+            meta = _get_collection_metadata('ansible.builtin')
 
         # TODO: merge meta
-        # print(meta.get('plugin_routing', {}).get(ptype, {}))
+        redirects = {}
+        entries = meta.get('plugin_routing', {}).get(ptype, {})
+        for entry in entries.keys():
+            if 'redirect' in  entries[entry]:
+                redirects[entry] = entries[entry]['redirect']
 
         bkey = ptype.upper()
         for plugin in plugins:
             display.vvvv("Found %s" % plugin)
-            full_path = '/'.join([path, plugin])
 
-            if plugin.startswith('.'):
-                continue
-            elif os.path.isdir(full_path):
-                continue
-            elif any(plugin.endswith(x) for x in C.BLACKLIST_EXTS):
-                continue
-            elif plugin.startswith('__'):
-                continue
-            elif plugin in C.IGNORE_FILES:
-                continue
-            elif plugin .startswith('_'):
-                if os.path.islink(full_path):  # avoids aliases
+            if collection:
+                plugin = '%s.%s' % (collection, plugin)
+            else:
+                full_path = '/'.join([path, plugin])
+
+                if plugin.startswith('.'):
                     continue
+                elif os.path.isdir(full_path):
+                    continue
+                elif any(plugin.endswith(x) for x in C.BLACKLIST_EXTS):
+                    continue
+                elif plugin.startswith('__'):
+                    continue
+                elif plugin in C.IGNORE_FILES:
+                    continue
+                elif plugin .startswith('_'):
+                    if os.path.islink(full_path):  # avoids aliases
+                        continue
 
-            plugin = os.path.splitext(plugin)[0]  # removes the extension
-            plugin = plugin.lstrip('_')  # remove underscore from deprecated plugins
+                plugin = os.path.splitext(plugin)[0]  # removes the extension
+                plugin = plugin.lstrip('_')  # remove underscore from deprecated plugins
 
             if plugin not in BLACKLIST.get(bkey, ()):
 
-                if collection:
-                    plugin = '%s.%s' % (collection, plugin)
+                if plugin in redirects:
+                    plugin_list.add(redirects[plugin])
+                else:
+                    plugin_list.add(plugin)
 
-                plugin_list.add(plugin)
                 display.vvvv("Added %s" % plugin)
 
         return plugin_list

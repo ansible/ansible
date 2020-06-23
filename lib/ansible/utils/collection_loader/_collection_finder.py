@@ -921,7 +921,7 @@ def _nested_dict_get(root_dict, key_list):
     return cur_value
 
 
-def _iter_modules_impl(paths, prefix=''):
+def _iter_modules_impl(paths, prefix='', exclude_symlinks=False):
     # NB: this currently only iterates what's on disk- redirected modules are not considered
     if not prefix:
         prefix = ''
@@ -934,14 +934,18 @@ def _iter_modules_impl(paths, prefix=''):
             continue
         for b_basename in sorted(os.listdir(b_path)):
             b_candidate_module_path = os.path.join(b_path, b_basename)
-            if os.path.isdir(b_candidate_module_path):
+
+            if exclude_symlinks and os.path.islink(b_candidate_module_path):
+                continue
+            elif os.path.isdir(b_candidate_module_path):
                 # exclude things that obviously aren't Python package dirs
                 # FIXME: this dir is adjustable in py3.8+, check for it
                 if b'.' in b_basename or b_basename == b'__pycache__':
                     continue
 
                 # TODO: proper string handling?
-                yield prefix + to_native(b_basename), True
+                for m, case in _iter_modules_impl([b_candidate_module_path], prefix, exclude_symlinks):
+                    yield m, case
             else:
                 # FIXME: match builtin ordering for package/dir/file, support compiled?
                 if b_basename.endswith(b'.py') and b_basename != b'__init__.py':
