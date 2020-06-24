@@ -90,7 +90,7 @@
       ansible_private_key_file: ""
 
   - name: reset connection with {{ ansible_user }}
-      meta: reset_connection
+    meta: reset_connection
 
   - name: check that attempt failed
     assert:
