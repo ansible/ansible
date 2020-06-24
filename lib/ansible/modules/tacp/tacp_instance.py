@@ -598,17 +598,8 @@ def add_disk_to_instance(playbook_disk, instance):
 
     try:
         disk_payload = get_disk_payload(playbook_disk)
-    except tacp_exceptions.InvalidDiskNameException:
-        failure_reason = 'Could not add disk to instance; disks must have a name provided.'  # noqa
-    except tacp_exceptions.InvalidDiskIopsLimitException:
-        failure_reason = 'Could not add disk to instance; disks must have a total IOPS limit of at least 50.'  # noqa
-    except tacp_exceptions.InvalidDiskBandwidthLimitException:
-        failure_reason = 'Could not add disk to instance; disks must have a bandwidth limit of at least 5 MBps (5000000).'  # noqa
-    except tacp_exceptions.InvalidDiskSizeException:
-        failure_reason = 'Could not add disk to instance; disks must have a positive size in GB provided.'  # noqa
-
-    if failure_reason:
-        fail_and_rollback_instance_creation()
+    except Exception as e:
+        fail_and_rollback_instance_creation(str(e), instance)
 
     RESOURCES['update_app'].create_disk(body=disk_payload, uuid=instance.uuid)
 
@@ -633,22 +624,30 @@ def get_disk_payload(playbook_disk):
     bandwidth_limit = playbook_disk.get('bandwidth_limit')
     if bandwidth_limit:
         if int(bandwidth_limit) < MINIMUM_BW_FIVE_MBPS_IN_BYTES:
-            raise tacp_exceptions.InvalidDiskBandwidthLimitException
+            raise tacp_exceptions.InvalidDiskBandwidthLimitException(
+                'Could not add disk to instance; disks must have a bandwidth limit of at least 5 MBps (5000000).'  # noqa
+        )
 
     iops_limit = playbook_disk.get('iops_limit')
     if iops_limit:
         if int(iops_limit) < MINIMUM_IOPS:
-            raise tacp_exceptions.InvalidDiskIopsLimitException
+            raise tacp_exceptions.InvalidDiskIopsLimitException(
+                'Could not add disk to instance; disks must have a total IOPS limit of at least 50.'  # noqa
+        )
 
     size_gb = playbook_disk.get('size_gb')
     if not size_gb:
-        raise tacp_exceptions.InvalidDiskSizeException
+        raise tacp_exceptions.InvalidDiskSizeException(
+            'Could not add disk to instance; disks must have a positive size in GB provided.'  # noqa
+    )
 
     size_bytes = tacp_utils.convert_memory_abbreviation_to_bytes(str(playbook_disk['size_gb']) + 'GB')  # noqa
 
     name = playbook_disk.get('name')
     if not name:
-        raise tacp_exceptions.InvalidDiskNameException
+        raise tacp_exceptions.InvalidDiskNameException(
+            'Could not add disk to instance; disks must have a name provided.'  # noqa
+    )
 
     disk_payload = tacp.ApiDiskSizeAndLimitPayload(bandwidth_limit=bandwidth_limit,  # noqa
                                             iops_limit=iops_limit,
