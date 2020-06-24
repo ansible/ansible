@@ -189,7 +189,7 @@ def get_parameters_to_create_new_application(playbook_instance):
         parameters for creating the appropriate payload elsewhere.
 
     Args:
-        playbook_instance (dict)): The specified instance configuration from
+        playbook_instance (dict): The specified instance configuration from
         the playbook input
 
     Returns:
@@ -376,7 +376,8 @@ def add_playbook_vnics(playbook_vnics, instance):
 
     Args:
         playbook_vnics (list): The vNICs from the playbook to be added.
-        instance_uuid (str): UUID of the instance
+        instance (ApiApplicationInstancePropertiesPayload): A payload
+            containing the properties of the instance
     """
     playbook_template = get_template_for_instance(instance)
     template_boot_order = playbook_template.boot_order
@@ -396,8 +397,8 @@ def add_vnic_to_instance(playbook_vnic, instance):
     Args:
         playbook_vnic (dict): The vNIC configuration as given by the Ansible
             playbook.
-        instance_uuid (str): The UUID of the application instance to which the
-            vNIC will be added.
+        instance (ApiApplicationInstancePropertiesPayload): A payload
+            containing the properties of the instance
     """
     datacenter_uuid = instance.datacenter_uuid
 
@@ -406,17 +407,8 @@ def add_vnic_to_instance(playbook_vnic, instance):
         parameters_to_create_vnic = get_parameters_to_create_vnic(
             datacenter_uuid,
             playbook_vnic)
-    except tacp_exceptions.InvalidVnicNameException:
-        failure_reason = 'Failed to create vNIC payload; an invalid name was provided for a vNIC.'  # noqa
-    except tacp_exceptions.InvalidNetworkNameException:
-        failure_reason = 'Failed to create vNIC payload; an invalid network name was provided.'  # noqa
-    except tacp_exceptions.InvalidNetworkTypeException:
-        failure_reason = 'Failed to create vNIC payload; vNICs must have a type of "VNET" or "VLAN"'  # noqa
-    except tacp_exceptions.InvalidFirewallOverrideNameException:
-        failure_reason = 'Failed to create vNIC payload; an invalid firewall override name was provided for a vNIC'  # noqa
-
-    if failure_reason:
-        fail_and_rollback_instance_creation(failure_reason, instance)
+    except Exception as e:
+        fail_and_rollback_instance_creation(str(e), instance)
 
     vnic_payload = get_add_vnic_payload(parameters_to_create_vnic)
     vnic_uuid = str(uuid4())
@@ -448,7 +440,9 @@ def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
 
     name = playbook_vnic.get('name')
     if not name:
-        raise tacp_exceptions.InvalidVnicNameException
+        raise tacp_exceptions.InvalidVnicNameException(
+            'Failed to create vNIC payload; an invalid name was provided for a vNIC.'  # noqa
+        )
 
     parameters_to_create_vnic['name'] = name
 
@@ -460,13 +454,17 @@ def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
 
     network_type = playbook_vnic.get('type').lower()
     if network_type not in ['vnet', 'vlan']:
-        raise tacp_exceptions.InvalidNetworkTypeException
+        raise tacp_exceptions.InvalidNetworkTypeException(
+            'Failed to create vNIC payload; vNICs must have a type of "VNET" or "VLAN"'  # noqa
+        )
 
     network_resource = RESOURCES[network_type]
 
     networks = network_resource.filter(name=playbook_vnic['network'])
     if not networks:
-        raise tacp_exceptions.InvalidNetworkNameException
+        raise tacp_exceptions.InvalidNetworkNameException(
+            'Failed to create vNIC payload; an invalid network name was provided.'  # noqa
+    )
 
     network_uuid = networks[0].uuid
     parameters_to_create_vnic['network_uuid'] = network_uuid
@@ -477,7 +475,9 @@ def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
             datacenter_uuid,
             firewall_override_name)
         if not firewall_override_uuid:
-            raise tacp_exceptions.InvalidFirewallOverrideNameException
+            raise tacp_exceptions.InvalidFirewallOverrideNameException(
+                'Failed to create vNIC payload; an invalid firewall override name was provided for a vNIC'  # noqa
+        )
     else:
         firewall_override_uuid = None
     parameters_to_create_vnic['firewall_override_uuid'] = firewall_override_uuid  # noqa
@@ -570,7 +570,8 @@ def add_playbook_disks(playbook_disks, instance):
     Args:
         playbook_disks (list): The list of dicts of disk configurations
             specified in the Ansible playbook.
-        instance_uuid (str): The UUID of the instance.
+        instance (ApiApplicationInstancePropertiesPayload): A payload
+            containing the properties of the instance
     """
     playbook_template = get_template_for_instance(instance)
     template_boot_order = playbook_template.boot_order
@@ -590,7 +591,8 @@ def add_disk_to_instance(playbook_disk, instance):
     Args:
         playbook_disk (dict): The configuration of a single disk from the
             Ansible playbook
-        instance_uuid (str): The UUID of the instance.
+        instance (ApiApplicationInstancePropertiesPayload): A payload
+            containing the properties of the instance
     """
     failure_reason = None
 
