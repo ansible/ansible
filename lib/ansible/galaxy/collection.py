@@ -56,6 +56,95 @@ MANIFEST_FORMAT = 1
 ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
 
 
+class CollectionSearch:
+    """Class to encapsulate collection search functionality.
+
+    Search path validation is performed. If an invalid path is found, a warning
+    string is generated and appended to the `warnings` attribute.
+
+    Example usage:
+
+        s = CollectionSearch(['/path1', 'path2'])
+        found_collection = s.find("example.collection")
+        for warning in s.warnings:
+            display.warning(warning)
+    """
+
+    def __init__(self, collection_search_paths):
+        self.warnings = []
+        self._requested_search_paths = collection_search_paths
+        self._valid_search_paths = None
+        self._default_search_paths = C.config.get_configuration_definition('COLLECTIONS_PATHS').get('default')
+
+    def _is_valid_path(self, path):
+        """Returns True if path is valid, False otherwise."""
+
+        # Verify the given path exists and is a directory
+        if not os.path.exists(path):
+            if path not in self._default_search_paths:
+                # don't warn for missing default paths
+                self.warnings.append("- the configured path {0} does not exist.".format(path))
+            return False
+        if not os.path.isdir(path):
+            self.warnings.append("- the configured path {0} exists, but it is not a directory.".format(path))
+            return False
+
+        # Now check for the existence of the ansible_collections subdirectory
+        path = validate_collection_path(path)
+        if not os.path.exists(path):
+            self.warnings.append("- the configured path {0} does not exist.".format(path))
+            return False
+        if not os.path.isdir(path):
+            self.warnings.append("- the configured path {0} exists, but it is not a directory.".format(path))
+            return False
+
+        return True
+
+    @property
+    def valid_search_paths(self):
+        """Of the supplied search paths, return the ones that are valid.
+
+        The paths are only ever validated once.
+        """
+        if self._valid_search_paths is None:
+            self._valid_search_paths = []
+            for path in self._requested_search_paths:
+                path = os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
+                if self._is_valid_path(path):
+                    self._valid_search_paths.append(path)
+        return self._valid_search_paths
+
+    def clear_warnings(self):
+        self.warnings = []
+
+    def find(self, collection_name):
+        """Find a single collection.
+
+        Returns the CollectionRequirement object for the collection, or None if not found.
+        """
+        for path in self.valid_search_paths:
+            validate_collection_name(collection_name)
+            namespace, collection = collection_name.split('.')
+
+            path = validate_collection_path(path)
+            b_collection_path = to_bytes(os.path.join(path, namespace, collection), errors='surrogate_or_strict')
+            if not os.path.exists(b_collection_path):
+                continue
+            else:
+                return CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=True)
+
+        self.warnings.append("- unable to find {0} in collection paths".format(collection_name))
+        return None
+
+    def find_all(self):
+        """Find all collections in the search paths.
+
+        Returns a list of CollectionRequirement objects for the collections.
+        """
+        for path in self.valid_search_paths:
+            pass
+
+
 class CollectionRequirement:
 
     _FILE_MAPPING = [(b'MANIFEST.json', 'manifest_file'), (b'FILES.json', 'files_file')]

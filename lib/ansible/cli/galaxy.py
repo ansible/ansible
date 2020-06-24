@@ -23,6 +23,7 @@ from ansible.galaxy import Galaxy, get_collections_galaxy_meta_info
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.collection import (
     build_collection,
+    CollectionSearch,
     CollectionRequirement,
     download_collections,
     find_existing_collections,
@@ -964,58 +965,20 @@ class GalaxyCLI(CLI):
 
     def execute_info_collection(self):
         """Find and display the metadata for a given collection."""
-
-        collection_name = context.CLIARGS['args'][0]
         collections_search_paths = set(context.CLIARGS['collections_path'])
-        default_collections_path = C.config.get_configuration_definition('COLLECTIONS_PATHS').get('default')
 
-        warnings = []
-        path_found = False
-        collection_found = False
+        search = CollectionSearch(collections_search_paths)
 
-        for path in collections_search_paths:
-            collection_path = GalaxyCLI._resolve_path(path)
-            if not os.path.exists(path):
-                if path in default_collections_path:
-                    # don't warn for missing default paths
-                    continue
-                warnings.append("- the configured path {0} does not exist.".format(collection_path))
-                continue
-
-            if not os.path.isdir(collection_path):
-                warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
-                continue
-
-            path_found = True
-
-            validate_collection_name(collection_name)
-            namespace, collection = collection_name.split('.')
-
-            collection_path = validate_collection_path(collection_path)
-            b_collection_path = to_bytes(os.path.join(collection_path, namespace, collection), errors='surrogate_or_strict')
-
-            if not os.path.exists(b_collection_path):
-                warnings.append("- unable to find {0} in collection paths".format(collection_name))
-                continue
-
-            if not os.path.isdir(collection_path):
-                warnings.append("- the configured path {0}, exists, but it is not a directory.".format(collection_path))
-                continue
-
-            collection_found = True
-            collection = CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=True)
-            self._display_collection_info(collection)
-            break
-
-        # Do not warn if the specific collection was found in any of the search paths
-        if collection_found:
-            warnings = []
-
-        for w in warnings:
-            display.warning(w)
-
-        if not path_found:
-            raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --collections-path")
+        for collection in context.CLIARGS['args']:
+            found_collection = search.find(collection)
+            if found_collection:
+                self._display_collection_info(found_collection)
+                search.clear_warnings()
+            else:
+                for w in search.warnings:
+                    display.warning(w)
+                if not search.valid_search_paths:
+                    raise AnsibleOptionsError("- None of the provided paths were usable. Please specify a valid path with --collections-path")
 
         return 0
 
