@@ -149,7 +149,8 @@ options:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
     version_added: "2.7"
-    type: str
+    type: list
+    elements: str
   disable_excludes:
     description:
       - Disable the excludes defined in DNF config files.

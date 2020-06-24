@@ -118,10 +118,12 @@ options:
             description:
                 - List of flags you want to examine.
             type: list
+            elements: str
         flags_set:
             description:
                 - Flags to be set.
             type: list
+            elements: str
   match:
     description:
       - Specifies a match to use, that is, an extension module that tests for

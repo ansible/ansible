@@ -44,7 +44,7 @@ options:
         description:
             - The path to a keyfile on the remote server to add to the keyring.
         aliases: ['filename']
-        type: str
+        type: path
     keyring:
         description:
             - The full path to specific keyring file in /etc/apt/trusted.gpg.d/
