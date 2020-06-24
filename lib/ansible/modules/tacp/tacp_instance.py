@@ -31,7 +31,7 @@ short_description: Creates and modifies power state of application instances on
 
 description:
     - 'This module can be used to create new application instances on the
-        ThinkAgile CP cloud platform, a well as delete and modify power states
+        ThinkAgile CP cloud platform, as well as delete and modify power states
         of existing application instances.'
     - 'Currently this module cannot modify the resources of existing
         application instances aside from performing deletion and power state
