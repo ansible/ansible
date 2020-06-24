@@ -1122,7 +1122,7 @@ class GalaxyCLI(CLI):
             try:
                 installed = role.install()
             except AnsibleError as e:
-                display.warning(u"- %s %s was NOT installed successfully: %s " % (role.name, role.version, to_text(e)))
+                display.warning(u"- %s %s was NOT installed successfully: %s " % (role.name, role.version or '*', to_text(e)))
                 self.exit_without_ignore()
                 continue
 
@@ -1164,7 +1164,7 @@ class GalaxyCLI(CLI):
                                     display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
             if not installed:
-                display.warning("- %s %s was NOT installed successfully." % (role.name, role.version))
+                display.warning("- %s %s was NOT installed successfully." % (role.name, role.version or '*'))
                 self.exit_without_ignore()
 
         return 0
