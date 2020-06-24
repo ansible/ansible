@@ -390,7 +390,7 @@ COVERAGE_REMOTE_OUTPUT:
   - {name: _ansible_coverage_remote_output}
   type: str
   version_added: '2.9'
-COVERAGE_REMOTE_WHITELIST:
+COVERAGE_REMOTE_PATH_FILTER:
   name: Sets the list of paths to run coverage for.
   description:
   - A list of paths for files on the Ansible controller to run coverage for when executing on the remote host.
@@ -400,7 +400,7 @@ COVERAGE_REMOTE_WHITELIST:
   - This is for internal use only.
   default: '*'
   env:
-  - {name: _ANSIBLE_COVERAGE_REMOTE_WHITELIST}
+  - {name: _ANSIBLE_COVERAGE_REMOTE_PATH_FILTER}
   type: str
   version_added: '2.9'
 ACTION_WARNINGS:

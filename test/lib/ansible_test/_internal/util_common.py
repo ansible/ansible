@@ -394,7 +394,7 @@ def get_coverage_environment(args, target_name, version, temp_path, module_cover
             # is responsible for adding '={language version}=coverage.{hostname}.{pid}.{id}'
             env['_ANSIBLE_COVERAGE_REMOTE_OUTPUT'] = os.path.join(remote_temp_path, '%s=%s=%s' % (
                 args.command, target_name, args.coverage_label or 'remote'))
-            env['_ANSIBLE_COVERAGE_REMOTE_WHITELIST'] = os.path.join(data_context().content.root, '*')
+            env['_ANSIBLE_COVERAGE_REMOTE_PATH_FILTER'] = os.path.join(data_context().content.root, '*')
 
     return env
 
