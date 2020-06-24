@@ -7,11 +7,6 @@ import json
 import re
 import tacp
 
-try:
-    from urllib.parse import quote
-except ImportError:
-    from urllib import quote
-
 from functools import wraps
 
 from tacp.rest import ApiException
@@ -71,6 +66,7 @@ def wait_to_complete(method):
                 sleep(1)
                 time_spent += 1
             raise ActionTimedOutException
+        raise InvalidActionUuidException
     return wrapper
 
 
