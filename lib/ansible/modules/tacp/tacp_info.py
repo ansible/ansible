@@ -22,56 +22,79 @@ DOCUMENTATION = '''
 ---
 module: tacp_info
 
-short_description: This is my test module
-
-version_added: "2.9"
+short_description: Get facts about various resources in ThinkAgile CP.
 
 description:
-    - "This is my longer description explaining my test module"
-
-options:
-    name:
-        description:
-            - This is the message to send to the test module
-        required: true
-    new:
-        description:
-            - Control to demo if the result of this module is changed or not
-        required: false
-
-extends_documentation_fragment:
-    - tacp
+    - This module can be used to retrieve data about various types of resources
+        in the ThinkAgile CP cloud platform.
 
 author:
+    - Lenovo (@lenovo)
     - Xander Madsen (@xmadsen)
+
+requirements:
+- tacp
+
+options:
+    api_key:
+        description:
+            - An API key generated in the Developer Options in the ThinkAgile
+                CP portal. This is required to perform any operations with this
+                module.
+        required: true
+        type: str
+    resource:
+        description:
+           - The type of resource the user wants to retrieve data about.
+           - Valid choices are:
+              - application
+              - application_group
+              - category
+              - datacenter
+              - firewall_profile
+              - instance
+              - marketplace_template
+              - migration_zone
+              - site
+              - storage_pool
+              - tag
+              - template
+              - user
+              - vlan
+              - vnet
+        required: true
+        type: str
 '''
 
 EXAMPLES = '''
-# Pass in a message
-- name: Test with a message
-  tacp_instance:
-    name: hello world
+- name: Get details about application instances from ThinkAgile CP
+  tacp_info:
+    api_key: "{{ api_key}}"
+    resource: instance
 
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  tacp_instance:
-    name: hello world
-    new: true
+- name: Get details about datacenters and networks from ThinkAgile CP
+  tacp_info:
+    api_key: "{{ api_key}}"
+    resource: "{{ resource }}"
+  loop:
+    - datacenter
+    - vlan
+    - vnet
+  loop_control:
+    loop_var: resource
 
-# fail the module
-- name: Test failure of the module
-  tacp_instance:
-    name: fail me
+- name: Get a list of the available marketplace application templates from
+        ThinkAgile CP
+  tacp_info:
+    api_key: "{{ api_key}}"
+    resource: marketplace_template
 '''
 
 RETURN = '''
-original_message:
-    description: The original name param that was passed in
-    type: str
-    returned: always
-message:
-    description: The output message that the test module generates
-    type: str
+resource:
+    description: A dict containing a key with the name of the resource type,
+                    and a list of the returned resources as a value.
+    type: dict
     returned: always
 '''
 
@@ -183,7 +206,8 @@ def run_module():
                 item['tags'] = tacp_utils.fill_in_missing_names_by_uuid(
                     item['tags'], tag_resource, 'tags')
 
-    result[module.params['resource']] = items
+    result['resource'] = {}
+    result['resource'][module.params['resource']] = items
 
     module.exit_json(**result)
 
