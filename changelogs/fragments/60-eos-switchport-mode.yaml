@@ -1,0 +1,2 @@
+bugfixes:
+- l2_interfaces - Included "mode" key. When not specified the mode present in the config is deleted.
