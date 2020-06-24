@@ -78,39 +78,39 @@ message:
 '''
 
 
-PLAYBOOK_STATES = [Playbook_State.STARTED, Playbook_State.SHUTDOWN,
-                   Playbook_State.STOPPED, Playbook_State.RESTARTED,
-                   Playbook_State.FORCE_RESTARTED, Playbook_State.PAUSED,
-                   Playbook_State.ABSENT]
+PLAYBOOK_STATES = [PlaybookState.STARTED, PlaybookState.SHUTDOWN,
+                   PlaybookState.STOPPED, PlaybookState.RESTARTED,
+                   PlaybookState.FORCE_RESTARTED, PlaybookState.PAUSED,
+                   PlaybookState.ABSENT]
 
 STATE_CHANGES = {
-    (API_State.RUNNING, Playbook_State.STARTED): [],
-    (API_State.RUNNING, Playbook_State.SHUTDOWN): [Playbook_State.SHUTDOWN],
-    (API_State.RUNNING, Playbook_State.STOPPED): [Playbook_State.STOPPED],
-    (API_State.RUNNING, Playbook_State.RESTARTED): [Playbook_State.RESTARTED],
-    (API_State.RUNNING, Playbook_State.FORCE_RESTARTED): [
-        Playbook_State.FORCE_RESTARTED],
-    (API_State.RUNNING, Playbook_State.PAUSED): [Playbook_State.PAUSED],
-    (API_State.RUNNING, Playbook_State.ABSENT): [Playbook_State.ABSENT],
-    (API_State.SHUTDOWN, Playbook_State.STARTED): [Playbook_State.STARTED],
-    (API_State.SHUTDOWN, Playbook_State.SHUTDOWN): [],
-    (API_State.SHUTDOWN, Playbook_State.STOPPED): [],
-    (API_State.SHUTDOWN, Playbook_State.RESTARTED): [Playbook_State.STARTED],
-    (API_State.SHUTDOWN, Playbook_State.FORCE_RESTARTED): [
-        Playbook_State.STARTED],
-    (API_State.SHUTDOWN, Playbook_State.PAUSED): [
-        Playbook_State.STARTED, Playbook_State.PAUSED],
-    (API_State.SHUTDOWN, Playbook_State.ABSENT): [Playbook_State.ABSENT],
-    (API_State.PAUSED, Playbook_State.STARTED): [Playbook_State.RESUMED],
-    (API_State.PAUSED, Playbook_State.SHUTDOWN): [
-        Playbook_State.RESUMED, Playbook_State.SHUTDOWN],
-    (API_State.PAUSED, Playbook_State.STOPPED): [Playbook_State.STOPPED],
-    (API_State.PAUSED, Playbook_State.RESTARTED): [
-        Playbook_State.RESUMED, Playbook_State.RESTARTED],
-    (API_State.PAUSED, Playbook_State.FORCE_RESTARTED):
-        [Playbook_State.RESUMED, Playbook_State.FORCE_RESTARTED],
-    (API_State.PAUSED, Playbook_State.PAUSED): [],
-    (API_State.PAUSED, Playbook_State.ABSENT): [Playbook_State.ABSENT]
+    (ApiState.RUNNING, PlaybookState.STARTED): [],
+    (ApiState.RUNNING, PlaybookState.SHUTDOWN): [PlaybookState.SHUTDOWN],
+    (ApiState.RUNNING, PlaybookState.STOPPED): [PlaybookState.STOPPED],
+    (ApiState.RUNNING, PlaybookState.RESTARTED): [PlaybookState.RESTARTED],
+    (ApiState.RUNNING, PlaybookState.FORCE_RESTARTED): [
+        PlaybookState.FORCE_RESTARTED],
+    (ApiState.RUNNING, PlaybookState.PAUSED): [PlaybookState.PAUSED],
+    (ApiState.RUNNING, PlaybookState.ABSENT): [PlaybookState.ABSENT],
+    (ApiState.SHUTDOWN, PlaybookState.STARTED): [PlaybookState.STARTED],
+    (ApiState.SHUTDOWN, PlaybookState.SHUTDOWN): [],
+    (ApiState.SHUTDOWN, PlaybookState.STOPPED): [],
+    (ApiState.SHUTDOWN, PlaybookState.RESTARTED): [PlaybookState.STARTED],
+    (ApiState.SHUTDOWN, PlaybookState.FORCE_RESTARTED): [
+        PlaybookState.STARTED],
+    (ApiState.SHUTDOWN, PlaybookState.PAUSED): [
+        PlaybookState.STARTED, PlaybookState.PAUSED],
+    (ApiState.SHUTDOWN, PlaybookState.ABSENT): [PlaybookState.ABSENT],
+    (ApiState.PAUSED, PlaybookState.STARTED): [PlaybookState.RESUMED],
+    (ApiState.PAUSED, PlaybookState.SHUTDOWN): [
+        PlaybookState.RESUMED, PlaybookState.SHUTDOWN],
+    (ApiState.PAUSED, PlaybookState.STOPPED): [PlaybookState.STOPPED],
+    (ApiState.PAUSED, PlaybookState.RESTARTED): [
+        PlaybookState.RESUMED, PlaybookState.RESTARTED],
+    (ApiState.PAUSED, PlaybookState.FORCE_RESTARTED):
+        [PlaybookState.RESUMED, PlaybookState.FORCE_RESTARTED],
+    (ApiState.PAUSED, PlaybookState.PAUSED): [],
+    (ApiState.PAUSED, PlaybookState.ABSENT): [PlaybookState.ABSENT]
 }
 
 MODULE_ARGS = {
@@ -178,9 +178,9 @@ def fail_with_reason(reason):
     MODULE.fail_json(**RESULT)
 
 
-def fail_and_rollback_instance_creation(reason, instance_uuid):
+def fail_and_rollback_instance_creation(reason, instance):
     RESULT['msg'] = reason + "\n Rolled back application instance creation."
-    RESOURCES['app'].delete(instance_uuid)
+    RESOURCES['app'].delete(instance.uuid)
     MODULE.fail_json()
 
 
@@ -331,58 +331,42 @@ def create_instance(playbook_instance):
     return created_instance_response
 
 
-def instance_power_action(instance_uuid, action):
+def instance_power_action(instance, action):
     RESOURCES['app'].power_action_on_instance_by_uuid(
-        instance_uuid, action
+        instance.uuid, action
     )
     RESULT['changed'] = True
 
 
 def get_instance_by_name(instance_name):
-    instance = RESOURCES['app'].filter(name=instance_name)[0]
+    instance = RESOURCES['app'].filter(name=instance_name)
+    if instance:
+        return instance[0]
 
-    return instance
-
-
-def get_instance_uuid(instance_name):
-    instance_list = RESOURCES['app'].filter(name=instance_name)
-    if instance_list:
-        found_instance = instance_list[0]
-        instance_uuid = found_instance.uuid
-        return instance_uuid
     return None
 
 
 def instance_exists(instance_name):
-    return bool(get_instance_uuid(instance_name))
+    return bool(get_instance_by_name(instance_name))
 
 
-def get_template_for_instance(instance_uuid):
-    instance = RESOURCES['app'].filter(uuid=instance_uuid)[0]
-
+def get_template_for_instance(instance):
     template_uuid = instance.template_uuid
     template = RESOURCES['template'].filter(uuid=template_uuid)[0]
 
     return template
 
 
-def get_current_instance_state(instance_uuid):
-    instance = RESOURCES['app'].filter(uuid=instance_uuid)[0]
-    instance_state = instance.status
-
-    return instance_state
-
-
-def update_instance_state(instance_uuid, current_state, target_state):
-    if current_state in [API_State.RUNNING,
-                         API_State.SHUTDOWN,
-                         API_State.PAUSED]:
+def update_instance_state(instance, current_state, target_state):
+    if current_state in [ApiState.RUNNING,
+                         ApiState.SHUTDOWN,
+                         ApiState.PAUSED]:
         for power_action in STATE_CHANGES[(current_state, target_state)]:
-            instance_power_action(instance_uuid, power_action)
+            instance_power_action(instance, power_action)
         RESULT['changed'] = True
 
 
-def add_playbook_vnics(playbook_vnics, instance_uuid):
+def add_playbook_vnics(playbook_vnics, instance):
     """Given a list of vnics as dicts, add them to the given instance if they
         are not already part of the instance template, since they would
         necessarily already be part of the instance at creation time.
@@ -391,7 +375,7 @@ def add_playbook_vnics(playbook_vnics, instance_uuid):
         playbook_vnics (list): The vNICs from the playbook to be added.
         instance_uuid (str): UUID of the instance
     """
-    playbook_template = get_template_for_instance(instance_uuid)
+    playbook_template = get_template_for_instance(instance)
     template_boot_order = playbook_template.boot_order
 
     template_vnics = [
@@ -399,10 +383,10 @@ def add_playbook_vnics(playbook_vnics, instance_uuid):
 
     for playbook_vnic in playbook_vnics:
         if playbook_vnic['name'] not in template_vnics:
-            add_vnic_to_instance(playbook_vnic, instance_uuid)
+            add_vnic_to_instance(playbook_vnic, instance)
 
 
-def add_vnic_to_instance(playbook_vnic, instance_uuid):
+def add_vnic_to_instance(playbook_vnic, instance):
     """Adds a vNIC to an instance if a vNIC with the same name is not already
         present in that instance.
 
@@ -412,8 +396,7 @@ def add_vnic_to_instance(playbook_vnic, instance_uuid):
         instance_uuid (str): The UUID of the application instance to which the
             vNIC will be added.
     """
-    datacenter_uuid = RESOURCES['app'].filter(
-        uuid=instance_uuid)[0].datacenter_uuid
+    datacenter_uuid = instance.datacenter_uuid
 
     failure_reason = None
     try:
@@ -430,12 +413,12 @@ def add_vnic_to_instance(playbook_vnic, instance_uuid):
         failure_reason = 'Failed to create vNIC payload; an invalid firewall override name was provided for a vNIC'  # noqa
 
     if failure_reason:
-        fail_and_rollback_instance_creation(failure_reason, instance_uuid)
+        fail_and_rollback_instance_creation(failure_reason, instance)
 
     vnic_payload = get_add_vnic_payload(parameters_to_create_vnic)
     vnic_uuid = str(uuid4())
     network_payload = get_add_network_payload(vnic_payload, vnic_uuid)
-    RESOURCES['update_app'].create_vnic(body=network_payload, uuid=instance_uuid)  # noqa
+    RESOURCES['update_app'].create_vnic(body=network_payload, uuid=instance.uuid)  # noqa
 
 
 def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
@@ -577,7 +560,7 @@ def get_add_network_payload(vnic_payload, vnic_uuid):
     return network_payload
 
 
-def add_playbook_disks(playbook_disks, instance_uuid):
+def add_playbook_disks(playbook_disks, instance):
     """Given a list of disks from the Ansible playbook, add them to the
         specified instance.
 
@@ -586,7 +569,7 @@ def add_playbook_disks(playbook_disks, instance_uuid):
             specified in the Ansible playbook.
         instance_uuid (str): The UUID of the instance.
     """
-    playbook_template = get_template_for_instance(instance_uuid)
+    playbook_template = get_template_for_instance(instance)
     template_boot_order = playbook_template.boot_order
 
     template_disks = [
@@ -594,10 +577,10 @@ def add_playbook_disks(playbook_disks, instance_uuid):
 
     for playbook_disk in playbook_disks:
         if playbook_disk['name'] not in template_disks:
-            add_disk_to_instance(playbook_disk, instance_uuid)
+            add_disk_to_instance(playbook_disk, instance)
 
 
-def add_disk_to_instance(playbook_disk, instance_uuid):
+def add_disk_to_instance(playbook_disk, instance):
     """Adds a new disk to an application instance if a disk with the same name
         is not already present in that instance.
 
@@ -605,7 +588,7 @@ def add_disk_to_instance(playbook_disk, instance_uuid):
         playbook_disk (dict): The configuration of a single disk from the
             Ansible playbook
         instance_uuid (str): The UUID of the instance.
-    """    
+    """
     failure_reason = None
 
     try:
@@ -622,7 +605,7 @@ def add_disk_to_instance(playbook_disk, instance_uuid):
     if failure_reason:
         fail_and_rollback_instance_creation()
 
-    RESOURCES['update_app'].create_disk(body=disk_payload, uuid=instance_uuid)
+    RESOURCES['update_app'].create_disk(body=disk_payload, uuid=instance.uuid)
 
 
 def get_disk_payload(playbook_disk):
@@ -697,7 +680,7 @@ def get_full_boot_order_payload_for_playbook(playbook_instance):
     Returns:
         ApiEditApplicationPayload: A payload object containing all the boot
             order objects needed to perform the update operation.
-    """    
+    """
     playbook_devices = {}
     playbook_devices['disks'] = playbook_instance['disks']
     playbook_devices['nics'] = playbook_instance['nics']
@@ -743,14 +726,14 @@ def get_new_boot_order_entry_for_device(boot_device, playbook_devices):
     if boot_device.vnic_uuid:
         new_boot_order_entry['vnic_uuid'] = boot_device.vnic_uuid
         new_boot_order_entry['disk_uuid'] = None
-        playbook_nic = [nic for nic in playbook_devices['nics']
-                        if nic['name'] == name][0]
+        playbook_nic = next(nic for nic in playbook_devices['nics']
+                            if nic['name'] == name)
         new_boot_order_entry['order'] = playbook_nic['boot_order']
     else:
         new_boot_order_entry['vnic_uuid'] = None
         new_boot_order_entry['disk_uuid'] = boot_device.disk_uuid
-        playbook_disk = [disk for disk in playbook_devices['disks']
-                         if disk['name'] == name][0]
+        playbook_disk = next(disk for disk in playbook_devices['disks']
+                             if disk['name'] == name)
         new_boot_order_entry['order'] = playbook_disk['boot_order']
 
     return new_boot_order_entry
@@ -774,28 +757,27 @@ def run_module():
     playbook_instance = MODULE.params
 
     instance_name = playbook_instance['name']
-    instance_uuid = None
 
     if not instance_exists(instance_name):
-        create_instance(playbook_instance)
+        instance_payload = create_instance(playbook_instance)
+        
+        instance = get_instance_by_name(instance_name)
 
-        instance_uuid = get_instance_uuid(instance_name)
-
-        add_playbook_vnics(playbook_instance['nics'], instance_uuid)
-        add_playbook_disks(playbook_instance['disks'], instance_uuid)
+        add_playbook_vnics(playbook_instance['nics'], instance)
+        add_playbook_disks(playbook_instance['disks'], instance)
 
         update_boot_order(playbook_instance)
+    else:
+        instance = get_instance_by_name(instance_name)
 
-    if not instance_uuid:
-        instance_uuid = get_instance_uuid(instance_name)
-
-    current_state = get_current_instance_state(instance_uuid)
+    current_state = instance.status
     target_state = playbook_instance['state']
 
-    update_instance_state(instance_uuid, current_state, target_state)
+    update_instance_state(instance, current_state, target_state)
 
-    if target_state != Playbook_State.ABSENT:
-        final_instance = RESOURCES['app'].filter(uuid=instance_uuid)[0]
+    if target_state != PlaybookState.ABSENT:
+        final_instance = get_instance_by_name(instance_name)
+
         RESULT['instance'] = final_instance.to_dict()
 
     MODULE.exit_json(**RESULT)

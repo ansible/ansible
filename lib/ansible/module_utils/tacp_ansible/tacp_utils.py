@@ -197,14 +197,14 @@ class ApplicationResource(Resource):
             specified by UUID
         """
         power_action_dict = {
-            Playbook_State.STARTED: self.api.start_application_using_put,
-            Playbook_State.SHUTDOWN: self.api.shutdown_application_using_put,
-            Playbook_State.STOPPED: self.api.stop_application_using_put,
-            Playbook_State.RESTARTED: self.api.restart_application_using_put,
-            Playbook_State.FORCE_RESTARTED: self.api.force_restart_application_using_put,  # noqa
-            Playbook_State.PAUSED: self.api.pause_application_using_put,
-            Playbook_State.ABSENT: self.api.delete_application_using_delete,
-            Playbook_State.RESUMED: self.api.resume_application_using_put
+            PlaybookState.STARTED: self.api.start_application_using_put,
+            PlaybookState.SHUTDOWN: self.api.shutdown_application_using_put,
+            PlaybookState.STOPPED: self.api.stop_application_using_put,
+            PlaybookState.RESTARTED: self.api.restart_application_using_put,
+            PlaybookState.FORCE_RESTARTED: self.api.force_restart_application_using_put,  # noqa
+            PlaybookState.PAUSED: self.api.pause_application_using_put,
+            PlaybookState.ABSENT: self.api.delete_application_using_delete,
+            PlaybookState.RESUMED: self.api.resume_application_using_put
         }
         if power_action not in power_action_dict:
             raise InvalidPowerActionException
@@ -223,7 +223,6 @@ class UpdateApplicationResource(Resource):
     def create_vnic(self, body, uuid):
         return self.api.create_application_vnic_using_post(body, uuid)
 
-    @wait_to_complete
     def edit_boot_order(self, body, uuid):
         return self.api.edit_application_boot_order_using_put(body, uuid)
 
