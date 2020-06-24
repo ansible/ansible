@@ -613,6 +613,8 @@ Now you can use this checkout of ``community.general`` in playbooks and roles wi
 
 For collections hosted in the ``ansible_collections`` GitHub org, create a branch and commit your changes on the branch. When you are done (remember to add tests, see :ref:`testing_collections`), push your changes to your fork of the collection and create a Pull Request. For other collections, especially for collections not hosted on GitHub, check the ``README.md`` of the collection for information on contributing to it.
 
+.. _collection_changelogs:
+
 Generating changelogs for a collection
 ======================================
 
@@ -650,10 +652,10 @@ Porting Guide entries
 
 The following changelog fragment categories are consumed by the Ansible changelog generator into the Ansible Porting Guide:
 
-* major_changes
-* breaking_changes
-* deprecated_features
-* removed_features
+* ``major_changes``
+* ``breaking_changes``
+* ``deprecated_features``
+* ``removed_features``
 
 
 .. seealso::
