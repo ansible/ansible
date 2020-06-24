@@ -6,22 +6,34 @@
       privilege: 15
       role: network-operator
       state: present
-      provider: "{{ cli }}"
       configured_password: pass123
 
-  - name: test login
-    expect:
-      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PubkeyAuthentication=no show version"
-      responses:
-        (?i)password: "pass123"
+  - name: reset connection with {{ ansible_user }
+    meta: reset_connection
+
+  - name: test login for {{ ansible_user }} user with password
+    ios_command:
+      commands:
+        - show version
+    vars:
+      ansible_user: auth_user
+      ansible_password: pass123
+
+  - name: reset connection with {{ ansible_user }
+    meta: reset_connection
 
   - name: test login with invalid password (should fail)
-    expect:
-      command: "ssh auth_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PubkeyAuthentication=no show version"
-      responses:
-        (?i)password: "badpass"
+    ios_command:
+      commands:
+        - show version
     ignore_errors: yes
     register: results
+    vars:
+      ansible_user: auth_user
+      ansible_password: badpass
+
+  - name: reset connection with {{ ansible_user }
+    meta: reset_connection
 
   - name: check that attempt failed
     assert:
@@ -33,7 +45,6 @@
     ios_user:
       name: auth_user
       state: absent
-      provider: "{{ cli }}"
     register: result
 
   - name: reset connection
@@ -52,19 +63,34 @@
       privilege: 15
       role: network-operator
       state: present
-      provider: "{{ cli }}"
       sshkey: "{{ lookup('file', 'files/test_rsa.pub') }}"
 
-  - name: test sshkey login
-    shell: "ssh ssh_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o IdentityFile={{ role_path }}/files/test_rsa -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o BatchMode=yes -o PubkeyAuthentication=yes show version"
+  - name: reset connection with {{ ansible_user }
+    meta: reset_connection
 
-  - name: test login without sshkey (should fail)
-    expect:
-      command: "ssh ssh_user@{{ ansible_ssh_host }} -p {{ ansible_ssh_port|default(22) }} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PubkeyAuthentication=no show version"
-      responses:
-        (?i)password: badpass
+  - name: test sshkey login for {{ ansible_user }} user
+    ios_command:
+      commands:
+        - show version
+    vars:
+      ansible_user: ssh_user
+      ansible_private_key_file: "{{ role_path }}/files/test_rsa"
+
+  - name: reset connection with {{ ansible_user }}
+    meta: reset_connection
+
+  - name: test with {{ ansible_user }} user without keys
+    ios_command:
+      commands:
+        - show version
     ignore_errors: yes
     register: results
+    vars:
+      ansible_user: ssh_user
+      ansible_private_key_file: ""
+
+  - name: reset connection with {{ ansible_user }}
+    meta: reset_connection
 
   - name: check that attempt failed
     assert:
@@ -76,7 +102,6 @@
     ios_user:
       name: ssh_user
       state: absent
-      provider: "{{ cli }}"
     register: result
 
   - name: reset connection
