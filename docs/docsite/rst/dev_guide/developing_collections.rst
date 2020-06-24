@@ -616,16 +616,43 @@ For collections hosted in the ``ansible_collections`` GitHub org, create a branc
 Generating changelogs for a collection
 ======================================
 
-We recommend that you use the `antsibull-changelog <https://github.com/ansible-community/antsibull-changelog>`_ tool to generate Ansible-compatible changelogs for your collection. The Ansible changelog uses the output of this tool to collate all the collections included in an Ansible release into one omnibus changelog for the release.
+We recommend that you use the `antsibull-changelog <https://github.com/ansible-community/antsibull-changelog>`_ tool to generate Ansible-compatible changelogs for your collection. The Ansible changelog uses the output of this tool to collate all the collections included in an Ansible release into one combined changelog for the release.
 
 .. note::
 
-	Ansible here refers to the Ansible 2.10 or later release that includes a curated set of collections that rec
+	Ansible here refers to the Ansible 2.10 or later release that includes a curated set of collections.
 
 Understanding antsibull-changelog
 ---------------------------------
 
-The ``antsibull-changelog`` tool allows you to create and update changelogs for Ansible collections that are compatible with the combined Ansible changelogs.
+The ``antsibull-changelog`` tool allows you to create and update changelogs for Ansible collections that are compatible with the combined Ansible changelogs. This is an update to the changelog generator used in prior Ansible releases. The tool adds three new changelog fragment categories: ``breaking_changes``, ``security_fixes`` and ``trivial``. The tool also generates the ``changelog.yaml`` file that Ansible uses to create the combined ``Changelog.rst`` file and Porting guide for the release.
+
+See :ref:`changelogs_how_to` and the `antsibull-changelog documentation <https://github.com/ansible-community/antsibull-changelog/tree/main/docs>`_ for complete details.
+
+
+Generating changelogs
+---------------------
+
+To initialize changelog generation:
+
+#. Install ``antsibull-changelog``: :code:`pip install antsibull-changelog`.
+#. Initialize changelogs for your repository: :code:`antsibull-changelog init <path/to/your/collection>`.
+
+To generate changelogs from the changelog fragments you created:
+
+#. Optionally, validate your changelog fragments: :code:`antsibull-changelog lint`.
+#. Generate the changelog for your release: :code:`antsibull-changelog release [--version version_number]`.
+
+Porting Guide entries
+----------------------
+
+The following changelog fragment categories are consumed by the Ansible changelog generator into the Ansible Porting Guide:
+
+* major_changes
+* breaking_changes
+* deprecated_features
+* removed_features
+
 
 .. seealso::
 
