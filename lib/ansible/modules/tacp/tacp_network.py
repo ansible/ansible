@@ -91,7 +91,7 @@ options:
     autodeploy_nfv:
         description:
             - Whether the network function virtualization (NFV) instance
-                will be create along with the VNET network.
+                will be created along with the VNET network.
             - If this is set to False, the VNET network will need an NFV
                 added manually later before it will work properly.
             - Only valid for VNET network types.
@@ -276,32 +276,100 @@ options:
 '''
 
 EXAMPLES = '''
-# Pass in a message
-- name: Test with a message
-  tacp_instance:
-    name: hello world
+- name: Create a VLAN network on ThinkAgile CP
+    tacp_network:
+      api_key: "{{ api_key }}"
+      name: VLAN-15
+      state: present
+      network_type: VLAN
+      vlan_tag: 15
 
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  tacp_instance:
-    name: hello world
-    new: true
+- name: Delete a VLAN network on ThinkAgile CP
+    tacp_network:
+      api_key: "{{ api_key }}"
+      name: VLAN-15
+      state: absent
+      network_type: VLAN
 
-# fail the module
-- name: Test failure of the module
-  tacp_instance:
-    name: fail me
+- name: Create a VNET network with an NFV on TACP
+    tacp_network:
+      api_key: "{{ api_key }}"
+      name:  Private VNET
+      state: present
+      network_type: VNET
+      autodeploy_nfv: True
+      network_address: 192.168.1.0
+      subnet_mask: 255.255.255.0
+      gateway: 192.168.1.1
+      dhcp:
+        dhcp_start: 192.168.1.100
+        dhcp_end: 192.168.1.200
+        domain_name: test.local
+        lease_time: 86400 # seconds, 24 hours
+        dns1: 1.1.1.1
+        dns2: 8.8.8.8
+      routing:
+        type: VLAN
+        network: Lab-VLAN
+        address_mode: static
+        ip_address: 192.168.100.201
+        subnet_mask: 255.255.255.0
+        gateway: 192.168.100.1
+      nfv:
+        datacenter: Datacenter1
+        storage_pool: Pool1
+        migration_zone: Zone1
+        cpu_cores: 1
+        memory: 1G
+        auto_recovery: True
+
+- name: Create a VNET network with an NFV and static bindings on TACP
+    tacp_network:
+      api_key: "{{ api_key }}"
+      name:  Private VNET
+      state: present
+      network_type: VNET
+      autodeploy_nfv: True
+      network_address: 192.168.1.0
+      subnet_mask: 255.255.255.0
+      gateway: 192.168.1.1
+      dhcp:
+        dhcp_start: 192.168.1.100
+        dhcp_end: 192.168.1.200
+        domain_name: test.local
+        lease_time: 86400 # seconds, 24 hours
+        dns1: 1.1.1.1
+        dns2: 8.8.8.8
+        static_bindings:
+          - hostname: Host1
+            ip_address: 192.168.1.101
+            mac_address: b4:d1:35:00:0f:f1
+          - hostname: Host2
+            ip_address: 192.168.1.102
+            mac_address: b4:d1:35:00:0f:f2
+      routing:
+        type: VLAN
+        network: Lab-VLAN
+        address_mode: static
+        ip_address: 192.168.100.201
+        subnet_mask: 255.255.255.0
+        gateway: 192.168.100.1
+      nfv:
+        datacenter: Datacenter1
+        storage_pool: Pool1
+        migration_zone: Zone1
+        cpu_cores: 1
+        memory: 1G
+        auto_recovery: True
 '''
 
 RETURN = '''
-original_message:
-    description: The original name param that was passed in
+msg:
+    description: 
+        - An error message in the event of invalid input or other
+        unexpected behavior during module execution.
     type: str
-    returned: always
-message:
-    description: The output message that the test module generates
-    type: str
-    returned: always
+    returned: failure
 '''
 
 
