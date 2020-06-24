@@ -50,18 +50,17 @@ class AnsibleDocTest(SanitySingleVersion):
     def filter_targets(self, targets):  # type: (t.List[TestTarget]) -> t.List[TestTarget]
         """Return the given list of test targets, filtered to include only those relevant for the test."""
         # This should use documentable plugins from constants instead
-        plugin_type_blacklist = set([
+        unsupported_plugin_types = set([
             # not supported by ansible-doc
             'action',
             'doc_fragments',
             'filter',
             'module_utils',
-            'netconf',
             'terminal',
             'test',
         ])
 
-        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type not in plugin_type_blacklist]
+        plugin_paths = [plugin_path for plugin_type, plugin_path in data_context().content.plugin_paths.items() if plugin_type not in unsupported_plugin_types]
 
         return [target for target in targets
                 if os.path.splitext(target.path)[1] == '.py'
