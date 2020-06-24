@@ -239,10 +239,10 @@ def get_parameters_to_create_new_application(playbook_instance):
                       in template_boot_order if boot_device.vnic_uuid]
 
     for playbook_vnic in playbook_instance['nics']:
-        if playbook_vnic['name'] in [vnic.name for vnic in template_vnics]:  # noqa
-            corresponding_template_vnic = [vnic for vnic in
-                                            template_vnics if
-                                            vnic.name == playbook_vnic['name']][0]  # noqa
+        if playbook_vnic['name'] in [vnic.name for vnic in template_vnics]:
+            corresponding_template_vnic = next(vnic for vnic in
+                                               template_vnics if
+                                               vnic.name == playbook_vnic['name'])  # noqa
 
             vnic_uuid = corresponding_template_vnic.vnic_uuid
             template_order = corresponding_template_vnic.order
@@ -352,9 +352,12 @@ def instance_exists(instance_name):
 
 def get_template_for_instance(instance):
     template_uuid = instance.template_uuid
-    template = RESOURCES['template'].filter(uuid=template_uuid)[0]
+    template_result = RESOURCES['template'].filter(uuid=template_uuid)
+    if template_result:
+        template = template_result[0]
+        return template
 
-    return template
+    return None
 
 
 def update_instance_state(instance, current_state, target_state):
@@ -760,7 +763,7 @@ def run_module():
 
     if not instance_exists(instance_name):
         instance_payload = create_instance(playbook_instance)
-        
+
         instance = get_instance_by_name(instance_name)
 
         add_playbook_vnics(playbook_instance['nics'], instance)
