@@ -107,6 +107,7 @@ options:
     description:
       - A list of valid, numeric, HTTP status codes that signifies success of the request.
     type: list
+    elements: str
     default: [ 200 ]
   timeout:
     description:
@@ -168,6 +169,7 @@ options:
   unix_socket:
     description:
     - Path to Unix domain socket to use for connection
+    type: path
     version_added: '2.8'
   http_agent:
     description:
@@ -618,7 +620,7 @@ def main():
         follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
         creates=dict(type='path'),
         removes=dict(type='path'),
-        status_code=dict(type='list', default=[200]),
+        status_code=dict(type='list', elements='str', default=[200]),
         timeout=dict(type='int', default=30),
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),

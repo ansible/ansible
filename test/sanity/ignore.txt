@@ -48,6 +48,7 @@ lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
 lib/ansible/module_utils/facts/network/linux.py pylint:blacklisted-name
+lib/ansible/module_utils/facts/system/distribution.py pylint:ansible-bad-function
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSProvideCommentHelp # need to agree on best format for comment location
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSUseApprovedVerbs
@@ -69,9 +70,7 @@ lib/ansible/module_utils/urls.py pylint:blacklisted-name
 lib/ansible/module_utils/urls.py replace-urlopen
 lib/ansible/modules/command.py validate-modules:doc-missing-type
 lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/command.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/command.py validate-modules:undocumented-parameter
-lib/ansible/modules/expect.py validate-modules:doc-missing-type
 lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/blockinfile.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/blockinfile.py validate-modules:doc-default-does-not-match-spec
@@ -91,80 +90,41 @@ lib/ansible/modules/stat.py validate-modules:parameter-invalid
 lib/ansible/modules/stat.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/stat.py validate-modules:undocumented-parameter
 lib/ansible/modules/unarchive.py validate-modules:nonexistent-parameter-documented
-lib/ansible/modules/unarchive.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/get_url.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/uri.py pylint:blacklisted-name
 lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
-lib/ansible/modules/uri.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/uri.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/pip.py pylint:blacklisted-name
-lib/ansible/modules/pip.py validate-modules:doc-elements-mismatch
 lib/ansible/modules/pip.py validate-modules:invalid-ansiblemodule-schema
-lib/ansible/modules/apt.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
-lib/ansible/modules/apt.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/apt.py validate-modules:undocumented-parameter
-lib/ansible/modules/apt_key.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/apt_key.py validate-modules:undocumented-parameter
 lib/ansible/modules/apt_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
 lib/ansible/modules/apt_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/apt_repository.py validate-modules:undocumented-parameter
-lib/ansible/modules/dnf.py validate-modules:doc-missing-type
 lib/ansible/modules/dnf.py validate-modules:doc-required-mismatch
 lib/ansible/modules/dnf.py validate-modules:parameter-invalid
-lib/ansible/modules/dnf.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/dnf.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/dpkg_selections.py validate-modules:doc-missing-type
-lib/ansible/modules/dpkg_selections.py validate-modules:doc-required-mismatch
-lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
-lib/ansible/modules/package_facts.py validate-modules:doc-missing-type
-lib/ansible/modules/package_facts.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/rpm_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum.py pylint:blacklisted-name
-lib/ansible/modules/yum.py validate-modules:doc-missing-type
 lib/ansible/modules/yum.py validate-modules:parameter-invalid
-lib/ansible/modules/yum.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/yum.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
-lib/ansible/modules/yum_repository.py validate-modules:doc-missing-type
-lib/ansible/modules/yum_repository.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/yum_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/yum_repository.py validate-modules:undocumented-parameter
 lib/ansible/modules/git.py pylint:blacklisted-name
 lib/ansible/modules/git.py use-argspec-type-path
 lib/ansible/modules/git.py validate-modules:doc-missing-type
 lib/ansible/modules/git.py validate-modules:doc-required-mismatch
-lib/ansible/modules/git.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/git.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/subversion.py validate-modules:doc-required-mismatch
-lib/ansible/modules/subversion.py validate-modules:parameter-type-not-in-doc
-lib/ansible/modules/subversion.py validate-modules:undocumented-parameter
-lib/ansible/modules/getent.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/hostname.py validate-modules:invalid-ansiblemodule-schema
-lib/ansible/modules/hostname.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/iptables.py pylint:blacklisted-name
-lib/ansible/modules/iptables.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:use-run-command-not-popen
-lib/ansible/modules/setup.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/setup.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/systemd.py validate-modules:parameter-invalid
-lib/ansible/modules/systemd.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/systemd.py validate-modules:return-syntax-error
-lib/ansible/modules/sysvinit.py validate-modules:parameter-list-no-elements
-lib/ansible/modules/sysvinit.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/sysvinit.py validate-modules:return-syntax-error
 lib/ansible/modules/user.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/user.py validate-modules:doc-default-incompatible-type
-lib/ansible/modules/user.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/async_status.py use-argspec-type-path
 lib/ansible/modules/async_status.py validate-modules!skip
 lib/ansible/modules/async_wrapper.py ansible-doc!skip  # not an actual module
 lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function # ignore, required
 lib/ansible/modules/async_wrapper.py use-argspec-type-path
-lib/ansible/modules/wait_for.py validate-modules:parameter-list-no-elements
 lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
 lib/ansible/playbook/base.py pylint:blacklisted-name
 lib/ansible/playbook/collectionsearch.py required-and-default-attributes  # https://github.com/ansible/ansible/issues/61460
@@ -176,9 +136,9 @@ lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
 lib/ansible/vars/hostvars.py pylint:blacklisted-name
-test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import # ignore, required for testing
-test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
-test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function # ignore, required for testing
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function
 test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
@@ -199,7 +159,6 @@ test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.1/DSCResources/AN
 test/integration/targets/incidental_win_dsc/files/xTestDsc/1.0.1/xTestDsc.psd1 pslint!skip
 test/integration/targets/incidental_win_ping/library/win_ping_syntax_error.ps1 pslint!skip
 test/integration/targets/incidental_win_reboot/templates/post_reboot.ps1 pslint!skip
-test/integration/targets/lookup_csvfile/files/crlf.csv line-endings
 test/integration/targets/lookup_ini/lookup-8859-15.ini no-smart-quotes
 test/integration/targets/module_precedence/lib_with_extension/a.ini shebang
 test/integration/targets/module_precedence/lib_with_extension/ping.ini shebang
@@ -325,6 +284,7 @@ test/units/module_utils/urls/fixtures/multipart.txt line-endings  # Fixture for 
 test/units/module_utils/urls/test_Request.py replace-urlopen
 test/units/module_utils/urls/test_fetch_url.py replace-urlopen
 test/units/modules/test_apt.py pylint:blacklisted-name
+test/units/modules/test_known_hosts.py pylint:ansible-bad-function
 test/units/parsing/vault/test_vault.py pylint:blacklisted-name
 test/units/playbook/role/test_role.py pylint:blacklisted-name
 test/units/plugins/test_plugins.py pylint:blacklisted-name

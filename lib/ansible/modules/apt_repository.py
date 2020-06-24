@@ -24,15 +24,18 @@ options:
     repo:
         description:
             - A source string for the repository.
+        type: str
         required: true
     state:
         description:
             - A source string state.
+        type: str
         choices: [ absent, present ]
         default: "present"
     mode:
         description:
             - The octal mode for newly created files in sources.list.d
+        type: str
         default: '0644'
         version_added: "1.6"
     update_cache:
@@ -40,6 +43,7 @@ options:
             - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
         type: bool
         default: "yes"
+        aliases: [ 'update-cache' ]
     update_cache_retries:
         description:
         - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
@@ -64,12 +68,20 @@ options:
             - Sets the name of the source list file in sources.list.d.
               Defaults to a file name based on the repository source url.
               The .list extension will be automatically added.
+        type: str
         version_added: '2.1'
     codename:
         description:
             - Override the distribution codename to use for PPA repositories.
               Should usually only be set when working with a PPA on a non-Ubuntu target (e.g. Debian or Mint)
+        type: str
         version_added: '2.3'
+    install_python_apt:
+        description:
+            - Whether to install python apt or not, default is true
+              If python_apt isn't installed this module won't work
+        type: bool
+        default: true
 author:
 - Alexander Saltanov (@sashka)
 version_added: "0.7"
@@ -510,7 +522,7 @@ def main():
         argument_spec=dict(
             repo=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            mode=dict(type='raw'),
+            mode=dict(type='raw', default='0644'),
             update_cache=dict(type='bool', default=True, aliases=['update-cache']),
             update_cache_retries=dict(type='int', default=5),
             update_cache_retry_max_delay=dict(type='int', default=12),

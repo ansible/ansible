@@ -24,17 +24,20 @@ options:
   repo:
     description:
       - The subversion URL to the repository.
+    type: str
     required: true
     aliases: [ name, repository ]
   dest:
     description:
       - Absolute path where the repository should be deployed.
+    type: path
     required: true
   revision:
     description:
       - Specific revision to checkout.
+    type: str
     default: HEAD
-    aliases: [ version ]
+    aliases: [ rev, version ]
   force:
     description:
       - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
@@ -51,15 +54,18 @@ options:
   username:
     description:
       - C(--username) parameter passed to svn.
+    type: str
   password:
     description:
       - C(--password) parameter passed to svn when svn is less than version 1.10.0. This is not secure and
         the password will be leaked to argv.
       - C(--password-from-stdin) parameter when svn is greater or equal to version 1.10.0.
+    type: str
   executable:
     description:
       - Path to svn executable to use. If not supplied,
         the normal mechanism for resolving binary paths will be used.
+    type: path
     version_added: "1.4"
   checkout:
     description:
@@ -254,7 +260,7 @@ class Subversion(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(type='path'),
+            dest=dict(type='path', required=True),
             repo=dict(type='str', required=True, aliases=['name', 'repository']),
             revision=dict(type='str', default='HEAD', aliases=['rev', 'version']),
             force=dict(type='bool', default=False),

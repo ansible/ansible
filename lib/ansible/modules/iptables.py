@@ -130,6 +130,7 @@ options:
       - Matches are evaluated first to last if specified as an array and work in short-circuit
         fashion, i.e. if one extension yields false, evaluation will stop.
     type: list
+    elements: str
     default: []
   jump:
     description:
@@ -268,6 +269,7 @@ options:
       - C(ctstate) is a list of the connection states to match in the conntrack module.
       - Possible states are C(INVALID), C(NEW), C(ESTABLISHED), C(RELATED), C(UNTRACKED), C(SNAT), C(DNAT)
     type: list
+    elements: str
     default: []
   src_range:
     description:
@@ -667,11 +669,11 @@ def main():
             to_source=dict(type='str'),
             destination=dict(type='str'),
             to_destination=dict(type='str'),
-            match=dict(type='list', default=[]),
+            match=dict(type='list', elements='str', default=[]),
             tcp_flags=dict(type='dict',
                            options=dict(
-                                flags=dict(type='list'),
-                                flags_set=dict(type='list'))
+                                flags=dict(type='list', elements='str'),
+                                flags_set=dict(type='list', elements='str'))
                            ),
             jump=dict(type='str'),
             gateway=dict(type='str'),
@@ -693,7 +695,7 @@ def main():
             set_dscp_mark=dict(type='str'),
             set_dscp_mark_class=dict(type='str'),
             comment=dict(type='str'),
-            ctstate=dict(type='list', default=[]),
+            ctstate=dict(type='list', elements='str', default=[]),
             src_range=dict(type='str'),
             dst_range=dict(type='str'),
             limit=dict(type='str'),

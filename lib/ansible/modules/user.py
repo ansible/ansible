@@ -57,6 +57,7 @@ options:
               the user is removed from all groups except the primary group.
             - Before Ansible 2.3, the only input format allowed was a comma separated string.
         type: list
+        elements: str
     append:
         description:
             - If C(yes), add the user to the groups specified in C(groups).
@@ -2873,7 +2874,7 @@ def main():
             uid=dict(type='int'),
             non_unique=dict(type='bool', default=False),
             group=dict(type='str'),
-            groups=dict(type='list'),
+            groups=dict(type='list', elements='str'),
             comment=dict(type='str'),
             home=dict(type='path'),
             shell=dict(type='str'),
