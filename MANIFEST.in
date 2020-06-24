@@ -32,5 +32,6 @@ recursive-include test/units *
 include Makefile
 include MANIFEST.in
 include changelogs/CHANGELOG*.rst
+include changelogs/changelog.yaml
 recursive-include hacking/build_library *.py
 include hacking/build-ansible.py
