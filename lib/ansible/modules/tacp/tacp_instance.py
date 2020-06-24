@@ -252,9 +252,6 @@ options:
               .
         required: false
         type: str
-
-author:
-    - Xander Madsen (@xmadsen)
 '''
 
 EXAMPLES = '''
