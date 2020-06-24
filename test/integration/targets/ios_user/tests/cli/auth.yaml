@@ -33,7 +33,7 @@
       ansible_password: badpass
 
   - name: reset connection with {{ ansible_user }
-      meta: reset_connection
+    meta: reset_connection
 
   - name: check that attempt failed
     assert:
