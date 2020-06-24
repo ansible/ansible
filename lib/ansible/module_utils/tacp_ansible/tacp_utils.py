@@ -15,7 +15,7 @@ from ansible.module_utils.tacp_ansible.tacp_exceptions import (
     ActionTimedOutException, InvalidActionUuidException,
     InvalidPowerActionException, UuidNotFoundException
 )
-from ansible.module_utils.tacp_ansible.tacp_constants import Playbook_State
+from ansible.module_utils.tacp_ansible.tacp_constants import PlaybookState
 from time import sleep
 
 

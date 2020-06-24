@@ -6,7 +6,7 @@
 from ansible.module_utils.basic import AnsibleModule
 
 from ansible.module_utils.tacp_ansible.tacp_constants import (
-    Playbook_State, API_State)
+    PlaybookState, ApiState)
 from ansible.module_utils.tacp_ansible import tacp_exceptions
 from ansible.module_utils.tacp_ansible import tacp_utils
 
