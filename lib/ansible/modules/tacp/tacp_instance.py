@@ -436,8 +436,14 @@ EXAMPLES = '''
 RETURN = '''
 instance:
     description: The final state of the application instance if it still exists.
-    type: str
+    type: dict
     returned: success
+
+msg:
+    description: An error message in the event of invalid input or other
+        unexpected behavior during module execution.
+    type: str
+    returned: failure
 '''
 
 
