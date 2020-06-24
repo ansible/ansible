@@ -120,7 +120,7 @@ The following table shows:
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/cisco/asa">cisco.asa</a></td>
-      <td>community.asa</td>
+      <td><a href="https://galaxy.ansible.com/community/asa">community.asa</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Security-Automation">Security</a></td>
       <td>✓</td>
       <td>✓</td>
