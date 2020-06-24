@@ -53,7 +53,7 @@ options:
         type: str
     state:
         description:
-            - The desired state for the network. 
+            - The desired state for the network.
             - Only valid for VLAN networks.
         required: false
         default: present
@@ -206,8 +206,8 @@ options:
                 type: str
             static_bindings:
                 description:
-                    - A list of static DHCP bindings, each binding requires at least
-                        an ip_address and mac_address value as a dict.
+                    - A list of static DHCP bindings, each binding requires at
+                        least an ip_address and mac_address value as a dict.
                 required: False
                 type: list
                 suboptions:
@@ -365,7 +365,7 @@ EXAMPLES = '''
 
 RETURN = '''
 msg:
-    description: 
+    description:
         - An error message in the event of invalid input or other
         unexpected behavior during module execution.
     type: str
