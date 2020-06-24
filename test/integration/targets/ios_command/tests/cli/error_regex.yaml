@@ -11,10 +11,18 @@
         - "\r"
     ignore_errors: True
 
+  - name: increase log buffer size
+    cli_config:
+      config: logging buffered 9600000
+
   - name: send log with error regex match 1
     cli_command: &send_logs
-      command: "send log 'IPSEC-3-REPLAY_ERROR: test log_1'"
+      command: "send log 'IPSEC-3-REPLAY_ERROR: test log_1'\n"
     ignore_errors: True
+
+  - name: pause to avoid rate limiting-1
+    pause:
+      seconds: 20
 
   - name: fetch logs without command specific error regex
     ios_command:
@@ -28,9 +36,9 @@
       that:
         - "result.failed == true"
 
-  - name: pause to avoid rate limiting
+  - name: pause to avoid rate limiting-2
     pause:
-      seconds: 10
+      seconds: 20
 
   - name: clear logs 2
     cli_command: *clear_logs
