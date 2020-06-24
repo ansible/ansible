@@ -6,7 +6,7 @@ import re
 def checkIP(ip):
     if ip == "0.0.0.0":
         return False
-    p = '^((25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))$'
+    p = r'^((25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))$'
     if re.search(p, ip, re.I):
         return True
     else:
@@ -16,11 +16,11 @@ def checkIP(ip):
 def checkSubnetMask(ip):
     if ip == "0.0.0.0":
         return False
-    p = '^((25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))$'
-    m1 = '(128|192|224|240|248|252|254|255)\.0\.0\.0|'
-    m2 = '255\.(0|128|192|224|240|248|252|254|255)\.0\.0|'
-    m3 = '255\.255\.(0|128|192|224|240|248|252|254|255)\.0|'
-    m4 = '255\.255\.255\.(0|128|192|224|240|248|252|254)'
+    p = r'^((25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))$'
+    m1 = r'(128|192|224|240|248|252|254|255)\.0\.0\.0|'
+    m2 = r'255\.(0|128|192|224|240|248|252|254|255)\.0\.0|'
+    m3 = r'255\.255\.(0|128|192|224|240|248|252|254|255)\.0|'
+    m4 = r'255\.255\.255\.(0|128|192|224|240|248|252|254)'
     pSubnetMask = '^' + m1 + m2 + m3 + m4 + '$'
     if re.search(p, ip, re.I):
         if re.search(pSubnetMask, ip, re.I):
@@ -33,7 +33,7 @@ def checkSubnetMask(ip):
 
 # bmc username
 def checkUsername(z):
-    p = '^[a-zA-Z]([a-zA-Z0-9_\-@]){0,15}$'
+    p = r'^[a-zA-Z]([a-zA-Z0-9_\-@]){0,15}$'
     if re.search(p, z, re.I):
         return True
     else:
@@ -52,7 +52,7 @@ def checkPassword(z):
 # bmc time 2018-05-31T10:10+08:00
 def checkBMCTime(bmctime):
     import time
-    p = "^[0-9]{4}\-[0-9]{2}\-[0-9]{2}T[0-9]{2}:[0-9]{2}(\+|\-)[0-9]{2}:[0-9]{2}$"
+    p = r"^[0-9]{4}\-[0-9]{2}\-[0-9]{2}T[0-9]{2}:[0-9]{2}(\+|\-)[0-9]{2}:[0-9]{2}$"
     if re.search(p, bmctime, re.I):
         if "+" in bmctime:
             data = bmctime.split("+")[0]
@@ -65,7 +65,7 @@ def checkBMCTime(bmctime):
         # check date
         try:
             struct_time = time.strptime(data, "%Y-%m-%dT%H:%M")
-        except:
+        except BaseException:
             return False
         # check zone
         hour = int(zone.split(":")[0])
@@ -81,7 +81,7 @@ def checkBMCTime(bmctime):
 # bmc time 2018-05-31T10:10+08:00
 def checkBMCZone(bmczone_raw):
     import time
-    p = "^\[(\+|\-)[0-9]{2}:[0-9]{2}\]$"
+    p = r"^\[(\+|\-)[0-9]{2}:[0-9]{2}\]$"
     if re.search(p, bmczone_raw, re.I):
         bmczone = bmczone_raw[1:-1]
         if "+" in bmczone:
@@ -107,13 +107,13 @@ def checkSubnetPrefixLength(spl):
         if spl_int < 0 or spl_int > 128:
             return False
         return True
-    except:
+    except BaseException:
         return False
 
 
 def checkIPv6(ip):
     # p = '^(([\da-fA-F]{1,4}):){7}([\da-fA-F]{1,4})$'
-    p = '^((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:[0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){5}(:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|((:[0-9A-Fa-f]{1,4}){1,2})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|((:[0-9A-Fa-f]{1,4}){1,3})|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|((:[0-9A-Fa-f]{1,4}){1,4})|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|((:[0-9A-Fa-f]{1,4}){1,5})|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|((:[0-9A-Fa-f]{1,4}){1,6})|:))|(:(((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|((:[0-9A-Fa-f]{1,4}){1,7})|:)))$'
+    p = r'^((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:[0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){5}(:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|((:[0-9A-Fa-f]{1,4}){1,2})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|((:[0-9A-Fa-f]{1,4}){1,3})|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|((:[0-9A-Fa-f]{1,4}){1,4})|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|((:[0-9A-Fa-f]{1,4}){1,5})|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|((:[0-9A-Fa-f]{1,4}){1,6})|:))|(:(((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|((:[0-9A-Fa-f]{1,4}){1,7})|:)))$'
     if re.search(p, ip, re.I):
         return True
     else:
@@ -122,7 +122,7 @@ def checkIPv6(ip):
 
 # bmc username
 def checkM3Username(z):
-    p = '^[a-zA-Z0-9_]([a-zA-Z0-9_\-\.]){0,14}([a-zA-Z0-9_\-\.]|\$)$'
+    p = r'^[a-zA-Z0-9_]([a-zA-Z0-9_\-\.]){0,14}([a-zA-Z0-9_\-\.]|\$)$'
     if re.search(p, z, re.I):
         return True
     else:
@@ -134,7 +134,7 @@ def checkM3Password(z):
     # 不多于16
     p1 = '[a-zA-Z]'
     p2 = '[0-9]'
-    p3 = '\S'
+    p3 = r'\S'
     if len(z) < 8 or len(z) > 16:
         return 1
     else:
@@ -161,17 +161,17 @@ def checkIP46d(s):
           '|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d' \
           '|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})' \
           '|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))' \
-          '|:)))(%.+)?\s*$'
+          r'|:)))(%.+)?\s*$'
     if re.search(ip6, s, re.I):
         return True
     # ipv4
-    ip4 = '^((25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))$'
+    ip4 = r'^((25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2}|[1-9]?\d)))$'
     if re.search(ip4, s, re.I):
         return True
     # domain name contains \d A-Z a-z \.
     # only \d is not allowed
-    dn = '^([\da-zA-Z]+\.)*[\da-zA-Z]+\.[\da-zA-Z]+$'
-    dnd = '^([\d]+\.)*[\d]+\.[\d]+$'
+    dn = r'^([\da-zA-Z]+\.)*[\da-zA-Z]+\.[\da-zA-Z]+$'
+    dnd = r'^([\d]+\.)*[\d]+\.[\d]+$'
     if re.search(dn, s, re.I) and not re.search(dnd, s, re.I):
         return True
     return False
@@ -190,7 +190,7 @@ def checkPrefix(prefix):
 
 
 def checkDomainName(dm):
-    p1 = '\.'
+    p1 = r'\.'
     p2 = '[a-zA_Z]'
     if re.search(p1, dm, re.I) and re.search(p2, dm, re.I):
         return True
@@ -201,7 +201,7 @@ def checkDomainName(dm):
 def checkHostName(hm):
     if len(hm) > 64 or len(hm) < 1:
         return False
-    p = '^[a-zA-Z0-9\_\-]+$'
+    p = r'^[a-zA-Z0-9\_\-]+$'
     if re.search(p, hm, re.I):
         return True
     else:
@@ -209,7 +209,7 @@ def checkHostName(hm):
 
 
 def checkZone(z):
-    p = '^((\-?([0-9]|10|11|12))(\.5)?|12)$'
+    p = r'^((\-?([0-9]|10|11|12))(\.5)?|12)$'
     if re.search(p, z, re.I):
         return True
     else:
@@ -237,7 +237,7 @@ def checkEngineId(engineId):
 
 
 def checkEmail(email):
-    p = '^\w+@[a-z0-9]+\.[a-z]{2,4}$'
+    p = r'^\w+@[a-z0-9]+\.[a-z]{2,4}$'
     if re.search(p, email, re.I):
         return True
     else:
@@ -273,17 +273,20 @@ def checkVP(p):
         return False
     return True
 
+
 def checkFileSize(fs):
     if fs < 3 or fs > 65535:
         return False
     else:
         return True
 
+
 def checkPort(p):
     if p < 0 or p > 65535:
         return False
     else:
         return True
+
 
 def is_number(s):
     try:
@@ -297,6 +300,7 @@ def is_number(s):
         except (TypeError, ValueError):
             return False
 
+
 # createldisk
 def check_arg(arg):
     if is_number(arg) is not True:
@@ -307,6 +311,7 @@ def check_arg(arg):
         arg = string.atoi(arg)
         return arg
 
+
 def checkFile(str):
     try:
         f = open(str)
@@ -315,12 +320,13 @@ def checkFile(str):
     except IOError:
         return False
 
+
 def checkBase(s):
     # 域名名称是一个64字母数字组成的字串。
     # 开头字符必须是字母。
     # 允许特殊字符如点(.)，逗号(,)，连字符(-)，下划线(_)，等于号(=)。
     # 范例: cn=manager,ou=login, dc=domain,dc=com
-    dn = '^[a-zA-Z][a-zA-Z\-_\.\,\=]{4,64}$'
+    dn = r'^[a-zA-Z][a-zA-Z\-_\.\,\=]{4,64}$'
     if re.search(dn, s, re.I):
         return True
     return False

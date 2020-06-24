@@ -34,9 +34,7 @@ class RedfishClient():
         self.headerhost = None
         self.auth = None
 
-
-
-    def setself(self, host, username, password, port = 623, lantype = "lanplus"):
+    def setself(self, host, username, password, port=623, lantype="lanplus"):
         '''
         #=====================================================================
         #   @Method:  设置带内hos，port,username,password值
@@ -56,24 +54,23 @@ class RedfishClient():
             self.lantype = 'lanplus'
         else:
             self.lantype = lantype
-    
-    def setHearder(self,header):
-        self.header =header
 
+    def setHearder(self, header):
+        self.header = header
 
     def getHearder(self):
         return self.header
 
+    # 请求一个URI资源
+    # method  POST GET DELETE PATCH PUT
+    # resource uri
+    # headers HTTP头
+    # stream None
+    # data python字典数据，转化为Http写入Body中，a=1&b=2转化为urlEncode格式
+    # json python字典数据，转化为Http写入Body中，{'a':1,'b':2}转化为Josn格式
+    # files 上传文件
+    # timeout 请求过期时间
 
-    #请求一个URI资源
-    #method  POST GET DELETE PATCH PUT
-    #resource uri
-    #headers HTTP头
-    #stream None
-    #data python字典数据，转化为Http写入Body中，a=1&b=2转化为urlEncode格式
-    #json python字典数据，转化为Http写入Body中，{'a':1,'b':2}转化为Josn格式
-    #files 上传文件
-    #timeout 请求过期时间
     def request(self, method, resource, headers=None, stream=None,
                 data=None, files=None, timeout=50):
         '''
@@ -95,24 +92,24 @@ class RedfishClient():
             if method == 'POST':
                 if headers is None:
                     data = json.dumps(data)
-                    r = requests.post(url=url, headers=None, verify=False, data=data,timeout = 50,auth='')
+                    r = requests.post(url=url, headers=None, verify=False, data=data, timeout=50, auth='')
                 else:
                     data = json.dumps(data)
-                    r = requests.post(url=url, headers=headers, verify=False, data=data,timeout = 50,auth='')
+                    r = requests.post(url=url, headers=headers, verify=False, data=data, timeout=50, auth='')
             elif method == 'GET':
                 data = json.dumps(data)
-                r = requests.get(url=url+'?'+data, headers=headers, verify=False)
+                r = requests.get(url=url + '?' + data, headers=headers, verify=False)
             elif method == 'DELETE':
                 r = requests.delete(url=url, headers=headers, verify=False)
             elif method == 'PATCH':
                 data = json.dumps(data)
                 r = requests.patch(url=url, headers=headers, verify=False, data=data)
-            elif method =='PUT':
+            elif method == 'PUT':
                 r = requests.put(url, data=data, headers=headers,
-                                   auth=self.auth, verify=False,json=json, timeout=timeout)
-            elif method =='FILE':
+                                 auth=self.auth, verify=False, json=json, timeout=timeout)
+            elif method == 'FILE':
                 # print('file',headers)
-                r = requests.post(url,files=files,headers=headers,verify=False)
+                r = requests.post(url, files=files, headers=headers, verify=False)
             else:
                 print('测试')
         except Exception as e:
@@ -120,8 +117,8 @@ class RedfishClient():
             # print('usage: utool [-h] [-V] -H <HOST> -U <USERNAME> -P <PASSWORD> -p <PORT> subcommand ...')
             return r
         return r
-        #以下注释可打印HTTP的所有数据
-        #print(r._content)
+        # 以下注释可打印HTTP的所有数据
+        # print(r._content)
         # if r.status_code == 200:
         #     return r
         # elif r.status_code==405:

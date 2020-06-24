@@ -2,7 +2,7 @@ from ansible.plugins.inspur_sdk.interface.CommonM5 import *
 from ansible.plugins.inspur_sdk.command import RestFunc
 import os
 import re
-from ResEntity import  *
+from ResEntity import *
 
 STR_PD_DEV_SPEED = {
     0: 0,
@@ -19,84 +19,84 @@ STR_PD_DEV_SPEED = {
 #     15:'Hidden'
 # }
 stripSizes = {
-    7:'64k',
-    8:'128k',
-    9:'256k',
-    10:'512k',
-    11:'1024k'
+    7: '64k',
+    8: '128k',
+    9: '256k',
+    10: '512k',
+    11: '1024k'
 
 }
 accessPolicys = {
-    1:'Read Write',
-    2:'Read Only',
-    3:'Blocked'
+    1: 'Read Write',
+    2: 'Read Only',
+    3: 'Blocked'
 }
 readPolicys = {
-    1:'Read Ahead',
-    2:'No Read Ahead'
+    1: 'Read Ahead',
+    2: 'No Read Ahead'
 }
 writePolicys = {
-    1:'Write Throgh',
-    2:'Write Back',
-    3:'Write caching ok if bad BBU'
+    1: 'Write Throgh',
+    2: 'Write Back',
+    3: 'Write caching ok if bad BBU'
 }
 ioPolicys = {
-    1:'Direct IO',
-    2:'Cached IO'
+    1: 'Direct IO',
+    2: 'Cached IO'
 }
 
 driveCaches = {
-    1:'Unchanged',
-    2:'Enabled',
-    3:'Disabled'
+    1: 'Unchanged',
+    2: 'Enabled',
+    3: 'Disabled'
 
 }
 initStates = {
-    1:'No Init',
-    2:'Quick Init',
-    3:'Full Init'
+    1: 'No Init',
+    2: 'Quick Init',
+    3: 'Full Init'
 }
 State = {
-    0:'Offline',
-    1:'Partially Degraded',
-    2:'Degraded',
-    3:'Optimal'
+    0: 'Offline',
+    1: 'Partially Degraded',
+    2: 'Degraded',
+    3: 'Optimal'
 }
+
 
 class NF5180M5(CommonM5):
 
     def getcapabilities(self, client, args):
         res = ResultBean()
         cap = CapabilitiesBean()
-        getcomand = ['getadaptiveport','getbios','getcapabilities','getcpu','geteventlog','getfan','getfru', 'getfw','gethealth','getip',  'getnic','getpcie','getpdisk','getpower','getproduct','getpsu', 'getsensor','getservice','getsysboot','gettemp','gettime','gettrap','getuser','getvolt', 'getraid', 'getmemory','getldisk','getfirewall','gethealthevent']
-        getcomand_not_support = ['getbiossetting','getbiosresult', 'geteventsub', 'getpwrcap', 'getmgmtport','getupdatestate','getserialport','getvnc','getvncsession','gettaskstate','getbiosdebug','getthreshold','get80port']
-        setcommand = ['adduser','clearsel','deluser','fancontrol','fwupdate','locatedisk','locateserver','mountvmm','powercontrol','resetbmc','restorebmc','sendipmirawcmd','settimezone','settrapcom','setbios','setip','setpriv','setpwd','setservice','setsysboot','settrapdest','setvlan','settime','setproductserial']
-        setcommand_ns = ['setbiospwd','sethsc','clearbiospwd','restorebios','setfirewall','setimageurl','setadaptiveport','setserialport','powerctrldisk','recoverypsu','setvnc','downloadtfalog','setthreshold','addwhitelist','delwhitelist','delvncsession','downloadsol','exportbmccfg','exportbioscfg','importbioscfg','importbmccfg','canceltask','setbiosdebug','collect']
+        getcomand = ['getadaptiveport', 'getbios', 'getcapabilities', 'getcpu', 'geteventlog', 'getfan', 'getfru', 'getfw', 'gethealth', 'getip', 'getnic', 'getpcie', 'getpdisk', 'getpower', 'getproduct', 'getpsu', 'getsensor', 'getservice', 'getsysboot', 'gettemp', 'gettime', 'gettrap', 'getuser', 'getvolt', 'getraid', 'getmemory', 'getldisk', 'getfirewall', 'gethealthevent']
+        getcomand_not_support = ['getbiossetting', 'getbiosresult', 'geteventsub', 'getpwrcap', 'getmgmtport', 'getupdatestate', 'getserialport', 'getvnc', 'getvncsession', 'gettaskstate', 'getbiosdebug', 'getthreshold', 'get80port']
+        setcommand = ['adduser', 'clearsel', 'deluser', 'fancontrol', 'fwupdate', 'locatedisk', 'locateserver', 'mountvmm', 'powercontrol', 'resetbmc', 'restorebmc', 'sendipmirawcmd', 'settimezone', 'settrapcom', 'setbios', 'setip', 'setpriv', 'setpwd', 'setservice', 'setsysboot', 'settrapdest', 'setvlan', 'settime', 'setproductserial']
+        setcommand_ns = ['setbiospwd', 'sethsc', 'clearbiospwd', 'restorebios', 'setfirewall', 'setimageurl', 'setadaptiveport', 'setserialport', 'powerctrldisk', 'recoverypsu', 'setvnc', 'downloadtfalog', 'setthreshold', 'addwhitelist', 'delwhitelist', 'delvncsession', 'downloadsol', 'exportbmccfg', 'exportbioscfg', 'importbioscfg', 'importbmccfg', 'canceltask', 'setbiosdebug', 'collect']
         cap.GetCommandList(getcomand)
         cap.SetCommandList(setcommand)
         res.State('Success')
         res.Message(cap)
         return res
 
-
     def getnic(self, client, args):
-        #login
-        headers=RestFunc.login(client)
+        # login
+        headers = RestFunc.login(client)
         client.setHearder(headers)
         try:
-            #get
-            res=RestFunc.getAdapterByRest(client)
-            nicRes=ResultBean()
-            if res=={}:
+            # get
+            res = RestFunc.getAdapterByRest(client)
+            nicRes = ResultBean()
+            if res == {}:
                 nicRes.State("Failure")
                 nicRes.Message(["cannot get information"])
             elif res.get('code') == 0 and res.get('data') is not None:
-                port_status_dict={0:"Not Linked",1:"Linked",2:"NA"}
+                port_status_dict = {0: "Not Linked", 1: "Linked", 2: "NA"}
                 nicRes.State("Success")
-                nicinfo=NicAllBean()
+                nicinfo = NicAllBean()
                 nicinfo.OverallHealth("OK")
                 nicinfo.Maximum(1)
-                PCIEinfo=NICBean()
+                PCIEinfo = NICBean()
                 PCIEinfo.CommonName("PCIE")
                 PCIEinfo.Location(None)
                 PCIEinfo.Manufacturer(None)
@@ -104,8 +104,8 @@ class NF5180M5(CommonM5):
                 PCIEinfo.Serialnumber(None)
                 PCIEinfo.State(None)
                 PCIEinfo.Health(None)
-                sys_adapters=res.get('data')['sys_adapters']
-                controllerList=[]
+                sys_adapters = res.get('data')['sys_adapters']
+                controllerList = []
                 for ada in sys_adapters:
                     for adaport in ada['ports']:
                         adapterinfo = NICController()
@@ -115,10 +115,10 @@ class NF5180M5(CommonM5):
                         adapterinfo.Serialnumber(None)
                         adapterinfo.FirmwareVersion(None)
                         adapterinfo.PortCount(adaport['port_num'])
-                        portlist=[]
+                        portlist = []
                         for x in range(4):
-                            portBean=NicPort()
-                            portBean.Id(x+1)
+                            portBean = NicPort()
+                            portBean.Id(x + 1)
                             if x == 0:
                                 x = ""
                             portBean.MACAddress(adaport['mac_addr' + str(x)])
@@ -136,14 +136,13 @@ class NF5180M5(CommonM5):
             else:
                 nicRes.State("Failure")
                 nicRes.Message(["get information error, error code " + str(res.get('code'))])
-            #logout
+            # logout
             RestFunc.logout(client)
             return nicRes
-        except:
+        except BaseException:
             RestFunc.logout(client)
             return CommonM5.getnic(self, client, args)
-            
-        
+
     def collect(self, client, args):
         res = ResultBean()
         res.State("Not Support")
@@ -165,7 +164,7 @@ class NF5180M5(CommonM5):
         if not os.path.exists(file_path):
             try:
                 os.makedirs(file_path)
-            except:
+            except BaseException:
                 export.State("Failure")
                 export.Message(["cannot build path."])
                 return export
@@ -230,5 +229,3 @@ class NF5180M5(CommonM5):
         # logout
         RestFunc.logout(client)
         return import_Info
-
-

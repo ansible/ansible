@@ -7,23 +7,24 @@
 #   @Date:
 #=========================================================================
 '''
+from ansible.plugins.inspur_sdk.util import RegularCheckUtil
+from ansible.plugins.inspur_sdk.command import IpmiFunc
 import sys
 import os
 import re
+import time
 from ansible.plugins.inspur_sdk.interface.IBase import IBase
 from ansible.plugins.inspur_sdk.interface.ResEntity import *
-rootpath=os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+rootpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.join(rootpath, "command"))
 sys.path.append(os.path.join(rootpath, "util"))
-from ansible.plugins.inspur_sdk.command import IpmiFunc
-from ansible.plugins.inspur_sdk.util import RegularCheckUtil
 
 
 class Base(IBase):
 
     # 100+为utool定义
-    # 1-9为ipmitool工具定义    
-    
+    # 1-9为ipmitool工具定义
+
     ERR_dict = {
         1: 'Ipmi information get error',
         2: 'Ipmi parameter is null',
@@ -53,11 +54,7 @@ class Base(IBase):
         8: 'incorrect user name or password',
         9: 'user not exist'
     }
-    
-    
-    
-    
-    
+
     def __init__(self):
         pass
 
@@ -68,33 +65,33 @@ class Base(IBase):
             if fru.get('code') == 0 and fru.get('data') is not None:
                 FRUlist = []
                 for product in fru.get('data'):
-                    #print(product)
+                    # print(product)
                     #frubean = FruBean()
                     frubean = collections.OrderedDict()
                     if product['fru_id']:
-                        frubean["FRUID"]=product['fru_id']
+                        frubean["FRUID"] = product['fru_id']
                     else:
-                        frubean["FRUID"]=None
+                        frubean["FRUID"] = None
 
                     if product['fru_name']:
-                        frubean["FRUName"]=product['fru_name']
+                        frubean["FRUName"] = product['fru_name']
                     else:
-                        frubean["FRUName"]=None
+                        frubean["FRUName"] = None
 
                     if product['chassis_type']:
-                        frubean["ChassisType"]=product['chassis_type']
+                        frubean["ChassisType"] = product['chassis_type']
                     else:
-                        frubean["ChassisType"]=None
+                        frubean["ChassisType"] = None
 
                     if product['chassis_part_number']:
-                        frubean["ChassisPartNumber"]=product['chassis_part_number']
+                        frubean["ChassisPartNumber"] = product['chassis_part_number']
                     else:
-                        frubean["ChassisPartNumber"]=None
+                        frubean["ChassisPartNumber"] = None
 
                     if product['chassis_serial']:
-                        frubean["ChassisSerial"]=product['chassis_serial']
+                        frubean["ChassisSerial"] = product['chassis_serial']
                     else:
-                        frubean["ChassisSerial"]=None
+                        frubean["ChassisSerial"] = None
 
                     if product['chassis_extra']:
                         if ";" not in product['chassis_extra']:
@@ -106,31 +103,31 @@ class Base(IBase):
                             # if len(celist) == 3:
                             #     frubean["ChassisExtra3"] = celist[2]
                             for i in range(len(celist)):
-                                frubean["ChassisExtra" + str(i+1)] = celist[i]
+                                frubean["ChassisExtra" + str(i + 1)] = celist[i]
 
                     if product['board_mfg_date']:
-                        frubean["BoardMfgDate"]=product['board_mfg_date']
+                        frubean["BoardMfgDate"] = product['board_mfg_date']
                     else:
-                        frubean["BoardMfgDate"]=None
+                        frubean["BoardMfgDate"] = None
 
                     if product['board_mfg']:
-                        frubean["BoardMfg"]=product['board_mfg']
+                        frubean["BoardMfg"] = product['board_mfg']
                     else:
-                        frubean["BoardMfg"]=None
+                        frubean["BoardMfg"] = None
 
                     if product['board_product']:
-                        frubean["BoardProduct"]=product['board_product']
+                        frubean["BoardProduct"] = product['board_product']
                     else:
-                        frubean["BoardProduct"]=None
+                        frubean["BoardProduct"] = None
 
                     if product['board_serial']:
-                        frubean["BoardSerial"]=product['board_serial']
+                        frubean["BoardSerial"] = product['board_serial']
                     else:
-                        frubean["BoardSerial"]=None
+                        frubean["BoardSerial"] = None
                     if product['board_part_number']:
-                        frubean["BoardPartNumber"]=product['board_part_number']
+                        frubean["BoardPartNumber"] = product['board_part_number']
                     else:
-                        frubean["BoardPartNumber"]=None
+                        frubean["BoardPartNumber"] = None
 
                     if product['board_extra']:
                         if ";" not in product['board_extra']:
@@ -142,37 +139,37 @@ class Base(IBase):
                             # if len(belist) == 3:
                             #     frubean["BoardExtra3"] = belist[2]
                             for i in range(len(belist)):
-                                frubean["BoardExtra" + str(i+1)] = belist[i]
-                                
+                                frubean["BoardExtra" + str(i + 1)] = belist[i]
+
                     if product['product_manufacturer']:
-                        frubean["ProductManufacturer"]=product['product_manufacturer']
+                        frubean["ProductManufacturer"] = product['product_manufacturer']
                     else:
-                        frubean["ProductManufacturer"]=None
+                        frubean["ProductManufacturer"] = None
 
                     if product['product_name']:
-                        frubean["ProductName"]=product['product_name']
+                        frubean["ProductName"] = product['product_name']
                     else:
-                        frubean["ProductName"]=None
+                        frubean["ProductName"] = None
 
                     if product['product_part_number']:
-                        frubean["ProductPartNumber"]=product['product_part_number']
+                        frubean["ProductPartNumber"] = product['product_part_number']
                     else:
-                        frubean["ProductPartNumber"]=None
+                        frubean["ProductPartNumber"] = None
 
                     if product['product_version']:
-                        frubean["ProductVersion"]=product['product_version']
+                        frubean["ProductVersion"] = product['product_version']
                     else:
-                        frubean["ProductVersion"]=None
+                        frubean["ProductVersion"] = None
 
                     if product['product_serial']:
-                        frubean["ProductSerial"]=product['product_serial']
+                        frubean["ProductSerial"] = product['product_serial']
                     else:
-                        frubean["ProductSerial"]=None
+                        frubean["ProductSerial"] = None
 
                     if product['product_asset_tag']:
-                        frubean["ProductAssetTag"]=product['product_asset_tag']
+                        frubean["ProductAssetTag"] = product['product_asset_tag']
                     else:
-                        frubean["ProductAssetTag"]=None
+                        frubean["ProductAssetTag"] = None
 
                     if product['product_extra']:
                         if ";" not in product['product_extra']:
@@ -182,10 +179,10 @@ class Base(IBase):
                             # frubean["ProductExtra1"] = pelist[0]
                             # frubean["ProductExtra2"] = pelist[1]
                             for i in range(len(pelist)):
-                                frubean["ProductExtra" + str(i+1)] = pelist[i]
+                                frubean["ProductExtra" + str(i + 1)] = pelist[i]
 
                     FRUlist.append(frubean)
-                FRU=[{"FRU":FRUlist}]
+                FRU = [{"FRU": FRUlist}]
                 res.State('Success')
                 res.Message(FRU)
             else:
@@ -195,7 +192,7 @@ class Base(IBase):
             res.State('Failure')
             res.Message('Can not get Fru information')
         return res
-        
+
     def getProdcut(self, client, args):
         '''
         :return:
@@ -208,12 +205,12 @@ class Base(IBase):
         '''
         res = ResultBean()
         cap = CapabilitiesBean()
-        getcomand = ['get80port','getadaptiveport','getbios','getbiosdebug','getbiosresult','getbiossetting','getcapabilities','getcpu','geteventlog', 'geteventsub','getfan','getfirewall',
-        'getfru', 'getfw','gethealth','gethealthevent','getip','getldisk','getmemory', 'getmgmtport',  'getnic','getpcie','getpdisk','getpower ',
-        'getproduct','getpsu','getpwrcap','getraid', 'getsensor','getserialport','getservice','getsysboot','gettaskstate','gettemp','getthreshold','gettime','gettrap','getupdatestate','getuser','getvnc','getvncsession','getvolt']
-        setcommand = ['adduser','addwhitelist','canceltask','clearbiospwd','clearsel','collect','deluser','delvncsession','delwhitelist','downloadsol','downloadtfalog','exportbioscfg','exportbmccfg','fancontrol',
-        'fwupdate','importbioscfg','importbmccfg','locatedisk','locateserver','mountvmm','powercontrol','powerctrldisk','recoverypsu','resetbmc','restorebios','restorebmc','sendipmirawcmd','settime','settimezone','settrapcom',
-        'setadaptiveport','setbios','setbiosdebug','setbiospwd','setfirewall','sethsc','setip','setpriv','setproductserial','setpwd','setserialport','setservice','setsysboot','setthreshold','settrapdest','setvlan','setvnc','setimageurl']
+        getcomand = ['get80port', 'getadaptiveport', 'getbios', 'getbiosdebug', 'getbiosresult', 'getbiossetting', 'getcapabilities', 'getcpu', 'geteventlog', 'geteventsub', 'getfan', 'getfirewall',
+                     'getfru', 'getfw', 'gethealth', 'gethealthevent', 'getip', 'getldisk', 'getmemory', 'getmgmtport', 'getnic', 'getpcie', 'getpdisk', 'getpower ',
+                     'getproduct', 'getpsu', 'getpwrcap', 'getraid', 'getsensor', 'getserialport', 'getservice', 'getsysboot', 'gettaskstate', 'gettemp', 'getthreshold', 'gettime', 'gettrap', 'getupdatestate', 'getuser', 'getvnc', 'getvncsession', 'getvolt']
+        setcommand = ['adduser', 'addwhitelist', 'canceltask', 'clearbiospwd', 'clearsel', 'collect', 'deluser', 'delvncsession', 'delwhitelist', 'downloadsol', 'downloadtfalog', 'exportbioscfg', 'exportbmccfg', 'fancontrol',
+                      'fwupdate', 'importbioscfg', 'importbmccfg', 'locatedisk', 'locateserver', 'mountvmm', 'powercontrol', 'powerctrldisk', 'recoverypsu', 'resetbmc', 'restorebios', 'restorebmc', 'sendipmirawcmd', 'settime', 'settimezone', 'settrapcom',
+                      'setadaptiveport', 'setbios', 'setbiosdebug', 'setbiospwd', 'setfirewall', 'sethsc', 'setip', 'setpriv', 'setproductserial', 'setpwd', 'setserialport', 'setservice', 'setsysboot', 'setthreshold', 'settrapdest', 'setvlan', 'setvnc', 'setimageurl']
         cap.GetCommandList(getcomand)
         cap.SetCommandList(setcommand)
         res.State('Success')
@@ -251,13 +248,13 @@ class Base(IBase):
         :param args:
         :return:power control
         '''
-        choices = {'On':'on', 'ForceOff':'off', 'ForcePowerCycle':'cycle', 'ForceReset':'reset', 'GracefulShutdown':'soft', 'Nmi':'diag'}
-        #power on, power off(immediately shutdown), power soft(orderly shutdown), power reset, power cycle. Power diag
+        choices = {'On': 'on', 'ForceOff': 'off', 'ForcePowerCycle': 'cycle', 'ForceReset': 'reset', 'GracefulShutdown': 'soft', 'Nmi': 'diag'}
+        # power on, power off(immediately shutdown), power soft(orderly shutdown), power reset, power cycle. Power diag
         ctr_result = ResultBean()
         # 首先获取当前电源状态，如果是关机状态，只能开机操作
         cur_status = IpmiFunc.getPowerStatusByIpmi(client)
         if cur_status and cur_status.get('code') == 0 and cur_status.get('data') is not None and cur_status.get('data').get(
-                    'status') is not None:
+                'status') is not None:
             cur_power = cur_status.get('data').get('status')
             if cur_power == 'off' and (choices[args.state] == 'off' or choices[args.state] == 'soft'):
                 ctr_result.State("Success")
@@ -283,12 +280,11 @@ class Base(IBase):
                 ctr_result.Message('set power success,current power status is ' + ctr_info['data'].get('result') + '.')
             else:
                 ctr_result.State("Failure")
-                ctr_result.Message('set power failed: '+ ctr_info.get('data', ' '))
+                ctr_result.Message('set power failed: ' + ctr_info.get('data', ' '))
         else:
             ctr_result.State("Failure")
             ctr_result.Message('set power failed.')
         return ctr_result
-
 
     def gethealth(self, client, args):
         '''
@@ -303,15 +299,15 @@ class Base(IBase):
         #{'data': '01 05 00 18 00 00 00', 'code': 0}
         if sysboot['code'] == 0:
             bootflags = sysboot['data'].strip().split(" ")
-            data1=bootflags[2]
-            bin_1=bin(int(data1,16))[2:]
-            if len(bin_1)<8:
-                bin_1 = "0"*(8-len(bin_1)) + bin_1
-            data2=bootflags[3]
+            data1 = bootflags[2]
+            bin_1 = bin(int(data1, 16))[2:]
+            if len(bin_1) < 8:
+                bin_1 = "0" * (8 - len(bin_1)) + bin_1
+            data2 = bootflags[3]
             #print (data2)
-            bin_2=bin(int(data2,16))[2:]
-            if len(bin_2)<8:
-                bin_2 = "0"*(8-len(bin_2)) + bin_2
+            bin_2 = bin(int(data2, 16))[2:]
+            if len(bin_2) < 8:
+                bin_2 = "0" * (8 - len(bin_2)) + bin_2
             # boot device
             boot_device = bin_2[2:6]
             boot_device_dict = {'0000': 'none',
@@ -323,7 +319,7 @@ class Base(IBase):
                                 '0110': 'BIOSSETUP',
                                 '1111': 'Floppy'}
             biosaAttribute['BootDevice'] = boot_device_dict.get(boot_device, 'reserved')
-            #boot type
+            # boot type
             biosaAttribute['BootMode'] = None
             # apply2
             if bin_1[1] == '0':
@@ -403,8 +399,8 @@ class Base(IBase):
 
     def setsysboot(self, client, args):
         result = ResultBean()
-        flag=True
-        info=""
+        flag = True
+        info = ""
         if args.mode is not None:
             mode_set = IpmiFunc.setBootModeByIpmi(client, args.mode)
             if mode_set['code'] != 0:
@@ -501,8 +497,7 @@ class Base(IBase):
         res.Message([])
         return res
 
-    #def downloadfandiag(self, client, args):
-
+    # def downloadfandiag(self, client, args):
 
     def downloadsol(self, client, args):
         '''
@@ -568,7 +563,7 @@ class Base(IBase):
             num_data = sensors_num.get('data')
             # print(num_data)
             for i in range(len(num_data)):
-                num_dict[num_data[i].get('name')] = int(num_data[i].get('number').split('h')[0],16)
+                num_dict[num_data[i].get('name')] = int(num_data[i].get('number').split('h')[0], 16)
 
         if sensors:
             if sensors.get('code') == 0 and sensors.get('data') is not None:
@@ -603,7 +598,7 @@ class Base(IBase):
 
             else:
                 result.State('Failure')
-                result.Message(['Failed to get sensor info. ' +self.ERR_dict.get(sensors.get('code'), '')])
+                result.Message(['Failed to get sensor info. ' + self.ERR_dict.get(sensors.get('code'), '')])
         else:
             result.State('Failure')
             result.Message(['Failed to get sensor info, load dll error.'])
@@ -623,13 +618,13 @@ class Base(IBase):
                     powersingle = PowerSingleBean()
                     # if 'state' in sensor and sensor.get('state').lower() == 'ok':
                     powersingle.Name(sensor.get('name', None))
-                    powersingle.SensorNumber(int(sensor.get('number', num).split('h')[0],16))
+                    powersingle.SensorNumber(int(sensor.get('number', num).split('h')[0], 16))
                     try:
                         if ' Watts' in sensor.get('value', 'null'):
                             powersingle.ReadingWatt(float(sensor.get('value').split(' Watts')[0]))
                         else:
                             powersingle.ReadingWatt(None)
-                    except:
+                    except BaseException:
                         powersingle.ReadingWatt(None)
                     num = num + 1
                     List.append(powersingle.dict)
@@ -663,7 +658,7 @@ class Base(IBase):
             num_data = sensors_num.get('data')
             # print(num_data)
             for i in range(len(num_data)):
-                num_dict[num_data[i].get('name')] = int(num_data[i].get('number').split('h')[0],16)
+                num_dict[num_data[i].get('name')] = int(num_data[i].get('number').split('h')[0], 16)
 
         if sensors_temp:
             if sensors_temp.get('code') == 0 and sensors_temp.get('data') is not None:
@@ -674,8 +669,8 @@ class Base(IBase):
                 for temp in temps:
                     temp_single = Temperature()
                     if temp.get('unit') == 'degrees C':
-                        temp_single.Name(temp.get('name',None))
-                        temp_single.SensorNumber(num_dict.get(temp.get('name',None),num))
+                        temp_single.Name(temp.get('name', None))
+                        temp_single.SensorNumber(num_dict.get(temp.get('name', None), num))
                         temp_single.UpperThresholdFatal(None if temp.get('unr', None) == 'na' or temp.get('unr', None) is None else float(temp.get('unr')))
                         temp_single.UpperThresholdCritical(None if temp.get('uc', None) == 'na' or temp.get('uc', None) is None else float(temp.get('uc')))
                         temp_single.UpperThresholdNonCritical(None if temp.get('unc', None) == 'na' or temp.get('unc', None) is None else float(temp.get('unc')))
@@ -695,13 +690,12 @@ class Base(IBase):
 
             else:
                 result.State('Failure')
-                result.Message(['Failed to get temp info. ' +self.ERR_dict.get(sensors_temp.get('code'), '')])
+                result.Message(['Failed to get temp info. ' + self.ERR_dict.get(sensors_temp.get('code'), '')])
         else:
             result.State('Failure')
             result.Message(['Failed to get temp info, load dll error.'])
 
         return result
-
 
     def getvolt(self, client, args):
         '''
@@ -731,7 +725,7 @@ class Base(IBase):
                     temp_single = Voltage()
                     if temp.get('unit') == 'Volts':
                         temp_single.Name(temp.get('name', None))
-                        temp_single.SensorNumber(num_dict.get(temp.get('name',None),num))
+                        temp_single.SensorNumber(num_dict.get(temp.get('name', None), num))
                         temp_single.UpperThresholdFatal(
                             None if temp.get('unr', None) == 'na' or temp.get('unr', None) is None else float(
                                 temp.get('unr')))
@@ -901,8 +895,8 @@ class Base(IBase):
             if offset > 32768:
                 we = "-"
                 offset = 65536 - offset
-            hh = str(offset//60)
-            mm = str(offset%60)
+            hh = str(offset // 60)
+            mm = str(offset % 60)
             if len(hh) == 1:
                 hh = "0" + hh
             if len(mm) == 1:
@@ -926,9 +920,7 @@ class Base(IBase):
             res.State("Success")
             res.Message("cannot get sel time UTC offset. " + offsetres.get("data", ""))
         return res
-        
-        
-        
+
     def settime(self, client, args):
         import time
         res = ResultBean()
@@ -939,37 +931,37 @@ class Base(IBase):
             res.Message(["time param should be like YYYY-mm-ddTHH:MM+HH:MM"])
             return res
         if "+" in args.newtime:
-            newtime=args.newtime.split("+")[0]
-            zone=args.newtime.split("+")[1]
-            we="+"
+            newtime = args.newtime.split("+")[0]
+            zone = args.newtime.split("+")[1]
+            we = "+"
         else:
-            zone=args.newtime.split("-")[-1]
-            newtime=args.newtime.split("-" + zone)[0]
-            we="-"
-        #set zone
-        args.zone="[" + we+zone + "]"
-        res_zone=Base.settimezone(self, client, args)
+            zone = args.newtime.split("-")[-1]
+            newtime = args.newtime.split("-" + zone)[0]
+            we = "-"
+        # set zone
+        args.zone = "[" + we + zone + "]"
+        res_zone = Base.settimezone(self, client, args)
         if res_zone.State == "Failure":
             return res_zone
-        #set time
+        # set time
         try:
             #time.struct_time(tm_year=2019, tm_mon=4, tm_mday=16, tm_hour=15, tm_min=35, tm_sec=0, tm_wday=1, tm_yday=106, tm_isdst=-1)
-            structtime=time.strptime(newtime, "%Y-%m-%dT%H:%M")
-            #时间戳1555400100
-            stamptime=int(time.mktime(structtime))
+            structtime = time.strptime(newtime, "%Y-%m-%dT%H:%M")
+            # 时间戳1555400100
+            stamptime = int(time.mktime(structtime))
         except ValueError as e:
             res.State("Failure")
             res.Message(["illage time param"])
             return res
-        #执行
-        time_set=IpmiFunc.setBMCTimeByIpmi(client, stamptime)
+        # 执行
+        time_set = IpmiFunc.setBMCTimeByIpmi(client, stamptime)
 
         if time_set["code"] == 0:
             res.State("Success")
             res.Message([])
         else:
             res.State("Failure")
-            res.Message(["set time error" + time_set.get('data','')])
+            res.Message(["set time error" + time_set.get('data', '')])
         return res
 
     def settimezone(self, client, args):
@@ -984,22 +976,22 @@ class Base(IBase):
             res.State("Failure")
             res.Message(["timezone should be -12:00 to +14:00"])
             return res
-        ew=args.zone[1]
-        hh=int(args.zone[2:4])
-        mm=int(args.zone[5:7])
+        ew = args.zone[1]
+        hh = int(args.zone[2:4])
+        mm = int(args.zone[5:7])
         zoneMinutes = int(ew + str(hh * 60 + mm))
         if mm != 0 and mm != 30:
             res.State("Not Support")
             res.Message(["minutes can only be 0 or 30 now"])
             return res
 
-        time_set=IpmiFunc.setBMCTimezoneByIpmi(client, zoneMinutes)
+        time_set = IpmiFunc.setBMCTimezoneByIpmi(client, zoneMinutes)
         if time_set["code"] == 0:
             res.State("Success")
             res.Message([])
         else:
             res.State("Failure")
-            res.Message(["set time zone error" + time_set.get('data','')])
+            res.Message(["set time zone error" + time_set.get('data', '')])
         return res
 
     def resetbmc(self, client, args):
@@ -1035,41 +1027,41 @@ class Base(IBase):
                 res.Message(["lan channel must be 1 or 8"])
             else:
             '''
-            #channel 1专口ip
-            args.channel="1"
-            #调用父类方法
-            ipinfo=Base.getip(self, client, args)
-            if ipinfo.State=="Failure":
+            # channel 1专口ip
+            args.channel = "1"
+            # 调用父类方法
+            ipinfo = Base.getip(self, client, args)
+            if ipinfo.State == "Failure":
                 res.State("Failure")
                 res.Message(["set vlan error"])
                 return res
-            ipm=ipinfo.Message[0]
+            ipm = ipinfo.Message[0]
             if ipm["IP Address"] == client.host:
-                args.channel="1"
+                args.channel = "1"
             else:
-                args.channel="8"
-            state="Success"
-            message=""
+                args.channel = "8"
+            state = "Success"
+            message = ""
             if args.mode.lower() == "dhcp":
                 if args.addr is not None or args.gateway is not None or args.sub is not None:
                     res.State("Failure")
                     res.Message(["ip address, gateway, subnet cannot be setted when mode is DHCP"])
                 else:
-                    modeSet=IpmiFunc.setIpv4ModeByIpmi(client, args.channel, args.mode.lower())
+                    modeSet = IpmiFunc.setIpv4ModeByIpmi(client, args.channel, args.mode.lower())
                     if modeSet == 0:
                         message = "Set mode to " + args.mode + ". "
                     else:
                         state = "Failure"
             elif args.mode.lower() == "static":
                 if args.mode is not None:
-                    modeSet=IpmiFunc.setIpv4ModeByIpmi(client, args.channel, args.mode.lower())
+                    modeSet = IpmiFunc.setIpv4ModeByIpmi(client, args.channel, args.mode.lower())
                     if modeSet == 0:
                         message = "Set mode to " + args.mode + ". "
                     else:
                         state = "Failure"
                 if args.gateway is not None:
                     if RegularCheckUtil.checkIP(args.gateway):
-                        gatewaySet=IpmiFunc.setIpv4GatewayByIpmi(client, args.channel, args.gateway)
+                        gatewaySet = IpmiFunc.setIpv4GatewayByIpmi(client, args.channel, args.gateway)
                         if gatewaySet == 0:
                             message = message + "Set gateway " + args.gateway + ". "
                         else:
@@ -1079,7 +1071,7 @@ class Base(IBase):
                         message = message + "Illegal gateway ip. "
                 if args.sub is not None:
                     if RegularCheckUtil.checkSubnetMask(args.sub):
-                        subSet=IpmiFunc.setIpv4SubnetmaskByIpmi(client, args.channel, args.sub)
+                        subSet = IpmiFunc.setIpv4SubnetmaskByIpmi(client, args.channel, args.sub)
                         if subSet == 0:
                             message = message + "Set subnet " + args.sub + ". "
                         else:
@@ -1087,10 +1079,10 @@ class Base(IBase):
                     else:
                         state = "Failure"
                         message = message + "Illegal subnet. "
-                #最后修改ip
+                # 最后修改ip
                 if args.addr is not None:
                     if RegularCheckUtil.checkIP(args.addr):
-                        addrSet=IpmiFunc.setIpv4IPByIpmi(client, args.channel, args.addr)
+                        addrSet = IpmiFunc.setIpv4IPByIpmi(client, args.channel, args.addr)
                         if addrSet == 0:
                             message = message + "Set ip " + args.addr + ". "
                         else:
@@ -1115,19 +1107,19 @@ class Base(IBase):
             res.State("Success")
             res.Message(["nothing to set"])
             return res
-        #channel
-        args.channel="1"
-        #调用父类方法
-        ipinfo=Base.getip(self, client, args)
-        if ipinfo.State=="Failure":
+        # channel
+        args.channel = "1"
+        # 调用父类方法
+        ipinfo = Base.getip(self, client, args)
+        if ipinfo.State == "Failure":
             res.State("Failure")
             res.Message(["set vlan error"])
             return res
-        ipm=ipinfo.Message[0]
+        ipm = ipinfo.Message[0]
         if ipm["IP Address"] == client.host:
-            channel=1
+            channel = 1
         else:
-            channel=8
+            channel = 8
             args.channel = "8"
             ipinfo = Base.getip(self, client, args)
             ipm = ipinfo.Message[0]
@@ -1149,22 +1141,21 @@ class Base(IBase):
                 res.State("Failure")
                 res.Message(["vlan id is already enabled"])
                 return res
-                
-            
-        #vlan status
+
+        # vlan status
         if args.vlan_status == "Disabled":
-            status=0
+            status = 0
         elif args.vlan_status == "Enabled":
             if args.vlan_id is None:
                 res.State("Failure")
                 res.Message(["vlan is disabled, enable it first"])
-                return res 
-            status=1
+                return res
+            status = 1
         else:
             res.State("Failure")
             res.Message(["vlan status must be enabled or disabled"])
             return res
-        #vlanid
+        # vlanid
         if args.vlan_id is None:
             args.vlan_id = 2
         if args.vlan_id < 2 or args.vlan_id > 4094:
@@ -1172,7 +1163,7 @@ class Base(IBase):
             res.Message(["vlan id must be 2-4094"])
             return res
 
-        vlan_set=IpmiFunc.setVlanByIpmi(client, channel, status, args.vlan_id)
+        vlan_set = IpmiFunc.setVlanByIpmi(client, channel, status, args.vlan_id)
         if vlan_set["code"] == 0:
             res.State("Success")
             res.Message([])
@@ -1204,22 +1195,22 @@ class Base(IBase):
         service = ResultBean()
         service_all = ServiceBean()
         list = []
-        #获取服务列表全部信息
+        # 获取服务列表全部信息
         Name = ["Web", "Kvm", "Cdmedia", "Fdmedia", "Hdmedia", "Ssh", "Telnet", "Solssh"]
-        serviceFormat = {"kvm": 'KVM', 
-        "cd-media": 'CDMedia', 
-        "fd-media": 'FDMedia', 
-        "hd-media": 'HDMedia', 
-        "cd_media": 'CDMedia', 
-        "fd_media": 'FDMedia', 
-        "hd_media": 'HDMedia', 
-        "vnc": 'VNC', 
-        "ssh": 'SSH'}
+        serviceFormat = {"kvm": 'KVM',
+                         "cd-media": 'CDMedia',
+                         "fd-media": 'FDMedia',
+                         "hd-media": 'HDMedia',
+                         "cd_media": 'CDMedia',
+                         "fd_media": 'FDMedia',
+                         "hd_media": 'HDMedia',
+                         "vnc": 'VNC',
+                         "ssh": 'SSH'}
         for service_name in Name:
             service_item = ServiceSingleBean()
             try:
-                item_Info = getattr(IpmiFunc, "getM5" + service_name+'ByIpmi')(client)
-            except:
+                item_Info = getattr(IpmiFunc, "getM5" + service_name + 'ByIpmi')(client)
+            except BaseException:
                 service.State('Failure')
                 service.Message(['this command is incompatible with current server.'])
                 return service
@@ -1230,7 +1221,7 @@ class Base(IBase):
                     if fname == '':
                         fname = sname.upper()
                     service_item.Name(fname)
-                    service_item.Enable(Enabled.get(item_Info.get('data').get('Status'),item_Info.get('data').get('Status')))
+                    service_item.Enable(Enabled.get(item_Info.get('data').get('Status'), item_Info.get('data').get('Status')))
                     service_item.Port(None if item_Info.get('data').get('SecurePort') == 'N/A' else item_Info.get('data').get('SecurePort'))
                     service_item.Port2(None if item_Info.get('data').get('NonsecurePort') == 'N/A' else item_Info.get('data').get('NonsecurePort'))
                     service_item.SSLEnable('Enabled')
@@ -1311,7 +1302,7 @@ class Base(IBase):
         service_name = args.service.replace('-', '').title()
         try:
             Info_all = getattr(IpmiFunc, "getM5" + service_name + 'ByIpmi')(client)
-        except:
+        except BaseException:
             set_result.State('Failure')
             set_result.Message(['this command is incompatible with current server.'])
             return set_result
@@ -1368,7 +1359,7 @@ class Base(IBase):
                     return set_result
             else:
                 set_result.State("Failure")
-                set_result.Message(["failed to set service info: "+ Info_all.get('data', '')])
+                set_result.Message(["failed to set service info: " + Info_all.get('data', '')])
                 return set_result
         else:
             set_result.State("Failure")
@@ -1407,14 +1398,14 @@ class Base(IBase):
 
     def settrapcom(self, client, args):
         res = ResultBean()
-        flag=True
-        info=""
+        flag = True
+        info = ""
         if args.severity is None and args.community is None and args.enabled is None:
             res.State("Failure")
             res.Message(["nothing to set, input severity/community/enable"])
             return res
         # enable
-        if args.enabled is not None and args.enabled=="Disabled":
+        if args.enabled is not None and args.enabled == "Disabled":
             res.State("Not Support")
             res.Message([["cannot disable trap"]])
             return res
@@ -1422,15 +1413,15 @@ class Base(IBase):
         if args.community is not None:
             community_set = IpmiFunc.setTrapByIpmi(client, "community", args.community)
             if community_set["code"] != 0:
-                flag=False
-                info= info + " set community failed: " + community_set.get('data', '')
+                flag = False
+                info = info + " set community failed: " + community_set.get('data', '')
         # severity
         if args.severity is not None:
-            s_dict={'All':0,'WarningAndCritical':1, 'Critical':2}
+            s_dict = {'All': 0, 'WarningAndCritical': 1, 'Critical': 2}
             community_set = IpmiFunc.setTrapByIpmi(client, "severity", s_dict[args.severity])
             if community_set["code"] != 0:
-                flag=False
-                info= info + " set severity failed: " + community_set.get('data', '')
+                flag = False
+                info = info + " set severity failed: " + community_set.get('data', '')
         if flag:
             res.State("Success")
             res.Message([])
@@ -1548,15 +1539,14 @@ class Base(IBase):
 
     def sendipmirawcmd(self, client, args):
 
-
         def checkcmd(cmd):
             if cmd is None:
                 return ""
             if not cmd.startswith("0x") and not cmd.startswith("0X"):
                 try:
-                    cmd = int (cmd)
+                    cmd = int(cmd)
                     cmd = hex(cmd)
-                except:
+                except BaseException:
                     return 1
             if len(cmd) > 4 or len(cmd) < 3:
                 return 2
@@ -1568,11 +1558,11 @@ class Base(IBase):
             else:
                 return 3
 
-        check_error={
-            0 : " cannot be None",
-            1 : " should be number",
-            2 : " should be between 0-255 or 0x00-0xff",
-            3 : " should be illegal hex",
+        check_error = {
+            0: " cannot be None",
+            1: " should be number",
+            2: " should be between 0-255 or 0x00-0xff",
+            3: " should be illegal hex",
         }
         res = ResultBean()
         netfun = checkcmd(args.netfun)
@@ -1587,14 +1577,14 @@ class Base(IBase):
             res.Message([{"ipmirsp": "command" + check_error.get(command)}])
             return res
 
-        #if args.bridge is not None:
+        # if args.bridge is not None:
         bridge = checkcmd(args.bridge)
         if isinstance(bridge, int):
             res.State("Failure")
             res.Message([{"ipmirsp": "command" + check_error.get(bridge)}])
             return res
 
-        #if args.target is not None:
+        # if args.target is not None:
         target = checkcmd(args.target)
         if isinstance(target, int):
             res.State("Failure")
@@ -1620,17 +1610,16 @@ class Base(IBase):
                 else:
                     datalist = datalist + " " + data
 
-
         if args.target is not None or args.bridge is not None:
-            result = IpmiFunc.sendIPMIrawEXByIpmi(client,target,bridge,netfun,command,datalist)
+            result = IpmiFunc.sendIPMIrawEXByIpmi(client, target, bridge, netfun, command, datalist)
         else:
-            result = IpmiFunc.sendIPMIrawcmdByIpmi(client,netfun,command,datalist)
+            result = IpmiFunc.sendIPMIrawcmdByIpmi(client, netfun, command, datalist)
         if result is None or result == {}:
             res.State("Failure")
             res.Message([{"ipmirsp": "failed to send raw command."}])
         elif result.get("code") == 0:
             res.State("Success")
-            res.Message([{"ipmirsp":result["data"]}])
+            res.Message([{"ipmirsp": result["data"]}])
         else:
             res.State("Failure")
             res.Message([{"ipmirsp": result.get("data", "")}])
@@ -1642,7 +1631,6 @@ class Base(IBase):
         :return:
         '''
 
-    
     def getuser(self, client, args):
         '''
 
@@ -1659,11 +1647,11 @@ class Base(IBase):
         # return res
 
     def adduser(self, client, args):
-        priv_dict={"administrator":4,"operator":3,"user":2,"commonuser":2,"noaccess":2}
+        priv_dict = {"administrator": 4, "operator": 3, "user": 2, "commonuser": 2, "noaccess": 2}
         if args.roleid.lower() == "noaccess":
-            args.access=0
+            args.access = 0
         else:
-            args.access=1
+            args.access = 1
         res = ResultBean()
         userlist = IpmiFunc.addUserByIpmi(client, args.uname, args.upass, priv_dict.get(args.roleid.lower()), args.access)
         # print ("userlist")
@@ -1675,16 +1663,16 @@ class Base(IBase):
             res.State("Failure")
             res.Message(["add user error"])
         return res
-        
+
     def deluser(self, client, args):
         res = ResultBean()
-        userRes=IpmiFunc.getUserListByIpmi(client)
+        userRes = IpmiFunc.getUserListByIpmi(client)
         if userRes.get("code") == 0:
             userInfo = userRes.get("data")
             userid = ""
             for user in userInfo:
                 if user.get("user_name") == args.uname:
-                    userid = user.get("user_id","")
+                    userid = user.get("user_id", "")
             if userid == "":
                 res.State("Failure")
                 res.Message(["user '" + args.uname + "' not exist"])
@@ -1703,10 +1691,10 @@ class Base(IBase):
             res.State("Failure")
             res.Message(["del user error" + str(del_res)])
         return res
-        
+
     def setpwd(self, client, args):
         res = ResultBean()
-        userRes=IpmiFunc.setUserPassByIpmi(client, args.uname, args.upass)
+        userRes = IpmiFunc.setUserPassByIpmi(client, args.uname, args.upass)
         if userRes == 0:
             res.State("Success")
             res.Message([])
@@ -1714,14 +1702,14 @@ class Base(IBase):
             res.State("Failure")
             res.Message(["user not exits"])
         return res
-            
+
     def setpriv(self, client, args):
-        priv_dict={"administrator":4,"operator":3,"commonuser":2,"noaccess":15}
+        priv_dict = {"administrator": 4, "operator": 3, "commonuser": 2, "noaccess": 15}
         res = ResultBean()
         if args.roleid.lower() == "noaccess":
-            userRes1=IpmiFunc.setUserModByIpmi(client, args.uname, 0)
-            userRes2=IpmiFunc.setUserPrivByIpmi(client, args.uname, 15)
-            if userRes1 == 0 and userRes2==0:
+            userRes1 = IpmiFunc.setUserModByIpmi(client, args.uname, 0)
+            userRes2 = IpmiFunc.setUserPrivByIpmi(client, args.uname, 15)
+            if userRes1 == 0 and userRes2 == 0:
                 res.State("Success")
                 res.Message([])
             else:
@@ -1729,9 +1717,9 @@ class Base(IBase):
                 res.Message([])
             return res
         else:
-            userRes1=IpmiFunc.setUserModByIpmi(client, args.uname, 1)
-            userRes2=IpmiFunc.setUserPrivByIpmi(client, args.uname, priv_dict.get(args.roleid.lower()))
-            if userRes1 == 0 and userRes2==0:
+            userRes1 = IpmiFunc.setUserModByIpmi(client, args.uname, 1)
+            userRes2 = IpmiFunc.setUserPrivByIpmi(client, args.uname, priv_dict.get(args.roleid.lower()))
+            if userRes1 == 0 and userRes2 == 0:
                 res.State("Success")
                 res.Message([])
             else:
@@ -1815,37 +1803,37 @@ class Base(IBase):
 
         :return:
         '''
-        
+
     def get80port(self, client, args):
         res = ResultBean()
         res.State("Not Support")
         res.Message([])
         return res
-        
+
     def getfirewall(self, client, args):
         res = ResultBean()
         res.State("Not Support")
         res.Message([])
         return res
-        
+
     def setfirewall(self, client, args):
         res = ResultBean()
         res.State("Not Support")
         res.Message([])
         return res
-        
+
     def Opwhitelist(self, client, args):
         res = ResultBean()
         res.State("Not Support")
         res.Message([])
         return res
-        
+
     def addwhitelist(self, client, args):
         res = ResultBean()
         res.State("Not Support")
         res.Message([])
         return res
-        
+
     def delwhitelist(self, client, args):
         res = ResultBean()
         res.State("Not Support")
@@ -1857,17 +1845,19 @@ class Base(IBase):
         res.State("Not Support")
         res.Message([])
         return res
-        
+
     def getimageurl(self, client, args):
         res = ResultBean()
         res.State("Not Support")
         res.Message([])
         return res
-    
+
     def methods(self, client, args):
         return(list(filter(lambda m: not m.startswith("__") and not m.endswith("__") and callable(getattr(self, client, args, m)), dir(self, client, args))))
 
 # Ascii转十六进制
+
+
 def ascii2hex(data, length):
     count = length - len(data)
     list_h = []
@@ -1877,12 +1867,15 @@ def ascii2hex(data, length):
     return data
 
 # 十六进制字符串逆序
+
+
 def hexReverse(data):
     pattern = re.compile('.{2}')
     time_hex = ' '.join(pattern.findall(data))
     seq = time_hex.split(' ')[::-1]
     data = '0x' + ' 0x'.join(seq)
     return data
+
 
 if __name__ == "__main__":
     class aaa():
@@ -1899,8 +1892,8 @@ if __name__ == "__main__":
             self.access = 1
     import RequestClient
     client = RequestClient.RequestClient()
-    #client.setself("100.2.73.207","root","root",623,"lanplus")
-    client.setself("100.2.73.169","admin","admin",623,"lanplus")
+    # client.setself("100.2.73.207","root","root",623,"lanplus")
+    client.setself("100.2.73.169", "admin", "admin", 623, "lanplus")
     base = Base()
     args = aaa()
     # message = base.getfru(client,None)

@@ -380,6 +380,7 @@ class vlanBean():
     def VLANPriority(self, value):
         self.dict['VLANPriority'] = value
 
+
 class IPBean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -441,6 +442,7 @@ class IPv6Bean(IPBean):
 
     def Index(self, value):
         self.dict['Index'] = value
+
 
 class PSUBean():
     def __init__(self):
@@ -624,6 +626,7 @@ class PSUSingleBean():
 
     def Mode(self, value):
         self.dict['Mode'] = value
+
 
 class FanBean():
     def __init__(self):
@@ -1690,6 +1693,7 @@ class NICController():
     def Location(self, value):
         self.dict['Location'] = value
 
+
 class NicPort():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -1888,7 +1892,6 @@ class ServiceSingleBean():
         self.dict['ActiveSessions'] = value
 
 
-
 class UserBean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -2052,6 +2055,7 @@ class Pcie():
 
     def BoardLocation(self, value):
         self.dict['BoardLocation'] = value
+
 
 class TemperatureBean():
     def __init__(self):
@@ -3136,6 +3140,7 @@ class SnmpBean():
     def Port(self, value):
         self.dict['Port'] = value
 
+
 class DestinationTXBean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -3452,6 +3457,7 @@ class PowerStatusBean():
     def UIDLed(self, value):
         self.dict['UIDLed'] = value
 
+
 class UpTimeBean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -3496,6 +3502,7 @@ class SessionBean():
 
     def UserPrivilege(self, value):
         self.dict['UserPrivilege'] = value
+
 
 class HardBackBean():
     def __init__(self):
@@ -3585,6 +3592,7 @@ class HardBackBean():
     def Present(self, value):
         self.dict['Present'] = value
 
+
 class BackplaneBean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -3624,6 +3632,7 @@ class BackplaneBean():
 
     def Present(self, value):
         self.dict['Present'] = value
+
 
 class HardBoardBean():
     def __init__(self):
@@ -3665,6 +3674,7 @@ class HardBoardBean():
     def Present(self, value):
         self.dict['Present'] = value
 
+
 class BMCNicBean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -3692,6 +3702,7 @@ class BMCNicBean():
 
     def IPAddress(self, value):
         self.dict['IPAddress'] = value
+
 
 class DNSBean():
     def __init__(self):
@@ -3768,6 +3779,7 @@ class DNSBean():
 
     def DNSIPPriority(self, value):
         self.dict['DNSIPPriority'] = value
+
 
 class SMTPBean():
     def __init__(self):
@@ -3869,6 +3881,7 @@ class SMTPBean():
     def Destination(self, value):
         self.dict['Destination'] = value
 
+
 class SmtpDestBean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -3896,6 +3909,7 @@ class SmtpDestBean():
 
     def Description(self, value):
         self.dict['Description'] = value
+
 
 class SnmpGetSetBean():
     def __init__(self):
@@ -3949,6 +3963,7 @@ class SnmpGetSetBean():
     def AUTHUserName(self, value):
         self.dict['AUTHUserName'] = value
 
+
 class NCSIBean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -3970,6 +3985,7 @@ class NCSIBean():
 
     def PortNum(self, value):
         self.dict['PortNum'] = value
+
 
 class SMTPM5Bean():
     def __init__(self):
@@ -4004,6 +4020,7 @@ class SMTPM5Bean():
 
     def SMTPServer(self, value):
         self.dict['SMTPServer'] = value
+
 
 class SMTPServerBean():
     def __init__(self):
@@ -4050,6 +4067,7 @@ class SMTPServerBean():
 
     def Username(self, value):
         self.dict['Username'] = value
+
 
 class SnmpGetSetM5Bean():
     def __init__(self):
@@ -4133,6 +4151,7 @@ class SnmpGetSetM5Bean():
     def PrivPasswd(self, value):
         self.dict['PrivPasswd'] = value
 
+
 class NCSIM5Bean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -4190,6 +4209,7 @@ class PSUConfigBean():
     def Mode(self, value):
         self.dict['Mode'] = value
 
+
 class PSUPeakBean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -4205,6 +4225,7 @@ class PSUPeakBean():
 
     def Time(self, value):
         self.dict['Time'] = value
+
 
 class ADBean():
     def __init__(self):
@@ -4252,6 +4273,7 @@ class ADBean():
     def DomainControllerServerAddress3(self, value):
         self.dict['DomainControllerServerAddress3'] = value
 
+
 class ADGroupBean():
     def __init__(self):
         self.dict = collections.OrderedDict()
@@ -4291,6 +4313,7 @@ class ADGroupBean():
 
     def VMedia(self, value):
         self.dict['VMedia'] = value
+
 
 class LDAPBean():
     def __init__(self):
@@ -4343,6 +4366,7 @@ class LDAPBean():
 
     def LoginAttr(self, value):
         self.dict['LoginAttr'] = value
+
 
 class LDAPGroupBean():
     def __init__(self):

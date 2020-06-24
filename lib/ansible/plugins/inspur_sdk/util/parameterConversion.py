@@ -65,7 +65,7 @@ getauditlog = {
     'audit_file': 'auditfile'
 }
 
-fancontrol ={
+fancontrol = {
     'fan_speed': 'fanspeedlevel'
 }
 
@@ -141,12 +141,30 @@ fwupdate = {
     'dual_image': 'dualimage'
 }
 
+
 def getParam(dictobj):
-    param = {'setsmtp': setsmtp, 'setdns': setdns, 'exportbioscfg': exportbioscfg, 'addldisk': addldisk,
-             'adduser': adduser, 'getauditlog': getauditlog, 'importbioscfg': importbioscfg, 'collectblackbox': collectblackbox,
-             'setbios': setbios, 'fancontrol': fancontrol, 'setldisk': setldisk, 'setbmclogsettings': setbmclogsettings,
-             'settime': settime, 'setpriv': setpriv, 'setservice': setservice, 'setsnmp': setsnmp, 'setsnmptrap': setsnmptrap,
-             'geteventlog': geteventlog, 'getsystemlog': getsystemlog, 'fwupdate': fwupdate}
+    param = {
+        'setsmtp': setsmtp,
+        'setdns': setdns,
+        'exportbioscfg': exportbioscfg,
+        'addldisk': addldisk,
+        'adduser': adduser,
+        'getauditlog': getauditlog,
+        'importbioscfg': importbioscfg,
+        'collectblackbox': collectblackbox,
+        'setbios': setbios,
+        'fancontrol': fancontrol,
+        'setldisk': setldisk,
+        'setbmclogsettings': setbmclogsettings,
+        'settime': settime,
+        'setpriv': setpriv,
+        'setservice': setservice,
+        'setsnmp': setsnmp,
+        'setsnmptrap': setsnmptrap,
+        'geteventlog': geteventlog,
+        'getsystemlog': getsystemlog,
+        'fwupdate': fwupdate
+    }
     if 'subcommand' in dictobj:
         subcommand = dictobj['subcommand']
         obj = {}
@@ -161,4 +179,3 @@ def getParam(dictobj):
         return obj
     else:
         return dictobj
-

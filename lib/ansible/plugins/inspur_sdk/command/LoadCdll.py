@@ -22,7 +22,7 @@ cdllNameLinux = "inspur_ipmi_shared.so"
 # load cdll libary type
 class LoadCdll():
 
-    #init
+    # init
     def __init__(self):
         pass
 

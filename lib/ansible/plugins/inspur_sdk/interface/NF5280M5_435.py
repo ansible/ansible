@@ -16,21 +16,22 @@ from ansible.plugins.inspur_sdk.interface.ResEntity import *
 import os
 import re
 
+
 class NF5280M5_435(NF5280M5):
 
     def getcapabilities(self, client, args):
         res = ResultBean()
         cap = CapabilitiesBean()
-        getcomand = ['getadaptiveport','getbios','getcapabilities','getcpu','geteventlog','getfan','getfru', 'getfw','gethealth','getip',  'getnic','getpcie','getpdisk','getpower','getproduct','getpsu', 'getsensor','getservice','getsysboot','gettemp','gettime','gettrap','getuser','getvolt', 'getraid', 'getmemory','getldisk','getfirewall','gethealthevent','getvnc','getvncsession']
-        getcomand_not_support = ['getbiossetting','getbiosresult', 'geteventsub', 'getpwrcap', 'getmgmtport','getupdatestate','getserialport','gettaskstate','getbiosdebug','getthreshold','get80port']
-        setcommand = ['adduser','clearsel','collect','deluser','fancontrol','fwupdate','locatedisk','locateserver','mountvmm','powercontrol','resetbmc','restorebmc','sendipmirawcmd','settimezone','settrapcom','setbios','setip','setpriv','setpwd','setservice','setsysboot','settrapdest','setvlan','setbiospwd','setvnc','settime','clearbiospwd','restorebios','delvncsession','setproductserial','exportbmccfg','exportbioscfg','importbioscfg','importbmccfg','setfirewall','addwhitelist','delwhitelist']
-        setcommand_ns = ['sethsc','setimageurl','setadaptiveport','setserialport','powerctrldisk','recoverypsu','downloadtfalog','setthreshold','downloadsol','canceltask','setbiosdebug']
+        getcomand = ['getadaptiveport', 'getbios', 'getcapabilities', 'getcpu', 'geteventlog', 'getfan', 'getfru', 'getfw', 'gethealth', 'getip', 'getnic', 'getpcie', 'getpdisk', 'getpower', 'getproduct', 'getpsu', 'getsensor', 'getservice', 'getsysboot', 'gettemp', 'gettime', 'gettrap', 'getuser', 'getvolt', 'getraid', 'getmemory', 'getldisk', 'getfirewall', 'gethealthevent', 'getvnc', 'getvncsession']
+        getcomand_not_support = ['getbiossetting', 'getbiosresult', 'geteventsub', 'getpwrcap', 'getmgmtport', 'getupdatestate', 'getserialport', 'gettaskstate', 'getbiosdebug', 'getthreshold', 'get80port']
+        setcommand = ['adduser', 'clearsel', 'collect', 'deluser', 'fancontrol', 'fwupdate', 'locatedisk', 'locateserver', 'mountvmm', 'powercontrol', 'resetbmc', 'restorebmc', 'sendipmirawcmd', 'settimezone', 'settrapcom', 'setbios', 'setip', 'setpriv', 'setpwd', 'setservice', 'setsysboot', 'settrapdest', 'setvlan', 'setbiospwd', 'setvnc', 'settime', 'clearbiospwd', 'restorebios', 'delvncsession', 'setproductserial', 'exportbmccfg', 'exportbioscfg', 'importbioscfg', 'importbmccfg', 'setfirewall', 'addwhitelist', 'delwhitelist']
+        setcommand_ns = ['sethsc', 'setimageurl', 'setadaptiveport', 'setserialport', 'powerctrldisk', 'recoverypsu', 'downloadtfalog', 'setthreshold', 'downloadsol', 'canceltask', 'setbiosdebug']
         cap.GetCommandList(getcomand)
         cap.SetCommandList(setcommand)
         res.State('Success')
         res.Message(cap.dict)
         return res
-        
+
     def exportbioscfg(self, client, args):
         '''
         export bios setup configuration
@@ -46,7 +47,7 @@ class NF5280M5_435(NF5280M5):
         if not os.path.exists(file_path):
             try:
                 os.makedirs(file_path)
-            except:
+            except BaseException:
                 export.State("Failure")
                 export.Message(["cannot build path."])
                 return export
@@ -76,7 +77,7 @@ class NF5280M5_435(NF5280M5):
             export.Message([res.get('data')])
         else:
             export.State("Failure")
-            export.Message(["export bios setup configuration file error, "+res.get('data')])
+            export.Message(["export bios setup configuration file error, " + res.get('data')])
         # logout
         RestFunc.logout(client)
         return export
@@ -91,7 +92,7 @@ class NF5280M5_435(NF5280M5):
         # login
         headers = RestFunc.login(client)
         if headers == {}:
-            login_res=ResultBean()
+            login_res = ResultBean()
             login_res.State("Failure")
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
@@ -107,17 +108,15 @@ class NF5280M5_435(NF5280M5):
             import_Info.Message(['import bios setup configuration file success.'])
         else:
             import_Info.State("Failure")
-            import_Info.Message(["import bios setup configuration failed, "+str(res.get('data'))])
+            import_Info.Message(["import bios setup configuration failed, " + str(res.get('data'))])
         # logout
         RestFunc.logout(client)
         return import_Info
-        
-        
-        
+
     def exportbmccfg(self, client, args):
         checkparam_res = ResultBean()
-        #check param
-        
+        # check param
+
         checkparam_res = ResultBean()
 
         if args.fileurl == ".":
@@ -126,7 +125,7 @@ class NF5280M5_435(NF5280M5):
         elif args.fileurl == "..":
             file_name = "bmcconfig.json"
             file_path = os.path.abspath("..")
-        elif re.search("^[C-Zc-z]\:$",args.fileurl,re.I):
+        elif re.search(r"^[C-Zc-z]\:$", args.fileurl, re.I):
             file_name = "bmcconfig.json"
             file_path = os.path.abspath(args.fileurl + "\\")
         else:
@@ -143,7 +142,7 @@ class NF5280M5_435(NF5280M5):
         if not os.path.exists(file_path):
             try:
                 os.makedirs(file_path)
-            except:
+            except BaseException:
                 checkparam_res.State("Failure")
                 checkparam_res.Message(["cannot build path."])
                 return checkparam_res
@@ -160,12 +159,11 @@ class NF5280M5_435(NF5280M5):
                     file_new = os.path.join(file_path, name_new)
                 args.fileurl = file_new
 
-
-        #check param end
+        # check param end
         # login
         headers = RestFunc.login(client)
         if headers == {}:
-            login_res=ResultBean()
+            login_res = ResultBean()
             login_res.State("Failure")
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
@@ -178,13 +176,13 @@ class NF5280M5_435(NF5280M5):
             bmcres.State("Failure")
             bmcres.Message(["cannot get bmc cfg export express"])
         elif res.get('code') == 0 and res.get('data') is not None:
-            data =res.get('data')
+            data = res.get('data')
             if "filePath" in data and "state" in data:
                 fp = data["filePath"]
                 jj = os.path.splitext(fp)[1]
 
-                if data["state"] == 0 and jj ==".json":
-                    state=0
+                if data["state"] == 0 and jj == ".json":
+                    state = 0
                     count = 0
                     while state == 0:
                         if count > 60:
@@ -206,7 +204,7 @@ class NF5280M5_435(NF5280M5):
                             if "state" in data and data["state"] == 2:
                                 state = 2
                                 filepathinserver = data["filePath"]
-                                filename=filepathinserver.split("/")[-1]
+                                filename = filepathinserver.split("/")[-1]
                                 # download
                                 download_res = RestFunc.downloadBMCcfgByRest(client, args.fileurl, filename)
                                 if download_res == {}:
@@ -253,10 +251,10 @@ class NF5280M5_435(NF5280M5):
                             bmcres.State("Failure")
                             bmcres.Message(["cannot generate BMC cfg"])
                             break
-                elif data["state"] == 2 or jj =="":
-                    #从头开始
+                elif data["state"] == 2 or jj == "":
+                    # 从头开始
                     import random
-                    filename = str(random.randint(100,999)) + ".json"
+                    filename = str(random.randint(100, 999)) + ".json"
                     generate_res = RestFunc.generateBMCcfgByRest(client, filename)
                     if generate_res == {}:
                         bmcres.State("Failure")
@@ -334,8 +332,6 @@ class NF5280M5_435(NF5280M5):
                             bmcres.State("Failure")
                             bmcres.Message(["cannot generate BMC cfg"])
 
-
-
                     elif generate_res.get('code') != 0 and generate_res .get('data') is not None:
                         bmcres.State("Failure")
                         bmcres.Message([generate_res.get('data')])
@@ -357,7 +353,7 @@ class NF5280M5_435(NF5280M5):
 
     def importbmccfg(self, client, args):
         checkparam_res = ResultBean()
-        #check param
+        # check param
         '''
         file_suf = os.path.splitext(args.fileurl)[-1]
         if file_suf != ".json":
@@ -369,10 +365,10 @@ class NF5280M5_435(NF5280M5):
             checkparam_res.State("Failure")
             checkparam_res.Message(["File is not exist."])
             return checkparam_res
-        #check file must be json
+        # check file must be json
         try:
             f = open(args.fileurl, "r")
-            fr=f.read()
+            fr = f.read()
             import json
             json.loads(fr)
         except ValueError:
@@ -380,11 +376,11 @@ class NF5280M5_435(NF5280M5):
             checkparam_res.Message(["File is not json format."])
             return checkparam_res
         #
-        #check param end
+        # check param end
         # login
         headers = RestFunc.login(client)
         if headers == {}:
-            login_res=ResultBean()
+            login_res = ResultBean()
             login_res.State("Failure")
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
@@ -396,17 +392,17 @@ class NF5280M5_435(NF5280M5):
             bmcres.State("Failure")
             bmcres.Message(["upload BMC cfg file error"])
         elif upload_res.get('code') == 0 and upload_res.get('data') is not None:
-            #import
+            # import
             import_res = RestFunc.importBMCfgByRest(client)
             if import_res == {}:
                 bmcres.State("Failure")
                 bmcres.Message(["import BMC cfg error"])
             elif import_res.get('code') == 0 and import_res.get('data') is not None:
                 count = 0
-                #重试次数
+                # 重试次数
                 retrynum = 3
                 while True:
-                    #定时器
+                    # 定时器
                     if count > 120:
                         bmcres.State("Failure")
                         bmcres.Message(["import BMC cfg time out"])
@@ -434,7 +430,7 @@ class NF5280M5_435(NF5280M5):
                                 break
                         elif "completeCode" in data and data["completeCode"] != 0:
                             bmcres.State("Failure")
-                            errorlist={1: "configuration file does not exist ", 2: "failed to create IPMI Session ", 3: "failed to parse Json file ", 4: "set operation over retry number ", 16: "service setting failed :Json format error ", 17: "service setting failed :Json array overbounds ", 18: "service setting failed: please enter valid id", 19: "service setting failed: please enter valid timeout ", 20: "service setting failed: configuration item missing ", 21: "service setting failed ", 32: "NTP setting failed: configuration item missing ", 33: "NTP setting failed: please enter the correct enable state ", 34: "NTP set failed: parse date failed ", 35: "NTP setting failed: parse time failed ", 36: "NTP setting failure: setting time failure ", 37: "NTP setting failed: setting UTC time zone failed ", 38: "NTP setting failed: failed to configure time zone ", 39: "NTP setting failed ", 48: "SMTP setting failed :Json format error ", 49: "SMTP setting failed :Json array out of bounds ", 50: "SMTP setting failed: configuration item missing ", 51: "SMTP setting failed: please enter valid network interface ", 52: "SMTP setting failed: please enter valid server IP address ", 53: "SMTP setting failed ", 64: "SNMP setting failure :Json format error ", 65: "SNMP setting fails :Json array overruns ", 66: "SNMP alarm IP setting fails ", 67: "SNMP warning email setting failed ", 68: "SNMP setting failed ", 80: "user setting failed :Json format error ", 81: "user setting failed :Json array overbounds ", 82: "user setting failed: add user failed ", 83: "user setting failed: modify user failed ", 84: "user setting fails: deletion fails ", 85: "failure of user setting: failure of obtaining user information ", 86: "user setting failed: please enter valid user ID", 87: "user setting failed: please enter valid user permissions ", 88: "user setting failed: user group name is empty ", 89: "user setting failed: user name is empty ", 90: "user setting fails: user name already exists ", 91: "user setting failed: password is empty ", 92: "user setting fails: password already exists ", 93: "user setting failed: old password is empty ", 94: "user setting failed: please enter a valid password change flag ", 95: "user setting fails: old password validation fails ", 96: "user setting failed: password length does not match ", 97: "user setting failed: password complexity not met ", 98: "user Settings fail: mailbox Settings fail ", 99: "user setting fails: mailbox format failed ", 100: "user setting failed: failed to add user to user group ", 112: "network setting failed :Json format error ", 113: "network setting failed :Json array overbounds ", 114: "network setting failed: please enter valid network interface ", 115: "network setting failed: please enter valid IP address ", 116: "network setting failed: please enter a valid subnet mask ", 117: "network setting failed: please enter valid default gateway ", 118: "network setting failed: please enter the correct enabling state ", 119: "network setting failed: configuration item missing ", 120: "network setting failed ", 121: "DNS setting failed ", 122: "network aggregation Settings failed ", 123: "network link setting failed ", 124: "network link setting failed: configuration item missing "}
+                            errorlist = {1: "configuration file does not exist ", 2: "failed to create IPMI Session ", 3: "failed to parse Json file ", 4: "set operation over retry number ", 16: "service setting failed :Json format error ", 17: "service setting failed :Json array overbounds ", 18: "service setting failed: please enter valid id", 19: "service setting failed: please enter valid timeout ", 20: "service setting failed: configuration item missing ", 21: "service setting failed ", 32: "NTP setting failed: configuration item missing ", 33: "NTP setting failed: please enter the correct enable state ", 34: "NTP set failed: parse date failed ", 35: "NTP setting failed: parse time failed ", 36: "NTP setting failure: setting time failure ", 37: "NTP setting failed: setting UTC time zone failed ", 38: "NTP setting failed: failed to configure time zone ", 39: "NTP setting failed ", 48: "SMTP setting failed :Json format error ", 49: "SMTP setting failed :Json array out of bounds ", 50: "SMTP setting failed: configuration item missing ", 51: "SMTP setting failed: please enter valid network interface ", 52: "SMTP setting failed: please enter valid server IP address ", 53: "SMTP setting failed ", 64: "SNMP setting failure :Json format error ", 65: "SNMP setting fails :Json array overruns ", 66: "SNMP alarm IP setting fails ", 67: "SNMP warning email setting failed ", 68: "SNMP setting failed ", 80: "user setting failed :Json format error ", 81: "user setting failed :Json array overbounds ", 82: "user setting failed: add user failed ", 83: "user setting failed: modify user failed ", 84: "user setting fails: deletion fails ", 85: "failure of user setting: failure of obtaining user information ", 86: "user setting failed: please enter valid user ID", 87: "user setting failed: please enter valid user permissions ", 88: "user setting failed: user group name is empty ", 89: "user setting failed: user name is empty ", 90: "user setting fails: user name already exists ", 91: "user setting failed: password is empty ", 92: "user setting fails: password already exists ", 93: "user setting failed: old password is empty ", 94: "user setting failed: please enter a valid password change flag ", 95: "user setting fails: old password validation fails ", 96: "user setting failed: password length does not match ", 97: "user setting failed: password complexity not met ", 98: "user Settings fail: mailbox Settings fail ", 99: "user setting fails: mailbox format failed ", 100: "user setting failed: failed to add user to user group ", 112: "network setting failed :Json format error ", 113: "network setting failed :Json array overbounds ", 114: "network setting failed: please enter valid network interface ", 115: "network setting failed: please enter valid IP address ", 116: "network setting failed: please enter a valid subnet mask ", 117: "network setting failed: please enter valid default gateway ", 118: "network setting failed: please enter the correct enabling state ", 119: "network setting failed: configuration item missing ", 120: "network setting failed ", 121: "DNS setting failed ", 122: "network aggregation Settings failed ", 123: "network link setting failed ", 124: "network link setting failed: configuration item missing "}
                             bmcres.Message([errorlist[data["completeCode"]]])
                             break
                         else:
@@ -479,7 +475,7 @@ class NF5280M5_435(NF5280M5):
         RestFunc.logout(client)
         return bmcres
 
-    def setvnc(self,client,args):
+    def setvnc(self, client, args):
         '''
         set vnc setting
         :param client:
@@ -496,7 +492,7 @@ class NF5280M5_435(NF5280M5):
             set_result.State("Failure")
             set_result.Message(["Settings are not supported when -e is set to Disabled."])
             return set_result
-        if args.pwd is not None and (len(args.pwd) > 8 or len(args.pwd) <1):
+        if args.pwd is not None and (len(args.pwd) > 8 or len(args.pwd) < 1):
             set_result.State("Failure")
             set_result.Message(["the length of password is 1-8."])
             return set_result
@@ -514,7 +510,7 @@ class NF5280M5_435(NF5280M5):
                 sp = '{:08x}'.format(args.secureport)
                 sp_hex = hexReverse(sp)
         if args.pwd is not None:
-            args.pwd = ascii2hex(args.pwd,len(args.pwd))
+            args.pwd = ascii2hex(args.pwd, len(args.pwd))
         if args.nonsecureport is not None:
             if args.nonsecureport < 1 or args.nonsecureport > 65535:
                 set_result.State("Failure")
@@ -539,7 +535,7 @@ class NF5280M5_435(NF5280M5):
                 # 需要获取
                 try:
                     Info_all = IpmiFunc.getM5VncByIpmi(client)
-                except:
+                except BaseException:
                     set_result.State('Failure')
                     set_result.Message(['this command is incompatible with current server.'])
                     return set_result
@@ -652,7 +648,7 @@ class NF5280M5_435(NF5280M5):
 
         return set_result
 
-    def getvnc(self,client,args):
+    def getvnc(self, client, args):
         '''
        get vnc setting
        :param client:
@@ -663,7 +659,7 @@ class NF5280M5_435(NF5280M5):
         res = VncBean()
         try:
             Info_all = IpmiFunc.getM5VncByIpmi(client)
-        except:
+        except BaseException:
             get_result.State('Failure')
             get_result.Message(['this command is incompatible with current server.'])
             return get_result
@@ -671,20 +667,20 @@ class NF5280M5_435(NF5280M5):
             if Info_all.get('code') == 0 and Info_all.get('data') is not None:
                 data = Info_all.get('data')
                 res.KeyboardLayout(None)
-                if data.get('Timeout',0) == 'N/A':
+                if data.get('Timeout', 0) == 'N/A':
                     res.SessionTimeoutMinutes(0)
                 else:
-                    res.SessionTimeoutMinutes(int(data.get('Timeout',0))/60)
+                    res.SessionTimeoutMinutes(int(data.get('Timeout', 0)) / 60)
                 # res.SSLEncryptionEnabled(True if data.get('Status') == 'Enabled' else False)
                 res.SSLEncryptionEnabled(None)
                 if data.get('MaximumSessions', 0) == 'N/A':
                     res.MaximumNumberOfSessions(0)
                 else:
-                    res.MaximumNumberOfSessions(int(data.get('MaximumSessions',0)))
+                    res.MaximumNumberOfSessions(int(data.get('MaximumSessions', 0)))
                 if data.get('ActiveSessions', 0) == 'N/A':
                     res.NumberOfActivatedSessions(0)
                 else:
-                    res.NumberOfActivatedSessions(int(data.get('ActiveSessions',0)))
+                    res.NumberOfActivatedSessions(int(data.get('ActiveSessions', 0)))
                 res.SessionMode(None)
                 get_result.State('Success')
                 get_result.Message([res.dict])
@@ -698,9 +694,9 @@ class NF5280M5_435(NF5280M5):
             get_result.Message(['Failed to get vnc info.'])
             return get_result
 
-    def getvncsession(self,client, args):
+    def getvncsession(self, client, args):
 
-        priv_dict = {4:"Administrator",3: "Operator",2: "Commonuser",15:"Noaccess"}
+        priv_dict = {4: "Administrator", 3: "Operator", 2: "Commonuser", 15: "Noaccess"}
         result = ResultBean()
         headers = RestFunc.login(client)
         client.setHearder(headers)
@@ -715,23 +711,22 @@ class NF5280M5_435(NF5280M5):
                 list_Info = []
                 for i in range(num):
                     vnc_info = VncSessionBean()
-                    vnc_info.SessionId(res.get('data')[i].get('session_id',None))
-                    vnc_info.Id(res.get('data')[i].get('id',None))
-                    vnc_info.ClientIP(res.get('data')[i].get('client_ip',None))
-                    vnc_info.SessionType(res.get('data')[i].get('session_type',None))
-                    vnc_info.UserId(res.get('data')[i].get('user_id',None))
-                    vnc_info.UserName(res.get('data')[i].get('user_name',None))
-                    vnc_info.UserPrivilege(priv_dict.get(res.get('data')[i].get('user_privilege',None),None))
+                    vnc_info.SessionId(res.get('data')[i].get('session_id', None))
+                    vnc_info.Id(res.get('data')[i].get('id', None))
+                    vnc_info.ClientIP(res.get('data')[i].get('client_ip', None))
+                    vnc_info.SessionType(res.get('data')[i].get('session_type', None))
+                    vnc_info.UserId(res.get('data')[i].get('user_id', None))
+                    vnc_info.UserName(res.get('data')[i].get('user_name', None))
+                    vnc_info.UserPrivilege(priv_dict.get(res.get('data')[i].get('user_privilege', None), None))
                     list_Info.append(vnc_info.dict)
                 result.State('Success')
                 result.Message([list_Info])
         else:
             result.State('Failure')
-            result.Message(['failed to get vnc session info， '+str(res.get('data'))])
+            result.Message(['failed to get vnc session info， ' + str(res.get('data'))])
         # logout
         RestFunc.logout(client)
         return result
-
 
     def delvncsession(self, client, args):
         result = ResultBean()
@@ -750,7 +745,7 @@ class NF5280M5_435(NF5280M5):
             if args.id is not None:
                 if str(args.id) in id_list:
                     res1 = RestFunc.deleteM5VncSessionByRest(client, args.id)
-                    if res1.get('code') == 0 and res1.get('data') is not None and res1.get('data').get('cc',1) == 0:
+                    if res1.get('code') == 0 and res1.get('data') is not None and res1.get('data').get('cc', 1) == 0:
                         result.State('Success')
                         result.Message(['delete session id {0} success, please wait a few seconds.'.format(args.id)])
                     elif res1.get('code') == 0 and res1.get('data') is not None and res1.get('data').get('cc', 1) != 0:
@@ -758,10 +753,10 @@ class NF5280M5_435(NF5280M5):
                         result.Message(['delete vnc session request parsing failed.'])
                     else:
                         result.State('Failure')
-                        result.Message(['delete session id {0} failed， '.format(args.id)+res1.get('data')])
+                        result.Message(['delete session id {0} failed， '.format(args.id) + res1.get('data')])
                 else:
                     result.State('Failure')
-                    result.Message(['wrong session id, please input right id, id list is {0}.'.format(','.join(id_list) if len(id_list)>1 else id_list)])
+                    result.Message(['wrong session id, please input right id, id list is {0}.'.format(','.join(id_list) if len(id_list) > 1 else id_list)])
             else:
                 # 如果不输入，循环调用，全部删除
                 flag = []
@@ -774,21 +769,21 @@ class NF5280M5_435(NF5280M5):
                         continue
                 if len(flag) != 0:
                     result.State('Failure')
-                    result.Message(['delete session id {0} failed.'.format(','.join(flag) if len(flag)>1 else flag)])
+                    result.Message(['delete session id {0} failed.'.format(','.join(flag) if len(flag) > 1 else flag)])
                 else:
                     result.State('Success')
-                    result.Message(['delete session id {0} success, please wait a few seconds.'.format(','.join(id_list) if len(id_list)>1 else id_list)])
+                    result.Message(['delete session id {0} success, please wait a few seconds.'.format(','.join(id_list) if len(id_list) > 1 else id_list)])
         elif res.get('code') == 0 and res.get('data') is not None and len(res.get('data')) == 0:
             result.State('Failure')
             result.Message(['session count is 0.'])
         else:
             result.State('Failure')
-            result.Message(['failed to get vnc session info， '+str(res.get('data'))])
+            result.Message(['failed to get vnc session info， ' + str(res.get('data'))])
         # logout
         RestFunc.logout(client)
         return result
 
-    def setbiospwd(self,client,args):
+    def setbiospwd(self, client, args):
         '''
         set bios password
         :param client:
@@ -800,7 +795,7 @@ class NF5280M5_435(NF5280M5):
         #     set_result.State('Failure')
         #     set_result.Message(['not need old password input.'])
         #     return set_result
-        if len(args.newpassword)<8 or len(args.newpassword)>20:
+        if len(args.newpassword) < 8 or len(args.newpassword) > 20:
             set_result.State('Failure')
             set_result.Message(['length of password range from 8-20.'])
             return set_result
@@ -809,7 +804,7 @@ class NF5280M5_435(NF5280M5):
         # print(bios_version)
         if bios_version and 'code' in bios_version and bios_version['code'] == 0:
             # bios_version['data']['Version'] = 'x.3.x'
-            version = bios_version['data'].get('Version',0).split('(')[0].split('.')
+            version = bios_version['data'].get('Version', 0).split('(')[0].split('.')
             if len(version) >= 3:
                 if int(version[1]) != 3:
                     set_result.State('Failure')
@@ -824,12 +819,12 @@ class NF5280M5_435(NF5280M5):
             set_result.Message(['can not get bios version.'])
             return set_result
 
-        pwd = ascii2hex(args.newpassword,len(args.newpassword))
+        pwd = ascii2hex(args.newpassword, len(args.newpassword))
         if args.type == 'User':
             type = '0x01'
         else:
             type = '0x00'
-        Info_all = IpmiFunc.setM5BiosPwdByIpmi(client,type,pwd)
+        Info_all = IpmiFunc.setM5BiosPwdByIpmi(client, type, pwd)
         if Info_all:
             if Info_all.get('code') == 0:
                 set_result.State('Success')
@@ -844,7 +839,7 @@ class NF5280M5_435(NF5280M5):
             set_result.Message(['Do not be in bios or in the process of switching on or off, and input right password format.'])
             return set_result
 
-    def clearbiospwd(self,client,args):
+    def clearbiospwd(self, client, args):
         '''
         clear bios password
         :param client:
@@ -856,7 +851,7 @@ class NF5280M5_435(NF5280M5):
             type = '0x01'
         else:
             type = '0x00'
-        Info_all = IpmiFunc.clearBiospwdM5ByIpmi(client,type)
+        Info_all = IpmiFunc.clearBiospwdM5ByIpmi(client, type)
         if Info_all:
             if Info_all.get('code') == 0:
                 result.State('Success')
@@ -864,7 +859,7 @@ class NF5280M5_435(NF5280M5):
                 return result
             else:
                 result.State('Failure')
-                result.Message(['Failed to clear bios password. '+ Info_all.get('data', '')])
+                result.Message(['Failed to clear bios password. ' + Info_all.get('data', '')])
                 return result
         else:
             result.State('Failure')
@@ -887,7 +882,7 @@ class NF5280M5_435(NF5280M5):
                 return result
             else:
                 result.State('Failure')
-                result.Message(['Failed to restore bios. '+ Info_all.get('data', '')])
+                result.Message(['Failed to restore bios. ' + Info_all.get('data', '')])
                 return result
         else:
             result.State('Failure')
@@ -920,7 +915,6 @@ class NF5280M5_435(NF5280M5):
             get_res.Message("cannot get firewall state: " + res.get('data'))
         return get_res
 
-
     def setfirewall(self, client, args):
         '''
         get firewall configuration
@@ -942,32 +936,32 @@ class NF5280M5_435(NF5280M5):
             set_res.Message([res.get('data')])
         return set_res
 
+    # 白名单添加删除
 
-    #白名单添加删除
     def Opwhitelist(client, args):
-        #检查参数必须为0x的16进制
+        # 检查参数必须为0x的16进制
         param_p = '^0(x|X)[0-9a-fA-F]{2}$'
-        if not re.search(param_p,args.channel,re.I):
+        if not re.search(param_p, args.channel, re.I):
             res = ResultBean()
             res.State('Failure')
             res.Message(["channel should be 0x00-0x0f"])
             return res
-        if not re.search(param_p,args.lun,re.I):
+        if not re.search(param_p, args.lun, re.I):
             res = ResultBean()
             res.State('Failure')
             res.Message(["lun should be 0x00, 0x01, 0x10, 0x11"])
             return res
-        if not re.search(param_p,args.netfn,re.I):
+        if not re.search(param_p, args.netfn, re.I):
             res = ResultBean()
             res.State('Failure')
             res.Message(["netfn should be even,and between 0x00-0x3e"])
             return res
-        if not re.search(param_p,args.command,re.I):
+        if not re.search(param_p, args.command, re.I):
             res = ResultBean()
             res.State('Failure')
             res.Message(["command should be 0x00-0xff"])
             return res
-        #检查是否为白名单模式
+        # 检查是否为白名单模式
         get_res = ResultBean()
         res = IpmiFunc.getFirewallByIpmi(client)
         if res == {}:
@@ -982,50 +976,50 @@ class NF5280M5_435(NF5280M5):
             get_res.Message(["cannot get firewall state: " + res.get('data')])
         if get_res.State == "Failure":
             return get_res
-        #操作白名单
+        # 操作白名单
         add_res = ResultBean()
         try:
-            channel10 = int(args.channel,16)
-            if channel10 > 15 :
+            channel10 = int(args.channel, 16)
+            if channel10 > 15:
                 add_res.State('Failure')
                 add_res.Message(["channel should be 0x00-0x0f"])
                 return add_res
-        except:
+        except BaseException:
             add_res.State('Failure')
             add_res.Message(["channel should be hex"])
             return add_res
         try:
-            lun10 = int(args.lun,16)
+            lun10 = int(args.lun, 16)
             if lun10 != 0 and lun10 != 1 and lun10 != 16 and lun10 != 17:
                 add_res.State('Failure')
                 add_res.Message(["lun should be 0x00, 0x01, 0x10, 0x11"])
                 return add_res
-        except:
+        except BaseException:
             add_res.State('Failure')
             add_res.Message(["lun should be hex"])
             return add_res
         try:
-            netfn10 = int(args.netfn,16)
-            if netfn10 > 63 or netfn10%2 ==1 :
+            netfn10 = int(args.netfn, 16)
+            if netfn10 > 63 or netfn10 % 2 == 1:
                 add_res.State('Failure')
                 add_res.Message(["netfn should be even,and between 0x00-0x3e"])
                 return add_res
-        except :
+        except BaseException:
             add_res.State('Failure')
             add_res.Message(["netfn should be like 0x00"])
             return add_res
-            
+
         try:
-            command10 = int(args.command,16)
-            if command10 > 255 :
+            command10 = int(args.command, 16)
+            if command10 > 255:
                 add_res.State('Failure')
                 add_res.Message(["command should be 0x00-0xff"])
                 return add_res
-        except:
+        except BaseException:
             add_res.State('Failure')
             add_res.Message(["command should be hex"])
             return add_res
-        res = IpmiFunc.opWhiteListByIpmi4(client, args.op, args.channel,args.lun, args.netfn, args.command)
+        res = IpmiFunc.opWhiteListByIpmi4(client, args.op, args.channel, args.lun, args.netfn, args.command)
         if res == 0:
             add_res.State('Success')
             if args.op == "add":
@@ -1039,21 +1033,18 @@ class NF5280M5_435(NF5280M5):
             else:
                 add_res.Message(["del cmd from white list error"])
         return add_res
-        
-        
-        
+
     def addwhitelist(self, client, args):
         add_res = ResultBean()
-        args.op="add"
+        args.op = "add"
         add_res = NF5280M5_435.Opwhitelist(client, args)
         return add_res
 
     def delwhitelist(self, client, args):
         add_res = ResultBean()
-        args.op="del"
+        args.op = "del"
         add_res = NF5280M5_435.Opwhitelist(client, args)
         return add_res
-        
 
     def collect(self, client, args):
         if args.component is not None:
@@ -1070,7 +1061,7 @@ class NF5280M5_435(NF5280M5):
             file_name = ""
             file_path = os.path.abspath("..")
             args.fileurl = os.path.join(file_path, file_name)
-        elif re.search("^[C-Zc-z]\:$",args.fileurl,re.I):
+        elif re.search(r"^[C-Zc-z]\:$", args.fileurl, re.I):
             file_name = ""
             file_path = os.path.abspath(args.fileurl + "\\")
             args.fileurl = os.path.join(file_path, file_name)
@@ -1082,14 +1073,14 @@ class NF5280M5_435(NF5280M5):
             file_path = os.path.abspath(".")
             args.fileurl = os.path.join(file_path, file_name)
 
-        #用户输入路径，则默认文件名dump_psn_time.tar
+        # 用户输入路径，则默认文件名dump_psn_time.tar
         if file_name == "":
-            psn="UNKNOWN"
-            res=Base.getfru(self, client, args)
+            psn = "UNKNOWN"
+            res = Base.getfru(self, client, args)
             if res.State == "Success":
-                frulist=res.Message[0].get("FRU",[])
+                frulist = res.Message[0].get("FRU", [])
                 if frulist != []:
-                    psn = frulist[0].get('ProductSerial','UNKNOWN')
+                    psn = frulist[0].get('ProductSerial', 'UNKNOWN')
             else:
                 return res
             import time
@@ -1098,7 +1089,7 @@ class NF5280M5_435(NF5280M5):
             file_name = "dump_" + psn + "_" + logtime + ".tar"
             args.fileurl = os.path.join(file_path, file_name)
         else:
-            p = '\.tar$'
+            p = r'\.tar$'
             if not re.search(p, file_name, re.I):
                 checkparam_res.State("Failure")
                 checkparam_res.Message(["Filename should be xxx.tar"])
@@ -1107,7 +1098,7 @@ class NF5280M5_435(NF5280M5):
         if not os.path.exists(file_path):
             try:
                 os.makedirs(file_path)
-            except:
+            except BaseException:
                 checkparam_res.State("Failure")
                 checkparam_res.Message(["can not create path."])
                 return checkparam_res
@@ -1131,7 +1122,6 @@ class NF5280M5_435(NF5280M5):
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
         client.setHearder(headers)
-
 
         bmcres = ResultBean()
         # 因为无法通过FileExistFlag=0判断是否1正在生成2刚刚刷了系统
@@ -1173,7 +1163,7 @@ class NF5280M5_435(NF5280M5):
                 data = process_res.get('data')
                 error_info = data
                 if "FileExistFlag" in data and "FileName" in data:
-                    #log收集成功
+                    # log收集成功
                     if data["FileExistFlag"] == 1 and data["FileName"] != "":
                         # get folder
                         folder = data['FileName']
@@ -1211,6 +1201,3 @@ class NF5280M5_435(NF5280M5):
                 bmcres.Message(["generate log error"])
                 break
         return bmcres
-
-
-

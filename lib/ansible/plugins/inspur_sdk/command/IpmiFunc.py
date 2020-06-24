@@ -356,6 +356,7 @@ def str2bytes(param):
     else:
         return bytes(param, 'utf-8')
 
+
 def getfruByIpmi(client):
     '''
     get Product FRU  information
@@ -386,7 +387,7 @@ def execSysCmd(cmd):
 
 
 def getIpmitoolkey(result, key):
-    param = key + "[\. ]+: ([\w]+[\.]*[\w]*)"
+    param = key + r"[\. ]+: ([\w]+[\.]*[\w]*)"
     value = re.findall(param, result)
     return value
 
@@ -789,7 +790,7 @@ def sendIPMIrawEXByIpmi(client, target, brige, netfun, command, datalist):
                              client.port, str2bytes(target), str2bytes(brige), str2bytes(raw))
         try:
             dictraw = json.loads(result.decode("utf-8"))
-        except:
+        except BaseException:
             dictraw['code'] = 102
             dictraw['data'] = res + "result is not a valid JSON format: " + str(result)
         logger.utoolLog.info(
@@ -2361,7 +2362,7 @@ def sendRawByIpmi(client, raw):
                           client.port, str2bytes(raw))
         try:
             dictraw = json.loads(result.decode("utf-8"))
-        except:
+        except BaseException:
             dictraw['code'] = 102
             dictraw['data'] = res + "result is not a valid JSON format: " + str(result)
         # logger.utoolLog.info("[RAW] " + client.host + " " + raw + ": [RES] " + str(dictraw))
@@ -2429,7 +2430,7 @@ def setAdaptiveportByIpmi(client, portlist):
                 portdict[nic] = portnum
             else:
                 portdict[nic] = portnum | portdict[nic]
-    if portdict == None or len(portdict) == 0:
+    if portdict is None or len(portdict) == 0:
         res = {"code": 105, "data": "nic list cannot be null"}
         return res
     elif len(portdict) > 2:
@@ -2615,6 +2616,8 @@ def getRaidStatusByIpmi(client, cid):
     return sendRawByIpmi(client, cmd_get)
 
 # str转换Ascii
+
+
 def __str2ascii(data):
     ascii_data = ""
     for c in data:
@@ -2743,5 +2746,3 @@ if __name__ == "__main__":
     # raw = setM5BiosByipmi(client,cmd)
     # raw = getPowerStatusByIpmi(client)
     # print('raw:', raw)
-
-

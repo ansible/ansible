@@ -13,6 +13,7 @@ from ansible.plugins.inspur_sdk.interface.ResEntity import *
 import os
 import re
 
+
 class NF5280M5_436(NF5280M5_435):
     def exportbioscfg(self, client, args):
         '''
@@ -29,7 +30,7 @@ class NF5280M5_436(NF5280M5_435):
         if not os.path.exists(file_path):
             try:
                 os.makedirs(file_path)
-            except:
+            except BaseException:
                 export.State("Failure")
                 export.Message(["cannot build path."])
                 return export
@@ -59,7 +60,7 @@ class NF5280M5_436(NF5280M5_435):
             export.Message([res.get('data')])
         else:
             export.State("Failure")
-            export.Message(["export bios setup configuration file error, "+res.get('data')])
+            export.Message(["export bios setup configuration file error, " + res.get('data')])
         # logout
         RestFunc.logout(client)
         return export

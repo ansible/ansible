@@ -7,6 +7,13 @@
 #   @Date:
 #=========================================================================
 '''
+from ansible.plugins.inspur_sdk.util import HostTypeJudge
+import threading
+from ansible.plugins.inspur_sdk.util import RegularCheckUtil
+from ansible.plugins.inspur_sdk.util import RequestClient
+from ansible.plugins.inspur_sdk.command import backup, restore
+from ansible.plugins.inspur_sdk.command import RestFunc
+from ansible.plugins.inspur_sdk.command import IpmiFunc
 import sys
 import os
 import json
@@ -23,13 +30,6 @@ import collections
 rootpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(os.path.join(rootpath, "command"))
 sys.path.append(os.path.join(rootpath, "util"))
-from ansible.plugins.inspur_sdk.command import IpmiFunc
-from ansible.plugins.inspur_sdk.command import RestFunc
-from ansible.plugins.inspur_sdk.command import backup,restore
-from ansible.plugins.inspur_sdk.util import RequestClient
-from ansible.plugins.inspur_sdk.util import RegularCheckUtil
-import threading
-from ansible.plugins.inspur_sdk.util import HostTypeJudge
 
 MR_LD_CACHE_WRITE_BACK = 0x01
 MR_LD_CACHE_WRITE_ADAPTIVE = 0x02
@@ -383,10 +383,10 @@ class CommonM5(Base):
     def getcapabilities(self, client, args):
         res = ResultBean()
         cap = CapabilitiesBean()
-        getcomand = ['getadaptiveport','getbios','getcapabilities','getcpu','geteventlog','getfan','getfru', 'getfw','gethealth','getip',  'getnic','getpcie','getpdisk','getpower','getproduct','getpsu', 'getsensor','getservice','getsysboot','gettemp','gettime','gettrap','getuser','getvolt', 'getraid', 'getmemory','getldisk','getfirewall','gethealthevent']
-        getcomand_not_support = ['getbiossetting','getbiosresult', 'geteventsub', 'getpwrcap', 'getmgmtport','getupdatestate','getserialport','getvnc','getvncsession','gettaskstate','getbiosdebug','getthreshold','get80port']
-        setcommand = ['adduser','clearsel','collect','deluser','fancontrol','fwupdate','locatedisk','locateserver','mountvmm','powercontrol','resetbmc','restorebmc','sendipmirawcmd','settimezone','settrapcom','setbios','setip','setpriv','setpwd','setservice','setsysboot','settrapdest','setvlan','settime','setproductserial']
-        setcommand_ns = ['setbiospwd','sethsc','clearbiospwd','restorebios','setfirewall','setimageurl','setadaptiveport','setserialport','powerctrldisk','recoverypsu','setvnc','downloadtfalog','setthreshold','addwhitelist','delwhitelist','delvncsession','downloadsol','exportbmccfg','exportbioscfg','importbioscfg','importbmccfg','canceltask','setbiosdebug']
+        getcomand = ['getadaptiveport', 'getbios', 'getcapabilities', 'getcpu', 'geteventlog', 'getfan', 'getfru', 'getfw', 'gethealth', 'getip', 'getnic', 'getpcie', 'getpdisk', 'getpower', 'getproduct', 'getpsu', 'getsensor', 'getservice', 'getsysboot', 'gettemp', 'gettime', 'gettrap', 'getuser', 'getvolt', 'getraid', 'getmemory', 'getldisk', 'getfirewall', 'gethealthevent']
+        getcomand_not_support = ['getbiossetting', 'getbiosresult', 'geteventsub', 'getpwrcap', 'getmgmtport', 'getupdatestate', 'getserialport', 'getvnc', 'getvncsession', 'gettaskstate', 'getbiosdebug', 'getthreshold', 'get80port']
+        setcommand = ['adduser', 'clearsel', 'collect', 'deluser', 'fancontrol', 'fwupdate', 'locatedisk', 'locateserver', 'mountvmm', 'powercontrol', 'resetbmc', 'restorebmc', 'sendipmirawcmd', 'settimezone', 'settrapcom', 'setbios', 'setip', 'setpriv', 'setpwd', 'setservice', 'setsysboot', 'settrapdest', 'setvlan', 'settime', 'setproductserial']
+        setcommand_ns = ['setbiospwd', 'sethsc', 'clearbiospwd', 'restorebios', 'setfirewall', 'setimageurl', 'setadaptiveport', 'setserialport', 'powerctrldisk', 'recoverypsu', 'setvnc', 'downloadtfalog', 'setthreshold', 'addwhitelist', 'delwhitelist', 'delvncsession', 'downloadsol', 'exportbmccfg', 'exportbioscfg', 'importbioscfg', 'importbmccfg', 'canceltask', 'setbiosdebug']
         cap.GetCommandList(getcomand)
         cap.SetCommandList(setcommand)
         res.State('Success')
@@ -801,12 +801,12 @@ class CommonM5(Base):
             biosinfo = ""
             Bios_result = ResultBean()
             xml_path = os.path.join(IpmiFunc.command_path, "bios")
-            #不再多调用HostTypeJudge，直接调用IpmiFunc
+            # 不再多调用HostTypeJudge，直接调用IpmiFunc
             # 根据productname获取xml文件
             #hostTypeClient = HostTypeJudge.HostTypeClient()
             # get productName,BMC Version
             #productName, firmwareVersion = hostTypeClient.getProductNameByIPMI(args)
-            
+
             productName = IpmiFunc.getProductNameByIpmi(client)
             firmwareVersion = IpmiFunc.getFirmwareVersoinByIpmi(client)
             if productName is None:
@@ -924,7 +924,7 @@ class CommonM5(Base):
                 if res.State == "Success":
                     frulist = res.Message[0].get("FRU", [])
                     if frulist != []:
-                        psn = frulist[0].get('ProductSerial','UNKNOWN')
+                        psn = frulist[0].get('ProductSerial', 'UNKNOWN')
                 else:
                     return res
                 import time
@@ -935,7 +935,7 @@ class CommonM5(Base):
             if not os.path.exists(file_path):
                 try:
                     os.makedirs(file_path)
-                except:
+                except BaseException:
                     nicRes.State("Failure")
                     nicRes.Message(["cannot build path " + file_path])
                     return nicRes
@@ -946,7 +946,7 @@ class CommonM5(Base):
                     while os.path.exists(path_new):
                         name_id = name_id + 1
                         path_new = os.path.splitext(args.eventfile)[0] + "(" + str(name_id) + ")" + \
-                                   os.path.splitext(args.eventfile)[1]
+                            os.path.splitext(args.eventfile)[1]
                     args.eventfile = path_new
         # check param
         if args.logtime is not None and args.count is not None:
@@ -1483,12 +1483,12 @@ class CommonM5(Base):
         '''
         Bios_result = ResultBean()
         xml_path = os.path.join(IpmiFunc.command_path, "bios")
-        #不再多调用HostTypeJudge，直接调用IpmiFunc
+        # 不再多调用HostTypeJudge，直接调用IpmiFunc
         # 根据productname获取xml文件
         #hostTypeClient = HostTypeJudge.HostTypeClient()
         # get productName,BMC Version
         #productName, firmwareVersion = hostTypeClient.getProductNameByIPMI(args)
-        
+
         productName = IpmiFunc.getProductNameByIpmi(client)
         firmwareVersion = IpmiFunc.getFirmwareVersoinByIpmi(client)
         # print(productName)
@@ -1609,12 +1609,12 @@ class CommonM5(Base):
         :return:
         '''
         Bios_result = ResultBean()
-        #不再多调用HostTypeJudge，直接调用IpmiFunc
+        # 不再多调用HostTypeJudge，直接调用IpmiFunc
         # 根据productname获取xml文件
         #hostTypeClient = HostTypeJudge.HostTypeClient()
         # get productName,BMC Version
         #productName, firmwareVersion = hostTypeClient.getProductNameByIPMI(args)
-        
+
         productName = IpmiFunc.getProductNameByIpmi(client)
         firmwareVersion = IpmiFunc.getFirmwareVersoinByIpmi(client)
         xml_path = os.path.join(IpmiFunc.command_path, "bios")
@@ -1712,7 +1712,7 @@ class CommonM5(Base):
                         Bios_result.State('Failure')
                         Bios_result.Message(["failed to execute an order to make it effective."])
                         return Bios_result
-                except:
+                except BaseException:
                     Bios_result.Message(['file format error.'])
                     Bios_result.State('Failure')
             else:
@@ -1916,7 +1916,7 @@ class CommonM5(Base):
                     ip = host
                     [user, passwd] = '', ''
                 path = '/' + '/'.join(path_list)
-            except:
+            except BaseException:
                 result.State('Failure')
                 result.Message(['image(-i) format error'])
                 return result
@@ -2089,7 +2089,6 @@ class CommonM5(Base):
         else:
             deviceOwnerID = None
 
-
         res_2 = RestFunc.getFruByRest(client)
         flag = 1
         if res_2.get('code') == 0 and res_2.get('data') is not None:
@@ -2239,7 +2238,7 @@ class CommonM5(Base):
                                 fan_singe.CommonName('Fan Module' + index[0:1] + ' ' + module_dict.get(index[1:2], ''))
                         else:
                             fan_singe.CommonName('Fan' + str(i))
-                except:
+                except BaseException:
                     fan_singe.CommonName('Fan' + str(i))
                 fan_singe.Location('Chassis')
                 if fan.get('present') == 1:
@@ -2772,7 +2771,7 @@ class CommonM5(Base):
             return pcie_result
         try:
             pcie_info = IpmiFunc.getM5PcieByIpmi(client, pcie_count.get('data'))
-        except:
+        except BaseException:
             pcie_result.State('Failure')
             pcie_result.Message(['get pcie info failed, parsing failed.'])
             return pcie_result
@@ -2956,7 +2955,7 @@ class CommonM5(Base):
             ipinfo.State("Success")
             data = res.get('data')
             for lan in data:
-                if lan['ipv4_address'] != client.host and lan['ipv6_address']!= client.host:
+                if lan['ipv4_address'] != client.host and lan['ipv6_address'] != client.host:
                     continue
                 ipbean = NetBean()
 
@@ -3010,7 +3009,6 @@ class CommonM5(Base):
 
         :return:
         '''
-
 
     def gettrap(self, client, args):
         # login
@@ -3093,19 +3091,19 @@ class CommonM5(Base):
                 snmpv3readenable = False
                 if version == dict_snmp['SNMP_VERSION_V3_ONLY'] or version == (
                         dict_snmp['SNMP_VERSION_DETAIL_BIT'] | dict_snmp['SNMP_VERSION_V3_READ_BIT'] | dict_snmp[
-                    'SNMP_VERSION_V3_WRITE_BIT']):
+                            'SNMP_VERSION_V3_WRITE_BIT']):
                     versiondisp = 2
                     snmpv3writeenable = True
                     snmpv3readenable = True
                 elif version == (
                         dict_snmp['SNMP_VERSION_DETAIL_BIT'] | dict_snmp['SNMP_VERSION_V2C_READ_BIT'] | dict_snmp[
-                    'SNMP_VERSION_V2C_WRITE_BIT']):
+                            'SNMP_VERSION_V2C_WRITE_BIT']):
                     versiondisp = 1
                     snmpv2cwriteenable = True
                     snmpv2creadenable = True
                 elif version == (
                         dict_snmp['SNMP_VERSION_DETAIL_BIT'] | dict_snmp['SNMP_VERSION_V1_READ_BIT'] | dict_snmp[
-                    'SNMP_VERSION_V1_WRITE_BIT']):
+                            'SNMP_VERSION_V1_WRITE_BIT']):
                     versiondisp = 0
                     snmpv1writeenable = True
                     snmpv1readenable = True
@@ -3269,7 +3267,7 @@ class CommonM5(Base):
 
     def getalertpolicy(self, client, args):
         # login
-        headers=RestFunc.login(client)
+        headers = RestFunc.login(client)
         if headers == {}:
             login_res = ResultBean()
             login_res.State("Failure")
@@ -3308,8 +3306,8 @@ class CommonM5(Base):
         RestFunc.logout(client)
         return snmpinfo
 
-
     # not interface sub function
+
     def getDestination(self, client, args):
         # login
         '''
@@ -3339,7 +3337,7 @@ class CommonM5(Base):
                 destinationbean.Name(aitem['name'])
                 # 5180m5没有此字段
                 # destinationbean.Domain(aitem['destination_domain'])
-                destinationbean.Domain(aitem.get('destination_domain',""))
+                destinationbean.Domain(aitem.get('destination_domain', ""))
                 destinationbean.Type(aitem['destination_type'])
                 destinationbean.Subject(aitem['subject'])
                 destinationbean.Message(aitem['message'])
@@ -3507,7 +3505,7 @@ class CommonM5(Base):
             res.State("Not Support")
             res.Message(["dest port cannot be set on the M5 platform, default 162"])
             return res
-            
+
        # login
         headers = RestFunc.login(client)
         if headers == {}:
@@ -3516,8 +3514,7 @@ class CommonM5(Base):
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
         client.setHearder(headers)
-            
-            
+
         if args.enabled == "Disabled":
             enable = 0
         elif args.enabled == "Enabled":
@@ -3525,7 +3522,7 @@ class CommonM5(Base):
         else:
             destinationlRes = CommonM5.getDestination(self, client, None)
             # logout
-            #RestFunc.logout(client)
+            # RestFunc.logout(client)
             if destinationlRes.State == "Success":
                 alist = destinationlRes.Message[0]
                 for a in alist:
@@ -3570,11 +3567,10 @@ class CommonM5(Base):
         else:
             res.State("Failure")
             res.Message(["get lan info error"])
-        #logout
+        # logout
         RestFunc.logout(client)
         if res.State == "Failure":
             return res
-            
 
         trap_set = IpmiFunc.setSNMPTrapPolicyByIpmi(client, args.destinationid, channel, enable)
         if trap_set["code"] != 0:
@@ -3652,7 +3648,7 @@ class CommonM5(Base):
         elif res.get('code') == 0 and res.get('data') is not None:
             data = res.get('data')
             for lan in data:
-                if lan['ipv4_address'] != client.host and lan['ipv6_address']!= client.host:
+                if lan['ipv4_address'] != client.host and lan['ipv6_address'] != client.host:
                     continue
 
                 # dhcp_dict = {'static':0, 'disable':-1, 'dhcp':1}
@@ -4400,7 +4396,7 @@ class CommonM5(Base):
                 localtime = time.localtime()
                 f_localtime = time.strftime(ff, localtime)
                 return f_localtime
-            except:
+            except BaseException:
                 return ""
 
         def wirte_log(log_path, stage="", state="", note=""):
@@ -4463,7 +4459,7 @@ class CommonM5(Base):
         if res_syn.State == "Success":
             frulist = res_syn.Message[0].get("FRU", [])
             if frulist != []:
-                psn = frulist[0].get('ProductSerial','UNKNOWN')
+                psn = frulist[0].get('ProductSerial', 'UNKNOWN')
         else:
             return res_syn
         logtime = ftime("%Y%m%d%H%M%S")
@@ -4484,11 +4480,11 @@ class CommonM5(Base):
             with open(log_path, 'w') as newlog:
                 log_dict = {"log": []}
                 newlog.write(str(log_dict))
-                
-        #能ping通
+
+        # 能ping通
         print(ftime() + "Ping https successfully")
         wirte_log(log_path, "Upload File", "Network Ping OK", "")
-        
+
         # file check
         updatefile = args.url
         if not os.path.exists(updatefile):
@@ -4515,7 +4511,7 @@ class CommonM5(Base):
             # 删除
             if result.State == "Success":
                 if args.type == "BMC" or args.type == "bmc":
-                    psn=""
+                    psn = ""
                     hostname = ""
                     # 设置hostname
                     # get Product Serial Number
@@ -4533,7 +4529,7 @@ class CommonM5(Base):
                     else:
                         print(ftime() + "Cannot get product serial")
                         # 删除session
-                        RestFunc.logout(client)  
+                        RestFunc.logout(client)
                         return result
                     # gethostname
                     time.sleep(30)
@@ -4558,8 +4554,8 @@ class CommonM5(Base):
                             resetDNSRes = IpmiFunc.resetDNS(client)
                             time.sleep(60)
                             print(ftime() + "set hostname success")
-                            #if resetDNSRes.get("code", "1") == 0:
-                                #resetBMC = IpmiFunc.resetBMCByIpmi(client)
+                            # if resetDNSRes.get("code", "1") == 0:
+                            #resetBMC = IpmiFunc.resetBMCByIpmi(client)
                         else:
                             print(ftime() + "set hostname failed: " + sethostnameRes.get("data", ""))
                             # 删除session
@@ -4586,7 +4582,6 @@ class CommonM5(Base):
                         time.sleep(60)
                     else:
                         RestFunc.logout(client)
-                        
 
             # login
             headers = {}
@@ -4598,7 +4593,7 @@ class CommonM5(Base):
                     client.username = "root"
                     client.password = "root"
                 elif logcount > 18:
-                    #7分钟后超时退出
+                    # 7分钟后超时退出
                     break
                 else:
                     logcount = logcount + 1
@@ -4625,16 +4620,16 @@ class CommonM5(Base):
 
             # update
             if args.type == "BMC" or args.type == "bmc":
-                #改写mac 若使用共享口调用utool ，且共享口专口MAC不一样，则修改专口Mac
+                # 改写mac 若使用共享口调用utool ，且共享口专口MAC不一样，则修改专口Mac
                 res = RestFunc.getLanByRest(client)
                 if res == {}:
                     print(ftime() + "cannot get lan info")
                 elif res.get('code') == 0 and res.get('data') is not None:
                     data = res.get('data')
-                    ip1=""
-                    ip8=""
-                    mac1=""
-                    mac8=""
+                    ip1 = ""
+                    ip8 = ""
+                    mac1 = ""
+                    mac8 = ""
                     for lan in data:
                         if lan.get('channel_number', '') == 8:
                             ip8 = lan.get('ipv4_address', '')
@@ -4651,12 +4646,12 @@ class CommonM5(Base):
                     print(ftime() + "Sharelink MAC is " + mac8)
                     macRes = IpmiFunc.getMac(client)
                     #{'code': 0, 'data': '06 6c 92 bf f8 cb 99'}
-                    if macRes.get("code",1) == 0:
-                        mac_raw = macRes.get("data","err")[3:].strip().upper()
+                    if macRes.get("code", 1) == 0:
+                        mac_raw = macRes.get("data", "err")[3:].strip().upper()
                         mac = ":".join(mac_raw.split(" "))
                         print(ftime() + "Real Dedicated MAC is " + mac)
                         if mac != "00:00:00:00:00:00":
-                            #1 dedicated       8 sharelink
+                            # 1 dedicated       8 sharelink
                             mac_flag = False
                             if RegularCheckUtil.checkIP(client.host):
                                 if client.host == ip8 and ip1 != client.host:
@@ -4667,14 +4662,14 @@ class CommonM5(Base):
                             if mac_flag:
                                 if mac != mac1:
                                     print(ftime() + "set Real Dedicated MAC to dedicate MAC.")
-                                    macset=IpmiFunc.setDedicatedMac(client, mac)
+                                    macset = IpmiFunc.setDedicatedMac(client, mac)
                                     if macset["code"] != 0:
                                         print(ftime() + "Set dedicated MAC error: " + str(macset["data"]))
                     else:
-                        print(ftime() + "Cannot get Real Dedicated MAC: " + macRes.get("data",""))
+                        print(ftime() + "Cannot get Real Dedicated MAC: " + macRes.get("data", ""))
                 else:
                     print(ftime() + "cannot get lan info " + str(res))
-                #打印当前版本及升级文件
+                # 打印当前版本及升级文件
                 fw1 = ""
                 fw2 = ""
                 cfw = ""
@@ -4699,9 +4694,7 @@ class CommonM5(Base):
                     print(ftime() + "get bmc version information error, " + res.get('data'))
                     wirte_log(log_path, "Upload File", "Version Verify Failed", res.get('data'))
 
-                
-
-                #设置改写配置
+                # 设置改写配置
                 override_res = RestFunc.preserveBMCConfigM5(client, args.override)
                 if override_res == {}:
                     result.State("Failure")
@@ -4792,7 +4785,7 @@ class CommonM5(Base):
                                     preserve = 0
                                 else:
                                     preserve = 0
-                                #preserve 锁定为0 通过preserveBMCConfigM5进行配置改写
+                                # preserve 锁定为0 通过preserveBMCConfigM5进行配置改写
                                 preserve = 0
                                 print(ftime() + "Apply(Flash) start")
                                 wirte_log(log_path, "Apply", "Start", "")
@@ -4839,7 +4832,7 @@ class CommonM5(Base):
                                             error_info = 'Failed to call BMC interface api/maintenance/firmware/flash-progress, response is none'
                                         elif progress.get('code') == 0 and progress.get('data') is not None:
                                             # { "id": 1, "action": "Flashing...", "progress": "0% done         ", "state": 0 }
-                                            error_info = str( progress.get('data'))
+                                            error_info = str(progress.get('data'))
                                             if progress.get('data')['state'] == 2:
                                                 print(ftime() + "Apply(Flash) inprogress, progress: 100%")
                                                 # print('upgrade complete, BMC will reset, please wait for a minute')
@@ -4858,8 +4851,8 @@ class CommonM5(Base):
                                                 if pro == '100':
                                                     count_100 = count_100 + 1
                                         else:
-                                            #有可能还没检查到进度完成，就完成并且重启了
-                                            if progress.get('code') == 1500 and "Read timed out" in  progress.get('error'):
+                                            # 有可能还没检查到进度完成，就完成并且重启了
+                                            if progress.get('code') == 1500 and "Read timed out" in progress.get('error'):
                                                 if args.type == "BMC" and args.mode == "Auto":
                                                     print(ftime() + "Apply(Flash) inprogress, progress: 100%")
                                                     print(ftime() + "Apply(Flash) successfully")
@@ -5173,7 +5166,7 @@ class CommonM5(Base):
             file_name = ""
             file_path = os.path.abspath("..")
             args.fileurl = os.path.join(file_path, file_name)
-        elif re.search("^[C-Zc-z]\:$",args.fileurl,re.I):
+        elif re.search(r"^[C-Zc-z]\:$", args.fileurl, re.I):
             file_name = ""
             file_path = os.path.abspath(args.fileurl + "\\")
             args.fileurl = os.path.join(file_path, file_name)
@@ -5192,7 +5185,7 @@ class CommonM5(Base):
             if res.State == "Success":
                 frulist = res.Message[0].get("FRU", [])
                 if frulist != []:
-                    psn = frulist[0].get('ProductSerial','UNKNOWN')
+                    psn = frulist[0].get('ProductSerial', 'UNKNOWN')
             else:
                 return res
             import time
@@ -5201,7 +5194,7 @@ class CommonM5(Base):
             file_name = "dump_" + psn + "_" + logtime + ".tar"
             args.fileurl = os.path.join(file_path, file_name)
         else:
-            p = '\.tar$'
+            p = r'\.tar$'
             if not re.search(p, file_name, re.I):
                 checkparam_res.State("Failure")
                 checkparam_res.Message(["Filename should be xxx.tar"])
@@ -5210,7 +5203,7 @@ class CommonM5(Base):
         if not os.path.exists(file_path):
             try:
                 os.makedirs(file_path)
-            except:
+            except BaseException:
                 checkparam_res.State("Failure")
                 checkparam_res.Message(["can not create path."])
                 return checkparam_res
@@ -5490,7 +5483,7 @@ class CommonM5(Base):
             if not os.path.exists(file_path):
                 try:
                     os.makedirs(file_path)
-                except:
+                except BaseException:
                     nicRes.State("Failure")
                     nicRes.Message(["cannot build path " + file_path])
                     return nicRes
@@ -5501,7 +5494,7 @@ class CommonM5(Base):
                     while os.path.exists(path_new):
                         name_id = name_id + 1
                         path_new = os.path.splitext(args.auditfile)[0] + "(" + str(name_id) + ")" + \
-                                   os.path.splitext(args.auditfile)[1]
+                            os.path.splitext(args.auditfile)[1]
                     args.auditfile = path_new
         # check param
         if args.logtime is not None and args.count is not None:
@@ -5645,7 +5638,7 @@ class CommonM5(Base):
             if not os.path.exists(file_path):
                 try:
                     os.makedirs(file_path)
-                except:
+                except BaseException:
                     nicRes.State("Failure")
                     nicRes.Message(["cannot build path " + file_path])
                     return nicRes
@@ -5656,7 +5649,7 @@ class CommonM5(Base):
                     while os.path.exists(path_new):
                         name_id = name_id + 1
                         path_new = os.path.splitext(args.systemfile)[0] + "(" + str(name_id) + ")" + \
-                                   os.path.splitext(args.systemfile)[1]
+                            os.path.splitext(args.systemfile)[1]
                     args.systemfile = path_new
         # check param
         if args.logtime is not None and args.count is not None:
@@ -5869,9 +5862,9 @@ class CommonM5(Base):
         localFlag = False
         # remote 是否可以配置
         remoteFlag = False
-        decodeStatus = {'disable': 0, 'enable': 1} #default 1
-        decodeType = {'remote': 2, 'local': 1, 'both': 3} #default 0
-        decodeProtocolType = {'UDP': 0, 'TCP': 1} #default 1
+        decodeStatus = {'disable': 0, 'enable': 1}  # default 1
+        decodeType = {'remote': 2, 'local': 1, 'both': 3}  # default 0
+        decodeProtocolType = {'UDP': 0, 'TCP': 1}  # default 1
 
         getres = RestFunc.getBMCLogSettings(client)
         if getres.get('code') == 0 and getres.get('data') is not None:
@@ -5896,11 +5889,11 @@ class CommonM5(Base):
             # 远程状态下system_log==2 但是传至还是需要传1
             if default_audit_log == 2:
                 default_audit_log = 1
-            if data.has_key('protocol'):
+            if 'protocol' in data:
                 default_protocol = data['protocol']
             else:
                 default_protocol = ''
-            if data.has_key('remote_audit'):
+            if 'remote_audit' in data:
                 if bmc_flag == 0:
                     bmc_flag = 1
                 default_audit_type = data['remote_audit']
@@ -6180,7 +6173,7 @@ class CommonM5(Base):
         client.setHearder(headers)
         try:
             service = setservice(client, args)
-        except:
+        except BaseException:
             RestFunc.logout(client)
 
         RestFunc.logout(client)
@@ -6197,7 +6190,7 @@ class CommonM5(Base):
         client.setHearder(headers)
         try:
             ldisk = createVirtualDrive(client, args)
-        except:
+        except BaseException:
             RestFunc.logout(client)
         RestFunc.logout(client)
         return ldisk
@@ -6213,7 +6206,7 @@ class CommonM5(Base):
         client.setHearder(headers)
         try:
             ldisk = setVirtualDrive(client, args)
-        except:
+        except BaseException:
             RestFunc.logout(client)
         RestFunc.logout(client)
         return ldisk
@@ -6484,7 +6477,7 @@ class CommonM5(Base):
             return login_res
         client.setHearder(headers)
         policy_dict = {2: 'Always Power On', 0: 'Always Power Off', 1: 'Restore Last Power State', 3: 'UnKnown'}
-        policy_rest =RestFunc.getPowerPolicyByRest(client)
+        policy_rest = RestFunc.getPowerPolicyByRest(client)
         if policy_rest.get('code') == 0 and policy_rest.get('data') is not None:
             policy_serult = policy_rest['data']
             JSON = {}
@@ -6594,10 +6587,9 @@ class CommonM5(Base):
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
         client.setHearder(headers)
-        result = setAD(client,args)
+        result = setAD(client, args)
         RestFunc.logout(client)
         return result
-
 
     def getadgroup(self, client, args):
         # login
@@ -6608,7 +6600,7 @@ class CommonM5(Base):
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
         client.setHearder(headers)
-        result = getADGroup(client,args)
+        result = getADGroup(client, args)
         RestFunc.logout(client)
         return result
 
@@ -6677,7 +6669,6 @@ class CommonM5(Base):
         RestFunc.logout(client)
         return result
 
-
     def getldapgroup(self, client, args):
         # login
         headers = RestFunc.login(client)
@@ -6687,7 +6678,7 @@ class CommonM5(Base):
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
         client.setHearder(headers)
-        result = getLDAPGroup(client,args)
+        result = getLDAPGroup(client, args)
         RestFunc.logout(client)
         return result
 
@@ -6902,7 +6893,7 @@ class CommonM5(Base):
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
         client.setHearder(headers)
-        result = backup.backup(client,args)
+        result = backup.backup(client, args)
         RestFunc.logout(client)
         return result
 
@@ -6915,10 +6906,10 @@ class CommonM5(Base):
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
         client.setHearder(headers)
-        result = restore.restore(client,args)
+        result = restore.restore(client, args)
         try:
             RestFunc.logout(client)
-        except:
+        except BaseException:
             return result
         return result
 
@@ -6935,13 +6926,13 @@ class CommonM5(Base):
         res = RestFunc.resetBMC(client, 0)
         if res['code'] == 0 and res['data'] is not None:
             result.State("Success")
-            result.Message([ "reset BMC success"])
+            result.Message(["reset BMC success"])
         else:
             result.State("Failure")
             result.Message(["failed to reset BMC"])
         try:
             RestFunc.logout(client)
-        except:
+        except BaseException:
             return result
         return result
 
@@ -6958,15 +6949,16 @@ class CommonM5(Base):
         res = RestFunc.resetBMC(client, 1)
         if res['code'] == 0 and res['data'] is not None:
             result.State("Success")
-            result.Message([ "reset KVM success"])
+            result.Message(["reset KVM success"])
         else:
             result.State("Failure")
             result.Message(["failed to reset KVM"])
         try:
             RestFunc.logout(client)
-        except:
+        except BaseException:
             return result
         return result
+
 
 def getNone(item_str):
     if item_str is None or item_str == '':
@@ -7290,6 +7282,7 @@ def setSMTP(client, args):
         smtpResult.Message(['set SMTP Settings failure.'])
     return smtpResult
 
+
 def setservice(client, args):
     global usage
     global InterFace
@@ -7324,7 +7317,6 @@ def setservice(client, args):
         result.Message('cannot get web status')
         return result
 
-
     if webFlag is False:
         # set时的 header
         header = client.getHearder()
@@ -7349,7 +7341,7 @@ def setservice(client, args):
             result.Message(' Current interface(-I) choose from {0}.'.format(InterFace))
             return result
     else:
-        InterFace = ['both','eth0','eth1']
+        InterFace = ['both', 'eth0', 'eth1']
         if args.interface is not None:
             result.State('Failure')
             result.Message('Please set web to active first,then set the interface(-I) a few seconds later.')
@@ -7412,7 +7404,7 @@ def setservice(client, args):
     elif args.servicename == 'web':
         # 现在web处于inactive状态，需要设置为active状态。
         if webFlag is True:
-            data = setWEB_flag(args,data)  # 验证当前设置参数的正确性
+            data = setWEB_flag(args, data)  # 验证当前设置参数的正确性
             if data.State == 'Failure':  # 输入了不支持的设置项,提示信息已展示
                 return data
             else:
@@ -7460,7 +7452,7 @@ def setservice(client, args):
                         t = '{:08x}'.format(webInfo['Timeout'])
                         t_hex = hexReverse(t)
                 else:
-                    t = '{:08x}'.format(args.timeout )
+                    t = '{:08x}'.format(args.timeout)
                     t_hex = hexReverse(t)
 
                 dictrawset = IpmiFunc.setM5WebByIpmi(client, enabled, interface, nsp_hex, sp_hex, t_hex)
@@ -7721,7 +7713,6 @@ def setservice(client, args):
         result.Message(["Service Name choose from: 'web', 'kvm', 'cd-media', 'fd-media', 'hd-media', 'ssh', 'telnet', 'solssh'."])
         return result
 
-
     if result_set.State == 'Success':
         item_Info = defaultServiceInfo(client, args)
         Enabled = {1: 'Enabled', 0: 'Disabled'}
@@ -7741,8 +7732,9 @@ def setservice(client, args):
         service_item.ActiveSessions(item_Info.get('active_session', 128) - 128)
         result = ResultBean()
         result.State('Success')
-        result.Message(['Set {0} success, current {1} information:'.format(args.servicename, args.servicename),service_item])
+        result.Message(['Set {0} success, current {1} information:'.format(args.servicename, args.servicename), service_item])
         return result
+
 
 def defaultServiceInfo(client, args):
     responds = RestFunc.getServiceInfoByRest(client)
@@ -7757,14 +7749,14 @@ def defaultServiceInfo(client, args):
         return None
 
 
-def setSSH(args,serve_info,data):
+def setSSH(args, serve_info, data):
     result = ResultBean()
     # 支持设置安全端口号与超时时间，如果有值，则直接赋值，如果没输入，则用get的值
     # 可设置的项 其get值不会有N/A
     # 如果其他值被设置了，需要提示不能设置，并展示可以设置的值
     if args.interface is not None and args.nonsecureport is not None:
         result.State('Failure')
-        result.Message(['Info: The interface(-I) and nonsecureport(-NSP) are not support to set.','Available item is -SP -T.'])
+        result.Message(['Info: The interface(-I) and nonsecureport(-NSP) are not support to set.', 'Available item is -SP -T.'])
         return result
     elif args.interface is not None and args.nonsecureport is None:
         result.State('Failure')
@@ -7803,7 +7795,7 @@ def setSSH(args,serve_info,data):
     return result
 
 
-def setWEB(args,serve_info,data):
+def setWEB(args, serve_info, data):
     result = ResultBean()
     # InterFace = ['eth0', 'eth1', 'both']
     # 全部支持，如果有值，则直接赋值，如果没输入，则用get的值
@@ -7849,7 +7841,8 @@ def setWEB(args,serve_info,data):
     result.Message([data])
     return result
 
-def setWEB_flag(args,data):
+
+def setWEB_flag(args, data):
     result = ResultBean()
     # InterFace = ['eth0', 'eth1', 'both']
     # 全部支持，如果有值，则直接赋值，如果没输入，则用get的值
@@ -7882,7 +7875,7 @@ def setWEB_flag(args,data):
     return result
 
 
-def setKVM(args,serve_info,data):
+def setKVM(args, serve_info, data):
     result = ResultBean()
     # InterFace = ['eth0', 'eth1', 'both']
     # 全部支持，如果有值，则直接赋值，如果没输入，则用get的值
@@ -7929,7 +7922,7 @@ def setKVM(args,serve_info,data):
     return result
 
 
-def setMedia(args,serve_info,data):
+def setMedia(args, serve_info, data):
     result = ResultBean()
     # InterFace = ['eth0', 'eth1', 'both']
     # 如果其他值被设置了，需要提示不能设置，并展示可以设置的值
@@ -7979,7 +7972,7 @@ def setMedia(args,serve_info,data):
     return result
 
 
-def setTEL(args,serve_info,data):
+def setTEL(args, serve_info, data):
     result = ResultBean()
     # 如果其他值被设置了，需要提示不能设置，并展示可以设置的值
     if args.secureport is not None and args.interface is not None:
@@ -8023,7 +8016,8 @@ def setTEL(args,serve_info,data):
     result.Message([data])
     return result
 
-def setSNMP(args,serve_info,data):
+
+def setSNMP(args, serve_info, data):
     result = ResultBean()
     # 如果其他值被设置了，需要提示不能设置，并展示可以设置的值
     if args.secureport is not None and args.interface is not None and args.timeout is not None:
@@ -8064,7 +8058,7 @@ def setSNMP(args,serve_info,data):
     return result
 
 
-def setItem(name,client,data,header,num):
+def setItem(name, client, data, header, num):
     result = ResultBean()
     # 服务设置
     info = RestFunc.setServiceByRest(client, data, num)
@@ -8082,6 +8076,7 @@ def setItem(name,client,data,header,num):
         result.Message(['Set {0} service failed'.format(serve_list[num])])
         return result
 
+
 def verInterface(client):
     # 验证是都需要设置成bond0
     info = RestFunc.getInterfaceByRest(client)
@@ -8090,7 +8085,7 @@ def verInterface(client):
     elif info.get('code') == 0 and info.get('data') is not None:
         data = info.get('data')
         if len(data) == 1:
-            respond =data[0]
+            respond = data[0]
             if 'interface_name' in respond:
                 return respond['interface_name']
             else:
@@ -8480,7 +8475,7 @@ def getPdInfo_LSI(client):
             disk.FailurePredicted(None)
             if 'rawSize' in disk_temp:
                 temp = disk_temp.get('rawSize')
-                if type(temp) is str:
+                if isinstance(temp, str):
                     size = re.findall(r'\d+.\d+', temp)
                     disk.CapacityGiB(float(size[0]))
                 else:
@@ -8586,7 +8581,7 @@ def getPdInfo_PMC(client):
             disk.FailurePredicted(None)
             if 'GBSize' in disk_temp:
                 temp = disk_temp.get('GBSize')
-                if type(temp) is str:
+                if isinstance(temp, str):
                     size = re.findall(r'\d+.\d+', temp)
                     disk.CapacityGiB(float(size[0]))
                 else:
@@ -8600,7 +8595,7 @@ def getPdInfo_PMC(client):
             disk.SerialNumber(disk_temp.get('SN', None).strip())
             if 'RAIDSpeed' in disk_temp:
                 temp = disk_temp.get('RAIDSpeed')
-                if type(temp) is str:
+                if isinstance(temp, str):
                     size = re.findall(r'\d+.\d+', temp)
                     disk.CapableSpeedGbs(float(size[0]))
                     # disk.NegotiatedSpeedGbs(float(size[0]))
@@ -8693,7 +8688,7 @@ def getPdInfo(client):
                     disk.FailurePredicted(None)
                     if 'rawSize' in disk_temp:
                         temp = disk_temp.get('rawSize')
-                        if type(temp) is str:
+                        if isinstance(temp, str):
                             size = re.findall(r'\d+.\d+', temp)
                             disk.CapacityGiB(float(size[0]))
                         else:
@@ -8757,7 +8752,7 @@ def getPdInfo(client):
                     disk.FailurePredicted(None)
                     if 'GBSize' in disk_temp:
                         temp = disk_temp.get('GBSize')
-                        if type(temp) is str:
+                        if isinstance(temp, str):
                             size = re.findall(r'\d+.\d+', temp)
                             disk.CapacityGiB(float(size[0]))
                         else:
@@ -8771,7 +8766,7 @@ def getPdInfo(client):
                     disk.SerialNumber(disk_temp.get('SN', None).strip())
                     if 'RAIDSpeed' in disk_temp:
                         temp = disk_temp.get('RAIDSpeed')
-                        if type(temp) is str:
+                        if isinstance(temp, str):
                             size = re.findall(r'\d+.\d+', temp)
                             disk.CapableSpeedGbs(float(size[0]))
                         else:
@@ -8846,7 +8841,7 @@ def getLdInfo_LSI(client):
                 ldisk.RedundantType(None)
                 if 'size' in ldisk_temp:
                     temp = ldisk_temp.get('size')
-                    if type(temp) is str:
+                    if isinstance(temp, str):
                         size = re.findall(r'\d+.\d+', temp)
                         ldisk.CapacityGiB(float(size[0]))
                     else:
@@ -8866,7 +8861,7 @@ def getLdInfo_LSI(client):
                 ldisk.DefaultCachePolicy(cachePolicy)
                 if 'curCaPolicy' in ldisk_temp:
                     cachePolicy = ldisk_temp.get('curCaPolicy')
-                    if type(cachePolicy) is str:
+                    if isinstance(cachePolicy, str):
                         readPolicy = ldisk_temp.get('curRePolicy')
                         writePolicy = ldisk_temp.get('curWrPolicy')
                     elif not str(cachePolicy).isdigit():
@@ -8970,7 +8965,7 @@ def getLdInfo_PMC(client):
                 ldisk.RaidLevel(ldisk_temp.get('type'))
                 if 'size_GB' in ldisk_temp:
                     temp = ldisk_temp.get('size_GB')
-                    if type(temp) is str:
+                    if isinstance(temp, str):
                         size = re.findall(r'\d+.\d+', temp)
                         # ldisk.CapacityGiB(float(size[0])/1024)
                         ldisk.CapacityGiB(float(size[0]))
@@ -9064,7 +9059,7 @@ def getLdInfo(client):
                 ldisk.RaidLevel(raidlevels.get(ldisk_temp.get('PRL', None), ldisk_temp.get('PRL', None)))
                 if 'size' in ldisk_temp:
                     temp = ldisk_temp.get('size')
-                    if type(temp) is str:
+                    if isinstance(temp, str):
                         size = re.findall(r'\d+.\d+', temp)
                         ldisk.CapacityGiB(float(size[0]))
                     else:
@@ -9086,7 +9081,7 @@ def getLdInfo(client):
                 ldisk.DefaultCachePolicy(cachePolicy)
                 if 'curCaPolicy' in ldisk_temp:
                     cachePolicy = ldisk_temp.get('curCaPolicy')
-                    if type(cachePolicy) is str:
+                    if isinstance(cachePolicy, str):
                         readPolicy = ldisk_temp.get('curRePolicy')
                         writePolicy = ldisk_temp.get('curWrPolicy')
                     elif not str(cachePolicy).isdigit():
@@ -9129,7 +9124,7 @@ def getLdInfo(client):
                 ldisk.RaidLevel(ldisk_temp.get('type'))
                 if 'size_GB' in ldisk_temp:
                     temp = ldisk_temp.get('size_GB')
-                    if type(temp) is str:
+                    if isinstance(temp, str):
                         size = re.findall(r'\d+.\d+', temp)
                         ldisk.CapacityGiB(float(size[0]))
                     else:
@@ -9166,6 +9161,7 @@ def getLdInfo(client):
         ldisk_return.State('Success')
         ldisk_return.Message([ldisk_info.dict])
     return ldisk_return
+
 
 def powerState(var):
     if var == 0:
@@ -9224,7 +9220,7 @@ def intfType(var):
 def showpdInfo(client, args):
     result = ResultBean()
     try:
-        count =RestFunc.getLSICtrlCountByRest(client)
+        count = RestFunc.getLSICtrlCountByRest(client)
         if count.get('code') == 0 and count.get('data') is not None:
             countNumber = count['data']['ctrlCount']
             if countNumber == 0:
@@ -9241,7 +9237,7 @@ def showpdInfo(client, args):
                     for item in ctrlpdinfo.json():
                         pdiskDict = collections.OrderedDict()
                         if 'slotNum' in item:
-                            pdiskDict['Slot Number'] =item['slotNum']
+                            pdiskDict['Slot Number'] = item['slotNum']
                         if 'intfType' in item:
                             pdiskDict['Interface'] = intfType(item['intfType'])
                         if 'mediaType' in item:
@@ -9270,7 +9266,7 @@ def showpdInfo(client, args):
         return result
 
 
-def getpdInfo(client,cid_index):
+def getpdInfo(client, cid_index):
     pd = []
     pv = {}
     px = {}
@@ -9278,7 +9274,7 @@ def getpdInfo(client,cid_index):
     if ctrlpdinfo.get('code') == 0 and ctrlpdinfo.get('data') is not None:
         for item in ctrlpdinfo.json():
             if 'index' not in item:
-                return [],{},{}
+                return [], {}, {}
             # pd[ctrlItem['index']].append(item['index'])
             if item['fwState'] == "UNCONFIGURED GOOD" or item['fwState'] == 0:
                 pd.append(item['slotNum'])
@@ -9286,7 +9282,7 @@ def getpdInfo(client,cid_index):
                 px[item['slotNum']] = item['devId']
         return pd, pv, px
     else:
-        return [],{},{}
+        return [], {}, {}
 
 
 def createVirtualDrive(client, args):
@@ -9308,14 +9304,14 @@ def createVirtualDrive(client, args):
             result.State('Failure')
             result.Message(['No controller'])
             return result
-        elif args.ctrlId > len(result)-1 or args.ctrlId < 0:
+        elif args.ctrlId > len(result) - 1 or args.ctrlId < 0:
             result.State('Failure')
             result.Message(['no controller id ' + str(args.ctrlId)])
             return result
         else:
             cid_info = result[args.ctrlId]
             if 'index' in cid_info:
-                cid_index = cid_info.get('index',args.ctrlId)
+                cid_index = cid_info.get('index', args.ctrlId)
             else:
                 result.State('Failure')
                 result.Message(['get controller failed'])
@@ -9325,7 +9321,7 @@ def createVirtualDrive(client, args):
         result.Message(['get controller failed'])
         return result
     # check pd pv
-    pdset, pv, px = getpdInfo(client,args.ctrlId)
+    pdset, pv, px = getpdInfo(client, args.ctrlId)
 
     # check select size
     if args.select < 1 or args.select > 100:
@@ -9430,7 +9426,8 @@ def createVirtualDrive(client, args):
         result.Message(['create virtual drive failed'])
     return result
 
-def getStatus( client, ctrlindex):
+
+def getStatus(client, ctrlindex):
     for num in range(0, 600):
         flg = IpmiFunc.getRaidStatusByIpmi(client, ctrlindex)
         flg = flg.replace("\n", "").replace(" ", "")[0:2]
@@ -9460,6 +9457,8 @@ def state(var):
         return 'Optimal'
     else:
         return 'Unknown'
+
+
 def initState(var):
     if var == 0:
         return 'No Init'
@@ -9475,7 +9474,7 @@ def showLogicalInfo_LSI(client, args):
     result = ResultBean()
     count = RestFunc.getLSICtrlCountByRest(client)
     if count.get('code') == 0 and count.get('data') is not None:
-        if 'ctrlCount' in  count['data']:
+        if 'ctrlCount' in count['data']:
             countNumber = count['data']['ctrlCount']
         else:
             result.State('Failure')
@@ -9492,7 +9491,7 @@ def showLogicalInfo_LSI(client, args):
         return result
     raidList = []
     for i in range(countNumber):
-        ctrlldinfo = RestFunc.getLSICtrlLdInfoByRest(client,i)
+        ctrlldinfo = RestFunc.getLSICtrlLdInfoByRest(client, i)
         if ctrlldinfo.get('code') == 0 and ctrlldinfo.get('data') is not None:
             raidDict = collections.OrderedDict()
             raidDict['Controller ID'] = i
@@ -9522,10 +9521,10 @@ def showLogicalInfo_LSI(client, args):
 
 
 def showLogicalInfo_PMC(client, args):
-    result =ResultBean()
+    result = ResultBean()
     count = RestFunc.getPMCCtrlCountByRest(client)
     if count.get('code') == 0 and count.get('data') is not None:
-        if 'ctrlCount' in  count['data']:
+        if 'ctrlCount' in count['data']:
             countNumber = count['data']['ctrlCount']
         else:
             result.State('Failure')
@@ -9584,7 +9583,7 @@ def showLogicalInfo_PMC(client, args):
 def getLogicalInfo_LSI(client, args):
     count = RestFunc.getLSICtrlCountByRest(client)
     if count.get('code') == 0 and count.get('data') is not None:
-        if 'ctrlCount' in  count['data']:
+        if 'ctrlCount' in count['data']:
             countNumber = count['data']['ctrlCount']
             if countNumber == 0:
                 return [], []
@@ -9653,6 +9652,7 @@ def setVirtualDrive(client, args):
         return result
     return result
 
+
 def setLogicalDrive_LSI(args, client):
     if args.Info is not None:
         result = showLogicalInfo_LSI(client, args)
@@ -9719,6 +9719,7 @@ def setLogicalDrive_LSI(args, client):
             result.State('Failure')
             result.Message(['set virtual drive failed.'])
     return result
+
 
 def setSNMPtrap(client, args):
     # get
@@ -9970,6 +9971,7 @@ def setSNMPtrap(client, args):
         snmpinfo.Message(["get information error, error code " + str(res.get('code'))])
     return snmpinfo
 
+
 def getAlertPolicy(client, args):
     # get
     res = RestFunc.getLanDestinationsByRest(client)
@@ -10052,6 +10054,7 @@ def getAlertPolicy(client, args):
         snmpinfo.State("Failure")
         snmpinfo.Message(["get lan destination information error"])
     return snmpinfo
+
 
 def setAlertPolicy(client, args):
     snmpinfo = getAlertPolicy(client, args)
@@ -10330,6 +10333,7 @@ def setNTP(client, args):
         return result
     return result
 
+
 def setSNMP(client, args):
     result = ResultBean()
     dict_snmp = {
@@ -10360,25 +10364,25 @@ def setSNMP(client, args):
             snmpv2creadenable = False
             snmpv3writeenable = False
             snmpv3readenable = False
-            if version == dict_snmp['SNMP_VERSION_V3_ONLY'] or version == (dict_snmp['SNMP_VERSION_DETAIL_BIT']|dict_snmp['SNMP_VERSION_V3_READ_BIT']|dict_snmp['SNMP_VERSION_V3_WRITE_BIT']):
+            if version == dict_snmp['SNMP_VERSION_V3_ONLY'] or version == (dict_snmp['SNMP_VERSION_DETAIL_BIT'] | dict_snmp['SNMP_VERSION_V3_READ_BIT'] | dict_snmp['SNMP_VERSION_V3_WRITE_BIT']):
                 versiondisp = 2
                 snmpv3writeenable = True
                 snmpv3readenable = True
-            elif version == (dict_snmp['SNMP_VERSION_DETAIL_BIT']|dict_snmp['SNMP_VERSION_V2C_READ_BIT']|dict_snmp['SNMP_VERSION_V2C_WRITE_BIT']):
+            elif version == (dict_snmp['SNMP_VERSION_DETAIL_BIT'] | dict_snmp['SNMP_VERSION_V2C_READ_BIT'] | dict_snmp['SNMP_VERSION_V2C_WRITE_BIT']):
                 versiondisp = 1
                 snmpv2cwriteenable = True
                 snmpv2creadenable = True
-            elif version == (dict_snmp['SNMP_VERSION_DETAIL_BIT']|dict_snmp['SNMP_VERSION_V1_READ_BIT']|dict_snmp['SNMP_VERSION_V1_WRITE_BIT']):
+            elif version == (dict_snmp['SNMP_VERSION_DETAIL_BIT'] | dict_snmp['SNMP_VERSION_V1_READ_BIT'] | dict_snmp['SNMP_VERSION_V1_WRITE_BIT']):
                 versiondisp = 0
                 snmpv1writeenable = True
                 snmpv1readenable = True
             elif version == dict_snmp['SNMP_VERSION_V3_ONLY'] or version == (dict_snmp['SNMP_VERSION_DETAIL_BIT']
-                                                                             |dict_snmp['SNMP_VERSION_V3_READ_BIT']
-                                                                             |dict_snmp['SNMP_VERSION_V3_WRITE_BIT']
-                                                                             |dict_snmp['SNMP_VERSION_V2C_READ_BIT']
-                                                                             |dict_snmp['SNMP_VERSION_V2C_WRITE_BIT']
-                                                                             |dict_snmp['SNMP_VERSION_V2C_READ_BIT']
-                                                                             |dict_snmp['SNMP_VERSION_V2C_WRITE_BIT']):
+                                                                             | dict_snmp['SNMP_VERSION_V3_READ_BIT']
+                                                                             | dict_snmp['SNMP_VERSION_V3_WRITE_BIT']
+                                                                             | dict_snmp['SNMP_VERSION_V2C_READ_BIT']
+                                                                             | dict_snmp['SNMP_VERSION_V2C_WRITE_BIT']
+                                                                             | dict_snmp['SNMP_VERSION_V2C_READ_BIT']
+                                                                             | dict_snmp['SNMP_VERSION_V2C_WRITE_BIT']):
                 versiondisp = 3
                 snmpv1writeenable = True
                 snmpv1readenable = True
@@ -10509,9 +10513,9 @@ def setSNMP(client, args):
                 authPassword = ''
                 if authProtocol == 1 or authProtocol == 2:
                     if args.authPassword is None:
-                            result.State('Failure')
-                            result.Message(['authentication password connot be empty,when authentication protocol exists.'])
-                            return result
+                        result.State('Failure')
+                        result.Message(['authentication password connot be empty,when authentication protocol exists.'])
+                        return result
                     else:
                         authPassword = args.authPassword
                         if not RegularCheckUtil.checkPass(authPassword):
@@ -10597,15 +10601,15 @@ def setSNMP(client, args):
                         result.Message(['privacy password will be ignored with no privacy protocol.'])
                         return result
             data = {
-                "version":version,
-                "community":community,
-                "username":username,
-                "auth_protocol":authProtocol,
-                "auth_passwd":authPassword,
-                "priv_protocol":privacy,
-                "priv_passwd":privPassword,
-                "versiondisp":args.version,
-                "encrypt_flag":2
+                "version": version,
+                "community": community,
+                "username": username,
+                "auth_protocol": authProtocol,
+                "auth_passwd": authPassword,
+                "priv_protocol": privacy,
+                "priv_passwd": privPassword,
+                "versiondisp": args.version,
+                "encrypt_flag": 2
             }
         else:
             if args.version is not None or args.snmpstatus is not None:
@@ -10666,13 +10670,13 @@ def setSNMP(client, args):
                     result.Message(['privacy password will be ignored with no privacy protocol.'])
                     return result
             data = {
-                "username":username,
-                "auth_protocol":authProtocol,
-                "priv_protocol":privacy,
-                "community":community,
-                "auth_passwd":authPassword,
-                "priv_passwd":privPassword,
-                "encrypt_flag":2
+                "username": username,
+                "auth_protocol": authProtocol,
+                "priv_protocol": privacy,
+                "community": community,
+                "auth_passwd": authPassword,
+                "priv_passwd": privPassword,
+                "encrypt_flag": 2
             }
     res = RestFunc.setSnmpM5ByRest(client, snmp)
     if res.get('code') == 0 and res.get('data') is not None:
@@ -10800,6 +10804,7 @@ def setNCSI(client, args):
         result.Message(["change NSCI settings error"])
     return result
 
+
 def setPsuConfig(client, args):
     result = ResultBean()
     psuinfo = RestFunc.getPsuInfo1ByRest(client)
@@ -10854,6 +10859,7 @@ def setPsuConfig(client, args):
         result.State('Failure')
         result.Message(["can not set psu config"])
     return result
+
 
 def setPsuPeak(client, args):
     result = ResultBean()
@@ -11092,7 +11098,8 @@ def setAD(client, args):
         result.Message(["failed to set AD."])
     return result
 
-def getADGroup( client, args):
+
+def getADGroup(client, args):
     result = ResultBean()
 
     res = RestFunc.getADgroupM6(client)
@@ -11116,7 +11123,8 @@ def getADGroup( client, args):
 
     return result
 
-def delADGroup( client, args):
+
+def delADGroup(client, args):
     result = ResultBean()
     # login
     res = getADGroup(client, args)
@@ -11124,7 +11132,7 @@ def delADGroup( client, args):
     if res.State == "Success":
         data = res.Message[0].get("ADgroup")
         for item in data:
-            name = item.get('Name',"unknown")
+            name = item.get('Name', "unknown")
             if name == args.name:
                 user_flag = True
                 args.id = item.get('Id', 0)
@@ -11147,7 +11155,8 @@ def delADGroup( client, args):
 
     return result
 
-def addADGroup( client, args):
+
+def addADGroup(client, args):
 
     result = ResultBean()
     if args.name is not None:
@@ -11212,7 +11221,8 @@ def addADGroup( client, args):
 
     return result
 
-def setADGroup( client, args):
+
+def setADGroup(client, args):
 
     result = ResultBean()
     # login
@@ -11294,6 +11304,7 @@ def setADGroup( client, args):
 
     return result
 
+
 def getLDAP(client, args):
     result = ResultBean()
 
@@ -11320,6 +11331,7 @@ def getLDAP(client, args):
         result.Message([res.get('data')])
 
     return result
+
 
 def setLDAP(client, args):
     result = ResultBean()
@@ -11548,6 +11560,7 @@ def setLDAP(client, args):
         result.Message(['failed to set LDAP'])
     return result
 
+
 def getLDAPGroup(client, args):
     result = ResultBean()
     # login
@@ -11573,6 +11586,7 @@ def getLDAPGroup(client, args):
 
     return result
 
+
 def delLDAPGroup(client, args):
     result = ResultBean()
     res = getLDAPGroup(client, args)
@@ -11580,7 +11594,7 @@ def delLDAPGroup(client, args):
     if res.State == "Success":
         data = res.Message[0].get("LDAPgroup")
         for item in data:
-            name = item.get('Name',"unknown")
+            name = item.get('Name', "unknown")
             if name == args.name:
                 user_flag = True
                 args.id = item.get('Id', 0)
@@ -11603,12 +11617,13 @@ def delLDAPGroup(client, args):
 
     return result
 
+
 def addLDAPGroup(client, args):
     result = ResultBean()
     if args.name is not None:
         if not RegularCheckUtil.checkHostName(args.name):
             result.State("Failure")
-            result.Message([ 'Group name is a string of less than 64 alpha-numeric characters, and hyphen and underscore are also allowed.'])
+            result.Message(['Group name is a string of less than 64 alpha-numeric characters, and hyphen and underscore are also allowed.'])
             return result
 
     if args.base is not None:
@@ -11667,6 +11682,7 @@ def addLDAPGroup(client, args):
         result.Message([set_res.get('data')])
 
     return result
+
 
 def setLDAPGroup(client, args):
     result = ResultBean()
@@ -11747,6 +11763,7 @@ def setLDAPGroup(client, args):
 
     return result
 
+
 def addUserGroup(client, args):
     result = ResultBean()
     group = []
@@ -11778,6 +11795,7 @@ def addUserGroup(client, args):
         result.State("Failure")
         result.Message(['failed to add user group'])
     return result
+
 
 def setUserGroup(client, args):
     result = ResultBean()
@@ -11821,6 +11839,7 @@ def setUserGroup(client, args):
         result.Message(['failed to set user group'])
     return result
 
+
 def delUserGroup(client, args):
     result = ResultBean()
     group = []
@@ -11860,6 +11879,7 @@ def delUserGroup(client, args):
         result.State("Failure")
         result.Message(['failed to delete user group'])
     return result
+
 
 def getNetwork(client, args):
     # get
@@ -11929,6 +11949,7 @@ def getNetwork(client, args):
         ipinfo.Message(["get lan information error"])
 
     return ipinfo
+
 
 def setNetwork(client, args):
 
@@ -12008,6 +12029,7 @@ def setNetwork(client, args):
             ipinfo.State("Failure")
             ipinfo.Message([setres['data']])
         return ipinfo
+
 
 def setIPv4(client, args):
 
@@ -12131,7 +12153,8 @@ def setIPv4(client, args):
             ipinfo.Message([setres['data']])
         return ipinfo
 
-def setIPv6( client, args):
+
+def setIPv6(client, args):
 
     # get
     ipinfo = ResultBean()
@@ -12259,6 +12282,7 @@ def setIPv6( client, args):
             ipinfo.Message([setres['data']])
         return ipinfo
 
+
 def getBMCNet(client, args):
     Param = None
     res = RestFunc.getNetworkByRest(client)
@@ -12273,6 +12297,7 @@ def getBMCNet(client, args):
         return Param
     else:
         return None
+
 
 def setVlan(client, args):
 
@@ -12379,6 +12404,7 @@ def setVlan(client, args):
             ipinfo.Message([setres['data']])
         return ipinfo
 
+
 def getDNS(client, args):
 
     # get
@@ -12406,6 +12432,7 @@ def getDNS(client, args):
         result.Message(['get current power status failed.'])
 
     return result
+
 
 def setDNS(client, args):
 
@@ -12502,7 +12529,7 @@ def setDNS(client, args):
                         for item in options:
                             # 去掉打印出来的u
                             list.append(item['domain_iface'])
-                    except:
+                    except BaseException:
                         result.State('Failure')
                         result.Message(['can not get domain options.'])
                         return result
@@ -12601,7 +12628,7 @@ def setDNS(client, args):
                         for item in options:
                             # 去掉打印出来的u
                             list.append(item['dns_iface'])
-                    except:
+                    except BaseException:
                         result.State('Failure')
                         result.Message(['can not get server options.'])
                         return result
@@ -12755,12 +12782,12 @@ def judgeValueInList(attr, value, list):
                         replace_param = low_param + ' ' + up_param
                         # 将输入的数值验证成功后替换进命令行中
                         cmd = cmd.replace('$in', replace_param)
-                except:
+                except BaseException:
                     return Flag, cmd, infomation
 
             else:
                 # 选择一个值
-                if type(value) is int:
+                if isinstance(value, int):
                     value = str(value)
                 for list in info['setter']:
                     if list['value'] == value:
@@ -12773,7 +12800,7 @@ def judgeValueInList(attr, value, list):
 
 # 定义需要验证参数的验证函数，以输入的attr为函数名
 def PatrolScrubInterval(input):
-    if type(input) is str and not input.isdigit():
+    if isinstance(input, str) and not input.isdigit():
         Flag = False
         return Flag
     else:
@@ -12786,7 +12813,7 @@ def PatrolScrubInterval(input):
 
 
 def PXEbootwaittime(input):
-    if type(input) is str and not input.isdigit():
+    if isinstance(input, str) and not input.isdigit():
         Flag = False
         return Flag
     else:
@@ -12799,7 +12826,7 @@ def PXEbootwaittime(input):
 
 
 def Mediadetectcount(input):
-    if type(input) is str and not input.isdigit():
+    if isinstance(input, str) and not input.isdigit():
         Flag = False
         return Flag
     else:
@@ -12812,7 +12839,7 @@ def Mediadetectcount(input):
 
 
 def NGNDieSparingAggressiveness(input):
-    if type(input) is str and not input.isdigit():
+    if isinstance(input, str) and not input.isdigit():
         Flag = False
         return Flag
     else:
@@ -13094,7 +13121,6 @@ if __name__ == "__main__":
 
         def operatortype(self, value):
             tex.operatortype = value
-
 
     client = RequestClient.RequestClient()
     client.setself("100.2.39.104", "root", "root", 0, "lanplus")

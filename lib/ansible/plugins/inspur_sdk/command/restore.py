@@ -8,6 +8,7 @@ from ansible.plugins.inspur_sdk.util import RegularCheckUtil
 from ansible.plugins.inspur_sdk.command import RestFunc
 from ansible.plugins.inspur_sdk.interface.ResEntity import ResultBean
 
+
 def getUser(client):
     responds = RestFunc.getUserByRest(client)
     if responds['code'] == 0 and responds['data'] is not None:
@@ -312,6 +313,7 @@ def restore_AD(client, args, path):
         return status, info
 
     return 1, "ok"
+
 
 def restore(client, args):
     result = ResultBean
@@ -636,8 +638,8 @@ def restore(client, args):
 
 
 def ntp(client, bak_path):
-    f=open(bak_path,'r')
-    NTPInfo=f.read()
+    f = open(bak_path, 'r')
+    NTPInfo = f.read()
     f.close()
     NTPJson = json.loads(NTPInfo)
     flag = True
@@ -649,15 +651,15 @@ def ntp(client, bak_path):
     else:
         autodate = NTPJson['auto_date']
     data = {
-        'auto_date':autodate,
-        'id':NTPJson['id'],
-        'localized_timestamp':NTPJson['localized_timestamp'],
-        'primary_ntp':NTPJson['primary_ntp'],
-        'secondary_ntp':NTPJson['secondary_ntp'],
-        'third_ntp':NTPJson['third_ntp'],
-        'timestamp':timestamp,
-        'timezone':"",
-        'utc_minutes':NTPJson['utc_minutes']
+        'auto_date': autodate,
+        'id': NTPJson['id'],
+        'localized_timestamp': NTPJson['localized_timestamp'],
+        'primary_ntp': NTPJson['primary_ntp'],
+        'secondary_ntp': NTPJson['secondary_ntp'],
+        'third_ntp': NTPJson['third_ntp'],
+        'timestamp': timestamp,
+        'timezone': "",
+        'utc_minutes': NTPJson['utc_minutes']
     }
     if 'date_cycle' in NTPJson:
         data['date_cycle'] = NTPJson['date_cycle']
@@ -673,26 +675,27 @@ def ntp(client, bak_path):
     else:
         return -1, info
 
+
 def dns(client, bak_path):
-    f=open(bak_path,'r')
-    DNSInfo=f.read()
+    f = open(bak_path, 'r')
+    DNSInfo = f.read()
     f.close()
     DNSJson = json.loads(DNSInfo)
     flag = True
     info = ""
     data = {
-        'dns_iface':DNSJson['dns_iface'],
-        'dns_manual':DNSJson['dns_manual'],
-        'dns_priority':DNSJson['dns_priority'],
-        'dns_server1':DNSJson['dns_server1'],
-        'dns_server2':DNSJson['dns_server2'],
-        'dns_server3':DNSJson['dns_server3'],
-        'dns_status':DNSJson['dns_status'],
-        'domain_iface':DNSJson['domain_iface'],
-        'domain_manual':DNSJson['domain_manual'],
-        'domain_name':DNSJson['domain_name'],
-        'host_cfg':DNSJson['host_cfg'],
-        'host_name':DNSJson['host_name']
+        'dns_iface': DNSJson['dns_iface'],
+        'dns_manual': DNSJson['dns_manual'],
+        'dns_priority': DNSJson['dns_priority'],
+        'dns_server1': DNSJson['dns_server1'],
+        'dns_server2': DNSJson['dns_server2'],
+        'dns_server3': DNSJson['dns_server3'],
+        'dns_status': DNSJson['dns_status'],
+        'domain_iface': DNSJson['domain_iface'],
+        'domain_manual': DNSJson['domain_manual'],
+        'domain_name': DNSJson['domain_name'],
+        'host_cfg': DNSJson['host_cfg'],
+        'host_name': DNSJson['host_name']
     }
     responds = RestFunc.setDNSByRestM5(client, data)
     if responds['code'] == 0 and responds['data'] is not None:
@@ -710,6 +713,7 @@ def dns(client, bak_path):
         return 1, info
     else:
         return -1, info
+
 
 def snmp(client, bak_path):
     f = open(bak_path, 'r')
@@ -745,11 +749,12 @@ def snmp(client, bak_path):
     else:
         return -1, info
 
-def network(client, bak_path):
-    #读取
 
-    f=open(bak_path,'r')
-    networkInfo=f.read()
+def network(client, bak_path):
+    # 读取
+
+    f = open(bak_path, 'r')
+    networkInfo = f.read()
     f.close()
     networkJson = json.loads(networkInfo)
     flag = True
@@ -760,28 +765,28 @@ def network(client, bak_path):
     }
     for netinfo in networkJson:
         data = {
-            "id":netinfo['id'],
-            "interface_name":netinfo['interface_name'],
-            "channel_number":netinfo['channel_number'],
-            "mac_address":netinfo['mac_address'],
-            "lan_enable":netinfo['lan_enable'],
+            "id": netinfo['id'],
+            "interface_name": netinfo['interface_name'],
+            "channel_number": netinfo['channel_number'],
+            "mac_address": netinfo['mac_address'],
+            "lan_enable": netinfo['lan_enable'],
 
-            "ipv4_enable":netinfo['ipv4_enable'],
-            "ipv4_dhcp_enable":netinfo['ipv4_dhcp_enable'],
-            "ipv4_address":netinfo['ipv4_address'],
-            "ipv4_subnet":netinfo['ipv4_subnet'],
-            "ipv4_gateway":netinfo['ipv4_gateway'],
+            "ipv4_enable": netinfo['ipv4_enable'],
+            "ipv4_dhcp_enable": netinfo['ipv4_dhcp_enable'],
+            "ipv4_address": netinfo['ipv4_address'],
+            "ipv4_subnet": netinfo['ipv4_subnet'],
+            "ipv4_gateway": netinfo['ipv4_gateway'],
 
-            "ipv6_enable":netinfo['ipv6_enable'],
-            "ipv6_dhcp_enable":netinfo['ipv6_dhcp_enable'],
-            "ipv6_address":netinfo['ipv6_address'],
-            "ipv6_index":netinfo['ipv6_index'],
-            "ipv6_prefix":netinfo['ipv6_prefix'],
-            "ipv6_gateway":netinfo['ipv6_gateway'],
+            "ipv6_enable": netinfo['ipv6_enable'],
+            "ipv6_dhcp_enable": netinfo['ipv6_dhcp_enable'],
+            "ipv6_address": netinfo['ipv6_address'],
+            "ipv6_index": netinfo['ipv6_index'],
+            "ipv6_prefix": netinfo['ipv6_prefix'],
+            "ipv6_gateway": netinfo['ipv6_gateway'],
 
-            "vlan_enable":netinfo['vlan_enable'],
-            "vlan_id":netinfo['vlan_id'],
-            "vlan_priority":netinfo['vlan_priority']
+            "vlan_enable": netinfo['vlan_enable'],
+            "vlan_id": netinfo['vlan_id'],
+            "vlan_priority": netinfo['vlan_priority']
         }
         responds = RestFunc.setLanByRest(client, data)
         if responds['code'] == 0 and responds['data'] is not None:
@@ -893,7 +898,8 @@ def smtp(client, args, bak_path):
     else:
         return -1, info
 
-def service(client,path_service):
+
+def service(client, path_service):
     # 读取
     f = open(path_service, 'r')
     networkInfo = f.read()
@@ -915,12 +921,14 @@ def service(client,path_service):
             return -2, str(responds['data'])
     return 1, " "
 
+
 def bios(client, path_bios):
     responds = RestFunc.exportBiosCfgByRest(client, path_bios)
     if responds['code'] == 0 and responds['data'] is not None:
         return 1, 'ok'
     else:
         return -2, 'import bios option failed. '
+
 
 def delusergroup(client, args, delName):
     for item in delName:
@@ -933,6 +941,7 @@ def delusergroup(client, args, delName):
         if status != 1:
             return status, info
     return 1, 'ok'
+
 
 def delusergroupfun(client, argsList):
     flag = checkUser(client, argsList, 'Import')
@@ -972,6 +981,7 @@ def delusergroupfun(client, argsList):
     else:
         return 0, 'failed to delete user group' + str(argsList['N'])
 
+
 def setusergroupfun(client, argsList):
     flag = checkUser(client, argsList, 'Import')
     if flag == 'Info':
@@ -1010,6 +1020,7 @@ def setusergroupfun(client, argsList):
     else:
         return 0, 'failed to set user group ' + str(argsList['N'])
 
+
 def getUserGroup(client):
     responds = RestFunc.getUserGroupByRest(client)
     if responds['code'] == 0 and responds['data'] is not None:
@@ -1017,6 +1028,7 @@ def getUserGroup(client):
         return result
     else:
         return None
+
 
 def setusergroup(client, args, setName, path_userg):
     f = open(path_userg, 'r')
@@ -1044,6 +1056,7 @@ def setusergroup(client, args, setName, path_userg):
                 if status != 1:
                     return status, info
     return 1, 'ok'
+
 
 def addusergroupfun(client, argsList):
     flag = checkUser(client, argsList, 'Import')
@@ -1103,6 +1116,7 @@ def addusergroup(client, args, addName, path_userg):
                     return status, info
     return 1, 'ok'
 
+
 def deluserfun(client, argsList):
     flag = checkUser(client, argsList, 'Import')
     if flag == 'Info':
@@ -1136,6 +1150,7 @@ def deluser(client, args, delName):
             return status, info
     return 1, 'ok'
 
+
 def getUserID(client, args, flag):
     responds = RestFunc.getUserByRest(client)
     if responds['code'] == 0 and responds['data'] is not None:
@@ -1156,6 +1171,7 @@ def getUserID(client, args, flag):
         return None
     else:
         return None
+
 
 def setuserfun(client, argsList):
     flag = checkUser(client, argsList, 'Import')
@@ -1191,6 +1207,7 @@ def setuser(client, args, delName):
             return status, info
     return 1, 'ok'
 
+
 def adduserfun(client, argsList):
     flag = checkUser(client, argsList, 'Import')
     if flag == 'Info':
@@ -1223,7 +1240,7 @@ def adduserfun(client, argsList):
 
     elif len(argsList['PWD']) < 1 or len(argsList['PWD']) > 16:
         return 0, 'password of user ' + str(argsList['N']) + ' is a string of 1 to ' \
-               + str(size) + ' characters'
+            + str(size) + ' characters'
 
     if argsList['ACCESS'] == '':
         argsList['ACCESS'] = 0
@@ -1300,6 +1317,7 @@ def adduser(client, args, addName, path_user):
             else:
                 continue
     return 1, 'ok'
+
 
 def ldapfun(client, argsList):
     header = client.getHearder()
@@ -1431,7 +1449,7 @@ def ldapfun(client, argsList):
                 # header["Cookie"] = "" + header["Cookie"] + ";refresh_disable=1"
                 #
                 # r = client.request("POST", "api/settings/ldap-certificates", files=files, headers=header)
-                responds = RestFunc.setLDAPFile(client,files)
+                responds = RestFunc.setLDAPFile(client, files)
                 if responds['code'] != 0:
                     return 0, 'failed to set LDAP'
 
@@ -1522,6 +1540,7 @@ def ldap(client, args, path_ldap):
         return 0, 'incorrect password file'
     return ldapfun(client, argsList)
 
+
 def delldapgroupfun(client, argsList):
     group = getLDAPgroup(client)
     if group is None:
@@ -1552,6 +1571,7 @@ def delldapgroup(client, args, delName):
             return status, info
     return 1, 'ok'
 
+
 def addldapgroufun(client, argsList):
 
     if argsList['BASE'] == '':
@@ -1577,7 +1597,7 @@ def addldapgroufun(client, argsList):
     if responds['code'] == 0 and responds['data'] is not None:
         return 1, 'ok'
     else:
-        return 0,  'failed to add LDAP group'
+        return 0, 'failed to add LDAP group'
 
 
 def addldapgroup(client, args, path):
@@ -1600,6 +1620,7 @@ def addldapgroup(client, args, path):
         if status != 1:
             return status, info
     return 1, 'ok'
+
 
 def adfun(client, argsList):
 
@@ -1725,6 +1746,7 @@ def ad(client, args, path_ad):
             break
 
     return adfun(client, argsList)
+
 
 def deladgroupfun(client, argsList):
     group = getADgroup(client)

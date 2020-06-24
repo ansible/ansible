@@ -66,7 +66,7 @@ EXAMPLES = '''
   tasks:
 
   - name: "add ldap group information"
-    is_add_ad_group.py:
+    is_add_ldap_group.py:
       name: "wbs"
       base: "cn=manager"
       pri: "administrator"

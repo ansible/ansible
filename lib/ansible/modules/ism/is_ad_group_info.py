@@ -44,7 +44,10 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-
+proposed:
+    description: k/v pairs of parameters passed into module
+    returned: always
+    type: dict
 message:
     description: messages returned after module execution
     returned: always

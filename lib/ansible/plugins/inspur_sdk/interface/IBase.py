@@ -7,35 +7,43 @@
 #   @Date:
 #=========================================================================
 '''
+
+
 class IBase():
     def __init__(self):
         pass
+
     def getfru(self, client, args):
         '''
         get product Fru information
         :return:
         '''
+
     def getProdcut(self, client, args):
         '''
 
         :return:
         '''
+
     def getcapabilities(self, client, args):
         '''
 
         :return:
         '''
         print('cap')
+
     def getcpu(self, client, args):
         '''
 
         :return:
         '''
+
     def getmemory(self, client, args):
         '''
 
         :return:
         '''
+
     def powercontrol(self, client, args):
         '''
 
@@ -47,51 +55,61 @@ class IBase():
 
         :return:
         '''
+
     def getsysboot(self, client, args):
         '''
 
         :return:
         '''
+
     def geteventlog(self, client, args):
         '''
 
         :return:
         '''
+
     def downloadtfalog(self, client, args):
         '''
 
         :return:
         '''
+
     def gethealthevent(self, client, args):
         '''
 
         :return:
         '''
+
     def getraid(self, client, args):
         '''
 
         :return:
         '''
+
     def getldisk(self, client, args):
         '''
 
         :return:
         '''
+
     def clearsel(self, client, args):
         '''
-        
+
         :return:
         '''
+
     def getnic(self, client, args):
         '''
 
         :return:
         '''
+
     def setsysboot(self, client, args):
         '''
 
         :return:
         '''
+
     def powerctrldisk(self, client, args):
         '''
 
@@ -103,61 +121,73 @@ class IBase():
 
         :return:
         '''
+
     def getbios(self, client, args):
         '''
 
         :return:
         '''
+
     def setbios(self, client, args):
         '''
 
         :return:
         '''
+
     def setbiospwd(self, client, args):
         '''
 
         :return:
         '''
+
     def getbiossetting(self, client, args):
         '''
 
         :return:
         '''
+
     def getbiosresult(self, client, args):
         '''
 
         :return:
         '''
+
     def getbiosdebug(self, client, args):
         '''
 
         :return:
         '''
+
     def clearbiospwd(self, client, args):
         '''
 
         :return:
         '''
+
     def restorebios(self, client, args):
         '''
 
         :return:
         '''
+
     def setbiosdebug(self, client, args):
         '''
 
         :return:
         '''
+
     def mountvmm(self, client, args):
         '''
 
         :return:
         '''
+
     def setthreshold(self, client, args):
         '''
 
         :return:
         '''
+
     def downloadfandiag(self, client, args):
         '''
 
@@ -169,315 +199,375 @@ class IBase():
 
         :return:
         '''
+
     def sethsc(self, client, args):
         '''
 
         :return:
         '''
 
-
     def chassis(self, client, args):
         '''
 
         :return:
         '''
+
     def getproduct(self, client, args):
         '''
 
         :return:
         '''
+
     def setproductserial(self, client, args):
         '''
 
         :return:
         '''
+
     def getfan(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def fancontrol(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getsensor(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def gettemp(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getvolt(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getthreshold(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getpwrcap(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getpsu(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def recoverypsu(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getpdisk(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getpcie(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def locateserver(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def locatedisk(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def Managers(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getip(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getdns(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def gettrap(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def restorebmc(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def collect(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def settime(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def settimezone(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def resetbmc(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def setip(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def setvlan(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getvnc(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def setvnc(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getservice(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def setservice(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getmgmtport(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getserialport(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def setserialport(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def setadaptiveport(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def settrapcom(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def settrapdest(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def triggernmi(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def exportbmccfg(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def importbmccfg(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def exportbioscfg(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def importbioscfg(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def delvncsession(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def sendipmirawcmd(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def AccountService(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getuser(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def adduser(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def deluser(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def setpwd(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def setpriv(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def updateservice(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getfw(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def getupdatestate(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def fwupdate(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def EventServices(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def geteventsub(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def addeventsub(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def deleventsub(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def TaskService(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def gettaskstate(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''
+
     def cancletask(self, client, args):
-            '''
+        '''
 
-            :return:
-            '''
+        :return:
+        '''

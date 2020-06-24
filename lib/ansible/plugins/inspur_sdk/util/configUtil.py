@@ -13,7 +13,8 @@ import xml.etree.ElementTree as ET
 
 routePath = os.path.join(os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "route", "route.yml")
 
-#get yaml config util,singleton type
+
+# get yaml config util,singleton type
 class configUtil():
     def __init__(self):
         pass
@@ -23,20 +24,20 @@ class configUtil():
         if not hasattr(cls, "_instance"):
             cls._instance = super().__new__(cls, *args, **kwargs)
         return cls._instance
-                       
-    #get all configuration option
+
+    # get all configuration option
     def getRouteConfig(self):
         '''
         get route configuration to dict
         :return: all route  dict
         '''
         if os.path.exists(routePath):
-            with open(routePath,'r') as f:
-                serverconfig =yaml.load(f.read())
+            with open(routePath, 'r') as f:
+                serverconfig = yaml.load(f.read())
                 return serverconfig
 
     # get Product and BmcVersion configuration option
-    def getRouteOption(self,productName,bmcVersion):
+    def getRouteOption(self, productName, bmcVersion):
         '''
         :param productName: Product Name
         :param bmcVersion: BMC Version X.XX
@@ -46,7 +47,7 @@ class configUtil():
         if os.path.exists(routePath):
             with open(routePath, 'r') as f:
                 serverconfig = yaml.load(f.read())
-                #if route.yml has configuration get
+                # if route.yml has configuration get
                 productName = productName.upper()
                 if serverconfig.get(productName):
                     if serverconfig.get(productName).get(float(bmcVersion)):
@@ -68,7 +69,8 @@ class configUtil():
                     else:
                         config = "Error: Not Supported ProductName: " + productName
                 elif "T6" in productName:
-                    if serverconfig.get('T6') and serverconfig.get('T6').get('common'):
+                    if serverconfig.get('T6') \
+                            and serverconfig.get('T6').get('common'):
                         config = serverconfig.get('T6').get('common')
                     else:
                         config = "Error: Not Supported ProductName: " + productName
@@ -79,19 +81,17 @@ class configUtil():
         return config
 
     # xmlfilepath 文件路径
-    def getSetOption(self,xmlfilepath):
-
+    def getSetOption(self, xmlfilepath):
         '''python在安装时默认编码是ascii，出现非ascii编码时会报错，
            此时需要自己设置python的默认编码，一般设为utf-8
            直接setdefaulttencoding会AttributeError，需要先执行reload(sys)
         '''
         tree = ET.parse(xmlfilepath)  # 调用parse方法返回解析树
-        server = tree.getroot()     # 获取根节点
+        server = tree.getroot()  # 获取根节点
 
-        blongtoSet = set()   # 存储所有的分类
+        blongtoSet = set()  # 存储所有的分类
         descriptionList = []  # 存储所有的描述
         infoList = []  # 存储所有xml表示的数据 字典列表
-
 
         for cfgItems in server:
             for cfgItem in cfgItems:
@@ -108,13 +108,12 @@ class configUtil():
                 blongtoSet.add(blongto_text)
                 descriptionList.append(description_text)
 
-
                 # getter标签
-                getterCMD=''
+                getterCMD = ''
                 for getter in cfgItem.getiterator('getter'):
-                    getterCMD = str(getter.text).replace('raw','')
+                    getterCMD = str(getter.text).replace('raw', '')
 
-                # #setters标签
+                # setters标签
                 setterlist = []  # 后面嵌套了setOption，是一个字典列表，每一项都是一个字典，字典里面包含{cmd，value，validation}
                 sin = False
                 for setters in cfgItem.getiterator('setters'):
@@ -122,7 +121,8 @@ class configUtil():
                         setOption = {}
                         for cmd in setter.getiterator('cmd'):
                             # 将tab键替换，换行键替换
-                            setOption['cmd'] = cmd.text.replace("\\t","").replace("\\n"," xxxxx ").replace('raw','')
+                            setOption['cmd'] = cmd.text.replace("\\t", "") \
+                                .replace("\\n", " xxxxx ").replace('raw', '')
                         for value in setter.getiterator('value'):
                             setOption['value'] = value.text
                         for validation in setter.getiterator('validation'):
@@ -138,9 +138,4 @@ class configUtil():
                 info['setter'] = setterlist
                 infoList.append(info)
 
-        return blongtoSet, descriptionList,infoList
-if __name__ == '__main__':
-    fruclass = configUtil()
-    #print(fruclass.getRouteConfig().get("NF5180M5"))
-    abc = fruclass.getRouteOption("NF50M3","4.21")
-    print(abc)
+        return blongtoSet, descriptionList, infoList

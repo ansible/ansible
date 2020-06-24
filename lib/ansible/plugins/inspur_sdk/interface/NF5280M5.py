@@ -24,11 +24,7 @@ sys.path.append(os.path.join(rootpath, "command"))
 sys.path.append(os.path.join(rootpath, "util"))
 
 
-
-
 class NF5280M5(CommonM5):
-
-
 
     def collect(self, client, args):
         if args.component is not None:
@@ -45,7 +41,7 @@ class NF5280M5(CommonM5):
             file_name = ""
             file_path = os.path.abspath("..")
             args.fileurl = os.path.join(file_path, file_name)
-        elif re.search("^[C-Zc-z]\:$",args.fileurl,re.I):
+        elif re.search(r"^[C-Zc-z]\:$", args.fileurl, re.I):
             file_name = ""
             file_path = os.path.abspath(args.fileurl + "\\")
             args.fileurl = os.path.join(file_path, file_name)
@@ -57,15 +53,14 @@ class NF5280M5(CommonM5):
             file_path = os.path.abspath(".")
             args.fileurl = os.path.join(file_path, file_name)
 
-
-        #用户输入路径，则默认文件名dump_psn_time.tar
+        # 用户输入路径，则默认文件名dump_psn_time.tar
         if file_name == "":
-            psn="UNKNOWN"
-            res=Base.getfru(self, client, args)
+            psn = "UNKNOWN"
+            res = Base.getfru(self, client, args)
             if res.State == "Success":
-                frulist=res.Message[0].get("FRU",[])
+                frulist = res.Message[0].get("FRU", [])
                 if frulist != []:
-                    psn = frulist[0].get('ProductSerial','UNKNOWN')
+                    psn = frulist[0].get('ProductSerial', 'UNKNOWN')
             else:
                 return res
             import time
@@ -74,7 +69,7 @@ class NF5280M5(CommonM5):
             file_name = "dump_" + psn + "_" + logtime + ".tar"
             args.fileurl = os.path.join(file_path, file_name)
         else:
-            p = '\.tar$'
+            p = r'\.tar$'
             if not re.search(p, file_name, re.I):
                 checkparam_res.State("Failure")
                 checkparam_res.Message(["Filename should be xxx.tar"])
@@ -83,7 +78,7 @@ class NF5280M5(CommonM5):
         if not os.path.exists(file_path):
             try:
                 os.makedirs(file_path)
-            except:
+            except BaseException:
                 checkparam_res.State("Failure")
                 checkparam_res.Message(["can not create path."])
                 return checkparam_res
@@ -98,11 +93,10 @@ class NF5280M5(CommonM5):
                     file_new = os.path.join(file_path, name_new)
                 args.fileurl = file_new
 
-
         # login
         headers = RestFunc.login(client)
         if headers == {}:
-            login_res=ResultBean()
+            login_res = ResultBean()
             login_res.State("Failure")
             login_res.Message(["login error, please check username/password/host/port"])
             return login_res
@@ -155,22 +149,22 @@ class NF5280M5(CommonM5):
                     else:
                         bmcres.State("Failure")
                         bmcres.Message(["download onekeylog error"])
-                elif  export_res.get('code') == 404:
-                        bmcres.State("Not Support")
-                        bmcres.Message([""])
+                elif export_res.get('code') == 404:
+                    bmcres.State("Not Support")
+                    bmcres.Message([""])
                 else:
                     bmcres.State("Failure")
                     bmcres.Message(["download onekeylog error"])
         if bmcres.State == "Not Support":
-            #收集黑盒
+            # 收集黑盒
             bmcres = NF5280M5.collectblackbox(client, args)
 
         # logout
         RestFunc.logout(client)
         return bmcres
 
-
     # 检查日志是否存在，确定存在后，下载文件
+
     def getProgressAndDown(self, client, args):
         bmcres = ResultBean()
         count = 0
@@ -199,8 +193,8 @@ class NF5280M5(CommonM5):
                     data = process_res.get('data')
                     error_info = data
                     if "FileExistFlag" in data and "FileName" in data:
-                        #log收集成功
-                        #if data["FileExistFlag"] == 1 and data["FileName"] != "":
+                        # log收集成功
+                        # if data["FileExistFlag"] == 1 and data["FileName"] != "":
                         if data["FileName"] != "":
                             # get folder
                             folder = data['FileName']
@@ -216,14 +210,14 @@ class NF5280M5(CommonM5):
                                 bmcres.State("Failure")
                                 bmcres.Message([download_res.get('data')])
                             break
-                        #elif data["FileExistFlag"] == 0 and data["FileName"] == "":
+                        # elif data["FileExistFlag"] == 0 and data["FileName"] == "":
                         elif data["FileName"] == "":
                             continue
                         else:
                             continue
-                            #bmcres.State("Failure")
+                            # bmcres.State("Failure")
                             #bmcres.Message(["cannot find log file"])
-                            #break
+                            # break
                     else:
                         error_info = data
                         error_count = error_count + 1
@@ -238,8 +232,7 @@ class NF5280M5(CommonM5):
                 continue
         return bmcres
 
-
-    def collectblackbox(self,client, args):
+    def collectblackbox(self, client, args):
         bmcres = ResultBean()
         try:
             file_path = os.path.dirname(args.fileurl)
@@ -252,25 +245,24 @@ class NF5280M5(CommonM5):
                 os.makedirs(bbl_path)
                 time.sleep(5)
 
-
             NF5280M5.collectBlackboxlog(client, bbl_path, "blackbox")
             NF5280M5.collectBlackboxlog(client, bbl_path, "blackboxpeci")
-            #打包
+            # 打包
             import tarfile
-            tar  = tarfile.open(args.fileurl, "w")
-            for root ,dir, files in os.walk(bbl_path):
+            tar = tarfile.open(args.fileurl, "w")
+            for root, dir, files in os.walk(bbl_path):
                 for file in files:
-                    fullpath = os.path.join(root,file)
-                    tar.add(fullpath,arcname=file)
+                    fullpath = os.path.join(root, file)
+                    tar.add(fullpath, arcname=file)
             tar.close()
 
-            for root ,dir, files in os.walk(bbl_path):
+            for root, dir, files in os.walk(bbl_path):
                 for file in files:
                     fullpath = os.path.join(root, file)
                     os.remove(fullpath)
 
             if os.path.exists(bbl_path):
-               os.removedirs(bbl_path)
+                os.removedirs(bbl_path)
 
             bmcres.State("Success")
             bmcres.Message(["Download blackbox log success, the file path is " + os.path.abspath(args.fileurl)])
@@ -280,30 +272,29 @@ class NF5280M5(CommonM5):
             bmcres.Message(["Cannot collect blackbox log: " + str(e)])
             return bmcres
 
-
-    #收集日志到bbl_path
-    def collectBlackboxlog(self,client, bbl_path, logtype):#查看黑盒日志是否存在
+    # 收集日志到bbl_path
+    def collectBlackboxlog(self, client, bbl_path, logtype):  # 查看黑盒日志是否存在
         bbl_file = os.path.join(bbl_path, logtype + ".log")
         log_exist_res = RestFunc.getblacklogfileexist(client, logtype)
         if log_exist_res.get("code") == 0:
             if log_exist_res.get("data").get('FileExistFlag') == 1:
                 download_res = RestFunc.downloadBlackboxlogByRest(client, bbl_file, logtype)
                 if download_res.get("code") == 0:
-                    a=""
+                    a = ""
                     with open(download_res.get("data"), 'rb') as f:
                         a = f.read()
                     try:
                         b = a.decode("utf-8")
-                    except:
-                        #需要解码
+                    except BaseException:
+                        # 需要解码
                         import platform
                         if platform.system() == 'Linux':
-                            cmd ='/tools//blackbox_decrypt/blackbox_decrypt '
+                            cmd = '/tools//blackbox_decrypt/blackbox_decrypt '
                         else:
-                            cmd ="\\tools\\blackbox_decrypt\\blackbox_decrypt.exe "
-                        cmd =  os.path.dirname(os.path.dirname(__file__)) + cmd  + download_res.get("data") + " > " + os.path.join(bbl_path, "res")
+                            cmd = "\\tools\\blackbox_decrypt\\blackbox_decrypt.exe "
+                        cmd = os.path.dirname(os.path.dirname(__file__)) + cmd + download_res.get("data") + " > " + os.path.join(bbl_path, "res")
                         try:
-                            pathnow= os.getcwd()
+                            pathnow = os.getcwd()
                             os.chdir(os.path.dirname(download_res.get("data")))
                             result_cmd = os.popen(cmd)
                             result_cmd.close()
@@ -337,7 +328,7 @@ class NF5280M5(CommonM5):
         if not os.path.exists(file_path):
             try:
                 os.makedirs(file_path)
-            except:
+            except BaseException:
                 export.State("Failure")
                 export.Message(["cannot build path."])
                 return export
