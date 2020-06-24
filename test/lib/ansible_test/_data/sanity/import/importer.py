@@ -94,6 +94,7 @@ def main():
         _collection_finder._meta_yml_to_dict = yaml_to_dict  # pylint: disable=protected-access
 
         collection_loader = _AnsibleCollectionFinder(paths=[collection_root])
+        # noinspection PyProtectedMember
         collection_loader._install()  # pylint: disable=protected-access
     else:
         # do not support collection loading when not testing a collection
@@ -120,18 +121,18 @@ def main():
         def __init__(self, *args, **kwargs):
             raise ImporterAnsibleModuleException()
 
-    class ImportBlacklist:
-        """Blacklist inappropriate imports."""
+    class RestrictedModuleLoader:
+        """Python module loader that restricts inappropriate imports."""
         def __init__(self, path, name):
             self.path = path
             self.name = name
             self.loaded_modules = set()
 
         def find_module(self, fullname, path=None):
-            """Return self if the given fullname is blacklisted, otherwise return None.
+            """Return self if the given fullname is restricted, otherwise return None.
             :param fullname: str
             :param path: str
-            :return: ImportBlacklist | None
+            :return: RestrictedModuleLoader | None
             """
             if fullname in self.loaded_modules:
                 return None  # ignore modules that are already being loaded
@@ -144,21 +145,21 @@ def main():
                     return None  # module_utils and module under test are always allowed
 
                 if any(os.path.exists(candidate_path) for candidate_path in convert_ansible_name_to_absolute_paths(fullname)):
-                    return self  # blacklist ansible files that exist
+                    return self  # restrict access to ansible files that exist
 
-                return None  # ansible file does not exist, do not blacklist
+                return None  # ansible file does not exist, do not restrict access
 
             if is_name_in_namepace(fullname, ['ansible_collections']):
                 if not collection_loader:
-                    return self  # blacklist collections when we are not testing a collection
+                    return self  # restrict access to collections when we are not testing a collection
 
                 if is_name_in_namepace(fullname, ['ansible_collections...plugins.module_utils', self.name]):
                     return None  # module_utils and module under test are always allowed
 
                 if collection_loader.find_module(fullname, path):
-                    return self  # blacklist collection files that exist
+                    return self  # restrict access to collection files that exist
 
-                return None  # collection file does not exist, do not blacklist
+                return None  # collection file does not exist, do not restrict access
 
             # not a namespace we care about
             return None
@@ -229,13 +230,13 @@ def main():
 
         try:
             with monitor_sys_modules(path, messages):
-                with blacklist_imports(path, name, messages):
+                with restrict_imports(path, name, messages):
                     with capture_output(capture_normal):
                         import_module(name)
 
             if run_main:
                 with monitor_sys_modules(path, messages):
-                    with blacklist_imports(path, name, messages):
+                    with restrict_imports(path, name, messages):
                         with capture_output(capture_main):
                             runpy.run_module(name, run_name='__main__', alter_sys=True)
         except ImporterAnsibleModuleException:
@@ -397,25 +398,27 @@ def main():
             print(message)
 
     @contextlib.contextmanager
-    def blacklist_imports(path, name, messages):
-        """Blacklist imports.
+    def restrict_imports(path, name, messages):
+        """Restrict available imports.
         :type path: str
         :type name: str
         :type messages: set[str]
         """
-        blacklist = ImportBlacklist(path, name)
+        restricted_loader = RestrictedModuleLoader(path, name)
 
-        sys.meta_path.insert(0, blacklist)
+        # noinspection PyTypeChecker
+        sys.meta_path.insert(0, restricted_loader)
         sys.path_importer_cache.clear()
 
         try:
             yield
         finally:
-            if sys.meta_path[0] != blacklist:
+            if sys.meta_path[0] != restricted_loader:
                 report_message(path, 0, 0, 'metapath', 'changes to sys.meta_path[0] are not permitted', messages)
 
-            while blacklist in sys.meta_path:
-                sys.meta_path.remove(blacklist)
+            while restricted_loader in sys.meta_path:
+                # noinspection PyTypeChecker
+                sys.meta_path.remove(restricted_loader)
 
             sys.path_importer_cache.clear()
 
@@ -447,6 +450,7 @@ def main():
         # clear all warnings registries to make all warnings available
         for module in sys.modules.values():
             try:
+                # noinspection PyUnresolvedReferences
                 module.__warningregistry__.clear()
             except AttributeError:
                 pass
