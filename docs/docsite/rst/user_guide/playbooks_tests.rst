@@ -386,7 +386,7 @@ The following tasks are illustrative of the tests meant to check the status of t
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
    :ref:`playbooks_best_practices`
-       Best practices in playbooks
+       Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_

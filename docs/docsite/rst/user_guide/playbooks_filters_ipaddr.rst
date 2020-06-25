@@ -641,7 +641,7 @@ The supported formats result in the following conversions for the ``1a:2b:3c:4d:
 
 
    `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_
-       Ansible network collection for common code 
+       Ansible network collection for common code
    :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`playbooks_filters`
@@ -655,7 +655,7 @@ The supported formats result in the following conversions for the ``1a:2b:3c:4d:
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
    :ref:`playbooks_best_practices`
-       Best practices in playbooks
+    	 Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
