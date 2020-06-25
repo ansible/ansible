@@ -513,11 +513,11 @@ def main():
         output['mimetype'] = output['charset'] = 'unknown'
         mimecmd = module.get_bin_path('file')
         if mimecmd:
-            mimecmd = [mimecmd, '-i', b_path]
+            mimecmd = [mimecmd, '--mime-type', '--mime-encoding', b_path]
             try:
                 rc, out, err = module.run_command(mimecmd)
                 if rc == 0:
-                    mimetype, charset = out.split(':')[1].split(';')
+                    mimetype, charset = out.rsplit(':', 1)[1].split(';')
                     output['mimetype'] = mimetype.strip()
                     output['charset'] = charset.split('=')[1].strip()
             except Exception:

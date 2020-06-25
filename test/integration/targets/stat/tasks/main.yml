@@ -155,3 +155,25 @@
         - "'xgrp' in stat_result.stat"
         - "'xoth' in stat_result.stat"
         - "'xusr' in stat_result.stat"
+
+- name: make a new file with colon in filename
+  copy:
+    dest: "{{ output_dir }}/foo:bar.txt"
+    mode: '0644'
+    content: "hello world"
+
+- name: check stat of a file with colon in name
+  stat:
+    path: "{{ output_dir }}/foo:bar.txt"
+    follow: True
+  register: stat_result
+
+- debug:
+    var: stat_result
+
+- assert:
+    that:
+        - "'changed' in stat_result"
+        - "stat_result.changed == false"
+        - "stat_result.stat.mimetype == 'text/plain'"
+        - "stat_result.stat.charset == 'us-ascii'"
