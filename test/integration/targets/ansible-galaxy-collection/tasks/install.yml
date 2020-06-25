@@ -213,7 +213,7 @@
   environment:
     ANSIBLE_GALAXY_SERVER_LIST: undefined
 
-- when: not requires_auth|default(False)
+- when: not requires_auth
   block:
     - name: install a collection with an empty server list - {{ test_name }}
       command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' {{ galaxy_verbosity }}
