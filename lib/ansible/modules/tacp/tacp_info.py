@@ -179,9 +179,14 @@ def run_module():
                                     vnet_resource.filter(uuid=('=in=', uuids))})  # noqa
                 for network in item['networks']:
                     network['name'] = network_list[network['uuid']]
+
             if item.get('tags'):
-                item['tags'] = tacp_utils.fill_in_missing_names_by_uuid(
-                    item['tags'], tag_resource, 'tags')
+                uuids = [tag['uuid'] for tag in item['tags']]
+                item['tags'] = [
+                    tag.to_dict() for tag in tag_resource.filter(
+                        uuid=('=in=', uuids)
+                    )
+                ]
 
     result[module.params['resource']] = items
 
