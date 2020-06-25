@@ -351,13 +351,6 @@ def instance_power_action(instance, action):
     RESULT['changed'] = True
 
 
-def get_template_for_instance(instance):
-    template_uuid = instance.template_uuid
-    template = RESOURCES['template'].get_by_uuid(template_uuid)
-
-    return template
-
-
 def update_instance_state(instance, current_state, target_state):
     if current_state in [ApiState.RUNNING,
                          ApiState.SHUTDOWN,
@@ -378,7 +371,8 @@ def add_playbook_vnics(playbook_vnics, instance):
         instance (ApiApplicationInstancePropertiesPayload): A payload
             containing the properties of the instance
     """
-    playbook_template = get_template_for_instance(instance)
+    playbook_template = RESOURCES['template'].get_by_uuid(
+        instance.template_uuid)
     template_boot_order = playbook_template.boot_order
 
     template_vnics = [
@@ -542,7 +536,8 @@ def add_playbook_disks(playbook_disks, instance):
         instance (ApiApplicationInstancePropertiesPayload): A payload
             containing the properties of the instance
     """
-    playbook_template = get_template_for_instance(instance)
+    playbook_template = RESOURCES['template'].get_by_uuid(
+        instance.template_uuid)
     template_boot_order = playbook_template.boot_order
 
     template_disks = [
