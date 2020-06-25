@@ -1,4 +1,4 @@
-class State:
+class ApiState:
     RUNNING = "Running"
     SHUTDOWN = "Shut down"
     PAUSED = "Paused"
@@ -8,7 +8,7 @@ class State:
     DELETING = "Deleting"
 
 
-class Action:
+class PlaybookState:
     STARTED = "started"
     SHUTDOWN = "shutdown"
     STOPPED = "stopped"
@@ -17,3 +17,8 @@ class Action:
     PAUSED = "paused"
     ABSENT = "absent"
     RESUMED = "resumed"
+
+    @classmethod
+    def _all(cls):
+        return [getattr(cls, attr) for attr in dir(cls)
+                if not attr.startswith('_')]
