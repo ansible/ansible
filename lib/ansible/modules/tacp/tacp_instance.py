@@ -243,8 +243,8 @@ def get_parameters_to_create_new_application(playbook_instance):
         data['application_group_uuid'] = uuid
 
     network_payloads = []
-    template_vnics = [boot_device for boot_device
-                      in template_boot_order if boot_device.vnic_uuid]
+    template_vnics = [boot_device for boot_device in template_boot_order
+                      if boot_device.vnic_uuid]
 
     playbook_vnics_in_template = {
         playbook_vnic['name']: template_vnic
@@ -263,7 +263,7 @@ def get_parameters_to_create_new_application(playbook_instance):
         template_order = template_vnic.order
 
         parameters_to_create_new_vnic = get_parameters_to_create_vnic(
-            datacenter_uuid=data['datacenter_uuid'],  # noqa
+            datacenter_uuid=data['datacenter_uuid'],
             playbook_vnic=playbook_vnic,
             template_order=template_order
         )
