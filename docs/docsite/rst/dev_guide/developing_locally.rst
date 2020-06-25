@@ -43,7 +43,7 @@ Once you save your module file in one of these locations, Ansible will load it a
 
 To confirm that ``my_custom_module`` is available:
 
-* type ``ansible-doc -t module my_custom_module``. You should see the documentation for that module.
+* type ``ansible localhost -m my_custom_module``. You should see the output for that module.
 
 .. note::
 
