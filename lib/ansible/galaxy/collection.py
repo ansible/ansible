@@ -1179,7 +1179,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
 
 def _collections_from_scm(collection, requirement, b_temp_path, force, parent=None):
     """Returns a list of collections found in the repo. If there is a galaxy.yml in the collection then just return
-    tH specific collection. Otherwise, check each top-level directory for a galaxy.yml.
+    the specific collection. Otherwise, check each top-level directory for a galaxy.yml.
 
     :param collection: URI to a git repo
     :param requirement: The version of the artifact
