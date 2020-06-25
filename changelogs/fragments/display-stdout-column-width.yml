@@ -1,0 +1,2 @@
+bugfixes:
+  - Ansible output now uses stdout to determine column width instead of stdin
