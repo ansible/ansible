@@ -8606,7 +8606,7 @@ plugin_routing:
     nxos:
       redirect: cisco.nxos.nxos
     splunk:
-      redirect: splunk.enterprise_security.splunk
+      redirect: splunk.es.splunk
     qradar:
       redirect: ibm.qradar.qradar
   inventory:
