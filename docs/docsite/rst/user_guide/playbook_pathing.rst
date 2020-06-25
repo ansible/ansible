@@ -4,7 +4,10 @@
 Search paths in Ansible
 ***********************
 
-Absolute paths are not an issue as they always have a known start, but relative paths ... well, they are relative.
+You can control the paths Ansible searches to find resources on your control node (including configuration, modules, roles, ssh keys, and more) as well as resources on the remote nodes you are managing. Use absolute paths to tell Ansible where to find resources whenever you can. However, absolute paths are not always practical. This page covers how Ansible interprets relative search paths, along with ways to troubleshoot when Ansible cannot find the resource you need.
+
+.. contents::
+   :local:
 
 Config paths
 ============
@@ -15,9 +18,7 @@ By default these should be relative to the config file, some are specifically re
 Task paths
 ==========
 
-Here things start getting complicated, there are 2 different scopes to consider, task evaluation (paths are all local, like in lookups) and task execution, which is normally on the remote, unless an action plugin is involved.
-
-Some tasks that require 'local' resources use action plugins (template and copy are examples of these), in which case the path is also local.
+Task paths include two different scopes: task evaluation and task execution. For task evaluation, all paths are local, like in lookups. For task execution, which usually happens on the remote nodes, local paths do not usually apply. However, if a task uses an action plugin, it uses a local path. The template and copy modules are examples of modules that use action plugins, and therefore use local paths.
 
 The magic of 'local' paths
 --------------------------
@@ -32,9 +33,7 @@ i.e ::
     play search path is playdir/{files|vars|templates}/, playdir/.
 
 
-The current working directory (cwd) is not searched. If you see it, it just happens to coincide with one of the paths above.
-If you `include` a task file from a role, it  will NOT trigger role behavior, this only happens when running as a role, `include_role` will work.
-A new variable `ansible_search_path` var will have the search path used, in order (but without the appended subdirs). Using 5 "v"s (`-vvvvv`) should show the detail of the search as it happens.
+By default, Ansible does not search the current working directory (cwd) unless it happens to coincide with one of the paths above. If you `include` a task file from a role, it  will NOT trigger role behavior, this only happens when running as a role, `include_role` will work. A new variable `ansible_search_path` var will have the search path used, in order (but without the appended subdirs). Using 5 "v"s (`-vvvvv`) should show the detail of the search as it happens.
 
 As for includes, they try the path of the included file first and fall back to the play/role that includes them.
 
