@@ -395,7 +395,7 @@ class DocCLI(CLI):
         redirects = {}
         entries = meta.get('plugin_routing', {}).get(ptype, {})
         for entry in entries.keys():
-            if 'redirect' in  entries[entry]:
+            if 'redirect' in entries[entry]:
                 redirects[entry] = entries[entry]['redirect']
 
         bkey = ptype.upper()

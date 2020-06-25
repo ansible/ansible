@@ -113,6 +113,6 @@ def get_existing_collections(search_paths=None, warn=True):
 
         # ensure we skip masked by precedence
         if cname not in collections:
-                collections[cname] = b_path
+            collections[cname] = b_path
 
     return collections
