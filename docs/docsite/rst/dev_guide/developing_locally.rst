@@ -45,6 +45,10 @@ To confirm that ``my_custom_module`` is available:
 
 * type ``ansible-doc -t module my_custom_module``. You should see the documentation for that module.
 
+.. note::
+
+	Currently, ``ansible-doc`` command can only parse Python modules for the module documentation. If you have module written in a different programming language other than Python, please write a documentation in Python file adjacent to module file.
+
 To use a local module only in certain playbooks:
 
 * store it in a sub-directory called ``library`` in the directory that contains the playbook(s)

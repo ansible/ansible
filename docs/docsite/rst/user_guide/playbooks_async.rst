@@ -102,7 +102,8 @@ If you need a synchronization point with an async task, you can register it to o
           jid: "{{ yum_sleeper.ansible_job_id }}"
         register: job_result
         until: job_result.finished
-        retries: 30
+        retries: 100
+        delay: 10
 
 .. note::
    If the value of ``async:`` is not high enough, this will cause the
