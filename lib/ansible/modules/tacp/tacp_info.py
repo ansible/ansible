@@ -174,14 +174,19 @@ def run_module():
                 # ill_in_missing_names_by_uuid function
                 uuids = [network['uuid'] for network in item['networks']]  # noqa
                 network_list = {vlan.uuid: vlan.name for vlan in
-                                    vlan_resource.filter(uuid=('=in=', *uuids))}  # noqa
+                                    vlan_resource.filter(uuid=('=in=', uuids))}  # noqa
                 network_list.update({vnet.uuid: vnet.name for vnet in
-                                    vnet_resource.filter(uuid=('=in=', *uuids))})  # noqa
+                                    vnet_resource.filter(uuid=('=in=', uuids))})  # noqa
                 for network in item['networks']:
                     network['name'] = network_list[network['uuid']]
+
             if item.get('tags'):
-                item['tags'] = tacp_utils.fill_in_missing_names_by_uuid(
-                    item['tags'], tag_resource, 'tags')
+                uuids = [tag['uuid'] for tag in item['tags']]
+                item['tags'] = [
+                    tag.to_dict() for tag in tag_resource.filter(
+                        uuid=('=in=', uuids)
+                    )
+                ]
 
     result[module.params['resource']] = items
 

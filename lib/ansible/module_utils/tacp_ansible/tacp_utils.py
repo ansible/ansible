@@ -117,16 +117,17 @@ class Resource(object):
 
         for k, v in kws.items():
             if isinstance(v, (list, tuple)):
-                op, *value = v
+                op, value = v[0], v[1:]
                 if op not in allowed:
                     raise Exception('Invalid operator "{}". '
                                     'Allowed: {}'.format(op, allowed))
+                if len(value) == 0:
+                    raise Exception('Must provide at least one value')
 
+                value = value[0]
                 if op in ('=in=', '=out='):
                     value = ','.join(map(str, value))
                     value = '({})'.format(value)
-                else:
-                    value = value[0]
             else:
                 op = '=='
                 value = v
@@ -547,9 +548,9 @@ def fill_in_missing_names_by_uuid(item, api_resource, key_name):
         uuid_name = 'category_uuid'
     else:
         uuid_name = key_name[:-1] + "_uuid"
-    uuids = [resource[uuid_name] for resource in item[key_name]]
-    resource_list = {resource.uuid: resource.name for resource in
-                     api_resource.filter(uuid=('=in=', *uuids))}
+    uuids = [resource[uuid_name] for resource in item[key_name]]  # noqa
+    resource_list = {resource.uuid: resource.name for resource in  # noqa
+                        api_resource.filter(uuid=('=in=', uuids))}  # noqa
     for resource in item[key_name]:
         resource['name'] = resource_list[resource[uuid_name]]
 
