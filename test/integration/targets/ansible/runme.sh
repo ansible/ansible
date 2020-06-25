@@ -13,6 +13,12 @@ ansible-config dump -c ./ansible-testé.cfg | grep 'DEFAULT_REMOTE_USER([^)]*) =
 ANSIBLE_REMOTE_USER=administrator ansible-config dump| grep 'DEFAULT_REMOTE_USER([^)]*) = administrator\>'
 ansible-config list | grep 'DEFAULT_REMOTE_USER'
 
+# Collection
+ansible-config view -c ./ansible-testé.cfg | grep 'collections_paths = /tmp/collections'
+ansible-config dump -c ./ansible-testé.cfg | grep 'COLLECTIONS_PATHS([^)]*) ='
+ANSIBLE_COLLECTIONS_PATHS=/tmp/collections ansible-config dump| grep 'COLLECTIONS_PATHS([^)]*) ='
+ansible-config list | grep 'COLLECTIONS_PATHS'
+
 # 'view' command must fail when config file is missing or has an invalid file extension
 ansible-config view -c ./ansible-non-existent.cfg 2> err1.txt || grep -Eq 'ERROR! The provided configuration file is missing or not accessible:' err1.txt || (cat err*.txt; rm -f err1.txt; exit 1)
 ansible-config view -c ./no-extension 2> err2.txt || grep -q 'Unsupported configuration file extension' err2.txt || (cat err2.txt; rm -f err*.txt; exit 1)
