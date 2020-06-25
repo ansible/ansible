@@ -110,7 +110,17 @@
     that:
       - '"{{ "hash" | hash("sha1") }}" == "2346ad27d7568ba9896f1b7da6b5991251debdf2"'
       - '"{{ "café" | hash("sha1") }}" == "f424452a9673918c6f09b0cdd35b20be8e6ae7d7"'
-      - '"corned beef"|hash("haha, get it?") == None'
+
+- name: Test unsupported hash type
+  debug:
+    msg: "{{ 'hash' | hash('unsupported_hash_type') }}"
+  ignore_errors: yes
+  register: unsupported_hash_type_res
+
+- assert:
+    that:
+      - "unsupported_hash_type_res is failed"
+      - "'unsupported hash type' in unsupported_hash_type_res.msg"
 
 - name: Flatten tests
   block:
