@@ -129,7 +129,7 @@ To list installed collections, run ``ansible-galaxy collection list``. This show
       cisco.aci                  0.0.5
       cisco.mso                  0.0.4
       sandwiches.ham             *
-      splunk.enterprise_security 0.0.5
+      splunk.es                  0.0.5
 
       # /usr/share/ansible/collections/ansible_collections
       Collection        Version
@@ -179,7 +179,7 @@ To search other paths for collections, use the ``-p`` option. Specify multiple s
       cisco.mso                  0.0.4
       fortinet.fortios           1.0.1
       sandwiches.ham             *
-      splunk.enterprise_security 0.0.5
+      splunk.es                  0.0.5
 
       # /usr/share/ansible/collections/ansible_collections
       Collection        Version
