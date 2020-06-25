@@ -61,7 +61,7 @@ class TestCliBuildVaultIds(unittest.TestCase):
         self.assertEqual(res, [])
 
     def test_no_vault_id_no_auto_prompt(self):
-        # similate 'ansible-playbook site.yml' with out --ask-vault-pass, should not prompt
+        # simulate 'ansible-playbook site.yml' with out --ask-vault-pass, should not prompt
         res = cli.CLI.build_vault_ids([], auto_prompt=False)
         self.assertEqual(res, [])
 
