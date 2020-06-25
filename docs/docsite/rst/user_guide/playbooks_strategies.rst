@@ -193,14 +193,14 @@ However, with ``run_once``, the results are applied to all the hosts. To run the
 As always with :ref:`delegation <playbooks_delegation>`, the action will be executed on the delegated host, but the information is still that of the original host in the task.
 
 .. note::
-     When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch. If the task must run only once regardless of "serial" mode, use
+     When used together with ``serial``, tasks marked as ``run_once`` will be run on one host in *each* serial batch. If the task must run only once regardless of ``serial`` mode, use
      :code:`when: inventory_hostname == ansible_play_hosts_all[0]` construct.
 
 .. note::
     Any conditional (i.e `when:`) will use the variables of the 'first host' to decide if the task runs or not, no other hosts will be tested.
 
 .. note::
-    If you want to avoid the default behavior of setting the fact for all hosts, set `delegate_facts: True` for the specific task or block.
+    If you want to avoid the default behavior of setting the fact for all hosts, set ``delegate_facts: True`` for the specific task or block.
 
 .. seealso::
 
