@@ -140,10 +140,10 @@ class Resource(object):
             return {'filters': query_string}
         return {}
 
-    def get_uuid_by_name(self, name):
+    def get_by_name(self, name):
         instances = self.filter(name=name)
         if instances:
-            return instances[0].uuid
+            return instances[0]
         return None
 
     filter_method = None
@@ -211,7 +211,7 @@ class ApplicationResource(Resource):
         return power_action_dict[power_action](uuid)
 
 
-class UpdateApplicationResource(Resource):
+class ApplicationUpdateResource(Resource):
 
     resource_class = tacp.EditApplicationsApi
 
@@ -229,23 +229,27 @@ class UpdateApplicationResource(Resource):
     @wait_to_complete
     def edit_disk_name(self, disk_uuid, uuid, disk_name):
         body = tacp.ApiDiskSizePayload(name=disk_name, uuid=disk_uuid)
-        return self.api.edit_application_disk_name_using_put(body, disk_uuid, uuid)  # noqa
+        return self.api.edit_application_disk_name_using_put(
+            body, disk_uuid, uuid)
 
     @wait_to_complete
     def edit_disk_size(self, disk_uuid, uuid, disk_size):
         body = tacp.ApiDiskSizePayload(size=disk_size, uuid=disk_uuid)
-        return self.api.edit_application_disk_size_using_put(body, disk_uuid, uuid)  # noqa
+        return self.api.edit_application_disk_size_using_put(
+            body, disk_uuid, uuid)
 
     @wait_to_complete
-    def edit_disk_bw_limit(self, disk_uuid, uuid, bw_limit):  # noqa
+    def edit_disk_bw_limit(self, disk_uuid, uuid, bw_limit):
         body = tacp.ApiDiskBandwidthPayload(
             bandwidth_limit=bw_limit, uuid=disk_uuid)
-        return self.api.edit_application_disk_bandwidth_limit_using_put(body, disk_uuid, uuid)  # noqa
+        return self.api.edit_application_disk_bandwidth_limit_using_put(
+            body, disk_uuid, uuid)
 
     @wait_to_complete
-    def edit_disk_iops_limit(self, disk_uuid, uuid, iops_limit):  # noqa
+    def edit_disk_iops_limit(self, disk_uuid, uuid, iops_limit):
         body = tacp.ApiDiskIopsPayload(iops_limit=iops_limit, uuid=disk_uuid)
-        return self.api.edit_application_disk_iops_limit_using_put(body, disk_uuid, uuid)  # noqa
+        return self.api.edit_application_disk_iops_limit_using_put(
+            body, disk_uuid, uuid)
 
 
 class VlanResource(Resource):
@@ -292,6 +296,18 @@ class DatacenterResource(Resource):
 
     filter_method = "get_datacenters_using_get"
     uuid_method = "get_datacenter_using_get"
+
+    def get_firewall_override_by_name(self, datacenter_uuid,
+                                      firewall_override_name):
+        firewall_overrides = self.api.get_datacenter_firewall_overrides_using_get(  # noqa
+            uuid=datacenter_uuid,
+            filters='name=="{}"'.format(firewall_override_name))
+        firewall_override = None
+
+        if firewall_overrides:
+            firewall_override = firewall_overrides[0]
+
+        return firewall_override
 
 
 class UserResource(Resource):
@@ -378,7 +394,8 @@ def get_component_fields_by_name(name, component,
 
     valid_components = ["storage_pool", "application",
                         "template", "datacenter", "migration_zone",
-                        "vnet", "vlan", "firewall_profile", "firewall_override"]  # noqa
+                        "vnet", "vlan", "firewall_profile",
+                        "firewall_override"]
 
     if component not in valid_components:
         return "Invalid component"
@@ -530,9 +547,9 @@ def fill_in_missing_names_by_uuid(item, api_resource, key_name):
         uuid_name = 'category_uuid'
     else:
         uuid_name = key_name[:-1] + "_uuid"
-    uuids = [resource[uuid_name] for resource in item[key_name]]  # noqa
-    resource_list = {resource.uuid: resource.name for resource in  # noqa
-                        api_resource.filter(uuid=('=in=', *uuids))}  # noqa
+    uuids = [resource[uuid_name] for resource in item[key_name]]
+    resource_list = {resource.uuid: resource.name for resource in
+                     api_resource.filter(uuid=('=in=', *uuids))}
     for resource in item[key_name]:
         resource['name'] = resource_list[resource[uuid_name]]
 
