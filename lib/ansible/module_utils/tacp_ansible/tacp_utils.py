@@ -125,11 +125,10 @@ class Resource(object):
                 if len(value) == 0:
                     raise Exception('Must provide at least one value')
 
+                value = value[0]
                 if op in ('=in=', '=out='):
                     value = ','.join(map(str, value))
                     value = '({})'.format(value)
-                else:
-                    value = value[0]
             else:
                 op = '=='
                 value = v
