@@ -117,3 +117,19 @@ class DictMergeTestCase(unittest.TestCase):
         self.assertTrue('b2' in result)
         self.assertTrue(result['b3'])
         self.assertTrue(result['b4'])
+
+
+class AzureIncidentalTestCase(unittest.TestCase):
+
+    def test_dict_merge_invalid_dict(self):
+        ''' if b is not a dict, return b '''
+        res = dict_merge({}, None)
+        self.assertEqual(res, None)
+
+    def test_merge_sub_dicts(self):
+        '''merge sub dicts '''
+        a = {'a': {'a1': 1}}
+        b = {'a': {'b1': 2}}
+        c = {'a': {'a1': 1, 'b1': 2}}
+        res = dict_merge(a, b)
+        self.assertEqual(res, c)
