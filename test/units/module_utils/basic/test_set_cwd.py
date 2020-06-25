@@ -27,8 +27,10 @@ class TestAnsibleModuleSetCwd:
 
         def mock_getcwd():
             return '/tmp'
+
         def mock_access(path, perm):
             return True
+
         def mock_chdir(path):
             pass
 
@@ -47,16 +49,20 @@ class TestAnsibleModuleSetCwd:
 
         def mock_getcwd():
             return '/tmp'
+
         def mock_access(path, perm):
             if path == '/tmp' and perm == 4:
                 return False
             return True
+
         def mock_expandvars(var):
             if var == '$HOME':
                 return '/home/foobar'
             return var
+
         def mock_gettempdir():
             return '/tmp/testdir'
+
         def mock_chdir(path):
             if path == '/tmp':
                 raise Exception()
@@ -80,16 +86,20 @@ class TestAnsibleModuleSetCwd:
 
         def mock_getcwd():
             return '/tmp'
+
         def mock_access(path, perm):
             if path in ['/tmp', '/tmp2']  and perm == 4:
                 return False
             return True
+
         def mock_expandvars(var):
             if var == '$HOME':
                 return '/home/foobar'
             return var
+
         def mock_gettempdir():
             return '/tmp/testdir'
+
         def mock_chdir(path):
             if path == '/tmp':
                 raise Exception()
@@ -115,16 +125,20 @@ class TestAnsibleModuleSetCwd:
 
         def mock_getcwd():
             return '/tmp'
+
         def mock_access(path, perm):
             if path in ['/tmp', '/tmp2', '/home/foobar']  and perm == 4:
                 return False
             return True
+
         def mock_expandvars(var):
             if var == '$HOME':
                 return '/home/foobar'
             return var
+
         def mock_gettempdir():
             return '/tmp3'
+
         def mock_chdir(path):
             if path == '/tmp':
                 raise Exception()
@@ -149,16 +163,20 @@ class TestAnsibleModuleSetCwd:
 
         def mock_getcwd():
             return '/tmp'
+
         def mock_access(path, perm):
             if path in ['/tmp', '/tmp2', '/tmp3', '/home/foobar']  and perm == 4:
                 return False
             return True
+
         def mock_expandvars(var):
             if var == '$HOME':
                 return '/home/foobar'
             return var
+
         def mock_gettempdir():
             return '/tmp3'
+
         def mock_chdir(path):
             if path == '/tmp':
                 raise Exception()
