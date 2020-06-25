@@ -17,3 +17,8 @@ class PlaybookState:
     PAUSED = "paused"
     ABSENT = "absent"
     RESUMED = "resumed"
+
+    @classmethod
+    def _all(cls):
+        return [getattr(cls, attr) for attr in dir(cls)
+                if not attr.startswith('_')]
