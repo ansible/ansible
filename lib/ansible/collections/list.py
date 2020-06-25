@@ -11,6 +11,7 @@ from collections import defaultdict
 from ansible.collections import is_collection_path
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import string_types
+from ansible.module_utils.common._collections_compat import Iterable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.collection_loader._collection_finder import AnsibleCollectionRef, _get_collection_name_from_path, validated_collection_path
 from ansible.utils.display import Display
