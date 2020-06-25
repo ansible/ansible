@@ -253,11 +253,11 @@ def randomize_list(mylist, seed=None):
 
 
 def get_hash(data, hashtype='sha1'):
-
-    try:  # see if hash is supported
+    try:
         h = hashlib.new(hashtype)
-    except Exception:
-        return None
+    except Exception as e:
+        # hash is not supported?
+        raise AnsibleFilterError(e)
 
     h.update(to_bytes(data, errors='surrogate_or_strict'))
     return h.hexdigest()
