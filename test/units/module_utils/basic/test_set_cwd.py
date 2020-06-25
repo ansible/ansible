@@ -174,4 +174,4 @@ class TestAnsibleModuleSetCwd:
         am._tmpdir = '/tmp2'
         monkeypatch.setattr(tempfile, 'gettempdir', mock_gettempdir)
         result = am._set_cwd()
-        assert result == None
+        assert result is None
