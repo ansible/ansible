@@ -88,7 +88,7 @@ class TestAnsibleModuleSetCwd:
             return '/tmp'
 
         def mock_access(path, perm):
-            if path in ['/tmp', '/tmp2']  and perm == 4:
+            if path in ['/tmp', '/tmp2'] and perm == 4:
                 return False
             return True
 
@@ -127,7 +127,7 @@ class TestAnsibleModuleSetCwd:
             return '/tmp'
 
         def mock_access(path, perm):
-            if path in ['/tmp', '/tmp2', '/home/foobar']  and perm == 4:
+            if path in ['/tmp', '/tmp2', '/home/foobar'] and perm == 4:
                 return False
             return True
 
@@ -165,7 +165,7 @@ class TestAnsibleModuleSetCwd:
             return '/tmp'
 
         def mock_access(path, perm):
-            if path in ['/tmp', '/tmp2', '/tmp3', '/home/foobar']  and perm == 4:
+            if path in ['/tmp', '/tmp2', '/tmp3', '/home/foobar'] and perm == 4:
                 return False
             return True
 
