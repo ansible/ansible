@@ -28,8 +28,8 @@ def list_valid_collection_paths(search_paths=None, warn=False):
 
     if search_paths is None:
         search_paths = []
-    elif isinstance(search_paths, string_types):
-        raise TypeError("'search_paths' is string and expected list")
+    elif isinstance(search_paths, string_types) or not isinstance(search_paths, Iterable):
+        raise TypeError("'search_paths' is expected to be a list but got: %s" % type(search_paths))
 
     search_paths.extend(AnsibleCollectionConfig.collection_paths)
 
