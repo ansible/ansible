@@ -4,6 +4,7 @@
 - set_fact:
     config:
       - name: Ethernet1
+        mode: trunk
         trunk:
           native_vlan: 10
       - name: Ethernet2
@@ -36,11 +37,13 @@
 - set_fact:
     expected_config:
       - name: Ethernet1
+        mode: trunk
         access:
           vlan: 20
         trunk:
           native_vlan: 10
       - name: Ethernet2
+        mode: trunk
         access:
           vlan: 30
         trunk:
