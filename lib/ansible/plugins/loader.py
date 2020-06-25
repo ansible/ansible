@@ -651,7 +651,8 @@ class PluginLoader:
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
             except OSError as e:
-                display.warning("Error accessing plugin paths: %s" % to_text(e))
+                display.warning("Unable to access plugin path: %s" % to_text(e))
+                continue
 
             for full_path in (f for f in full_paths if os.path.isfile(f) and not f.endswith('__init__.py')):
                 full_name = os.path.basename(full_path)
