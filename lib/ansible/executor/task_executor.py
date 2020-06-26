@@ -500,26 +500,28 @@ class TaskExecutor:
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
 
+        if self._task.delegate_to:
+            # use vars from delegated host (which already include task vars) instead of original host
+            cvars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+            orig_vars = templar.available_variables
+        else:
+            # just use normal host vars
+            cvars = orig_vars = variables
+
+        templar.available_variables = cvars
+
         # get the connection and the handler for this execution
         if (not self._connection or
                 not getattr(self._connection, 'connected', False) or
                 self._play_context.remote_addr != self._connection._play_context.remote_addr):
-            self._connection = self._get_connection(variables=variables, templar=templar)
+            self._connection = self._get_connection(cvars, templar)
         else:
             # if connection is reused, its _play_context is no longer valid and needs
             # to be replaced with the one templated above, in case other data changed
             self._connection._play_context = self._play_context
 
-        if self._task.delegate_to:
-            # use vars from delegated host (which already include task vars) instead of original host
-            delegated_vars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
-            orig_vars = templar.available_variables
-            templar.available_variables = delegated_vars
-            plugin_vars = self._set_connection_options(delegated_vars, templar)
-            templar.available_variables = orig_vars
-        else:
-            # just use normal host vars
-            plugin_vars = self._set_connection_options(variables, templar)
+        plugin_vars = self._set_connection_options(cvars, templar)
+        templar.available_variables = orig_vars
 
         # get handler
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
@@ -700,7 +702,7 @@ class TaskExecutor:
         if self._task.delegate_to:
             result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
             for k in plugin_vars:
-                result["_ansible_delegated_vars"][k] = delegated_vars.get(k)
+                result["_ansible_delegated_vars"][k] = cvars.get(k)
         # and return
         display.debug("attempt loop complete, returning result")
         return result
@@ -786,16 +788,11 @@ class TaskExecutor:
                                "Use `ansible-doc -t become -l` to list available plugins." % name)
         return become
 
-    def _get_connection(self, variables, templar):
+    def _get_connection(self, cvars, templar):
         '''
         Reads the connection property for the host, and returns the
         correct connection object from the list of connection plugins
         '''
-
-        if self._task.delegate_to is not None:
-            cvars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
-        else:
-            cvars = variables
 
         # use magic var if it exists, if not, let task inheritance do it's thing.
         if cvars.get('ansible_connection') is not None:
@@ -858,15 +855,14 @@ class TaskExecutor:
             display.vvvv('attempting to start connection', host=self._play_context.remote_addr)
             display.vvvv('using connection plugin %s' % connection.transport, host=self._play_context.remote_addr)
 
-            options = self._get_persistent_connection_options(connection, variables, templar)
+            options = self._get_persistent_connection_options(connection, cvars, templar)
             socket_path = start_connection(self._play_context, options, self._task._uuid)
             display.vvvv('local domain socket path is %s' % socket_path, host=self._play_context.remote_addr)
             setattr(connection, '_socket_path', socket_path)
 
         return connection
 
-    def _get_persistent_connection_options(self, connection, variables, templar):
-        final_vars = combine_vars(variables, variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()))
+    def _get_persistent_connection_options(self, connection, final_vars, templar):
 
         option_vars = C.config.get_plugin_vars('connection', connection._load_name)
         plugin = connection._sub_plugin

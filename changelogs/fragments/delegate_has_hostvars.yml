@@ -1,0 +1,2 @@
+bugfixes:
+  - ensure delegated vars can resolve hostvars, also fix issue with inventory_hostname and delegated host vars mixing on connection settings.
