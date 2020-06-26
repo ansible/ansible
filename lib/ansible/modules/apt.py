@@ -140,7 +140,6 @@ options:
       - 'Corresponds to the C(--no-remove) option for I(apt).'
       - 'If C(yes), it is ensured that no packages will be removed or the task will fail.'
       - 'C(no_remove) is only supported with state except I(absent)'
-    aliases: ['no-remove']
     type: bool
     default: 'no'
     version_added: "2.11"
