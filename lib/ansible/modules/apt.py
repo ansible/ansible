@@ -953,10 +953,10 @@ def upgrade(m, mode="yes", force=False, default_release=None,
     else:
         force_yes = ''
 
-    if no_remove:
-        no_remove = '--no-remove'
+    if fail_on_autoremove:
+        fail_on_autoremove = '--no-remove'
     else:
-        no_remove = ''
+        fail_on_autoremove = ''
 
     allow_unauthenticated = '--allow-unauthenticated' if allow_unauthenticated else ''
 
