@@ -689,7 +689,7 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
             cmd = "%s -y %s %s %s %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, fail_on_autoremove, check_arg, packages)
         else:
             cmd = "%s -y %s %s %s %s %s %s %s install %s" % \
-                  (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, no_remove, check_arg, packages)
+                  (APT_GET_CMD, dpkg_options, only_upgrade, fixed, force_yes, autoremove, fail_on_autoremove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
