@@ -1172,7 +1172,7 @@ def main():
         force_yes = p['force']
 
         if p['upgrade']:
-            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, no_remove, allow_unauthenticated)
+            upgrade(module, p['upgrade'], force_yes, p['default_release'], use_apt_get, dpkg_options, autoremove, fail_on_autoremove, allow_unauthenticated)
 
         if p['deb']:
             if p['state'] != 'present':
