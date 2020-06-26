@@ -181,7 +181,10 @@
 
 # INSTALL WITHOUT REMOVALS
 - name: Install hello, that conflicts with hello-traditional
-  apt: pkg=hello state=present update_cache=no
+  apt: 
+    pkg: hello
+    state: present
+    update_cache: no
 
 - name: check hello
   shell: dpkg-query -l hello
