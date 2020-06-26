@@ -31,7 +31,7 @@ options:
         required: true
     version:
         description:
-            - What version of the repository to check out.  This can be
+            - What version of the repository to check out. This can be
               the literal string C(HEAD), a branch name, a tag name.
               It can also be a I(SHA-1) hash, in which case C(refspec) needs
               to be specified if the given revision is not already available.
@@ -69,7 +69,7 @@ options:
               If version is set to a I(SHA-1) not reachable from any branch
               or tag, this option may be necessary to specify the ref containing
               the I(SHA-1).
-              Uses the same syntax as the 'git fetch' command.
+              Uses the same syntax as the C(git fetch) command.
               An example value could be "refs/meta/config".
         version_added: "1.9"
     force:
@@ -129,8 +129,7 @@ options:
 
     single_branch:
         description:
-            - if C(no), repository will be cloned with the --single-branch
-              option. (clone only)
+            - Clone only the history leading to the tip of the specified C(branch)
         type: bool
         default: 'no'
         version_added: '2.11'
@@ -479,11 +478,12 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.append('--bare')
     else:
         cmd.extend(['--origin', remote])
+
+    is_branch_or_tag = is_remote_branch(git_path, module, dest, repo, version) or is_remote_tag(git_path, module, dest, repo, version)
     if depth:
         if version == 'HEAD' or refspec:
             cmd.extend(['--depth', str(depth)])
-        elif is_remote_branch(git_path, module, dest, repo, version) \
-                or is_remote_tag(git_path, module, dest, repo, version):
+        elif is_branch_or_tag:
             cmd.extend(['--depth', str(depth)])
             cmd.extend(['--branch', version])
         else:
@@ -496,6 +496,9 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
 
     if single_branch:
         cmd.append("--single-branch")
+
+        if is_branch_or_tag:
+            cmd.extend(['--branch', version])
 
     needs_separate_git_dir_fallback = False
     if separate_git_dir:
@@ -1077,7 +1080,7 @@ def main():
             executable=dict(default=None, type='path'),
             bare=dict(default='no', type='bool'),
             recursive=dict(default='yes', type='bool'),
-            single_branch=dict(default='no', type='bool'),
+            single_branch=dict(default=False, type='bool'),
             track_submodules=dict(default='no', type='bool'),
             umask=dict(default=None, type='raw'),
             archive=dict(type='path'),
