@@ -1054,7 +1054,7 @@ def main():
             dpkg_options=dict(type='str', default=DPKG_OPTIONS),
             autoremove=dict(type='bool', default=False),
             autoclean=dict(type='bool', default=False),
-            no_remove=dict(type='bool', default=False, aliases=['no-remove']),
+            fail_on_autoremove=dict(type='bool', default=False),
             policy_rc_d=dict(type='int', default=None),
             only_upgrade=dict(type='bool', default=False),
             force_apt_get=dict(type='bool', default=False),
