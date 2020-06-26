@@ -198,7 +198,10 @@
         - "dpkg_result.rc == 0"
 
 - name: Try installing hello-traditional, that conflicts with hello
-  apt: pkg=hello-traditional state=present no_remove=yes
+  apt: 
+    pkg: hello-traditional
+    state: present
+    fail_on_autoremove: yes
   ignore_errors: yes
   register: apt_result
 
