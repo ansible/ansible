@@ -212,7 +212,11 @@
       - '"Packages need to be removed but remove is disabled." in apt_result.msg'
 
 - name: uninstall hello with apt
-  apt: pkg=hello state=absent purge=yes update_cache=no
+  apt: 
+    pkg: hello
+    state: absent
+    purge: yes
+    update_cache: no
 
 - name: install deb file
   apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
