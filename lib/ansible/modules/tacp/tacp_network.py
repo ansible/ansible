@@ -168,15 +168,16 @@ def run_module():
         if len(site_list) == 1:
             network_params['location_uuid'] = site_list[0].uuid
 
-        inputs_valid, missing_params = validate_input(module.params)
-        if not inputs_valid:
-            fail_with_reason("Invalid inputs - %s" % ', '.join(missing_params))
+        # inputs_valid, missing_params = validate_input(module.params)
+        # if not inputs_valid:
+        #     fail_with_reason("Invalid inputs - %s" % ', '.join(missing_params))
 
         network_params['name'] = module.params['name']
 
         if 'location_uuid' not in network_params.keys():
-            location_uuid = tacp_utils.get_component_fields_by_name(
-                module.params['site_name'], 'location', api_client)
+            site = next(site for site in site_list if
+                        site.name == module.params['site_name'])
+            location_uuid = site.uuid
             if not location_uuid:
                 fail_with_reason(
                     "Could not get a UUID for the provided site name. Verify that a site with name %s exists and try again." % module.params['site_name'])
@@ -382,7 +383,7 @@ def run_module():
         if network_type == 'VLAN':
             vlan_resource = tacp_utils.VlanResource(api_client)
 
-            vlan_uuid = vlan_resource.get_uuid_by_name(name)
+            vlan_uuid = vlan_resource.get_by_name(name).uuid
 
             if vlan_uuid:
                 response = vlan_resource.delete(vlan_uuid)
@@ -393,10 +394,11 @@ def run_module():
             vnet_resource = tacp_utils.VnetResource(api_client)
             application_resource = tacp_utils.ApplicationResource(api_client)
 
-            vnet_uuid = vnet_resource.get_uuid_by_name(name)
+            vnet_uuid = vnet_resource.get_by_name(name).uuid
 
             if vnet_uuid:
-                nfv_uuid = vnet_resource.get_by_uuid(vnet_uuid).to_dict()['nfv_instance_uuid']
+                nfv_uuid = vnet_resource.get_by_uuid(vnet_uuid).to_dict()[
+                    'nfv_instance_uuid']
 
                 if nfv_uuid:
                     # Delete the NFV instance
@@ -414,8 +416,19 @@ def run_module():
         result['failed'] = False
         module.exit_json(**result)
 
-    # Return the inputs for debugging purposes
-    result['args'] = module.params
+    def bad_inputs_for_state_change(playbook_network):
+        non_state_change_inputs = [
+            'vlan_tag', 'firewall_override',
+            'firewall_profile', 'nfv', 'network_address',
+            'subnet_mask', 'gateway', 'dhcp', 'routing'
+        ]
+
+        bad_inputs_in_playbook = [bad_input for bad_input in
+                                  non_state_change_inputs
+                                  if playbook_network[bad_input]
+                                  ]
+
+        return bad_inputs_in_playbook
 
     # Define configuration
     configuration = tacp_utils.get_configuration(module.params['api_key'],
@@ -424,10 +437,24 @@ def run_module():
 
     if module.params['network_type'].upper() == 'VLAN':
         vlan_resource = tacp_utils.VlanResource(api_client)
-        vlan_uuid = vlan_resource.get_uuid_by_name(module.params['name'])
+        vlan_uuid = None
+        vlan = vlan_resource.get_by_name(module.params['name'])
+        if vlan:
+            vlan_uuid = vlan.uuid
 
         if module.params['state'] == 'present':
             if vlan_uuid:
+                bad_inputs = bad_inputs_for_state_change(
+                    module.params)
+                if bad_inputs:
+                    fail_with_reason(
+                        "Currently tacp_network cannot modify existing "
+                        "virtual networks' configurations apart from"
+                        " creation and deletion - since network {} already"
+                        " exists the following parameter(s) are invalid"
+                        ": {}".format(
+                            module.params['name'],
+                            ", ".join(bad_inputs)))
                 result['msg'] = "VLAN network %s is already present, nothing to do." % module.params['name']
 
             else:
@@ -443,9 +470,24 @@ def run_module():
 
     elif module.params['network_type'].upper() == 'VNET':
         vnet_resource = tacp_utils.VnetResource(api_client)
-        vnet_uuid = vnet_resource.get_uuid_by_name(module.params['name'])
+        vnet_uuid = None
+        vnet = vnet_resource.get_by_name(module.params['name'])
+        if vnet:
+            vnet_uuid = vnet.uuid
+
         if module.params['state'] == 'present':
             if vnet_uuid:
+                bad_inputs = bad_inputs_for_state_change(
+                    module.params)
+                if bad_inputs:
+                    fail_with_reason(
+                        "Currently tacp_network cannot modify existing "
+                        "virtual networks' configurations apart from"
+                        " creation and deletion - since network {} already"
+                        " exists the following parameter(s) are invalid"
+                        ": {}".format(
+                            module.params['name'],
+                            ", ".join(bad_inputs)))
                 result['msg'] = "VNET network %s is already present, nothing to do." % module.params['name']
 
             else:
