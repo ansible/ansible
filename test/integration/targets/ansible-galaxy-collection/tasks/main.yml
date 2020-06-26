@@ -53,7 +53,7 @@
 - name: setup test collections for install and download test
   loop:
     # For pulp interactions, we only upload to galaxy_ng which shares
-    # the same repo and distribution with galaxy_ng
+    # the same repo and distribution with pulp_ansible
     # However, we use galaxy_ng only, since collections are unique across
     # pulp repositories, and galaxy_ng maintains a 2nd list of published collections
     - galaxy_ng
