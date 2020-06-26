@@ -752,7 +752,7 @@ def run_module():
             fail_with_reason(
                 "Currently tacp_instance cannot modify existing "
                 "application instances' configurations apart from power state"
-                " - the following parameters are invalid since instance {} "
+                " - the following parameter(s) are invalid since instance {} "
                 "already exists: {}".format(instance_name,
                                             ", ".join(bad_inputs)))
         if playbook_instance['state'] == PlaybookState.ABSENT:
