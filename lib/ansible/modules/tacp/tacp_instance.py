@@ -721,6 +721,20 @@ def get_boot_order_payload(boot_order_entry):
     return boot_order_payload
 
 
+def bad_inputs_for_state_change(playbook_instance):
+    non_state_change_inputs = ['datacenter', 'migration_zone', 'storage_pool',
+                               'template', 'vcpu_cores', 'disks', 'nics',
+                               'boot_order', 'description',
+                               'application_group']
+
+    bad_inputs_in_playbook = [bad_input for bad_input in
+                              non_state_change_inputs
+                              if playbook_instance[bad_input]
+                              ]
+
+    return bad_inputs_in_playbook
+
+
 def run_module():
     # define available arguments/parameters a user can pass to the module
     if MODULE.check_mode:
@@ -731,7 +745,23 @@ def run_module():
     instance_name = playbook_instance['name']
 
     instance = RESOURCES['app'].get_by_name(instance_name)
-    if not instance:
+    if instance:
+        bad_inputs = bad_inputs_for_state_change(
+            playbook_instance)
+        if bad_inputs:
+            fail_with_reason(
+                "Currently tacp_instance cannot modify existing "
+                "application instances' configurations apart from power state"
+                " - the following parameters are invalid since instance {} "
+                "already exists: {}".format(instance_name,
+                                            ", ".join(bad_inputs)))
+        if playbook_instance['state'] == PlaybookState.ABSENT:
+            RESOURCES['app'].delete(instance.uuid)
+            RESULT['changed'] = True
+            MODULE.exit_json(**RESULT)
+    else:
+        if playbook_instance['state'] == PlaybookState.ABSENT:
+            MODULE.exit_json(**RESULT)
         instance_payload = create_instance(playbook_instance)
 
         instance = RESOURCES['app'].get_by_name(instance_name)
