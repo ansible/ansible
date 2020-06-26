@@ -71,7 +71,7 @@ class Taggable:
         unique_tags = []
 
         if not isinstance(value, list):
-            raise AnsibleParserError("the field '%s' should be a list, but is a %s" % (name, type(value)))
+            raise AnsibleParserError("the field 'tags' should be a list, but is a %s" % (type(value)))
 
         for tag in value:
             # Deduplicate extended nested list variables
