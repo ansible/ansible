@@ -1,0 +1,22 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+    - name: make sure the nobody user is available
+      include_role:
+        name: setup_nobody
+
+    - name: verify AnsibleModule works when cwd is missing
+      test_cwd_missing:
+      register: missing
+
+    - name: verify AnsibleModule works when cwd is unreadable
+      test_cwd_unreadable:
+      register: unreadable
+      become: yes
+      become_user: nobody  # root can read cwd regardless of permissions, so a non-root user is required here
+
+    - name: verify AnsibleModule was able to adjust cwd as expected
+      assert:
+        that:
+          - missing.before != missing.after
+          - unreadable.before != unreadable.after or unreadable.before == '/'  # allow / fallback on macOS when using an unprivileged user
