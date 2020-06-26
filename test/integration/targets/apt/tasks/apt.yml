@@ -202,8 +202,8 @@
 - name: verify failure of installing hello-traditional, because it is required to remove hello to install.
   assert:
     that:
-    - apt_result is failed
-    - '"Packages need to be removed but remove is disabled." in apt_result.msg'
+      - apt_result is failed
+      - '"Packages need to be removed but remove is disabled." in apt_result.msg'
 
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes update_cache=no
