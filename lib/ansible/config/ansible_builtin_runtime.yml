@@ -7599,6 +7599,8 @@ plugin_routing:
       redirect: community.general.digital_ocean
     dimensiondata:
       redirect: community.general.dimensiondata
+    docker.common:
+      redirect: community.general.docker.common
     docker.swarm:
       redirect: community.general.docker.swarm
     exoscale:
