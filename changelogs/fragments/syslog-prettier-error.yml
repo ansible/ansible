@@ -1,0 +1,2 @@
+minor_changes:
+  - The logging functionality in module_utils.basic now returns a nicer error when it falls back to syslog but ends up getting a TypeError thrown back.
