@@ -968,7 +968,7 @@ def upgrade(m, mode="yes", force=False, default_release=None,
                             "to have APTITUDE in path or use 'force_apt_get=True'")
     apt_cmd_path = m.get_bin_path(apt_cmd, required=True)
 
-    cmd = '%s -y %s %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, no_remove, allow_unauthenticated, check_arg, upgrade_command)
+    cmd = '%s -y %s %s %s %s %s %s' % (apt_cmd_path, dpkg_options, force_yes, fail_on_autoremove, allow_unauthenticated, check_arg, upgrade_command)
 
     if default_release:
         cmd += " -t '%s'" % (default_release,)
