@@ -781,7 +781,7 @@ def install_deb(m, debs, cache, force, fail_on_autoremove, install_recommends, a
     if deps_to_install:
         (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
                                      install_recommends=install_recommends,
-                                     no_remove=no_remove,
+                                     fail_on_autoremove = fail_on_autoremove,
                                      allow_unauthenticated=allow_unauthenticated,
                                      dpkg_options=expand_dpkg_options(dpkg_options))
         if not success:
