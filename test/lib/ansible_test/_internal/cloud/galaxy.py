@@ -72,7 +72,7 @@ class GalaxyProvider(CloudProvider):
 
         self.pulp = os.environ.get(
             'ANSIBLE_PULP_CONTAINER',
-            'docker.io/sivel/pulp-galaxy-ng:latest'
+            'docker.io/pulp/pulp-galaxy-ng@sha256:69b4c4cba4908539b56c5592f40d282f938dd1bdf4de5a81e0a8d04ac3e6e326'
         )
 
         self.containers = []
