@@ -627,7 +627,7 @@ def mark_installed_manually(m, packages):
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
-            build_dep=False, fixed=False, autoremove=False, no_remove=False, only_upgrade=False,
+            build_dep=False, fixed=False, autoremove=False, fail_on_autoremove=False, only_upgrade=False,
             allow_unauthenticated=False):
     pkg_list = []
     packages = ""
