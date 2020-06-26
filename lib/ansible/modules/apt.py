@@ -582,7 +582,7 @@ def expand_dpkg_options(dpkg_options_compressed):
     return dpkg_options.strip()
 
 
-def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
+def expand_pkgspec_from_fnmatches(m, pkgspec, cache, to_rmv=False):
     # Note: apt-get does implicit regex matching when an exact package name
     # match is not found.  Something like this:
     # matches = [pkg.name for pkg in cache if re.match(pkgspec, pkg.name)]
@@ -616,7 +616,8 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
                 matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
                 if not matches:
-                    m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
+                    if not to_rmv:
+                        m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
                 else:
                     new_pkgspec.extend(matches)
             else:
@@ -895,7 +896,7 @@ def install_deb(
 def remove(m, pkgspec, cache, purge=False, force=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
     pkg_list = []
-    pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
+    pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache, to_rmv=True)
     for package in pkgspec:
         name, version_cmp, version = package_split(package)
         installed, installed_version, upgradable, has_files = package_status(m, name, version_cmp, version, None, cache, state='remove')
