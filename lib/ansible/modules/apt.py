@@ -1230,7 +1230,7 @@ def main():
                 build_dep=state_builddep,
                 fixed=state_fixed,
                 autoremove=autoremove,
-                no_remove=no_remove,
+                fail_on_autoremove=fail_on_autoremove,
                 only_upgrade=p['only_upgrade'],
                 allow_unauthenticated=allow_unauthenticated
             )
