@@ -1110,7 +1110,7 @@ def main():
     allow_unauthenticated = p['allow_unauthenticated']
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
-    no_remove = p['no_remove']
+    fail_on_autoremove = p['fail_on_autoremove']
     autoclean = p['autoclean']
 
     # Get the cache object
