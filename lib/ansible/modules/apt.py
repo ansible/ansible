@@ -670,10 +670,10 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             autoremove = ''
 
-        if no_remove:
-            no_remove = '--no-remove'
+        if fail_on_autoremove:
+            fail_on_autoremove = '--no-remove'
         else:
-            no_remove = ''
+            fail_on_autoremove = ''
 
         if only_upgrade:
             only_upgrade = '--only-upgrade'
