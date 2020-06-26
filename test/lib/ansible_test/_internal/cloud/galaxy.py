@@ -31,9 +31,9 @@ from ..docker_util import (
 # We add BasicAuthentication, to make the tasks that deal with
 # direct API access easier to deal with across galaxy_ng and pulp
 SETTINGS = b'''
-CONTENT_ORIGIN = 'http://pulp:80'
-ANSIBLE_API_HOSTNAME = 'http://pulp:80'
-ANSIBLE_CONTENT_HOSTNAME = 'http://pulp:80/pulp/content'
+CONTENT_ORIGIN = 'http://ansible-ci-pulp:80'
+ANSIBLE_API_HOSTNAME = 'http://ansible-ci-pulp:80'
+ANSIBLE_CONTENT_HOSTNAME = 'http://ansible-ci-pulp:80/pulp/content'
 TOKEN_AUTH_DISABLED = True
 GALAXY_REQUIRE_CONTENT_APPROVAL = False
 GALAXY_AUTHENTICATION_CLASSES = [
@@ -106,13 +106,13 @@ class GalaxyProvider(CloudProvider):
         if container_id:
             display.info('Running in docker container: %s' % container_id, verbosity=1)
 
-        p_results = docker_inspect(self.args, 'pulp')
+        p_results = docker_inspect(self.args, 'ansible-ci-pulp')
 
         if p_results and not p_results[0].get('State', {}).get('Running'):
-            docker_rm(self.args, 'pulp')
+            docker_rm(self.args, 'ansible-ci-pulp')
             p_results = []
 
-        display.info('%s pulp docker container.'
+        display.info('%s ansible-ci-pulp docker container.'
                      % ('Using the existing' if p_results else 'Starting a new'),
                      verbosity=1)
 
@@ -133,7 +133,7 @@ class GalaxyProvider(CloudProvider):
             stdout, _dummy = docker_run(
                 self.args,
                 self.pulp,
-                ['--name', 'pulp'] + publish_ports,
+                ['--name', 'ansible-ci-pulp'] + publish_ports,
                 create_only=True
             )
 
@@ -156,14 +156,14 @@ class GalaxyProvider(CloudProvider):
                 os.unlink(admin_pass.name)
 
             # Start the container
-            docker_start(self.args, 'pulp', [])
+            docker_start(self.args, 'ansible-ci-pulp', [])
 
-            self.containers.append('pulp')
+            self.containers.append('ansible-ci-pulp')
 
         if self.args.docker:
-            pulp_host = 'pulp'
+            pulp_host = 'ansible-ci-pulp'
         elif container_id:
-            pulp_host = self._get_simulator_address('pulp')
+            pulp_host = self._get_simulator_address('ansible-ci-pulp')
             display.info('Found Galaxy simulator container address: %s' % pulp_host, verbosity=1)
         else:
             pulp_host = 'localhost'
@@ -178,7 +178,7 @@ class GalaxyProvider(CloudProvider):
 
         :rtype: list[str]
         """
-        return ['--link', 'pulp']  # if self.managed else []
+        return ['--link', 'ansible-ci-pulp']  # if self.managed else []
 
     def cleanup(self):
         """Clean up the resource and temporary configs files after tests."""
