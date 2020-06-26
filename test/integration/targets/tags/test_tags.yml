@@ -5,6 +5,8 @@
   vars:
     the_tags:
       - tag3
+    extend_tags:
+      - tag4
   tasks:
     - name: Task_with_tag
       debug: msg=
@@ -31,3 +33,13 @@
     - name: Task_with_templated_tags
       debug: msg=templated
       tags: "{{ the_tags }}"
+    - name: Block_with_extend
+      tags: "{{ extend_tags }}"
+      block:
+      - name: Task_in_block_with_extended_tags
+        debug:
+        # Tag inherits and extends - no tags is implicitly
+        # tags: "{{ extend_tags }}"
+      - name: Task_in_block_with_added_tag
+        debug:
+        tags: tag5, tag6

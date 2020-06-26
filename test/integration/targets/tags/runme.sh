@@ -47,3 +47,11 @@ export LC_ALL=en_US.UTF-8
 # Run templated tags
 [ "$("${COMMAND[@]}" --tags tag3 | grep -F Task_with | xargs)" = \
 "Task_with_always_tag TAGS: [always] Task_with_templated_tags TAGS: [tag3]" ]
+
+# Run extend tags
+[ "$("${COMMAND[@]}" --tags tag4 | grep -F Task_in_block_with_extended_tags | xargs)" = \
+"Task_in_block_with_extended_tags TAGS: [tag4, {{ extend_tags }}]" ]
+
+# Run extend tags with added tags
+[ "$("${COMMAND[@]}" --tags tag6 | grep -F Task_in_block_with_added_tag | xargs)" = \
+"Task_in_block_with_added_tag TAGS: [tag4, tag5, tag6, {{ extend_tags }}]" ]
