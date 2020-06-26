@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - fix delete package by wildcard if it is not found (https://github.com/ansible/ansible/issues/62262).
