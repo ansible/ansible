@@ -206,7 +206,7 @@ EXAMPLES = '''
   apt:
     name: foo
     state: latest
-    no_remove: yes
+    fail_on_autoremove: yes
 
 - name: Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
   apt:
