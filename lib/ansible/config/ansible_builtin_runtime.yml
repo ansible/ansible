@@ -7599,8 +7599,8 @@ plugin_routing:
       redirect: community.general.digital_ocean
     dimensiondata:
       redirect: community.general.dimensiondata
-    swarm:
-      redirect: community.general.swarm
+    docker.swarm:
+      redirect: community.general.docker.swarm
     exoscale:
       redirect: community.general.exoscale
     f5_utils:
@@ -7625,8 +7625,8 @@ plugin_routing:
       redirect: community.general.hwc_utils
     ibm_sa_utils:
       redirect: community.general.ibm_sa_utils
-    keycloak:
-      redirect: community.general.keycloak
+    identity.keycloak:
+      redirect: community.general.identity.keycloak
     infinibox:
       redirect: community.general.infinibox
     influxdb:
@@ -7753,8 +7753,8 @@ plugin_routing:
       redirect: community.general.online
     opennebula:
       redirect: community.general.opennebula
-    oci_utils:
-      redirect: community.general.oci_utils
+    oracle.oci_utils:
+      redirect: community.general.oracle.oci_utils
     postgres:
       redirect: community.general.postgres
     pure:
@@ -7767,18 +7767,18 @@ plugin_routing:
       redirect: community.general.redfish_utils
     redhat:
       redirect: community.general.redhat
-    dellemc_idrac:
-      redirect: community.general.dellemc_idrac
-    ome:
-      redirect: community.general.ome
+    remote_management.dellemc.dellemc_idrac:
+      redirect: community.general.remote_management.dellemc.dellemc_idrac
+    remote_management.dellemc.ome:
+      redirect: community.general.remote_management.dellemc.ome
     scaleway:
       redirect: community.general.scaleway
-    bitbucket:
-      redirect: community.general.bitbucket
-    emc_vnx:
-      redirect: community.general.emc_vnx
-    hpe3par:
-      redirect: community.general.hpe3par
+    source_control.bitbucket:
+      redirect: community.general.source_control.bitbucket
+    storage.emc.emc_vnx:
+      redirect: community.general.storage.emc.emc_vnx
+    storage.hpe3par:
+      redirect: community.general.storage.hpe3par
     univention_umc:
       redirect: community.general.univention_umc
     utm_utils:
