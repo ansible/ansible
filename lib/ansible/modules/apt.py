@@ -1182,7 +1182,7 @@ def main():
             install_deb(module, p['deb'], cache,
                         install_recommends=install_recommends,
                         allow_unauthenticated=allow_unauthenticated,
-                        force=force_yes, no_remove=no_remove, dpkg_options=p['dpkg_options'])
+                        force=force_yes, fail_on_autoremove=fail_on_autoremove, dpkg_options=p['dpkg_options'])
 
         unfiltered_packages = p['package'] or ()
         packages = [package.strip() for package in unfiltered_packages if package != '*']
