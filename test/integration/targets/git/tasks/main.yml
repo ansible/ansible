@@ -26,6 +26,7 @@
 - import_tasks: submodules.yml
 - import_tasks: change-repo-url.yml
 - import_tasks: depth.yml
+- import_tasks: single-branch.yml
 - import_tasks: checkout-new-tag.yml
 - include_tasks: gpg-verification.yml
   when:
