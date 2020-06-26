@@ -6711,23 +6711,23 @@ plugin_routing:
     ovirt_vnic_profile_info:
       redirect: ovirt.ovirt.ovirt_vnic_profile_info
     dellos10_command:
-      redirect: dellemc_networking.os10.os10_command
+      redirect: dellemc.os10.os10_command
     dellos10_facts:
-      redirect: dellemc_networking.os10.os10_facts
+      redirect: dellemc.os10.os10_facts
     dellos10_config:
-      redirect: dellemc_networking.os10.os10_config
+      redirect: dellemc.os10.os10_config
     dellos9_facts:
-      redirect: dellemc_networking.os9.dellos9_facts
+      redirect: dellemc.os9.dellos9_facts
     dellos9_command:
-      redirect: dellemc_networking.os9.dellos9_command
+      redirect: dellemc.os9.dellos9_command
     dellos9_config:
-      redirect: dellemc_networking.os9.dellos9_config
+      redirect: dellemc.os9.dellos9_config
     dellos6_facts:
-      redirect: dellemc_networking.os6.dellos6_facts
+      redirect: dellemc.os6.dellos6_facts
     dellos6_config:
-      redirect: dellemc_networking.os6.dellos6_config
+      redirect: dellemc.os6.dellos6_config
     dellos6_command:
-      redirect: dellemc_networking.os6.dellos6_command
+      redirect: dellemc.os6.dellos6_command
     hcloud_location_facts:
       redirect: hetzner.hcloud.hcloud_location_facts
     hcloud_server_info:
@@ -7926,11 +7926,11 @@ plugin_routing:
     ovirt:
       redirect: ovirt.ovirt.ovirt
     dellos10:
-      redirect: dellemc_networking.os10.os10
+      redirect: dellemc.os10.os10
     dellos9:
-      redirect: dellemc_networking.os9.dellos9
+      redirect: dellemc.os9.dellos9
     dellos6:
-      redirect: dellemc_networking.os6.dellos6
+      redirect: dellemc.os6.dellos6
     hcloud:
       redirect: hetzner.hcloud.hcloud
     gcp_utils:
@@ -8001,11 +8001,11 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.os10
+      redirect: dellemc.os10.os10
     dellos9:
-      redirect: dellemc_networking.os9.dellos9
+      redirect: dellemc.os9.dellos9
     dellos6:
-      redirect: dellemc_networking.os6.dellos6
+      redirect: dellemc.os6.dellos6
     vyos:
       redirect: vyos.vyos.vyos
   terminal:
@@ -8064,11 +8064,11 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.os10
+      redirect: dellemc.os10.os10
     dellos9:
-      redirect: dellemc_networking.os9.dellos9
+      redirect: dellemc.os9.dellos9
     dellos6:
-      redirect: dellemc_networking.os6.dellos6
+      redirect: dellemc.os6.dellos6
     vyos:
       redirect: vyos.vyos.vyos
   action:
@@ -8182,11 +8182,11 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.os10
+      redirect: dellemc.os10.os10
     dellos9:
-      redirect: dellemc_networking.os9.dellos9
+      redirect: dellemc.os9.dellos9
     dellos6:
-      redirect: dellemc_networking.os6.dellos6
+      redirect: dellemc.os6.dellos6
     vyos:
       redirect: vyos.vyos.vyos
   become:
@@ -8507,11 +8507,11 @@ plugin_routing:
     ovirt_info:
       redirect: ovirt.ovirt.ovirt_info
     dellos10:
-      redirect: dellemc_networking.os10.os10
+      redirect: dellemc.os10.os10
     dellos9:
-      redirect: dellemc_networking.os9.dellos9
+      redirect: dellemc.os9.dellos9
     dellos6:
-      redirect: dellemc_networking.os6.dellos6
+      redirect: dellemc.os6.dellos6
     hcloud:
       redirect: hetzner.hcloud.hcloud
     skydive:
