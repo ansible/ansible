@@ -293,6 +293,8 @@ on an interface:
 
 If needed, you can extract subnet and prefix information from the 'host/prefix' value::
 
+.. code-block:: jinja
+
     # {{ host_prefix | ansible.netcommon.ipaddr('host/prefix') | ansible.netcommon.ipaddr('subnet') }}
     ['2001:db8:deaf:be11::/64', '192.0.2.0/24']
 
@@ -446,6 +448,38 @@ To find the peer IP address for a point to point link, use ``peer``::
     192.168.122.2
 
 
+Testing if a address belong to a network range
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Filter ``network_in_usable`` returns wether an address passed as argument is usable in a network.
+Usable adresses are adresses that can be assigned to host so address of the network except network
+and broadcast adresses.::
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.network_in_usable( '192.168.0.1' ) }}
+    True
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.network_in_usable( '192.168.0.255' ) }}
+    False
+
+    # {{ '192.168.0.0/16' | ansible.netcommon.network_in_usable( '192.168.0.255' ) }}
+    True
+
+Filter ``network_in_network`` returns wether an address or a network passed as argument is in a network.::
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.network_in_network( '192.168.0.1' ) }}
+    True
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.network_in_network( '192.168.0.0/24' ) }}
+    True
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.network_in_network( '192.168.0.255' ) }}
+    True
+
+    # Check in a network is part of another network
+    # {{ '192.168.0.0/16' | ansible.netcommon.network_in_network( '192.168.0.0/24' ) }}
+    True
+
+
 IP Math
 ^^^^^^^
 
@@ -455,24 +489,32 @@ The ``ipmath()`` filter can be used to do simple IP math/arithmetic.
 
 Here are a few simple examples::
 
+    # Get the next five address based on a ip address
     # {{ '192.168.1.5' | ansible.netcommon.ipmath(5) }}
     192.168.1.10
 
+    # Get the ten previous address based on a ip address
     # {{ '192.168.0.5' | ansible.netcommon.ipmath(-10) }}
     192.167.255.251
 
+    # Get the next five address using cidr notation
     # {{ '192.168.1.1/24' | ansible.netcommon.ipmath(5) }}
     192.168.1.6
 
+    # Get the previous five address using cidr notation
     # {{ '192.168.1.6/24' | ansible.netcommon.ipmath(-5) }}
     192.168.1.1
 
+    # Get the previous ten address using cidr notation
+    # It returns a address of the previous network range
     # {{ '192.168.2.6/24' | ansible.netcommon.ipmath(-10) }}
     192.168.1.252
 
+    # Get the next ten address in IPv6
     # {{ '2001::1' | ansible.netcommon.ipmath(10) }}
     2001::b
 
+    # Get the previous ten address in IPv6
     # {{ '2001::5' | ansible.netcommon.ipmath(-10) }}
     2000:ffff:ffff:ffff:ffff:ffff:ffff:fffb
 
@@ -641,7 +683,7 @@ The supported formats result in the following conversions for the ``1a:2b:3c:4d:
 
 
    `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_
-       Ansible network collection for common code 
+       Ansible network collection for common code
    :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`playbooks_filters`
