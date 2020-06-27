@@ -433,6 +433,13 @@ To find the available range of IP addresses from the given network address, use 
     # {{ '192.168.122.1/24' | ansible.netcommon.ipaddr('range_usable') }}
     192.168.122.1-192.168.122.254
 
+To find the peer IP address for a point to point link, use ``peer``::
+
+    # {{ '192.168.122.1/31' | ansible.netcommon.ipaddr('peer') }}
+    192.168.122.0
+    # {{ '192.168.122.1/30' | ansible.netcommon.ipaddr('peer') }}
+    192.168.122.2
+
 To find the next nth usable IP address within a range, use ``next_nth_usable``
 In the example, ``next_nth_usable`` returns the second usable IP address for the given IP range::
 
@@ -448,14 +455,6 @@ There is also a filter ``previous_nth_usable`` to find previous usable address::
 
     # {{ '192.168.122.10/24' | ansible.netcommon.previous_nth_usable(2) }}
     192.168.122.8
-
-To find the peer IP address for a point to point link, use ``peer``::
-
-    # {{ '192.168.122.1/31' | ansible.netcommon.ipaddr('peer') }}
-    192.168.122.0
-    # {{ '192.168.122.1/30' | ansible.netcommon.ipaddr('peer') }}
-    192.168.122.2
-
 
 Testing if a address belong to a network range
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
