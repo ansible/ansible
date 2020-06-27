@@ -7,7 +7,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: known_hosts
 short_description: Add or remove a host from the C(known_hosts) file
@@ -23,37 +23,43 @@ options:
     description:
       - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
       - Must match with <hostname> or <ip> present in key attribute.
+      - For custom SSH port, C(name) needs to specify port as well. See example section.
     required: true
+    type: str
   key:
     description:
-      - The SSH public host key, as a string (required if state=present, optional when state=absent, in which case all keys for the host are removed).
-        The key must be in the right format for ssh (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT").
-
-        Specifically, the key should not match the format that is found in an SSH pubkey file, but should rather have the hostname prepended to a
+      - The SSH public host key, as a string.
+      - Required if C(state=present), optional when C(state=absent), in which case all keys for the host are removed.
+      - The key must be in the right format for SSH (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT").
+      - Specifically, the key should not match the format that is found in an SSH pubkey file, but should rather have the hostname prepended to a
         line that includes the pubkey, the same way that it would appear in the known_hosts file. The value prepended to the line must also match
         the value of the name parameter.
-
-        Should be of format `<hostname[,IP]> ssh-rsa <pubkey>`
+      - Should be of format `<hostname[,IP]> ssh-rsa <pubkey>`.
+      - For custom SSH port, C(key) needs to specify port as well. See example section.
+    type: str
   path:
     description:
-      - The known_hosts file to edit
-    default: "(homedir)+/.ssh/known_hosts"
+      - The known_hosts file to edit.
+    default: "~/.ssh/known_hosts"
+    type: path
   hash_host:
     description:
-      - Hash the hostname in the known_hosts file
+      - Hash the hostname in the known_hosts file.
     type: bool
-    default: 'no'
+    default: "no"
     version_added: "2.3"
   state:
     description:
-      - I(present) to add the host key, I(absent) to remove it.
-    choices: [ "present", "absent" ]
-    default: present
-requirements: [ ]
-author: "Matthew Vernon (@mcv21)"
+      - I(present) to add the host key.
+      - I(absent) to remove it.
+    choices: [ "absent", "present" ]
+    default: "present"
+    type: str
+author:
+- Matthew Vernon (@mcv21)
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 - name: Tell the host about our servers it might want to ssh to
   known_hosts:
     path: /etc/ssh/ssh_known_hosts
@@ -64,6 +70,13 @@ EXAMPLES = '''
   known_hosts:
     name: host1.example.com   # or 10.9.8.77
     key: host1.example.com,10.9.8.77 ssh-rsa ASDeararAIUHI324324  # some key gibberish
+    path: /etc/ssh/ssh_known_hosts
+    state: present
+
+- name: Add host with custom SSH port
+  known_hosts:
+    name: '[host1.example.com]:2222'
+    key: '[host1.example.com]:2222 ssh-rsa ASDeararAIUHI324324' # some key gibberish
     path: /etc/ssh/ssh_known_hosts
     state: present
 '''
