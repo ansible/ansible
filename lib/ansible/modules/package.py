@@ -17,8 +17,14 @@ author:
     - Ansible Core Team
 short_description: Generic OS package manager
 description:
-     - Installs, upgrade and removes packages using the underlying OS package manager.
-     - For Windows targets, use the M(ansible.windows.win_package) module instead.
+    - This modules manages packages on a target without specifying a package manager module (like M(ansible.builtin.yum), M(ansible.builtin.apt), ...).
+      It is convenient to use in an heterogeneous environment of machines without having to create a specific task for
+      each package manager. `package` calls behind the module for the package manager used by the operating system
+      discovered by the module M(ansible.builtin.setup).  If `setup` was not yet run, `package` will run it.
+    - This module acts as a proxy to the underlying package manager module. While all arguments will be passed to the
+      underlying module, not all modules support the same arguments. This documentation only covers the minimum intersection
+      of module arguments that all packaging modules support.
+    - For Windows targets, use the M(ansile.windows.win_package) module instead.
 options:
   name:
     description:
@@ -33,15 +39,15 @@ options:
     required: true
   use:
     description:
-      - The required package manager module to use (yum, apt, etc). The default 'auto' will use existing facts or try to autodetect it.
+      - The required package manager module to use (`yum`, `apt`, etc). The default 'auto' will use existing facts or try to autodetect it.
       - You should only use this field if the automatic selection is not working for some reason.
     required: false
     default: auto
 requirements:
     - Whatever is required for the package plugins specific for each system.
 notes:
-    - This module actually calls the pertinent package modules for each system (apt, yum, etc).
-    - For Windows targets, use the M(ansible.windows.win_package) module instead.
+    - While `package` abstracts package managers to ease dealing with multiple distributions, package name often differs for the same software.
+
 '''
 EXAMPLES = '''
 - name: Install ntpdate
