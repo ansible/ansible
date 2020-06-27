@@ -440,7 +440,17 @@ To find the peer IP address for a point to point link, use ``peer``::
     # {{ '192.168.122.1/30' | ansible.netcommon.ipaddr('peer') }}
     192.168.122.2
 
-To find the next nth usable IP address within a range, use ``next_nth_usable``
+To return the nth ip from a network, use the filter ``nthhost``::
+
+    # {{ '10.0.0.0/8' | ansible.netcommon.nthhost(305) }}
+    10.0.1.49
+
+``nthhost`` supports also a negative value, so it provides the ip address downward::
+
+    # {{ '10.0.0.0/8' | ansible.netcommon.nthhost(-1) }}
+    10.255.255.255
+
+To find the next nth usable IP address in relation to another within a range, use ``next_nth_usable``
 In the example, ``next_nth_usable`` returns the second usable IP address for the given IP range::
 
     # {{ '192.168.122.1/24' | ansible.netcommon.next_nth_usable(2) }}
