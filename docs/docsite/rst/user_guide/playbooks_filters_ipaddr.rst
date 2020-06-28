@@ -497,6 +497,11 @@ Filter ``network_in_network`` returns whether an address or a network passed as 
     # {{ '192.168.0.0/16' | ansible.netcommon.network_in_network( '192.168.0.0/24' ) }}
     True
 
+Should you have several addresses to check if they belong to a network, you can use ``reduce_on_network``::
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.reduce_on_network( ['192.168.0.34', '10.3.0.3', '192.168.2.34'] ) }}
+    ['192.168.0.34']
+
 
 IP Math
 ^^^^^^^
