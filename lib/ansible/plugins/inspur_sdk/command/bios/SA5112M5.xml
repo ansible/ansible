@@ -1,0 +1,3194 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<server>
+	<cfgItems>
+		<cfgItem>
+			<name>
+				<description>Security Device Support</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x05</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x05 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x05 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Console Redirection</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x10</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x10 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x10 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Terminal Type</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x11</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x11 0x00 0x00</cmd>
+					<value>VT100</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x11 0x01 0x00</cmd>
+					<value>VT100+</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x11 0x02 0x00</cmd>
+					<value>VT-UTF8</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x11 0x03 0x00</cmd>
+					<value>ANSI</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Bits per second</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x12</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x12 0x03 0x00</cmd>
+					<value>9600</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x12 0x04 0x00</cmd>
+					<value>19200</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x12 0x05 0x00</cmd>
+					<value>38400</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x12 0x06 0x00</cmd>
+					<value>57600</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x12 0x07 0x00</cmd>
+					<value>115200</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Data Bits</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x13</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x13 0x07 0x00</cmd>
+					<value>7</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x13 0x08 0x00</cmd>
+					<value>8</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Parity</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x14</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x14 0x01 0x00</cmd>
+					<value>None</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x14 0x02 0x00</cmd>
+					<value>Even</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x14 0x03 0x00</cmd>
+					<value>Odd</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x14 0x04 0x00</cmd>
+					<value>Mark</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x14 0x05 0x00</cmd>
+					<value>Space</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Stop Bits</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x15</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x15 0x01 0x00</cmd>
+					<value>1</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x15 0x02 0x00</cmd>
+					<value>2</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Flow Control</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x16</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x16 0x00 0x00</cmd>
+					<value>None</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x16 0x01 0x00</cmd>
+					<value>Hardware RTS/CTS</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>VT-UTF8 Combo Key Support</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x17</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x17 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x17 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Recorder Mode</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x18</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x18 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x18 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Resolution 100x31</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x19</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x19 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x19 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Legacy OS Redirection</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x1A</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x1A 0x00 0x00</cmd>
+					<value>80x24</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x1A 0x01 0x00</cmd>
+					<value>80x25</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Putty Keypad</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x1B</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x1B 0x01 0x00</cmd>
+					<value>VT100</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x1B 0x02 0x00</cmd>
+					<value>LINUX</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x1B 0x04 0x00</cmd>
+					<value>XTERMR6</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x1B 0x08 0x00</cmd>
+					<value>SCO</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x1B 0x010 0x00</cmd>
+					<value>ESCN</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0x1B 0x20 0x00</cmd>
+					<value>VT400</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Redirection After BIOS POST</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x1C</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x1C 0x00 0x00</cmd>
+					<value>Always Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x1C 0x01 0x00</cmd>
+					<value>BootLoader</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <!--<cfgItem>-->
+			<!--<name>-->
+				<!--<description>Serial Port 0</description>-->
+				<!--<belongto>Advanced</belongto>-->
+			<!--</name>-->
+			<!--<getter>raw 0x3c 0x49 0x00 0x1D</getter>-->
+			<!--<setters>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x1D 0x00 0x00</cmd>-->
+					<!--<value>Disable</value>-->
+				<!--</setter>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x1D 0x01 0x00</cmd>-->
+					<!--<value>Enable</value>-->
+				<!--</setter>-->
+			<!--</setters>-->
+		<!--</cfgItem>-->
+        <!--<cfgItem>-->
+			<!--<name>-->
+				<!--<description>Change Settings 0</description>-->
+				<!--<belongto>Advanced</belongto>-->
+			<!--</name>-->
+			<!--<getter>raw 0x3c 0x49 0x00 0x1E</getter>-->
+			<!--<setters>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x1E 0x00 0x00</cmd>-->
+					<!--<value>User Automatic Settings</value>-->
+				<!--</setter>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x1E 0x01 0x00</cmd>-->
+					<!--<value>IO=3F8h;IRQ=4;DMA</value>-->
+				<!--</setter>-->
+                <!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x1E 0x02 0x00</cmd>-->
+					<!--<value>IO=3F8h;IRQ=3,4,5,6,7,9,10,11,12;DMA</value>-->
+				<!--</setter>-->
+                <!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x1E 0x03 0x00</cmd>-->
+					<!--<value>IO=2F8h;IRQ=3,4,5,7,9,10,11,12;DMA</value>-->
+				<!--</setter>-->
+                <!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x1E 0x04 0x00</cmd>-->
+					<!--<value>IO=3E8h;IRQ=3,4,5,6,7,9,10,11,12;DMA</value>-->
+				<!--</setter>-->
+                <!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x1E 0x05 0x00</cmd>-->
+					<!--<value>IO=2E8h;IRQ=3,4,5,6,7,9,10,11,12;DMA</value>-->
+				<!--</setter>-->
+			<!--</setters>-->
+		<!--</cfgItem>-->
+        <!--<cfgItem>-->
+			<!--<name>-->
+				<!--<description>Serial Port 1</description>-->
+				<!--<belongto>Advanced</belongto>-->
+			<!--</name>-->
+			<!--<getter>raw 0x3c 0x49 0x00 0x1F</getter>-->
+			<!--<setters>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x1F 0x00 0x00</cmd>-->
+					<!--<value>Disable</value>-->
+				<!--</setter>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x1F 0x01 0x00</cmd>-->
+					<!--<value>Enable</value>-->
+				<!--</setter>-->
+			<!--</setters>-->
+		<!--</cfgItem>-->
+        <!--<cfgItem>-->
+			<!--<name>-->
+				<!--<description>Change Settings 1</description>-->
+				<!--<belongto>Advanced</belongto>-->
+			<!--</name>-->
+			<!--<getter>raw 0x3c 0x49 0x00 0x20</getter>-->
+			<!--<setters>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x20 0x00 0x00</cmd>-->
+					<!--<value>User Automatic Settings</value>-->
+				<!--</setter>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x20 0x01 0x00</cmd>-->
+					<!--<value>IO=2F8h;IRQ=3;DMA</value>-->
+				<!--</setter>-->
+                <!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x20 0x02 0x00</cmd>-->
+					<!--<value>IO=3F8h;IRQ=3,4,5,6,7,9,10,11,12;DMA</value>-->
+				<!--</setter>-->
+                <!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x20 0x03 0x00</cmd>-->
+					<!--<value>IO=2F8h;IRQ=3,4,5,7,9,10,11,12;DMA</value>-->
+				<!--</setter>-->
+                <!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x20 0x04 0x00</cmd>-->
+					<!--<value>IO=3E8h;IRQ=3,4,5,6,7,9,10,11,12;DMA</value>-->
+				<!--</setter>-->
+                <!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x20 0x05 0x00</cmd>-->
+					<!--<value>IO=2E8h;IRQ=3,4,5,6,7,9,10,11,12;DMA</value>-->
+				<!--</setter>-->
+			<!--</setters>-->
+		<!--</cfgItem>-->
+		<cfgItem>
+			<name>
+				<description>Above 4G Decoding</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x21</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x21 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x21 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>SR-IOV Support</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x22</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x22 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x22 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Network Stack</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x23</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x23 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x23 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Ipv4 PXE Support</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x24</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x24 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x24 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Ipv4 HTTP Support</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x25</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x25 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x25 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Ipv6 PXE Support</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x26</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x26 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x26 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Ipv6 HTTP Support</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x27</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x27 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x27 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>PXE boot wait time</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x28</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x28 $in</cmd>
+					<value>0 ~ 5</value>
+					<validation>com.inspur.isa.biosconfig.service.BiosItemValueValidate.validateCorrectableErrorThreshold</validation>
+				</setter>
+			</setters>
+		</cfgItem>
+         <cfgItem>
+			<name>
+				<description>Media detect count</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x29</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x29 $in</cmd>
+					<value>1 ~ 50</value>
+					<validation>com.inspur.isa.biosconfig.service.BiosItemValueValidate.validateCorrectableErrorThreshold</validation>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>CSM Support</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x2A</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2A 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2A 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>GateA20 Active</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x2B</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2B 0x00 0x00</cmd>
+					<value>Upon Request</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2B 0x01 0x00</cmd>
+					<value>Always</value>
+				</setter>
+			</setters>
+		</cfgItem><cfgItem>
+			<name>
+				<description>INT19 Trap Response</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x2C</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2C 0x00 0x00</cmd>
+					<value>Postponed</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2C 0x01 0x00</cmd>
+					<value>Immediate</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+            <name>
+                <description>Boot Mode</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x00 0x2D</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x00 0x2D 0x01 0x00</cmd>
+                    <value>Legacy Mode</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x00 0x2D 0x02 0x00</cmd>
+                    <value>UEFI Mode</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+			<name>
+				<description>Network</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x2E</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2E 0x00 0x00</cmd>
+					<value>Do not launch</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2E 0x01 0x00</cmd>
+					<value>UEFI</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2E 0x02 0x00</cmd>
+					<value>Legacy</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Storage</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x2F</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2F 0x00 0x00</cmd>
+					<value>Do not launch</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2F 0x01 0x00</cmd>
+					<value>UEFI</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x2F 0x02 0x00</cmd>
+					<value>Legacy</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Video OPROM Policy</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x30</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x30 0x00 0x00</cmd>
+					<value>Do not launch</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x30 0x01 0x00</cmd>
+					<value>UEFI</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x30 0x02 0x00</cmd>
+					<value>Legacy</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Other PCI devices</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x31</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x31 0x00 0x00</cmd>
+					<value>Do not launch</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x31 0x01 0x00</cmd>
+					<value>UEFI</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x31 0x02 0x00</cmd>
+					<value>Legacy</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+            <name>
+                <description>NIC1 PXE ROM</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x00 0x32</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x00 0x32 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x00 0x32 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>NIC2 PXE ROM</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x00 0x33</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x00 0x33 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x00 0x33 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>NIC3 PXE ROM</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x00 0x34</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x00 0x34 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x00 0x34 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>NIC4 PXE ROM</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x00 0x35</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x00 0x35 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x00 0x35 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+			<name>
+				<description>SATA Controller</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x37</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x37 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x37 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>SATA Mode Options</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x38</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x38 0x00 0x00</cmd>
+					<value>AHCI</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x38 0x01 0x00</cmd>
+					<value>RAID</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>sSATA Controller</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x46</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x46 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x46 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>sSATA Mode Options</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x47</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x47 0x00 0x00</cmd>
+					<value>AHCI</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x47 0x01 0x00</cmd>
+					<value>RAID</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 0)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x49</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x49 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x49 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x49 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 0)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x4b</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x4b 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x4b 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 1A)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x4c</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x4c 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x4c 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x4c 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 1A)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x4e</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x4e 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x4e 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 1B)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x4f</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x4f 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x4f 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x4f 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 1B)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x51</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x51 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x51 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 1C)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x52</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x52 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x52 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x52 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 1C)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x54</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x54 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x54 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 1D)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x55</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x55 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x55 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x55 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 1D)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x57</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x57 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x57 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 2A)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x58</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x58 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x58 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x58 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 2A)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x5A</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x5A 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x5A 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 2B)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x5b</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x5b 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x5b 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x5b 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 2B)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x5D</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x5D 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x5D 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 2C)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x5e</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x5e 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x5e 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x5e 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 2C)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x60</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x60 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x60 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 2D)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x61</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x61 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x61 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x61 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 2D)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x63</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x63 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x63 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 3A)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x64</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x64 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x64 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x64 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 3A)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x66</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x66 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x66 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 3B)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x67</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x67 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x67 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x67 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 3B)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x69</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x69 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x69 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 3C)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x6a</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x6a 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x6a 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x6a 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 3C)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x6c</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x6c 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x6c 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(Port 3D)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x6d</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x6d 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x6d 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x6d 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(Port 3D)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x6f</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x6f 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x6f 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(MCP 0)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x70</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x70 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x70 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x70 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(MCP 0)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x72</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x72 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x72 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>PCI-E Port(MCP 1)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x73</getter>
+            <setters>
+            	<setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x73 0x02 0x00</cmd>
+                    <value>Auto</value>
+                </setter>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x73 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x73 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>PXE Option ROM(MCP 1)</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x75</getter>
+            <setters>
+               <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x75 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x75 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+
+		<cfgItem>
+			<name>
+				<description>Sharelink Network</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x02 0x05</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x05 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x05 0x03 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Restore AC Power Loss</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x65</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x65 0x00 0x00</cmd>
+					<value>Power On</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x65 0x01 0x00</cmd>
+					<value>Power Off</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x65 0xFF 0x00</cmd>
+					<value>Last State</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Max Page Table Size</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x66</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x66 0x00 0x00</cmd>
+					<value>2M</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x66 0x01 0x00</cmd>
+					<value>1G</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>VGA Priority</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x68</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x68 0x01 0x00</cmd>
+					<value>Onboard Device</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x68 0x02 0x00</cmd>
+					<value>Offboard Device</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>PTT Support</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x69</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x69 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x69 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <!--<cfgItem>-->
+			<!--<name>-->
+				<!--<description>Altitude</description>-->
+				<!--<belongto>Chipset</belongto>-->
+			<!--</name>-->
+			<!--<getter>raw 0x3c 0x49 0x00 0x6A</getter>-->
+			<!--<setters>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x6A $in</cmd>-->
+					<!--<value>0~0xFFFF</value>-->
+                    <!--<validation>com.inspur.isa.biosconfig.service.BiosItemValueValidate.validateCorrectableErrorThreshold</validation>-->
+				<!--</setter>-->
+			<!--</setters>-->
+		<!--</cfgItem>-->
+        <!--<cfgItem>-->
+			<!--<name>-->
+				<!--<description>MCTP Bus Owner</description>-->
+				<!--<belongto>Chipset</belongto>-->
+			<!--</name>-->
+			<!--<getter>raw 0x3c 0x49 0x00 0x6B</getter>-->
+			<!--<setters>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0x6B $in</cmd>-->
+					<!--<value>0~0xFFFF</value>-->
+                    <!--<validation>com.inspur.isa.biosconfig.service.BiosItemValueValidate.validateCorrectableErrorThreshold</validation>-->
+				<!--</setter>-->
+			<!--</setters>-->
+		<!--</cfgItem>-->
+		<cfgItem>
+			<name>
+				<description>System Errors</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0x6C</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x6C 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0x6C 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>PCIE Hot Plug</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xFC</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xFC 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xFC 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>PCI-E ASPM Support(Global)</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xE3</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE3 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE3 0x01 0x00</cmd>
+					<value>EPer-Port</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE3 0x02 0x00</cmd>
+					<value>L1 Only</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Uncore Freq Scaling (UFS)</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xE4</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE4 0x00 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE4 0x01 0x00</cmd>
+					<value>Disable(Min Frequency)</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE4 0x02 0x00</cmd>
+					<value>Disable(MAX Frequency)</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE4 0x03 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>SpeedStep(Pstates)</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xE5</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE5 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE5 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Turbo Mode</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xE6</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE6 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE6 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Hardware P-States</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xE7</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE7 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE7 0x01 0x00</cmd>
+					<value>Native Mode</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE7 0x02 0x00</cmd>
+					<value>Out of Band Mode</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE7 0x03 0x00</cmd>
+					<value>Native Mode with No Legacy Support</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>EPP Enable</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xE8</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE8 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE8 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+            <name>
+                <description>Monitor/Mwait Support</description>
+                <belongto>Advanced</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0xf5 </getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0xf5 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0xf5 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+			<name>
+				<description>Autonomous Core C-State</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xE9</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE9 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xE9 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>CPU C6 report</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xEA</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEA 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEA 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEA 0xFF 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Enhanced Halt State(C1E)</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xEB</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEB 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEB 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Package C State</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xEC</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEC 0x00 0x00</cmd>
+					<value>C0/C1 state</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEC 0x01 0x00</cmd>
+					<value>C2 state</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEC 0x02 0x00</cmd>
+					<value>C6 (non Retention) state</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEC 0x03 0x00</cmd>
+					<value>C6 (Retention) state</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEC 0x07 0x00</cmd>
+					<value>No Limit</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEC 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Power Performance Tuning</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xED</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xED 0x00 0x00</cmd>
+					<value>OS Controls EPB</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xED 0x01 0x00</cmd>
+					<value>BIOS Controls EPB</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>ENERGY_PERF_BIAS_CFG mode</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xEE</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEE 0x00 0x00</cmd>
+					<value>Performance</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEE 0x07 0x00</cmd>
+					<value>Balanced Performance</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEE 0x08 0x00</cmd>
+					<value>Balanced Power</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEE 0x0F 0x00</cmd>
+					<value>Power</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Workload Configuration</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xEF</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEF 0x00 0x00</cmd>
+					<value>Balanced</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xEF 0x01 0x00</cmd>
+					<value>I/O Sensitive</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Hyper Threading Technology</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xC4</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC4 0x01 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC4 0x00 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Max CPUID Value Limit</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xC5</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC5 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC5 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Execute Disable Bit</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xC6</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC6 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC6 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Enable Intel(R) TXT</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xC7</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC7 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC7 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>VMX</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xC8</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC8 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC8 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+
+		<cfgItem>
+            <name>
+                <description>VT-d</description>
+                <belongto>Processor</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x01 0x76</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x76 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x01 0x76 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+
+		<cfgItem>
+			<name>
+				<description>SMX</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xC9</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC9 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xC9 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Hardware Prefetcher</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xCA</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCA 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCA 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Adjacent Cache Prefetch</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xCB</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCB 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCB 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>DCU Streamer Prefetcher</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xCC</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCC 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCC 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>DCU IP Prefetcher</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xCD</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCD 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCD 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>DCU Mode</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xCE</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCE 0x00 0x00</cmd>
+					<value>32KB 8Way Without ECC</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCE 0x01 0x00</cmd>
+					<value>16KB 4Way With ECC</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Extended APIC</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xCF</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCF 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xCF 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>AES-NI</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xD0</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD0 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD0 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>MMIO High Base</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xD1</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD1 0x00 0x00</cmd>
+					<value>56T</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD1 0x01 0x00</cmd>
+					<value>40T</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD1 0x02 0x00</cmd>
+					<value>24T</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD1 0x03 0x00</cmd>
+					<value>16T</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD1 0x04 0x00</cmd>
+					<value>4T</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD1 0x05 0x00</cmd>
+					<value>1T</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>MMIO High Granularity Size</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xD2</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD2 0x00 0x00</cmd>
+					<value>1G</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD2 0x01 0x00</cmd>
+					<value>4G</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD2 0x02 0x00</cmd>
+					<value>16G</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD2 0x03 0x00</cmd>
+					<value>64G</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD2 0x04 0x00</cmd>
+					<value>256G</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD2 0x05 0x00</cmd>
+					<value>1024G</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Numa</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xD3</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD3 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD3 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Degrade Precedence</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xD4</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD4 0x00 0x00</cmd>
+					<value>Topology Precedence</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD4 0x01 0x00</cmd>
+					<value>Feature Precedence</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Link Speed Mode</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xD5</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD5 0x00 0x00</cmd>
+					<value>Slow</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD5 0x01 0x00</cmd>
+					<value>Fast</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Link Frequency Select</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xD6</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD6 0x00 0x00</cmd>
+					<value>9.6GB/s</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD6 0x01 0x00</cmd>
+					<value>10.4GB/s</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD6 0x02 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD6 0x03 0x00</cmd>
+					<value>User Per Link Setting</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Link L0p Enabled</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xD7</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD7 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD7 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Link L1 Enabled</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xD8</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD8 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD8 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>UPI Failover Support</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xD9</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD9 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xD9 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Sub NUMA Clustering</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xF6</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xF6 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xF6 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xF6 0x02 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Legacy VGA Socket</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xDA</getter>
+			<setters>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDA 0x01 0x00</cmd>
+					<value>1</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDA 0x00 0x00</cmd>
+					<value>0</value>
+				</setter>
+                 <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDA 0x02 0x00</cmd>
+					<value>2</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDA 0x03 0x00</cmd>
+					<value>3</value>
+				</setter>
+            </setters>
+		</cfgItem>
+        <cfgItem>
+            <name>
+                <description>Legacy VGA Stack</description>
+                <belongto>Processor</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x00 0xDB</getter>
+            <setters>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDB 0x01 0x00</cmd>
+					<value>1</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDB 0x00 0x00</cmd>
+					<value>0</value>
+				</setter>
+                 <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDB 0x02 0x00</cmd>
+					<value>2</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDB 0x03 0x00</cmd>
+					<value>3</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDB 0x04 0x00</cmd>
+					<value>4</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDB 0x05 0x00</cmd>
+					<value>5</value>
+				</setter>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDB 0x06 0x00</cmd>
+					<value>6</value>
+				</setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+			<name>
+				<description>Enforce POR</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xDC</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDC 0x00 0x00</cmd>
+					<value>POR</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDC 0x02 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Memory Frequency</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xDD</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDD 0x00 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDD 0x07 0x00</cmd>
+					<value>1600</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDD 0x09 0x00</cmd>
+					<value>1866</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDD 0x0B 0x00</cmd>
+					<value>2133</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDD 0x0D 0x00</cmd>
+					<value>2400</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDD 0x0F 0x00</cmd>
+					<value>2666</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Data Scrambling for NVMDIMM</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xDF</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDF 0x02 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDF 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xDF 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Data Scrambling for DDR4</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xE0</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE0 0x02 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE0 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE0 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Enabled ADR</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xE1</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE1 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE1 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Legacy ADR Mode</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xE2</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE2 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE2 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Volatile Memory Mode</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xE5</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE5 0x00 0x00</cmd>
+					<value>1LM</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE5 0x01 0x00</cmd>
+					<value>2LM</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE5 0x02 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>1LM Memory Interleave Granularity</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xE6</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE6 0x00 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE6 0x01 0x00</cmd>
+					<value>256B Target,256B Channel</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE6 0x02 0x00</cmd>
+					<value>64B Target,64B Channel</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>IMC Interleaving</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xE7</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE7 0x00 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE7 0x01 0x00</cmd>
+					<value>1-way Interleave</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE7 0x02 0x00</cmd>
+					<value>2-way interleave</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Channel Interleaving</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xE8</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE8 0x00 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE8 0x01 0x00</cmd>
+					<value>1-way Interleave</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE8 0x02 0x00</cmd>
+					<value>2-way Interleave</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE8 0x03 0x00</cmd>
+					<value>3-way Interleave</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Rank Interleaving</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xE9</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE9 0x00 0x00</cmd>
+					<value>Auto</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE9 0x01 0x00</cmd>
+					<value>1-way Interleave</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE9 0x02 0x00</cmd>
+					<value>2-way Interleave</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE9 0x04 0x00</cmd>
+					<value>4-way Interleave</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xE9 0x08 0x00</cmd>
+					<value>8-way Interleave</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Socket Interleave Below 4GB</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xEA</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEA 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEA 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Static Virtual Lockstep Mode</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xEB</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEB 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEB 0x03 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Mirror mode</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xEC</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEC 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEC 0x01 0x00</cmd>
+					<value>Mirror Mode 1LM</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEC 0x02 0x00</cmd>
+					<value>Mirror Mode 2LM</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Mirror TAD0</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xED</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xED 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xED 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Enabled Partial Mirror</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xEE</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEE 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEE 0x01 0x00</cmd>
+					<value>Partial Mirror mode 1LM</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEE 0x02 0x00</cmd>
+					<value>Partial Mirror mode 2LM</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>UEFI ARM Mirror</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xEF</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEF 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xEF 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Memory Rank Sparing</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xF0</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF0 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF0 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Correctable Error Threshold</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xF1</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF1 $in</cmd>
+					<value>0 ~ 32767</value>
+					<validation>com.inspur.isa.biosconfig.service.BiosItemValueValidate.validateCorrectableErrorThreshold</validation>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>SDDC/SDDC Plus One</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xF2</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF2 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF2 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>ADDDC Sparing</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xF3</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF3 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF3 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Set NGN Die Sparing</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xF4</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF4 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF4 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>NGN Die Sparing Aggressiveness</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xF5</getter>
+            <setters>
+                <setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF5 $in</cmd>
+					<value>0~255</value>
+					<validation>com.inspur.isa.biosconfig.service.BiosItemValueValidate.validateLegacyVGAStack</validation>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Patrol Scrub</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xF6</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF6 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF6 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Patrol Scrub Interval</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xF7</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF7 $in</cmd>
+					<value>0 ~ 24</value>
+					<validation>com.inspur.isa.biosconfig.service.BiosItemValueValidate.validatePatrolScrubInterval</validation>
+				</setter>
+			</setters>
+		</cfgItem>
+    <cfgItem>
+			<name>
+				<description>Patrol Scrub Address Mode</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xF8</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF8 0x00 0x00</cmd>
+					<value>Reverse Address</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF8 0x01 0x00</cmd>
+					<value>System Physical Address</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <cfgItem>
+			<name>
+				<description>Erase All DIMMs</description>
+				<belongto>Processor</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x00 0xF9</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF9 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x00 0xF9 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+        <!--<cfgItem>-->
+			<!--<name>-->
+				<!--<description>S0 CH0</description>-->
+				<!--<belongto>Processor</belongto>-->
+			<!--</name>-->
+			<!--<getter>raw 0x3c 0x49 0x00 0xFA</getter>-->
+			<!--<setters>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0xFA 0x00 0x00</cmd>-->
+					<!--<value>Disable</value>-->
+				<!--</setter>-->
+				<!--<setter>-->
+					<!--<cmd>raw 0x3c 0x48 0x00 0xFA 0x01 0x00</cmd>-->
+					<!--<value>Enable</value>-->
+				<!--</setter>-->
+			<!--</setters>-->
+		<!--</cfgItem>-->
+		<cfgItem>
+           <name>
+               <description>Power/Performance Profile</description>
+               <belongto>Processor</belongto>
+           </name>
+           <getter>raw 0x3c 0x49 0x01 0xFB</getter>
+           <setters>
+               <setter>
+                   <cmd>raw 0x3c 0x48 0x01 0xFB 0x00 0x00</cmd>
+                   <value>Maximum Performance</value>
+               </setter>
+               <setter>
+                   <cmd>raw 0x3c 0x48 0x01 0xFB 0x01 0x00</cmd>
+                   <value>Minimum Power</value>
+               </setter>
+               <setter>
+                   <cmd>raw 0x3c 0x48 0x01 0xFB 0x02 0x00</cmd>
+                   <value>Custom</value>
+               </setter>
+           </setters>
+        </cfgItem>
+		<cfgItem>
+			<name>
+				<description>FRB-2 Timer</description>
+				<belongto>ServerMgmt</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x01 0xFF</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xFF 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x01 0xFF 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>FRB-2 Timer timeout</description>
+				<belongto>ServerMgmt</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x02 0x00</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x00 0xB4 0x00</cmd>
+					<value>3 minutes</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x00 0xF0 0x00</cmd>
+					<value>4 minutes</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x00 0x12c 0x00</cmd>
+					<value>5 minutes</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x00 0x68 0x01</cmd>
+					<value>6 minutes</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>FRB-2 Timer Policy</description>
+				<belongto>ServerMgmt</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x02 0x01</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x01 0x00 0x00</cmd>
+					<value>Do Nothing</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x01 0x01 0x00</cmd>
+					<value>Reset</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x01 0x02 0x00</cmd>
+					<value>Power Down</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x01 0x03 0x00</cmd>
+					<value>Power Cycle</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>OS Watchdog Timer</description>
+				<belongto>ServerMgmt</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x02 0x02</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x02 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x02 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+
+		<cfgItem>
+			<name>
+				<description>Boot Options Retry</description>
+				<belongto>Boot</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x02 0x12</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x12 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x12 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Quiet Boot</description>
+				<belongto>Boot</belongto>
+			</name>
+			<getter>raw 0x3c 0x49 0x02 0x11</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x11 0x01 0x00</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3c 0x48 0x02 0x11 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+            <name>
+                <description>Bios Boot Options</description>
+                <belongto>Boot</belongto>
+            </name>
+            <getter></getter>
+            <setters>
+                <setter>
+                    <cmd>chassis bootdev none options=persistent</cmd>
+                    <value>none</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev pxe options=persistent</cmd>
+                    <value>pxe</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev disk options=persistent</cmd>
+                    <value>disk</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev safe options=persistent</cmd>
+                    <value>safe</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev diag options=persistent</cmd>
+                    <value>diag</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev cdrom options=persistent</cmd>
+                    <value>cdrom</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev bios options=persistent</cmd>
+                    <value>bios</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev floppy options=persistent</cmd>
+                    <value>floppy</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>Boot Option 1</description>
+                <belongto>Boot</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x02 0x13</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x13 0x00 0x00</cmd>
+                    <value>Hard Disk</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x13 0x01 0x00</cmd>
+                    <value>Network</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x13 0x02 0x00</cmd>
+                    <value>CD/DVD</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x13 0x03 0x00</cmd>
+                    <value>USB Device</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x13 0x04 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>Boot Option 2</description>
+                <belongto>Boot</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x02 0x14</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x14 0x00 0x00</cmd>
+                    <value>Hard Disk</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x14 0x01 0x00</cmd>
+                    <value>Network</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x14 0x02 0x00</cmd>
+                    <value>CD/DVD</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x14 0x03 0x00</cmd>
+                    <value>USB Device</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x14 0x04 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>Boot Option 3</description>
+                <belongto>Boot</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x02 0x15</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x15 0x00 0x00</cmd>
+                    <value>Hard Disk</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x15 0x01 0x00</cmd>
+                    <value>Network</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x15 0x02 0x00</cmd>
+                    <value>CD/DVD</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x15 0x03 0x00</cmd>
+                    <value>USB Device</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x15 0x04 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>Boot Option 4</description>
+                <belongto>Boot</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x02 0x16</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x16 0x00 0x00</cmd>
+                    <value>Hard Disk</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x16 0x01 0x00</cmd>
+                    <value>Network</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x16 0x02 0x00</cmd>
+                    <value>CD/DVD</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x16 0x03 0x00</cmd>
+                    <value>USB Device</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x16 0x04 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>Add EFI Shell To Boot Option</description>
+                <belongto>Boot</belongto>
+            </name>
+            <getter>raw 0x3c 0x49 0x02 0x17</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x17 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3c 0x48 0x02 0x17 0x01 0x00</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+	</cfgItems>
+</server>

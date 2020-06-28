@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<server>
+	<cfgItems>
+		<cfgItem>
+			<name>
+				<description>SOL Console redirection</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3e 0x21 0x2d 0x00 0x01</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x2d 0x00 0x01</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x2d 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Above 4G Decoding</description>
+				<belongto>Advanced</belongto>
+			</name>
+			<getter>raw 0x3e 0x21 0x6f 0x00 0x01</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x6f 0x00 0x01</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x6f 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		
+		<cfgItem>
+            <name>
+                <description>Power Technology</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x71 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x71 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x71 0x00 0x02</cmd>
+                    <value>Custom</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Mwait</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x64 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x64 0x00 0x01</cmd>
+                    <value>Enable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x64 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		 <cfgItem>
+            <name>
+                <description>Energy Performance Tuning</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x65 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x65 0x00 0x01</cmd>
+                    <value>BIOS</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x65 0x00 0x00</cmd>
+                    <value>OS</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Energy Performance Bias</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x1b 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x1b 0x00 0x00</cmd>
+                    <value>Performance</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x1b 0x00 0x07</cmd>
+                    <value>Balanced Performance</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x1b 0x00 0x08</cmd>
+                    <value>Balanced Power</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x1b 0x00 0x0f</cmd>
+                    <value>Power</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        
+		<cfgItem>
+			<name>
+				<description>Hyper Threading Technology</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3e 0x21 0x00 0x00 0x01</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x00 0x00 0x01</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x00 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Intel TXT Support</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3e 0x21 0x04 0x00 0x01</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x04 0x00 0x01</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x04 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>VMX</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3e 0x21 0x03 0x00 0x01</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x03 0x00 0x01</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x03 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>SMX</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3e 0x21 0x70 0x00 0x01</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x70 0x00 0x01</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x70 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>EIST(P-states)</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3e 0x21 0x12 0x00 0x01</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x12 0x00 0x01</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x12 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Turbo Mode</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3e 0x21 0x13 0x00 0x01</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x13 0x00 0x01</cmd>
+					<value>Enable</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x13 0x00 0x00</cmd>
+					<value>Disable</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+			<name>
+				<description>Package C State limit</description>
+				<belongto>Chipset</belongto>
+			</name>
+			<getter>raw 0x3e 0x21 0x16 0x00 0x01</getter>
+			<setters>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x16 0x00 0x00</cmd>
+					<value>C0/C1 state</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x16 0x00 0x01</cmd>
+					<value>C2 state</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x16 0x00 0x02</cmd>
+					<value>C6(non Retention) state</value>
+				</setter>
+				<setter>
+					<cmd>raw 0x3e 0x20 0x16 0x00 0x03</cmd>
+					<value>C6(Retention) state</value>
+				</setter>
+			</setters>
+		</cfgItem>
+		<cfgItem>
+            <name>
+                <description>System profile</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x71 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x71 0x00 0x00</cmd>
+                    <value>Balanced Power and Performance</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x71 0x00 0x01</cmd>
+                    <value>Maximum Performance</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x71 0x00 0x02</cmd>
+                    <value>Minimum Power</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x71 0x00 0x03</cmd>
+                    <value>Custom</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>CPU C3 report</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x17 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x17 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x17 0x00 0x01</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>CPU C6 report</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x18 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x18 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x18 0x00 0x01</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Enhanced Halt State (C1E)</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x19 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x19 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x19 0x00 0x01</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Memory Mode</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x24 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x24 0x00 0x00</cmd>
+                    <value>Independent</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x24 0x00 0x01</cmd>
+                    <value>Mirror</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x24 0x00 0x02</cmd>
+                    <value>Lockstep Mode</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Memory Rank Sparing</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x25 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x25 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x25 0x00 0x01</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Patrol Scrub</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x26 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x26 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x26 0x00 0x01</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Patrol Scrub Interval</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x27 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x27 0x00 $in</cmd>
+                    <value>0~24</value>
+                    <validation>com.inspur.isa.biosconfig.service.BiosItemValueValidate.validatePatrolScrubInterval</validation>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Restore AC Power Loss</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x72 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x72 0x00 0x00</cmd>
+                    <value>Power on</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x72 0x00 0x01</cmd>
+                    <value>Power Off</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x72 0x00 0x02</cmd>
+                    <value>Last State</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Numa</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x20 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x20 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x20 0x00 0x01</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>SSata Mode</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x73 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x73 0x00 0x01</cmd>
+                    <value>AHCI</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x73 0x00 0x02</cmd>
+                    <value>Raid</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Sata Mode</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x74 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x74 0x00 0x01</cmd>
+                    <value>AHCI</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x74 0x00 0x02</cmd>
+                    <value>Raid</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>XHCI Mode</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x75 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x75 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x75 0x00 0x01</cmd>
+                    <value>Enable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x75 0x00 0x02</cmd>
+                    <value>Auto</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>VGA Priority</description>
+                <belongto>Chipset</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x76 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x76 0x00 0x01</cmd>
+                    <value>Onboard Device</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x76 0x00 0x02</cmd>
+                    <value>Offboard Device</value>
+                </setter>
+            </setters>
+        </cfgItem>
+        <cfgItem>
+            <name>
+                <description>Bios Boot Options</description>
+                <belongto>Boot</belongto>
+            </name>
+            <getter></getter>
+            <setters>
+                <setter>
+                    <cmd>chassis bootdev none</cmd>
+                    <value>none</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev pxe</cmd>
+                    <value>pxe</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev disk</cmd>
+                    <value>disk</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev safe</cmd>
+                    <value>safe</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev diag</cmd>
+                    <value>diag</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev cdrom</cmd>
+                    <value>cdrom</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev bios</cmd>
+                    <value>bios</value>
+                </setter>
+                <setter>
+                    <cmd>chassis bootdev floppy</cmd>
+                    <value>floppy</value>
+                </setter>
+            </setters>
+        </cfgItem>
+		<cfgItem>
+            <name>
+                <description>Boot Options Retry</description>
+                <belongto>Boot</belongto>
+            </name>
+            <getter>raw 0x3e 0x21 0x77 0x00 0x01</getter>
+            <setters>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x77 0x00 0x00</cmd>
+                    <value>Disable</value>
+                </setter>
+                <setter>
+                    <cmd>raw 0x3e 0x20 0x77 0x00 0x01</cmd>
+                    <value>Enable</value>
+                </setter>
+            </setters>
+        </cfgItem>
+	</cfgItems>
+</server>
