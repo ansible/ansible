@@ -445,7 +445,7 @@ To return the nth ip from a network, use the filter ``nthhost``::
     # {{ '10.0.0.0/8' | ansible.netcommon.nthhost(305) }}
     10.0.1.49
 
-``nthhost`` supports also a negative value, so it provides the ip address downward::
+``nthhost`` alse supports a negative value::
 
     # {{ '10.0.0.0/8' | ansible.netcommon.nthhost(-1) }}
     10.255.255.255
@@ -461,7 +461,7 @@ If there is no usable address, it returns an empty string::
     # {{ '192.168.122.254/24' | ansible.netcommon.next_nth_usable(2) }}
     ""
 
-There is also a filter ``previous_nth_usable`` to find previous usable address::
+Just like ``next_nth_ansible``, you have ``previous_nth_usable`` to find previous usable address::
 
     # {{ '192.168.122.10/24' | ansible.netcommon.previous_nth_usable(2) }}
     192.168.122.8
@@ -469,7 +469,7 @@ There is also a filter ``previous_nth_usable`` to find previous usable address::
 Testing if a address belong to a network range
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Filter ``network_in_usable`` returns wether an address passed as argument is usable in a network.
+Filter ``network_in_usable`` returns whether an address passed as argument is usable in a network.
 Usable addresses are addresses that can be assigned to host so address of the network except network
 and broadcast addresses.::
 
@@ -482,7 +482,7 @@ and broadcast addresses.::
     # {{ '192.168.0.0/16' | ansible.netcommon.network_in_usable( '192.168.0.255' ) }}
     True
 
-Filter ``network_in_network`` returns wether an address or a network passed as argument is in a network.::
+Filter ``network_in_network`` returns whether an address or a network passed as argument is in a network.::
 
     # {{ '192.168.0.0/24' | ansible.netcommon.network_in_network( '192.168.0.1' ) }}
     True
