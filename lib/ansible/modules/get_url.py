@@ -511,11 +511,18 @@ def main():
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)
             checksum_map = []
-            for line in lines:
-                parts = line.split(None, 1)
-                if len(parts) == 2:
-                    checksum_map.append((parts[0], parts[1]))
             filename = url_filename(url)
+            if len(lines) == 1 and len(lines[0].split()) == 1:
+                # Only a single line with a single string
+                # treat it as a checksum only file
+                checksum_map.append((lines[0], filename))
+            else:
+                # The assumption here is the file is in the format of
+                # checksum filename
+                for line in lines:
+                    parts = line.split(None, 1)
+                    if len(parts) == 2:
+                        checksum_map.append((parts[0], parts[1]))
 
             # Look through each line in the checksum file for a hash corresponding to
             # the filename in the url, returning the first hash that is found.
