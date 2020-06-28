@@ -445,7 +445,7 @@ To return the nth ip from a network, use the filter ``nthhost``::
     # {{ '10.0.0.0/8' | ansible.netcommon.nthhost(305) }}
     10.0.1.49
 
-``nthhost`` alse supports a negative value::
+``nthhost`` also supports a negative value::
 
     # {{ '10.0.0.0/8' | ansible.netcommon.nthhost(-1) }}
     10.255.255.255
