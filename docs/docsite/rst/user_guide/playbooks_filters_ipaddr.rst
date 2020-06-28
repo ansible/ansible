@@ -697,6 +697,15 @@ The supported formats result in the following conversions for the ``1a:2b:3c:4d:
     linux or unix: 1a:2b:3c:4d:5e:6f:
     pgsql, postgresql, or psql: 1a2b3c:4d5e6f
 
+
+Generate IPv6 address in Stateless Configuration (SLAAC)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+the filter ``slaac()`` generates an IPv6 address for a given network and a MAC Address in Stateless Configuration::
+
+    # {{ fdcf:1894:23b5:d38c:0000:0000:0000:0000 | slaac('c2:31:b3:83:bf:2b') }}
+    fdcf:1894:23b5:d38c:c031:b3ff:fe83:bf2b
+
 .. seealso::
 
 
