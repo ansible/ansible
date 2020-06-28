@@ -153,6 +153,8 @@ clean:
 	rm -f test/units/.coverage*
 	rm -rf test/results/*/*
 	find test/ -type f -name '*.retry' -delete
+	@echo "Cleaning up symlink cache"
+	rm -f SYMLINK_CACHE.json
 	@echo "Cleaning up Debian building stuff"
 	rm -rf debian
 	rm -rf deb-build
