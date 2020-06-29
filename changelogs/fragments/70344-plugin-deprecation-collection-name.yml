@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-doc - collection name for plugin top-level deprecation was not inserted when deprecating by version (https://github.com/ansible/ansible/pull/70344)."
