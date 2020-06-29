@@ -134,7 +134,7 @@ def wrap_var(v):
     elif isinstance(v, Set):
         return _wrap_set(v)
     elif isinstance(v, Mapping):
-        return_wrap_dict(v)
+        return _wrap_dict(v)
     elif is_sequence(v):
         return _wrap_sequence(v)
 

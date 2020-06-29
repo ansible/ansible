@@ -143,7 +143,7 @@ def test_unwrap_var():
     assert not isinstance(out['dict']['text'], AnsibleUnsafe)
     assert not isinstance(out['list'][0], AnsibleUnsafe)
     assert not isinstance(next(iter(out['set'])), AnsibleUnsafe)
-    assert isinstance(out['tuple'][0], AnsibleUnsafe)
+    assert not isinstance(out['tuple'][0], AnsibleUnsafe)
     assert not isinstance(out['unwrapped_text'], AnsibleUnsafe)
     assert not isinstance(out['unwrapped_non_ascii'], AnsibleUnsafe)
     assert not isinstance(out['unwrapped_bytes'], AnsibleUnsafe)
