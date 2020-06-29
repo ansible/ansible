@@ -153,15 +153,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             return True
         return False
 
-    def _configure_module(self, module_name, module_args, task_vars=None):
+    def _configure_module(self, module_name, module_args, task_vars):
         '''
         Handles the loading and templating of the module code through the
         modify_module() function.
         '''
-
-        if task_vars is None:
-            task_vars = {}
-
         if self._task.delegate_to:
             use_vars = task_vars.get('ansible_delegated_vars')[self._task.delegate_to]
         else:
