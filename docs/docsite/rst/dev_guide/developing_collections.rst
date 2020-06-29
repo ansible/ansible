@@ -651,6 +651,11 @@ To generate changelogs from the changelog fragments you created:
 #. Optionally, validate your changelog fragments: :code:`antsibull-changelog lint`.
 #. Generate the changelog for your release: :code:`antsibull-changelog release [--version version_number]`.
 
+.. note::
+
+  Add the  ``--reload-plugins`` option if you ran the ``antsibull-changelog release`` command previously and the version of the collection has not changed. ``antsibull-changelog`` caches the information on all plugins and does not update its cache until the collection version changes.  
+
+
 Porting Guide entries
 ----------------------
 
