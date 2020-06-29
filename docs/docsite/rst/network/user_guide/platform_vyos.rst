@@ -4,11 +4,12 @@
 VyOS Platform Options
 ***************************************
 
-This page offers details on connection options to manage VyOS using Ansible.
+The `VyOS <https://galaxy.ansible.com/vyos/vyos>`_ collection supports the ``network_cli`` connection type. This page offers details on connection options to manage VyOS using Ansible.
 
-.. contents:: Topics
+.. contents::
+  :local:
 
-Connections Available
+Connections available
 ================================================================================
 
 .. table::
@@ -35,7 +36,7 @@ Connections Available
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 
-For legacy playbooks, VyOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` as soon as possible.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: network_cli`` or ``ansible_connection: netconf`` as soon as possible.
 
 Using CLI in Ansible
 ====================
@@ -56,13 +57,13 @@ Example CLI ``group_vars/vyos.yml``
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
 
-Example CLI Task
+Example CLI task
 ----------------
 
 .. code-block:: yaml
 
    - name: Retrieve VyOS version info
-     vyos_command:
+     vyos.vyos.vyos_command:
        commands: show version
      when: ansible_network_os == 'vyos'
 

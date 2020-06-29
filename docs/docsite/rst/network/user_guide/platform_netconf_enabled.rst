@@ -6,9 +6,10 @@ Netconf enabled Platform Options
 
 This page offers details on how the netconf connection works in Ansible and how to use it.
 
-.. contents:: Topics
+.. contents::
+  :local:
 
-Connections Available
+Connections available
 ================================================================================
 .. table::
     :class: documentation-table
@@ -31,7 +32,7 @@ Connections Available
     ====================  ==========================================
 
 
-For legacy playbooks, Ansible still supports ``ansible_connection=local`` for the netconf_config module only. We recommend modernizing to use ``ansible_connection=netconf`` as soon as possible.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: netconf`` as soon as possible.
 
 Using NETCONF in Ansible
 ========================
@@ -51,7 +52,7 @@ For example set up your platform-level variables just like in the CLI example ab
 
    - name: Enable NETCONF
      connection: network_cli
-     junos_netconf:
+     junipernetworks.junos.junos_netconf:
      when: ansible_network_os == 'junos'
 
 Once NETCONF is enabled, change your variables to use the NETCONF connection.
@@ -68,23 +69,23 @@ Example NETCONF inventory ``[junos:vars]``
    ansible_password=!vault |
 
 
-Example NETCONF Task
+Example NETCONF task
 --------------------
 
 .. code-block:: yaml
 
    - name: Backup current switch config
-     netconf_config:
+     junipernetworks.junos.netconf_config:
        backup: yes
      register: backup_junos_location
 
-Example NETCONF Task with configurable variables
+Example NETCONF task with configurable variables
 ------------------------------------------------
 
 .. code-block:: yaml
 
    - name: configure interface while providing different private key file path
-     netconf_config:
+     junipernetworks.junos.netconf_config:
        backup: yes
      register: backup_junos_location
      vars:
@@ -92,7 +93,7 @@ Example NETCONF Task with configurable variables
 
 Note: For netconf connection plugin configurable variables see :ref:`netconf <netconf_connection>`.
 
-Bastion/Jumphost Configuration
+Bastion/Jumphost configuration
 ------------------------------
 To use a jump host to connect to a NETCONF enabled device you must set the ``ANSIBLE_NETCONF_SSH_CONFIG`` environment variable.
 

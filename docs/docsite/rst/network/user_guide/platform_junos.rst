@@ -4,11 +4,12 @@
 Junos OS Platform Options
 ***************************************
 
-Juniper Junos OS supports multiple connections. This page offers details on how each connection works in Ansible and how to use it.
+The `Juniper Junos OS <https://galaxy.ansible.com/junipernetworks/junos>`_ supports multiple connections. This page offers details on how each connection works in Ansible and how to use it.
 
-.. contents:: Topics
+.. contents::
+  :local:
 
-Connections Available
+Connections available
 ================================================================================
 
 .. table::
@@ -40,7 +41,7 @@ Connections Available
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 
-For legacy playbooks, Ansible still supports ``ansible_connection=local`` on all JUNOS modules. We recommend modernizing to use ``ansible_connection=netconf`` or ``ansible_connection=network_cli`` as soon as possible.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: network_cli`` or ``ansible_connection: netconf`` as soon as possible.
 
 Using CLI in Ansible
 ====================
@@ -62,13 +63,13 @@ Example CLI inventory ``[junos:vars]``
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
 
-Example CLI Task
+Example CLI task
 ----------------
 
 .. code-block:: yaml
 
    - name: Retrieve Junos OS version
-     junos_command:
+     junipernetworks.junos.junos_command:
        commands: show version
      when: ansible_network_os == 'junos'
 
@@ -90,7 +91,7 @@ To enable NETCONF on a new switch via Ansible, use the ``junos_netconf`` module 
 
    - name: Enable NETCONF
      connection: network_cli
-     junos_netconf:
+     junipernetworks.junos.junos_netconf:
      when: ansible_network_os == 'junos'
 
 Once NETCONF is enabled, change your variables to use the NETCONF connection.
@@ -108,13 +109,13 @@ Example NETCONF inventory ``[junos:vars]``
    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
 
 
-Example NETCONF Task
+Example NETCONF task
 --------------------
 
 .. code-block:: yaml
 
    - name: Backup current switch config (junos)
-     junos_config:
+     junipernetworks.junos.junos_config:
        backup: yes
      register: backup_junos_location
      when: ansible_network_os == 'junos'

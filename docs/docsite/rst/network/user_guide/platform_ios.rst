@@ -4,11 +4,12 @@
 IOS Platform Options
 ***************************************
 
-IOS supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IOS in Ansible.
+The `Cisco IOS <https://galaxy.ansible.com/cisco/ios>`_ collection supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IOS in Ansible.
 
-.. contents:: Topics
+.. contents::
+  :local:
 
-Connections Available
+Connections available
 ================================================================================
 
 .. table::
@@ -36,7 +37,7 @@ Connections Available
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 
-For legacy playbooks, IOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` as soon as possible.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: network_cli`` as soon as possible.
 
 Using CLI in Ansible
 ====================
@@ -60,13 +61,13 @@ Example CLI ``group_vars/ios.yml``
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
 
-Example CLI Task
+Example CLI task
 ----------------
 
 .. code-block:: yaml
 
    - name: Backup current switch config (ios)
-     ios_config:
+     cisco.ios.ios_config:
        backup: yes
      register: backup_ios_location
      when: ansible_network_os == 'ios'
