@@ -893,7 +893,6 @@
 
 - name: install sos and bc as comma separated
   yum: name=sos,bc state=present
-  register: yum_result
 
 - name: reinstall sos and bc as comma separated
   yum: name=sos,bc state=reinstalled

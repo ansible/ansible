@@ -1753,6 +1753,7 @@ def main():
     #   list=pkgspec
 
     yumdnf_argument_spec['argument_spec']['use_backend'] = dict(default='auto', choices=['auto', 'yum', 'yum4', 'dnf'])
+    yumdnf_argument_spec['argument_spec']['state'] = dict(type='str', default=None, choices=['absent', 'installed', 'latest', 'present', 'removed', 'reinstalled'])
 
     module = AnsibleModule(
         **yumdnf_argument_spec
