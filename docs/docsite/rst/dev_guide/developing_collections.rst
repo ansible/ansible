@@ -633,6 +633,9 @@ The ``antsibull-changelog`` tool allows you to create and update changelogs for 
 
 See :ref:`changelogs_how_to` and the `antsibull-changelog documentation <https://github.com/ansible-community/antsibull-changelog/tree/main/docs>`_ for complete details.
 
+.. note::
+
+	The collection maintainers set the changelog policy for their collections. See the individual collection contributing guidelines for complete details.
 
 Generating changelogs
 ---------------------
