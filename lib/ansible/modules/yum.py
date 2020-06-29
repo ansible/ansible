@@ -51,13 +51,14 @@ options:
       - This parameter is mutually exclusive with C(name).
   state:
     description:
-      - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
+      - Whether to install (C(present) or C(installed), C(latest)), remove (C(absent) or C(removed)) a package or reinstall (C(reinstalled)) a package.
       - C(present) and C(installed) will simply ensure that a desired package is installed.
       - C(latest) will update the specified package if it's not of the latest available version.
       - C(absent) and C(removed) will remove the specified package.
+      - C(reinstalled) will reinstall the specified package.
       - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
         enabled for this module, then C(absent) is inferred.
-    choices: [ absent, installed, latest, present, removed ]
+    choices: [ absent, installed, latest, present, removed, reinstalled ]
   enablerepo:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.
@@ -1185,6 +1186,71 @@ class YumModule(YumDnf):
 
         return res
 
+    def reinstall(self, items, repoq):
+
+        pkgs = []
+        res = {}
+        res['results'] = []
+        res['msg'] = ''
+        res['changed'] = False
+        res['rc'] = 0
+
+        for pkg in items:
+            if pkg.endswith('.rpm') or '://' in pkg:
+                if '://' not in pkg and not os.path.exists(pkg):
+                    res['msg'] += "No RPM file matching '%s' found on system" % pkg
+                    res['results'].append("No RPM file matching '%s' found on system" % pkg)
+                    res['rc'] = 127  # Ensure the task fails in with-loop
+                    self.module.fail_json(**res)
+
+                if '://' in pkg:
+                    with self.set_env_proxy():
+                        package = fetch_file(self.module, pkg)
+                        if not package.endswith('.rpm'):
+                            # yum requires a local file to have the extension of .rpm and we
+                            # can not guarantee that from an URL (redirects, proxies, etc)
+                            new_package_path = '%s.rpm' % package
+                            os.rename(package, new_package_path)
+                            package = new_package_path
+                else:
+                    package = pkg
+
+                # most common case is the pkg is already installed
+                envra = self.local_envra(package)
+                if envra is None:
+                    self.module.fail_json(msg="Failed to get nevra information from RPM package: %s" % pkg)
+                installed = self.is_installed(repoq, envra)
+            elif pkg.startswith('@'):
+                installed = self.is_group_env_installed(pkg)
+            else:
+                installed = self.is_installed(repoq, pkg, is_pkg=True)
+
+            if installed:
+                pkgs.append(pkg)
+            else:
+                res['results'].append('%s is not installed' % pkg)
+
+        if pkgs:
+            if self.module.check_mode:
+                self.module.exit_json(changed=True, results=res['results'], changes=dict(reinstalled=pkgs))
+            else:
+                res['changes'] = dict(reinstalled=pkgs)
+
+            # run an actual yum transaction
+            cmd = self.yum_basecmd + ["reinstall"] + pkgs
+            rc, out, err = self.module.run_command(cmd)
+
+            res['rc'] = rc
+            res['results'].append(out)
+            res['msg'] = err
+
+            if rc != 0:
+                self.module.fail_json(**res)
+
+            res['changed'] = True
+
+        return res
+
     def run_check_update(self):
         # run check-update to see if we have packages pending
         if self.releasever:
@@ -1555,6 +1621,8 @@ class YumModule(YumDnf):
             res = self.install(pkgs, repoq)
         elif self.state in ('removed', 'absent'):
             res = self.remove(pkgs, repoq)
+        elif self.state == 'reinstalled':
+            res = self.reinstall(pkgs, repoq)
         else:
             # should be caught by AnsibleModule argument_spec
             self.module.fail_json(

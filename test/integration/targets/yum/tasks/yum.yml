@@ -866,3 +866,78 @@
           - remove is changed
           - "'toaster-1.2.3.4' not in rpmqa.stdout"
           - "'test-package-that-provides-toaster' in rpmqa.stdout"
+
+# REINSTALL
+- name: install sos
+  yum: name=sos state=present
+
+- name: reinstall sos in check mode
+  yum: name=sos state=reinstalled
+  check_mode: true
+  register: yum_result
+
+- name: verify reinstallation of sos in check mode
+  assert:
+    that:
+      - "yum_result is changed"
+
+- name: reinstall sos
+  yum: name=sos state=reinstalled
+  register: yum_result
+
+- name: verify installation of sos
+  assert:
+    that:
+      - "yum_result is success"
+      - "yum_result is changed"
+
+- name: install sos and bc as comma separated
+  yum: name=sos,bc state=present
+  register: yum_result
+
+- name: reinstall sos and bc as comma separated
+  yum: name=sos,bc state=reinstalled
+  register: yum_result
+
+- name: verify packages reinstalled
+  assert:
+    that:
+      - "yum_result is success"
+      - "yum_result is changed"
+
+- name: check sos with rpm
+  shell: rpm -q sos
+
+- name: check bc with rpm
+  shell: rpm -q bc
+
+- name: reinstall sos and bc as list
+  yum:
+    name:
+      - sos
+      - bc
+    state: reinstalled
+  register: yum_result
+
+- name: verify packages installed
+  assert:
+    that:
+      - "yum_result is success"
+      - "yum_result is changed"
+
+- name: check sos with rpm
+  shell: rpm -q sos
+
+- name: check bc with rpm
+  shell: rpm -q bc
+
+- name: reinstall non-existent rpm
+  yum:
+    name: does-not-exist
+  register: non_existent_rpm
+  ignore_errors: True
+
+- name: check non-existent rpm reinstall failed
+  assert:
+    that:
+      - non_existent_rpm is failed
