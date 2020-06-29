@@ -266,7 +266,7 @@ warnings:
     description: List of warnings if requested features were not available due to a too old git version.
     returned: error
     type: str
-    sample: Your git version is too old to fully support the depth argument. Falling back to full checkouts.
+    sample: git version is too old to fully support the depth argument. Falling back to full checkouts.
 git_dir_now:
     description: Contains the new path of .git directory if it's changed
     returned: success
@@ -499,7 +499,7 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
             module.fail_json(msg='Cannot find git executable at %s' % git_path)
 
         if git_version_used < LooseVersion('1.7.10'):
-            module.warn("The git version '%s' is too old to use 'single-branch'" % git_version_used)
+            module.warn("git version '%s' is too old to use 'single-branch'. Ignoring." % git_version_used)
         else:
             cmd.append("--single-branch")
 
@@ -1183,7 +1183,7 @@ def main():
     git_version_used = git_version(git_path, module)
 
     if depth is not None and git_version_used < LooseVersion('1.9.1'):
-        result['warnings'].append("Your git version is too old to fully support the depth argument. Falling back to full checkouts.")
+        module.warn("git version is too old to fully support the depth argument. Falling back to full checkouts.")
         depth = None
 
     recursive = module.params['recursive']
