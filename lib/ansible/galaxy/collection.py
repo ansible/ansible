@@ -251,6 +251,8 @@ class CollectionRequirement:
         else:
             self.install_scm(b_collection_path)
 
+        display.display("%s (%s) was installed successfully" % (to_text(self), self.latest_version))
+
     def install_artifact(self, b_collection_path, b_temp_path):
 
         try:
@@ -604,6 +606,7 @@ def download_collections(collections, output_path, apis, validate_certs, no_deps
                 display.display("Downloading collection '%s' to '%s'" % (name, dest_path))
                 b_temp_download_path = requirement.download(b_temp_path)
                 shutil.move(b_temp_download_path, to_bytes(dest_path, errors='surrogate_or_strict'))
+                display.display("%s (%s) was downloaded successfully" % (name, requirement.latest_version))
 
             requirements_path = os.path.join(output_path, 'requirements.yml')
             display.display("Writing requirements.yml file of downloaded collections to '%s'" % requirements_path)
@@ -1366,7 +1369,7 @@ def _download_file(url, b_path, expected_hash, validate_certs, headers=None):
     b_file_ext = to_bytes(urlsplit[1], errors='surrogate_or_strict')
     b_file_path = tempfile.NamedTemporaryFile(dir=b_path, prefix=b_file_name, suffix=b_file_ext, delete=False).name
 
-    display.vvv("Downloading %s to %s" % (url, to_text(b_path)))
+    display.display("Downloading %s to %s" % (url, to_text(b_path)))
     # Galaxy redirs downloads to S3 which reject the request if an Authorization header is attached so don't redir that
     resp = open_url(to_native(url, errors='surrogate_or_strict'), validate_certs=validate_certs, headers=headers,
                     unredirected_headers=['Authorization'], http_agent=user_agent())
