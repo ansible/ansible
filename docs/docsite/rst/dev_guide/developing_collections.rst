@@ -624,12 +624,12 @@ We recommend that you use the `antsibull-changelog <https://github.com/ansible-c
 
 	Ansible here refers to the Ansible 2.10 or later release that includes a curated set of collections.
 
-If your collection is part of Ansible but you are not using this tool, your collection should include the properly formatted ``changelog.yaml`` file or your changelogs will not be part of the combined Ansible CHANGELOG.rst and porting guide at release.  See the `changlog.yaml format <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelog.yaml-format.md>`_ for details.
+If your collection is part of Ansible but you are not using this tool, your collection should include the properly formatted ``changelog.yaml`` file or your changelogs will not be part of the combined Ansible CHANGELOG.rst and Porting Guide at release.  See the `changlog.yaml format <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelog.yaml-format.md>`_ for details.
 
 Understanding antsibull-changelog
 ---------------------------------
 
-The ``antsibull-changelog`` tool allows you to create and update changelogs for Ansible collections that are compatible with the combined Ansible changelogs. This is an update to the changelog generator used in prior Ansible releases. The tool adds three new changelog fragment categories: ``breaking_changes``, ``security_fixes`` and ``trivial``. The tool also generates the ``changelog.yaml`` file that Ansible uses to create the combined ``CHANGELOG.rst`` file and Porting guide for the release.
+The ``antsibull-changelog`` tool allows you to create and update changelogs for Ansible collections that are compatible with the combined Ansible changelogs. This is an update to the changelog generator used in prior Ansible releases. The tool adds three new changelog fragment categories: ``breaking_changes``, ``security_fixes`` and ``trivial``. The tool also generates the ``changelog.yaml`` file that Ansible uses to create the combined ``CHANGELOG.rst`` file and Porting Guide for the release.
 
 See :ref:`changelogs_how_to` and the `antsibull-changelog documentation <https://github.com/ansible-community/antsibull-changelog/tree/main/docs>`_ for complete details.
 
