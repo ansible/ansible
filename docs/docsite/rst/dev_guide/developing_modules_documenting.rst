@@ -193,6 +193,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :seealso:
 
   * A list of references to other modules, documentation or Internet resources
+  * In Ansible 2.10 and later, references to modules must use  the FQCN or ``ansible.builtin`` for modules in ``ansible-base``.
   * A reference can be one of the following formats:
 
 
@@ -201,10 +202,10 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
         seealso:
 
         # Reference by module name
-        - module: aci_tenant
+        - module: cisco.aci.aci_tenant
 
         # Reference by module name, including description
-        - module: aci_tenant
+        - module: cisco.aci.aci_tenant
           description: ACI module to create tenants on a Cisco ACI fabric.
 
         # Reference by rST documentation anchor
@@ -232,18 +233,23 @@ You can link from your module documentation to other module docs, other resource
 * ``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See R(Cisco IOS Platform Guide,ios_platform_options)``.  Use the RST anchor for the cross-reference. See :ref:`adding_anchors_rst` for details.
 * ``I()`` for option names. For example: ``Required if I(state=present).``
 * ``C()`` for files and option values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.``
-* ``M()`` for module names. For example: ``See also M(win_copy) or M(win_template).``
+* ``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``.
 
 .. note::
 
-  For links between modules and documentation within a collection, you can use any of the options above. For links outside of your collection, use ``R()`` if available. Otherwise, use ``U()`` or ``L()`` with full URLs (not relative links). If you are creating your own documentation site, you will need to use the `intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ to convert ``R()`` and ``M()`` to the correct links.
+  For links between modules and documentation within a collection, you can use any of the options above. For links outside of your collection, use ``R()`` if available. Otherwise, use ``U()`` or ``L()`` with full URLs (not relative links). For modules, use ``M()`` with the FQCN or ``ansible.builtin`` as shown in the example. If you are creating your own documentation site, you will need to use the `intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ to convert ``R()`` and ``M()`` to the correct links.
 
+
+.. note::
+    - To refer to a group of modules in a collection, use ``R()``.  When a collection is not the right granularity, use ``C(..)``:
+
+        -``Refer to the R(community.kubernetes collection, plugins_in_community.kubernetes) for information on managing kubernetes clusters.``
+        -``The C(win_*) modules (spread across several collections) allow you to manage various aspects of windows hosts.``
 
 
 .. note::
 
-    - To refer a group of modules, use ``C(..)``, e.g. ``Refer to the C(win_*) modules.``
-    - Because it stands out better, using ``seealso`` is preferred for general references over the use of notes or adding links to the description.
+   Because it stands out better, use ``seealso`` for general references over the use of notes or adding links to the description.
 
 .. _module_docs_fragments:
 
