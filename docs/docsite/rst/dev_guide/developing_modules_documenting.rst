@@ -240,11 +240,16 @@ You can link from your module documentation to other module docs, other resource
   For links between modules and documentation within a collection, you can use any of the options above. For links outside of your collection, use ``R()`` if available. Otherwise, use ``U()`` or ``L()`` with full URLs (not relative links). For modules, use ``M()`` with the FQCN or ``ansible.builtin`` as shown in the example. If you are creating your own documentation site, you will need to use the `intersphinx extension <https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html>`_ to convert ``R()`` and ``M()`` to the correct links.
 
 
+.. note::
+    - To refer to a group of modules in a collection, use ``R()``.  When a collection is not the right granularity, use ``C(..)``:
+
+        -``Refer to the R(community.kubernetes collection, plugins_in_community.kubernetes) for information on managing kubernetes clusters.``
+        -``The C(win_*) modules (spread across several collections) allow you to manage various aspects of windows hosts.``
+
 
 .. note::
 
-    - To refer a group of modules, use ``C(..)``, e.g. ``Refer to the C(win_*) modules.``
-    - Because it stands out better, using ``seealso`` is preferred for general references over the use of notes or adding links to the description.
+   Because it stands out better, use ``seealso`` for general references over the use of notes or adding links to the description.
 
 .. _module_docs_fragments:
 
