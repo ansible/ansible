@@ -904,7 +904,8 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
         py_module_file_name = '%s.py' % py_module_path
 
         zf.writestr(py_module_file_name, py_module_cache[py_module_name][0])
-        display.vvvvv("Using module_utils file %s" % py_module_cache[py_module_name][1])
+        mu_file = to_text(py_module_cache[py_module_name][1], errors='surrogate_or_strict')
+        display.vvvvv("Using module_utils file %s" % mu_file)
 
     # Add the names of the files we're scheduling to examine in the loop to
     # py_module_names so that we don't re-examine them in the next pass
