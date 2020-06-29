@@ -340,4 +340,6 @@ class Play(Base, Taggable, CollectionSearch):
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
         new_me._included_conditional = self._included_conditional
         new_me._included_path = self._included_path
+        new_me.only_tags = self.only_tags
+        new_me.skip_tags = self.skip_tags
         return new_me
