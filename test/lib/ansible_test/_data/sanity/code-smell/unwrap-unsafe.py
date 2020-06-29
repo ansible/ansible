@@ -13,11 +13,12 @@ WHITELIST = {
     'lib/ansible/utils/unsafe_proxy.py': 4,
 }
 
+
 def main():
     for path in sys.argv[1:] or sys.stdin.read().splitlines():
         found = 0
         with open(path, 'r') as f:
-            for i, line in enumerate(f.readlines()):
+            for line in f.readlines():
                 matches = UNWRAP_RE.findall(line)
                 if matches:
                     found += 1
