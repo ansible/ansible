@@ -728,6 +728,12 @@ class KaliHostname(Hostname):
     strategy_class = DebianStrategy
 
 
+class ParrotHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Parrot'
+    strategy_class = DebianStrategy
+
+
 class UbuntuHostname(Hostname):
     platform = 'Linux'
     distribution = 'Ubuntu'
