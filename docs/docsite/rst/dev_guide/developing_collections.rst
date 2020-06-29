@@ -642,6 +642,8 @@ To initialize changelog generation:
 #. Install ``antsibull-changelog``: :code:`pip install antsibull-changelog`.
 #. Initialize changelogs for your repository: :code:`antsibull-changelog init <path/to/your/collection>`.
 
+To customize the location of the generated changelog ``.rst`` file, or other options, you need to edit the ``changelogs/config.yaml`` file. See `antsibull-changelog documentation <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst#bootstrapping-changelogs-for-collections>`_ for an overview of the most relevant settings.
+
 To generate changelogs from the changelog fragments you created:
 
 #. Optionally, validate your changelog fragments: :code:`antsibull-changelog lint`.
