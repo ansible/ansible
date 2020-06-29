@@ -1,0 +1,25 @@
+{
+    "name": "Parrot 4.8",
+    "input": {
+        "/etc/os-release": "PRETTY_NAME=\"Parrot GNU/Linux 4.8\"\nNAME=\"Parrot GNU/Linux\"\nID=parrot\nVERSION=\"4.8\"\nVERSION_ID=\"4.8\"\nID_LIKE=debian\nHOME_URL=\"https://www.parrotlinux.org/\"\nSUPPORT_URL=\"https://community.parrotlinux.org/\"\nBUG_REPORT_URL=\"https://nest.parrot.sh/\"\n",
+        "/etc/lsb-release": "DISTRIB_ID=Parrot\nDISTRIB_RELEASE=4.8\nDISTRIB_CODENAME=rolling\nDISTRIB_DESCRIPTION=\"Parrot 4.8\"\n",
+        "/usr/lib/os-release": "PRETTY_NAME=\"Parrot GNU/Linux 4.8\"\nNAME=\"Parrot GNU/Linux\"\nID=parrot\nVERSION=\"4.8\"\nVERSION_ID=\"4.8\"\nID_LIKE=debian\nHOME_URL=\"https://www.parrotlinux.org/\"\nSUPPORT_URL=\"https://community.parrotlinux.org/\"\nBUG_REPORT_URL=\"https://nest.parrot.sh/\"\n"
+    },
+    "platform.dist": ["parrot", "4.8", ""],
+    "distro": {
+        "codename": "rolling",
+        "id": "parrot",
+        "name": "Parrot GNU/Linux",
+        "version": "4.8",
+        "version_best": "4.8",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "Parrot",
+        "distribution_version": "4.8",
+        "distribution_release": "rolling",
+        "distribution_major_version": "4",
+        "os_family": "Debian"
+    }
+}

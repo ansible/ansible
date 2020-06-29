@@ -321,9 +321,12 @@ class DistributionFiles:
         elif 'SteamOS' in data:
             debian_facts['distribution'] = 'SteamOS'
             # nothing else to do, SteamOS gets correct info from python functions
-        elif path in ('/etc/lsb-release', '/etc/os-release') and 'Kali' in data:
-            # Kali does not provide /etc/lsb-release anymore
-            debian_facts['distribution'] = 'Kali'
+        elif path in ('/etc/lsb-release', '/etc/os-release') and ('Kali' in data or 'Parrot' in data):
+            if 'Kali' in data:
+                # Kali does not provide /etc/lsb-release anymore
+                debian_facts['distribution'] = 'Kali'
+            elif 'Parrot' in data:
+                debian_facts['distribution'] = 'Parrot'
             release = re.search('DISTRIB_RELEASE=(.*)', data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
@@ -488,7 +491,7 @@ class Distribution(object):
                                 'EulerOS', 'openEuler'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
-                                'Pop!_OS', ],
+                                'Pop!_OS', 'Parrot'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
