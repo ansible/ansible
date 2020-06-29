@@ -4,14 +4,16 @@
 
 - assert:
     that:
-      - command.stdout_lines | length == 7
+      - command.stdout_lines | length == 9
       - command.stdout_lines[0] == "Starting galaxy collection install process"
       - command.stdout_lines[1] == "Process install dependency map"
       - command.stdout_lines[2] == "Starting collection install process"
       - "'namespace_1.collection_1' in command.stdout_lines[3]"
       - "'namespace_1.collection_1' in command.stdout_lines[4]"
-      - "'namespace_2.collection_2' in command.stdout_lines[5]"
+      - "'namespace_1.collection_1' in command.stdout_lines[5]"
       - "'namespace_2.collection_2' in command.stdout_lines[6]"
+      - "'namespace_2.collection_2' in command.stdout_lines[7]"
+      - "'namespace_2.collection_2' in command.stdout_lines[8]"
 
 - name: list installed collections
   command: 'ansible-galaxy collection list'
@@ -28,14 +30,16 @@
 
 - assert:
     that:
-      - command.stdout_lines | length == 7
+      - command.stdout_lines | length == 9
       - command.stdout_lines[0] == "Starting galaxy collection install process"
       - command.stdout_lines[1] == "Process install dependency map"
       - command.stdout_lines[2] == "Starting collection install process"
       - "'namespace_1.collection_1' in command.stdout_lines[3]"
       - "'namespace_1.collection_1' in command.stdout_lines[4]"
-      - "'namespace_2.collection_2' in command.stdout_lines[5]"
+      - "'namespace_1.collection_1' in command.stdout_lines[5]"
       - "'namespace_2.collection_2' in command.stdout_lines[6]"
+      - "'namespace_2.collection_2' in command.stdout_lines[7]"
+      - "'namespace_2.collection_2' in command.stdout_lines[8]"
 
 - name: list installed collections
   command: 'ansible-galaxy collection list'
