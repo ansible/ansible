@@ -77,7 +77,7 @@ Working groups are a way for Ansible community members to self-organize around p
 Teach Ansible to others
 =======================
 
-We're working on a standardized Ansible workshop called `Lightbulb <https://github.com/ansible/lightbulb>`_ that can provide a good hands-on introduction to Ansible usage and concepts.
+We're working on a standardized `Ansible workshop <https://ansible.github.io/workshops/>`_ that can provide a good hands-on introduction to Ansible usage and concepts.
 
 Social media
 ============
