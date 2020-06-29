@@ -465,7 +465,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
 
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch):
+          reference, refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -495,16 +495,21 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
         cmd.extend(['--reference', str(reference)])
 
     if single_branch:
-        cmd.append("--single-branch")
+        if git_version_used is None:
+            module.fail_json(msg='Cannot find git executable at %s' % git_path)
 
-        if is_branch_or_tag:
-            cmd.extend(['--branch', version])
+        if git_version_used < LooseVersion('1.7.10'):
+            module.warn("The git version '%s' is too old to use 'single-branch'" % git_version_used)
+        else:
+            cmd.append("--single-branch")
+
+            if is_branch_or_tag:
+                cmd.extend(['--branch', version])
 
     needs_separate_git_dir_fallback = False
     if separate_git_dir:
-        git_version_used = git_version(git_path, module)
         if git_version_used is None:
-            module.fail_json(msg='Can not find git executable at %s' % git_path)
+            module.fail_json(msg='Cannot find git executable at %s' % git_path)
         if git_version_used < LooseVersion('1.7.5'):
             # git before 1.7.5 doesn't have separate-git-dir argument, do fallback
             needs_separate_git_dir_fallback = True
@@ -1202,7 +1207,7 @@ def main():
             module.exit_json(**result)
         # there's no git config, so clone
         clone(git_path, module, repo, dest, remote, depth, version, bare, reference,
-              refspec, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch)
+              refspec, git_version_used, verify_commit, separate_git_dir, result, gpg_whitelist, single_branch)
     elif not update:
         # Just return having found a repo already in the dest path
         # this does no checking that the repo is the actual repo

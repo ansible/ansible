@@ -24,13 +24,22 @@
   args:
     chdir: '{{ checkout_dir }}'
   register: rev_list1
+  when: git_version.stdout is version(git_version_supporting_single_branch, '>=')
 
-- name: SINGLE_BRANCH | Ensure single_branch did the right thing
+- name: SINGLE_BRANCH | Ensure single_branch did the right thing with git >= {{ git_version_supporting_single_branch }}
   assert:
     that:
       - single_branch_1 is changed
       - single_branch_2 is not changed
-      - rev_list1.stdout == '3'
+  when: git_version.stdout is version(git_version_supporting_single_branch, '>=')
+
+- name: SINGLE_BRANCH | Ensure single_branch did the right thing with git < {{ git_version_supporting_single_branch }}
+  assert:
+    that:
+      - single_branch_1 is changed
+      - single_branch_1.warnings | length == 1
+      - single_branch_2 is not changed
+  when: git_version.stdout is version(git_version_supporting_single_branch, '<')
 
 
 - name: SINGLE_BRANCH | clear checkout_dir
@@ -59,10 +68,20 @@
   args:
     chdir: '{{ checkout_dir }}'
   register: rev_list2
+  when: git_version.stdout is version(git_version_supporting_single_branch, '>=')
 
-- name: SINGLE_BRANCH | Ensure single_branch did the right thing
+- name: SINGLE_BRANCH | Ensure single_branch did the right thing with git >= {{ git_version_supporting_single_branch }}
   assert:
     that:
       - single_branch_3 is changed
       - single_branch_4 is not changed
       - rev_list2.stdout == '1'
+  when: git_version.stdout is version(git_version_supporting_single_branch, '>=')
+
+- name: SINGLE_BRANCH | Ensure single_branch did the right thing with git < {{ git_version_supporting_single_branch }}
+  assert:
+    that:
+      - single_branch_3 is changed
+      - single_branch_3.warnings | length == 1
+      - single_branch_4 is not changed
+  when: git_version.stdout is version(git_version_supporting_single_branch, '<')
