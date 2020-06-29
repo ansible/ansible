@@ -16,25 +16,26 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- include_tasks: setup.yml
-- include_tasks: setup-local-repos.yml
+- import_tasks: setup.yml
+- import_tasks: setup-local-repos.yml
 
-- include_tasks: formats.yml
-- include_tasks: missing_hostkey.yml
-- include_tasks: no-destination.yml
-- include_tasks: specific-revision.yml
-- include_tasks: submodules.yml
-- include_tasks: change-repo-url.yml
-- include_tasks: depth.yml
-- include_tasks: checkout-new-tag.yml
+- import_tasks: formats.yml
+- import_tasks: missing_hostkey.yml
+- import_tasks: no-destination.yml
+- import_tasks: specific-revision.yml
+- import_tasks: submodules.yml
+- import_tasks: change-repo-url.yml
+- import_tasks: depth.yml
+- import_tasks: single-branch.yml
+- import_tasks: checkout-new-tag.yml
 - include_tasks: gpg-verification.yml
   when:
     - not gpg_version.stderr
     - gpg_version.stdout
     - git_version.stdout is version("2.1.0", '>=')
-- include_tasks: localmods.yml
-- include_tasks: reset-origin.yml
-- include_tasks: ambiguous-ref.yml
-- include_tasks: archive.yml
-- include_tasks: separate-git-dir.yml
-- include_tasks: forcefully-fetch-tag.yml
+- import_tasks: localmods.yml
+- import_tasks: reset-origin.yml
+- import_tasks: ambiguous-ref.yml
+- import_tasks: archive.yml
+- import_tasks: separate-git-dir.yml
+- import_tasks: forcefully-fetch-tag.yml
