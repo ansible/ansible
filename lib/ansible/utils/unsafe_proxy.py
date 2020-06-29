@@ -148,7 +148,7 @@ def to_unsafe_bytes(*args, **kwargs):
 
 def to_unsafe_text(*args, **kwargs):
     """Convert a value to text, and wrap with ``AnsibleUnsafeText``"""
-    return wrap_var(to_text(*args, **kwargs))
+    return AnsibleUnsafeText(to_text(*args, **kwargs))
 
 
 def unwrap_var(v):
