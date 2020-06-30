@@ -502,10 +502,18 @@ class GalaxyCLI(CLI):
     def api(self):
         if self._api:
             return self._api
+
         for server in self.api_servers:
-            if u'v1' in server.available_api_versions:
-                self._api = server
-                break
+            try:
+                if u'v1' in server.available_api_versions:
+                    self._api = server
+                    break
+            except Exception:
+                continue
+
+        if not self._api:
+            self._api = self.api_servers[0]
+
         return self._api
 
     def _get_default_collection_path(self):
