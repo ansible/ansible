@@ -1,5 +1,5 @@
 cloud/azure
-shippable/azure/group10
+unsupported
 destructive
 azure_rm_virtualmachinescaleset_facts
 azure_rm_virtualmachinescalesetinstance_facts
