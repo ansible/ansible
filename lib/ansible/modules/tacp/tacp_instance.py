@@ -409,10 +409,13 @@ def add_vnic_to_instance(playbook_vnic, instance):
 
     response = RESOURCES['update_app'].create_vnic(body=network_payload,
                                                    uuid=instance.uuid)
-    response_body = json.loads(response.body)
 
-    if "Invalid Request" in response_body['code']:
-        fail_and_rollback_instance_creation(response_body['message'], instance)
+    if hasattr(response, 'body'):
+        response_body = json.loads(response.body)
+
+        if "Invalid Request" in response_body['code']:
+            fail_and_rollback_instance_creation(response_body['message'],
+                                                instance)
 
 
 def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
@@ -576,9 +579,13 @@ def add_disk_to_instance(playbook_disk, instance):
 
     response = RESOURCES['update_app'].create_disk(body=disk_payload,
                                                    uuid=instance.uuid)
-    response_body = json.loads(response_body)
-    if "Invalid Request" in response_body['code']:
-        fail_and_rollback_instance_creation(response_body['message'], instance)
+
+    if hasattr(response, 'body'):
+        response_body = json.loads(response_body)
+
+        if "Invalid Request" in response_body['code']:
+            fail_and_rollback_instance_creation(response_body['message'],
+                                                instance)
 
 
 def get_disk_payload(playbook_disk):
