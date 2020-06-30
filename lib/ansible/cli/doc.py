@@ -513,7 +513,8 @@ class DocCLI(CLI):
     def add_fields(text, fields, limit, opt_indent, return_values=False, base_indent=''):
 
         for o in sorted(fields):
-            opt = fields[o]
+            # Create a copy so we don't modify the original (in case YAML anchors have been used)
+            opt = dict(fields[o])
 
             required = opt.pop('required', False)
             if not isinstance(required, bool):
@@ -562,7 +563,8 @@ class DocCLI(CLI):
             conf = {}
             for config in ('env', 'ini', 'yaml', 'vars', 'keywords'):
                 if config in opt and opt[config]:
-                    conf[config] = opt.pop(config)
+                    # Create a copy so we don't modify the original (in case YAML anchors have been used)
+                    conf[config] = [dict(item) for item in opt.pop(config)]
                     for ignore in DocCLI.IGNORE:
                         for item in conf[config]:
                             if ignore in item:
@@ -593,6 +595,8 @@ class DocCLI(CLI):
 
     @staticmethod
     def get_man_text(doc):
+        # Create a copy so we don't modify the original
+        doc = dict(doc)
 
         DocCLI.IGNORE = DocCLI.IGNORE + (context.CLIARGS['type'],)
         opt_indent = "        "
