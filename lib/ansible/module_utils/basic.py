@@ -1886,7 +1886,9 @@ class AnsibleModule(object):
                 syslog.syslog(syslog.LOG_INFO, msg)
             except TypeError as e:
                 self.fail_json(
-                    msg='Failed to log to syslog: %s' % to_native(e),
+                    msg='Failed to log to syslog (%s). To proceed anyway, ' \
+                        'disable syslog logging by setting no_target_syslog ' \
+                        'to True in your Ansible config.' % to_native(e),
                     exception=traceback.format_exc(),
                     msg_to_log=msg,
                 )
