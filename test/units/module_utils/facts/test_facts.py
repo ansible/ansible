@@ -267,7 +267,7 @@ LSBLK_UUIDS = {'/dev/sda1': '66Ojcd-ULtu-1cZa-Tywo-mx0d-RF4O-ysA9jK'}
 
 UDEVADM_UUID = 'N/A'
 
-MTAB = """
+MTAB = r"""
 sysfs /sys sysfs rw,seclabel,nosuid,nodev,noexec,relatime 0 0
 proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
 devtmpfs /dev devtmpfs rw,seclabel,nosuid,size=8044400k,nr_inodes=2011100,mode=755 0 0
@@ -306,6 +306,7 @@ grimlock.g.a: /home/adrian/sshfs-grimlock fuse.sshfs rw,nosuid,nodev,relatime,us
 grimlock.g.a:test_path/path_with'single_quotes /home/adrian/sshfs-grimlock-single-quote fuse.sshfs rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0
 grimlock.g.a:path_with'single_quotes /home/adrian/sshfs-grimlock-single-quote-2 fuse.sshfs rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0
 grimlock.g.a:/mnt/data/foto's /home/adrian/fotos fuse.sshfs rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0
+\\Windows\share /data/ cifs credentials=/root/.creds 0 0
 """
 
 MTAB_ENTRIES = [
@@ -518,6 +519,7 @@ MTAB_ENTRIES = [
     # Mount path with space in the name
     # The space is encoded as \040 since the fields in /etc/mtab are space-delimeted
     ['/dev/sdz9', r'/mnt/foo\040bar', 'ext4', 'rw,relatime', '0', '0'],
+    ['\\\\Windows\\share', '/data/', 'cifs', 'credentials=/root/.creds', '0', '0'],
 ]
 
 BIND_MOUNTS = ['/not/a/real/bind_mount']
@@ -572,7 +574,7 @@ class TestFactsLinuxHardwareGetMountFacts(unittest.TestCase):
         mtab_entries = lh._mtab_entries()
         self.assertIsInstance(mtab_entries, list)
         self.assertIsInstance(mtab_entries[0], list)
-        self.assertEqual(len(mtab_entries), 38)
+        self.assertEqual(len(mtab_entries), 39)
 
     @patch('ansible.module_utils.facts.hardware.linux.LinuxHardware._run_findmnt', return_value=(0, FINDMNT_OUTPUT, ''))
     def test_find_bind_mounts(self, mock_run_findmnt):

@@ -543,7 +543,7 @@ class LinuxHardware(Hardware):
 
             device, mount, fstype, options = fields[0], fields[1], fields[2], fields[3]
 
-            if not device.startswith('/') and ':/' not in device or fstype == 'none':
+            if not device.startswith(('/', '\\')) and ':/' not in device or fstype == 'none':
                 continue
 
             mount_info = {'mount': mount,
