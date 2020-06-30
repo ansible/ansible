@@ -86,3 +86,5 @@
   assert:
     that:
       - password1 != password2
+
+- include_tasks: ./errors.yml
