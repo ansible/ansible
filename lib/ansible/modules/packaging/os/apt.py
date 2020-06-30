@@ -131,7 +131,7 @@ options:
       - 'C(fail_on_autoremove) is only supported with state except C(absent)'
     type: bool
     default: 'no'
-    version_added: "2.11"
+    version_added: "2.9"
   force_apt_get:
     description:
       - Force usage of apt-get instead of aptitude
