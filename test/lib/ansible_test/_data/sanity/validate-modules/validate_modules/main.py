@@ -2204,6 +2204,9 @@ class ModuleValidator(Validator):
             self._check_for_os_call()
 
         if self._powershell_module():
+            if self.basename in self.PS_DOC_BLACKLIST:
+                return
+
             self._validate_ps_replacers()
             docs_path = self._find_ps_docs_py_file()
 
