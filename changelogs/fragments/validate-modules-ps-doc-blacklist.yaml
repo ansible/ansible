@@ -1,2 +1,2 @@
 bugfixes:
-- ansible-test - Do not try to validate modules that are in the PS_DOC_BLACKLIST like ``setup.ps1``, ``slurp.ps1``, and ``async_status.ps1``
+- ansible-test - Do not try to validate PowerShell modules ``setup.ps1``, ``slurp.ps1``, and ``async_status.ps1``
