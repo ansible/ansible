@@ -130,7 +130,6 @@ MODULE_ARGS = {
     'memory': {'type': 'str', 'required': False},
     'disks': {'type': 'list', 'required': False},
     'nics': {'type': 'list', 'required': False},
-    'boot_order': {'type': 'list', 'required': False},
     'vtx_enabled': {'type': 'bool', 'default': True, 'required': False},
     'auto_recovery_enabled': {'type': 'bool', 'default': True,
                               'required': False},
@@ -466,6 +465,9 @@ def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
         firewall_override = RESOURCES['datacenter'].get_firewall_override_by_name(  # noqa
             datacenter_uuid, playbook_vnic['firewall_override']
         )
+        if not firewall_override:
+            raise tacp_exceptions.InvalidFirewallOverrideNameException(
+        'Failed to create vNIC payload; an invalid firewall override name was provided.')  # noqa
         data['firewall_override_uuid'] = firewall_override.uuid
 
     data['boot_order'] = template_order
@@ -724,8 +726,7 @@ def get_boot_order_payload(boot_order_entry):
 def bad_inputs_for_state_change(playbook_instance):
     non_state_change_inputs = ['datacenter', 'migration_zone', 'storage_pool',
                                'template', 'vcpu_cores', 'disks', 'nics',
-                               'boot_order', 'description',
-                               'application_group']
+                               'description', 'application_group']
 
     bad_inputs_in_playbook = [bad_input for bad_input in
                               non_state_change_inputs
