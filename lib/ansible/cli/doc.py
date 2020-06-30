@@ -69,7 +69,7 @@ class DocCLI(CLI):
         and it can create a short "snippet" which can be pasted into a playbook.  '''
 
     # default ignore list for detailed views
-    IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs')
+    IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection')
 
     def __init__(self, args):
 
@@ -315,26 +315,25 @@ class DocCLI(CLI):
             raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
         plugin_name, filename = result.plugin_resolved_name, result.plugin_resolved_path
 
-        collection_name = 'ansible.builtin'
+        collection_name = ''
         if plugin_name.startswith('ansible_collections.'):
             collection_name = '.'.join(plugin_name.split('.')[1:3])
 
         doc, plainexamples, returndocs, metadata = get_docstring(
             filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
-            collection_name=collection_name, is_module=(plugin_type == 'module'))
+            collection_name=collection_name or 'ansible.builtin', is_module=(plugin_type == 'module'))
 
         # If the plugin existed but did not have a DOCUMENTATION element and was not removed, it's an error
         if doc is None:
             raise ValueError('%s did not contain a DOCUMENTATION attribute' % plugin)
 
         doc['filename'] = filename
+        doc['collection'] = collection_name
         return doc, plainexamples, returndocs, metadata
 
     @staticmethod
     def format_plugin_doc(plugin, plugin_type, doc, plainexamples, returndocs, metadata):
-        collection_name = 'ansible.builtin'
-        if plugin.startswith('ansible_collections.'):
-            collection_name = '.'.join(plugin.split('.')[1:3])
+        collection_name = doc['collection']
 
         # TODO: do we really want this?
         # add_collection_to_versions_and_dates(doc, '(unknown)', is_module=(plugin_type == 'module'))
@@ -363,7 +362,7 @@ class DocCLI(CLI):
             text = DocCLI.get_snippet_text(doc)
         else:
             try:
-                text = DocCLI.get_man_text(doc)
+                text = DocCLI.get_man_text(doc, collection_name)
             except Exception as e:
                 raise AnsibleError("Unable to retrieve documentation from '%s' due to: %s" % (plugin, to_native(e)))
 
@@ -594,7 +593,7 @@ class DocCLI(CLI):
                 text.append('')
 
     @staticmethod
-    def get_man_text(doc):
+    def get_man_text(doc, collection_name=''):
         # Create a copy so we don't modify the original
         doc = dict(doc)
 
@@ -604,7 +603,11 @@ class DocCLI(CLI):
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
-        text.append("> %s    (%s)\n" % (doc.get(context.CLIARGS['type'], doc.get('plugin_type')).upper(), doc.pop('filename')))
+        plugin_name = doc.get(context.CLIARGS['type'], doc.get('plugin_type'))
+        if collection_name:
+            plugin_name = '%s.%s' % (collection_name, plugin_name)
+
+        text.append("> %s    (%s)\n" % (plugin_name.upper(), doc.pop('filename')))
 
         if isinstance(doc['description'], list):
             desc = " ".join(doc.pop('description'))
