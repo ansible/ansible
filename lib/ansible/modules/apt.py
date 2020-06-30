@@ -202,9 +202,9 @@ EXAMPLES = '''
     default_release: squeeze-backports
     update_cache: yes
 
-- name: Install foo with ensuring no packages will be removed.
+- name: Install zfsutils-linux with ensuring conflicted packages (e.g. zfs-fuse) will not be removed.
   apt:
-    name: foo
+    name: zfsutils-linux
     state: latest
     fail_on_autoremove: yes
 
