@@ -405,7 +405,13 @@ def add_vnic_to_instance(playbook_vnic, instance):
     vnic_payload = get_add_vnic_payload(parameters_to_create_vnic)
     vnic_uuid = str(uuid4())
     network_payload = get_add_network_payload(vnic_payload, vnic_uuid)
-    RESOURCES['update_app'].create_vnic(body=network_payload, uuid=instance.uuid)  # noqa
+    
+    response = RESOURCES['update_app'].create_vnic(
+        body=network_payload, uuid=instance.uuid)
+
+    if "Invalid Request" in response.code:
+        fail_and_rollback_instance_creation(response.message, instance)
+
 
 
 def get_parameters_to_create_vnic(datacenter_uuid, playbook_vnic,
@@ -567,7 +573,9 @@ def add_disk_to_instance(playbook_disk, instance):
     except Exception as e:
         fail_and_rollback_instance_creation(str(e), instance)
 
-    RESOURCES['update_app'].create_disk(body=disk_payload, uuid=instance.uuid)
+    response = RESOURCES['update_app'].create_disk(body=disk_payload, uuid=instance.uuid)
+    if "Invalid Request" in response.code:
+        fail_and_rollback_instance_creation(response.message, instance)
 
 
 def get_disk_payload(playbook_disk):
