@@ -1,5 +1,5 @@
 cloud/azure
 destructive
-shippable/azure/group1
+unsupported
 azure_rm_cosmosdbaccount_facts
 disabled
