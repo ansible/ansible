@@ -11,6 +11,7 @@ UNWRAP_RE = re.compile(r'^.*\bunwrap_var\(')
 # All changes to the whitelist need to be approved by an Ansible core committer
 WHITELIST = {
     'lib/ansible/utils/unsafe_proxy.py': 4,
+    'lib/ansible/plugins/filter/core.py': 2,
 }
 
 

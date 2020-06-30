@@ -53,6 +53,7 @@ from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
+from ansible.utils.unsafe_proxy import unwrap_var
 from ansible.utils.vars import merge_hash
 
 display = Display()
@@ -209,13 +210,15 @@ def regex_escape(string, re_type='python'):
 
 def from_yaml(data):
     if isinstance(data, string_types):
-        return yaml.safe_load(data)
+        # We use ``unwrap_var`` here because the c pyyaml extension cannot handle AnsibleUnsafeText
+        return yaml.safe_load(unwrap_var(data))
     return data
 
 
 def from_yaml_all(data):
     if isinstance(data, string_types):
-        return yaml.safe_load_all(data)
+        # We use ``unwrap_var`` here because the c pyyaml extension cannot handle AnsibleUnsafeText
+        return yaml.safe_load_all(unwrap_var(data))
     return data
 
 
