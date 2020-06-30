@@ -25,57 +25,423 @@ DOCUMENTATION = '''
 ---
 module: tacp_instance
 
-short_description: This is my test module
-
-version_added: '2.9'
+short_description: Creates and modifies power state of application instances on
+  ThinkAgile CP.
 
 description:
-    - 'This is my longer description explaining my test module'
+  - "This module can be used to create new application instances on the
+    ThinkAgile CP cloud platform, as well as delete and modify power states
+    of existing application instances."
+  - "Currently this module cannot modify the resources of existing
+    application instances aside from performing deletion and power state
+    operations."
+author:
+  - Lenovo (@lenovo)
+  - Xander Madsen (@xmadsen)
+
+requirements:
+  - tacp
 
 options:
-    name:
+  api_key:
+    description:
+      - An API key generated in the Developer Options in the ThinkAgile
+        CP portal. This is required to perform any operations with this
+        module.
+    required: true
+    type: str
+  name:
+    description:
+      - This is the name of the instance to be created or modified
+    required: true
+    type: str
+  state:
+    description:
+      - The desired state for the application instance in question. All
+        options except 'absent' will perform a power operation if
+        necessary, while 'absent' deletes the application instance with
+        the provided name if it exists.
+    choices:
+      - started
+      - shutdown
+      - stopped
+      - restarted
+      - force_restarted
+      - paused
+      - absent
+  datacenter:
+    description:
+      - The name of the virtual datacenter that the instance will be
+        created in. Only required when creating a new instance.
+    required: false
+    type: str
+  migration_zone:
+    description:
+      - The name of the migration zone that the instance will be created
+        in. Only required when creating a new instance.
+    required: false
+    type: str
+  template:
+    description:
+      - The name of the template used as a basis for the creation of the
+        instance. Only required when creating a new instance.
+    required: false
+    type: str
+  storage_pool:
+    description:
+      - The name of the storage pool that the instance's disks will be
+        stored in. Only required when creating a new instance.
+    required: false
+    type: str
+  vcpu_cores:
+    description:
+      - The number of virtual CPU cores that the application instance
+        will have when it is created. Only required when creating a new
+        instance.
+    required: false
+    type: int
+  memory:
+    description:
+      - The amount of virtual memory (RAM) that the application instance
+        will have when it is created. Can be expressed with various
+        units. Only required when creating a new instance.
+    required: false
+    type: str
+  disks:
+    description:
+      - An array of disks that will be associated with the application
+        instance when it is created.
+      - Must contain any disks that the template contains, and the names
+        must match for any of those such disks. Only required when
+        creating a new instance.
+    required: false
+    type: list
+    suboptions:
+      name:
         description:
-            - This is the message to send to the test module
+          - The name of the disk. If the specified disk is not part
+            of the template, it can be named anything (except the
+            name of a disk in the template).
         required: true
-    new:
+        type: str
+      size_gb:
         description:
-            - Control to demo if the result of this module is changed or not
+          - The size of the disk in GB. Can be expressed as a float.
+        required: true
+        type: float
+      boot_order:
+        description:
+          - The place in the boot order for the disk. The overall
+            boot order must begin at 1, and every NIC and disk must
+            have an order provided.
+        required: true
+        type: int
+      bandwidth_limit:
+        description:
+          - A limit to the bandwidth usage allowed for this disk.
+            Must be at least 5000000 (5 Mbps).
         required: false
+        type: int
+      iops_limit:
+        description:
+          - A limit to the total IOPS allowed for this disk.
+            Must be at least 50.
+        required: false
+        type: int
+  nics:
+    description:
+      - An array of NICs that will be associated with the application
+        instance when it is created.
+      - Must contain any NICs that the template contains, and the names
+        must match for any of those such NICs. Only required when
+        creating a new instance.
+    required: false
+    type: list
+    suboptions:
+      name:
+        description:
+          - The name of the NIC. If the specified NIC is not part
+            of the template, it can be named anything (except the
+            name of a NIC in the template).
+        required: true
+        type: str
+      type:
+        description:
+          - The type of network that the NIC will be a part of.
+          - Valid chocies are either "VNET" or "VLAN".
+        required: true
+        type: str
+      network:
+        description:
+          - The name of the network that the NIC will be a part of.
+          - There must be an existing network of the provided type
+            that has the provided network name to succeed.
+        required: true
+        type: str
+      boot_order:
+        description:
+          - The place in the boot order for the NIC. The overall boot
+            order must begin at 1, and every NIC and disk must have
+            an order provided.
+        required: true
+        type: int
+      automatic_mac_address:
+        description:
+          - Whether this interface should be automatically assigned
+            a MAC address.
+          - Providing a MAC address to the mac_address field sets
+            this value to false.
+        required: false
+        type: bool
+      mac_address:
+        description:
+          - A static MAC address to be assigned to the NIC. Should
+            not exist on any other interfaces on the network.
+          - Should be of the format aa:bb:cc:dd:ee:ff
+          - If this is set, 'automatic_mac_address' is automatically
+            set to false.
+        required: false
+        type: str
+      firewall_override:
+        description:
+          - The name of a firewall override that exists in the
+            datacenter that the NIC's instance will reside in.
+        required: false
+        type: str
+  vtx_enabled:
+    description:
+      - Whether or not VT-x nested virtualization features should be
+        enabled for the instance. Enabled by default.
+    required: false
+    type: bool
+  auto_recovery_enabled:
+    description:
+      - Whether or not the instance should be restarted on a different
+        host node in the event that its host node fails. Defaults to
+        true.
+    required: false
+    type: bool
+  description:
+    description:
+      - A textual description of the instance. Defaults to any
+        description that the source template come with.
+    required: false
+    type: str
+  vm_mode:
+    description:
+      - Sets the instance mode. Set to "Enhanced" by default.
+      - Valid choices are "Enhanced" and "Compatibility"
+      - Any instance can boot in Compatibility mode.
+      - In Enhanced mode, Virtio drivers must be present in the template
+        in order to boot.
+      - Additionally, in Enhanced mode
+        - Storage disks are exported as virtio iSCSI devices
+        - vNICs are exported as virtio vNICs
+        - Snapshots will be application consistent (when ThinkAgile CP
+        Guest Agent is installed) if the guest OS supports freeze and
+        thaw
+        - CPU and Memory Statistics are available (When ThinkAgile CP
+        Guest Agent is installed)
+    required: false
+    type: str
+  application_group:
+    description:
+      - The name of an application group that the instance will be put
+        in. Creates it in the virtual datacenter if it does not yet exist
+        .
+    required: false
+    type: str
 
-extends_documentation_fragment:
-    - tacp
-
-author:
-    - Xander Madsen (@xmadsen)
 '''
 
 EXAMPLES = '''
-# Pass in a message
-- name: Test with a message
+- name: Create a basic VM on ThinkAgile CP
   tacp_instance:
-    name: hello world
+      api_key: "{{ api_key }}"
+      name: Basic_VM1
+      state: started
+      datacenter: Datacenter1
+      migration_zone: Zone1
+      template: CentOS 7.5 (64-bit) - Lenovo Template
+      storage_pool: Pool1
+      vcpu_cores: 1
+      memory: 4096GB
+      disks:
+      - name: Disk 0
+          size_gb: 50
+          boot_order: 1
+      nics:
+      - name: vNIC 0
+          type: VNET
+          network: VNET-TEST
+          boot_order: 2
 
-# pass in a message and have changed true
-- name: Test with a message and changed output
+- name: Create a shutdown VM with multiple disks and set its NIC to the first 
+        boot device
   tacp_instance:
-    name: hello world
-    new: true
+      api_key: "{{ api_key }}"
+      name: Basic_VM2
+      state: started
+      datacenter: Datacenter1
+      migration_zone: Zone1
+      template: RHEL 7.4 (Minimal) - Lenovo Template
+      storage_pool: Pool1
+      vcpu_cores: 1
+      memory: 8G
+      disks:
+      - name: Disk 0
+          size_gb: 50
+          boot_order: 2
+      - name: Disk 1
+          size_gb: 200
+          boot_order: 3
+      nics:
+      - name: vNIC 0
+          type: VLAN
+          network: VLAN-300
+          boot_order: 1
 
-# fail the module
-- name: Test failure of the module
+- name: Create a VM with multiple disks with limits, and two NICs with static
+        MAC addresses, and don't power it on after creation
   tacp_instance:
-    name: fail me
+      api_key: "{{ api_key }}"
+      name: Basic_VM3
+      state: shutdown
+      datacenter: Datacenter1
+      migration_zone: Zone1
+      template: RHEL 7.4 (Minimal) - Lenovo Template
+      storage_pool: Pool1
+      vcpu_cores: 1
+      memory: 8GB
+      disks:
+      - name: Disk 0
+          size_gb: 50
+          boot_order: 2
+          iops_limit: 200
+      - name: Disk 1
+          size_gb: 200
+          boot_order: 3
+          bandwidth_limit: 10000000
+      nics:
+      - name: vNIC 0
+          type: VLAN
+          network: VLAN-300
+          boot_order: 4
+          firewall_override: Allow-All
+      - name: vNIC 1
+          type: VNET
+          network: PXE-VNET
+          boot_order: 1
+          mac_address: b4:d1:35:00:00:01
+
+- name: Create a VM from a custom template without virtio drivers
+  tacp_instance:
+      api_key: "{{ api_key }}"
+      name: Custom_VM
+      state: started
+      datacenter: Datacenter1
+      migration_zone: Zone1
+      template: MyCustomTemplate
+      storage_pool: Pool1
+      vcpu_cores: 1
+      memory: 4G
+      vm_mode: Compatibility
+      disks:
+      - name: Disk 0
+          size_gb: 50
+          boot_order: 1
+      nics:
+      - name: vNIC 0
+          type: VNET
+          network: VNET-TEST
+          boot_order: 2
+
+- name: Pause Basic_VM1 on ThinkAgile CP
+  tacp_instance:
+      api_key: "{{ api_key }}"
+      name: Basic_VM1
+      state: paused
+
+- name: Restart all of my Basic_VMs on ThinkAgile CP
+  tacp_instance:
+      api_key: "{{ api_key }}"
+      name: "{{ instance }}"
+      state: restarted
+  loop:
+    - Basic_VM1
+    - Basic_VM2
+    - Basic_VM3
+  loop_control:
+    loop_var: instance
+
+- name: Delete Basic_VM1 from ThinkAgile CP
+  tacp_instance:
+      api_key: "{{ api_key }}"
+      name: Basic_VM1
+      state: absent
+
+- name: Create a variety of VMs on TACP in a loop
+  tacp_instance:
+      api_key: "{{ api_key }}"
+      name: "{{ instance.name }}"
+      state: "{{ instance.state }}"
+      datacenter: Datacenter2
+      migration_zone: Zone2
+      template: "{{ instance.template }}"
+      storage_pool: Pool2
+      vcpu_cores: "{{ instance.vcpu_cores }}"
+      memory: "{{ instance.memory }}"
+      disks:
+        - name: Disk 0
+          size_gb: 100
+          boot_order: 1
+      nics:
+        - name: vNIC 0
+          type: "{{ instance.network_type }}"
+          network: "{{ instance.network_name }}"
+          mac_address: "{{ instance.mac_address }}"
+          boot_order: 2
+  loop:
+      - { name: CentOS VM 1,
+          state: started,
+          template: "CentOS 7.5 (64-bit) - Lenovo Template",
+          vcpu_cores: 2,
+          memory: 4096MB,
+          network_type: VLAN,
+          network_name: VLAN-15,
+          mac_address: b4:d1:35:00:0f:f0 }
+      - { name: RHEL VM 11,
+          state: stopped,
+          template: "RHEL 7.4 (Minimal) - Lenovo Template",
+          vcpu_cores: 6,
+          memory: 6g,
+          network_type: VNET,
+          network_name: Production-VNET,
+          mac_address: b4:d1:35:00:0f:f1 }
+      - { name: Windows Server 2019 VM 1,
+          state: started,
+          template: "Windows Server 2019 Standard - Lenovo Template",
+          vcpu_cores: 8,
+          memory: 16GB,
+          network_type: VNET,
+          network_name: Internal-VNET,
+          mac_address: b4:d1:35:00:0f:f2 }
+  loop_control:
+      loop_var: instance
 '''
 
 RETURN = '''
-original_message:
-    description: The original name param that was passed in
-    type: str
-    returned: always
-message:
-    description: The output message that the test module generates
-    type: str
-    returned: always
+instance:
+  description: The final state of the application instance if it still exists.
+  type: dict
+  returned: success
+
+msg:
+  description: An error message in the event of invalid input or other
+    unexpected behavior during module execution.
+  type: str
+  returned: failure
+
 '''
 
 

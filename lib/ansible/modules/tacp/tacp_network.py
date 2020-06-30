@@ -23,57 +23,354 @@ DOCUMENTATION = '''
 ---
 module: tacp_network
 
-short_description: This is my test module
-
-version_added: "2.9"
+short_description: Creates and deletes VLAN and VNET networks on ThinkAgile CP.
 
 description:
-    - "This is my longer description explaining my test module"
-
-options:
-    name:
-        description:
-            - This is the message to send to the test module
-        required: true
-    new:
-        description:
-            - Control to demo if the result of this module is changed or not
-        required: false
-
-extends_documentation_fragment:
-    - tacp
+  - "This module can be used to create new VLAN and VNET networks on the
+    ThinkAgile CP cloud platform, as well as delete existing networks."
+  - "Currently this module cannot modify the settings of existing
+    networks; all settings must be specified at creation time."
 
 author:
-    - Xander Madsen (@xmadsen)
+  - Lenovo (@lenovo)
+  - Xander Madsen (@xmadsen)
+
+requirements:
+  - tacp
+
+options:
+  api_key:
+    description:
+      - An API key generated in the Developer Options in the ThinkAgile
+        CP portal. This is required to perform any operations with this
+        module.
+    required: true
+    type: str
+  name:
+    description:
+      - This is the name of the network to be created or deleted.
+    required: true
+    type: str
+  state:
+    description:
+      - The desired state for the network.
+      - Only valid for VLAN networks.
+    required: false
+    default: present
+    type: str
+  network_type:
+    description:
+      - The type of network. Valid choices are either "VNET" or "VLAN".
+    required: True
+    type: str
+  site_name:
+    description:
+      - The name of the site that the network will be a part of.
+      - If only one site exists, that site will be used by default and
+        this parameter is unneeded.
+    required: False
+    type: str
+  vlan_tag:
+    description:
+      - The VLAN ID to tag the network traffic with.
+      - Must be in the range of 1-4094.
+      - Only valid for VLAN network types.
+    required: False
+    type: int
+  firewall_override:
+    description:
+      - The name of a firewall override to be assigned to a VNET.
+      - Only valid for VNET network types.
+    required: False
+    type: str
+  firewall_profile:
+    description:
+      - The name of a firewall profile to be assigned to a VNET.
+    required: False
+    type: str
+  autodeploy_nfv:
+    description:
+      - Whether the network function virtualization (NFV) instance
+        will be created along with the VNET network.
+      - If this is set to False, the VNET network will need an NFV
+        added manually later before it will work properly.
+      - Only valid for VNET network types.
+    required: False
+    type: bool
+  nfv:
+    description:
+      - The settings to create an NFV instance to provide routing and
+        DHCP functionality to the VNET.
+      - Required if autodeploy_nfv is set to true.
+      - Only valid for VNET network types.
+    required: False
+    type: dict
+    suboptions:
+      datacenter:
+        description:
+          - The name of the virtual datacenter that the NFV instance
+            will be created in. Only required when creating an NFV
+            instance.
+        required: false
+        type: str
+      storage_pool:
+        description:
+          - The name of the storage pool that the NFV instance's
+            disks will be stored in. Only required when creating a
+            new instance.
+        required: false
+        type: str
+      migration_zone:
+        description:
+          - The name of the migration zone that the NFV instance will
+            be created in. Only required when creating a new NFV
+            instance.
+        required: false
+        type: str
+      cpu_cores:
+        description:
+          - The number of virtual CPU cores that the NFV instance
+            will have when it is created. Only required when
+            creating a new NFV instance.
+        required: false
+        type: int
+      memory:
+        description:
+          - The amount of virtual memory (RAM) that the NFV instance
+            will have when it is created. Can be expressed with
+            various units. Only required when creating a new NFV
+            instance.
+        required: false
+        type: str
+      auto_recovery:
+        description:
+          - Whether or not the NFV instance should be restarted on a
+            different host node in the event that its host node
+            fails. Defaults to true.
+        required: false
+        type: bool
+  network_address:
+    description:
+      - The identifying address for the VNET network.
+      - Example - "192.168.0.0" for the 192.168.0.0/24 network.
+    required: False
+    type: str
+  subnet_mask:
+    description:
+      - The subnet mask for the VNET network.
+      - Example - "255.255.255.0" for the 192.168.0.0/24 network.
+    required: False
+    type: str
+  gateway:
+    description:
+      - The IP address for the gateway for this network.
+      - Example - "192.168.0.1"
+    required: False
+    type: str
+  dhcp:
+    description:
+      - The DHCP configuration for the NFV intance.
+      - Required if an NFV instance is being created.
+    required: False
+    type: dict
+    suboptions:
+      dhcp_start:
+        description:
+          - The starting IP address in the DHCP range.
+        required: False
+        type: str
+      dhcp_end:
+        description:
+          - The ending IP address in the DHCP range.
+        required: False
+        type: str
+      domain_name:
+        description:
+          - The domain name to be used for hosts in the DHCP range.
+        required: False
+        type: str
+      lease_time:
+        description:
+          - The length of the DHCP leases, in seconds.
+        required: False
+        type: int
+      dns1:
+        description:
+          - The primary DNS server for the DHCP configuration.
+        required: False
+        type: str
+      dns2:
+        description:
+          - The secondary DNS server for the DHCP configuration.
+        required: False
+        type: str
+      static_bindings:
+        description:
+          - A list of static DHCP bindings, each binding requires at
+            least an ip_address and mac_address value as a dict.
+        required: False
+        type: list
+        suboptions:
+          hostname:
+            description:
+              - A hostname to be assigned to a bound to a
+                particular IP address.
+            required: false
+            type: str
+          ip_address:
+            description:
+              - The IP address to be bound to the hostname
+                and/or MAC address provided in this entry.
+            required: false
+            type: str
+          mac_address:
+            description:
+              - The MAC address to be bound to the IP address
+                provided in this entry.
+            required: false
+            type: str
+  routing:
+    description:
+      - Defines the network settings for the outside interface of the NFV
+        instance.
+    required: False
+    type: dict
+    suboptions:
+      type:
+        description:
+          - The type of network the outside interface will belong to.
+          - Valid choices are either "VNET" or "VLAN".
+        required: false
+        type: str
+      network:
+        description:
+          - The name of the existing network the outside interface
+            will belong to. Must be of the network type specified
+            in the type field.
+        required: false
+        type: str
+      address_mode:
+        description:
+          - The mode of setting the outside interface IP address.
+          - Valid choices are either "static" or "DHCP".
+        required: false
+        type: str
+      ip_address:
+        description:
+          - The IP address of the outside interface.
+          - Only valid when address_mode is set to static.
+        required: false
+        type: str
+      subnet_mask:
+        description:
+          - The subnet mask of the outside interface.
+          - Only valid when address_mode is set to static.
+        required: false
+        type: str
+      gateway:
+        description:
+          - The IP address of the outside interface's gateway.
+          - Only valid when address_mode is set to static.
+        required: false
+        type: str
+
 '''
 
 EXAMPLES = '''
-# Pass in a message
-- name: Test with a message
-  tacp_instance:
-    name: hello world
+- name: Create a VLAN network on ThinkAgile CP
+    tacp_network:
+      api_key: "{{ api_key }}"
+      name: VLAN-15
+      state: present
+      network_type: VLAN
+      vlan_tag: 15
 
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  tacp_instance:
-    name: hello world
-    new: true
+- name: Delete a VLAN network on ThinkAgile CP
+    tacp_network:
+      api_key: "{{ api_key }}"
+      name: VLAN-15
+      state: absent
+      network_type: VLAN
 
-# fail the module
-- name: Test failure of the module
-  tacp_instance:
-    name: fail me
+- name: Create a VNET network with an NFV on TACP
+    tacp_network:
+      api_key: "{{ api_key }}"
+      name:  Private VNET
+      state: present
+      network_type: VNET
+      autodeploy_nfv: True
+      network_address: 192.168.1.0
+      subnet_mask: 255.255.255.0
+      gateway: 192.168.1.1
+      dhcp:
+        dhcp_start: 192.168.1.100
+        dhcp_end: 192.168.1.200
+        domain_name: test.local
+        lease_time: 86400 # seconds, 24 hours
+        dns1: 1.1.1.1
+        dns2: 8.8.8.8
+      routing:
+        type: VLAN
+        network: Lab-VLAN
+        address_mode: static
+        ip_address: 192.168.100.201
+        subnet_mask: 255.255.255.0
+        gateway: 192.168.100.1
+      nfv:
+        datacenter: Datacenter1
+        storage_pool: Pool1
+        migration_zone: Zone1
+        cpu_cores: 1
+        memory: 1G
+        auto_recovery: True
+
+- name: Create a VNET network with an NFV and static bindings on TACP
+    tacp_network:
+      api_key: "{{ api_key }}"
+      name:  Private VNET
+      state: present
+      network_type: VNET
+      autodeploy_nfv: True
+      network_address: 192.168.1.0
+      subnet_mask: 255.255.255.0
+      gateway: 192.168.1.1
+      dhcp:
+        dhcp_start: 192.168.1.100
+        dhcp_end: 192.168.1.200
+        domain_name: test.local
+        lease_time: 86400 # seconds, 24 hours
+        dns1: 1.1.1.1
+        dns2: 8.8.8.8
+        static_bindings:
+          - hostname: Host1
+            ip_address: 192.168.1.101
+            mac_address: b4:d1:35:00:0f:f1
+          - hostname: Host2
+            ip_address: 192.168.1.102
+            mac_address: b4:d1:35:00:0f:f2
+      routing:
+        type: VLAN
+        network: Lab-VLAN
+        address_mode: static
+        ip_address: 192.168.100.201
+        subnet_mask: 255.255.255.0
+        gateway: 192.168.100.1
+      nfv:
+        datacenter: Datacenter1
+        storage_pool: Pool1
+        migration_zone: Zone1
+        cpu_cores: 1
+        memory: 1G
+        auto_recovery: True
 '''
 
 RETURN = '''
-original_message:
-    description: The original name param that was passed in
-    type: str
-    returned: always
-message:
-    description: The output message that the test module generates
-    type: str
-    returned: always
+msg:
+  description:
+    - An error message in the event of invalid input or other
+      unexpected behavior during module execution.
+  type: str
+  returned: failure
 '''
 
 
