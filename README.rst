@@ -43,34 +43,30 @@ The tacp modules and module_utils files can be added to any of the following dfi
 
 1. For example, create the ``~/.ansible/plugins/`` directory:
 
-``[user@hostname ansible.lenovo-tacp]# mkdir -p ~/.ansible/plugins/``
+``$ mkdir -p ~/.ansible/plugins/``
 
-2. Create the ``~/.ansible/plugins/module_utils`` directory:
+2. Create the ``~/.ansible/plugins/module_utils`` and ``~/.ansible/plugins/modules/cloud`` directories:
 
-``[user@hostname ansible.lenovo-tacp]# mkdir -p ~/.ansible/plugins/module_utils``
-
-3. Create the ``~/.ansible/plugins/modules/cloud`` directory:
-
-``[user@hostname ansible.lenovo-tacp]# mkdir -p ~/.ansible/plugins/modules/cloud``
+``$ mkdir -p ~/.ansible/plugins/module_utils ~/.ansible/plugins/modules/cloud``
 
 4. Copy the ``module_utils/tacp_ansible/`` directory from this ansible.lenovo-tacp repo into
-   the local ansible installation's ``module_utils/`` directory. In this example the module files 
+   the local Ansible installation's ``module_utils/`` directory. In this example the module files 
    are copied to the ``/usr/share/ansible/plugins`` location, which requires ``sudo``.
 
-``[user@hostname ansible.lenovo-tacp]# sudo cp -R ./lib/ansible/module_utils/tacp_ansible 
+``$ cp -R ./lib/ansible/module_utils/tacp_ansible 
 ~/.ansible/plugins/module_utils``
 
 5. Copy the ``modules/tacp/`` directory from this ansible.lenovo-tacp repo into
-   the local ansible installation's ``modules/cloud/`` directory.
+   the local Ansible installation's ``modules/cloud/`` directory.
 
-``[user@hostname ansible.lenovo-tacp]# sudo cp -R ./lib/ansible/modules/tacp 
+``$ cp -R ./lib/ansible/modules/tacp 
 ~/.ansible/plugins/modules/cloud``
 
 6. Verify the manual installation worked:
 
 .. code-block:: shell 
 
-  [user@hostname ansible.lenovo-tacp]# ansible-doc -t module tacp_instance
+  $ ansible-doc -t module tacp_instance
   > TACP_INSTANCE    (/home/user/.ansible/plugins/modules/cloud/tacp/tacp_instance.py)
 
         This module can be used to create new application instances on the ThinkAgile CP cloud platform, as well as delete and modify power states of existing application instances. Currently this module cannot modify the resources of
