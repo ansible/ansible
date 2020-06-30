@@ -1,0 +1,2 @@
+bugfixes:
+  - apt - add ``fail_on_autoremove`` param to apt module to avoid unintended package removals (https://github.com/ansible/ansible/issues/63231)
