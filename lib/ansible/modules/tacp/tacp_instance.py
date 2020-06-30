@@ -183,7 +183,7 @@ def fail_with_reason(reason):
 def fail_and_rollback_instance_creation(reason, instance):
     RESULT['msg'] = reason + "\n Rolled back application instance creation."
     RESOURCES['app'].delete(instance.uuid)
-    MODULE.fail_json()
+    MODULE.fail_json(**RESULT)
 
 
 def get_parameters_to_create_new_application(playbook_instance):
