@@ -618,6 +618,9 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache, to_rmv=False):
                 if not matches:
                     if not to_rmv:
                         m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
+                    else:
+                        m.warn("No package(s) matching '%s' to delete. It might be the name(s) was(were) misspelled."
+                               % str(pkgname_pattern))
                 else:
                     new_pkgspec.extend(matches)
             else:
