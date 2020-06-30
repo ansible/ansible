@@ -46,7 +46,10 @@ def wait_to_complete(method):
         wait = kws.pop('_wait', True)
         wait_timeout = kws.pop('_wait_timeout', 120)
 
-        method_api_response = method.__get__(self, type(self))(*a, **kws)
+        try:
+            method_api_response = method.__get__(self, type(self))(*a, **kws)
+        except Exception as e:
+            return e
 
         if not wait:
             return method_api_response
