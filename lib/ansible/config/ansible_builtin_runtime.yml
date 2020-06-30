@@ -7599,8 +7599,10 @@ plugin_routing:
       redirect: community.general.digital_ocean
     dimensiondata:
       redirect: community.general.dimensiondata
-    swarm:
-      redirect: community.general.swarm
+    docker.common:
+      redirect: community.general.docker.common
+    docker.swarm:
+      redirect: community.general.docker.swarm
     exoscale:
       redirect: community.general.exoscale
     f5_utils:
@@ -7625,8 +7627,8 @@ plugin_routing:
       redirect: community.general.hwc_utils
     ibm_sa_utils:
       redirect: community.general.ibm_sa_utils
-    keycloak:
-      redirect: community.general.keycloak
+    identity.keycloak:
+      redirect: community.general.identity.keycloak
     infinibox:
       redirect: community.general.infinibox
     influxdb:
@@ -7651,42 +7653,42 @@ plugin_routing:
       redirect: community.general.mysql
     api:
       redirect: skydive.skydive.api
-    a10:
-      redirect: community.network.a10
-    aireos:
-      redirect: community.network.aireos
-    aos:
-      redirect: community.network.aos
-    apconos:
-      redirect: community.network.apconos
-    aruba:
-      redirect: community.network.aruba
-    ansible_utils:
-      redirect: community.network.ansible_utils
-    avi:
-      redirect: community.network.avi
-    avi_api:
-      redirect: community.network.avi_api
-    bigswitch:
-      redirect: community.network.bigswitch
-    ce:
-      redirect: community.network.ce
-    cnos:
-      redirect: community.network.cnos
-    cnos_devicerules:
-      redirect: community.network.cnos_devicerules
-    cnos_errorcodes:
-      redirect: community.network.cnos_errorcodes
-    edgeos:
-      redirect: community.network.edgeos
-    edgeswitch:
-      redirect: community.network.edgeswitch
-    edgeswitch_interface:
-      redirect: community.network.edgeswitch_interface
-    enos:
-      redirect: community.network.enos
-    eric_eccli:
-      redirect: community.network.eric_eccli
+    network.a10:
+      redirect: community.network.network.a10
+    network.aireos:
+      redirect: community.network.network.aireos
+    network.aos:
+      redirect: community.network.network.aos
+    network.apconos:
+      redirect: community.network.network.apconos
+    network.aruba:
+      redirect: community.network.network.aruba
+    network.avi.ansible_utils:
+      redirect: community.network.network.avi.ansible_utils
+    network.avi.avi:
+      redirect: community.network.network.avi.avi
+    network.avi.avi_api:
+      redirect: community.network.network.avi.avi_api
+    network.bigswitch:
+      redirect: community.network.network.bigswitch
+    network.cloudengine.ce:
+      redirect: community.network.network.cloudengine.ce
+    network.cnos.cnos:
+      redirect: community.network.network.cnos.cnos
+    network.cnos.cnos_devicerules:
+      redirect: community.network.network.cnos.cnos_devicerules
+    network.cnos.cnos_errorcodes:
+      redirect: community.network.network.cnos.cnos_errorcodes
+    network.edgeos:
+      redirect: community.network.network.edgeos
+    network.edgeswitch.edgeswitch:
+      redirect: community.network.network.edgeswitch.edgeswitch
+    network.edgeswitch.edgeswitch_interface:
+      redirect: community.network.network.edgeswitch.edgeswitch_interface
+    network.enos:
+      redirect: community.network.network.enos
+    network.eric_eccli:
+      redirect: community.network.network.eric_eccli
     facts:
       redirect: vyos.vyos.facts
     l2_interfaces:
@@ -7697,54 +7699,54 @@ plugin_routing:
       redirect: vyos.vyos.lldp_interfaces
     vlans:
       redirect: junipernetworks.junos.vlans
-    exos:
-      redirect: community.network.exos
+    network.exos:
+      redirect: community.network.network.exos
     utils:
       redirect: vyos.vyos.utils
-    iworkflow:
-      redirect: community.network.iworkflow
-    legacy:
-      redirect: community.network.legacy
+    network.iworkflow:
+      redirect: community.network.network.iworkflow  # does not exist in community.general!
+    network.exos.facts.legacy:
+      redirect: community.network.network.exos.facts.legacy
     urls:
       redirect: amazon.aws.urls
-    fortianalyzer:
-      redirect: community.network.fortianalyzer
-    configuration:
-      redirect: community.network.configuration
-    device:
-      redirect: community.network.device
-    fdm_swagger_client:
-      redirect: community.network.fdm_swagger_client
-    operation:
-      redirect: community.network.operation
-    icx:
-      redirect: community.network.icx
-    ironware:
-      redirect: community.network.ironware
-    netscaler:
-      redirect: community.network.netscaler
-    netvisor:
-      redirect: community.network.netvisor
-    pn_nvos:
-      redirect: community.network.pn_nvos
-    nos:
-      redirect: community.network.nos
-    nso:
-      redirect: community.network.nso
-    onyx:
-      redirect: community.network.onyx
-    ordnance:
-      redirect: community.network.ordnance
-    panos:
-      redirect: community.network.panos
-    routeros:
-      redirect: community.network.routeros
-    slxos:
-      redirect: community.network.slxos
-    sros:
-      redirect: community.network.sros
-    voss:
-      redirect: community.network.voss
+    network.fortianalyzer:
+      redirect: community.network.network.fortianalyzer
+    network.ftd.configuration:
+      redirect: community.network.network.ftd.configuration
+    network.ftd.device:
+      redirect: community.network.network.ftd.device
+    network.ftd.fdm_swagger_client:
+      redirect: community.network.network.ftd.fdm_swagger_client
+    network.ftd.operation:
+      redirect: community.network.network.ftd.operation
+    network.icx:
+      redirect: community.network.network.icx
+    network.ironware:
+      redirect: community.network.network.ironware
+    network.netscaler:
+      redirect: community.network.network.netscaler
+    network.netvisor.netvisor:
+      redirect: community.network.network.netvisor.netvisor
+    network.netvisor.pn_nvos:
+      redirect: community.network.network.netvisor.pn_nvos
+    network.nos:
+      redirect: community.network.network.nos
+    network.nso:
+      redirect: community.network.network.nso
+    network.onyx:
+      redirect: community.network.network.onyx
+    network.ordnance:
+      redirect: community.network.network.ordnance
+    network.panos:
+      redirect: community.network.network.panos
+    network.routeros:
+      redirect: community.network.network.routeros
+    network.slxos:
+      redirect: community.network.network.slxos
+    network.sros:
+      redirect: community.network.network.sros
+    network.voss:
+      redirect: community.network.network.voss
     oneandone:
       redirect: community.general.oneandone
     oneview:
@@ -7753,8 +7755,8 @@ plugin_routing:
       redirect: community.general.online
     opennebula:
       redirect: community.general.opennebula
-    oci_utils:
-      redirect: community.general.oci_utils
+    oracle.oci_utils:
+      redirect: community.general.oracle.oci_utils
     postgres:
       redirect: community.general.postgres
     pure:
@@ -7767,18 +7769,18 @@ plugin_routing:
       redirect: community.general.redfish_utils
     redhat:
       redirect: community.general.redhat
-    dellemc_idrac:
-      redirect: community.general.dellemc_idrac
-    ome:
-      redirect: community.general.ome
+    remote_management.dellemc.dellemc_idrac:
+      redirect: community.general.remote_management.dellemc.dellemc_idrac
+    remote_management.dellemc.ome:
+      redirect: community.general.remote_management.dellemc.ome
     scaleway:
       redirect: community.general.scaleway
-    bitbucket:
-      redirect: community.general.bitbucket
-    emc_vnx:
-      redirect: community.general.emc_vnx
-    hpe3par:
-      redirect: community.general.hpe3par
+    source_control.bitbucket:
+      redirect: community.general.source_control.bitbucket
+    storage.emc.emc_vnx:
+      redirect: community.general.storage.emc.emc_vnx
+    storage.hpe3par:
+      redirect: community.general.storage.hpe3par
     univention_umc:
       redirect: community.general.univention_umc
     utm_utils:
