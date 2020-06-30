@@ -2,7 +2,7 @@
 
 set -eux
 
-ANSIBLE_ROLES_PATH=../ UNICODE_VAR=café ansible-playbook runme.yml "$@"
+ANSIBLE_ROLES_PATH=./ UNICODE_VAR=café ansible-playbook runme.yml "$@"
 
 ansible-playbook template_lookup_vaulted/playbook.yml --vault-password-file template_lookup_vaulted/test_vault_pass "$@"
 
