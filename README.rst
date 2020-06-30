@@ -31,28 +31,20 @@ Download this git respository.
 
 |
 
-Find the ``modules/`` and ``module_utils/`` directories in your existing 
-Ansible environment. The following 
+The tacp modules and module_utils files can be added to any of the following dfirectories:
 
-``[user@hostname ansible.lenovo-tacp]# pip3 show ansible | grep Location``
+- any directory added to the ``ANSIBLE_LIBRARY`` environment variable (``$ANSIBLE_LIBRARY`` takes a colon-separated list like ``$PATH``)
 
-``Location: /usr/local/lib/python3.6/site-packages``
+- ``~/.ansible/plugins/``
 
-|
+- ``/usr/share/ansible/plugins/``
 
-In this example, the ansible directory is located at ``/usr/local/lib/python3.6/site-packages/ansible`` .
-
-|
-
-In your environment, you should replace instances of ``/usr/local/lib/python3.6/site-packages/`` with the directory returned in the previous command's output.
-
-|
 
 Copy the ``module_utils/tacp_ansible/`` directory from this ansible.lenovo-tacp repo into
 the local ansible installation's ``module_utils/`` directory.
 
 ``[user@hostname ansible.lenovo-tacp]# cp -R ./lib/ansible/module_utils/tacp_ansible 
-/usr/local/lib/python3.6/site-packages/ansible/module_utils``
+/usr/share/ansible/plugins/module_utils``
 
 |
 
@@ -60,7 +52,7 @@ Copy the ``modules/tacp/`` directory from this ansible.lenovo-tacp repo into
 the local ansible installation's ``modules/cloud/`` directory.
 
 ``[user@hostname ansible.lenovo-tacp]# cp -R ./lib/ansible/modules/tacp 
-/usr/local/lib/python3.6/site-packages/ansible/modules/cloud``
+/usr/share/ansible/plugins/modules/cloud``
 
 Examples
 ========
