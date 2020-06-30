@@ -25,231 +25,232 @@ DOCUMENTATION = '''
 module: tacp_instance
 
 short_description: Creates and modifies power state of application instances on
-                    ThinkAgile CP.
+  ThinkAgile CP.
 
 description:
-    - 'This module can be used to create new application instances on the
-        ThinkAgile CP cloud platform, as well as delete and modify power states
-        of existing application instances.'
-    - 'Currently this module cannot modify the resources of existing
-        application instances aside from performing deletion and power state
-        operations.'
+  - "This module can be used to create new application instances on the
+    ThinkAgile CP cloud platform, as well as delete and modify power states
+    of existing application instances."
+  - "Currently this module cannot modify the resources of existing
+    application instances aside from performing deletion and power state
+    operations."
 author:
-    - Lenovo (@lenovo)
-    - Xander Madsen (@xmadsen)
+  - Lenovo (@lenovo)
+  - Xander Madsen (@xmadsen)
 
 requirements:
-- tacp
+  - tacp
 
 options:
-    api_key:
+  api_key:
+    description:
+      - An API key generated in the Developer Options in the ThinkAgile
+        CP portal. This is required to perform any operations with this
+        module.
+    required: true
+    type: str
+  name:
+    description:
+      - This is the name of the instance to be created or modified
+    required: true
+    type: str
+  state:
+    description:
+      - The desired state for the application instance in question. All
+        options except 'absent' will perform a power operation if
+        necessary, while 'absent' deletes the application instance with
+        the provided name if it exists.
+    choices:
+      - started
+      - shutdown
+      - stopped
+      - restarted
+      - force_restarted
+      - paused
+      - absent
+  datacenter:
+    description:
+      - The name of the virtual datacenter that the instance will be
+        created in. Only required when creating a new instance.
+    required: false
+    type: str
+  migration_zone:
+    description:
+      - The name of the migration zone that the instance will be created
+        in. Only required when creating a new instance.
+    required: false
+    type: str
+  template:
+    description:
+      - The name of the template used as a basis for the creation of the
+        instance. Only required when creating a new instance.
+    required: false
+    type: str
+  storage_pool:
+    description:
+      - The name of the storage pool that the instance's disks will be
+        stored in. Only required when creating a new instance.
+    required: false
+    type: str
+  vcpu_cores:
+    description:
+      - The number of virtual CPU cores that the application instance
+        will have when it is created. Only required when creating a new
+        instance.
+    required: false
+    type: int
+  memory:
+    description:
+      - The amount of virtual memory (RAM) that the application instance
+        will have when it is created. Can be expressed with various
+        units. Only required when creating a new instance.
+    required: false
+    type: str
+  disks:
+    description:
+      - An array of disks that will be associated with the application
+        instance when it is created.
+      - Must contain any disks that the template contains, and the names
+        must match for any of those such disks. Only required when
+        creating a new instance.
+    required: false
+    type: list
+    suboptions:
+      name:
         description:
-            - An API key generated in the Developer Options in the ThinkAgile
-                CP portal. This is required to perform any operations with this
-                module.
+          - The name of the disk. If the specified disk is not part
+            of the template, it can be named anything (except the
+            name of a disk in the template).
         required: true
         type: str
-    name:
+      size_gb:
         description:
-            - This is the name of the instance to be created or modified
+          - The size of the disk in GB. Can be expressed as a float.
         required: true
-        type: str
-    state:
+        type: float
+      boot_order:
         description:
-            - The desired state for the application instance in question. All
-                options except 'absent' will perform a power operation if
-                necessary, while 'absent' deletes the application instance with
-                the provided name if it exists.
-        choices:
-            - started
-            - shutdown
-            - stopped
-            - restarted
-            - force_restarted
-            - paused
-            - absent
-    datacenter:
+          - The place in the boot order for the disk. The overall
+            boot order must begin at 1, and every NIC and disk must
+            have an order provided.
+        required: true
+        type: int
+      bandwidth_limit:
         description:
-            - The name of the virtual datacenter that the instance will be
-              created in. Only required when creating a new instance.
-        required: false
-        type: str
-    migration_zone:
-        description:
-            - The name of the migration zone that the instance will be created
-              in. Only required when creating a new instance.
-        required: false
-        type: str
-    template:
-        description:
-            - The name of the template used as a basis for the creation of the
-              instance. Only required when creating a new instance.
-        required: false
-        type: str
-    storage_pool:
-        description:
-            - The name of the storage pool that the instance's disks will be
-              stored in. Only required when creating a new instance.
-        required: false
-        type: str
-    vcpu_cores:
-        description:
-            - The number of virtual CPU cores that the application instance
-              will have when it is created. Only required when creating a new
-              instance.
+          - A limit to the bandwidth usage allowed for this disk.
+            Must be at least 5000000 (5 Mbps).
         required: false
         type: int
-    memory:
+      iops_limit:
         description:
-            - The amount of virtual memory (RAM) that the application instance
-              will have when it is created. Can be expressed with various
-              units. Only required when creating a new instance.
+          - A limit to the total IOPS allowed for this disk.
+            Must be at least 50.
         required: false
-        type: str
-    disks:
-        description:
-            - An array of disks that will be associated with the application
-              instance when it is created.
-            - Must contain any disks that the template contains, and the names
-              must match for any of those such disks. Only required when
-              creating a new instance.
-        required: false
-        type: list
-        suboptions:
-            name:
-                description:
-                    - The name of the disk. If the specified disk is not part
-                      of the template, it can be named anything (except the
-                      name of a disk in the template).
-                required: true
-                type: str
-            size_gb:
-                description:
-                    - The size of the disk in GB. Can be expressed as a float.
-                required: true
-                type: float
-            boot_order:
-                description:
-                    - The place in the boot order for the disk. The overall
-                      boot order must begin at 1, and every NIC and disk must
-                      have an order provided.
-                required: true
-                type: int
-            bandwidth_limit:
-                description:
-                    - A limit to the bandwidth usage allowed for this disk.
-                      Must be at least 5000000 (5 Mbps).
-                required: false
-                type: int
-            iops_limit:
-                description:
-                    - A limit to the total IOPS allowed for this disk.
-                      Must be at least 50.
-                required: false
-                type: int
-    nics:
-        description:
-            - An array of NICs that will be associated with the application
-              instance when it is created.
-            - Must contain any NICs that the template contains, and the names
-              must match for any of those such NICs. Only required when
-              creating a new instance.
-        required: false
-        type: list
-        suboptions:
-            name:
-                description:
-                    - The name of the NIC. If the specified NIC is not part
-                      of the template, it can be named anything (except the
-                      name of a NIC in the template).
-                required: true
-                type: str
-            type:
-                description:
-                    - The type of network that the NIC will be a part of.
-                    - Valid chocies are either "VNET" or "VLAN".
-                required: true
-                type: str
-            network:
-                description:
-                    - The name of the network that the NIC will be a part of.
-                    - There must be an existing network of the provided type
-                      that has the provided network name to succeed.
-                required: true
-                type: str
-            boot_order:
-                description:
-                    - The place in the boot order for the NIC. The overall boot
-                      order must begin at 1, and every NIC and disk must have
-                      an order provided.
-                required: true
-                type: int
-            automatic_mac_address:
-                description:
-                    - Whether this interface should be automatically assigned
-                      a MAC address.
-                    - Providing a MAC address to the mac_address field sets
-                      this value to false.
-                required: false
-                type: bool
-            mac_address:
-                description:
-                    - A static MAC address to be assigned to the NIC. Should
-                      not exist on any other interfaces on the network.
-                    - Should be of the format aa:bb:cc:dd:ee:ff
-                    - If this is set, 'automatic_mac_address' is automatically
-                      set to false.
-                required: false
-                type: str
-            firewall_override:
-                description:
-                    - The name of a firewall override that exists in the
-                      datacenter that the NIC's instance will reside in.
-                required: false
-                type: str
-    vtx_enabled:
-        description:
-            - Whether or not VT-x nested virtualization features should be
-              enabled for the instance. Enabled by default.
-        required: false
-        type: bool
-    auto_recovery_enabled:
-        description:
-            - Whether or not the instance should be restarted on a different
-              host node in the event that its host node fails. Defaults to
-              true.
-        required: false
-        type: bool
+        type: int
+  nics:
     description:
+      - An array of NICs that will be associated with the application
+        instance when it is created.
+      - Must contain any NICs that the template contains, and the names
+        must match for any of those such NICs. Only required when
+        creating a new instance.
+    required: false
+    type: list
+    suboptions:
+      name:
         description:
-            - A textual description of the instance. Defaults to any
-              description that the source template come with.
+          - The name of the NIC. If the specified NIC is not part
+            of the template, it can be named anything (except the
+            name of a NIC in the template).
+        required: true
+        type: str
+      type:
+        description:
+          - The type of network that the NIC will be a part of.
+          - Valid chocies are either "VNET" or "VLAN".
+        required: true
+        type: str
+      network:
+        description:
+          - The name of the network that the NIC will be a part of.
+          - There must be an existing network of the provided type
+            that has the provided network name to succeed.
+        required: true
+        type: str
+      boot_order:
+        description:
+          - The place in the boot order for the NIC. The overall boot
+            order must begin at 1, and every NIC and disk must have
+            an order provided.
+        required: true
+        type: int
+      automatic_mac_address:
+        description:
+          - Whether this interface should be automatically assigned
+            a MAC address.
+          - Providing a MAC address to the mac_address field sets
+            this value to false.
+        required: false
+        type: bool
+      mac_address:
+        description:
+          - A static MAC address to be assigned to the NIC. Should
+            not exist on any other interfaces on the network.
+          - Should be of the format aa:bb:cc:dd:ee:ff
+          - If this is set, 'automatic_mac_address' is automatically
+            set to false.
         required: false
         type: str
-    vm_mode:
+      firewall_override:
         description:
-            - Sets the instance mode. Set to "Enhanced" by default.
-            - Valid choices are "Enhanced" and "Compatibility"
-            - Any instance can boot in Compatibility mode.
-            - In Enhanced mode, Virtio drivers must be present in the template
-              in order to boot.
-            - Additionally, in Enhanced mode:
-                - Storage disks are exported as virtio iSCSI devices
-                - vNICs are exported as virtio vNICs
-                - Snapshots will be application consistent (when ThinkAgile CP
-                  Guest Agent is installed) if the guest OS supports freeze and
-                  thaw
-                - CPU and Memory Statistics are available (When ThinkAgile CP
-                  Guest Agent is installed)
+          - The name of a firewall override that exists in the
+            datacenter that the NIC's instance will reside in.
         required: false
         type: str
-    application_group:
-        description:
-            - The name of an application group that the instance will be put
-              in. Creates it in the virtual datacenter if it does not yet exist
-              .
-        required: false
-        type: str
+  vtx_enabled:
+    description:
+      - Whether or not VT-x nested virtualization features should be
+        enabled for the instance. Enabled by default.
+    required: false
+    type: bool
+  auto_recovery_enabled:
+    description:
+      - Whether or not the instance should be restarted on a different
+        host node in the event that its host node fails. Defaults to
+        true.
+    required: false
+    type: bool
+  description:
+    description:
+      - A textual description of the instance. Defaults to any
+        description that the source template come with.
+    required: false
+    type: str
+  vm_mode:
+    description:
+      - Sets the instance mode. Set to "Enhanced" by default.
+      - Valid choices are "Enhanced" and "Compatibility"
+      - Any instance can boot in Compatibility mode.
+      - In Enhanced mode, Virtio drivers must be present in the template
+        in order to boot.
+      - Additionally, in Enhanced mode
+        - Storage disks are exported as virtio iSCSI devices
+        - vNICs are exported as virtio vNICs
+        - Snapshots will be application consistent (when ThinkAgile CP
+        Guest Agent is installed) if the guest OS supports freeze and
+        thaw
+        - CPU and Memory Statistics are available (When ThinkAgile CP
+        Guest Agent is installed)
+    required: false
+    type: str
+  application_group:
+    description:
+      - The name of an application group that the instance will be put
+        in. Creates it in the virtual datacenter if it does not yet exist
+        .
+    required: false
+    type: str
+
 '''
 
 EXAMPLES = '''
@@ -430,15 +431,16 @@ EXAMPLES = '''
 
 RETURN = '''
 instance:
-    description: The final state of the application instance if it still exists.
-    type: dict
-    returned: success
+  description: The final state of the application instance if it still exists.
+  type: dict
+  returned: success
 
 msg:
-    description: An error message in the event of invalid input or other
-        unexpected behavior during module execution.
-    type: str
-    returned: failure
+  description: An error message in the event of invalid input or other
+    unexpected behavior during module execution.
+  type: str
+  returned: failure
+
 '''
 
 

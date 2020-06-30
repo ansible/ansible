@@ -25,45 +25,46 @@ module: tacp_info
 short_description: Get facts about various resources in ThinkAgile CP.
 
 description:
-    - This module can be used to retrieve data about various types of resources
-        in the ThinkAgile CP cloud platform.
+  - This module can be used to retrieve data about various types of resources
+    in the ThinkAgile CP cloud platform.
 
 author:
-    - Lenovo (@lenovo)
-    - Xander Madsen (@xmadsen)
+  - Lenovo (@lenovo)
+  - Xander Madsen (@xmadsen)
 
 requirements:
-- tacp
+  - tacp
 
 options:
-    api_key:
-        description:
-            - An API key generated in the Developer Options in the ThinkAgile
-                CP portal. This is required to perform any operations with this
-                module.
-        required: true
-        type: str
-    resource:
-        description:
-           - The type of resource the user wants to retrieve data about.
-           - Valid choices are:
-              - application
-              - application_group
-              - category
-              - datacenter
-              - firewall_profile
-              - instance
-              - marketplace_template
-              - migration_zone
-              - site
-              - storage_pool
-              - tag
-              - template
-              - user
-              - vlan
-              - vnet
-        required: true
-        type: str
+  api_key:
+    description:
+      - An API key generated in the Developer Options in the ThinkAgile
+        CP portal. This is required to perform any operations with this
+        module.
+    required: true
+    type: str
+  resource:
+    description:
+      - The type of resource the user wants to retrieve data about.
+      - Valid choices are
+        - application
+        - application_group
+        - category
+        - datacenter
+        - firewall_profile
+        - instance
+        - marketplace_template
+        - migration_zone
+        - site
+        - storage_pool
+        - tag
+        - template
+        - user
+        - vlan
+        - vnet
+    required: true
+    type: str
+
 '''
 
 EXAMPLES = '''
@@ -92,10 +93,11 @@ EXAMPLES = '''
 
 RETURN = '''
 resource:
-    description: A dict containing a key with the name of the resource type,
-                    and a list of the returned resources as a value.
-    type: dict
-    returned: always
+  description: A dict containing a key with the name of the resource type,
+    and a list of the returned resources as a value.
+  type: dict
+  returned: always
+
 '''
 
 module_args = {
