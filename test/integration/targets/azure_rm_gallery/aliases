@@ -1,5 +1,5 @@
 cloud/azure
-shippable/azure/group4
+unsupported
 destructive
 azure_rm_galleryimage
 azure_rm_galleryimageversion

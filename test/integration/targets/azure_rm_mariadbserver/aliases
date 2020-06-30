@@ -1,6 +1,6 @@
 cloud/azure
 destructive
-shippable/azure/group9
+unsupported
 azure_rm_mariadbserver_facts
 azure_rm_mariadbdatabase
 azure_rm_mariadbdatabase_facts

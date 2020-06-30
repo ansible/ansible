@@ -1,5 +1,5 @@
 cloud/azure
-shippable/azure/group2
+unsupported
 destructive
 azure_rm_cdnprofile_info
 azure_rm_cdnendpoint

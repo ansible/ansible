@@ -1,6 +1,6 @@
 cloud/azure
 destructive
-shippable/azure/group2
+unsupported
 azure_rm_devtestlab_facts
 azure_rm_devtestlabarmtemplate
 azure_rm_devtestlabartifact
