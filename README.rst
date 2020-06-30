@@ -45,20 +45,28 @@ The tacp modules and module_utils files can be added to any of the following dfi
 
 ``[user@hostname ansible.lenovo-tacp]# mkdir -p ~/.ansible/plugins/``
 
-2. Copy the ``module_utils/tacp_ansible/`` directory from this ansible.lenovo-tacp repo into
+2. Create the ``~/.ansible/plugins/module_utils`` directory:
+
+``[user@hostname ansible.lenovo-tacp]# mkdir -p ~/.ansible/plugins/module_utils``
+
+3. Create the ``~/.ansible/plugins/modules/cloud`` directory:
+
+``[user@hostname ansible.lenovo-tacp]# mkdir -p ~/.ansible/plugins/modules/cloud``
+
+4. Copy the ``module_utils/tacp_ansible/`` directory from this ansible.lenovo-tacp repo into
    the local ansible installation's ``module_utils/`` directory. In this example the module files 
    are copied to the ``/usr/share/ansible/plugins`` location, which requires ``sudo``.
 
 ``[user@hostname ansible.lenovo-tacp]# sudo cp -R ./lib/ansible/module_utils/tacp_ansible 
 ~/.ansible/plugins/module_utils``
 
-3. Copy the ``modules/tacp/`` directory from this ansible.lenovo-tacp repo into
+5. Copy the ``modules/tacp/`` directory from this ansible.lenovo-tacp repo into
    the local ansible installation's ``modules/cloud/`` directory.
 
 ``[user@hostname ansible.lenovo-tacp]# sudo cp -R ./lib/ansible/modules/tacp 
 ~/.ansible/plugins/modules/cloud``
 
-4. Verify the manual installation worked:
+6. Verify the manual installation worked:
 
 .. code-block:: shell 
 
