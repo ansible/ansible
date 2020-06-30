@@ -137,9 +137,9 @@ options:
     version_added: "2.1"
   fail_on_autoremove:
     description:
-      - 'Corresponds to the C(--no-remove) option for I(apt).'
+      - 'Corresponds to the C(--no-remove) option for C(apt).'
       - 'If C(yes), it is ensured that no packages will be removed or the task will fail.'
-      - 'C(fail_on_autoremove) is only supported with state except I(absent)'
+      - 'C(fail_on_autoremove) is only supported with state except C(absent)'
     type: bool
     default: 'no'
     version_added: "2.11"
