@@ -7732,7 +7732,7 @@ plugin_routing:
     nso:
       redirect: community.network.nso
     onyx:
-      redirect: community.network.onyx
+      redirect: mellanox.onyx.onyx
     ordnance:
       redirect: community.network.ordnance
     panos:
@@ -7981,7 +7981,7 @@ plugin_routing:
     nos:
       redirect: community.network.nos
     onyx:
-      redirect: community.network.onyx
+      redirect: mellanox.onyx.onyx
     routeros:
       redirect: community.network.routeros
     slxos:
@@ -8040,7 +8040,7 @@ plugin_routing:
     nos:
       redirect: community.network.nos
     onyx:
-      redirect: community.network.onyx
+      redirect: mellanox.onyx.onyx
     routeros:
       redirect: community.network.routeros
     slxos:
@@ -8377,7 +8377,7 @@ plugin_routing:
     online:
       redirect: community.general.online
     onyx:
-      redirect: community.network.onyx
+      redirect: mellanox.onyx.onyx
     opennebula:
       redirect: community.general.opennebula
     openswitch:
