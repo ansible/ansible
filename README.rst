@@ -37,22 +37,39 @@ The tacp modules and module_utils files can be added to any of the following dfi
 
 - ``~/.ansible/plugins/``
 
-- ``/usr/share/ansible/plugins/``
-
-
-Copy the ``module_utils/tacp_ansible/`` directory from this ansible.lenovo-tacp repo into
-the local ansible installation's ``module_utils/`` directory. In this example the module files are copied to the ``/usr/share/ansible/plugins`` location, which requires ``sudo``.
-
-``[user@hostname ansible.lenovo-tacp]# sudo cp -R ./lib/ansible/module_utils/tacp_ansible 
-/usr/share/ansible/plugins/module_utils``
+- On CentOS/RHEL systems, ``/usr/share/ansible/plugins/``
 
 |
 
-Copy the ``modules/tacp/`` directory from this ansible.lenovo-tacp repo into
-the local ansible installation's ``modules/cloud/`` directory.
+1. For example, create the ``~/.ansible/plugins/`` directory:
+
+``[user@hostname ansible.lenovo-tacp]# mkdir -p ~/.ansible/plugins/``
+
+2. Copy the ``module_utils/tacp_ansible/`` directory from this ansible.lenovo-tacp repo into
+   the local ansible installation's ``module_utils/`` directory. In this example the module files 
+   are copied to the ``/usr/share/ansible/plugins`` location, which requires ``sudo``.
+
+``[user@hostname ansible.lenovo-tacp]# sudo cp -R ./lib/ansible/module_utils/tacp_ansible 
+~/.ansible/plugins/module_utils``
+
+3. Copy the ``modules/tacp/`` directory from this ansible.lenovo-tacp repo into
+   the local ansible installation's ``modules/cloud/`` directory.
 
 ``[user@hostname ansible.lenovo-tacp]# sudo cp -R ./lib/ansible/modules/tacp 
-/usr/share/ansible/plugins/modules/cloud``
+~/.ansible/plugins/modules/cloud``
+
+4. Verify the manual installation worked:
+
+.. code-block:: shell 
+
+  [user@hostname ansible.lenovo-tacp]# ansible-doc -t module tacp_instance
+  > TACP_INSTANCE    (/home/user/.ansible/plugins/modules/cloud/tacp/tacp_instance.py)
+
+        This module can be used to create new application instances on the ThinkAgile CP cloud platform, as well as delete and modify power states of existing application instances. Currently this module cannot modify the resources of
+        existing application instances aside from performing deletion and power state operations.
+        .
+        .
+        .
 
 Examples
 ========
