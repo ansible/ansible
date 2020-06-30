@@ -188,7 +188,6 @@
 
 - name: check hello
   shell: dpkg-query -l hello
-  failed_when: False
   register: dpkg_result
 
 - name: verify installation of hello
