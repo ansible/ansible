@@ -72,7 +72,7 @@ Become connection variables
 You can define different ``become`` options for each managed node or group. You can define these variables in inventory or use them as normal variables.
 
 ansible_become
-    equivalent of the ``become`` directive, decides if privilege escalation is used or not.
+    overrides the ``become`` directive, decides if privilege escalation is used or not.
 
 ansible_become_method
     which privilege escalation method should be used
@@ -84,7 +84,7 @@ ansible_become_password
     set the privilege escalation password. See :ref:`playbooks_vault` for details on how to avoid having secrets in plain text
 
 ansible_common_remote_group
-    determines if Ansible should try to ``chgrp`` its temporary files to a group if ``setfacl`` and ``chown`` both fail. See `Risks of becoming an unprivileged user`_ for more information.
+    determines if Ansible should try to ``chgrp`` its temporary files to a group if ``setfacl`` and ``chown`` both fail. See `Risks of becoming an unprivileged user`_ for more information. Added in version 2.10.
 
 For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this:
 
