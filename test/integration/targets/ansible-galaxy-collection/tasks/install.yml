@@ -5,7 +5,7 @@
     state: directory
 
 - name: install simple collection with implicit path - {{ test_name }}
-  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}' {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_name }}' {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_normal
@@ -32,7 +32,7 @@
     - (install_normal_manifest.content | b64decode | from_json).collection_info.version == '1.0.9'
 
 - name: install existing without --force - {{ test_name }}
-  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}' {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_name }}' {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_existing_no_force
@@ -43,7 +43,7 @@
     - '"Skipping ''namespace1.name1'' as it is already installed" in install_existing_no_force.stdout'
 
 - name: install existing with --force - {{ test_name }}
-  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}' --force {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_name }}' --force {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
   register: install_existing_force
@@ -59,7 +59,7 @@
     state: absent
 
 - name: install pre-release as explicit version to custom dir - {{ test_name }}
-  command: ansible-galaxy collection install 'namespace1.name1:1.1.0-beta.1' -s '{{ test_server }}' -p '{{ galaxy_dir }}/ansible_collections' {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install 'namespace1.name1:1.1.0-beta.1' -s '{{ test_name }}' -p '{{ galaxy_dir }}/ansible_collections' {{ galaxy_verbosity }}
   register: install_prerelease
 
 - name: get result of install pre-release as explicit version to custom dir - {{ test_name }}
@@ -79,7 +79,7 @@
     state: absent
 
 - name: install pre-release version with --pre to custom dir - {{ test_name }}
-  command: ansible-galaxy collection install --pre 'namespace1.name1' -s '{{ test_server }}' -p '{{ galaxy_dir }}/ansible_collections' {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install --pre 'namespace1.name1' -s '{{ test_name }}' -p '{{ galaxy_dir }}/ansible_collections' {{ galaxy_verbosity }}
   register: install_prerelease
 
 - name: get result of install pre-release version with --pre to custom dir - {{ test_name }}
@@ -127,13 +127,16 @@
     - (install_multiple_with_dep_actual.results[3].content | b64decode | from_json).collection_info.version == '1.2.2'
 
 - name: expect failure with dep resolution failure
-  command:  ansible-galaxy collection install fail_namespace.fail_collection -s {{ test_server }} {{ galaxy_verbosity }}
+  command:  ansible-galaxy collection install fail_namespace.fail_collection -s {{ test_name }} {{ galaxy_verbosity }}
   register: fail_dep_mismatch
   failed_when: '"Cannot meet dependency requirement ''fail_dep2.name:<0.0.5'' for collection fail_namespace.fail_collection" not in fail_dep_mismatch.stderr'
 
-- name: Find artifact url
+- name: Find artifact url for namespace3.name
   uri:
     url: '{{ test_server }}{{ vX }}collections/namespace3/name/versions/1.0.0/'
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
   register: artifact_url_response
 
 - name: download a collection for an offline install - {{ test_name }}
@@ -178,9 +181,12 @@
     that:
     - not fail_bad_tar_actual.stat.exists
 
-- name: Find artifact url
+- name: Find artifact url for namespace4.name
   uri:
     url: '{{ test_server }}{{ vX }}collections/namespace4/name/versions/1.0.0/'
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
   register: artifact_url_response
 
 - name: install a collection from a URI - {{ test_name }}
@@ -207,23 +213,25 @@
   environment:
     ANSIBLE_GALAXY_SERVER_LIST: undefined
 
-- name: install a collection with an empty server list - {{ test_name }}
-  command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' {{ galaxy_verbosity }}
-  register: install_empty_server_list
-  environment:
-    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
-    ANSIBLE_GALAXY_SERVER_LIST: ''
+- when: not requires_auth
+  block:
+    - name: install a collection with an empty server list - {{ test_name }}
+      command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}' {{ galaxy_verbosity }}
+      register: install_empty_server_list
+      environment:
+        ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+        ANSIBLE_GALAXY_SERVER_LIST: ''
 
-- name: get result of a collection with an empty server list - {{ test_name }}
-  slurp:
-    path: '{{ galaxy_dir }}/ansible_collections/namespace5/name/MANIFEST.json'
-  register: install_empty_server_list_actual
+    - name: get result of a collection with an empty server list - {{ test_name }}
+      slurp:
+        path: '{{ galaxy_dir }}/ansible_collections/namespace5/name/MANIFEST.json'
+      register: install_empty_server_list_actual
 
-- name: assert install a collection with an empty server list - {{ test_name }}
-  assert:
-    that:
-    - '"Installing ''namespace5.name:1.0.0'' to" in install_empty_server_list.stdout'
-    - (install_empty_server_list_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
+    - name: assert install a collection with an empty server list - {{ test_name }}
+      assert:
+        that:
+        - '"Installing ''namespace5.name:1.0.0'' to" in install_empty_server_list.stdout'
+        - (install_empty_server_list_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
 
 - name: create test requirements file with both roles and collections - {{ test_name }}
   copy:
@@ -237,7 +245,7 @@
 
 # Need to run with -vvv to validate the roles will be skipped msg
 - name: install collections only with requirements-with-role.yml - {{ test_name }}
-  command: ansible-galaxy collection install -r '{{ galaxy_dir }}/ansible_collections/requirements-with-role.yml' -s '{{ test_server }}' -vvv
+  command: ansible-galaxy collection install -r '{{ galaxy_dir }}/ansible_collections/requirements-with-role.yml' -s '{{ test_name }}' -vvv
   register: install_req_collection
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
@@ -270,7 +278,7 @@
     dest: '{{ galaxy_dir }}/ansible_collections/requirements.yaml'
 
 - name: install collections with ansible-galaxy install - {{ test_name }}
-  command: ansible-galaxy install -r '{{ galaxy_dir }}/ansible_collections/requirements.yaml' -s '{{ test_server }}'
+  command: ansible-galaxy install -r '{{ galaxy_dir }}/ansible_collections/requirements.yaml' -s '{{ test_name }}'
   register: install_req
   environment:
     ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
@@ -299,7 +307,7 @@
     state: absent
 
 - name: install collection with symlink - {{ test_name }}
-  command: ansible-galaxy collection install symlink.symlink -s '{{ test_server }}' {{ galaxy_verbosity }}
+  command: ansible-galaxy collection install symlink.symlink -s '{{ test_name }}' {{ galaxy_verbosity }}
   environment:
     ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
   register: install_symlink
