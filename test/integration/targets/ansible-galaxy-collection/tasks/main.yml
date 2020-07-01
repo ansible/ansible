@@ -14,13 +14,16 @@
 - name: run ansible-galaxy collection build tests
   import_tasks: build.yml
 
+- name: configure pulp
+  include_tasks: pulp.yml
+
+- name: configure galaxy_ng
+  include_tasks: galaxy_ng.yml
+
 - name: create test ansible.cfg that contains the Galaxy server list
   template:
     src: ansible.cfg.j2
     dest: '{{ galaxy_dir }}/ansible.cfg'
-
-- name: configure pulp
-  include_tasks: pulp.yml
 
 - name: run ansible-galaxy collection publish tests for {{ test_name }}
   include_tasks: publish.yml
@@ -32,23 +35,28 @@
     test_name: '{{ item.name }}'
     test_server: '{{ item.server }}'
     is_pulp: '{{ item.pulp|default(false) }}'
-  with_items:
-  - name: galaxy
-    server: '{{ fallaxy_galaxy_server }}'
-  - name: automation_hub
-    server: '{{ fallaxy_ah_server }}'
+    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
+  loop:
   - name: pulp_v2
     server: '{{ pulp_v2_server }}'
     pulp: true
   - name: pulp_v3
     server: '{{ pulp_v3_server }}'
     pulp: true
+    v3: true
+  - name: galaxy_ng
+    server: '{{ galaxy_ng_server }}'
+    pulp: true
+    v3: true
 
 # We use a module for this so we can speed up the test time.
 - name: setup test collections for install and download test
   loop:
-    - '{{ fallaxy_galaxy_server }}'
-    - pulp_v2
+    # For pulp interactions, we only upload to galaxy_ng which shares
+    # the same repo and distribution with pulp_ansible
+    # However, we use galaxy_ng only, since collections are unique across
+    # pulp repositories, and galaxy_ng maintains a 2nd list of published collections
+    - galaxy_ng
   environment:
     ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
   async: 300
@@ -56,114 +64,7 @@
   register: setup_collections
   setup_collections:
     server: '{{ item }}'
-    token: '{{ omit if item == "pulp_v2" else fallaxy_token }}'
-    collections:
-    # Scenario to test out pre-release being ignored unless explicitly set and version pagination.
-    - namespace: namespace1
-      name: name1
-      version: 0.0.1
-    - namespace: namespace1
-      name: name1
-      version: 0.0.2
-    - namespace: namespace1
-      name: name1
-      version: 0.0.3
-    - namespace: namespace1
-      name: name1
-      version: 0.0.4
-    - namespace: namespace1
-      name: name1
-      version: 0.0.5
-    - namespace: namespace1
-      name: name1
-      version: 0.0.6
-    - namespace: namespace1
-      name: name1
-      version: 0.0.7
-    - namespace: namespace1
-      name: name1
-      version: 0.0.8
-    - namespace: namespace1
-      name: name1
-      version: 0.0.9
-    - namespace: namespace1
-      name: name1
-      version: 0.0.10
-    - namespace: namespace1
-      name: name1
-      version: 0.1.0
-    - namespace: namespace1
-      name: name1
-      version: 1.0.0
-    - namespace: namespace1
-      name: name1
-      version: 1.0.9
-    - namespace: namespace1
-      name: name1
-      version: 1.1.0-beta.1
-
-    # Pad out number of namespaces for pagination testing
-    - namespace: namespace2
-      name: name
-    - namespace: namespace3
-      name: name
-    - namespace: namespace4
-      name: name
-    - namespace: namespace5
-      name: name
-    - namespace: namespace6
-      name: name
-    - namespace: namespace7
-      name: name
-    - namespace: namespace8
-      name: name
-    - namespace: namespace9
-      name: name
-
-    # Complex dependency resolution
-    - namespace: parent_dep
-      name: parent_collection
-      dependencies:
-        child_dep.child_collection: '>=0.5.0,<1.0.0'
-    - namespace: child_dep
-      name: child_collection
-      version: 0.4.0
-    - namespace: child_dep
-      name: child_collection
-      version: 0.5.0
-    - namespace: child_dep
-      name: child_collection
-      version: 0.9.9
-      dependencies:
-        child_dep.child_dep2: '!=1.2.3'
-    - namespace: child_dep
-      name: child_collection
-    - namespace: child_dep
-      name: child_dep2
-      version: 1.2.2
-    - namespace: child_dep
-      name: child_dep2
-      version: 1.2.3
-
-    # Dep resolution failure
-    - namespace: fail_namespace
-      name: fail_collection
-      version: 2.1.2
-      dependencies:
-        fail_dep.name: '0.0.5'
-        fail_dep2.name: '<0.0.5'
-    - namespace: fail_dep
-      name: name
-      version: '0.0.5'
-      dependencies:
-        fail_dep2.name: '>0.0.5'
-    - namespace: fail_dep2
-      name: name
-
-    # Symlink tests
-    - namespace: symlink
-      name: symlink
-      use_symlink: yes
+    collections: '{{ collection_list }}'
 
 - name: Wait for setup_collections
   async_status:
@@ -187,12 +88,16 @@
     test_name: '{{ item.name }}'
     test_server: '{{ item.server }}'
     vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
-  with_items:
-  - name: galaxy
-    server: '{{ fallaxy_galaxy_server }}'
-  - name: automation_hub
-    server: '{{ fallaxy_ah_server }}'
+    requires_auth: '{{ item.requires_auth|default(false) }}'
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  loop:
+  - name: galaxy_ng
+    server: '{{ galaxy_ng_server }}'
     v3: true
+    requires_auth: true
   - name: pulp_v2
     server: '{{ pulp_v2_server }}'
   - name: pulp_v3

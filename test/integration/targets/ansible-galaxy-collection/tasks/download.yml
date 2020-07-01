@@ -5,7 +5,7 @@
     state: directory
 
 - name: download collection with multiple dependencies
-  command: ansible-galaxy collection download parent_dep.parent_collection -s {{ fallaxy_galaxy_server }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection download parent_dep.parent_collection -s pulp_v2 {{ galaxy_verbosity }}
   register: download_collection
   args:
     chdir: '{{ galaxy_dir }}/download'
@@ -69,7 +69,7 @@
     dest: '{{ galaxy_dir }}/download/download.yml'
 
 - name: download collection with req to custom dir
-  command: ansible-galaxy collection download -r '{{ galaxy_dir }}/download/download.yml' -s {{ fallaxy_ah_server }} -p '{{ galaxy_dir }}/download/collections-custom' {{ galaxy_verbosity }}
+  command: ansible-galaxy collection download -r '{{ galaxy_dir }}/download/download.yml' -s galaxy_ng -p '{{ galaxy_dir }}/download/collections-custom' {{ galaxy_verbosity }}
   register: download_req_custom_path
 
 - name: get result of download collection with req to custom dir
