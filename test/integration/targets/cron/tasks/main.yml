@@ -123,7 +123,7 @@
   - assert:
       that: not cron_file_stats.stat.exists
 
-- name: Allow non-ascii char in cron job (#69492)
+- name: Allow non-ascii chars in cron job (#69492)
   block:
   - name: Cron file creation
     cron:
