@@ -141,9 +141,12 @@
           - flat_full_nonull == [1, 3, 4, 5, 6, 7]
           - flat_one_nonull == [1, 3, [4, [5]], 6, 7]
           - flat_two_nonull == [1, 3, 4, [5], 6, 7]
+          - list_with_subnulls|flatten(skip_nulls=False) ==  [1, 2, 'None', 4, 5, 6, 7]
+          - list_with_subnulls|flatten(skip_nulls=True) ==  [1, 2, 4, 5, 6, 7]
   vars:
     orig_list: [1, 2, [3, [4, [5]], 6], 7]
     list_with_nulls: [1, None, [3, [4, [5]], 6], 7]
+    list_with_subnulls: [1, 2, [None, [4, [5]], 6], 7]
 
 - name: Test base64 filter
   assert:
