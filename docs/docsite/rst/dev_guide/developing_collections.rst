@@ -263,7 +263,7 @@ Integration tests are executed using the ``ansible-test integration`` command. N
     
     For ``ansible-test`` to recognize tests as ``windows-integration`` tests, the test targets must have a ``windows`` entry in their ``aliases`` file. Alternatively, the modules and targets may use the ``win_`` prefix.
 
-Unit tests are executed using ``ansible-test unit`` syntax. Refer to :ref:`_testing_units` for details.
+Unit tests are executed using ``ansible-test units`` syntax. Refer to :ref:`_testing_units` for details.
 
 .. _creating_collections_skeleton:
 
