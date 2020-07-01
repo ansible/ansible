@@ -123,6 +123,7 @@
       - "'unsupported hash type' in unsupported_hash_type_res.msg"
 
 - name: Flatten tests
+  tags: flatten
   block:
     - name: use flatten
       set_fact:
@@ -130,6 +131,12 @@
         flat_one: '{{orig_list|flatten(levels=1)}}'
         flat_two: '{{orig_list|flatten(levels=2)}}'
         flat_tuples: '{{ [1,3] | zip([2,4]) | list | flatten }}'
+        flat_full_null: '{{list_with_nulls|flatten(skip_nulls=False)}}'
+        flat_one_null: '{{list_with_nulls|flatten(levels=1, skip_nulls=False)}}'
+        flat_two_null: '{{list_with_nulls|flatten(levels=2, skip_nulls=False)}}'
+        flat_full_nonull: '{{list_with_nulls|flatten(skip_nulls=True)}}'
+        flat_one_nonull: '{{list_with_nulls|flatten(levels=1, skip_nulls=True)}}'
+        flat_two_nonull: '{{list_with_nulls|flatten(levels=2, skip_nulls=True)}}'
 
     - name: Verify flatten filter works as expected
       assert:
@@ -138,8 +145,18 @@
           - flat_one == [1, 2, 3, [4, [5]], 6, 7]
           - flat_two == [1, 2, 3, 4, [5], 6, 7]
           - flat_tuples == [1, 2, 3, 4]
+          - flat_full_null == [1, 'None', 3, 4, 5, 6, 7]
+          - flat_one_null == [1, 'None', 3, [4, [5]], 6, 7]
+          - flat_two_null == [1, 'None', 3, 4, [5], 6, 7]
+          - flat_full_nonull == [1, 3, 4, 5, 6, 7]
+          - flat_one_nonull == [1, 3, [4, [5]], 6, 7]
+          - flat_two_nonull == [1, 3, 4, [5], 6, 7]
+          - list_with_subnulls|flatten(skip_nulls=False) ==  [1, 2, 'None', 4, 5, 6, 7]
+          - list_with_subnulls|flatten(skip_nulls=True) ==  [1, 2, 4, 5, 6, 7]
   vars:
     orig_list: [1, 2, [3, [4, [5]], 6], 7]
+    list_with_nulls: [1, None, [3, [4, [5]], 6], 7]
+    list_with_subnulls: [1, 2, [None, [4, [5]], 6], 7]
 
 - name: Test base64 filter
   assert:
