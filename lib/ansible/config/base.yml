@@ -189,7 +189,7 @@ AGNOSTIC_BECOME_PROMPT:
 CACHE_PLUGIN:
   name: Persistent Cache plugin
   default: memory
-  description: Chooses which cache plugin to use, the default 'memory' is ephimeral.
+  description: Chooses which cache plugin to use, the default 'memory' is ephemeral.
   env: [{name: ANSIBLE_CACHE_PLUGIN}]
   ini:
   - {key: fact_caching, section: defaults}
