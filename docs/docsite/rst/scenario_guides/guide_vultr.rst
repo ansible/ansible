@@ -93,7 +93,7 @@ Since `Vultr <https://www.vultr.com>`_ offers a public API, the execution of the
           region: New Jersey
 
 
-From that point on, only you creativity is the limit. Make sure to read the documentation of the `available modules <https://docs.ansible.com/ansible/latest/modules/list_of_cloud_modules.html#vultr>`_.
+From that point on, only your creativity is the limit. Make sure to read the documentation of the `available modules <https://docs.ansible.com/ansible/latest/modules/list_of_cloud_modules.html#vultr>`_.
 
 
 Dynamic Inventory
