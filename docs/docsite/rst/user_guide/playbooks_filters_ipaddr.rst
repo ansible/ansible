@@ -482,7 +482,7 @@ and broadcast addresses.::
     # {{ '192.168.0.0/16' | ansible.netcommon.network_in_usable( '192.168.0.255' ) }}
     True
 
-Filter ``network_in_network`` returns whether an address or a network passed as argument is in a network.::
+The ``network_in_network`` filter returns whether an address or a network passed as argument is in a network.::
 
     # {{ '192.168.0.0/24' | ansible.netcommon.network_in_network( '192.168.0.1' ) }}
     True
