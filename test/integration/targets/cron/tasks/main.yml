@@ -122,3 +122,26 @@
 
   - assert:
       that: not cron_file_stats.stat.exists
+
+- name: Allow non-ascii char in cron job (#69492)
+  block:
+  - name: Cron file creation
+    cron:
+      cron_file: cron_filename
+      name: "cron job that contain non-ascii chars in name and job (これは日本語です)"
+      job: 'echo "うどんを週に18食は食べている"'
+      user: root
+
+  - name: Cron file deletion
+    cron:
+      cron_file: cron_filename
+      name: "cron job that contain non-ascii chars in name and job (これは日本語です)"
+      state: absent
+
+  - name: Check file succesfull deletion
+    stat:
+      path: /etc/cron.d/cron_filename
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
