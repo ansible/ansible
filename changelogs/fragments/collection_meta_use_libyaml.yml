@@ -1,0 +1,2 @@
+bugfixes:
+  - collection metadata - ensure collection loader uses libyaml/CSafeLoader to parse collection metadata if available
