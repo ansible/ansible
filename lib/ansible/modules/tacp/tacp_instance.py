@@ -922,8 +922,25 @@ def add_playbook_disks(playbook_disks, instance):
         device.name for device in template_boot_order if device.disk_uuid]
 
     for playbook_disk in playbook_disks:
-        if playbook_disk['name'] not in template_disks:
-            add_disk_to_instance(playbook_disk, instance)
+        if playbook_disk['name'] in template_disks:
+            existing_disk = next(disk for disk in instance.disks
+                                 if disk.name == playbook_disk['name'])
+
+            target_disk_size_bytes = tacp_utils.convert_memory_abbreviation_to_bytes(  # noqa
+                            str(playbook_disk['size_gb']) + "GB"
+            )
+            if target_disk_size_bytes < existing_disk.size:
+                fail_and_rollback_instance_creation(
+                    "Failed to resize disk {} from {} bytes to {} bytes. "
+                    "Cannot shrink a template's disk.".format(
+                        existing_disk.name, existing_disk.size,
+                        target_disk_size_bytes), instance)
+
+            RESOURCES['update_app'].edit_disk_size(existing_disk.uuid,
+                                                   instance.uuid,
+                                                   target_disk_size_bytes)
+            return
+        add_disk_to_instance(playbook_disk, instance)
 
 
 def add_disk_to_instance(playbook_disk, instance):
@@ -947,7 +964,7 @@ def add_disk_to_instance(playbook_disk, instance):
                                                    uuid=instance.uuid)
 
     if hasattr(response, 'body'):
-        response_body = json.loads(response_body)
+        response_body = json.loads(response.body)
 
         if "Invalid Request" in response_body['code']:
             fail_and_rollback_instance_creation(response_body['message'],
