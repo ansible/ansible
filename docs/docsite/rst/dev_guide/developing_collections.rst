@@ -175,7 +175,6 @@ TBD.
 
 tests directory
 ----------------
-
 Ansible Collections are tested much like Ansible itself, by using the
 `ansible-test` utility which is released as part of Ansible, version 2.9.0 and
 newer. Because Ansible Collections are tested using the same tooling as Ansible
