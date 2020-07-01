@@ -60,6 +60,11 @@ display = Display()
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
+try:
+    yaml_SafeLoader = yaml.CSafeLoader
+except AttributeError:
+    yaml_SafeLoader = yaml.SafeLoader
+
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
@@ -211,14 +216,14 @@ def regex_escape(string, re_type='python'):
 def from_yaml(data):
     if isinstance(data, string_types):
         # We use ``unwrap_var`` here because the c pyyaml extension cannot handle AnsibleUnsafeText
-        return yaml.safe_load(unwrap_var(data))
+        return yaml.load(unwrap_var(data), Loader=yaml_SafeLoader)
     return data
 
 
 def from_yaml_all(data):
     if isinstance(data, string_types):
         # We use ``unwrap_var`` here because the c pyyaml extension cannot handle AnsibleUnsafeText
-        return yaml.safe_load_all(unwrap_var(data))
+        return yaml.load_all(unwrap_var(data), Loader=yaml_SafeLoader)
     return data
 
 
