@@ -264,7 +264,7 @@ Sanity tests are executed using ``ansible-test sanity`` syntax. Refer to :ref:`_
 Refer to :ref:`_testing_integration` for details.
 
 .. note::
-    For ``ansible-test`` to recognize tests as ``network-integration`` tests, the test targets must have a ``network`` entry in their ``aliases`` file. Alternatively, if the modules and targets share a common prefix, such as ``ios_`` then that prefix (without the underscore) can be added to `tests/integration/target-prefixes.network``, with one prefix listed per line.
+    For ``ansible-test`` to recognize tests as ``network-integration`` tests, the test targets must have a ``network`` entry in their ``aliases`` file. Alternatively, if the modules and targets share a common prefix, such as ``ios_`` then that prefix (without the underscore) can be added to ``tests/integration/target-prefixes.network``, with one prefix listed per line.
     
     For ``ansible-test`` to recognize tests as ``windows-integration`` tests, the test targets must have a ``windows`` entry in their ``aliases`` file. Alternatively, the modules and targets may use the ``win_`` prefix.
 
