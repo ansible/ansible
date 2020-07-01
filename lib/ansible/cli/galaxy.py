@@ -114,6 +114,7 @@ class GalaxyCLI(CLI):
 
         self.api_servers = []
         self.galaxy = None
+        self._api = None
         super(GalaxyCLI, self).__init__(args)
 
     def init_parser(self):
@@ -499,7 +500,21 @@ class GalaxyCLI(CLI):
 
     @property
     def api(self):
-        return self.api_servers[0]
+        if self._api:
+            return self._api
+
+        for server in self.api_servers:
+            try:
+                if u'v1' in server.available_api_versions:
+                    self._api = server
+                    break
+            except Exception:
+                continue
+
+        if not self._api:
+            self._api = self.api_servers[0]
+
+        return self._api
 
     def _get_default_collection_path(self):
         return C.COLLECTIONS_PATHS[0]
