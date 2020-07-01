@@ -32,6 +32,7 @@ It can usually be installed with either your system package manager or using
    :depth: 2
    :backlinks: top
 
+
 Basic tests
 ^^^^^^^^^^^
 
@@ -301,6 +302,7 @@ If needed, you can extract subnet and prefix information from the 'host/prefix' 
     # {{ host_prefix | ansible.netcommon.ipaddr('host/prefix') | ansible.netcommon.ipaddr('prefix') }}
     [64, 24]
 
+
 Converting subnet masks to CIDR notation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -332,6 +334,7 @@ This result can be converted to canonical form with ``ipaddr()`` to produce a su
     # {{ net_mask | ansible.netcommon.ipaddr('net') }}
     '192.168.0.0/24'
 
+
 Getting information about the network in CIDR notation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -347,6 +350,7 @@ This can be used to obtain the network address in CIDR notation format::
 
     # {{ ip_address | ansible.netcommon.ipaddr('network/prefix') }}
     '192.168.0.0/24'
+
 
 IP address conversion
 ^^^^^^^^^^^^^^^^^^^^^
@@ -413,6 +417,7 @@ be automatically converted to a router address (with a ``::1/48`` host address):
 
 .. _6to4: https://en.wikipedia.org/wiki/6to4
 
+
 Finding IP addresses within a range
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -465,6 +470,7 @@ Just like ``next_nth_ansible``, you have ``previous_nth_usable`` to find the pre
 
     # {{ '192.168.122.10/24' | ansible.netcommon.previous_nth_usable(2) }}
     192.168.122.8
+
 
 Testing if a address belong to a network range
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -647,6 +653,7 @@ Because of the size of IPv6 subnets, iteration over all of them to find the
 correct one may take some time on slower computers, depending on the size
 difference between the subnets.
 
+
 Subnet Merging
 ^^^^^^^^^^^^^^
 
@@ -670,6 +677,7 @@ subnet which contains all of the inputs::
 
     {{ ['192.168.1.42', '192.168.42.1'] | ansible.netcommon.cidr_merge('span') }}
     # => '192.168.0.0/18'
+
 
 MAC address filter
 ^^^^^^^^^^^^^^^^^^
