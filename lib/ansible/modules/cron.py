@@ -250,8 +250,8 @@ class CronTab(object):
         if self.cron_file:
             # read the cronfile
             try:
-                f = open(self.cron_file, 'r')
-                self.existing = f.read()
+                f = open(self.cron_file, 'rb')
+                self.existing = f.read().decode('utf-8')
                 self.lines = self.existing.splitlines()
                 f.close()
             except IOError:
@@ -291,15 +291,15 @@ class CronTab(object):
         Write the crontab to the system. Saves all information.
         """
         if backup_file:
-            fileh = open(backup_file, 'w')
+            fileh = open(backup_file, 'wb')
         elif self.cron_file:
-            fileh = open(self.cron_file, 'w')
+            fileh = open(self.cron_file, 'wb')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
             os.chmod(path, int('0644', 8))
-            fileh = os.fdopen(filed, 'w')
+            fileh = os.fdopen(filed, 'wb')
 
-        fileh.write(self.render())
+        fileh.write(self.render().encode(encoding='utf-8'))
         fileh.close()
 
         # return if making a backup
