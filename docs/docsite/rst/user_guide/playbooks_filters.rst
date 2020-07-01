@@ -1,13 +1,12 @@
 .. _playbooks_filters:
 
-*******
-Filters
-*******
+********************************
+Using filters to manipulate data
+********************************
 
-Filters let you transform data inside template expressions. This page documents mainly Ansible-specific filters, but you can use any of the standard filters shipped with Jinja2 - see the list of :ref:`builtin filters <jinja2:builtin-filters>` in the official Jinja2 template documentation. You can also use :ref:`Python methods <jinja2:python-methods>` to manipulate variables. A few useful filters are typically added with each new Ansible release. The development documentation shows
-how to create custom Ansible filters as plugins, though we generally welcome new filters into the core code so everyone can use them.
+Filters let you transform JSON data into YAML data, split a URL to extract the hostname, get the SHA1 hash of a string, add or multiply integers, and much more. You can use the Ansible-specific filters documented here to manipulate your data, or use any of the standard filters shipped with Jinja2 - see the list of :ref:`built-in filters <jinja2:builtin-filters>` in the official Jinja2 template documentation. You can also use :ref:`Python methods <jinja2:python-methods>` to transform data. You can :ref:`create custom Ansible filters as plugins <developing_filter_plugins>`, though we generally welcome new filters into the ansible-base repo so everyone can use them.
 
-Templating happens on the Ansible controller, **not** on the target host, so filters execute on the controller and manipulate data locally.
+Because templating happens on the Ansible controller, **not** on the target host, filters execute on the controller and transform data locally.
 
 .. contents::
    :local:
@@ -15,7 +14,7 @@ Templating happens on the Ansible controller, **not** on the target host, so fil
 Handling undefined variables
 ============================
 
-Filters can help you manage missing or undefined variables by providing defaults or making some variable optional. If you configure Ansible to ignore most undefined variables, you can mark some variables as requiring values with the ``mandatory`` filter.
+Filters can help you manage missing or undefined variables by providing defaults or making some variables optional. If you configure Ansible to ignore most undefined variables, you can mark some variables as requiring values with the ``mandatory`` filter.
 
 .. _defaulting_undefined_variables:
 
@@ -40,7 +39,7 @@ If you want to use the default value when variables evaluate to false or an empt
 Making variables optional
 -------------------------
 
-In some cases, you want to make a variable optional. For example, if you want to use a system default for some items and control the value for others. To make a variable optional, set the default value to the special variable ``omit``::
+By default Ansible requires values for all variables in a templated expression. However, you can make specific variables optional. For example, you might want to use a system default for some items and control the value for others. To make a variable optional, set the default value to the special variable ``omit``::
 
     - name: touch files with an optional mode
       file:
@@ -56,9 +55,7 @@ In some cases, you want to make a variable optional. For example, if you want to
 In this example, the default mode for the files ``/tmp/foo`` and ``/tmp/bar`` is determined by the umask of the system. Ansible does not send a value for ``mode``. Only the third file, ``/tmp/baz``, receives the `mode=0444` option.
 
 .. note:: If you are "chaining" additional filters after the ``default(omit)`` filter, you should instead do something like this:
-      ``"{{ foo | default(None) | some_filter or omit }}"``. In this example, the default ``None`` (Python null) value will cause the
-      later filters to fail, which will trigger the ``or omit`` portion of the logic. Using ``omit`` in this manner is very specific to
-      the later filters you're chaining though, so be prepared for some trial and error if you do this.
+      ``"{{ foo | default(None) | some_filter or omit }}"``. In this example, the default ``None`` (Python null) value will cause the later filters to fail, which will trigger the ``or omit`` portion of the logic. Using ``omit`` in this manner is very specific to the later filters you're chaining though, so be prepared for some trial and error if you do this.
 
 .. _forcing_variables_to_be_defined:
 
@@ -71,8 +68,8 @@ If you configure Ansible to ignore undefined variables, you may want to define s
 
 The variable value will be used as is, but the template evaluation will raise an error if it is undefined.
 
-Defining different values for true/false/null
-=============================================
+Defining different values for true/false/null (ternary)
+=======================================================
 
 You can create a test, then define one value to use when the test returns true and another when the test returns false (new in version 1.9)::
 
@@ -82,83 +79,10 @@ In addition, you can define a one value to use on true, one value on false and a
 
    {{ enabled | ternary('no shutdown', 'shutdown', omit) }}
 
-Manipulating data types
-=======================
+Managing data types
+===================
 
-Sometimes a variables file or registered variable contains a dictionary when your playbook needs a list. Sometimes you have a list when your template needs a dictionary. These filters help you transform these data types.
-
-.. _dict_filter:
-
-Transforming dictionaries into lists
-------------------------------------
-
-.. versionadded:: 2.6
-
-
-To turn a dictionary into a list of items, suitable for looping, use `dict2items`::
-
-    {{ dict | dict2items }}
-
-Which turns::
-
-    tags:
-      Application: payment
-      Environment: dev
-
-into::
-
-    - key: Application
-      value: payment
-    - key: Environment
-      value: dev
-
-.. versionadded:: 2.8
-
-``dict2items`` accepts 2 keyword arguments, ``key_name`` and ``value_name`` that allow configuration of the names of the keys to use for the transformation::
-
-    {{ files | dict2items(key_name='file', value_name='path') }}
-
-Which turns::
-
-    files:
-      users: /etc/passwd
-      groups: /etc/group
-
-into::
-
-    - file: users
-      path: /etc/passwd
-    - file: groups
-      path: /etc/group
-
-Transforming lists into dictionaries
-------------------------------------
-
-.. versionadded:: 2.7
-
-This filter turns a list of dicts with 2 keys, into a dict, mapping the values of those keys into ``key: value`` pairs::
-
-    {{ tags | items2dict }}
-
-Which turns::
-
-    tags:
-      - key: Application
-        value: payment
-      - key: Environment
-        value: dev
-
-into::
-
-    Application: payment
-    Environment: dev
-
-This is the reverse of the ``dict2items`` filter.
-
-``items2dict`` accepts 2 keyword arguments, ``key_name`` and ``value_name`` that allow configuration of the names of the keys to use for the transformation::
-
-    {{ tags | items2dict(key_name='key', value_name='value') }}
-
+You might need to know, change, or set the data type on a variable. For example, a registered variable might contain a dictionary when your next task needs a list, or a user :ref:`prompt <playbooks_prompts>` might return a string when your playbook needs a boolean value. Use the ``type_debug``, ``dict2items``, and ``items2dict`` filters to manage data types. You can also use the data type itself to cast a value as a specific data type.
 
 Discovering the data type
 -------------------------
@@ -169,10 +93,98 @@ If you are unsure of the underlying Python type of a variable, you can use the `
 
     {{ myvar | type_debug }}
 
+
+.. _dict_filter:
+
+Transforming dictionaries into lists
+------------------------------------
+
+.. versionadded:: 2.6
+
+
+Use the ``dict2items`` filter to transform a dictionary into a list of items suitable for :ref:`looping <playbooks_loops>`::
+
+    {{ dict | dict2items }}
+
+Dictionary data (before applying the ``dict2items`` filter)::
+
+    tags:
+      Application: payment
+      Environment: dev
+
+List data (after applying the ``dict2items`` filter)::
+
+    - key: Application
+      value: payment
+    - key: Environment
+      value: dev
+
+.. versionadded:: 2.8
+
+The ``dict2items`` filter is the reverse of the ``items2dict`` filter.
+
+If you want to configure the names of the keys, the ``dict2items`` filter accepts 2 keyword arguments. Pass the ``key_name`` and ``value_name`` arguments to configure the names of the keys in the list output::
+
+    {{ files | dict2items(key_name='file', value_name='path') }}
+
+Dictionary data (before applying the ``dict2items`` filter)::
+
+    files:
+      users: /etc/passwd
+      groups: /etc/group
+
+List data (after applying the ``dict2items`` filter)::
+
+    - file: users
+      path: /etc/passwd
+    - file: groups
+      path: /etc/group
+
+
+Transforming lists into dictionaries
+------------------------------------
+
+.. versionadded:: 2.7
+
+Use the ``items2dict``filter to transform a list into a dictionary, mapping the content into ``key: value`` pairs::
+
+    {{ tags | items2dict }}
+
+List data (before applying the ``items2dict`` filter)::
+
+    tags:
+      - key: Application
+        value: payment
+      - key: Environment
+        value: dev
+
+Dictionary data (after applying the ``items2dict`` filter)::
+
+    Application: payment
+    Environment: dev
+
+The ``items2dict`` filter is the reverse of the ``dict2items`` filter.
+
+Not all lists use ``key`` to designate keys and ``value`` to designate values. For example::
+
+    fruits:
+      - fruit: apple
+        color: red
+      - fruit: pear
+        color: yellow
+      - fruit: grapefruit
+        color: yellow
+
+In this example, you must pass the ``key_name`` and ``value_name`` arguments to configure the transformation. For example::
+
+    {{ tags | items2dict(key_name='fruit', value_name='color') }}
+
+If you do not pass these arguments, or do not pass the correct values for your list, you will see ``KeyError: key`` or ``KeyError: my_typo``.
+
 Forcing the data type
 ---------------------
 
-You can cast values as certain types. For example, if you expect the input "True" from a :ref:`vars_prompt <playbooks_prompts>` and you want Ansible to recognize it as a Boolean value instead of a string::
+You can cast values as certain types. For example, if you expect the input "True" from a :ref:`vars_prompt <playbooks_prompts>` and you want Ansible to recognize it as a boolean value instead of a string::
 
    - debug:
      msg: test
@@ -188,10 +200,10 @@ If you want to perform a mathematical comparison on a fact and you want Ansible 
 
 .. _filters_for_formatting_data:
 
-Controlling data formats: YAML and JSON
-=======================================
+Formatting data: YAML and JSON
+==============================
 
-The following filters will take a data structure in a template and manipulate it or switch it from or to JSON or YAML format. These are occasionally useful for debugging::
+You can switch a data structure in a template from or to JSON or YAML format, with options for formatting, indenting, and loading data. The basic filters are occasionally useful for debugging::
 
     {{ some_variable | to_json }}
     {{ some_variable | to_yaml }}
@@ -245,7 +257,7 @@ for example::
 Combining and selecting data
 ============================
 
-These filters let you manipulate data from multiple sources and types and manage large data structures, giving you precise control over complex data.
+You can combine data from multiple sources and types, and select values from large data structures, giving you precise control over complex data.
 
 .. _zip_filter:
 
@@ -264,7 +276,7 @@ To get a list combining the elements of other lists use ``zip``::
       debug:
         msg: "{{ [1,2,3] | zip(['a','b','c','d','e','f']) | list }}"
 
-To always exhaust all list use ``zip_longest``::
+To always exhaust all lists use ``zip_longest``::
 
     - name: give me longest combo of three lists , fill with X
       debug:
@@ -274,7 +286,7 @@ Similarly to the output of the ``items2dict`` filter mentioned above, these filt
 
     {{ dict(keys_list | zip(values_list)) }}
 
-Which turns::
+List data (before applying the ``zip`` filter)::
 
     keys_list:
       - one
@@ -283,7 +295,7 @@ Which turns::
       - apple
       - orange
 
-into::
+Dictonary data (after applying the ``zip`` filter)::
 
     one: apple
     two: orange
@@ -297,7 +309,7 @@ The ``subelements`` filter produces a product of an object and the subelement va
 
     {{ users | subelements('groups', skip_missing=True) }}
 
-turns this data::
+Data before applying the ``subelements`` filter::
 
     users:
     - name: alice
@@ -313,7 +325,7 @@ turns this data::
       groups:
       - docker
 
-Into this data::
+Data after applying the ``subelements`` filter::
 
     -
       - name: alice
@@ -356,8 +368,7 @@ Combining hashes/dictionaries
 
 .. versionadded:: 2.0
 
-The ``combine`` filter allows hashes to be merged.
-For example, the following would override keys in one hash::
+The ``combine`` filter allows hashes to be merged. For example, the following would override keys in one hash::
 
     {{ {'a':1, 'b':2} | combine({'b':3}) }}
 
@@ -370,8 +381,7 @@ The filter can also take multiple arguments to merge::
     {{ a | combine(b, c, d) }}
     {{ [a, b, c, d] | combine }}
 
-In this case, keys in ``d`` would override those in ``c``, which would
-override those in ``b``, and so on.
+In this case, keys in ``d`` would override those in ``c``, which would override those in ``b``, and so on.
 
 The filter also accepts two optional parameters: ``recursive`` and ``list_merge``.
 
@@ -470,9 +480,7 @@ This would result in::
       - patch
       - default
 
-If ``list_merge='append_rp'``, arrays from the right hash will be appended to the ones in the left hash.
-Elements of arrays in the left hash that are also in the corresponding array of the right hash will be removed ("rp" stands for "remove present").
-Duplicate elements that aren't in both hashes are kept::
+If ``list_merge='append_rp'``, arrays from the right hash will be appended to the ones in the left hash. Elements of arrays in the left hash that are also in the corresponding array of the right hash will be removed ("rp" stands for "remove present"). Duplicate elements that aren't in both hashes are kept::
 
     default:
       a:
@@ -575,8 +583,7 @@ Selecting values from arrays or hashtables
 
 .. versionadded:: 2.1
 
-The `extract` filter is used to map from a list of indices to a list of
-values from a container (hash or array)::
+The `extract` filter is used to map from a list of indices to a list of values from a container (hash or array)::
 
     {{ [0,2] | map('extract', ['x','y','z']) | list }}
     {{ ['x','y'] | map('extract', {'x': 42, 'y': 31}) | list }}
@@ -590,12 +597,9 @@ The filter can take another argument::
 
     {{ groups['x'] | map('extract', hostvars, 'ec2_ip_address') | list }}
 
-This takes the list of hosts in group 'x', looks them up in `hostvars`,
-and then looks up the `ec2_ip_address` of the result. The final result
-is a list of IP addresses for the hosts in group 'x'.
+This takes the list of hosts in group 'x', looks them up in `hostvars`, and then looks up the `ec2_ip_address` of the result. The final result is a list of IP addresses for the hosts in group 'x'.
 
-The third argument to the filter can also be a list, for a recursive
-lookup inside the container::
+The third argument to the filter can also be a list, for a recursive lookup inside the container::
 
     {{ ['a'] | map('extract', b, ['x','y']) | list }}
 
@@ -631,9 +635,7 @@ Also see the :ref:`zip_filter`
 
 products
 ^^^^^^^^
-The product filter returns the `cartesian product <https://docs.python.org/3/library/itertools.html#itertools.product>`_ of the input iterables.
-
-This is roughly equivalent to nested for-loops in a generator expression.
+The product filter returns the `cartesian product <https://docs.python.org/3/library/itertools.html#itertools.product>`_ of the input iterables. This is roughly equivalent to nested for-loops in a generator expression.
 
 For example::
 
@@ -650,8 +652,7 @@ This would result in::
 Selecting JSON data: JSON queries
 ---------------------------------
 
-
-Sometimes you end up with a complex data structure in JSON format and you need to extract only a small set of data within it. The **json_query** filter lets you query a complex JSON structure and iterate over it using a loop structure.
+To select a single element or a data subset from a complex data structure in JSON format (for example, Ansible facts), use the ``json_query`` filter.  The ``json_query`` filter lets you query a complex JSON structure and iterate over it using a loop structure.
 
 .. note::
 
@@ -716,14 +717,14 @@ To extract all clusters from this structure, you can use the following query::
         var: item
       loop: "{{ domain_definition | community.general.json_query('domain.cluster[*].name') }}"
 
-Same thing for all server names::
+To extract all server names::
 
     - name: "Display all server names"
       debug:
         var: item
       loop: "{{ domain_definition | community.general.json_query('domain.server[*].name') }}"
 
-This example shows ports from cluster1::
+To extract ports from cluster1::
 
     - name: "Display all ports from cluster1"
       debug:
@@ -734,15 +735,15 @@ This example shows ports from cluster1::
 
 .. note:: You can use a variable to make the query more readable.
 
-Or, alternatively print out the ports in a comma separated string::
+To print out the ports from cluster1 in a comma separated string::
 
     - name: "Display all ports from cluster1 as a string"
       debug:
         msg: "{{ domain_definition | community.general.json_query('domain.server[?cluster==`cluster1`].port') | join(', ') }}"
 
-.. note:: Here, quoting literals using backticks avoids escaping quotes and maintains readability.
+.. note:: In the example above, quoting literals using backticks avoids escaping quotes and maintains readability.
 
-Or, using YAML `single quote escaping <https://yaml.org/spec/current.html#id2534365>`_::
+You can use YAML `single quote escaping <https://yaml.org/spec/current.html#id2534365>`_::
 
     - name: "Display all ports from cluster1"
       debug:
@@ -751,7 +752,7 @@ Or, using YAML `single quote escaping <https://yaml.org/spec/current.html#id2534
 
 .. note:: Escaping single quotes within single quotes in YAML is done by doubling the single quote.
 
-In this example, we get a hash map with all ports and names of a cluster::
+To get a hash map with all ports and names of a cluster::
 
     - name: "Display all server ports and names from cluster1"
       debug:
@@ -789,7 +790,7 @@ Note that if anything is wrong with the prefix string, the filter will issue an 
 
  .. versionadded:: 2.9
 
-As of Ansible version 2.9, you can also initialize the random number generator from a seed. This way, you can create random-but-idempotent MAC addresses::
+As of Ansible version 2.9, you can also initialize the random number generator from a seed to create random-but-idempotent MAC addresses::
 
     "{{ '52:54:00' | community.general.random_mac(seed=inventory_hostname) }}"
 
@@ -799,9 +800,7 @@ As of Ansible version 2.9, you can also initialize the random number generator f
 Random items or numbers
 -----------------------
 
-
-This filter can be used similar to the default Jinja2 random filter (returning a random item from a sequence of
-items), but can also generate a random number based on a range.
+The ``random`` filter in Ansible is an extension of the default Jinja2 random filter, and can be used to return a random item from a sequence of items or to generate a random number based on a range.
 
 To get a random item from a list::
 
@@ -813,27 +812,26 @@ To get a random number between 0 and a specified number::
     "{{ 60 | random }} * * * * root /script/from/cron"
     # => '21 * * * * root /script/from/cron'
 
-Get a random number from 0 to 100 but in steps of 10::
+To get a random number from 0 to 100 but in steps of 10::
 
     {{ 101 | random(step=10) }}
     # => 70
 
-Get a random number from 1 to 100 but in steps of 10::
+To get a random number from 1 to 100 but in steps of 10::
 
     {{ 101 | random(1, 10) }}
     # => 31
     {{ 101 | random(start=1, step=10) }}
     # => 51
 
-It's also possible to initialize the random number generator from a seed. This way, you can create random-but-idempotent numbers::
+You can initialize the random number generator from a seed to create random-but-idempotent numbers::
 
     "{{ 60 | random(seed=inventory_hostname) }} * * * * root /script/from/cron"
 
 Shuffling a list
 ----------------
 
-
-This filter will randomize an existing list, giving a different order every invocation.
+The ``shuffle`` filter randomizes an existing list, giving a different order every invocation.
 
 To get a random list from an existing  list::
 
@@ -842,20 +840,20 @@ To get a random list from an existing  list::
     {{ ['a','b','c'] | shuffle }}
     # => ['b','c','a']
 
-It's also possible to shuffle a list idempotent. All you need is a seed.::
+You can initialize the shuffle generator from a seed to generate a random-but-idempotent order::
 
     {{ ['a','b','c'] | shuffle(seed=inventory_hostname) }}
     # => ['b','a','c']
 
 The shuffle filter returns a list whenever possible. If you use it with a non 'listable' item, the filter does nothing.
 
+
 .. _list_filters:
 
-List filters
-============
+Managing list variables
+=======================
 
-These filters all operate on list variables.
-
+You can search for the minimum or maximum value in a list, or flatten a multi-level list.
 
 To get the minimum value from list of numbers::
 
@@ -878,10 +876,10 @@ Flatten only the first level of a list (akin to the `items` lookup)::
 
 .. _set_theory_filters:
 
-Set theory filters
-==================
+Selecting from sets or lists (set theory)
+=========================================
 
-These functions return a unique set from sets or lists.
+You can select or combine items from sets or lists.
 
 .. versionadded:: 1.4
 
@@ -908,11 +906,12 @@ To get the symmetric difference of 2 lists (items exclusive to each list)::
 
 .. _math_stuff:
 
-Math filters
-============
+Calculating numbers (math)
+==========================
 
 .. versionadded:: 1.9
 
+You can calculate logs, powers, and roots of numbers with Ansible filters. Jinja2 provides other mathematical functions like abs() and round().
 
 Get the logarithm (default is e)::
 
@@ -932,10 +931,9 @@ Square root, or the 5th::
     {{ myvar | root }}
     {{ myvar | root(5) }}
 
-Note that jinja2 already provides some like abs() and round().
 
-Network filters
-===============
+Managing network interactions
+=============================
 
 These filters help you with common network tasks.
 
@@ -1171,7 +1169,7 @@ Network VLAN filters
 
 .. versionadded:: 2.8
 
-Use the ``vlan_parser`` filter to manipulate an unsorted list of VLAN integers into a
+Use the ``vlan_parser`` filter to transform an unsorted list of VLAN integers into a
 sorted string list of integers according to IOS-like VLAN list rules. This list has the following properties:
 
 * Vlans are listed in ascending order.
@@ -1200,8 +1198,8 @@ This allows for dynamic generation of VLAN lists on a Cisco IOS tagged interface
 
 .. _hash_filters:
 
-Encryption filters
-==================
+Encrypting and checksumming strings and passwords
+=================================================
 
 .. versionadded:: 1.9
 
@@ -1233,8 +1231,7 @@ An idempotent method to generate unique hashes per system is to use a salt that 
 
     {{ 'secretpassword' | password_hash('sha512', 65534 | random(seed=inventory_hostname) | string) }}
 
-Hash types available depend on the master system running ansible,
-'hash' depends on hashlib password_hash depends on passlib (https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
+Hash types available depend on the master system running Ansible, 'hash' depends on hashlib, password_hash depends on passlib (https://passlib.readthedocs.io/en/stable/lib/passlib.hash.html).
 
 .. versionadded:: 2.7
 
@@ -1244,18 +1241,17 @@ Some hash types allow providing a rounds parameter::
 
 .. _other_useful_filters:
 
-Text filters
-============
+Manipulating text
+=================
 
-These filters work with strings and text.
+Several filters work with text, including URLs, file names, and path names.
 
 .. _comment_filter:
 
 Adding comments to files
 ------------------------
 
-
-The `comment` filter lets you turn text in a template into comments in a file, with a variety of comment styles. By default Ansible uses ``#`` to start a comment line and adds a blank comment line above and below your comment text. For example the following::
+The ``comment`` filter lets you create comments in a file from text in a template, with a variety of comment styles. By default Ansible uses ``#`` to start a comment line and adds a blank comment line above and below your comment text. For example the following::
 
     {{ "Plain style (default)" | comment }}
 
@@ -1420,9 +1416,8 @@ To replace text in a string with regex, use the "regex_replace" filter::
     # change a multiline string
     {{ var | regex_replace('^', '#CommentThis#', multiline=True) }}
 
-.. note:: If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors.
-   For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the
-   end, which means it will make two replacements::
+.. note::
+   If you want to match the whole string and you are using ``*`` make sure to always wraparound your regular expression with the start/end anchors. For example ``^(.*)$`` will always match only one result, while ``(.*)`` on some Python versions will match the whole string and an empty string at the end, which means it will make two replacements::
 
       # add "https://" prefix to each item in a list
       GOOD:
@@ -1442,8 +1437,8 @@ To replace text in a string with regex, use the "regex_replace" filter::
       BAD:
       {{ hosts | map('regex_replace', '(.*)', '\\1:80') | list }}
 
-.. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
-   then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+.. note::
+   Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments), then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
 
 .. versionadded:: 2.0
 
@@ -1460,8 +1455,8 @@ To escape special characters within a POSIX basic regex, use the "regex_escape" 
     {{ '^f.*o(.*)$' | regex_escape('posix_basic') }}
 
 
-Working with filenames and pathnames
-------------------------------------
+Managing file names and path names
+----------------------------------
 
 To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
@@ -1511,7 +1506,7 @@ To get the relative path of a link, from a start point (new in version 1.7)::
 
     {{ path | relpath('/etc') }}
 
-To get the root and extension of a path or filename (new in version 2.0)::
+To get the root and extension of a path or file name (new in version 2.0)::
 
     # with path == 'nginx.conf' the return would be ('nginx', '.conf')
     {{ path | splitext }}
@@ -1522,8 +1517,8 @@ To join one or more path components::
 
 .. versionadded:: 2.10
 
-String filters
-==============
+Manipulating strings
+====================
 
 To add quotes for shell usage::
 
@@ -1543,13 +1538,12 @@ As of version 2.6, you can define the type of encoding to use, the default is ``
     {{ encoded | b64decode(encoding='utf-16-le') }}
     {{ decoded | string | b64encode(encoding='utf-16-le') }}
 
-.. note:: The ``string`` filter is only required for Python 2 and ensures that text to encode is a unicode string.
-    Without that filter before b64encode the wrong value will be encoded.
+.. note:: The ``string`` filter is only required for Python 2 and ensures that text to encode is a unicode string. Without that filter before b64encode the wrong value will be encoded.
 
 .. versionadded:: 2.6
 
-UUID filters
-============
+Managing UUIDs
+==============
 
 To create a namespaced UUIDv5::
 
@@ -1568,8 +1562,8 @@ To make use of one attribute from each item in a list of complex variables, use 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts | map(attribute='mount') | join(',') }}
 
-Date and time filters
-=====================
+Handling dates and times
+========================
 
 To get a date object from a string use the `to_datetime` filter::
 
@@ -1602,8 +1596,8 @@ To format a date using a string (like with the shell date command), use the "str
 
 .. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
 
-Kubernetes filters
-==================
+Getting Kubernetes resource names
+=================================
 
 .. note::
 
