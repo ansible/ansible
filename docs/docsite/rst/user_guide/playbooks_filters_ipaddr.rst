@@ -469,7 +469,7 @@ Just like ``next_nth_ansible``, you have ``previous_nth_usable`` to find the pre
 Testing if a address belong to a network range
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Filter ``network_in_usable`` returns whether an address passed as argument is usable in a network.
+The ``network_in_usable`` filter returns whether an address passed as an argument is usable in a network.
 Usable addresses are addresses that can be assigned to host so address of the network except network
 and broadcast addresses.::
 
