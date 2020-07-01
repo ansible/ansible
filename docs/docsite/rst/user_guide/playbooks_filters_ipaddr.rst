@@ -470,7 +470,7 @@ Testing if a address belong to a network range
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``network_in_usable`` filter returns whether an address passed as an argument is usable in a network.
-Usable addresses are addresses that can be assigned to host so address of the network except network
+Usable addresses are addresses that can be assigned to a host. The network ID and
 and broadcast addresses.::
 
     # {{ '192.168.0.0/24' | ansible.netcommon.network_in_usable( '192.168.0.1' ) }}
