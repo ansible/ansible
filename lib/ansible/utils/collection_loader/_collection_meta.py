@@ -11,9 +11,9 @@ except ImportError:
     from yaml import SafeLoader
 
 try:
-    from collections.abc import Mapping
+    from collections.abc import Mapping   # pylint: disable=ansible-bad-import-from
 except ImportError:
-    from collections import Mapping
+    from collections import Mapping  # pylint: disable=ansible-bad-import-from
 
 
 def _meta_yml_to_dict(yaml_string_data, content_id):
