@@ -255,7 +255,13 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
 
 Sanity tests are executed using ``ansible-test sanity`` syntax. Refer to :ref:`_testing_sanity` for details.
 
-Integration tests are executed using the ``ansible-test integration`` command. Network integration tests are executed using the ``ansible-test network-integration`` command. Windows integration tests use the ``ansible-test windows-integration`` command. Refer to :ref:`_testing_integration` for details.
+* Integration tests are executed using the ``ansible-test integration`` command.
+
+* Network integration tests are executed using the ``ansible-test network-integration`` command.
+
+* Windows integration tests use the ``ansible-test windows-integration`` command.
+
+Refer to :ref:`_testing_integration` for details.
 
 .. note::
     For ``ansible-test`` to recognize tests as ``network-integration`` tests, the test targets must have a ``network`` entry in their ``aliases`` file. Alternatively, if the modules and targets share a common prefix, such as ``ios_`` then that prefix (without the underscore) can be added to `tests/integration/target-prefixes.network``, with one prefix listed per line.
