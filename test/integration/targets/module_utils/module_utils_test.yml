@@ -60,3 +60,40 @@
       that:
         - result.deprecations[0].msg == "Alias 'baz' is deprecated. See the module docs for more information"
         - result.deprecations[0].version == '9.99'
+
+  - block:
+      - name: Get a string with a \0 in it
+        command: echo -e 'hi\0foo'
+        register: string_with_null
+
+      - name: Use the null string as a module parameter
+        lineinfile:
+          path: "{{ output_dir }}/nulltest"
+          line: "{{ string_with_null.stdout }}"
+          create: yes
+        ignore_errors: yes
+        register: nulltest
+
+      - name: See if the file exists
+        stat:
+          path: "{{ output_dir }}/nulltest"
+        register: nullstat
+
+      - assert:
+          that:
+            - nulltest is failed
+            - nulltest.msg_to_log.startswith('Invoked ')
+            - nulltest.msg.startswith('Failed to log to syslog')
+        # Conditionalize this, because when we log with something other than
+        # syslog, it's probably successful and these assertions will fail.
+        when: nulltest is failed
+
+      # Ensure we fail out early and don't actually run the module if logging
+      # failed.
+      - assert:
+          that:
+            - nullstat.stat.exists == nulltest is successful
+    always:
+      - file:
+          path: "{{ output_dir }}/nulltest"
+          state: absent
