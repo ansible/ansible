@@ -1879,10 +1879,19 @@ class AnsibleModule(object):
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:
-            module = 'ansible-%s' % self._name
-            facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
-            syslog.openlog(str(module), 0, facility)
-            syslog.syslog(syslog.LOG_INFO, msg)
+            try:
+                module = 'ansible-%s' % self._name
+                facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
+                syslog.openlog(str(module), 0, facility)
+                syslog.syslog(syslog.LOG_INFO, msg)
+            except TypeError as e:
+                self.fail_json(
+                    msg='Failed to log to syslog (%s). To proceed anyway, '
+                        'disable syslog logging by setting no_target_syslog '
+                        'to True in your Ansible config.' % to_native(e),
+                    exception=traceback.format_exc(),
+                    msg_to_log=msg,
+                )
 
     def debug(self, msg):
         if self._debug:
