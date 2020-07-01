@@ -16,7 +16,7 @@
   when: not is_pulp
 
 - name: publish collection - {{ test_name }}
-  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ fallaxy_token }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
   register: fallaxy_publish_collection
@@ -34,8 +34,11 @@
 
 - name: get result of publish collection - {{ test_name }}
   uri:
-    url: '{{ test_server }}v2/collections/ansible_test/my_collection/versions/1.0.0/'
+    url: '{{ test_server }}{{ vX }}collections/ansible_test/my_collection/versions/1.0.0/'
     return_content: yes
+    user: '{{ pulp_user }}'
+    password: '{{ pulp_password }}'
+    force_basic_auth: true
   register: publish_collection_actual
 
 - name: assert publish collection - {{ test_name }}
@@ -47,7 +50,7 @@
     - publish_collection_actual.json.version == '1.0.0'
 
 - name: fail to publish existing collection version - {{ test_name }}
-  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --token {{ fallaxy_token }} {{ galaxy_verbosity }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_name }} {{ galaxy_verbosity }}
   args:
     chdir: '{{ galaxy_dir }}'
   register: fail_publish_existing
