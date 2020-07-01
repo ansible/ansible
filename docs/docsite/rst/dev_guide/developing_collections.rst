@@ -82,6 +82,9 @@ plugins directory
 
 Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on without having to import a role in every play.
 
+=======
+Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
+>>>>>>> 748ef10d7e... Update developing_collections.rst
 Vars plugins are unsupported in collections. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
 
 .. _collection_module_utils:
@@ -206,6 +209,7 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
 
   The version of Ansible required to use the collection. Multiple versions can be separated with a comma.
 
+<<<<<<< HEAD
   .. code:: yaml
 
      requires_ansible: ">=2.10,<2.11"
