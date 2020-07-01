@@ -128,7 +128,7 @@ Examples
           template: CentOS 7.5 (64-bit) - Lenovo Template
           storage_pool: Pool1
           vcpu_cores: 1
-          memory: 4096GB
+          memory: 4096MB
           disks:
           - name: Disk 0
             size_gb: 50
