@@ -19,9 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.helpers import resolve_extended_attr
 from ansible.template import Templar
 
 
@@ -42,63 +43,12 @@ class Taggable:
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 
-    def _post_validate_tags(self, attr, value, templar):
-        '''Tags are templatable and use extend=True, so this value
-        may be extended from the parent and contain possible variable
-        items which should be strings, ints, or a list of those items
-
-        If an item is a templated list it is flattened by using its contents to extend the list of unique tags
-
-        e.g.
-        vars:
-          list_or_individual_tag: ['tag1', 'tag2']
-        tasks:
-        - name: block with tags
-          tags: "{{ list_or_individual_tag }}"
-          block:
-              ...
-              - name: task with tags
-                module:
-                tags: "{{ list_or_individual_tag }}"  # deduplicate in post validation as the value may be different from the parent scope
-
-        The extended tags received by this function will be ['tag1', 'tag2', '{{ list_or_individual_tag }}']
-
-        :raises AnsibleParserError: if tags contains invalid types
-        :return: List of strings and integers
-        :rtype: list
-        '''
-
-        unique_tags = []
-
-        if not isinstance(value, list):
-            raise AnsibleParserError("the field 'tags' should be a list, but is a %s" % (type(value)))
-
-        for tag in value:
-            # Deduplicate extended nested list variables
-            if templar.is_template(tag):
-                tag = templar.template(tag)
-
-            if isinstance(tag, list):
-                for item in tag:
-                    if not isinstance(item, attr.listof):
-                        raise AnsibleParserError("the field 'tags' should be a list of %s, "
-                                                 "but the item '%s' is a %s" % (attr.listof, item, type(item)), obj=self.get_ds())
-                    if item not in unique_tags:
-                        unique_tags.append(item)
-            else:
-                if not isinstance(tag, attr.listof):
-                    raise AnsibleParserError("the field 'tags' should be a list of %s, "
-                                             "but the item '%s' is a %s" % (attr.listof, tag, type(tag)), obj=self.get_ds())
-                if tag not in unique_tags:
-                    unique_tags.append(tag)
-
-        return unique_tags
-
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
         ''' this checks if the current item should be executed depending on tag options '''
 
         if self.tags:
-            tags = self._post_validate_tags(self._tags, self.tags, Templar(loader=self._loader, variables=all_vars))
+            templar = Templar(loader=self._loader, variables=all_vars)
+            tags = resolve_extended_attr('tags', self._tags, self.tags, templar, ds=self.get_ds())
 
             _temp_tags = set()
             for tag in tags:

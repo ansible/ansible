@@ -30,6 +30,7 @@ from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
+from ansible.playbook.helpers import flatten_extended_attrs
 from ansible.utils.display import Display
 
 display = Display()
@@ -80,6 +81,7 @@ class Conditional:
         Loops through the conditionals set on this object, returning
         False if any of them evaluate as such.
         '''
+        templar.available_variables = all_vars
 
         # since this is a mix-in, it may not have an underlying datastructure
         # associated with it, so we pull it out now in case we need it for
@@ -88,18 +90,36 @@ class Conditional:
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
 
+        conditionals = []
+        warnings = []
+
+        for conditional in self.when:
+
+            if C.CONDITIONAL_BARE_VARS:
+                if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
+                    conditional = all_vars[conditional]
+                    bare_vars_warning = True
+                    warnings.append(conditional)
+            conditionals.append(conditional)
+
         try:
-            for conditional in self.when:
-                if not self._check_conditional(conditional, templar, all_vars):
+            # Ensure extended conditionals are merged/deduplicated
+            if hasattr(self, 'get_ds'):
+                ds = self.get_ds()
+            else:
+                ds = None
+            for conditional, disable_lookups in flatten_extended_attrs('when', self._when, conditionals, templar, ds=ds):
+                if not self._check_conditional(conditional, templar, all_vars, disable_lookups, bare_vars_warning=bool(conditional in warnings)):
                     return False
+
         except Exception as e:
             raise AnsibleError(
-                "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds
+                "The conditional check '%s' failed. The error was: %s" % (to_native(conditionals), to_native(e)), obj=ds
             )
 
         return True
 
-    def _check_conditional(self, conditional, templar, all_vars):
+    def _check_conditional(self, conditional, templar, all_vars, disable_lookups=False, bare_vars_warning=False):
         '''
         This method does the low-level evaluation of each conditional
         set on this object, using jinja2 to wrap the conditionals for
@@ -119,18 +139,10 @@ class Conditional:
                             'templating delimiters such as {{ }} or {%% %%}. '
                             'Found: %s' % conditional)
 
-        bare_vars_warning = False
-        if C.CONDITIONAL_BARE_VARS:
-            if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
-                conditional = all_vars[conditional]
-                bare_vars_warning = True
-
         # make sure the templar is using the variables specified with this method
         templar.available_variables = all_vars
 
         try:
-            # if the conditional is "unsafe", disable lookups
-            disable_lookups = hasattr(conditional, '__UNSAFE__')
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
             if bare_vars_warning and not isinstance(conditional, bool):
                 display.deprecated('evaluating %r as a bare variable, this behaviour will go away and you might need to add |bool'

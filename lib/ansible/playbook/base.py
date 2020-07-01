@@ -20,6 +20,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.helpers import resolve_extended_attr
 from ansible.parsing.dataloader import DataLoader
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
@@ -428,7 +429,11 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     value = getattr(self, name)
                 else:
                     # if the attribute contains a variable, template it now
-                    value = templar.template(getattr(self, name))
+                    # if the attribute is extending the parent value, flatten nested lists after templating
+                    if attribute.isa == 'list' and attribute.extend and name != 'when':
+                        value = resolve_extended_attr(name, attribute, getattr(self, name), templar, ds=self.get_ds())
+                    else:
+                        value = templar.template(getattr(self, name))
 
                 # if this evaluated to the omit value, set the value back to
                 # the default specified in the FieldAttribute and move on

@@ -549,3 +549,40 @@
             - item
         loop:
           - 1 == 1
+
+
+    - name: Test inheriting and extending templated conditions
+      vars:
+        conditions_1:
+          - true
+          - true
+        conditions_2:
+          - true
+      when: bare|bool
+      block:
+        - name: create a block with a variable conditional list
+          when: conditions_1
+          block:
+
+          - name: run a task with another variable conditional list
+            debug:
+            when: conditions_2
+            register: result
+            failed_when: result.skipped is defined and result.skipped
+
+          - name: check that the parent value is inherited correctly
+            set_fact:
+              conditions_1:
+                - true
+                - false
+
+          - name: this should inherit condition_1 and resolve to the value set in the task before
+            failed_when: result.skipped is undefined or not result.skipped
+            register: result
+            fail:
+              msg: This task should have been skipped
+
+        - name: validate that modifiying the child's value of conditions_1 didn't affect the parent scope
+          failed_when: result.skipped is defined and result.skipped
+          register: result
+          debug:

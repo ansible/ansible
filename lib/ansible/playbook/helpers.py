@@ -394,3 +394,40 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
         roles.append(i)
 
     return roles
+
+
+def resolve_extended_attr(field, attr, value, templar, ds):
+    return [v for v, _ in flatten_extended_attrs(field, attr, value, templar, ds)]
+
+
+def flatten_extended_attrs(field, attr, value, templar, ds):
+    if not attr.isa == 'list':
+        raise AnsibleParserError(msg="Unexpected attribute type %s ('%s') for flattening extended values. This method expects a list." % (field, attr.isa))
+
+    if not isinstance(value, list):
+        raise AnsibleParserError("the field '%s' should be a list, but it is a %s" % (field, type(value)))
+
+    unique_list = []
+
+    # Extended values may contain nested items by using a variable list which is merged with the parent value
+    # Template and flatten before validating listof
+    for item in value:
+        flatten = []
+        disable_lookups = False
+        template = templar.is_template(item)
+        if template:
+            disable_lookups = hasattr(item, '__UNSAFE__')
+            item = templar.template(item, disable_lookups=disable_lookups)
+        if isinstance(item, list):
+            flatten.extend(item)
+        else:
+            flatten.append(item)
+
+        for value in flatten:
+            if attr.listof and not isinstance(value, attr.listof):
+                raise AnsibleParserError("the field '%s' should be a list of %s, "
+                                         "but the item '%s' is a %s" % (field, attr.listof, value, type(value)), obj=ds)
+
+            if value not in unique_list:
+                unique_list.append(value)
+                yield value, disable_lookups
