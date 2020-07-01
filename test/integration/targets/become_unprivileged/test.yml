@@ -1,0 +1,8 @@
+- name: Run the test
+  hosts: ssh
+  gather_facts: yes
+  remote_user: unpriv1
+  become: yes
+  become_user: unpriv2
+  roles:
+    - become_unprivileged

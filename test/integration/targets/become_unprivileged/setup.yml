@@ -1,0 +1,8 @@
+- name: Set up host
+  hosts: ssh
+  gather_facts: yes
+
+   # Default, just noted here to be explicit about what is happening:
+  remote_user: root
+  roles:
+    - setup_become_unprivileged

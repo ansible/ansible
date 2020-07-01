@@ -107,6 +107,13 @@ class ShellBase(AnsiblePlugin):
 
         return ' '.join(cmd)
 
+    def chgrp(self, paths, group):
+        cmd = ['chgrp', group]
+        cmd.extend(paths)
+        cmd = [shlex_quote(c) for c in cmd]
+
+        return ' '.join(cmd)
+
     def set_user_facl(self, paths, user, mode):
         """Only sets acls for users as that's really all we need"""
         cmd = ['setfacl', '-m', 'u:%s:%s' % (user, mode)]

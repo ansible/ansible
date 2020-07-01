@@ -1,0 +1,74 @@
+# Do this first so we can use tilde notation while the user still exists
+- name: Delete homedirs
+  file:
+    path: '~{{ item }}'
+    state: absent
+  with_items:
+    - unpriv1
+    - unpriv2
+
+- name: Delete users
+  user:
+    name: "{{ item }}"
+    state: absent
+    force: yes # I think this is needed in case pipelining is used and the session remains open
+  with_items:
+    - unpriv1
+    - unpriv2
+
+- name: Delete groups
+  group:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - notcoolenoughforroot
+    - unpriv1
+    - unpriv2
+
+- name: Fix sudoers.d path for FreeBSD
+  set_fact:
+    sudoers_etc: /usr/local/etc
+  when: ansible_distribution == 'FreeBSD'
+
+- name: Fix sudoers.d path for everything else
+  set_fact:
+    sudoers_etc: /etc
+  when: ansible_distribution != 'FreeBSD'
+
+- name: Undo OpenSUSE
+  lineinfile:
+    path: "{{ sudoers_etc }}/sudoers"
+    regexp: '^### Defaults targetpw'
+    line: 'Defaults targetpw'
+    backrefs: yes
+
+- name: Nuke custom sudoers file
+  file:
+    path: "{{ sudoers_etc }}/sudoers.d/unpriv1"
+    state: absent
+
+- name: Check if /usr/bin/setfacl exists
+  stat:
+    path: /usr/bin/setfacl
+  register: usr_bin_setfacl
+
+- name: Check if the /bin/setfacl exists
+  stat:
+    path: /bin/setfacl
+  register: bin_setfacl
+
+- name: Set path to setfacl
+  set_fact:
+    setfacl_path: /usr/bin/setfacl
+  when: usr_bin_setfacl.stat.exists
+
+- name: Set path to setfacl
+  set_fact:
+    setfacl_path: /bin/setfacl
+  when: bin_setfacl.stat.exists
+
+- name: chmod +x setfacl
+  file:
+    path: "{{ setfacl_path }}"
+    mode: +x
+  when: setfacl_path is defined
