@@ -72,7 +72,7 @@ Become connection variables
 You can define different ``become`` options for each managed node or group. You can define these variables in inventory or use them as normal variables.
 
 ansible_become
-    equivalent of the become directive, decides if privilege escalation is used or not.
+    overrides the ``become`` directive, decides if privilege escalation is used or not.
 
 ansible_become_method
     which privilege escalation method should be used
@@ -82,6 +82,9 @@ ansible_become_user
 
 ansible_become_password
     set the privilege escalation password. See :ref:`playbooks_vault` for details on how to avoid having secrets in plain text
+
+ansible_common_remote_group
+    determines if Ansible should try to ``chgrp`` its temporary files to a group if ``setfacl`` and ``chown`` both fail. See `Risks of becoming an unprivileged user`_ for more information. Added in version 2.10.
 
 For example, if you want to run all tasks as ``root`` on a server named ``webserver``, but you can only connect as the ``manager`` user, you could use an inventory entry like this:
 
@@ -125,32 +128,63 @@ and finally executing it there.
 
 Everything is fine if the module file is executed without using ``become``,
 when the ``become_user`` is root, or when the connection to the remote machine
-is made as root.  In these cases Ansible creates the module file with permissions
-that only allow reading by the user and root, or only allow reading by the unprivileged
-user being switched to.
+is made as root. In these cases Ansible creates the module file with
+permissions that only allow reading by the user and root, or only allow reading
+by the unprivileged user being switched to.
 
 However, when both the connection user and the ``become_user`` are unprivileged,
-the module file is written as the user that Ansible connects as, but the file needs to
-be readable by the user Ansible is set to ``become``. In this case, Ansible makes
-the module file world-readable for the duration of the Ansible module execution.
+the module file is written as the user that Ansible connects as (the
+``remote_user``), but the file needs to be readable by the user Ansible is set
+to ``become``. The details of how Ansible solves this can vary based on platform.
+However, on POSIX systems, Ansible solves this problem in the following way:
+
+First, if :command:`setfacl` is installed and available in the remote ``PATH``,
+and the temporary directory on the remote host is mounted with POSIX.1e
+filesystem ACL support, Ansible will use POSIX ACLs to share the module file
+with the second unprivileged user.
+
+Next, if POSIX ACLs are **not** available or :command:`setfacl` could not be
+run, Ansible will attempt to change ownership of the module file using
+:command:`chown` for systems which support doing so as an unprivileged user.
+
+New in Ansible 2.10, if the :command:`chown` fails, Ansible will then check the
+value of the configuration setting ``ansible_common_remote_group``. Many
+systems will allow a given user to change the group ownership of a file to a
+group the user is in. As a result, if the second unprivileged user (the
+``become_user``) has a UNIX group in common with the user Ansible is connected
+as (the ``remote_user``), and if ``ansible_common_remote_group`` is defined to
+be that group, Ansible can try to change the group ownership of the module file
+to that group by using :command:`chgrp`, thereby likely making it readable to
+the ``become_user``.
+
+At this point, if ``ansible_common_remote_group`` was defined and a
+:command:`chgrp` was attempted and returned successfully, Ansible assumes (but,
+importantly, does not check) that the new group ownership is enough and does not
+fall back further. That is, Ansible **does not check** that the ``become_user``
+does in fact share a group with the ``remote_user``; so long as the command
+exits successfully, Ansible considers the result successful and does not proceed
+to check ``allow_world_readable_tmpfiles`` per below.
+
+If ``ansible_common_remote_group`` is **not** set and the chown above it failed,
+or if ``ansible_common_remote_group`` *is* set but the :command:`chgrp` (or
+following group-permissions :command:`chmod`) returned a non-successful exit
+code, Ansible will lastly check the value of
+``allow_world_readable_tmpfiles``. If this is set, Ansible will place the module
+file in a world-readable temporary directory, with world-readable permissions to
+allow the ``become_user`` (and incidentally any other user on the system) to
+read the contents of the file. **If any of the parameters passed to the module
+are sensitive in nature, and you do not trust the remote machines, then this is
+a potential security risk.**
+
 Once the module is done executing, Ansible deletes the temporary file.
 
-If any of the parameters passed to the module are sensitive in nature, and you do
-not trust the client machines, then this is a potential danger.
-
-Ways to resolve this include:
+Several ways exist to avoid the above logic flow entirely:
 
 * Use `pipelining`.  When pipelining is enabled, Ansible does not save the
   module to a temporary file on the client.  Instead it pipes the module to
   the remote python interpreter's stdin. Pipelining does not work for
   python modules involving file transfer (for example: :ref:`copy <copy_module>`,
   :ref:`fetch <fetch_module>`, :ref:`template <template_module>`), or for non-python modules.
-
-* Install POSIX.1e filesystem acl support on the
-  managed host.  If the temporary directory on the remote host is mounted with
-  POSIX acls enabled and the :command:`setfacl` tool is in the remote ``PATH``
-  then Ansible will use POSIX acls to share the module file with the second
-  unprivileged user instead of having to make the file readable by everyone.
 
 * Avoid becoming an unprivileged
   user.  Temporary files are protected by UNIX file permissions when you
@@ -167,13 +201,31 @@ Ways to resolve this include:
 
 Ansible makes it hard to unknowingly use ``become`` insecurely. Starting in Ansible 2.1,
 Ansible defaults to issuing an error if it cannot execute securely with ``become``.
-If you cannot use pipelining or POSIX ACLs, you must connect as an unprivileged user,
-you must use ``become`` to execute as a different unprivileged user,
-and you decide that your managed nodes are secure enough for the
+If you cannot use pipelining or POSIX ACLs, must connect as an unprivileged user,
+must use ``become`` to execute as a different unprivileged user,
+and decide that your managed nodes are secure enough for the
 modules you want to run there to be world readable, you can turn on
 ``allow_world_readable_tmpfiles`` in the :file:`ansible.cfg` file.  Setting
 ``allow_world_readable_tmpfiles`` will change this from an error into
 a warning and allow the task to run as it did prior to 2.1.
+
+.. versionchanged:: 2.10
+
+Ansible 2.10 introduces the above-mentioned ``ansible_common_remote_group``
+fallback. As mentioned above, if enabled, it is used when ``remote_user`` and
+``become_user`` are both unprivileged users. Refer to the text above for details
+on when this fallback happens.
+
+.. warning:: As mentioned above, if ``ansible_common_remote_group`` and
+   ``allow_world_readable_tmpfiles`` are both enabled, it is unlikely that the
+   world-readable fallback will ever trigger, and yet Ansible might still be
+   unable to access the module file. This is because after the group ownership
+   change is successful, Ansible does not fall back any further, and also does
+   not do any check to ensure that the ``become_user`` is actually a member of
+   the "common group". This is a design decision made by the fact that doing
+   such a check would require another round-trip connection to the remote
+   machine, which is a time-expensive operation. Ansible does, however, emit a
+   warning in this case.
 
 Not supported by all connection plugins
 ---------------------------------------

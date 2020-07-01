@@ -1,0 +1,58 @@
+- name: Run a command
+  shell: whoami
+  register: whoami
+
+# TODO: We ignore_errors here because atomic_move has some really weird edge
+# cases and gives different behavior based on whether the tmpdir we are copying
+# from is on the same partition as the target or not, among other things. There
+# is probably work to be done there to either unify the behavior if possible, or
+# if not, document/add a warning.
+#
+# In what follows, unpriv1 is remote_user and unpriv2 is become_user. Both
+# users are unprivileged.
+#
+# In particular, given a system (FreeBSD in my testing, but probably any *nix)
+# with a single partition, when we connect (as unpriv1) and become unpriv2,
+# the file ends up being unpriv1:commongroup. We can't chown it after that
+# since we are become_user, so the file remains owned by unpriv1.
+#
+# But when we have multiple partitions, os.rename() in atomic_move fails, and
+# we end up falling back to a whole new bunch of logic. In the end the file
+# ends up being creted as unpriv2 and is unpriv2:unpriv2_login_group.
+#
+# This creates a bunch of inconsistency and really should be documented better
+# but the relevant part for *this* test is that in the single-partition case,
+# we cannot chmod in the `if creating` branch of atomic_move since we do not
+# own the file. That will generate an error.
+- name: Copy a file
+  copy:
+    src: baz.txt
+    dest: ~/uh-oh
+    owner: unpriv2
+    group: notcoolenoughforroot
+    mode: 0644
+  ignore_errors: yes
+
+- name: See if the file exists
+  stat:
+    path: ~/uh-oh
+  register: uh_oh_stat
+
+#- name: Get files in /var/tmp
+#  find:
+#    paths: "/var/tmp/"
+#    patterns: 'ansible*'
+#    file_type: directory
+#  register: found
+#
+#- name: Get latest ansible tmp dir
+#  set_fact:
+#    tmpdir: "{{ found.files | sort(attribute='mtime') | last }}"
+#
+#- debug: var=tmpdir
+
+- assert:
+    that:
+      - whoami.stdout == 'unpriv2'
+      - uh_oh_stat.stat.exists
+      #- tmpdir.gr_name == 'notcoolenoughforroot'
