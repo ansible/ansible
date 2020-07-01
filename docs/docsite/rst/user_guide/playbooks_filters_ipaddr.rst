@@ -476,8 +476,8 @@ Testing if a address belong to a network range
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``network_in_usable`` filter returns whether an address passed as an argument is usable in a network.
-Usable addresses are addresses that can be assigned to a host. The network ID and
-the broadcast address are not usable addresses.::
+Usable addresses are addresses that can be assigned to a host. The network ID and the broadcast address
+are not usable addresses.::
 
     # {{ '192.168.0.0/24' | ansible.netcommon.network_in_usable( '192.168.0.1' ) }}
     True
@@ -712,7 +712,7 @@ The supported formats result in the following conversions for the ``1a:2b:3c:4d:
 
 
 Generate an IPv6 address in Stateless Configuration (SLAAC)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 the filter ``slaac()`` generates an IPv6 address for a given network and a MAC Address in Stateless Configuration::
 
