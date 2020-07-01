@@ -533,7 +533,7 @@ Here are a few simple examples::
     # {{ '192.168.2.6/24' | ansible.netcommon.ipmath(-10) }}
     192.168.1.252
 
-    # Get the next ten address in IPv6
+    # Get the next ten addresses in IPv6
     # {{ '2001::1' | ansible.netcommon.ipmath(10) }}
     2001::b
 
