@@ -14,6 +14,7 @@ import tacp
 from tacp.rest import ApiException
 import json
 from uuid import uuid4
+from time import sleep
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -923,23 +924,9 @@ def add_playbook_disks(playbook_disks, instance):
 
     for playbook_disk in playbook_disks:
         if playbook_disk['name'] in template_disks:
-            existing_disk = next(disk for disk in instance.disks
-                                 if disk.name == playbook_disk['name'])
+            update_default_disk(playbook_disk, instance)
+            continue
 
-            target_disk_size_bytes = tacp_utils.convert_memory_abbreviation_to_bytes(  # noqa
-                            str(playbook_disk['size_gb']) + "GB"
-            )
-            if target_disk_size_bytes < existing_disk.size:
-                fail_and_rollback_instance_creation(
-                    "Failed to resize disk {} from {} bytes to {} bytes. "
-                    "Cannot shrink a template's disk.".format(
-                        existing_disk.name, existing_disk.size,
-                        target_disk_size_bytes), instance)
-
-            RESOURCES['update_app'].edit_disk_size(existing_disk.uuid,
-                                                   instance.uuid,
-                                                   target_disk_size_bytes)
-            return
         add_disk_to_instance(playbook_disk, instance)
 
 
@@ -1026,6 +1013,38 @@ def get_disk_payload(playbook_disk):
     )
 
     return disk_payload
+
+
+def update_default_disk(playbook_disk, instance):
+    existing_disk = next(disk for disk in instance.disks
+                         if disk.name == playbook_disk['name'])
+    if 'size_gb' in playbook_disk:
+        target_disk_size_bytes = tacp_utils.convert_memory_abbreviation_to_bytes(  # noqa
+                        str(playbook_disk['size_gb']) + "GB"
+        )
+        if target_disk_size_bytes < existing_disk.size:
+            fail_and_rollback_instance_creation(
+                "Failed to resize disk {} from {} bytes to {} bytes. "
+                "Cannot shrink a template's disk.".format(
+                    existing_disk.name, existing_disk.size,
+                    target_disk_size_bytes), instance)
+
+        RESOURCES['update_app'].edit_disk_size(
+            existing_disk.uuid,
+            instance.uuid,
+            target_disk_size_bytes)
+
+    if 'iops_limit' in playbook_disk:
+        RESOURCES['update_app'].edit_disk_iops_limit(
+            existing_disk.uuid,
+            instance.uuid,
+            playbook_disk['iops_limit'])
+
+    if 'bandwidth_limit' in playbook_disk:
+        RESOURCES['update_app'].edit_disk_bw_limit(
+            existing_disk.uuid,
+            instance.uuid,
+            playbook_disk['bandwidth_limit'])
 
 
 def update_boot_order(playbook_instance):
