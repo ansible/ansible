@@ -210,8 +210,8 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.text.converters import to_bytes, to_text
 from ansible.module_utils.six.moves import shlex_quote
-
 
 class CronTabError(Exception):
     pass
@@ -251,7 +251,7 @@ class CronTab(object):
             # read the cronfile
             try:
                 f = open(self.cron_file, 'rb')
-                self.existing = f.read().decode('utf-8')
+                self.existing = to_text(f.read())
                 self.lines = self.existing.splitlines()
                 f.close()
             except IOError:
@@ -299,7 +299,7 @@ class CronTab(object):
             os.chmod(path, int('0644', 8))
             fileh = os.fdopen(filed, 'wb')
 
-        fileh.write(self.render().encode(encoding='utf-8'))
+        fileh.write(to_bytes(self.render()))
         fileh.close()
 
         # return if making a backup
