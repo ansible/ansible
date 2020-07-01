@@ -461,7 +461,7 @@ If there is no usable address, it returns an empty string::
     # {{ '192.168.122.254/24' | ansible.netcommon.next_nth_usable(2) }}
     ""
 
-Just like ``next_nth_ansible``, you have ``previous_nth_usable`` to find previous usable address::
+Just like ``next_nth_ansible``, you have ``previous_nth_usable`` to find the previous usable address::
 
     # {{ '192.168.122.10/24' | ansible.netcommon.previous_nth_usable(2) }}
     192.168.122.8
