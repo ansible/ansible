@@ -471,7 +471,7 @@ Testing if a address belong to a network range
 
 The ``network_in_usable`` filter returns whether an address passed as an argument is usable in a network.
 Usable addresses are addresses that can be assigned to a host. The network ID and
-and broadcast addresses.::
+the broadcast address are not usable addresses.::
 
     # {{ '192.168.0.0/24' | ansible.netcommon.network_in_usable( '192.168.0.1' ) }}
     True
@@ -497,7 +497,7 @@ The ``network_in_network`` filter returns whether an address or a network passed
     # {{ '192.168.0.0/16' | ansible.netcommon.network_in_network( '192.168.0.0/24' ) }}
     True
 
-Should you have several addresses to check if they belong to a network, you can use ``reduce_on_network``::
+To check whether multiple addresses belong to a network, use the ``reduce_on_network`` filter::
 
     # {{ '192.168.0.0/24' | ansible.netcommon.reduce_on_network( ['192.168.0.34', '10.3.0.3', '192.168.2.34'] ) }}
     ['192.168.0.34']
@@ -512,19 +512,19 @@ The ``ipmath()`` filter can be used to do simple IP math/arithmetic.
 
 Here are a few simple examples::
 
-    # Get the next five address based on a ip address
+    # Get the next five addresses based on an IP address
     # {{ '192.168.1.5' | ansible.netcommon.ipmath(5) }}
     192.168.1.10
 
-    # Get the ten previous address based on a ip address
+    # Get the ten previous addresses based on an IP address
     # {{ '192.168.0.5' | ansible.netcommon.ipmath(-10) }}
     192.167.255.251
 
-    # Get the next five address using cidr notation
+    # Get the next five addresses using CIDR notation
     # {{ '192.168.1.1/24' | ansible.netcommon.ipmath(5) }}
     192.168.1.6
 
-    # Get the previous five address using cidr notation
+    # Get the previous five addresses using CIDR notation
     # {{ '192.168.1.6/24' | ansible.netcommon.ipmath(-5) }}
     192.168.1.1
 
