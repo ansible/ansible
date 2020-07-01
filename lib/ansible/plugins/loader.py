@@ -329,7 +329,7 @@ class PluginLoader:
                     for c in contents:
                         if os.path.isdir(c) and c not in ret:
                             ret.append(c)
-                if path not in ret:
+                if os.path.isdir(path) and path not in ret:
                     ret.append(path)
 
         # look for any plugins installed in the package subtree
