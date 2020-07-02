@@ -24,7 +24,7 @@ Maintenance
 
    distributed on Galaxy         various; follow ``repo`` link              community or partners
 
-   distributed on Automation Hub various; follow ``repo`` link              core team or partners
+   distributed on Automation Hub various; follow ``repo`` link              content team or partners
    ============================= ========================================== ==========================
 
 .. _ansible/ansible repo: https://github.com/ansible/ansible/tree/devel/lib/ansible/modules
@@ -32,13 +32,13 @@ Maintenance
 Issue Reporting
 ===============
 
-If you find a bug that affects multiple modules, or a module in ``ansible.builtin``:
+If you find a bug that affects a plugin in the main Ansible repo:
 
   #. Confirm that you are running the latest stable version of Ansible or the devel branch.
   #. Look at the `issue tracker in the Ansible repo <https://github.com/ansible/ansible/issues>`_ to see if an issue has already been filed.
   #. Create an issue if one does not already exist. Include as much detail as you can about the behavior you discovered.
 
-If you find a bug that affects a module in a Galaxy collection:
+If you find a bug that affects a plugin in a Galaxy collection:
 
   #. Find the collection on Galaxy.
   #. Find the issue tracker for the collection.
@@ -51,12 +51,12 @@ If you are not sure whether the behavior you see is a bug, if you have questions
 
 If you find a bug that affects a module in an Automation Hub collection:
 
-  #. Follow the standard process for reporting issues on the `Red Hat Customer Portal <https://access.redhat.com/>`_. You must have a subscription to the Red Hat Ansible Automation Platform to create an issue on the portal.
+  #. If the collection offers an Issue Tracker link on Automation Hub, click there and open an issue on the collection repository. If it does not, follow the standard process for reporting issues on the `Red Hat Customer Portal <https://access.redhat.com/>`_. You must have a subscription to the Red Hat Ansible Automation Platform to create an issue on the portal.
 
 Support
 =======
 
-The ``ansible.builtin`` collection and all collections hosted in Automation Hub are supported by Red Hat. No other collections are supported by Red Hat. If you have a subscription to the Red Hat Ansible Automation Platform, you can find more information and resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_
+All plugins that remain in ansible-base and all collections hosted in Automation Hub are supported by Red Hat. No other plugins or collections are supported by Red Hat. If you have a subscription to the Red Hat Ansible Automation Platform, you can find more information and resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_
 
 .. seealso::
 
