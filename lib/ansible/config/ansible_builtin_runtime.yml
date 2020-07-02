@@ -525,13 +525,13 @@ plugin_routing:
     clc_server_snapshot:
       redirect: community.general.clc_server_snapshot
     cloudscale_floating_ip:
-      redirect: community.general.cloudscale_floating_ip
+      redirect: cloudscale_ch.cloud.floating_ip
     cloudscale_server:
-      redirect: community.general.cloudscale_server
+      redirect: cloudscale_ch.cloud.server
     cloudscale_server_group:
-      redirect: community.general.cloudscale_server_group
+      redirect: cloudscale_ch.cloud.server_group
     cloudscale_volume:
-      redirect: community.general.cloudscale_volume
+      redirect: cloudscale_ch.cloud.volume
     cs_instance_facts:
       redirect: ngine_io.cloudstack.cs_instance_info
     cs_zone_facts:
@@ -7590,7 +7590,7 @@ plugin_routing:
     cloud:
       redirect: community.general.cloud
     cloudscale:
-      redirect: community.general.cloudscale
+      redirect: cloudscale_ch.cloud.api
     cloudstack:
       redirect: ngine_io.cloudstack.cloudstack
     database:
@@ -8315,7 +8315,7 @@ plugin_routing:
     ce:
       redirect: community.network.ce
     cloudscale:
-      redirect: community.general.cloudscale
+      redirect: cloudscale_ch.cloud.api_parameters
     cloudstack:
       redirect: ngine_io.cloudstack.cloudstack
     cnos:
@@ -8616,7 +8616,7 @@ plugin_routing:
     formerly_core_inventory:
       redirect: testns.content_adj.statichost
     cloudscale:
-      redirect: community.general.cloudscale
+      redirect: cloudscale_ch.cloud.inventory
     docker_machine:
       redirect: community.general.docker_machine
     docker_swarm:
