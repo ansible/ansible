@@ -61,7 +61,7 @@ def get_all_plugin_loaders():
 
 def add_all_plugin_dirs(path):
     ''' add any existing plugin dirs in the path provided '''
-    b_path = to_bytes(path, errors='surrogate_or_strict')
+    b_path = os.path.expanduser(to_bytes(path, errors='surrogate_or_strict'))
     if os.path.isdir(b_path):
         for name, obj in get_all_plugin_loaders():
             if obj.subdir:
