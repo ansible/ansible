@@ -32,6 +32,7 @@ It can usually be installed with either your system package manager or using
    :depth: 2
    :backlinks: top
 
+
 Basic tests
 ^^^^^^^^^^^
 
@@ -293,11 +294,14 @@ on an interface:
 
 If needed, you can extract subnet and prefix information from the 'host/prefix' value::
 
+.. code-block:: jinja
+
     # {{ host_prefix | ansible.netcommon.ipaddr('host/prefix') | ansible.netcommon.ipaddr('subnet') }}
     ['2001:db8:deaf:be11::/64', '192.0.2.0/24']
 
     # {{ host_prefix | ansible.netcommon.ipaddr('host/prefix') | ansible.netcommon.ipaddr('prefix') }}
     [64, 24]
+
 
 Converting subnet masks to CIDR notation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -330,6 +334,7 @@ This result can be converted to canonical form with ``ipaddr()`` to produce a su
     # {{ net_mask | ansible.netcommon.ipaddr('net') }}
     '192.168.0.0/24'
 
+
 Getting information about the network in CIDR notation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -345,6 +350,7 @@ This can be used to obtain the network address in CIDR notation format::
 
     # {{ ip_address | ansible.netcommon.ipaddr('network/prefix') }}
     '192.168.0.0/24'
+
 
 IP address conversion
 ^^^^^^^^^^^^^^^^^^^^^
@@ -411,6 +417,7 @@ be automatically converted to a router address (with a ``::1/48`` host address):
 
 .. _6to4: https://en.wikipedia.org/wiki/6to4
 
+
 Finding IP addresses within a range
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -431,19 +438,75 @@ To find the available range of IP addresses from the given network address, use 
     # {{ '192.168.122.1/24' | ansible.netcommon.ipaddr('range_usable') }}
     192.168.122.1-192.168.122.254
 
-To find the next nth usable IP address within a range, use ``next_nth_usable``::
-
-    # {{ '192.168.122.1/24' | ansible.netcommon.next_nth_usable(2) }}
-    192.168.122.3
-
-In this example, ``next_nth_usable`` returns the second usable IP address for the given IP range.
-
 To find the peer IP address for a point to point link, use ``peer``::
 
     # {{ '192.168.122.1/31' | ansible.netcommon.ipaddr('peer') }}
     192.168.122.0
     # {{ '192.168.122.1/30' | ansible.netcommon.ipaddr('peer') }}
     192.168.122.2
+
+To return the nth ip from a network, use the filter ``nthhost``::
+
+    # {{ '10.0.0.0/8' | ansible.netcommon.nthhost(305) }}
+    10.0.1.49
+
+``nthhost`` also supports a negative value::
+
+    # {{ '10.0.0.0/8' | ansible.netcommon.nthhost(-1) }}
+    10.255.255.255
+
+To find the next nth usable IP address in relation to another within a range, use ``next_nth_usable``
+In the example, ``next_nth_usable`` returns the second usable IP address for the given IP range::
+
+    # {{ '192.168.122.1/24' | ansible.netcommon.next_nth_usable(2) }}
+    192.168.122.3
+
+If there is no usable address, it returns an empty string::
+
+    # {{ '192.168.122.254/24' | ansible.netcommon.next_nth_usable(2) }}
+    ""
+
+Just like ``next_nth_ansible``, you have ``previous_nth_usable`` to find the previous usable address::
+
+    # {{ '192.168.122.10/24' | ansible.netcommon.previous_nth_usable(2) }}
+    192.168.122.8
+
+
+Testing if a address belong to a network range
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``network_in_usable`` filter returns whether an address passed as an argument is usable in a network.
+Usable addresses are addresses that can be assigned to a host. The network ID and the broadcast address
+are not usable addresses.::
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.network_in_usable( '192.168.0.1' ) }}
+    True
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.network_in_usable( '192.168.0.255' ) }}
+    False
+
+    # {{ '192.168.0.0/16' | ansible.netcommon.network_in_usable( '192.168.0.255' ) }}
+    True
+
+The ``network_in_network`` filter returns whether an address or a network passed as argument is in a network.::
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.network_in_network( '192.168.0.1' ) }}
+    True
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.network_in_network( '192.168.0.0/24' ) }}
+    True
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.network_in_network( '192.168.0.255' ) }}
+    True
+
+    # Check in a network is part of another network
+    # {{ '192.168.0.0/16' | ansible.netcommon.network_in_network( '192.168.0.0/24' ) }}
+    True
+
+To check whether multiple addresses belong to a network, use the ``reduce_on_network`` filter::
+
+    # {{ '192.168.0.0/24' | ansible.netcommon.reduce_on_network( ['192.168.0.34', '10.3.0.3', '192.168.2.34'] ) }}
+    ['192.168.0.34']
 
 
 IP Math
@@ -455,24 +518,32 @@ The ``ipmath()`` filter can be used to do simple IP math/arithmetic.
 
 Here are a few simple examples::
 
+    # Get the next five addresses based on an IP address
     # {{ '192.168.1.5' | ansible.netcommon.ipmath(5) }}
     192.168.1.10
 
+    # Get the ten previous addresses based on an IP address
     # {{ '192.168.0.5' | ansible.netcommon.ipmath(-10) }}
     192.167.255.251
 
+    # Get the next five addresses using CIDR notation
     # {{ '192.168.1.1/24' | ansible.netcommon.ipmath(5) }}
     192.168.1.6
 
+    # Get the previous five addresses using CIDR notation
     # {{ '192.168.1.6/24' | ansible.netcommon.ipmath(-5) }}
     192.168.1.1
 
+    # Get the previous ten address using cidr notation
+    # It returns a address of the previous network range
     # {{ '192.168.2.6/24' | ansible.netcommon.ipmath(-10) }}
     192.168.1.252
 
+    # Get the next ten addresses in IPv6
     # {{ '2001::1' | ansible.netcommon.ipmath(10) }}
     2001::b
 
+    # Get the previous ten address in IPv6
     # {{ '2001::5' | ansible.netcommon.ipmath(-10) }}
     2000:ffff:ffff:ffff:ffff:ffff:ffff:fffb
 
@@ -582,6 +653,7 @@ Because of the size of IPv6 subnets, iteration over all of them to find the
 correct one may take some time on slower computers, depending on the size
 difference between the subnets.
 
+
 Subnet Merging
 ^^^^^^^^^^^^^^
 
@@ -605,6 +677,7 @@ subnet which contains all of the inputs::
 
     {{ ['192.168.1.42', '192.168.42.1'] | ansible.netcommon.cidr_merge('span') }}
     # => '192.168.0.0/18'
+
 
 MAC address filter
 ^^^^^^^^^^^^^^^^^^
@@ -637,11 +710,20 @@ The supported formats result in the following conversions for the ``1a:2b:3c:4d:
     linux or unix: 1a:2b:3c:4d:5e:6f:
     pgsql, postgresql, or psql: 1a2b3c:4d5e6f
 
+
+Generate an IPv6 address in Stateless Configuration (SLAAC)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+the filter ``slaac()`` generates an IPv6 address for a given network and a MAC Address in Stateless Configuration::
+
+    # {{ fdcf:1894:23b5:d38c:0000:0000:0000:0000 | slaac('c2:31:b3:83:bf:2b') }}
+    fdcf:1894:23b5:d38c:c031:b3ff:fe83:bf2b
+
 .. seealso::
 
 
    `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_
-       Ansible network collection for common code 
+       Ansible network collection for common code
    :ref:`about_playbooks`
        An introduction to playbooks
    :ref:`playbooks_filters`
