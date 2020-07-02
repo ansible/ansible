@@ -8333,7 +8333,7 @@ plugin_routing:
     enos:
       redirect: community.network.enos
     exoscale:
-      redirect: ngine.io.exoscale.exoscale
+      redirect: ngine_io.exoscale.exoscale
     gcp:
       redirect: google.cloud.gcp
     hetzner:
