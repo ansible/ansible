@@ -1,0 +1,2 @@
+minor_changes:
+  - "command and shell modules: Removed suggestions (warnings) to use modules instead of commands."

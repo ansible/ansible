@@ -74,6 +74,7 @@ lib/ansible/module_utils/urls.py replace-urlopen
 lib/ansible/modules/command.py validate-modules:doc-missing-type
 lib/ansible/modules/command.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/command.py validate-modules:parameter-list-no-elements
+lib/ansible/modules/command.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/command.py validate-modules:undocumented-parameter
 lib/ansible/modules/expect.py validate-modules:doc-missing-type
 lib/ansible/modules/assemble.py validate-modules:nonexistent-parameter-documented

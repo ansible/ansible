@@ -56,12 +56,6 @@ options:
     description:
       - Change into this directory before running the command.
     version_added: "0.6"
-  warn:
-    description:
-      - Enable or disable task warnings.
-    type: bool
-    default: yes
-    version_added: "1.8"
   stdin:
     description:
       - Set the stdin of the command directly to the specified value.
@@ -209,42 +203,6 @@ from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
 
 
-def check_command(module, commandline):
-    arguments = {'chown': 'owner', 'chmod': 'mode', 'chgrp': 'group',
-                 'ln': 'state=link', 'mkdir': 'state=directory',
-                 'rmdir': 'state=absent', 'rm': 'state=absent', 'touch': 'state=touch'}
-    commands = {'curl': 'get_url or uri', 'wget': 'get_url or uri',
-                'svn': 'subversion', 'service': 'service',
-                'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
-                'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
-                'dnf': 'dnf', 'zypper': 'zypper'}
-    become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun', 'machinectl']
-    if isinstance(commandline, list):
-        command = commandline[0]
-    else:
-        command = commandline.split()[0]
-    command = os.path.basename(command)
-
-    disable_suffix = "If you need to use command because {mod} is insufficient you can add" \
-                     " 'warn: false' to this command task or set 'command_warnings=False' in" \
-                     " ansible.cfg to get rid of this message."
-    substitutions = {'mod': None, 'cmd': command}
-
-    if command in arguments:
-        msg = "Consider using the {mod} module with {subcmd} rather than running '{cmd}'.  " + disable_suffix
-        substitutions['mod'] = 'file'
-        substitutions['subcmd'] = arguments[command]
-        module.warn(msg.format(**substitutions))
-
-    if command in commands:
-        msg = "Consider using the {mod} module rather than running '{cmd}'.  " + disable_suffix
-        substitutions['mod'] = commands[command]
-        module.warn(msg.format(**substitutions))
-
-    if command in become:
-        module.warn("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
-
-
 def main():
 
     # the command module is the one ansible module that does not take key=value args
@@ -258,8 +216,8 @@ def main():
             executable=dict(),
             creates=dict(type='path'),
             removes=dict(type='path'),
-            # The default for this really comes from the action plugin
-            warn=dict(type='bool', default=True),
+            # Deprecated
+            warn=dict(type='bool'),
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
             strip_empty_ends=dict(type='bool', default=True),
@@ -281,6 +239,13 @@ def main():
     if not shell and executable:
         module.warn("As of Ansible 2.4, the parameter 'executable' is no longer supported with the 'command' module. Not using '%s'." % executable)
         executable = None
+
+    if warn is not None:
+        module.deprecate(
+            'The "warn" option no longer has any effect and its use will '
+            'constitute an error in version 2.13',
+            version='2.13',
+            collection_name='ansible.builtin')
 
     if (not args or args.strip() == '') and not argv:
         module.fail_json(rc=256, msg="no command given")
@@ -331,9 +296,6 @@ def main():
                 changed=False,
                 rc=0
             )
-
-    if warn:
-        check_command(module, args)
 
     startd = datetime.datetime.now()
 
