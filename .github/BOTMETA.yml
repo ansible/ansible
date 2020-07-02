@@ -4044,7 +4044,7 @@ files:
     maintainers: $team_extreme
     migrated_to: community.general
   $plugins/httpapi/splunk.py:
-    migrated_to: splunk.enterprise_security
+    migrated_to: splunk.es
   $plugins/httpapi/qradar.py:
     migrated_to: ibm.qradar
   $plugins/inventory/__init__.py:
