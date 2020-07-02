@@ -583,8 +583,16 @@ def get_parameters_to_create_new_application(playbook_instance):
     data['instance_name'] = playbook_instance['name']
 
     for item in ('datacenter', 'migration_zone', 'storage_pool', 'template'):
-        resource_uuid = RESOURCES[item].get_by_name(
-            playbook_instance[item]).uuid
+        resource = RESOURCES[item].get_by_name(
+            playbook_instance[item])
+
+        if not resource:
+            fail_with_reason(
+                "Could not create create instance. Invalid {} provided: {}".format(  # noqa
+                    item, playbook_instance[item]
+                ))
+
+        resource_uuid = resource.uuid
 
         data['{}_uuid'.format(item)] = resource_uuid
 
