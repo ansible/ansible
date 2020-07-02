@@ -43,7 +43,7 @@ options:
             - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
         type: bool
         default: "yes"
-        aliases: [ 'update-cache' ]
+        aliases: [ update-cache ]
     update_cache_retries:
         description:
         - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
@@ -79,7 +79,7 @@ options:
     install_python_apt:
         description:
             - Whether to install python apt or not, default is true
-              If python_apt isn't installed this module won't work
+            - If python-apt Python library is not installed this module will not work.
         type: bool
         default: true
 author:

@@ -43,7 +43,7 @@ options:
     file:
         description:
             - The path to a keyfile on the remote server to add to the keyring.
-        aliases: ['filename']
+        aliases: [ filename ]
         type: path
     keyring:
         description:

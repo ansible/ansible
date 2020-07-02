@@ -410,8 +410,8 @@ def main():
 
     # start work
     global module
-    module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'elements': 'str', 'default': ['auto']},
-                                              strategy={'choices': ['first', 'all'], 'default': 'first'}),
+    module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'elements': 'str', 'default': ['auto'],
+                                              choices=['apt', 'auto', 'pacman', 'pkg', 'portage', 'rpm']},
                            supports_check_mode=True)
     packages = {}
     results = {'ansible_facts': {}}

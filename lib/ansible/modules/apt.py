@@ -36,7 +36,7 @@ options:
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
-    aliases: ['update-cache']
+    aliases: [ update-cache ]
     type: bool
     default: 'no'
   update_cache_retries:
@@ -65,13 +65,13 @@ options:
   default_release:
     description:
       - Corresponds to the C(-t) option for I(apt) and sets pin priorities
-    aliases: ['default-release']
+    aliases: [ default-release ]
     type: str
   install_recommends:
     description:
       - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install
         recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
-    aliases: ['install-recommends']
+    aliases: [ install-recommends ]
     type: bool
   force:
     description:
@@ -87,7 +87,7 @@ options:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
       - 'C(allow_unauthenticated) is only supported with state: I(install)/I(present)'
-    aliases: ['allow-unauthenticated']
+    aliases: [ allow-unauthenticated ]
     type: bool
     default: 'no'
     version_added: "2.1"
