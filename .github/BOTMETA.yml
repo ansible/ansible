@@ -94,6 +94,7 @@ files:
   $modules/cloud/cloudstack/:
     maintainers: $team_cloudstack
     labels: cloudstack
+    migrated_to: ngine_io.cloudstack
   $modules/cloud/digital_ocean/: &id010
     keywords:
     - digital ocean
@@ -3964,7 +3965,7 @@ files:
   $plugins/doc_fragments/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   $plugins/doc_fragments/docker.py:
     ignored: ThomasSteinbach cove
     labels: *id001
@@ -4384,6 +4385,7 @@ files:
   test/integration/targets/cs_:
     maintainers: $team_cloudstack
     labels: cloudstack
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/docker: *id011
   test/integration/targets/gcp:
     maintainers: $team_google
