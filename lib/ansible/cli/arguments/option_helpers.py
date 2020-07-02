@@ -19,6 +19,7 @@ from ansible.release import __version__
 from ansible.utils.path import unfrackpath
 from ansible.utils.yaml import safe_load
 
+
 #
 # Special purpose OptionParsers
 #

@@ -55,7 +55,7 @@ from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.unsafe_proxy import unwrap_var
 from ansible.utils.vars import merge_hash
-from ansible.utils.yaml import safe_load
+from ansible.utils.yaml import safe_load, safe_load_all
 
 display = Display()
 
