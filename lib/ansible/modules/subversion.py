@@ -260,7 +260,7 @@ class Subversion(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            dest=dict(type='path', required=True),
+            dest=dict(type='path'),
             repo=dict(type='str', required=True, aliases=['name', 'repository']),
             revision=dict(type='str', default='HEAD', aliases=['rev', 'version']),
             force=dict(type='bool', default=False),
