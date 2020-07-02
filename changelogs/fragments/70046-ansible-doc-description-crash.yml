@@ -1,2 +1,2 @@
 bugfixes:
-- "ansible-doc - avoid crash in man page formatter when ``description`` is missing for a (sub-)option or a return value or its ``contains`` (https://github.com/ansible/ansible/pull/70046)."
+- "ansible-doc - improve error message in text formatter when ``description`` is missing for a (sub-)option or a return value or its ``contains`` (https://github.com/ansible/ansible/pull/70046)."
