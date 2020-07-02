@@ -44,3 +44,7 @@ class InvalidDiskSizeException(Exception):
 
 class InvalidDiskNameException(Exception):
     pass
+
+
+class InvalidParameterException(Exception):
+    pass

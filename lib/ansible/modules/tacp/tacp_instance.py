@@ -136,18 +136,6 @@ options:
             have an order provided.
         required: true
         type: int
-      bandwidth_limit:
-        description:
-          - A limit to the bandwidth usage allowed for this disk.
-            Must be at least 5000000 (5 Mbps).
-        required: false
-        type: int
-      iops_limit:
-        description:
-          - A limit to the total IOPS allowed for this disk.
-            Must be at least 50.
-        required: false
-        type: int
   nics:
     description:
       - An array of NICs that will be associated with the application
@@ -982,19 +970,14 @@ def get_disk_payload(playbook_disk):
         ApiDiskSizeAndLimitPayload: The populated payload object to be provided
             to the function that actually creates the disk.
     """
-    bandwidth_limit = playbook_disk.get('bandwidth_limit')
-    if bandwidth_limit:
-        if int(bandwidth_limit) < MINIMUM_BW_FIVE_MBPS_IN_BYTES:
-            raise tacp_exceptions.InvalidDiskBandwidthLimitException(
-                'Could not add disk to instance; disks must have a bandwidth limit of at least 5 MBps (5000000).'  # noqa
-        )
 
-    iops_limit = playbook_disk.get('iops_limit')
-    if iops_limit:
-        if int(iops_limit) < MINIMUM_IOPS:
-            raise tacp_exceptions.InvalidDiskIopsLimitException(
-                'Could not add disk to instance; disks must have a total IOPS limit of at least 50.'  # noqa
-        )
+    if 'bandwidth_limit' in playbook_disk:
+        raise tacp_exceptions.InvalidParameterException(
+            'Invalid disk parameter "bandwidth_limit" provided.')
+
+    if 'iops_limit' in playbook_disk:
+        raise tacp_exceptions.InvalidParameterException(
+            'Invalid disk parameter "iops_limit" provided.')
 
     size_gb = playbook_disk.get('size_gb')
     if not size_gb:
@@ -1012,8 +995,6 @@ def get_disk_payload(playbook_disk):
         )
 
     disk_payload = tacp.ApiDiskSizeAndLimitPayload(
-        bandwidth_limit=bandwidth_limit,
-        iops_limit=iops_limit,
         name=name,
         size=size_bytes,
         uuid=str(uuid4())
@@ -1030,7 +1011,7 @@ def update_default_disk(playbook_disk, instance):
             Ansible playbook
         instance (ApiApplicationInstancePropertiesPayload): A payload
             containing the properties of the instance
-    """    
+    """
     existing_disk = next(disk for disk in instance.disks
                          if disk.name == playbook_disk['name'])
     if 'size_gb' in playbook_disk:
@@ -1049,17 +1030,11 @@ def update_default_disk(playbook_disk, instance):
             instance.uuid,
             target_disk_size_bytes)
 
-    if 'iops_limit' in playbook_disk:
-        RESOURCES['update_app'].edit_disk_iops_limit(
-            existing_disk.uuid,
-            instance.uuid,
-            playbook_disk['iops_limit'])
-
     if 'bandwidth_limit' in playbook_disk:
-        RESOURCES['update_app'].edit_disk_bw_limit(
-            existing_disk.uuid,
-            instance.uuid,
-            playbook_disk['bandwidth_limit'])
+        fail_with_reason('Invalid disk parameter "bandwidth_limit" provided.')
+
+    if 'iops_limit' in playbook_disk:
+        fail_with_reason('Invalid disk parameter "iops_limit" provided.')
 
 
 def update_boot_order(playbook_instance):
