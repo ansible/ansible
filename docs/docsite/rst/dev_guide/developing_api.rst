@@ -71,6 +71,18 @@ This example is a simple demonstration that shows how to minimally run a couple 
     # variable manager takes care of merging all the different sources to give you a unified view of variables available in each context
     variable_manager = VariableManager(loader=loader, inventory=inventory)
 
+    # Instantiate task queue manager, which takes care of forking
+    # and setting up all objects to iterate over host list and tasks.
+    # IMPORTANT: This also adds library dirs paths to the module loader
+    # IMPORTANT: and so it must be initialized before calling `Play.load()`.
+    tqm = TaskQueueManager(
+        inventory=inventory,
+        variable_manager=variable_manager,
+        loader=loader,
+        passwords=passwords,
+        stdout_callback=results_callback,  # Use our custom callback instead of the ``default`` callback plugin, which prints to stdout
+    )
+
     # create data structure that represents our play, including tasks, this is basically what our YAML loader does internally.
     play_source =  dict(
             name = "Ansible Play",
@@ -86,16 +98,8 @@ This example is a simple demonstration that shows how to minimally run a couple 
     # this will also automatically create the task objects from the info provided in play_source
     play = Play().load(play_source, variable_manager=variable_manager, loader=loader)
 
-    # Run it - instantiate task queue manager, which takes care of forking and setting up all objects to iterate over host list and tasks
-    tqm = None
+    # Actually run it
     try:
-        tqm = TaskQueueManager(
-                  inventory=inventory,
-                  variable_manager=variable_manager,
-                  loader=loader,
-                  passwords=passwords,
-                  stdout_callback=results_callback,  # Use our custom callback instead of the ``default`` callback plugin, which prints to stdout
-              )
         result = tqm.run(play) # most interesting data for a play is actually sent to the callback's methods
     finally:
         # we always need to cleanup child procs and the structures we use to communicate with them
