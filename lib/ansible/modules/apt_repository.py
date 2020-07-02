@@ -406,6 +406,12 @@ class UbuntuSourcesList(SourcesList):
         self.codename = module.params['codename'] or distro.codename
         super(UbuntuSourcesList, self).__init__(module)
 
+    def __deepcopy__(self, memo=None):
+        return UbuntuSourcesList(
+            self.module,
+            add_ppa_signing_keys_callback=self.add_ppa_signing_keys_callback
+        )
+
     def _get_ppa_info(self, owner_name, ppa_name):
         lp_api = self.LP_API % (owner_name, ppa_name)
 
