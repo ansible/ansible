@@ -1,0 +1,4 @@
+bugfixes:
+  - >
+    ssh connection plugin - use ``get_option()`` rather than ``_play_context`` to
+    ensure ``ANSBILE_SSH_ARGS`` are applied properly (https://github.com/ansible/ansible/issues/70437)
