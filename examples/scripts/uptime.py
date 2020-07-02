@@ -48,9 +48,26 @@ def main():
     loader = DataLoader()
     passwords = dict()
 
+    # Instantiate our ResultsCollector for handling results as
+    # they come in. Ansible expects this to be one of its main
+    # display outlets.
+    callback = ResultsCollector()
+
     # create inventory and pass to var manager
     inventory = InventoryManager(loader=loader, sources=sources)
     variable_manager = VariableManager(loader=loader, inventory=inventory)
+
+    # Instantiate task queue manager, which takes care of forking
+    # and setting up all objects to iterate over host list and tasks.
+    # IMPORTANT: This also adds library dirs paths to the module loader
+    # IMPORTANT: and so it must be initialized before calling `Play.load()`.
+    tqm = TaskQueueManager(
+        inventory=inventory,
+        variable_manager=variable_manager,
+        loader=loader,
+        passwords=passwords,
+        stdout_callback=callback,
+    )
 
     # create play with tasks
     play_source = dict(
@@ -62,16 +79,7 @@ def main():
     play = Play().load(play_source, variable_manager=variable_manager, loader=loader)
 
     # actually run it
-    tqm = None
-    callback = ResultsCollector()
     try:
-        tqm = TaskQueueManager(
-            inventory=inventory,
-            variable_manager=variable_manager,
-            loader=loader,
-            passwords=passwords,
-            stdout_callback=callback,
-        )
         result = tqm.run(play)
     finally:
         if tqm is not None:
