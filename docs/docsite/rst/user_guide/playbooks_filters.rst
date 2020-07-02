@@ -874,7 +874,7 @@ Flatten only the first level of a list (akin to the `items` lookup)::
     {{ [3, [4, [2]] ] | flatten(levels=1) }}
 
 
-.. versionadded:: 2.10
+.. versionadded:: 2.11
 
 Preserve nulls in a list, by default flatten removes them. ::
 
