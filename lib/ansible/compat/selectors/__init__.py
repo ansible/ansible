@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+# NOT_BUNDLED
+
 '''
 Compat selectors library.  Python-3.5 has this builtin.  The selectors2
 package exists on pypi to backport the functionality as far as python-2.6.
