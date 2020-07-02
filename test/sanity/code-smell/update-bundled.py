@@ -51,9 +51,9 @@ def get_bundled_libs(paths):
     for filename in fnmatch.filter(paths, 'lib/ansible/compat/*/__init__.py'):
         bundled_libs.add(filename)
 
+    bundled_libs.add('lib/ansible/module_utils/compat/selectors.py')
     bundled_libs.add('lib/ansible/module_utils/distro/__init__.py')
     bundled_libs.add('lib/ansible/module_utils/six/__init__.py')
-    bundled_libs.add('lib/ansible/module_utils/compat/ipaddress.py')
     # backports.ssl_match_hostname should be moved to its own file in the future
     bundled_libs.add('lib/ansible/module_utils/urls.py')
 
@@ -89,6 +89,15 @@ def get_bundled_metadata(filename):
     """
     with open(filename, 'r') as module:
         for line in module:
+            if line.strip().startswith('# NOT_BUNDLED'):
+                return None
+
+            if line.strip().startswith('# CANT_UPDATE'):
+                print(
+                    '{0} marked as CANT_UPDATE, so skipping. Manual '
+                    'check for CVEs required.'.format(filename))
+                return None
+
             if line.strip().startswith('_BUNDLED_METADATA'):
                 data = line[line.index('{'):].strip()
                 break
@@ -145,6 +154,9 @@ def main():
                 print('{0}: ERROR: {1}.  Perhaps the bundled library has been removed'
                       ' or moved and the bundled library test needs to be modified as'
                       ' well?'.format(filename, e))
+
+        if metadata is None:
+            continue
 
         pypi_fh = open_url('https://pypi.org/pypi/{0}/json'.format(metadata['pypi_name']))
         pypi_data = json.loads(pypi_fh.read().decode('utf-8'))
