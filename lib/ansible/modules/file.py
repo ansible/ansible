@@ -237,7 +237,7 @@ class AnsibleModuleError(Exception):
         self.results = results
 
     def __repr__(self):
-        print('AnsibleModuleError(results={0})'.format(self.results))
+        return 'AnsibleModuleError(results={0})'.format(self.results)
 
 
 class ParameterError(AnsibleModuleError):
