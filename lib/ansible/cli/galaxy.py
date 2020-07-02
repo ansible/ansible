@@ -12,7 +12,6 @@ import shutil
 import sys
 import textwrap
 import time
-import yaml
 
 from yaml.error import YAMLError
 
@@ -51,6 +50,7 @@ from ansible.template import Templar
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import get_versioned_doclink
+from ansible.utils.yaml import safe_dump, safe_load
 
 display = Display()
 urlparse = six.moves.urllib.parse.urlparse
@@ -483,7 +483,7 @@ class GalaxyCLI(CLI):
             # Config definitions are looked up dynamically based on the C.GALAXY_SERVER_LIST entry. We look up the
             # section [galaxy_server.<server>] for the values url, username, password, and token.
             config_dict = dict((k, server_config_def(server_key, k, req)) for k, req in server_def)
-            defs = AnsibleLoader(yaml.safe_dump(config_dict)).get_single_data()
+            defs = AnsibleLoader(safe_dump(config_dict)).get_single_data()
             C.config.initialize_plugin_configuration_definitions('galaxy_server', server_key, defs)
 
             server_options = C.config.get_plugin_options('galaxy_server', server_key)
@@ -613,7 +613,7 @@ class GalaxyCLI(CLI):
         display.vvv("Reading requirement file at '%s'" % requirements_file)
         with open(b_requirements_file, 'rb') as req_obj:
             try:
-                file_requirements = yaml.safe_load(req_obj)
+                file_requirements = safe_load(req_obj)
             except YAMLError as err:
                 raise AnsibleError(
                     "Failed to parse the requirements yml at '%s' with the following error:\n%s"
@@ -638,7 +638,7 @@ class GalaxyCLI(CLI):
                 with open(b_include_path, 'rb') as f_include:
                     try:
                         return [GalaxyRole(self.galaxy, self.api, **r) for r in
-                                (RoleRequirement.role_yaml_parse(i) for i in yaml.safe_load(f_include))]
+                                (RoleRequirement.role_yaml_parse(i) for i in safe_load(f_include))]
                     except Exception as e:
                         raise AnsibleError("Unable to load data from include requirements file: %s %s"
                                            % (to_native(requirements_file), to_native(e)))

@@ -121,6 +121,7 @@ from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash, secure_hash_s
 from ansible.utils.version import SemanticVersion
+from ansible.utils.yaml import safe_dump, safe_load
 
 
 display = Display()
