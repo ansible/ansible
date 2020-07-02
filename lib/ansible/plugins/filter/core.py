@@ -55,15 +55,11 @@ from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap
 from ansible.utils.unsafe_proxy import unwrap_var
 from ansible.utils.vars import merge_hash
+from ansible.utils.yaml import safe_load
 
 display = Display()
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
-
-try:
-    yaml_SafeLoader = yaml.CSafeLoader
-except AttributeError:
-    yaml_SafeLoader = yaml.SafeLoader
 
 
 def to_yaml(a, *args, **kw):
@@ -216,14 +212,14 @@ def regex_escape(string, re_type='python'):
 def from_yaml(data):
     if isinstance(data, string_types):
         # We use ``unwrap_var`` here because the c pyyaml extension cannot handle AnsibleUnsafeText
-        return yaml.load(unwrap_var(data), Loader=yaml_SafeLoader)
+        return safe_load(unwrap_var(data))
     return data
 
 
 def from_yaml_all(data):
     if isinstance(data, string_types):
         # We use ``unwrap_var`` here because the c pyyaml extension cannot handle AnsibleUnsafeText
-        return yaml.load_all(unwrap_var(data), Loader=yaml_SafeLoader)
+        return safe_load_all(unwrap_var(data))
     return data
 
 

@@ -39,12 +39,6 @@ except ImportError:
     Version = None
 
 try:
-    # use C version if possible for speedup
-    from yaml import CSafeLoader as SafeLoader
-except ImportError:
-    from yaml import SafeLoader
-
-try:
     import importlib.util
     imp = None
 except ImportError:
