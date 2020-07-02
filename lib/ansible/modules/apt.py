@@ -7,6 +7,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+from ansible.module_utils._text import to_text
 __metaclass__ = type
 
 
@@ -617,10 +618,10 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache, to_rmv=False):
 
                 if not matches:
                     if not to_rmv:
-                        m.fail_json(msg="No package(s) matching '%s' available" % str(pkgname_pattern))
+                        m.fail_json(msg="No package(s) matching '%s' available" % to_text(pkgname_pattern))
                     else:
                         m.warn("No package(s) matching '%s' to delete. It might be the name(s) was(were) misspelled."
-                               % str(pkgname_pattern))
+                               % to_text(pkgname_pattern))
                 else:
                     new_pkgspec.extend(matches)
             else:
