@@ -7,7 +7,6 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
-from ansible.module_utils._text import to_text
 __metaclass__ = type
 
 
@@ -583,7 +582,7 @@ def expand_dpkg_options(dpkg_options_compressed):
     return dpkg_options.strip()
 
 
-def expand_pkgspec_from_fnmatches(m, pkgspec, cache, to_rmv=False):
+def expand_pkgspec_from_fnmatches(m, pkgspec, cache, remove=False):
     # Note: apt-get does implicit regex matching when an exact package name
     # match is not found.  Something like this:
     # matches = [pkg.name for pkg in cache if re.match(pkgspec, pkg.name)]
@@ -617,11 +616,11 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache, to_rmv=False):
                 matches = fnmatch.filter(pkg_name_cache, pkgname_pattern)
 
                 if not matches:
-                    if not to_rmv:
-                        m.fail_json(msg="No package(s) matching '%s' available" % to_text(pkgname_pattern))
+                    if not remove:
+                        m.fail_json(msg="No package(s) matching '%s' available" % to_native(pkgname_pattern))
                     else:
                         m.warn("No package(s) matching '%s' to delete. It might be the name(s) was(were) misspelled."
-                               % to_text(pkgname_pattern))
+                               % to_native(pkgname_pattern))
                 else:
                     new_pkgspec.extend(matches)
             else:
@@ -900,7 +899,7 @@ def install_deb(
 def remove(m, pkgspec, cache, purge=False, force=False,
            dpkg_options=expand_dpkg_options(DPKG_OPTIONS), autoremove=False):
     pkg_list = []
-    pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache, to_rmv=True)
+    pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache, remove=True)
     for package in pkgspec:
         name, version_cmp, version = package_split(package)
         installed, installed_version, upgradable, has_files = package_status(m, name, version_cmp, version, None, cache, state='remove')
