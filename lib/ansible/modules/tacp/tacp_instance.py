@@ -14,7 +14,6 @@ import tacp
 from tacp.rest import ApiException
 import json
 from uuid import uuid4
-from time import sleep
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.1',
@@ -1016,6 +1015,14 @@ def get_disk_payload(playbook_disk):
 
 
 def update_default_disk(playbook_disk, instance):
+    """Updates a disk that was created from a template by default.
+
+    Args:
+        playbook_disk (dict): The configuration of a single disk from the
+            Ansible playbook
+        instance (ApiApplicationInstancePropertiesPayload): A payload
+            containing the properties of the instance
+    """    
     existing_disk = next(disk for disk in instance.disks
                          if disk.name == playbook_disk['name'])
     if 'size_gb' in playbook_disk:
