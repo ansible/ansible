@@ -1,0 +1,2 @@
+minor_changes:
+  - "Command module: Removed suggestions to use modules which have moved to collections and out of ansible-base"
