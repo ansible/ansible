@@ -588,8 +588,8 @@ def get_parameters_to_create_new_application(playbook_instance):
 
         if not resource:
             fail_with_reason(
-                "Could not create create instance. Invalid {} provided: {}".format(  # noqa
-                    item, playbook_instance[item]
+                "Could not create instance. {} with name {} not found.".format(  # noqa
+                    item.capitalize(), playbook_instance[item]
                 ))
 
         resource_uuid = resource.uuid
