@@ -7,6 +7,9 @@ files:
     support: core
   changelogs/fragments/:
     support: community
+  lib/ansible/config/ansible_builtin_runtime.yml:
+    labels: runtime
+    maintainers: gundalow
   $modules:
     ignored: ryansb tomaszkiewicz
   $modules/cloud/amazon/:
