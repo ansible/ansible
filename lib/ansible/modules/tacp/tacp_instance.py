@@ -583,8 +583,16 @@ def get_parameters_to_create_new_application(playbook_instance):
     data['instance_name'] = playbook_instance['name']
 
     for item in ('datacenter', 'migration_zone', 'storage_pool', 'template'):
-        resource_uuid = RESOURCES[item].get_by_name(
-            playbook_instance[item]).uuid
+        resource = RESOURCES[item].get_by_name(
+            playbook_instance[item])
+
+        if not resource:
+            fail_with_reason(
+                "Could not create instance. {} with name {} not found.".format(  # noqa
+                    item.capitalize(), playbook_instance[item]
+                ))
+
+        resource_uuid = resource.uuid
 
         data['{}_uuid'.format(item)] = resource_uuid
 
@@ -922,8 +930,11 @@ def add_playbook_disks(playbook_disks, instance):
         device.name for device in template_boot_order if device.disk_uuid]
 
     for playbook_disk in playbook_disks:
-        if playbook_disk['name'] not in template_disks:
-            add_disk_to_instance(playbook_disk, instance)
+        if playbook_disk['name'] in template_disks:
+            update_default_disk(playbook_disk, instance)
+            continue
+
+        add_disk_to_instance(playbook_disk, instance)
 
 
 def add_disk_to_instance(playbook_disk, instance):
@@ -947,7 +958,7 @@ def add_disk_to_instance(playbook_disk, instance):
                                                    uuid=instance.uuid)
 
     if hasattr(response, 'body'):
-        response_body = json.loads(response_body)
+        response_body = json.loads(response.body)
 
         if "Invalid Request" in response_body['code']:
             fail_and_rollback_instance_creation(response_body['message'],
@@ -1009,6 +1020,46 @@ def get_disk_payload(playbook_disk):
     )
 
     return disk_payload
+
+
+def update_default_disk(playbook_disk, instance):
+    """Updates a disk that was created from a template by default.
+
+    Args:
+        playbook_disk (dict): The configuration of a single disk from the
+            Ansible playbook
+        instance (ApiApplicationInstancePropertiesPayload): A payload
+            containing the properties of the instance
+    """    
+    existing_disk = next(disk for disk in instance.disks
+                         if disk.name == playbook_disk['name'])
+    if 'size_gb' in playbook_disk:
+        target_disk_size_bytes = tacp_utils.convert_memory_abbreviation_to_bytes(  # noqa
+                        str(playbook_disk['size_gb']) + "GB"
+        )
+        if target_disk_size_bytes < existing_disk.size:
+            fail_and_rollback_instance_creation(
+                "Failed to resize disk {} from {} bytes to {} bytes. "
+                "Cannot shrink a template's disk.".format(
+                    existing_disk.name, existing_disk.size,
+                    target_disk_size_bytes), instance)
+
+        RESOURCES['update_app'].edit_disk_size(
+            existing_disk.uuid,
+            instance.uuid,
+            target_disk_size_bytes)
+
+    if 'iops_limit' in playbook_disk:
+        RESOURCES['update_app'].edit_disk_iops_limit(
+            existing_disk.uuid,
+            instance.uuid,
+            playbook_disk['iops_limit'])
+
+    if 'bandwidth_limit' in playbook_disk:
+        RESOURCES['update_app'].edit_disk_bw_limit(
+            existing_disk.uuid,
+            instance.uuid,
+            playbook_disk['bandwidth_limit'])
 
 
 def update_boot_order(playbook_instance):
