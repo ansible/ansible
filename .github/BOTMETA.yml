@@ -94,6 +94,7 @@ files:
   $modules/cloud/cloudscale/:
     maintainers: $team_cloudscale
     labels: cloud
+    migrated_to: cloudscale_ch.cloud
   $modules/cloud/cloudstack/:
     maintainers: $team_cloudstack
     labels: cloudstack
@@ -3356,7 +3357,7 @@ files:
     support: core
   $module_utils/cloudscale.py:
     maintainers: $team_cloudscale
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
@@ -4384,6 +4385,7 @@ files:
   test/integration/targets/cloudscale:
     maintainers: $team_cloudscale
     labels: cloud
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cs_:
     maintainers: $team_cloudstack
     labels: cloudstack
@@ -7114,7 +7116,7 @@ files:
   lib/ansible/plugins/doc_fragments/ce.py:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/cloudscale.py:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   lib/ansible/plugins/doc_fragments/cnos.py:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/digital_ocean.py:
@@ -7214,7 +7216,7 @@ files:
   lib/ansible/plugins/httpapi/fortimanager.py:
     migrated_to: community.general
   lib/ansible/plugins/inventory/cloudscale.py:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   lib/ansible/plugins/inventory/docker_machine.py:
     migrated_to: community.general
   lib/ansible/plugins/inventory/gitlab_runners.py:
@@ -7806,13 +7808,13 @@ files:
   lib/ansible/modules/cloud/centurylink/clc_server_snapshot.py:
     migrated_to: community.general
   lib/ansible/modules/cloud/cloudscale/cloudscale_floating_ip.py:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   lib/ansible/modules/cloud/cloudscale/cloudscale_server.py:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   lib/ansible/modules/cloud/cloudscale/cloudscale_server_group.py:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   lib/ansible/modules/cloud/cloudscale/cloudscale_volume.py:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   lib/ansible/modules/cloud/cloudstack/_cs_instance_facts.py:
     migrated_to: community.general
   lib/ansible/modules/cloud/cloudstack/_cs_zone_facts.py:
@@ -12600,41 +12602,41 @@ files:
   test/integration/targets/filter_random_mac/tasks/main.yml:
     migrated_to: community.general
   test/integration/targets/inventory_cloudscale/inventory-uuid.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_cloudscale/inventory-public.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_cloudscale/aliases:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_cloudscale/runme.sh:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_cloudscale/inventory-private.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_cloudscale/playbooks/cleanup.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_cloudscale/playbooks/test-inventory.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_cloudscale/playbooks/setup.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_cloudscale/playbooks/change-inventory-config.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_cloudscale/playbooks/common-asserts.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_cloudscale/filter_plugins/group_name.py:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_common/aliases:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_common/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_common/tasks/cleanup_volumes.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_common/tasks/cleanup_server_groups.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_common/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_common/tasks/cleanup_floating_ips.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_common/tasks/cleanup_servers.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/inventory_docker_machine/aliases:
     migrated_to: community.general
   test/integration/targets/inventory_docker_machine/inventory_1.docker_machine.yml:
@@ -12836,51 +12838,51 @@ files:
   test/integration/targets/setup_tls/tasks/main.yml:
     migrated_to: community.general
   test/integration/targets/cloudscale_floating_ip/aliases:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_floating_ip/tasks/floating_ip.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_floating_ip/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_floating_ip/tasks/unassigned.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_floating_ip/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server/aliases:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server/tasks/tests.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server/tasks/failures.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server_group/aliases:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server_group/tasks/tests.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server_group/tasks/failures.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server_group/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_server_group/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_volume/aliases:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_volume/tasks/cleanup.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_volume/tasks/setup.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_volume/tasks/tests.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_volume/tasks/failures.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_volume/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cloudscale_volume/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: cloudscale_ch.cloud
   test/integration/targets/cs_account/aliases:
     migrated_to: community.general
   test/integration/targets/cs_account/tasks/main.yml:
