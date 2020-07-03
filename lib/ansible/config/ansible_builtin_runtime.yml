@@ -1653,9 +1653,9 @@ plugin_routing:
     dnsmadeeasy:
       redirect: community.general.dnsmadeeasy
     exo_dns_domain:
-      redirect: community.general.exo_dns_domain
+      redirect: ngine_io.exoscale.exo_dns_domain
     exo_dns_record:
-      redirect: community.general.exo_dns_record
+      redirect: ngine_io.exoscale.exo_dns_record
     haproxy:
       redirect: community.general.haproxy
     hetzner_failover_ip:
@@ -7602,7 +7602,7 @@ plugin_routing:
     swarm:
       redirect: community.general.swarm
     exoscale:
-      redirect: community.general.exoscale
+      redirect: ngine_io.exoscale.exoscale
     f5_utils:
       tombstone:
         removal_date: 2019-11-06
@@ -8331,7 +8331,7 @@ plugin_routing:
     enos:
       redirect: community.network.enos
     exoscale:
-      redirect: community.general.exoscale
+      redirect: ngine_io.exoscale.exoscale
     gcp:
       redirect: google.cloud.gcp
     hetzner:
