@@ -525,13 +525,13 @@ plugin_routing:
     clc_server_snapshot:
       redirect: community.general.clc_server_snapshot
     cloudscale_floating_ip:
-      redirect: community.general.cloudscale_floating_ip
+      redirect: cloudscale_ch.cloud.floating_ip
     cloudscale_server:
-      redirect: community.general.cloudscale_server
+      redirect: cloudscale_ch.cloud.server
     cloudscale_server_group:
-      redirect: community.general.cloudscale_server_group
+      redirect: cloudscale_ch.cloud.server_group
     cloudscale_volume:
-      redirect: community.general.cloudscale_volume
+      redirect: cloudscale_ch.cloud.volume
     cs_instance_facts:
       redirect: ngine_io.cloudstack.cs_instance_info
     cs_zone_facts:
@@ -1653,9 +1653,9 @@ plugin_routing:
     dnsmadeeasy:
       redirect: community.general.dnsmadeeasy
     exo_dns_domain:
-      redirect: community.general.exo_dns_domain
+      redirect: ngine_io.exoscale.exo_dns_domain
     exo_dns_record:
-      redirect: community.general.exo_dns_record
+      redirect: ngine_io.exoscale.exo_dns_record
     haproxy:
       redirect: community.general.haproxy
     hetzner_failover_ip:
@@ -7590,7 +7590,7 @@ plugin_routing:
     cloud:
       redirect: community.general.cloud
     cloudscale:
-      redirect: community.general.cloudscale
+      redirect: cloudscale_ch.cloud.api
     cloudstack:
       redirect: ngine_io.cloudstack.cloudstack
     database:
@@ -7602,7 +7602,7 @@ plugin_routing:
     swarm:
       redirect: community.general.swarm
     exoscale:
-      redirect: community.general.exoscale
+      redirect: ngine_io.exoscale.exoscale
     f5_utils:
       tombstone:
         removal_date: 2019-11-06
@@ -8313,7 +8313,7 @@ plugin_routing:
     ce:
       redirect: community.network.ce
     cloudscale:
-      redirect: community.general.cloudscale
+      redirect: cloudscale_ch.cloud.api_parameters
     cloudstack:
       redirect: ngine_io.cloudstack.cloudstack
     cnos:
@@ -8331,7 +8331,7 @@ plugin_routing:
     enos:
       redirect: community.network.enos
     exoscale:
-      redirect: community.general.exoscale
+      redirect: ngine_io.exoscale.exoscale
     gcp:
       redirect: google.cloud.gcp
     hetzner:
@@ -8614,7 +8614,7 @@ plugin_routing:
     formerly_core_inventory:
       redirect: testns.content_adj.statichost
     cloudscale:
-      redirect: community.general.cloudscale
+      redirect: cloudscale_ch.cloud.inventory
     docker_machine:
       redirect: community.general.docker_machine
     docker_swarm:
