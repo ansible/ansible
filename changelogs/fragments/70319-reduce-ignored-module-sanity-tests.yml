@@ -1,0 +1,2 @@
+bugfixes:
+  - Fixes ``mode`` doc on ``apt_repository`` to remove ineffective default (https://github.com/ansible/ansible/pull/70319)

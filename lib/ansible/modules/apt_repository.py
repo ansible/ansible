@@ -34,9 +34,9 @@ options:
         default: "present"
     mode:
         description:
-            - The octal mode for newly created files in sources.list.d
+            - The octal mode for newly created files in sources.list.d.
+            - Default is what system uses (probably 0644).
         type: raw
-        default: '0644'
         version_added: "1.6"
     update_cache:
         description:
@@ -522,7 +522,7 @@ def main():
         argument_spec=dict(
             repo=dict(type='str', required=True),
             state=dict(type='str', default='present', choices=['absent', 'present']),
-            mode=dict(type='raw', default='0644'),
+            mode=dict(type='raw'),
             update_cache=dict(type='bool', default=True, aliases=['update-cache']),
             update_cache_retries=dict(type='int', default=5),
             update_cache_retry_max_delay=dict(type='int', default=12),
