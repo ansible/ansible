@@ -7466,7 +7466,7 @@ files:
   lib/ansible/module_utils/docker/swarm.py:
     migrated_to: community.general
   lib/ansible/module_utils/exoscale.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.exoscale
   lib/ansible/module_utils/firewalld.py:
     migrated_to: community.general
   lib/ansible/module_utils/gcdns.py:
@@ -8888,9 +8888,9 @@ files:
   lib/ansible/modules/net_tools/dnsmadeeasy.py:
     migrated_to: community.general
   lib/ansible/modules/net_tools/exoscale/exo_dns_domain.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.exoscale
   lib/ansible/modules/net_tools/exoscale/exo_dns_record.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.exoscale
   lib/ansible/modules/net_tools/haproxy.py:
     migrated_to: community.general
   lib/ansible/modules/net_tools/hetzner_failover_ip.py:
