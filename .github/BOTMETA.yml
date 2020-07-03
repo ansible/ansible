@@ -800,7 +800,7 @@ files:
     - cloud
     - vultr
     maintainers: $team_vultr
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   $modules/cloud/webfaction/: quentinsf
   $modules/cloud/xenserver/: bvitnik
   $modules/clustering/k8s/:
@@ -8506,91 +8506,91 @@ files:
   lib/ansible/modules/cloud/univention/udm_user.py:
     migrated_to: community.general
   lib/ansible/modules/cloud/vultr/_vr_account_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vr_dns_domain.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vr_dns_record.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vr_firewall_group.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vr_firewall_rule.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vr_server.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vr_ssh_key.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vr_startup_script.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vr_user.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_account_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_block_storage_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_dns_domain_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_firewall_group_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_network_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_os_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_plan_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_region_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_server_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_ssh_key_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_startup_script_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/_vultr_user_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_account_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_block_storage.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_block_storage_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_dns_domain.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_dns_domain_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_dns_record.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_firewall_group.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_firewall_group_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_firewall_rule.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_network.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_network_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_os_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_plan_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_region_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_server.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_server_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_ssh_key.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_ssh_key_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_startup_script.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_startup_script_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_user.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/vultr/vultr_user_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   lib/ansible/modules/cloud/webfaction/webfaction_app.py:
     migrated_to: community.general
   lib/ansible/modules/cloud/webfaction/webfaction_db.py:
@@ -13744,139 +13744,139 @@ files:
   test/integration/targets/scaleway_volume_info/tasks/main.yml:
     migrated_to: community.general
   test/integration/targets/vultr_account_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_account_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_block_storage/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_block_storage/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_block_storage/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_block_storage_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_block_storage_info/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_block_storage_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_domain/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_domain/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_domain/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_domain_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_domain_info/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_domain_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_record/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_record/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_record/tasks/record.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_record/tasks/update_record.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_record/tasks/test_fail_multiple.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_record/tasks/create_record.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_record/tasks/remove_record.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_dns_record/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_firewall_group/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_firewall_group/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_firewall_group/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_firewall_group_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_firewall_group_info/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_firewall_group_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_firewall_rule/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_firewall_rule/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_firewall_rule/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_network/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_network/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_network/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_network_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_network_info/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_network_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_os_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_os_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_plan_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_plan_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_region_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_region_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_server/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_server/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_server/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_server_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_server_info/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_server_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_ssh_key/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_ssh_key/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_ssh_key/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_ssh_key_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_ssh_key_info/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_ssh_key_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_startup_script/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_startup_script/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_startup_script/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_startup_script_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_startup_script_info/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_startup_script_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_user/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_user/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_user/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_user_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_user_info/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/vultr_user_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.vultr
   test/integration/targets/consul/aliases:
     migrated_to: community.general
   test/integration/targets/consul/tasks/consul_session.yml:
