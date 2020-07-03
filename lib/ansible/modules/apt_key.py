@@ -43,7 +43,6 @@ options:
     file:
         description:
             - The path to a keyfile on the remote server to add to the keyring.
-        aliases: [ filename ]
         type: path
     keyring:
         description:
@@ -274,7 +273,7 @@ def main():
             id=dict(type='str'),
             url=dict(type='str'),
             data=dict(type='str'),
-            file=dict(type='path', aliases=['filename']),
+            file=dict(type='path'),
             keyring=dict(type='path'),
             validate_certs=dict(type='bool', default=True),
             keyserver=dict(type='str'),

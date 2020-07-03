@@ -75,14 +75,14 @@ options:
   enabled:
     description:
       - This tells yum whether or not use this repository.
+      - Yum default value is true.
     type: bool
-    default: 'yes'
   enablegroups:
     description:
       - Determines whether yum will allow the use of package groups for this
         repository.
+      - Yum default value is true.
     type: bool
-    default: 'yes'
   exclude:
     description:
       - List of packages to exclude from updates or installs. This should be a
@@ -594,8 +594,8 @@ def main():
         deltarpm_metadata_percentage=dict(),
         deltarpm_percentage=dict(),
         description=dict(),
-        enabled=dict(type='bool', default=True),
-        enablegroups=dict(type='bool', default=True),
+        enabled=dict(type='bool'),
+        enablegroups=dict(type='bool'),
         exclude=dict(type='list', elements='str'),
         failovermethod=dict(choices=['roundrobin', 'priority']),
         file=dict(),

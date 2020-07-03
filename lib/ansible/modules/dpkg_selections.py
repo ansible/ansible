@@ -20,7 +20,7 @@ author:
 options:
     name:
         description:
-            - Name of the package
+            - Name of the package.
         required: true
         type: str
     selection:
