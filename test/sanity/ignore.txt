@@ -108,7 +108,6 @@ lib/ansible/modules/git.py pylint:blacklisted-name
 lib/ansible/modules/git.py use-argspec-type-path
 lib/ansible/modules/git.py validate-modules:doc-missing-type
 lib/ansible/modules/git.py validate-modules:doc-required-mismatch
-lib/ansible/modules/subversion.py validate-modules:doc-required-mismatch
 lib/ansible/modules/hostname.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/iptables.py pylint:blacklisted-name
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented

@@ -30,8 +30,8 @@ options:
   dest:
     description:
       - Absolute path where the repository should be deployed.
+      - The destination directory must be specified unless checkout=no, update=no, and export=no.
     type: path
-    required: true
   revision:
     description:
       - Specific revision to checkout.
