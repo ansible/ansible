@@ -98,6 +98,7 @@ files:
   $modules/cloud/cloudstack/:
     maintainers: $team_cloudstack
     labels: cloudstack
+    migrated_to: ngine_io.cloudstack
   $modules/cloud/digital_ocean/: &id010
     keywords:
     - digital ocean
@@ -3361,7 +3362,7 @@ files:
   $module_utils/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   $module_utils/crypto.py: *id012
   $module_utils/csharp: &id029
     labels: windows
@@ -3968,7 +3969,7 @@ files:
   $plugins/doc_fragments/cloudstack.py:
     maintainers: $team_cloudstack
     labels: cloudstack
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   $plugins/doc_fragments/docker.py:
     ignored: ThomasSteinbach cove
     labels: *id001
@@ -4389,6 +4390,7 @@ files:
   test/integration/targets/cs_:
     maintainers: $team_cloudstack
     labels: cloudstack
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/docker: *id011
   test/integration/targets/gcp:
     maintainers: $team_google
@@ -7284,9 +7286,9 @@ files:
   contrib/inventory/cloudforms.py:
     migrated_to: community.general
   contrib/inventory/cloudstack.ini:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   contrib/inventory/cloudstack.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   contrib/inventory/cobbler.ini:
     migrated_to: community.general
   contrib/inventory/cobbler.py:
@@ -7816,115 +7818,115 @@ files:
   lib/ansible/modules/cloud/cloudscale/cloudscale_volume.py:
     migrated_to: cloudscale_ch.cloud
   lib/ansible/modules/cloud/cloudstack/_cs_instance_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/_cs_zone_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_account.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_affinitygroup.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_cluster.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_configuration.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_disk_offering.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_domain.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_facts.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_firewall.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_host.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_image_store.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_instance.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_instance_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_instance_nic.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_instance_nic_secondaryip.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_instance_password_reset.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_instancegroup.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_ip_address.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_iso.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_loadbalancer_rule_member.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_network.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_network_acl.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_network_acl_rule.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_network_offering.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_physical_network.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_pod.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_portforward.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_project.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_region.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_resourcelimit.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_role.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_role_permission.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_router.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_securitygroup.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_securitygroup_rule.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_service_offering.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_snapshot_policy.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_sshkeypair.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_staticnat.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_storage_pool.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_template.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_traffic_type.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_user.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_vlan_ip_range.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_vmsnapshot.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_volume.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_vpc.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_vpc_offering.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_vpn_connection.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_vpn_customer_gateway.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_vpn_gateway.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_zone.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/cloudstack/cs_zone_info.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   lib/ansible/modules/cloud/digital_ocean/_digital_ocean.py:
     migrated_to: community.general
   lib/ansible/modules/cloud/digital_ocean/_digital_ocean_account_facts.py:
@@ -10586,7 +10588,7 @@ files:
   test/units/module_utils/xenserver/test_misc.py:
     migrated_to: community.general
   test/units/modules/cloud/cloudstack/test_cs_traffic_type.py:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/units/modules/cloud/docker/test_docker_container.py:
     migrated_to: community.general
   test/units/modules/cloud/docker/__init__.py:
@@ -12884,383 +12886,383 @@ files:
   test/integration/targets/cloudscale_volume/meta/main.yml:
     migrated_to: cloudscale_ch.cloud
   test/integration/targets/cs_account/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_account/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_account/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_common/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_common/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_affinitygroup/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_affinitygroup/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_affinitygroup/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_cluster/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_cluster/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_cluster/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_configuration/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_configuration/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_configuration/tasks/cluster.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_configuration/tasks/account.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_configuration/tasks/zone.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_configuration/tasks/storage.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_configuration/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_configuration/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_disk_offering/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_disk_offering/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_disk_offering/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_domain/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_domain/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_domain/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_firewall/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_firewall/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_firewall/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_firewall/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_host/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_host/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_host/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_image_store/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_image_store/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_image_store/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/host.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/sshkeys.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/cleanup.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/absent.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/present.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/setup.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/project.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/tags.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/absent_display_name.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/tasks/present_display_name.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_info/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_info/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_nic/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_nic/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_nic/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_nic_secondaryip/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_nic_secondaryip/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_nic_secondaryip/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_password_reset/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_password_reset/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instance_password_reset/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instancegroup/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instancegroup/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_instancegroup/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_ip_address/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_ip_address/tasks/vpc.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_ip_address/tasks/network.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_ip_address/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_ip_address/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_iso/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_iso/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_iso/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_loadbalancer_rule/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_loadbalancer_rule/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_loadbalancer_rule/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network/tasks/vpc_network_tier.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network_acl/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network_acl/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network_acl/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network_acl_rule/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network_acl_rule/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network_acl_rule/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network_offering/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network_offering/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_network_offering/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_physical_network/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_physical_network/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_physical_network/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_pod/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_pod/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_pod/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_portforward/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_portforward/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_portforward/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_portforward/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_project/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_project/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_project/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_region/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_region/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_region/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_resourcelimit/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_resourcelimit/tasks/instance.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_resourcelimit/tasks/cpu.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_resourcelimit/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_resourcelimit/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_role/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_role/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_role/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_role_permission/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_role_permission/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_role_permission/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_router/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_router/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_router/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_securitygroup/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_securitygroup/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_securitygroup/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_securitygroup_rule/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_securitygroup_rule/tasks/cleanup.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_securitygroup_rule/tasks/absent.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_securitygroup_rule/tasks/present.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_securitygroup_rule/tasks/setup.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_securitygroup_rule/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_securitygroup_rule/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_service_offering/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_service_offering/tasks/system_vm_service_offering.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_service_offering/tasks/guest_vm_service_offering.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_service_offering/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_service_offering/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_snapshot_policy/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_snapshot_policy/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_snapshot_policy/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_sshkeypair/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_sshkeypair/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_sshkeypair/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_storage_pool/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_storage_pool/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_storage_pool/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_template/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_template/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_template/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_template/tasks/test1.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_template/tasks/test2.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_template/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_traffic_type/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_traffic_type/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_traffic_type/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_user/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_user/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_user/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vlan_ip_range/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vlan_ip_range/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vlan_ip_range/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vmsnapshot/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vmsnapshot/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vmsnapshot/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vmsnapshot/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_volume/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_volume/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_volume/tasks/extract_upload.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_volume/tasks/common.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_volume/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_volume/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpc/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpc/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpc/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpc_offering/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpc_offering/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpc_offering/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpn_connection/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpn_connection/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpn_connection/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpn_customer_gateway/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpn_customer_gateway/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpn_customer_gateway/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpn_gateway/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpn_gateway/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_vpn_gateway/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_zone/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_zone/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_zone/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_zone_info/aliases:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_zone_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/cs_zone_info/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: ngine_io.cloudstack
   test/integration/targets/digital_ocean_floating_ip/aliases:
     migrated_to: community.general
   test/integration/targets/digital_ocean_floating_ip/tasks/main.yml:
