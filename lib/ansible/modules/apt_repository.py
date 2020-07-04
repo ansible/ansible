@@ -78,6 +78,12 @@ options:
               a non-Ubuntu target (for example, Debian or Mint).
         type: str
         version_added: '2.3'
+    install_python_apt:
+        description:
+            - Whether to install python apt or not, default is true
+            - If python-apt Python library is not installed this module will not work.
+        type: bool
+        default: true
 author:
 - Alexander Saltanov (@sashka)
 version_added: "0.7"
