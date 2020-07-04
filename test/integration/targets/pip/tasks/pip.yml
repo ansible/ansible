@@ -577,3 +577,38 @@
         - '"black==19.10b0" in pip_prereleases.stdout_lines'
 
   when: ansible_python.version.major == 3
+
+### test pip download begin ###
+
+- name: Test pip download command with arguments
+  block:
+
+    - name: Create a directory to download package
+      file:
+        path: "{{ output_dir }}/packages"
+        state: directory
+        mode: "0755"
+
+    - name: Download package with arguments
+      pip:
+        name: "{{ pip_test_package }}"
+        extra_args: "-d {{ output_dir }}/packages"
+        version: 1.3.1
+        state: download
+
+    - name: Check that the download file exists
+      stat:
+        path: "{{ output_dir }}/packages/sampleprojectpy2-1.3.1.tar.gz"
+      register: stat_result
+
+    - name: Ensure file download was successful
+      assert:
+        that:
+          - stat_result.stat.exists
+
+  when:
+    - ansible_system == 'Linux'
+    - not ansible_distribution | default("") == "CentOS"
+    - not ansible_distribution_major_version | default("") == "6"
+
+### test pip download end ###

@@ -71,8 +71,9 @@ options:
     description:
       - The state of module
       - The 'forcereinstall' option is only available in Ansible 2.1 and above.
+      - The 'download' option is only available from C(pip>=8)
     type: str
-    choices: [ absent, forcereinstall, latest, present ]
+    choices: [ absent, forcereinstall, latest, present, download ]
     default: present
   extra_args:
     description:
@@ -226,6 +227,12 @@ EXAMPLES = '''
     name: bottle
     umask: "0022"
   become: True
+
+- name: Download bottle to specific directory
+  pip:
+    name: bottle
+    state: download
+    extra_args: -d /my_packages/
 '''
 
 RETURN = '''
@@ -587,6 +594,7 @@ def main():
         absent=['uninstall', '-y'],
         latest=['install', '-U'],
         forcereinstall=['install', '-U', '--force-reinstall'],
+        download=['download'],
     )
 
     module = AnsibleModule(
