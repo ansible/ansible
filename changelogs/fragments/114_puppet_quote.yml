@@ -1,0 +1,2 @@
+bugfixes:
+- "puppet - fix command line construction for check mode and ``manifest:`` (https://github.com/ansible/ansible/issues/60576)."
