@@ -75,13 +75,13 @@ options:
   enabled:
     description:
       - This tells yum whether or not use this repository.
-      - Yum default value is true.
+      - Yum default value is C(true).
     type: bool
   enablegroups:
     description:
       - Determines whether yum will allow the use of package groups for this
         repository.
-      - Yum default value is true.
+      - Yum default value is C(true).
     type: bool
   exclude:
     description:
