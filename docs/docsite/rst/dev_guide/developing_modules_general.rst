@@ -78,10 +78,12 @@ To create a new module:
         name:
             description:
                 - This is the message to send to the test module
+            type: str
             required: true
         new:
             description:
                 - Control to demo if the result of this module is changed or not
+            type: bool
             required: false
 
     extends_documentation_fragment:
