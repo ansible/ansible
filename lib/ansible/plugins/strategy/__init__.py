@@ -388,24 +388,38 @@ class StrategyBase:
                         'play_context': play_context
                     }
 
-                    if not task.loop and not task.loop_with and not task.evaluate_conditional(templar, task_vars):
-                        self._tqm.send_callback('v2_runner_on_start', host, task)
-                        self._results_lock.acquire()
-                        queue = self._handler_results if isinstance(task, Handler) else self._results
-                        queue.append(
-                            TaskResult(
-                                host=host.name,
-                                task=task._uuid,
-                                return_data={
-                                    'changed': False,
-                                    'skipped': True,
-                                    'skip_reason': 'Conditional result was False',
-                                    '_ansible_no_log': play_context.no_log,
-                                },
-                            )
-                        )
-                        self._results_lock.release()
-                        break
+                    if not task.loop and not task.loop_with:
+                        tr = None
+                        try:
+                            conditional = task.evaluate_conditional(templar, task_vars)
+                        except AnsibleError as e:
+                            tr = TaskResult(
+                                    host=host.name,
+                                    task=task._uuid,
+                                    return_data={
+                                        'failed': True,
+                                        'msg': to_text(e),
+                                    },
+                                )
+                        else:
+                            if not conditional:
+                                tr = TaskResult(
+                                    host=host.name,
+                                    task=task._uuid,
+                                    return_data={
+                                        'changed': False,
+                                        'skipped': True,
+                                        'skip_reason': 'Conditional result was False',
+                                    },
+                                )
+                        finally:
+                            if tr:
+                                self._tqm.send_callback('v2_runner_on_start', host, task)
+                                queue = self._handler_results if isinstance(task, Handler) else self._results
+                                self._results_lock.acquire()
+                                queue.append(tr)
+                                self._results_lock.release()
+                                break
 
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
                     self._workers[self._cur_worker] = worker_prc
