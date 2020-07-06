@@ -526,6 +526,8 @@ class DocCLI(CLI):
 
             text.append("%s%s %s" % (base_indent, opt_leadin, o))
 
+            if 'description' not in opt:
+                raise AnsibleError("All (sub-)options and return values must have a 'description' field")
             if isinstance(opt['description'], list):
                 for entry_idx, entry in enumerate(opt['description'], 1):
                     if not isinstance(entry, string_types):
