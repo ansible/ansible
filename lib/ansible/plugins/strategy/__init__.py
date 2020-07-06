@@ -388,6 +388,24 @@ class StrategyBase:
                         'play_context': play_context
                     }
 
+                    if not task.loop and not task.loop_with and not task.evaluate_conditional(templar, task_vars):
+                        self._tqm.send_callback('v2_runner_on_start', host, task)
+                        self._results_lock.acquire()
+                        self._results.append(
+                            TaskResult(
+                                host=host.name,
+                                task=task._uuid,
+                                return_data={
+                                    'changed': False,
+                                    'skipped': True,
+                                    'skip_reason': 'Conditional result was False',
+                                    '_ansible_no_log': play_context.no_log,
+                                },
+                            )
+                        )
+                        self._results_lock.release()
+                        break
+
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)
