@@ -3,6 +3,18 @@
   environment:
     ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
   tasks:
+    - name: module with missing description return docs
+      command: ansible-doc test_docs_missing_description
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is failed
+          - |
+            "ERROR! Unable to retrieve documentation from 'test_docs_missing_description' due to: All (sub-)options and return values must have a 'description' field"
+            in result.stderr
+
     - name: module with suboptions
       command: ansible-doc test_docs_suboptions
       register: result
