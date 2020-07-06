@@ -114,7 +114,7 @@ options:
   validate:
     description:
       - how (if at all) to validate the resource definition against the kubernetes schema.
-        Requires the kubernetes-validate python module
+        Requires the kubernetes-validate python module and openshift >= 0.8.0
     suboptions:
       fail_on_error:
         description: whether to fail on validation errors.
@@ -135,6 +135,7 @@ options:
     - The full definition of an object is needed to generate the hash - this means that deleting an object created with append_hash
       will only work if the same object is passed with state=absent (alternatively, just use state=absent with the name including
       the generated hash and append_hash=no)
+    - Requires openshift >= 0.7.2
     type: bool
     version_added: "2.8"
   apply:
@@ -142,6 +143,7 @@ options:
     - C(apply) compares the desired resource definition with the previously supplied resource definition,
       ignoring properties that are automatically generated
     - C(apply) works better with Services than 'force=yes'
+    - Requires openshift >= 0.9.2
     - mutually exclusive with C(merge_type)
     type: bool
     version_added: "2.9"
