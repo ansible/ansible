@@ -1247,10 +1247,10 @@ def main():
         elif p['state'] == 'absent':
             remove(module, packages, cache, p['purge'], force=force_yes, dpkg_options=dpkg_options, autoremove=autoremove)
 
-    except apt.cache.LockFailedException:
-        module.fail_json(msg="Failed to lock apt for exclusive operation")
-    except apt.cache.FetchFailedException:
-        module.fail_json(msg="Could not fetch updated apt files")
+    except apt.cache.LockFailedException as lockFailedException:
+        module.fail_json(msg="Failed to lock apt for exclusive operation: %s" % lockFailedException)
+    except apt.cache.FetchFailedException as fetchFailedException:
+        module.fail_json(msg="Could not fetch updated apt files: %s" % fetchFailedException)
 
 
 if __name__ == "__main__":
