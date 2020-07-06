@@ -51,7 +51,7 @@ The following modules no longer exist:
 Deprecation notices
 -------------------
 
-No notable changes
+* command and shell modules - The `warn` parameter is deprecated and no longer has any effect. It will become an invalid parameter in version 2.13.
 
 
 Noteworthy module changes
