@@ -394,13 +394,13 @@ class StrategyBase:
                             conditional = task.evaluate_conditional(templar, task_vars)
                         except AnsibleError as e:
                             tr = TaskResult(
-                                    host=host.name,
-                                    task=task._uuid,
-                                    return_data={
-                                        'failed': True,
-                                        'msg': to_text(e),
-                                    },
-                                )
+                                host=host.name,
+                                task=task._uuid,
+                                return_data={
+                                    'failed': True,
+                                    'msg': to_text(e),
+                                },
+                            )
                         else:
                             if not conditional:
                                 tr = TaskResult(
@@ -412,14 +412,13 @@ class StrategyBase:
                                         'skip_reason': 'Conditional result was False',
                                     },
                                 )
-                        finally:
-                            if tr:
-                                self._tqm.send_callback('v2_runner_on_start', host, task)
-                                queue = self._handler_results if isinstance(task, Handler) else self._results
-                                self._results_lock.acquire()
-                                queue.append(tr)
-                                self._results_lock.release()
-                                break
+                        if tr:
+                            self._tqm.send_callback('v2_runner_on_start', host, task)
+                            queue = self._handler_results if isinstance(task, Handler) else self._results
+                            self._results_lock.acquire()
+                            queue.append(tr)
+                            self._results_lock.release()
+                            break
 
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
                     self._workers[self._cur_worker] = worker_prc
