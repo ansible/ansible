@@ -848,7 +848,8 @@ files:
     maintainers: $team_postgresql
     notified: jbscalia
     migrated_to: community.general
-  $modules/database/proxysql/: *id004
+  $modules/database/proxysql/:
+    migrated_to: community.proxysql
   $modules/database/vertica/: dareko
   $modules/files/acl.py:
     ignored: astorije
@@ -3998,7 +3999,8 @@ files:
     maintainers: $team_openstack
     migrated_to: openstack.cloud
   $plugins/doc_fragments/postgres.py: *id028
-  $plugins/doc_fragments/proxysql.py: *id004
+  $plugins/doc_fragments/proxysql.py:
+    migrated_to: community.proxysql
   $plugins/doc_fragments/ucs.py: *id031
   $plugins/doc_fragments/vultr.py: *id035
   $plugins/doc_fragments/ovirt.py:
@@ -8700,19 +8702,19 @@ files:
   lib/ansible/modules/database/postgresql/postgresql_user_obj_stat_info.py:
     migrated_to: community.general
   lib/ansible/modules/database/proxysql/proxysql_backend_servers.py:
-    migrated_to: community.general
+    migrated_to: community.proxysql
   lib/ansible/modules/database/proxysql/proxysql_global_variables.py:
-    migrated_to: community.general
+    migrated_to: community.proxysql
   lib/ansible/modules/database/proxysql/proxysql_manage_config.py:
-    migrated_to: community.general
+    migrated_to: community.proxysql
   lib/ansible/modules/database/proxysql/proxysql_mysql_users.py:
-    migrated_to: community.general
+    migrated_to: community.proxysql
   lib/ansible/modules/database/proxysql/proxysql_query_rules.py:
-    migrated_to: community.general
+    migrated_to: community.proxysql
   lib/ansible/modules/database/proxysql/proxysql_replication_hostgroups.py:
-    migrated_to: community.general
+    migrated_to: community.proxysql
   lib/ansible/modules/database/proxysql/proxysql_scheduler.py:
-    migrated_to: community.general
+    migrated_to: community.proxysql
   lib/ansible/modules/database/vertica/_vertica_facts.py:
     migrated_to: community.general
   lib/ansible/modules/database/vertica/vertica_configuration.py:
