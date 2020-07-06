@@ -391,7 +391,8 @@ class StrategyBase:
                     if not task.loop and not task.loop_with and not task.evaluate_conditional(templar, task_vars):
                         self._tqm.send_callback('v2_runner_on_start', host, task)
                         self._results_lock.acquire()
-                        self._results.append(
+                        queue = self._handler_results if isinstance(task, Handler) else self._results
+                        queue.append(
                             TaskResult(
                                 host=host.name,
                                 task=task._uuid,
