@@ -1,0 +1,2 @@
+bugfixes:
+  - Fixes ansible-test traceback when plugin author is NoneType (https://github.com/ansible/ansible/pull/70507)
