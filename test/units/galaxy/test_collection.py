@@ -602,7 +602,7 @@ def test_publish_with_wait(galaxy_server, collection_artifact, monkeypatch):
 
 
 def test_find_existing_collections(tmp_path_factory, monkeypatch):
-    test_dir = to_text(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections'))
+    test_dir = to_text(os.path.join(tmp_path_factory.mktemp('test-ÅÑŚÌβŁÈ Collections')), 'ansible_collections')
     collection1 = os.path.join(test_dir, 'namespace1', 'collection1')
     collection2 = os.path.join(test_dir, 'namespace2', 'collection2')
     fake_collection1 = os.path.join(test_dir, 'namespace3', 'collection3')
