@@ -1602,7 +1602,7 @@ To format a date using a string (like with the shell date command), use the "str
     {{ '%Y-%m-%d' | strftime(0) }}          # => 1970-01-01
     {{ '%Y-%m-%d' | strftime(1441357287) }} # => 2015-09-04
 
-.. note:: To get all string possibilities, check https://docs.python.org/2/library/time.html#time.strftime
+.. note:: To get all string possibilities, check https://docs.python.org/3/library/time.html#time.strftime
 
 Getting Kubernetes resource names
 =================================
