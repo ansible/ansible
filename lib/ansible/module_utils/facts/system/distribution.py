@@ -136,7 +136,7 @@ class DistributionFiles:
             parsed, dist_file_dict = distfunc(name, dist_file_content, path, collected_facts)
             return parsed, dist_file_dict
         except AttributeError as exc:
-            print('exc: %s' % exc)
+            self.module.debug('exc: %s' % exc)
             # this should never happen, but if it does fail quietly and not with a traceback
             return False, dist_file_dict
 
