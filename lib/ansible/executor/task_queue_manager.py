@@ -309,6 +309,7 @@ class TaskQueueManager:
                         worker_prc.terminate()
                     except AttributeError:
                         pass
+
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
 
