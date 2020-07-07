@@ -8403,7 +8403,7 @@ plugin_routing:
     postgres:
       redirect: community.general.postgres
     proxysql:
-      redirect: community.general.proxysql
+      redirect: community.proxysql.proxysql
     purestorage:
       redirect: community.general.purestorage
     rabbitmq:
