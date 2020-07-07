@@ -51,7 +51,6 @@ lib/ansible/module_utils/distro/_distro.py no-assert
 lib/ansible/module_utils/distro/_distro.py pep8!skip # bundled code we don't want to modify
 lib/ansible/module_utils/facts/__init__.py empty-init # breaks namespacing, deprecate and eventually remove
 lib/ansible/module_utils/facts/network/linux.py pylint:blacklisted-name
-lib/ansible/module_utils/facts/system/distribution.py pylint:ansible-bad-function
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.ArgvParser.psm1 pslint:PSUseApprovedVerbs
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSProvideCommentHelp # need to agree on best format for comment location
 lib/ansible/module_utils/powershell/Ansible.ModuleUtils.CommandUtil.psm1 pslint:PSUseApprovedVerbs
@@ -84,7 +83,6 @@ lib/ansible/modules/copy.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:doc-type-does-not-match-spec
 lib/ansible/modules/copy.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/copy.py validate-modules:undocumented-parameter
-lib/ansible/modules/file.py pylint:ansible-bad-function
 lib/ansible/modules/file.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/file.py validate-modules:undocumented-parameter
 lib/ansible/modules/find.py use-argspec-type-path # fix needed
@@ -169,7 +167,7 @@ lib/ansible/modules/user.py validate-modules:use-run-command-not-popen
 lib/ansible/modules/async_status.py use-argspec-type-path
 lib/ansible/modules/async_status.py validate-modules!skip
 lib/ansible/modules/async_wrapper.py ansible-doc!skip  # not an actual module
-lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function
+lib/ansible/modules/async_wrapper.py pylint:ansible-bad-function # ignore, required
 lib/ansible/modules/async_wrapper.py use-argspec-type-path
 lib/ansible/modules/wait_for.py validate-modules:parameter-list-no-elements
 lib/ansible/parsing/vault/__init__.py pylint:blacklisted-name
@@ -183,9 +181,9 @@ lib/ansible/plugins/lookup/sequence.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/__init__.py pylint:blacklisted-name
 lib/ansible/plugins/strategy/linear.py pylint:blacklisted-name
 lib/ansible/vars/hostvars.py pylint:blacklisted-name
-test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import
-test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from
-test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import # ignore, required for testing
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-import-from # ignore, required for testing
+test/integration/targets/ansible-test/ansible_collections/ns/col/tests/integration/targets/hello/files/bad.py pylint:ansible-bad-function # ignore, required for testing
 test/integration/targets/ansible-test/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
@@ -335,7 +333,6 @@ test/units/module_utils/urls/fixtures/multipart.txt line-endings  # Fixture for 
 test/units/module_utils/urls/test_Request.py replace-urlopen
 test/units/module_utils/urls/test_fetch_url.py replace-urlopen
 test/units/modules/test_apt.py pylint:blacklisted-name
-test/units/modules/test_known_hosts.py pylint:ansible-bad-function
 test/units/parsing/vault/test_vault.py pylint:blacklisted-name
 test/units/playbook/role/test_role.py pylint:blacklisted-name
 test/units/plugins/test_plugins.py pylint:blacklisted-name
