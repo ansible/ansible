@@ -274,13 +274,13 @@ def main():
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=True,
-        mutually_exclusive=(('data', 'filename', 'keyserver', 'url'),),
+        mutually_exclusive=(('data', 'file', 'keyserver', 'url'),),
     )
 
     key_id = module.params['id']
     url = module.params['url']
     data = module.params['data']
-    filename = module.params['file']
+    file = module.params['file']
     keyring = module.params['keyring']
     state = module.params['state']
     keyserver = module.params['keyserver']
@@ -311,11 +311,11 @@ def main():
             # to decide if the key is installed or not.
             module.exit_json(changed=True)
         else:
-            if not filename and not data and not keyserver:
+            if not file and not data and not keyserver:
                 data = download_key(module, url)
 
-            if filename:
-                add_key(module, filename, keyring)
+            if file:
+                add_key(module, file, keyring)
             elif keyserver:
                 import_key(module, keyring, keyserver, key_id)
             else:
