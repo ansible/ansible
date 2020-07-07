@@ -1,0 +1,2 @@
+bugfixes:
+  - Allow for better information when winrm put_file failes. fixes #70361
