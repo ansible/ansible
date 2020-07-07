@@ -1,0 +1,13 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: skipped include loop
+      include_tasks: doesnt_matter.yml
+      loop:
+        - 1
+        - 2
+      when: false
+      register: skipped_include
+
+    - debug:
+        var: skipped_include
