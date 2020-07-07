@@ -60,16 +60,12 @@ def get_all_plugin_loaders():
 
 
 def add_all_plugin_dirs(path):
-    ''' add any existing plugin dirs in the path provided '''
-    b_path = os.path.expanduser(to_bytes(path, errors='surrogate_or_strict'))
-    if os.path.isdir(b_path):
-        for name, obj in get_all_plugin_loaders():
-            if obj.subdir:
-                plugin_path = os.path.join(b_path, to_bytes(obj.subdir))
-                if os.path.isdir(plugin_path):
-                    obj.add_directory(to_text(plugin_path))
-    else:
-        display.warning("Ignoring invalid path provided to plugin path: '%s' is not a directory" % to_text(path))
+    ''' add any existing adjacent plugin dirs in the path provided '''
+
+    for name, obj in get_all_plugin_loaders():
+        if obj.subdir:
+            plugin_path = os.path.join(path, obj.subdir)
+            obj.add_directory(plugin_path)
 
 
 def get_shell_plugin(shell_type=None, executable=None):
