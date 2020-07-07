@@ -13,6 +13,7 @@ import ansible.constants as C
 from ansible.utils.display import Display
 from ansible.parsing.yaml.constructor import AnsibleConstructor
 
+
 @pytest.fixture
 def dupe_node():
     tag = 'tag:yaml.org,2002:map'
