@@ -9,6 +9,7 @@
     keyserver: keys.gnupg.net
     id: 97A1AE57C3A2372CCA3A4ABA6C13026D12C944D0
   register: both_file_keyserver
+  ignore_errors: True
 
 - name: Run apt_key with file only
   apt_key:
