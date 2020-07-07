@@ -418,7 +418,7 @@ def author(value):
 
     for line in value:
         if not isinstance(line, string_types):
-            raise Invalid("Specify author as a list of strings")
+            raise Invalid("Specify author as a string or a list of strings, or not specify author at all")
         m = author_line.search(line)
         if not m:
             raise Invalid("Invalid author")
