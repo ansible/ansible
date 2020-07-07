@@ -53,6 +53,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
+            callback_queue=MagicMock(),
         )
 
     def test_task_executor_run(self):
@@ -80,6 +81,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
+            callback_queue=MagicMock(),
         )
 
         te._get_loop_items = MagicMock(return_value=None)
@@ -98,7 +100,7 @@ class TestTaskExecutor(unittest.TestCase):
         self.assertIn("failed", res)
 
     def test_task_executor_run_clean_res(self):
-        te = TaskExecutor(None, MagicMock(), None, None, None, None, None, None)
+        te = TaskExecutor(None, MagicMock(), None, None, None, None, None, None, MagicMock())
         te._get_loop_items = MagicMock(return_value=[1])
         te._run_loop = MagicMock(
             return_value=[
@@ -146,6 +148,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
+            callback_queue=MagicMock(),
         )
 
         items = te._get_loop_items()
@@ -182,6 +185,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=mock_shared_loader,
             final_q=mock_queue,
+            callback_queue=MagicMock(),
         )
 
         def _execute(variables):
@@ -202,6 +206,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=DictDataLoader({}),
             shared_loader_obj=MagicMock(),
             final_q=MagicMock(),
+            callback_queue=MagicMock(),
         )
 
         action_loader = te._shared_loader_obj.action_loader
@@ -236,6 +241,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=DictDataLoader({}),
             shared_loader_obj=MagicMock(),
             final_q=MagicMock(),
+            callback_queue=MagicMock(),
         )
 
         action_loader = te._shared_loader_obj.action_loader
@@ -271,6 +277,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=DictDataLoader({}),
             shared_loader_obj=MagicMock(),
             final_q=MagicMock(),
+            callback_queue=MagicMock(),
         )
 
         action_loader = te._shared_loader_obj.action_loader
@@ -341,6 +348,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=shared_loader,
             final_q=mock_queue,
+            callback_queue=MagicMock(),
         )
 
         te._get_connection = MagicMock(return_value=mock_connection)
@@ -396,6 +404,7 @@ class TestTaskExecutor(unittest.TestCase):
             loader=fake_loader,
             shared_loader_obj=shared_loader,
             final_q=mock_queue,
+            callback_queue=MagicMock(),
         )
 
         te._connection = MagicMock()
