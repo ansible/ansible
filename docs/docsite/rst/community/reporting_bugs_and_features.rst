@@ -42,9 +42,9 @@ Bugs in collections
 
 Many bugs only affect a single module or plugin. If you find a bug that affects a module or plugin hosted in a collection, file the bug in the repository of the :ref:`collection <collections>`:
 
-  #. Find the collection on Galaxy
-  #. Click on the Issue Tracker link for that collection
-  #. Follow the guidelines or instructions in the collection repo
+  #. Find the collection on Galaxy.
+  #. Click on the Issue Tracker link for that collection.
+  #. Follow the contributor guidelines or instructions in the collection repo.
 
 If you are not sure whether a bug is in ansible-base or in a collection, you can report the behavior on the :ref:`mailing list or IRC first <communication>`.
 
