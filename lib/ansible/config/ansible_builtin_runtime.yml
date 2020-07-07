@@ -643,73 +643,73 @@ plugin_routing:
     cs_zone_info:
       redirect: ngine_io.cloudstack.cs_zone_info
     digital_ocean:
-      redirect: community.general.digital_ocean
+      redirect: community.digitalocean.digital_ocean
     digital_ocean_account_facts:
-      redirect: community.general.digital_ocean_account_facts
+      redirect: community.digitalocean.digital_ocean_account_facts
     digital_ocean_certificate_facts:
-      redirect: community.general.digital_ocean_certificate_facts
+      redirect: community.digitalocean.digital_ocean_certificate_facts
     digital_ocean_domain_facts:
-      redirect: community.general.digital_ocean_domain_facts
+      redirect: community.digitalocean.digital_ocean_domain_facts
     digital_ocean_firewall_facts:
-      redirect: community.general.digital_ocean_firewall_facts
+      redirect: community.digitalocean.digital_ocean_firewall_facts
     digital_ocean_floating_ip_facts:
-      redirect: community.general.digital_ocean_floating_ip_facts
+      redirect: community.digitalocean.digital_ocean_floating_ip_facts
     digital_ocean_image_facts:
-      redirect: community.general.digital_ocean_image_facts
+      redirect: community.digitalocean.digital_ocean_image_facts
     digital_ocean_load_balancer_facts:
-      redirect: community.general.digital_ocean_load_balancer_facts
+      redirect: community.digitalocean.digital_ocean_load_balancer_facts
     digital_ocean_region_facts:
-      redirect: community.general.digital_ocean_region_facts
+      redirect: community.digitalocean.digital_ocean_region_facts
     digital_ocean_size_facts:
-      redirect: community.general.digital_ocean_size_facts
+      redirect: community.digitalocean.digital_ocean_size_facts
     digital_ocean_snapshot_facts:
-      redirect: community.general.digital_ocean_snapshot_facts
+      redirect: community.digitalocean.digital_ocean_snapshot_facts
     digital_ocean_sshkey_facts:
-      redirect: community.general.digital_ocean_sshkey_facts
+      redirect: community.digitalocean.digital_ocean_sshkey_facts
     digital_ocean_tag_facts:
-      redirect: community.general.digital_ocean_tag_facts
+      redirect: community.digitalocean.digital_ocean_tag_facts
     digital_ocean_volume_facts:
-      redirect: community.general.digital_ocean_volume_facts
+      redirect: community.digitalocean.digital_ocean_volume_facts
     digital_ocean_account_info:
-      redirect: community.general.digital_ocean_account_info
+      redirect: community.digitalocean.digital_ocean_account_info
     digital_ocean_block_storage:
-      redirect: community.general.digital_ocean_block_storage
+      redirect: community.digitalocean.digital_ocean_block_storage
     digital_ocean_certificate:
-      redirect: community.general.digital_ocean_certificate
+      redirect: community.digitalocean.digital_ocean_certificate
     digital_ocean_certificate_info:
-      redirect: community.general.digital_ocean_certificate_info
+      redirect: community.digitalocean.digital_ocean_certificate_info
     digital_ocean_domain:
-      redirect: community.general.digital_ocean_domain
+      redirect: community.digitalocean.digital_ocean_domain
     digital_ocean_domain_info:
-      redirect: community.general.digital_ocean_domain_info
+      redirect: community.digitalocean.digital_ocean_domain_info
     digital_ocean_droplet:
-      redirect: community.general.digital_ocean_droplet
+      redirect: community.digitalocean.digital_ocean_droplet
     digital_ocean_firewall_info:
-      redirect: community.general.digital_ocean_firewall_info
+      redirect: community.digitalocean.digital_ocean_firewall_info
     digital_ocean_floating_ip:
-      redirect: community.general.digital_ocean_floating_ip
+      redirect: community.digitalocean.digital_ocean_floating_ip
     digital_ocean_floating_ip_info:
-      redirect: community.general.digital_ocean_floating_ip_info
+      redirect: community.digitalocean.digital_ocean_floating_ip_info
     digital_ocean_image_info:
-      redirect: community.general.digital_ocean_image_info
+      redirect: community.digitalocean.digital_ocean_image_info
     digital_ocean_load_balancer_info:
-      redirect: community.general.digital_ocean_load_balancer_info
+      redirect: community.digitalocean.digital_ocean_load_balancer_info
     digital_ocean_region_info:
-      redirect: community.general.digital_ocean_region_info
+      redirect: community.digitalocean.digital_ocean_region_info
     digital_ocean_size_info:
-      redirect: community.general.digital_ocean_size_info
+      redirect: community.digitalocean.digital_ocean_size_info
     digital_ocean_snapshot_info:
-      redirect: community.general.digital_ocean_snapshot_info
+      redirect: community.digitalocean.digital_ocean_snapshot_info
     digital_ocean_sshkey:
-      redirect: community.general.digital_ocean_sshkey
+      redirect: community.digitalocean.digital_ocean_sshkey
     digital_ocean_sshkey_info:
-      redirect: community.general.digital_ocean_sshkey_info
+      redirect: community.digitalocean.digital_ocean_sshkey_info
     digital_ocean_tag:
-      redirect: community.general.digital_ocean_tag
+      redirect: community.digitalocean.digital_ocean_tag
     digital_ocean_tag_info:
-      redirect: community.general.digital_ocean_tag_info
+      redirect: community.digitalocean.digital_ocean_tag_info
     digital_ocean_volume_info:
-      redirect: community.general.digital_ocean_volume_info
+      redirect: community.digitalocean.digital_ocean_volume_info
     dimensiondata_network:
       redirect: community.general.dimensiondata_network
     dimensiondata_vlan:
@@ -7596,7 +7596,7 @@ plugin_routing:
     database:
       redirect: community.general.database
     digital_ocean:
-      redirect: community.general.digital_ocean
+      redirect: community.digitalocean.digital_ocean
     dimensiondata:
       redirect: community.general.dimensiondata
     docker.common:
@@ -8321,7 +8321,7 @@ plugin_routing:
     cnos:
       redirect: community.network.cnos
     digital_ocean:
-      redirect: community.general.digital_ocean
+      redirect: community.digitalocean.digital_ocean
     dimensiondata:
       redirect: community.general.dimensiondata
     dimensiondata_wait:
