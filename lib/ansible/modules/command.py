@@ -58,9 +58,10 @@ options:
     version_added: "0.6"
   warn:
     description:
-      - Enable or disable task warnings.
+      - (deprecated) Enable or disable task warnings.
+      - This feature is deprecated and will be removed in 2.13.
     type: bool
-    default: yes
+    default: no
     version_added: "1.8"
   stdin:
     description:
@@ -259,7 +260,7 @@ def main():
             creates=dict(type='path'),
             removes=dict(type='path'),
             # The default for this really comes from the action plugin
-            warn=dict(type='bool', default=True),
+            warn=dict(type='bool', default=True, removed_in_version='2.13'),
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
             strip_empty_ends=dict(type='bool', default=True),
