@@ -74,6 +74,9 @@
     - import_tasks: acls.yml
       when: ansible_system == 'Linux'
 
+    - import_tasks: selinux.yml
+      when: ansible_os_family == 'RedHat' and ansible_selinux.get('mode') == 'enforcing'
+
     - import_tasks: check_mode.yml
 
     # https://github.com/ansible/ansible/issues/57618
