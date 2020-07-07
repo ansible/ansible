@@ -38,8 +38,11 @@ class VirtualSysctlDetectionMixin(object):
                 elif out.rstrip() == 'VirtualBox':
                     virtual_product_facts['virtualization_type'] = 'virtualbox'
                     virtual_product_facts['virtualization_role'] = 'guest'
-                elif out.rstrip() == 'HVM domU':
+                elif re.match('(HVM domU|XenPVH|XenPV|XenPVHVM).*', out):
                     virtual_product_facts['virtualization_type'] = 'xen'
+                    virtual_product_facts['virtualization_role'] = 'guest'
+                elif out.rstrip() == 'Hyper-V':
+                    virtual_product_facts['virtualization_type'] = 'Hyper-V'
                     virtual_product_facts['virtualization_role'] = 'guest'
                 elif out.rstrip() == 'Parallels':
                     virtual_product_facts['virtualization_type'] = 'parallels'

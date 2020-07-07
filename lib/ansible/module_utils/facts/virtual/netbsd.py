@@ -38,7 +38,15 @@ class NetBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
             virtual_vendor_facts = self.detect_virt_vendor('machdep.dmi.system-vendor')
             virtual_facts.update(virtual_vendor_facts)
 
-        if os.path.exists('/dev/xencons'):
+        # The above logic is tried first for backwards compatibility. If
+        # something above matches, use it. Otherwise if the result is still
+        # empty, try machdep.hypervisor.
+        if virtual_facts['virtualization_type'] == '':
+            virtual_vendor_facts = self.detect_virt_vendor('machdep.hypervisor')
+            virtual_facts.update(virtual_vendor_facts)
+
+        if (virtual_facts['virtualization_type'] == '' and
+                os.path.exists('/dev/xencons')):
             virtual_facts['virtualization_type'] = 'xen'
             virtual_facts['virtualization_role'] = 'guest'
 
