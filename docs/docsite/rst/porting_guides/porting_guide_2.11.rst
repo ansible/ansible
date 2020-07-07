@@ -57,7 +57,7 @@ No notable changes
 Noteworthy module changes
 -------------------------
 
-No notable changes
+* facts - ``ansible_virtualization_type`` now tries to report a more accurate result than ``xen`` when virtualized and not running on Xen.
 
 
 Plugins
