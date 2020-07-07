@@ -416,15 +416,20 @@ ACTION_WARNINGS:
   version_added: "2.5"
 COMMAND_WARNINGS:
   name: Command module warnings
-  default: True
+  default: False
   description:
-    - By default Ansible will issue a warning when the shell or command module is used and the command appears to be similar to an existing Ansible module.
+    - Ansible can issue a warning when the shell or command module is used and the command appears to be similar to an existing Ansible module.
     - These warnings can be silenced by adjusting this setting to False. You can also control this at the task level with the module option ``warn``.
+    - As of version 2.11, this is disabled by default.
   env: [{name: ANSIBLE_COMMAND_WARNINGS}]
   ini:
   - {key: command_warnings, section: defaults}
   type: boolean
   version_added: "1.8"
+  deprecated:
+    why: The command warnings feature is being removed.
+    version: "2.14"
+    alternatives: N/A, these are just warnings and we no longer plan to show them.
 LOCALHOST_WARNING:
   name: Warning when using implicit inventory with only localhost
   default: True

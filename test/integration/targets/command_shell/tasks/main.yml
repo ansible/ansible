@@ -3,46 +3,6 @@
 # Copyright: (c) 2014, Richard Isaacson <richard.c.isaacson@gmail.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: use command to execute sudo
-  command: sudo -h
-  register: become
-
-- name: assert become warning was reported
-  assert:
-    that:
-      - "become.warnings | length() == 1"
-      - "'Consider using' in become.warnings[0]"
-
-- name: use command to execute sudo without warnings
-  command: sudo -h warn=no
-  register: become
-
-- name: assert become warning was not reported
-  assert:
-    that:
-      - "'warnings' not in become"
-
-- name: use command to execute tar
-  command: tar --help
-  register: tar
-
-- name: assert tar warning was reported
-  assert:
-    that:
-      - tar.warnings | length() == 1
-      - '"Consider using the unarchive module rather than running ''tar''" in tar.warnings[0]'
-
-- name: use command to execute chown
-  command: chown -h
-  register: chown
-  ignore_errors: true
-
-- name: assert chown warning was reported
-  assert:
-    that:
-      - chown.warnings | length() == 1
-      - '"Consider using the file module with owner rather than running ''chown''" in chown.warnings[0]'
-
 - name: use command with unsupported executable arg
   command: ls /dev/null
   args:
@@ -55,19 +15,6 @@
       - executable.stdout == '/dev/null'
       - executable.warnings | length() == 1
       - "'no longer supported' in executable.warnings[0]"
-
-# The warning isn't on the task since it comes from the action plugin. Not sure
-# how to test for that.
-#
-# - name: Use command with reboot
-#   command: sleep 2 && /not/shutdown -r now
-#   ignore_errors: yes
-#   register: reboot
-
-# - name: Assert that reboot warning was issued
-#   assert:
-#     that:
-#       - '"Consider using the reboot module" in reboot.warnings[0]'
 
 - name: use command with no command
   command:
