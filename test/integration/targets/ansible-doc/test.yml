@@ -136,3 +136,14 @@
           - '"Reason: Updated module released with more functionality" in result.stdout'
           - '"Will be removed in a release after 2022-06-01" in result.stdout'
           - '"Alternatives: new_module" in result.stdout'
+
+    - name: documented module with YAML anchors
+      command: ansible-doc test_docs_yaml_anchors
+      register: result
+    - set_fact:
+        actual_output: >-
+          {{ result.stdout | regex_replace('^(> [A-Z_]+ +\().+library/([a-z_]+.py)\)$', '\1library/\2)', multiline=true) }}
+        expected_output: "{{ lookup('file', 'test_docs_yaml_anchors.output') }}"
+    - assert:
+        that:
+          - actual_output == expected_output
