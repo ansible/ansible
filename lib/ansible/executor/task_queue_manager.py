@@ -309,12 +309,6 @@ class TaskQueueManager:
                         worker_prc.terminate()
                     except AttributeError:
                         pass
-        try:
-            self.callback_queue.put((Sentinel, (), {}))
-        except IOError:
-            pass
-        self._callback_thread.join()
-
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
 
@@ -331,6 +325,12 @@ class TaskQueueManager:
         return self._workers[:]
 
     def terminate(self):
+        try:
+            self.callback_queue.put((Sentinel, (), {}))
+        except IOError:
+            pass
+        self._callback_thread.join()
+        self.callback_queue.close()
         self._terminated = True
 
     def has_dead_workers(self):
