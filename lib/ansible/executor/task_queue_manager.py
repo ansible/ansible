@@ -294,6 +294,7 @@ class TaskQueueManager:
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
+            self.callback_queue.put((Sentinel, (), {}))
             for attempts_remaining in range(C.WORKER_SHUTDOWN_POLL_COUNT - 1, -1, -1):
                 if not any(worker_prc and worker_prc.is_alive() for worker_prc in self._workers):
                     break
@@ -309,7 +310,6 @@ class TaskQueueManager:
                         worker_prc.terminate()
                     except AttributeError:
                         pass
-        self.callback_queue.put((Sentinel, (), {}))
         self._callback_thread.join()
 
     def clear_failed_hosts(self):
