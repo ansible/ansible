@@ -1128,7 +1128,7 @@ def main():
             archive_prefix=dict(),
             separate_git_dir=dict(type='path'),
         ),
-        mutually_exclusive=[('separate_git_dir', 'bare')],
+        mutually_exclusive=[('separate_git_dir', 'bare'), ('accept_hostkey', 'accept_newhostkey')],
         required_by={'archive_prefix': ['archive']},
         supports_check_mode=True
     )
