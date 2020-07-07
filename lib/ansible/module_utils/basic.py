@@ -888,11 +888,12 @@ class AnsibleModule(object):
             f.close()
         except Exception:
             return (False, None)
+
         path_mount_point = self.find_mount_point(path)
+
         for line in mount_data:
             (device, mount_point, fstype, options, rest) = line.split(' ', 4)
-
-            if path_mount_point == mount_point:
+            if to_bytes(path_mount_point) == to_bytes(mount_point):
                 for fs in self._selinux_special_fs:
                     if fs in fstype:
                         special_context = self.selinux_context(path_mount_point)
