@@ -409,10 +409,10 @@ COVERAGE_REMOTE_ENABLED:
     deprecated:
       why: Normalizing names to new standard.
       version: "2.14"
-      alternatives: 'ANSIBLE_COVERATE_REMOTE_ENABLED'
-  - name: _ANSIBLE_COVERAGE_REMOTE_ENABLED
+      alternatives: '_ANSIBLE_COVERATE_REMOTE_ENABLED'
+  - name: '_ANSIBLE_COVERAGE_REMOTE_ENABLED'
     version_added: '2.11'
-  type: str
+  type: pathlist
   version_added: '2.9'
 ACTION_WARNINGS:
   name: Toggle action warnings
