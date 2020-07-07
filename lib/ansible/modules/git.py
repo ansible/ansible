@@ -48,6 +48,15 @@ options:
         type: bool
         default: 'no'
         version_added: "1.5"
+    accept_newhostkey:
+        description:
+            - As of OpenSSH 7.5, "-o StrictHostKeyChecking=accept-new" can be
+              used which is safer and will only accepts host keys which are
+              not present or are the same. if C(yes), ensure that
+              "-o StrictHostKeyChecking=accept-new" is present as an ssh option.
+        type: bool
+        default: 'no'
+        version_added: "2.11"
     ssh_opts:
         description:
             - Creates a wrapper script and exports the path as GIT_SSH
@@ -1106,6 +1115,7 @@ def main():
             verify_commit=dict(default='no', type='bool'),
             gpg_whitelist=dict(default=[], type='list', elements='str'),
             accept_hostkey=dict(default='no', type='bool'),
+            accept_newhostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, type='path', required=False),
             ssh_opts=dict(default=None, required=False),
             executable=dict(default=None, type='path'),
@@ -1153,6 +1163,13 @@ def main():
                 ssh_opts += " -o StrictHostKeyChecking=no"
         else:
             ssh_opts = "-o StrictHostKeyChecking=no"
+
+    if module.params['accept_newhostkey']:
+        if ssh_opts is not None:
+            if ("-o StrictHostKeyChecking=no" not in ssh_opts) and ("-o StrictHostKeyChecking=accept-new" not in ssh_opts):
+                ssh_opts += " -o StrictHostKeyChecking=accept-new"
+        else:
+            ssh_opts = "-o StrictHostKeyChecking=accept-new"
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
