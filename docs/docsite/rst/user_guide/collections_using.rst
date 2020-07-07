@@ -68,7 +68,8 @@ Downloading collections
 To download a collection and its dependencies for an offline install, run ``ansible-galaxy collection download``. This
 downloads the collections specified and their dependencies to the specified folder and creates a ``requirements.yml``
 file which can be used to install those collections on a host without access to a Galaxy server. All the collections
-are downloaded by default to the ``./collections`` folder.
+are downloaded by default to the ``./collections`` folder. For ``ansible-galaxy`` 2.10 and earlier, the collections downloaded
+must have an associated Galaxy server or be a ``tar.gz`` artifact. Ansible 2.10 skips SCM collections.
 
 Just like the ``install`` command, the collections are sourced based on the
 :ref:`configured galaxy server config <galaxy_server_config>`. Even if a collection to download was specified by a URL

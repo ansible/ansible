@@ -603,9 +603,18 @@ def download_collections(collections, output_path, apis, validate_certs, no_deps
                 dest_path = os.path.join(output_path, collection_filename)
                 requirements.append({'name': collection_filename, 'version': requirement.latest_version})
 
+                if requirement.api is None and requirement.b_path and not os.path.isfile(requirement.b_path):
+                    display.display("Skipping collection '%s'. The requirement doesn't have an associated Galaxy server" % name)
+                    continue
+
                 display.display("Downloading collection '%s' to '%s'" % (name, dest_path))
-                b_temp_download_path = requirement.download(b_temp_path)
-                shutil.move(b_temp_download_path, to_bytes(dest_path, errors='surrogate_or_strict'))
+
+                if requirement.api is None and requirement.b_path and os.path.isfile(requirement.b_path):
+                    shutil.copy(requirement.b_path, to_bytes(dest_path, errors='surrogate_or_strict'))
+                else:
+                    b_temp_download_path = requirement.download(b_temp_path)
+                    shutil.move(b_temp_download_path, to_bytes(dest_path, errors='surrogate_or_strict'))
+
                 display.display("%s (%s) was downloaded successfully" % (name, requirement.latest_version))
 
             requirements_path = os.path.join(output_path, 'requirements.yml')
