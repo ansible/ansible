@@ -1447,19 +1447,19 @@ plugin_routing:
     postgresql_user_obj_stat_info:
       redirect: community.general.postgresql_user_obj_stat_info
     proxysql_backend_servers:
-      redirect: community.general.proxysql_backend_servers
+      redirect: community.proxysql.proxysql_backend_servers
     proxysql_global_variables:
-      redirect: community.general.proxysql_global_variables
+      redirect: community.proxysql.proxysql_global_variables
     proxysql_manage_config:
-      redirect: community.general.proxysql_manage_config
+      redirect: community.proxysql.proxysql_manage_config
     proxysql_mysql_users:
-      redirect: community.general.proxysql_mysql_users
+      redirect: community.proxysql.proxysql_mysql_users
     proxysql_query_rules:
-      redirect: community.general.proxysql_query_rules
+      redirect: community.proxysql.proxysql_query_rules
     proxysql_replication_hostgroups:
-      redirect: community.general.proxysql_replication_hostgroups
+      redirect: community.proxysql.proxysql_replication_hostgroups
     proxysql_scheduler:
-      redirect: community.general.proxysql_scheduler
+      redirect: community.proxysql.proxysql_scheduler
     vertica_facts:
       redirect: community.general.vertica_facts
     vertica_configuration:
@@ -8403,7 +8403,7 @@ plugin_routing:
     postgres:
       redirect: community.general.postgres
     proxysql:
-      redirect: community.general.proxysql
+      redirect: community.proxysql.proxysql
     purestorage:
       redirect: community.general.purestorage
     rabbitmq:
