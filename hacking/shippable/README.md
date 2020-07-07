@@ -43,7 +43,7 @@ Reducing incidental test coverage, and eventually removing incidental tests invo
    ```shell
    # download results to ansible/ansible directory under cwd
    # substitute the correct run number for the Shippable coverage run you want to download
-   hacking/shippable/download.py https://app.shippable.com/github/ansible/ansible/runs/162160 --all -v
+   hacking/shippable/download.py https://app.shippable.com/github/ansible/ansible/runs/162160 --test-results --run-metadata -v
    ```
 3. Analyze code coverage data to see which portions of the code are covered by each test.
    Example:
