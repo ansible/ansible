@@ -575,6 +575,7 @@ def build_collection(collection_path, output_path, force):
                                "the collection artifact." % to_native(collection_output))
 
     _build_collection_tar(b_collection_path, b_collection_output, collection_manifest, file_manifest)
+    return collection_output
 
 
 def download_collections(collections, output_path, apis, validate_certs, no_deps, allow_pre_release):
@@ -603,14 +604,16 @@ def download_collections(collections, output_path, apis, validate_certs, no_deps
                 dest_path = os.path.join(output_path, collection_filename)
                 requirements.append({'name': collection_filename, 'version': requirement.latest_version})
 
-                if requirement.api is None and requirement.b_path and not os.path.isfile(requirement.b_path):
-                    display.display("Skipping collection '%s'. The requirement doesn't have an associated Galaxy server" % name)
-                    continue
-
                 display.display("Downloading collection '%s' to '%s'" % (name, dest_path))
 
                 if requirement.api is None and requirement.b_path and os.path.isfile(requirement.b_path):
                     shutil.copy(requirement.b_path, to_bytes(dest_path, errors='surrogate_or_strict'))
+                elif requirement.api is None and requirement.b_path:
+                    temp_path = to_text(b_temp_path, errors='surrogate_or_string')
+                    scm_build_path = os.path.join(temp_path, 'tmp_build')
+                    os.makedirs(scm_build_path, mode=0o0755)
+                    temp_download_path = build_collection(os.path.join(temp_path, name), scm_build_path, True)
+                    shutil.move(temp_download_path, dest_path)
                 else:
                     b_temp_download_path = requirement.download(b_temp_path)
                     shutil.move(b_temp_download_path, to_bytes(dest_path, errors='surrogate_or_strict'))

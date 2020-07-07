@@ -1,0 +1,36 @@
+- name: create test download dir
+  file:
+    path: '{{ galaxy_dir }}/download'
+    state: directory
+
+- name: download a git repository
+  command: 'ansible-galaxy collection download git+https://github.com/ansible-collections/amazon.aws.git,37875c5b4ba5bf3cc43e07edf29f3432fd76def5'
+  args:
+    chdir: '{{ galaxy_dir }}/download'
+  register: download_collection
+
+- name: check that the file was downloaded
+  stat:
+    path: '{{ galaxy_dir }}/download/collections/amazon-aws-1.0.0.tar.gz'
+  register: download_collection_actual
+
+- assert:
+    that:
+      - '"Downloading collection ''amazon.aws'' to" in download_collection.stdout'
+      - download_collection_actual.stat.exists
+
+- name: test the downloaded repository can be installed
+  command: 'ansible-galaxy collection install -r requirements.yml'
+  args:
+    chdir: '{{ galaxy_dir }}/download/collections/'
+
+- name: list installed collections
+  command: 'ansible-galaxy collection list'
+  register: installed_collections
+
+- assert:
+    that:
+      - "'amazon.aws' in installed_collections.stdout"
+
+- include_tasks: ./empty_installed_collections.yml
+  when: cleanup
