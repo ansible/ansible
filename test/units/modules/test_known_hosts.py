@@ -22,7 +22,7 @@ class KnownHostsDiffTestCase(unittest.TestCase):
         return tmp_file.name
 
     def test_no_existing_file(self):
-        path = tempfile.mktemp(prefix='ansible-test-', suffix='-known_hosts')
+        path = "/tmp/this_file_does_not_exists_known_hosts"
         key = 'example.com ssh-rsa AAAAetc\n'
         diff = compute_diff(path, found_line=None, replace_or_add=False, state='present', key=key)
         self.assertEqual(diff, {
