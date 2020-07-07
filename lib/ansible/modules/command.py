@@ -260,7 +260,7 @@ def main():
             creates=dict(type='path'),
             removes=dict(type='path'),
             # The default for this really comes from the action plugin
-            warn=dict(type='bool', default=True, removed_in_version='2.13'),
+            warn=dict(type='bool', default=False, removed_in_version='2.13', removed_from_collection='ansible.builtin'),
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
             strip_empty_ends=dict(type='bool', default=True),
