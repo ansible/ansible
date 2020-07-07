@@ -92,31 +92,3 @@ def cwd():
     os.getcwd = old_cwd
     if hasattr(os, 'getcwdu'):
         os.getcwdu = old_cwdu
-
-
-class TestMkBoolean:
-    def test_bools(self):
-        assert constants.mk_boolean(True) is True
-        assert constants.mk_boolean(False) is False
-
-    def test_none(self):
-        assert constants.mk_boolean(None) is False
-
-    def test_numbers(self):
-        assert constants.mk_boolean(1) is True
-        assert constants.mk_boolean(0) is False
-        assert constants.mk_boolean(0.0) is False
-
-# Current mk_boolean doesn't consider these to be true values
-#    def test_other_numbers(self):
-#        assert constants.mk_boolean(2) is True
-#        assert constants.mk_boolean(-1) is True
-#        assert constants.mk_boolean(0.1) is True
-
-    def test_strings(self):
-        assert constants.mk_boolean("true") is True
-        assert constants.mk_boolean("TRUE") is True
-        assert constants.mk_boolean("t") is True
-        assert constants.mk_boolean("yes") is True
-        assert constants.mk_boolean("y") is True
-        assert constants.mk_boolean("on") is True

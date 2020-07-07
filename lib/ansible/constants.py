@@ -39,32 +39,6 @@ def _deprecated(msg, version='2.8'):
         sys.stderr.write(' [DEPRECATED] %s, to be removed in %s\n' % (msg, version))
 
 
-def mk_boolean(value):
-    ''' moved to module_utils'''
-    _deprecated('ansible.constants.mk_boolean() is deprecated.  Use ansible.module_utils.parsing.convert_bool.boolean() instead')
-    return boolean(value, strict=False)
-
-
-def get_config(parser, section, key, env_var, default_value, value_type=None, expand_relative_paths=False):
-    ''' kept for backwarsd compatibility, but deprecated '''
-    _deprecated('ansible.constants.get_config() is deprecated. There is new config API, see porting docs.')
-
-    value = None
-    # small reconstruction of the old code env/ini/default
-    value = os.environ.get(env_var, None)
-    if value is None:
-        try:
-            value = get_ini_config_value(parser, {'key': key, 'section': section})
-        except Exception:
-            pass
-    if value is None:
-        value = default_value
-
-    value = ensure_type(value, value_type)
-
-    return value
-
-
 def set_constant(name, value, export=vars()):
     ''' sets constants and returns resolved options dict '''
     export[name] = value
@@ -84,15 +58,6 @@ class _DeprecatedSequenceConstant(Sequence):
         _deprecated(self._msg, version=self._version)
         return self._value[y]
 
-
-# Deprecated constants
-BECOME_METHODS = _DeprecatedSequenceConstant(
-    ['sudo', 'su', 'pbrun', 'pfexec', 'doas', 'dzdo', 'ksu', 'runas', 'pmrun', 'enable', 'machinectl'],
-    ('ansible.constants.BECOME_METHODS is deprecated, please use '
-     'ansible.plugins.loader.become_loader. This list is statically '
-     'defined and may not include all become methods'),
-    '2.10'
-)
 
 # CONSTANTS ### yes, actual ones
 BLACKLIST_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
