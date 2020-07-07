@@ -134,7 +134,7 @@ class Resource(object):
             else:
                 op = '=='
                 value = v
-            filters.append('{}{}"{}"'.format(k, op, value))
+            filters.append('{}{}{}'.format(k, op, value))
 
         return ';'.join(filters)
 
