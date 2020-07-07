@@ -421,6 +421,16 @@ class CallbackModule(CallbackBase):
             msg += "Result was: %s" % self._dump_results(result._result)
         self._display.display(msg, color=C.COLOR_DEBUG)
 
+    def v2_runner_on_async_poll(self, result):
+        host = result._host.get_name()
+        jid = result._result.get('ansible_job_id')
+        started = result._result.get('started')
+        finished = result._result.get('finished')
+        self._display.display(
+            'ASYNC POLL on %s: jid=%s started=%s finished=%s' % (host, jid, started, finished),
+            color=C.COLOR_DEBUG
+        )
+
     def v2_playbook_on_notify(self, handler, host):
         if self._display.verbosity > 1:
             self._display.display("NOTIFIED HANDLER %s for %s" % (handler.get_name(), host), color=C.COLOR_VERBOSE, screen_only=True)

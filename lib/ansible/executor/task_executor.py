@@ -83,7 +83,7 @@ class TaskExecutor:
     class.
     '''
 
-    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q):
+    def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj, final_q, callback_queue):
         self._host = host
         self._task = task
         self._job_vars = job_vars
@@ -93,6 +93,7 @@ class TaskExecutor:
         self._shared_loader_obj = shared_loader_obj
         self._connection = None
         self._final_q = final_q
+        self._callback_queue = callback_queue
         self._loop_eval_error = None
 
         self._task.squash()
@@ -600,7 +601,6 @@ class TaskExecutor:
             if self._task.async_val > 0:
                 if self._task.poll > 0 and not result.get('skipped') and not result.get('failed'):
                     result = self._poll_async_result(result=result, templar=templar, task_vars=vars_copy)
-                    # FIXME callback 'v2_runner_on_async_poll' here
 
                 # ensure no log is preserved
                 result["_ansible_no_log"] = self._play_context.no_log
@@ -778,6 +778,21 @@ class TaskExecutor:
                     raise
             else:
                 time_left -= self._task.poll
+                self._callback_queue.put(
+                    (
+                        'v2_runner_on_async_poll',
+                        (
+                            TaskResult(
+                                self._host,
+                                async_task,
+                                async_result,
+                                task_fields=self._task.dump_attrs(),
+                            ),
+                        ),
+                        {}
+                    ),
+                    block=False,
+                )
 
         if int(async_result.get('finished', 0)) != 1:
             if async_result.get('_ansible_parsed'):

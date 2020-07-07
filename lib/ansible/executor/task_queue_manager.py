@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 import tempfile
+import threading
 import time
 
 from ansible import constants as C
@@ -35,6 +36,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
+from ansible.utils.sentinel import Sentinel
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
@@ -44,6 +46,19 @@ from ansible.utils.multiprocessing import context as multiprocessing_context
 __all__ = ['TaskQueueManager']
 
 display = Display()
+
+
+def callback_thread(tqm):
+    while True:
+        try:
+            method_name, args, kwargs = tqm.callback_queue.get()
+            if method_name is Sentinel:
+                break
+            tqm.send_callback(method_name, *args, **kwargs)
+        except (IOError, EOFError):
+            break
+        except Queue.Empty:
+            pass
 
 
 class TaskQueueManager:
@@ -96,8 +111,15 @@ class TaskQueueManager:
 
         try:
             self._final_q = multiprocessing_context.Queue()
+            self.callback_queue = multiprocessing_context.Queue()
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
+
+        self._callback_thread = threading.Thread(target=callback_thread, args=(self,))
+        self._callback_thread.daemon = True
+        self._callback_thread.start()
+
+        self._callback_lock = threading.Lock()
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
@@ -286,6 +308,8 @@ class TaskQueueManager:
                         worker_prc.terminate()
                     except AttributeError:
                         pass
+        self.callback_queue.put((Sentinel, (), {}))
+        self._callback_thread.join()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
@@ -317,6 +341,10 @@ class TaskQueueManager:
         return defunct
 
     def send_callback(self, method_name, *args, **kwargs):
+        with self._callback_lock:
+            self._send_callback(method_name, *args, **kwargs)
+
+    def _send_callback(self, method_name, *args, **kwargs):
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
