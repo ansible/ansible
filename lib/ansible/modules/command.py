@@ -59,7 +59,8 @@ options:
   warn:
     description:
       - (deprecated) Enable or disable task warnings.
-      - This feature is deprecated and will be removed in 2.13.
+      - This feature is deprecated and will be removed in 2.14.
+      - As of version 2.11, this option is now disabled by default.
     type: bool
     default: no
     version_added: "1.8"
@@ -260,7 +261,7 @@ def main():
             creates=dict(type='path'),
             removes=dict(type='path'),
             # The default for this really comes from the action plugin
-            warn=dict(type='bool', default=False, removed_in_version='2.13', removed_from_collection='ansible.builtin'),
+            warn=dict(type='bool', default=False, removed_in_version='2.14', removed_from_collection='ansible.builtin'),
             stdin=dict(required=False),
             stdin_add_newline=dict(type='bool', default=True),
             strip_empty_ends=dict(type='bool', default=True),
