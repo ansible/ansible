@@ -412,14 +412,20 @@ def deprecation_schema(for_collection):
 
 
 def author(value):
+    if value is None:
+        return value  # let schema checks handle
 
     if not is_iterable(value):
         value = [value]
 
     for line in value:
+        if not isinstance(line, string_types):
+            continue  # let schema checks handle
         m = author_line.search(line)
         if not m:
             raise Invalid("Invalid author")
+
+    return value
 
 
 def doc_schema(module_name, for_collection=False, deprecated_module=False):
