@@ -3435,7 +3435,7 @@ files:
     maintainers: glitchcrab
     labels: cloud
     migrated_to: community.general
-  $module_utils/mysql.py: *id004
+  $module_utils/mysql.py:
     migrated_to: community.mysql
   $module_utils/net_tools/nios/:
     support: core
@@ -3993,7 +3993,7 @@ files:
   $plugins/doc_fragments/mso.py:
     labels: aci
     migrated_to: cisco.mso
-  $plugins/doc_fragments/mysql.py: *id004
+  $plugins/doc_fragments/mysql.py:
     migrated_to: community.mysql
   $plugins/doc_fragments/netapp.py:
     migrated_to: netapp.ontap
@@ -4417,7 +4417,7 @@ files:
   test/integration/targets/meraki_:
     migrated_to: cisco.meraki
   test/integration/targets/mso_: *id017
-  test/integration/targets/mysql: *id004
+  test/integration/targets/mysql:
     migrated_to: community.mysql
   test/integration/targets/nxos_: *id040
   test/integration/targets/netapp:
@@ -4429,7 +4429,7 @@ files:
   test/integration/targets/setup_acme: *id012
   test/integration/targets/setup_docker: *id011
   test/integration/targets/setup_openssl: *id012
-  test/integration/targets/setup_mysql_db: *id004
+  test/integration/targets/setup_mysql_db:
     migrated_to: community.mysql
   test/integration/targets/setup_zabbix:
     maintainers: $team_zabbix
