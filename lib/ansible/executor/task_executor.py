@@ -778,20 +778,14 @@ class TaskExecutor:
                     raise
             else:
                 time_left -= self._task.poll
-                self._callback_queue.put(
-                    (
-                        'v2_runner_on_async_poll',
-                        (
-                            TaskResult(
-                                self._host,
-                                async_task,
-                                async_result,
-                                task_fields=self._task.dump_attrs(),
-                            ),
-                        ),
-                        {}
+                self._callback_queue.send_callback(
+                    'v2_runner_on_async_poll',
+                    TaskResult(
+                        self._host,
+                        async_task,
+                        async_result,
+                        task_fields=self._task.dump_attrs(),
                     ),
-                    block=False,
                 )
 
         if int(async_result.get('finished', 0)) != 1:

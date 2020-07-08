@@ -23,6 +23,7 @@ import os
 import tempfile
 import threading
 import time
+import multiprocessing.queues
 
 from ansible import constants as C
 from ansible import context
@@ -30,7 +31,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.play_context import PlayContext
@@ -60,6 +61,16 @@ def callback_thread(tqm):
             break
         except Queue.Empty:
             pass
+
+
+class CallbackQueue(multiprocessing.queues.Queue):
+    def __init__(self, *args, **kwargs):
+        if PY3:
+            kwargs['ctx'] = multiprocessing_context
+        super(CallbackQueue, self).__init__(*args, **kwargs)
+
+    def send_callback(self, method_name, *args, **kwargs):
+        self.put((method_name, args, kwargs), block=False)
 
 
 class TaskQueueManager:
@@ -112,7 +123,7 @@ class TaskQueueManager:
 
         try:
             self._final_q = multiprocessing_context.Queue()
-            self.callback_queue = multiprocessing_context.Queue()
+            self.callback_queue = CallbackQueue()
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
