@@ -60,6 +60,13 @@ EXAMPLES = """
 - name: the final countdown
   debug: msg={{item}} seconds to detonation
   with_sequence: end=0 start=10
+
+- name: Use of variable
+  debug:
+    msg: "{{ item }}"
+  with_sequence: start=1 end="{{ end_at }}"
+  vars:
+    - end_at: 10
 """
 
 RETURN = """

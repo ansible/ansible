@@ -35,7 +35,7 @@ An Ansible role has a defined directory structure with seven main standard direc
             defaults/
             meta/
 
-Each directory within a role must contain a ``main.yml`` file with relevant content:
+By default Ansible will look in each directory within a role for a ``main.yml`` file for relevant content (also ``main.yaml`` and ``main``):
 
 - ``tasks/main.yml`` - the main list of tasks that the role executes.
 - ``handlers/main.yml`` - handlers, which may be used within or outside this role.
