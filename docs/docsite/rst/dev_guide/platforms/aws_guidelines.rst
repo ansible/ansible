@@ -678,13 +678,13 @@ AWS Permissions for Integration Tests
 -------------------------------------
 
 As explained in the :ref:`Integration Test guide <testing_integration>`
-there are defined IAM policies in ``hacking/aws_config/testing_policies/`` that contain the necessary permissions
-to run the AWS integration test. The permissions used by CI are more restrictive than those in ``hacking/aws_config/testing_policies``; for CI we want
-the most restrictive policy possible that still allows the given tests to pass.
+there are defined IAM policies in `mattclay/aws-terminator <https://github.com/mattclay/aws-terminator>`_ that contain the necessary permissions
+to run the AWS integration test.
 
 If your module interacts with a new service or otherwise requires new permissions, tests will fail when you submit a pull request and the
 `Ansibullbot <https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_ will tag your PR as needing revision.
-We do not automatically grant additional permissions to the roles used by the continuous integration builds. You must provide the minimum IAM permissions required to run your integration test.
+We do not automatically grant additional permissions to the roles used by the continuous integration builds.
+You will need to raise a Pull Request against `mattclay/aws-terminator <https://github.com/mattclay/aws-terminator>`_ to add them.
 
 If your PR has test failures, check carefully to be certain the failure is only due to the missing permissions. If you've ruled out other sources of failure, add a comment with the `ready_for_review`
 tag and explain that it's due to missing permissions.
@@ -705,7 +705,7 @@ To start with the most permissive IAM policy:
 3) Modify your policy to allow only the actions your tests use. Restrict account, region, and prefix where possible. Wait a few minutes for your policy to update.
 4) Run the tests again with a user or role that allows only the new policy.
 5) If the tests fail, troubleshoot (see tips below), modify the policy, run the tests again, and repeat the process until the tests pass with a restrictive policy.
-6) Open a pull request proposing the minimum required policy to the `testing policies <https://github.com/mattclay/aws-terminator/tree/master/aws/policy>`_.
+6) Open a pull request proposing the minimum required policy to the `CI policies <https://github.com/mattclay/aws-terminator/tree/master/aws/policy>`_.
 
 To start from the least permissive IAM policy:
 
@@ -722,7 +722,7 @@ To start from the least permissive IAM policy:
 3) Add the action or resource that caused the failure to `an IAM policy <https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_create.html#access_policies_create-start>`_. Wait a few minutes for your policy to update.
 4) Run the tests again with this policy attached to your user or role.
 5) If the tests still fail at the same place with the same error you will need to troubleshoot (see tips below). If the first test passes, repeat steps 2 and 3 for the next error. Repeat the process until the tests pass with a restrictive policy.
-6) Open a pull request proposing the minimum required policy to the `testing policies <https://github.com/mattclay/aws-terminator/tree/master/aws/policy>`_.
+6) Open a pull request proposing the minimum required policy to the `CI policies <https://github.com/mattclay/aws-terminator/tree/master/aws/policy>`_.
 
 Troubleshooting IAM policies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -737,7 +737,23 @@ Troubleshooting IAM policies
 - Use a search engine.
 - Ask in the Ansible IRC channel #ansible-aws (on freenode IRC).
 
+Unsupported Integration tests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+There are a limited number of reasons why it may not be practical to run integration
+tests for a module within CI.  Where these apply you should add the keyword
+`unsupported` to the aliases file in `test/integration/targets/MODULE_NAME/aliases`.
+
 Some cases where tests should be marked as unsupported:
 1) The tests take longer than 10 or 15 minutes to complete
 2) The tests create expensive resources
 3) The tests create inline policies
+4) The tests require the existance of external resources
+5) The tests manage Account level security policies such as the password policy or AWS Organizations.
+
+Where one of these reasons apply you should open a pull request proposing the minimum required policy to the
+`unsupported test policies <https://github.com/mattclay/aws-terminator/tree/master/hacking/aws_config/test_policies>`_.
+
+Unsupported integration tests will not be automatically run by CI.  However, the
+necessary policies should be available so that the tests can be manually run by
+someone performing a PR review or writing a patch.

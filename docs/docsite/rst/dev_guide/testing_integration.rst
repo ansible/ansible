@@ -190,10 +190,19 @@ Ansible needs fairly wide ranging powers to run the tests in an AWS account.  Th
 testing-policies
 ----------------
 
-``hacking/aws_config/testing_policies`` contains a set of policies that are required for all existing AWS module tests.
-The ``hacking/aws_config/setup_iam.yml`` playbook can be used to add all of those policies to an IAM group (using
-``-e iam_group=GROUP_NAME``. Once the group is created, you'll need to create a user and make the user a member of the
-group. The policies are designed to minimize the rights of that user.  Please note that while this policy does limit
+The GitHub repository `mattclay/aws-terminator <https://github.com/mattclay/aws-terminator/>`_
+contains two sets of policies used for all existing AWS module integratoin tests.
+The `hacking/aws_config/setup_iam.yml` playbook can be used to setup two groups:
+
+  - `ansible-integration-ci` will have the policies applied necessary to run any
+    integration tests not marked as `unsupported` and are designed to mirror those
+    used by Ansible's CI.
+  - `ansible-integration-unsupported` will have the additional policies applied
+    necessary to run the integraion tests marked as `unsupported` including tests
+    for managing IAM roles, users and groups.
+
+Once the groups have been created, you'll need to create a user and make the user a member of these
+groups. The policies are designed to minimize the rights of that user.  Please note that while this policy does limit
 the user to one region, this does not fully restrict the user (primarily due to the limitations of the Amazon ARN
 notation). The user will still have wide privileges for viewing account definitions, and will also able to manage
 some resources that are not related to testing (for example, AWS lambdas with different names).  Tests should not
