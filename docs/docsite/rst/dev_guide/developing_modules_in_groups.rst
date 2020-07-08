@@ -36,7 +36,7 @@ Fully Qualified Collection Names (FQCNs) for plugins and modules include three e
       * words separated with an underscore (``_``) character
       * singular, rather than plural, for example, ``command`` not ``commands``
 
-For example, ``community.mongodb.mongdb_linux`` or ``cisco.meraki.meraki_device``.
+For example, ``community.mongodb.mongodb_linux`` or ``cisco.meraki.meraki_device``.
 
 It is convenient if the organization and repository names on GitHub (or elsewhere) match your namespace and collection names on Ansible Galaxy, but it is not required. The plugin names you select, however, are always the same in your code repository and in your collection artifact on Galaxy.
 
