@@ -55,6 +55,8 @@ MANIFEST_FORMAT = 1
 
 ModifiedContent = namedtuple('ModifiedContent', ['filename', 'expected', 'installed'])
 
+b_ignore_dirs = frozenset([b'CVS', b'.bzr', b'.hg', b'.git', b'.svn', b'__pycache__', b'.tox'])
+
 
 class CollectionRequirement:
 
@@ -923,7 +925,6 @@ def _build_files_manifest(b_collection_path, namespace, name, ignore_patterns):
         to_bytes('{0}-{1}-*.tar.gz'.format(namespace, name)),  # Ignores previously built artifacts in the root dir.
     ]
     b_ignore_patterns += [to_bytes(p) for p in ignore_patterns]
-    b_ignore_dirs = frozenset([b'CVS', b'.bzr', b'.hg', b'.git', b'.svn', b'__pycache__', b'.tox'])
 
     entry_template = {
         'name': None,
@@ -1140,6 +1141,9 @@ def find_existing_collections(path, fallback_metadata=False):
         for b_collection in os.listdir(b_namespace_path):
             b_collection_path = os.path.join(b_namespace_path, b_collection)
             if os.path.isdir(b_collection_path):
+                if any(b_collection_path.endswith(b_path) for b_path in b_ignore_dirs):
+                    display.warning("Skipping path %s" % to_text(b_collection_path))
+                    continue
                 req = CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=fallback_metadata)
                 display.vvv("Found installed collection %s:%s at '%s'" % (to_text(req), req.latest_version,
                                                                           to_text(b_collection_path)))
