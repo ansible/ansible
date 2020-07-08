@@ -376,14 +376,15 @@ class PluginLoader:
     def add_directory(self, directory, with_subdir=False):
         ''' Adds an additional directory to the search path '''
 
-        directory = os.path.realpath(directory)
+        directory = os.path.realpath(to_native(directory))
 
         if directory is not None:
             if with_subdir:
                 directory = os.path.join(directory, self.subdir)
+                b_dir = to_bytes(directory)
             if directory not in self._extra_dirs:
-                if os.path.exists(directory):
-                    if os.path.isdir(directory):
+                if os.path.exists(b_dir):
+                    if os.path.isdir(b_dir):
                         # append the directory and invalidate the path cache
                         self._extra_dirs.append(directory)
                         self._clear_caches()
