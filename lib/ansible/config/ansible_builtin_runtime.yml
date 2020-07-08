@@ -8650,7 +8650,7 @@ plugin_routing:
     foreman:
       redirect: theforeman.foreman.foreman
     netbox:
-      redirect: netbox.netbox.netbox
+      redirect: netbox.netbox.nb_inventory
     openstack:
       redirect: openstack.cloud.openstack
     tower:
