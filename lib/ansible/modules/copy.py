@@ -16,10 +16,10 @@ version_added: historical
 short_description: Copy files to remote locations
 description:
     - The C(copy) module copies a file from the local or remote machine to a location on the remote machine.
-    - Use the M(fetch) module to copy files from remote locations to the local box.
-    - If you need variable interpolation in copied files, use the M(template) module. Using a variable in the C(content)
-      field will result in unpredictable output.
-    - For Windows targets, use the M(win_copy) module instead.
+    - Use the M(ansible.builtin.fetch) module to copy files from remote locations to the local box.
+    - If you need variable interpolation in copied files, use the M(ansible.builtin.template) module.
+      Using a variable in the C(content) field will result in unpredictable output.
+    - For Windows targets, use the M(ansible.windows.win_copy) module instead.
 options:
   src:
     description:
@@ -34,7 +34,8 @@ options:
     description:
     - When used instead of C(src), sets the contents of a file directly to the specified value.
     - Works only when C(dest) is a file. Creates the file if it does not exist.
-    - For advanced formatting or if C(content) contains a variable, use the M(template) module.
+    - For advanced formatting or if C(content) contains a variable, use the
+      M(ansible.builtin.template) module.
     type: str
     version_added: '1.1'
   dest:
@@ -116,14 +117,14 @@ extends_documentation_fragment:
 - files
 - validate
 notes:
-- The M(copy) module recursively copy facility does not scale to lots (>hundreds) of files.
+- The M(ansible.builtin.copy) module recursively copy facility does not scale to lots (>hundreds) of files.
 seealso:
-- module: assemble
-- module: fetch
-- module: file
-- module: synchronize
-- module: template
-- module: win_copy
+- module: ansible.builtin.assemble
+- module: ansible.builtin.fetch
+- module: ansible.builtin.file
+- module: ansible.builtin.template
+- module: ansible.posix.synchronize
+- module: ansible.windows.win_copy
 author:
 - Ansible Core Team
 - Michael DeHaan
