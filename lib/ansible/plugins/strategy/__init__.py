@@ -369,6 +369,8 @@ class StrategyBase:
                 raise ForkShortCircuit(tr)
 
     def _short_circuit_fork_include(self, host, task, task_vars, templar):
+        vars_copy = task_vars.copy()
+        vars_copy['ansible_search_path'] = task.get_search_path()
         if not task.loop and not task.loop_with:
             tr = None
             # if this task is a TaskInclude, we just return now with a success code so the
@@ -387,7 +389,8 @@ class StrategyBase:
                     )
 
                 try:
-                    include_file = templar.template(include_file)
+                    with templar.set_temporary_context(available_variables=vars_copy):
+                        include_file = templar.template(include_file)
                 except AnsibleError as e:
                     tr = TaskResult(
                         host=host.name,
