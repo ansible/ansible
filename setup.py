@@ -30,6 +30,39 @@ except ImportError:
 from distutils.command.build_scripts import build_scripts as BuildScripts
 from distutils.command.sdist import sdist as SDist
 
+
+def validate_install_ansible_base():
+    """Validate that we can install ansible-base. Currently this only
+    cares about upgrading to ansible-base from ansible<2.10
+    """
+    # Make sure `lib` isn't in `sys.path` that could confuse this
+    # Later we actually add `lib` to `sys.path`, this is just a precaution
+    sys_modules = set(sys.modules)
+    sys_path = sys.path[:]
+    abspath = os.path.abspath
+    sys.path[:] = [p for p in sys.path if abspath(p) != os.path.abspath('lib')]
+
+    try:
+        from ansible.release import __version__
+    except ImportError:
+        pass
+    else:
+        version_tuple = tuple(int(v) for v in __version__.split('.')[:2])
+        if version_tuple < (2, 10):
+            stars = '*' * 76
+            raise RuntimeError(
+                '\n\n%s\n\nCannot upgrade ansible==%s to ansible-base. You must first uninstall ansible before '
+                'installing ansible-base\n\n%s\n' % (stars, __version__, stars)
+            )
+    finally:
+        sys.path[:] = sys_path
+        for key in sys_modules.symmetric_difference(sys.modules):
+            sys.modules.pop(key, None)
+
+
+validate_install_ansible_base()
+
+
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible.release import __version__, __author__
 
