@@ -40,7 +40,7 @@ def validate_install_ansible_base():
     sys_modules = set(sys.modules)
     sys_path = sys.path[:]
     abspath = os.path.abspath
-    sys.path[:] = [p for p in sys.path if abspath(p) != os.path.abspath('lib')]
+    sys.path[:] = [p for p in sys.path if abspath(p) != abspath('lib')]
 
     try:
         from ansible.release import __version__
