@@ -65,7 +65,7 @@ def add_all_plugin_dirs(path):
     for name, obj in get_all_plugin_loaders():
         if obj.subdir:
             # only plugin types with a subdir are available for 'adjacent' loading
-            plugin_path = os.path.join(path, obj.subdir)
+            plugin_path = os.path.join(to_native(path), obj.subdir)
             obj.add_directory(plugin_path)
 
 
