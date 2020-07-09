@@ -17,7 +17,7 @@ description:
        server I(must) have direct access to the remote resource.
      - By default, if an environment variable C(<protocol>_proxy) is set on
        the target host, requests will be sent through that proxy. This
-       behaviour can be overridden by setting a variable for this task
+      behaviour can be overridden by setting a variable for this task
        (see `setting the environment
        <https://docs.ansible.com/playbooks_environment.html>`_),
        or by using the use_proxy option.
@@ -25,7 +25,7 @@ description:
        your proxy environment for both protocols is correct.
      - From Ansible 2.4 when run with C(--check), it will do a HEAD request to validate the URL but
        will not download the entire file or verify it against hashes.
-     - For Windows targets, use the M(win_get_url) module instead.
+     - For Windows targets, use the M(ansible.windows.win_get_url) module instead.
 version_added: '0.6'
 options:
   url:
@@ -169,10 +169,10 @@ options:
 extends_documentation_fragment:
     - files
 notes:
-     - For Windows targets, use the M(win_get_url) module instead.
+     - For Windows targets, use the M(ansible.windows.win_get_url) module instead.
 seealso:
-- module: uri
-- module: win_get_url
+- module: ansible.builtin.uri
+- module: ansible.windows.win_get_url
 author:
 - Jan-Piet Mens (@jpmens)
 '''
