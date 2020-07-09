@@ -381,7 +381,7 @@ class PluginLoader:
         if directory is not None:
             if with_subdir:
                 directory = os.path.join(directory, self.subdir)
-                b_dir = to_bytes(directory)
+            b_dir = to_bytes(directory)
             if directory not in self._extra_dirs:
                 if os.path.exists(b_dir):
                     if os.path.isdir(b_dir):
