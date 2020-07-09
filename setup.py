@@ -1,6 +1,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ast
+import codecs
 import json
 import os
 import os.path
@@ -31,13 +33,40 @@ from distutils.command.build_scripts import build_scripts as BuildScripts
 from distutils.command.sdist import sdist as SDist
 
 
-def validate_install_ansible_base():
+def find_package_info(*file_paths):
+    # Open in Latin-1 so that we avoid encoding errors.
+    # Use codecs.open for Python 2 compatibility
+    try:
+        f = codecs.open(os.path.join(*file_paths), 'r', 'latin1')
+        info_file = f.read()
+        f.close()
+    except:
+        raise RuntimeError("Unable to find package info.")
+
+    # The version line must have the form
+    # __version__ = 'ver'
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              info_file, re.M)
+    author_match = re.search(r"^__author__ = ['\"]([^'\"]*)['\"]",
+                             info_file, re.M)
+
+    if version_match and author_match:
+        return version_match.group(1), author_match.group(1)
+    raise RuntimeError("Unable to find package info.")
+
+
+def _validate_install_ansible_base():
     """Validate that we can install ansible-base. Currently this only
     cares about upgrading to ansible-base from ansible<2.10
     """
+    if os.getenv('ANSIBLE_SKIP_CONFLICT_CHECK', '') not in ('', 0):
+        return
+
+    # Save these for later restoring things to pre invocation
+    sys_modules = sys.modules.copy()
+    sys_modules_keys = set(sys_modules)
+
     # Make sure `lib` isn't in `sys.path` that could confuse this
-    # Later we actually add `lib` to `sys.path`, this is just a precaution
-    sys_modules = set(sys.modules)
     sys_path = sys.path[:]
     abspath = os.path.abspath
     sys.path[:] = [p for p in sys.path if abspath(p) != abspath('lib')]
@@ -51,21 +80,39 @@ def validate_install_ansible_base():
         if version_tuple < (2, 10):
             stars = '*' * 76
             raise RuntimeError(
-                '\n\n%s\n\nCannot upgrade ansible==%s to ansible-base. You must first uninstall\n'
-                'ansible before installing ansible-base. This is only required when upgrading\n'
-                'from ansible<2.10 to ansible-base.\n\n%s\n' % (stars, __version__, stars)
+                '''
+
+    %s
+
+    Cannot install ansible-base with a pre-existing ansible==%s
+    installation.
+
+    Installing ansible-base with ansible-2.9 or older currently installed with
+    pip is known to cause problems. Please uninstall ansible and install the new
+    version:
+
+        pip uninstall ansible
+        pip install ansible-base
+
+    If you want to skip the conflict checks and manually resolve any issues
+    afterwards, set the ANSIBLE_SKIP_CONFLICT_CHECK environment variable:
+
+        ANSIBLE_SKIP_CONFLICT_CHECK=1 pip install ansible-base
+
+    %s
+                ''' % (stars, __version__, stars)
+                # '\n\n%s\n\nCannot upgrade ansible==%s to ansible-base. You must first uninstall\n'
+                # 'ansible before installing ansible-base. This is only required when upgrading\n'
+                # 'from ansible<2.10 to ansible-base.\n\n%s\n' % (stars, __version__, stars)
             )
     finally:
         sys.path[:] = sys_path
-        for key in sys_modules.symmetric_difference(sys.modules):
+        for key in sys_modules_keys.symmetric_difference(sys.modules):
             sys.modules.pop(key, None)
+        sys.modules.update(sys_modules)
 
 
-validate_install_ansible_base()
-
-
-sys.path.insert(0, os.path.abspath('lib'))
-from ansible.release import __version__, __author__
+_validate_install_ansible_base()
 
 
 SYMLINK_CACHE = 'SYMLINK_CACHE.json'
@@ -288,6 +335,8 @@ def get_dynamic_setup_params():
     }
 
 
+here = os.path.abspath(os.path.dirname(__file__))
+__version__, __author__ = find_package_info(here, 'lib', 'ansible', 'release.py')
 static_setup_params = dict(
     # Use the distutils SDist so that symlinks are not expanded
     # Use a custom Build for the same reason
