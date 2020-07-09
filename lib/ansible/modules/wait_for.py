@@ -107,7 +107,7 @@ notes:
 seealso:
 - module: ansible.builtin.wait_for_connection
 - module: ansible.windows.win_wait_for
-- module: ansible.windows.win_wait_for_process
+- module: community.windows.win_wait_for_process
 author:
     - Jeroen Hoekx (@jhoekx)
     - John Jarvis (@jarv)

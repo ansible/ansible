@@ -22,7 +22,7 @@ description:
      - By default, it will copy the source file from the local system to the target before unpacking.
      - Set C(remote_src=yes) to unpack an archive which already exists on the target.
      - If checksum validation is desired, use M(ansible.builtin.get_url) or M(ansible.builtin.uri) instead to fetch the file and set C(remote_src=yes).
-     - For Windows targets, use the M(ansible.windows.win_unzip) module instead.
+     - For Windows targets, use the M(community.windows.win_unzip) module instead.
 options:
   src:
     description:
@@ -108,7 +108,7 @@ notes:
 seealso:
 - module: community.general.archive
 - module: community.general.iso_extract
-- module: ansible.windows.win_unzip
+- module: community.windows.win_unzip
 author: Michael DeHaan
 '''
 
