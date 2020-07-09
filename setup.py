@@ -52,7 +52,8 @@ def validate_install_ansible_base():
             stars = '*' * 76
             raise RuntimeError(
                 '\n\n%s\n\nCannot upgrade ansible==%s to ansible-base. You must first uninstall\n'
-                'ansible before installing ansible-base\n\n%s\n' % (stars, __version__, stars)
+                'ansible before installing ansible-base. This is only required when upgrading\n'
+                'from ansible<2.10 to ansible-base\n\n%s\n' % (stars, __version__, stars)
             )
     finally:
         sys.path[:] = sys_path
