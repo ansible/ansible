@@ -11,9 +11,9 @@ from ansible.module_utils._text import to_bytes
 B_FLAG_FILES = frozenset([b'MANIFEST.json', b'galaxy.yml'])
 
 
-def is_collection_path(path):
+def has_collection_flag(path):
     """
-    Verify that a path meets min requirements to be a collection
+    Verify that a path has a collection flag file (installed or devel)
     :param path: byte-string path to evaluate for collection containment
     :return: boolean signifying 'collectionness'
     """
