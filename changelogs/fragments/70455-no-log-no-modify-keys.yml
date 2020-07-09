@@ -1,0 +1,2 @@
+bugfixes:
+- Ensure we don't strip no log values from keys with special meaning (https://github.com/ansible/ansible/issues/70455)

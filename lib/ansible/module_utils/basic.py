@@ -272,6 +272,10 @@ if not _PY_MIN:
     sys.exit(1)
 
 
+_NO_MODIFY_KEYS = frozenset(
+    ('msg', 'exception', 'warnings', 'deprecations', 'failed', 'skipped', 'changed')
+)
+
 #
 # Deprecated functions
 #
@@ -411,7 +415,10 @@ def remove_values(value, no_log_strings):
         old_data, new_data = deferred_removals.popleft()
         if isinstance(new_data, Mapping):
             for old_key, old_elem in old_data.items():
-                new_key = _remove_values_conditions(old_key, no_log_strings, deferred_removals)
+                if old_key in _NO_MODIFY_KEYS:
+                    new_key = old_key
+                else:
+                    new_key = _remove_values_conditions(old_key, no_log_strings, deferred_removals)
                 new_elem = _remove_values_conditions(old_elem, no_log_strings, deferred_removals)
                 new_data[new_key] = new_elem
         else:

@@ -118,6 +118,27 @@ class TestRemoveValues(unittest.TestCase):
             {'key-********': 'value-********'},
         ),
         (
+            {
+                'failed': False,
+                'changed': True,
+                'skipped': False,
+                'msg': 'foo',
+                'exception': 'bar',
+                'warnings': 'baz',
+                'deprecations': 'qux',
+            },
+            frozenset(['fail', 'hang', 'skip', 'msg', 'cept', 'nin', 'cation']),
+            {
+                'failed': False,
+                'changed': True,
+                'skipped': False,
+                'msg': 'foo',
+                'exception': 'bar',
+                'warnings': 'baz',
+                'deprecations': 'qux',
+            }
+        ),
+        (
             'This sentence has an enigma wrapped in a mystery inside of a secret. - mr mystery',
             frozenset(['enigma', 'mystery', 'secret']),
             'This sentence has an ******** wrapped in a ******** inside of a ********. - mr ********'
