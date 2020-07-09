@@ -18,7 +18,7 @@ version_added: historical
 short_description: Manages packages with the I(yum) package manager
 description:
      - Installs, upgrade, downgrades, removes, and lists packages and groups with the I(yum) package manager.
-     - This module only works on Python 2. If you require Python 3 support see the M(dnf) module.
+     - This module only works on Python 2. If you require Python 3 support see the M(ansible.builtin.dnf) module.
 options:
   use_backend:
     description:

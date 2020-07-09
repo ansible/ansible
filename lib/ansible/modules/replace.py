@@ -81,7 +81,7 @@ options:
     default: no
   others:
     description:
-      - All arguments accepted by the M(file) module also work here.
+      - All arguments accepted by the M(ansible.builtin.file) module also work here.
     type: str
   encoding:
     description:

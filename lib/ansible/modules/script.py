@@ -15,7 +15,7 @@ description:
      - Either a free form command or C(cmd) parameter is required, see the examples.
      - The local script at path will be transferred to the remote node and then executed.
      - The given script will be processed through the shell environment on the remote node.
-     - This module does not require python on the remote system, much like the M(raw) module.
+     - This module does not require python on the remote system, much like the M(ansible.builtin.raw) module.
      - This module is also supported for Windows targets.
 options:
   free_form:
@@ -48,8 +48,8 @@ notes:
   - If the path to the local script contains spaces, it needs to be quoted.
   - This module is also supported for Windows targets.
 seealso:
-- module: shell
-- module: win_shell
+- module: ansible.builtin.shell
+- module: ansible.windows.win_shell
 author:
     - Ansible Core Team
     - Michael DeHaan

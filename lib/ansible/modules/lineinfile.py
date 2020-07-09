@@ -18,9 +18,9 @@ description:
   - This module ensures a particular line is in a file, or replace an
     existing line using a back-referenced regular expression.
   - This is primarily useful when you want to change a single line in a file only.
-  - See the M(replace) module if you want to change multiple, similar lines
-    or check M(blockinfile) if you want to insert/update/remove a block of lines in a file.
-    For other cases, see the M(copy) or M(template) modules.
+  - See the M(ansible.builtin.replace) module if you want to change multiple, similar lines
+    or check M(ansible.builtin.blockinfile) if you want to insert/update/remove a block of lines in a file.
+    For other cases, see the M(ansible.builtin.copy) or M(ansible.builtin.template) modules.
 version_added: "0.7"
 options:
   path:
@@ -118,7 +118,7 @@ options:
     version_added: "2.5"
   others:
     description:
-      - All arguments accepted by the M(file) module also work here.
+      - All arguments accepted by the M(ansible.builtin.file) module also work here.
     type: str
 extends_documentation_fragment:
     - files
@@ -126,12 +126,12 @@ extends_documentation_fragment:
 notes:
   - As of Ansible 2.3, the I(dest) option has been changed to I(path) as default, but I(dest) still works as well.
 seealso:
-- module: blockinfile
-- module: copy
-- module: file
-- module: replace
-- module: template
-- module: win_lineinfile
+- module: ansible.builtin.blockinfile
+- module: ansible.builtin.copy
+- module: ansible.builtin.file
+- module: ansible.builtin.replace
+- module: ansible.builtin.template
+- module: ansible.windows.win_lineinfile
 author:
     - Daniel Hokka Zakrissoni (@dhozac)
     - Ahti Kitsik (@ahtik)
