@@ -1,0 +1,15 @@
+# We can't change hostnames in containers, so limit it to systems where
+# we get a full VM. Then realize:
+# intersection(
+#   systems with full VM in CI,
+#   systems hostname module currently supports) == just RHEL and FreeBSD
+
+- include_tasks: rhel.yml
+  when: ansible_distribution == 'RedHat'
+
+- include_tasks: freebsd.yml
+  when: ansible_distribution == 'FreeBSD'
+
+# Even check_mode fails in a container. :-(
+- import_tasks: check_mode.yml
+  when: ansible_distribution in ['RedHat', 'FreeBSD']
