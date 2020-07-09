@@ -97,7 +97,7 @@ class ActionModule(ActionBase):
         regexp = self._task.args.get('regexp', None)
         follow = self._task.args.get('follow', False)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
-        decrypt = self._task.args.get('decrypt', True)
+        decrypt = self._task.args.pop('decrypt', True)
 
         try:
             if src is None or dest is None:
