@@ -102,8 +102,6 @@
         files:
           - "{{ ansible_facts.distribution }}.yml"
           - default.yml
-  # Setting the hostname in our test containers doesn't work currently
-  when: ansible_facts.virtualization_type != 'docker'
 
   always:
     # Reset back to original hostname

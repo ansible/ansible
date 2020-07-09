@@ -626,7 +626,7 @@ class DarwinStrategy(GenericStrategy):
 
     def _scrub_hostname(self, name):
         """LocalHostName only accepts valid DNS characters while HostName and ComputerName
-        accept a much wider range of characters. This functions aims to mimic how macOS
+        accept a much wider range of characters. This function aims to mimic how macOS
         translates a friendly name to the LocalHostName.
         """
 
@@ -648,8 +648,8 @@ class DarwinStrategy(GenericStrategy):
         cmd = [self.scutil, '--get', 'HostName']
         rc, out, err = self.module.run_command(cmd)
         if rc != 0 and 'HostName: not set' not in err:
-
             self.module.fail_json(msg="Failed to get current hostname rc=%d, out=%s, err=%s" % (rc, out, err))
+
         return to_native(out).strip()
 
     def get_permanent_hostname(self):
@@ -657,6 +657,7 @@ class DarwinStrategy(GenericStrategy):
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Failed to get permanent hostname rc=%d, out=%s, err=%s" % (rc, out, err))
+
         return to_native(out).strip()
 
     def set_permanent_hostname(self, name):
