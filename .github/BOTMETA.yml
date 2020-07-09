@@ -838,7 +838,7 @@ files:
     - database
     - mysql
     maintainers: $team_mysql
-    migrated_to: community.general
+    migrated_to: community.mysql
   $modules/database/postgresql/: &id028
     keywords:
     - database
@@ -3435,7 +3435,8 @@ files:
     maintainers: glitchcrab
     labels: cloud
     migrated_to: community.general
-  $module_utils/mysql.py: *id004
+  $module_utils/mysql.py:
+    migrated_to: community.mysql
   $module_utils/net_tools/nios/:
     support: core
     labels:
@@ -3992,7 +3993,8 @@ files:
   $plugins/doc_fragments/mso.py:
     labels: aci
     migrated_to: cisco.mso
-  $plugins/doc_fragments/mysql.py: *id004
+  $plugins/doc_fragments/mysql.py:
+    migrated_to: community.mysql
   $plugins/doc_fragments/netapp.py:
     migrated_to: netapp.ontap
   $plugins/doc_fragments/openstack.py:
@@ -4415,7 +4417,8 @@ files:
   test/integration/targets/meraki_:
     migrated_to: cisco.meraki
   test/integration/targets/mso_: *id017
-  test/integration/targets/mysql: *id004
+  test/integration/targets/mysql:
+    migrated_to: community.mysql
   test/integration/targets/nxos_: *id040
   test/integration/targets/netapp:
     maintainers: $team_netapp
@@ -4426,7 +4429,8 @@ files:
   test/integration/targets/setup_acme: *id012
   test/integration/targets/setup_docker: *id011
   test/integration/targets/setup_openssl: *id012
-  test/integration/targets/setup_mysql_db: *id004
+  test/integration/targets/setup_mysql_db:
+    migrated_to: community.mysql
   test/integration/targets/setup_zabbix:
     maintainers: $team_zabbix
     migrated_to: community.zabbix
@@ -8646,17 +8650,17 @@ files:
   lib/ansible/modules/database/misc/riak.py:
     migrated_to: community.general
   lib/ansible/modules/database/mysql/mysql_db.py:
-    migrated_to: community.general
+    migrated_to: community.mysql
   lib/ansible/modules/database/mysql/mysql_info.py:
-    migrated_to: community.general
+    migrated_to: community.mysql
   lib/ansible/modules/database/mysql/mysql_query.py:
-    migrated_to: community.general
+    migrated_to: community.mysql
   lib/ansible/modules/database/mysql/mysql_replication.py:
-    migrated_to: community.general
+    migrated_to: community.mysql
   lib/ansible/modules/database/mysql/mysql_user.py:
-    migrated_to: community.general
+    migrated_to: community.mysql
   lib/ansible/modules/database/mysql/mysql_variables.py:
-    migrated_to: community.general
+    migrated_to: community.mysql
   lib/ansible/modules/database/postgresql/postgresql_copy.py:
     migrated_to: community.general
   lib/ansible/modules/database/postgresql/postgresql_db.py:
@@ -13922,159 +13926,159 @@ files:
   test/integration/targets/setup_influxdb/tasks/main.yml:
     migrated_to: community.general
   test/integration/targets/mysql_db/aliases:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_db/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_db/tasks/multi_db_create_delete.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_db/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_db/tasks/state_dump_import.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_db/tasks/encoding_dump_import.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_db/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/FreeBSD.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/RedHat-7.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/Fedora-py3.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/Ubuntu-py3.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/Fedora.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/RedHat-8.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/RedHat.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/default.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/default-py3.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/Debian.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/Suse-py3.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/vars/Suse.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_db/handlers/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_info/aliases:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_info/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_info/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_info/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_info/templates/my.cnf.j2:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_query/aliases:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_query/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_query/tasks/mysql_query_initial.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_query/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_query/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql8/vars/CentOS-8.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql8/vars/RedHat-8.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql8/vars/default.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql8/vars/Debian.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql8/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql8/files/my.cnf:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql8/tasks/setup_mysql8.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql8/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql8/handlers/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_replication/aliases:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_replication/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_replication/tasks/mysql_replication_initial.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_replication/tasks/mysql_replication_resetmaster_mode.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_replication/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_replication/tasks/mysql_replication_channel.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_replication/tasks/mysql_replication_master_delay.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_replication/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_replication/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_replication/tasks/setup_mysql_cluster.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_replication/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_replication/templates/my-1.cnf.j2:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/setup_mysql_replication/templates/my-2.cnf.j2:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/aliases:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/files/create-function.sql:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/files/create-procedure.sql:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/tasks/assert_user.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/tasks/test_privs.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/tasks/user_password_update_test.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/tasks/create_user.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/tasks/test_priv_dict.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/tasks/remove_user.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/tasks/assert_no_user.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/tasks/issue-29511.yaml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/tasks/issue-64560.yaml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_user/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_variables/aliases:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_variables/defaults/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_variables/tasks/assert_var_output.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_variables/tasks/assert_var.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_variables/tasks/assert_fail_msg.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_variables/tasks/mysql_variables.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_variables/tasks/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/mysql_variables/meta/main.yml:
-    migrated_to: community.general
+    migrated_to: community.mysql
   test/integration/targets/postgresql_copy/aliases:
     migrated_to: community.general
   test/integration/targets/postgresql_copy/tasks/postgresql_copy_initial.yml:
