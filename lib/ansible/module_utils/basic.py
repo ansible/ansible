@@ -276,6 +276,7 @@ _NO_MODIFY_KEYS = frozenset(
     ('msg', 'exception', 'warnings', 'deprecations', 'failed', 'skipped', 'changed', 'results')
 )
 
+
 #
 # Deprecated functions
 #
