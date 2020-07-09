@@ -85,6 +85,9 @@ options:
     default: "yes"
     version_added: "2.0"
     type: bool
+
+requirements:
+    - subversion (the command line tool with C(svn) entrypoint)
 '''
 
 EXAMPLES = '''
