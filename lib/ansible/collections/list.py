@@ -93,9 +93,10 @@ def list_collection_dirs(search_paths, coll_filter=None):
                             if collection not in collections[ns]:
                                 b_coll = to_bytes(collection)
                                 b_coll_dir = os.path.join(b_namespace_dir, b_coll)
-                                if is_collection_path(b_coll_dir):
-                                    collections[ns][collection] = b_coll_dir
-                                    yield b_coll_dir
+                                if not is_collection_path(b_coll_dir):
+                                    display.warning('Found collection but missing MANIFEST.JSON or galaxy.yml: %s' % to_text(b_coll_dir, errors='surrogate_or_strict'))
+                                collections[ns][collection] = b_coll_dir
+                                yield b_coll_dir
 
 
 def get_existing_collections(search_paths=None, warn=True):
