@@ -126,8 +126,11 @@ class TestRemoveValues(unittest.TestCase):
                 'exception': 'bar',
                 'warnings': 'baz',
                 'deprecations': 'qux',
+                'results': [],
+                '_ansible_something': 'baz',
+                'something': 'something',
             },
-            frozenset(['fail', 'hang', 'skip', 'msg', 'cept', 'nin', 'cation']),
+            frozenset(['fail', 'hang', 'skip', 'msg', 'cept', 'nin', 'cation', 'sult', 'thing']),
             {
                 'failed': False,
                 'changed': True,
@@ -136,6 +139,9 @@ class TestRemoveValues(unittest.TestCase):
                 'exception': 'bar',
                 'warnings': 'baz',
                 'deprecations': 'qux',
+                'results': [],
+                '_ansible_something': 'baz',
+                'some********': 'some********',
             }
         ),
         (
