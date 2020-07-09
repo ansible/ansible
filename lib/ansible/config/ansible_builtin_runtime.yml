@@ -1391,17 +1391,17 @@ plugin_routing:
     mssql_db:
       redirect: community.general.mssql_db
     mysql_db:
-      redirect: community.general.mysql_db
+      redirect: community.mysql.mysql_db
     mysql_info:
-      redirect: community.general.mysql_info
+      redirect: community.mysql.mysql_info
     mysql_query:
-      redirect: community.general.mysql_query
+      redirect: community.mysql.mysql_query
     mysql_replication:
-      redirect: community.general.mysql_replication
+      redirect: community.mysql.mysql_replication
     mysql_user:
-      redirect: community.general.mysql_user
+      redirect: community.mysql.mysql_user
     mysql_variables:
-      redirect: community.general.mysql_variables
+      redirect: community.mysql.mysql_variables
     postgresql_copy:
       redirect: community.general.postgresql_copy
     postgresql_db:
@@ -7650,7 +7650,7 @@ plugin_routing:
     memset:
       redirect: community.general.memset
     mysql:
-      redirect: community.general.mysql
+      redirect: community.mysql.mysql
     api:
       redirect: skydive.skydive.api
     network.a10:
@@ -8367,7 +8367,7 @@ plugin_routing:
     manageiq:
       redirect: community.general.manageiq
     mysql:
-      redirect: community.general.mysql
+      redirect: community.mysql.mysql
     netscaler:
       redirect: community.network.netscaler
     nios:
