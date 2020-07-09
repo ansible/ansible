@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix to previous deprecation change (#70504) which caused command warning deprecation to show in all cases, even when not specified by the user.

@@ -17,7 +17,7 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # Command module has a special config option to turn off the command nanny warnings
-        if 'warn' not in self._task.args:
+        if 'warn' not in self._task.args and C.COMMAND_WARNINGS:
             self._task.args['warn'] = C.COMMAND_WARNINGS
 
         wrap_async = self._task.async_val and not self._connection.has_native_async
