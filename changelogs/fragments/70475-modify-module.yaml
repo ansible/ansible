@@ -1,0 +1,5 @@
+minor_changes:
+- AnsiballZ - Improve performance of ``ModuleDepFinder`` by using faster
+  lookups and reducing the object types that are walked while looking for
+  ``import`` statements.
+  (https://github.com/ansible/ansible/pull/70475)

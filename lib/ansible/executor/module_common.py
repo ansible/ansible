@@ -29,6 +29,7 @@ import shlex
 import zipfile
 import re
 import pkgutil
+from ast import AST, Import, ImportFrom
 from io import BytesIO
 
 from ansible.release import __version__, __author__
@@ -464,6 +465,28 @@ class ModuleDepFinder(ast.NodeVisitor):
         self.submodules = set()
         self.module_fqn = module_fqn
 
+        self._visit_map = {
+            Import: self.visit_Import,
+            ImportFrom: self.visit_ImportFrom,
+        }
+
+    def generic_visit(self, node):
+        """Overridden ``generic_visit`` that makes some assumptions about our
+        use case, and improves performance by calling visitors directly instead
+        of calling ``visit`` to offload calling visitors.
+        """
+        visit_map = self._visit_map
+        generic_visit = self.generic_visit
+        for field, value in ast.iter_fields(node):
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, (Import, ImportFrom)):
+                        visit_map[item.__class__](item)
+                    elif isinstance(item, AST):
+                        generic_visit(item)
+
+    visit = generic_visit
+
     def visit_Import(self, node):
         """
         Handle import ansible.module_utils.MODLIB[.MODLIBn] [as asname]
@@ -710,7 +733,7 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
     """
     # Parse the module and find the imports of ansible.module_utils
     try:
-        tree = ast.parse(data)
+        tree = compile(data, '<unknown>', 'exec', ast.PyCF_ONLY_AST)
     except (SyntaxError, IndentationError) as e:
         raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
 
