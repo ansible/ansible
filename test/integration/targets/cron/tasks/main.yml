@@ -128,14 +128,14 @@
   - name: Cron file creation
     cron:
       cron_file: cron_filename
-      name: "cron job that contain non-ascii chars in name and job (これは日本語です)"
-      job: 'echo "うどんを週に18食は食べている"'
+      name: "cron job that contain non-ascii chars in name and job (これは日本語です; This is Japanese)"
+      job: 'echo "うどんは好きだがお化け👻は苦手である"'
       user: root
 
   - name: Cron file deletion
     cron:
       cron_file: cron_filename
-      name: "cron job that contain non-ascii chars in name and job (これは日本語です)"
+      name: "cron job that contain non-ascii chars in name and job (これは日本語です; This is Japanese)"
       state: absent
 
   - name: Check file succesfull deletion
