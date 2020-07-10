@@ -642,10 +642,10 @@ class PluginLoader:
         # requested mod_type
         pull_cache = self._plugin_path_cache[suffix]
         try:
-            path, collection = pull_cache[name]
-            plugin_load_context.plugin_resolved_path = path
+            path_with_context = pull_cache[name]
+            plugin_load_context.plugin_resolved_path = path_with_context.path
             plugin_load_context.plugin_resolved_name = name
-            plugin_load_context.plugin_resolved_collection = collection
+            plugin_load_context.plugin_resolved_collection = 'ansible.builtin' if path_with_context.internal else ''
             plugin_load_context.resolved = True
             return plugin_load_context
         except KeyError:
@@ -677,7 +677,7 @@ class PluginLoader:
 
                 splitname = os.path.splitext(full_name)
                 base_name = splitname[0]
-                collection = 'ansible.builtin' if path_context.internal else ''
+                internal = path_context.internal
                 try:
                     extension = splitname[1]
                 except IndexError:
@@ -685,23 +685,23 @@ class PluginLoader:
 
                 # Module found, now enter it into the caches that match this file
                 if base_name not in self._plugin_path_cache['']:
-                    self._plugin_path_cache[''][base_name] = (full_path, collection)
+                    self._plugin_path_cache[''][base_name] = PluginPathContext(full_path, internal)
 
                 if full_name not in self._plugin_path_cache['']:
-                    self._plugin_path_cache[''][full_name] = (full_path, collection)
+                    self._plugin_path_cache[''][full_name] = PluginPathContext(full_path, internal)
 
                 if base_name not in self._plugin_path_cache[extension]:
-                    self._plugin_path_cache[extension][base_name] = (full_path, collection)
+                    self._plugin_path_cache[extension][base_name] = PluginPathContext(full_path, internal)
 
                 if full_name not in self._plugin_path_cache[extension]:
-                    self._plugin_path_cache[extension][full_name] = (full_path, collection)
+                    self._plugin_path_cache[extension][full_name] = PluginPathContext(full_path, internal)
 
             self._searched_paths.add(path)
             try:
-                path, collection = pull_cache[name]
-                plugin_load_context.plugin_resolved_path = path
+                path_with_context = pull_cache[name]
+                plugin_load_context.plugin_resolved_path = path_with_context.path
                 plugin_load_context.plugin_resolved_name = name
-                plugin_load_context.plugin_resolved_collection = collection
+                plugin_load_context.plugin_resolved_collection = 'ansible.builtin' if path_with_context.internal else ''
                 plugin_load_context.resolved = True
                 return plugin_load_context
             except KeyError:
@@ -713,14 +713,14 @@ class PluginLoader:
             alias_name = '_' + name
             # We've already cached all the paths at this point
             if alias_name in pull_cache:
-                path, collection = pull_cache[alias_name]
-                if not ignore_deprecated and not os.path.islink(path):
+                path_with_context = pull_cache[alias_name]
+                if not ignore_deprecated and not os.path.islink(path_with_context.path):
                     # FIXME: this is not always the case, some are just aliases
                     display.deprecated('%s is kept for backwards compatibility but usage is discouraged. '  # pylint: disable=ansible-deprecated-no-version
                                        'The module documentation details page may explain more about this rationale.' % name.lstrip('_'))
-                plugin_load_context.plugin_resolved_path = path
+                plugin_load_context.plugin_resolved_path = path_with_context.path
                 plugin_load_context.plugin_resolved_name = alias_name
-                plugin_load_context.plugin_resolved_collection = collection
+                plugin_load_context.plugin_resolved_collection = 'ansible.builtin' if path_with_context.internal else ''
                 plugin_load_context.resolved = True
                 return plugin_load_context
 
