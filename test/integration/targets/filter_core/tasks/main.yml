@@ -528,7 +528,7 @@
       - subelements_1 is failed
       - 'subelements_1.msg == "obj must be a list of dicts or a nested dict"'
       - subelements_2 is failed
-      - 'subelements_2.msg == "subelements must be a list or a string"'
+      - '"subelements must be a list or a string" in subelements_2.msg'
       - 'subelements_demo|subelements("does not compute", skip_missing=True) == []'
       - subelements_3 is failed
       - '"could not find" in subelements_3.msg'
