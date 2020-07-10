@@ -2847,7 +2847,6 @@ files:
     notified: jlozadad
     migrated_to: community.general
   $modules/storage/hpe3par/: farhan7500 gautamphegde
-  $modules/storage/infinidat/: GR360RY vmalloc
   $modules/storage/netapp/:
     maintainers: $team_netapp
     support: community
@@ -7144,7 +7143,7 @@ files:
   lib/ansible/plugins/doc_fragments/ibm_storage.py:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/infinibox.py:
-    migrated_to: community.general
+    migrated_to: infinidat.infinibox
   lib/ansible/plugins/doc_fragments/influxdb.py:
     migrated_to: community.general
   lib/ansible/plugins/doc_fragments/ingate.py:
@@ -7494,7 +7493,7 @@ files:
   lib/ansible/module_utils/identity/keycloak/keycloak.py:
     migrated_to: community.general
   lib/ansible/module_utils/infinibox.py:
-    migrated_to: community.general
+    migrated_to: infinidat.infinibox
   lib/ansible/module_utils/influxdb.py:
     migrated_to: community.general
   lib/ansible/module_utils/known_hosts.py:
@@ -10122,17 +10121,17 @@ files:
   lib/ansible/modules/storage/ibm/ibm_sa_vol_map.py:
     migrated_to: community.general
   lib/ansible/modules/storage/infinidat/infini_export.py:
-    migrated_to: community.general
+    migrated_to: infinidat.infinibox
   lib/ansible/modules/storage/infinidat/infini_export_client.py:
-    migrated_to: community.general
+    migrated_to: infinidat.infinibox
   lib/ansible/modules/storage/infinidat/infini_fs.py:
-    migrated_to: community.general
+    migrated_to: infinidat.infinibox
   lib/ansible/modules/storage/infinidat/infini_host.py:
-    migrated_to: community.general
+    migrated_to: infinidat.infinibox
   lib/ansible/modules/storage/infinidat/infini_pool.py:
-    migrated_to: community.general
+    migrated_to: infinidat.infinibox
   lib/ansible/modules/storage/infinidat/infini_vol.py:
-    migrated_to: community.general
+    migrated_to: infinidat.infinibox
   lib/ansible/modules/storage/netapp/_na_cdot_aggregate.py:
     migrated_to: community.general
   lib/ansible/modules/storage/netapp/_na_cdot_license.py:
