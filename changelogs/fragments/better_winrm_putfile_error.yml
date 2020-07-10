@@ -1,2 +1,2 @@
 bugfixes:
-  - Allow for better information when winrm put_file failes. fixes #70361
+  - winrm - preserve winrm forensic data on put_file failures
