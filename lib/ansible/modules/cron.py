@@ -237,9 +237,9 @@ class CronTab(object):
 
         if cron_file:
             if os.path.isabs(cron_file):
-                self.cron_file = cron_file
+                self.cron_file = to_text(cron_file, errors='surrogate_or_strict')
             else:
-                self.cron_file = os.path.join('/etc/cron.d', cron_file)
+                self.cron_file = os.path.join(u'/etc/cron.d', to_text(cron_file, errors='surrogate_or_strict'))
         else:
             self.cron_file = None
 
