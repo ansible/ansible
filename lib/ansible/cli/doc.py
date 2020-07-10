@@ -272,7 +272,7 @@ class DocCLI(CLI):
         if filename is None:
             raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
 
-        collection_name = 'ansible.builtin'
+        collection_name = ''
         if plugin_name.startswith('ansible_collections.'):
             collection_name = '.'.join(plugin_name.split('.')[1:3])
 
@@ -321,7 +321,7 @@ class DocCLI(CLI):
 
         doc, plainexamples, returndocs, metadata = get_docstring(
             filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
-            collection_name=collection_name or 'ansible.builtin', is_module=(plugin_type == 'module'))
+            collection_name=collection_name, is_module=(plugin_type == 'module'))
 
         # If the plugin existed but did not have a DOCUMENTATION element and was not removed, it's an error
         if doc is None:
