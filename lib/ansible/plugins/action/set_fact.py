@@ -52,7 +52,10 @@ class ActionModule(ActionBase):
                 # NOTE: this should really use BOOLEANS from convert_bool, but only in the k=v case,
                 # right now it converts matching explicit YAML strings also when 'jinja2_native' is disabled.
                 if not C.DEFAULT_JINJA2_NATIVE and isinstance(v, string_types) and v.lower() in ('true', 'false', 'yes', 'no'):
-                    v = boolean(v, strict=False)
+                    try:
+                        v = boolean(v, strict=True)
+                    except TypeError:
+                        pass  # not valid bool string
                 facts[k] = v
         else:
             raise AnsibleActionFail('No key/value pairs provided, at least one is required for this action to succeed')

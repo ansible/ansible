@@ -1,0 +1,2 @@
+bugfixes:
+  - Avoid adding delegated host vars when no host is present for task (imports).
