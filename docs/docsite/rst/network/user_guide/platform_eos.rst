@@ -15,9 +15,9 @@ Connections available
 .. table::
     :class: documentation-table
 
-    ====================  ==========================================  =========================
+    ====================  ==========================================  ===========================
     ..                    CLI                                         eAPI
-    ====================  ==========================================  =========================
+    ====================  ==========================================  ===========================
     Protocol              SSH                                         HTTP(S)
 
     Credentials           uses SSH keys / SSH-agent if present        uses HTTPS certificates if
@@ -26,7 +26,8 @@ Connections available
 
     Indirect Access       via a bastion (jump host)                   via a web proxy
 
-    Connection Settings   ``ansible_connection: network_cli``         ``ansible_connection: httpapi``
+    Connection Settings   ``ansible_connection:``                     ``ansible_connection:``
+                          ``ansible.netcommon.network_cli``           ``ansible.netcommon.httpapi``
 
 
     |enable_mode|         supported: |br|                             supported: |br|
@@ -36,12 +37,12 @@ Connections available
                                                                         with ``ansible_become_method: enable``
 
     Returned Data Format  ``stdout[0].``                              ``stdout[0].messages[0].``
-    ====================  ==========================================  =========================
+    ====================  ==========================================  ===========================
 
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 
-The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi`` instead.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: ansible.netcommon.network_cli`` or ``ansible_connection: ansible.netcommon.httpapi`` instead.
 
 Using CLI in Ansible
 ====================
@@ -51,8 +52,8 @@ Example CLI ``group_vars/eos.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: eos
+   ansible_connection: ansible.netcommon.network_cli
+   ansible_network_os: arista.eos.eos
    ansible_user: myuser
    ansible_password: !vault...
    ansible_become: yes
@@ -74,7 +75,7 @@ Example CLI task
      arista.eos.eos_config:
        backup: yes
      register: backup_eos_location
-     when: ansible_network_os == 'eos'
+     when: ansible_network_os == 'arista.eos.eos'
 
 
 
@@ -84,7 +85,7 @@ Using eAPI in Ansible
 Enabling eAPI
 -------------
 
-Before you can use eAPI to connect to a switch, you must enable eAPI. To enable eAPI on a new switch with Ansible, use the ``eos_eapi`` module through the CLI connection. Set up ``group_vars/eos.yml`` just like in the CLI example above, then run a playbook task like this:
+Before you can use eAPI to connect to a switch, you must enable eAPI. To enable eAPI on a new switch with Ansible, use the ``arista.eos.eos_eapi`` module through the CLI connection. Set up ``group_vars/eos.yml`` just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
 
@@ -94,9 +95,9 @@ Before you can use eAPI to connect to a switch, you must enable eAPI. To enable 
        enable_https: yes
      become: true
      become_method: enable
-     when: ansible_network_os == 'eos'
+     when: ansible_network_os == 'arista.eos.eos'
 
-You can find more options for enabling HTTP/HTTPS connections in the :ref:`eos_eapi <eos_eapi_module>` module documentation.
+You can find more options for enabling HTTP/HTTPS connections in the :ref:`arista.eos.eos_eapi <arista.eos.eos_eapi_module>` module documentation.
 
 Once eAPI is enabled, change your ``group_vars/eos.yml`` to use the eAPI connection.
 
@@ -105,8 +106,8 @@ Example eAPI ``group_vars/eos.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: httpapi
-   ansible_network_os: eos
+   ansible_connection: ansible.netcommon.httpapi
+   ansible_network_os: arista.eos.eos
    ansible_user: myuser
    ansible_password: !vault...
    ansible_become: yes
@@ -128,7 +129,7 @@ Example eAPI task
        backup: yes
      register: backup_eos_location
      environment: "{{ proxy_env }}"
-     when: ansible_network_os == 'eos'
+     when: ansible_network_os == 'arista.eos.eos'
 
 In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed to the ``environment`` option of the module in the task.
 
