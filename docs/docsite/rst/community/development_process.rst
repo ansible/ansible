@@ -209,7 +209,7 @@ Here are some examples:
 .. code-block:: yaml
 
   bugfixes:
-    - copy module - The copy module was attempting to change the mode of files for
+    - copy - the module was attempting to change the mode of files for
       remote_src=True even if mode was not set as a parameter.  This failed on
       filesystems which do not have permission bits (https://github.com/ansible/ansible/issues/29444).
 
