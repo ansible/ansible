@@ -616,9 +616,16 @@ class Connection(ConnectionBase):
         if result.status_code != 0:
             raise AnsibleError(to_native(result.std_err))
 
-        put_output = json.loads(result.std_out)
-        remote_sha1 = put_output.get("sha1")
+        try:
+            put_output = json.loads(result.std_out)
+        except ValueError:
+            # stdout does not contain a valid response
+            stderr = to_bytes(result.std_err, encoding='utf-8')
+            if stderr.startswith(b"#< CLIXML"):
+                stderr = _parse_clixml(stderr)
+            raise AnsibleError('winrm put_file failed; \nstdout: %s\nstderr %s' % (to_native(result.std_out), to_native(stderr)))
 
+        remote_sha1 = put_output.get("sha1")
         if not remote_sha1:
             raise AnsibleError("Remote sha1 was not returned")
 
