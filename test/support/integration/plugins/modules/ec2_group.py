@@ -374,7 +374,7 @@ ip_permissions:
     - from_port: 8182
       ip_protocol: tcp
       ip_ranges:
-        - cidr_ip: "198.51.100.1/32"
+        - cidr_ip: "1.1.1.1/32"
       ipv6_ranges: []
       prefix_list_ids: []
       to_port: 8182
