@@ -2199,7 +2199,7 @@ class ModuleValidator(Validator):
             self._check_for_os_call()
 
         if self._powershell_module():
-            if self.basename in self.PS_DOC_BLACKLIST:
+            if self.basename in self.PS_DOC_REJECTLIST:
                 return
 
             self._validate_ps_replacers()
