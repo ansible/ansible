@@ -107,7 +107,6 @@ lib/ansible/modules/apt.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
 lib/ansible/modules/apt.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/apt.py validate-modules:undocumented-parameter
-lib/ansible/modules/apt_key.py validate-modules:mutually_exclusive-unknown
 lib/ansible/modules/apt_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/apt_key.py validate-modules:undocumented-parameter
 lib/ansible/modules/apt_repository.py validate-modules:doc-default-does-not-match-spec

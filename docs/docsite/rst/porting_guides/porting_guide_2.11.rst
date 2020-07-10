@@ -37,7 +37,7 @@ No notable changes
 Modules
 =======
 
-No notable changes
+* The ``apt_key`` module has explicitly defined ``file`` as mutually exclusive with ``data``, ``keyserver`` and ``url``. They cannot be used together anymore.
 
 
 Modules removed

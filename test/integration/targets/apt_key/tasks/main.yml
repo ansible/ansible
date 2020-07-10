@@ -26,3 +26,6 @@
 
 - include: 'apt_key.yml'
   when: ansible_distribution in ('Ubuntu', 'Debian')
+  
+- include: 'file.yml'
+  when: ansible_distribution in ('Ubuntu', 'Debian')
