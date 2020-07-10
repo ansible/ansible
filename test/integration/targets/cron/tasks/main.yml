@@ -132,15 +132,15 @@
       job: 'echo "うどんは好きだがお化け👻は苦手である"'
       user: root
 
-  - name: "Ensure /tmp/my.conf contains '127.0.0.1'"
+  - name: "Ensure cron_file contains job string"
     lineinfile:
-      name: /tmp/my.conf
+      name: /etc/cron.d/cron_filename
       regexp: "^.*?(うどんは好きだがお化け👻は苦手である).*?$"
-      line: "Not found."
+      line: "Found!"
       state: present
     check_mode: yes
     register: check_contents
-    failed_when: (check_contents is changed) or (check_contents is failed)
+    failed_when: (check_contents is not changed) or (check_contents is failed)
 
   - name: Cron file deletion
     cron:
