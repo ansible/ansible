@@ -280,7 +280,7 @@ def main():
     key_id = module.params['id']
     url = module.params['url']
     data = module.params['data']
-    file = module.params['file']
+    filename = module.params['file']
     keyring = module.params['keyring']
     state = module.params['state']
     keyserver = module.params['keyserver']
@@ -311,11 +311,11 @@ def main():
             # to decide if the key is installed or not.
             module.exit_json(changed=True)
         else:
-            if not file and not data and not keyserver:
+            if not filename and not data and not keyserver:
                 data = download_key(module, url)
 
-            if file:
-                add_key(module, file, keyring)
+            if filename:
+                add_key(module, filename, keyring)
             elif keyserver:
                 import_key(module, keyring, keyserver, key_id)
             else:
