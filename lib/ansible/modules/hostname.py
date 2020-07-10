@@ -237,11 +237,8 @@ class DebianStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
         if not os.path.isfile(self.HOSTNAME_FILE):
-            try:
-                open(self.HOSTNAME_FILE, "a").write("")
-            except IOError as e:
-                self.module.fail_json(msg="failed to write file: %s" %
-                                          to_native(e), exception=traceback.format_exc())
+            return ''
+
         try:
             f = open(self.HOSTNAME_FILE)
             try:
@@ -273,11 +270,8 @@ class SLESStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
         if not os.path.isfile(self.HOSTNAME_FILE):
-            try:
-                open(self.HOSTNAME_FILE, "a").write("")
-            except IOError as e:
-                self.module.fail_json(msg="failed to write file: %s" %
-                                          to_native(e), exception=traceback.format_exc())
+            return ''
+
         try:
             f = open(self.HOSTNAME_FILE)
             try:
@@ -362,11 +356,8 @@ class AlpineStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
         if not os.path.isfile(self.HOSTNAME_FILE):
-            try:
-                open(self.HOSTNAME_FILE, "a").write("")
-            except IOError as e:
-                self.module.fail_json(msg="failed to write file: %s" %
-                                          to_native(e), exception=traceback.format_exc())
+            return ''
+
         try:
             f = open(self.HOSTNAME_FILE)
             try:
@@ -497,11 +488,8 @@ class OpenBSDStrategy(GenericStrategy):
 
     def get_permanent_hostname(self):
         if not os.path.isfile(self.HOSTNAME_FILE):
-            try:
-                open(self.HOSTNAME_FILE, "a").write("")
-            except IOError as e:
-                self.module.fail_json(msg="failed to write file: %s" %
-                                          to_native(e), exception=traceback.format_exc())
+            return ''
+
         try:
             f = open(self.HOSTNAME_FILE)
             try:
@@ -562,14 +550,10 @@ class FreeBSDStrategy(GenericStrategy):
     HOSTNAME_FILE = '/etc/rc.conf.d/hostname'
 
     def get_permanent_hostname(self):
-
         name = 'UNKNOWN'
         if not os.path.isfile(self.HOSTNAME_FILE):
-            try:
-                open(self.HOSTNAME_FILE, "a").write("hostname=temporarystub\n")
-            except IOError as e:
-                self.module.fail_json(msg="failed to write file: %s" %
-                                          to_native(e), exception=traceback.format_exc())
+            return ''
+
         try:
             try:
                 f = open(self.HOSTNAME_FILE, 'r')

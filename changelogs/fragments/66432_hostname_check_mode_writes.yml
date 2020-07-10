@@ -1,0 +1,2 @@
+bugfixes:
+  - hostname - No longer modifies system files in get_* methods consulted when in check_mode (https://github.com/ansible/ansible/issues/66432)
