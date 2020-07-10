@@ -97,7 +97,7 @@ Before you can use eAPI to connect to a switch, you must enable eAPI. To enable 
      become_method: enable
      when: ansible_network_os == 'arista.eos.eos'
 
-You can find more options for enabling HTTP/HTTPS connections in the :ref:`arista.eos.eos_eapi <arista.eos.eos_eapi_module>` module documentation.
+You can find more options for enabling HTTP/HTTPS connections in the :ref:`arista.eos.eos_eapi <ansible_collections.arista.eos.eos_eapi_module>` module documentation.
 
 Once eAPI is enabled, change your ``group_vars/eos.yml`` to use the eAPI connection.
 
