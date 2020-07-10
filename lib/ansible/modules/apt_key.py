@@ -274,7 +274,7 @@ def main():
             state=dict(type='str', default='present', choices=['absent', 'present']),
         ),
         supports_check_mode=True,
-        mutually_exclusive=(('data', 'filename', 'keyserver', 'url'),),
+        mutually_exclusive=(('data', 'file', 'keyserver', 'url'),),
     )
 
     key_id = module.params['id']
