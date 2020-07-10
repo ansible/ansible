@@ -20,7 +20,7 @@ requirements: [ hostname ]
 description:
     - Set system's hostname, supports most OSs/Distributions, including those using systemd.
     - Note, this module does *NOT* modify C(/etc/hosts). You need to modify it yourself using other modules like template or replace.
-    - Windows, HP-UX and AIX are not currently supported.
+    - Windows, macOS, HP-UX and AIX are not currently supported.
 options:
     name:
         description:
@@ -29,8 +29,8 @@ options:
     use:
         description:
             - Which strategy to use to update the hostname.
-            - If not set we try to autodetect, but this can be problematic, specially with containers as they can present misleading information.
-        choices: ['generic', 'debian','sles', 'redhat', 'alpine', 'systemd', 'openrc', 'openbsd', 'solaris', 'freebsd']
+            - If not set we try to autodetect, but this can be problematic, particularly with containers as they can present misleading information.
+        choices: ['generic', 'debian', 'sles', 'redhat', 'alpine', 'systemd', 'openrc', 'openbsd', 'solaris', 'freebsd']
         version_added: '2.9'
 '''
 
@@ -155,9 +155,7 @@ class GenericStrategy(object):
     def __init__(self, module):
         self.module = module
         self.changed = False
-        self.hostname_cmd = self.module.get_bin_path('hostnamectl', False)
-        if not self.hostname_cmd:
-            self.hostname_cmd = self.module.get_bin_path('hostname', True)
+        self.hostname_cmd = self.module.get_bin_path('hostname', True)
 
     def update_current_and_permanent_hostname(self):
         self.update_current_hostname()
@@ -373,6 +371,10 @@ class SystemdStrategy(GenericStrategy):
     This is a Systemd hostname manipulation strategy class - it uses
     the hostnamectl command.
     """
+
+    def __init__(self, module):
+        super(SystemdStrategy, self).__init__(module)
+        self.hostname_cmd = self.module.get_bin_path('hostnamectl', True)
 
     def get_current_hostname(self):
         cmd = [self.hostname_cmd, '--transient', 'status']

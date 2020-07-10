@@ -1,0 +1,121 @@
+# Setting the hostname in our test containers doesn't work currently
+- when: ansible_facts.virtualization_type != 'docker'
+  block:
+    - name: Include distribution specific variables
+      include_vars: "{{ lookup('first_found', params) }}"
+      vars:
+        params:
+          files:
+            - "{{ ansible_facts.distribution }}.yml"
+            - "{{ ansible_facts.os_family }}.yml"
+            - default.yml
+          paths:
+            - "{{ role_path }}/vars"
+
+    - name: Get current hostname
+      command: hostname
+      register: original
+
+    - name: Run hostname module in check_mode
+      hostname:
+        name: crocodile.ansible.test.doesthiswork.net.example.com
+      check_mode: true
+      register: hn1
+
+    - name: Get current hostname again
+      command: hostname
+      register: after_hn
+
+    - assert:
+        that:
+          - hn1 is changed
+          - original.stdout == after_hn.stdout
+
+    - when: _hostname_file is defined and _hostname_file
+      block:
+        - name: See if current hostname file exists
+          stat:
+            path: "{{ _hostname_file }}"
+          register: hn_stat
+
+        - name: Move the current hostname file if it exists
+          command: mv {{ _hostname_file }} {{ _hostname_file }}.orig
+          when: hn_stat.stat.exists
+
+        - name: Run hostname module in check_mode
+          hostname:
+            name: crocodile.ansible.test.doesthiswork.net.example.com
+          check_mode: true
+          register: hn
+
+        - stat:
+            path: /etc/rc.conf.d/hostname
+          register: hn_stat_checkmode
+
+        - assert:
+            that:
+              # TODO: This is a legitimate bug and will be fixed in another PR.
+              # - not hn_stat_checkmode.stat.exists
+              - hn is changed
+
+        - name: Get hostname again
+          command: hostname
+          register: current_after_cm
+
+        - assert:
+            that:
+              - original.stdout == current_after_cm.stdout
+
+    - name: Run hostname module for real now
+      hostname:
+        name: crocodile.ansible.test.doesthiswork.net.example.com
+      register: hn2
+
+    - name: Get hostname
+      command: hostname
+      register: current_after_hn2
+
+    - name: Run hostname again to ensure it is idempotent
+      hostname:
+        name: crocodile.ansible.test.doesthiswork.net.example.com
+      register: hnidem
+
+    - name: Get hostname
+      command: hostname
+      register: current_after_hnidem
+
+    - assert:
+        that:
+          - hn2 is changed
+          - hnidem is not changed
+          - current_after_hn2.stdout == 'crocodile.ansible.test.doesthiswork.net.example.com'
+          - current_after_hn2.stdout == current_after_hnidem.stdout
+
+    - name: Include distribution specific tasks
+      include_tasks:
+        file: "{{ lookup('first_found', files) }}"
+      vars:
+        files:
+          - "{{ ansible_facts.distribution }}.yml"
+          - default.yml
+  always:
+    # Reset back to original hostname
+    - name: Move back original file if it existed
+      command: mv -f {{ _hostname_file }}.orig {{ _hostname_file }}
+      when: hn_stat is defined and hn_stat.stat.exists
+
+    - name: Delete the file if it never existed
+      file:
+        path: "{{ _hostname_file }}"
+        state: absent
+      when: hn_stat is defined and not hn_stat.stat.exists
+
+    # Reset back to original hostname
+    - hostname:
+        name: "{{ original.stdout }}"
+      register: revert
+
+    # And make sure we really do
+    - assert:
+        that:
+          - revert is changed
