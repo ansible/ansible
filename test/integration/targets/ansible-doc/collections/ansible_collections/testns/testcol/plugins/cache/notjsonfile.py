@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    cache: testns.testcol.notjsonfile
+    cache: notjsonfile
     short_description: JSON formatted files.
     description:
         - This cache uses JSON formatted, per host, files saved to the filesystem.
