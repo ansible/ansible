@@ -140,7 +140,6 @@ matrix:
     - env: T=i/cs//1
     - env: T=i/tower//1
     - env: T=i/cloud//1
-    - env: T=i/hcloud//1
 
 branches:
   except:
