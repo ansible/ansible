@@ -28,7 +28,7 @@ import math
 
 from jinja2.filters import environmentfilter
 
-from ansible.errors import AnsibleFilterError
+from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import zip, zip_longest
@@ -140,14 +140,14 @@ def logarithm(x, base=math.e):
         else:
             return math.log(x, base)
     except TypeError as e:
-        raise AnsibleFilterError('log() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterTypeError('log() can only be used on numbers: %s' % to_native(e))
 
 
 def power(x, y):
     try:
         return math.pow(x, y)
     except TypeError as e:
-        raise AnsibleFilterError('pow() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterTypeError('pow() can only be used on numbers: %s' % to_native(e))
 
 
 def inversepower(x, base=2):
@@ -157,13 +157,15 @@ def inversepower(x, base=2):
         else:
             return math.pow(x, 1.0 / float(base))
     except (ValueError, TypeError) as e:
-        raise AnsibleFilterError('root() can only be used on numbers: %s' % to_native(e))
+        raise AnsibleFilterTypeError('root() can only be used on numbers: %s' % to_native(e))
 
 
 def human_readable(size, isbits=False, unit=None):
     ''' Return a human readable string '''
     try:
         return formatters.bytes_to_human(size, isbits, unit)
+    except TypeError as e:
+        raise AnsibleFilterTypeError("human_readable() failed on bad input: %s" % to_native(e))
     except Exception:
         raise AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
 
@@ -172,6 +174,8 @@ def human_to_bytes(size, default_unit=None, isbits=False):
     ''' Return bytes count from a human readable string '''
     try:
         return formatters.human_to_bytes(size, default_unit, isbits)
+    except TypeError as e:
+        raise AnsibleFilterTypeError("human_to_bytes() failed on bad input: %s" % to_native(e))
     except Exception:
         raise AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
 
@@ -195,16 +199,18 @@ def rekey_on_member(data, key, duplicates='error'):
     elif isinstance(data, Iterable) and not isinstance(data, (text_type, binary_type)):
         iterate_over = data
     else:
-        raise AnsibleFilterError("Type is not a valid list, set, or dict")
+        raise AnsibleFilterTypeError("Type is not a valid list, set, or dict")
 
     for item in iterate_over:
         if not isinstance(item, Mapping):
-            raise AnsibleFilterError("List item is not a valid dict")
+            raise AnsibleFilterTypeError("List item is not a valid dict")
 
         try:
             key_elem = item[key]
         except KeyError:
             raise AnsibleFilterError("Key {0} was not found".format(key))
+        except TypeError as e:
+            raise AnsibleFilterTypeError(to_native(e))
         except Exception as e:
             raise AnsibleFilterError(to_native(e))
 

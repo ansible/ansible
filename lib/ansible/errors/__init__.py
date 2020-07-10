@@ -334,3 +334,8 @@ class AnsiblePluginCircularRedirect(AnsiblePluginError):
 class AnsibleCollectionUnsupportedVersionError(AnsiblePluginError):
     '''a collection is not supported by this version of Ansible'''
     pass
+
+
+class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
+    ''' a Jinja filter templating failure due to bad type'''
+    pass
