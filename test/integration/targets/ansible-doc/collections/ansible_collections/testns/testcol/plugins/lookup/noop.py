@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: testns.testcol.noop
+    lookup: noop
     author: Ansible core team
     short_description: returns input
     description:
