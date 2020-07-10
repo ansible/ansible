@@ -75,7 +75,7 @@ notes:
   - If you want to execute a command securely and predictably, it may be
     better to use the M(ansible.builtin.command) module instead. Best practices
     when writing playbooks will follow the trend of using M(ansible.builtin.command)
-    unless the C(shell) module is explicitly required. When running ad-hoc
+    unless the M(ansible.builtin.shell) module is explicitly required. When running ad-hoc
     commands, use your best judgement.
   - Check mode is supported when passing C(creates) or C(removes). If running
     in check mode and either of these are specified, the module will check for
