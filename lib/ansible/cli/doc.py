@@ -55,7 +55,7 @@ def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
         path = to_text(b_path, errors='surrogate_or_strict')
         collname = _get_collection_name_from_path(b_path)
         ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
-        plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), plugin_type, collection=collname))
+        plugin_list.update(DocCLI.find_plugins(os.path.join(path, 'plugins', ptype), False, plugin_type, collection=collname))
 
 
 class PluginNotFound(Exception):
@@ -181,9 +181,10 @@ class DocCLI(CLI):
                 coll_filter = context.CLIARGS['args'][0]
 
             if coll_filter in ('', None):
-                paths = loader._get_paths()
-                for path in paths:
-                    self.plugin_list.update(DocCLI.find_plugins(path, plugin_type))
+                paths = loader._get_paths_with_context()
+                for path_context in paths:
+                    self.plugin_list.update(
+                        DocCLI.find_plugins(path_context.path, path_context.internal, plugin_type))
 
             add_collection_plugins(self.plugin_list, plugin_type, coll_filter=coll_filter)
 
@@ -258,9 +259,9 @@ class DocCLI(CLI):
     def get_all_plugins_of_type(plugin_type):
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
         plugin_list = set()
-        paths = loader._get_paths()
-        for path in paths:
-            plugins_to_add = DocCLI.find_plugins(path, plugin_type)
+        paths = loader._get_paths_with_context()
+        for path_context in paths:
+            plugins_to_add = DocCLI.find_plugins(path_context.path, path_context.internal, plugin_type)
             plugin_list.update(plugins_to_add)
         return sorted(set(plugin_list))
 
@@ -268,13 +269,11 @@ class DocCLI(CLI):
     def get_plugin_metadata(plugin_type, plugin_name):
         # if the plugin lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
         loader = getattr(plugin_loader, '%s_loader' % plugin_type)
-        filename = loader.find_plugin(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
-        if filename is None:
+        result = loader.find_plugin_with_context(plugin_name, mod_type='.py', ignore_deprecated=True, check_aliases=True)
+        if not result.resolved:
             raise AnsibleError("unable to load {0} plugin named {1} ".format(plugin_type, plugin_name))
-
-        collection_name = ''
-        if plugin_name.startswith('ansible_collections.'):
-            collection_name = '.'.join(plugin_name.split('.')[1:3])
+        filename = result.plugin_resolved_path
+        collection_name = result.plugin_resolved_collection
 
         try:
             doc, __, __, __ = get_docstring(filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
@@ -313,11 +312,9 @@ class DocCLI(CLI):
         result = loader.find_plugin_with_context(plugin, mod_type='.py', ignore_deprecated=True, check_aliases=True)
         if not result.resolved:
             raise PluginNotFound('%s was not found in %s' % (plugin, search_paths))
-        plugin_name, filename = result.plugin_resolved_name, result.plugin_resolved_path
-
-        collection_name = ''
-        if plugin_name.startswith('ansible_collections.'):
-            collection_name = '.'.join(plugin_name.split('.')[1:3])
+        plugin_name = result.plugin_resolved_name
+        filename = result.plugin_resolved_path
+        collection_name = result.plugin_resolved_collection
 
         doc, plainexamples, returndocs, metadata = get_docstring(
             filename, fragment_loader, verbose=(context.CLIARGS['verbosity'] > 0),
@@ -369,7 +366,8 @@ class DocCLI(CLI):
         return text
 
     @staticmethod
-    def find_plugins(path, ptype, collection=None):
+    def find_plugins(path, internal, ptype, collection=None):
+        # if internal, collection could be set to `ansible.builtin`
 
         display.vvvv("Searching %s for plugins" % path)
 
