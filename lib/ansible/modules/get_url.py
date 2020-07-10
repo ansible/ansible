@@ -17,7 +17,7 @@ description:
        server I(must) have direct access to the remote resource.
      - By default, if an environment variable C(<protocol>_proxy) is set on
        the target host, requests will be sent through that proxy. This
-      behaviour can be overridden by setting a variable for this task
+       behaviour can be overridden by setting a variable for this task
        (see `setting the environment
        <https://docs.ansible.com/playbooks_environment.html>`_),
        or by using the use_proxy option.
