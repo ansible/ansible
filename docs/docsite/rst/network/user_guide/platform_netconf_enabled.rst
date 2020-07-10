@@ -28,11 +28,11 @@ Connections available
 
     Indirect Access       via a bastion (jump host)
 
-    Connection Settings   ``ansible_connection: netconf``
+    Connection Settings   ``ansible_connection: ansible.netcommon.netconf``
     ====================  ==========================================
 
 
-The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: netconf`` as soon as possible.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: ansible.netcommon.netconf`` as soon as possible.
 
 Using NETCONF in Ansible
 ========================
@@ -51,9 +51,9 @@ For example set up your platform-level variables just like in the CLI example ab
 .. code-block:: yaml
 
    - name: Enable NETCONF
-     connection: network_cli
+     connection: ansible.netcommon.network_cli
      junipernetworks.junos.junos_netconf:
-     when: ansible_network_os == 'junos'
+     when: ansible_network_os == 'junipernetworks.junos.junos'
 
 Once NETCONF is enabled, change your variables to use the NETCONF connection.
 
@@ -63,8 +63,8 @@ Example NETCONF inventory ``[junos:vars]``
 .. code-block:: yaml
 
    [junos:vars]
-   ansible_connection=netconf
-   ansible_network_os=junos
+   ansible_connection=ansible.netcommon.netconf
+   ansible_network_os=junipernetworks.junos.junos
    ansible_user=myuser
    ansible_password=!vault |
 
@@ -91,7 +91,7 @@ Example NETCONF task with configurable variables
      vars:
        ansible_private_key_file: /home/admin/.ssh/newprivatekeyfile
 
-Note: For netconf connection plugin configurable variables see :ref:`netconf <netconf_connection>`.
+Note: For netconf connection plugin configurable variables see :ref:`ansible.netcommon.netconf <ansible_collections.ansible.netcommon.netconf_connection>`.
 
 Bastion/Jumphost configuration
 ------------------------------

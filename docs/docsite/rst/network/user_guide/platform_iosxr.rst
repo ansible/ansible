@@ -30,7 +30,8 @@ Connections available
 
     Indirect Access       via a bastion (jump host)                   via a bastion (jump host)
 
-    Connection Settings   ``ansible_connection: network_cli``         ``ansible_connection: netconf``
+    Connection Settings   ``ansible_connection:``                     ``ansible_connection:``
+                            ``ansible.netcommon.network_cli``          ``ansible.netcommon.netconf``  
 
     |enable_mode|         not supported                               not supported
 
@@ -40,7 +41,7 @@ Connections available
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 
-The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: network_cli`` or ``ansible_connection: netconf`` instead.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: ansible.netcommon.network_cli`` or ``ansible_connection: ansible.netcommon.netconf`` instead.
 
 Using CLI in Ansible
 ====================
@@ -51,8 +52,8 @@ Example CLI inventory ``[iosxr:vars]``
 .. code-block:: yaml
 
    [iosxr:vars]
-   ansible_connection=network_cli
-   ansible_network_os=iosxr
+   ansible_connection=ansible.netcommon.network_cli
+   ansible_network_os=cisco.iosxr.iosxr
    ansible_user=myuser
    ansible_password=!vault...
    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
@@ -70,7 +71,7 @@ Example CLI task
    - name: Retrieve IOS-XR version
      cisco.iosxr.iosxr_command:
        commands: show version
-     when: ansible_network_os == 'iosxr'
+     when: ansible_network_os == 'cisco.iosxr.iosxr'
 
 
 Using NETCONF in Ansible
@@ -84,14 +85,14 @@ Before you can use NETCONF to connect to a switch, you must:
 - install the ``ncclient`` python package on your control node(s) with ``pip install ncclient``
 - enable NETCONF on the Cisco IOS-XR device(s)
 
-To enable NETCONF on a new switch via Ansible, use the ``iosxr_netconf`` module via the CLI connection. Set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
+To enable NETCONF on a new switch via Ansible, use the ``cisco.iosxr.iosxr_netconf`` module through the CLI connection. Set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
 
    - name: Enable NETCONF
-     connection: network_cli
+     connection: ansible.netcommon.network_cli
      cisco.iosxr.iosxr_netconf:
-     when: ansible_network_os == 'iosxr'
+     when: ansible_network_os == 'cisco.iosxr.iosxr'
 
 Once NETCONF is enabled, change your variables to use the NETCONF connection.
 
@@ -101,8 +102,8 @@ Example NETCONF inventory ``[iosxr:vars]``
 .. code-block:: yaml
 
    [iosxr:vars]
-   ansible_connection=netconf
-   ansible_network_os=iosxr
+   ansible_connection=ansible.netcommon.netconf
+   ansible_network_os=cisco.iosxr.iosxr
    ansible_user=myuser
    ansible_password=!vault |
    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'

@@ -26,7 +26,7 @@ Connections available
 
     Indirect Access       via a bastion (jump host)
 
-    Connection Settings   ``ansible_connection: network_cli``
+    Connection Settings   ``ansible_connection: ansible.netcommon.network_cli``
 
     |enable_mode|         supported: use ``ansible_become: yes`` with
                           ``ansible_become_method: enable`` and ``ansible_become_password:``
@@ -37,7 +37,7 @@ Connections available
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 
-The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: network_cli`` instead.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: ansible.netcommon.network_cli`` instead.
 
 Using CLI in Ansible
 ====================
@@ -47,8 +47,8 @@ Example CLI ``group_vars/ios.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: ios
+   ansible_connection: ansible.netcommon.network_cli
+   ansible_network_os: cisco.ios.ios
    ansible_user: myuser
    ansible_password: !vault...
    ansible_become: yes
@@ -70,7 +70,7 @@ Example CLI task
      cisco.ios.ios_config:
        backup: yes
      register: backup_ios_location
-     when: ansible_network_os == 'ios'
+     when: ansible_network_os == 'cisco.ios.ios'
 
 .. include:: shared_snippets/SSH_warning.txt
 

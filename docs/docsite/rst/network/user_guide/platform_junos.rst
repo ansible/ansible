@@ -29,7 +29,8 @@ Connections available
 
     Indirect Access       via a bastion (jump host)                   via a bastion (jump host)
 
-    Connection Settings   ``ansible_connection: network_cli``         ``ansible_connection: netconf``
+    Connection Settings   ``ansible_connection:                       ``ansible_connection:
+                          ``ansible.netcommon.network_cli``           ``ansible.netcommon.netconf``
 
     |enable_mode|         not supported by Junos OS                   not supported by Junos OS
 
@@ -41,7 +42,7 @@ Connections available
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 
-The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: network_cli`` or ``ansible_connection: netconf`` instead.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: ansible.netcommon.network_cli`` or ``ansible_connection: ansible.netcommon.netconf`` instead.
 
 Using CLI in Ansible
 ====================
@@ -52,8 +53,8 @@ Example CLI inventory ``[junos:vars]``
 .. code-block:: yaml
 
    [junos:vars]
-   ansible_connection=network_cli
-   ansible_network_os=junos
+   ansible_connection=ansible.netcommon.network_cli
+   ansible_network_os=junipernetworks.junos.junos
    ansible_user=myuser
    ansible_password=!vault...
    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
@@ -71,7 +72,7 @@ Example CLI task
    - name: Retrieve Junos OS version
      junipernetworks.junos.junos_command:
        commands: show version
-     when: ansible_network_os == 'junos'
+     when: ansible_network_os == 'junipernetworks.junos.junos'
 
 
 Using NETCONF in Ansible
@@ -85,14 +86,14 @@ Before you can use NETCONF to connect to a switch, you must:
 - install the ``ncclient`` python package on your control node(s) with ``pip install ncclient``
 - enable NETCONF on the Junos OS device(s)
 
-To enable NETCONF on a new switch via Ansible, use the ``junos_netconf`` module via the CLI connection. Set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
+To enable NETCONF on a new switch via Ansible, use the ``junipernetworks.junos.junos_netconf`` module through the CLI connection. Set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
 
    - name: Enable NETCONF
-     connection: network_cli
+     connection: ansible.netcommon.network_cli
      junipernetworks.junos.junos_netconf:
-     when: ansible_network_os == 'junos'
+     when: ansible_network_os == 'junipernetworks.junos.junos'
 
 Once NETCONF is enabled, change your variables to use the NETCONF connection.
 
@@ -102,8 +103,8 @@ Example NETCONF inventory ``[junos:vars]``
 .. code-block:: yaml
 
    [junos:vars]
-   ansible_connection=netconf
-   ansible_network_os=junos
+   ansible_connection=ansible.netcommon.netconf
+   ansible_network_os=junipernetworks.junos.junos
    ansible_user=myuser
    ansible_password=!vault |
    ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion01"'
@@ -118,7 +119,7 @@ Example NETCONF task
      junipernetworks.junos.junos_config:
        backup: yes
      register: backup_junos_location
-     when: ansible_network_os == 'junos'
+     when: ansible_network_os == 'junipernetworks.junos.junos'
 
 
 .. include:: shared_snippets/SSH_warning.txt

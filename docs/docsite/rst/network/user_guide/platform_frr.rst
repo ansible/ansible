@@ -4,7 +4,7 @@
 FRR Platform Options
 ***************************************
 
-The `FRR <https://galaxy.ansible.com/frr/frr>`_ collection supports the ``network_cli`` connection. This section provides details on how to use this connection for Free Range Routing (FRR).
+The `FRR <https://galaxy.ansible.com/frr/frr>`_ collection supports the ``ansible.netcommon.network_cli`` connection. This section provides details on how to use this connection for Free Range Routing (FRR).
 
 .. contents::
   :local:
@@ -26,7 +26,7 @@ Connections available
 
     Indirect Access       via a bastion (jump host)
 
-    Connection Settings   ``ansible_connection: network_cli``
+    Connection Settings   ``ansible_connection: ansible.netcommon.network_cli``
 
     |enable_mode|         not supported
 
@@ -44,8 +44,8 @@ Example CLI ``group_vars/frr.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: frr
+   ansible_connection: ansible.netcommon.network_cli
+   ansible_network_os: frr.frr.frr
    ansible_user: frruser
    ansible_password: !vault...
    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q bastion01"'

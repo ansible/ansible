@@ -26,7 +26,8 @@ Connections available
 
     Indirect Access       via a bastion (jump host)                   via a web proxy
 
-    Connection Settings   ``ansible_connection: network_cli``         ``ansible_connection: httpapi``
+    Connection Settings   ``ansible_connection:``                     ``ansible_connection:``
+                            ``ansible.netcommon.network_cli``             ``ansible.netcommon.httpapi``
 
     |enable_mode|         supported: use ``ansible_become: yes``      not supported by NX-API
                           with ``ansible_become_method: enable``
@@ -38,7 +39,7 @@ Connections available
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation) |br| supported as of 2.5.3
 
 
-The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi`` instead.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: ansible.netcommon.network_cli`` or ``ansible_connection: ansible.netcommon.httpapi`` instead.
 
 Using CLI in Ansible
 ====================
@@ -48,8 +49,8 @@ Example CLI ``group_vars/nxos.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: nxos
+   ansible_connection: ansible.netcommon.network_cli
+   ansible_network_os: cisco.nxos.nxos
    ansible_user: myuser
    ansible_password: !vault...
    ansible_become: yes
@@ -71,7 +72,7 @@ Example CLI task
      cisco.nxos.nxos_config:
        backup: yes
      register: backup_nxos_location
-     when: ansible_network_os == 'nxos'
+     when: ansible_network_os == 'cisco.nxos.nxos'
 
 
 
@@ -89,7 +90,7 @@ Before you can use NX-API to connect to a switch, you must enable NX-API. To ena
       cisco.nxos.nxos_nxapi:
           enable_http: yes
           enable_https: yes
-      when: ansible_network_os == 'nxos'
+      when: ansible_network_os == 'cisco.nxos.nxos'
 
 To find out more about the options for enabling HTTP/HTTPS and local http see the :ref:`nxos_nxapi <nxos_nxapi_module>` module documentation.
 
@@ -100,8 +101,8 @@ Example NX-API ``group_vars/nxos.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: httpapi
-   ansible_network_os: nxos
+   ansible_connection: ansible.netcommon.httpapi
+   ansible_network_os: cisco.nxos.nxos
    ansible_user: myuser
    ansible_password: !vault...
    proxy_env:
@@ -121,7 +122,7 @@ Example NX-API task
        backup: yes
      register: backup_nxos_location
      environment: "{{ proxy_env }}"
-     when: ansible_network_os == 'nxos'
+     when: ansible_network_os == 'cisco.nxos.nxos'
 
 In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed to the ``environment`` option of the module used in the task.
 
