@@ -9,7 +9,7 @@ import os
 from collections import defaultdict
 
 from ansible.collections import has_collection_flag
-from ansible.module_utils._text import to_bytes
+from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import string_types
 from ansible.module_utils.common._collections_compat import Iterable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
@@ -94,7 +94,8 @@ def list_collection_dirs(search_paths, coll_filter=None):
                                 b_coll = to_bytes(collection)
                                 b_coll_dir = os.path.join(b_namespace_dir, b_coll)
                                 if not has_collection_flag(b_coll_dir):
-                                    display.warning('Found collection but missing MANIFEST.JSON or galaxy.yml: %s' % to_text(b_coll_dir, errors='surrogate_or_strict'))
+                                    coll_dir = to_text(b_coll_dir, errors='surrogate_or_strict')
+                                    display.warning('Found collection but missing MANIFEST.JSON or galaxy.yml: %s' % coll_dir)
                                 collections[ns][collection] = b_coll_dir
                                 yield b_coll_dir
 
