@@ -70,8 +70,8 @@ notes:
     For more complex needs, consider the use of expect code with the M(ansible.builtin.shell)
     or M(ansible.builtin.script) modules. (An example is part of the M(ansible.builtin.shell) module documentation)
 seealso:
-- module: script
-- module: shell
+- module: ansible.builtin.script
+- module: ansible.builtin.shell
 author: "Matt Martz (@sivel)"
 '''
 

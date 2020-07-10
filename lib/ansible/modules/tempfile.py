@@ -42,8 +42,8 @@ options:
     type: str
     default: ""
 seealso:
-- module: file
-- module: win_tempfile
+- module: ansible.builtin.file
+- module: ansible.windows.win_tempfile
 author:
   - Krzysztof Magosa (@krzysztof-magosa)
 '''
