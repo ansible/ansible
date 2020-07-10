@@ -252,7 +252,7 @@ class CronTab(object):
             # read the cronfile
             try:
                 f = open(self.cron_file, 'rb')
-                self.existing = to_text(f.read())
+                self.existing = to_text(f.read(), errors='surrogate_or_strict')
                 self.lines = self.existing.splitlines()
                 f.close()
             except IOError:
