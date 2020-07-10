@@ -1,0 +1,2 @@
+bugfixes:
+  - Allow TypeErrors on Undefined variables in filters to be handled or deferred when processing for loops.

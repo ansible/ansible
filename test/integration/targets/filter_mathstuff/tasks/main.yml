@@ -183,7 +183,7 @@
       - '"0.10 GB" == 102400000|human_readable(unit="G")'
       - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
       - human_readable_exc1_res is failed
-      - '"interpret following string" in human_readable_exc1_res.msg'
+      - '"failed on bad input" in human_readable_exc1_res.msg'
 
 - name: Verify human_to_bytes
   tags: human_to_bytes

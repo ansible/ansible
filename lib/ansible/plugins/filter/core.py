@@ -40,7 +40,7 @@ from random import Random, SystemRandom, shuffle
 
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
-from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.six import iteritems, string_types, integer_types, reraise
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -509,7 +509,7 @@ def subelements(obj, subelements, skip_missing=False):
     elif isinstance(subelements, string_types):
         subelement_list = subelements.split('.')
     else:
-        raise AnsibleFilterError('subelements must be a list or a string')
+        raise AnsibleFilterTypeError('subelements must be a list or a string')
 
     results = []
 
@@ -524,9 +524,9 @@ def subelements(obj, subelements, skip_missing=False):
                     break
                 raise AnsibleFilterError("could not find %r key in iterated item %r" % (subelement, values))
             except TypeError:
-                raise AnsibleFilterError("the key %s should point to a dictionary, got '%s'" % (subelement, values))
+                raise AnsibleFilterTypeError("the key %s should point to a dictionary, got '%s'" % (subelement, values))
         if not isinstance(values, list):
-            raise AnsibleFilterError("the key %r should point to a list, got %r" % (subelement, values))
+            raise AnsibleFilterTypeError("the key %r should point to a list, got %r" % (subelement, values))
 
         for value in values:
             results.append((element, value))
@@ -539,7 +539,7 @@ def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
 
     if not isinstance(mydict, Mapping):
-        raise AnsibleFilterError("dict2items requires a dictionary, got %s instead." % type(mydict))
+        raise AnsibleFilterTypeError("dict2items requires a dictionary, got %s instead." % type(mydict))
 
     ret = []
     for key in mydict:
@@ -552,7 +552,7 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
         effectively as the reverse of dict2items '''
 
     if not is_sequence(mylist):
-        raise AnsibleFilterError("items2dict requires a list, got %s instead." % type(mylist))
+        raise AnsibleFilterTypeError("items2dict requires a list, got %s instead." % type(mylist))
 
     return dict((item[key_name], item[value_name]) for item in mylist)
 
@@ -565,7 +565,7 @@ def path_join(paths):
     elif is_sequence(paths):
         return os.path.join(*paths)
     else:
-        raise AnsibleFilterError("|path_join expects string or sequence, got %s instead." % type(paths))
+        raise AnsibleFilterTypeError("|path_join expects string or sequence, got %s instead." % type(paths))
 
 
 class FilterModule(object):
