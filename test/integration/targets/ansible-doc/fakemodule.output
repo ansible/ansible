@@ -1,4 +1,4 @@
-> FAKEMODULE    (./collections/ansible_collections/testns/testcol/plugins/modules/fakemodule.py)
+> TESTNS.TESTCOL.FAKEMODULE    (./collections/ansible_collections/testns/testcol/plugins/modules/fakemodule.py)
 
         this is a fake module
 
