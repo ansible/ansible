@@ -2961,17 +2961,17 @@ plugin_routing:
     ibm_sa_vol_map:
       redirect: community.general.ibm_sa_vol_map
     infini_export:
-      redirect: community.general.infini_export
+      redirect: infinidat.infinibox.infini_export
     infini_export_client:
-      redirect: community.general.infini_export_client
+      redirect: infinidat.infinibox.infini_export_client
     infini_fs:
-      redirect: community.general.infini_fs
+      redirect: infinidat.infinibox.infini_fs
     infini_host:
-      redirect: community.general.infini_host
+      redirect: infinidat.infinibox.infini_host
     infini_pool:
-      redirect: community.general.infini_pool
+      redirect: infinidat.infinibox.infini_pool
     infini_vol:
-      redirect: community.general.infini_vol
+      redirect: infinidat.infinibox.infini_vol
     na_cdot_aggregate:
       redirect: community.general.na_cdot_aggregate
     na_cdot_license:
@@ -7630,7 +7630,7 @@ plugin_routing:
     identity.keycloak:
       redirect: community.general.identity.keycloak
     infinibox:
-      redirect: community.general.infinibox
+      redirect: infinidat.infinibox.infinibox
     influxdb:
       redirect: community.general.influxdb
     ipa:
@@ -8345,7 +8345,7 @@ plugin_routing:
     ibm_storage:
       redirect: community.general.ibm_storage
     infinibox:
-      redirect: community.general.infinibox
+      redirect: infinidat.infinibox.infinibox
     influxdb:
       redirect: community.general.influxdb
     ingate:
