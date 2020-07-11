@@ -1159,7 +1159,7 @@ def main():
 
     if module.params['accept_hostkey']:
         if ssh_opts is not None:
-            if "-o StrictHostKeyChecking=no" not in ssh_opts:
+            if ("-o StrictHostKeyChecking=no" not in ssh_opts) and ("-o StrictHostKeyChecking=accept-new" not in ssh_opts):
                 ssh_opts += " -o StrictHostKeyChecking=no"
         else:
             ssh_opts = "-o StrictHostKeyChecking=no"
