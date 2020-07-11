@@ -11,8 +11,7 @@
     that:
       - lookup('varnames', '^qz_.+', wantlist=True) == ['qz_1', 'qz_2']
       - lookup('varnames', '^qz_.+', '^qa.*', wantlist=True) == ['qz_1', 'qz_2', 'qa_1']
-      - >-
-        'ansible_python_interpreter' in lookup('varnames', '^ansible_.*', wantlist=True)
+      - "'ansible_python_interpreter' in lookup('varnames', '^ansible_.*', wantlist=True)"
       - lookup('varnames', '^doesnotexist.*', wantlist=True) == []
       - lookup('varnames', '^doesnotexist.*', '.*python_inter.*', wantlist=True) == ['ansible_python_interpreter']
       - lookup('varnames', '^q.*_\d', wantlist=True) == ['qz_1', 'qz_2', 'qa_1']
@@ -33,10 +32,7 @@
 - assert:
     that:
       - fail1res is failed
-      - >-
-        'Invalid setting identifier' in fail1res.msg
+      - "'Invalid setting identifier' in fail1res.msg"
       - fail2res is failed
-      - >-
-        'Unable to use' in fail2res.msg
-      - >-
-        'nothing to repeat' in fail2res.msg
+      - "'Unable to use' in fail2res.msg"
+      - "'nothing to repeat' in fail2res.msg"
