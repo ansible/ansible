@@ -7569,388 +7569,394 @@ plugin_routing:
       redirect: ansible_collections.testns.testcoll.plugins.module_utils.base
     sub1.sub2.formerly_core:
       redirect: ansible_collections.testns.testcoll.plugins.module_utils.base
-    common:
-      redirect: f5networks.f5_modules.common
-    frr:
-      redirect: frr.frr.frr
-    module:
-      redirect: cisco.iosxr.module
-    providers:
-      redirect: cisco.iosxr.providers
-    base:
-      redirect: vyos.vyos.base
-    neighbors:
-      redirect: cisco.iosxr.neighbors
-    process:
-      redirect: cisco.iosxr.process
-    address_family:
-      redirect: cisco.iosxr.address_family
-    alicloud_ecs:
-      redirect: community.general.alicloud_ecs
-    cloud:
-      redirect: community.general.cloud
-    cloudscale:
-      redirect: cloudscale_ch.cloud.api
-    cloudstack:
-      redirect: ngine_io.cloudstack.cloudstack
-    database:
-      redirect: community.general.database
-    digital_ocean:
-      redirect: community.digitalocean.digital_ocean
-    dimensiondata:
-      redirect: community.general.dimensiondata
-    docker.common:
-      redirect: community.general.docker.common
-    docker.swarm:
-      redirect: community.general.docker.swarm
-    exoscale:
-      redirect: ngine_io.exoscale.exoscale
-    f5_utils:
-      tombstone:
-        removal_date: 2019-11-06
-        warning_text: f5_utils has been removed.
-    firewalld:
-      redirect: community.general.firewalld
-    gcdns:
-      redirect: community.general.gcdns
-    gce:
-      redirect: community.general.gce
-    gcp:
-      redirect: google.cloud.gcp
-    gitlab:
-      redirect: community.general.gitlab
-    heroku:
-      redirect: community.general.heroku
-    hetzner:
-      redirect: community.general.hetzner
-    hwc_utils:
-      redirect: community.general.hwc_utils
-    ibm_sa_utils:
-      redirect: community.general.ibm_sa_utils
-    identity.keycloak:
-      redirect: community.general.identity.keycloak
-    infinibox:
-      redirect: infinidat.infinibox.infinibox
-    influxdb:
-      redirect: community.general.influxdb
-    ipa:
-      redirect: community.general.ipa
-    known_hosts:
-      redirect: community.general.known_hosts
-    kubevirt:
-      redirect: community.general.kubevirt
-    ldap:
-      redirect: community.general.ldap
-    linode:
-      redirect: community.general.linode
-    lxd:
-      redirect: community.general.lxd
-    manageiq:
-      redirect: community.general.manageiq
-    memset:
-      redirect: community.general.memset
-    mysql:
-      redirect: community.mysql.mysql
-    api:
-      redirect: skydive.skydive.api
-    network.a10:
-      redirect: community.network.network.a10
-    network.aireos:
-      redirect: community.network.network.aireos
-    network.aos:
-      redirect: community.network.network.aos
-    network.apconos:
-      redirect: community.network.network.apconos
-    network.aruba:
-      redirect: community.network.network.aruba
-    network.avi.ansible_utils:
-      redirect: community.network.network.avi.ansible_utils
-    network.avi.avi:
-      redirect: community.network.network.avi.avi
-    network.avi.avi_api:
-      redirect: community.network.network.avi.avi_api
-    network.bigswitch:
-      redirect: community.network.network.bigswitch
-    network.cloudengine.ce:
-      redirect: community.network.network.cloudengine.ce
-    network.cnos.cnos:
-      redirect: community.network.network.cnos.cnos
-    network.cnos.cnos_devicerules:
-      redirect: community.network.network.cnos.cnos_devicerules
-    network.cnos.cnos_errorcodes:
-      redirect: community.network.network.cnos.cnos_errorcodes
-    network.edgeos:
-      redirect: community.network.network.edgeos
-    network.edgeswitch.edgeswitch:
-      redirect: community.network.network.edgeswitch.edgeswitch
-    network.edgeswitch.edgeswitch_interface:
-      redirect: community.network.network.edgeswitch.edgeswitch_interface
-    network.enos:
-      redirect: community.network.network.enos
-    network.eric_eccli:
-      redirect: community.network.network.eric_eccli
-    facts:
-      redirect: vyos.vyos.facts
-    l2_interfaces:
-      redirect: junipernetworks.junos.l2_interfaces
-    lldp_global:
-      redirect: vyos.vyos.lldp_global
-    lldp_interfaces:
-      redirect: vyos.vyos.lldp_interfaces
-    vlans:
-      redirect: junipernetworks.junos.vlans
-    network.exos:
-      redirect: community.network.network.exos
-    utils:
-      redirect: vyos.vyos.utils
-    network.iworkflow:
-      redirect: community.network.network.iworkflow  # does not exist in community.general!
-    network.exos.facts.legacy:
-      redirect: community.network.network.exos.facts.legacy
-    urls:
-      redirect: amazon.aws.urls
-    network.fortianalyzer:
-      redirect: community.network.network.fortianalyzer
-    network.ftd.configuration:
-      redirect: community.network.network.ftd.configuration
-    network.ftd.device:
-      redirect: community.network.network.ftd.device
-    network.ftd.fdm_swagger_client:
-      redirect: community.network.network.ftd.fdm_swagger_client
-    network.ftd.operation:
-      redirect: community.network.network.ftd.operation
-    network.icx:
-      redirect: community.network.network.icx
-    network.ironware:
-      redirect: community.network.network.ironware
-    network.netscaler:
-      redirect: community.network.network.netscaler
-    network.netvisor.netvisor:
-      redirect: community.network.network.netvisor.netvisor
-    network.netvisor.pn_nvos:
-      redirect: community.network.network.netvisor.pn_nvos
-    network.nos:
-      redirect: community.network.network.nos
-    network.nso:
-      redirect: community.network.network.nso
-    network.onyx:
-      redirect: mellanox.onyx.onyx
-    network.ordnance:
-      redirect: community.network.network.ordnance
-    network.panos:
-      redirect: community.network.network.panos
-    network.routeros:
-      redirect: community.network.network.routeros
-    network.slxos:
-      redirect: community.network.network.slxos
-    network.sros:
-      redirect: community.network.network.sros
-    network.voss:
-      redirect: community.network.network.voss
-    oneandone:
-      redirect: community.general.oneandone
-    oneview:
-      redirect: community.general.oneview
-    online:
-      redirect: community.general.online
-    opennebula:
-      redirect: community.general.opennebula
-    oracle.oci_utils:
-      redirect: community.general.oracle.oci_utils
-    postgres:
-      redirect: community.general.postgres
-    pure:
-      redirect: community.general.pure
-    rabbitmq:
-      redirect: community.rabbitmq.rabbitmq
-    rax:
-      redirect: community.general.rax
-    redfish_utils:
-      redirect: community.general.redfish_utils
-    redhat:
-      redirect: community.general.redhat
-    remote_management.dellemc.dellemc_idrac:
-      redirect: community.general.remote_management.dellemc.dellemc_idrac
-    remote_management.dellemc.ome:
-      redirect: community.general.remote_management.dellemc.ome
-    scaleway:
-      redirect: community.general.scaleway
-    source_control.bitbucket:
-      redirect: community.general.source_control.bitbucket
-    storage.emc.emc_vnx:
-      redirect: community.general.storage.emc.emc_vnx
-    storage.hpe3par:
-      redirect: community.general.storage.hpe3par
-    univention_umc:
-      redirect: community.general.univention_umc
-    utm_utils:
-      redirect: community.general.utm_utils
-    vexata:
-      redirect: community.general.vexata
-    vultr:
-      redirect: ngine_io.vultr.vultr
-    xenserver:
-      redirect: community.general.xenserver
-    raw:
-      redirect: community.kubernetes.raw
-    scale:
-      redirect: community.kubernetes.scale
-    acme:
-      redirect: community.crypto.acme
-    crypto:
-      redirect: community.crypto.crypto
-    VmwareRestModule:
-      redirect: vmware.vmware_rest.vmware_httpapi
-    vca:
-      redirect: community.vmware.vca
-    vmware:
-      redirect: community.vmware.vmware
-    vmware_rest_client:
-      redirect: community.vmware.vmware_rest_client
-    vmware_spbm:
-      redirect: community.vmware.vmware_spbm
-    service_now:
-      redirect: servicenow.servicenow.service_now
-    acm:
-      redirect: amazon.aws.acm
-    batch:
-      redirect: amazon.aws.batch
-    cloudfront_facts:
-      redirect: amazon.aws.cloudfront_facts
-    core:
-      redirect: amazon.aws.core
-    direct_connect:
-      redirect: amazon.aws.direct_connect
-    elb_utils:
-      redirect: amazon.aws.elb_utils
-    elbv2:
-      redirect: amazon.aws.elbv2
-    iam:
-      redirect: amazon.aws.iam
-    rds:
-      redirect: amazon.aws.rds
-    s3:
-      redirect: amazon.aws.s3
-    waf:
-      redirect: amazon.aws.waf
-    waiters:
-      redirect: amazon.aws.waiters
-    ec2:
-      redirect: amazon.aws.ec2
-    ipaddress:
-      redirect: f5networks.f5_modules.ipaddress
-    network:
-      redirect: ansible.netcommon.network
-    parsing:
-      redirect: ansible.netcommon.parsing
-    netconf:
-      redirect: ansible.netcommon.netconf
-    config:
-      redirect: ansible.netcommon.config
-    restconf:
-      redirect: ansible.netcommon.restconf
-    ismount:
-      redirect: ansible.posix.ismount
-#    Ansible.Service:
-#      redirect: ansible.windows.Ansible.Service
-    fortimanager:
-      redirect: fortinet.fortios.fortimanager
-    system:
-      redirect: fortinet.fortios.system
-    fortios:
-      redirect: fortinet.fortios.fortios
-    netbox_utils:
-      redirect: netbox.netbox.netbox_utils
-    netapp:
-      redirect: netapp.ontap.netapp
-    netapp_elementsw_module:
-      redirect: netapp.ontap.netapp_elementsw_module
-    netapp_module:
-      redirect: netapp.ontap.netapp_module
-    checkpoint:
-      redirect: check_point.mgmt.checkpoint
-    eos:
-      redirect: arista.eos.eos
-    acl_interfaces:
-      redirect: cisco.nxos.acl_interfaces
-    static_routes:
-      redirect: vyos.vyos.static_routes
-    l3_interfaces:
-      redirect: vyos.vyos.l3_interfaces
-    lacp_interfaces:
-      redirect: junipernetworks.junos.lacp_interfaces
-    lag_interfaces:
-      redirect: vyos.vyos.lag_interfaces
-    interfaces:
-      redirect: vyos.vyos.interfaces
-    lacp:
-      redirect: junipernetworks.junos.lacp
-    acls:
-      redirect: cisco.nxos.acls
-    aci:
-      redirect: cisco.aci.aci
-    asa:
-      redirect: cisco.asa.asa
-    intersight:
-      redirect: cisco.intersight.intersight
-    ios:
-      redirect: cisco.ios.ios
-    iosxr:
-      redirect: cisco.iosxr.iosxr
-    meraki:
-      redirect: cisco.meraki.meraki
-    mso:
-      redirect: cisco.mso.mso
-    nxos:
-      redirect: cisco.nxos.nxos
-    bfd_interfaces:
-      redirect: cisco.nxos.bfd_interfaces
-    telemetry:
-      redirect: cisco.nxos.telemetry
-    hsrp_interfaces:
-      redirect: cisco.nxos.hsrp_interfaces
-    ucs:
-      redirect: cisco.ucs.ucs
-    bigip:
-      redirect: f5networks.f5_modules.bigip
-    bigiq:
-      redirect: f5networks.f5_modules.bigiq
-    compare:
-      redirect: f5networks.f5_modules.compare
-    icontrol:
-      redirect: f5networks.f5_modules.icontrol
-    openstack:
-      redirect: openstack.cloud.openstack
-    junos:
-      redirect: junipernetworks.junos.junos
-    ansible_tower:
-      redirect: awx.awx.ansible_tower
-    ovirt:
-      redirect: ovirt.ovirt.ovirt
-    dellos10:
-      redirect: dellemc.os10.os10
-    dellos9:
-      redirect: dellemc.os9.dellos9
-    dellos6:
-      redirect: dellemc.os6.dellos6
-    hcloud:
-      redirect: hetzner.hcloud.hcloud
-    gcp_utils:
-      redirect: google.cloud.gcp_utils
-    azure_rm_common:
-      redirect: azure.azcollection.azure_rm_common
-    azure_rm_common_ext:
-      redirect: azure.azcollection.azure_rm_common_ext
-    azure_rm_common_rest:
-      redirect: azure.azcollection.azure_rm_common_rest
-    vyos:
-      redirect: vyos.vyos.vyos
-    firewall_global:
-      redirect: vyos.vyos.firewall_global
-    firewall_rules:
-      redirect: vyos.vyos.firewall_rules
-    firewall_interfaces:
-      redirect: vyos.vyos.firewall_interfaces
+#    network.f5.common:
+#      redirect: f5networks.f5_modules.common
+#    k8s:
+#      redirect: ansible_collections.community.kubernetes.plugins.module_utils
+#    k8s.common:
+#      redirect: ansible_collections.community.kubernetes.plugins.module_utils.common
+#    frr:
+#      redirect: frr.frr.frr
+#    module:
+#      redirect: cisco.iosxr.module
+#    providers:
+#      redirect: cisco.iosxr.providers
+#    base:
+#      redirect: vyos.vyos.base
+#    neighbors:
+#      redirect: cisco.iosxr.neighbors
+#    process:
+#      redirect: cisco.iosxr.process
+#    address_family:
+#      redirect: cisco.iosxr.address_family
+#    alicloud_ecs:
+#      redirect: community.general.alicloud_ecs
+#    cloud:
+#      redirect: community.general.cloud
+#    cloudscale:
+#      redirect: cloudscale_ch.cloud.api
+#    cloudstack:
+#      redirect: ngine_io.cloudstack.cloudstack
+#    database:
+#      redirect: community.general.database
+#    digital_ocean:
+#      redirect: community.digitalocean.digital_ocean
+#    dimensiondata:
+#      redirect: community.general.dimensiondata
+#    docker.common:
+#      redirect: community.general.docker.common
+#    docker.swarm:
+#      redirect: community.general.docker.swarm
+#    exoscale:
+#      redirect: ngine_io.exoscale.exoscale
+#    f5_utils:
+#      tombstone:
+#        removal_date: 2019-11-06
+#        warning_text: f5_utils has been removed.
+#    firewalld:
+#      redirect: community.general.firewalld
+#    gcdns:
+#      redirect: community.general.gcdns
+#    gce:
+#      redirect: community.general.gce
+#    gcp:
+#      redirect: google.cloud.gcp
+#    gitlab:
+#      redirect: community.general.gitlab
+#    heroku:
+#      redirect: community.general.heroku
+#    hetzner:
+#      redirect: community.general.hetzner
+#    hwc_utils:
+#      redirect: community.general.hwc_utils
+#    ibm_sa_utils:
+#      redirect: community.general.ibm_sa_utils
+#    identity.keycloak:
+#      redirect: community.general.identity.keycloak
+#    infinibox:
+#      redirect: community.general.infinibox
+#    influxdb:
+#      redirect: community.general.influxdb
+#    ipa:
+#      redirect: community.general.ipa
+#    known_hosts:
+#      redirect: community.general.known_hosts
+#    kubevirt:
+#      redirect: community.general.kubevirt
+#    ldap:
+#      redirect: community.general.ldap
+#    linode:
+#      redirect: community.general.linode
+#    lxd:
+#      redirect: community.general.lxd
+#    manageiq:
+#      redirect: community.general.manageiq
+#    memset:
+#      redirect: community.general.memset
+#    mysql:
+#      redirect: community.mysql.mysql
+#    api:
+#      redirect: skydive.skydive.api
+#    network.a10:
+#      redirect: community.network.network.a10
+#    network.aireos:
+#      redirect: community.network.network.aireos
+#    network.aos:
+#      redirect: community.network.network.aos
+#    network.apconos:
+#      redirect: community.network.network.apconos
+#    network.aruba:
+#      redirect: community.network.network.aruba
+#    network.avi.ansible_utils:
+#      redirect: community.network.network.avi.ansible_utils
+#    network.avi.avi:
+#      redirect: community.network.network.avi.avi
+#    network.avi.avi_api:
+#      redirect: community.network.network.avi.avi_api
+#    network.bigswitch:
+#      redirect: community.network.network.bigswitch
+#    network.cloudengine.ce:
+#      redirect: community.network.network.cloudengine.ce
+#    network.cnos.cnos:
+#      redirect: community.network.network.cnos.cnos
+#    network.cnos.cnos_devicerules:
+#      redirect: community.network.network.cnos.cnos_devicerules
+#    network.cnos.cnos_errorcodes:
+#      redirect: community.network.network.cnos.cnos_errorcodes
+#    network.edgeos:
+#      redirect: community.network.network.edgeos
+#    network.edgeswitch.edgeswitch:
+#      redirect: community.network.network.edgeswitch.edgeswitch
+#    network.edgeswitch.edgeswitch_interface:
+#      redirect: community.network.network.edgeswitch.edgeswitch_interface
+#    network.enos:
+#      redirect: community.network.network.enos
+#    network.eric_eccli:
+#      redirect: community.network.network.eric_eccli
+#    facts:
+#      redirect: vyos.vyos.facts
+#    l2_interfaces:
+#      redirect: junipernetworks.junos.l2_interfaces
+#    lldp_global:
+#      redirect: vyos.vyos.lldp_global
+#    lldp_interfaces:
+#      redirect: vyos.vyos.lldp_interfaces
+#    vlans:
+#      redirect: junipernetworks.junos.vlans
+#    network.exos:
+#      redirect: community.network.network.exos
+#    utils:
+#      redirect: vyos.vyos.utils
+#    network.iworkflow:
+#      redirect: community.network.network.iworkflow  # does not exist in community.general!
+#    network.exos.facts.legacy:
+#      redirect: community.network.network.exos.facts.legacy
+#    urls:
+#      redirect: amazon.aws.urls
+#    network.fortianalyzer:
+#      redirect: community.network.network.fortianalyzer
+#    network.ftd.configuration:
+#      redirect: community.network.network.ftd.configuration
+#    network.ftd.device:
+#      redirect: community.network.network.ftd.device
+#    network.ftd.fdm_swagger_client:
+#      redirect: community.network.network.ftd.fdm_swagger_client
+#    network.ftd.operation:
+#      redirect: community.network.network.ftd.operation
+#    network.icx:
+#      redirect: community.network.network.icx
+#    network.ironware:
+#      redirect: community.network.network.ironware
+#    network.netscaler:
+#      redirect: community.network.network.netscaler
+#    network.netvisor.netvisor:
+#      redirect: community.network.network.netvisor.netvisor
+#    network.netvisor.pn_nvos:
+#      redirect: community.network.network.netvisor.pn_nvos
+#    network.nos:
+#      redirect: community.network.network.nos
+#    network.nso:
+#      redirect: community.network.network.nso
+#    network.onyx:
+#      redirect: mellanox.onyx.onyx
+#    network.ordnance:
+#      redirect: community.network.network.ordnance
+#    network.panos:
+#      redirect: community.network.network.panos
+#    network.routeros:
+#      redirect: community.network.network.routeros
+#    network.slxos:
+#      redirect: community.network.network.slxos
+#    network.sros:
+#      redirect: community.network.network.sros
+#    network.voss:
+#      redirect: community.network.network.voss
+#    oneandone:
+#      redirect: community.general.oneandone
+#    oneview:
+#      redirect: community.general.oneview
+#    online:
+#      redirect: community.general.online
+#    opennebula:
+#      redirect: community.general.opennebula
+#    oracle.oci_utils:
+#      redirect: community.general.oracle.oci_utils
+#    postgres:
+#      redirect: community.general.postgres
+#    pure:
+#      redirect: community.general.pure
+#    rabbitmq:
+#      redirect: community.rabbitmq.rabbitmq
+#    rax:
+#      redirect: community.general.rax
+#    redfish_utils:
+#      redirect: community.general.redfish_utils
+#    redhat:
+#      redirect: community.general.redhat
+#    remote_management.dellemc.dellemc_idrac:
+#      redirect: community.general.remote_management.dellemc.dellemc_idrac
+#    remote_management.dellemc.ome:
+#      redirect: community.general.remote_management.dellemc.ome
+#    scaleway:
+#      redirect: community.general.scaleway
+#    source_control.bitbucket:
+#      redirect: community.general.source_control.bitbucket
+#    storage.emc.emc_vnx:
+#      redirect: community.general.storage.emc.emc_vnx
+#    storage.hpe3par:
+#      redirect: community.general.storage.hpe3par
+#    univention_umc:
+#      redirect: community.general.univention_umc
+#    utm_utils:
+#      redirect: community.general.utm_utils
+#    vexata:
+#      redirect: community.general.vexata
+#    vultr:
+#      redirect: ngine_io.vultr.vultr
+#    xenserver:
+#      redirect: community.general.xenserver
+#    raw:
+#      redirect: community.kubernetes.raw
+#    scale:
+#      redirect: community.kubernetes.scale
+#    acme:
+#      redirect: community.crypto.acme
+#    crypto:
+#      redirect: community.crypto.crypto
+#    VmwareRestModule:
+#      redirect: vmware.vmware_rest.vmware_httpapi
+#    vca:
+#      redirect: community.vmware.vca
+#    vmware:
+#      redirect: community.vmware.vmware
+#    vmware_rest_client:
+#      redirect: community.vmware.vmware_rest_client
+#    vmware_spbm:
+#      redirect: community.vmware.vmware_spbm
+#    service_now:
+#      redirect: servicenow.servicenow.service_now
+#    acm:
+#      redirect: amazon.aws.acm
+#    batch:
+#      redirect: amazon.aws.batch
+#    cloudfront_facts:
+#      redirect: amazon.aws.cloudfront_facts
+#    core:
+#      redirect: amazon.aws.core
+#    direct_connect:
+#      redirect: amazon.aws.direct_connect
+#    elb_utils:
+#      redirect: amazon.aws.elb_utils
+#    elbv2:
+#      redirect: amazon.aws.elbv2
+#    iam:
+#      redirect: amazon.aws.iam
+#    rds:
+#      redirect: amazon.aws.rds
+#    s3:
+#      redirect: amazon.aws.s3
+#    waf:
+#      redirect: amazon.aws.waf
+#    waiters:
+#      redirect: amazon.aws.waiters
+#    ec2:
+#      redirect: amazon.aws.ec2
+#    ipaddress:
+#      redirect: f5networks.f5_modules.ipaddress
+#    network.common.network:
+#      redirect: ansible.netcommon.network.common.network
+#    network.common.parsing:
+#      redirect: ansible.netcommon.network.common.parsing
+#    network.common.netconf:
+#      redirect: ansible.netcommon.network.common.netconf
+#    network.common.config:
+#      redirect: ansible.netcommon.network.common.config
+#    network.common.utils:
+#      redirect: ansible.netcommon.network.common.utils
+#    restconf:
+#      redirect: ansible.netcommon.restconf
+#    ismount:
+#      redirect: ansible.posix.ismount
+##    Ansible.Service:
+##      redirect: ansible.windows.Ansible.Service
+#    fortimanager:
+#      redirect: fortinet.fortios.fortimanager
+#    system:
+#      redirect: fortinet.fortios.system
+#    fortios:
+#      redirect: fortinet.fortios.fortios
+#    netbox_utils:
+#      redirect: netbox.netbox.netbox_utils
+#    netapp:
+#      redirect: netapp.ontap.netapp
+#    netapp_elementsw_module:
+#      redirect: netapp.ontap.netapp_elementsw_module
+#    netapp_module:
+#      redirect: netapp.ontap.netapp_module
+#    checkpoint:
+#      redirect: check_point.mgmt.checkpoint
+#    eos:
+#      redirect: arista.eos.eos
+#    acl_interfaces:
+#      redirect: cisco.nxos.acl_interfaces
+#    static_routes:
+#      redirect: vyos.vyos.static_routes
+#    l3_interfaces:
+#      redirect: vyos.vyos.l3_interfaces
+#    lacp_interfaces:
+#      redirect: junipernetworks.junos.lacp_interfaces
+#    lag_interfaces:
+#      redirect: vyos.vyos.lag_interfaces
+#    interfaces:
+#      redirect: vyos.vyos.interfaces
+#    lacp:
+#      redirect: junipernetworks.junos.lacp
+#    acls:
+#      redirect: cisco.nxos.acls
+#    aci:
+#      redirect: cisco.aci.aci
+#    asa:
+#      redirect: cisco.asa.asa
+#    intersight:
+#      redirect: cisco.intersight.intersight
+#    ios:
+#      redirect: cisco.ios.ios
+#    iosxr:
+#      redirect: cisco.iosxr.iosxr
+#    meraki:
+#      redirect: cisco.meraki.meraki
+#    mso:
+#      redirect: cisco.mso.mso
+#    nxos:
+#      redirect: cisco.nxos.nxos
+#    bfd_interfaces:
+#      redirect: cisco.nxos.bfd_interfaces
+#    telemetry:
+#      redirect: cisco.nxos.telemetry
+#    hsrp_interfaces:
+#      redirect: cisco.nxos.hsrp_interfaces
+#    ucs:
+#      redirect: cisco.ucs.ucs
+#    bigip:
+#      redirect: f5networks.f5_modules.bigip
+#    bigiq:
+#      redirect: f5networks.f5_modules.bigiq
+#    compare:
+#      redirect: f5networks.f5_modules.compare
+#    icontrol:
+#      redirect: f5networks.f5_modules.icontrol
+#    openstack:
+#      redirect: openstack.cloud.openstack
+#    junos:
+#      redirect: junipernetworks.junos.junos
+#    ansible_tower:
+#      redirect: awx.awx.ansible_tower
+#    ovirt:
+#      redirect: ovirt.ovirt.ovirt
+#    dellos10:
+#      redirect: dellemc.os10.os10
+#    dellos9:
+#      redirect: dellemc.os9.dellos9
+#    dellos6:
+#      redirect: dellemc.os6.dellos6
+#    hcloud:
+#      redirect: hetzner.hcloud.hcloud
+#    gcp_utils:
+#      redirect: google.cloud.gcp_utils
+#    azure_rm_common:
+#      redirect: azure.azcollection.azure_rm_common
+#    azure_rm_common_ext:
+#      redirect: azure.azcollection.azure_rm_common_ext
+#    azure_rm_common_rest:
+#      redirect: azure.azcollection.azure_rm_common_rest
+#    vyos:
+#      redirect: vyos.vyos.vyos
+#    firewall_global:
+#      redirect: vyos.vyos.firewall_global
+#    firewall_rules:
+#      redirect: vyos.vyos.firewall_rules
+#    firewall_interfaces:
+#      redirect: vyos.vyos.firewall_interfaces
   cliconf:
     frr:
       redirect: frr.frr.frr
