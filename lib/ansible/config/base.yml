@@ -429,7 +429,6 @@ COMMAND_WARNINGS:
   deprecated:
     why: The command warnings feature is being removed.
     version: "2.14"
-    alternatives: N/A, these are just warnings and we no longer plan to show them.
 LOCALHOST_WARNING:
   name: Warning when using implicit inventory with only localhost
   default: True
