@@ -66,7 +66,7 @@ class LookupModule(LookupBase):
         for term in terms:
 
             if not isinstance(term, string_types):
-                raise AnsibleError('Invalid setting identifier, "%s" is not a string, its a %s' % (term, type(term)))
+                raise AnsibleError('Invalid setting identifier, "%s" is not a string, it is a %s' % (term, type(term)))
 
             try:
                 name = re.compile(term)
