@@ -20,7 +20,7 @@ options:
       - Since 2.8 this is a list and can support multiple package managers per system.
       - The 'portage' and 'pkg' options were added in version 2.8.
     default: ['auto']
-    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman']
+    choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk']
     required: False
     type: list
   strategy:
@@ -374,6 +374,31 @@ class PORTAGE(CLIMgr):
 
     def get_package_details(self, package):
         return dict(zip(self.atoms, package.split()))
+
+
+class APK(CLIMgr):
+
+    CLI = 'apk'
+    atoms = ['name', 'version']
+
+    def list_installed(self):
+        rc, out, err = module.run_command([self._cli, 'info', '-v'])])
+        if rc != 0 or err:
+            raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
+        return out.splitlines()
+
+    def get_package_details(self, package):
+        raw_pkg_details = {}
+        for line in package.splitlines():
+            m = re.match(r"([\w ].*?)-([0-9-\.r]+)", line.decode("utf-8"))
+            if m:
+                raw_pkg_details['Name'] = m.group(2)
+                raw_pkg_details['Version'] = m.group(2)
+
+        return {
+            'name': raw_pkg_details['Name'],
+            'version': raw_pkg_details['Version'],
+        }
 
 
 def main():
