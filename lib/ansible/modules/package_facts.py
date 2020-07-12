@@ -382,7 +382,7 @@ class APK(CLIMgr):
     atoms = ['name', 'version']
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, 'info', '-v'])])
+        rc, out, err = module.run_command([self._cli, 'info', '-v'])
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.splitlines()
