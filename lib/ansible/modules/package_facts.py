@@ -392,7 +392,7 @@ class APK(CLIMgr):
         for line in package.splitlines():
             m = re.match(r"([\w ].*?)-([0-9-\.r]+)", line.decode("utf-8"))
             if m:
-                raw_pkg_details['Name'] = m.group(2)
+                raw_pkg_details['Name'] = m.group(1)
                 raw_pkg_details['Version'] = m.group(2)
 
         return {
