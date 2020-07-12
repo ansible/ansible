@@ -383,7 +383,7 @@ class APK(CLIMgr):
     atoms = ['name', 'version']
 
     def list_installed(self):
-        rc, out, err = module.run_command([self._cli, 'info', '-v'])
+        rc, out, err = module.run_command([self._cli, 'info', '-v'])])
         if rc != 0 or err:
             raise Exception("Unable to list packages rc=%s : %s" % (rc, err))
         return out.splitlines()
@@ -391,12 +391,15 @@ class APK(CLIMgr):
     def get_package_details(self, package):
         raw_pkg_details = {}
         for line in package.splitlines():
-            m = re.match(r"([\w ].*?)-([0-9-\.]+[0-9a-z-\.]*-r[0-9]+)", to_native(line))
+            m = re.match(r"([\w ].*?)-([0-9-\.r]+)", line.decode("utf-8"))
             if m:
-                raw_pkg_details['name'] = m.group(1)
-                raw_pkg_details['version'] = m.group(2)
+                raw_pkg_details['Name'] = m.group(2)
+                raw_pkg_details['Version'] = m.group(2)
 
-        return raw_pkg_details
+        return {
+            'name': raw_pkg_details['Name'],
+            'version': raw_pkg_details['Version'],
+        }
 
 
 def main():
