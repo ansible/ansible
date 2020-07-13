@@ -352,6 +352,8 @@ To keep track of where you are in a loop, use the ``index_var`` directive with `
     loop_control:
       index_var: my_idx
 
+.. note:: `index_var` is 0 indexed.
+
 Defining inner and outer variable names with ``loop_var``
 ---------------------------------------------------------
 .. versionadded:: 2.1
