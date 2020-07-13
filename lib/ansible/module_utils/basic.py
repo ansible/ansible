@@ -273,7 +273,7 @@ if not _PY_MIN:
 
 
 _NO_MODIFY_KEYS = frozenset(
-    ('msg', 'exception', 'warnings', 'deprecations', 'failed', 'skipped', 'changed', 'results')
+    ('msg', 'exception', 'warnings', 'deprecations', 'failed', 'skipped', 'changed', 'rc', 'stdout', 'stderr')
 )
 
 
