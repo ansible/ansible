@@ -126,7 +126,6 @@ class TestRemoveValues(unittest.TestCase):
                 'exception': 'bar',
                 'warnings': 'baz',
                 'deprecations': 'qux',
-                'results': [],
                 '_ansible_something': 'baz',
                 'something': 'something',
             },
@@ -139,7 +138,6 @@ class TestRemoveValues(unittest.TestCase):
                 'exception': 'bar',
                 'warnings': 'baz',
                 'deprecations': 'qux',
-                'results': [],
                 '_ansible_something': 'baz',
                 'some********': 'some********',
             }
