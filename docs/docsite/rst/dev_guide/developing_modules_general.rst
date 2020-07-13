@@ -51,7 +51,7 @@ Starting a new module
 
 To create a new module:
 
-1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/cloud/azure/``
+1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/``
 2. Create your new module file: ``$ touch my_test.py``
 3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
 4. Modify and extend the code to do what you want your new module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean, concise module code.
@@ -62,8 +62,10 @@ To create a new module:
 
     # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+    from __future__ import (absolute_import, division, print_function)
+    __metaclass__ = type
 
-    DOCUMENTATION = '''
+    DOCUMENTATION = r'''
     ---
     module: my_test
 
@@ -72,19 +74,19 @@ To create a new module:
     version_added: "2.4"
 
     description:
-        - "This is my longer description explaining my test module"
+        - "This is my longer description explaining my test module."
 
     options:
         name:
             description:
-                - This is the message to send to the test module
-            type: str
+                - This is the message to send to the test module.
             required: true
+            type: str
         new:
             description:
-                - Control to demo if the result of this module is changed or not
-            type: bool
+                - Control to demo if the result of this module is changed or not.
             required: false
+            type: bool
 
     extends_documentation_fragment:
         - azure
@@ -93,7 +95,7 @@ To create a new module:
         - Your Name (@yourhandle)
     '''
 
-    EXAMPLES = '''
+    EXAMPLES = r'''
     # Pass in a message
     - name: Test with a message
       my_test:
@@ -111,7 +113,7 @@ To create a new module:
         name: fail me
     '''
 
-    RETURN = '''
+    RETURN = r'''
     original_message:
         description: The original name param that was passed in
         type: str
@@ -210,7 +212,7 @@ If your module does not need to target a remote host, you can quickly and easily
    development) activate it: ``$ . venv/bin/activate``
 -  Setup the environment for development: ``$ . hacking/env-setup``
 -  Run your test module locally and directly:
-   ``$ python -m ansible.modules.cloud.azure.my_test /tmp/args.json``
+   ``$ python -m ansible.modules.my_test /tmp/args.json``
 
 This should return output like this:
 
