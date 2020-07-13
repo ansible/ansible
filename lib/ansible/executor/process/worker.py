@@ -54,7 +54,7 @@ class WorkerProcess(multiprocessing_context.Process):
     for reading later.
     '''
 
-    def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj, callback_queue):
+    def __init__(self, final_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
@@ -66,7 +66,6 @@ class WorkerProcess(multiprocessing_context.Process):
         self._loader = loader
         self._variable_manager = variable_manager
         self._shared_loader_obj = shared_loader_obj
-        self._callback_queue = callback_queue
 
         # NOTE: this works due to fork, if switching to threads this should change to per thread storage of temp files
         # clear var to ensure we only delete files for this child
@@ -162,7 +161,6 @@ class WorkerProcess(multiprocessing_context.Process):
                 self._loader,
                 self._shared_loader_obj,
                 self._final_q,
-                self._callback_queue,
             ).run()
 
             display.debug("done running TaskExecutor() for %s/%s [%s]" % (self._host, self._task, self._task._uuid))

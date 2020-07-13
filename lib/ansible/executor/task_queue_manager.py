@@ -50,27 +50,24 @@ __all__ = ['TaskQueueManager']
 display = Display()
 
 
-def callback_thread(tqm):
-    while True:
-        try:
-            method_name, args, kwargs = tqm.callback_queue.get()
-            if method_name is Sentinel:
-                break
-            tqm.send_callback(method_name, *args, **kwargs)
-        except (IOError, EOFError, ValueError):
-            break
-        except Queue.Empty:
-            pass
+class CallbackSend:
+    def __init__(self, method_name, *args, **kwargs):
+        self.method_name = method_name
+        self.args = args
+        self.kwargs = kwargs
 
 
-class CallbackQueue(multiprocessing.queues.Queue):
+class FinalQueue(multiprocessing.queues.Queue):
     def __init__(self, *args, **kwargs):
         if PY3:
             kwargs['ctx'] = multiprocessing_context
-        super(CallbackQueue, self).__init__(*args, **kwargs)
+        super(FinalQueue, self).__init__(*args, **kwargs)
 
     def send_callback(self, method_name, *args, **kwargs):
-        self.put((method_name, args, kwargs), block=False)
+        self.put(
+            CallbackSend(method_name, *args, **kwargs),
+            block=False
+        )
 
 
 class TaskQueueManager:
@@ -122,14 +119,9 @@ class TaskQueueManager:
         self._unreachable_hosts = dict()
 
         try:
-            self._final_q = multiprocessing_context.Queue()
-            self.callback_queue = CallbackQueue()
+            self._final_q = FinalQueue()
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
-
-        self._callback_thread = threading.Thread(target=callback_thread, args=(self,))
-        self._callback_thread.daemon = True
-        self._callback_thread.start()
 
         self._callback_lock = threading.Lock()
 
@@ -337,12 +329,6 @@ class TaskQueueManager:
         return self._workers[:]
 
     def terminate(self):
-        try:
-            self.callback_queue.put((Sentinel, (), {}))
-        except IOError:
-            pass
-        self._callback_thread.join()
-        self.callback_queue.close()
         self._terminated = True
 
     def has_dead_workers(self):

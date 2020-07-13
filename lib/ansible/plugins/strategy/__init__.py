@@ -37,6 +37,7 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
+from ansible.executor.task_queue_manager import CallbackSend
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
@@ -92,7 +93,9 @@ def results_thread_main(strategy):
             result = strategy._final_q.get()
             if isinstance(result, StrategySentinel):
                 break
-            else:
+            elif isinstance(result, CallbackSend):
+                strategy._tqm.send_callback(result.method_name, *result.args, **result.kwargs)
+            elif isinstance(result, TaskResult):
                 strategy._results_lock.acquire()
                 # only handlers have the listen attr, so this must be a handler
                 # we split up the results into two queues here to make sure
@@ -102,6 +105,8 @@ def results_thread_main(strategy):
                 else:
                     strategy._results.append(result)
                 strategy._results_lock.release()
+            else:
+                display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
         except (IOError, EOFError):
             break
         except Queue.Empty:
@@ -378,7 +383,7 @@ class StrategyBase:
                     }
 
                     worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader,
-                                               self._variable_manager, plugin_loader, self._tqm.callback_queue)
+                                               self._variable_manager, plugin_loader)
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)
                     worker_prc.start()
