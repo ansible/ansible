@@ -303,7 +303,7 @@ Some system dependencies that must be installed prior to using Kerberos. The scr
 .. code-block:: shell
 
     # Via Yum (RHEL/Centos/Fedora)
-    yum -y install python-devel krb5-devel krb5-libs krb5-workstation
+    yum -y install gcc python-devel krb5-devel krb5-libs krb5-workstation
 
     # Via Apt (Ubuntu)
     sudo apt-get install python-dev libkrb5-dev krb5-user
