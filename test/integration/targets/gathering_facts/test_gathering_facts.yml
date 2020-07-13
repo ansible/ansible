@@ -398,3 +398,77 @@
         # facter/ohai
         that:
           - 'ansible_user_id|default("UNDEF_MIN") != "UNDEF_MIN"'
+
+- hosts: facthost9
+  tags: [ 'fact_file_utils' ]
+  connection: local
+  gather_facts: false
+  tasks:
+    - block:
+        - name: Ensure get_file_content works when strip=False
+          file_utils:
+            test: strip
+
+        - assert:
+            that:
+              - ansible_facts.get('etc_passwd_newlines', 0) + 1 == ansible_facts.get('etc_passwd_newlines_unstripped', 0)
+
+        - name: Make an empty file
+          file:
+            path: "{{ output_dir }}/empty_file"
+            state: touch
+
+        - name: Ensure get_file_content gives default when file is empty
+          file_utils:
+            test: default
+            touch_file: "{{ output_dir }}/empty_file"
+
+        - assert:
+            that:
+              - ansible_facts.get('touch_default') == 'i am a default'
+
+        - copy:
+            dest: "{{ output_dir }}/1charsep"
+            content: "foo:bar:baz:buzz:"
+
+        - copy:
+            dest: "{{ output_dir }}/2charsep"
+            content: "foo::bar::baz::buzz::"
+
+        - name: Ensure get_file_lines works as expected with specified 1-char line_sep
+          file_utils:
+            test: line_sep
+            line_sep_file: "{{ output_dir }}/1charsep"
+            line_sep_sep: ":"
+
+        - assert:
+            that:
+              - ansible_facts.get('line_sep') == ['foo', 'bar', 'baz', 'buzz']
+
+        - name: Ensure get_file_lines works as expected with specified 1-char line_sep
+          file_utils:
+            test: line_sep
+            line_sep_file: "{{ output_dir }}/2charsep"
+            line_sep_sep: "::"
+
+        - assert:
+            that:
+              - ansible_facts.get('line_sep') == ['foo', 'bar', 'baz', 'buzz', '']
+
+        - name: Ensure get_mount_size fails gracefully
+          file_utils:
+            test: invalid_mountpoint
+
+        - assert:
+            that:
+              - ansible_facts['invalid_mountpoint']|length == 0
+
+      always:
+        - name: Remove test files
+          file:
+            path: "{{ item }}"
+            state: absent
+          with_items:
+            - "{{ output_dir }}/empty_file"
+            - "{{ output_dir }}/1charsep"
+            - "{{ output_dir }}/2charsep"
