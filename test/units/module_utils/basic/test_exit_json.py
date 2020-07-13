@@ -14,8 +14,8 @@ import pytest
 
 
 EMPTY_INVOCATION = {u'module_args': {}}
-
 DATETIME = datetime.datetime.strptime('2020-07-13 12:50:00', '%Y-%m-%d %H:%M:%S')
+
 
 class TestAnsibleModuleExitJson:
     """
