@@ -9,8 +9,6 @@ import sys
 import warnings
 
 from collections import defaultdict
-from distutils.command.build_scripts import build_scripts as BuildScripts
-from distutils.command.sdist import sdist as SDist
 
 try:
     from setuptools import setup, find_packages
@@ -22,6 +20,15 @@ except ImportError:
           " your package manager (usually python-setuptools) or via pip (pip"
           " install setuptools).", file=sys.stderr)
     sys.exit(1)
+
+# `distutils` must be imported after `setuptools` or it will cause explosions
+# with `setuptools >=48.0.0, <49.1`.
+# Refs:
+# * https://github.com/ansible/ansible/issues/70456
+# * https://github.com/pypa/setuptools/issues/2230
+# * https://github.com/pypa/setuptools/commit/bd110264
+from distutils.command.build_scripts import build_scripts as BuildScripts
+from distutils.command.sdist import sdist as SDist
 
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible.release import __version__, __author__
