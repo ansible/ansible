@@ -1,7 +1,3 @@
-- debug:
-    msg: "{{ ansible_facts.default_ipv4 }}"
-    verbosity: 2
-
 - block:
     - name: Add IP to interface
       command: ip address add 100.42.42.1/32 dev {{ ansible_facts.default_ipv4.interface }}
@@ -16,13 +12,7 @@
         that:
           - ansible_facts[ansible_facts['default_ipv4']['interface']]['ipv4_secondaries'][0]['broadcast'] == ''
 
-  rescue:
-    - debug:
-        msg: "{{ ansible_facts[ansible_facts['default_ipv4']['interface']]['ipv4_secondaries'] }}"
-        verbosity: 2
-
   always:
-
     - name: Remove IP from interface
       command: ip address delete 100.42.42.1/32 dev {{ ansible_facts.default_ipv4.interface }}
       ignore_errors: yes
