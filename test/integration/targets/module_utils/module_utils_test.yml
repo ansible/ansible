@@ -97,3 +97,15 @@
       - file:
           path: "{{ output_dir }}/nulltest"
           state: absent
+
+  - name: Test that date and datetime in module output works
+    test_datetime:
+      date: "2020-10-05"
+      datetime: "2020-10-05T10:05:05"
+    register: datetimetest
+
+  - name:
+    assert:
+      that:
+        - datetimetest.date == '2020-10-05'
+        - datetimetest.datetime == '2020-10-05T10:05:05'
