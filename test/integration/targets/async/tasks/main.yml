@@ -165,6 +165,18 @@
     - async_result is successful
     - async_result.warnings[0] is search('trailing junk after module output')
 
+- name: test stderr handling
+  async_test:
+    fail_mode: stderr
+  async: 30
+  poll: 1
+  register: async_result
+  ignore_errors: true
+
+- assert:
+    that:
+      - async_result.stderr == "printed to stderr\n"
+
 # NOTE: This should report a warning that cannot be tested
 - name: test async properties on non-async task
   command: sleep 1
