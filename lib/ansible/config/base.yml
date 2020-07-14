@@ -57,6 +57,7 @@ ANSIBLE_COW_ENABLED:
       alternatives: 'cowsay_enabled_stencils'
   - key: cowsay_enabled_stencils
     section: defaults
+    version_added: '2.11'
   type: list
 ANSIBLE_FORCE_COLOR:
   name: Force color output
