@@ -240,7 +240,8 @@ class CronTab(object):
                 self.cron_file = cron_file
                 self.b_cron_file = to_bytes(cron_file, errors='surrogate_or_strict')
             else:
-                self.cron_file = os.path.join(u'/etc/cron.d', to_text(cron_file, errors='surrogate_or_strict'))
+                self.cron_file = os.path.join('/etc/cron.d', cron_file)
+                self.b_cron_file = os.path.join(b'/etc/cron.d', to_bytes(cron_file, errors='surrogate_or_strict'))
         else:
             self.cron_file = None
 
