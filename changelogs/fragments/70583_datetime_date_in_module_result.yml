@@ -1,0 +1,2 @@
+minor_changes:
+  - Add support for datetime.date object type in module result (https://github.com/ansible/ansible/issues/70583).
