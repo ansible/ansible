@@ -5,6 +5,27 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.13
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-07-14
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Remove the deprecation message for the ``TRANSFORM_INVALID_GROUP_CHARS`` setting. (https://github.com/ansible/ansible/issues/61889)
+- pipe lookup - update docs for Popen with shell=True usages (https://github.com/ansible/ansible/issues/70159).
+
+Bugfixes
+--------
+
+- yum - fix bug that caused ``enablerepo`` to not be honored when used with disablerepo all wildcard/glob (https://github.com/ansible/ansible/issues/66549)
+
 v2.8.12
 =======
 

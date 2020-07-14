@@ -1662,6 +1662,14 @@ releases:
     - v2.8.12_summary.yaml
     - win_psmodule-repo-tls.yaml
     release_date: '2020-05-11'
+  2.8.13:
+    codename: How Many More Times
+    fragments:
+    - 61889-change-transform_invalid_group_chars-default.yml
+    - 66549-enablerepo-not-honored-when-used-with-disablerepo-all.yml
+    - 70261_pipe_lookup.yml
+    - v2.8.13_summary.yaml
+    release_date: '2020-07-14'
   2.8.2:
     codename: How Many More Times
     fragments:
