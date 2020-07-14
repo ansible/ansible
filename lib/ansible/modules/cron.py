@@ -232,7 +232,7 @@ class CronTab(object):
         self.root = (os.getuid() == 0)
         self.lines = None
         self.ansible = "#Ansible: "
-        self.b_existing = ''
+        self.n_existing = ''
         self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
@@ -254,7 +254,7 @@ class CronTab(object):
             # read the cronfile
             try:
                 f = open(self.b_cron_file, 'rb')
-                self.b_existing = to_native(f.read(), errors='surrogate_or_strict')
+                self.n_existing = to_native(f.read(), errors='surrogate_or_strict')
                 f.close()
             except IOError:
                 # cron file does not exist
@@ -268,7 +268,7 @@ class CronTab(object):
             if rc != 0 and rc != 1:  # 1 can mean that there are no jobs.
                 raise CronTabError("Unable to read crontab")
 
-            self.b_existing = out
+            self.n_existing = out
 
             lines = out.splitlines()
             count = 0
@@ -279,7 +279,7 @@ class CronTab(object):
                     self.lines.append(l)
                 else:
                     pattern = re.escape(l) + '[\r\n]?'
-                    self.b_existing = re.sub(pattern, '', self.b_existing, 1)
+                    self.n_existing = re.sub(pattern, '', self.n_existing, 1)
                 count += 1
 
     def is_empty(self):
