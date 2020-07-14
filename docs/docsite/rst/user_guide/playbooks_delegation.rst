@@ -1,9 +1,9 @@
 .. _playbooks_delegation:
 
-Delegation and local actions
-============================
+Controlling where tasks run: delegation and local actions
+=========================================================
 
-By default Ansible executes all tasks on the machines that match the ``hosts`` line of your playbook. If you want to run some tasks on a different machine, you can use delegation. For example, when updating webservers, you might want to retrieve information from your database servers. In this scenario, your play would target the webservers group and you would delegate the database tasks to your dbservers group. With delegation, you can perform a task on one host on behalf of another, or execute tasks locally on behalf of remote hosts.
+By default Ansible gathers facts and executes all tasks on the machines that match the ``hosts`` line of your playbook. This page shows you how to delegate tasks to a different machine or group, delegate facts to specific machines or groups, or run an entire playbook locally. Using these approaches, you can manage inter-related environments precisely and efficiently. For example, when updating your webservers, you might need to remove them from a load-balanced pool temporarily. You cannot perform this task on the webservers themselves. By delegating the task to localhost, you keep all the tasks within the same play.
 
 .. contents::
    :local:
@@ -99,52 +99,10 @@ Delegating Ansible tasks is like delegating tasks in the real world - your groce
 
 This task gathers facts for the machines in the dbservers group and assigns the facts to those machines, even though the play targets the app_servers group. This way you can lookup `hostvars['dbhost1']['ansible_default_ipv4']['address']` even though dbservers were not part of the play, or left out by using `--limit`.
 
-.. _run_once:
-
-Run once
---------
-
-If you want a task to run only on the first host in your batch of hosts, set ``run_once`` to true on that task::
-
-    ---
-    # ...
-
-      tasks:
-
-        # ...
-
-        - command: /opt/application/upgrade_db.py
-          run_once: true
-
-        # ...
-
-Ansible executes this task on the first host in the current batch and applies all results and facts to all the hosts in the same batch. This approach is similar to applying a conditional to a task such as::
-
-        - command: /opt/application/upgrade_db.py
-          when: inventory_hostname == webservers[0]
-
-However, with ``run_once``, the results are applied to all the hosts. To specify an individual host to execute on, delegate the task::
-
-        - command: /opt/application/upgrade_db.py
-          run_once: true
-          delegate_to: web01.example.org
-
-As always with delegation, the action will be executed on the delegated host, but the information is still that of the original host in the task.
-
-.. note::
-     When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch. If the task must run only once regardless of "serial" mode, use
-     :code:`when: inventory_hostname == ansible_play_hosts_all[0]` construct.
-
-.. note::
-    Any conditional (i.e `when:`) will use the variables of the 'first host' to decide if the task runs or not, no other hosts will be tested.
-
-.. note::
-    If you want to avoid the default behavior of setting the fact for all hosts, set `delegate_facts: True` for the specific task or block.
-
 .. _local_playbooks:
 
 Local playbooks
-```````````````
+---------------
 
 It may be useful to use a playbook locally on a remote host, rather than by connecting over SSH.  This can be useful for assuring the configuration of a system by putting a playbook in a crontab.  This may also be used
 to run a playbook inside an OS installer, such as an Anaconda kickstart.
@@ -165,11 +123,12 @@ use the default remote connection type::
     under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in
     host_vars/localhost.yml, for example. You can avoid this issue by using ``local_action`` or ``delegate_to: localhost`` instead.
 
-
 .. seealso::
 
    :ref:`playbooks_intro`
        An introduction to playbooks
+   :ref:`playbooks_strategies`
+       More ways to control how and where Ansible executes
    `Ansible Examples on GitHub <https://github.com/ansible/ansible-examples>`_
        Many examples of full-stack deployments
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
