@@ -19,7 +19,7 @@ As you write more playbooks and roles, you might have some special use cases. Fo
    ../plugins/plugins
    playbooks_prompts
    playbooks_tags
-   playbooks_vault
+   vault
    playbooks_startnstep
    ../reference_appendices/playbooks_keywords
    playbooks_lookups

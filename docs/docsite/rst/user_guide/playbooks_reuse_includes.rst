@@ -15,7 +15,7 @@ The content on this page has been moved to :ref:`playbooks_reuse`.
    :ref:`working_with_playbooks`
        Review the basic Playbook language features
    :ref:`playbooks_best_practices`
-       Various tips about managing playbooks in the real world
+       Tips and tricks for playbooks
    :ref:`playbooks_variables`
        All about variables in playbooks
    :ref:`playbooks_conditionals`
