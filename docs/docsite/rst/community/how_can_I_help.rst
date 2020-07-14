@@ -4,7 +4,8 @@
 How can I help?
 ***************
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Thanks for being interested in helping the Ansible project!
 
@@ -50,19 +51,19 @@ File and verify issues
 All software has bugs, and Ansible is no exception. When you find a bug, you can help tremendously by :ref:`telling us about it <reporting_bugs_and_features>`.
 
 
-If you should discover that the bug you're trying to file already exists in an issue, you can help by verifying the behavior of the reported bug with a comment in that issue, or by reporting any additional information.
+If the bug you found already exists in an issue, you can help by verifying the behavior of the reported bug with a comment in that issue, or by reporting any additional information.
 
 Review and submit pull requests
 ===============================
 
-As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you've got a solution to a bug you've found in Ansible, or if you've got a new feature that you've written and would like to share with millions of Ansible users, read all about the :ref:`Ansible development process <community_development_process>` to learn how to get your code accepted into Ansible.
+As you become more familiar with how Ansible works, you may be able to fix issues or develop new features yourself. If you think you have a fix for a bug in Ansible, or if you have a new feature that you would like to share with millions of Ansible users, read all about the :ref:`Ansible development process <community_development_process>` and and :ref:`how to contribute to collections <contributing_maintained_collections>` to learn how to get your code accepted into Ansible.
 
 Another good way to help is to review pull requests that other Ansible users have submitted. The Ansible community keeps a full list of `open pull requests by file <https://ansible.sivel.net/pr/byfile.html>`_, so if there's a particular module or plug-in that particularly interests you, you can easily keep track of all the relevant new pull requests and provide testing or feedback.
 
-Become a module maintainer
-==========================
+Become a collection maintainer
+==============================
 
-Once you've learned about the development process and have contributed code to a particular module, we encourage you to become a maintainer of that module. There are hundreds of different modules in Ansible, and the vast majority of them are written and maintained entirely by members of the Ansible community.
+Once you have learned about the development process and have contributed code to a collection, we encourage you to become a maintainer of that collection. There are hundreds of modules in dozens of Ansible collections, and the vast majority of them are written and maintained entirely by members of the Ansible community.
 
 To learn more about the responsibilities of being an Ansible module maintainer, please read our :ref:`module maintainer guidelines <maintainers>`.
 
@@ -77,7 +78,7 @@ Working groups are a way for Ansible community members to self-organize around p
 Teach Ansible to others
 =======================
 
-We're working on a standardized `Ansible workshop <https://ansible.github.io/workshops/>`_ that can provide a good hands-on introduction to Ansible usage and concepts.
+We are working on a standardized `Ansible workshop <https://ansible.github.io/workshops/>`_ that can provide a good hands-on introduction to Ansible usage and concepts.
 
 Social media
 ============
