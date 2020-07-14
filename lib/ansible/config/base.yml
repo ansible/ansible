@@ -44,9 +44,10 @@ ANSIBLE_COW_ENABLED:
   - name: ANSIBLE_COW_WHITELIST
     deprecated:
       why: Normalizing names to new standard.
-      version: "2.14"
+      version: "2.15"
       alternatives: 'ANSIBLE_COW_ENABLED'
   - name: ANSIBLE_COW_ENABLED
+    version_added: '2.11'
   ini:
   - key: cow_whitelist
     section: defaults
