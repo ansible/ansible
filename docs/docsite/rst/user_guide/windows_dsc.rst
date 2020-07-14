@@ -496,7 +496,7 @@ Setup IIS Website
    :ref:`playbooks_intro`
        An introduction to playbooks
    :ref:`playbooks_best_practices`
-       Best practices advice
+       Tips and tricks for playbooks
    :ref:`List of Windows Modules <windows_modules>`
        Windows specific module list, all implemented in PowerShell
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
