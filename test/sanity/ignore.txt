@@ -94,6 +94,7 @@ lib/ansible/modules/uri.py validate-modules:doc-required-mismatch
 lib/ansible/modules/pip.py pylint:blacklisted-name
 lib/ansible/modules/pip.py validate-modules:invalid-ansiblemodule-schema
 lib/ansible/modules/apt.py validate-modules:parameter-invalid
+lib/ansible/modules/apt_key.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/apt_key.py validate-modules:undocumented-parameter
 lib/ansible/modules/apt_repository.py validate-modules:doc-default-does-not-match-spec
 lib/ansible/modules/apt_repository.py validate-modules:parameter-invalid
