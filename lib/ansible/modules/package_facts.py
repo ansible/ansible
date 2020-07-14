@@ -19,6 +19,7 @@ options:
       - The package manager used by the system so we can query the package information.
       - Since 2.8 this is a list and can support multiple package managers per system.
       - The 'portage' and 'pkg' options were added in version 2.8.
+      - The 'apk' option was added in version 2.11.
     default: ['auto']
     choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk']
     required: False
