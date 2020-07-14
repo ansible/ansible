@@ -636,7 +636,9 @@ class ModuleUtilLocatorBase:
         else:
             self.candidate_names = [fq_name_parts]
 
-
+    @property
+    def candidate_names_joined(self):
+        return ['.'.join(n) for n in self.candidate_names]
 
     def _handle_redirect(self, name_parts):
         module_utils_relative_parts = self._get_module_utils_remainder_parts(name_parts)
@@ -649,7 +651,6 @@ class ModuleUtilLocatorBase:
             collection_metadata = _get_collection_metadata(self._collection_name)
         except ValueError as ve:  # collection not found or some other error related to collection load
             raise AnsibleError('error loading redirected collection {0}: {1}'.format(self._collection_name, to_native(ve)))
-            return False
 
         routing_entry = _nested_dict_get(collection_metadata, ['plugin_routing', 'module_utils', '.'.join(module_utils_relative_parts)])
         if routing_entry and 'redirect' in routing_entry:
@@ -884,7 +885,11 @@ def recursive_finder(name, module_fqn, module_data, zf):
 
     # we'll be adding new modules inline as we discover them, so just keep going til we've processed them all
     while modules_to_process:
-        py_module_name, is_ambiguous = modules_to_process.pop()
+        # TODO: without orderedset, this is expensive, but nice for repeatable ordering in case there's a problem
+        py_module_name, is_ambiguous = sorted(modules_to_process)[0]
+        # py_module_name, is_ambiguous = modules_to_process.pop()
+        modules_to_process.remove((py_module_name, is_ambiguous))
+
         if py_module_name in py_module_cache:
             # this is normal; we'll often see the same module imported many times, but we only need to process it once
             continue
@@ -902,7 +907,7 @@ def recursive_finder(name, module_fqn, module_data, zf):
         # Could not find the module.  Construct a helpful error message.
         if not module_info.found:
             # FIXME: use dot-joined candidate names
-            msg = 'Could not find imported module support code for {0}.  Looked for ({1})'.format(module_fqn, module_info.candidate_names)
+            msg = 'Could not find imported module support code for {0}.  Looked for ({1})'.format(module_fqn, module_info.candidate_names_joined)
             raise AnsibleError(msg)
 
         # check the cache one more time with the module we actually found, since the name could be different than the input
