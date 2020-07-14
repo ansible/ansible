@@ -210,7 +210,7 @@ import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.common.text.converters import to_bytes, to_text
+from ansible.module_utils.common.text.converters import to_bytes, to_native
 from ansible.module_utils.six.moves import shlex_quote
 
 
@@ -232,7 +232,7 @@ class CronTab(object):
         self.root = (os.getuid() == 0)
         self.lines = None
         self.ansible = "#Ansible: "
-        self.existing = ''
+        self.b_existing = ''
         self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
@@ -268,7 +268,7 @@ class CronTab(object):
             if rc != 0 and rc != 1:  # 1 can mean that there are no jobs.
                 raise CronTabError("Unable to read crontab")
 
-            self.existing = out
+            self.b_existing = out
 
             lines = out.splitlines()
             count = 0
@@ -279,7 +279,7 @@ class CronTab(object):
                     self.lines.append(l)
                 else:
                     pattern = re.escape(l) + '[\r\n]?'
-                    self.existing = re.sub(pattern, '', self.existing, 1)
+                    self.b_existing = re.sub(pattern, '', self.b_existing, 1)
                 count += 1
 
     def is_empty(self):
