@@ -47,6 +47,7 @@ from ansible.utils.collection_loader._collection_finder import _get_collection_m
 from ansible.executor import action_write_locks
 
 from ansible.utils.display import Display
+from collections import namedtuple
 
 
 try:
@@ -63,6 +64,8 @@ except NameError:
     FileNotFoundError = IOError
 
 display = Display()
+
+ModuleUtilsProcessEntry = namedtuple('ModuleUtilsInfo', ['name_parts', 'is_ambiguous', 'has_redirected_child'])
 
 REPLACER = b"#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_VERSION = b"\"<<ANSIBLE_VERSION>>\""
@@ -621,9 +624,14 @@ def _get_shebang(interpreter, task_vars, templar, args=tuple()):
 
 
 class ModuleUtilLocatorBase:
-    def __init__(self, fq_name_parts, is_ambiguous=False):
+    def __init__(self, fq_name_parts, is_ambiguous=False, child_is_redirected=False):
         self._is_ambiguous = is_ambiguous
+        # a child package redirection could cause intermediate package levels to be missing, eg
+        # from ansible.module_utils.x.y.z import foo; if x.y.z.foo is redirected, we may not have packages on disk for
+        # the intermediate packages x.y.z, so we'll need to supply empty packages for those
+        self._child_is_redirected = child_is_redirected
         self.found = False
+        self.redirected = False
         self.fq_name_parts = fq_name_parts
         self.source_code = ''
         self.output_path = ''
@@ -675,6 +683,7 @@ class ModuleUtilLocatorBase:
 
             display.deprecated(msg, removal_version, removed, removal_date, self._collection_name)
         if 'redirect' in routing_entry:
+            self.redirected = True
             source_pkg = '.'.join(name_parts)
             self.is_package = True  # treat all redirects as packages
             redirect_target_pkg = routing_entry['redirect']
@@ -715,8 +724,12 @@ class ModuleUtilLocatorBase:
             if self._find_module(candidate_name_parts):
                 break
 
-        else:  # didn't find what we were looking for, just bail
-            return
+        else:  # didn't find what we were looking for- last chance for packages whose parents were redirected
+            if self._child_is_redirected:  # make fake packages
+                self.is_package = True
+                self.source_code = ''
+            else:  # nope, just bail
+                return
 
         if self.is_package:
             path_parts = candidate_name_parts + ('__init__',)
@@ -738,8 +751,8 @@ sys.modules['{0}'] = mod
 
 
 class LegacyModuleUtilLocator(ModuleUtilLocatorBase):
-    def __init__(self, fq_name_parts, is_ambiguous=False, mu_paths=None):
-        super(LegacyModuleUtilLocator, self).__init__(fq_name_parts, is_ambiguous)
+    def __init__(self, fq_name_parts, is_ambiguous=False, mu_paths=None, child_is_redirected=False):
+        super(LegacyModuleUtilLocator, self).__init__(fq_name_parts, is_ambiguous, child_is_redirected)
 
         if fq_name_parts[0:2] != ('ansible', 'module_utils'):
             raise Exception('this class can only locate from ansible.module_utils, got {0}'.format(fq_name_parts))
@@ -801,8 +814,8 @@ class LegacyModuleUtilLocator(ModuleUtilLocatorBase):
 
 
 class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
-    def __init__(self, fq_name_parts, is_ambiguous=False):
-        super(CollectionModuleUtilLocator, self).__init__(fq_name_parts, is_ambiguous)
+    def __init__(self, fq_name_parts, is_ambiguous=False, child_is_redirected=False):
+        super(CollectionModuleUtilLocator, self).__init__(fq_name_parts, is_ambiguous, child_is_redirected)
 
         if fq_name_parts[0] != 'ansible_collections':
             raise Exception('CollectionModuleUtilLocator can only locate from ansible_collections, got {0}'.format(fq_name_parts))
@@ -898,26 +911,24 @@ def recursive_finder(name, module_fqn, module_data, zf):
 
     # the format of this set is a tuple of the module name and whether or not the import is ambiguous as a module name
     # or an attribute of a module (eg from x.y import z <-- is z a module or an attribute of x.y?)
-    modules_to_process = set((m, True) for m in finder.submodules)
+    modules_to_process = [ModuleUtilsProcessEntry(m, True, False) for m in finder.submodules]
 
     # HACK: basic is currently always required since module global init is currently tied up with AnsiballZ arg input
-    modules_to_process.add((('ansible', 'module_utils', 'basic'), False))
+    modules_to_process.append(ModuleUtilsProcessEntry(('ansible', 'module_utils', 'basic'), False, False))
 
     # we'll be adding new modules inline as we discover them, so just keep going til we've processed them all
     while modules_to_process:
-        # TODO: without orderedset, this is expensive, but nice for repeatable ordering in case there's a problem
-        py_module_name, is_ambiguous = sorted(modules_to_process)[0]
-        # py_module_name, is_ambiguous = modules_to_process.pop()
-        modules_to_process.remove((py_module_name, is_ambiguous))
+        modules_to_process.sort()  # not strictly necessary, but nice to process things in predictable and repeatable order
+        py_module_name, is_ambiguous, child_is_redirected = modules_to_process.pop(0)
 
         if py_module_name in py_module_cache:
             # this is normal; we'll often see the same module imported many times, but we only need to process it once
             continue
 
         if py_module_name[0:2] == ('ansible', 'module_utils'):
-            module_info = LegacyModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous, mu_paths=module_utils_paths)
+            module_info = LegacyModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous, mu_paths=module_utils_paths, child_is_redirected=child_is_redirected)
         elif py_module_name[0] == 'ansible_collections':
-            module_info = CollectionModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous)
+            module_info = CollectionModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous, child_is_redirected=child_is_redirected)
         else:
             # FIXME: dot-joined result
             display.warning('ModuleDepFinder improperly found a non-module_utils import %s'
@@ -941,9 +952,9 @@ def recursive_finder(name, module_fqn, module_data, zf):
         except (SyntaxError, IndentationError) as e:
             raise AnsibleError("Unable to import %s due to %s" % (module_info.fq_name_parts, e.msg))
 
-        finder = ModuleDepFinder(module_fqn)
+        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts))
         finder.visit(tree)
-        modules_to_process.update((m, True) for m in finder.submodules if m not in py_module_cache)
+        modules_to_process.extend(ModuleUtilsProcessEntry(m, True, False) for m in finder.submodules if m not in py_module_cache)
 
         # we've processed this item, add it to the output list
         py_module_cache[module_info.fq_name_parts] = (module_info.source_code, module_info.output_path)
@@ -954,7 +965,7 @@ def recursive_finder(name, module_fqn, module_data, zf):
             accumulated_pkg_name.append(pkg)  # we're accumulating this across iterations
             normalized_name = tuple(accumulated_pkg_name)  # extra machinations to get a hashable type (list is not)
             if normalized_name not in py_module_cache:
-                modules_to_process.add((normalized_name, False))
+                modules_to_process.append((normalized_name, False, module_info.redirected))
 
     for py_module_name in py_module_cache:
         py_module_file_name = py_module_cache[py_module_name][1]
