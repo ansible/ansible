@@ -410,7 +410,7 @@ COVERAGE_REMOTE_ENABLED:
     deprecated:
       why: Normalizing names to new standard.
       version: "2.15"
-      alternatives: '_ANSIBLE_COVERATE_REMOTE_ENABLED'
+      alternatives: '_ANSIBLE_COVERAGE_REMOTE_ENABLED'
   - name: '_ANSIBLE_COVERAGE_REMOTE_ENABLED'
     version_added: '2.11'
   type: pathlist
