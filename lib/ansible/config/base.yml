@@ -53,7 +53,7 @@ ANSIBLE_COW_ENABLED:
     section: defaults
     deprecated:
       why: Normalizing names to new standard.
-      version: "2.14"
+      version: "2.15"
       alternatives: 'cowsay_enabled_stencils'
   - key: cowsay_enabled_stencils
     section: defaults
@@ -405,11 +405,10 @@ COVERAGE_REMOTE_ENABLED:
   - This is for internal use only.
   default: '*'
   env:
-  - name: _ANSIBLE_COVERAGE_REMOTE_PATH_FILTER
   - name: _ANSIBLE_COVERAGE_REMOTE_WHITELIST
     deprecated:
       why: Normalizing names to new standard.
-      version: "2.14"
+      version: "2.15"
       alternatives: '_ANSIBLE_COVERATE_REMOTE_ENABLED'
   - name: '_ANSIBLE_COVERAGE_REMOTE_ENABLED'
     version_added: '2.11'
@@ -576,18 +575,20 @@ DEFAULT_CALLABLE_ACCEPT_LIST:
   - name: ANSIBLE_CALLABLE_WHITELIST
     deprecated:
       why: Normalizing names to new standard.
-      version: "2.14"
+      version: "2.15"
       alternatives: 'ANSIBLE_CALLABLE_ENABLED'
   - name: ANSIBLE_CALLABLE_ENABLED
+    version_added: '2.11'
   ini:
   - key: callable_whitelist
     section: defaults
     deprecated:
       why: Normalizing names to new standard.
-      version: "2.14"
+      version: "2.15"
       alternatives: 'callable_enabled'
   - key: callable_enabled
     section: defaults
+    version_added: '2.11'
   type: list
 DEFAULT_CALLBACK_PLUGIN_PATH:
   name: Callback Plugins Path
@@ -599,7 +600,7 @@ DEFAULT_CALLBACK_PLUGIN_PATH:
   type: pathspec
   yaml: {key: plugins.callback.path}
 DEFAULT_CALLBACK_ENABLED:
-  name: Callback Whitelist
+  name: Enable callback plugins that require it.
   default: []
   description:
     - "List of enabled callbacks, not all callbacks need enabling,
@@ -608,18 +609,20 @@ DEFAULT_CALLBACK_ENABLED:
   - name: ANSIBLE_CALLBACK_WHITELIST
     deprecated:
       why: Normalizing names to new standard.
-      version: "2.14"
+      version: "2.15"
       alternatives: 'ANSIBLE_CALLBACK_ENABLED'
   - name: ANSIBLE_CALLBACK_ENABLED
+    version_added: '2.11'
   ini:
   - key: callback_whitelist
     section: defaults
     deprecated:
       why: Normalizing names to new standard.
-      version: "2.14"
+      version: "2.15"
       alternatives: 'callback_enabled'
   - key: callback_enabled
     section: defaults
+    version_added: '2.11'
   type: list
 DEFAULT_CLICONF_PLUGIN_PATH:
   name: Cliconf Plugins Path
