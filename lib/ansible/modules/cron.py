@@ -296,7 +296,7 @@ class CronTab(object):
         if backup_file:
             fileh = open(backup_file, 'wb')
         elif self.cron_file:
-            fileh = open(self.cron_file, 'wb')
+            fileh = open(self.b_cron_file, 'wb')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
             os.chmod(path, int('0644', 8))
