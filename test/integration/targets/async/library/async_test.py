@@ -37,7 +37,8 @@ def main():
             raise Exception('failing via exception')
 
         if 'stderr' in fail_mode:
-            print('printed to stderr', file=sys.stderr)
+            sys.stderr.write('printed to stderr\n')
+            sys.stderr.flush()
 
         module.exit_json(**result)
 
