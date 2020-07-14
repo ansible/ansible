@@ -217,8 +217,6 @@ test/integration/targets/ansible-test/ansible_collections/ns/col/tests/unit/plug
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/plugins/modules/hello.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/module_utils/test_my_util.py pylint:relative-beyond-top-level
 test/integration/targets/ansible-test-docker/ansible_collections/ns/col/tests/unit/plugins/modules/test_hello.py pylint:relative-beyond-top-level
-test/integration/targets/async/library/async_test.py future-import-boilerplate
-test/integration/targets/async/library/async_test.py metaclass-boilerplate
 test/integration/targets/async_fail/library/async_test.py future-import-boilerplate
 test/integration/targets/async_fail/library/async_test.py metaclass-boilerplate
 test/integration/targets/collections_plugin_namespace/collection_root/ansible_collections/my_ns/my_col/plugins/lookup/lookup_no_future_boilerplate.py future-import-boilerplate
