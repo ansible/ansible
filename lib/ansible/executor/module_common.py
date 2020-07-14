@@ -34,7 +34,7 @@ from io import BytesIO
 
 from ansible.release import __version__, __author__
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsiblePluginRemovedError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
@@ -650,15 +650,36 @@ class ModuleUtilLocatorBase:
         try:
             collection_metadata = _get_collection_metadata(self._collection_name)
         except ValueError as ve:  # collection not found or some other error related to collection load
-            raise AnsibleError('error loading redirected collection {0}: {1}'.format(self._collection_name, to_native(ve)))
+            raise AnsibleError('error processing module_util {0} loading redirected collection {1}: {2}'.format('.'.join(name_parts), self._collection_name, to_native(ve)))
 
         routing_entry = _nested_dict_get(collection_metadata, ['plugin_routing', 'module_utils', '.'.join(module_utils_relative_parts)])
-        if routing_entry and 'redirect' in routing_entry:
+        if not routing_entry:
+            return False
+        # FIXME: add deprecation warning support
+
+        dep_or_ts = routing_entry.get('tombstone')
+        removed = dep_or_ts is not None
+        if not removed:
+            dep_or_ts = routing_entry.get('deprecation')
+
+        if dep_or_ts:
+            removal_date = dep_or_ts.get('removal_date')
+            removal_version = dep_or_ts.get('removal_version')
+            warning_text = dep_or_ts.get('warning_text')
+
+            msg = 'module_util {0} has been removed'.format('.'.join(name_parts))
+            if warning_text:
+                msg += ' ({0)}'.format(warning_text)
+            else:
+                msg += '.'
+
+            display.deprecated(msg, removal_version, removed, removal_date, self._collection_name)
+        if 'redirect' in routing_entry:
             source_pkg = '.'.join(name_parts)
             self.is_package = True  # treat all redirects as packages
-            # FIXME: work with either FQ Python name or expanded collection name? Currently only allows FQ Python...
             redirect_target_pkg = routing_entry['redirect']
 
+            # expand FQCN redirects
             if not redirect_target_pkg.startswith('ansible_collections'):
                 split_fqcn = redirect_target_pkg.split('.')
                 if len(split_fqcn) < 3:
@@ -672,7 +693,6 @@ class ModuleUtilLocatorBase:
             display.vvv('redirecting module_util {0} to {1}'.format(source_pkg, redirect_target_pkg))
             self.source_code = self._generate_redirect_shim_source(source_pkg, redirect_target_pkg)
             return True
-
         return False
 
     def _get_module_utils_remainder_parts(self, name_parts):
