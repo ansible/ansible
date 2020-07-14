@@ -194,7 +194,7 @@ class TestSELinux(ModuleTestCase):
 
             mount_data = [
                 '/dev/disk1 / ext4 rw,seclabel,relatime,data=ordered 0 0\n',
-                '1.1.1.1:/path/to/nfs /some/path nfs ro 0 0\n',
+                '10.1.1.1:/path/to/nfs /some/path nfs ro 0 0\n',
                 'whatever /weird/random/fstype foos rw 0 0\n',
             ]
 
