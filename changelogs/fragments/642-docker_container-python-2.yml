@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_container - various error fixes in string handling for Python 2 to avoid crashes when non-ASCII characters are used in strings (https://github.com/ansible-collections/community.general/issues/640)."

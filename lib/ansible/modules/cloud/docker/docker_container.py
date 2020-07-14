@@ -1067,6 +1067,9 @@ from distutils.version import LooseVersion
 from time import sleep
 
 from ansible.module_utils.common.text.formatters import human_to_bytes
+from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native, to_text
+
 from ansible.module_utils.docker.common import (
     AnsibleDockerClient,
     DifferenceTracker,
@@ -1080,7 +1083,6 @@ from ansible.module_utils.docker.common import (
     DOCKER_COMMON_ARGS,
     RequestException,
 )
-from ansible.module_utils.six import string_types
 
 try:
     from docker import utils
@@ -1269,7 +1271,7 @@ class TaskParameters(DockerBaseClass):
         if self.groups:
             # In case integers are passed as groups, we need to convert them to
             # strings as docker internally treats them as strings.
-            self.groups = [str(g) for g in self.groups]
+            self.groups = [to_text(g, errors='surrogate_or_strict') for g in self.groups]
 
         for param_name in REQUIRES_CONVERSION_TO_BYTES:
             if client.module.params.get(param_name):
@@ -1301,7 +1303,7 @@ class TaskParameters(DockerBaseClass):
         try:
             self.healthcheck, self.disable_healthcheck = parse_healthcheck(self.healthcheck)
         except ValueError as e:
-            self.fail(str(e))
+            self.fail(to_native(e))
 
         self.exp_links = None
         self.volume_binds = self._get_volume_binds(self.volumes)
@@ -1328,12 +1330,12 @@ class TaskParameters(DockerBaseClass):
 
         if self.entrypoint:
             # convert from list to str.
-            self.entrypoint = ' '.join([str(x) for x in self.entrypoint])
+            self.entrypoint = ' '.join([to_text(x, errors='surrogate_or_strict') for x in self.entrypoint])
 
         if self.command:
             # convert from list to str
             if isinstance(self.command, list):
-                self.command = ' '.join([str(x) for x in self.command])
+                self.command = ' '.join([to_text(x, errors='surrogate_or_strict') for x in self.command])
 
         self.mounts_opt, self.expected_mounts = self._process_mounts()
 
@@ -1587,7 +1589,7 @@ class TaskParameters(DockerBaseClass):
 
         binds = {}
         for port in self.published_ports:
-            parts = split_colon_ipv6(str(port), self.client)
+            parts = split_colon_ipv6(to_text(port, errors='surrogate_or_strict'), self.client)
             container_port = parts[-1]
             protocol = ''
             if '/' in container_port:
@@ -1657,7 +1659,7 @@ class TaskParameters(DockerBaseClass):
         exposed = []
         if self.exposed_ports:
             for port in self.exposed_ports:
-                port = str(port).strip()
+                port = to_text(port, errors='surrogate_or_strict').strip()
                 protocol = 'tcp'
                 match = re.search(r'(/.+$)', port)
                 if match:
@@ -1751,9 +1753,10 @@ class TaskParameters(DockerBaseClass):
                 if not isinstance(v, string_types):
                     self.client.module.warn(
                         "Non-string value found for log_options option '%s'. The value is automatically converted to '%s'. "
-                        "If this is not correct, or you want to avoid such warnings, please quote the value." % (k, str(v))
+                        "If this is not correct, or you want to avoid such warnings, please quote the value." % (
+                            k, to_text(v, errors='surrogate_or_strict'))
                     )
-                v = str(v)
+                v = to_text(v, errors='surrogate_or_strict')
                 self.log_options[k] = v
                 options['Config'][k] = v
 
@@ -1787,13 +1790,13 @@ class TaskParameters(DockerBaseClass):
         if self.env_file:
             parsed_env_file = utils.parse_env_file(self.env_file)
             for name, value in parsed_env_file.items():
-                final_env[name] = str(value)
+                final_env[name] = to_text(value, errors='surrogate_or_strict')
         if self.env:
             for name, value in self.env.items():
                 if not isinstance(value, string_types):
                     self.fail("Non-string value found for env option. Ambiguous env options must be "
                               "wrapped in quotes to avoid them being interpreted. Key: %s" % (name, ))
-                final_env[name] = str(value)
+                final_env[name] = to_text(value, errors='surrogate_or_strict')
         return final_env
 
     def _get_network_id(self, network_name):
@@ -1804,7 +1807,7 @@ class TaskParameters(DockerBaseClass):
                     network_id = network['Id']
                     break
         except Exception as exc:
-            self.fail("Error getting network id for %s - %s" % (network_name, str(exc)))
+            self.fail("Error getting network id for %s - %s" % (network_name, to_native(exc)))
         return network_id
 
     def _process_mounts(self):
@@ -2160,7 +2163,7 @@ class Container(DockerBaseClass):
             if not minimal_version.get('supported', True):
                 continue
             compare = self.parameters.client.comparisons[self.parameters_map.get(key, key)]
-            self.log('check differences %s %s vs %s (%s)' % (key, getattr(self.parameters, key), str(value), compare))
+            self.log('check differences %s %s vs %s (%s)' % (key, getattr(self.parameters, key), to_text(value, errors='surrogate_or_strict'), compare))
             if getattr(self.parameters, key, None) is not None:
                 match = self._compare(getattr(self.parameters, key), value, compare)
 
@@ -2183,7 +2186,7 @@ class Container(DockerBaseClass):
                         else:
                             # We sort the list of dictionaries by using the sorted items of a dict as its key.
                             def sort_key_fn(x):
-                                return sorted((a, str(b)) for a, b in x.items())
+                                return sorted((a, to_text(b, errors='surrogate_or_strict')) for a, b in x.items())
                         if p is not None:
                             p = sorted(p, key=sort_key_fn)
                         if c is not None:
@@ -2363,9 +2366,9 @@ class Container(DockerBaseClass):
             elif isinstance(config[0], tuple):
                 expected_bound_ports[container_port] = []
                 for host_ip, host_port in config:
-                    expected_bound_ports[container_port].append({'HostIp': host_ip, 'HostPort': str(host_port)})
+                    expected_bound_ports[container_port].append({'HostIp': host_ip, 'HostPort': to_text(host_port, errors='surrogate_or_strict')})
             else:
-                expected_bound_ports[container_port] = [{'HostIp': config[0], 'HostPort': str(config[1])}]
+                expected_bound_ports[container_port] = [{'HostIp': config[0], 'HostPort': to_text(config[1], errors='surrogate_or_strict')}]
         return expected_bound_ports
 
     def _get_expected_links(self):
@@ -2482,7 +2485,7 @@ class Container(DockerBaseClass):
             image_ports = [self._normalize_port(p) for p in image_exposed_ports.keys()]
         param_ports = []
         if self.parameters.ports:
-            param_ports = [str(p[0]) + '/' + p[1] for p in self.parameters.ports]
+            param_ports = [to_text(p[0], errors='surrogate_or_strict') + '/' + p[1] for p in self.parameters.ports]
         result = list(set(image_ports + param_ports))
         self.log(result, pretty_print=True)
         return result
@@ -2506,7 +2509,7 @@ class Container(DockerBaseClass):
             return None
         result = dict()
         for key, value in config_sysctls.items():
-            result[key] = str(value)
+            result[key] = to_text(value, errors='surrogate_or_strict')
         return result
 
     def _get_expected_cmd(self):
@@ -2688,7 +2691,7 @@ class ContainerManager(DockerBaseClass):
                             self.client.unpause(container=container.Id)
                     except Exception as exc:
                         self.fail("Error %s container %s: %s" % (
-                            "pausing" if self.parameters.paused else "unpausing", container.Id, str(exc)
+                            "pausing" if self.parameters.paused else "unpausing", container.Id, to_native(exc)
                         ))
                     container = self._get_container(container.Id)
                 self.results['changed'] = True
@@ -2810,7 +2813,7 @@ class ContainerManager(DockerBaseClass):
                         self.client.disconnect_container_from_network(container.Id, diff['parameter']['id'])
                     except Exception as exc:
                         self.fail("Error disconnecting container from network %s - %s" % (diff['parameter']['name'],
-                                                                                          str(exc)))
+                                                                                          to_native(exc)))
             # connect to the network
             params = dict()
             for para in ('ipv4_address', 'ipv6_address', 'links', 'aliases'):
@@ -2823,7 +2826,7 @@ class ContainerManager(DockerBaseClass):
                     self.log(params, pretty_print=True)
                     self.client.connect_container_to_network(container.Id, diff['parameter']['id'], **params)
                 except Exception as exc:
-                    self.fail("Error connecting container to network %s - %s" % (diff['parameter']['name'], str(exc)))
+                    self.fail("Error connecting container to network %s - %s" % (diff['parameter']['name'], to_native(exc)))
         return self._get_container(container.Id)
 
     def _purge_networks(self, container, networks):
@@ -2834,7 +2837,7 @@ class ContainerManager(DockerBaseClass):
                     self.client.disconnect_container_from_network(container.Id, network['name'])
                 except Exception as exc:
                     self.fail("Error disconnecting container from network %s - %s" % (network['name'],
-                                                                                      str(exc)))
+                                                                                      to_native(exc)))
         return self._get_container(container.Id)
 
     def container_create(self, image, create_parameters):
@@ -2849,7 +2852,7 @@ class ContainerManager(DockerBaseClass):
                 new_container = self.client.create_container(image, **create_parameters)
                 self.client.report_warnings(new_container)
             except Exception as exc:
-                self.fail("Error creating container: %s" % str(exc))
+                self.fail("Error creating container: %s" % to_native(exc))
             return self._get_container(new_container['Id'])
         return new_container
 
@@ -2861,7 +2864,7 @@ class ContainerManager(DockerBaseClass):
             try:
                 self.client.start(container=container_id)
             except Exception as exc:
-                self.fail("Error starting container %s: %s" % (container_id, str(exc)))
+                self.fail("Error starting container %s: %s" % (container_id, to_native(exc)))
 
             if not self.parameters.detach:
                 if self.client.docker_py_version >= LooseVersion('3.0'):
@@ -2913,21 +2916,21 @@ class ContainerManager(DockerBaseClass):
                         # New docker daemon versions do not allow containers to be removed
                         # if they are paused. Make sure we don't end up in an infinite loop.
                         if count == 3:
-                            self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
+                            self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, to_native(exc)))
                         count += 1
                         # Unpause
                         try:
                             self.client.unpause(container=container_id)
                         except Exception as exc2:
-                            self.fail("Error unpausing container %s for removal: %s" % (container_id, str(exc2)))
+                            self.fail("Error unpausing container %s for removal: %s" % (container_id, to_native(exc2)))
                         # Now try again
                         continue
                     if 'removal of container ' in exc.explanation and ' is already in progress' in exc.explanation:
                         pass
                     else:
-                        self.fail("Error removing container %s: %s" % (container_id, str(exc)))
+                        self.fail("Error removing container %s: %s" % (container_id, to_native(exc)))
                 except Exception as exc:
-                    self.fail("Error removing container %s: %s" % (container_id, str(exc)))
+                    self.fail("Error removing container %s: %s" % (container_id, to_native(exc)))
                 # We only loop when explicitly requested by 'continue'
                 break
         return response
@@ -2943,7 +2946,7 @@ class ContainerManager(DockerBaseClass):
                     result = self.client.update_container(container_id, **update_parameters)
                     self.client.report_warnings(result)
                 except Exception as exc:
-                    self.fail("Error updating container %s: %s" % (container_id, str(exc)))
+                    self.fail("Error updating container %s: %s" % (container_id, to_native(exc)))
         return self._get_container(container_id)
 
     def container_kill(self, container_id):
@@ -2970,7 +2973,7 @@ class ContainerManager(DockerBaseClass):
                 else:
                     dummy = self.client.restart(container_id)
             except Exception as exc:
-                self.fail("Error restarting container %s: %s" % (container_id, str(exc)))
+                self.fail("Error restarting container %s: %s" % (container_id, to_native(exc)))
         return self._get_container(container_id)
 
     def container_stop(self, container_id):
@@ -2993,18 +2996,18 @@ class ContainerManager(DockerBaseClass):
                         # New docker daemon versions do not allow containers to be removed
                         # if they are paused. Make sure we don't end up in an infinite loop.
                         if count == 3:
-                            self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, str(exc)))
+                            self.fail("Error removing container %s (tried to unpause three times): %s" % (container_id, to_native(exc)))
                         count += 1
                         # Unpause
                         try:
                             self.client.unpause(container=container_id)
                         except Exception as exc2:
-                            self.fail("Error unpausing container %s for removal: %s" % (container_id, str(exc2)))
+                            self.fail("Error unpausing container %s for removal: %s" % (container_id, to_native(exc2)))
                         # Now try again
                         continue
-                    self.fail("Error stopping container %s: %s" % (container_id, str(exc)))
+                    self.fail("Error stopping container %s: %s" % (container_id, to_native(exc)))
                 except Exception as exc:
-                    self.fail("Error stopping container %s: %s" % (container_id, str(exc)))
+                    self.fail("Error stopping container %s: %s" % (container_id, to_native(exc)))
                 # We only loop when explicitly requested by 'continue'
                 break
         return response
