@@ -36,11 +36,11 @@ def _handle_error(json_exc, yaml_exc, file_name, show_content):
         err_obj = AnsibleBaseYAMLObject()
         err_obj.ansible_pos = (file_name, yaml_exc.problem_mark.line + 1, yaml_exc.problem_mark.column + 1)
 
-    yaml_syntax_error = YAML_SYNTAX_ERROR % to_text(getattr(yaml_exc, 'problem', u''))
-    err_msg = u'We were unable to read either as JSON nor YAML, these are the errors we got from each:\n' \
-              u'JSON: %s\n\n%s' % (to_text(json_exc), yaml_syntax_error)
+    n_yaml_syntax_error = YAML_SYNTAX_ERROR % to_native(getattr(yaml_exc, 'problem', u''))
+    n_err_msg = 'We were unable to read either as JSON nor YAML, these are the errors we got from each:\n' \
+                'JSON: %s\n\n%s' % (to_native(json_exc), n_yaml_syntax_error)
 
-    raise AnsibleParserError(to_native(err_msg), obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
+    raise AnsibleParserError(n_err_msg, obj=err_obj, show_content=show_content, orig_exc=yaml_exc)
 
 
 def _safe_load(stream, file_name=None, vault_secrets=None):
