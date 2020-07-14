@@ -430,7 +430,7 @@ Migrating from with_X to loop
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
    :ref:`playbooks_best_practices`
-       Best practices in playbooks
+       Tips and tricks for playbooks
    :ref:`playbooks_conditionals`
        Conditional statements in playbooks
    :ref:`playbooks_variables`

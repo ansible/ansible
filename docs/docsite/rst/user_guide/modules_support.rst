@@ -4,68 +4,66 @@
 Module Maintenance & Support
 ****************************
 
+If you are using a module and you discover a bug, you may want to know where to report that bug, who is responsible for fixing it, and how you can track changes to the module. If you are a Red Hat subscriber, you may want to know whether you can get support for the issue you are facing.
+
+Starting in Ansible 2.10, most modules live in collections. The distribution method for each collection reflects the maintenance and support for the modules in that collection.
+
 .. contents::
-  :depth: 2
   :local:
 
 Maintenance
 ===========
 
-To clarify who maintains each included module, adding features and fixing bugs, each included module now has associated metadata that provides information about maintenance.
+.. table::
+   :class: documentation-table
 
-Core
-----
+   ============================= ========================================== ==========================
+   Collection                    Code location                              Maintained by
+   ============================= ========================================== ==========================
+   ansible.builtin               `ansible/ansible repo`_ on GitHub          core team
 
-:ref:`Core Maintained<core_supported>` modules are maintained by the Ansible Engineering Team.
-These modules are integral to the basic foundations of the Ansible distribution.
+   distributed on Galaxy         various; follow ``repo`` link              community or partners
 
-Network
--------
+   distributed on Automation Hub various; follow ``repo`` link              content team or partners
+   ============================= ========================================== ==========================
 
-:ref:`Network Maintained<network_supported>` modules are are maintained by the Ansible Network Team. Please note there are additional networking modules that are categorized as Certified or Community not maintained by Ansible.
-
-
-Certified
----------
-
-`Certified <https://access.redhat.com/articles/3642632>`_ modules are maintained by Ansible Partners.
-
-Community
----------
-
-:ref:`Community Maintained<community_supported>` modules are submitted and maintained by the Ansible community.  These modules are not maintained by Ansible, and are included as a convenience.
+.. _ansible/ansible repo: https://github.com/ansible/ansible/tree/devel/lib/ansible/modules
 
 Issue Reporting
 ===============
 
-If you believe you have found a bug in a module and are already running the latest stable or development version of Ansible, first look at the `issue tracker in the Ansible repo <https://github.com/ansible/ansible/issues>`_ to see if an issue has already been filed. If not, please file one.
+If you find a bug that affects a plugin in the main Ansible repo:
 
-Should you have a question rather than a bug report, inquiries are welcome on the `ansible-project Google group <https://groups.google.com/forum/#%21forum/ansible-project>`_ or on Ansible's "#ansible" channel, located on irc.freenode.net.
+  #. Confirm that you are running the latest stable version of Ansible or the devel branch.
+  #. Look at the `issue tracker in the Ansible repo <https://github.com/ansible/ansible/issues>`_ to see if an issue has already been filed.
+  #. Create an issue if one does not already exist. Include as much detail as you can about the behavior you discovered.
 
-For development-oriented topics, use the `ansible-devel Google group <https://groups.google.com/forum/#%21forum/ansible-devel>`_ or Ansible's #ansible and #ansible-devel channels, located on irc.freenode.net. You should also read the :ref:`Community Guide <ansible_community_guide>`, :ref:`Testing Ansible <developing_testing>`, and the :ref:`Developer Guide <developer_guide>`.
+If you find a bug that affects a plugin in a Galaxy collection:
 
-The modules are hosted on GitHub in a subdirectory of the `Ansible <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_ repo.
+  #. Find the collection on Galaxy.
+  #. Find the issue tracker for the collection.
+  #. Look there to see if an issue has already been filed.
+  #. Create an issue if one does not already exist. Include as much detail as you can about the behavior you discovered.
 
-NOTE: If you have a Red Hat Ansible Automation product subscription, please follow the standard issue reporting process via the `Red Hat Customer Portal <https://access.redhat.com/>`_.
+Some partner collections may be hosted in private repositories.
+
+If you are not sure whether the behavior you see is a bug, if you have questions, if you want to discuss development-oriented topics, or if you just want to get in touch, use one of our Google groups or IRC channels to  :ref:`communicate with Ansiblers <communication>`.
+
+If you find a bug that affects a module in an Automation Hub collection:
+
+  #. If the collection offers an Issue Tracker link on Automation Hub, click there and open an issue on the collection repository. If it does not, follow the standard process for reporting issues on the `Red Hat Customer Portal <https://access.redhat.com/>`_. You must have a subscription to the Red Hat Ansible Automation Platform to create an issue on the portal.
 
 Support
 =======
 
-For more information on how included Ansible modules are supported by Red Hat,
-please refer to the following `knowledge base article <https://access.redhat.com/articles/3166901>`_ as well as other resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_
+All plugins that remain in ansible-base and all collections hosted in Automation Hub are supported by Red Hat. No other plugins or collections are supported by Red Hat. If you have a subscription to the Red Hat Ansible Automation Platform, you can find more information and resources on the `Red Hat Customer Portal. <https://access.redhat.com/>`_
 
 .. seealso::
 
-   :ref:`Module index<modules_by_category>`
-       A complete list of all available modules.
    :ref:`intro_adhoc`
        Examples of using modules in /usr/bin/ansible
    :ref:`working_with_playbooks`
        Examples of using modules with /usr/bin/ansible-playbook
-   :ref:`developing_modules`
-       How to write your own modules
-   `List of Ansible Certified Modules <https://access.redhat.com/articles/3642632>`_
-       High level list of Ansible certified modules from Partners
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

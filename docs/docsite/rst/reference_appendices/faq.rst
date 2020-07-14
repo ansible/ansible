@@ -698,7 +698,7 @@ Please see the section below for a link to IRC and the Google Group, where you c
    :ref:`working_with_playbooks`
        An introduction to playbooks
    :ref:`playbooks_best_practices`
-       Best practices advice
+       Tips and tricks for playbooks
    `User Mailing List <https://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_

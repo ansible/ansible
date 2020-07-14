@@ -188,7 +188,7 @@ Imports are processed before the play begins, so the name of the import no longe
    :ref:`playbooks_loops`
        Loops in playbooks
    :ref:`playbooks_best_practices`
-       Various tips about managing playbooks in the real world
+       Tips and tricks for playbooks
    :ref:`ansible_galaxy`
        How to share roles on galaxy, role management
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_

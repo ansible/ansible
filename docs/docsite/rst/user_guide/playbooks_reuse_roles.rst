@@ -441,7 +441,7 @@ Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page
    :ref:`working_with_playbooks`
        Review the basic Playbook language features
    :ref:`playbooks_best_practices`
-       Tips for managing playbooks in the real world
+       Tips and tricks for playbooks
    :ref:`playbooks_variables`
        Variables in playbooks
    :ref:`playbooks_conditionals`
