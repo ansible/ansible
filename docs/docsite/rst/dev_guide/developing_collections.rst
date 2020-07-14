@@ -5,7 +5,6 @@
 Developing collections
 **********************
 
-
 Collections are a distribution format for Ansible content. You can use collections to package and distribute playbooks, roles, modules, and plugins.
 You can publish and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
 
@@ -653,7 +652,7 @@ To generate changelogs from the changelog fragments you created:
 
 .. note::
 
-  Add the  ``--reload-plugins`` option if you ran the ``antsibull-changelog release`` command previously and the version of the collection has not changed. ``antsibull-changelog`` caches the information on all plugins and does not update its cache until the collection version changes.  
+  Add the  ``--reload-plugins`` option if you ran the ``antsibull-changelog release`` command previously and the version of the collection has not changed. ``antsibull-changelog`` caches the information on all plugins and does not update its cache until the collection version changes.
 
 
 Porting Guide entries
