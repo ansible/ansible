@@ -383,10 +383,10 @@ class DocCLI(CLI):
 
         if collection is not None:
             # get all 'physical plugins'
-            plugins = [x for x, y in _iter_modules_impl([path], exclude_symlinks=True)]
+            plugins = [x for x, y in _iter_modules_impl([path])]
 
             # consult meta
-            meta = _get_collection_metadata('ansible.builtin')
+            meta = _get_collection_metadata(collection)
         else:
             plugins = os.listdir(path)
             meta = _get_collection_metadata('ansible.builtin')
