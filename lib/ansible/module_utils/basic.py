@@ -391,7 +391,7 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
             if omit_me in stringy_value:
                 return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
 
-    elif isinstance(value, datetime.datetime):
+    elif isinstance(value, (datetime.datetime, datetime.date)):
         value = value.isoformat()
     else:
         raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
