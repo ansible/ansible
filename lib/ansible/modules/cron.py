@@ -630,7 +630,7 @@ def main():
 
     if module._diff:
         diff = dict()
-        diff['before'] = crontab.existing
+        diff['before'] = crontab.n_existing
         if crontab.cron_file:
             diff['before_header'] = crontab.cron_file
         else:
@@ -726,8 +726,8 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed and crontab.existing != '':
-        if not (crontab.existing.endswith('\r') or crontab.existing.endswith('\n')):
+    if not changed and crontab.n_existing != '':
+        if not (crontab.n_existing.endswith('\r') or crontab.n_existing.endswith('\n')):
             changed = True
 
     res_args = dict(
