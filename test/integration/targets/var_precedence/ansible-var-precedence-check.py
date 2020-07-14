@@ -3,6 +3,9 @@
 # A tool to check the order of precedence for ansible variables
 # https://github.com/ansible/ansible/blob/devel/test/integration/test_var_precedence.yml
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import json
 import os
 import sys
@@ -455,7 +458,7 @@ def main():
             if f not in features:
                 print('%s is not a valid feature' % f)
                 sys.exit(1)
-        features = [x for x in options.feature]
+        features = list(options.feature)
 
     fdesc = {
         'ini_host': 'host var inside the ini',

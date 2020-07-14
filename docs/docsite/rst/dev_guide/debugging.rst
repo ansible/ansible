@@ -27,8 +27,8 @@ To debug a module running on a remote target (i.e. not ``localhost``):
 #. Take note of the directory Ansible used to store modules on the remote host. This directory is usually under the home directory of your ``ansible_user``, in the form ``~/.ansible/tmp/ansible-tmp-...``.
 #. SSH into the remote target after the playbook runs.
 #. Navigate to the directory you noted in step 3.
-#. Extract the module you want to debug from the zipped file that Ansible sent to the remote host: ``$ python AnsiballZ_my_test_module.py explode``. Ansible will expand the module into ``./debug-dir``. You can optionally run the zipped file by specifying ``python AnsiballZ_my_test_module.py``.
-#. Navigate to the debug directory: ``$ cd debug-dir``.
+#. Extract the module you want to debug from the zipped file that Ansible sent to the remote host: ``$ python AnsiballZ_my_test_module.py explode``. Ansible will expand the module into ``./debug_dir``. You can optionally run the zipped file by specifying ``python AnsiballZ_my_test_module.py``.
+#. Navigate to the debug directory: ``$ cd debug_dir``.
 #. Modify or set a breakpoint in ``__main__.py``.
 #. Ensure that the unzipped module is executable: ``$ chmod 755 __main__.py``.
 #. Run the unzipped module directly, passing the ``args`` file that contains the params that were originally passed: ``$ ./__main__.py args``. This approach is good for reproducing behavior as well as modifying the parameters for debugging.
@@ -95,7 +95,7 @@ string into some python files that you can work with:
 
 When you look into the debug_dir you'll see a directory structure like this::
 
-    ├── ansible_module_ping.py
+    ├── AnsiballZ_ping.py
     ├── args
     └── ansible
         ├── __init__.py
@@ -103,7 +103,7 @@ When you look into the debug_dir you'll see a directory structure like this::
             ├── basic.py
             └── __init__.py
 
-* :file:`ansible_module_ping.py` is the code for the module itself.  The name
+* :file:`AnsiballZ_ping.py` is the code for the module itself.  The name
   is based on the name of the module with a prefix so that we don't clash with
   any other python module names.  You can modify this code to see what effect
   it would have on your module.
@@ -118,7 +118,7 @@ When you look into the debug_dir you'll see a directory structure like this::
   files for any :mod:`ansible.module_utils` imports in the module but not
   any files from any other module.  So if your module uses
   :mod:`ansible.module_utils.url` Ansible will include it for you, but if
-  your module includes `requests <http://docs.python-requests.org/en/master/api/>`_ then you'll have to make sure that
+  your module includes `requests <https://requests.readthedocs.io/en/master/api/>`_ then you'll have to make sure that
   the python `requests library <https://pypi.org/project/requests/>`_ is installed on the system before running the
   module.  You can modify files in this directory if you suspect that the
   module is having a problem in some of this boilerplate code rather than in
@@ -138,17 +138,3 @@ the arguments in the :file:`args` file.  You can continue to run it like this
 until you understand the problem.  Then you can copy it back into your real
 module file and test that the real module works via :command:`ansible` or
 :command:`ansible-playbook`.
-
-.. note::
-
-    The wrapper provides one more subcommand, ``excommunicate``.  This
-    subcommand is very similar to ``execute`` in that it invokes the exploded
-    module on the arguments in the :file:`args`.  The way it does this is
-    different, however.  ``excommunicate`` imports the ``main``
-    function from the module and then calls that.  This makes excommunicate
-    execute the module in the wrapper's process.  This may be useful for
-    running the module under some graphical debuggers but it is very different
-    from the way the module is executed by Ansible itself.  Some modules may
-    not work with ``excommunicate`` or may behave differently than when used
-    with Ansible normally.  Those are not bugs in the module; they're
-    limitations of ``excommunicate``.  Use at your own risk.

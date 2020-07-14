@@ -1,2 +1,0 @@
-bugfixes:
-- lineinfile - fix bug that caused multiple line insertions (https://github.com/ansible/ansible/issues/58923).

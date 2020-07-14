@@ -1,3 +1,0 @@
-bugfixes:
-  - dnf module - Ensure the modules exit_json['msg'] response is
-    always string, not sometimes a tuple.

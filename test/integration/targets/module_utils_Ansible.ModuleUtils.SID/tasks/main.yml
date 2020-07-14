@@ -1,0 +1,22 @@
+---
+- block:
+  - name: create test user with well know SID as the name
+    win_user:
+      name: S-1-0-0
+      password: AbcDef123!@#
+      state: present
+
+  - name: call module with SID tests
+    sid_utils_test:
+      sid_account: S-1-0-0
+    register: sid_test
+
+  always:
+  - name: remove test SID user
+    win_user:
+      name: S-1-0-0
+      state: absent
+
+- assert:
+    that:
+    - sid_test.data == 'success'

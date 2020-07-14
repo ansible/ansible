@@ -1,3 +1,0 @@
----
-bugfixes:
-- redfish_command - fix power ResetType mapping logic (https://github.com/ansible/ansible/issues/59804)

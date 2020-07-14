@@ -1,6 +1,0 @@
-- hosts: localhost
-  connection: local
-  environment: "{{ ansible_test.environment }}"
-
-  roles:
-    - elb_target_info

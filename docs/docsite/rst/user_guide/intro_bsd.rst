@@ -3,7 +3,7 @@
 Ansible and BSD
 ===============
 
-Managing BSD machines is different from managing Linux/Unix machines. If you have managed nodes running BSD, review these topics.
+Managing BSD machines is different from managing other Unix-like machines. If you have managed nodes running BSD, review these topics.
 
 .. contents::
    :local:
@@ -49,7 +49,7 @@ Once this is done you can now use other Ansible modules apart from the ``raw`` m
 Setting the Python interpreter
 ------------------------------
 
-To support a variety of Unix/Linux operating systems and distributions, Ansible cannot always rely on the existing environment or ``env`` variables to locate the correct Python binary. By default, modules point at ``/usr/bin/python`` as this is the most common location. On BSD variants, this path may differ, so it is advised to inform Ansible of the binary's location, through the ``ansible_python_interpreter`` inventory variable. For example:
+To support a variety of Unix-like operating systems and distributions, Ansible cannot always rely on the existing environment or ``env`` variables to locate the correct Python binary. By default, modules point at ``/usr/bin/python`` as this is the most common location. On BSD variants, this path may differ, so it is advised to inform Ansible of the binary's location, through the ``ansible_python_interpreter`` inventory variable. For example:
 
 .. code-block:: text
 
@@ -70,7 +70,7 @@ If you use additional plugins beyond those bundled with Ansible, you can set sim
 Which modules are available?
 ----------------------------
 
-The majority of the core Ansible modules are written for a combination of Linux/Unix machines and other generic services, so most should function well on the BSDs with the obvious exception of those that are aimed at Linux-only technologies (such as LVG).
+The majority of the core Ansible modules are written for a combination of Unix-like machines and other generic services, so most should function well on the BSDs with the obvious exception of those that are aimed at Linux-only technologies (such as LVG).
 
 Using BSD as the control node
 -----------------------------

@@ -1,0 +1,21 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: try to set 'diff' a boolean
+      debug: msg="not important"
+      diff: yes
+      ignore_errors: True
+      register: good_diff
+
+    - name: try to set 'diff' a boolean to a string (. would make it non boolean)
+      debug: msg="not important"
+      diff: yes.
+      ignore_errors: True
+      register: bad_diff
+
+    - name: Check we did error out
+      assert:
+        that:
+            - good_diff is success
+            - bad_diff is failed
+            - "'is not a valid boolean' in bad_diff['msg']"

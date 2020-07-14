@@ -97,7 +97,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
             display.deprecated(
                 msg="The 'cache' option is deprecated for the script inventory plugin. "
                 "External scripts implement their own caching and this option has never been used",
-                version="2.12"
+                version="2.12", collection_name='ansible.builtin'
             )
 
         # Support inventory scripts that are not prefixed with some
@@ -128,7 +128,7 @@ class InventoryModule(BaseInventoryPlugin, Cacheable):
                 raise AnsibleError("Inventory {0} contained characters that cannot be interpreted as UTF-8: {1}".format(path, to_native(e)))
 
             try:
-                processed = self.loader.load(data)
+                processed = self.loader.load(data, json_only=True)
             except Exception as e:
                 raise AnsibleError("failed to parse executable inventory script results from {0}: {1}\n{2}".format(path, to_native(e), err))
 

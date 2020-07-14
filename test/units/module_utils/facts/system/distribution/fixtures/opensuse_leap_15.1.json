@@ -1,0 +1,36 @@
+{
+    "name": "openSUSE Leap 15.1",
+    "distro": {
+        "codename": "",
+        "id": "opensuse-leap",
+        "name": "openSUSE Leap",
+        "version": "15.1",
+        "version_best": "15.1",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "openSUSE Leap",
+            "version": "15.1",
+            "codename": "",
+            "id": "opensuse-leap",
+            "id_like": "suse opensuse",
+            "version_id": "15.1",
+            "pretty_name": "openSUSE Leap 15.1",
+            "ansi_color": "0;32",
+            "cpe_name": "cpe:/o:opensuse:leap:15.1",
+            "bug_report_url": "https://bugs.opensuse.org",
+            "home_url": "https://www.opensuse.org/"
+        }
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"openSUSE Leap\"\nVERSION=\"15.1\"\nID=\"opensuse-leap\"\nID_LIKE=\"suse opensuse\"\nVERSION_ID=\"15.1\"\nPRETTY_NAME=\"openSUSE Leap 15.1\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:leap:15.1\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n",
+        "/usr/lib/os-release": "NAME=\"openSUSE Leap\"\nVERSION=\"15.1\"\nID=\"opensuse-leap\"\nID_LIKE=\"suse opensuse\"\nVERSION_ID=\"15.1\"\nPRETTY_NAME=\"openSUSE Leap 15.1\"\nANSI_COLOR=\"0;32\"\nCPE_NAME=\"cpe:/o:opensuse:leap:15.1\"\nBUG_REPORT_URL=\"https://bugs.opensuse.org\"\nHOME_URL=\"https://www.opensuse.org/\"\n"
+    },
+    "platform.dist": ["opensuse-leap", "15.1", ""],
+    "result": {
+        "distribution": "openSUSE Leap",
+        "distribution_version": "15.1",
+        "distribution_release": "1",
+        "distribution_major_version": "15",
+        "os_family": "Suse"
+    }
+}

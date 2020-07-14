@@ -1,10 +1,5 @@
 - name: delete temporary directory
-  file:
-    path: "{{ remote_tmp_dir }}"
-    state: absent
-  no_log: yes
+  include_tasks: default-cleanup.yml
 
 - name: delete temporary directory (windows)
-  win_file:
-    path: "{{ remote_tmp_dir }}"
-    state: absent
+  include_tasks: windows-cleanup.yml

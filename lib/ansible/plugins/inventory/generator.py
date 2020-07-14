@@ -41,7 +41,6 @@ EXAMPLES = '''
     # remember to enable this inventory plugin in the ansible.cfg before using
     # View the output using `ansible-inventory -i inventory.config --list`
     plugin: generator
-    strict: False
     hosts:
         name: "{{ operation }}_{{ application }}_{{ environment }}_runner"
         parents:

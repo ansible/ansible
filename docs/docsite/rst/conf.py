@@ -13,6 +13,9 @@
 # All configuration values have a default value; values that are commented out
 # serve to show the default value.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import sys
 import os
 
@@ -147,7 +150,7 @@ html_context = {
     'current_version': version,
     'latest_version': '2.9',
     # list specifically out of order to make latest work
-    'available_versions': ('latest', '2.8', '2.7', 'devel'),
+    'available_versions': ('latest', '2.9_ja', '2.8', '2.7', 'devel'),
     'css_files': ('_static/ansible.css',  # overrides to the standard theme
                   ),
 }
@@ -276,4 +279,17 @@ autoclass_content = 'both'
 # location for the mappning to live) will confuse it.
 intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2.inv')),
                        'python3': ('https://docs.python.org/3/', (None, '../python3.inv')),
-                       'jinja2': ('http://jinja.palletsprojects.com/', (None, '../jinja2.inv'))}
+                       'jinja2': ('http://jinja.palletsprojects.com/', (None, '../jinja2.inv')),
+                       'ansible_2_9': ('https://docs.ansible.com/ansible/2.9/', (None, '../ansible_2_9.inv')),
+                       'ansible_2_8': ('https://docs.ansible.com/ansible/2.8/', (None, '../ansible_2_8.inv')),
+                       'ansible_2_7': ('https://docs.ansible.com/ansible/2.7/', (None, '../ansible_2_7.inv')),
+                       'ansible_2_6': ('https://docs.ansible.com/ansible/2.6/', (None, '../ansible_2_6.inv')),
+                       'ansible_2_5': ('https://docs.ansible.com/ansible/2.5/', (None, '../ansible_2_5.inv')),
+                       }
+
+# linckchecker settings
+linkcheck_ignore = [
+    r'http://irc\.freenode\.net',
+]
+linkcheck_workers = 25
+# linkcheck_anchors = False

@@ -1,7 +1,0 @@
----
-scaleway_organization: '{{ scw_org }}'
-scaleway_region: ams1
-scaleway_image_id: 89ee4018-f8c3-4dc4-a6b5-bca14f985ebe
-scaleway_commerial_type: START1-S
-scaleway_server_name: scaleway_ip_test_server
-scaleway_reverse_name: scaleway.com

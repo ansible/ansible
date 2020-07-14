@@ -33,7 +33,7 @@ You can find the official :ref:`Ansible communication channels <communication>`.
 Review, fix, and maintain the documentation
 ===========================================
 
-Typos are everywhere, even in the Ansible documentation. We work hard to keep the documentation up-to-date, but you may also find out-dated examples. We offer easy ways to :ref:`report and/or fix documentation errors <community_documentation_contributions>`.
+Typos are everywhere, even in the Ansible documentation. We work hard to keep the documentation up-to-date, but you may also find outdated examples. We offer easy ways to :ref:`report and/or fix documentation errors <community_documentation_contributions>`.
 
 .. _ansible_community_meetup:
 
@@ -77,7 +77,7 @@ Working groups are a way for Ansible community members to self-organize around p
 Teach Ansible to others
 =======================
 
-We're working on a standardized Ansible workshop called `Lightbulb <https://github.com/ansible/lightbulb>`_ that can provide a good hands-on introduction to Ansible usage and concepts.
+We're working on a standardized `Ansible workshop <https://ansible.github.io/workshops/>`_ that can provide a good hands-on introduction to Ansible usage and concepts.
 
 Social media
 ============

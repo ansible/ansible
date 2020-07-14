@@ -1,8 +1,0 @@
-<rpc-reply message-id="urn:uuid:0693e4e3-4208-4912-a51e-2e509be7d2d0">
-	<output>
-		Hostname: vsrx01
-		Model: vSRX
-		Junos: 15.1X49-D15.4
-		JUNOS Software Release [15.1X49-D15.4]
-	</output>
- </rpc-reply>

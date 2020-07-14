@@ -1,0 +1,9 @@
+action_groups:
+  testgroup:
+    - testns.testcoll.echo1
+    - testns.testcoll.echo2
+# note we can define defaults for an action
+    - testns.testcoll.echoaction
+# note we can define defaults in this group for actions/modules in another collection
+    - testns.othercoll.other_echoaction
+    - testns.othercoll.other_echo1

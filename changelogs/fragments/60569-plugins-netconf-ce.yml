@@ -1,2 +1,0 @@
-bugfixes:
-  - plugins-netconf-ce - to get attribute 'set-id' from rpc-reply.

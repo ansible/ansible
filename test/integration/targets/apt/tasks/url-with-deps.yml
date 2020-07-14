@@ -1,0 +1,56 @@
+- block:
+    - name: Install https transport for apt
+      apt:
+        name: apt-transport-https
+
+    - name: Ensure echo-hello is not installed
+      apt:
+        name: echo-hello
+        state: absent
+        purge: yes
+
+    # Note that this .deb is just a stupidly tiny one that has a dependency
+    # on vim-tiny. Really any .deb will work here so long as it has
+    # dependencies that exist in a repo and get brought in.
+    # The source and files for building this .deb can be found here:
+    # https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/apt/echo-hello-source.tar.gz
+    - name: Install deb file with dependencies from URL (check_mode)
+      apt:
+        deb: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/apt/echo-hello_1.0_all.deb
+      check_mode: true
+      register: apt_url_deps_check_mode
+
+    - name: check to make sure we didn't install the package due to check_mode
+      shell: dpkg-query -l echo-hello
+      failed_when: false
+      register: dpkg_result_check_mode
+
+    - name: verify check_mode installation of echo-hello
+      assert:
+        that:
+        - apt_url_deps_check_mode is changed
+        - dpkg_result_check_mode.rc != 0
+
+    - name: Install deb file with dependencies from URL (for real this time)
+      apt:
+        deb: https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/apt/echo-hello_1.0_all.deb
+      register: apt_url_deps
+
+    - name: check to make sure we installed the package
+      shell: dpkg-query -l echo-hello
+      failed_when: False
+      register: dpkg_result
+
+    - name: verify real installation of echo-hello
+      assert:
+        that:
+        - apt_url_deps is changed
+        - dpkg_result is successful
+        - dpkg_result.rc == 0
+
+  always:
+    - name: uninstall echo-hello with apt
+      apt:
+        pkg: echo-hello
+        state: absent
+        purge: yes

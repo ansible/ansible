@@ -1,0 +1,24 @@
+{
+    "name": "SmartOS Global Zone",
+    "uname_v": "joyent_20160330T234717Z",
+    "result": {
+        "distribution_release": "SmartOS 20160330T234717Z x86_64",
+        "distribution": "SmartOS",
+        "os_family": "Solaris",
+        "distribution_version": "joyent_20160330T234717Z"
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "",
+        "name": "",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/release": "                       SmartOS 20160330T234717Z x86_64\n              Copyright 2010 Sun Microsystems, Inc.  All Rights Reserved.\n              Copyright 2010-2012 Joyent, Inc.  All Rights Reserved.\n                        Use is subject to license terms.\n\n   Built with the following components:\n\n[\n        { \"repo\": \"smartos-live\", \"branch\": \"release-20160331\", \"rev\": \"a77c410f2afe6dc9853a915733caec3609cc50f1\", \"commit_date\": \"1459340323\", \"url\": \"git@github.com:joyent/smartos-live.git\" }\n        , { \"repo\": \"illumos-joyent\", \"branch\": \"release-20160331\", \"rev\": \"ab664c06caf06e9ce7586bff956e7709df1e702e\", \"commit_date\": \"1459362533\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-joyent\" }\n        , { \"repo\": \"illumos-extra\", \"branch\": \"release-20160331\", \"rev\": \"cc723855bceace3df7860b607c9e3827d47e0ff4\", \"commit_date\": \"1458153188\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-extra\" }\n        , { \"repo\": \"kvm\", \"branch\": \"release-20160331\", \"rev\": \"a8befd521c7e673749c64f118585814009fe4b73\", \"commit_date\": \"1450081968\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-kvm\" }\n        , { \"repo\": \"kvm-cmd\", \"branch\": \"release-20160331\", \"rev\": \"c1a197c8e4582c68739ab08f7e3198b2392c9820\", \"commit_date\": \"1454723558\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/illumos-kvm-cmd\" }\n        , { \"repo\": \"mdata-client\", \"branch\": \"release-20160331\", \"rev\": \"58158c44603a3316928975deccc5d10864832770\", \"commit_date\": \"1429917227\", \"url\": \"/root/data/jenkins/workspace/smartos/MG/build/mdata-client\" }\n]\n"
+    },
+    "platform.system": "SunOS"
+}

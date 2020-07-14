@@ -1,3 +1,0 @@
-mysql_data_dirs:
-  - /var/lib/mysql
-  - /usr/share/mysql

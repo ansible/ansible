@@ -26,8 +26,10 @@ import pytest
 from units.compat.mock import MagicMock
 from units.mock.loader import DictDataLoader
 
+from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.playbook.task_include import TaskInclude
+from ansible.playbook.role_include import IncludeRole
 from ansible.executor import task_result
 
 from ansible.playbook.included_file import IncludedFile
@@ -47,6 +49,48 @@ def mock_variable_manager():
     mock_variable_manager = MagicMock(name='MockVariableManager')
     mock_variable_manager.get_vars.return_value = dict()
     return mock_variable_manager
+
+
+def test_equals_ok():
+    uuid = '111-111'
+    parent = MagicMock(name='MockParent')
+    parent._uuid = uuid
+    task = MagicMock(name='MockTask')
+    task._uuid = uuid
+    task._parent = parent
+    inc_a = IncludedFile('a.yml', {}, {}, task)
+    inc_b = IncludedFile('a.yml', {}, {}, task)
+    assert inc_a == inc_b
+
+
+def test_equals_different_tasks():
+    parent = MagicMock(name='MockParent')
+    parent._uuid = '111-111'
+    task_a = MagicMock(name='MockTask')
+    task_a._uuid = '11-11'
+    task_a._parent = parent
+    task_b = MagicMock(name='MockTask')
+    task_b._uuid = '22-22'
+    task_b._parent = parent
+    inc_a = IncludedFile('a.yml', {}, {}, task_a)
+    inc_b = IncludedFile('a.yml', {}, {}, task_b)
+    assert inc_a != inc_b
+
+
+def test_equals_different_parents():
+    parent_a = MagicMock(name='MockParent')
+    parent_a._uuid = '111-111'
+    parent_b = MagicMock(name='MockParent')
+    parent_b._uuid = '222-222'
+    task_a = MagicMock(name='MockTask')
+    task_a._uuid = '11-11'
+    task_a._parent = parent_a
+    task_b = MagicMock(name='MockTask')
+    task_b._uuid = '11-11'
+    task_b._parent = parent_b
+    inc_a = IncludedFile('a.yml', {}, {}, task_a)
+    inc_b = IncludedFile('a.yml', {}, {}, task_b)
+    assert inc_a != inc_b
 
 
 def test_included_file_instantiation():
@@ -159,6 +203,103 @@ def test_process_include_simulate_free(mock_iterator, mock_variable_manager):
     assert len(res) == 2
     assert res[0]._filename == os.path.join(os.getcwd(), 'include_test.yml')
     assert res[1]._filename == os.path.join(os.getcwd(), 'include_test.yml')
+
+    assert res[0]._hosts == ['testhost1']
+    assert res[1]._hosts == ['testhost2']
+
+    assert res[0]._args == {}
+    assert res[1]._args == {}
+
+    assert res[0]._vars == {}
+    assert res[1]._vars == {}
+
+
+def test_process_include_simulate_free_block_role_tasks(mock_iterator,
+                                                        mock_variable_manager):
+    """Test loading the same role returns different included files
+
+    In the case of free, we may end up with included files from roles that
+    have the same parent but are different tasks. Previously the comparison
+    for equality did not check if the tasks were the same and only checked
+    that the parents were the same. This lead to some tasks being run
+    incorrectly and some tasks being silient dropped."""
+
+    fake_loader = DictDataLoader({
+        'include_test.yml': "",
+        '/etc/ansible/roles/foo_role/tasks/task1.yml': """
+            - debug: msg=task1
+        """,
+        '/etc/ansible/roles/foo_role/tasks/task2.yml': """
+            - debug: msg=task2
+        """,
+    })
+
+    hostname = "testhost1"
+    hostname2 = "testhost2"
+
+    role1_ds = {
+        'name': 'task1 include',
+        'include_role': {
+            'name': 'foo_role',
+            'tasks_from': 'task1.yml'
+        }
+    }
+    role2_ds = {
+        'name': 'task2 include',
+        'include_role': {
+            'name': 'foo_role',
+            'tasks_from': 'task2.yml'
+        }
+    }
+    parent_task_ds = {
+        'block': [
+            role1_ds,
+            role2_ds
+        ]
+    }
+    parent_block = Block.load(parent_task_ds, loader=fake_loader)
+
+    parent_block._play = None
+
+    include_role1_ds = {
+        'include_args': {
+            'name': 'foo_role',
+            'tasks_from': 'task1.yml'
+        }
+    }
+    include_role2_ds = {
+        'include_args': {
+            'name': 'foo_role',
+            'tasks_from': 'task2.yml'
+        }
+    }
+
+    include_role1 = IncludeRole.load(role1_ds,
+                                     block=parent_block,
+                                     loader=fake_loader)
+    include_role2 = IncludeRole.load(role2_ds,
+                                     block=parent_block,
+                                     loader=fake_loader)
+
+    result1 = task_result.TaskResult(host=hostname,
+                                     task=include_role1,
+                                     return_data=include_role1_ds)
+    result2 = task_result.TaskResult(host=hostname2,
+                                     task=include_role2,
+                                     return_data=include_role2_ds)
+    results = [result1, result2]
+
+    res = IncludedFile.process_include_results(results,
+                                               mock_iterator,
+                                               fake_loader,
+                                               mock_variable_manager)
+    assert isinstance(res, list)
+    # we should get two different includes
+    assert len(res) == 2
+    assert res[0]._filename == 'foo_role'
+    assert res[1]._filename == 'foo_role'
+    # with different tasks
+    assert res[0]._task != res[1]._task
 
     assert res[0]._hosts == ['testhost1']
     assert res[1]._hosts == ['testhost2']

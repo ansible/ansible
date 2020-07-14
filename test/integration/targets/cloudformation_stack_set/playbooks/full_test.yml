@@ -1,6 +1,0 @@
-- hosts: localhost
-  connection: local
-  environment: "{{ ansible_test.environment }}"
-
-  roles:
-    - ../../cloudformation_stack_set

@@ -1,2 +1,0 @@
-bugfixes:
-- ansible-galaxy - Fix pagination issue when retrieving role versions for install - https://github.com/ansible/ansible/issues/64355

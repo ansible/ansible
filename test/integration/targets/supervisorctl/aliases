@@ -1,4 +1,0 @@
-destructive
-shippable/posix/group2
-skip/python3
-skip/aix

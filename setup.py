@@ -1,5 +1,5 @@
-
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
@@ -9,8 +9,6 @@ import sys
 import warnings
 
 from collections import defaultdict
-from distutils.command.build_scripts import build_scripts as BuildScripts
-from distutils.command.sdist import sdist as SDist
 
 try:
     from setuptools import setup, find_packages
@@ -22,6 +20,15 @@ except ImportError:
           " your package manager (usually python-setuptools) or via pip (pip"
           " install setuptools).", file=sys.stderr)
     sys.exit(1)
+
+# `distutils` must be imported after `setuptools` or it will cause explosions
+# with `setuptools >=48.0.0, <49.1`.
+# Refs:
+# * https://github.com/ansible/ansible/issues/70456
+# * https://github.com/pypa/setuptools/issues/2230
+# * https://github.com/pypa/setuptools/commit/bd110264
+from distutils.command.build_scripts import build_scripts as BuildScripts
+from distutils.command.sdist import sdist as SDist
 
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible.release import __version__, __author__
@@ -236,22 +243,6 @@ def substitute_crypto_to_req(req):
     return [r for r in req if is_not_crypto(r)] + [crypto_backend]
 
 
-def read_extras():
-    """Specify any extra requirements for installation."""
-    extras = dict()
-    extra_requirements_dir = 'packaging/requirements'
-    for extra_requirements_filename in os.listdir(extra_requirements_dir):
-        filename_match = re.search(r'^requirements-(\w*).txt$', extra_requirements_filename)
-        if not filename_match:
-            continue
-        extra_req_file_path = os.path.join(extra_requirements_dir, extra_requirements_filename)
-        try:
-            extras[filename_match.group(1)] = read_file(extra_req_file_path).splitlines()
-        except RuntimeError:
-            pass
-    return extras
-
-
 def get_dynamic_setup_params():
     """Add dynamically calculated setup params to static ones."""
     return {
@@ -260,7 +251,6 @@ def get_dynamic_setup_params():
         'install_requires': substitute_crypto_to_req(
             read_requirements('requirements.txt'),
         ),
-        'extras_require': read_extras(),
     }
 
 
@@ -274,7 +264,7 @@ static_setup_params = dict(
         'install_scripts': InstallScriptsCommand,
         'sdist': SDistCommand,
     },
-    name='ansible',
+    name='ansible-base',
     version=__version__,
     description='Radically simple IT automation',
     author=__author__,

@@ -1,2 +1,0 @@
-minor_changes:
-  - database - add support to unique indexes in postgresql_idx

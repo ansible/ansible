@@ -1,0 +1,3 @@
+pylint ; python_version < '3.9'  # installation fails on python 3.9.0b1
+pyyaml  # needed for collection_detail.py
+mccabe  # pylint complexity testing

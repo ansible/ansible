@@ -1,0 +1,3 @@
+system: "{{ ansible_system|lower }}"
+suffix: "{{ '.exe' if system == 'win32nt' else '' }}"
+filename: "helloworld_{{ system }}_{{ ansible_architecture }}{{ suffix }}"

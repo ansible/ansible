@@ -1,2 +1,0 @@
-minor_changes:
-- vmware_cluster_drs - Implemented DRS advanced settings (https://github.com/ansible/ansible/issues/66217)

@@ -1,1 +1,0 @@
-setuptools < 45 ; python_version <= '2.7' # setuptools 45 and later require python 3.5 or later

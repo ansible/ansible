@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_swarm_service - fix task always reporting as changed when using ``healthcheck.start_period``."

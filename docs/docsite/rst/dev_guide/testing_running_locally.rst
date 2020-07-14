@@ -6,12 +6,13 @@
 Testing Ansible
 ***************
 
-.. contents:: Topics
-
 This document describes how to:
 
 * Run tests locally using ``ansible-test``
 * Extend
+
+.. contents::
+   :local:
 
 Requirements
 ============
@@ -35,7 +36,7 @@ An API key is required to use this feature.
 
     Recommended for integration tests.
 
-See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/runner/completion/remote.txt>`_ for additional details.
+See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/remote.txt>`_ for additional details.
 
 Environment Variables
 ---------------------

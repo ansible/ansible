@@ -1,1 +1,0 @@
-docker_image_info.py

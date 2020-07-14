@@ -1,2 +1,0 @@
-minor_changes:
-- Ignore plesk-release file while parsing distribution release (https://github.com/ansible/ansible/issues/64101).

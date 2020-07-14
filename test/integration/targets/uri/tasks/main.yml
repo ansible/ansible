@@ -406,6 +406,33 @@
     - result is failure
     - "'failed to parse body as form_urlencoded: too many values to unpack' in result.msg"
 
+- name: multipart/form-data
+  uri:
+    url: https://{{ httpbin_host }}/post
+    method: POST
+    body_format: form-multipart
+    body:
+      file1:
+        filename: formdata.txt
+      file2:
+        content: text based file content
+        filename: fake.txt
+        mime_type: text/plain
+      text_form_field1: value1
+      text_form_field2:
+        content: value2
+        mime_type: text/plain
+  register: multipart
+
+- name: Assert multipart/form-data
+  assert:
+    that:
+      - multipart.json.files.file1 == '_multipart/form-data_\n'
+      - multipart.json.files.file2 == 'text based file content'
+      - multipart.json.form.text_form_field1 == 'value1'
+      - multipart.json.form.text_form_field2 == 'value2'
+
+
 - name: Validate invalid method
   uri:
     url: https://{{ httpbin_host }}/anything
@@ -517,6 +544,18 @@
     that:
       - result.json.json[0] == 'JSON Test Pattern pass1'
 
+- name: Make request that includes password in JSON keys
+  uri:
+    url: "https://{{ httpbin_host}}/get?key-password=value-password"
+    user: admin
+    password: password
+  register: sanitize_keys
+
+- name: assert that keys were sanitized
+  assert:
+    that:
+      - sanitize_keys.json.args['key-********'] == 'value-********'
+
 - name: Create a testing file
   copy:
     content: "content"
@@ -556,3 +595,6 @@
 
 - name: Check unexpected failures
   import_tasks: unexpected-failures.yml
+
+- name: Check return-content
+  import_tasks: return-content.yml

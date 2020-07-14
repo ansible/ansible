@@ -39,6 +39,7 @@ options:
     - name: ansible_password
     - name: ansible_winrm_pass
     - name: ansible_winrm_password
+    aliases: [ password ]
   port:
     description:
     - The port for PSRP to connect on the remote target.

@@ -1,2 +1,0 @@
-win_stat_dir: '{{win_output_dir}}\win_stat'
-win_stat_user: test-stat

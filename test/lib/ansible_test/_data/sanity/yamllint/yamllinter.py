@@ -119,16 +119,17 @@ class YamlChecker:
                 yaml_data = yaml_data[1:]
                 lineno += 1
 
-            self.check_parsable(path, yaml_data)
+            self.check_parsable(path, yaml_data, lineno)
 
             messages = list(linter.run(yaml_data, conf, path))
 
             self.messages += [self.result_to_message(r, path, lineno - 1, key) for r in messages]
 
-    def check_parsable(self, path, contents):
+    def check_parsable(self, path, contents, lineno=1):
         """
         :type path: str
         :type contents: str
+        :type lineno: int
         """
         try:
             yaml.load(contents, Loader=TestLoader)
@@ -136,7 +137,7 @@ class YamlChecker:
             self.messages += [{'code': 'unparsable-with-libyaml',
                                'message': '%s - %s' % (e.args[0], e.args[2]),
                                'path': path,
-                               'line': e.problem_mark.line + 1,
+                               'line': e.problem_mark.line + lineno,
                                'column': e.problem_mark.column + 1,
                                'level': 'error',
                                }]

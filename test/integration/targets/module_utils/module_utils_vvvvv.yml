@@ -1,0 +1,5 @@
+- hosts: testhost
+  gather_facts: no
+  tasks:
+  - name: Use a specially crafted module to see if things were imported correctly
+    test:

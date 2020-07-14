@@ -26,7 +26,8 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import PromptVaultSecret, get_file_vault_secret
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.release import __version__
-from ansible.utils.collection_loader import AnsibleCollectionLoader, get_collection_name_from_path, set_collection_playbook_paths
+from ansible.utils.collection_loader import AnsibleCollectionConfig
+from ansible.utils.collection_loader._collection_finder import _get_collection_name_from_path
 from ansible.utils.display import Display
 from ansible.utils.path import unfrackpath
 from ansible.utils.unsafe_proxy import to_unsafe_text
@@ -70,6 +71,13 @@ class CLI(with_metaclass(ABCMeta, object)):
         self.parser = None
         self.callback = callback
 
+        if C.DEVEL_WARNING and __version__.endswith('dev0'):
+            display.warning(
+                'You are running the development version of Ansible. You should only run Ansible from "devel" if '
+                'you are modifying the Ansible engine, or trying out features under development. This is a rapidly '
+                'changing source of code and can become unstable at any point.'
+            )
+
     @abstractmethod
     def run(self):
         """Run the ansible command
@@ -94,8 +102,11 @@ class CLI(with_metaclass(ABCMeta, object)):
                 alt = ', use %s instead' % deprecated[1]['alternatives']
             else:
                 alt = ''
-            ver = deprecated[1]['version']
-            display.deprecated("%s option, %s %s" % (name, why, alt), version=ver)
+            ver = deprecated[1].get('version')
+            date = deprecated[1].get('date')
+            collection_name = deprecated[1].get('collection_name')
+            display.deprecated("%s option, %s %s" % (name, why, alt),
+                               version=ver, date=date, collection_name=collection_name)
 
     @staticmethod
     def split_vault_id(vault_id):
@@ -344,7 +355,7 @@ class CLI(with_metaclass(ABCMeta, object)):
             verbosity_arg = next(iter([arg for arg in self.args if arg.startswith('-v')]), None)
             if verbosity_arg:
                 display.deprecated("Setting verbosity before the arg sub command is deprecated, set the verbosity "
-                                   "after the sub command", "2.13")
+                                   "after the sub command", "2.13", collection_name='ansible.builtin')
                 options.verbosity = verbosity_arg.count('v')
 
         return options
@@ -364,7 +375,12 @@ class CLI(with_metaclass(ABCMeta, object)):
         if HAS_ARGCOMPLETE:
             argcomplete.autocomplete(self.parser)
 
-        options = self.parser.parse_args(self.args[1:])
+        try:
+            options = self.parser.parse_args(self.args[1:])
+        except SystemExit as e:
+            if(e.code != 0):
+                self.parser.exit(status=2, message=" \n%s " % self.parser.format_help())
+            raise
         options = self.post_process_args(options)
         context._init_global_context(options)
 
@@ -448,11 +464,11 @@ class CLI(with_metaclass(ABCMeta, object)):
         if basedir:
             loader.set_basedir(basedir)
             add_all_plugin_dirs(basedir)
-            set_collection_playbook_paths(basedir)
-            default_collection = get_collection_name_from_path(basedir)
+            AnsibleCollectionConfig.playbook_paths = basedir
+            default_collection = _get_collection_name_from_path(basedir)
             if default_collection:
                 display.warning(u'running with default collection {0}'.format(default_collection))
-                AnsibleCollectionLoader().set_default_collection(default_collection)
+                AnsibleCollectionConfig.default_collection = default_collection
 
         vault_ids = list(options['vault_ids'])
         default_vault_ids = C.DEFAULT_VAULT_IDENTITY_LIST

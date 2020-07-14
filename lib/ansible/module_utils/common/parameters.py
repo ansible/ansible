@@ -65,7 +65,7 @@ def _return_datastructure_name(obj):
     elif isinstance(obj, tuple(list(integer_types) + [float])):
         yield to_native(obj, nonstring='simplerepr')
     else:
-        raise TypeError('Unknown parameter type: %s, %s' % (type(obj), obj))
+        raise TypeError('Unknown parameter type: %s' % (type(obj)))
 
 
 def list_no_log_values(argument_spec, params):
@@ -86,7 +86,10 @@ def list_no_log_values(argument_spec, params):
             no_log_object = params.get(arg_name, None)
 
             if no_log_object:
-                no_log_values.update(_return_datastructure_name(no_log_object))
+                try:
+                    no_log_values.update(_return_datastructure_name(no_log_object))
+                except TypeError as e:
+                    raise TypeError('Failed to convert "%s": %s' % (arg_name, to_native(e)))
 
         # Get no_log values from suboptions
         sub_argument_spec = arg_opts.get('options')
@@ -134,10 +137,17 @@ def list_deprecations(argument_spec, params, prefix=''):
                 sub_prefix = '%s["%s"]' % (prefix, arg_name)
             else:
                 sub_prefix = arg_name
-            if arg_opts.get('removed_in_version') is not None:
+            if arg_opts.get('removed_at_date') is not None:
                 deprecations.append({
                     'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
-                    'version': arg_opts.get('removed_in_version')
+                    'date': arg_opts.get('removed_at_date'),
+                    'collection_name': arg_opts.get('removed_from_collection'),
+                })
+            elif arg_opts.get('removed_in_version') is not None:
+                deprecations.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
+                    'version': arg_opts.get('removed_in_version'),
+                    'collection_name': arg_opts.get('removed_from_collection'),
                 })
             # Check sub-argument spec
             sub_argument_spec = arg_opts.get('options')

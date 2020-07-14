@@ -1,4 +1,0 @@
-- include: setup.yml
-- include: present.yml
-- include: absent.yml
-- include: cleanup.yml

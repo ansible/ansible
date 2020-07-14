@@ -27,9 +27,6 @@ DOCUMENTATION = """
             - name: ansible_winrm_host
         type: str
       remote_user:
-        keywords:
-          - name: user
-          - name: remote_user
         description:
             - The user to log in as to the Windows machine
         vars:
@@ -51,8 +48,6 @@ DOCUMENTATION = """
           - name: ansible_port
           - name: ansible_winrm_port
         default: 5986
-        keywords:
-          - name: port
         type: integer
       scheme:
         description:
@@ -71,7 +66,7 @@ DOCUMENTATION = """
         type: str
       transport:
         description:
-           - List of winrm transports to attempt to to use (ssl, plaintext, kerberos, etc)
+           - List of winrm transports to attempt to use (ssl, plaintext, kerberos, etc)
            - If None (the default) the plugin will try to automatically guess the correct list
            - The choices available depend on your version of pywinrm
         type: list
@@ -621,9 +616,16 @@ class Connection(ConnectionBase):
         if result.status_code != 0:
             raise AnsibleError(to_native(result.std_err))
 
-        put_output = json.loads(result.std_out)
-        remote_sha1 = put_output.get("sha1")
+        try:
+            put_output = json.loads(result.std_out)
+        except ValueError:
+            # stdout does not contain a valid response
+            stderr = to_bytes(result.std_err, encoding='utf-8')
+            if stderr.startswith(b"#< CLIXML"):
+                stderr = _parse_clixml(stderr)
+            raise AnsibleError('winrm put_file failed; \nstdout: %s\nstderr %s' % (to_native(result.std_out), to_native(stderr)))
 
+        remote_sha1 = put_output.get("sha1")
         if not remote_sha1:
             raise AnsibleError("Remote sha1 was not returned")
 

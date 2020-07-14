@@ -1,2 +1,0 @@
-docker_packages:
-  - docker>=17

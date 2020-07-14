@@ -1,6 +1,0 @@
-Stack unit 1:
-  NAND Type: Micron NAND 2GiB (x 1)
-  Compressed Pri Code size = 25966800, Version:08.0.80bT211 (primary.bin)
-  Compressed Sec Code size = 29451996, Version:08.0.70dT213 (SPR08070d.bin)
-  Compressed Boot-Monitor Image size = 786944, Version:10.1.09T225
-  Code Flash Free Space = 1318699008

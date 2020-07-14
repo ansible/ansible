@@ -1,2 +1,0 @@
-minor_changes:
-    - Enable testing the AIX platform as a remote OS in ansible-test

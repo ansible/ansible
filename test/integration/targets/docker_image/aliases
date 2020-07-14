@@ -1,5 +1,0 @@
-shippable/posix/group5
-skip/aix
-skip/osx
-skip/freebsd
-destructive

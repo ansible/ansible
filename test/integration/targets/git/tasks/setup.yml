@@ -13,8 +13,7 @@
     name: '{{ item }}'
   when: ansible_distribution != "MacOSX"
   notify:
-    - remove git
-    - remove git from FreeBSD
+    - cleanup
   with_items: "{{ git_required_packages[ansible_os_family | default('default') ] | default(git_required_packages.default) }}"
 
 - name: SETUP | verify that git is installed so this test can continue

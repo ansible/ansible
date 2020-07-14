@@ -12,5 +12,5 @@
 - assert:
     that:
         - "adexec1_json.rc == 0"
-        - "adexec1_json.events|length == 3"
+        - "adexec1_json.events|length == 4"
         - "'localhost' in adexec1_json.stats.ok"

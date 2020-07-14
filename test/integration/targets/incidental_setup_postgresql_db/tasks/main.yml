@@ -1,0 +1,222 @@
+- name: python 2
+  set_fact:
+    python_suffix: ""
+  when: ansible_python_version is version('3', '<')
+
+- name: python 3
+  set_fact:
+    python_suffix: "-py3"
+  when: ansible_python_version is version('3', '>=')
+
+- name: Include distribution and Python version specific variables
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_major_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}{{ python_suffix }}.yml'
+        - '{{ ansible_os_family }}{{ python_suffix }}.yml'
+        - 'default{{ python_suffix }}.yml'
+      paths:
+        - "{{ role_path }}/vars"
+
+- name: make sure the dbus service is started under systemd
+  systemd:
+    name: dbus
+    state: started
+  when: ansible_service_mgr == 'systemd' and ansible_distribution == 'Fedora'
+
+# Make sure we start fresh
+- name: stop postgresql service
+  service: name={{ postgresql_service }} state=stopped
+  ignore_errors: True
+
+- name: remove old db (RedHat or Suse)
+  file:
+    path: "{{ pg_dir }}"
+    state: absent
+  ignore_errors: True
+  when: ansible_os_family == "RedHat" or ansible_os_family == "Suse"
+
+- name: remove old db (FreeBSD)
+  file:
+    path: "{{ pg_dir }}"
+    state: absent
+  ignore_errors: True
+  when: ansible_os_family == "FreeBSD"
+
+# Theoretically, pg_dropcluster should work but it doesn't so remove files
+- name: remove old db config and files (debian)
+  file:
+    path: '{{ loop_item }}'
+    state: absent
+  ignore_errors: True
+  when: ansible_os_family == "Debian"
+  loop:
+  - /etc/postgresql
+  - /var/lib/postgresql
+  loop_control:
+    loop_var: loop_item
+
+- name: install dependencies for postgresql test
+  package:
+    name: "{{ postgresql_package_item }}"
+    state: present
+  with_items: "{{ postgresql_packages }}"
+  loop_control:
+    loop_var: postgresql_package_item
+
+- name: initialize postgres (FreeBSD)
+  command: /usr/local/etc/rc.d/postgresql oneinitdb
+  when: ansible_os_family == "FreeBSD"
+
+- name: Initialize postgres (RedHat systemd)
+  command: postgresql-setup initdb
+  when: ansible_os_family == "RedHat" and ansible_service_mgr == "systemd"
+
+- name: Initialize postgres (RedHat sysv)
+  command: /sbin/service postgresql initdb
+  when: ansible_os_family == "RedHat" and ansible_service_mgr != "systemd"
+
+- name: Initialize postgres (Debian)
+  shell: '. /usr/share/postgresql-common/maintscripts-functions && set_system_locale && /usr/bin/pg_createcluster -u postgres {{ pg_ver }} main'
+  args:
+    creates: "/etc/postgresql/{{ pg_ver }}/"
+  when: ansible_os_family == 'Debian'
+
+- name: Initialize postgres (Suse)
+  service: name=postgresql state=restarted
+  when: ansible_os_family == 'Suse'
+
+- name: Copy pg_hba into place
+  template:
+    src: files/pg_hba.conf
+    dest: "{{ pg_hba_location }}"
+    owner: "{{ pg_user }}"
+    group: "{{ pg_group }}"
+    mode: "0644"
+
+- name: Generate locales (Debian)
+  locale_gen:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - pt_BR
+    - es_ES
+  when: ansible_os_family == 'Debian'
+
+# Suse: locales are installed by default (glibc-locale package).
+# Fedora 23: locales are installed by default (glibc-common package)
+# CentOS: all locales are installed by default (glibc-common package) but some
+# RPM macros could prevent their installation (for example when using anaconda
+# instLangs parameter).
+
+- block:
+  - name: Install langpacks (RHEL8)
+    yum:
+      name:
+        - glibc-langpack-es
+        - glibc-langpack-pt
+        - glibc-all-langpacks
+      state: present
+    when: ansible_distribution_major_version is version('8', '>=')
+
+  - name: Check if locales need to be generated (RedHat)
+    shell: "localedef --list-archive | grep -a -q '^{{ locale }}$'"
+    register: locale_present
+    ignore_errors: True
+    with_items:
+      - es_ES
+      - pt_BR
+    loop_control:
+      loop_var: locale
+
+  - name: Reinstall internationalization files
+    shell: 'yum -y reinstall glibc-common || yum -y install glibc-common'
+    args:
+      warn: no
+    when: locale_present is failed
+
+  - name: Generate locale (RedHat)
+    command: 'localedef -f ISO-8859-1 -i {{ item.locale }} {{ item.locale }}'
+    when: item is failed
+    with_items: '{{ locale_present.results }}'
+  when: ansible_os_family == 'RedHat' and ansible_distribution != 'Fedora'
+
+- name: Install glibc langpacks (Fedora >= 24)
+  package:
+    name: '{{ item }}'
+    state: 'latest'
+  with_items:
+    - glibc-langpack-es
+    - glibc-langpack-pt
+  when: ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('24', '>=')
+
+- name: enable postgresql service (FreeBSD)
+  lineinfile:
+    path: /etc/rc.conf
+    line: 'postgresql_enable="YES"'
+  when: ansible_os_family == "FreeBSD"
+
+- name: stop postgresql service
+  service:
+    name: "{{ postgresql_service }}"
+    state: stopped
+
+- name: pause between stop and start of postgresql service
+  pause:
+    seconds: 3
+
+- name: start postgresql service
+  service:
+    name: "{{ postgresql_service }}"
+    state: started
+
+########################
+# Setup dummy extension:
+- name: copy control file for dummy ext
+  copy:
+    src: dummy.control
+    dest: "/usr/share/postgresql/{{ pg_ver }}/extension/dummy.control"
+    mode: 0444
+  when: ansible_os_family == 'Debian'
+
+- name: copy version files for dummy ext
+  copy:
+    src: "{{ item }}"
+    dest: "/usr/share/postgresql/{{ pg_ver }}/extension/{{ item }}"
+    mode: 0444
+  with_items:
+  - dummy--1.0.sql
+  - dummy--2.0.sql
+  - dummy--3.0.sql
+  when: ansible_os_family == 'Debian'
+
+- name: add update paths
+  file:
+    path: "/usr/share/postgresql/{{ pg_ver }}/extension/{{ item }}"
+    mode: 0444
+    state: touch
+  with_items:
+  - dummy--1.0--2.0.sql
+  - dummy--2.0--3.0.sql
+  when: ansible_os_family == 'Debian'
+
+- name: Get PostgreSQL version
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: "echo 'SHOW SERVER_VERSION' | psql --tuples-only --no-align --dbname postgres"
+  register: postgres_version_resp
+
+- name: Print PostgreSQL server version
+  debug:
+    msg: "{{ postgres_version_resp.stdout }}"
+
+# SSL configuration.
+# Restricted using Debian family because of there are errors on other distributions
+# that not related with PostgreSQL or psycopg2 SSL support.
+# The tests key point is to be sure that ssl options work in general
+- import_tasks: ssl.yml
+  when:
+  - ansible_os_family == 'Debian'
+  - postgres_version_resp.stdout is version('9.4', '>=')

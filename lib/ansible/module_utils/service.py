@@ -26,6 +26,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import glob
 import os
 import pickle
@@ -114,10 +117,7 @@ def fail_if_missing(module, found, service, msg=''):
     :kw msg: extra info to append to error/success msg when missing
     '''
     if not found:
-        if module.check_mode:
-            module.exit_json(msg="Service %s not found on %s, assuming it will exist on full run" % (service, msg), changed=True)
-        else:
-            module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
+        module.fail_json(msg='Could not find the requested service %s: %s' % (service, msg))
 
 
 def fork_process():

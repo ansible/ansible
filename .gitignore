@@ -64,6 +64,7 @@ credentials.yml
 results.xml
 coverage.xml
 /test/units/cover-html
+/test/integration/inventory
 /test/integration/targets/*/backup/
 /test/cache/*
 # Development
@@ -71,11 +72,17 @@ coverage.xml
 venv
 Vagrantfile
 .vagrant
-ansible.egg-info/
+# Backwards compatibility with `stable-2.9` and earlier branches.
+# Also used in the `devel` branch during early Ansible 2.10 development.
+/lib/ansible.egg-info/
+# First used in the `devel` branch during Ansible 2.10 development.
+/lib/ansible_base.egg-info/
 /shippable/
 /test/integration/cloud-config-*.*
 !/test/integration/cloud-config-*.*.template
 .python-version
+/hacking/tests/selinux/*.mod
+/hacking/tests/selinux/*.pp
 # Release directory
 packaging/release/ansible_release
 /.cache/
@@ -99,5 +106,3 @@ test/units/.coverage.*
 /SYMLINK_CACHE.json
 changelogs/.plugin-cache.yaml
 .ansible-test-timeout.json
-# ansible-test temporary metadata file for use with delgation
-/metadata-*.json

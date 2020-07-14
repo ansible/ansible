@@ -1,2 +1,0 @@
-bugfixes:
-- Fix string parsing of inline vault strings for plugin config variable sources

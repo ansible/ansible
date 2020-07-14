@@ -37,7 +37,8 @@ def main():
                     found = False
 
             if not found:
-                exit('ERROR: Could not find `coverage` module. Did you use a virtualenv created without --system-site-packages or with the wrong interpreter?')
+                sys.exit('ERROR: Could not find `coverage` module. '
+                         'Did you use a virtualenv created without --system-site-packages or with the wrong interpreter?')
 
     if name == 'python.py':
         if sys.argv[1] == '-c':

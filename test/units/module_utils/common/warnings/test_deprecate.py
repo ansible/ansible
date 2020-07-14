@@ -16,20 +16,50 @@ from ansible.module_utils.six import PY3
 @pytest.fixture
 def deprecation_messages():
     return [
-        {'msg': 'First deprecation', 'version': None},
-        {'msg': 'Second deprecation', 'version': '2.14'},
-        {'msg': 'Third deprecation', 'version': '2.9'},
+        {'msg': 'First deprecation', 'version': None, 'collection_name': None},
+        {'msg': 'Second deprecation', 'version': None, 'collection_name': 'ansible.builtin'},
+        {'msg': 'Third deprecation', 'version': '2.14', 'collection_name': None},
+        {'msg': 'Fourth deprecation', 'version': '2.9', 'collection_name': None},
+        {'msg': 'Fifth deprecation', 'version': '2.9', 'collection_name': 'ansible.builtin'},
+        {'msg': 'Sixth deprecation', 'date': '2199-12-31', 'collection_name': None},
+        {'msg': 'Seventh deprecation', 'date': '2199-12-31', 'collection_name': 'ansible.builtin'},
     ]
 
 
 def test_deprecate_message_only():
     deprecate('Deprecation message')
-    assert warnings._global_deprecations == [{'msg': 'Deprecation message', 'version': None}]
+    assert warnings._global_deprecations == [
+        {'msg': 'Deprecation message', 'version': None, 'collection_name': None}]
+
+
+def test_deprecate_with_collection():
+    deprecate(msg='Deprecation message', collection_name='ansible.builtin')
+    assert warnings._global_deprecations == [
+        {'msg': 'Deprecation message', 'version': None, 'collection_name': 'ansible.builtin'}]
 
 
 def test_deprecate_with_version():
     deprecate(msg='Deprecation message', version='2.14')
-    assert warnings._global_deprecations == [{'msg': 'Deprecation message', 'version': '2.14'}]
+    assert warnings._global_deprecations == [
+        {'msg': 'Deprecation message', 'version': '2.14', 'collection_name': None}]
+
+
+def test_deprecate_with_version_and_collection():
+    deprecate(msg='Deprecation message', version='2.14', collection_name='ansible.builtin')
+    assert warnings._global_deprecations == [
+        {'msg': 'Deprecation message', 'version': '2.14', 'collection_name': 'ansible.builtin'}]
+
+
+def test_deprecate_with_date():
+    deprecate(msg='Deprecation message', date='2199-12-31')
+    assert warnings._global_deprecations == [
+        {'msg': 'Deprecation message', 'date': '2199-12-31', 'collection_name': None}]
+
+
+def test_deprecate_with_date_and_collection():
+    deprecate(msg='Deprecation message', date='2199-12-31', collection_name='ansible.builtin')
+    assert warnings._global_deprecations == [
+        {'msg': 'Deprecation message', 'date': '2199-12-31', 'collection_name': 'ansible.builtin'}]
 
 
 def test_multiple_deprecations(deprecation_messages):
@@ -45,7 +75,7 @@ def test_get_deprecation_messages(deprecation_messages):
 
     accessor_deprecations = get_deprecation_messages()
     assert isinstance(accessor_deprecations, tuple)
-    assert len(accessor_deprecations) == 3
+    assert len(accessor_deprecations) == 7
 
 
 @pytest.mark.parametrize(

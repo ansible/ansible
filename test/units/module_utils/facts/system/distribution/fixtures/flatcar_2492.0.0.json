@@ -1,0 +1,24 @@
+{
+    "name": "Flatcar Container Linux",
+    "input": {
+        "/usr/lib/os-release": "NAME=\"Flatcar Container Linux by Kinvolk\"\nID=flatcar\nID_LIKE=coreos\nVERSION=2492.0.0\nVERSION_ID=2492.0.0\nBUILD_ID=2020-04-28-2210\nPRETTY_NAME=\"Flatcar Container Linux by Kinvolk 2492.0.0 (Rhyolite)\"\nANSI_COLOR=\"38;5;75\"\nHOME_URL=\"https://flatcar-linux.org/\"\nBUG_REPORT_URL=\"https://issues.flatcar-linux.org\"",
+        "/etc/lsb-release": "DISTRIB_ID=\"Flatcar Container Linux by Kinvolk\"\nDISTRIB_RELEASE=2492.0.0\nDISTRIB_CODENAME=\"Rhyolite\"\nDISTRIB_DESCRIPTION=\"Flatcar Container Linux by Kinvolk 2492.0.0 (Rhyolite)\""
+    },
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "Rhyolite",
+        "id": "flatcar",
+        "id_like": "coreos",
+        "name": "Flatcar",
+        "version": "2492.0.0",
+        "version_best": "2492.0.0",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "platform.release": "",
+    "result": {
+        "distribution": "Flatcar",
+        "distribution_major_version": "2492",
+        "distribution_version": "2492.0.0"
+    }
+}

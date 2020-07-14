@@ -29,6 +29,7 @@ import shlex
 import zipfile
 import re
 import pkgutil
+from ast import AST, Import, ImportFrom
 from io import BytesIO
 
 from ansible.release import __version__, __author__
@@ -36,8 +37,11 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
-from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.common.json import AnsibleJSONEncoder
+from ansible.module_utils.common.text.converters import to_bytes, to_text, to_native
 from ansible.plugins.loader import module_utils_loader
+from ansible.utils.collection_loader._collection_finder import _get_collection_metadata, AnsibleCollectionRef
+
 # Must import strategy and use write_locks from there
 # If we import write_locks directly then we end up binding a
 # variable to the object and then it never gets updated.
@@ -52,13 +56,6 @@ try:
     imp = None
 except ImportError:
     import imp
-
-
-# HACK: keep Python 2.6 controller tests happy in CI until they're properly split
-try:
-    from importlib import import_module
-except ImportError:
-    import_module = __import__
 
 # if we're on a Python that doesn't have FNFError, redefine it as IOError (since that's what we'll see)
 try:
@@ -148,8 +145,10 @@ def _ansiballz_main():
         # OSX raises OSError if using abspath() in a directory we don't have
         # permission to read (realpath calls abspath)
         pass
-    if scriptdir is not None:
-        sys.path = [p for p in sys.path if p != scriptdir]
+
+    # Strip cwd from sys.path to avoid potential permissions issues
+    excludes = set(('', '.', scriptdir))
+    sys.path = [p for p in sys.path if p not in excludes]
 
     import base64
     import runpy
@@ -417,8 +416,8 @@ else:
 # Do this instead of getting site-packages from distutils.sysconfig so we work when we
 # haven't been installed
 site_packages = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.py$' % site_packages)
-COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.py$')
+CORE_LIBRARY_PATH_RE = re.compile(r'%s/(?P<path>ansible/modules/.*)\.(py|ps1)$' % site_packages)
+COLLECTION_PATH_RE = re.compile(r'/(?P<path>ansible_collections/[^/]+/[^/]+/plugins/modules/.*)\.(py|ps1)$')
 
 # Detect new-style Python modules by looking for required imports:
 # import ansible_collections.[my_ns.my_col.plugins.module_utils.my_module_util]
@@ -466,6 +465,28 @@ class ModuleDepFinder(ast.NodeVisitor):
         super(ModuleDepFinder, self).__init__(*args, **kwargs)
         self.submodules = set()
         self.module_fqn = module_fqn
+
+        self._visit_map = {
+            Import: self.visit_Import,
+            ImportFrom: self.visit_ImportFrom,
+        }
+
+    def generic_visit(self, node):
+        """Overridden ``generic_visit`` that makes some assumptions about our
+        use case, and improves performance by calling visitors directly instead
+        of calling ``visit`` to offload calling visitors.
+        """
+        visit_map = self._visit_map
+        generic_visit = self.generic_visit
+        for field, value in ast.iter_fields(node):
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, (Import, ImportFrom)):
+                        visit_map[item.__class__](item)
+                    elif isinstance(item, AST):
+                        generic_visit(item)
+
+    visit = generic_visit
 
     def visit_Import(self, node):
         """
@@ -607,7 +628,8 @@ class ModuleInfo:
         path = None
 
         if imp is None:
-            self._info = info = importlib.machinery.PathFinder.find_spec(name, paths)
+            # don't pretend this is a top-level module, prefix the rest of the namespace
+            self._info = info = importlib.machinery.PathFinder.find_spec('ansible.module_utils.' + name, paths)
             if info is not None:
                 self.py_src = os.path.splitext(info.origin)[1] in importlib.machinery.SOURCE_SUFFIXES
                 self.pkg_dir = info.origin.endswith('/__init__.py')
@@ -638,33 +660,61 @@ class ModuleInfo:
 
 
 class CollectionModuleInfo(ModuleInfo):
-    def __init__(self, name, paths):
+    def __init__(self, name, pkg):
         self._mod_name = name
         self.py_src = True
-        # FIXME: Implement pkg_dir so that we can place __init__.py files
         self.pkg_dir = False
 
-        for path in paths:
-            self._package_name = '.'.join(path.split('/'))
-            try:
-                self.get_source()
-            except FileNotFoundError:
-                pass
-            else:
-                self.path = os.path.join(path, self._mod_name) + '.py'
-                break
-        else:
-            # FIXME (nitz): implement package fallback code
+        split_name = pkg.split('.')
+        split_name.append(name)
+        if len(split_name) < 5 or split_name[0] != 'ansible_collections' or split_name[3] != 'plugins' or split_name[4] != 'module_utils':
+            raise ValueError('must search for something beneath a collection module_utils, not {0}.{1}'.format(to_native(pkg), to_native(name)))
+
+        # NB: we can't use pkgutil.get_data safely here, since we don't want to import/execute package/module code on
+        # the controller while analyzing/assembling the module, so we'll have to manually import the collection's
+        # Python package to locate it (import root collection, reassemble resource path beneath, fetch source)
+
+        # FIXME: handle MU redirection logic here
+
+        collection_pkg_name = '.'.join(split_name[0:3])
+        resource_base_path = os.path.join(*split_name[3:])
+        # look for package_dir first, then module
+
+        self._src = pkgutil.get_data(collection_pkg_name, to_native(os.path.join(resource_base_path, '__init__.py')))
+
+        if self._src is not None:  # empty string is OK
+            return
+
+        self._src = pkgutil.get_data(collection_pkg_name, to_native(resource_base_path + '.py'))
+
+        if not self._src:
             raise ImportError('unable to load collection-hosted module_util'
-                              ' {0}.{1}'.format(to_native(self._package_name),
-                                                to_native(name)))
+                              ' {0}.{1}'.format(to_native(pkg), to_native(name)))
 
     def get_source(self):
-        # FIXME (nitz): need this in py2 for some reason TBD, but we shouldn't (get_data delegates
-        # to wrong loader without it)
-        pkg = import_module(self._package_name)
-        data = pkgutil.get_data(to_native(self._package_name), to_native(self._mod_name + '.py'))
-        return data
+        return self._src
+
+
+class InternalRedirectModuleInfo(ModuleInfo):
+    def __init__(self, name, full_name):
+        self.pkg_dir = None
+        self._original_name = full_name
+        self.path = full_name.replace('.', '/') + '.py'
+        collection_meta = _get_collection_metadata('ansible.builtin')
+        redirect = collection_meta.get('plugin_routing', {}).get('module_utils', {}).get(name, {}).get('redirect', None)
+        if not redirect:
+            raise ImportError('no redirect found for {0}'.format(name))
+        self._redirect = redirect
+        self.py_src = True
+        self._shim_src = """
+import sys
+import {1} as mod
+
+sys.modules['{0}'] = mod
+""".format(self._original_name, self._redirect)
+
+    def get_source(self):
+        return self._shim_src
 
 
 def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, zf):
@@ -684,7 +734,7 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
     """
     # Parse the module and find the imports of ansible.module_utils
     try:
-        tree = ast.parse(data)
+        tree = compile(data, '<unknown>', 'exec', ast.PyCF_ONLY_AST)
     except (SyntaxError, IndentationError) as e:
         raise AnsibleError("Unable to import %s due to %s" % (name, e.msg))
 
@@ -727,8 +777,7 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
                     break
                 try:
                     # this is a collection-hosted MU; look it up with pkgutil.get_data()
-                    module_info = CollectionModuleInfo(py_module_name[-idx],
-                                                       [os.path.join(*py_module_name[:-idx])])
+                    module_info = CollectionModuleInfo(py_module_name[-idx], '.'.join(py_module_name[:-idx]))
                     break
                 except ImportError:
                     continue
@@ -746,7 +795,13 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
                                              [os.path.join(p, *relative_module_utils_dir[:-idx]) for p in module_utils_paths])
                     break
                 except ImportError:
-                    continue
+                    # check metadata for redirect, generate stub if present
+                    try:
+                        module_info = InternalRedirectModuleInfo(py_module_name[-idx],
+                                                                 '.'.join(py_module_name[:(None if idx == 1 else -1)]))
+                        break
+                    except ImportError:
+                        continue
         else:
             # If we get here, it's because of a bug in ModuleDepFinder.  If we get a reproducer we
             # should then fix ModuleDepFinder
@@ -873,7 +928,8 @@ def recursive_finder(name, module_fqn, data, py_module_names, py_module_cache, z
         py_module_file_name = '%s.py' % py_module_path
 
         zf.writestr(py_module_file_name, py_module_cache[py_module_name][0])
-        display.vvvvv("Using module_utils file %s" % py_module_cache[py_module_name][1])
+        mu_file = to_text(py_module_cache[py_module_name][1], errors='surrogate_or_strict')
+        display.vvvvv("Using module_utils file %s" % mu_file)
 
     # Add the names of the files we're scheduling to examine in the loop to
     # py_module_names so that we don't re-examine them in the next pass
@@ -1006,10 +1062,21 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     output = BytesIO()
     py_module_names = set()
 
+    try:
+        remote_module_fqn = _get_ansible_module_fqn(module_path)
+    except ValueError:
+        # Modules in roles currently are not found by the fqn heuristic so we
+        # fallback to this.  This means that relative imports inside a module from
+        # a role may fail.  Absolute imports should be used for future-proofness.
+        # People should start writing collections instead of modules in roles so we
+        # may never fix this
+        display.debug('ANSIBALLZ: Could not determine module FQN')
+        remote_module_fqn = 'ansible.modules.%s' % module_name
+
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         try:
-            python_repred_params = repr(json.dumps(params))
+            python_repred_params = repr(json.dumps(params, cls=AnsibleJSONEncoder, vault_to_text=True))
         except TypeError as e:
             raise AnsibleError("Unable to pass options to module, they must be JSON serializable: %s" % to_native(e))
 
@@ -1018,17 +1085,6 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         except AttributeError:
             display.warning(u'Bad module compression string specified: %s.  Using ZIP_STORED (no compression)' % module_compression)
             compression_method = zipfile.ZIP_STORED
-
-        try:
-            remote_module_fqn = _get_ansible_module_fqn(module_path)
-        except ValueError:
-            # Modules in roles currently are not found by the fqn heuristic so we
-            # fallback to this.  This means that relative imports inside a module from
-            # a role may fail.  Absolute imports should be used for future-proofness.
-            # People should start writing collections instead of modules in roles so we
-            # may never fix this
-            display.debug('ANSIBALLZ: Could not determine module FQN')
-            remote_module_fqn = 'ansible.modules.%s' % module_name
 
         lookup_path = os.path.join(C.DEFAULT_LOCAL_TMP, 'ansiballz_cache')
         cached_module_filename = os.path.join(lookup_path, "%s-%s" % (module_name, module_compression))
@@ -1197,11 +1253,11 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         b_module_data = ps_manifest._create_powershell_wrapper(
             b_module_data, module_path, module_args, environment,
             async_timeout, become, become_method, become_user, become_password,
-            become_flags, module_substyle, task_vars
+            become_flags, module_substyle, task_vars, remote_module_fqn
         )
 
     elif module_substyle == 'jsonargs':
-        module_args_json = to_bytes(json.dumps(module_args))
+        module_args_json = to_bytes(json.dumps(module_args, cls=AnsibleJSONEncoder, vault_to_text=True))
 
         # these strings could be included in a third-party module but
         # officially they were included in the 'basic' snippet for new-style
@@ -1288,7 +1344,23 @@ def modify_module(module_name, module_path, module_args, templar, task_vars=None
     return (b_module_data, module_style, shebang)
 
 
-def get_action_args_with_defaults(action, args, defaults, templar):
+def get_action_args_with_defaults(action, args, defaults, templar, redirected_names=None):
+    group_collection_map = {
+        'acme': ['community.crypto'],
+        'aws': ['amazon.aws', 'community.aws'],
+        'azure': ['azure.azcollection'],
+        'cpm': ['wti.remote'],
+        'docker': ['community.general'],
+        'gcp': ['google.cloud'],
+        'k8s': ['community.kubernetes', 'community.general'],
+        'os': ['openstack.cloud'],
+        'ovirt': ['ovirt.ovirt', 'community.general'],
+        'vmware': ['community.vmware'],
+        'testgroup': ['testns.testcoll', 'testns.othercoll', 'testns.boguscoll']
+    }
+
+    if not redirected_names:
+        redirected_names = [action]
 
     tmp_args = {}
     module_defaults = {}
@@ -1303,13 +1375,26 @@ def get_action_args_with_defaults(action, args, defaults, templar):
         module_defaults = templar.template(module_defaults)
 
         # deal with configured group defaults first
-        if action in C.config.module_defaults_groups:
-            for group in C.config.module_defaults_groups.get(action, []):
-                tmp_args.update((module_defaults.get('group/{0}'.format(group)) or {}).copy())
+        for default in module_defaults:
+            if not default.startswith('group/'):
+                continue
+
+            group_name = default.split('group/')[-1]
+
+            for collection_name in group_collection_map.get(group_name, []):
+                try:
+                    action_group = _get_collection_metadata(collection_name).get('action_groups', {})
+                except ValueError:
+                    # The collection may not be installed
+                    continue
+
+                if any(name for name in redirected_names if name in action_group):
+                    tmp_args.update((module_defaults.get('group/%s' % group_name) or {}).copy())
 
         # handle specific action defaults
-        if action in module_defaults:
-            tmp_args.update(module_defaults[action].copy())
+        for action in redirected_names:
+            if action in module_defaults:
+                tmp_args.update(module_defaults[action].copy())
 
     # direct args override all
     tmp_args.update(args)

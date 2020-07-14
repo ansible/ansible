@@ -18,6 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ctypes.util
 import errno
 import fcntl
 import getpass
@@ -35,8 +36,8 @@ from termios import TIOCGWINSZ
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleAssertionError
-from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.six import with_metaclass
+from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.six import with_metaclass, text_type
 from ansible.utils.color import stringc
 from ansible.utils.singleton import Singleton
 from ansible.utils.unsafe_proxy import wrap_var
@@ -47,6 +48,100 @@ try:
 except NameError:
     # Python 3, we already have raw_input
     pass
+
+_LIBC = ctypes.cdll.LoadLibrary(ctypes.util.find_library('c'))
+# Set argtypes, to avoid segfault if the wrong type is provided,
+# restype is assumed to be c_int
+_LIBC.wcwidth.argtypes = (ctypes.c_wchar,)
+_LIBC.wcswidth.argtypes = (ctypes.c_wchar_p, ctypes.c_int)
+# Max for c_int
+_MAX_INT = 2 ** (ctypes.sizeof(ctypes.c_int) * 8 - 1) - 1
+
+_LOCALE_INITIALIZED = False
+_LOCALE_INITIALIZATION_ERR = None
+
+
+def initialize_locale():
+    """Set the locale to the users default setting
+    and set ``_LOCALE_INITIALIZED`` to indicate whether
+    ``get_text_width`` may run into trouble
+    """
+    global _LOCALE_INITIALIZED, _LOCALE_INITIALIZATION_ERR
+    if _LOCALE_INITIALIZED is False:
+        try:
+            locale.setlocale(locale.LC_ALL, '')
+        except locale.Error as e:
+            _LOCALE_INITIALIZATION_ERR = e
+        else:
+            _LOCALE_INITIALIZED = True
+
+
+def get_text_width(text):
+    """Function that utilizes ``wcswidth`` or ``wcwidth`` to determine the
+    number of columns used to display a text string.
+
+    We try first with ``wcswidth``, and fallback to iterating each
+    character and using wcwidth individually, falling back to a value of 0
+    for non-printable wide characters
+
+    On Py2, this depends on ``locale.setlocale(locale.LC_ALL, '')``,
+    that in the case of Ansible is done in ``bin/ansible``
+    """
+    if not isinstance(text, text_type):
+        raise TypeError('get_text_width requires text, not %s' % type(text))
+
+    if _LOCALE_INITIALIZATION_ERR:
+        Display().warning(
+            'An error occurred while calling ansible.utils.display.initialize_locale '
+            '(%s). This may result in incorrectly calculated text widths that can '
+            'cause Display to print incorrect line lengths' % _LOCALE_INITIALIZATION_ERR
+        )
+    elif not _LOCALE_INITIALIZED:
+        Display().warning(
+            'ansible.utils.display.initialize_locale has not been called, '
+            'this may result in incorrectly calculated text widths that can '
+            'cause Display to print incorrect line lengths'
+        )
+
+    try:
+        width = _LIBC.wcswidth(text, _MAX_INT)
+    except ctypes.ArgumentError:
+        width = -1
+    if width != -1:
+        return width
+
+    width = 0
+    counter = 0
+    for c in text:
+        counter += 1
+        if c in (u'\x08', u'\x7f', u'\x94', u'\x1b'):
+            # A few characters result in a subtraction of length:
+            # BS, DEL, CCH, ESC
+            # ESC is slightly different in that it's part of an escape sequence, and
+            # while ESC is non printable, it's part of an escape sequence, which results
+            # in a single non printable length
+            width -= 1
+            counter -= 1
+            continue
+
+        try:
+            w = _LIBC.wcwidth(c)
+        except ctypes.ArgumentError:
+            w = -1
+        if w == -1:
+            # -1 signifies a non-printable character
+            # use 0 here as a best effort
+            w = 0
+        width += w
+
+    if width == 0 and counter and not _LOCALE_INITIALIZED:
+        raise EnvironmentError(
+            'ansible.utils.display.initialize_locale has not been called, '
+            'and get_text_width could not calculate text width of %r' % text
+        )
+
+    # It doesn't make sense to have a negative printable width
+    return width if width >= 0 else 0
 
 
 class FilterBlackList(logging.Filter):
@@ -62,7 +157,12 @@ class FilterUserInjector(logging.Filter):
     This is a filter which injects the current user as the 'user' attribute on each record. We need to add this filter
     to all logger handlers so that 3rd party libraries won't print an exception due to user not being defined.
     """
-    username = getpass.getuser()
+
+    try:
+        username = getpass.getuser()
+    except KeyError:
+        # people like to make containers w/o actual valid passwd/shadow and use host uids
+        username = 'uid=%s' % os.getuid()
 
     def filter(self, record):
         record.user = FilterUserInjector.username
@@ -153,13 +253,18 @@ class Display(with_metaclass(Singleton, object)):
         nocolor = msg
 
         if not log_only:
-            if not msg.endswith(u'\n') and newline:
-                msg2 = msg + u'\n'
+
+            has_newline = msg.endswith(u'\n')
+            if has_newline:
+                msg2 = msg[:-1]
             else:
                 msg2 = msg
 
             if color:
                 msg2 = stringc(msg2, color)
+
+            if has_newline or newline:
+                msg2 = msg2 + u'\n'
 
             msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
             if sys.version_info >= (3,):
@@ -239,27 +344,56 @@ class Display(with_metaclass(Singleton, object)):
             else:
                 self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
-    def deprecated(self, msg, version=None, removed=False):
+    def get_deprecation_message(self, msg, version=None, removed=False, date=None, collection_name=None):
         ''' used to print out a deprecation message.'''
+        msg = msg.strip()
+        if msg and msg[-1] not in ['!', '?', '.']:
+            msg += '.'
 
+        if collection_name == 'ansible.builtin':
+            collection_name = 'ansible-base'
+
+        if removed:
+            header = '[DEPRECATED]: {0}'.format(msg)
+            removal_fragment = 'This feature was removed'
+            help_text = 'Please update your playbooks.'
+        else:
+            header = '[DEPRECATION WARNING]: {0}'.format(msg)
+            removal_fragment = 'This feature will be removed'
+            # FUTURE: make this a standalone warning so it only shows up once?
+            help_text = 'Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.'
+
+        if collection_name:
+            from_fragment = 'from {0}'.format(collection_name)
+        else:
+            from_fragment = ''
+
+        if date:
+            when = 'in a release after {0}.'.format(date)
+        elif version:
+            when = 'in version {0}.'.format(version)
+        else:
+            when = 'in a future release.'
+
+        message_text = ' '.join(f for f in [header, removal_fragment, from_fragment, when, help_text] if f)
+
+        return message_text
+
+    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
         if not removed and not C.DEPRECATION_WARNINGS:
             return
 
-        if not removed:
-            if version:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in version %s." % (msg, version)
-            else:
-                new_msg = "[DEPRECATION WARNING]: %s. This feature will be removed in a future release." % (msg)
-            new_msg = new_msg + " Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.\n\n"
-        else:
-            raise AnsibleError("[DEPRECATED]: %s.\nPlease update your playbooks." % msg)
+        message_text = self.get_deprecation_message(msg, version=version, removed=removed, date=date, collection_name=collection_name)
 
-        wrapped = textwrap.wrap(new_msg, self.columns, drop_whitespace=False)
-        new_msg = "\n".join(wrapped) + "\n"
+        if removed:
+            raise AnsibleError(message_text)
 
-        if new_msg not in self._deprecations:
-            self.display(new_msg.strip(), color=C.COLOR_DEPRECATE, stderr=True)
-            self._deprecations[new_msg] = 1
+        wrapped = textwrap.wrap(message_text, self.columns, drop_whitespace=False)
+        message_text = "\n".join(wrapped) + "\n"
+
+        if message_text not in self._deprecations:
+            self.display(message_text.strip(), color=C.COLOR_DEPRECATE, stderr=True)
+            self._deprecations[message_text] = 1
 
     def warning(self, msg, formatted=False):
 
@@ -282,6 +416,8 @@ class Display(with_metaclass(Singleton, object)):
         '''
         Prints a header-looking line with cowsay or stars with length depending on terminal width (3 minimum)
         '''
+        msg = to_text(msg)
+
         if self.b_cowsay and cows:
             try:
                 self.banner_cowsay(msg)
@@ -290,7 +426,10 @@ class Display(with_metaclass(Singleton, object)):
                 self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
 
         msg = msg.strip()
-        star_len = self.columns - len(msg)
+        try:
+            star_len = self.columns - get_text_width(msg)
+        except EnvironmentError:
+            star_len = self.columns - len(msg)
         if star_len <= 3:
             star_len = 3
         stars = u"*" * star_len
@@ -391,8 +530,8 @@ class Display(with_metaclass(Singleton, object)):
         return encoding
 
     def _set_column_width(self):
-        if os.isatty(0):
-            tty_size = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
+        if os.isatty(1):
+            tty_size = unpack('HHHH', fcntl.ioctl(1, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
         else:
             tty_size = 0
         self.columns = max(79, tty_size - 1)

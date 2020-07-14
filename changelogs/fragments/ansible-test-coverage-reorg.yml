@@ -1,2 +1,0 @@
-minor_changes:
-    - reorganized code for the ``ansible-test coverage`` command for easier maintenance and feature additions

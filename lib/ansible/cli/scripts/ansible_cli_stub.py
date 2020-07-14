@@ -22,7 +22,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-__requires__ = ['ansible']
+__requires__ = ['ansible_base']
 
 
 import errno
@@ -60,10 +60,12 @@ if __name__ == '__main__':
 
     try:  # bad ANSIBLE_CONFIG or config options can force ugly stacktrace
         import ansible.constants as C
-        from ansible.utils.display import Display
+        from ansible.utils.display import Display, initialize_locale
     except AnsibleOptionsError as e:
         display.error(to_text(e), wrap_text=False)
         sys.exit(5)
+
+    initialize_locale()
 
     cli = None
     me = os.path.basename(sys.argv[0])

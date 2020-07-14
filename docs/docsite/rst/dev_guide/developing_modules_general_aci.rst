@@ -263,7 +263,7 @@ Example: ``aci.post_config()``
 
 Example code
 """"""""""""
-.. code-block:: guess
+.. code-block:: text
 
     if state == 'present':
         aci.payload(
@@ -295,7 +295,7 @@ When state is absent
 ^^^^^^^^^^^^^^^^^^^^
 If the task sets the state to absent, then the ``delete_config()`` method is all that is needed. This method does not take any arguments, and handles check mode.
 
-.. code-block:: guess
+.. code-block:: text
 
         elif state == 'absent':
             aci.delete_config()
@@ -305,7 +305,7 @@ Exiting the module
 ^^^^^^^^^^^^^^^^^^
 To have the module exit, call the ACIModule method ``exit_json()``. This method automatically takes care of returning the common return values for you.
 
-.. code-block:: guess
+.. code-block:: text
 
         aci.exit_json()
 
@@ -319,7 +319,7 @@ Testing ACI library functions
 =============================
 You can test your ``construct_url()`` and ``payload()`` arguments without accessing APIC hardware by using the following python script:
 
-.. code-block:: guess
+.. code-block:: text
 
     #!/usr/bin/python
     import json

@@ -1,5 +1,0 @@
-bugfixes:
-- Add support for network connection=local with collections for network supported platforms
-
-deprecated_features:
-- Deprecate connection=local support for network platforms using persistent framework

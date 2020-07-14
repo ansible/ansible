@@ -27,6 +27,7 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 from ansible.utils.display import Display
+from ansible.module_utils.six import string_types
 
 __all__ = ['IncludeRole']
 
@@ -137,7 +138,10 @@ class IncludeRole(TaskInclude):
         # build options for role includes
         for key in my_arg_names.intersection(IncludeRole.FROM_ARGS):
             from_key = key.replace('_from', '')
-            ir._from_files[from_key] = basename(ir.args.get(key))
+            args_value = ir.args.get(key)
+            if not isinstance(args_value, string_types):
+                raise AnsibleParserError('Expected a string for %s but got %s instead' % (key, type(args_value)))
+            ir._from_files[from_key] = basename(args_value)
 
         apply_attrs = ir.args.get('apply', {})
         if apply_attrs and ir.action != 'include_role':

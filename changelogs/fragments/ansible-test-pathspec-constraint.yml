@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now limits ``pathspec`` to versions prior to 0.6.0 on Python 2.6 to avoid installation errors

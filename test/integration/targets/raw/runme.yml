@@ -1,0 +1,4 @@
+- hosts: testhost
+  gather_facts: no
+  roles:
+    - { role: raw }

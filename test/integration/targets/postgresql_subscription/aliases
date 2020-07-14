@@ -1,9 +1,0 @@
-destructive
-shippable/posix/group1
-skip/aix
-skip/osx
-skip/centos
-skip/freebsd
-skip/rhel
-skip/opensuse
-skip/fedora

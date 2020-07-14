@@ -64,7 +64,7 @@ define the following keys:
 * ``url``: The URL of the Galaxy instance to connect to. Required.
 * ``token``: An API token key to use for authentication against the Galaxy instance. Mutually exclusive with ``username``.
 * ``username``: The username to use for basic authentication against the Galaxy instance. Mutually exclusive with ``token``.
-* ``password``: The password to use, in conjuction with ``username``, for basic authentication.
+* ``password``: The password to use, in conjunction with ``username``, for basic authentication.
 * ``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO authentication (for example, Automation Hub). Mutually exclusive with ``username``. Requires ``token``.
 
 As well as defining these server options in the ``ansible.cfg`` file, you can also define them as environment variables.

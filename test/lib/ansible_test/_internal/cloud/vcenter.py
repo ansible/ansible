@@ -13,8 +13,8 @@ from . import (
 from ..util import (
     find_executable,
     display,
-    is_shippable,
     ConfigParser,
+    ApplicationError,
 )
 
 from ..docker_util import (
@@ -23,10 +23,6 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
-)
-
-from ..core_ci import (
-    AnsibleCoreCI,
 )
 
 
@@ -47,12 +43,9 @@ class VcenterProvider(CloudProvider):
             self.image = 'quay.io/ansible/vcenter-test-container:1.7.0'
         self.container_name = ''
 
-        # VMware tests can be run on govcsim or baremetal, either BYO with a static config
-        # file or hosted in worldstream.  Using an env var value of 'worldstream' with appropriate
-        # CI credentials will deploy a dynamic baremetal environment. The simulator is the default
-        # if no other config if provided.
+        # VMware tests can be run on govcsim or BYO with a static config file.
+        # The simulator is the default if no config is provided.
         self.vmware_test_platform = os.environ.get('VMWARE_TEST_PLATFORM', 'govcsim')
-        self.aci = None
         self.insecure = False
         self.proxy = None
         self.platform = 'vcenter'
@@ -80,16 +73,6 @@ class VcenterProvider(CloudProvider):
                 return
 
             super(VcenterProvider, self).filter(targets, exclude)
-        elif self.vmware_test_platform == 'worldstream':
-            aci = self._create_ansible_core_ci()
-
-            if os.path.isfile(aci.ci_key):
-                return
-
-            if is_shippable():
-                return
-
-            super(VcenterProvider, self).filter(targets, exclude)
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
@@ -99,32 +82,23 @@ class VcenterProvider(CloudProvider):
         if self.vmware_test_platform == 'govcsim':
             self._setup_dynamic_simulator()
             self.managed = True
-        elif self.vmware_test_platform == 'worldstream':
-            self._setup_dynamic_baremetal()
-            self.managed = True
         elif self.vmware_test_platform == 'static':
             self._use_static_config()
             self._setup_static()
         else:
-            display.error('Unknown vmware_test_platform: %s' % self.vmware_test_platform)
-            exit(1)
+            raise ApplicationError('Unknown vmware_test_platform: %s' % self.vmware_test_platform)
 
     def get_docker_run_options(self):
         """Get any additional options needed when delegating tests to a docker container.
         :rtype: list[str]
         """
-        if self.managed and self.vmware_test_platform != 'worldstream':
+        if self.managed:
             return ['--link', self.DOCKER_SIMULATOR_NAME]
 
         return []
 
     def cleanup(self):
         """Clean up the cloud resource and any temporary configuration files after tests complete."""
-        if self.vmware_test_platform == 'worldstream':
-
-            if self.aci:
-                self.aci.stop()
-
         if self.container_name:
             docker_rm(self.args, self.container_name)
 
@@ -185,39 +159,10 @@ class VcenterProvider(CloudProvider):
         ipaddress = results[0]['NetworkSettings']['IPAddress']
         return ipaddress
 
-    def _setup_dynamic_baremetal(self):
-        """Request Esxi credentials through the Ansible Core CI service."""
-        display.info('Provisioning %s cloud environment.' % self.platform,
-                     verbosity=1)
-
-        config = self._read_config_template()
-
-        aci = self._create_ansible_core_ci()
-
-        if not self.args.explain:
-            self.aci = aci
-            aci.start()
-            aci.wait(iterations=160)
-
-            data = aci.get().response_json.get('data')
-            for key, value in data.items():
-                if key.endswith('PASSWORD'):
-                    display.sensitive.add(value)
-            config = self._populate_config_template(config, data)
-            self._write_config(config)
-
-    def _create_ansible_core_ci(self):
-        """
-        :rtype: AnsibleCoreCI
-        """
-        return AnsibleCoreCI(self.args, 'vmware', 'vmware',
-                             persist=False, stage=self.args.remote_stage,
-                             provider='vmware')
-
     def _setup_static(self):
         if not os.path.exists(self.config_static_path):
-            display.error('Configuration file does not exist: %s' % self.config_static_path)
-            exit(1)
+            raise ApplicationError('Configuration file does not exist: %s' % self.config_static_path)
+
         parser = ConfigParser({
             'vcenter_port': '443',
             'vmware_proxy_host': '',
@@ -242,7 +187,7 @@ class VcenterEnvironment(CloudEnvironment):
             # We may be in a container, so we cannot just reach VMWARE_TEST_PLATFORM,
             # We do a try/except instead
             parser = ConfigParser()
-            parser.read(self.config_path)  # Worldstream and static
+            parser.read(self.config_path)  # static
 
             env_vars = dict()
             ansible_vars = dict(

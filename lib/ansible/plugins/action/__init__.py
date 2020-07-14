@@ -18,7 +18,7 @@ import time
 from abc import ABCMeta, abstractmethod
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail
+from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsiblePluginRemovedError
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
 from ansible.module_utils.common._collections_compat import Sequence
@@ -28,6 +28,7 @@ from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.release import __version__
+from ansible.utils.collection_loader import resource_from_fqcr
 from ansible.utils.display import Display
 from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
@@ -152,32 +153,50 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             return True
         return False
 
-    def _configure_module(self, module_name, module_args, task_vars=None):
+    def _configure_module(self, module_name, module_args, task_vars):
         '''
         Handles the loading and templating of the module code through the
         modify_module() function.
         '''
-        if task_vars is None:
-            task_vars = dict()
+        if self._task.delegate_to:
+            use_vars = task_vars.get('ansible_delegated_vars')[self._task.delegate_to]
+        else:
+            use_vars = task_vars
 
         # Search module path(s) for named module.
         for mod_type in self._connection.module_implementation_preferences:
             # Check to determine if PowerShell modules are supported, and apply
             # some fixes (hacks) to module name + args.
             if mod_type == '.ps1':
-                # win_stat, win_file, and win_copy are not just like their
+                # FIXME: This should be temporary and moved to an exec subsystem plugin where we can define the mapping
+                # for each subsystem.
+                win_collection = 'ansible.windows'
+
+                # async_status, win_stat, win_file, win_copy, and win_ping are not just like their
                 # python counterparts but they are compatible enough for our
                 # internal usage
-                if module_name in ('stat', 'file', 'copy') and self._task.action != module_name:
-                    module_name = 'win_%s' % module_name
+                if module_name in ('stat', 'file', 'copy', 'ping') and self._task.action != module_name:
+                    module_name = '%s.win_%s' % (win_collection, module_name)
+                elif module_name in ['async_status']:
+                    module_name = '%s.%s' % (win_collection, module_name)
 
                 # Remove extra quotes surrounding path parameters before sending to module.
-                if module_name in ('win_stat', 'win_file', 'win_copy', 'slurp') and module_args and hasattr(self._connection._shell, '_unquote'):
+                if resource_from_fqcr(module_name) in ['win_stat', 'win_file', 'win_copy', 'slurp'] and module_args and \
+                        hasattr(self._connection._shell, '_unquote'):
                     for key in ('src', 'dest', 'path'):
                         if key in module_args:
                             module_args[key] = self._connection._shell._unquote(module_args[key])
 
-            module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type, collection_list=self._task.collections)
+            result = self._shared_loader_obj.module_loader.find_plugin_with_context(module_name, mod_type, collection_list=self._task.collections)
+
+            if not result.resolved:
+                if result.redirect_list and len(result.redirect_list) > 1:
+                    # take the last one in the redirect list, we may have successfully jumped through N other redirects
+                    target_module_name = result.redirect_list[-1]
+
+                    raise AnsibleError("The module {0} was redirected to {1}, which could not be loaded.".format(module_name, target_module_name))
+
+            module_path = result.plugin_resolved_path
             if module_path:
                 break
         else:  # This is a for-else: http://bit.ly/1ElPkyg
@@ -202,7 +221,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         for dummy in (1, 2):
             try:
                 (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, self._templar,
-                                                                            task_vars=task_vars,
+                                                                            task_vars=use_vars,
                                                                             module_compression=self._play_context.module_compression,
                                                                             async_timeout=self._task.async_val,
                                                                             environment=final_environment,
@@ -213,17 +232,25 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     action=self,
                     interpreter_name=idre.interpreter_name,
                     discovery_mode=idre.discovery_mode,
-                    task_vars=task_vars))
+                    task_vars=use_vars))
 
                 # update the local task_vars with the discovered interpreter (which might be None);
                 # we'll propagate back to the controller in the task result
                 discovered_key = 'discovered_interpreter_%s' % idre.interpreter_name
-                # store in local task_vars facts collection for the retry and any other usages in this worker
-                if task_vars.get('ansible_facts') is None:
-                    task_vars['ansible_facts'] = {}
-                task_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
-                # preserve this so _execute_module can propagate back to controller as a fact
-                self._discovered_interpreter_key = discovered_key
+
+                # update the local vars copy for the retry
+                use_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
+
+                # TODO: this condition prevents 'wrong host' from being updated
+                # but in future we would want to be able to update 'delegated host facts'
+                # irrespective of task settings
+                if not self._task.delegate_to or self._task.delegate_facts:
+                    # store in local task_vars facts collection for the retry and any other usages in this worker
+                    task_vars['ansible_facts'][discovered_key] = self._discovered_interpreter
+                    # preserve this so _execute_module can propagate back to controller as a fact
+                    self._discovered_interpreter_key = discovered_key
+                else:
+                    task_vars['ansible_delegated_vars'][self._task.delegate_to]['ansible_facts'][discovered_key] = self._discovered_interpreter
 
         return (module_style, module_shebang, module_data, module_path)
 
@@ -272,20 +299,30 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Determines if we are required and can do pipelining
         '''
 
-        # any of these require a true
-        for condition in [
-            self._connection.has_pipelining,
-            self._play_context.pipelining or self._connection.always_pipeline_modules,  # pipelining enabled for play or connection requires it (eg winrm)
-            module_style == "new",                     # old style modules do not support pipelining
-            not C.DEFAULT_KEEP_REMOTE_FILES,           # user wants remote files
-            not wrap_async or self._connection.always_pipeline_modules,  # async does not normally support pipelining unless it does (eg winrm)
-            (self._connection.become.name if self._connection.become else '') != 'su',  # su does not work with pipelining,
-            # FIXME: we might need to make become_method exclusion a configurable list
-        ]:
-            if not condition:
-                return False
+        try:
+            is_enabled = self._connection.get_option('pipelining')
+        except (KeyError, AttributeError, ValueError):
+            is_enabled = self._play_context.pipelining
 
-        return True
+        # winrm supports async pipeline
+        # TODO: make other class property 'has_async_pipelining' to separate cases
+        always_pipeline = self._connection.always_pipeline_modules
+
+        # su does not work with pipelining
+        # TODO: add has_pipelining class prop to become plugins
+        become_exception = (self._connection.become.name if self._connection.become else '') != 'su'
+
+        # any of these require a true
+        conditions = [
+            self._connection.has_pipelining,    # connection class supports it
+            is_enabled or always_pipeline,      # enabled via config or forced via connection (eg winrm)
+            module_style == "new",              # old style modules do not support pipelining
+            not C.DEFAULT_KEEP_REMOTE_FILES,    # user wants remote files
+            not wrap_async or always_pipeline,  # async does not normally support pipelining unless it does (eg winrm)
+            become_exception,
+        ]
+
+        return all(conditions)
 
     def _get_admin_users(self):
         '''
@@ -332,18 +369,18 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Create and return a temporary path on a remote box.
         '''
 
-        become_unprivileged = self._is_become_unprivileged()
-        remote_tmp = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
-
-        # deal with tmpdir creation
-        basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         # Network connection plugins (network_cli, netconf, etc.) execute on the controller, rather than the remote host.
         # As such, we want to avoid using remote_user for paths  as remote_user may not line up with the local user
         # This is a hack and should be solved by more intelligent handling of remote_tmp in 2.7
         if getattr(self._connection, '_remote_is_local', False):
             tmpdir = C.DEFAULT_LOCAL_TMP
         else:
-            tmpdir = self._remote_expand_user(remote_tmp, sudoable=False)
+            # NOTE: shell plugins should populate this setting anyways, but they dont do remote expansion, which
+            # we need for 'non posix' systems like cloud-init and solaris
+            tmpdir = self._remote_expand_user(self.get_shell_option('remote_tmp', default='~/.ansible/tmp'), sudoable=False)
+
+        become_unprivileged = self._is_become_unprivileged()
+        basefile = self._connection._shell._generate_temp_dir_name()
         cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
         result = self._low_level_execute_command(cmd, sudoable=False)
 
@@ -362,9 +399,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             elif u'No space left on device' in result['stderr']:
                 output = result['stderr']
             else:
-                output = ('Authentication or permission failure. '
+                output = ('Failed to create temporary directory.'
                           'In some cases, you may have been able to authenticate and did not have permissions on the target directory. '
-                          'Consider changing the remote tmp path in ansible.cfg to a path rooted in "/tmp". '
+                          'Consider changing the remote tmp path in ansible.cfg to a path rooted in "/tmp", for more error information use -vvv. '
                           'Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
                 output = output + u", stdout output: %s" % result['stdout']
@@ -473,11 +510,24 @@ class ActionBase(with_metaclass(ABCMeta, object)):
           file with chown which only works in case the remote_user is
           privileged or the remote systems allows chown calls by unprivileged
           users (e.g. HP-UX)
-        * If the chown fails we can set the file to be world readable so that
+        * If the chown fails, we check if ansible_common_remote_group is set.
+          If it is, we attempt to chgrp the file to its value. This is useful
+          if the remote_user has a group in common with the become_user. As the
+          remote_user, we can chgrp the file to that group and allow the
+          become_user to read it.
+        * If (the chown fails AND ansible_common_remote_group is not set) OR
+          (ansible_common_remote_group is set AND the chgrp (or following chmod)
+          returned non-zero), we can set the file to be world readable so that
           the second unprivileged user can read the file.
           Since this could allow other users to get access to private
           information we only do this if ansible is configured with
-          "allow_world_readable_tmpfiles" in the ansible.cfg
+          "allow_world_readable_tmpfiles" in the ansible.cfg. Also note that
+          when ansible_common_remote_group is set this final fallback is very
+          unlikely to ever be triggered, so long as chgrp was successful. But
+          just because the chgrp was successful, does not mean Ansible can
+          necessarily access the files (if, for example, the variable was set
+          to a group that remote_user is in, and can chgrp to, but does not have
+          in common with become_user).
         """
         if remote_user is None:
             remote_user = self._get_remote_user()
@@ -491,6 +541,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # Unprivileged user that's different than the ssh user.  Let's get
             # to work!
 
+            become_user = self.get_become_option('become_user')
+
             # Try to use file system acls to make the files readable for sudo'd
             # user
             if execute:
@@ -503,7 +555,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # start to we'll have to fix this.
                 setfacl_mode = 'r-X'
 
-            res = self._remote_set_user_facl(remote_paths, self.get_become_option('become_user'), setfacl_mode)
+            res = self._remote_set_user_facl(remote_paths, become_user, setfacl_mode)
             if res['rc'] != 0:
                 # File system acls failed; let's try to use chown next
                 # Set executable bit first as on some systems an
@@ -513,18 +565,54 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     if res['rc'] != 0:
                         raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
 
-                res = self._remote_chown(remote_paths, self.get_become_option('become_user'))
-                if res['rc'] != 0 and remote_user in self._get_admin_users():
-                    # chown failed even if remote_user is administrator/root
-                    raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
-                                       'Unprivileged become user would be unable to read the file.')
-                elif res['rc'] != 0:
-                    if C.ALLOW_WORLD_READABLE_TMPFILES:
+                res = self._remote_chown(remote_paths, become_user)
+                if res['rc'] != 0:
+                    # First check if we are an admin/root user. If we are
+                    # and failed here, something weird has happened.
+                    if remote_user in self._get_admin_users():
+                        # chown failed even if remote_user is administrator/root
+                        raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
+                                           'Unprivileged become user would be unable to read the file.')
+
+                    # Otherwise, we're a normal user. We failed to chown the
+                    # paths to the unprivileged user, but if we have a common
+                    # group with them, we should be able to chown it to that.
+                    #
+                    # Note that we have no way of knowing if this will actually
+                    # work... just because chgrp exits successfully does not
+                    # mean that Ansible will work. We could check if the become
+                    # user is in the group, but this would create an extra
+                    # round trip.
+                    #
+                    # Also note that due to the above, this can prevent the
+                    # ALLOW_WORLD_READABLE_TMPFILES logic below from ever
+                    # getting called. We leave this up to the user to rectify
+                    # if they have both of these features enabled.
+                    group = self.get_shell_option('common_remote_group')
+                    if group is not None:
+                        res = self._remote_chgrp(remote_paths, group)
+                        if res['rc'] == 0:
+                            # If ALLOW_WORLD_READABLE_TMPFILES is set, we should warn the user
+                            # that something might go weirdly here.
+                            if C.ALLOW_WORLD_READABLE_TMPFILES:
+                                display.warning('Both common_remote_group and allow_world_readable_tmpfiles are set. chgrp was successful, but there is no '
+                                                'guarantee that Ansible will be able to read the files after this operation, particularly if '
+                                                'common_remote_group was set to a group of which the unprivileged become user is not a member. In this '
+                                                'situation, allow_world_readable_tmpfiles is a no-op. See the "Risks of becoming an unprivileged user" section '
+                                                'of the "Understanding privilege escalation: become" user guide documentation for more information')
+                            if execute:
+                                group_mode = 'g+rwx'
+                            else:
+                                group_mode = 'g+rw'
+                            res = self._remote_chmod(remote_paths, group_mode)
+
+                if res['rc'] != 0:
+                    if self.get_shell_option('world_readable_temp', C.ALLOW_WORLD_READABLE_TMPFILES):
                         # chown and fs acls failed -- do things this insecure
                         # way only if the user opted in in the config file
                         display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user. '
                                         'This may be insecure. For information on securing this, see '
-                                        'https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user')
+                                        'https://docs.ansible.com/ansible/user_guide/become.html#risks-of-becoming-an-unprivileged-user')
                         res = self._remote_chmod(remote_paths, 'a+%s' % chmod_mode)
                         if res['rc'] != 0:
                             raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
@@ -555,6 +643,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         Issue a remote chown command
         '''
         cmd = self._connection._shell.chown(paths, user)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable)
+        return res
+
+    def _remote_chgrp(self, paths, group, sudoable=False):
+        '''
+        Issue a remote chgrp command
+        '''
+        cmd = self._connection._shell.chgrp(paths, group)
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
@@ -707,7 +803,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_check_mode'] = False
 
         # set no log in the module arguments, if required
-        module_args['_ansible_no_log'] = self._play_context.no_log or C.DEFAULT_NO_TARGET_SYSLOG
+        no_target_syslog = C.config.get_config_value('DEFAULT_NO_TARGET_SYSLOG', variables=task_vars)
+        module_args['_ansible_no_log'] = self._play_context.no_log or no_target_syslog
 
         # set debug in the module arguments, if required
         module_args['_ansible_debug'] = C.DEFAULT_DEBUG
@@ -802,7 +899,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 msg = "Setting the async dir from the environment keyword " \
                       "ANSIBLE_ASYNC_DIR is deprecated. Set the async_dir " \
                       "shell option instead"
-                self._display.deprecated(msg, "2.12")
+                self._display.deprecated(msg, "2.12", collection_name='ansible.builtin')
             else:
                 # ANSIBLE_ASYNC_DIR is not set on the task, we get the value
                 # from the shell option and temporarily add to the environment
@@ -1045,10 +1142,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             display.debug("_low_level_execute_command(): changing cwd to %s for this command" % chdir)
             cmd = self._connection._shell.append_command('cd %s' % chdir, cmd)
 
+        # https://github.com/ansible/ansible/issues/68054
+        if executable:
+            self._connection._shell.executable = executable
+
         ruser = self._get_remote_user()
         buser = self.get_become_option('become_user')
         if (sudoable and self._connection.become and  # if sudoable and have become
-                self._connection.transport != 'network_cli' and  # if not using network_cli
+                resource_from_fqcr(self._connection.transport) != 'network_cli' and  # if not using network_cli
                 (C.BECOME_ALLOW_SAME_USER or (buser != ruser or not any((ruser, buser))))):  # if we allow same user PE or users are different and either is set
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._connection.become.build_become_command(cmd, self._connection._shell)

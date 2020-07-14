@@ -62,8 +62,6 @@ except AttributeError:
     C = None
 
 
-DOCKER_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
-REMOTE_COMPLETION = {}  # type: t.Dict[str, t.Dict[str, str]]
 PYTHON_PATHS = {}  # type: t.Dict[str, str]
 
 try:
@@ -117,58 +115,8 @@ SUPPORTED_PYTHON_VERSIONS = (
     '3.6',
     '3.7',
     '3.8',
+    '3.9',
 )
-
-
-def get_docker_completion():
-    """
-    :rtype: dict[str, dict[str, str]]
-    """
-    return get_parameterized_completion(DOCKER_COMPLETION, 'docker')
-
-
-def get_remote_completion():
-    """
-    :rtype: dict[str, dict[str, str]]
-    """
-    return get_parameterized_completion(REMOTE_COMPLETION, 'remote')
-
-
-def get_parameterized_completion(cache, name):
-    """
-    :type cache: dict[str, dict[str, str]]
-    :type name: str
-    :rtype: dict[str, dict[str, str]]
-    """
-    if not cache:
-        images = read_lines_without_comments(os.path.join(ANSIBLE_TEST_DATA_ROOT, 'completion', '%s.txt' % name), remove_blank_lines=True)
-
-        cache.update(dict(kvp for kvp in [parse_parameterized_completion(i) for i in images] if kvp))
-
-    return cache
-
-
-def parse_parameterized_completion(value):
-    """
-    :type value: str
-    :rtype: tuple[str, dict[str, str]]
-    """
-    values = value.split()
-
-    if not values:
-        return None
-
-    name = values[0]
-    data = dict((kvp[0], kvp[1] if len(kvp) > 1 else '') for kvp in [item.split('=', 1) for item in values[1:]])
-
-    return name, data
-
-
-def is_shippable():
-    """
-    :rtype: bool
-    """
-    return os.environ.get('SHIPPABLE') == 'true'
 
 
 def remove_file(path):
@@ -304,7 +252,7 @@ def generate_pip_command(python):
     :type python: str
     :rtype: list[str]
     """
-    return [python, '-m', 'pip.__main__']
+    return [python, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'quiet_pip.py')]
 
 
 def raw_command(cmd, capture=False, env=None, data=None, cwd=None, explain=False, stdin=None, stdout=None,
@@ -743,16 +691,6 @@ class MissingEnvironmentVariable(ApplicationError):
         self.name = name
 
 
-def docker_qualify_image(name):
-    """
-    :type name: str
-    :rtype: str
-    """
-    config = get_docker_completion().get(name, {})
-
-    return config.get('name', name)
-
-
 def parse_to_list_of_dict(pattern, value):
     """
     :type pattern: str
@@ -830,6 +768,16 @@ def paths_to_dirs(paths):  # type: (t.List[str]) -> t.List[str]
             dir_names.add(path + os.path.sep)
 
     return sorted(dir_names)
+
+
+def str_to_version(version):  # type: (str) -> t.Tuple[int]
+    """Return a version tuple from a version string."""
+    return tuple(int(n) for n in version.split('.'))
+
+
+def version_to_str(version):  # type: (t.Tuple[int]) -> str
+    """Return a version string from a version tuple."""
+    return '.'.join(str(n) for n in version)
 
 
 def import_plugins(directory, root=None):  # type: (str, t.Optional[str]) -> None

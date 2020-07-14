@@ -1,2 +1,0 @@
-minor_changes:
-- "docker_container - add ``cpus`` option (https://github.com/ansible/ansible/issues/34320)."

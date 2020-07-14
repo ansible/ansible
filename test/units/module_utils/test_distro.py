@@ -12,6 +12,9 @@
 # Note that nir0s/distro has many more tests in it's test suite. The tests here are
 # primarily for testing the vendoring.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 from ansible.module_utils import distro
 from ansible.module_utils.six import string_types
 

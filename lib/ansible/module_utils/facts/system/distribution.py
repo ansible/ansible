@@ -71,6 +71,7 @@ class DistributionFiles:
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
+        {'path': '/etc/flatcar/update.conf', 'name': 'Flatcar'},
         {'path': '/etc/os-release', 'name': 'NA'},
     )
 
@@ -135,7 +136,7 @@ class DistributionFiles:
             parsed, dist_file_dict = distfunc(name, dist_file_content, path, collected_facts)
             return parsed, dist_file_dict
         except AttributeError as exc:
-            print('exc: %s' % exc)
+            self.module.debug('exc: %s' % exc)
             # this should never happen, but if it does fail quietly and not with a traceback
             return False, dist_file_dict
 
@@ -320,8 +321,12 @@ class DistributionFiles:
         elif 'SteamOS' in data:
             debian_facts['distribution'] = 'SteamOS'
             # nothing else to do, SteamOS gets correct info from python functions
-        elif path == '/etc/lsb-release' and 'Kali' in data:
-            debian_facts['distribution'] = 'Kali'
+        elif path in ('/etc/lsb-release', '/etc/os-release') and ('Kali' in data or 'Parrot' in data):
+            if 'Kali' in data:
+                # Kali does not provide /etc/lsb-release anymore
+                debian_facts['distribution'] = 'Kali'
+            elif 'Parrot' in data:
+                debian_facts['distribution'] = 'Parrot'
             release = re.search('DISTRIB_RELEASE=(.*)', data)
             if release:
                 debian_facts['distribution_release'] = release.groups()[0]
@@ -401,6 +406,21 @@ class DistributionFiles:
 
         return True, coreos_facts
 
+    def parse_distribution_file_Flatcar(self, name, data, path, collected_facts):
+        flatcar_facts = {}
+        distro = get_distribution()
+
+        if distro.lower() == 'flatcar':
+            if not data:
+                return False, flatcar_facts
+            release = re.search("^GROUP=(.*)", data)
+            if release:
+                flatcar_facts['distribution_release'] = release.group(1).strip('"')
+        else:
+            return False, flatcar_facts
+
+        return True, flatcar_facts
+
     def parse_distribution_file_ClearLinux(self, name, data, path, collected_facts):
         clear_facts = {}
         if "clearlinux" not in name.lower():
@@ -452,6 +472,7 @@ class Distribution(object):
         {'path': '/etc/sourcemage-release', 'name': 'SMGL'},
         {'path': '/usr/lib/os-release', 'name': 'ClearLinux'},
         {'path': '/etc/coreos/update.conf', 'name': 'Coreos'},
+        {'path': '/etc/flatcar/update.conf', 'name': 'Flatcar'},
         {'path': '/etc/os-release', 'name': 'NA'},
     )
 
@@ -466,9 +487,11 @@ class Distribution(object):
     # keep keys in sync with Conditionals page of docs
     OS_FAMILY_MAP = {'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
                                 'Ascendos', 'CloudLinux', 'PSBM', 'OracleLinux', 'OVS',
-                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba', 'EulerOS'],
+                                'OEL', 'Amazon', 'Virtuozzo', 'XenServer', 'Alibaba',
+                                'EulerOS', 'openEuler'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
-                                'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux'],
+                                'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
+                                'Pop!_OS', 'Parrot'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],

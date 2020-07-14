@@ -1,2 +1,0 @@
-minor_changes:
-- postgresql_user - add the comment parameter (https://github.com/ansible/ansible/pull/66711).

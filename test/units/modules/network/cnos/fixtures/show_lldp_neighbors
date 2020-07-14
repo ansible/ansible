@@ -1,8 +1,0 @@
-Capability codes:
-  (R) Router, (B) Bridge, (T) Telephone, (C) DOCSIS Cable Device
-  (W) WLAN Access Point, (P) Repeater, (S) Station, (O) Other
-Device ID               Local Intf       Hold-time Capability Port ID
-INDIA-LAB-1-C3750X.l... mgmt0            120       BR         Gi1/0/30
-
-Total entries displayed: 1
-

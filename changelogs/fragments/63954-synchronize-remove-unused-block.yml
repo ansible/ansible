@@ -1,2 +1,0 @@
-bugfixes:
-- synchronize - remove unused block (https://github.com/ansible/ansible/issues/63954)

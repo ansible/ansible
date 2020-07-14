@@ -26,10 +26,10 @@ import pytest
 
 from ansible import constants as C
 from ansible.errors import AnsibleAuthenticationFailure
-from ansible.compat.selectors import SelectorKey, EVENT_READ
 from units.compat import unittest
 from units.compat.mock import patch, MagicMock, PropertyMock
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.module_utils.compat.selectors import SelectorKey, EVENT_READ
 from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.play_context import PlayContext
@@ -38,6 +38,15 @@ from ansible.plugins.loader import connection_loader, become_loader
 
 
 class TestConnectionBaseClass(unittest.TestCase):
+
+    def test_plugins_connection_ssh_module(self):
+        play_context = PlayContext()
+        play_context.prompt = (
+            '[sudo via ansible, key=ouzmdnewuhucvuaabtjmweasarviygqq] password: '
+        )
+        in_stream = StringIO()
+
+        self.assertIsInstance(ssh.Connection(play_context, in_stream), ssh.Connection)
 
     def test_plugins_connection_ssh_basic(self):
         pc = PlayContext()
@@ -371,7 +380,7 @@ def mock_run_env(request, mocker):
     request.cls.mock_popen = mock_popen
 
     request.cls.mock_selector = MockSelector()
-    mocker.patch('ansible.compat.selectors.DefaultSelector', lambda: request.cls.mock_selector)
+    mocker.patch('ansible.module_utils.compat.selectors.DefaultSelector', lambda: request.cls.mock_selector)
 
     request.cls.mock_openpty = mocker.patch('pty.openpty')
 

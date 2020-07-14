@@ -31,6 +31,7 @@ fatal: [testhost]: FAILED! => {"changed": false, "msg": "Failed as requested fro
 
 TASK [Rescue task] *************************************************************
 changed: [testhost]
+included: .../test/integration/targets/callback_default/include_me.yml for testhost => (item=1)
 
 RUNNING HANDLER [Test handler 1] ***********************************************
 changed: [testhost]
@@ -47,5 +48,5 @@ TASK [Second free task] ********************************************************
 changed: [testhost]
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=12   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
+testhost                   : ok=14   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
 

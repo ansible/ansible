@@ -1,2 +1,0 @@
-bugfixes:
-  - template lookup - fix regression when templating hostvars (https://github.com/ansible/ansible/issues/63940)

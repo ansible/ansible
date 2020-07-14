@@ -1,9 +1,0 @@
-{
-  "kind": "tm:gtm:datacenter:datacenterstate",
-  "name": "asd",
-  "partition": "Common",
-  "fullPath": "/Common/asd",
-  "generation": 278,
-  "selfLink": "https://localhost/mgmt/tm/gtm/datacenter/~Common~asd?ver=12.1.2",
-  "enabled": true
-}

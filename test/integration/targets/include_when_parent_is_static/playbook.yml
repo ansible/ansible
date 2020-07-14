@@ -1,0 +1,4 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - import_tasks: tasks.yml

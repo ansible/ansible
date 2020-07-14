@@ -1,8 +1,0 @@
-Sending 5, 16-byte ICMP Echo to 8.8.8.8, timeout 5000 msec, TTL 70
-Type Control-c to abort
-Reply from 8.8.8.8         : bytes=16 time=40ms TTL=45
-Reply from 8.8.8.8         : bytes=16 time=40ms TTL=45
-Reply from 8.8.8.8         : bytes=16 time=40ms TTL=45
-Reply from 8.8.8.8         : bytes=16 time=40ms TTL=45
-Reply from 8.8.8.8         : bytes=16 time=40ms TTL=45
-Success rate is 100 percent (5/5), round-trip min/avg/max=40/40/40 ms.

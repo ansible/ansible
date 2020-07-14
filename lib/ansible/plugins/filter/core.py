@@ -40,12 +40,12 @@ from random import Random, SystemRandom, shuffle
 
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
-from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.six import iteritems, string_types, integer_types, reraise
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common.collections import is_sequence
-from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
@@ -80,12 +80,7 @@ def to_json(a, *args, **kw):
 
 def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
     '''Make verbose, human readable JSON'''
-    try:
-        return json.dumps(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), cls=AnsibleJSONEncoder, *args, **kw)
-    except Exception as e:
-        # Fallback to the to_json filter
-        display.warning(u'Unable to convert data using to_nice_json, falling back to to_json: %s' % to_text(e))
-        return to_json(a, *args, **kw)
+    return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), *args, **kw)
 
 
 def to_bool(a):
@@ -123,21 +118,25 @@ def fileglob(pathname):
     return [g for g in glob.glob(pathname) if os.path.isfile(g)]
 
 
-def regex_replace(value='', pattern='', replacement='', ignorecase=False):
+def regex_replace(value='', pattern='', replacement='', ignorecase=False, multiline=False):
     ''' Perform a `re.sub` returning a string '''
 
     value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
 
+    flags = 0
     if ignorecase:
-        flags = re.I
-    else:
-        flags = 0
+        flags |= re.I
+    if multiline:
+        flags |= re.M
     _re = re.compile(pattern, flags=flags)
     return _re.sub(replacement, value)
 
 
 def regex_findall(value, regex, multiline=False, ignorecase=False):
     ''' Perform re.findall and return the list of matches '''
+
+    value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
+
     flags = 0
     if ignorecase:
         flags |= re.I
@@ -148,6 +147,8 @@ def regex_findall(value, regex, multiline=False, ignorecase=False):
 
 def regex_search(value, regex, *args, **kwargs):
     ''' Perform re.search and return the list of matches or a backref '''
+
+    value = to_text(value, errors='surrogate_or_strict', nonstring='simplerepr')
 
     groups = list()
     for arg in args:
@@ -188,6 +189,7 @@ def ternary(value, true_val, false_val, none_val=None):
 
 
 def regex_escape(string, re_type='python'):
+    string = to_text(string, errors='surrogate_or_strict', nonstring='simplerepr')
     '''Escape all regular expressions special characters from STRING.'''
     if re_type == 'python':
         return re.escape(string)
@@ -251,11 +253,11 @@ def randomize_list(mylist, seed=None):
 
 
 def get_hash(data, hashtype='sha1'):
-
-    try:  # see if hash is supported
+    try:
         h = hashlib.new(hashtype)
-    except Exception:
-        return None
+    except Exception as e:
+        # hash is not supported?
+        raise AnsibleFilterError(e)
 
     h.update(to_bytes(data, errors='surrogate_or_strict'))
     return h.hexdigest()
@@ -306,25 +308,36 @@ def mandatory(a, msg=None):
 
 
 def combine(*terms, **kwargs):
-    recursive = kwargs.get('recursive', False)
-    if len(kwargs) > 1 or (len(kwargs) == 1 and 'recursive' not in kwargs):
-        raise AnsibleFilterError("'recursive' is the only valid keyword argument")
+    recursive = kwargs.pop('recursive', False)
+    list_merge = kwargs.pop('list_merge', 'replace')
+    if kwargs:
+        raise AnsibleFilterError("'recursive' and 'list_merge' are the only valid keyword arguments")
 
-    dicts = []
-    for t in terms:
-        if isinstance(t, MutableMapping):
-            recursive_check_defined(t)
-            dicts.append(t)
-        elif isinstance(t, list):
-            recursive_check_defined(t)
-            dicts.append(combine(*t, **kwargs))
-        else:
-            raise AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
+    # allow the user to do `[dict1, dict2, ...] | combine`
+    dictionaries = flatten(terms, levels=1)
 
-    if recursive:
-        return reduce(merge_hash, dicts)
-    else:
-        return dict(itertools.chain(*map(iteritems, dicts)))
+    # recursively check that every elements are defined (for jinja2)
+    recursive_check_defined(dictionaries)
+
+    if not dictionaries:
+        return {}
+
+    if len(dictionaries) == 1:
+        return dictionaries[0]
+
+    # merge all the dicts so that the dict at the end of the array have precedence
+    # over the dict at the beginning.
+    # we merge the dicts from the highest to the lowest priority because there is
+    # a huge probability that the lowest priority dict will be the biggest in size
+    # (as the low prio dict will hold the "default" values and the others will be "patches")
+    # and merge_hash create a copy of it's first argument.
+    # so high/right -> low/left is more efficient than low/left -> high/right
+    high_to_low_prio_dict_iterator = reversed(dictionaries)
+    result = next(high_to_low_prio_dict_iterator)
+    for dictionary in high_to_low_prio_dict_iterator:
+        result = merge_hash(dictionary, result, recursive, list_merge)
+
+    return result
 
 
 def comment(text, style='plain', **kw):
@@ -454,19 +467,19 @@ def b64decode(string, encoding='utf-8'):
     return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')), encoding=encoding)
 
 
-def flatten(mylist, levels=None):
+def flatten(mylist, levels=None, skip_nulls=True):
 
     ret = []
     for element in mylist:
-        if element in (None, 'None', 'null'):
-            # ignore undefined items
-            break
+        if skip_nulls and element in (None, 'None', 'null'):
+            # ignore null items
+            continue
         elif is_sequence(element):
             if levels is None:
-                ret.extend(flatten(element))
+                ret.extend(flatten(element, skip_nulls=skip_nulls))
             elif levels >= 1:
                 # decrement as we go down the stack
-                ret.extend(flatten(element, levels=(int(levels) - 1)))
+                ret.extend(flatten(element, levels=(int(levels) - 1), skip_nulls=skip_nulls))
             else:
                 ret.append(element)
         else:
@@ -496,7 +509,7 @@ def subelements(obj, subelements, skip_missing=False):
     elif isinstance(subelements, string_types):
         subelement_list = subelements.split('.')
     else:
-        raise AnsibleFilterError('subelements must be a list or a string')
+        raise AnsibleFilterTypeError('subelements must be a list or a string')
 
     results = []
 
@@ -511,9 +524,9 @@ def subelements(obj, subelements, skip_missing=False):
                     break
                 raise AnsibleFilterError("could not find %r key in iterated item %r" % (subelement, values))
             except TypeError:
-                raise AnsibleFilterError("the key %s should point to a dictionary, got '%s'" % (subelement, values))
+                raise AnsibleFilterTypeError("the key %s should point to a dictionary, got '%s'" % (subelement, values))
         if not isinstance(values, list):
-            raise AnsibleFilterError("the key %r should point to a list, got %r" % (subelement, values))
+            raise AnsibleFilterTypeError("the key %r should point to a list, got %r" % (subelement, values))
 
         for value in values:
             results.append((element, value))
@@ -526,7 +539,7 @@ def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
 
     if not isinstance(mydict, Mapping):
-        raise AnsibleFilterError("dict2items requires a dictionary, got %s instead." % type(mydict))
+        raise AnsibleFilterTypeError("dict2items requires a dictionary, got %s instead." % type(mydict))
 
     ret = []
     for key in mydict:
@@ -539,7 +552,7 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
         effectively as the reverse of dict2items '''
 
     if not is_sequence(mylist):
-        raise AnsibleFilterError("items2dict requires a list, got %s instead." % type(mylist))
+        raise AnsibleFilterTypeError("items2dict requires a list, got %s instead." % type(mylist))
 
     return dict((item[key_name], item[value_name]) for item in mylist)
 
@@ -552,7 +565,7 @@ def path_join(paths):
     elif is_sequence(paths):
         return os.path.join(*paths)
     else:
-        raise AnsibleFilterError("|path_join expects string or sequence, got %s instead." % type(paths))
+        raise AnsibleFilterTypeError("|path_join expects string or sequence, got %s instead." % type(paths))
 
 
 class FilterModule(object):

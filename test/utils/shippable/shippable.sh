@@ -13,7 +13,7 @@ docker images ansible/ansible
 docker images quay.io/ansible/*
 docker ps
 
-for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v '^drydock/' | sed 's/^.* //'); do
+for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v -e '^drydock/' -e '^quay.io/ansible/shippable-build-container:' | sed 's/^.* //'); do
     docker rm -f "${container}" || true  # ignore errors
 done
 
@@ -102,6 +102,9 @@ function cleanup
             # shellcheck disable=SC2086
             ansible-test coverage xml --color -v --requirements --group-by command --group-by version ${stub:+"$stub"}
             cp -a test/results/reports/coverage=*.xml shippable/codecoverage/
+
+            # analyze and capture code coverage aggregated by integration test target
+            ansible-test coverage analyze targets generate -v shippable/testresults/coverage-analyze-targets.json
 
             # upload coverage report to codecov.io only when using complete on-demand coverage
             if [ "${COVERAGE}" == "--coverage" ] && [ "${CHANGED}" == "" ]; then

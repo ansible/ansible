@@ -78,6 +78,21 @@ Install multiple collections with a requirements file
 
 .. include:: ../shared_snippets/installing_multiple_collections.txt
 
+Downloading a collection for offline use
+-----------------------------------------
+
+.. include:: ../shared_snippets/download_tarball_collections.txt
+
+Installing a collection from a git repository
+---------------------------------------------
+
+.. include:: ../shared_snippets/installing_collections_git_repo.txt
+
+Listing installed collections
+-----------------------------
+
+To list installed collections, run ``ansible-galaxy collection list``. See :ref:`collections_listing` for more details.
+
 
 Configuring the ``ansible-galaxy`` client
 ------------------------------------------
@@ -252,27 +267,31 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 .. code-block:: yaml
 
     # from galaxy
-    - src: yatesr.timezone
+    - name: yatesr.timezone
 
     # from GitHub
     - src: https://github.com/bennojoy/nginx
 
     # from GitHub, overriding the name and specifying a specific tag
-    - src: https://github.com/bennojoy/nginx
+    - name: nginx_role
+      src: https://github.com/bennojoy/nginx
       version: master
-      name: nginx_role
+
+    # from GitHub, specifying a specific commit hash
+    - src: https://github.com/bennojoy/nginx
+      version: "ee8aa41"
 
     # from a webserver, where the role is packaged in a tar.gz
-    - src: https://some.webserver.example.com/files/master.tar.gz
-      name: http-role-gz
+    - name: http-role-gz
+      src: https://some.webserver.example.com/files/master.tar.gz
 
     # from a webserver, where the role is packaged in a tar.bz2
-    - src: https://some.webserver.example.com/files/master.tar.bz2
-      name: http-role-bz2
+    - name: http-role-bz2
+      src: https://some.webserver.example.com/files/master.tar.bz2
 
     # from a webserver, where the role is packaged in a tar.xz (Python 3.x only)
-    - src: https://some.webserver.example.com/files/master.tar.xz
-      name: http-role-xz
+    - name: http-role-xz
+      src: https://some.webserver.example.com/files/master.tar.xz
 
     # from Bitbucket
     - src: git+https://bitbucket.org/willthames/git-ansible-galaxy
@@ -287,6 +306,10 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
       scm: git
       version: "0.1"  # quoted, so YAML doesn't parse this as a floating-point value
 
+.. warning::
+
+   Embedding credentials into a SCM URL is not secure. Make sure to use safe auth options for security reasons. For example, use `SSH <https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh>`_, `netrc <https://linux.die.net/man/5/netrc>`_ or `http.extraHeader <https://git-scm.com/docs/git-config#Documentation/git-config.txt-httpextraHeader>`_/`url.<base>.pushInsteadOf <https://git-scm.com/docs/git-config#Documentation/git-config.txt-urlltbasegtpushInsteadOf>`_ in Git config to prevent your creds from being exposed in logs.
+
 Installing roles and collections from the same requirements.yml file
 ---------------------------------------------------------------------
 
@@ -297,7 +320,7 @@ You can install roles and collections from the same requirements files, with som
     ---
     roles:
       # Install a role from Ansible Galaxy.
-      - src: geerlingguy.java
+      - name: geerlingguy.java
         version: 1.9.6
 
     collections:
@@ -333,7 +356,7 @@ The following shows the contents of the :file:`requirements.yml` file that now i
 .. code-block:: bash
 
   # from galaxy
-  - src: yatesr.timezone
+  - name: yatesr.timezone
   - include: <path_to_requirements>/webserver.yml
 
 To install all the roles from both files, pass the root file, in this case :file:`requirements.yml` on the
@@ -348,10 +371,30 @@ command line, as follows:
 Dependencies
 ------------
 
-Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependencies will automatically be installed.
+Roles can also be dependent on other roles, and when you install a role that has dependencies, those dependencies will automatically be installed to the ``roles_path``.
 
-You specify role dependencies in the ``meta/main.yml`` file by providing a list of roles. If the source of a role is Galaxy, you can simply specify the role in
-the format ``namespace.role_name``. You can also use the more complex format in ``requirements.yml``, allowing you to provide ``src``, ``scm``, ``version``, and ``name``.
+There are two ways to define the dependencies of a role:
+
+* using ``meta/requirements.yml``
+* using ``meta/main.yml``
+
+Using ``meta/requirements.yml``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`.. versionadded:: 2.10`
+
+You can create the file ``meta/requirements.yml`` and define dependencies in the same format used for :file:`requirements.yml` described in the `Installing multiple roles from a file`_ section.
+
+From there, you can import or include the specified roles in your tasks.
+
+Using ``meta/main.yml``
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Alternatively, you can specify role dependencies in the ``meta/main.yml`` file by providing a list of roles under the ``dependencies`` section. If the source of a role is Galaxy, you can simply specify the role in
+the format ``namespace.role_name``. You can also use the more complex format in :file:`requirements.yml`, allowing you to provide ``src``, ``scm``, ``version``, and ``name``.
+
+Dependencies installed that way, depending on other factors described below, will also be executed **before** this role is executed during play execution.
+To better understand how dependencies are handled during play execution, see :ref:`playbooks_reuse_roles`.
 
 The following shows an example ``meta/main.yml`` file with dependent roles:
 
@@ -405,12 +448,10 @@ Alternately, you can specify the role dependencies in the complex form used in  
 .. code-block:: yaml
 
     dependencies:
-      - src: geerlingguy.ansible
-      - src: git+https://github.com/geerlingguy/ansible-role-composer.git
+      - name: geerlingguy.ansible
+      - name: composer
+        src: git+https://github.com/geerlingguy/ansible-role-composer.git
         version: 775396299f2da1f519f0d8885022ca2d6ee80ee8
-        name: composer
-
-When dependencies are encountered by ``ansible-galaxy``, it will automatically install each dependency to the ``roles_path``. To understand how dependencies are handled during play execution, see :ref:`playbooks_reuse_roles`.
 
 .. note::
 
@@ -429,7 +470,7 @@ Use ``list`` to show the name and version of each role installed in the *roles_p
       - ansible-network.config_manager, v2.6.2
       - ansible-network.cisco_nxos, v2.7.1
       - ansible-network.vyos, v2.7.3
-    - ansible-network.cisco_ios, v2.7.0
+      - ansible-network.cisco_ios, v2.7.0
 
 Remove an installed role
 ------------------------
@@ -443,6 +484,6 @@ Use ``remove`` to delete a role from *roles_path*:
 
 .. seealso::
   :ref:`collections`
-    Sharable collections of modules, playbooks and roles
+    Shareable collections of modules, playbooks and roles
   :ref:`playbooks_reuse_roles`
     Reusable tasks, handlers, and other files in a known directory structure

@@ -6,7 +6,7 @@ import os
 import sys
 
 # set by ansible-test to a single directory, rather than a list of directories as supported by Ansible itself
-ANSIBLE_COLLECTIONS_PATH = os.path.join(os.environ['ANSIBLE_COLLECTIONS_PATHS'], 'ansible_collections')
+ANSIBLE_COLLECTIONS_PATH = os.path.join(os.environ['ANSIBLE_COLLECTIONS_PATH'], 'ansible_collections')
 
 
 def collection_pypkgpath(self):
@@ -26,10 +26,11 @@ def pytest_configure():
     except AttributeError:
         pytest_configure.executed = True
 
-    from ansible.utils.collection_loader import AnsibleCollectionLoader
+    from ansible.utils.collection_loader._collection_finder import _AnsibleCollectionFinder
 
     # allow unit tests to import code from collections
-    sys.meta_path.insert(0, AnsibleCollectionLoader())
+
+    _AnsibleCollectionFinder(paths=[os.path.dirname(ANSIBLE_COLLECTIONS_PATH)])._install()  # pylint: disable=protected-access
 
     # noinspection PyProtectedMember
     import py._path.local

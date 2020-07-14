@@ -116,21 +116,27 @@ class TestActionBase(unittest.TestCase):
         mock_task = MagicMock()
         mock_task.action = "copy"
         mock_task.async_val = 0
+        mock_task.delegate_to = None
 
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()
 
         # create a mock shared loader object
-        def mock_find_plugin(name, options, collection_list=None):
+        def mock_find_plugin_with_context(name, options, collection_list=None):
+            mockctx = MagicMock()
             if name == 'badmodule':
-                return None
+                mockctx.resolved = False
+                mockctx.plugin_resolved_path = None
             elif '.ps1' in options:
-                return '/fake/path/to/%s.ps1' % name
+                mockctx.resolved = True
+                mockctx.plugin_resolved_path = '/fake/path/to/%s.ps1' % name
             else:
-                return '/fake/path/to/%s' % name
+                mockctx.resolved = True
+                mockctx.plugin_resolved_path = '/fake/path/to/%s' % name
+            return mockctx
 
         mock_module_loader = MagicMock()
-        mock_module_loader.find_plugin.side_effect = mock_find_plugin
+        mock_module_loader.find_plugin_with_context.side_effect = mock_find_plugin_with_context
         mock_shared_obj_loader = MagicMock()
         mock_shared_obj_loader.module_loader = mock_module_loader
 
@@ -158,19 +164,19 @@ class TestActionBase(unittest.TestCase):
                 self.assertEqual(shebang, u"#!/usr/bin/python")
 
                 # test module not found
-                self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
+                self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args, {})
 
         # test powershell module formatting
         with patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))):
             mock_task.action = 'win_copy'
             mock_task.args = dict(b=2)
             mock_connection.module_implementation_preferences = ('.ps1',)
-            (style, shebang, data, path) = action_base._configure_module('stat', mock_task.args)
+            (style, shebang, data, path) = action_base._configure_module('stat', mock_task.args, {})
             self.assertEqual(style, "new")
             self.assertEqual(shebang, u'#!powershell')
 
             # test module not found
-            self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
+            self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args, {})
 
     def test_action_base__compute_environment_string(self):
         fake_loader = DictDataLoader({

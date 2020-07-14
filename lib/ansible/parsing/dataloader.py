@@ -51,8 +51,16 @@ class DataLoader:
     '''
 
     def __init__(self):
+
         self._basedir = '.'
+
+        # NOTE: not effective with forks as the main copy does not get updated.
+        # avoids rereading files
         self._FILE_CACHE = dict()
+
+        # NOTE: not thread safe, also issues with forks not returning data to main proc
+        #       so they need to be cleaned independently. See WorkerProcess for example.
+        # used to keep track of temp files for cleaning
         self._tempfiles = set()
 
         # initialize the vault stuff with an empty password
@@ -67,11 +75,11 @@ class DataLoader:
     def set_vault_secrets(self, vault_secrets):
         self._vault.secrets = vault_secrets
 
-    def load(self, data, file_name='<string>', show_content=True):
+    def load(self, data, file_name='<string>', show_content=True, json_only=False):
         '''Backwards compat for now'''
-        return from_yaml(data, file_name, show_content, self._vault.secrets)
+        return from_yaml(data, file_name, show_content, self._vault.secrets, json_only=json_only)
 
-    def load_from_file(self, file_name, cache=True, unsafe=False):
+    def load_from_file(self, file_name, cache=True, unsafe=False, json_only=False):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
 
         file_name = self.path_dwim(file_name)
@@ -86,7 +94,7 @@ class DataLoader:
             (b_file_data, show_content) = self._get_file_contents(file_name)
 
             file_data = to_text(b_file_data, errors='surrogate_or_strict')
-            parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content)
+            parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content, json_only=json_only)
 
             # cache the file contents for next time
             self._FILE_CACHE[file_name] = parsed_data
@@ -322,7 +330,7 @@ class DataLoader:
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
-        fd, content_tempfile = tempfile.mkstemp()
+        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
         try:
@@ -385,6 +393,10 @@ class DataLoader:
             self._tempfiles.remove(file_path)
 
     def cleanup_all_tmp_files(self):
+        """
+        Removes all temporary files that DataLoader has created
+        NOTE: not thread safe, forks also need special handling see __init__ for details.
+        """
         for f in self._tempfiles:
             try:
                 self.cleanup_tmp_file(f)

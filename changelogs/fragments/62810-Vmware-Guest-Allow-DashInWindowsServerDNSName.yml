@@ -1,2 +1,0 @@
-bugfixes:
-- vmware_guest - Allow '-' (Dash) special char in windows DNS name.

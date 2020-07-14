@@ -6,6 +6,9 @@
     handler2: name2
     handler3: name3
     handler4: name4
+    handler_list:
+      - name5
+      - name6
 
   handlers:
     - name: name1
@@ -22,6 +25,12 @@
       set_fact:
         templated_listener: True
       listen: "{{ handler4 }}"
+    - name: name5
+      set_fact:
+        handler5: True
+    - set_fact:
+        handler6: True
+      listen: name6
 
   tasks:
     - command: echo Hello World
@@ -39,5 +48,15 @@
           - templated_name is defined
           - non_templated_listener is defined
           - templated_listener is undefined
+
+    - command: echo
+      notify: "{{ handler_list }}"
+
+    - meta: flush_handlers
+
+    - assert:
+        that:
+          - handler5 is defined
+          - handler6 is defined
 
     - include_role: name=test_templating_in_handlers

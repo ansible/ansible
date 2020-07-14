@@ -17,8 +17,8 @@ ansible -m include_role -a name=role1 localhost
 ## Import (static)
 
 # Playbook
-ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook.yml -i inventory "$@"
-ANSIBLE_STRATEGY='free' ansible-playbook playbook/test_import_playbook.yml -i inventory "$@"
+test "$(ansible-playbook -i ../../inventory playbook/test_import_playbook.yml "$@" 2>&1 | grep -c '\[WARNING\]: Additional parameters in import_playbook')" = 1
+
 ANSIBLE_STRATEGY='linear' ansible-playbook playbook/test_import_playbook_tags.yml -i inventory "$@" --tags canary1,canary22,validate --skip-tags skipme
 
 # Tasks
@@ -42,6 +42,9 @@ ANSIBLE_STRATEGY='free' ansible-playbook tasks/test_include_tasks_tags.yml -i in
 ANSIBLE_STRATEGY='linear' ansible-playbook role/test_include_role.yml -i inventory "$@"
 ANSIBLE_STRATEGY='free' ansible-playbook role/test_include_role.yml -i inventory "$@"
 
+# https://github.com/ansible/ansible/issues/68515
+ansible-playbook -v role/test_include_role_vars_from.yml 2>&1 | tee test_include_role_vars_from.out
+test "$(grep -E -c 'Expected a string for vars_from but got' test_include_role_vars_from.out)" = 1
 
 ## Max Recursion Depth
 # https://github.com/ansible/ansible/issues/23609
@@ -108,3 +111,6 @@ ansible-playbook valid_include_keywords/playbook.yml "$@"
 # https://github.com/ansible/ansible/issues/64902
 ansible-playbook tasks/test_allow_single_role_dup.yml 2>&1 | tee test_allow_single_role_dup.out
 test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
+
+# https://github.com/ansible/ansible/issues/66764
+ANSIBLE_HOST_PATTERN_MISMATCH=error ansible-playbook empty_group_warning/playbook.yml

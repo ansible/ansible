@@ -1,2 +1,0 @@
-minor_changes:
-  - vmware_datastore_info - added ``properties`` and ``schema`` options.

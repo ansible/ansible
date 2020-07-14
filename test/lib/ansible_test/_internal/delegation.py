@@ -9,6 +9,10 @@ import tempfile
 
 from . import types as t
 
+from .io import (
+    make_dirs,
+)
+
 from .executor import (
     SUPPORTED_PYTHON_VERSIONS,
     HTTPTESTER_HOSTS,
@@ -17,8 +21,6 @@ from .executor import (
     start_httptester,
     get_python_interpreter,
     get_python_version,
-    get_docker_completion,
-    get_remote_completion,
 )
 
 from .config import (
@@ -56,6 +58,8 @@ from .util_common import (
     run_command,
     ResultType,
     create_interpreter_wrapper,
+    get_docker_completion,
+    get_remote_completion,
 )
 
 from .docker_util import (
@@ -90,6 +94,10 @@ from .venv import (
     create_virtual_environment,
 )
 
+from .ci import (
+    get_ci_provider,
+)
+
 
 def check_delegation_args(args):
     """
@@ -113,8 +121,12 @@ def delegate(args, exclude, require, integration_targets):
     :rtype: bool
     """
     if isinstance(args, TestConfig):
-        with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=data_context().content.root) as metadata_fd:
-            args.metadata_path = os.path.basename(metadata_fd.name)
+        args.metadata.ci_provider = get_ci_provider().code
+
+        make_dirs(ResultType.TMP.path)
+
+        with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=ResultType.TMP.path) as metadata_fd:
+            args.metadata_path = os.path.join(ResultType.TMP.relative_path, os.path.basename(metadata_fd.name))
             args.metadata.to_file(args.metadata_path)
 
             try:
@@ -230,6 +242,7 @@ def delegate_docker(args, exclude, require, integration_targets):
 
     httptester_id = None
     test_id = None
+    success = False
 
     options = {
         '--docker': 1,
@@ -239,16 +252,17 @@ def delegate_docker(args, exclude, require, integration_targets):
 
     python_interpreter = get_python_interpreter(args, get_docker_completion(), args.docker_raw)
 
-    install_root = '/root/ansible'
+    pwd = '/root'
+    ansible_root = os.path.join(pwd, 'ansible')
 
     if data_context().content.collection:
-        content_root = os.path.join(install_root, data_context().content.collection.directory)
+        content_root = os.path.join(pwd, data_context().content.collection.directory)
     else:
-        content_root = install_root
+        content_root = ansible_root
 
     remote_results_root = os.path.join(content_root, data_context().content.results_path)
 
-    cmd = generate_command(args, python_interpreter, os.path.join(install_root, 'bin'), content_root, options, exclude, require)
+    cmd = generate_command(args, python_interpreter, os.path.join(ansible_root, 'bin'), content_root, options, exclude, require)
 
     if isinstance(args, TestConfig):
         if args.coverage and not args.coverage_label:
@@ -316,9 +330,8 @@ def delegate_docker(args, exclude, require, integration_targets):
             # write temporary files to /root since /tmp isn't ready immediately on container start
             docker_put(args, test_id, os.path.join(ANSIBLE_TEST_DATA_ROOT, 'setup', 'docker.sh'), '/root/docker.sh')
             docker_exec(args, test_id, ['/bin/bash', '/root/docker.sh'])
-            docker_put(args, test_id, local_source_fd.name, '/root/ansible.tgz')
-            docker_exec(args, test_id, ['mkdir', '/root/ansible'])
-            docker_exec(args, test_id, ['tar', 'oxzf', '/root/ansible.tgz', '-C', '/root/ansible'])
+            docker_put(args, test_id, local_source_fd.name, '/root/test.tgz')
+            docker_exec(args, test_id, ['tar', 'oxzf', '/root/test.tgz', '-C', '/root'])
 
             # docker images are only expected to have a single python version available
             if isinstance(args, UnitsConfig) and not args.python:
@@ -343,8 +356,12 @@ def delegate_docker(args, exclude, require, integration_targets):
 
                 networks = get_docker_networks(args, test_id)
 
-                for network in networks:
-                    docker_network_disconnect(args, test_id, network)
+                if networks is not None:
+                    for network in networks:
+                        docker_network_disconnect(args, test_id, network)
+                else:
+                    display.warning('Network disconnection is not supported (this is normal under podman). '
+                                    'Tests will not be isolated from the network. Network-related tests may misbehave.')
 
                 cmd += ['--requirements-mode', 'skip']
 
@@ -352,12 +369,17 @@ def delegate_docker(args, exclude, require, integration_targets):
 
             try:
                 docker_exec(args, test_id, cmd, options=cmd_options)
+                # docker_exec will throw SubprocessError if not successful
+                # If we make it here, all the prep work earlier and the docker_exec line above were all successful.
+                success = True
             finally:
                 local_test_root = os.path.dirname(os.path.join(data_context().content.root, data_context().content.results_path))
 
                 remote_test_root = os.path.dirname(remote_results_root)
                 remote_results_name = os.path.basename(remote_results_root)
                 remote_temp_file = os.path.join('/root', remote_results_name + '.tgz')
+
+                make_dirs(local_test_root)  # make sure directory exists for collections which have no tests
 
                 with tempfile.NamedTemporaryFile(prefix='ansible-result-', suffix='.tgz') as local_result_fd:
                     docker_exec(args, test_id, ['tar', 'czf', remote_temp_file, '--exclude', ResultType.TMP.name, '-C', remote_test_root, remote_results_name])
@@ -368,7 +390,8 @@ def delegate_docker(args, exclude, require, integration_targets):
                 docker_rm(args, httptester_id)
 
             if test_id:
-                docker_rm(args, test_id)
+                if args.docker_terminate == 'always' or (args.docker_terminate == 'success' and success):
+                    docker_rm(args, test_id)
 
 
 def delegate_remote(args, exclude, require, integration_targets):
@@ -378,12 +401,9 @@ def delegate_remote(args, exclude, require, integration_targets):
     :type require: list[str]
     :type integration_targets: tuple[IntegrationTarget]
     """
-    parts = args.remote.split('/', 1)
+    remote = args.parsed_remote
 
-    platform = parts[0]
-    version = parts[1]
-
-    core_ci = AnsibleCoreCI(args, platform, version, stage=args.remote_stage, provider=args.remote_provider)
+    core_ci = AnsibleCoreCI(args, remote.platform, remote.version, stage=args.remote_stage, provider=args.remote_provider, arch=remote.arch)
     success = False
     raw = False
 
@@ -411,7 +431,7 @@ def delegate_remote(args, exclude, require, integration_targets):
 
         python_version = get_python_version(args, get_remote_completion(), args.remote)
 
-        if platform == 'windows':
+        if remote.platform == 'windows':
             # Windows doesn't need the ansible-test fluff, just run the SSH command
             manage = ManageWindowsCI(core_ci)
             manage.setup(python_version)
@@ -432,21 +452,21 @@ def delegate_remote(args, exclude, require, integration_targets):
 
             python_interpreter = get_python_interpreter(args, get_remote_completion(), args.remote)
 
-            install_root = os.path.join(pwd, 'ansible')
+            ansible_root = os.path.join(pwd, 'ansible')
 
             if data_context().content.collection:
-                content_root = os.path.join(install_root, data_context().content.collection.directory)
+                content_root = os.path.join(pwd, data_context().content.collection.directory)
             else:
-                content_root = install_root
+                content_root = ansible_root
 
-            cmd = generate_command(args, python_interpreter, os.path.join(install_root, 'bin'), content_root, options, exclude, require)
+            cmd = generate_command(args, python_interpreter, os.path.join(ansible_root, 'bin'), content_root, options, exclude, require)
 
             if httptester_id:
                 cmd += ['--inject-httptester']
 
             if isinstance(args, TestConfig):
                 if args.coverage and not args.coverage_label:
-                    cmd += ['--coverage-label', 'remote-%s-%s' % (platform, version)]
+                    cmd += ['--coverage-label', 'remote-%s-%s' % (remote.platform, remote.version)]
 
             if isinstance(args, IntegrationConfig):
                 if not args.allow_destructive:
@@ -468,7 +488,7 @@ def delegate_remote(args, exclude, require, integration_targets):
         finally:
             download = False
 
-            if platform != 'windows':
+            if remote.platform != 'windows':
                 download = True
 
             if isinstance(args, ShellConfig):
@@ -484,7 +504,7 @@ def delegate_remote(args, exclude, require, integration_targets):
 
                 # AIX cp and GNU cp provide different options, no way could be found to have a common
                 # pattern and achieve the same goal
-                cp_opts = '-hr' if platform in ['aix', 'ibmi'] else '-a'
+                cp_opts = '-hr' if remote.platform in ['aix', 'ibmi'] else '-a'
 
                 manage.ssh('rm -rf {0} && mkdir {0} && cp {1} {2}/* {0}/ && chmod -R a+r {0}'.format(remote_temp_path, cp_opts, remote_results_root))
                 manage.download(remote_temp_path, local_test_root)
@@ -536,8 +556,10 @@ def generate_command(args, python_interpreter, ansible_bin_path, content_root, o
     if isinstance(args, ShellConfig):
         cmd = create_shell_command(cmd)
     elif isinstance(args, SanityConfig):
-        if args.base_branch:
-            cmd += ['--base-branch', args.base_branch]
+        base_branch = args.base_branch or get_ci_provider().get_base_branch()
+
+        if base_branch:
+            cmd += ['--base-branch', base_branch]
 
     return cmd
 

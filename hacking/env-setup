@@ -61,8 +61,11 @@ expr "$MANPATH" : "${PREFIX_MANPATH}.*" > /dev/null || prepend_path MANPATH "$PR
 # Do the work in a function so we don't repeat ourselves later
 gen_egg_info()
 {
-    if [ -e "$PREFIX_PYTHONPATH/ansible.egg-info" ] ; then
-        \rm -rf "$PREFIX_PYTHONPATH/ansible.egg-info"
+    # check for current and past egg-info directory names
+    if ls "$PREFIX_PYTHONPATH"/ansible*.egg-info >/dev/null 2>&1; then
+        # bypass shell aliases with leading backslash
+        # see https://github.com/ansible/ansible/pull/11967
+        \rm -rf "$PREFIX_PYTHONPATH"/ansible*.egg-info
     fi
     $PYTHON_BIN setup.py egg_info
 }

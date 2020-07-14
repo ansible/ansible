@@ -1,0 +1,23 @@
+{
+    "name": "Ubuntu 10.04 guess",
+    "input": {
+        "/etc/lsb-release": "DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=10.04\nDISTRIB_CODENAME=lucid\nDISTRIB_DESCRIPTION=\"Ubuntu 10.04.4 LTS"
+    },
+    "platform.dist": ["Ubuntu", "10.04", "lucid"],
+    "distro": {
+        "codename": "lucid",
+        "id": "ubuntu",
+        "name": "Ubuntu",
+        "version": "10.04",
+        "version_best": "10.04.1",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "Ubuntu",
+        "distribution_major_version": "10",
+        "distribution_release": "lucid",
+        "os_family": "Debian",
+        "distribution_version": "10.04"
+    }
+}

@@ -16,6 +16,7 @@ from .util import (
 
 from .util_common import (
     intercept_command,
+    get_network_settings,
     run_command,
 )
 
@@ -75,7 +76,7 @@ class ManageWindowsCI:
         name = 'windows_%s' % self.core_ci.version
 
         env = ansible_environment(self.core_ci.args)
-        cmd = ['ansible', '-m', 'win_ping', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
+        cmd = ['ansible', '-m', 'ansible.windows.win_ping', '-i', '%s,' % name, name, '-e', ' '.join(extra_vars)]
 
         for dummy in range(1, 120):
             try:
@@ -149,11 +150,14 @@ class ManageNetworkCI:
 
     def wait(self):
         """Wait for instance to respond to ansible ping."""
+        settings = get_network_settings(self.core_ci.args, self.core_ci.platform, self.core_ci.version)
+
         extra_vars = [
             'ansible_host=%s' % self.core_ci.connection.hostname,
             'ansible_port=%s' % self.core_ci.connection.port,
-            'ansible_connection=local',
             'ansible_ssh_private_key_file=%s' % self.core_ci.ssh_key.key,
+        ] + [
+            '%s=%s' % (key, value) for key, value in settings.inventory_vars.items()
         ]
 
         name = '%s-%s' % (self.core_ci.platform, self.core_ci.version.replace('.', '-'))
@@ -161,7 +165,7 @@ class ManageNetworkCI:
         env = ansible_environment(self.core_ci.args)
         cmd = [
             'ansible',
-            '-m', '%s_command' % self.core_ci.platform,
+            '-m', '%s%s_command' % (settings.collection + '.' if settings.collection else '', self.core_ci.platform),
             '-a', 'commands=?',
             '-u', self.core_ci.connection.username,
             '-i', '%s,' % name,
@@ -209,7 +213,7 @@ class ManagePosixCI:
                 raise NotImplementedError('provider %s has not been implemented' % self.core_ci.provider)
         elif self.core_ci.platform == 'osx':
             self.become = ['sudo', '-in', 'PATH=/usr/local/bin:$PATH']
-        elif self.core_ci.platform == 'rhel':
+        elif self.core_ci.platform == 'rhel' or self.core_ci.platform == 'centos':
             self.become = ['sudo', '-in', 'bash', '-c']
         elif self.core_ci.platform in ['aix', 'ibmi']:
             self.become = []
@@ -273,7 +277,7 @@ class ManagePosixCI:
             # being different and -z not being recognized. This pattern works
             # with both versions of tar.
             self.ssh(
-                'rm -rf ~/ansible && mkdir ~/ansible && cd ~/ansible && gunzip --stdout %s | tar oxf - && rm %s' %
+                'rm -rf ~/ansible ~/ansible_collections && cd ~/ && gunzip --stdout %s | tar oxf - && rm %s' %
                 (remote_source_path, remote_source_path)
             )
 

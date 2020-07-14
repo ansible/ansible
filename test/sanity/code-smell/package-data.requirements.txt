@@ -1,0 +1,10 @@
+docutils
+jinja2
+packaging
+pyyaml  # ansible-base requirement
+rstcheck
+setuptools > 39.2
+straight.plugin
+
+# changelog build requires python 3.6+
+antsibull-changelog ; python_version >= '3.6'

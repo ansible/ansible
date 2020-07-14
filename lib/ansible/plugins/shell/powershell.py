@@ -24,7 +24,6 @@ import pkgutil
 import xml.etree.ElementTree as ET
 import ntpath
 
-from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.shell import ShellBase
 
@@ -68,26 +67,7 @@ class ShellModule(ShellBase):
     # Used by various parts of Ansible to do Windows specific changes
     _IS_WINDOWS = True
 
-    env = dict()
-
-    # We're being overly cautious about which keys to accept (more so than
-    # the Windows environment is capable of doing), since the powershell
-    # env provider's limitations don't appear to be documented.
-    safe_envkey = re.compile(r'^[\d\w_]{1,255}$')
-
     # TODO: add binary module support
-
-    def assert_safe_env_key(self, key):
-        if not self.safe_envkey.match(key):
-            raise AnsibleError("Invalid PowerShell environment key: %s" % key)
-        return key
-
-    def safe_env_value(self, key, value):
-        if len(value) > 32767:
-            raise AnsibleError("PowerShell environment value for key '%s' exceeds 32767 characters in length" % key)
-        # powershell single quoted literals need single-quote doubling as their only escaping
-        value = value.replace("'", "''")
-        return to_text(value, errors='surrogate_or_strict')
 
     def env_prefix(self, **kwargs):
         # powershell/winrm env handling is handled in the exec wrapper
@@ -135,6 +115,8 @@ class ShellModule(ShellBase):
     def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
         # Windows does not have an equivalent for the system temp files, so
         # the param is ignored
+        if not basefile:
+            basefile = self.__class__._generate_temp_dir_name()
         basefile = self._escape(self._unquote(basefile))
         basetmpdir = tmpdir if tmpdir else self.get_option('remote_tmp')
 

@@ -1,9 +1,0 @@
-fail_json message: Error: interface eth0 not found
-options:
-{
-    "address_family": "inet",
-    "iface": "eth0",
-    "option": "address",
-    "state": "present",
-    "value": "192.168.0.42"
-}

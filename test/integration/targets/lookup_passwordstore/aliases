@@ -1,4 +1,0 @@
-shippable/posix/group4
-destructive
-skip/aix
-skip/rhel

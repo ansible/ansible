@@ -179,6 +179,44 @@
 - name: uninstall hello with apt
   apt: pkg=hello state=absent purge=yes
 
+# INSTALL WITHOUT REMOVALS
+- name: Install hello, that conflicts with hello-traditional
+  apt: 
+    pkg: hello
+    state: present
+    update_cache: no
+
+- name: check hello
+  shell: dpkg-query -l hello
+  register: dpkg_result
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "apt_result.changed"
+        - "dpkg_result.rc == 0"
+
+- name: Try installing hello-traditional, that conflicts with hello
+  apt: 
+    pkg: hello-traditional
+    state: present
+    fail_on_autoremove: yes
+  ignore_errors: yes
+  register: apt_result
+
+- name: verify failure of installing hello-traditional, because it is required to remove hello to install.
+  assert:
+    that:
+      - apt_result is failed
+      - '"Packages need to be removed but remove is disabled." in apt_result.msg'
+
+- name: uninstall hello with apt
+  apt: 
+    pkg: hello
+    state: absent
+    purge: yes
+    update_cache: no
+
 - name: install deb file
   apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
   register: apt_initial

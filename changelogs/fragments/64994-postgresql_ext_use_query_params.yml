@@ -1,2 +1,0 @@
-minor_changes:
-- postgresql_ext - use query parameters with cursor object (https://github.com/ansible/ansible/pull/64994).

@@ -13,3 +13,9 @@
   set_fact:
     role_templated_listener: True
   listen: "{{ handler4 }}"
+- name: name5
+  set_fact:
+    role_handler5: True
+- set_fact:
+    role_handler6: True
+  listen: name6

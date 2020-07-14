@@ -32,7 +32,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
-from ansible.utils.collection_loader import AnsibleCollectionLoader
+from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.vars import combine_vars
 
 
@@ -128,7 +128,9 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
     def __repr__(self):
         return self.get_name()
 
-    def get_name(self):
+    def get_name(self, include_role_fqcn=True):
+        if include_role_fqcn:
+            return '.'.join(x for x in (self._role_collection, self._role_name) if x)
         return self._role_name
 
     @staticmethod
@@ -155,8 +157,8 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             params['from_include'] = from_include
 
             hashed_params = hash_params(params)
-            if role_include.role in play.ROLE_CACHE:
-                for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
+            if role_include.get_name() in play.ROLE_CACHE:
+                for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.get_name()]):
                     if hashed_params == entry:
                         if parent_role:
                             role_obj.add_parent(parent_role)
@@ -169,11 +171,11 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
             r = Role(play=play, from_files=from_files, from_include=from_include)
             r._load_role_data(role_include, parent_role=parent_role)
 
-            if role_include.role not in play.ROLE_CACHE:
-                play.ROLE_CACHE[role_include.role] = dict()
+            if role_include.get_name() not in play.ROLE_CACHE:
+                play.ROLE_CACHE[role_include.get_name()] = dict()
 
             # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
-            play.ROLE_CACHE[role_include.role][hashed_params] = r
+            play.ROLE_CACHE[role_include.get_name()][hashed_params] = r
             return r
 
         except RuntimeError:
@@ -232,7 +234,7 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         if self._role_collection:  # this is a collection-hosted role
             self.collections.insert(0, self._role_collection)
         else:  # this is a legacy role, but set the default collection if there is one
-            default_collection = AnsibleCollectionLoader().default_collection
+            default_collection = AnsibleCollectionConfig.default_collection
             if default_collection:
                 self.collections.insert(0, default_collection)
             # legacy role, ensure all plugin dirs under the role are added to plugin search path

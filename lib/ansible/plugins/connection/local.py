@@ -23,12 +23,13 @@ import fcntl
 import getpass
 
 import ansible.constants as C
-from ansible.compat import selectors
 from ansible.errors import AnsibleError, AnsibleFileNotFound
+from ansible.module_utils.compat import selectors
 from ansible.module_utils.six import text_type, binary_type
 from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.display import Display
+from ansible.utils.path import unfrackpath
 
 display = Display()
 
@@ -130,18 +131,13 @@ class Connection(ConnectionBase):
         display.debug("done with local.exec_command()")
         return (p.returncode, stdout, stderr)
 
-    def _ensure_abs(self, path):
-        if not os.path.isabs(path) and self.cwd is not None:
-            path = os.path.normpath(os.path.join(self.cwd, path))
-        return path
-
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
 
         super(Connection, self).put_file(in_path, out_path)
 
-        in_path = self._ensure_abs(in_path)
-        out_path = self._ensure_abs(out_path)
+        in_path = unfrackpath(in_path, basedir=self.cwd)
+        out_path = unfrackpath(out_path, basedir=self.cwd)
 
         display.vvv(u"PUT {0} TO {1}".format(in_path, out_path), host=self._play_context.remote_addr)
         if not os.path.exists(to_bytes(in_path, errors='surrogate_or_strict')):

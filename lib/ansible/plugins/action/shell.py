@@ -17,7 +17,7 @@ class ActionModule(ActionBase):
         self._task.action = 'command'
         self._task.args['_uses_shell'] = True
 
-        command_action = self._shared_loader_obj.action_loader.get('command',
+        command_action = self._shared_loader_obj.action_loader.get('ansible.legacy.command',
                                                                    task=self._task,
                                                                    connection=self._connection,
                                                                    play_context=self._play_context,

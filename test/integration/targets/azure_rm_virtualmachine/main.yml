@@ -1,7 +1,0 @@
-- name: Run Azurue VM tests in parallel
-  hosts: all
-  gather_facts: no
-  strategy: free
-  tasks:
-    - name: Include tasks based on inventory hostname
-      include_tasks: tasks/{{ inventory_hostname }}.yml
