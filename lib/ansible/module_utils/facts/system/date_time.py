@@ -53,6 +53,7 @@ class DateTimeFactCollector(BaseFactCollector):
         date_time_facts['iso8601_basic'] = now.strftime("%Y%m%dT%H%M%S%f")
         date_time_facts['iso8601_basic_short'] = now.strftime("%Y%m%dT%H%M%S")
         date_time_facts['tz'] = time.strftime("%Z")
+        date_time_facts['tz_dst'] = time.tzname[1]
         date_time_facts['tz_offset'] = time.strftime("%z")
 
         facts_dict['date_time'] = date_time_facts
