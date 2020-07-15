@@ -23,7 +23,7 @@
         "not in paramvals" in invalid_arg.msg
       - missing_file is failed
       - >
-        "need string or buffer" in missing_file.msg
+        "need string or buffer" in missing_file.msg or "expected str, bytes or os.PathLike object" in missing_file.msg
 
 - name: Check basic comma-separated file
   assert:
