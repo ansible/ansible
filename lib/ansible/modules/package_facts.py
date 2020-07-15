@@ -389,7 +389,7 @@ class APK(CLIMgr):
         return out.splitlines()
 
     def get_package_details(self, package):
-        raw_pkg_details = {}
+        raw_pkg_details = {'name': package}
         for line in package.splitlines():
             m = re.match(r"([\w ].*?)-([0-9-\.]+[0-9a-z-_\.]*-r[0-9]+)", to_native(line))
             if m:
