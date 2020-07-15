@@ -744,7 +744,7 @@ def test_install_collections_existing_without_force(collection_artifact, monkeyp
 
     actual_files = os.listdir(collection_path)
     actual_files.sort()
-    assert actual_files == [b'README.md', b'docs', b'galaxy.yml', b'playbooks', b'plugins', b'roles', b'runme.sh']
+    assert actual_files == [b'FILES.json', b'MANIFEST.json', b'README.md', b'docs', b'playbooks', b'plugins', b'roles', b'runme.sh']
 
     # Filter out the progress cursor display calls.
     display_msgs = [m[1][0] for m in mock_display.mock_calls if 'newline' not in m[2] and len(m[1]) == 1]
