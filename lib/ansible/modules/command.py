@@ -219,7 +219,7 @@ def check_command(module, commandline):
                 'svn': 'subversion', 'service': 'service',
                 'mount': 'mount', 'rpm': 'yum, dnf or zypper', 'yum': 'yum', 'apt-get': 'apt',
                 'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'replace, lineinfile or template',
-                'dnf': 'dnf', 'zypper': 'zypper'}
+                'dnf': 'dnf', 'zypper': 'zypper', 'chattr': 'file'}
     become = ['sudo', 'su', 'pbrun', 'pfexec', 'runas', 'pmrun', 'machinectl']
     if isinstance(commandline, list):
         command = commandline[0]

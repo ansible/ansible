@@ -1,0 +1,2 @@
+minor_changes:
+  - command - issue a warning when using directly the command ``chattr`` and suggest to use module ``file``.
