@@ -7768,898 +7768,874 @@ plugin_routing:
       redirect: community.network.network.edgeswitch.edgeswitch_interface
     network.enos.enos:
       redirect: community.network.network.enos.enos
-    network.eos.argspec:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec
     network.eos.argspec.facts:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.facts
+      redirect: arista.eos.network.eos.argspec.facts
     network.eos.argspec.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.facts.facts
+      redirect: arista.eos.network.eos.argspec.facts.facts
     network.eos.argspec.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.interfaces
+      redirect: arista.eos.network.eos.argspec.interfaces
     network.eos.argspec.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.interfaces.interfaces
+      redirect: arista.eos.network.eos.argspec.interfaces.interfaces
     network.eos.argspec.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.l2_interfaces
+      redirect: arista.eos.network.eos.argspec.l2_interfaces
     network.eos.argspec.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.l2_interfaces.l2_interfaces
+      redirect: arista.eos.network.eos.argspec.l2_interfaces.l2_interfaces
     network.eos.argspec.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.l3_interfaces
+      redirect: arista.eos.network.eos.argspec.l3_interfaces
     network.eos.argspec.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.l3_interfaces.l3_interfaces
+      redirect: arista.eos.network.eos.argspec.l3_interfaces.l3_interfaces
     network.eos.argspec.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.lacp
+      redirect: arista.eos.network.eos.argspec.lacp
     network.eos.argspec.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.lacp.lacp
+      redirect: arista.eos.network.eos.argspec.lacp.lacp
     network.eos.argspec.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.lacp_interfaces
+      redirect: arista.eos.network.eos.argspec.lacp_interfaces
     network.eos.argspec.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.lacp_interfaces.lacp_interfaces
+      redirect: arista.eos.network.eos.argspec.lacp_interfaces.lacp_interfaces
     network.eos.argspec.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.lag_interfaces
+      redirect: arista.eos.network.eos.argspec.lag_interfaces
     network.eos.argspec.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.lag_interfaces.lag_interfaces
+      redirect: arista.eos.network.eos.argspec.lag_interfaces.lag_interfaces
     network.eos.argspec.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.lldp_global
+      redirect: arista.eos.network.eos.argspec.lldp_global
     network.eos.argspec.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.lldp_global.lldp_global
+      redirect: arista.eos.network.eos.argspec.lldp_global.lldp_global
     network.eos.argspec.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.lldp_interfaces
+      redirect: arista.eos.network.eos.argspec.lldp_interfaces
     network.eos.argspec.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.lldp_interfaces.lldp_interfaces
+      redirect: arista.eos.network.eos.argspec.lldp_interfaces.lldp_interfaces
     network.eos.argspec.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.vlans
+      redirect: arista.eos.network.eos.argspec.vlans
     network.eos.argspec.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.eos.argspec.vlans.vlans
+      redirect: arista.eos.network.eos.argspec.vlans.vlans
     network.eos.config:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config
+      redirect: arista.eos.network.eos.config
     network.eos.config.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.interfaces
+      redirect: arista.eos.network.eos.config.interfaces
     network.eos.config.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.interfaces.interfaces
+      redirect: arista.eos.network.eos.config.interfaces.interfaces
     network.eos.config.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.l2_interfaces
+      redirect: arista.eos.network.eos.config.l2_interfaces
     network.eos.config.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.l2_interfaces.l2_interfaces
+      redirect: arista.eos.network.eos.config.l2_interfaces.l2_interfaces
     network.eos.config.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.l3_interfaces
+      redirect: arista.eos.network.eos.config.l3_interfaces
     network.eos.config.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.l3_interfaces.l3_interfaces
+      redirect: arista.eos.network.eos.config.l3_interfaces.l3_interfaces
     network.eos.config.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.lacp
+      redirect: arista.eos.network.eos.config.lacp
     network.eos.config.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.lacp.lacp
+      redirect: arista.eos.network.eos.config.lacp.lacp
     network.eos.config.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.lacp_interfaces
+      redirect: arista.eos.network.eos.config.lacp_interfaces
     network.eos.config.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.lacp_interfaces.lacp_interfaces
+      redirect: arista.eos.network.eos.config.lacp_interfaces.lacp_interfaces
     network.eos.config.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.lag_interfaces
+      redirect: arista.eos.network.eos.config.lag_interfaces
     network.eos.config.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.lag_interfaces.lag_interfaces
+      redirect: arista.eos.network.eos.config.lag_interfaces.lag_interfaces
     network.eos.config.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.lldp_global
+      redirect: arista.eos.network.eos.config.lldp_global
     network.eos.config.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.lldp_global.lldp_global
+      redirect: arista.eos.network.eos.config.lldp_global.lldp_global
     network.eos.config.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.lldp_interfaces
+      redirect: arista.eos.network.eos.config.lldp_interfaces
     network.eos.config.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.lldp_interfaces.lldp_interfaces
+      redirect: arista.eos.network.eos.config.lldp_interfaces.lldp_interfaces
     network.eos.config.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.vlans
+      redirect: arista.eos.network.eos.config.vlans
     network.eos.config.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.eos.config.vlans.vlans
+      redirect: arista.eos.network.eos.config.vlans.vlans
     network.eos.eos:
-      redirect: FIXMENS.FIXMECOLL.network.eos.eos
+      redirect: arista.eos.network.eos.eos
     network.eos.facts:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts
+      redirect: arista.eos.network.eos.facts
     network.eos.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.facts
+      redirect: arista.eos.network.eos.facts.facts
     network.eos.facts.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.interfaces
+      redirect: arista.eos.network.eos.facts.interfaces
     network.eos.facts.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.interfaces.interfaces
+      redirect: arista.eos.network.eos.facts.interfaces.interfaces
     network.eos.facts.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.l2_interfaces
+      redirect: arista.eos.network.eos.facts.l2_interfaces
     network.eos.facts.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.l2_interfaces.l2_interfaces
+      redirect: arista.eos.network.eos.facts.l2_interfaces.l2_interfaces
     network.eos.facts.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.l3_interfaces
+      redirect: arista.eos.network.eos.facts.l3_interfaces
     network.eos.facts.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.l3_interfaces.l3_interfaces
+      redirect: arista.eos.network.eos.facts.l3_interfaces.l3_interfaces
     network.eos.facts.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.lacp
+      redirect: arista.eos.network.eos.facts.lacp
     network.eos.facts.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.lacp.lacp
+      redirect: arista.eos.network.eos.facts.lacp.lacp
     network.eos.facts.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.lacp_interfaces
+      redirect: arista.eos.network.eos.facts.lacp_interfaces
     network.eos.facts.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.lacp_interfaces.lacp_interfaces
+      redirect: arista.eos.network.eos.facts.lacp_interfaces.lacp_interfaces
     network.eos.facts.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.lag_interfaces
+      redirect: arista.eos.network.eos.facts.lag_interfaces
     network.eos.facts.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.lag_interfaces.lag_interfaces
+      redirect: arista.eos.network.eos.facts.lag_interfaces.lag_interfaces
     network.eos.facts.legacy:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.legacy
+      redirect: arista.eos.network.eos.facts.legacy
     network.eos.facts.legacy.base:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.legacy.base
+      redirect: arista.eos.network.eos.facts.legacy.base
     network.eos.facts.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.lldp_global
+      redirect: arista.eos.network.eos.facts.lldp_global
     network.eos.facts.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.lldp_global.lldp_global
+      redirect: arista.eos.network.eos.facts.lldp_global.lldp_global
     network.eos.facts.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.lldp_interfaces
+      redirect: arista.eos.network.eos.facts.lldp_interfaces
     network.eos.facts.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.lldp_interfaces.lldp_interfaces
+      redirect: arista.eos.network.eos.facts.lldp_interfaces.lldp_interfaces
     network.eos.facts.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.vlans
+      redirect: arista.eos.network.eos.facts.vlans
     network.eos.facts.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.eos.facts.vlans.vlans
+      redirect: arista.eos.network.eos.facts.vlans.vlans
     network.eos.providers:
-      redirect: FIXMENS.FIXMECOLL.network.eos.providers
+      redirect: arista.eos.network.eos.providers
     network.eos.providers.cli:
-      redirect: FIXMENS.FIXMECOLL.network.eos.providers.cli
+      redirect: arista.eos.network.eos.providers.cli
     network.eos.providers.cli.config:
-      redirect: FIXMENS.FIXMECOLL.network.eos.providers.cli.config
+      redirect: arista.eos.network.eos.providers.cli.config
     network.eos.providers.cli.config.bgp:
-      redirect: FIXMENS.FIXMECOLL.network.eos.providers.cli.config.bgp
+      redirect: arista.eos.network.eos.providers.cli.config.bgp
     network.eos.providers.cli.config.bgp.address_family:
-      redirect: FIXMENS.FIXMECOLL.network.eos.providers.cli.config.bgp.address_family
+      redirect: arista.eos.network.eos.providers.cli.config.bgp.address_family
     network.eos.providers.cli.config.bgp.neighbors:
-      redirect: FIXMENS.FIXMECOLL.network.eos.providers.cli.config.bgp.neighbors
+      redirect: arista.eos.network.eos.providers.cli.config.bgp.neighbors
     network.eos.providers.cli.config.bgp.process:
-      redirect: FIXMENS.FIXMECOLL.network.eos.providers.cli.config.bgp.process
+      redirect: arista.eos.network.eos.providers.cli.config.bgp.process
     network.eos.providers.module:
-      redirect: FIXMENS.FIXMECOLL.network.eos.providers.module
+      redirect: arista.eos.network.eos.providers.module
     network.eos.providers.providers:
-      redirect: FIXMENS.FIXMECOLL.network.eos.providers.providers
+      redirect: arista.eos.network.eos.providers.providers
     network.eos.utils:
-      redirect: FIXMENS.FIXMECOLL.network.eos.utils
+      redirect: arista.eos.network.eos.utils
     network.eos.utils.utils:
-      redirect: FIXMENS.FIXMECOLL.network.eos.utils.utils
-    network.eric_eccli:
-      redirect: FIXMENS.FIXMECOLL.network.eric_eccli
+      redirect: arista.eos.network.eos.utils.utils
     network.eric_eccli.eric_eccli:
-      redirect: FIXMENS.FIXMECOLL.network.eric_eccli.eric_eccli
-    network.exos:
-      redirect: FIXMENS.FIXMECOLL.network.exos
-    network.exos.argspec:
-      redirect: FIXMENS.FIXMECOLL.network.exos.argspec
-    network.exos.argspec.facts:
-      redirect: FIXMENS.FIXMECOLL.network.exos.argspec.facts
+      redirect: community.network.network.eric_eccli.eric_eccli
     network.exos.argspec.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.exos.argspec.facts.facts
+      redirect: community.network.network.exos.argspec.facts.facts
     network.exos.argspec.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.exos.argspec.lldp_global
+      redirect: community.network.network.exos.argspec.lldp_global
     network.exos.argspec.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.exos.argspec.lldp_global.lldp_global
-    network.exos.config:
-      redirect: FIXMENS.FIXMECOLL.network.exos.config
+      redirect: community.network.network.exos.argspec.lldp_global.lldp_global
     network.exos.config.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.exos.config.lldp_global
+      redirect: community.network.network.exos.config.lldp_global
     network.exos.config.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.exos.config.lldp_global.lldp_global
+      redirect: community.network.network.exos.config.lldp_global.lldp_global
     network.exos.exos:
-      redirect: FIXMENS.FIXMECOLL.network.exos.exos
-    network.exos.facts:
-      redirect: FIXMENS.FIXMECOLL.network.exos.facts
+      redirect: community.network.network.exos.exos
     network.exos.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.exos.facts.facts
+      redirect: community.network.network.exos.facts.facts
     network.exos.facts.legacy:
-      redirect: FIXMENS.FIXMECOLL.network.exos.facts.legacy
+      redirect: community.network.network.exos.facts.legacy
     network.exos.facts.legacy.base:
-      redirect: FIXMENS.FIXMECOLL.network.exos.facts.legacy.base
+      redirect: community.network.network.exos.facts.legacy.base
     network.exos.facts.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.exos.facts.lldp_global
+      redirect: community.network.network.exos.facts.lldp_global
     network.exos.facts.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.exos.facts.lldp_global.lldp_global
-    network.exos.utils:
-      redirect: FIXMENS.FIXMECOLL.network.exos.utils
+      redirect: community.network.network.exos.facts.lldp_global.lldp_global
     network.exos.utils.utils:
-      redirect: FIXMENS.FIXMECOLL.network.exos.utils.utils
-    network.f5:
-      redirect: FIXMENS.FIXMECOLL.network.f5
+      redirect: community.network.network.exos.utils.utils
     network.f5.bigip:
-      redirect: FIXMENS.FIXMECOLL.network.f5.bigip
+      redirect: f5networks.f5_modules.bigip
     network.f5.bigiq:
-      redirect: FIXMENS.FIXMECOLL.network.f5.bigiq
+      redirect: f5networks.f5_modules.bigiq
     network.f5.common:
-      redirect: FIXMENS.FIXMECOLL.network.f5.common
+      redirect: f5networks.f5_modules.common
     network.f5.compare:
-      redirect: FIXMENS.FIXMECOLL.network.f5.compare
+      redirect: f5networks.f5_modules.compare
     network.f5.icontrol:
-      redirect: FIXMENS.FIXMECOLL.network.f5.icontrol
+      redirect: f5networks.f5_modules.icontrol
     network.f5.ipaddress:
-      redirect: FIXMENS.FIXMECOLL.network.f5.ipaddress
+      redirect: f5networks.f5_modules.ipaddress
     network.f5.iworkflow:
-      redirect: FIXMENS.FIXMECOLL.network.f5.iworkflow
+      redirect: f5networks.f5_modules.iworkflow
     network.f5.legacy:
-      redirect: FIXMENS.FIXMECOLL.network.f5.legacy
+      redirect: f5networks.f5_modules.legacy
     network.f5.urls:
-      redirect: FIXMENS.FIXMECOLL.network.f5.urls
-    network.fortianalyzer:
-      redirect: FIXMENS.FIXMECOLL.network.fortianalyzer
+      redirect: f5networks.f5_modules.urls
     network.fortianalyzer.common:
-      redirect: FIXMENS.FIXMECOLL.network.fortianalyzer.common
+      redirect: community.network.network.fortianalyzer.common
     network.fortianalyzer.fortianalyzer:
-      redirect: FIXMENS.FIXMECOLL.network.fortianalyzer.fortianalyzer
-    network.fortimanager:
-      redirect: FIXMENS.FIXMECOLL.network.fortimanager
+      redirect: community.network.network.fortianalyzer.fortianalyzer
     network.fortimanager.common:
-      redirect: FIXMENS.FIXMECOLL.network.fortimanager.common
+      redirect: fortinet.fortios.common
     network.fortimanager.fortimanager:
-      redirect: FIXMENS.FIXMECOLL.network.fortimanager.fortimanager
-    network.fortios:
-      redirect: FIXMENS.FIXMECOLL.network.fortios
+      redirect: fortinet.fortios.fortimanager
     network.fortios.argspec:
-      redirect: FIXMENS.FIXMECOLL.network.fortios.argspec
+      redirect: fortinet.fortios.fortios.argspec
     network.fortios.argspec.facts:
-      redirect: FIXMENS.FIXMECOLL.network.fortios.argspec.facts
+      redirect: fortinet.fortios.fortios.argspec.facts
     network.fortios.argspec.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.fortios.argspec.facts.facts
+      redirect: fortinet.fortios.fortios.argspec.facts.facts
     network.fortios.argspec.system:
-      redirect: FIXMENS.FIXMECOLL.network.fortios.argspec.system
+      redirect: fortinet.fortios.fortios.argspec.system
     network.fortios.argspec.system.system:
-      redirect: FIXMENS.FIXMECOLL.network.fortios.argspec.system.system
+      redirect: fortinet.fortios.fortios.argspec.system.system
     network.fortios.facts:
-      redirect: FIXMENS.FIXMECOLL.network.fortios.facts
+      redirect: fortinet.fortios.fortios.facts
     network.fortios.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.fortios.facts.facts
+      redirect: fortinet.fortios.fortios.facts.facts
     network.fortios.facts.system:
-      redirect: FIXMENS.FIXMECOLL.network.fortios.facts.system
+      redirect: fortinet.fortios.fortios.facts.system
     network.fortios.facts.system.system:
-      redirect: FIXMENS.FIXMECOLL.network.fortios.facts.system.system
+      redirect: fortinet.fortios.fortios.facts.system.system
     network.fortios.fortios:
-      redirect: FIXMENS.FIXMECOLL.network.fortios.fortios
+      redirect: fortinet.fortios.fortios.fortios
     network.frr:
-      redirect: FIXMENS.FIXMECOLL.network.frr
+      redirect: frr.frr.network.frr
     network.frr.frr:
-      redirect: FIXMENS.FIXMECOLL.network.frr.frr
+      redirect: frr.frr.network.frr.frr
     network.frr.providers:
-      redirect: FIXMENS.FIXMECOLL.network.frr.providers
+      redirect: frr.frr.network.frr.providers
     network.frr.providers.cli:
-      redirect: FIXMENS.FIXMECOLL.network.frr.providers.cli
+      redirect: frr.frr.network.frr.providers.cli
     network.frr.providers.cli.config:
-      redirect: FIXMENS.FIXMECOLL.network.frr.providers.cli.config
+      redirect: frr.frr.network.frr.providers.cli.config
     network.frr.providers.cli.config.base:
-      redirect: FIXMENS.FIXMECOLL.network.frr.providers.cli.config.base
+      redirect: frr.frr.network.frr.providers.cli.config.base
     network.frr.providers.cli.config.bgp:
-      redirect: FIXMENS.FIXMECOLL.network.frr.providers.cli.config.bgp
+      redirect: frr.frr.network.frr.providers.cli.config.bgp
     network.frr.providers.cli.config.bgp.address_family:
-      redirect: FIXMENS.FIXMECOLL.network.frr.providers.cli.config.bgp.address_family
+      redirect: frr.frr.network.frr.providers.cli.config.bgp.address_family
     network.frr.providers.cli.config.bgp.neighbors:
-      redirect: FIXMENS.FIXMECOLL.network.frr.providers.cli.config.bgp.neighbors
+      redirect: frr.frr.network.frr.providers.cli.config.bgp.neighbors
     network.frr.providers.cli.config.bgp.process:
-      redirect: FIXMENS.FIXMECOLL.network.frr.providers.cli.config.bgp.process
+      redirect: frr.frr.network.frr.providers.cli.config.bgp.process
     network.frr.providers.module:
-      redirect: FIXMENS.FIXMECOLL.network.frr.providers.module
+      redirect: frr.frr.network.frr.providers.module
     network.frr.providers.providers:
-      redirect: FIXMENS.FIXMECOLL.network.frr.providers.providers
+      redirect: frr.frr.network.frr.providers.providers
     network.ftd:
-      redirect: FIXMENS.FIXMECOLL.network.ftd
+      redirect: community.network.network.ftd
     network.ftd.common:
-      redirect: FIXMENS.FIXMECOLL.network.ftd.common
+      redirect: community.network.network.ftd.common
     network.ftd.configuration:
-      redirect: FIXMENS.FIXMECOLL.network.ftd.configuration
+      redirect: community.network.network.ftd.configuration
     network.ftd.device:
-      redirect: FIXMENS.FIXMECOLL.network.ftd.device
+      redirect: community.network.network.ftd.device
     network.ftd.fdm_swagger_client:
-      redirect: FIXMENS.FIXMECOLL.network.ftd.fdm_swagger_client
+      redirect: community.network.network.ftd.fdm_swagger_client
     network.ftd.operation:
-      redirect: FIXMENS.FIXMECOLL.network.ftd.operation
+      redirect: community.network.network.ftd.operation
     network.icx:
-      redirect: FIXMENS.FIXMECOLL.network.icx
+      redirect: community.network.network.icx
     network.icx.icx:
-      redirect: FIXMENS.FIXMECOLL.network.icx.icx
+      redirect: community.network.network.icx.icx
     network.ingate:
-      redirect: FIXMENS.FIXMECOLL.network.ingate
+      redirect: community.networknetwork.ingate
     network.ingate.common:
-      redirect: FIXMENS.FIXMECOLL.network.ingate.common
+      redirect: community.network.network.ingate.common
     network.ios:
-      redirect: FIXMENS.FIXMECOLL.network.ios
+      redirect: cisco.ios.network.ios
     network.ios.argspec:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec
+      redirect: cisco.ios.network.ios.argspec
     network.ios.argspec.facts:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.facts
+      redirect: cisco.ios.network.ios.argspec.facts
     network.ios.argspec.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.facts.facts
+      redirect: cisco.ios.network.ios.argspec.facts.facts
     network.ios.argspec.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.interfaces
+      redirect: cisco.ios.network.ios.argspec.interfaces
     network.ios.argspec.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.interfaces.interfaces
+      redirect: cisco.ios.network.ios.argspec.interfaces.interfaces
     network.ios.argspec.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.l2_interfaces
+      redirect: cisco.ios.network.ios.argspec.l2_interfaces
     network.ios.argspec.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.l2_interfaces.l2_interfaces
+      redirect: cisco.ios.network.ios.argspec.l2_interfaces.l2_interfaces
     network.ios.argspec.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.l3_interfaces
+      redirect: cisco.ios.network.ios.argspec.l3_interfaces
     network.ios.argspec.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.l3_interfaces.l3_interfaces
+      redirect: cisco.ios.network.ios.argspec.l3_interfaces.l3_interfaces
     network.ios.argspec.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.lacp
+      redirect: cisco.ios.network.ios.argspec.lacp
     network.ios.argspec.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.lacp.lacp
+      redirect: cisco.ios.network.ios.argspec.lacp.lacp
     network.ios.argspec.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.lacp_interfaces
+      redirect: cisco.ios.network.ios.argspec.lacp_interfaces
     network.ios.argspec.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.lacp_interfaces.lacp_interfaces
+      redirect: cisco.ios.network.ios.argspec.lacp_interfaces.lacp_interfaces
     network.ios.argspec.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.lag_interfaces
+      redirect: cisco.ios.network.ios.argspec.lag_interfaces
     network.ios.argspec.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.lag_interfaces.lag_interfaces
+      redirect: cisco.ios.network.ios.argspec.lag_interfaces.lag_interfaces
     network.ios.argspec.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.lldp_global
+      redirect: cisco.ios.network.ios.argspec.lldp_global
     network.ios.argspec.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.lldp_global.lldp_global
+      redirect: cisco.ios.network.ios.argspec.lldp_global.lldp_global
     network.ios.argspec.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.lldp_interfaces
+      redirect: cisco.ios.network.ios.argspec.lldp_interfaces
     network.ios.argspec.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.lldp_interfaces.lldp_interfaces
+      redirect: cisco.ios.network.ios.argspec.lldp_interfaces.lldp_interfaces
     network.ios.argspec.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.vlans
+      redirect: cisco.ios.network.ios.argspec.vlans
     network.ios.argspec.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.ios.argspec.vlans.vlans
+      redirect: cisco.ios.network.ios.argspec.vlans.vlans
     network.ios.config:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config
+      redirect: cisco.ios.network.ios.config
     network.ios.config.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.interfaces
+      redirect: cisco.ios.network.ios.config.interfaces
     network.ios.config.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.interfaces.interfaces
+      redirect: cisco.ios.network.ios.config.interfaces.interfaces
     network.ios.config.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.l2_interfaces
+      redirect: cisco.ios.network.ios.config.l2_interfaces
     network.ios.config.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.l2_interfaces.l2_interfaces
+      redirect: cisco.ios.network.ios.config.l2_interfaces.l2_interfaces
     network.ios.config.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.l3_interfaces
+      redirect: cisco.ios.network.ios.config.l3_interfaces
     network.ios.config.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.l3_interfaces.l3_interfaces
+      redirect: cisco.ios.network.ios.config.l3_interfaces.l3_interfaces
     network.ios.config.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.lacp
+      redirect: cisco.ios.network.ios.config.lacp
     network.ios.config.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.lacp.lacp
+      redirect: cisco.ios.network.ios.config.lacp.lacp
     network.ios.config.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.lacp_interfaces
+      redirect: cisco.ios.network.ios.config.lacp_interfaces
     network.ios.config.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.lacp_interfaces.lacp_interfaces
+      redirect: cisco.ios.network.ios.config.lacp_interfaces.lacp_interfaces
     network.ios.config.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.lag_interfaces
+      redirect: cisco.ios.network.ios.config.lag_interfaces
     network.ios.config.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.lag_interfaces.lag_interfaces
+      redirect: cisco.ios.network.ios.config.lag_interfaces.lag_interfaces
     network.ios.config.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.lldp_global
+      redirect: cisco.ios.network.ios.config.lldp_global
     network.ios.config.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.lldp_global.lldp_global
+      redirect: cisco.ios.network.ios.config.lldp_global.lldp_global
     network.ios.config.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.lldp_interfaces
+      redirect: cisco.ios.network.ios.config.lldp_interfaces
     network.ios.config.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.lldp_interfaces.lldp_interfaces
+      redirect: cisco.ios.network.ios.config.lldp_interfaces.lldp_interfaces
     network.ios.config.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.vlans
+      redirect: cisco.ios.network.ios.config.vlans
     network.ios.config.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.ios.config.vlans.vlans
+      redirect: cisco.ios.network.ios.config.vlans.vlans
     network.ios.facts:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts
+      redirect: cisco.ios.network.ios.facts
     network.ios.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.facts
+      redirect: cisco.ios.network.ios.facts.facts
     network.ios.facts.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.interfaces
+      redirect: cisco.ios.network.ios.facts.interfaces
     network.ios.facts.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.interfaces.interfaces
+      redirect: cisco.ios.network.ios.facts.interfaces.interfaces
     network.ios.facts.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.l2_interfaces
+      redirect: cisco.ios.network.ios.facts.l2_interfaces
     network.ios.facts.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.l2_interfaces.l2_interfaces
+      redirect: cisco.ios.network.ios.facts.l2_interfaces.l2_interfaces
     network.ios.facts.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.l3_interfaces
+      redirect: cisco.ios.network.ios.facts.l3_interfaces
     network.ios.facts.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.l3_interfaces.l3_interfaces
+      redirect: cisco.ios.network.ios.facts.l3_interfaces.l3_interfaces
     network.ios.facts.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.lacp
+      redirect: cisco.ios.network.ios.facts.lacp
     network.ios.facts.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.lacp.lacp
+      redirect: cisco.ios.network.ios.facts.lacp.lacp
     network.ios.facts.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.lacp_interfaces
+      redirect: cisco.ios.network.ios.facts.lacp_interfaces
     network.ios.facts.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.lacp_interfaces.lacp_interfaces
+      redirect: cisco.ios.network.ios.facts.lacp_interfaces.lacp_interfaces
     network.ios.facts.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.lag_interfaces
+      redirect: cisco.ios.network.ios.facts.lag_interfaces
     network.ios.facts.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.lag_interfaces.lag_interfaces
+      redirect: cisco.ios.network.ios.facts.lag_interfaces.lag_interfaces
     network.ios.facts.legacy:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.legacy
+      redirect: cisco.ios.network.ios.facts.legacy
     network.ios.facts.legacy.base:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.legacy.base
+      redirect: cisco.ios.network.ios.facts.legacy.base
     network.ios.facts.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.lldp_global
+      redirect: cisco.ios.network.ios.facts.lldp_global
     network.ios.facts.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.lldp_global.lldp_global
+      redirect: cisco.ios.network.ios.facts.lldp_global.lldp_global
     network.ios.facts.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.lldp_interfaces
+      redirect: cisco.ios.network.ios.facts.lldp_interfaces
     network.ios.facts.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.lldp_interfaces.lldp_interfaces
+      redirect: cisco.ios.network.ios.facts.lldp_interfaces.lldp_interfaces
     network.ios.facts.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.vlans
+      redirect: cisco.ios.network.ios.facts.vlans
     network.ios.facts.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.ios.facts.vlans.vlans
+      redirect: cisco.ios.network.ios.facts.vlans.vlans
     network.ios.ios:
-      redirect: FIXMENS.FIXMECOLL.network.ios.ios
+      redirect: cisco.ios.network.ios.ios
     network.ios.providers:
-      redirect: FIXMENS.FIXMECOLL.network.ios.providers
+      redirect: cisco.ios.network.ios.providers
     network.ios.providers.cli:
-      redirect: FIXMENS.FIXMECOLL.network.ios.providers.cli
+      redirect: cisco.ios.network.ios.providers.cli
     network.ios.providers.cli.config:
-      redirect: FIXMENS.FIXMECOLL.network.ios.providers.cli.config
+      redirect: cisco.ios.network.ios.providers.cli.config
     network.ios.providers.cli.config.base:
-      redirect: FIXMENS.FIXMECOLL.network.ios.providers.cli.config.base
+      redirect: cisco.ios.network.ios.providers.cli.config.base
     network.ios.providers.cli.config.bgp:
-      redirect: FIXMENS.FIXMECOLL.network.ios.providers.cli.config.bgp
+      redirect: cisco.ios.network.ios.providers.cli.config.bgp
     network.ios.providers.cli.config.bgp.address_family:
-      redirect: FIXMENS.FIXMECOLL.network.ios.providers.cli.config.bgp.address_family
+      redirect: cisco.ios.network.ios.providers.cli.config.bgp.address_family
     network.ios.providers.cli.config.bgp.neighbors:
-      redirect: FIXMENS.FIXMECOLL.network.ios.providers.cli.config.bgp.neighbors
+      redirect: cisco.ios.network.ios.providers.cli.config.bgp.neighbors
     network.ios.providers.cli.config.bgp.process:
-      redirect: FIXMENS.FIXMECOLL.network.ios.providers.cli.config.bgp.process
+      redirect: cisco.ios.network.ios.providers.cli.config.bgp.process
     network.ios.providers.module:
-      redirect: FIXMENS.FIXMECOLL.network.ios.providers.module
+      redirect: cisco.ios.network.ios.providers.module
     network.ios.providers.providers:
-      redirect: FIXMENS.FIXMECOLL.network.ios.providers.providers
+      redirect: cisco.ios.network.ios.providers.providers
     network.ios.utils:
-      redirect: FIXMENS.FIXMECOLL.network.ios.utils
+      redirect: cisco.ios.network.ios.utils
     network.ios.utils.utils:
-      redirect: FIXMENS.FIXMECOLL.network.ios.utils.utils
+      redirect: cisco.ios.network.ios.utils.utils
     network.iosxr:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr
+      redirect: cisco.iosxr.network.iosxr
     network.iosxr.argspec:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec
+      redirect: cisco.iosxr.network.iosxr.argspec
     network.iosxr.argspec.facts:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.facts
+      redirect: cisco.iosxr.network.iosxr.argspec.facts
     network.iosxr.argspec.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.facts.facts
+      redirect: cisco.iosxr.network.iosxr.argspec.facts.facts
     network.iosxr.argspec.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.interfaces
     network.iosxr.argspec.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.interfaces.interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.interfaces.interfaces
     network.iosxr.argspec.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.l2_interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.l2_interfaces
     network.iosxr.argspec.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.l2_interfaces.l2_interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.l2_interfaces.l2_interfaces
     network.iosxr.argspec.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.l3_interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.l3_interfaces
     network.iosxr.argspec.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.l3_interfaces.l3_interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.l3_interfaces.l3_interfaces
     network.iosxr.argspec.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.lacp
+      redirect: cisco.iosxr.network.iosxr.argspec.lacp
     network.iosxr.argspec.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.lacp.lacp
+      redirect: cisco.iosxr.network.iosxr.argspec.lacp.lacp
     network.iosxr.argspec.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.lacp_interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.lacp_interfaces
     network.iosxr.argspec.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.lacp_interfaces.lacp_interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.lacp_interfaces.lacp_interfaces
     network.iosxr.argspec.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.lag_interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.lag_interfaces
     network.iosxr.argspec.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.lag_interfaces.lag_interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.lag_interfaces.lag_interfaces
     network.iosxr.argspec.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.lldp_global
+      redirect: cisco.iosxr.network.iosxr.argspec.lldp_global
     network.iosxr.argspec.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.lldp_global.lldp_global
+      redirect: cisco.iosxr.network.iosxr.argspec.lldp_global.lldp_global
     network.iosxr.argspec.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.lldp_interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.lldp_interfaces
     network.iosxr.argspec.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.argspec.lldp_interfaces.lldp_interfaces
+      redirect: cisco.iosxr.network.iosxr.argspec.lldp_interfaces.lldp_interfaces
     network.iosxr.config:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config
+      redirect: cisco.iosxr.network.iosxr.config
     network.iosxr.config.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.interfaces
+      redirect: cisco.iosxr.network.iosxr.config.interfaces
     network.iosxr.config.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.interfaces.interfaces
+      redirect: cisco.iosxr.network.iosxr.config.interfaces.interfaces
     network.iosxr.config.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.l2_interfaces
+      redirect: cisco.iosxr.network.iosxr.config.l2_interfaces
     network.iosxr.config.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.l2_interfaces.l2_interfaces
+      redirect: cisco.iosxr.network.iosxr.config.l2_interfaces.l2_interfaces
     network.iosxr.config.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.l3_interfaces
+      redirect: cisco.iosxr.network.iosxr.config.l3_interfaces
     network.iosxr.config.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.l3_interfaces.l3_interfaces
+      redirect: cisco.iosxr.network.iosxr.config.l3_interfaces.l3_interfaces
     network.iosxr.config.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.lacp
+      redirect: cisco.iosxr.network.iosxr.config.lacp
     network.iosxr.config.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.lacp.lacp
+      redirect: cisco.iosxr.network.iosxr.config.lacp.lacp
     network.iosxr.config.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.lacp_interfaces
+      redirect: cisco.iosxr.network.iosxr.config.lacp_interfaces
     network.iosxr.config.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.lacp_interfaces.lacp_interfaces
+      redirect: cisco.iosxr.network.iosxr.config.lacp_interfaces.lacp_interfaces
     network.iosxr.config.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.lag_interfaces
+      redirect: cisco.iosxr.network.iosxr.config.lag_interfaces
     network.iosxr.config.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.lag_interfaces.lag_interfaces
+      redirect: cisco.iosxr.network.iosxr.config.lag_interfaces.lag_interfaces
     network.iosxr.config.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.lldp_global
+      redirect: cisco.iosxr.network.iosxr.config.lldp_global
     network.iosxr.config.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.lldp_global.lldp_global
+      redirect: cisco.iosxr.network.iosxr.config.lldp_global.lldp_global
     network.iosxr.config.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.lldp_interfaces
+      redirect: cisco.iosxr.network.iosxr.config.lldp_interfaces
     network.iosxr.config.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.config.lldp_interfaces.lldp_interfaces
+      redirect: cisco.iosxr.network.iosxr.config.lldp_interfaces.lldp_interfaces
     network.iosxr.facts:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts
+      redirect: cisco.iosxr.network.iosxr.facts
     network.iosxr.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.facts
+      redirect: cisco.iosxr.network.iosxr.facts.facts
     network.iosxr.facts.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.interfaces
     network.iosxr.facts.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.interfaces.interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.interfaces.interfaces
     network.iosxr.facts.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.l2_interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.l2_interfaces
     network.iosxr.facts.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.l2_interfaces.l2_interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.l2_interfaces.l2_interfaces
     network.iosxr.facts.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.l3_interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.l3_interfaces
     network.iosxr.facts.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.l3_interfaces.l3_interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.l3_interfaces.l3_interfaces
     network.iosxr.facts.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.lacp
+      redirect: cisco.iosxr.network.iosxr.facts.lacp
     network.iosxr.facts.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.lacp.lacp
+      redirect: cisco.iosxr.network.iosxr.facts.lacp.lacp
     network.iosxr.facts.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.lacp_interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.lacp_interfaces
     network.iosxr.facts.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.lacp_interfaces.lacp_interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.lacp_interfaces.lacp_interfaces
     network.iosxr.facts.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.lag_interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.lag_interfaces
     network.iosxr.facts.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.lag_interfaces.lag_interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.lag_interfaces.lag_interfaces
     network.iosxr.facts.legacy:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.legacy
+      redirect: cisco.iosxr.network.iosxr.facts.legacy
     network.iosxr.facts.legacy.base:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.legacy.base
+      redirect: cisco.iosxr.network.iosxr.facts.legacy.base
     network.iosxr.facts.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.lldp_global
+      redirect: cisco.iosxr.network.iosxr.facts.lldp_global
     network.iosxr.facts.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.lldp_global.lldp_global
+      redirect: cisco.iosxr.network.iosxr.facts.lldp_global.lldp_global
     network.iosxr.facts.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.lldp_interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.lldp_interfaces
     network.iosxr.facts.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.facts.lldp_interfaces.lldp_interfaces
+      redirect: cisco.iosxr.network.iosxr.facts.lldp_interfaces.lldp_interfaces
     network.iosxr.iosxr:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.iosxr
+      redirect: cisco.iosxr.network.iosxr.iosxr
     network.iosxr.providers:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.providers
+      redirect: cisco.iosxr.network.iosxr.providers
     network.iosxr.providers.cli:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.providers.cli
+      redirect: cisco.iosxr.network.iosxr.providers.cli
     network.iosxr.providers.cli.config:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.providers.cli.config
+      redirect: cisco.iosxr.network.iosxr.providers.cli.config
     network.iosxr.providers.cli.config.bgp:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.providers.cli.config.bgp
+      redirect: cisco.iosxr.network.iosxr.providers.cli.config.bgp
     network.iosxr.providers.cli.config.bgp.address_family:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.providers.cli.config.bgp.address_family
+      redirect: cisco.iosxr.network.iosxr.providers.cli.config.bgp.address_family
     network.iosxr.providers.cli.config.bgp.neighbors:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.providers.cli.config.bgp.neighbors
+      redirect: cisco.iosxr.network.iosxr.providers.cli.config.bgp.neighbors
     network.iosxr.providers.cli.config.bgp.process:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.providers.cli.config.bgp.process
+      redirect: cisco.iosxr.network.iosxr.providers.cli.config.bgp.process
     network.iosxr.providers.module:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.providers.module
+      redirect: cisco.iosxr.network.iosxr.providers.module
     network.iosxr.providers.providers:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.providers.providers
+      redirect: cisco.iosxr.network.iosxr.providers.providers
     network.iosxr.utils:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.utils
+      redirect: cisco.iosxr.network.iosxr.utils
     network.iosxr.utils.utils:
-      redirect: FIXMENS.FIXMECOLL.network.iosxr.utils.utils
+      redirect: cisco.iosxr.network.iosxr.utils.utils
     network.ironware:
-      redirect: FIXMENS.FIXMECOLL.network.ironware
+      redirect: community.network.network.ironware
     network.ironware.ironware:
-      redirect: FIXMENS.FIXMECOLL.network.ironware.ironware
+      redirect: community.network.network.ironware.ironware
     network.junos:
-      redirect: FIXMENS.FIXMECOLL.network.junos
+      redirect: junipernetworks.junos.network.junos
     network.junos.argspec:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec
+      redirect: junipernetworks.junos.network.junos.argspec
     network.junos.argspec.facts:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.facts
+      redirect: junipernetworks.junos.network.junos.argspec.facts
     network.junos.argspec.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.facts.facts
+      redirect: junipernetworks.junos.network.junos.argspec.facts.facts
     network.junos.argspec.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.interfaces
     network.junos.argspec.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.interfaces.interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.interfaces.interfaces
     network.junos.argspec.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.l2_interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.l2_interfaces
     network.junos.argspec.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.l2_interfaces.l2_interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.l2_interfaces.l2_interfaces
     network.junos.argspec.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.l3_interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.l3_interfaces
     network.junos.argspec.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.l3_interfaces.l3_interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.l3_interfaces.l3_interfaces
     network.junos.argspec.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.lacp
+      redirect: junipernetworks.junos.network.junos.argspec.lacp
     network.junos.argspec.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.lacp.lacp
+      redirect: junipernetworks.junos.network.junos.argspec.lacp.lacp
     network.junos.argspec.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.lacp_interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.lacp_interfaces
     network.junos.argspec.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.lacp_interfaces.lacp_interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.lacp_interfaces.lacp_interfaces
     network.junos.argspec.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.lag_interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.lag_interfaces
     network.junos.argspec.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.lag_interfaces.lag_interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.lag_interfaces.lag_interfaces
     network.junos.argspec.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.lldp_global
+      redirect: junipernetworks.junos.network.junos.argspec.lldp_global
     network.junos.argspec.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.lldp_global.lldp_global
+      redirect: junipernetworks.junos.network.junos.argspec.lldp_global.lldp_global
     network.junos.argspec.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.lldp_interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.lldp_interfaces
     network.junos.argspec.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.lldp_interfaces.lldp_interfaces
+      redirect: junipernetworks.junos.network.junos.argspec.lldp_interfaces.lldp_interfaces
     network.junos.argspec.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.vlans
+      redirect: junipernetworks.junos.network.junos.argspec.vlans
     network.junos.argspec.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.junos.argspec.vlans.vlans
+      redirect: junipernetworks.junos.network.junos.argspec.vlans.vlans
     network.junos.config:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config
+      redirect: junipernetworks.junos.network.junos.config
     network.junos.config.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.interfaces
+      redirect: junipernetworks.junos.network.junos.config.interfaces
     network.junos.config.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.interfaces.interfaces
+      redirect: junipernetworks.junos.network.junos.config.interfaces.interfaces
     network.junos.config.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.l2_interfaces
+      redirect: junipernetworks.junos.network.junos.config.l2_interfaces
     network.junos.config.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.l2_interfaces.l2_interfaces
+      redirect: junipernetworks.junos.network.junos.config.l2_interfaces.l2_interfaces
     network.junos.config.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.l3_interfaces
+      redirect: junipernetworks.junos.network.junos.config.l3_interfaces
     network.junos.config.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.l3_interfaces.l3_interfaces
+      redirect: junipernetworks.junos.network.junos.config.l3_interfaces.l3_interfaces
     network.junos.config.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.lacp
+      redirect: junipernetworks.junos.network.junos.config.lacp
     network.junos.config.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.lacp.lacp
+      redirect: junipernetworks.junos.network.junos.config.lacp.lacp
     network.junos.config.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.lacp_interfaces
+      redirect: junipernetworks.junos.network.junos.config.lacp_interfaces
     network.junos.config.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.lacp_interfaces.lacp_interfaces
+      redirect: junipernetworks.junos.network.junos.config.lacp_interfaces.lacp_interfaces
     network.junos.config.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.lag_interfaces
+      redirect: junipernetworks.junos.network.junos.config.lag_interfaces
     network.junos.config.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.lag_interfaces.lag_interfaces
+      redirect: junipernetworks.junos.network.junos.config.lag_interfaces.lag_interfaces
     network.junos.config.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.lldp_global
+      redirect: junipernetworks.junos.network.junos.config.lldp_global
     network.junos.config.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.lldp_global.lldp_global
+      redirect: junipernetworks.junos.network.junos.config.lldp_global.lldp_global
     network.junos.config.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.lldp_interfaces
+      redirect: junipernetworks.junos.network.junos.config.lldp_interfaces
     network.junos.config.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.lldp_interfaces.lldp_interfaces
+      redirect: junipernetworks.junos.network.junos.config.lldp_interfaces.lldp_interfaces
     network.junos.config.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.vlans
+      redirect: junipernetworks.junos.network.junos.config.vlans
     network.junos.config.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.junos.config.vlans.vlans
+      redirect: junipernetworks.junos.network.junos.config.vlans.vlans
     network.junos.facts:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts
+      redirect: junipernetworks.junos.network.junos.facts
     network.junos.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.facts
+      redirect: junipernetworks.junos.network.junos.facts.facts
     network.junos.facts.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.interfaces
+      redirect: junipernetworks.junos.network.junos.facts.interfaces
     network.junos.facts.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.interfaces.interfaces
+      redirect: junipernetworks.junos.network.junos.facts.interfaces.interfaces
     network.junos.facts.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.l2_interfaces
+      redirect: junipernetworks.junos.network.junos.facts.l2_interfaces
     network.junos.facts.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.l2_interfaces.l2_interfaces
+      redirect: junipernetworks.junos.network.junos.facts.l2_interfaces.l2_interfaces
     network.junos.facts.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.l3_interfaces
+      redirect: junipernetworks.junos.network.junos.facts.l3_interfaces
     network.junos.facts.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.l3_interfaces.l3_interfaces
+      redirect: junipernetworks.junos.network.junos.facts.l3_interfaces.l3_interfaces
     network.junos.facts.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.lacp
+      redirect: junipernetworks.junos.network.junos.facts.lacp
     network.junos.facts.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.lacp.lacp
+      redirect: junipernetworks.junos.network.junos.facts.lacp.lacp
     network.junos.facts.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.lacp_interfaces
+      redirect: junipernetworks.junos.network.junos.facts.lacp_interfaces
     network.junos.facts.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.lacp_interfaces.lacp_interfaces
+      redirect: junipernetworks.junos.network.junos.facts.lacp_interfaces.lacp_interfaces
     network.junos.facts.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.lag_interfaces
+      redirect: junipernetworks.junos.network.junos.facts.lag_interfaces
     network.junos.facts.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.lag_interfaces.lag_interfaces
+      redirect: junipernetworks.junos.network.junos.facts.lag_interfaces.lag_interfaces
     network.junos.facts.legacy:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.legacy
+      redirect: junipernetworks.junos.network.junos.facts.legacy
     network.junos.facts.legacy.base:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.legacy.base
+      redirect: junipernetworks.junos.network.junos.facts.legacy.base
     network.junos.facts.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.lldp_global
+      redirect: junipernetworks.junos.network.junos.facts.lldp_global
     network.junos.facts.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.lldp_global.lldp_global
+      redirect: junipernetworks.junos.network.junos.facts.lldp_global.lldp_global
     network.junos.facts.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.lldp_interfaces
+      redirect: junipernetworks.junos.network.junos.facts.lldp_interfaces
     network.junos.facts.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.lldp_interfaces.lldp_interfaces
+      redirect: junipernetworks.junos.network.junos.facts.lldp_interfaces.lldp_interfaces
     network.junos.facts.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.vlans
+      redirect: junipernetworks.junos.network.junos.facts.vlans
     network.junos.facts.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.junos.facts.vlans.vlans
+      redirect: junipernetworks.junos.network.junos.facts.vlans.vlans
     network.junos.junos:
-      redirect: FIXMENS.FIXMECOLL.network.junos.junos
+      redirect: junipernetworks.junos.network.junos.junos
     network.junos.utils:
-      redirect: FIXMENS.FIXMECOLL.network.junos.utils
+      redirect: junipernetworks.junos.network.junos.utils
     network.junos.utils.utils:
-      redirect: FIXMENS.FIXMECOLL.network.junos.utils.utils
+      redirect: junipernetworks.junos.network.junos.utils.utils
     network.meraki:
-      redirect: FIXMENS.FIXMECOLL.network.meraki
+      redirect: cisco.meraki.network.meraki
     network.meraki.meraki:
-      redirect: FIXMENS.FIXMECOLL.network.meraki.meraki
+      redirect: cisco.meraki.network.meraki.meraki
     network.netconf:
-      redirect: FIXMENS.FIXMECOLL.network.netconf
+      redirect: ansible.netcommon.network.netconf
     network.netconf.netconf:
-      redirect: FIXMENS.FIXMECOLL.network.netconf.netconf
+      redirect: ansible.netcommon.network.netconf.netconf
     network.netscaler:
-      redirect: FIXMENS.FIXMECOLL.network.netscaler
+      redirect: community.network.network.netscaler
     network.netscaler.netscaler:
-      redirect: FIXMENS.FIXMECOLL.network.netscaler.netscaler
+      redirect: community.network.network.netscaler.netscaler
     network.netvisor:
-      redirect: FIXMENS.FIXMECOLL.network.netvisor
+      redirect: community.network.network.netvisor
     network.netvisor.netvisor:
-      redirect: FIXMENS.FIXMECOLL.network.netvisor.netvisor
+      redirect: community.network.network.netvisor.netvisor
     network.netvisor.pn_nvos:
-      redirect: FIXMENS.FIXMECOLL.network.netvisor.pn_nvos
+      redirect: community.network.network.netvisor.pn_nvos
     network.nos:
-      redirect: FIXMENS.FIXMECOLL.network.nos
+      redirect: community.network.network.nos
     network.nos.nos:
-      redirect: FIXMENS.FIXMECOLL.network.nos.nos
+      redirect: community.network.network.nos.nos
     network.nso:
-      redirect: FIXMENS.FIXMECOLL.network.nso
+      redirect: community.network.network.nso
     network.nso.nso:
-      redirect: FIXMENS.FIXMECOLL.network.nso.nso
+      redirect: community.network.network.nso.nso
     network.nxos:
-      redirect: FIXMENS.FIXMECOLL.network.nxos
+      redirect: cisco.nxos.network.nxos
     network.nxos.argspec:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec
+      redirect: cisco.nxos.network.nxos.argspec
     network.nxos.argspec.bfd_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.bfd_interfaces
+      redirect: cisco.nxos.network.nxos.argspec.bfd_interfaces
     network.nxos.argspec.bfd_interfaces.bfd_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.bfd_interfaces.bfd_interfaces
+      redirect: cisco.nxos.network.nxos.argspec.bfd_interfaces.bfd_interfaces
     network.nxos.argspec.facts:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.facts
+      redirect: cisco.nxos.network.nxos.argspec.facts
     network.nxos.argspec.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.facts.facts
+      redirect: cisco.nxos.network.nxos.argspec.facts.facts
     network.nxos.argspec.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.interfaces
+      redirect: cisco.nxos.network.nxos.argspec.interfaces
     network.nxos.argspec.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.interfaces.interfaces
+      redirect: cisco.nxos.network.nxos.argspec.interfaces.interfaces
     network.nxos.argspec.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.l2_interfaces
+      redirect: cisco.nxos.network.nxos.argspec.l2_interfaces
     network.nxos.argspec.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.l2_interfaces.l2_interfaces
+      redirect: cisco.nxos.network.nxos.argspec.l2_interfaces.l2_interfaces
     network.nxos.argspec.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.l3_interfaces
+      redirect: cisco.nxos.network.nxos.argspec.l3_interfaces
     network.nxos.argspec.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.l3_interfaces.l3_interfaces
+      redirect: cisco.nxos.network.nxos.argspec.l3_interfaces.l3_interfaces
     network.nxos.argspec.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.lacp
+      redirect: cisco.nxos.network.nxos.argspec.lacp
     network.nxos.argspec.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.lacp.lacp
+      redirect: cisco.nxos.network.nxos.argspec.lacp.lacp
     network.nxos.argspec.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.lacp_interfaces
+      redirect: cisco.nxos.network.nxos.argspec.lacp_interfaces
     network.nxos.argspec.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.lacp_interfaces.lacp_interfaces
+      redirect: cisco.nxos.network.nxos.argspec.lacp_interfaces.lacp_interfaces
     network.nxos.argspec.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.lag_interfaces
+      redirect: cisco.nxos.network.nxos.argspec.lag_interfaces
     network.nxos.argspec.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.lag_interfaces.lag_interfaces
+      redirect: cisco.nxos.network.nxos.argspec.lag_interfaces.lag_interfaces
     network.nxos.argspec.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.lldp_global
+      redirect: cisco.nxos.network.nxos.argspec.lldp_global
     network.nxos.argspec.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.lldp_global.lldp_global
+      redirect: cisco.nxos.network.nxos.argspec.lldp_global.lldp_global
     network.nxos.argspec.telemetry:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.telemetry
+      redirect: cisco.nxos.network.nxos.argspec.telemetry
     network.nxos.argspec.telemetry.telemetry:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.telemetry.telemetry
+      redirect: cisco.nxos.network.nxos.argspec.telemetry.telemetry
     network.nxos.argspec.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.vlans
+      redirect: cisco.nxos.network.nxos.argspec.vlans
     network.nxos.argspec.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.argspec.vlans.vlans
+      redirect: cisco.nxos.network.nxos.argspec.vlans.vlans
     network.nxos.cmdref:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.cmdref
+      redirect: cisco.nxos.network.nxos.cmdref
     network.nxos.cmdref.telemetry:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.cmdref.telemetry
+      redirect: cisco.nxos.network.nxos.cmdref.telemetry
     network.nxos.cmdref.telemetry.telemetry:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.cmdref.telemetry.telemetry
+      redirect: cisco.nxos.network.nxos.cmdref.telemetry.telemetry
     network.nxos.config:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config
+      redirect: cisco.nxos.network.nxos.config
     network.nxos.config.bfd_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.bfd_interfaces
+      redirect: cisco.nxos.network.nxos.config.bfd_interfaces
     network.nxos.config.bfd_interfaces.bfd_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.bfd_interfaces.bfd_interfaces
+      redirect: cisco.nxos.network.nxos.config.bfd_interfaces.bfd_interfaces
     network.nxos.config.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.interfaces
+      redirect: cisco.nxos.network.nxos.config.interfaces
     network.nxos.config.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.interfaces.interfaces
+      redirect: cisco.nxos.network.nxos.config.interfaces.interfaces
     network.nxos.config.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.l2_interfaces
+      redirect: cisco.nxos.network.nxos.config.l2_interfaces
     network.nxos.config.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.l2_interfaces.l2_interfaces
+      redirect: cisco.nxos.network.nxos.config.l2_interfaces.l2_interfaces
     network.nxos.config.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.l3_interfaces
+      redirect: cisco.nxos.network.nxos.config.l3_interfaces
     network.nxos.config.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.l3_interfaces.l3_interfaces
+      redirect: cisco.nxos.network.nxos.config.l3_interfaces.l3_interfaces
     network.nxos.config.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.lacp
+      redirect: cisco.nxos.network.nxos.config.lacp
     network.nxos.config.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.lacp.lacp
+      redirect: cisco.nxos.network.nxos.config.lacp.lacp
     network.nxos.config.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.lacp_interfaces
+      redirect: cisco.nxos.network.nxos.config.lacp_interfaces
     network.nxos.config.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.lacp_interfaces.lacp_interfaces
+      redirect: cisco.nxos.network.nxos.config.lacp_interfaces.lacp_interfaces
     network.nxos.config.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.lag_interfaces
+      redirect: cisco.nxos.network.nxos.config.lag_interfaces
     network.nxos.config.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.lag_interfaces.lag_interfaces
+      redirect: cisco.nxos.network.nxos.config.lag_interfaces.lag_interfaces
     network.nxos.config.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.lldp_global
+      redirect: cisco.nxos.network.nxos.config.lldp_global
     network.nxos.config.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.lldp_global.lldp_global
+      redirect: cisco.nxos.network.nxos.config.lldp_global.lldp_global
     network.nxos.config.telemetry:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.telemetry
+      redirect: cisco.nxos.network.nxos.config.telemetry
     network.nxos.config.telemetry.telemetry:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.telemetry.telemetry
+      redirect: cisco.nxos.network.nxos.config.telemetry.telemetry
     network.nxos.config.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.vlans
+      redirect: cisco.nxos.network.nxos.config.vlans
     network.nxos.config.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.config.vlans.vlans
+      redirect: cisco.nxos.network.nxos.config.vlans.vlans
     network.nxos.facts:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts
+      redirect: cisco.nxos.network.nxos.facts
     network.nxos.facts.bfd_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.bfd_interfaces
+      redirect: cisco.nxos.network.nxos.facts.bfd_interfaces
     network.nxos.facts.bfd_interfaces.bfd_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.bfd_interfaces.bfd_interfaces
+      redirect: cisco.nxos.network.nxos.facts.bfd_interfaces.bfd_interfaces
     network.nxos.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.facts
+      redirect: cisco.nxos.network.nxos.facts.facts
     network.nxos.facts.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.interfaces
+      redirect: cisco.nxos.network.nxos.facts.interfaces
     network.nxos.facts.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.interfaces.interfaces
+      redirect: cisco.nxos.network.nxos.facts.interfaces.interfaces
     network.nxos.facts.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.l2_interfaces
+      redirect: cisco.nxos.network.nxos.facts.l2_interfaces
     network.nxos.facts.l2_interfaces.l2_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.l2_interfaces.l2_interfaces
+      redirect: cisco.nxos.network.nxos.facts.l2_interfaces.l2_interfaces
     network.nxos.facts.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.l3_interfaces
+      redirect: cisco.nxos.network.nxos.facts.l3_interfaces
     network.nxos.facts.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.l3_interfaces.l3_interfaces
+      redirect: cisco.nxos.network.nxos.facts.l3_interfaces.l3_interfaces
     network.nxos.facts.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.lacp
+      redirect: cisco.nxos.network.nxos.facts.lacp
     network.nxos.facts.lacp.lacp:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.lacp.lacp
+      redirect: cisco.nxos.network.nxos.facts.lacp.lacp
     network.nxos.facts.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.lacp_interfaces
+      redirect: cisco.nxos.network.nxos.facts.lacp_interfaces
     network.nxos.facts.lacp_interfaces.lacp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.lacp_interfaces.lacp_interfaces
+      redirect: cisco.nxos.network.nxos.facts.lacp_interfaces.lacp_interfaces
     network.nxos.facts.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.lag_interfaces
+      redirect: cisco.nxos.network.nxos.facts.lag_interfaces
     network.nxos.facts.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.lag_interfaces.lag_interfaces
+      redirect: cisco.nxos.network.nxos.facts.lag_interfaces.lag_interfaces
     network.nxos.facts.legacy:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.legacy
+      redirect: cisco.nxos.network.nxos.facts.legacy
     network.nxos.facts.legacy.base:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.legacy.base
+      redirect: cisco.nxos.network.nxos.facts.legacy.base
     network.nxos.facts.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.lldp_global
+      redirect: cisco.nxos.network.nxos.facts.lldp_global
     network.nxos.facts.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.lldp_global.lldp_global
+      redirect: cisco.nxos.network.nxos.facts.lldp_global.lldp_global
     network.nxos.facts.telemetry:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.telemetry
+      redirect: cisco.nxos.network.nxos.facts.telemetry
     network.nxos.facts.telemetry.telemetry:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.telemetry.telemetry
+      redirect: cisco.nxos.network.nxos.facts.telemetry.telemetry
     network.nxos.facts.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.vlans
+      redirect: cisco.nxos.network.nxos.facts.vlans
     network.nxos.facts.vlans.vlans:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.facts.vlans.vlans
+      redirect: cisco.nxos.network.nxos.facts.vlans.vlans
     network.nxos.nxos:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.nxos
+      redirect: cisco.nxos.network.nxos.nxos
     network.nxos.utils:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.utils
+      redirect: cisco.nxos.network.nxos.utils
     network.nxos.utils.telemetry:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.utils.telemetry
+      redirect: cisco.nxos.network.nxos.utils.telemetry
     network.nxos.utils.telemetry.telemetry:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.utils.telemetry.telemetry
+      redirect: cisco.nxos.network.nxos.utils.telemetry.telemetry
     network.nxos.utils.utils:
-      redirect: FIXMENS.FIXMECOLL.network.nxos.utils.utils
+      redirect: cisco.nxos.network.nxos.utils.utils
     network.onyx:
       redirect: FIXMENS.FIXMECOLL.network.onyx
     network.onyx.onyx:
@@ -9506,7 +9482,7 @@ plugin_routing:
     fortianalyzer:
       redirect: community.network.fortianalyzer
     fortimanager:
-      redirect: fortinet.fortimanager.fortimanager
+      redirect: fortinet.fortios.fortimanager
     ftd:
       redirect: community.network.ftd
     vmware:
