@@ -46,6 +46,16 @@
     insertbefore: "BOF"
   register: result2
 
+- name: insert a line at the beginning of the file, and back it up to a specific file path
+  lineinfile:
+    dest: "{{ output_dir }}/test.txt"
+    state: present
+    line: "New line at the beginning"
+    insertbefore: "BOF"
+    backup: yes
+    backup_file: "{{ output_dir }}/test.txt.bak"
+  register: result3
+
 - name: assert that the line was inserted at the head of the file
   assert:
     that:
@@ -53,6 +63,7 @@
       - result2 is not changed
       - result1.msg == 'line added'
       - result1.backup != ''
+      - result3.backup == output_dir + '/test.txt.bak'
 
 - name: stat the backup file
   stat:

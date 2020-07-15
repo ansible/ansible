@@ -2279,14 +2279,14 @@ class AnsibleModule(object):
         ''' Return SHA-256 hex digest of local file using digest_from_file(). '''
         return self.digest_from_file(filename, 'sha256')
 
-    def backup_local(self, fn):
+    def backup_local(self, fn, backupdest=''):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
 
-        backupdest = ''
         if os.path.exists(fn):
-            # backups named basename.PID.YYYY-MM-DD@HH:MM:SS~
-            ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
-            backupdest = '%s.%s.%s' % (fn, os.getpid(), ext)
+            if not backupdest:
+                # backups named basename.PID.YYYY-MM-DD@HH:MM:SS~
+                ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
+                backupdest = '%s.%s.%s' % (fn, os.getpid(), ext)
 
             try:
                 self.preserved_copy(fn, backupdest)

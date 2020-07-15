@@ -38,7 +38,7 @@
       - 'blockinfile_test0.msg == "Block inserted"'
       - 'blockinfile_test0_grep.stdout == "2"'
 
-- name: check idemptotence
+- name: check idempotence
   blockinfile:
     path: "{{ output_dir_test }}/sshd_config"
     block: |

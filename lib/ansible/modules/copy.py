@@ -49,10 +49,16 @@ options:
     required: yes
   backup:
     description:
-    - Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+    - Create a backup file; by default the name includes the timestamp information
+      so you can get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
     version_added: '0.7'
+  backup_file:
+    description:
+    - Only when C(backup) is set, specify the path of the backup file
+    type: path
+    version_added: '2.11'
   force:
     description:
     - Influence whether the remote file must always be replaced.
@@ -162,6 +168,17 @@ EXAMPLES = r'''
     group: root
     mode: '0644'
     backup: yes
+
+
+- name: Copy a new "ntp.conf" file into place, backing up the original to a specified location if it differs from the copied version
+  copy:
+    src: /mine/ntp.conf
+    dest: /etc/ntp.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: yes
+    backup_file: /etc/ntp.conf.bak
 
 - name: Copy a new "sudoers" file into place, after passing validation with visudo
   copy:
@@ -508,6 +525,7 @@ def main():
             content=dict(type='str', no_log=True),
             dest=dict(type='path', required=True),
             backup=dict(type='bool', default=False),
+            backup_file=dict(type='path', required=False),
             force=dict(type='bool', default=True, aliases=['thirsty']),
             validate=dict(type='str'),
             directory_mode=dict(type='raw'),
@@ -532,6 +550,7 @@ def main():
         dest = '.{0}{1}'.format(os.path.sep, dest)
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     backup = module.params['backup']
+    backup_file = module.params['backup_file']
     force = module.params['force']
     _original_basename = module.params.get('_original_basename', None)
     validate = module.params.get('validate', None)
@@ -633,13 +652,12 @@ def main():
     if not os.access(os.path.dirname(b_dest), os.W_OK) and not module.params['unsafe_writes']:
         module.fail_json(msg="Destination %s not writable" % (os.path.dirname(dest)))
 
-    backup_file = None
     if checksum_src != checksum_dest or os.path.islink(b_dest):
         if not module.check_mode:
             try:
                 if backup:
                     if os.path.exists(b_dest):
-                        backup_file = module.backup_local(dest)
+                        backup_file = module.backup_local(dest, backup_file)
                 # allow for conversion from symlink.
                 if os.path.islink(b_dest):
                     os.unlink(b_dest)
@@ -784,7 +802,7 @@ def main():
     res_args = dict(
         dest=dest, src=src, md5sum=md5sum_src, checksum=checksum_src, changed=changed
     )
-    if backup_file:
+    if backup and backup_file:
         res_args['backup_file'] = backup_file
 
     if not module.check_mode:

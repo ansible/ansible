@@ -68,10 +68,15 @@ options:
     default: no
   backup:
     description:
-    - Create a backup file including the timestamp information so you can
+    - Create a backup file; by default the name includes the timestamp information so you can
       get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
+  backup_file:
+    description:
+    - Only when C(backup) is set, specify the path of the backup file
+    type: path
+    version_added: '2.11'
   marker_begin:
     description:
     - This will be inserted at C({mark}) in the opening ansible block marker.
@@ -201,6 +206,7 @@ def main():
             insertbefore=dict(type='str'),
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
+            backup_file=dict(type='path'),
             validate=dict(type='str'),
             marker_begin=dict(type='str', default='BEGIN'),
             marker_end=dict(type='str', default='END'),
@@ -331,7 +337,7 @@ def main():
     backup_file = None
     if changed and not module.check_mode:
         if module.boolean(params['backup']) and path_exists:
-            backup_file = module.backup_local(path)
+            backup_file = module.backup_local(path, params['backup_file'])
         # We should always follow symlinks so that we change the real file
         real_path = os.path.realpath(params['path'])
         write_changes(module, result, real_path)

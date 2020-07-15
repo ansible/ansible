@@ -105,10 +105,15 @@ options:
     default: no
   backup:
     description:
-      - Create a backup file including the timestamp information so you can
+      - Create a backup file; by default the name includes the timestamp information so you can
         get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
+  backup_file:
+    description:
+    - Only when C(backup) is set, specify the path of the backup file
+    type: path
+    version_added: '2.11'
   firstmatch:
     description:
       - Used with C(insertafter) or C(insertbefore).
@@ -251,7 +256,7 @@ def check_file_attrs(module, changed, message, diff):
 
 
 def present(module, dest, regexp, line, insertafter, insertbefore, create,
-            backup, backrefs, firstmatch):
+            backup, backupdest, backrefs, firstmatch):
 
     diff = {'before': '',
             'after': '',
@@ -434,10 +439,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     if module._diff:
         diff['after'] = to_native(b''.join(b_lines))
 
-    backupdest = ""
     if changed and not module.check_mode:
         if backup and os.path.exists(b_dest):
-            backupdest = module.backup_local(dest)
+            backupdest = module.backup_local(dest, backupdest)
         write_changes(module, b_lines, dest)
 
     if module.check_mode and not os.path.exists(b_dest):
@@ -453,7 +457,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
     module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=difflist)
 
 
-def absent(module, dest, regexp, line, backup):
+def absent(module, dest, regexp, line, backup, backupdest):
 
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     if not os.path.exists(b_dest):
@@ -492,10 +496,9 @@ def absent(module, dest, regexp, line, backup):
     if module._diff:
         diff['after'] = to_native(b''.join(b_lines))
 
-    backupdest = ""
     if changed and not module.check_mode:
         if backup:
-            backupdest = module.backup_local(dest)
+            backupdest = module.backup_local(dest, backupdest)
         write_changes(module, b_lines, dest)
 
     if changed:
@@ -524,6 +527,7 @@ def main():
             backrefs=dict(type='bool', default=False),
             create=dict(type='bool', default=False),
             backup=dict(type='bool', default=False),
+            backup_file=dict(type='path'),
             firstmatch=dict(type='bool', default=False),
             validate=dict(type='str'),
         ),
@@ -535,6 +539,7 @@ def main():
     params = module.params
     create = params['create']
     backup = params['backup']
+    backup_file = params['backup_file']
     backrefs = params['backrefs']
     path = params['path']
     firstmatch = params['firstmatch']
@@ -565,12 +570,12 @@ def main():
             ins_aft = 'EOF'
 
         present(module, path, regexp, line,
-                ins_aft, ins_bef, create, backup, backrefs, firstmatch)
+                ins_aft, ins_bef, create, backup, backup_file, backrefs, firstmatch)
     else:
         if regexp is None and line is None:
             module.fail_json(msg='one of line or regexp is required with state=absent')
 
-        absent(module, path, regexp, line, backup)
+        absent(module, path, regexp, line, backup, backup_file)
 
 
 if __name__ == '__main__':

@@ -75,10 +75,15 @@ options:
     version_added: "2.4"
   backup:
     description:
-      - Create a backup file including the timestamp information so you can
+      - Create a backup file; by default the name includes the timestamp information so you can
         get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
+  backup_file:
+    description:
+    - Only when C(backup) is set, specify the path of the backup file
+    type: path
+    version_added: '2.11'
   others:
     description:
       - All arguments accepted by the M(ansible.builtin.file) module also work here.
@@ -216,6 +221,7 @@ def main():
             after=dict(type='str'),
             before=dict(type='str'),
             backup=dict(type='bool', default=False),
+            backup_file=dict(type='path'),
             validate=dict(type='str'),
             encoding=dict(type='str', default='utf-8'),
         ),
@@ -284,8 +290,8 @@ def main():
         changed = False
 
     if changed and not module.check_mode:
-        if params['backup'] and os.path.exists(path):
-            res_args['backup_file'] = module.backup_local(path)
+        if module.boolean(params['backup']) and os.path.exists(path):
+            res_args['backup_file'] = module.backup_local(path, params['backup_file'])
         # We should always follow symlinks so that we change the real file
         path = os.path.realpath(path)
         write_changes(module, to_bytes(result[0], encoding=encoding), path)
