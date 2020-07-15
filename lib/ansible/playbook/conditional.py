@@ -76,6 +76,37 @@ class Conditional:
 
         return results
 
+    def resolve_conditionals(self, conditionals, templar):
+        ds = None
+        if hasattr(self, '_ds'):
+            ds = getattr(self, '_ds')
+
+        flattened_conditionals = {}
+        for conditional, disable_lookups, templated, original, error in flatten_extended_attrs('when', self._when, conditionals, templar, ds=ds, strict=False):
+            if error:
+                raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (to_native(original), error), obj=ds)
+            flattened_conditionals[conditional] = {'original': original}
+            flattened_conditionals[conditional]['disable_lookups'] = disable_lookups
+            if templated:
+                flattened_conditionals[conditional]['bare_vars_warning'] = False
+
+        for conditional in flattened_conditionals:
+            if C.CONDITIONAL_BARE_VARS:
+                if 'bare_vars_warning' not in flattened_conditionals[conditional] or flattened_conditionals[conditional]['bare_vars_warning']:
+                    if conditional in templar.available_variables and VALID_VAR_REGEX.match(conditional):
+                        resolved_conditional = templar.available_variables[conditional]
+                        flattened_conditionals[conditional]['bare_vars_warning'] = True
+                        flattened_conditionals[conditional]['resolved'] = resolved_conditional
+
+            resolved = flattened_conditionals[conditional].get('resolved', conditional)
+            disable_lookups = flattened_conditionals[conditional]['disable_lookups']
+            bare_vars_warning = flattened_conditionals[conditional].get('bare_vars_warning')
+            if isinstance(resolved, list):
+                for resolved_conditional in resolved:
+                    yield resolved_conditional, disable_lookups, bare_vars_warning, flattened_conditionals[conditional]['original']
+            else:
+                yield resolved, disable_lookups, bare_vars_warning, flattened_conditionals[conditional]['original']
+
     def evaluate_conditional(self, templar, all_vars):
         '''
         Loops through the conditionals set on this object, returning
@@ -90,32 +121,16 @@ class Conditional:
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
 
-        conditionals = []
-        warnings = []
+        original_conditional = self.when
 
-        for conditional in self.when:
-
-            if C.CONDITIONAL_BARE_VARS:
-                if conditional in all_vars and VALID_VAR_REGEX.match(conditional):
-                    conditional = all_vars[conditional]
-                    bare_vars_warning = True
-                    warnings.append(conditional)
-            conditionals.append(conditional)
-
-        try:
-            # Ensure extended conditionals are merged/deduplicated
-            if hasattr(self, 'get_ds'):
-                ds = self.get_ds()
-            else:
-                ds = None
-            for conditional, disable_lookups in flatten_extended_attrs('when', self._when, conditionals, templar, ds=ds):
-                if not self._check_conditional(conditional, templar, all_vars, disable_lookups, bare_vars_warning=bool(conditional in warnings)):
+        for resolved_conditional, disable_lookups, bare_vars_warning, original_conditional in self.resolve_conditionals(self.when, templar):
+            try:
+                if not self._check_conditional(resolved_conditional, templar, all_vars, disable_lookups, bare_vars_warning):
                     return False
-
-        except Exception as e:
-            raise AnsibleError(
-                "The conditional check '%s' failed. The error was: %s" % (to_native(conditionals), to_native(e)), obj=ds
-            )
+            except Exception as e:
+                raise AnsibleError(
+                    "The conditional check '%s' failed. The error was: %s" % (to_native(original_conditional), to_native(e)), obj=ds
+                )
 
         return True
 

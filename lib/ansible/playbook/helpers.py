@@ -21,7 +21,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
+from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
@@ -397,10 +397,10 @@ def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, 
 
 
 def resolve_extended_attr(field, attr, value, templar, ds):
-    return [v for v, _ in flatten_extended_attrs(field, attr, value, templar, ds)]
+    return [v for v, _, _, _, _ in flatten_extended_attrs(field, attr, value, templar, ds)]
 
 
-def flatten_extended_attrs(field, attr, value, templar, ds):
+def flatten_extended_attrs(field, attr, value, templar, ds, strict=True):
     if not attr.isa == 'list':
         raise AnsibleParserError(msg="Unexpected attribute type %s ('%s') for flattening extended values. This method expects a list." % (field, attr.isa))
 
@@ -412,12 +412,25 @@ def flatten_extended_attrs(field, attr, value, templar, ds):
     # Extended values may contain nested items by using a variable list which is merged with the parent value
     # Template and flatten before validating listof
     for item in value:
+        template_error = None
+        if isinstance(item, list):
+            original = item[:]
+        elif isinstance(item, dict):
+            original = item.copy()
+        else:
+            original = item
+
         flatten = []
         disable_lookups = False
         template = templar.is_template(item)
         if template:
             disable_lookups = hasattr(item, '__UNSAFE__')
-            item = templar.template(item, disable_lookups=disable_lookups)
+            try:
+                item = templar.template(item, disable_lookups=disable_lookups)
+            except AnsibleTemplateError as e:
+                if strict:
+                    raise
+                template_error = to_native(e)
         if isinstance(item, list):
             flatten.extend(item)
         else:
@@ -430,4 +443,4 @@ def flatten_extended_attrs(field, attr, value, templar, ds):
 
             if value not in unique_list:
                 unique_list.append(value)
-                yield value, disable_lookups
+                yield value, disable_lookups, template, original, template_error
