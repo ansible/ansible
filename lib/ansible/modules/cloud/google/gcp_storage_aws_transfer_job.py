@@ -3,11 +3,8 @@
 # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-from __future__ import absolute_import, division, print_function
-__metaclass__ = type
-
 ANSIBLE_METADATA = {
-    'metadata_version': '1.1',
+    'metadata_version': '1.0',
     'status': ['preview'],
     'supported_by': 'community'
 }
@@ -15,71 +12,66 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: gcp_storage_aws_transfer_job
-description:
-- This module will create GCP Storage Transfer Jobs which transfers AWS S3 Bucket objects into the specified
-  GCP Bucket. If there is an existing Transfer Job with the same Description it will delete it and create a new job.
-  If you include the parameter aws_s3_bucket_prefix, it will transfer that prefix only, otherwise it will transfer all
-  objects in the bucket. The Transfer Jobs will only pull changed or new objects when they execute.
+version_added: 2.9
 short_description: Creates GCP Transfer Jobs between AWS S3 and GCP Storage.
-version_added: 2.8
-author:
-- Chanaka Samarajeewa (@csamarajeewa) .
-requirements:
-- python >= 2.7
-- google-auth >= 1.6.3
-- google-auth-httplib2 >= 0.0.34
-- google-cloud-storage >= 1.16.1
-options:
-  project_id:
-    description:
-    - GCP account project id.
-    required: true
-  scheduled_start_date_utc:
-    description:
-    - Start date of transfer job in YYYY-MM-DD format. Example 2020-01-31.
-    - For details on how transfer job schedules work see https://cloud.google.com/storage-transfer/docs/reference/rest/v1/transferJobs#schedule.
-    required: true
-  scheduled_end_date_utc:
-    description:
-    - End date of transfer job in YYYY-MM-DD format. Example 2020-01-31.
-    required: true
-  scheduled_start_time_utc:
-    description:
-    - Transfer job start time in HH:SS format. Example 18:30.
-    required: true
-  gcp_storage_bucket:
-    description:
-    - The GCP storage bucket to transfer objects into.
-    required: true
-  service_account_file:
-    description:
-    - GCP credentails file.
-    required: true
-  aws_s3_bucket:
-    description:
-    - AWS S3 bucket which contains the source objects.
-    required: true
-  aws_s3_bucket_prefix:
-    description:
-    - Prefix within the S3 bucket which contains the source objects.
-    required: false
-  description:
-    description:
-    - This is used as a unique name for the transfer job. If a job with the same description exists, it is replaced, or deleted depending on state.
-    required: true
-  state:
-    description:
-    - Whether to create/update or delete a transfer job. Options are present and absent.
-    required: true
-  aws_access_key:
-    description:
-    - The AWS IAM account access key used by the transfer job to retreive S3 objects.
-    required: true
-  aws_secret_key:
-    description:
-    - The AWS IAM account access key secret used by the transfer job to retreive S3 objects.
-    required: true
+description: This module will create GCP Storage Transfer Jobs which transfers AWS S3 Bucket objects into the specified
+             GCP Bucket. If there is an existing Transfer Job with the same Description it will delete it and create a new job.
+             If you include the parameter aws_s3_bucket_prefix, it will transfer that prefix only, otherwise it will transfer all
+             objects in the bucket. The Transfer Jobs will only pull changed or new objects when they execute.
 
+options:
+    project_id:
+        description:
+            - GCP account project id.
+        required: true
+    scheduled_start_date_utc:
+        description:
+            - Start date of transfer job in YYYY-MM-DD format.
+            - For details on how transfer job schedules work see https://cloud.google.com/storage-transfer/docs/reference/rest/v1/transferJobs#schedule.
+        required: true
+    scheduled_end_date_utc:
+        description:
+            - End date of transfer job in YYYY-MM-DD format .
+        required: true
+    scheduled_start_time_utc:
+        description:
+            - Transfer job start time in HH:SS format.
+        required: true
+    gcp_storage_bucket:
+        description:
+            - The GCP storage bucket to transfer objects into.
+        required: true
+    service_account_file:
+        description:
+            - GCP credentails file.
+        required: true
+    aws_s3_bucket:
+        description:
+            - AWS S3 bucket which contains the source objects.
+        required: true
+    aws_s3_bucket_prefix:
+        description:
+            - Prefix within the S3 bucket which contains the source objects.
+        required: false
+    description:
+        description:
+            - This is used as a unique name for the transfer job. If a job with the same description exists, it is replaced, or deleted depending on state.
+        required: true
+    state:
+        description:
+            - Whether to create/update or delete a transfer job. Options are present and absent.
+        required: true
+    aws_access_key:
+        description:
+            - The AWS IAM account access key used by the transfer job to retreive S3 objects.
+        required: true
+    aws_secret_key:
+        description:
+            - The AWS IAM account access key secret used by the transfer job to retreive S3 objects.
+        required: true
+
+author:
+    - Chanaka Samarajeewa (@csamarajeewa)
 '''
 
 EXAMPLES = '''
@@ -120,6 +112,7 @@ EXAMPLES = '''
     state: absent
   loop: "{{ gcp_create_transfer_jobs }}"
 
+
 '''
 
 RETURN = '''
@@ -139,6 +132,7 @@ from google.oauth2 import service_account
 import googleapiclient.discovery
 
 from ansible.module_utils.basic import AnsibleModule
+
 
 def run_module():
 
@@ -225,18 +219,17 @@ def run_module():
         }
     }
 
-
     credentials = service_account.Credentials.from_service_account_file(module.params['service_account_file'])
     storagetransfer = googleapiclient.discovery.build('storagetransfer', 'v1', credentials=credentials)
 
     filterString = (
-     '{{"project_id": "{project_id}"}}'
+        '{{"project_id": "{project_id}"}}'
     ).format(project_id=module.params['project_id'])
 
     queryResult = storagetransfer.transferJobs().list(filter=filterString).execute()
     result['message'] = queryResult
 
-    #Delete existing job if exists, then create new job
+    # Delete existing job if exists, then create new job
     if 'transferJobs' in queryResult:
         for transferJob in queryResult['transferJobs']:
             if transferJob['description'] == module.params['description']:
@@ -252,8 +245,10 @@ def run_module():
 
     module.exit_json(**result)
 
+
 def main():
     run_module()
+
 
 if __name__ == '__main__':
     main()
