@@ -643,73 +643,73 @@ plugin_routing:
     cs_zone_info:
       redirect: ngine_io.cloudstack.cs_zone_info
     digital_ocean:
-      redirect: community.digitalocean.digital_ocean
+      redirect: community.general.digital_ocean
     digital_ocean_account_facts:
-      redirect: community.digitalocean.digital_ocean_account_facts
+      redirect: community.general.digital_ocean_account_facts
     digital_ocean_certificate_facts:
-      redirect: community.digitalocean.digital_ocean_certificate_facts
+      redirect: community.general.digital_ocean_certificate_facts
     digital_ocean_domain_facts:
-      redirect: community.digitalocean.digital_ocean_domain_facts
+      redirect: community.general.digital_ocean_domain_facts
     digital_ocean_firewall_facts:
-      redirect: community.digitalocean.digital_ocean_firewall_facts
+      redirect: community.general.digital_ocean_firewall_facts
     digital_ocean_floating_ip_facts:
-      redirect: community.digitalocean.digital_ocean_floating_ip_facts
+      redirect: community.general.digital_ocean_floating_ip_facts
     digital_ocean_image_facts:
-      redirect: community.digitalocean.digital_ocean_image_facts
+      redirect: community.general.digital_ocean_image_facts
     digital_ocean_load_balancer_facts:
-      redirect: community.digitalocean.digital_ocean_load_balancer_facts
+      redirect: community.general.digital_ocean_load_balancer_facts
     digital_ocean_region_facts:
-      redirect: community.digitalocean.digital_ocean_region_facts
+      redirect: community.general.digital_ocean_region_facts
     digital_ocean_size_facts:
-      redirect: community.digitalocean.digital_ocean_size_facts
+      redirect: community.general.digital_ocean_size_facts
     digital_ocean_snapshot_facts:
-      redirect: community.digitalocean.digital_ocean_snapshot_facts
+      redirect: community.general.digital_ocean_snapshot_facts
     digital_ocean_sshkey_facts:
-      redirect: community.digitalocean.digital_ocean_sshkey_facts
+      redirect: community.general.digital_ocean_sshkey_facts
     digital_ocean_tag_facts:
-      redirect: community.digitalocean.digital_ocean_tag_facts
+      redirect: community.general.digital_ocean_tag_facts
     digital_ocean_volume_facts:
-      redirect: community.digitalocean.digital_ocean_volume_facts
+      redirect: community.general.digital_ocean_volume_facts
     digital_ocean_account_info:
-      redirect: community.digitalocean.digital_ocean_account_info
+      redirect: community.general.digital_ocean_account_info
     digital_ocean_block_storage:
-      redirect: community.digitalocean.digital_ocean_block_storage
+      redirect: community.general.digital_ocean_block_storage
     digital_ocean_certificate:
-      redirect: community.digitalocean.digital_ocean_certificate
+      redirect: community.general.digital_ocean_certificate
     digital_ocean_certificate_info:
-      redirect: community.digitalocean.digital_ocean_certificate_info
+      redirect: community.general.digital_ocean_certificate_info
     digital_ocean_domain:
-      redirect: community.digitalocean.digital_ocean_domain
+      redirect: community.general.digital_ocean_domain
     digital_ocean_domain_info:
-      redirect: community.digitalocean.digital_ocean_domain_info
+      redirect: community.general.digital_ocean_domain_info
     digital_ocean_droplet:
-      redirect: community.digitalocean.digital_ocean_droplet
+      redirect: community.general.digital_ocean_droplet
     digital_ocean_firewall_info:
-      redirect: community.digitalocean.digital_ocean_firewall_info
+      redirect: community.general.digital_ocean_firewall_info
     digital_ocean_floating_ip:
-      redirect: community.digitalocean.digital_ocean_floating_ip
+      redirect: community.general.digital_ocean_floating_ip
     digital_ocean_floating_ip_info:
-      redirect: community.digitalocean.digital_ocean_floating_ip_info
+      redirect: community.general.digital_ocean_floating_ip_info
     digital_ocean_image_info:
-      redirect: community.digitalocean.digital_ocean_image_info
+      redirect: community.general.digital_ocean_image_info
     digital_ocean_load_balancer_info:
-      redirect: community.digitalocean.digital_ocean_load_balancer_info
+      redirect: community.general.digital_ocean_load_balancer_info
     digital_ocean_region_info:
-      redirect: community.digitalocean.digital_ocean_region_info
+      redirect: community.general.digital_ocean_region_info
     digital_ocean_size_info:
-      redirect: community.digitalocean.digital_ocean_size_info
+      redirect: community.general.digital_ocean_size_info
     digital_ocean_snapshot_info:
-      redirect: community.digitalocean.digital_ocean_snapshot_info
+      redirect: community.general.digital_ocean_snapshot_info
     digital_ocean_sshkey:
-      redirect: community.digitalocean.digital_ocean_sshkey
+      redirect: community.general.digital_ocean_sshkey
     digital_ocean_sshkey_info:
-      redirect: community.digitalocean.digital_ocean_sshkey_info
+      redirect: community.general.digital_ocean_sshkey_info
     digital_ocean_tag:
-      redirect: community.digitalocean.digital_ocean_tag
+      redirect: community.general.digital_ocean_tag
     digital_ocean_tag_info:
-      redirect: community.digitalocean.digital_ocean_tag_info
+      redirect: community.general.digital_ocean_tag_info
     digital_ocean_volume_info:
-      redirect: community.digitalocean.digital_ocean_volume_info
+      redirect: community.general.digital_ocean_volume_info
     dimensiondata_network:
       redirect: community.general.dimensiondata_network
     dimensiondata_vlan:
@@ -7577,32 +7577,30 @@ plugin_routing:
       redirect: community.general.alicloud_ecs
     ansible_tower:
       redirect: awx.awx.ansible_tower
-    aws:
-      redirect: amazon.aws.aws
     aws.batch:
-      redirect: amazon.aws.aws.batch
+      redirect: amazon.aws.batch
     aws.cloudfront_facts:
-      redirect: amazon.aws.aws.cloudfront_facts
+      redirect: amazon.aws.cloudfront_facts
     aws.core:
-      redirect: amazon.aws.aws.core
+      redirect: amazon.aws.core
     aws.direct_connect:
-      redirect: amazon.aws.aws.direct_connect
+      redirect: amazon.aws.direct_connect
     aws.elb_utils:
-      redirect: amazon.aws.aws.elb_utils
+      redirect: amazon.aws.elb_utils
     aws.elbv2:
-      redirect: amazon.aws.aws.elbv2
+      redirect: amazon.aws.elbv2
     aws.iam:
-      redirect: amazon.aws.aws.iam
+      redirect: amazon.aws.iam
     aws.rds:
-      redirect: amazon.aws.aws.rds
+      redirect: amazon.aws.rds
     aws.s3:
-      redirect: amazon.aws.aws.s3
+      redirect: amazon.aws.s3
     aws.urls:
-      redirect: amazon.aws.aws.urls
+      redirect: amazon.aws.urls
     aws.waf:
-      redirect: amazon.aws.aws.waf
+      redirect: amazon.aws.waf
     aws.waiters:
-      redirect: amazon.aws.aws.waiters
+      redirect: amazon.aws.waiters
     azure_rm_common:
       redirect: azure.azcollection.azure_rm_common
     azure_rm_common_ext:
@@ -7622,7 +7620,7 @@ plugin_routing:
     database:
       redirect: community.general.database
     digital_ocean:
-      redirect: community.digitalocean.digital_ocean
+      redirect: community.general.digital_ocean
     dimensiondata:
       redirect: community.general.dimensiondata
     docker:
@@ -7648,8 +7646,9 @@ plugin_routing:
       redirect: community.general.gcdns
     gce:
       redirect: community.general.gce
-    gcp:
-      redirect: google.cloud.gcp
+# FIXME: can't find this file in google.cloud
+#    gcp:
+#      redirect: google.cloud.gcp
     gcp_utils:
       redirect: google.cloud.gcp_utils
     gitlab:
@@ -7677,15 +7676,13 @@ plugin_routing:
     ipa:
       redirect: community.general.ipa
     ismount:
-      redirect: ansible.posix.ismount
-    k8s:
-      redirect: community.kubernetes.k8s
+      redirect: ansible.posix.mount
     k8s.common:
-      redirect: community.kubernetes.k8s.common
+      redirect: community.kubernetes.common
     k8s.raw:
-      redirect: community.kubernetes.k8s.raw
+      redirect: community.kubernetes.raw
     k8s.scale:
-      redirect: community.kubernetes.k8s.scale
+      redirect: community.kubernetes.scale
     known_hosts:
       redirect: community.general.known_hosts
     kubevirt:
@@ -7701,7 +7698,7 @@ plugin_routing:
     memset:
       redirect: community.general.memset
     mysql:
-      redirect: community.mysql.mysql
+      redirect: community.general.mysql
     net_tools.netbox.netbox_utils:
       redirect: netbox.netbox.netbox_utils
     net_tools.nios:
@@ -7738,66 +7735,39 @@ plugin_routing:
       redirect: community.network.network.bigswitch.bigswitch
     network.checkpoint.checkpoint:
       redirect: check_point.mgmt.checkpoint
-    network.cloudengine:
-      redirect: FIXMENS.FIXMECOLL.network.cloudengine
     network.cloudengine.ce:
-      redirect: FIXMENS.FIXMECOLL.network.cloudengine.ce
-    network.cnos:
-      redirect: FIXMENS.FIXMECOLL.network.cnos
+      redirect: community.network.network.cloudengine.ce
     network.cnos.cnos:
-      redirect: FIXMENS.FIXMECOLL.network.cnos.cnos
+      redirect: community.network.network.cnos.cnos
     network.cnos.cnos_devicerules:
-      redirect: FIXMENS.FIXMECOLL.network.cnos.cnos_devicerules
+      redirect: community.network.network.cnos.cnos_devicerules
     network.cnos.cnos_errorcodes:
-      redirect: FIXMENS.FIXMECOLL.network.cnos.cnos_errorcodes
-    network.common:
-      redirect: FIXMENS.FIXMECOLL.network.common
-    network.common.cfg:
-      redirect: FIXMENS.FIXMECOLL.network.common.cfg
+      redirect: community.network.network.cnos.cnos_errorcodes
     network.common.cfg.base:
-      redirect: FIXMENS.FIXMECOLL.network.common.cfg.base
+      redirect: ansible.netcommon.network.common.cfg.base
     network.common.config:
-      redirect: FIXMENS.FIXMECOLL.network.common.config
-    network.common.facts:
-      redirect: FIXMENS.FIXMECOLL.network.common.facts
+      redirect: ansible.netcommon.network.common.config
     network.common.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.common.facts.facts
+      redirect: ansible.netcommon.network.common.facts.facts
     network.common.netconf:
-      redirect: FIXMENS.FIXMECOLL.network.common.netconf
+      redirect: ansible.netcommon.network.common.netconf
     network.common.network:
-      redirect: FIXMENS.FIXMECOLL.network.common.network
+      redirect: ansible.netcommon.network.common.network
     network.common.parsing:
-      redirect: FIXMENS.FIXMECOLL.network.common.parsing
+      redirect: ansible.netcommon.network.common.parsing
     network.common.utils:
-      redirect: FIXMENS.FIXMECOLL.network.common.utils
-    network.dellos10:
-      redirect: FIXMENS.FIXMECOLL.network.dellos10
+      redirect: ansible.netcommon.network.common.utils
     network.dellos10.dellos10:
-      redirect: FIXMENS.FIXMECOLL.network.dellos10.dellos10
-    network.dellos6:
-      redirect: FIXMENS.FIXMECOLL.network.dellos6
-    network.dellos6.dellos6:
-      redirect: FIXMENS.FIXMECOLL.network.dellos6.dellos6
-    network.dellos9:
-      redirect: FIXMENS.FIXMECOLL.network.dellos9
-    network.dellos9.dellos9:
-      redirect: FIXMENS.FIXMECOLL.network.dellos9.dellos9
-    network.edgeos:
-      redirect: FIXMENS.FIXMECOLL.network.edgeos
+      redirect: dellemc_networking.os10.network.os10
+    # FIXME: no collection source found for dellos6/dellos9
     network.edgeos.edgeos:
-      redirect: FIXMENS.FIXMECOLL.network.edgeos.edgeos
-    network.edgeswitch:
-      redirect: FIXMENS.FIXMECOLL.network.edgeswitch
+      redirect: community.network.network.edgeos.edgeos
     network.edgeswitch.edgeswitch:
-      redirect: FIXMENS.FIXMECOLL.network.edgeswitch.edgeswitch
+      redirect: community.network.network.edgeswitch.edgeswitch
     network.edgeswitch.edgeswitch_interface:
-      redirect: FIXMENS.FIXMECOLL.network.edgeswitch.edgeswitch_interface
-    network.enos:
-      redirect: FIXMENS.FIXMECOLL.network.enos
+      redirect: community.network.network.edgeswitch.edgeswitch_interface
     network.enos.enos:
-      redirect: FIXMENS.FIXMECOLL.network.enos.enos
-    network.eos:
-      redirect: FIXMENS.FIXMECOLL.network.eos
+      redirect: community.network.network.enos.enos
     network.eos.argspec:
       redirect: FIXMENS.FIXMECOLL.network.eos.argspec
     network.eos.argspec.facts:
@@ -9265,7 +9235,7 @@ plugin_routing:
     cnos:
       redirect: community.network.cnos
     digital_ocean:
-      redirect: community.digitalocean.digital_ocean
+      redirect: community.general.digital_ocean
     dimensiondata:
       redirect: community.general.dimensiondata
     dimensiondata_wait:
