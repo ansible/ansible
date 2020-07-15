@@ -6,6 +6,8 @@
   pip:
     name: ansible-runner
     version: 1.2.0
+    extra_args:
+      -c {{ role_path }}/files/constraints.txt
 
 - name: Find location of ansible-runner installation
   command: "'{{ ansible_python_interpreter }}' -c 'import os, ansible_runner; print(os.path.dirname(ansible_runner.__file__))'"
