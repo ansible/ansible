@@ -1899,23 +1899,23 @@ plugin_routing:
     bigmon_policy:
       redirect: community.network.bigmon_policy
     checkpoint_access_layer_facts:
-      redirect: checkpoint.mgmt.checkpoint_access_layer_facts
+      redirect: check_point.mgmt.checkpoint_access_layer_facts
     checkpoint_access_rule:
-      redirect: checkpoint.mgmt.checkpoint_access_rule
+      redirect: check_point.mgmt.checkpoint_access_rule
     checkpoint_access_rule_facts:
-      redirect: checkpoint.mgmt.checkpoint_access_rule_facts
+      redirect: check_point.mgmt.checkpoint_access_rule_facts
     checkpoint_host:
-      redirect: checkpoint.mgmt.checkpoint_host
+      redirect: check_point.mgmt.checkpoint_host
     checkpoint_host_facts:
-      redirect: checkpoint.mgmt.checkpoint_host_facts
+      redirect: check_point.mgmt.checkpoint_host_facts
     checkpoint_object_facts:
-      redirect: checkpoint.mgmt.checkpoint_object_facts
+      redirect: check_point.mgmt.checkpoint_object_facts
     checkpoint_run_script:
-      redirect: checkpoint.mgmt.checkpoint_run_script
+      redirect: check_point.mgmt.checkpoint_run_script
     checkpoint_session:
-      redirect: checkpoint.mgmt.checkpoint_session
+      redirect: check_point.mgmt.checkpoint_session
     checkpoint_task_facts:
-      redirect: checkpoint.mgmt.checkpoint_task_facts
+      redirect: check_point.mgmt.checkpoint_task_facts
     cp_publish:
       redirect: community.network.cp_publish
     ce_aaa_server:
