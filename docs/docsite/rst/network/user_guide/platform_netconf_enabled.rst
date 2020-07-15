@@ -32,7 +32,7 @@ Connections available
     ====================  ==========================================
 
 
-The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: ansible.netcommon.netconf`` as soon as possible.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: ansible.netcommon.netconf`` instead.
 
 Using NETCONF in Ansible
 ========================
