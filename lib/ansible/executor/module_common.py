@@ -442,12 +442,13 @@ NEW_STYLE_PYTHON_MODULE_RE = re.compile(
 
 
 class ModuleDepFinder(ast.NodeVisitor):
-
-    def __init__(self, module_fqn, *args, **kwargs):
+    def __init__(self, module_fqn, is_pkg_init=False, *args, **kwargs):
         """
         Walk the ast tree for the python module.
         :arg module_fqn: The fully qualified name to reach this module in dotted notation.
             example: ansible.module_utils.basic
+        :arg is_pkg_init: Inform the finder it's looking at a package init (eg __init__.py) to allow
+            relative import expansion to use the proper package level without having imported it locally first.
 
         Save submodule[.submoduleN][.identifier] into self.submodules
         when they are from ansible.module_utils or ansible_collections packages
@@ -467,6 +468,7 @@ class ModuleDepFinder(ast.NodeVisitor):
         super(ModuleDepFinder, self).__init__(*args, **kwargs)
         self.submodules = set()
         self.module_fqn = module_fqn
+        self.is_pkg_init = is_pkg_init
 
         self._visit_map = {
             Import: self.visit_Import,
@@ -519,14 +521,16 @@ class ModuleDepFinder(ast.NodeVisitor):
         # from ...executor import module_common
         # from ... import executor (Currently it gives a non-helpful error)
         if node.level > 0:
+            # if we're in a package init, we have to add one to the node level (and make it none if 0 to preserve the right slicing behavior)
+            level_slice_offset = -node.level + 1 or None if self.is_pkg_init else -node.level
             if self.module_fqn:
                 parts = tuple(self.module_fqn.split('.'))
                 if node.module:
                     # relative import: from .module import x
-                    node_module = '.'.join(parts[:-node.level] + (node.module,))
+                    node_module = '.'.join(parts[:level_slice_offset] + (node.module,))
                 else:
                     # relative import: from . import x
-                    node_module = '.'.join(parts[:-node.level])
+                    node_module = '.'.join(parts[:level_slice_offset])
             else:
                 # fall back to an absolute import
                 node_module = node.module
@@ -952,7 +956,7 @@ def recursive_finder(name, module_fqn, module_data, zf):
         except (SyntaxError, IndentationError) as e:
             raise AnsibleError("Unable to import %s due to %s" % (module_info.fq_name_parts, e.msg))
 
-        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts))
+        finder = ModuleDepFinder('.'.join(module_info.fq_name_parts), module_info.is_package)
         finder.visit(tree)
         modules_to_process.extend(ModuleUtilsProcessEntry(m, True, False) for m in finder.submodules if m not in py_module_cache)
 
