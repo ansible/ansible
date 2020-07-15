@@ -48,7 +48,11 @@ class Taggable:
 
         if self.tags:
             templar = Templar(loader=self._loader, variables=all_vars)
-            tags = resolve_extended_attr('tags', self._tags, self.tags, templar, ds=self.get_ds())
+            # since this is a mix-in, it may not have an underlying datastructure associated with it
+            ds = None
+            if hasattr(self, '_ds'):
+                ds = getattr(self, '_ds')
+            tags = resolve_extended_attr('tags', self._tags, self.tags, templar, ds=ds)
 
             _temp_tags = set()
             for tag in tags:
