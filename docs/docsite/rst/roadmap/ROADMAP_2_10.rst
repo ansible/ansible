@@ -19,7 +19,7 @@ PRs must be raised well in advance of the dates below to have a chance of being 
 - 2020-06-16 Beta 1 **Feature freeze**
   No new functionality (including modules/plugins) to any code
 
-- 2020-07-14 Release Candidate 1
+- 2020-07-21 Release Candidate 1 (bumped from 2020-07-14)
 - 2020-??-?? Release Candidate 2 if needed
 - 2020-08-13 Release
 
