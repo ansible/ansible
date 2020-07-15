@@ -3101,7 +3101,7 @@ plugin_routing:
     filesystem:
       redirect: community.general.filesystem
     firewalld:
-      redirect: community.general.firewalld
+      redirect: ansible.posix.firewalld
     gconftool2:
       redirect: community.general.gconftool2
     interfaces_file:
