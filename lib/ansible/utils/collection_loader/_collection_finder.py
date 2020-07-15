@@ -942,8 +942,7 @@ def _iter_modules_impl(paths, prefix=''):
                     continue
 
                 # TODO: proper string handling?
-                for m, case in _iter_modules_impl([b_candidate_module_path], prefix):
-                    yield m, case
+                yield prefix + to_native(b_basename), True
             else:
                 # FIXME: match builtin ordering for package/dir/file, support compiled?
                 if b_basename.endswith(b'.py') and b_basename != b'__init__.py':
