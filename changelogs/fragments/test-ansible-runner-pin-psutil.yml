@@ -1,2 +1,2 @@
 bugfixes:
-  - add constraints file for ``anisble_runner`` test since an update to ``psutil`` is now causing test failures
+  - add constraints file for ``ansible_runner`` test since an update to ``psutil`` is now causing test failures
