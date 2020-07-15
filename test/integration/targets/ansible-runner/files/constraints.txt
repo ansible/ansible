@@ -1,0 +1,5 @@
+psutil < 5.7.0    # Greater than this version breaks on older pip
+pexpect >= 4.5, <= 4.8.0
+python-daemon <= 2.2.4
+pyyaml < 5.1 ; python_version < '2.7' # pyyaml 5.1 and later require python 2.7 or later
+six <= 1.14.0
