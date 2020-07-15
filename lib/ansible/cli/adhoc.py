@@ -142,7 +142,7 @@ class AdHocCLI(CLI):
 
         run_tree = False
         if context.CLIARGS['tree']:
-            C.DEFAULT_CALLBACK_ENABLED.append('tree')
+            C.CALLBACKS_ENABLED.append('tree')
             C.TREE_DIR = context.CLIARGS['tree']
             run_tree = True
 

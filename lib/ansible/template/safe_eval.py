@@ -112,7 +112,7 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     for test in test_loader.all():
         test_list.extend(test.tests().keys())
 
-    CALL_ENABLED = C.DEFAULT_CALLABLE_ACCEPT_LIST + filter_list + test_list
+    CALL_ENABLED = C.CALLABLE_ACCEPT_LIST + filter_list + test_list
 
     class CleansingNodeVisitor(ast.NodeVisitor):
         def generic_visit(self, node, inside_call=False):

@@ -175,7 +175,7 @@ class TaskQueueManager:
         callback_list = list(callback_loader.all(class_only=True))
 
         # add enabled callbacks that refer to collections, which might not appear in normal listing
-        for c in C.DEFAULT_CALLBACK_WHITELIST:
+        for c in C.DEFAULT_CALLBACK_ENABLED:
             # load all, as collection ones might be using short/redirected names and not a fqcn
             plugin = callback_loader.get(c, class_only=True)
 

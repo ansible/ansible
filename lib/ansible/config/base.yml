@@ -36,7 +36,7 @@ ANSIBLE_COW_SELECTION:
   env: [{name: ANSIBLE_COW_SELECTION}]
   ini:
   - {key: cow_selection, section: defaults}
-ANSIBLE_COW_ENABLED:
+ANSIBLE_COW_ACCEPTLIST:
   name: Cowsay filter acceptance list
   default: ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant', 'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep', 'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder', 'vader-koala', 'vader', 'www']
   description: White list of cowsay templates that are 'safe' to use, set to empty list if you want to enable all installed templates.
@@ -45,8 +45,8 @@ ANSIBLE_COW_ENABLED:
     deprecated:
       why: Normalizing names to new standard.
       version: "2.15"
-      alternatives: 'ANSIBLE_COW_ENABLED'
-  - name: ANSIBLE_COW_ENABLED
+      alternatives: 'ANSIBLE_COW_ACCEPTLIST'
+  - name: ANSIBLE_COW_ACCEPTLIST
     version_added: '2.11'
   ini:
   - key: cow_whitelist
@@ -396,7 +396,7 @@ COVERAGE_REMOTE_OUTPUT:
   - {name: _ansible_coverage_remote_output}
   type: str
   version_added: '2.9'
-COVERAGE_REMOTE_ENABLED:
+COVERAGE_REMOTE_PATHS:
   name: Sets the list of paths to run coverage for.
   description:
   - A list of paths for files on the Ansible controller to run coverage for when executing on the remote host.
@@ -410,8 +410,8 @@ COVERAGE_REMOTE_ENABLED:
     deprecated:
       why: Normalizing names to new standard.
       version: "2.15"
-      alternatives: '_ANSIBLE_COVERAGE_REMOTE_ENABLED'
-  - name: '_ANSIBLE_COVERAGE_REMOTE_ENABLED'
+      alternatives: '_ANSIBLE_COVERAGE_REMOTE_PATHS'
+  - name: '_ANSIBLE_COVERAGE_REMOTE_PATHS'
     version_added: '2.11'
   type: pathlist
   version_added: '2.9'
@@ -568,7 +568,7 @@ DEFAULT_CACHE_PLUGIN_PATH:
   ini:
   - {key: cache_plugins, section: defaults}
   type: pathspec
-DEFAULT_CALLABLE_ACCEPT_LIST:
+CALLABLE_ACCEPT_LIST:
   name: Template 'callable' accept list
   default: []
   description: Whitelist of callable methods to be made available to template evaluation
@@ -600,7 +600,7 @@ DEFAULT_CALLBACK_PLUGIN_PATH:
   - {key: callback_plugins, section: defaults}
   type: pathspec
   yaml: {key: plugins.callback.path}
-DEFAULT_CALLBACK_ENABLED:
+CALLBACKS_ENABLED:
   name: Enable callback plugins that require it.
   default: []
   description:
@@ -611,8 +611,8 @@ DEFAULT_CALLBACK_ENABLED:
     deprecated:
       why: Normalizing names to new standard.
       version: "2.15"
-      alternatives: 'ANSIBLE_CALLBACK_ENABLED'
-  - name: ANSIBLE_CALLBACK_ENABLED
+      alternatives: 'ANSIBLE_CALLBACKS_ENABLED'
+  - name: ANSIBLE_CALLBACKS_ENABLED
     version_added: '2.11'
   ini:
   - key: callback_whitelist
@@ -621,7 +621,7 @@ DEFAULT_CALLBACK_ENABLED:
       why: Normalizing names to new standard.
       version: "2.15"
       alternatives: 'callback_enabled'
-  - key: callback_enabled
+  - key: callbacks_enabled
     section: defaults
     version_added: '2.11'
   type: list
