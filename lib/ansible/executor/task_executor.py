@@ -798,10 +798,7 @@ class TaskExecutor:
             cvars = variables
 
         # use magic var if it exists, if not, let task inheritance do it's thing.
-        if cvars.get('ansible_connection'):
-            self._play_context.connection = templar.template(cvars['ansible_connection'])
-        else:
-            self._play_context.connection = self._task.connection
+        self._play_context.connection = cvars.get('ansible_connection', self._task.connection)
 
         # TODO: play context has logic to update the conneciton for 'smart'
         # (default value, will chose between ssh and paramiko) and 'persistent'
