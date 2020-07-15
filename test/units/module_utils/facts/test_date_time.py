@@ -7,10 +7,11 @@ __metaclass__ = type
 
 import pytest
 import datetime
+import time
 
-from ansible.module_utils.facts.system.date_time import DateTimeFactCollector
+from ansible.module_utils.facts.system import date_time
 
-TIMESTAMP = datetime.datetime(2020, 7, 11, 12, 34, 56, 124356)
+UTC_TIMESTAMP = datetime.datetime(2020, 7, 11, 2, 34, 56, 124356)
 
 
 @pytest.fixture
@@ -18,18 +19,19 @@ def fake_now(monkeypatch):
     """Patch `datetime.datetime.now()` to return a deterministic value."""
     class FakeNow:
         @classmethod
-        def now(cls):
-            return TIMESTAMP
+        def utcnow(cls):
+            return UTC_TIMESTAMP
 
-    monkeypatch.setattr(datetime, 'datetime', FakeNow)
+    monkeypatch.setattr(date_time, 'datetime', FakeNow)
 
 
 @pytest.fixture
 def date_facts(monkeypatch, fake_now):
     """Return a predictable instance of collected date_time facts."""
-    monkeypatch.setenv('TZ', 'Australia/Melbourne')
 
-    collector = DateTimeFactCollector()
+    monkeypatch.setenv('TZ', 'Australia/Melbourne')
+    time.tzset()
+    collector = date_time.DateTimeFactCollector()
     data = collector.collect()
 
     return data
@@ -52,9 +54,11 @@ def date_facts(monkeypatch, fake_now):
         ('time', '12:34:56'),
         ('iso8601_basic', '20200711T123456124356'),
         ('iso8601_basic_short', '20200711T123456'),
+        ('iso8601_micro', '2020-07-11T02:34:56.124356Z'),
+        ('iso8601', '2020-07-11T02:34:56Z'),
         ('tz', 'AEST'),
         ('tz_dst', 'AEDT'),
-        ('tz_offset', '+1000')
+        ('tz_offset', '+1000'),
     ),
 )
 def test_date_time_facts(date_facts, fact_name, fact_value):

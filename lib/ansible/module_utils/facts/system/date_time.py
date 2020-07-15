@@ -18,8 +18,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import datetime
 import time
+
+from datetime import (
+    datetime,
+    timedelta,
+)
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -32,7 +36,10 @@ class DateTimeFactCollector(BaseFactCollector):
         facts_dict = {}
         date_time_facts = {}
 
-        now = datetime.datetime.now()
+        utcnow = datetime.utcnow()
+        offset_delta = timedelta(seconds=time.timezone)
+        now = utcnow - offset_delta
+
         date_time_facts['year'] = now.strftime('%Y')
         date_time_facts['month'] = now.strftime('%m')
         date_time_facts['weekday'] = now.strftime('%A')
@@ -48,8 +55,8 @@ class DateTimeFactCollector(BaseFactCollector):
             date_time_facts['epoch'] = str(int(time.time()))
         date_time_facts['date'] = now.strftime('%Y-%m-%d')
         date_time_facts['time'] = now.strftime('%H:%M:%S')
-        date_time_facts['iso8601_micro'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        date_time_facts['iso8601'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        date_time_facts['iso8601_micro'] = utcnow.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        date_time_facts['iso8601'] = utcnow.strftime("%Y-%m-%dT%H:%M:%SZ")
         date_time_facts['iso8601_basic'] = now.strftime("%Y%m%dT%H%M%S%f")
         date_time_facts['iso8601_basic_short'] = now.strftime("%Y%m%dT%H%M%S")
         date_time_facts['tz'] = time.strftime("%Z")
