@@ -113,6 +113,8 @@ Inventory script example: AWS EC2
 
 If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.githubusercontent.com/ansible-collections/community.aws/master/scripts/inventory/ec2.py>`_ script.
 
+.. note:: If you install ansible by pip because probably you are in MacOS you may need to change the `#!/usr/bin/env python` in the `ec2.py` to `#!/usr/bin/env python3` so it will use Python3 instead of Python2.7.
+
 You can use this script in one of two ways. The easiest is to use Ansible's ``-i`` command line option and specify the path to the script after marking it executable:
 
 .. code-block:: bash
