@@ -13,3 +13,5 @@ ansible-playbook undall.yml -i inventory -v "$@"
 
 # test hostvars templating
 ansible-playbook task_vars_templating.yml -v "$@"
+
+ansible-playbook test_connection_vars.yml -v "$@" 2>&1 | grep 'sudo'
