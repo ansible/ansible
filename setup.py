@@ -37,10 +37,9 @@ def find_package_info(*file_paths):
     # Open in Latin-1 so that we avoid encoding errors.
     # Use codecs.open for Python 2 compatibility
     try:
-        f = codecs.open(os.path.join(*file_paths), 'r', 'latin1')
-        info_file = f.read()
-        f.close()
-    except:
+        with codecs.open(os.path.join(*file_paths), 'r', 'latin1') as f:
+            info_file = f.read()
+    except Exception:
         raise RuntimeError("Unable to find package info.")
 
     # The version line must have the form
@@ -59,7 +58,7 @@ def _validate_install_ansible_base():
     """Validate that we can install ansible-base. Currently this only
     cares about upgrading to ansible-base from ansible<2.10
     """
-    if os.getenv('ANSIBLE_SKIP_CONFLICT_CHECK', '') not in ('', 0):
+    if os.getenv('ANSIBLE_SKIP_CONFLICT_CHECK', '') not in ('', '0'):
         return
 
     # Save these for later restoring things to pre invocation
