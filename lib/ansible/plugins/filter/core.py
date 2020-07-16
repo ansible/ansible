@@ -554,6 +554,12 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
     if not is_sequence(mylist):
         raise AnsibleFilterTypeError("items2dict requires a list, got %s instead." % type(mylist))
 
+    if value_name is None:
+        ret = {}
+        for element in mylist:
+            ret[element[key_name]] = element
+        return ret
+
     return dict((item[key_name], item[value_name]) for item in mylist)
 
 

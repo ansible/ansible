@@ -1,0 +1,2 @@
+minor_changes:
+  - When its final argument is ``None`, the ``items2dict`` filter can now return a dict whose values are the original elements of the input list, and whose keys are the *value* of some entry in each dict. When the resulting dict is stored and referenced later, this allows for O(1) lookup of a particular key without having to scan the entire list each time.

@@ -566,6 +566,12 @@
       - items2dict_fail is failed
       - '"items2dict requires a list" in items2dict_fail.msg'
 
+- name: Verify items2dict can key on list of commonly-structured dicts
+  assert:
+    that:
+      - '[{"name": "foo", "version": "10"}, {"name": "banana", "version": "93"}]|items2dict("name", None) == {"foo": {"name": "foo", "version": "10"}, "banana": {"name": "banana", "version": "93"}}'
+      - '[{"name": "foo", "version": "10"}, {"name": "banana", "version": "86"}, {"name": "banana", "version": "93"}]|items2dict("name", None) == {"foo": {"name": "foo", "version": "10"}, "banana": {"name": "banana", "version": "93"}}'
+
 - name: Verify path_join throws on non-string and non-sequence
   set_fact:
     foo: '{{True|path_join}}'

@@ -181,6 +181,20 @@ In this example, you must pass the ``key_name`` and ``value_name`` arguments to 
 
 If you do not pass these arguments, or do not pass the correct values for your list, you will see ``KeyError: key`` or ``KeyError: my_typo``.
 
+.. versionadded:: 2.11
+
+If the ``value_name`` is explicitly set to ``None`, the filter will return a dict whose *keys* are the value of the ``key_name`` field of the elements, and whose *values* are the full element (dict). Continuing with the example above::
+
+    {{ tags | items2dict(key_name='fruit', value_name=None) }}
+
+will result in the following dict::
+
+    {"apple": {"fruit": "apple", "color: "red"}, "pear": {"fruit": "pear", "color": "yellow"}, ...}
+
+This is useful when you have a list of similarly-structured dicts and want to be able to index into them by one of their values. For large input lists, running the filter once and storing the result provides fast access to elements of the original list.
+
+Note that if multiple elements in the input list have a ``key_name`` key with the same value, the last one will be used.
+
 Forcing the data type
 ---------------------
 
