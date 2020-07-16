@@ -289,10 +289,17 @@ def delegate_docker(args, exclude, require, integration_targets):
                 httptester_id = None
 
             test_options = [
-                '--detach',
                 '--volume', '/sys/fs/cgroup:/sys/fs/cgroup:ro',
                 '--privileged=%s' % str(privileged).lower(),
             ]
+
+            # We add the detach option here to prevent the container
+            # init process from killing all TTY sessions on the host
+            # ref: https://github.com/docker/for-linux/issues/106
+            if privileged:
+                test_options.extend([
+                    '--detach=true'
+                ])
 
             if args.docker_memory:
                 test_options.extend([
