@@ -720,13 +720,15 @@ class ModuleUtilLocatorBase:
     def _find_module(self, name_parts):
         return False
 
-    def _locate(self):
+    def _locate(self, redirect_first=True):
         for candidate_name_parts in self.candidate_names:
-            # check for a redirect entry first
-            if self._handle_redirect(candidate_name_parts):
+            if redirect_first and self._handle_redirect(candidate_name_parts):
                 break
 
             if self._find_module(candidate_name_parts):
+                break
+
+            if not redirect_first and self._handle_redirect(candidate_name_parts):
                 break
 
         else:  # didn't find what we were looking for- last chance for packages whose parents were redirected
@@ -770,7 +772,7 @@ class LegacyModuleUtilLocator(ModuleUtilLocatorBase):
 
         self._mu_paths = mu_paths
         self._collection_name = 'ansible.builtin'  # legacy module utils always look in ansible.builtin for redirects
-        self._locate()
+        self._locate(redirect_first=False)  # let local stuff override redirects for legacy
 
     def _get_module_utils_remainder_parts(self, name_parts):
         return name_parts[2:]  # eg, foo.bar for ansible.module_utils.foo.bar
