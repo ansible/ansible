@@ -682,7 +682,7 @@ class ModuleUtilLocatorBase:
 
             msg = 'module_util {0} has been removed'.format('.'.join(name_parts))
             if warning_text:
-                msg += ' ({0)}'.format(warning_text)
+                msg += ' ({0})'.format(warning_text)
             else:
                 msg += '.'
 

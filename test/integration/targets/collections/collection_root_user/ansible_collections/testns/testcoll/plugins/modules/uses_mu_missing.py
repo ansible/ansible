@@ -5,13 +5,11 @@ __metaclass__ = type
 import json
 import sys
 
-from ..module_utils import bogusmu
+from ..module_utils import bogusmu  # pylint: disable=relative-beyond-top-level
 
 
 def main():
     raise Exception('should never get here')
-
-    sys.exit()
 
 
 if __name__ == '__main__':
