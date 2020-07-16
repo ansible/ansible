@@ -50,7 +50,7 @@ class DateTimeFactCollector(BaseFactCollector):
         date_time_facts['epoch'] = now.strftime('%s')
         if date_time_facts['epoch'] == '' or date_time_facts['epoch'][0] == '%':
             # NOTE: in this case, the epoch wont match the rest of the date_time facts? ie, it's a few milliseconds later..? -akl
-            date_time_facts['epoch'] = str(int(time.time()))
+            date_time_facts['epoch'] = str(int(epoch_ts))
         date_time_facts['date'] = now.strftime('%Y-%m-%d')
         date_time_facts['time'] = now.strftime('%H:%M:%S')
         date_time_facts['iso8601_micro'] = utcnow.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
