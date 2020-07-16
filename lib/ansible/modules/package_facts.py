@@ -388,9 +388,7 @@ class APK(CLIMgr):
         return out.splitlines()
 
     def get_package_details(self, package):
-        raw_pkg_details = {'name', package}
-        # or maybe
-        # raw_pkg_details = {'name': package, 'version': '', 'release': ''}
+        raw_pkg_details = {'name': package, 'version': '', 'release': ''}
         nvr = package.rsplit('-', 2)
         try:
             return {
