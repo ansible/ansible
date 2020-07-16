@@ -118,18 +118,34 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def get_name(self, include_role_fqcn=True):
         ''' return the name of the task '''
 
-        if self._role:
-            role_name = self._role.get_name(include_role_fqcn=include_role_fqcn)
+        role_name = None
+        role_fqcn_name = None
 
-        if self._role and self.name and role_name not in self.name:
-            return "%s : %s" % (role_name, self.name)
-        elif self.name:
-            return self.name
-        else:
-            if self._role:
-                return "%s : %s" % (role_name, self.action)
+        if not self._role:
+            if self.name:
+                return "%s" % self.name
             else:
-                return "%s" % (self.action,)
+                return "%s" % self.action
+
+        role_name = self._role.get_name(include_role_fqcn=False)
+
+        if include_role_fqcn:
+            role_fqcn_name = self._role.get_name(include_role_fqcn=True)
+
+        if self.name:
+            if role_fqcn_name and not self.name.startswith("%s : " % role_fqcn_name):
+                return "%s : %s" % (role_fqcn_name, self.name)
+            if role_name and not self.name.startswith("%s : " % role_name):
+                return "%s : %s" % (role_name, self.name)
+            return "%s" % self.name
+
+        if role_fqcn_name:
+            return "%s : %s" % (role_fqcn_name, self.action)
+
+        if role_name:
+            return "%s : %s" % (role_name, self.action)
+
+        return "%s" % self.action
 
     def _merge_kv(self, ds):
         if ds is None:
