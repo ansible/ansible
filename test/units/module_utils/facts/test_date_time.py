@@ -11,18 +11,32 @@ import time
 
 from ansible.module_utils.facts.system import date_time
 
-UTC_TIMESTAMP = datetime.datetime(2020, 7, 11, 2, 34, 56, 124356)
+EPOCH_TS = 1594449296.123456
+DT = datetime.datetime(2020, 7, 11, 12, 34, 56, 124356)
+DT_UTC = datetime.datetime(2020, 7, 11, 2, 34, 56, 124356)
 
 
 @pytest.fixture
 def fake_now(monkeypatch):
-    """Patch `datetime.datetime.now()` to return a deterministic value."""
+    """
+    Patch `datetime.datetime.fromtimestamp()`, `datetime.datetime.utcfromtimestamp()`,
+    and `time.time()` to return deterministic values.
+    """
+
     class FakeNow:
         @classmethod
-        def utcnow(cls):
-            return UTC_TIMESTAMP
+        def fromtimestamp(cls, timestamp):
+            return DT
+
+        @classmethod
+        def utcfromtimestamp(cls, timestamp):
+            return DT_UTC
+
+    def _time():
+        return EPOCH_TS
 
     monkeypatch.setattr(date_time, 'datetime', FakeNow)
+    monkeypatch.setattr(time, 'time', _time)
 
 
 @pytest.fixture
