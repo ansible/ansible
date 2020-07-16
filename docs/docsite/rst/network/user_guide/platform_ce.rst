@@ -4,7 +4,7 @@
 CloudEngine OS Platform Options
 ***************************************
 
-CloudEngine CE OS is part of the `community.general <https://galaxy.ansible.com/community/network>`_ collection and supports multiple connections. This page offers details on how each connection works in Ansible and how to use it.
+CloudEngine CE OS is part of the `community.network <https://galaxy.ansible.com/community/network>`_ collection and supports multiple connections. This page offers details on how each connection works in Ansible and how to use it.
 
 .. contents::
   :local:
@@ -88,7 +88,7 @@ To enable NETCONF on a new switch via Ansible, use the ``community.network.ce_co
 
    - name: Enable NETCONF
      connection: ansible.netcommon.network_cli
-     ce_config:
+     community.network.ce_config:
        lines:
          - snetconf server enable
      when: ansible_network_os == 'community.network.ce'

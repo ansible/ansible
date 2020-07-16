@@ -4,7 +4,7 @@
 Dell OS10 Platform Options
 ***************************************
 
-The `dellemc.os9 <https://github.com/ansible-collections/dellemc.os9>`_ collection supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on OS10 in Ansible.
+The `dellemc.os10 <https://galaxy.ansible.com/dellemc_networking/os10>`_ collection supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on OS10 in Ansible.
 
 .. contents::
   :local:
