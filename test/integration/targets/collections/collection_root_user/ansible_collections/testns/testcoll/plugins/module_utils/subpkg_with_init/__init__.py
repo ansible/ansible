@@ -5,5 +5,6 @@ __metaclass__ = type
 from .mod_in_subpkg_with_init import thingtocall as submod_thingtocall
 from ..subpkg.submod import thingtocall as cousin_submod_thingtocall
 
+
 def thingtocall():
     return "thingtocall in subpkg_with_init"

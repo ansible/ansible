@@ -662,7 +662,8 @@ class ModuleUtilLocatorBase:
         try:
             collection_metadata = _get_collection_metadata(self._collection_name)
         except ValueError as ve:  # collection not found or some other error related to collection load
-            raise AnsibleError('error processing module_util {0} loading redirected collection {1}: {2}'.format('.'.join(name_parts), self._collection_name, to_native(ve)))
+            raise AnsibleError('error processing module_util {0} loading redirected collection {1}: {2}'
+                               .format('.'.join(name_parts), self._collection_name, to_native(ve)))
 
         routing_entry = _nested_dict_get(collection_metadata, ['plugin_routing', 'module_utils', '.'.join(module_utils_relative_parts)])
         if not routing_entry:
@@ -774,7 +775,6 @@ class LegacyModuleUtilLocator(ModuleUtilLocatorBase):
     def _get_module_utils_remainder_parts(self, name_parts):
         return name_parts[2:]  # eg, foo.bar for ansible.module_utils.foo.bar
 
-
     def _find_module(self, name_parts):
         rel_name_parts = self._get_module_utils_remainder_parts(name_parts)
 
@@ -824,7 +824,8 @@ class CollectionModuleUtilLocator(ModuleUtilLocatorBase):
         if fq_name_parts[0] != 'ansible_collections':
             raise Exception('CollectionModuleUtilLocator can only locate from ansible_collections, got {0}'.format(fq_name_parts))
         elif len(fq_name_parts) >= 6 and fq_name_parts[3:5] != ('plugins', 'module_utils'):
-            raise Exception('CollectionModuleUtilLocator can only locate below ansible_collections.(ns).(coll).plugins.module_utils, got {0}'.format(fq_name_parts))
+            raise Exception('CollectionModuleUtilLocator can only locate below ansible_collections.(ns).(coll).plugins.module_utils, got {0}'
+                            .format(fq_name_parts))
 
         self._collection_name = '.'.join(fq_name_parts[1:3])
 
@@ -930,7 +931,8 @@ def recursive_finder(name, module_fqn, module_data, zf):
             continue
 
         if py_module_name[0:2] == ('ansible', 'module_utils'):
-            module_info = LegacyModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous, mu_paths=module_utils_paths, child_is_redirected=child_is_redirected)
+            module_info = LegacyModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous,
+                                                  mu_paths=module_utils_paths, child_is_redirected=child_is_redirected)
         elif py_module_name[0] == 'ansible_collections':
             module_info = CollectionModuleUtilLocator(py_module_name, is_ambiguous=is_ambiguous, child_is_redirected=child_is_redirected)
         else:

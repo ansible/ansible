@@ -9,6 +9,7 @@ from ansible_collections.testns.testcoll.plugins.module_utils.moved_out_root imp
 from ..module_utils.formerly_testcoll_pkg import thing as movedthing
 from ..module_utils.formerly_testcoll_pkg.submod import thing as submodmovedthing
 
+
 def main():
     mu_result = importme()
     print(json.dumps(dict(changed=False, source='user', mu_result=mu_result, mu_result2=movedthing, mu_result3=submodmovedthing)))
