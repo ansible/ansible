@@ -274,7 +274,7 @@ def main():
             url=dict(type='str'),
             data=dict(type='str'),
             file=dict(type='path'),
-            key=dict(type='str'),
+            key=dict(type='str', removed_in_version='2.14', removed_from_collection='ansible.builtin'),
             keyring=dict(type='path'),
             validate_certs=dict(type='bool', default=True),
             keyserver=dict(type='str'),
@@ -295,9 +295,6 @@ def main():
 
     fingerprint = short_key_id = key_id
     short_format = False
-    if module.params.get('key'):
-        module.deprecate('The paramater "key" does not have any effect, has been deprecated and will be removed',
-                         version='2.13', collection_name='ansible.builtin')
     if key_id:
         try:
             short_key_id, fingerprint, key_id = parse_key_id(key_id)
