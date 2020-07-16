@@ -29,6 +29,7 @@ class LinuxVirtual(Virtual):
     This is a Linux-specific subclass of Virtual.  It defines
     - virtualization_type
     - virtualization_role
+    - container
     """
     platform = 'Linux'
 
@@ -46,6 +47,8 @@ class LinuxVirtual(Virtual):
         host_tech = set()
         guest_tech = set()
 
+        # assume container is False
+        virtual_facts['container'] = False
         # lxc/docker
         if os.path.exists('/proc/1/cgroup'):
             for line in get_file_lines('/proc/1/cgroup'):
