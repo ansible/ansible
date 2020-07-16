@@ -33,7 +33,7 @@ EXAMPLES = r"""
 
 - name: Always use quote filter to make sure your variables are safe to use with shell
   debug:
-    msg: "{{ lookup('pipe', 'getent ' + myuser | quote ) }}"
+    msg: "{{ lookup('pipe', 'getent passwd ' + myuser | quote ) }}"
 """
 
 RETURN = r"""
