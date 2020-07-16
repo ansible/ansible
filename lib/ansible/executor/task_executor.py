@@ -798,7 +798,10 @@ class TaskExecutor:
             cvars = variables
 
         # use magic var if it exists, if not, let task inheritance do it's thing.
-        self._play_context.connection = cvars.get('ansible_connection', self._task.connection)
+        if cvars.get('ansible_connection') is not None:
+            self._play_context.connection = templar.template(cvars['ansible_connection'])
+        else:
+            self._play_context.connection = self._task.connection
 
         # TODO: play context has logic to update the conneciton for 'smart'
         # (default value, will chose between ssh and paramiko) and 'persistent'
@@ -820,13 +823,13 @@ class TaskExecutor:
 
         # load become plugin if needed
         if cvars.get('ansible_become') is not None:
-            become = boolean(templar.template(cvars.get('ansible_become')))
+            become = boolean(templar.template(cvars['ansible_become']))
         else:
             become = self._task.become
 
         if become:
             if cvars.get('ansible_become_method'):
-                become_plugin = self._get_become(templar.template(cvars.get('ansible_become_method')))
+                become_plugin = self._get_become(templar.template(cvars['ansible_become_method']))
             else:
                 become_plugin = self._get_become(self._task.become_method)
 
