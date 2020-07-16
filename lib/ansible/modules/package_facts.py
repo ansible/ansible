@@ -388,12 +388,18 @@ class APK(CLIMgr):
         return out.splitlines()
 
     def get_package_details(self, package):
+        raw_pkg_details = {'name', package}
+        # or maybe
+        # raw_pkg_details = {'name': package, 'version': '', 'release': ''}
         nvr = package.rsplit('-', 2)
-        return {
-            'name': nvr[0],
-            'version': nvr[1],
-            'release': nvr[2],
-        }
+        try:
+            return {
+                'name': nvr[0],
+                'version': nvr[1],
+                'release': nvr[2],
+            }
+        except IndexError:
+            return raw_pkg_details
 
 
 def main():
