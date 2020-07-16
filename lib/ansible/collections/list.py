@@ -51,7 +51,7 @@ def list_valid_collection_paths(search_paths=None, warn=False):
         yield path
 
 
-def list_collection_dirs(search_paths, coll_filter=None):
+def list_collection_dirs(search_paths, coll_filter=None, warn=False):
     """
     Return paths for the specific collections found in passed or configured search paths
     :param search_paths: list of text-string paths, if none load default config
@@ -94,14 +94,14 @@ def list_collection_dirs(search_paths, coll_filter=None):
                                 b_coll = to_bytes(collection)
                                 b_coll_dir = os.path.join(b_namespace_dir, b_coll)
                                 if os.path.isdir(b_coll_dir):
-                                    if not has_collection_flag(b_coll_dir):
+                                    if warn and not has_collection_flag(b_coll_dir):
                                         coll_dir = to_text(b_coll_dir, errors='surrogate_or_strict')
                                         display.warning('Found collection but missing MANIFEST.JSON or galaxy.yml: %s' % coll_dir)
                                     collections[ns][collection] = b_coll_dir
                                     yield b_coll_dir
 
 
-def get_existing_collections(search_paths=None, warn=True):
+def get_existing_collections(search_paths=None, warn=False):
     '''
     Return a list of collections for given a path
 
@@ -112,7 +112,7 @@ def get_existing_collections(search_paths=None, warn=True):
 
     collections = {}
 
-    for b_path in list_collection_dirs(search_paths):
+    for b_path in list_collection_dirs(search_paths, warn=warn):
         cname = _get_collection_name_from_path(b_path)
 
         # ensure we skip masked by precedence

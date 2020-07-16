@@ -53,7 +53,7 @@ def add_collection_plugins(plugin_list, plugin_type, coll_filter=None):
     ptype = C.COLLECTION_PTYPE_COMPAT.get(plugin_type, plugin_type)
 
     # get existing collections
-    colls = get_existing_collections()
+    colls = get_existing_collections(warn=True)
     for name, b_path in colls.items():
         plugin_list.update(DocCLI.find_plugins(os.path.join(to_native(b_path), 'plugins', ptype), plugin_type, collection=name))
 
