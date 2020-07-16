@@ -163,8 +163,6 @@ lib/ansible/module_utils/alicloud_ecs.py future-import-boilerplate
 lib/ansible/module_utils/alicloud_ecs.py metaclass-boilerplate
 lib/ansible/module_utils/ansible_tower.py future-import-boilerplate
 lib/ansible/module_utils/ansible_tower.py metaclass-boilerplate
-lib/ansible/module_utils/api.py future-import-boilerplate
-lib/ansible/module_utils/api.py metaclass-boilerplate
 lib/ansible/module_utils/aws/batch.py future-import-boilerplate
 lib/ansible/module_utils/aws/batch.py metaclass-boilerplate
 lib/ansible/module_utils/aws/cloudfront_facts.py future-import-boilerplate
