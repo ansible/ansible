@@ -2,4 +2,4 @@
   gather_facts: false
   vars:
     foo: bar
-    foo: baz
+    foo: baz  # yamllint disable rule:key-duplicates
