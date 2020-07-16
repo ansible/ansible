@@ -7952,10 +7952,11 @@ plugin_routing:
       redirect: f5networks.f5_modules.icontrol
     network.f5.ipaddress:
       redirect: f5networks.f5_modules.ipaddress
-    network.f5.iworkflow:
-      redirect: f5networks.f5_modules.iworkflow
-    network.f5.legacy:
-      redirect: f5networks.f5_modules.legacy
+    # FIXME: missing
+    #network.f5.iworkflow:
+    #  redirect: f5networks.f5_modules.iworkflow
+    #network.f5.legacy:
+    #  redirect: f5networks.f5_modules.legacy
     network.f5.urls:
       redirect: f5networks.f5_modules.urls
     network.fortianalyzer.common:
@@ -7963,9 +7964,9 @@ plugin_routing:
     network.fortianalyzer.fortianalyzer:
       redirect: community.network.network.fortianalyzer.fortianalyzer
     network.fortimanager.common:
-      redirect: fortinet.fortios.common
+      redirect: fortinet.fortimanager.common
     network.fortimanager.fortimanager:
-      redirect: fortinet.fortios.fortimanager
+      redirect: fortinet.fortimanager.fortimanager
     network.fortios.argspec:
       redirect: fortinet.fortios.fortios.argspec
     network.fortios.argspec.facts:
@@ -8027,7 +8028,7 @@ plugin_routing:
     network.icx.icx:
       redirect: community.network.network.icx.icx
     network.ingate:
-      redirect: community.networknetwork.ingate
+      redirect: community.network.network.ingate
     network.ingate.common:
       redirect: community.network.network.ingate.common
     network.ios:
@@ -8637,209 +8638,207 @@ plugin_routing:
     network.nxos.utils.utils:
       redirect: cisco.nxos.network.nxos.utils.utils
     network.onyx:
-      redirect: FIXMENS.FIXMECOLL.network.onyx
+      redirect: community.network.network.onyx
     network.onyx.onyx:
-      redirect: FIXMENS.FIXMECOLL.network.onyx.onyx
+      redirect: community.network.network.onyx.onyx
     network.ordnance:
-      redirect: FIXMENS.FIXMECOLL.network.ordnance
+      redirect: community.network.network.ordnance
     network.ordnance.ordnance:
-      redirect: FIXMENS.FIXMECOLL.network.ordnance.ordnance
+      redirect: community.network.network.ordnance.ordnance
     network.panos:
-      redirect: FIXMENS.FIXMECOLL.network.panos
+      redirect: community.network.network.panos
     network.panos.panos:
-      redirect: FIXMENS.FIXMECOLL.network.panos.panos
+      redirect: community.network.network.panos.panos
     network.restconf:
-      redirect: FIXMENS.FIXMECOLL.network.restconf
+      redirect: ansible.netcommon.network.restconf
     network.restconf.restconf:
-      redirect: FIXMENS.FIXMECOLL.network.restconf.restconf
+      redirect: ansible.netcommon.network.restconf.restconf
     network.routeros:
-      redirect: FIXMENS.FIXMECOLL.network.routeros
+      redirect: community.network.network.routeros
     network.routeros.routeros:
-      redirect: FIXMENS.FIXMECOLL.network.routeros.routeros
+      redirect: community.network.network.routeros.routeros
     network.skydive:
-      redirect: FIXMENS.FIXMECOLL.network.skydive
+      redirect: skydive.skydive.network.skydive
     network.skydive.api:
-      redirect: FIXMENS.FIXMECOLL.network.skydive.api
+      redirect: skydive.skydive.network.skydive.api
     network.slxos:
-      redirect: FIXMENS.FIXMECOLL.network.slxos
+      redirect: community.network.network.slxos
     network.slxos.slxos:
-      redirect: FIXMENS.FIXMECOLL.network.slxos.slxos
+      redirect: community.network.network.slxos.slxos
     network.sros:
-      redirect: FIXMENS.FIXMECOLL.network.sros
+      redirect: community.network.network.sros
     network.sros.sros:
-      redirect: FIXMENS.FIXMECOLL.network.sros.sros
+      redirect: community.network.network.sros.sros
     network.voss:
-      redirect: FIXMENS.FIXMECOLL.network.voss
+      redirect: community.network.network.voss
     network.voss.voss:
-      redirect: FIXMENS.FIXMECOLL.network.voss.voss
+      redirect: community.network.network.voss.voss
     network.vyos:
-      redirect: FIXMENS.FIXMECOLL.network.vyos
+      redirect: vyos.vyos.network.vyos
     network.vyos.argspec:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec
+      redirect: vyos.vyos.network.vyos.argspec
     network.vyos.argspec.facts:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.facts
+      redirect: vyos.vyos.network.vyos.argspec.facts
     network.vyos.argspec.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.facts.facts
+      redirect: vyos.vyos.network.vyos.argspec.facts.facts
     network.vyos.argspec.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.interfaces
+      redirect: vyos.vyos.network.vyos.argspec.interfaces
     network.vyos.argspec.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.interfaces.interfaces
+      redirect: vyos.vyos.network.vyos.argspec.interfaces.interfaces
     network.vyos.argspec.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.l3_interfaces
+      redirect: vyos.vyos.network.vyos.argspec.l3_interfaces
     network.vyos.argspec.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.l3_interfaces.l3_interfaces
+      redirect: vyos.vyos.network.vyos.argspec.l3_interfaces.l3_interfaces
     network.vyos.argspec.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.lag_interfaces
+      redirect: vyos.vyos.network.vyos.argspec.lag_interfaces
     network.vyos.argspec.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.lag_interfaces.lag_interfaces
+      redirect: vyos.vyos.network.vyos.argspec.lag_interfaces.lag_interfaces
     network.vyos.argspec.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.lldp_global
+      redirect: vyos.vyos.network.vyos.argspec.lldp_global
     network.vyos.argspec.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.lldp_global.lldp_global
+      redirect: vyos.vyos.network.vyos.argspec.lldp_global.lldp_global
     network.vyos.argspec.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.lldp_interfaces
+      redirect: vyos.vyos.network.vyos.argspec.lldp_interfaces
     network.vyos.argspec.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.argspec.lldp_interfaces.lldp_interfaces
+      redirect: vyos.vyos.network.vyos.argspec.lldp_interfaces.lldp_interfaces
     network.vyos.config:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config
+      redirect: vyos.vyos.network.vyos.config
     network.vyos.config.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config.interfaces
+      redirect: vyos.vyos.network.vyos.config.interfaces
     network.vyos.config.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config.interfaces.interfaces
+      redirect: vyos.vyos.network.vyos.config.interfaces.interfaces
     network.vyos.config.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config.l3_interfaces
+      redirect: vyos.vyos.network.vyos.config.l3_interfaces
     network.vyos.config.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config.l3_interfaces.l3_interfaces
+      redirect: vyos.vyos.network.vyos.config.l3_interfaces.l3_interfaces
     network.vyos.config.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config.lag_interfaces
+      redirect: vyos.vyos.network.vyos.config.lag_interfaces
     network.vyos.config.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config.lag_interfaces.lag_interfaces
+      redirect: vyos.vyos.network.vyos.config.lag_interfaces.lag_interfaces
     network.vyos.config.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config.lldp_global
+      redirect: vyos.vyos.network.vyos.config.lldp_global
     network.vyos.config.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config.lldp_global.lldp_global
+      redirect: vyos.vyos.network.vyos.config.lldp_global.lldp_global
     network.vyos.config.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config.lldp_interfaces
+      redirect: vyos.vyos.network.vyos.config.lldp_interfaces
     network.vyos.config.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.config.lldp_interfaces.lldp_interfaces
+      redirect: vyos.vyos.network.vyos.config.lldp_interfaces.lldp_interfaces
     network.vyos.facts:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts
+      redirect: vyos.vyos.network.vyos.facts
     network.vyos.facts.facts:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.facts
+      redirect: vyos.vyos.network.vyos.facts.facts
     network.vyos.facts.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.interfaces
+      redirect: vyos.vyos.network.vyos.facts.interfaces
     network.vyos.facts.interfaces.interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.interfaces.interfaces
+      redirect: vyos.vyos.network.vyos.facts.interfaces.interfaces
     network.vyos.facts.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.l3_interfaces
+      redirect: vyos.vyos.network.vyos.facts.l3_interfaces
     network.vyos.facts.l3_interfaces.l3_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.l3_interfaces.l3_interfaces
+      redirect: vyos.vyos.network.vyos.facts.l3_interfaces.l3_interfaces
     network.vyos.facts.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.lag_interfaces
+      redirect: vyos.vyos.network.vyos.facts.lag_interfaces
     network.vyos.facts.lag_interfaces.lag_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.lag_interfaces.lag_interfaces
+      redirect: vyos.vyos.network.vyos.facts.lag_interfaces.lag_interfaces
     network.vyos.facts.legacy:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.legacy
+      redirect: vyos.vyos.network.vyos.facts.legacy
     network.vyos.facts.legacy.base:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.legacy.base
+      redirect: vyos.vyos.network.vyos.facts.legacy.base
     network.vyos.facts.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.lldp_global
+      redirect: vyos.vyos.network.vyos.facts.lldp_global
     network.vyos.facts.lldp_global.lldp_global:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.lldp_global.lldp_global
+      redirect: vyos.vyos.network.vyos.facts.lldp_global.lldp_global
     network.vyos.facts.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.lldp_interfaces
+      redirect: vyos.vyos.network.vyos.facts.lldp_interfaces
     network.vyos.facts.lldp_interfaces.lldp_interfaces:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.facts.lldp_interfaces.lldp_interfaces
+      redirect: vyos.vyos.network.vyos.facts.lldp_interfaces.lldp_interfaces
     network.vyos.utils:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.utils
+      redirect: vyos.vyos.network.vyos.utils
     network.vyos.utils.utils:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.utils.utils
+      redirect: vyos.vyos.network.vyos.utils.utils
     network.vyos.vyos:
-      redirect: FIXMENS.FIXMECOLL.network.vyos.vyos
+      redirect: vyos.vyos.network.vyos.vyos
     oneandone:
-      redirect: FIXMENS.FIXMECOLL.oneandone
+      redirect: community.general.oneandone
     oneview:
-      redirect: FIXMENS.FIXMECOLL.oneview
+      redirect: community.general.oneview
     online:
-      redirect: FIXMENS.FIXMECOLL.online
+      redirect: community.general.online
     opennebula:
-      redirect: FIXMENS.FIXMECOLL.opennebula
+      redirect: community.general.opennebula
     openstack:
-      redirect: FIXMENS.FIXMECOLL.openstack
+      redirect: openstack.cloud.openstack
     oracle:
-      redirect: FIXMENS.FIXMECOLL.oracle
+      redirect: community.general.oracle
     oracle.oci_utils:
-      redirect: FIXMENS.FIXMECOLL.oracle.oci_utils
+      redirect: community.general.oracle.oci_utils
     ovirt:
-      redirect: FIXMENS.FIXMECOLL.ovirt
+      redirect: community.general._ovirt
     podman:
-      redirect: FIXMENS.FIXMECOLL.podman
+      redirect: containers.podman.podman
     podman.common:
-      redirect: FIXMENS.FIXMECOLL.podman.common
+      redirect: containers.podman.podman.common
     postgres:
-      redirect: FIXMENS.FIXMECOLL.postgres
+      redirect: community.general.postgres
     pure:
-      redirect: FIXMENS.FIXMECOLL.pure
+      redirect: community.general.pure
     rabbitmq:
-      redirect: FIXMENS.FIXMECOLL.rabbitmq
+      redirect: community.rabbitmq.rabbitmq
     rax:
-      redirect: FIXMENS.FIXMECOLL.rax
+      redirect: community.general.rax
     redfish_utils:
-      redirect: FIXMENS.FIXMECOLL.redfish_utils
+      redirect: community.general.redfish_utils
     redhat:
-      redirect: FIXMENS.FIXMECOLL.redhat
-    remote_management:
-      redirect: FIXMENS.FIXMECOLL.remote_management
+      redirect: community.general.redhat
     remote_management.dellemc:
-      redirect: FIXMENS.FIXMECOLL.remote_management.dellemc
+      redirect: community.general.remote_management.dellemc
     remote_management.dellemc.dellemc_idrac:
-      redirect: FIXMENS.FIXMECOLL.remote_management.dellemc.dellemc_idrac
+      redirect: community.general.remote_management.dellemc.dellemc_idrac
     remote_management.dellemc.ome:
-      redirect: FIXMENS.FIXMECOLL.remote_management.dellemc.ome
+      redirect: community.general.remote_management.dellemc.ome
     remote_management.intersight:
-      redirect: FIXMENS.FIXMECOLL.remote_management.intersight
+      redirect: cisco.intersight.intersight
     remote_management.lxca:
-      redirect: FIXMENS.FIXMECOLL.remote_management.lxca
+      redirect: community.general.remote_management.lxca
     remote_management.lxca.common:
-      redirect: FIXMENS.FIXMECOLL.remote_management.lxca.common
+      redirect: community.general.remote_management.lxca.common
     remote_management.ucs:
-      redirect: FIXMENS.FIXMECOLL.remote_management.ucs
+      redirect: cisco.ucs.ucs
     scaleway:
-      redirect: FIXMENS.FIXMECOLL.scaleway
+      redirect: community.general.scaleway
     service_now:
-      redirect: FIXMENS.FIXMECOLL.service_now
+      redirect: servicenow.servicenow.service_now
     source_control:
-      redirect: FIXMENS.FIXMECOLL.source_control
+      redirect: community.general.source_control
     source_control.bitbucket:
-      redirect: FIXMENS.FIXMECOLL.source_control.bitbucket
+      redirect: community.general.source_control.bitbucket
     storage:
-      redirect: FIXMENS.FIXMECOLL.storage
+      redirect: community.general.storage
     storage.emc:
-      redirect: FIXMENS.FIXMECOLL.storage.emc
+      redirect: community.general.storage.emc
     storage.emc.emc_vnx:
-      redirect: FIXMENS.FIXMECOLL.storage.emc.emc_vnx
+      redirect: community.general.storage.emc.emc_vnx
     storage.hpe3par:
-      redirect: FIXMENS.FIXMECOLL.storage.hpe3par
+      redirect: community.general.storage.hpe3par
     storage.hpe3par.hpe3par:
-      redirect: FIXMENS.FIXMECOLL.storage.hpe3par.hpe3par
+      redirect: community.general.storage.hpe3par.hpe3par
     univention_umc:
-      redirect: FIXMENS.FIXMECOLL.univention_umc
+      redirect: community.general.univention_umc
     utm_utils:
-      redirect: FIXMENS.FIXMECOLL.utm_utils
+      redirect: community.general.utm_utils
     vca:
-      redirect: FIXMENS.FIXMECOLL.vca
+      redirect: community.vmware.vca
     vexata:
-      redirect: FIXMENS.FIXMECOLL.vexata
+      redirect: community.general.vexata
     vmware:
-      redirect: FIXMENS.FIXMECOLL.vmware
+      redirect: community.vmware.vmware
     vmware_rest_client:
-      redirect: FIXMENS.FIXMECOLL.vmware_rest_client
+      redirect: community.vmware.vmware_rest_client
     vmware_spbm:
-      redirect: FIXMENS.FIXMECOLL.vmware_spbm
+      redirect: community.vmware.vmware_spbm
     vultr:
-      redirect: FIXMENS.FIXMECOLL.vultr
+      redirect: ngine_io.vultr.vultr
     xenserver:
-      redirect: FIXMENS.FIXMECOLL.xenserver
+      redirect: community.general.xenserver
     # end module_utils
   cliconf:
     frr:
