@@ -3,6 +3,10 @@
 # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
+
 ANSIBLE_METADATA = {
     'metadata_version': '1.0',
     'status': ['preview'],
@@ -12,7 +16,7 @@ ANSIBLE_METADATA = {
 DOCUMENTATION = '''
 ---
 module: gcp_storage_aws_transfer_job
-version_added: 2.9
+version_added: 2.10
 short_description: Creates GCP Transfer Jobs between AWS S3 and GCP Storage.
 description: This module will create GCP Storage Transfer Jobs which transfers AWS S3 Bucket objects into the specified
              GCP Bucket. If there is an existing Transfer Job with the same Description it will delete it and create a new job.
@@ -24,51 +28,63 @@ options:
         description:
             - GCP account project id.
         required: true
+        type: str
     scheduled_start_date_utc:
         description:
             - Start date of transfer job in YYYY-MM-DD format.
             - For details on how transfer job schedules work see https://cloud.google.com/storage-transfer/docs/reference/rest/v1/transferJobs#schedule.
         required: true
+        type: str
     scheduled_end_date_utc:
         description:
             - End date of transfer job in YYYY-MM-DD format .
         required: true
+        type: str
     scheduled_start_time_utc:
         description:
             - Transfer job start time in HH:SS format.
         required: true
+        type: str
     gcp_storage_bucket:
         description:
             - The GCP storage bucket to transfer objects into.
         required: true
+        type: str
     service_account_file:
         description:
             - GCP credentails file.
         required: true
+        type: str
     aws_s3_bucket:
         description:
             - AWS S3 bucket which contains the source objects.
         required: true
+        type: str
     aws_s3_bucket_prefix:
         description:
             - Prefix within the S3 bucket which contains the source objects.
         required: false
+        type: str
     description:
         description:
             - This is used as a unique name for the transfer job. If a job with the same description exists, it is replaced, or deleted depending on state.
         required: true
+        type: str
     state:
         description:
             - Whether to create/update or delete a transfer job. Options are present and absent.
         required: true
+        type: str
     aws_access_key:
         description:
             - The AWS IAM account access key used by the transfer job to retreive S3 objects.
         required: true
+        type: str
     aws_secret_key:
         description:
             - The AWS IAM account access key secret used by the transfer job to retreive S3 objects.
         required: true
+        type: str
 
 author:
     - Chanaka Samarajeewa (@csamarajeewa)
@@ -128,9 +144,9 @@ message:
 
 import datetime
 import json
-from google.oauth2 import service_account
 import googleapiclient.discovery
 
+from google.oauth2 import service_account
 from ansible.module_utils.basic import AnsibleModule
 
 
@@ -148,7 +164,7 @@ def run_module():
         aws_access_key=dict(type='str', required=True),
         aws_secret_key=dict(type='str', required=True),
         description=dict(type='str', required=True),
-        state=dict(type='str', require=True)
+        state=dict(type='str', required=True)
     )
 
     result = dict(
