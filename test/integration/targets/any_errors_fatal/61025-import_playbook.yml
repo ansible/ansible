@@ -1,0 +1,3 @@
+- import_playbook: dynamic_playbook.yml
+  vars:
+    skip_errors: true

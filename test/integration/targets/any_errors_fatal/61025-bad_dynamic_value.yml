@@ -1,0 +1,14 @@
+- hosts: all
+  gather_facts: false
+  any_errors_fatal: false
+  ignore_unreachable: true
+  vars:
+    skip_errors: "silliness"
+  tasks:
+    - block:
+      - name: EXPECTED FAILURE any_errors_fatal, simulate failure on one node
+        shell: exit 1
+        when: inventory_hostname == "testhost"
+      - debug:
+          msg: "any_errors_fatal_dynamic_value_continues"
+      any_errors_fatal: "{{ skip_errors }}"

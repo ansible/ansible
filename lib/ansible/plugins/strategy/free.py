@@ -198,7 +198,12 @@ class StrategyModule(StrategyBase):
                         else:
                             # handle step if needed, skip meta actions as they are used internally
                             if not self._step or self._take_step(task, host_name):
-                                if task.any_errors_fatal:
+                                task_any_errors_fatal = task.get_validated_value('any_errors_fatal',
+                                                                                 task._valid_attrs['any_errors_fatal'],
+                                                                                 templar.template(task.any_errors_fatal),
+                                                                                 None)
+
+                                if task_any_errors_fatal:
                                     display.warning("Using any_errors_fatal with the free strategy is not supported, "
                                                     "as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)

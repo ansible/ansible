@@ -272,13 +272,18 @@ class StrategyModule(StrategyBase):
                         # corresponding action plugin
                         action = None
 
+                    task_any_errors_fatal = task.get_validated_value('any_errors_fatal',
+                                                                     task._valid_attrs['any_errors_fatal'],
+                                                                     templar.template(task.any_errors_fatal),
+                                                                     None)
+
                     if task.action in C._ACTION_META:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
                         if task.args.get('_raw_params', None) not in ('noop', 'reset_connection', 'end_host', 'role_complete'):
                             run_once = True
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                        if (task_any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
                     else:
                         # handle step if needed, skip meta actions as they are used internally
@@ -291,7 +296,7 @@ class StrategyModule(StrategyBase):
 
                         run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
 
-                        if (task.any_errors_fatal or run_once) and not task.ignore_errors:
+                        if (task_any_errors_fatal or run_once) and not task.ignore_errors:
                             any_errors_fatal = True
 
                         if not callback_sent:

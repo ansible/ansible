@@ -15,9 +15,30 @@ if [ "${res}" -eq 0 ] ; then
 	exit 1
 fi
 
-set -ux
-
 ansible-playbook -i inventory "$@" always_block.yml | tee out.txt | grep 'any_errors_fatal_always_block_start'
 res=$?
 cat out.txt
-exit $res
+if [ "${res}" -ne 0 ] ; then
+	exit 1
+fi
+
+ansible-playbook -i inventory "$@" 61025-dynamic_block.yml | tee out.txt | grep 'any_errors_fatal_dynamic_value_continues'
+res=$?
+cat out.txt
+if [ "${res}" -ne 0 ] ; then
+	exit 1
+fi
+
+ansible-playbook -i inventory "$@" 61025-import_playbook.yml | tee out.txt | grep 'any_errors_fatal_dynamic_value_import_playbook_continues'
+res=$?
+cat out.txt
+if [ "${res}" -ne 0 ] ; then
+	exit 1
+fi
+
+ansible-playbook -i inventory "$@" 61025-bad_dynamic_value.yml 2>&1 | tee out.txt | grep 'not a valid boolean.'
+res=$?
+cat out.txt
+if [ "${res}" -ne 0 ] ; then
+	exit 1
+fi

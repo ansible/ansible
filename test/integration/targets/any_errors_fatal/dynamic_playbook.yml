@@ -1,0 +1,9 @@
+- hosts: all
+  gather_facts: false
+  any_errors_fatal: "{{ not skip_errors }}"
+  tasks:
+    - name: EXPECTED FAILURE any_errors_fatal, simulate failure on one node
+      shell: exit 1
+      when: inventory_hostname == "testhost"
+    - debug:
+        msg: "any_errors_fatal_dynamic_value_import_playbook_continues"
