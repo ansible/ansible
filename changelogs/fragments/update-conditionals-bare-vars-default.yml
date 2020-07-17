@@ -1,0 +1,2 @@
+minor_changes:
+  - conditionals - change the default of CONDITIONAL_BARE_VARS to False (https://github.com/ansible/ansible/issues/70682).
