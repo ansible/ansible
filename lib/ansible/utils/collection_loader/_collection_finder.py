@@ -394,6 +394,10 @@ class _AnsibleCollectionPkgLoaderBase:
             if os.path.isfile(b_path):
                 with open(b_path, 'rb') as fd:
                     return fd.read()
+            # HACK: if caller asks for __init__.py and the parent dir exists, return empty string (this keep consistency
+            # with "collection subpackages don't require __init__.py" working everywhere with get_data
+            elif b_path.endswith(b'__init__.py') and os.path.isdir(os.path.dirname(b_path)):
+                return ''
 
         return None
 
