@@ -1,0 +1,2 @@
+minor_changes:
+  - Linux virtualization facts now returns a ``container`` bool value that helps identify whether or not the target system is running in a container. (https://github.com/ansible/ansible/pull/70697)
