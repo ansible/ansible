@@ -1,0 +1,2 @@
+bugfixes:
+- find module - Don't treat empty excludes as a match (https://github.com/ansible/ansible/issues/70640)

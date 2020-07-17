@@ -224,11 +224,11 @@ from ansible.module_utils.basic import AnsibleModule
 
 def pfilter(f, patterns=None, excludes=None, use_regex=False):
     '''filter using glob patterns'''
-    if patterns is None and excludes is None:
+    if not patterns and not excludes:
         return True
 
     if use_regex:
-        if patterns and excludes is None:
+        if patterns and not excludes:
             for p in patterns:
                 r = re.compile(p)
                 if r.match(f):
@@ -245,7 +245,7 @@ def pfilter(f, patterns=None, excludes=None, use_regex=False):
                     return True
 
     else:
-        if patterns and excludes is None:
+        if patterns and not excludes:
             for p in patterns:
                 if fnmatch.fnmatch(f, p):
                     return True
