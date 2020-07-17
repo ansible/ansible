@@ -74,12 +74,16 @@ class Connection(ConnectionBase):
         """
         run podman executable
 
-        :param cmd: podman's command to execute (str)
+        :param cmd: podman's command to execute (str or list)
         :param cmd_args: list of arguments to pass to the command (list of str/bytes)
         :param in_data: data passed to podman's stdin
         :return: return code, stdout, stderr
         """
-        local_cmd = ['podman', cmd]
+        local_cmd = ['podman']
+        if isinstance(cmd, str):
+            local_cmd.append(cmd)
+        else:
+            local_cmd.extend(cmd)
         if use_container_id:
             local_cmd.append(self._container_id)
         if cmd_args:
@@ -119,10 +123,11 @@ class Connection(ConnectionBase):
 
         # shlex.split has a bug with text strings on Python-2.6 and can only handle text strings on Python-3
         cmd_args_list = shlex.split(to_native(cmd, errors='surrogate_or_strict'))
+        exec_args_list = ["exec"]
         if self.user:
-            cmd_args_list += ["--user", self.user]
+            exec_args_list.extend(("--user", self.user))
 
-        rc, stdout, stderr = self._podman("exec", cmd_args_list, in_data)
+        rc, stdout, stderr = self._podman(exec_args_list, cmd_args_list, in_data)
 
         display.vvvvv("STDOUT %r STDERR %r" % (stderr, stderr))
         return rc, stdout, stderr
@@ -131,7 +136,7 @@ class Connection(ConnectionBase):
         """ Place a local file located in 'in_path' inside container at 'out_path' """
         super(Connection, self).put_file(in_path, out_path)
         display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._container_id)
-        if not self._mount_point:
+        if not self._mount_point or self.user:
             rc, stdout, stderr = self._podman(
                 "cp", [in_path, self._container_id + ":" + out_path], use_container_id=False
             )
