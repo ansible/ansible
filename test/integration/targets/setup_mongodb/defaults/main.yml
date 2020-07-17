@@ -45,5 +45,5 @@ redhat_packages_py3:
   - python3-pip
 
 pip_packages:
-  - psutil
-  - pymongo
+  - psutil==5.6.7
+  - pymongo==3.10.1
