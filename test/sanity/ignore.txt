@@ -19,9 +19,6 @@ hacking/build_library/build_ansible/command_plugins/dump_keywords.py compile-3.5
 hacking/build_library/build_ansible/command_plugins/generate_man.py compile-2.6!skip # docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/generate_man.py compile-2.7!skip # docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/generate_man.py compile-3.5!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/plugin_formatter.py compile-2.6!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/plugin_formatter.py compile-2.7!skip # docs build only, 3.6+ required
-hacking/build_library/build_ansible/command_plugins/plugin_formatter.py compile-3.5!skip # docs build only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-2.7!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/command_plugins/porting_guide.py compile-3.5!skip # release process only, 3.6+ required

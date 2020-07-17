@@ -58,12 +58,6 @@ You can use ``ansible-doc -t connection -l`` to see the list of available plugin
 Use ``ansible-doc -t connection <plugin name>`` to see detailed documentation and examples.
 
 
-.. toctree:: :maxdepth: 1
-    :glob:
-
-    connection/*
-
-
 .. seealso::
 
    :ref:`Working with Playbooks<working_with_playbooks>`

@@ -74,7 +74,7 @@ Ansible releases a new major release of Ansible approximately three to four time
    :maxdepth: 1
    :caption: Reference & Appendices
 
-   ../modules/modules_by_category
+   collections/index
    reference_appendices/playbooks_keywords
    reference_appendices/common_return_values
    reference_appendices/config

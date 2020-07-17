@@ -33,11 +33,6 @@ In this case, you will also want to update the :ref:`ansible_shell_executable <a
 You can further control the settings for each plugin via other configuration options
 detailed in the plugin themselves (linked below).
 
-.. toctree:: :maxdepth: 1
-    :glob:
-
-    shell/*
-
 .. seealso::
 
    :ref:`about_playbooks`

@@ -79,12 +79,6 @@ Plugin list
 You can use ``ansible-doc -t callback -l`` to see the list of available plugins.
 Use ``ansible-doc -t callback <plugin name>`` to see specific documents and examples.
 
-.. toctree:: :maxdepth: 1
-    :glob:
-
-    callback/*
-
-
 .. seealso::
 
    :ref:`action_plugins`
