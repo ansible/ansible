@@ -47,11 +47,6 @@ Plugin List
 You can use ``ansible-doc -t become -l`` to see the list of available plugins.
 Use ``ansible-doc -t become <plugin name>`` to see specific documentation and examples.
 
-.. toctree:: :maxdepth: 1
-    :glob:
-
-    become/*
-
 .. seealso::
 
    :ref:`about_playbooks`

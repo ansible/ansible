@@ -1,0 +1,17 @@
+# We also need an example of modules hosted in Automation Hub
+# We'll likely move to data hosted in botmeta instead of a standalone file but
+# we'll need all of these same details.
+module:
+    purefa_user:
+        source: 'https://galaxy.ansible.com/'
+        fqcn: 'purestorage.flasharray'
+    purefa_vg:
+        source: 'https://galaxy.ansible.com/'
+        fqcn: 'purestorage.flasharray'
+    gcp_compute_firewall_info:
+        source: 'https://galaxy.ansible.com/'
+        fqcn: 'google.cloud'
+module_utils:
+    purefa:
+        source: 'https://galaxy.ansible.com/'
+        fqcn: 'purestorage.flasharray'
