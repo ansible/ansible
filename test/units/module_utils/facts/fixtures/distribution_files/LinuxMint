@@ -1,0 +1,12 @@
+NAME="Linux Mint"
+VERSION="19.1 (Tessa)"
+ID=linuxmint
+ID_LIKE=ubuntu
+PRETTY_NAME="Linux Mint 19.1"
+VERSION_ID="19.1"
+HOME_URL="https://www.linuxmint.com/"
+SUPPORT_URL="https://forums.ubuntu.com/"
+BUG_REPORT_URL="http://linuxmint-troubleshooting-guide.readthedocs.io/en/latest/"
+PRIVACY_POLICY_URL="https://www.linuxmint.com/"
+VERSION_CODENAME=tessa
+UBUNTU_CODENAME=bionic
