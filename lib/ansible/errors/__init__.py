@@ -312,3 +312,8 @@ class AnsibleActionFail(AnsibleAction):
 class _AnsibleActionDone(AnsibleAction):
     ''' an action runtime early exit'''
     pass
+
+
+class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
+    ''' a Jinja filter templating failure due to bad type'''
+    pass
