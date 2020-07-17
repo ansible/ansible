@@ -358,6 +358,9 @@ class TestActionBase(unittest.TestCase):
                 return args_kv.get(option, default)
             return _helper
 
+        action_base.get_become_option = MagicMock()
+        action_base.get_become_option.return_value = 'remoteuser2'
+
         # Step 1: On windows, we just return remote_paths
         action_base._connection._shell._IS_WINDOWS = True
         assertSuccess(execute=False)
@@ -413,12 +416,6 @@ class TestActionBase(unittest.TestCase):
             'stderr': '',
         }
         action_base._remote_chmod.return_value = {
-            'rc': 0,
-            'stdout': 'some stuff here',
-            'stderr': '',
-        }
-        assertSuccess(execute=True)
-        action_base._remote_chmod.return_value = {
             'rc': 1,
             'stdout': 'some stuff here',
             'stderr': '',
@@ -426,6 +423,12 @@ class TestActionBase(unittest.TestCase):
         assertThrowRegex(
             'Failed to set file mode on remote temporary file',
             execute=True)
+        action_base._remote_chmod.return_value = {
+            'rc': 0,
+            'stdout': 'some stuff here',
+            'stderr': '',
+        }
+        assertSuccess(execute=True)
 
         # Step 3c: chown
         action_base._remote_chown = MagicMock()
@@ -446,7 +449,18 @@ class TestActionBase(unittest.TestCase):
         assertThrowRegex('user would be unable to read the file.')
         remote_user = 'remoteuser1'
 
-        # Step 3d: Common group
+        # Step 3d: chmod +a on osx
+        assertSuccess()
+        action_base._remote_chmod.assert_called_with(
+            ['remoteuser2 allow read'] + remote_paths,
+            '+a')
+
+        # Step 3e: Common group
+        action_base._remote_chmod = MagicMock()
+        action_base._remote_chmod.side_effect = \
+            lambda x, y: \
+            dict(rc=1, stdout='', stderr='') if y == '+a' \
+            else dict(rc=0, stdout='', stderr='')
 
         get_shell_option = action_base.get_shell_option
         action_base.get_shell_option = MagicMock()
@@ -463,11 +477,6 @@ class TestActionBase(unittest.TestCase):
         }
         # TODO: Add test to assert warning is shown if
         # ALLOW_WORLD_READABLE_TMPFILES is set in this case.
-        action_base._remote_chmod.return_value = {
-            'rc': 0,
-            'stdout': '',
-            'stderr': '',
-        }
         assertSuccess()
         action_base._remote_chgrp.assert_called_once_with(
             remote_paths,
@@ -486,6 +495,7 @@ class TestActionBase(unittest.TestCase):
             'stderr': '',
         }
         assertSuccess()
+        action_base._remote_chmod = MagicMock()
         action_base._remote_chmod.return_value = {
             'rc': 1,
             'stdout': 'some stuff here',
