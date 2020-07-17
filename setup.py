@@ -2,7 +2,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-import codecs
 import json
 import os
 import os.path
@@ -34,10 +33,8 @@ from distutils.command.sdist import sdist as SDist
 
 
 def find_package_info(*file_paths):
-    # Open in Latin-1 so that we avoid encoding errors.
-    # Use codecs.open for Python 2 compatibility
     try:
-        with codecs.open(os.path.join(*file_paths), 'r', 'latin1') as f:
+        with open(os.path.join(*file_paths), 'r') as f:
             info_file = f.read()
     except Exception:
         raise RuntimeError("Unable to find package info.")
