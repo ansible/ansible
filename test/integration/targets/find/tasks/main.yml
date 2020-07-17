@@ -19,10 +19,14 @@
 - set_fact: output_dir_test={{output_dir}}/test_find
 
 - name: make sure our testing sub-directory does not exist
-  file: path="{{ output_dir_test }}" state=absent
+  file:
+    path: "{{ output_dir_test }}"
+    state: absent
 
 - name: create our testing sub-directory
-  file: path="{{ output_dir_test }}" state=directory
+  file:
+    path: "{{ output_dir_test }}"
+    state: directory
 
 ##
 ## find
@@ -95,3 +99,18 @@
           - 'find_test2.matched == 1'
           - 'find_test2.files[0].pw_name is defined'
           - 'find_test2.files[0].gr_name is defined'
+
+- name: find the xml file with empty excludes
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.xml"
+      recurse: yes
+      excludes: []
+  register: find_test3
+- debug: var=find_test3
+- name: validate gr_name and pw_name are defined
+  assert:
+      that:
+          - 'find_test3.matched == 1'
+          - 'find_test3.files[0].pw_name is defined'
+          - 'find_test3.files[0].gr_name is defined'
