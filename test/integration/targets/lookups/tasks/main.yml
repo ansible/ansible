@@ -288,6 +288,8 @@
     that:
       - "hello_world_string|trim == 'Hello world!'"
 
+- include_tasks: ./errors.yml
+
 # Vars lookups
 
 - name: Test that we can give it a single value and receive a single value
