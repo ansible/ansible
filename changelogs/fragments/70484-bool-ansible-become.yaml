@@ -1,0 +1,3 @@
+bugfixes:
+  - The `ansible_become` value was not being treated as a boolean value when set in an INI format
+    inventory file (fixes bug https://github.com/ansible/ansible/issues/70476).
