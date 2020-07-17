@@ -380,7 +380,6 @@ class PORTAGE(CLIMgr):
 class APK(CLIMgr):
 
     CLI = 'apk'
-    atoms = ['name', 'version']
 
     def list_installed(self):
         rc, out, err = module.run_command([self._cli, 'info', '-v'])
@@ -389,14 +388,16 @@ class APK(CLIMgr):
         return out.splitlines()
 
     def get_package_details(self, package):
-        raw_pkg_details = {}
-        for line in package.splitlines():
-            m = re.match(r"([\w ].*?)-([0-9-\.]+[0-9a-z-\.]*-r[0-9]+)", to_native(line))
-            if m:
-                raw_pkg_details['name'] = m.group(1)
-                raw_pkg_details['version'] = m.group(2)
-
-        return raw_pkg_details
+        raw_pkg_details = {'name': package, 'version': '', 'release': ''}
+        nvr = package.rsplit('-', 2)
+        try:
+            return {
+                'name': nvr[0],
+                'version': nvr[1],
+                'release': nvr[2],
+            }
+        except IndexError:
+            return raw_pkg_details
 
 
 def main():
