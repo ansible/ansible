@@ -327,6 +327,8 @@ def create_addon_dict(addon):
     addon = addon or dict()
     for key in addon.keys():
         result[key] = addon[key].config
+        if result[key] is None:
+            result[key] = {}
         result[key]['enabled'] = addon[key].enabled
     return result
 
