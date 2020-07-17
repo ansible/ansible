@@ -37,6 +37,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.interpreter_discovery import InterpreterDiscoveryRequiredError
 from ansible.executor.powershell import module_manifest as ps_manifest
 from ansible.module_utils._text import to_bytes, to_text, to_native
+from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.compat.importlib import import_module
 from ansible.plugins.loader import module_utils_loader
 # Must import strategy and use write_locks from there
@@ -1003,7 +1004,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
     if module_substyle == 'python':
         params = dict(ANSIBLE_MODULE_ARGS=module_args,)
         try:
-            python_repred_params = repr(json.dumps(params))
+            python_repred_params = repr(json.dumps(params, cls=AnsibleJSONEncoder, vault_to_text=True))
         except TypeError as e:
             raise AnsibleError("Unable to pass options to module, they must be JSON serializable: %s" % to_native(e))
 
@@ -1195,7 +1196,7 @@ def _find_module_utils(module_name, b_module_data, module_path, module_args, tas
         )
 
     elif module_substyle == 'jsonargs':
-        module_args_json = to_bytes(json.dumps(module_args))
+        module_args_json = to_bytes(json.dumps(module_args, cls=AnsibleJSONEncoder, vault_to_text=True))
 
         # these strings could be included in a third-party module but
         # officially they were included in the 'basic' snippet for new-style
