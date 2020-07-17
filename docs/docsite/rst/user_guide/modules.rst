@@ -7,9 +7,8 @@ Working With Modules
    :maxdepth: 1
 
    modules_intro
-   ../reference_appendices/common_return_values
    modules_support
-   ../modules/modules_by_category
+   ../reference_appendices/common_return_values
 
 
 Ansible ships with a number of modules (called the 'module library')

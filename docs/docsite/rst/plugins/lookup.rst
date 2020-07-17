@@ -138,11 +138,6 @@ Plugin list
 You can use ``ansible-doc -t lookup -l`` to see the list of available plugins. Use ``ansible-doc -t lookup <plugin name>`` to see specific documents and examples.
 
 
-.. toctree:: :maxdepth: 1
-    :glob:
-
-    lookup/*
-
 .. seealso::
 
    :ref:`about_playbooks`
