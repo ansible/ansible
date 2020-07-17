@@ -1,0 +1,4 @@
+bugfixes:
+- json callback - Fix host result to task references in the resultant JSON
+  output for non-lockstep strategy plugins such as free
+  (https://github.com/ansible/ansible/issues/65931)
