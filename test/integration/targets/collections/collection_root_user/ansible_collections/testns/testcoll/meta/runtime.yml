@@ -40,4 +40,13 @@ plugin_routing:
   module_utils:
     moved_out_root:
       redirect: testns.content_adj.sub1.foomodule
+    formerly_testcoll_pkg:
+      redirect: ansible_collections.testns.othercoll.plugins.module_utils.formerly_testcoll_pkg
+    formerly_testcoll_pkg.submod:
+      redirect: ansible_collections.testns.othercoll.plugins.module_utils.formerly_testcoll_pkg.submod
+    missing_redirect_target_collection:
+      redirect: bogusns.boguscoll.bogusmu
+    missing_redirect_target_module:
+      redirect: testns.othercoll.bogusmu
+
 requires_ansible: '>=2.11'
