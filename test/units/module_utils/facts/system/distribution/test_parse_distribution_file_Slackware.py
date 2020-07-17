@@ -15,7 +15,7 @@ from ansible.module_utils.facts.system.distribution import DistributionFiles
     ('distro_file', 'expected_version'),
     (
         ('Slackware', '14.1'),
-        ('SlackwareCurrent', '14.1+'),
+        ('SlackwareCurrent', '14.2+'),
     )
 )
 def test_parse_distribution_file_slackware(mock_module, distro_file, expected_version):
