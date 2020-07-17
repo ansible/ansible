@@ -20,32 +20,29 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
-import crypt
+import datetime
 import glob
 import hashlib
-import itertools
 import json
 import ntpath
 import os.path
 import re
-import string
 import sys
 import time
 import uuid
 import yaml
 
-import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
-
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
-from ansible.module_utils.six import iteritems, string_types, integer_types, reraise
-from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.six import string_types, integer_types, reraise
+from ansible.module_utils.six.moves import shlex_quote
 from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.template import recursive_check_defined
@@ -83,19 +80,21 @@ def to_nice_json(a, indent=4, sort_keys=True, *args, **kw):
     return to_json(a, indent=indent, sort_keys=sort_keys, separators=(',', ': '), *args, **kw)
 
 
-def to_bool(a):
+def to_bool(a, strict=False):
     ''' return a bool for the arg '''
+
+    result = False
     if a is None or isinstance(a, bool):
-        return a
-    if isinstance(a, string_types):
-        a = a.lower()
-    if a in ('yes', 'on', '1', 'true', 1):
-        return True
-    return False
+        result = a
+    elif isinstance(a, string_types):
+        result = boolean(a, strict=strict)
+    else:
+        raise AnsibleFilterTypeError("Cannot convert '%s' into boolean" % type(a))
+    return result
 
 
-def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
-    return datetime.datetime.strptime(string, format)
+def to_datetime(datestring, format="%Y-%m-%d %H:%M:%S"):
+    return datetime.datetime.strptime(datestring, format)
 
 
 def strftime(string_format, second=None):
@@ -278,7 +277,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None, salt_size=Non
         reraise(AnsibleFilterError, AnsibleFilterError(to_native(e), orig_exc=e), sys.exc_info()[2])
 
 
-def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
+def to_uuid(name, namespace=UUID_NAMESPACE_ANSIBLE):
     uuid_namespace = namespace
     if not isinstance(uuid_namespace, uuid.UUID):
         try:
@@ -286,7 +285,7 @@ def to_uuid(string, namespace=UUID_NAMESPACE_ANSIBLE):
         except (AttributeError, ValueError) as e:
             raise AnsibleFilterError("Invalid value '%s' for 'namespace': %s" % (to_native(namespace), to_native(e)))
     # uuid.uuid5() requires bytes on Python 2 and bytes or text or Python 3
-    return to_text(uuid.uuid5(uuid_namespace, to_native(string, errors='surrogate_or_strict')))
+    return to_text(uuid.uuid5(uuid_namespace, to_native(name, errors='surrogate_or_strict')))
 
 
 def mandatory(a, msg=None):
@@ -459,12 +458,12 @@ def do_groupby(environment, value, attribute):
     return [tuple(t) for t in _do_groupby(environment, value, attribute)]
 
 
-def b64encode(string, encoding='utf-8'):
-    return to_text(base64.b64encode(to_bytes(string, encoding=encoding, errors='surrogate_or_strict')))
+def b64encode(original, encoding='utf-8'):
+    return to_text(base64.b64encode(to_bytes(original, encoding=encoding, errors='surrogate_or_strict')))
 
 
-def b64decode(string, encoding='utf-8'):
-    return to_text(base64.b64decode(to_bytes(string, errors='surrogate_or_strict')), encoding=encoding)
+def b64decode(encoded, encoding='utf-8'):
+    return to_text(base64.b64decode(to_bytes(encoded, errors='surrogate_or_strict')), encoding=encoding)
 
 
 def flatten(mylist, levels=None, skip_nulls=True):
