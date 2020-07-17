@@ -427,6 +427,37 @@ def remove_values(value, no_log_strings):
     return new_value
 
 
+def sanitize_keys(obj, no_log_strings):
+    """ Sanitize the keys in a dict-like object by removing no_log values from key names.
+
+    This is a companion function to the `remove_values()` function.
+
+    :param Mapping obj: The dict-like object containing the keys to sanitize.
+    :param set no_log_strings: A set of string values we do not want logged.
+
+    :returns: A dict object with sanitized keys.
+    """
+
+    if not isinstance(obj, Mapping):
+        raise TypeError('Cannot sanitize keys of a non-mapping object type.')
+
+    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+
+    new_obj = {}
+    for old_key, value in iteritems(obj):
+        # Sanitize the old key. Since this should always be a string-like object, we
+        # should be safe to pass None for the deferred_removals parameter.
+        new_key = _remove_values_conditions(old_key, no_log_strings, None)
+
+        if isinstance(value, Mapping):
+            # We have a sub-dict, so sanitize it as well.
+            new_obj[new_key] = sanitize_keys(value, no_log_strings)
+        else:
+            new_obj[new_key] = value
+
+    return new_obj
+
+
 def heuristic_log_sanitize(data, no_log_values=None):
     ''' Remove strings that look like passwords from log messages '''
     # Currently filters:
