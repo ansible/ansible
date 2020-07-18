@@ -685,9 +685,8 @@ class AnsibleModule(object):
 
     @property
     def tmpdir(self):
-        # if _ansible_tmpdir was not set and we have a remote_tmp,
-        # the module needs to create it and clean it up once finished.
-        # otherwise we create our own module tmp dir from the system defaults
+        # If not already created, create a temp dir based on _ansible_remote_tmp.
+        # The module is in charge of cleaning up the tmpdir.
         if self._tmpdir is None:
             basedir = None
 

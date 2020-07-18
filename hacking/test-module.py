@@ -130,7 +130,7 @@ def boilerplate_module(modfile, args, interpreters, check, destfile):
 
     # default selinux fs list is pass in as _ansible_selinux_special_fs arg
     complex_args['_ansible_selinux_special_fs'] = C.DEFAULT_SELINUX_SPECIAL_FS
-    complex_args['_ansible_tmpdir'] = C.DEFAULT_LOCAL_TMP
+    complex_args['_ansible_remote_tmp'] = C.DEFAULT_LOCAL_TMP
     complex_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
     complex_args['_ansible_version'] = __version__
 

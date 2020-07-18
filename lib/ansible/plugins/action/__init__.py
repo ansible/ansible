@@ -841,13 +841,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # make sure modules are aware if they need to keep the remote files
         module_args['_ansible_keep_remote_files'] = C.DEFAULT_KEEP_REMOTE_FILES
 
-        # make sure all commands use the designated temporary directory if created
-        if self._is_become_unprivileged():  # force fallback on remote_tmp as user cannot normally write to dir
-            module_args['_ansible_tmpdir'] = None
-        else:
-            module_args['_ansible_tmpdir'] = self._connection._shell.tmpdir
-
-        # make sure the remote_tmp value is sent through in case modules needs to create their own
+        # We used to have this set to self._connection._shell.tmpdir but to keep things simple we don't anymore
+        # always have a module use the remote_tmp set by the shell plugin and have the module create their own.
+        module_args['_ansible_tmpdir'] = None  # TODO: Remove this after we know it doesn't break anything
         module_args['_ansible_remote_tmp'] = self.get_shell_option('remote_tmp', default='~/.ansible/tmp')
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=None, wrap_async=False):

@@ -1,0 +1,2 @@
+minor_changes:
+- Stop sending ``_ansible_tmpdir`` as the action plugins managed tmpdir to simplify and separate module and controller tmpdirs
