@@ -6711,11 +6711,11 @@ plugin_routing:
     ovirt_vnic_profile_info:
       redirect: ovirt.ovirt.ovirt_vnic_profile_info
     dellos10_command:
-      redirect: dellemc.os10.os10_command
+      redirect: dellemc_networking.os10.os10_command
     dellos10_facts:
-      redirect: dellemc.os10.os10_facts
+      redirect: dellemc_networking.os10.os10_facts
     dellos10_config:
-      redirect: dellemc.os10.os10_config
+      redirect: dellemc_networking.os10.os10_config
     dellos9_facts:
       redirect: dellemc.os9.dellos9_facts
     dellos9_command:
