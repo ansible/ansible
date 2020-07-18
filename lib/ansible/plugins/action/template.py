@@ -55,7 +55,7 @@ class ActionModule(ActionBase):
         # assign to local vars for ease of use
         source = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
-        state = self._task.args.get('state', None)
+        state = self._task.args.get('state', 'present')
         newline_sequence = self._task.args.get('newline_sequence', self.DEFAULT_NEWLINE_SEQUENCE)
         variable_start_string = self._task.args.get('variable_start_string', None)
         variable_end_string = self._task.args.get('variable_end_string', None)
@@ -84,17 +84,30 @@ class ActionModule(ActionBase):
 
         try:
             # logical validation
-            if state is not None:
-                raise AnsibleActionFail("'state' cannot be specified on a template")
-            elif source is None or dest is None:
+            if source is None or dest is None:
                 raise AnsibleActionFail("src and dest are required")
             elif newline_sequence not in allowed_sequences:
                 raise AnsibleActionFail("newline_sequence needs to be one of: \n, \r or \r\n")
-            else:
+            elif state not in ('present', 'absent'):
+                raise AnsibleActionFail("'state' can be 'present' or 'absent'")
+            elif state == 'present':
                 try:
                     source = self._find_needle('templates', source)
                 except AnsibleError as e:
                     raise AnsibleActionFail(to_text(e))
+
+            if state == 'absent':
+                # Use file module to delete dest
+                file_module_args = {'state': 'absent'}
+                if not dest.endswith(os.path.sep):
+                    file_module_args['path'] = dest
+                else:
+                    file_module_args['path'] = dest + os.path.basename(source)
+
+                module_return = self._execute_module(module_name='file', module_args=file_module_args, task_vars=task_vars)
+
+                result.update(module_return)
+                return result
 
             mode = self._task.args.get('mode', None)
             if mode == 'preserve':
@@ -151,7 +164,7 @@ class ActionModule(ActionBase):
 
             # remove 'template only' options:
             for remove in ('newline_sequence', 'block_start_string', 'block_end_string', 'variable_start_string', 'variable_end_string',
-                           'trim_blocks', 'lstrip_blocks', 'output_encoding'):
+                           'trim_blocks', 'lstrip_blocks', 'output_encoding', 'state'):
                 new_task.args.pop(remove, None)
 
             local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)

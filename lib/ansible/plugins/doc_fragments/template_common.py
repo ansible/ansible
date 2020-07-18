@@ -99,6 +99,14 @@ options:
     type: str
     default: utf-8
     version_added: '2.7'
+  state:
+    description:
+    - If C(absent) and C(dest) doesn't ends with "/", C(dest) will be deleted.
+    - If C(absent) and C(dest) ends with "/", if it exists, the file C(dest/basename src) will be removed.
+    type: str
+    choices: [ 'present', 'absent' ]
+    default: present
+    version_added: '2.11'
 notes:
 - Including a string that uses a date in the template will result in the template being marked 'changed' each time.
 - Since Ansible 0.9, templates are loaded with C(trim_blocks=True).

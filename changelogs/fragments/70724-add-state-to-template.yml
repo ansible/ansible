@@ -1,0 +1,2 @@
+minor_changes:
+  - template action module - add ``state`` parameter to allow deleting ``dest`` when ``state=absent``.

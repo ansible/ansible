@@ -706,5 +706,30 @@
         - 'diff_result.stdout == ""'
         - "diff_result.rc == 0"
 
+- template:
+    src: bar
+    dest: '{{ output_dir }}/state_absent'
+    state: '{{ item }}'
+  loop:
+    - present
+    - absent
+    - absent
+  register: state_absent
+
+- stat:
+    path: '{{ output_dir }}/state_absent'
+    get_attributes: false
+    get_checksum: false
+    get_mime: false
+  register: stat_state_absent
+
+- name: verify state parameter
+  assert:
+    that:
+      - state_absent.results[0] is changed
+      - state_absent.results[1] is changed
+      - state_absent.results[2] is not changed
+      - not stat_state_absent.stat.exists
+
 # aliases file requires root for template tests so this should be safe
 - include: backup_test.yml
