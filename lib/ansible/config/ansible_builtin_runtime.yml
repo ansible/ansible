@@ -7646,9 +7646,8 @@ plugin_routing:
       redirect: community.general.gcdns
     gce:
       redirect: community.general.gce
-# FIXME: can't find this file in google.cloud
-#    gcp:
-#      redirect: google.cloud.gcp
+    gcp:
+      redirect: community.general.gcp
     gcp_utils:
       redirect: google.cloud.gcp_utils
     gitlab:
