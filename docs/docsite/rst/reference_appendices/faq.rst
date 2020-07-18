@@ -676,8 +676,8 @@ This works for all overridden connection variables, like ``ansible_user``, ``ans
 How do I fix 'protocol error: filename does not match request' when fetching a file?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Newer releases of OpenSSH have a `bug <https://bugzilla.mindrot.org/show_bug.cgi?id=2966>`_ in the SCP client
-that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism::
+Since release ``7.9p1`` of OpenSSH there is a `bug <https://bugzilla.mindrot.org/show_bug.cgi?id=2966>`_
+in the SCP client that can trigger this error on the Ansible controller when using SCP as the file transfer mechanism::
 
     failed to transfer file to /tmp/ansible/file.txt\r\nprotocol error: filename does not match request
 
