@@ -703,7 +703,7 @@ fails if the remote filename requires quotes to escape spaces or non-ascii chara
 How do I submit a change to the documentation?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
-Great question! Documentation for Ansible is kept in the main project git repository, and complete instructions
+Documentation for Ansible is kept in the main project git repository, and complete instructions
 for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docs/docsite/README.md>`_. Thanks!
 
 .. _i_dont_see_my_question:
