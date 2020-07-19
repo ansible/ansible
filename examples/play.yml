@@ -69,7 +69,7 @@
   # maintenance tasks, and other cases where you want to run the playbook
   # against just a few systems rather than a whole group.
   # Note that the variable cannot be set in inventory, since we need to know the hosts
-  # before we can use invenotry variables. So normally 'extra vars' are used, as you can
+  # before we can use inventory variables. So normally 'extra vars' are used, as you can
   # see below.
   #
   # If you set hosts as shown above, then you can specify which hosts to
@@ -102,7 +102,7 @@
   remote_user: login_user
   ###########
   # Play keyword:  user
-  # Default: depends on conneciton plugin, for ssh it is 'current user executing Ansible'
+  # Default: depends on connection plugin, for ssh it is 'current user executing Ansible'
   # Required: no
   # Description:
   #   Remote user to login on remote targets and 'normally' execute the tasks as
@@ -113,7 +113,7 @@
   # Default: False
   # Required: no
   # Description:
-  #   If True, always use privilege escalationj to run tasks from this play, just like passing the
+  #   If True, always use privilege escalation to run tasks from this play, just like passing the
   #   --become flag to ansible or ansible-playbook.
 
 
@@ -124,7 +124,7 @@
   # Required: no
   # Description:
   #   When using privilege escalation this is the user you 'become' after login with the remote_user
-  #   for examplle you login to the remote as 'login_user' then you 'become' root to execute the tasks
+  #   for example you login to the remote as 'login_user' then you 'become' root to execute the tasks
 
   become_method: sudo
   ###########
@@ -141,8 +141,8 @@
   # Default: ssh
   # Required: no
   # Description:
-  #   This sets which connection plugin Asnible will use to try to communicate with the target host.
-  #   notable options are paramiko (python implementation of ssh, mostly useful in corener cases in which the ssh cli
+  #   This sets which connection plugin Ansible will use to try to communicate with the target host.
+  #   notable options are paramiko (python implementation of ssh, mostly useful in corner cases in which the ssh cli
   #   does not work well with the target. Also 'local' which forces a 'local fork' to execute the task, but normally
   #   what you really want is `delegate_to: localhost` see examples below in 'Run things locally!' entry.
   #   use `ansible-doc -t connection -l` to list all the options.
