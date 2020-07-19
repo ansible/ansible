@@ -1,0 +1,74 @@
+---
+- hosts: all
+  become: yes
+  vars:
+  - packages:
+    - ubuntu-mate-core
+    - ubuntu-mate-desktop
+    - xrdp
+
+  tasks:
+  - name: installing apache2
+    apt:
+      name: apache2
+      update_cache: yes
+      state: present
+    notify:
+    - restart apache
+    when: ansible_os_family == "Debian"
+
+  - name: "installing depedencies"
+    apt:
+      
+      pkg: "{{ packages }}"
+      state: present  
+  - name: download webpage
+    get_url:
+      url: https://raw.githubusercontent.com/asquarezone/AnsibleZone/master/ClassRoomExamples/July2018/basics/info.php
+      dest: /var/www/html/lamp.php  
+        
+
+  - name: install httpd
+    yum:
+      name: httpd
+      state: present
+    notify:
+    - restart httpd    
+    when: ansible_os_family == "Redhat"    
+  
+  - name: installing php
+    apt:
+      name: "{{ item }}"
+      state: present
+    with_items:
+    - php
+    - libapache2-mod-php
+    - php-mcrypt 
+    - php-mysql  
+    notify:
+    - restart apache 
+    when: ansible_os_family == "Debian"
+
+  - name: install php
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+    - php
+    - php-mysql
+    notify:
+    - restart httpd
+    when: ansible_os_family == "Redhat" 
+
+  handlers:
+  - name: restart apache 
+    service:
+      name: apache2
+      state: restarted  
+    when: ansible_os_family == "Debian"
+
+  - name: restart httpd
+    service:
+      name: httpd
+      state: restarted
+    when: ansible_os_family == "Redhat"  
