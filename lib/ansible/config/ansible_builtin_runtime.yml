@@ -8893,7 +8893,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc.os10.os10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
@@ -8956,7 +8956,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc.os10.os10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
@@ -9074,7 +9074,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc.os10.os10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
@@ -9399,7 +9399,7 @@ plugin_routing:
     ovirt_info:
       redirect: ovirt.ovirt.ovirt_info
     dellos10:
-      redirect: dellemc.os10.os10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
