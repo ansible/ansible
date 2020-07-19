@@ -1,0 +1,44 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+  - name: adding default jre
+    apt:
+      name: default-jre
+      update_cache: yes
+      state: present
+  - name: adding default jdk
+    apt:
+      name: default-jdk
+      update_cache: yes
+      state: present
+
+  - name: adding properties
+    apt:
+      name: software-properties-common
+      update_cache: yes
+  - name: adding repository
+    apt_repository:
+      repo: 'ppa:webupd8team/java'
+      state: present
+      update_cache: yes
+  - name: Accept Java 8 License
+    become: yes
+    debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+  - name: install java8
+    apt:
+      name: "{{item}}"
+      update_cache: yes
+    with_items:
+      - oracle-java8-installer
+      - ca-certificates
+      - oracle-java8-set-default
+  - name: install tomcat8
+    apt:
+      name: tomcat8
+      update_cache: yes
+      state: present
+  - name: service start
+    service:
+      name: tomcat8
+      state: restarted
