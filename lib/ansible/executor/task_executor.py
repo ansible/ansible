@@ -803,9 +803,9 @@ class TaskExecutor:
         else:
             self._play_context.connection = self._task.connection
 
-        # TODO: play context has logic to update the conneciton for 'smart'
+        # TODO: play context has logic to update the connection for 'smart'
         # (default value, will chose between ssh and paramiko) and 'persistent'
-        # (really paramiko), evnentually this should move to task object itself.
+        # (really paramiko), eventually this should move to task object itself.
         connection_name = self._play_context.connection
 
         # load connection
