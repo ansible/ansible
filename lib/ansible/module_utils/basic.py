@@ -464,8 +464,7 @@ def _sanitize_keys(obj, no_log_strings):
             # should be safe to pass None for the deferred_removals parameter.
             new_key = _remove_values_conditions(old_key, no_log_strings, None)
 
-            if isinstance(value, Mapping):
-                # We have a sub-dict, so sanitize it as well.
+            if isinstance(value, (Mapping, list)):
                 new_obj[new_key] = _sanitize_keys(value, no_log_strings)
             else:
                 new_obj[new_key] = value

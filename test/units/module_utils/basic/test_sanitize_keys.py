@@ -48,7 +48,9 @@ def _run_comparison(obj):
         'key2': { 'key3': set(['value3a', 'value3b']),
                   'i-have-a-********': { '********-********': 'value-for-secret-password', 'key4': 'value4' }
                 }
-      }
+      },
+
+      { 'foo': [ { 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER': 1 } ] }
     ]
 
     assert ret == expected
@@ -70,7 +72,9 @@ def test_sanitize_keys_dict():
         'key2': { 'key3': set(['value3a', 'value3b']),
                   'i-have-a-secret': { 'secret-password': 'value-for-secret-password', 'key4': 'value4' }
                 }
-      }
+      },
+
+      { 'foo': [ { 'secret': 1 } ] }
     ]
 
     _run_comparison(d)
@@ -102,6 +106,12 @@ def test_sanitize_keys_OrderedDict():
 
     d['key2'] = d2
 
+    foo = OrderedDict()
+    foo['foo'] = []
+    foo['foo'].append(OrderedDict())
+    foo['foo'][0]['secret'] = 1
+
     obj.append(d)
+    obj.append(foo)
 
     _run_comparison(obj)
