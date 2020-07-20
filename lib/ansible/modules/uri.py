@@ -383,7 +383,7 @@ import shutil
 import sys
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import PY2, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
@@ -727,7 +727,7 @@ def main():
         if any(candidate in content_type for candidate in JSON_CANDIDATES):
             try:
                 js = json.loads(u_content)
-                uresp['json'] = js
+                uresp['json'] = sanitize_keys(js, self.no_log_strings)
             except Exception:
                 if PY2:
                     sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
