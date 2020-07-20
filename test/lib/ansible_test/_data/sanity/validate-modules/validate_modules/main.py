@@ -1905,7 +1905,7 @@ class ModuleValidator(Validator):
             doc_type = doc_options_arg.get('type', 'str')
             data_elements = data.get('elements', None)
             if (doc_elements and not doc_type == 'list'):
-                msg = "Argument '%s " % arg
+                msg = "Argument '%s' " % arg
                 if context:
                     msg += " found in %s" % " -> ".join(context)
                 msg += " defines parameter elements as %s but it is valid only when value of parameter type is list" % doc_elements
