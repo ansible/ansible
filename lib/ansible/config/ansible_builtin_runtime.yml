@@ -6713,11 +6713,11 @@ plugin_routing:
     ovirt_vnic_profile_info:
       redirect: ovirt.ovirt.ovirt_vnic_profile_info
     dellos10_command:
-      redirect: dellemc_networking.os10.os10_command
+      redirect: dellemc.os10.os10_command
     dellos10_facts:
-      redirect: dellemc_networking.os10.os10_facts
+      redirect: dellemc.os10.os10_facts
     dellos10_config:
-      redirect: dellemc_networking.os10.os10_config
+      redirect: dellemc.os10.os10_config
     dellos9_facts:
       redirect: dellemc.os9.dellos9_facts
     dellos9_command:
@@ -7759,7 +7759,7 @@ plugin_routing:
     network.common.utils:
       redirect: ansible.netcommon.network.common.utils
     network.dellos10.dellos10:
-      redirect: dellemc_networking.os10.network.os10
+      redirect: dellemc.os10.network.os10
     # FIXME: no collection source found for dellos6/dellos9
     network.edgeos.edgeos:
       redirect: community.network.network.edgeos.edgeos
@@ -8893,7 +8893,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.os10
+      redirect: dellemc.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
@@ -8956,7 +8956,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.os10
+      redirect: dellemc.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
@@ -9074,7 +9074,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc_networking.os10.os10
+      redirect: dellemc.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
@@ -9399,7 +9399,7 @@ plugin_routing:
     ovirt_info:
       redirect: ovirt.ovirt.ovirt_info
     dellos10:
-      redirect: dellemc_networking.os10.os10
+      redirect: dellemc.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
