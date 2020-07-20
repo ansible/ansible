@@ -43,9 +43,7 @@ All tasks in a block inherit directives applied at the block level. Most of what
 
 In the example above, the 'when' condition will be evaluated before Ansible runs each of the three tasks in the block. All three tasks also inherit the privilege escalation directives, running as the root user. Finally, ``ignore_errors: yes`` ensures that Ansible continues to execute the playbook even if some of the tasks fail.
 
-.. versionadded:: 2.3
-
-    The ``name:`` keyword for ``block:`` was added in Ansible 2.3.
+Names for blocks have been available since Ansible 2.3. We recommend using names in all tasks, within blocks or elsewhere, for better visibility into the tasks being executed when you run the playbook.
 
 .. _block_error_handling:
 
