@@ -1745,9 +1745,9 @@ plugin_routing:
     aci_intf_policy_mcp:
       redirect: cisco.aci.aci_interface_policy_mcp
     aci_intf_policy_port_channel:
-      redirect: cisco.aci.aci_interface_policy_channel
+      redirect: cisco.aci.aci_interface_policy_port_channel
     aci_intf_policy_port_security:
-      redirect: cisco.aci.aci_interface_policy_security
+      redirect: cisco.aci.aci_interface_policy_port_security
     mso_schema_template_external_epg_contract:
       redirect: cisco.mso.mso_schema_template_external_epg_contract
     mso_schema_template_external_epg_subnet:
@@ -3001,7 +3001,7 @@ plugin_routing:
     sf_volume_manager:
       redirect: community.general.sf_volume_manager
     netapp_e_alerts:
-      redirect: netapp_eseries.santricity.netapp_e__alerts
+      redirect: netapp_eseries.santricity.netapp_e_alerts
     netapp_e_amg:
       redirect: netapp_eseries.santricity.netapp_e_amg
     netapp_e_amg_role:
@@ -9384,7 +9384,7 @@ plugin_routing:
     meraki:
       redirect: cisco.meraki.meraki
     mso:
-      redirect: cisco.mso.mso
+      redirect: cisco.mso.modules
     nxos:
       redirect: cisco.nxos.nxos
     ucs:
