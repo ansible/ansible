@@ -1,0 +1,2 @@
+minor_changes:
+  - Restructured _fixup_perms2() in ansible.plugins.action to make it more linear

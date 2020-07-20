@@ -1,0 +1,36 @@
+- name: Tests for ANSIBLE_COMMON_REMOTE_GROUP functionality
+  hosts: ssh
+  gather_facts: yes
+  remote_user: unpriv1
+
+  tasks:
+    - name: foo
+      action: tmpdir
+      register: tmpdir
+      become_user: unpriv2
+      become: yes
+
+    - name: run whoami with become
+      command: whoami
+      register: whoami
+      become_user: unpriv2
+      become: yes
+
+    - set_fact:
+        stat_cmd: stat -c '%U %G' {{ tmpdir.tmpdir }}/*
+      when: ansible_distribution not in ['MacOSX', 'FreeBSD']
+
+    - set_fact:
+        stat_cmd: stat -f '%Su %Sg' {{ tmpdir.tmpdir }}/*
+      when: ansible_distribution in ['MacOSX', 'FreeBSD']
+
+    - name: Ensure we tested the right fallback
+      shell: "{{ stat_cmd }}"
+      register: stat
+      become_user: unpriv2
+      become: yes
+
+    - assert:
+        that:
+          - whoami.stdout == "unpriv2"
+          - stat.stdout == 'unpriv1 commongroup'
