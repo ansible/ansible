@@ -14,9 +14,9 @@ If the source you want is not currently covered by existing plugins, you can cre
 In previous versions you had to create a script or program that can output JSON in the correct format when invoked with the proper arguments.
 You can still use and write inventory scripts, as we ensured backwards compatibility via the :ref:`script inventory plugin <script_inventory>`
 and there is no restriction on the programming language used.
-If you choose to write a script, however, you will need to implement some features yourself.
-i.e caching, configuration management, dynamic variable and group composition, etc.
-While with :ref:`inventory plugins <inventory_plugins>` you can leverage the Ansible codebase to add these common features.
+If you choose to write a script, however, you will need to implement some features yourself
+such as caching, configuration management, dynamic variable and group composition, and other features.
+If you use :ref:`inventory plugins <inventory_plugins>` instead, you can leverage the Ansible codebase to add these common features.
 
 
 .. _inventory_sources:
@@ -24,25 +24,26 @@ While with :ref:`inventory plugins <inventory_plugins>` you can leverage the Ans
 Inventory sources
 =================
 
-Inventory sources are strings (i.e what you pass to ``-i`` in the command line),
-they can represent a path to a file/script or just be the raw data for the plugin to use.
-Here are some plugins and the type of source they use:
+Inventory sources are the input strings that inventory plugins work with.
+An inventory source can be a path to a file or to a script, or it can be raw data that the plugin can interpret.
 
-+--------------------------------------------+---------------------------------------+
-|  Plugin                                    | Source                                |
-+--------------------------------------------+---------------------------------------+
-| :ref:`host list <host_list_inventory>`     | A comma separated list of hosts       |
-+--------------------------------------------+---------------------------------------+
-| :ref:`yaml <yaml_inventory>`               | Path to a YAML format data file       |
-+--------------------------------------------+---------------------------------------+
-| :ref:`constructed <constructed_inventory>` | Path to a YAML configuration file     |
-+--------------------------------------------+---------------------------------------+
-| :ref:`ini <ini_inventory>`                 | Path to an INI formatted data file    |
-+--------------------------------------------+---------------------------------------+
-| :ref:`virtualbox <virtualbox_inventory>`   | Path to a YAML configuration file     |
-+--------------------------------------------+---------------------------------------+
-| :ref:`script plugin <script_inventory>`    | Path to an executable outputting JSON |
-+--------------------------------------------+---------------------------------------+
+The table below shows some examples of inventory plugins and the kinds of source you can pass to them with ``-i`` on the command line.
+
++--------------------------------------------+-----------------------------------------+
+|  Plugin                                    | Source                                  |
++--------------------------------------------+-----------------------------------------+
+| :ref:`host list <host_list_inventory>`     | A comma-separated list of hosts         |
++--------------------------------------------+-----------------------------------------+
+| :ref:`yaml <yaml_inventory>`               | Path to a YAML format data file         |
++--------------------------------------------+-----------------------------------------+
+| :ref:`constructed <constructed_inventory>` | Path to a YAML configuration file       |
++--------------------------------------------+-----------------------------------------+
+| :ref:`ini <ini_inventory>`                 | Path to an INI formatted data file      |
++--------------------------------------------+-----------------------------------------+
+| :ref:`virtualbox <virtualbox_inventory>`   | Path to a YAML configuration file       |
++--------------------------------------------+-----------------------------------------+
+| :ref:`script plugin <script_inventory>`    | Path to an executable that outputs JSON |
++--------------------------------------------+-----------------------------------------+
 
 
 .. _developing_inventory_inventory_plugins:
@@ -50,14 +51,14 @@ Here are some plugins and the type of source they use:
 Inventory plugins
 =================
 
-Like most plugin types (except modules) they must be developed in Python, since they execute on the controller they should match the same requirements :ref:`control_node_requirements`.
+Like most plugin types (except modules), inventory plugins must be developed in Python. They execute on the controller and should therefore match the :ref:`control_node_requirements`.
 
-Most of the documentation in :ref:`developing_plugins` also applies here, so as to not repeat ourselves, you should read that document first and we'll include inventory plugin specifics next.
+Most of the documentation in :ref:`developing_plugins` also applies here. You should read that document first for a general understanding and then come back to this document for specifics on inventory plugins.
 
-Inventory plugins normally only execute at the start of a run, before playbooks/plays and roles are loaded,
-but they can be 're-executed' via the ``meta: refresh_inventory`` task, which will clear out the existing inventory and rebuild it.
+Inventory plugins normally only execute at the start of a run, before playbooks, plays, and roles are loaded.
+However, you can use the ``meta: refresh_inventory`` task to clear the current inventory and to execute the inventory plugins again, which will generate a new inventory.
 
-When using the 'persistent' cache, inventory plugins can also use the configured cache plugin to store and retrieve data to avoid costly external calls.
+If you use the persistent cache, inventory plugins can also use the configured cache plugin to store and retrieve data. This avoids repeating costly external calls.
 
 .. _developing_an_inventory_plugin:
 
