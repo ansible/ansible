@@ -9384,7 +9384,7 @@ plugin_routing:
     meraki:
       redirect: cisco.meraki.meraki
     mso:
-      redirect: cisco.mso.mso
+      redirect: cisco.mso.modules
     nxos:
       redirect: cisco.nxos.nxos
     ucs:
