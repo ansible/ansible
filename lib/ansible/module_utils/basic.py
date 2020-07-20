@@ -473,7 +473,6 @@ def _sanitize_keys(obj, no_log_strings):
     return new_obj
 
 
-
 def heuristic_log_sanitize(data, no_log_values=None):
     ''' Remove strings that look like passwords from log messages '''
     # Currently filters:

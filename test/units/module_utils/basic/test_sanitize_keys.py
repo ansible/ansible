@@ -66,7 +66,7 @@ def test_sanitize_keys_dict():
       [1, 2],
 
       { 'key1': ['value1a', 'value1b'],
-        'some-password': 'value-for-some-password', 
+        'some-password': 'value-for-some-password',
         'key2': { 'key3': set(['value3a', 'value3b']),
                   'i-have-a-secret': { 'secret-password': 'value-for-secret-password', 'key4': 'value4' }
                 }
