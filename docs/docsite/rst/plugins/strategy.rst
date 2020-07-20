@@ -59,11 +59,6 @@ You can use ``ansible-doc -t strategy -l`` to see the list of available plugins.
 Use ``ansible-doc -t strategy <plugin name>`` to see plugin-specific specific documentation and examples.
 
 
-.. toctree:: :maxdepth: 1
-    :glob:
-
-    strategy/*
-
 .. seealso::
 
    :ref:`about_playbooks`

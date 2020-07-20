@@ -437,7 +437,7 @@ For information about advanced YAML syntax used to declare variables and have mo
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
    :ref:`playbooks_best_practices`
-       Best practices in playbooks
+       Tips and tricks for playbooks
    :ref:`special_variables`
        List of special variables
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
