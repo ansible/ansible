@@ -35,7 +35,7 @@ def fake_now(monkeypatch):
     def _time():
         return EPOCH_TS
 
-    monkeypatch.setattr(date_time, 'datetime', FakeNow)
+    monkeypatch.setattr(date_time.datetime, 'datetime', FakeNow)
     monkeypatch.setattr(time, 'time', _time)
 
 

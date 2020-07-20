@@ -20,7 +20,7 @@ __metaclass__ = type
 
 import time
 
-from datetime import datetime
+import datetime
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -35,8 +35,8 @@ class DateTimeFactCollector(BaseFactCollector):
 
         # Store the timestamp once, then get local and UTC versions from that
         epoch_ts = time.time()
-        now = datetime.fromtimestamp(epoch_ts)
-        utcnow = datetime.utcfromtimestamp(epoch_ts)
+        now = datetime.datetime.fromtimestamp(epoch_ts)
+        utcnow = datetime.datetime.utcfromtimestamp(epoch_ts)
 
         date_time_facts['year'] = now.strftime('%Y')
         date_time_facts['month'] = now.strftime('%m')
