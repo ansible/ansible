@@ -1745,9 +1745,9 @@ plugin_routing:
     aci_intf_policy_mcp:
       redirect: cisco.aci.aci_interface_policy_mcp
     aci_intf_policy_port_channel:
-      redirect: cisco.aci.aci_interface_policy_channel
+      redirect: cisco.aci.aci_interface_policy_port_channel
     aci_intf_policy_port_security:
-      redirect: cisco.aci.aci_interface_policy_security
+      redirect: cisco.aci.aci_interface_policy_port_security
     mso_schema_template_external_epg_contract:
       redirect: cisco.mso.mso_schema_template_external_epg_contract
     mso_schema_template_external_epg_subnet:
