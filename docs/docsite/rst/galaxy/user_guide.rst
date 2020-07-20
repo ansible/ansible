@@ -173,9 +173,9 @@ Installing roles from Galaxy
 The ``ansible-galaxy`` command comes bundled with Ansible, and you can use it to install roles from Galaxy or directly from a git based SCM. You can
 also use it to create a new role, remove roles, or perform tasks on the Galaxy website.
 
-The command line tool by default communicates with the Galaxy website API using the server address *https://galaxy.ansible.com*. Since the `Galaxy project <https://github.com/ansible/galaxy>`_
-is an open source project, you may be running your own internal Galaxy server and wish to override the default server address. You can do this using the *--server* option
-or by setting the Galaxy server value in your *ansible.cfg* file. For information on setting the value in *ansible.cfg* see :ref:`galaxy_server`.
+The command line tool by default communicates with the Galaxy website API using the server address *https://galaxy.ansible.com*. If you run your own internal Galaxy server
+and want to use it instead of the default one, pass the ``--server`` option following the address of this galaxy server. You can set permanently this option by setting
+the Galaxy server value in your ``ansible.cfg`` file to use it . For information on setting the value in *ansible.cfg* see :ref:`galaxy_server`.
 
 
 Installing roles
@@ -195,8 +195,8 @@ By default, Ansible downloads roles to the first writable directory in the defau
 You can override this with one of the following options:
 
 * Set the environment variable :envvar:`ANSIBLE_ROLES_PATH` in your session.
-* Define ``roles_path`` in an ``ansible.cfg`` file.
 * Use the ``--roles-path`` option for the ``ansible-galaxy`` command.
+* Define ``roles_path`` in an ``ansible.cfg`` file.
 
 The following provides an example of using ``--roles-path`` to install the role into the current working directory:
 
@@ -212,7 +212,8 @@ The following provides an example of using ``--roles-path`` to install the role 
 Installing a specific version of a role
 ---------------------------------------
 
-When the Galaxy server imports a role, it imports any git tags matching the Semantic Version format as versions. In turn, you can download a specific version of a role by specifying one of the imported tags.
+When the Galaxy server imports a role, it imports any git tags matching the `Semantic Version <https://semver.org/>`_ format as versions.
+In turn, you can download a specific version of a role by specifying one of the imported tags.
 
 To see the available versions for a role:
 

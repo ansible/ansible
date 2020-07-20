@@ -120,7 +120,7 @@ When you choose to use your username and password, your password is not sent to 
 It then sends the token to Galaxy, which in turn verifies that your identity and returns a Galaxy access token. After authentication completes the GitHub token is
 destroyed.
 
-If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the ``--github-token`` option to pass a personal access token that you create.
+If you do not want to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the ``--github-token`` option to pass a personal access token that you create.
 
 
 Import a role
