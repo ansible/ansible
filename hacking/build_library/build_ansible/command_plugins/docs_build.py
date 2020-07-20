@@ -52,9 +52,9 @@ def generate_base_docs(args):
             f.write(yaml.dump(deps_file_contents))
 
         # Generate the plugin rst
-        antsibull_docs.run(['antsibull-docs', 'stable', '--deps-file', modified_deps_file,
-                            '--ansible-base-cache', str(args.top_dir),
-                            '--dest-dir', args.output_dir])
+        return antsibull_docs.run(['antsibull-docs', 'stable', '--deps-file', modified_deps_file,
+                                   '--ansible-base-cache', str(args.top_dir),
+                                   '--dest-dir', args.output_dir])
 
         # If we make this more than just a driver for antsibull:
         # Run other rst generation
@@ -107,9 +107,9 @@ def generate_full_docs(args):
             f.write(yaml.dump(deps_data))
 
         # Generate the plugin rst
-        antsibull_docs.run(['antsibull-docs', 'stable', '--deps-file', modified_deps_file,
-                            '--ansible-base-cache', str(args.top_dir),
-                            '--dest-dir', args.output_dir])
+        return antsibull_docs.run(['antsibull-docs', 'stable', '--deps-file', modified_deps_file,
+                                   '--ansible-base-cache', str(args.top_dir),
+                                   '--dest-dir', args.output_dir])
 
         # If we make this more than just a driver for antsibull:
         # Run other rst generation
