@@ -24,7 +24,7 @@ To save a local module or plugin such that Ansible can find and use it, add the 
 
 .. _modules_vs_plugins:
 
-What are modules and plugins?
+Modules and plugins: what's the difference?
 ===========================================
 If you're looking to add local functionality to Ansible, you might wonder whether you need a module or a plugin. Here's a quick overview to help you decide between the two:
 
