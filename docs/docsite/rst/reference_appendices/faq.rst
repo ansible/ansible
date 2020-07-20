@@ -8,16 +8,26 @@ Here are some commonly asked questions and their answers.
 
 .. _set_environment:
 
-How can I set the PATH or any other environment variable for a task or entire playbook?
+How can I set the PATH or any other environment variable for a task or entire play?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Setting environment variables can be done with the `environment` keyword. It can be used at the task or other levels in the play::
+Setting environment variables can be done with the `environment` keyword. It can be used at the task or other levels in the play.
 
+.. code-block:: yaml
+
+    shell:
+      cmd: date
+    environment:
+      LANG=fr_FR.UTF-8
+
+.. code-block:: yaml
+
+    hosts: servers
     environment:
       PATH: "{{ ansible_env.PATH }}:/thingy/bin"
       SOME: value
 
-.. note:: starting in 2.0.1 the setup task from gather_facts also inherits the environment directive from the play, you might need to use the `|default` filter to avoid errors if setting this at play level.
+.. note:: starting in 2.0.1 the setup task from ``gather_facts`` also inherits the environment directive from the play, you might need to use the ``|default`` filter to avoid errors if setting this at play level.
 
 .. _faq_setting_users_and_ports:
 
