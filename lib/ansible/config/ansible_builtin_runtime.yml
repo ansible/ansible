@@ -7760,7 +7760,10 @@ plugin_routing:
       redirect: ansible.netcommon.network.common.utils
     network.dellos10.dellos10:
       redirect: dellemc.os10.network.os10
-    # FIXME: no collection source found for dellos6/dellos9
+    network.dellos9.dellos9:
+      redirect: dellemc.os9.network.os9
+    network.dellos6.dellos6:
+      redirect: dellemc.os6.network.os6
     network.edgeos.edgeos:
       redirect: community.network.network.edgeos.edgeos
     network.edgeswitch.edgeswitch:
