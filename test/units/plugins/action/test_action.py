@@ -342,7 +342,7 @@ class TestActionBase(unittest.TestCase):
             self.assertEqual(runWithNoExpectation(execute), remote_paths)
 
         def assertThrowRegex(regex, execute=False):
-            self.assertRaisesRegex(
+            self.assertRaisesRegexp(
                 AnsibleError,
                 regex,
                 action_base._fixup_perms2,
@@ -469,7 +469,9 @@ class TestActionBase(unittest.TestCase):
             'stderr': '',
         }
         assertSuccess()
-        action_base._remote_chgrp.assert_called()
+        action_base._remote_chgrp.assert_called_once_with(
+            remote_paths,
+            'commongroup')
 
         # Step 4: world-readable tmpdir
         action_base.get_shell_option.side_effect = get_shell_option_for_arg(
