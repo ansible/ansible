@@ -643,73 +643,73 @@ plugin_routing:
     cs_zone_info:
       redirect: ngine_io.cloudstack.cs_zone_info
     digital_ocean:
-      redirect: community.general.digital_ocean
+      redirect: community.digitalocean.digital_ocean
     digital_ocean_account_facts:
-      redirect: community.general.digital_ocean_account_facts
+      redirect: community.digitalocean.digital_ocean_account_facts
     digital_ocean_certificate_facts:
-      redirect: community.general.digital_ocean_certificate_facts
+      redirect: community.digitalocean.digital_ocean_certificate_facts
     digital_ocean_domain_facts:
-      redirect: community.general.digital_ocean_domain_facts
+      redirect: community.digitalocean.digital_ocean_domain_facts
     digital_ocean_firewall_facts:
-      redirect: community.general.digital_ocean_firewall_facts
+      redirect: community.digitalocean.digital_ocean_firewall_facts
     digital_ocean_floating_ip_facts:
-      redirect: community.general.digital_ocean_floating_ip_facts
+      redirect: community.digitalocean.digital_ocean_floating_ip_facts
     digital_ocean_image_facts:
-      redirect: community.general.digital_ocean_image_facts
+      redirect: community.digitalocean.digital_ocean_image_facts
     digital_ocean_load_balancer_facts:
-      redirect: community.general.digital_ocean_load_balancer_facts
+      redirect: community.digitalocean.digital_ocean_load_balancer_facts
     digital_ocean_region_facts:
-      redirect: community.general.digital_ocean_region_facts
+      redirect: community.digitalocean.digital_ocean_region_facts
     digital_ocean_size_facts:
-      redirect: community.general.digital_ocean_size_facts
+      redirect: community.digitalocean.digital_ocean_size_facts
     digital_ocean_snapshot_facts:
-      redirect: community.general.digital_ocean_snapshot_facts
+      redirect: community.digitalocean.digital_ocean_snapshot_facts
     digital_ocean_sshkey_facts:
-      redirect: community.general.digital_ocean_sshkey_facts
+      redirect: community.digitalocean.digital_ocean_sshkey_facts
     digital_ocean_tag_facts:
-      redirect: community.general.digital_ocean_tag_facts
+      redirect: community.digitalocean.digital_ocean_tag_facts
     digital_ocean_volume_facts:
-      redirect: community.general.digital_ocean_volume_facts
+      redirect: community.digitalocean.digital_ocean_volume_facts
     digital_ocean_account_info:
-      redirect: community.general.digital_ocean_account_info
+      redirect: community.digitalocean.digital_ocean_account_info
     digital_ocean_block_storage:
-      redirect: community.general.digital_ocean_block_storage
+      redirect: community.digitalocean.digital_ocean_block_storage
     digital_ocean_certificate:
-      redirect: community.general.digital_ocean_certificate
+      redirect: community.digitalocean.digital_ocean_certificate
     digital_ocean_certificate_info:
-      redirect: community.general.digital_ocean_certificate_info
+      redirect: community.digitalocean.digital_ocean_certificate_info
     digital_ocean_domain:
-      redirect: community.general.digital_ocean_domain
+      redirect: community.digitalocean.digital_ocean_domain
     digital_ocean_domain_info:
-      redirect: community.general.digital_ocean_domain_info
+      redirect: community.digitalocean.digital_ocean_domain_info
     digital_ocean_droplet:
-      redirect: community.general.digital_ocean_droplet
+      redirect: community.digitalocean.digital_ocean_droplet
     digital_ocean_firewall_info:
-      redirect: community.general.digital_ocean_firewall_info
+      redirect: community.digitalocean.digital_ocean_firewall_info
     digital_ocean_floating_ip:
-      redirect: community.general.digital_ocean_floating_ip
+      redirect: community.digitalocean.digital_ocean_floating_ip
     digital_ocean_floating_ip_info:
-      redirect: community.general.digital_ocean_floating_ip_info
+      redirect: community.digitalocean.digital_ocean_floating_ip_info
     digital_ocean_image_info:
-      redirect: community.general.digital_ocean_image_info
+      redirect: community.digitalocean.digital_ocean_image_info
     digital_ocean_load_balancer_info:
-      redirect: community.general.digital_ocean_load_balancer_info
+      redirect: community.digitalocean.digital_ocean_load_balancer_info
     digital_ocean_region_info:
-      redirect: community.general.digital_ocean_region_info
+      redirect: community.digitalocean.digital_ocean_region_info
     digital_ocean_size_info:
-      redirect: community.general.digital_ocean_size_info
+      redirect: community.digitalocean.digital_ocean_size_info
     digital_ocean_snapshot_info:
-      redirect: community.general.digital_ocean_snapshot_info
+      redirect: community.digitalocean.digital_ocean_snapshot_info
     digital_ocean_sshkey:
-      redirect: community.general.digital_ocean_sshkey
+      redirect: community.digitalocean.digital_ocean_sshkey
     digital_ocean_sshkey_info:
-      redirect: community.general.digital_ocean_sshkey_info
+      redirect: community.digitalocean.digital_ocean_sshkey_info
     digital_ocean_tag:
-      redirect: community.general.digital_ocean_tag
+      redirect: community.digitalocean.digital_ocean_tag
     digital_ocean_tag_info:
-      redirect: community.general.digital_ocean_tag_info
+      redirect: community.digitalocean.digital_ocean_tag_info
     digital_ocean_volume_info:
-      redirect: community.general.digital_ocean_volume_info
+      redirect: community.digitalocean.digital_ocean_volume_info
     dimensiondata_network:
       redirect: community.general.dimensiondata_network
     dimensiondata_vlan:
@@ -5627,7 +5627,9 @@ plugin_routing:
     asa_command:
       redirect: cisco.asa.asa_command
     intersight_facts:
-      redirect: cisco.intersight.intersight_facts
+      redirect: cisco.intersight.intersight_info
+    intersight_info:
+      redirect: cisco.intersight.intersight_info
     intersight_rest_api:
       redirect: cisco.intersight.intersight_rest_api
     ios_ospfv2:
@@ -6711,11 +6713,11 @@ plugin_routing:
     ovirt_vnic_profile_info:
       redirect: ovirt.ovirt.ovirt_vnic_profile_info
     dellos10_command:
-      redirect: dellemc.os10.os10_command
+      redirect: dellemc_networking.os10.os10_command
     dellos10_facts:
-      redirect: dellemc.os10.os10_facts
+      redirect: dellemc_networking.os10.os10_facts
     dellos10_config:
-      redirect: dellemc.os10.os10_config
+      redirect: dellemc_networking.os10.os10_config
     dellos9_facts:
       redirect: dellemc.os9.dellos9_facts
     dellos9_command:
@@ -7620,7 +7622,7 @@ plugin_routing:
     database:
       redirect: community.general.database
     digital_ocean:
-      redirect: community.general.digital_ocean
+      redirect: community.digitalocean.digital_ocean
     dimensiondata:
       redirect: community.general.dimensiondata
     docker:
@@ -7641,14 +7643,13 @@ plugin_routing:
       tombstone:
         removal_date: 2019-11-06
     firewalld:
-      redirect: community.general.firewalld
+      redirect: ansible.posix.firewalld
     gcdns:
       redirect: community.general.gcdns
     gce:
       redirect: community.general.gce
-# FIXME: can't find this file in google.cloud
-#    gcp:
-#      redirect: google.cloud.gcp
+    gcp:
+      redirect: community.general.gcp
     gcp_utils:
       redirect: google.cloud.gcp_utils
     gitlab:
@@ -7670,7 +7671,7 @@ plugin_routing:
     identity.keycloak.keycloak:
       redirect: community.general.identity.keycloak.keycloak
     infinibox:
-      redirect: community.general.infinibox
+      redirect: infinidat.infinibox.infinibox
     influxdb:
       redirect: community.general.influxdb
     ipa:
@@ -7698,7 +7699,7 @@ plugin_routing:
     memset:
       redirect: community.general.memset
     mysql:
-      redirect: community.general.mysql
+      redirect: community.mysql.mysql
     net_tools.netbox.netbox_utils:
       redirect: netbox.netbox.netbox_utils
     net_tools.nios:
@@ -8638,9 +8639,9 @@ plugin_routing:
     network.nxos.utils.utils:
       redirect: cisco.nxos.network.nxos.utils.utils
     network.onyx:
-      redirect: community.network.network.onyx
+      redirect: mellanox.onyx.network.onyx
     network.onyx.onyx:
-      redirect: community.network.network.onyx.onyx
+      redirect: mellanox.onyx.network.onyx.onyx
     network.ordnance:
       redirect: community.network.network.ordnance
     network.ordnance.ordnance:
@@ -8892,7 +8893,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc.os10.os10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
@@ -8955,7 +8956,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc.os10.os10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
@@ -9073,7 +9074,7 @@ plugin_routing:
     junos:
       redirect: junipernetworks.junos.junos
     dellos10:
-      redirect: dellemc.os10.os10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
@@ -9210,7 +9211,7 @@ plugin_routing:
     cnos:
       redirect: community.network.cnos
     digital_ocean:
-      redirect: community.general.digital_ocean
+      redirect: community.digitalocean.digital_ocean
     dimensiondata:
       redirect: community.general.dimensiondata
     dimensiondata_wait:
@@ -9398,7 +9399,7 @@ plugin_routing:
     ovirt_info:
       redirect: ovirt.ovirt.ovirt_info
     dellos10:
-      redirect: dellemc.os10.os10
+      redirect: dellemc_networking.os10.os10
     dellos9:
       redirect: dellemc.os9.dellos9
     dellos6:
