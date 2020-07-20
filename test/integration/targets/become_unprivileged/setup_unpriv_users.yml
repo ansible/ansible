@@ -1,0 +1,109 @@
+####################################################################
+# NOTE! Any destructive changes you make here... Undo them in
+# cleanup_become_unprivileged so that they don't affect other tests.
+####################################################################
+- name: Set up host and create unprivileged users
+  hosts: ssh
+  gather_facts: yes
+  remote_user: root
+  tasks:
+    - name: Create groups for unprivileged users
+      group:
+        name: "{{ item }}"
+      with_items:
+        - unpriv1
+        - unpriv2
+
+    # MacOS requires unencrypted password
+    - name: Set password for unpriv1 (MacOSX)
+      set_fact:
+        password: 'iWishIWereCoolEnoughForRoot!'
+      when: ansible_distribution == 'MacOSX'
+
+    - name: Set password for unpriv1 (everything else)
+      set_fact:
+        password: $6$CRuKRUfAoVwibjUI$1IEOISMFAE/a0VG73K9QsD0uruXNPLNkZ6xWg4Sk3kZIXwv6.YJLECzfNjn6pu8ay6XlVcj2dUvycLetL5Lgx1
+      when: ansible_distribution != 'MacOSX'
+
+    # This user is special. It gets a password so we can sudo as it
+    # (we set the sudo password in runme.sh) and it gets wheel so it can
+    # `become` unpriv2 without an overly complex sudoers file.
+    - name: Create first unprivileged user
+      user:
+        name: unpriv1
+        group: unpriv1
+        password: "{{ password }}"
+
+    - name: Create second unprivileged user
+      user:
+        name: unpriv2
+        group: unpriv2
+
+    - name: Special case group add for macOS
+      user:
+        name: unpriv1
+        groups: com.apple.access_ssh
+        append: yes
+      when: ansible_distribution == 'MacOSX'
+
+    - name: Create .ssh for unpriv1
+      file:
+        path: ~unpriv1/.ssh
+        state: directory
+        owner: unpriv1
+        group: unpriv1
+        mode: 0700
+
+    - name: Set authorized key for unpriv1
+      copy:
+        src: ~root/.ssh/authorized_keys
+        dest: ~unpriv1/.ssh/authorized_keys
+        remote_src: yes
+        owner: unpriv1
+        group: unpriv1
+        mode: 0600
+
+    # Without this we get:
+    # "Failed to connect to the host via ssh: "System is booting up. Unprivileged
+    # users are not permitted to log in yet. Please come back later."
+    - name: Nuke /run/nologin
+      file:
+        path: /run/nologin
+        state: absent
+
+    - name: Fix sudoers.d path for FreeBSD
+      set_fact:
+        sudoers_etc: /usr/local/etc
+      when: ansible_distribution == 'FreeBSD'
+
+    - name: Fix sudoers.d path for everything else
+      set_fact:
+        sudoers_etc: /etc
+      when: sudoers_etc is not defined
+
+    - name: Set chown group for bsd and osx
+      set_fact:
+        chowngroup: wheel
+      when: ansible_distribution in ('FreeBSD', 'MacOSX')
+
+    - name: Chown group for everything else
+      set_fact:
+        chowngroup: root
+      when: chowngroup is not defined
+
+    - name: Make it so unpriv1 can sudo (Chapter 1)
+      copy:
+        dest: "{{ sudoers_etc }}/sudoers.d/unpriv1"
+        content: unpriv1 ALL=(ALL) ALL
+        owner: root
+        group: "{{ chowngroup }}"
+        mode: 0644
+
+    # OpenSUSE has a weird sudo default here and requires the root pw
+    # instead of the user pw. Undo that setting, we can clean it up later.
+    - name: Make it so unpriv1 can sudo (Chapter 2 - The Return Of the OpenSUSE)
+      lineinfile:
+        dest: "{{ sudoers_etc }}/sudoers"
+        regexp: '^Defaults targetpw'
+        line: '### Defaults targetpw'
+        backrefs: yes

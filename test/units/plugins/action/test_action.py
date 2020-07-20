@@ -316,6 +316,189 @@ class TestActionBase(unittest.TestCase):
         action_base._low_level_execute_command.return_value = dict(rc=1, stdout='some stuff here', stderr='No space left on device')
         self.assertRaises(AnsibleError, action_base._make_tmp_path, 'root')
 
+    def test_action_base__fixup_perms2(self):
+        mock_task = MagicMock()
+        mock_connection = MagicMock()
+        play_context = PlayContext()
+        action_base = DerivedActionBase(
+            task=mock_task,
+            connection=mock_connection,
+            play_context=play_context,
+            loader=None,
+            templar=None,
+            shared_loader_obj=None,
+        )
+        action_base._low_level_execute_command = MagicMock()
+        remote_paths = ['/tmp/foo/bar.txt', '/tmp/baz.txt']
+        remote_user = 'remoteuser1'
+
+        def runWithNoExpectation(execute=False):
+            return action_base._fixup_perms2(
+                remote_paths,
+                remote_user=remote_user,
+                execute=execute)
+
+        def assertSuccess(execute=False):
+            self.assertEqual(runWithNoExpectation(execute), remote_paths)
+
+        def assertThrowRegex(regex, execute=False):
+            self.assertRaisesRegexp(
+                AnsibleError,
+                regex,
+                action_base._fixup_perms2,
+                remote_paths,
+                remote_user=remote_user,
+                execute=execute)
+
+        def get_shell_option_for_arg(args_kv, default):
+            '''A helper for get_shell_option. Returns a function that, if
+            called with ``option`` that exists in args_kv, will return the
+            value, else will return ``default`` for every other given arg'''
+            def _helper(option, *args, **kwargs):
+                return args_kv.get(option, default)
+            return _helper
+
+        # Step 1: On windows, we just return remote_paths
+        action_base._connection._shell._IS_WINDOWS = True
+        assertSuccess(execute=False)
+        assertSuccess(execute=True)
+
+        # But if we're not on windows....we have more work to do.
+        action_base._connection._shell._IS_WINDOWS = False
+
+        # Step 2: We're /not/ becoming an unprivileged user
+        action_base._remote_chmod = MagicMock()
+        action_base._is_become_unprivileged = MagicMock()
+        action_base._is_become_unprivileged.return_value = False
+        # Two subcases:
+        #   - _remote_chmod rc is 0
+        #   - _remote-chmod rc is not 0, something failed
+        action_base._remote_chmod.return_value = {
+            'rc': 0,
+            'stdout': 'some stuff here',
+            'stderr': '',
+        }
+        assertSuccess(execute=True)
+
+        # When execute=False, we just get the list back. But add it here for
+        # completion. chmod is never called.
+        assertSuccess()
+
+        action_base._remote_chmod.return_value = {
+            'rc': 1,
+            'stdout': 'some stuff here',
+            'stderr': 'and here',
+        }
+        assertThrowRegex(
+            'Failed to set execute bit on remote files',
+            execute=True)
+
+        # Step 3: we are becoming unprivileged
+        action_base._is_become_unprivileged.return_value = True
+
+        # Step 3a: setfacl
+        action_base._remote_set_user_facl = MagicMock()
+        action_base._remote_set_user_facl.return_value = {
+            'rc': 0,
+            'stdout': '',
+            'stderr': '',
+        }
+        assertSuccess()
+
+        # Step 3b: chmod +x if we need to
+        # To get here, setfacl failed, so mock it as such.
+        action_base._remote_set_user_facl.return_value = {
+            'rc': 1,
+            'stdout': '',
+            'stderr': '',
+        }
+        action_base._remote_chmod.return_value = {
+            'rc': 0,
+            'stdout': 'some stuff here',
+            'stderr': '',
+        }
+        assertSuccess(execute=True)
+        action_base._remote_chmod.return_value = {
+            'rc': 1,
+            'stdout': 'some stuff here',
+            'stderr': '',
+        }
+        assertThrowRegex(
+            'Failed to set file mode on remote temporary file',
+            execute=True)
+
+        # Step 3c: chown
+        action_base._remote_chown = MagicMock()
+        action_base._remote_chown.return_value = {
+            'rc': 0,
+            'stdout': '',
+            'stderr': '',
+        }
+        assertSuccess()
+        action_base._remote_chown.return_value = {
+            'rc': 1,
+            'stdout': '',
+            'stderr': '',
+        }
+        remote_user = 'root'
+        action_base._get_admin_users = MagicMock()
+        action_base._get_admin_users.return_value = ['root']
+        assertThrowRegex('user would be unable to read the file.')
+        remote_user = 'remoteuser1'
+
+        # Step 3d: Common group
+
+        get_shell_option = action_base.get_shell_option
+        action_base.get_shell_option = MagicMock()
+        action_base.get_shell_option.side_effect = get_shell_option_for_arg(
+            {
+                'common_remote_group': 'commongroup',
+            },
+            None)
+        action_base._remote_chgrp = MagicMock()
+        action_base._remote_chgrp.return_value = {
+            'rc': 0,
+            'stdout': '',
+            'stderr': '',
+        }
+        # TODO: Add test to assert warning is shown if
+        # ALLOW_WORLD_READABLE_TMPFILES is set in this case.
+        action_base._remote_chmod.return_value = {
+            'rc': 0,
+            'stdout': '',
+            'stderr': '',
+        }
+        assertSuccess()
+        action_base._remote_chgrp.assert_called_once_with(
+            remote_paths,
+            'commongroup')
+
+        # Step 4: world-readable tmpdir
+        action_base.get_shell_option.side_effect = get_shell_option_for_arg(
+            {
+                'world_readable_temp': True,
+                'common_remote_group': None,
+            },
+            None)
+        action_base._remote_chmod.return_value = {
+            'rc': 0,
+            'stdout': 'some stuff here',
+            'stderr': '',
+        }
+        assertSuccess()
+        action_base._remote_chmod.return_value = {
+            'rc': 1,
+            'stdout': 'some stuff here',
+            'stderr': '',
+        }
+        assertThrowRegex('Failed to set file mode on remote files')
+
+        # Otherwise if we make it here in this state, we hit the catch-all
+        action_base.get_shell_option.side_effect = get_shell_option_for_arg(
+            {},
+            None)
+        assertThrowRegex('on the temporary files Ansible needs to create')
+
     def test_action_base__remove_tmp_path(self):
         # create our fake task
         mock_task = MagicMock()

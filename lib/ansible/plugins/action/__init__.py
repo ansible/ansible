@@ -532,103 +532,149 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_user is None:
             remote_user = self._get_remote_user()
 
+        # Step 1: Are we on windows?
         if getattr(self._connection._shell, "_IS_WINDOWS", False):
-            # This won't work on Powershell as-is, so we'll just completely skip until
-            # we have a need for it, at which point we'll have to do something different.
+            # This won't work on Powershell as-is, so we'll just completely
+            # skip until we have a need for it, at which point we'll have to do
+            # something different.
             return remote_paths
 
-        if self._is_become_unprivileged():
-            # Unprivileged user that's different than the ssh user.  Let's get
-            # to work!
-
-            become_user = self.get_become_option('become_user')
-
-            # Try to use file system acls to make the files readable for sudo'd
-            # user
+        # Step 2: If we're not becoming an unprivileged user, we are roughly
+        # done. Make the files +x if we're asked to, and return.
+        if not self._is_become_unprivileged():
             if execute:
-                chmod_mode = 'rx'
-                setfacl_mode = 'r-x'
-            else:
-                chmod_mode = 'rX'
-                # NOTE: this form fails silently on freebsd.  We currently
-                # never call _fixup_perms2() with execute=False but if we
-                # start to we'll have to fix this.
-                setfacl_mode = 'r-X'
-
-            res = self._remote_set_user_facl(remote_paths, become_user, setfacl_mode)
-            if res['rc'] != 0:
-                # File system acls failed; let's try to use chown next
-                # Set executable bit first as on some systems an
-                # unprivileged user can use chown
-                if execute:
-                    res = self._remote_chmod(remote_paths, 'u+x')
-                    if res['rc'] != 0:
-                        raise AnsibleError('Failed to set file mode on remote temporary files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
-
-                res = self._remote_chown(remote_paths, become_user)
+                # Can't depend on the file being transferred with execute permissions.
+                # Only need user perms because no become was used here
+                res = self._remote_chmod(remote_paths, 'u+x')
                 if res['rc'] != 0:
-                    # First check if we are an admin/root user. If we are
-                    # and failed here, something weird has happened.
-                    if remote_user in self._get_admin_users():
-                        # chown failed even if remote_user is administrator/root
-                        raise AnsibleError('Failed to change ownership of the temporary files Ansible needs to create despite connecting as a privileged user. '
-                                           'Unprivileged become user would be unable to read the file.')
+                    raise AnsibleError(
+                        'Failed to set execute bit on remote files '
+                        '(rc: {0}, err: {1})'.format(
+                            res['rc'],
+                            to_native(res['stderr'])))
+            return remote_paths
 
-                    # Otherwise, we're a normal user. We failed to chown the
-                    # paths to the unprivileged user, but if we have a common
-                    # group with them, we should be able to chown it to that.
-                    #
-                    # Note that we have no way of knowing if this will actually
-                    # work... just because chgrp exits successfully does not
-                    # mean that Ansible will work. We could check if the become
-                    # user is in the group, but this would create an extra
-                    # round trip.
-                    #
-                    # Also note that due to the above, this can prevent the
-                    # ALLOW_WORLD_READABLE_TMPFILES logic below from ever
-                    # getting called. We leave this up to the user to rectify
-                    # if they have both of these features enabled.
-                    group = self.get_shell_option('common_remote_group')
-                    if group is not None:
-                        res = self._remote_chgrp(remote_paths, group)
-                        if res['rc'] == 0:
-                            # If ALLOW_WORLD_READABLE_TMPFILES is set, we should warn the user
-                            # that something might go weirdly here.
-                            if C.ALLOW_WORLD_READABLE_TMPFILES:
-                                display.warning('Both common_remote_group and allow_world_readable_tmpfiles are set. chgrp was successful, but there is no '
-                                                'guarantee that Ansible will be able to read the files after this operation, particularly if '
-                                                'common_remote_group was set to a group of which the unprivileged become user is not a member. In this '
-                                                'situation, allow_world_readable_tmpfiles is a no-op. See the "Risks of becoming an unprivileged user" section '
-                                                'of the "Understanding privilege escalation: become" user guide documentation for more information')
-                            if execute:
-                                group_mode = 'g+rwx'
-                            else:
-                                group_mode = 'g+rw'
-                            res = self._remote_chmod(remote_paths, group_mode)
+        # If we're still here, we have an unprivileged user that's different
+        # than the ssh user.
+        become_user = self.get_become_option('become_user')
 
-                if res['rc'] != 0:
-                    if self.get_shell_option('world_readable_temp', C.ALLOW_WORLD_READABLE_TMPFILES):
-                        # chown and fs acls failed -- do things this insecure
-                        # way only if the user opted in in the config file
-                        display.warning('Using world-readable permissions for temporary files Ansible needs to create when becoming an unprivileged user. '
-                                        'This may be insecure. For information on securing this, see '
-                                        'https://docs.ansible.com/ansible/user_guide/become.html#risks-of-becoming-an-unprivileged-user')
-                        res = self._remote_chmod(remote_paths, 'a+%s' % chmod_mode)
-                        if res['rc'] != 0:
-                            raise AnsibleError('Failed to set file mode on remote files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
-                    else:
-                        raise AnsibleError('Failed to set permissions on the temporary files Ansible needs to create when becoming an unprivileged user '
-                                           '(rc: %s, err: %s}). For information on working around this, see '
-                                           'https://docs.ansible.com/ansible/become.html#becoming-an-unprivileged-user'
-                                           % (res['rc'], to_native(res['stderr'])))
-        elif execute:
-            # Can't depend on the file being transferred with execute permissions.
-            # Only need user perms because no become was used here
+        # Try to use file system acls to make the files readable for sudo'd
+        # user
+        if execute:
+            chmod_mode = 'rx'
+            setfacl_mode = 'r-x'
+        else:
+            chmod_mode = 'rX'
+            # TODO: this form fails silently on freebsd.  We currently
+            # never call _fixup_perms2() with execute=False but if we
+            # start to we'll have to fix this.
+            setfacl_mode = 'r-X'
+
+        # Step 3a: Are we able to use setfacl to add user ACLs to the file?
+        res = self._remote_set_user_facl(
+            remote_paths,
+            become_user,
+            setfacl_mode)
+
+        if res['rc'] == 0:
+            return remote_paths
+
+        # Step 3b: Set execute if we need to. We do this before anything else
+        # because some of the methods below might work but not let us set +x
+        # as part of them.
+        if execute:
             res = self._remote_chmod(remote_paths, 'u+x')
             if res['rc'] != 0:
-                raise AnsibleError('Failed to set execute bit on remote files (rc: {0}, err: {1})'.format(res['rc'], to_native(res['stderr'])))
+                raise AnsibleError(
+                    'Failed to set file mode on remote temporary files '
+                    '(rc: {0}, err: {1})'.format(
+                        res['rc'],
+                        to_native(res['stderr'])))
 
-        return remote_paths
+        # Step 3c: File system ACLs failed above; try falling back to chown.
+        res = self._remote_chown(remote_paths, become_user)
+        if res['rc'] == 0:
+            return remote_paths
+
+        # Check if we are an admin/root user. If we are and got here, it means
+        # we failed to chown as root and something weird has happened.
+        if remote_user in self._get_admin_users():
+            raise AnsibleError(
+                'Failed to change ownership of the temporary files Ansible '
+                'needs to create despite connecting as a privileged user. '
+                'Unprivileged become user would be unable to read the '
+                'file.')
+
+        # Step 3d: Common group
+        # Otherwise, we're a normal user. We failed to chown the paths to the
+        # unprivileged user, but if we have a common group with them, we should
+        # be able to chown it to that.
+        #
+        # Note that we have no way of knowing if this will actually work... just
+        # because chgrp exits successfully does not mean that Ansible will work.
+        # We could check if the become user is in the group, but this would
+        # create an extra round trip.
+        #
+        # Also note that due to the above, this can prevent the
+        # ALLOW_WORLD_READABLE_TMPFILES logic below from ever getting called. We
+        # leave this up to the user to rectify if they have both of these
+        # features enabled.
+        group = self.get_shell_option('common_remote_group')
+        if group is not None:
+            res = self._remote_chgrp(remote_paths, group)
+            if res['rc'] == 0:
+                # If ALLOW_WORLD_READABLE_TMPFILES is set, we should warn the
+                # user that something might go weirdly here.
+                if C.ALLOW_WORLD_READABLE_TMPFILES:
+                    display.warning(
+                        'Both common_remote_group and '
+                        'allow_world_readable_tmpfiles are set. chgrp was '
+                        'successful, but there is no guarantee that Ansible '
+                        'will be able to read the files after this operation, '
+                        'particularly if common_remote_group was set to a '
+                        'group of which the unprivileged become user is not a '
+                        'member. In this situation, '
+                        'allow_world_readable_tmpfiles is a no-op. See this '
+                        'URL for more details: '
+                        'https://docs.ansible.com/ansible/become.html'
+                        '#becoming-an-unprivileged-user')
+                if execute:
+                    group_mode = 'g+rwx'
+                else:
+                    group_mode = 'g+rw'
+                res = self._remote_chmod(remote_paths, group_mode)
+                if res['rc'] == 0:
+                    return remote_paths
+
+        # Step 4: World-readable temp directory
+        if self.get_shell_option(
+                'world_readable_temp',
+                C.ALLOW_WORLD_READABLE_TMPFILES):
+            # chown and fs acls failed -- do things this insecure way only if
+            # the user opted in in the config file
+            display.warning(
+                'Using world-readable permissions for temporary files Ansible '
+                'needs to create when becoming an unprivileged user. This may '
+                'be insecure. For information on securing this, see '
+                'https://docs.ansible.com/ansible/user_guide/become.html'
+                '#risks-of-becoming-an-unprivileged-user')
+            res = self._remote_chmod(remote_paths, 'a+%s' % chmod_mode)
+            if res['rc'] == 0:
+                return remote_paths
+            raise AnsibleError(
+                'Failed to set file mode on remote files '
+                '(rc: {0}, err: {1})'.format(
+                    res['rc'],
+                    to_native(res['stderr'])))
+
+        raise AnsibleError(
+            'Failed to set permissions on the temporary files Ansible needs '
+            'to create when becoming an unprivileged user '
+            '(rc: %s, err: %s}). For information on working around this, see '
+            'https://docs.ansible.com/ansible/become.html'
+            '#becoming-an-unprivileged-user' % (
+                res['rc'],
+                to_native(res['stderr'])))
 
     def _remote_chmod(self, paths, mode, sudoable=False):
         '''
