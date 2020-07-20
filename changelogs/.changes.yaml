@@ -1483,6 +1483,37 @@ releases:
     - validate-include-args-in-handlers.yml
     - yum-dnf-elements-type-in-name-list.yml
     release_date: '2020-06-18'
+  2.9.11:
+    codename: Immigrant Song
+    fragments:
+    - 114_puppet_quote.yml
+    - 57360_enable_check_mode_on_bgp_modules.yaml
+    - 59_ios_l2_interfaces_facts_parsing_issue.yaml
+    - 63632-eos-enable-eapi.yaml
+    - 63767_selective_callback.yml
+    - 642-docker_container-python-2.yml
+    - 65726-nmcli-Add-compatibility-for-new-networkmanager-library.yaml
+    - 65931-json-callback-non-lockstep-output.yml
+    - 68275-vault-module-args.yml
+    - 70168-fix-delegate_facts-without-interpreter-set.yml
+    - 70240-fix-fatal-post_validate-error.yml
+    - 70261_pipe_lookup.yml
+    - 70375-galaxy-server.yml
+    - 70465-assemble-fix-decrypt-argument.yaml
+    - 70484-bool-ansible-become.yaml
+    - 82_ios_user_ios_command_text_fix.yaml
+    - ansible-test-change-detection-empty-python.yml
+    - ansible-test-change-detection-fix.yml
+    - ansible-test-python-import-analysis.yml
+    - better_winrm_putfile_error.yml
+    - group_by_changed.yml
+    - handle_undefined_in_type_errors_filters.yml
+    - items2dict-common-dict.yml~
+    - k8s-requirements-doc-update.yml
+    - test-ansible-runner-pin-psutil.yml
+    - v2.9.11_summary.yaml
+    - win_async_full_path.yml
+    release_date: '2020-07-20'
   2.9.2:
     codename: Immigrant Song
     fragments:

@@ -5,6 +5,50 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.11
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-07-20
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- The ``items2dict`` filter can now create a dict whose values are the original elements of the input list, and whose keys are the value of some key in each dict. When the resulting dict is stored, this allows for O(1) lookup of a particular key without having to scan the entire list each time.
+- k8s - update openshift requirements in documentation
+- pipe lookup - update docs for Popen with shell=True usages (https://github.com/ansible/ansible/issues/70159).
+
+Bugfixes
+--------
+
+- Allow TypeErrors on Undefined variables in filters to be handled or deferred when processing for loops.
+- Fix ``delegate_facts: true`` when ``ansible_python_interpreter`` is not set. (https://github.com/ansible/ansible/issues/70168)
+- Support check mode in NXOS BGP modules (https://github.com/ansible/ansible/pull/57360).
+- TaskExecutor - Handle unexpected errors as failed while post validating loops (https://github.com/ansible/ansible/issues/70050).
+- The `ansible_become` value was not being treated as a boolean value when set in an INI format inventory file (fixes bug https://github.com/ansible/ansible/issues/70476).
+- To fix ios_l2_interfaces facts parsing issue (https://github.com/ansible-collections/cisco.ios/pull/59)
+- To fix ios_user and ios_command test case failure fix (https://github.com/ansible-collections/cisco.ios/pull/82)
+- Vault - Allow single vault encrypted values to be used directly as module parameters. (https://github.com/ansible/ansible/issues/68275)
+- add constraints file for ``anisble_runner`` test since an update to ``psutil`` is now causing test failures
+- ansible-galaxy - Instead of assuming the first defined server is galaxy, filter based on the servers that support the v1 API, and return the first of those (https://github.com/ansible/ansible/issues/65440)
+- ansible-test no longer tracebacks during change analysis due to processing an empty python file
+- ansible-test now correctly recognizes imports in collections when using the ``--changed`` option.
+- ansible-test now ignores empty ``*.py`` files when analyzing module_utils imports for change detection
+- assemble - fix decrypt argument in the module (https://github.com/ansible/ansible/issues/65450).
+- docker_container - various error fixes in string handling for Python 2 to avoid crashes when non-ASCII characters are used in strings (https://github.com/ansible-collections/community.general/issues/640).
+- eos_eapi - enable eapi by default
+- group_by now should correctly refect changed status.
+- json callback - Fix host result to task references in the resultant JSON output for non-lockstep strategy plugins such as free (https://github.com/ansible/ansible/issues/65931)
+- nmcli - Add compatibility for new networkmanager library (https://github.com/ansible/ansible/pull/65726).
+- puppet - fix command line construction for check mode and ``manifest:`` (https://github.com/ansible/ansible/issues/60576).
+- selective callback - mark task failed correctly (https://github.com/ansible/ansible/issues/63767).
+- windows async - use full path when calling PowerShell to reduce reliance on environment vars being correct - https://github.com/ansible/ansible/issues/70655
+- winrm - preserve winrm forensic data on put_file failures
+
 v2.9.10
 =======
 
