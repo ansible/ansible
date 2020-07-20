@@ -32,9 +32,9 @@ def _run_comparison(obj):
     ret = sanitize_keys(obj, no_log_strings)
 
     expected = {
-      'key1': 'value1',
-      'some-********': 'value-for-some-password', 
-      'key2': { 'key3': 'value3',
+      'key1': ['value1a', 'value1b'],
+      'some-********': 'value-for-some-password',
+      'key2': { 'key3': set(['value3a', 'value3b']),
                 'i-have-a-********': { '********-********': 'value-for-secret-password', 'key4': 'value4' }
               }
     }
@@ -45,9 +45,9 @@ def test_sanitize_keys_dict():
     """ Test that santize_keys works with a dict. """
 
     d = {
-      'key1': 'value1',
+      'key1': ['value1a', 'value1b'],
       'some-password': 'value-for-some-password', 
-      'key2': { 'key3': 'value3',
+      'key2': { 'key3': set(['value3a', 'value3b']),
                 'i-have-a-secret': { 'secret-password': 'value-for-secret-password', 'key4': 'value4' }
               }
     }
@@ -58,7 +58,7 @@ def test_sanitize_keys_OrderedDict():
     """ Test that santize_keys works with an OrderedDict. """
 
     d = OrderedDict()
-    d['key1'] = 'value1'
+    d['key1'] = ['value1a', 'value1b']
     d['some-password'] = 'value-for-some-password'
 
     d3 = OrderedDict()
@@ -66,7 +66,7 @@ def test_sanitize_keys_OrderedDict():
     d3['key4'] =  'value4'
 
     d2 = OrderedDict()
-    d2['key3'] = 'value3'
+    d2['key3'] = set(['value3a', 'value3b'])
     d2['i-have-a-secret'] = d3
 
     d['key2'] = d2
