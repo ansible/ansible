@@ -429,8 +429,7 @@ def remove_values(value, no_log_strings):
 def sanitize_keys(obj, no_log_strings):
     """ Sanitize the keys in a container object by removing no_log values from key names.
 
-    This is a companion function to the `remove_values()` function. So that we only
-    convert no_log_strings once, we put the recursive part within a separate func.
+    This is a companion function to the `remove_values()` function.
 
     :param obj: The container object to sanitize. This must be either a Mapping type object,
         or a list type object that may or may not have additional Mapping type objects to sanitize.
@@ -440,13 +439,17 @@ def sanitize_keys(obj, no_log_strings):
     """
 
     no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+
+    # So that we convert no_log_strings only once, the recursive part this
+    # method is placed within the _sanitize_keys() function.
     return _sanitize_keys(obj, no_log_strings)
 
 
 def _sanitize_keys(obj, no_log_strings):
     if not isinstance(obj, (Mapping, list)):
-        raise TypeError('Cannot sanitize keys of a non-mapping object type. Value: %s' % obj)
+        raise TypeError('Cannot sanitize keys of a non-mapping object type.')
 
+    # Return an object of the same type.
     new_obj = type(obj)()
 
     # For a list, we just recursively iterate over the items, sanitizing any Mapping containers found.
