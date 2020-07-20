@@ -1,8 +1,0 @@
-- name: Clean up host
-  hosts: ssh
-  gather_facts: yes
-
-   # Default, just noted here to be explicit about what is happening:
-  remote_user: root
-  roles:
-    - cleanup_become_unprivileged
