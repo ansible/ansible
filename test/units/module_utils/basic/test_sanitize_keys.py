@@ -21,41 +21,72 @@ def test_sanitize_keys_bad_types():
         sanitize_keys('string value', no_log_strings)
 
     with pytest.raises(TypeError, match=type_exception):
-        sanitize_keys(['list'], no_log_strings)
+        sanitize_keys(None, no_log_strings)
 
     with pytest.raises(TypeError, match=type_exception):
         sanitize_keys(set('list'), no_log_strings)
+
+    with pytest.raises(TypeError, match=type_exception):
+        sanitize_keys(False, no_log_strings)
+
 
 def _run_comparison(obj):
     no_log_strings = {'secret', 'password'}
 
     ret = sanitize_keys(obj, no_log_strings)
 
-    expected = {
-      'key1': ['value1a', 'value1b'],
-      'some-********': 'value-for-some-password',
-      'key2': { 'key3': set(['value3a', 'value3b']),
-                'i-have-a-********': { '********-********': 'value-for-secret-password', 'key4': 'value4' }
-              }
-    }
+    expected = [
+      None,
+      True,
+      100,
+      "some string",
+      set([1, 2]),
+      [1, 2],
+
+      { 'key1': ['value1a', 'value1b'],
+        'some-********': 'value-for-some-password',
+        'key2': { 'key3': set(['value3a', 'value3b']),
+                  'i-have-a-********': { '********-********': 'value-for-secret-password', 'key4': 'value4' }
+                }
+      }
+    ]
 
     assert ret == expected
+
 
 def test_sanitize_keys_dict():
     """ Test that santize_keys works with a dict. """
 
-    d = {
-      'key1': ['value1a', 'value1b'],
-      'some-password': 'value-for-some-password', 
-      'key2': { 'key3': set(['value3a', 'value3b']),
-                'i-have-a-secret': { 'secret-password': 'value-for-secret-password', 'key4': 'value4' }
-              }
-    }
+    d = [
+      None,
+      True,
+      100,
+      "some string",
+      set([1, 2]),
+      [1, 2],
+
+      { 'key1': ['value1a', 'value1b'],
+        'some-password': 'value-for-some-password', 
+        'key2': { 'key3': set(['value3a', 'value3b']),
+                  'i-have-a-secret': { 'secret-password': 'value-for-secret-password', 'key4': 'value4' }
+                }
+      }
+    ]
 
     _run_comparison(d)
 
+
 def test_sanitize_keys_OrderedDict():
     """ Test that santize_keys works with an OrderedDict. """
+
+    obj = [
+      None,
+      True,
+      100,
+      "some string",
+      set([1, 2]),
+      [1, 2],
+    ]
 
     d = OrderedDict()
     d['key1'] = ['value1a', 'value1b']
@@ -71,4 +102,6 @@ def test_sanitize_keys_OrderedDict():
 
     d['key2'] = d2
 
-    _run_comparison(d)
+    obj.append(d)
+
+    _run_comparison(obj)
