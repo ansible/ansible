@@ -106,11 +106,6 @@ except ImportError:
 
 display = Display()
 
-WARNING_MSG = (
-    'The TOML inventory format is marked as preview, which means that it is not guaranteed to have a backwards '
-    'compatible interface.'
-)
-
 
 if HAS_TOML and hasattr(toml, 'TomlEncoder'):
     class AnsibleTomlEncoder(toml.TomlEncoder):
@@ -231,8 +226,6 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleParserError(
                 'The TOML inventory plugin requires the python "toml" library'
             )
-
-        display.warning(WARNING_MSG)
 
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()
