@@ -634,10 +634,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                         'particularly if common_remote_group was set to a '
                         'group of which the unprivileged become user is not a '
                         'member. In this situation, '
-                        'allow_world_readable_tmpfiles is a no-op. See the '
-                        '"Risks of becoming an unprivileged user" section of '
-                        'the "Understanding privilege escalation: become" user '
-                        'guide documentation for more information')
+                        'allow_world_readable_tmpfiles is a no-op. See this '
+                        'URL for more details: '
+                        'https://docs.ansible.com/ansible/become.html'
+                        '#becoming-an-unprivileged-user')
                 if execute:
                     group_mode = 'g+rwx'
                 else:
