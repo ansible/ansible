@@ -72,6 +72,7 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleParserError
+from ansible.inventory.group import to_safe_group_name
 from ansible.inventory.helpers import get_group_vars
 from ansible.plugins.inventory import BaseInventoryPlugin, Constructable
 from ansible.module_utils._text import to_native
@@ -83,6 +84,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable):
     """ constructs groups and vars using Jinja2 template expressions """
 
     NAME = 'constructed'
+
+    _sanitize_group_name = staticmethod(to_safe_group_name)
 
     def __init__(self):
 
