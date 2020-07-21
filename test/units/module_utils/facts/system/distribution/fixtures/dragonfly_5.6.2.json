@@ -1,0 +1,25 @@
+{
+    "name": "DragonFly v5.6.2-RELEASE #3",
+    "input": {},
+    "platform.system": "DragonFly",
+    "platform.release": "5.6-RELEASE",
+    "command_output": {
+        "/sbin/sysctl -n kern.version": "DragonFly v5.6.2-RELEASE #3: Sat Aug 10 10:28:36 EDT 2019\nroot@www.shiningsilence.com:/usr/obj/home/justin/release/5_6/sys/X86_64_GENERIC"
+    },
+    "distro": {
+        "codename": "",
+        "id": "dragonfly",
+        "name": "DragonFly",
+        "version": "5.2",
+        "version_best": "",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "DragonFly",
+        "distribution_major_version": "5",
+        "distribution_release": "5.6-RELEASE",
+        "os_family": "DragonFly",
+        "distribution_version": "5.6.2"
+    }
+}
