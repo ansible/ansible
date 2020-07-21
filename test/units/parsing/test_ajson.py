@@ -158,6 +158,7 @@ class TestAnsibleJSONEncoder:
         Test for passing AnsibleVaultEncryptedUnicode to AnsibleJSONEncoder.default().
         """
         assert ansible_json_encoder.default(test_input) == {'__ansible_vault': expected}
+        assert json.dumps(test_input, cls=AnsibleJSONEncoder, preprocess_unsafe=True) == '{"__ansible_vault": "%s"}' % expected.replace('\n', '\\n')
 
     @pytest.mark.parametrize(
         'test_input,expected',
