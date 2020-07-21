@@ -113,11 +113,6 @@ class TestRemoveValues(unittest.TestCase):
             }
         ),
         (
-            {'key-password': 'value-password'},
-            frozenset(['password']),
-            {'key-********': 'value-********'},
-        ),
-        (
             'This sentence has an enigma wrapped in a mystery inside of a secret. - mr mystery',
             frozenset(['enigma', 'mystery', 'secret']),
             'This sentence has an ******** wrapped in a ******** inside of a ********. - mr ********'
