@@ -226,7 +226,6 @@
           - user_test3_3 is changed
   when: ansible_facts.system != 'Darwin'
 
-
 # https://github.com/ansible/ansible/issues/41393
 # Create a new user account with a path that has parent directories that do not exist
 - name: Create user with home path that has parents that do not exist
@@ -285,6 +284,43 @@
     state: absent
     remove: yes
 
+# https://github.com/ansible/ansible/issues/70589
+# Create user with create_home: no and parent directory does not exist.
+- name: "Check if parent dir for home dir for user exists (before)"
+  stat:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/thereisnodir"
+  register: create_user_no_create_home_with_no_parent_parent_dir_before
+
+- name: "Create user with create_home == no and home path parent dir does not exist"
+  user:
+    name: randomuser
+    state: present
+    create_home: false
+    home: "{{ user_home_prefix[ansible_facts.system] }}/thereisnodir/randomuser"
+  register: create_user_no_create_home_with_no_parent
+
+- name: "Check if parent dir for home dir for user exists (after)"
+  stat:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/thereisnodir"
+  register: create_user_no_create_home_with_no_parent_parent_dir_after
+
+- name: "Check if home for user is created"
+  stat:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/thereisnodir/randomuser"
+  register: create_user_no_create_home_with_no_parent_home_dir
+
+- name: "Ensure user with non-existing parent paths with create_home: no was created successfully"
+  assert:
+    that:
+      - not create_user_no_create_home_with_no_parent_parent_dir_before.stat.exists
+      - not create_user_no_create_home_with_no_parent_parent_dir_after.stat.isdir is defined
+      - not create_user_no_create_home_with_no_parent_home_dir.stat.exists
+
+- name: Cleanup test account
+  user:
+    name: randomuser
+    state: absent
+    remove: yes
 
 ## user check
 
