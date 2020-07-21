@@ -3326,14 +3326,6 @@ plugin_routing:
       redirect: community.mongodb.mongodb_user
     mongodb_shard:
       redirect: community.mongodb.mongodb_shard
-    vmware_appliance_access_info:
-      redirect: vmware.vmware_rest.vmware_appliance_access_info
-    vmware_appliance_health_info:
-      redirect: vmware.vmware_rest.vmware_appliance_health_info
-    vmware_cis_category_info:
-      redirect: vmware.vmware_rest.vmware_cis_category_info
-    vmware_core_info:
-      redirect: vmware.vmware_rest.vmware_core_info
     vcenter_extension_facts:
       redirect: community.vmware.vcenter_extension_facts
     vmware_about_facts:
@@ -9331,14 +9323,6 @@ plugin_routing:
       redirect: community.crypto.acme
     ecs_credential:
       redirect: community.crypto.ecs_credential
-    VmwareRestModule:
-      redirect: vmware.vmware_rest.VmwareRestModule
-    VmwareRestModule_filters:
-      redirect: vmware.vmware_rest.VmwareRestModule_filters
-    VmwareRestModule_full:
-      redirect: vmware.vmware_rest.VmwareRestModule_full
-    VmwareRestModule_state:
-      redirect: vmware.vmware_rest.VmwareRestModule_state
     vca:
       redirect: community.vmware.vca
     vmware:
