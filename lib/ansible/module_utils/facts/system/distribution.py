@@ -506,7 +506,8 @@ class Distribution(object):
                      'HP-UX': ['HPUX'],
                      'Darwin': ['MacOSX'],
                      'FreeBSD': ['FreeBSD', 'TrueOS'],
-                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix']}
+                     'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix'],
+                     'DragonFly': ['DragonflyBSD', 'DragonFlyBSD', 'Gentoo/DragonflyBSD', 'Gentoo/DragonFlyBSD']}
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
@@ -604,7 +605,15 @@ class Distribution(object):
         return openbsd_facts
 
     def get_distribution_DragonFly(self):
-        return {}
+        dragonfly_facts = {
+            'distribution_release': platform.release()
+        }
+        rc, out, dummy = self.module.run_command("/sbin/sysctl -n kern.version")
+        match = re.search(r'v(\d+)\.(\d+)\.(\d+)-(RELEASE|STABLE|CURRENT).*', out)
+        if match:
+            dragonfly_facts['distribution_major_version'] = match.group(1)
+            dragonfly_facts['distribution_version'] = '%s.%s.%s' % match.groups()[:3]
+        return dragonfly_facts
 
     def get_distribution_NetBSD(self):
         netbsd_facts = {}
