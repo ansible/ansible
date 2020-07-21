@@ -15,15 +15,23 @@ from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.common.collections import is_sequence
 
 
+def _is_unsafe(value):
+    return getattr(value, '__UNSAFE__', False) and not getattr(value, '__ENCRYPTED__', False)
+
+
+def _is_vault(value):
+    return getattr(value, '__ENCRYPTED__', False)
+
+
 def _preprocess_unsafe_encode(value):
     """Recursively preprocess a data structure converting instances of ``AnsibleUnsafe``
     into their JSON dict representations
 
     Used in ``AnsibleJSONEncoder.iterencode``
     """
-    if getattr(value, '__UNSAFE__', False) and not getattr(value, '__ENCRYPTED__', False):
+    if _is_unsafe(value):
         value = {'__ansible_unsafe': to_text(value, errors='surrogate_or_strict', nonstring='strict')}
-    elif is_sequence(value):
+    elif is_sequence(value) and not _is_vault(value):
         value = [_preprocess_unsafe_encode(v) for v in value]
     elif isinstance(value, Mapping):
         value = dict((k, _preprocess_unsafe_encode(v)) for k, v in value.items())
