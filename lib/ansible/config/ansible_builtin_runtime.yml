@@ -767,7 +767,7 @@ plugin_routing:
     gce:
       redirect: community.general.gce
     gcp_backend_service:
-      redirect: google.cloud.gcp_backend_service
+      redirect: community.general.gcp_backend_service
     gcp_bigquery_dataset_facts:
       redirect: google.cloud.gcp_bigquery_dataset_info
     gcp_bigquery_table_facts:
@@ -847,9 +847,9 @@ plugin_routing:
     gcp_dns_resource_record_set_facts:
       redirect: google.cloud.gcp_dns_resource_record_set_info
     gcp_forwarding_rule:
-      redirect: google.cloud.gcp_forwarding_rule
+      redirect: community.general.gcp_forwarding_rule
     gcp_healthcheck:
-      redirect: google.cloud.gcp_healthcheck
+      redirect: community.general.gcp_healthcheck
     gcp_iam_role_facts:
       redirect: google.cloud.gcp_iam_role_info
     gcp_iam_service_account_facts:
@@ -907,9 +907,9 @@ plugin_routing:
     gce_tag:
       redirect: community.general.gce_tag
     gcpubsub:
-      redirect: google.cloud.gcpubsub
+      redirect: community.general.gcpubsub
     gcpubsub_info:
-      redirect: google.cloud.gcpubsub_info
+      redirect: community.general.gcpubsub_info
     heroku_collaborator:
       redirect: community.general.heroku_collaborator
     hwc_ecs_instance:
