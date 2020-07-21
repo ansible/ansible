@@ -636,7 +636,6 @@ def main():
 
     # Track our no_log values
     no_log_strings = set([])
-    url_password = module.params.get('url_password')
     if module.params.get('url_password'):
         no_log_strings.add(module.params.get('url_password'))
 

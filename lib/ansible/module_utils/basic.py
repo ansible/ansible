@@ -440,7 +440,7 @@ def sanitize_keys(obj, no_log_strings, ignore_keys=None):
     """
 
     if ignore_keys is None:
-        ignore_keys = set([])
+        ignore_keys = frozenset([])
 
     no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
 
