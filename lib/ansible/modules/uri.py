@@ -634,11 +634,6 @@ def main():
 
     dict_headers = module.params['headers']
 
-    # Track our no_log values
-    no_log_strings = set([])
-    if module.params.get('url_password'):
-        no_log_strings.add(module.params.get('url_password'))
-
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
 
@@ -746,8 +741,8 @@ def main():
     else:
         u_content = to_text(content, encoding=content_encoding)
 
-    if no_log_strings:
-        uresp = sanitize_keys(uresp, no_log_strings, NO_MODIFY_KEYS)
+    if module.no_log_values:
+        uresp = sanitize_keys(uresp, module.no_log_values, NO_MODIFY_KEYS)
 
     if resp['status'] not in status_code:
         uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))
