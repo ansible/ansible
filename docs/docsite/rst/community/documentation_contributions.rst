@@ -102,6 +102,10 @@ You can drop ``--user`` if you have set up a virtual environment (venv/virtenv).
 
     On macOS with Xcode, you may need to install ``six`` and ``pyparsing`` with ``--ignore-installed`` to get versions that work with ``sphinx``.
 
+.. note::
+
+  	After checking out ``ansible/ansible``, make sure the ``docs/docsite/rst`` directory has strict enough permissions. It should only be writable by the owner's account. If your default ``umask`` is not 022, you can use ``chmod go-w docs/docsite/rst`` to set the permissions correctly in your new branch.  Optionally, you can set your ``umask`` to 022 to make all newly created files on your system (including those created by ``git clone``) have the correct permissions.
+
 .. _testing_documentation_locally:
 
 Testing the documentation locally
