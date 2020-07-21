@@ -47,7 +47,22 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # Carry-over concept from the package action plugin
-        module = self._task.args.get('use_backend', "auto")
+        use_backend = self._task.args.get('use_backend', None)
+        use = self._task.args.get('use', None)
+        module = 'auto'
+
+        if None not in [use_backend, use]:
+            result.update(
+                {
+                    'failed': True,
+                    'msg': "use_backend and use are mutually exclusive. Cannot use both."
+                }
+            )
+            return result
+        elif use_backend is not None:
+            module = use_backend
+        elif use is not None:
+            module = use
 
         if module == 'auto':
             try:
