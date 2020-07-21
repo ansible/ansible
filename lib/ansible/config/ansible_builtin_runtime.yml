@@ -1035,7 +1035,7 @@ plugin_routing:
     os_flavor_facts:
       redirect: openstack.cloud.os_flavor_info
     os_image_facts:
-      redirect: openstack.cloud.os_image_facts
+      redirect: openstack.cloud.os_image_info
     os_keystone_domain_facts:
       redirect: openstack.cloud.os_keystone_domain_info
     os_networks_facts:
