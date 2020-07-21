@@ -108,6 +108,12 @@ def test_distribution_version(am, mocker, testcase):
             return True
         return False
 
+    def mock_run_command_output(v, command):
+        ret = (0, '', '')
+        if 'command_output' in testcase:
+            ret = (0, testcase['command_output'].get(command, ''), '')
+        return ret
+
     mocker.patch('ansible.module_utils.facts.system.distribution.get_file_content', mock_get_file_content)
     mocker.patch('ansible.module_utils.facts.system.distribution.get_uname', mock_get_uname)
     mocker.patch('ansible.module_utils.facts.system.distribution._file_exists', mock_file_exists)
@@ -125,6 +131,7 @@ def test_distribution_version(am, mocker, testcase):
     mocker.patch('platform.system', mock_platform_system)
     mocker.patch('platform.release', mock_platform_release)
     mocker.patch('platform.version', mock_platform_version)
+    mocker.patch('ansible.module_utils.basic.AnsibleModule.run_command', mock_run_command_output)
 
     real_open = builtins.open
     mocker.patch.object(builtins, 'open', new=mock_open)
