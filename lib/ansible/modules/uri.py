@@ -392,6 +392,13 @@ from ansible.module_utils.urls import fetch_url, prepare_multipart, url_argument
 
 JSON_CANDIDATES = ('text', 'json', 'javascript')
 
+# List of response key names we do not want sanitize_keys() to change.
+NO_MODIFY_KEYS = frozenset(
+    ('msg', 'exception', 'warnings', 'deprecations', 'failed', 'skipped',
+     'changed', 'rc', 'stdout', 'stderr', 'elapsed', 'path', 'location',
+     'content_type')
+)
+
 
 def format_message(err, resp):
     msg = resp.pop('msg')
@@ -627,6 +634,12 @@ def main():
 
     dict_headers = module.params['headers']
 
+    # Track our no_log values
+    no_log_strings = set([])
+    url_password = module.params.get('url_password')
+    if module.params.get('url_password'):
+        no_log_strings.add(module.params.get('url_password'))
+
     if not re.match('^[A-Z]+$', method):
         module.fail_json(msg="Parameter 'method' needs to be a single word in uppercase, like GET or POST.")
 
@@ -725,21 +738,17 @@ def main():
 
         u_content = to_text(content, encoding=content_encoding)
         if any(candidate in content_type for candidate in JSON_CANDIDATES):
-            no_log_strings = set([])
-            url_password = module.params.get('url_password')
-            if url_password:
-                no_log_strings.add(url_password)
             try:
                 js = json.loads(u_content)
-                if no_log_strings:
-                    uresp['json'] = sanitize_keys(js, no_log_strings)
-                else:
-                    uresp['json'] = js
+                uresp['json'] = js
             except Exception:
                 if PY2:
                     sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
     else:
         u_content = to_text(content, encoding=content_encoding)
+
+    if no_log_strings:
+        uresp = sanitize_keys(uresp, no_log_strings, NO_MODIFY_KEYS)
 
     if resp['status'] not in status_code:
         uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))

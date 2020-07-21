@@ -78,6 +78,7 @@ def test_sanitize_keys_dict():
 
     _run_comparison(d)
 
+
 def test_sanitize_keys_with_ignores():
     """ Test that we can actually ignore keys. """
 
@@ -87,15 +88,15 @@ def test_sanitize_keys_with_ignores():
     value = {'changed': True,
              'rc': 0,
              'test-rc': 1,
-             'test-secret': 2,
+             'another-secret': 2,
              'status': 'okie dokie'}
 
     # We expect to change 'test-rc' but NOT 'rc'.
     expected = {'changed': True,
                 'rc': 0,
                 'test-********': 1,
-                'test-********': 2,
+                'another-********': 2,
                 'status': 'okie dokie'}
 
     ret = sanitize_keys(value, no_log_strings, ignore_keys)
-    assert ret == expected   
+    assert ret == expected
