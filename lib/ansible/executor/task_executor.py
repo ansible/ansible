@@ -38,6 +38,8 @@ from ansible.utils.vars import combine_vars, isidentifier
 display = Display()
 
 
+RETURN_VARS = [x for x in C.MAGIC_VARIABLE_MAPPING.items() if 'become' not in x]
+
 __all__ = ['TaskExecutor']
 
 
@@ -699,10 +701,12 @@ class TaskExecutor:
 
         # add the delegated vars to the result, so we can reference them
         # on the results side without having to do any further templating
+        # also now add conneciton vars results when delegating
         if self._task.delegate_to:
             result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
-            for k in plugin_vars:
-                result["_ansible_delegated_vars"][k] = cvars.get(k)
+            for k in plugin_vars + RETURN_VARS:
+                if k in cvars and cvars[k] is not None:
+                    result["_ansible_delegated_vars"][k] = cvars[k]
         # and return
         display.debug("attempt loop complete, returning result")
         return result

@@ -9,24 +9,32 @@
           - inventory_hostname == ansible_delegated_vars['testhost5']['inventory_hostname']
       delegate_to: testhost5
 
-    - name: test fakelocal
-      command: ls
-      delegate_to: testhost5
-      ignore_unreachable: True
-      ignore_errors: True
-      register: badlogin
-
     - name: Set info on inventory_hostname
       set_fact:
         login: invaliduser
         mypass: badpassword
 
+    - name: test fakelocal
+      command: ls
+      ignore_unreachable: True
+      ignore_errors: True
+      remote_user: "{{ login }}"
+      vars:
+        ansible_password: "{{ mypass }}"
+        ansible_connection: fakelocal
+      register: badlogin
+
+    - name: ensure we skipped do to unreachable and not templating error
+      assert:
+        that:
+          - badlogin is unreachable
+
     - name: delegate but try to use inventory_hostname data directly
       command: ls
-      remote_user: "{{ login }}"
       delegate_to: testhost5
       ignore_unreachable: True
       ignore_errors: True
+      remote_user: "{{ login }}"
       vars:
         ansible_password: "{{ mypass }}"
       register: badlogin
