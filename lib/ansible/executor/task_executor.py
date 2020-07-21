@@ -421,6 +421,10 @@ class TaskExecutor:
 
         context_validation_error = None
         try:
+            #TODO: remove play_context as this does not take delegation into account, task itself should hold values
+            #  for connection/shell/become/terminal plugin options to finalize.
+            # kept for now for backwards compatiblity and a few functions that are still exclusive to it.
+
             # apply the given task's information to the connection info,
             # which may override some fields already set by the play or
             # the options specified on the command line
@@ -439,7 +443,6 @@ class TaskExecutor:
             # a certain subset of variables exist.
             self._play_context.update_vars(variables)
 
-            # FIXME: update connection/shell plugin options
         except AnsibleError as e:
             # save the error, which we'll raise later if we don't end up
             # skipping this task during the conditional evaluation step
@@ -707,6 +710,11 @@ class TaskExecutor:
             for k in plugin_vars + RETURN_VARS:
                 if k in cvars and cvars[k] is not None:
                     result["_ansible_delegated_vars"][k] = cvars[k]
+        else:
+            for k in plugin_vars + RETURN_VARS:
+                if k in cvars and cvars[k] is not None:
+                    result[k] = cvars[k]
+
         # and return
         display.debug("attempt loop complete, returning result")
         return result
