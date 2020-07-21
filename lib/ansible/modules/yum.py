@@ -26,9 +26,7 @@ options:
         upstream yum developers. As of Ansible 2.7+, this module also supports C(YUM4), which is the
         "new yum" and it has an C(dnf) backend.
       - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
-      - Since version 2.10 you can also use the C(use) alias for this option.
     default: "auto"
-    aliases: [ use ]
     choices: [ auto, yum, yum4, dnf ]
     version_added: "2.7"
   name:
