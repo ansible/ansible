@@ -8,7 +8,6 @@ __metaclass__ = type
 
 import pytest
 from ansible.module_utils.basic import sanitize_keys
-from collections import OrderedDict
 
 
 def test_sanitize_keys_bad_types():
@@ -79,39 +78,24 @@ def test_sanitize_keys_dict():
 
     _run_comparison(d)
 
+def test_sanitize_keys_with_ignores():
+    """ Test that we can actually ignore keys. """
 
-def test_sanitize_keys_OrderedDict():
-    """ Test that santize_keys works with an OrderedDict. """
+    no_log_strings = set(['secret', 'rc'])
+    ignore_keys = set(['changed', 'rc', 'status'])
 
-    obj = [
-        None,
-        True,
-        100,
-        "some string",
-        set([1, 2]),
-        [1, 2],
-    ]
+    value = {'changed': True,
+             'rc': 0,
+             'test-rc': 1,
+             'test-secret': 2,
+             'status': 'okie dokie'}
 
-    d = OrderedDict()
-    d['key1'] = ['value1a', 'value1b']
-    d['some-password'] = 'value-for-some-password'
+    # We expect to change 'test-rc' but NOT 'rc'.
+    expected = {'changed': True,
+                'rc': 0,
+                'test-********': 1,
+                'test-********': 2,
+                'status': 'okie dokie'}
 
-    d3 = OrderedDict()
-    d3['secret-password'] = 'value-for-secret-password'
-    d3['key4'] = 'value4'
-
-    d2 = OrderedDict()
-    d2['key3'] = set(['value3a', 'value3b'])
-    d2['i-have-a-secret'] = d3
-
-    d['key2'] = d2
-
-    f = OrderedDict()
-    f['foo'] = []
-    f['foo'].append(OrderedDict())
-    f['foo'][0]['secret'] = 1
-
-    obj.append(d)
-    obj.append(f)
-
-    _run_comparison(obj)
+    ret = sanitize_keys(value, no_log_strings, ignore_keys)
+    assert ret == expected   

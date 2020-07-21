@@ -426,7 +426,7 @@ def remove_values(value, no_log_strings):
     return new_value
 
 
-def sanitize_keys(obj, no_log_strings):
+def sanitize_keys(obj, no_log_strings, ignore_keys=None):
     """ Sanitize the keys in a container object by removing no_log values from key names.
 
     This is a companion function to the `remove_values()` function.
@@ -434,41 +434,49 @@ def sanitize_keys(obj, no_log_strings):
     :param obj: The container object to sanitize. This must be either a Mapping type object,
         or a list type object that may or may not have additional Mapping type objects to sanitize.
     :param no_log_strings: A set of string values we do not want logged.
+    :param ignore_keys: A set of string values of keys to not sanitize.
 
     :returns: An object with sanitized keys.
     """
+
+    if ignore_keys is None:
+        ignore_keys = set([])
 
     no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
 
     # So that we convert no_log_strings only once, the recursive part of this
     # method is placed within the _sanitize_keys() function.
-    return _sanitize_keys(obj, no_log_strings)
+    return _sanitize_keys(obj, no_log_strings, ignore_keys)
 
 
-def _sanitize_keys(obj, no_log_strings):
+def _sanitize_keys(obj, no_log_strings, ignore_keys):
     if not isinstance(obj, (Mapping, list)):
         raise TypeError('Unsupported type for key sanitization.')
 
     # Return an object of the same type.
     new_obj = type(obj)()
 
-    # For a list, we just recursively iterate over the items, sanitizing any Mapping containers found.
+    # For a list, we just recursively iterate over the items, making recursive
+    # calls for target types.
     if isinstance(obj, list):
         for item in obj:
             if isinstance(item, (Mapping, list)):
-                new_obj.append(_sanitize_keys(item, no_log_strings))
+                new_obj.append(_sanitize_keys(item, no_log_strings, ignore_keys))
             else:
                 new_obj.append(item)
 
     # For a Mapping object, sanitize the keys.
     elif isinstance(obj, Mapping):
         for old_key, value in iteritems(obj):
-            # Sanitize the old key. Since this should always be a string-like object, we
-            # should be safe to pass None for the deferred_removals parameter.
-            new_key = _remove_values_conditions(old_key, no_log_strings, None)
+            if old_key not in ignore_keys:
+                # Sanitize the old key. Since this should always be a string-like object, we
+                # should be safe to pass None for the deferred_removals parameter.
+                new_key = _remove_values_conditions(old_key, no_log_strings, None)
+            else:
+                new_key = old_key
 
             if isinstance(value, (Mapping, list)):
-                new_obj[new_key] = _sanitize_keys(value, no_log_strings)
+                new_obj[new_key] = _sanitize_keys(value, no_log_strings, ignore_keys)
             else:
                 new_obj[new_key] = value
 
