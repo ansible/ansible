@@ -235,7 +235,7 @@ To be prompted for a string to encrypt, encrypt it with the 'dev' vault password
 
 The command above triggers this prompt:
 
-.. code-block:: bash
+.. code-block:: text
 
     Reading plaintext input from stdin. (ctrl-d to end input)
 
