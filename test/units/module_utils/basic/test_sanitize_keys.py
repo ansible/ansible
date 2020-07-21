@@ -14,7 +14,7 @@ from collections import OrderedDict
 def test_sanitize_keys_bad_types():
     """ Test that non-dict-like objects raise an exception. """
 
-    type_exception = 'Cannot sanitize keys of a non-mapping object type.'
+    type_exception = 'Unsupported type for key sanitization.'
     no_log_strings = set()
 
     with pytest.raises(TypeError, match=type_exception):
@@ -24,33 +24,33 @@ def test_sanitize_keys_bad_types():
         sanitize_keys(None, no_log_strings)
 
     with pytest.raises(TypeError, match=type_exception):
-        sanitize_keys(set('list'), no_log_strings)
+        sanitize_keys(set(['x', 'y']), no_log_strings)
 
     with pytest.raises(TypeError, match=type_exception):
         sanitize_keys(False, no_log_strings)
 
 
 def _run_comparison(obj):
-    no_log_strings = {'secret', 'password'}
+    no_log_strings = set(['secret', 'password'])
 
     ret = sanitize_keys(obj, no_log_strings)
 
     expected = [
-      None,
-      True,
-      100,
-      "some string",
-      set([1, 2]),
-      [1, 2],
+        None,
+        True,
+        100,
+        "some string",
+        set([1, 2]),
+        [1, 2],
 
-      { 'key1': ['value1a', 'value1b'],
-        'some-********': 'value-for-some-password',
-        'key2': { 'key3': set(['value3a', 'value3b']),
-                  'i-have-a-********': { '********-********': 'value-for-secret-password', 'key4': 'value4' }
-                }
-      },
+        {'key1': ['value1a', 'value1b'],
+         'some-********': 'value-for-some-password',
+         'key2': {'key3': set(['value3a', 'value3b']),
+                  'i-have-a-********': {'********-********': 'value-for-secret-password', 'key4': 'value4'}
+                  }
+         },
 
-      { 'foo': [ { 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER': 1 } ] }
+        {'foo': [{'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER': 1}]}
     ]
 
     assert ret == expected
@@ -60,21 +60,21 @@ def test_sanitize_keys_dict():
     """ Test that santize_keys works with a dict. """
 
     d = [
-      None,
-      True,
-      100,
-      "some string",
-      set([1, 2]),
-      [1, 2],
+        None,
+        True,
+        100,
+        "some string",
+        set([1, 2]),
+        [1, 2],
 
-      { 'key1': ['value1a', 'value1b'],
-        'some-password': 'value-for-some-password',
-        'key2': { 'key3': set(['value3a', 'value3b']),
-                  'i-have-a-secret': { 'secret-password': 'value-for-secret-password', 'key4': 'value4' }
-                }
-      },
+        {'key1': ['value1a', 'value1b'],
+         'some-password': 'value-for-some-password',
+         'key2': {'key3': set(['value3a', 'value3b']),
+                  'i-have-a-secret': {'secret-password': 'value-for-secret-password', 'key4': 'value4'}
+                  }
+         },
 
-      { 'foo': [ { 'secret': 1 } ] }
+        {'foo': [{'secret': 1}]}
     ]
 
     _run_comparison(d)
@@ -84,12 +84,12 @@ def test_sanitize_keys_OrderedDict():
     """ Test that santize_keys works with an OrderedDict. """
 
     obj = [
-      None,
-      True,
-      100,
-      "some string",
-      set([1, 2]),
-      [1, 2],
+        None,
+        True,
+        100,
+        "some string",
+        set([1, 2]),
+        [1, 2],
     ]
 
     d = OrderedDict()
@@ -98,7 +98,7 @@ def test_sanitize_keys_OrderedDict():
 
     d3 = OrderedDict()
     d3['secret-password'] = 'value-for-secret-password'
-    d3['key4'] =  'value4'
+    d3['key4'] = 'value4'
 
     d2 = OrderedDict()
     d2['key3'] = set(['value3a', 'value3b'])
@@ -106,12 +106,12 @@ def test_sanitize_keys_OrderedDict():
 
     d['key2'] = d2
 
-    foo = OrderedDict()
-    foo['foo'] = []
-    foo['foo'].append(OrderedDict())
-    foo['foo'][0]['secret'] = 1
+    f = OrderedDict()
+    f['foo'] = []
+    f['foo'].append(OrderedDict())
+    f['foo'][0]['secret'] = 1
 
     obj.append(d)
-    obj.append(foo)
+    obj.append(f)
 
     _run_comparison(obj)

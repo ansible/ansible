@@ -440,14 +440,14 @@ def sanitize_keys(obj, no_log_strings):
 
     no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
 
-    # So that we convert no_log_strings only once, the recursive part this
+    # So that we convert no_log_strings only once, the recursive part of this
     # method is placed within the _sanitize_keys() function.
     return _sanitize_keys(obj, no_log_strings)
 
 
 def _sanitize_keys(obj, no_log_strings):
     if not isinstance(obj, (Mapping, list)):
-        raise TypeError('Cannot sanitize keys of a non-mapping object type.')
+        raise TypeError('Unsupported type for key sanitization.')
 
     # Return an object of the same type.
     new_obj = type(obj)()
