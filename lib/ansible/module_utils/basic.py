@@ -468,7 +468,7 @@ def _sanitize_keys(obj, no_log_strings, ignore_keys):
     # For a Mapping object, sanitize the keys.
     elif isinstance(obj, Mapping):
         for old_key, value in iteritems(obj):
-            if old_key not in ignore_keys:
+            if old_key not in ignore_keys and not old_key.startswith('_ansible'):
                 # Sanitize the old key. Since this should always be a string-like object, we
                 # should be safe to pass None for the deferred_removals parameter.
                 new_key = _remove_values_conditions(old_key, no_log_strings, None)
