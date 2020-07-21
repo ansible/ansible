@@ -122,3 +122,65 @@
 
   - assert:
       that: not cron_file_stats.stat.exists
+
+- name: Allow non-ascii chars in job (#69492)
+  block:
+  - name: Cron file creation
+    cron:
+      cron_file: cron_filename
+      name: "cron job that contain non-ascii chars in job (これは日本語です; This is Japanese)"
+      job: 'echo "うどんは好きだがお化け👻は苦手である。"'
+      user: root
+
+  - name: "Ensure cron_file contains job string"
+    replace:
+      path: /etc/cron.d/cron_filename
+      regexp: "うどんは好きだがお化け👻は苦手である。"
+      replace: "それは機密情報🔓です。"
+    register: find_chars
+    failed_when: (find_chars is not changed) or (find_chars is failed)
+
+  - name: Cron file deletion
+    cron:
+      cron_file: cron_filename
+      name: "cron job that contain non-ascii chars in job (これは日本語です; This is Japanese)"
+      state: absent
+
+  - name: Check file succesfull deletion
+    stat:
+      path: /etc/cron.d/cron_filename
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
+
+- name: Allow non-ascii chars in cron_file (#69492)
+  block:
+  - name: Cron file creation with non-ascii filename (これは日本語です; This is Japanese)
+    cron:
+      cron_file: 'なせば大抵なんとかなる👊'
+      name: "integration test cron"
+      job: 'echo "Hello, ansible!"'
+      user: root
+
+  - name: Check file exists
+    stat:
+      path: "/etc/cron.d/なせば大抵なんとかなる👊"
+    register: cron_file_stats
+
+  - assert:
+      that: cron_file_stats.stat.exists
+
+  - name: Cron file deletion
+    cron:
+      cron_file: 'なせば大抵なんとかなる👊'
+      name: "integration test cron"
+      state: absent
+
+  - name: Check file succesfull deletion
+    stat:
+      path: "/etc/cron.d/なせば大抵なんとかなる👊"
+    register: cron_file_stats
+
+  - assert:
+      that: not cron_file_stats.stat.exists
