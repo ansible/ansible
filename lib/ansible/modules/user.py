@@ -634,11 +634,12 @@ class User(object):
 
         if self.home is not None:
             # If the specified path to the user home contains parent directories that
-            # do not exist, first create the home directory since useradd cannot
-            # create parent directories
-            parent = os.path.dirname(self.home)
-            if not os.path.isdir(parent):
-                self.create_homedir(self.home)
+            # do not exist and create_home is True first create the parent directory
+            # since useradd cannot create it.
+            if self.create_home:
+                parent = os.path.dirname(self.home)
+                if not os.path.isdir(parent):
+                    self.create_homedir(self.home)
             cmd.append('-d')
             cmd.append(self.home)
 
@@ -2940,7 +2941,7 @@ def main():
             # Check to see if the provided home path contains parent directories
             # that do not exist.
             path_needs_parents = False
-            if user.home:
+            if user.home and user.create_home:
                 parent = os.path.dirname(user.home)
                 if not os.path.isdir(parent):
                     path_needs_parents = True
