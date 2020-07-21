@@ -105,7 +105,7 @@ class TestRemoveValues(unittest.TestCase):
                 'three': [
                     OMIT, 'musketeers', None, {
                         'ping': OMIT,
-                        OMIT: [
+                        'base': [
                             OMIT, 'raquets'
                         ]
                     }

@@ -725,9 +725,16 @@ def main():
 
         u_content = to_text(content, encoding=content_encoding)
         if any(candidate in content_type for candidate in JSON_CANDIDATES):
+            no_log_strings = set([])
+            url_password = module.params.get('url_password')
+            if url_password:
+                no_log_strings.add(url_password)
             try:
                 js = json.loads(u_content)
-                uresp['json'] = sanitize_keys(js, module.no_log_strings)
+                if no_log_strings:
+                    uresp['json'] = sanitize_keys(js, no_log_strings)
+                else:
+                    uresp['json'] = js
             except Exception:
                 if PY2:
                     sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
