@@ -139,7 +139,7 @@ except ImportError:
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.errors import AnsibleFileNotFound
-from ansible.module_utils.json_utils import _filter_non_json_lines, extract_json
+from ansible.module_utils.json_utils import load_json
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six.moves.urllib.parse import urlunsplit
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -503,11 +503,7 @@ class Connection(ConnectionBase):
                 # There are cases where the stdin input failed but the WinRM service still processed it. We attempt to
                 # see if stdout contains a valid json return value so we can ignore this error
                 try:
-                    try:
-                        next(extract_json(response.std_out))
-                    except StopIteration:
-                        filtered_output, dummy = _filter_non_json_lines(response.std_out)
-                        json.loads(filtered_output)
+                    load_json(response.std_out)
                 except ValueError:
                     # stdout does not contain a return response, stdin input was a fatal error
                     stderr = to_bytes(response.std_err, encoding='utf-8')

@@ -96,3 +96,14 @@ def extract_json(text, decoder=json.JSONDecoder()):
             pos = match + index
         except ValueError:
             pos = match + 1
+
+
+def load_json(text):
+    try:
+        return json.loads(text), []
+    except ValueError:
+        try:
+            return next(extract_json(text)), []
+        except (ValueError, StopIteration):
+            stripped, warnings = _filter_non_json_lines(text)
+            return json.loads(stripped), warnings
