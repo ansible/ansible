@@ -1,2 +1,7 @@
 bugfixes:
-  - hostname - No longer modifies system files in get_* methods consulted when in check_mode (https://github.com/ansible/ansible/issues/66432)
+  - hostname - No longer modifies system files in get_* methods and therefore when consulted in check_mode (https://github.com/ansible/ansible/issues/66432)
+
+breaking_changes:
+  - hostname - Drops any remaining support for Python 2.4 by using ``with open()`` to simplify exception handling code which leaked file handles in several spots
+  - hostname - On FreeBSD, the string ``temporarystub`` no longer gets written to the hostname file in the get methods (and in check_mode). As a result, the default hostname will now appear as ``''`` (empty string) instead of ``temporarystub`` for consistency with other strategies. This means the ``before`` result will be different.
+  - hostname - On OpenRC systems and Solaris, the ``before`` value will now be ``''`` (empty string) if the permanent hostname file does not exist, for consistency with other strategies.
