@@ -19,6 +19,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import iteritems, string_types, binary_type
 from ansible.module_utils.six.moves import xrange
@@ -231,7 +232,14 @@ class TaskExecutor:
                 loop_terms = listify_lookup_plugin_terms(terms=self._task.loop, templar=templar, loader=self._loader, fail_on_undefined=fail,
                                                          convert_bare=False)
                 if not fail:
-                    loop_terms = [t for t in loop_terms if not templar.is_template(t)]
+                    intermediate = []
+                    for term in loop_terms:
+                        if isinstance(term, Mapping) and 'files' in term:
+                            term['files'] = [t for t in term['files'] if not templar.is_template(t)]
+                            intermediate.append(term)
+                        elif not templar.is_template(term):
+                            intermediate.append(term)
+                    loop_terms = intermediate
 
                 # get lookup
                 mylookup = self._shared_loader_obj.lookup_loader.get(self._task.loop_with, loader=self._loader, templar=templar)

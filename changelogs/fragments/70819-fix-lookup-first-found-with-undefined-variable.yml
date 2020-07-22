@@ -1,0 +1,2 @@
+minor_changes:
+  - first_found - fix undefined variables in lookup plugin (provided by Matt Martz) (https://github.com/ansible/ansible/issues/70772).
