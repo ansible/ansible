@@ -1,0 +1,64 @@
+- name: ensure delegated host has hostvars available for resolving connection
+  hosts: testhost
+  gather_facts: false
+  tasks:
+
+    - name: ensure delegated host uses current host as inventory_hostname
+      assert:
+        that:
+          - inventory_hostname == ansible_delegated_vars['testhost5']['inventory_hostname']
+      delegate_to: testhost5
+
+    - name: Set info on inventory_hostname
+      set_fact:
+        login: invaliduser
+        mypass: badpassword
+
+    - name: test fakelocal
+      command: ls
+      ignore_unreachable: True
+      ignore_errors: True
+      remote_user: "{{ login }}"
+      vars:
+        ansible_password: "{{ mypass }}"
+        ansible_connection: fakelocal
+      register: badlogin
+
+    - name: ensure we skipped do to unreachable and not templating error
+      assert:
+        that:
+          - badlogin is unreachable
+
+    - name: delegate but try to use inventory_hostname data directly
+      command: ls
+      delegate_to: testhost5
+      ignore_unreachable: True
+      ignore_errors: True
+      remote_user: "{{ login }}"
+      vars:
+        ansible_password: "{{ mypass }}"
+      register: badlogin
+
+    - name: ensure we skipped do to unreachable and not templating error
+      assert:
+        that:
+          - badlogin is not unreachable
+          - badlogin is failed
+          - "'undefined' in badlogin['msg']"
+
+    - name: delegate ls to testhost5 as it uses ssh while testhost is local, but use vars from testhost
+      command: ls
+      remote_user: "{{ hostvars[inventory_hostname]['login'] }}"
+      delegate_to: testhost5
+      ignore_unreachable: True
+      ignore_errors: True
+      vars:
+        ansible_password: "{{ hostvars[inventory_hostname]['mypass'] }}"
+      register: badlogin
+
+    - name: ensure we skipped do to unreachable and not templating error
+      assert:
+        that:
+          - badlogin is unreachable
+          - badlogin is not failed
+          - "'undefined' not in badlogin['msg']"
