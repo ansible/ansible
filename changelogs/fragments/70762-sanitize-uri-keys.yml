@@ -1,0 +1,2 @@
+bugfixes:
+  - Sanitize no_log values from any response keys that might be returned from the uri module.
