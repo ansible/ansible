@@ -669,7 +669,7 @@ def main():
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
 
-    if crontab.b_cron_file and not name and not do_install:
+    if crontab.b_cron_file and not do_install:
         if module._diff:
             diff['after'] = ''
             diff['after_header'] = '/dev/null'
