@@ -501,6 +501,7 @@ Create a PR against the old collection repo to remove the modules, module_utils,
 .. warning::
 
 	Maintainers for the old collection have to make sure that the PR is merged in a way that it does not break user experience and semantic versioning:
+  
 	#. A new version containing the merged PR must not be released before the collection the content has been moved to has been released again, with that content contained in it. Otherwise the redirects cannot work and users relying on that content will experience breakage.
 	#. Once 1.0.0 of the collection from which the content has been removed has been released, such PRs can only be merged for a new **major** version (i.e. 2.0.0, 3.0.0, etc.).
 
