@@ -5043,7 +5043,7 @@ plugin_routing:
     netbox_site:
       redirect: netbox.netbox.netbox_site
     aws_netapp_cvs_FileSystems:
-      redirect: netapp.aws.aws_netapp_cvs_FileSystems
+      redirect: netapp.aws.aws_netapp_cvs_filesystems
     aws_netapp_cvs_active_directory:
       redirect: netapp.aws.aws_netapp_cvs_active_directory
     aws_netapp_cvs_pool:
