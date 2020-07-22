@@ -13,8 +13,7 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        # Shell module is implemented via command
-        self._task.action = 'command'
+        # Shell module is implemented via command with a special arg
         self._task.args['_uses_shell'] = True
 
         command_action = self._shared_loader_obj.action_loader.get('ansible.legacy.command',

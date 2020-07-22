@@ -68,7 +68,7 @@ class ActionModule(ActionBase):
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
             network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
-            modules.extend([connection_map.get(network_os or self._connection._load_name, 'setup')])
+            modules.extend([connection_map.get(network_os or self._connection._load_name, 'ansible.legacy.setup')])
             modules.pop(modules.index('smart'))
 
         failed = {}

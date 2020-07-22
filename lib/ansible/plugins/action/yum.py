@@ -59,7 +59,7 @@ class ActionModule(ActionBase):
                 pass  # could not get it from template!
 
         if module not in VALID_BACKENDS:
-            facts = self._execute_module(module_name="setup", module_args=dict(filter="ansible_pkg_mgr", gather_subset="!all"), task_vars=task_vars)
+            facts = self._execute_module(module_name="ansible.legacy.setup", module_args=dict(filter="ansible_pkg_mgr", gather_subset="!all"), task_vars=task_vars)
             display.debug("Facts %s" % facts)
             module = facts.get("ansible_facts", {}).get("ansible_pkg_mgr", "auto")
             if (not self._task.delegate_to or self._task.delegate_facts) and module != 'auto':
@@ -78,7 +78,10 @@ class ActionModule(ActionBase):
             if module == "yum4":
                 module = "dnf"
 
-            if module not in self._shared_loader_obj.module_loader:
+            # eliminate collisions with collections search while still allowing local override
+            module = 'ansible.legacy.' + module
+
+            if not self._shared_loader_obj.module_loader.has_plugin(module):
                 result.update({'failed': True, 'msg': "Could not find a yum module backend for %s." % module})
             else:
                 # run either the yum (yum3) or dnf (yum4) backend module
