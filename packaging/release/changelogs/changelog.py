@@ -211,6 +211,8 @@ def load_fragments(paths=None, exceptions=None):
     fragments = []
 
     for path in paths:
+        if path.startswith('.') or not path.endswith(('.yml', '.yaml')):
+            continue
         try:
             fragments.append(ChangelogFragment.load(path))
         except Exception as ex:
