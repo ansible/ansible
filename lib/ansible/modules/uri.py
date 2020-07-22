@@ -383,7 +383,7 @@ import shutil
 import sys
 import tempfile
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, sanitize_keys
 from ansible.module_utils.six import PY2, iteritems, string_types
 from ansible.module_utils.six.moves.urllib.parse import urlencode, urlsplit
 from ansible.module_utils._text import to_native, to_text
@@ -391,6 +391,13 @@ from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.urls import fetch_url, prepare_multipart, url_argument_spec
 
 JSON_CANDIDATES = ('text', 'json', 'javascript')
+
+# List of response key names we do not want sanitize_keys() to change.
+NO_MODIFY_KEYS = frozenset(
+    ('msg', 'exception', 'warnings', 'deprecations', 'failed', 'skipped',
+     'changed', 'rc', 'stdout', 'stderr', 'elapsed', 'path', 'location',
+     'content_type')
+)
 
 
 def format_message(err, resp):
@@ -733,6 +740,9 @@ def main():
                     sys.exc_clear()  # Avoid false positive traceback in fail_json() on Python 2
     else:
         u_content = to_text(content, encoding=content_encoding)
+
+    if module.no_log_values:
+        uresp = sanitize_keys(uresp, module.no_log_values, NO_MODIFY_KEYS)
 
     if resp['status'] not in status_code:
         uresp['msg'] = 'Status code was %s and not %s: %s' % (resp['status'], status_code, uresp.get('msg', ''))
