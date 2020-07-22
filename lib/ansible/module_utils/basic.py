@@ -2613,7 +2613,13 @@ class AnsibleModule(object):
 
             stdout = b''
             stderr = b''
-            selector = selectors.DefaultSelector()
+            try:
+                selector = selectors.DefaultSelector()
+            except OSError:
+                # Failed to detect default selector for the given platform
+                # Select PollSelector which is supported by major platforms
+                selector = selectors.PollSelector()
+
             selector.register(cmd.stdout, selectors.EVENT_READ)
             selector.register(cmd.stderr, selectors.EVENT_READ)
             if os.name == 'posix':
