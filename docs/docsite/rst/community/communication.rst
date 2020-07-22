@@ -24,7 +24,7 @@ Ansible has several mailing lists.  Your first post to the mailing list will be 
 * `Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ is for all things related to Ansible Lockdown projects, including DISA STIG automation and CIS Benchmarks.
 * `Ansible Outreach List <https://groups.google.com/forum/#!forum/ansible-outreach>`_ help with promoting Ansible and `Ansible Meetups <https://ansible.meetup.com/>`_
 * `Ansible Project List <https://groups.google.com/forum/#!forum/ansible-project>`_ is for sharing Ansible tips, answering questions, and general user discussion.
-* `Molecule List <https://groups.google.com/forum/#!forum/molecule-users>`_ is designed to aid with the development and testing of Ansible roles with Molecule.
+* `Molecule Discussions <https://github.com/ansible-community/molecule/discussions>`_ is designed to aid with the development and testing of Ansible roles with Molecule.
 
 To subscribe to a group from a non-Google account, you can send an email to the subscription address requesting the subscription. For example: ``ansible-devel+subscribe@googlegroups.com``
 
