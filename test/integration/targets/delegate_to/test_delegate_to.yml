@@ -18,6 +18,8 @@
       register: setup_results
       delegate_to: testhost4
 
+    - debug: var=setup_results
+
     - assert:
         that:
           - '"127.0.0.4" in setup_results.ansible_facts.ansible_env["SSH_CONNECTION"]'

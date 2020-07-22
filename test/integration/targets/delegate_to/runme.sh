@@ -59,6 +59,7 @@ ansible-playbook test_delegate_to_loop_caching.yml -i inventory -v "$@"
 # ensure we are using correct settings when delegating
 ANSIBLE_TIMEOUT=3 ansible-playbook delegate_vars_hanldling.yml -i inventory -v "$@"
 
+ansible-playbook has_hostvars.yml -i inventory -v "$@"
 
 # test ansible_x_interpreter
 # python
