@@ -179,9 +179,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # internal usage
                 # FIXME: only do this substitution if we've resolved these to the builtin/library modules
                 if leaf_module_name in ('stat', 'file', 'copy', 'ping') and self._task.action != module_name:
-                    module_name = '%s.win_%s' % (win_collection, module_name)
+                    module_name = '%s.win_%s' % (win_collection, leaf_module_name)
                 elif leaf_module_name == 'async_status':
-                    module_name = '%s.%s' % (win_collection, module_name)
+                    module_name = '%s.%s' % (win_collection, leaf_module_name)
 
                 # TODO: move this tweak down to the modules, not extensible here
                 # Remove extra quotes surrounding path parameters before sending to module.
