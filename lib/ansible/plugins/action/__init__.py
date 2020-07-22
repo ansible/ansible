@@ -1019,8 +1019,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if wrap_async and not self._connection.always_pipeline_modules:
             # configure, upload, and chmod the async_wrapper module
-            (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='ansible.legacy.async_wrapper', module_args=dict(),
-                                                                                                         task_vars=task_vars)
+            (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(
+                module_name='ansible.legacy.async_wrapper', module_args=dict(), task_vars=task_vars)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmpdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)

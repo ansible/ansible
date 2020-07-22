@@ -90,7 +90,8 @@ class ActionModule(ActionBase):
                     del new_module_args['use_backend']
 
                 display.vvvv("Running %s as the backend for the yum action plugin" % module)
-                result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
+                result.update(self._execute_module(
+                    module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
 
         # Cleanup
         if not self._task.async_val:
