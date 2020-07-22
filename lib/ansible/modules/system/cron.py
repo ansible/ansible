@@ -240,20 +240,18 @@ class CronTab(object):
 
         if cron_file:
             if os.path.isabs(cron_file):
-                self.cron_file = cron_file
                 self.b_cron_file = to_bytes(cron_file, errors='surrogate_or_strict')
             else:
-                self.cron_file = os.path.join('/etc/cron.d', cron_file)
                 self.b_cron_file = os.path.join(b'/etc/cron.d', to_bytes(cron_file, errors='surrogate_or_strict'))
         else:
-            self.cron_file = None
+            self.b_cron_file = None
 
         self.read()
 
     def read(self):
         # Read in the crontab from the system
         self.lines = []
-        if self.cron_file:
+        if self.b_cron_file:
             # read the cronfile
             try:
                 f = open(self.b_cron_file, 'rb')
@@ -297,7 +295,7 @@ class CronTab(object):
         """
         if backup_file:
             fileh = open(backup_file, 'wb')
-        elif self.cron_file:
+        elif self.b_cron_file:
             fileh = open(self.b_cron_file, 'wb')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
@@ -312,7 +310,7 @@ class CronTab(object):
             return
 
         # Add the entire crontab back to the user crontab
-        if not self.cron_file:
+        if not self.b_cron_file:
             # quoting shell args for now but really this should be two non-shell calls.  FIXME
             (rc, out, err) = self.module.run_command(self._write_execute(path), use_unsafe_shell=True)
             os.unlink(path)
@@ -321,8 +319,8 @@ class CronTab(object):
                 self.module.fail_json(msg=err)
 
         # set SELinux permissions
-        if self.module.selinux_enabled() and self.cron_file:
-            self.module.set_default_selinux_context(self.cron_file, False)
+        if self.module.selinux_enabled() and self.b_cron_file:
+            self.module.set_default_selinux_context(self.b_cron_file, False)
 
     def do_comment(self, name):
         return "%s%s" % (self.ansible, name)
@@ -382,7 +380,7 @@ class CronTab(object):
 
     def remove_job_file(self):
         try:
-            os.unlink(self.cron_file)
+            os.unlink(self.b_cron_file)
             return True
         except OSError:
             # cron file does not exist
@@ -434,12 +432,12 @@ class CronTab(object):
             disable_prefix = ''
 
         if special:
-            if self.cron_file:
+            if self.b_cron_file:
                 return "%s@%s %s %s" % (disable_prefix, special, self.user, job)
             else:
                 return "%s@%s %s" % (disable_prefix, special, job)
         else:
-            if self.cron_file:
+            if self.b_cron_file:
                 return "%s%s %s %s %s %s %s %s" % (disable_prefix, minute, hour, day, month, weekday, self.user, job)
             else:
                 return "%s%s %s %s %s %s %s" % (disable_prefix, minute, hour, day, month, weekday, job)
@@ -634,8 +632,8 @@ def main():
     if module._diff:
         diff = dict()
         diff['before'] = crontab.n_existing
-        if crontab.cron_file:
-            diff['before_header'] = crontab.cron_file
+        if crontab.b_cron_file:
+            diff['before_header'] = crontab.b_cron_file
         else:
             if crontab.user:
                 diff['before_header'] = 'crontab for user "%s"' % crontab.user
@@ -670,14 +668,14 @@ def main():
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
 
-    if crontab.cron_file and not name and not do_install:
+    if crontab.b_cron_file and not name and not do_install:
         if module._diff:
             diff['after'] = ''
             diff['after_header'] = '/dev/null'
         else:
             diff = dict()
         if module.check_mode:
-            changed = os.path.isfile(crontab.cron_file)
+            changed = os.path.isfile(crontab.b_cron_file)
         else:
             changed = crontab.remove_job_file()
         module.exit_json(changed=changed, cron_file=cron_file, state=state, diff=diff)
@@ -742,8 +740,8 @@ def main():
             crontab.write()
         if module._diff:
             diff['after'] = crontab.render()
-            if crontab.cron_file:
-                diff['after_header'] = crontab.cron_file
+            if crontab.b_cron_file:
+                diff['after_header'] = crontab.b_cron_file
             else:
                 if crontab.user:
                     diff['after_header'] = 'crontab for user "%s"' % crontab.user
