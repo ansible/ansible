@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Terminal plugins - add "\e[m" to the list of ANSI sequences stripped from device output
