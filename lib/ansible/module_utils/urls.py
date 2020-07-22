@@ -43,6 +43,7 @@ import email.mime.application
 import email.parser
 import email.utils
 import functools
+import logging
 import mimetypes
 import netrc
 import os
@@ -1145,6 +1146,10 @@ class Request:
 
         method = method.upper()
 
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(logging.StreamHandler(sys.stdout))
+
         if headers is None:
             headers = {}
         elif not isinstance(headers, dict):
@@ -1199,6 +1204,7 @@ class Request:
                 url = urlunparse(parsed_list)
 
             if username and not force_basic_auth:
+                logger.info('Creating instance of passman')
                 passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
 
                 # this creates a password manager
@@ -1215,16 +1221,19 @@ class Request:
                 handlers.append(digest_authhandler)
 
             elif username and force_basic_auth:
+                logger.info('Forcing basic authentication via options')
                 headers["Authorization"] = basic_auth_header(username, password)
 
             else:
                 try:
                     rc = netrc.netrc(os.environ.get('NETRC'))
                     login = rc.authenticators(parsed.hostname)
+                    logger.info('Trying NETRC configuration (via environment)')
                 except IOError:
                     login = None
 
                 if login:
+                    logger.info('Using NETRC configuration for basic authentication')
                     username, _, password = login
                     if username and password:
                         headers["Authorization"] = basic_auth_header(username, password)
