@@ -1259,7 +1259,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         diff = {}
         display.debug("Going to peek to see if file has changed permissions")
-        peek_result = self._execute_module(module_name='ansible.legacy.file', module_args=dict(path=destination, _diff_peek=True), task_vars=task_vars, persist_files=True)
+        peek_result = self._execute_module(
+            module_name='ansible.legacy.file', module_args=dict(path=destination, _diff_peek=True),
+            task_vars=task_vars, persist_files=True)
 
         if peek_result.get('failed', False):
             display.warning(u"Failed to get diff between '%s' and '%s': %s" % (os.path.basename(source), destination, to_text(peek_result.get(u'msg', u''))))
@@ -1275,7 +1277,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
                 display.debug(u"Slurping the file %s" % source)
-                dest_result = self._execute_module(module_name='ansible.legacy.slurp', module_args=dict(path=destination), task_vars=task_vars, persist_files=True)
+                dest_result = self._execute_module(
+                    module_name='ansible.legacy.slurp', module_args=dict(path=destination),
+                    task_vars=task_vars, persist_files=True)
                 if 'content' in dest_result:
                     dest_contents = dest_result['content']
                     if dest_result['encoding'] == u'base64':

@@ -56,7 +56,7 @@ class ActionModule(ActionBase):
             if module == 'auto':
                 facts = self._execute_module(
                     module_name='ansible.legacy.setup',
-                    module_args=dict(filter='ansible_pkg_mgr',gather_subset='!all'),
+                    module_args=dict(filter='ansible_pkg_mgr', gather_subset='!all'),
                     task_vars=task_vars)
                 display.debug("Facts %s" % facts)
                 module = facts.get('ansible_facts', {}).get('ansible_pkg_mgr', 'auto')
