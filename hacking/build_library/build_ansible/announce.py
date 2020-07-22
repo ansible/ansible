@@ -29,7 +29,7 @@ LONG_TEMPLATE = """
 {% set plural = False if versions | length == 1 else True %}
 {% set latest_ver = (versions | sort(attribute='ver_obj'))[-1] %}
 
-To: ansible-devel@googlegroups.com, ansible-project@googlegroups.com, ansible-announce@googlegroups.com
+To: ansible-releases@redhat.com, ansible-devel@googlegroups.com, ansible-project@googlegroups.com, ansible-announce@googlegroups.com
 Subject: New release{% if plural %}s{% endif %}: {{ version_str }}
 
 {% filter wordwrap %}
