@@ -1508,7 +1508,6 @@ releases:
     - better_winrm_putfile_error.yml
     - group_by_changed.yml
     - handle_undefined_in_type_errors_filters.yml
-    - items2dict-common-dict.yml~
     - k8s-requirements-doc-update.yml
     - test-ansible-runner-pin-psutil.yml
     - v2.9.11_summary.yaml
