@@ -507,7 +507,8 @@ class Distribution(object):
                      'Darwin': ['MacOSX'],
                      'FreeBSD': ['FreeBSD', 'TrueOS'],
                      'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix'],
-                     'DragonFly': ['DragonflyBSD', 'DragonFlyBSD', 'Gentoo/DragonflyBSD', 'Gentoo/DragonFlyBSD']}
+                     'DragonFly': ['DragonflyBSD', 'DragonFlyBSD', 'Gentoo/DragonflyBSD', 'Gentoo/DragonFlyBSD'],
+                     'NetBSD': ['NetBSD'], }
 
     OS_FAMILY = {}
     for family, names in OS_FAMILY_MAP.items():
@@ -617,9 +618,16 @@ class Distribution(object):
 
     def get_distribution_NetBSD(self):
         netbsd_facts = {}
-        # FIXME: poking at self.facts, should eventually make these each a collector
         platform_release = platform.release()
-        netbsd_facts['distribution_major_version'] = platform_release.split('.')[0]
+        netbsd_facts['distribution_release'] = platform_release
+        rc, out, dummy = self.module.run_command("/sbin/sysctl -n kern.version")
+        match = re.match(r'NetBSD\s(\d+)\.(\d+)\s\((GENERIC)\).*', out)
+        if match:
+            netbsd_facts['distribution_major_version'] = match.group(1)
+            netbsd_facts['distribution_version'] = '%s.%s' % match.groups()[:2]
+        else:
+            netbsd_facts['distribution_major_version'] = platform_release.split('.')[0]
+            netbsd_facts['distribution_version'] = platform_release
         return netbsd_facts
 
     def get_distribution_SMGL(self):
