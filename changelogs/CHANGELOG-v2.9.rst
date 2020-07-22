@@ -18,7 +18,6 @@ Release Summary
 Minor Changes
 -------------
 
-- The ``items2dict`` filter can now create a dict whose values are the original elements of the input list, and whose keys are the value of some key in each dict. When the resulting dict is stored, this allows for O(1) lookup of a particular key without having to scan the entire list each time.
 - k8s - update openshift requirements in documentation
 - pipe lookup - update docs for Popen with shell=True usages (https://github.com/ansible/ansible/issues/70159).
 
