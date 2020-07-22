@@ -491,6 +491,19 @@ To reference the system hostname::
 
 You can use facts in conditionals (see :ref:`playbooks_conditionals`) and also in templates. You can also use facts to create dynamic groups of hosts that match particular criteria, see the :ref:`group_by module <group_by_module>` documentation for details.
 
+.. _fact_requirements:
+
+Package requirements for fact gathering
+---------------------------------------
+
+Some fact gathering depends on installed binaries on the remote host. If the binary is absent, the fact is set to a default value.
+
+We recommended that you install these binaries on the remote host using default OS package manager.
+
+The following lists required binaries:
+
+* Linux Network fact gathering -  Depends on  the ``ip`` binary from the ``iproute2`` package.
+
 .. _fact_caching:
 
 Caching facts
