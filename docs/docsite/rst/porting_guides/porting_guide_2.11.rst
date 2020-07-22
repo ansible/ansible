@@ -111,6 +111,9 @@ The M(sysctl) module uses ``atomic_move()`` to operate on ``/etc/sysctl.conf`` o
 
 
 * The ``apt_key`` module has explicitly defined ``file`` as mutually exclusive with ``data``, ``keyserver`` and ``url``. They cannot be used together anymore.
+* ``hostname`` - On FreeBSD, the ``before`` result will no longer be ``"temporarystub"`` if permanent hostname file does not exist. It will instead be ``""`` (empty string) for consistency with other systems.
+* ``hostname`` - On OpenRC and Solaris based systems, the ``before`` result will no longer be ``"UNKNOWN"`` if the permanent hostname file does not exist. It will instead be ``""`` (empty string) for consistency with other systems.
+
 
 Modules removed
 ---------------
