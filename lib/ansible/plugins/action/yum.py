@@ -17,6 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleActionFail
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -47,22 +48,15 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # Carry-over concept from the package action plugin
-        use_backend = self._task.args.get('use_backend', None)
-        use = self._task.args.get('use', None)
         module = 'auto'
 
-        if None not in [use_backend, use]:
-            result.update(
-                {
-                    'failed': True,
-                    'msg': "use_backend and use are mutually exclusive. Cannot use both."
-                }
-            )
-            return result
-        elif use_backend is not None:
+        if 'use' in self._task.args and 'use_backend' in self._task.args:
+            raise AnsibleActionFail("parameters are mutually exclusive: ('use', 'use_backend')")
+
+        use_backend = self._task.args.get('use', self._task.args.get('use_backend', None))
+
+        if use_backend:
             module = use_backend
-        elif use is not None:
-            module = use
 
         if module == 'auto':
             try:
@@ -100,6 +94,8 @@ class ActionModule(ActionBase):
                 new_module_args = self._task.args.copy()
                 if 'use_backend' in new_module_args:
                     del new_module_args['use_backend']
+                if 'use' in new_module_args:
+                    del new_module_args['use']
 
                 display.vvvv("Running %s as the backend for the yum action plugin" % module)
                 result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
