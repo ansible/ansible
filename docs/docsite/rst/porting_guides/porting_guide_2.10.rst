@@ -135,7 +135,7 @@ Noteworthy plugin changes
 Action plugins which execute modules should use fully-qualified module names
 ---------------------------------------
 
-* Actions that call modules should pass explicit fully-qualified module names to ``_execute_module`` whenever possible (eg, ``ansible.builtin.file`` vs just ``file``). This ensures that the task's collection search order is not consulted to resolve the module, which can result in running an unintended module if a higher-precedence collection defines a module of that name.
+* Action plugins that call modules should pass explicit, fully-qualified module names to ``_execute_module()`` whenever possible (eg, ``ansible.builtin.file`` rather than ``file``). This ensures that the task's collection search order is not consulted to resolve the module. Otherwise, a module from a collection earlier in the search path could be used when not intended.
 
 Porting custom scripts
 ======================
