@@ -8,7 +8,7 @@
     test_repo_spec: "deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_distribution_release }}-pgdg main"
     test_repo_path: /etc/apt/sources.list.d/apt_postgresql_org_pub_repos_apt.list
 
-- include: mode_cleanup.yaml
+- import_tasks: mode_cleanup.yaml
 
 - name: Add GPG key to verify signatures
   apt_key:
@@ -31,7 +31,7 @@
   debug:
     var: mode_given_yaml_literal_0600
 
-- include: mode_cleanup.yaml
+- import_tasks: mode_cleanup.yaml
 
 - name: Assert mode_given_yaml_literal_0600 is correct
   assert:
@@ -52,11 +52,11 @@
   debug:
     var: no_mode_stat
 
-- include: mode_cleanup.yaml
+- import_tasks: mode_cleanup.yaml
 
 - name: Assert no_mode_stat is correct
   assert:
-    that: "no_mode_stat.stat.mode == '0644'"
+    that: "no_mode_stat.stat.mode == '0600'"
 
 - name: Mode specified as string 0600
   apt_repository:
@@ -74,7 +74,7 @@
   debug:
     var: mode_given_string_stat
 
-- include: mode_cleanup.yaml
+- import_tasks: mode_cleanup.yaml
 
 - name: Mode specified as string 600
   apt_repository:
@@ -92,7 +92,7 @@
   debug:
     var: mode_given_string_600_stat
 
-- include: mode_cleanup.yaml
+- import_tasks: mode_cleanup.yaml
 
 - name: Assert mode is correct
   assert:
@@ -114,7 +114,7 @@
   debug:
     var: mode_given_yaml_literal_600
 
-- include: mode_cleanup.yaml
+- import_tasks: mode_cleanup.yaml
 
 # a literal 600 as the mode will fail currently, in the sense that it
 # doesn't guess and consider 600 and 0600 to be the same, and will instead
