@@ -401,7 +401,13 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
 
 def remove_values(value, no_log_strings):
     """ Remove strings in no_log_strings from value.  If value is a container
-    type, then remove a lot more"""
+    type, then remove a lot more.
+
+    Use of deferred_removals exists, rather than a pure recursive solution,
+    because of the potential to hit the maximum recursion depth when dealing with
+    large amounts of data (see issue #24560).
+    """
+
     deferred_removals = deque()
 
     no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
@@ -429,10 +435,11 @@ def remove_values(value, no_log_strings):
 def sanitize_keys(obj, no_log_strings, ignore_keys=None):
     """ Sanitize the keys in a container object by removing no_log values from key names.
 
-    This is a companion function to the `remove_values()` function.
+    This is a companion function to the `remove_values()` function. Similar to that function,
+    we make use of deferred_removals to avoid hitting maximum recursion depth in cases of
+    large data structures.
 
-    :param obj: The container object to sanitize. This must be either a Mapping type object,
-        or a list type object that may or may not have additional Mapping type objects to sanitize.
+    :param obj: The container object to sanitize. Non-container objects are returned unmodified.
     :param no_log_strings: A set of string values we do not want logged.
     :param ignore_keys: A set of string values of keys to not sanitize.
 
@@ -442,45 +449,69 @@ def sanitize_keys(obj, no_log_strings, ignore_keys=None):
     if ignore_keys is None:
         ignore_keys = frozenset([])
 
+    deferred_removals = deque()
+
     no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+    new_value = _sanitize_keys(obj, no_log_strings, ignore_keys, deferred_removals)
 
-    # So that we convert no_log_strings only once, the recursive part of this
-    # method is placed within the _sanitize_keys() function.
-    return _sanitize_keys(obj, no_log_strings, ignore_keys)
+    while deferred_removals:
+        old_data, new_data = deferred_removals.popleft()
+
+        if isinstance(new_data, Mapping):
+            for old_key, old_elem in old_data.items():
+                if old_key not in ignore_keys and not old_key.startswith('_ansible'):
+                    # Sanitize the old key. We take advantage of the sanitizing code in
+                    # _remove_values_conditions() rather than recreating it here. Since the
+                    # value should always be a string-like object, it's safe to pass None
+                    # for the deferred_removals parameter.
+                    new_key = _remove_values_conditions(old_key, no_log_strings, None)
+                    new_data[new_key] = _sanitize_keys(old_elem, no_log_strings, ignore_keys, deferred_removals)
+                else:
+                    new_data[old_key] = _sanitize_keys(old_elem, no_log_strings, ignore_keys, deferred_removals)
+        else:
+            for elem in old_data:
+                new_elem = _sanitize_keys(elem, no_log_strings, ignore_keys, deferred_removals)
+                if isinstance(new_data, MutableSequence):
+                    new_data.append(new_elem)
+                elif isinstance(new_data, MutableSet):
+                    new_data.add(new_elem)
+                else:
+                    raise TypeError('Unknown container type encountered when removing private values from keys')
+
+    return new_value
 
 
-def _sanitize_keys(obj, no_log_strings, ignore_keys):
-    if not isinstance(obj, (Mapping, list)):
-        raise TypeError('Unsupported type for key sanitization.')
-
-    # Return an object of the same type.
-    new_obj = type(obj)()
-
-    # For a list, we just recursively iterate over the items, making recursive
-    # calls for target types.
-    if isinstance(obj, list):
-        for item in obj:
-            if isinstance(item, (Mapping, list)):
-                new_obj.append(_sanitize_keys(item, no_log_strings, ignore_keys))
-            else:
-                new_obj.append(item)
-
-    # For a Mapping object, sanitize the keys.
-    elif isinstance(obj, Mapping):
-        for old_key, value in iteritems(obj):
-            if old_key not in ignore_keys and not old_key.startswith('_ansible'):
-                # Sanitize the old key. Since this should always be a string-like object, we
-                # should be safe to pass None for the deferred_removals parameter.
-                new_key = _remove_values_conditions(old_key, no_log_strings, None)
-            else:
-                new_key = old_key
-
-            if isinstance(value, (Mapping, list)):
-                new_obj[new_key] = _sanitize_keys(value, no_log_strings, ignore_keys)
-            else:
-                new_obj[new_key] = value
-
-    return new_obj
+def _sanitize_keys(value, no_log_strings, ignore_keys, deferred_removals):
+    """ Helper method to sanitize_keys() to build deferred_removals and avoid deep recursion. """
+    if isinstance(value, (text_type, binary_type)):
+        return value
+    elif isinstance(value, Sequence):
+        if isinstance(value, MutableSequence):
+            new_value = type(value)()
+        else:
+            new_value = []  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+    elif isinstance(value, Set):
+        if isinstance(value, MutableSet):
+            new_value = type(value)()
+        else:
+            new_value = set()  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+    elif isinstance(value, Mapping):
+        if isinstance(value, MutableMapping):
+            new_value = type(value)()
+        else:
+            new_value = {}  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+    elif isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
+        return value
+    elif isinstance(value, (datetime.datetime, datetime.date)):
+        return value
+    else:
+        raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
 
 
 def heuristic_log_sanitize(data, no_log_values=None):

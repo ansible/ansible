@@ -10,23 +10,19 @@ import pytest
 from ansible.module_utils.basic import sanitize_keys
 
 
-def test_sanitize_keys_bad_types():
-    """ Test that non-dict-like objects raise an exception. """
+def test_sanitize_keys_non_dict_types():
+    """ Test that non-dict-like objects return the same data. """
 
     type_exception = 'Unsupported type for key sanitization.'
     no_log_strings = set()
 
-    with pytest.raises(TypeError, match=type_exception):
-        sanitize_keys('string value', no_log_strings)
+    assert 'string value' == sanitize_keys('string value', no_log_strings)
 
-    with pytest.raises(TypeError, match=type_exception):
-        sanitize_keys(None, no_log_strings)
+    assert sanitize_keys(None, no_log_strings) is None
 
-    with pytest.raises(TypeError, match=type_exception):
-        sanitize_keys(set(['x', 'y']), no_log_strings)
+    assert set(['x', 'y']) == sanitize_keys(set(['x', 'y']), no_log_strings)
 
-    with pytest.raises(TypeError, match=type_exception):
-        sanitize_keys(False, no_log_strings)
+    assert not sanitize_keys(False, no_log_strings)
 
 
 def _run_comparison(obj):
