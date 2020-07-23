@@ -181,9 +181,9 @@ For example:
 
   .. code-block:: rst
 
-   :ref:`ansible.builtin.enable become plugin <ansible_collections.ansible.builtin.enable_become>`
+   :ref:`ansible.builtin.first_found lookup plugin <ansible_collections.ansible.builtin.first_found_lookup>`
 
-displays as :ref:`ansible.builtin.enable become plugin <ansible_collections.ansible.builtin.enable_become>`.
+displays as :ref:`ansible.builtin.first_found lookup plugin <ansible_collections.ansible.builtin.first_found_lookup>`.
 
 Modules require different suffixes from other plugins:
 
