@@ -5,6 +5,80 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.0rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2020-07-23
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Add an example for using var in with_sequence (https://github.com/ansible/ansible/issues/68836).
+- Add standard Python 2/3 compatibility boilerplate to setup script, module_utils and docs_fragments which were missing them.
+- Command module: Removed suggestions to use modules which have moved to collections and out of ansible-base
+- The plugin loader now keeps track of the collection where a plugin was resolved to, in particular whether the plugin was loaded from ansible-base's internal paths (``ansible.builtin``) or from user-supplied paths (no collection name).
+- ansible-galaxy - Add installation successful message
+- ansible-galaxy - Change the output verbosity level of the download message from 3 to 0 (https://github.com/ansible/ansible/issues/70010)
+- ansible-test - Provisioning of RHEL instances now includes installation of pinned versions of ``packaging`` and ``pyparsing`` to match the downstream vendored versions.
+- ansible-test - Report the correct line number in the ``yamllint`` sanity test when reporting ``libyaml`` parse errors in module documentation.
+- conditionals - change the default of CONDITIONAL_BARE_VARS to False (https://github.com/ansible/ansible/issues/70682).
+- debconf - add a note about no_log=True since module might expose sensitive information to logs (https://github.com/ansible/ansible/issues/32386).
+- pipe lookup - update docs for Popen with shell=True usages (https://github.com/ansible/ansible/issues/70159).
+
+Bugfixes
+--------
+
+- **security issue** atomic_move - change default permissions when creating temporary files so they are not world readable (https://github.com/ansible/ansible/issues/67794) (CVE-2020-1736)
+- Address the deprecation of the use of stdlib distutils in packaging. It's a short-term hotfix for the problem (https://github.com/ansible/ansible/issues/70456, https://github.com/pypa/setuptools/issues/2230, https://github.com/pypa/setuptools/commit/bd110264)
+- Allow TypeErrors on Undefined variables in filters to be handled or deferred when processing for loops.
+- Ansible output now uses stdout to determine column width instead of stdin
+- Fix ``delegate_facts: true`` when ``ansible_python_interpreter`` is not set. (https://github.com/ansible/ansible/issues/70168)
+- JSON Encoder - Ensure we treat single vault encrypted values as strings (https://github.com/ansible/ansible/issues/70784)
+- Python module_utils finder - refactor logic to eliminate many corner cases, remove recursion, fix base module_utils redirections
+- SSH plugin - Improve error message when ssh client is not found on the host
+- Sanitize no_log values from any response keys that might be returned from the uri module.
+- TaskExecutor - Handle unexpected errors as failed while post validating loops (https://github.com/ansible/ansible/issues/70050).
+- Template connection variables before using them (https://github.com/ansible/ansible/issues/70598).
+- Terminal plugins - add "\e[m" to the list of ANSI sequences stripped from device output
+- The `ansible_become` value was not being treated as a boolean value when set in an INI format inventory file (fixes bug https://github.com/ansible/ansible/issues/70476).
+- The machine-readable changelog ``changelogs/changelog.yaml`` is now contained in the release.
+- Vault - Allow single vault encrypted values to be used directly as module parameters. (https://github.com/ansible/ansible/issues/68275)
+- action plugins - change all action/module delegations to use FQ names while allowing overrides (https://github.com/ansible/ansible/issues/69788)
+- add constraints file for ``anisble_runner`` test since an update to ``psutil`` is now causing test failures
+- add magic/connection vars updates from delegated host info.
+- ansible-doc - collection name for plugin top-level deprecation was not inserted when deprecating by version (https://github.com/ansible/ansible/pull/70344).
+- ansible-doc - improve error message in text formatter when ``description`` is missing for a (sub-)option or a return value or its ``contains`` (https://github.com/ansible/ansible/pull/70046).
+- ansible-doc - improve man page formatting to avoid problems when YAML anchors are used (https://github.com/ansible/ansible/pull/70045).
+- ansible-doc - include the collection name in the text output (https://github.com/ansible/ansible/pull/70401).
+- ansible-test - Do not try to validate PowerShell modules ``setup.ps1``, ``slurp.ps1``, and ``async_status.ps1``
+- ansible-test - The ``ansible-doc`` sanity test now works for ``netconf`` plugins.
+- ansible-test - integration and unit test change detection now works for filter, lookup and test plugins
+- ansible-test now always uses the ``--python`` option for ``virtualenv`` to select the correct interpreter when creating environments with the ``--venv`` option
+- api - time.clock is removed in Python 3.8, add backward compatible code (https://github.com/ansible/ansible/issues/70649).
+- apt - include exception message from apt python library in error output
+- assemble - fix decrypt argument in the module (https://github.com/ansible/ansible/issues/65450).
+- basic - use PollSelector implementation when DefaultSelector fails (https://github.com/ansible/ansible/issues/70238).
+- collection metadata - ensure collection loader uses libyaml/CSafeLoader to parse collection metadata if available
+- cron - encode and decode crontab files in UTF-8 explicitly to allow non-ascii chars in cron filepath and job (https://github.com/ansible/ansible/issues/69492)
+- ensure delegated vars can resolve hostvars object and access vars from hostvars[inventory_hostname].
+- facts - account for Slackware OS with ``+`` in the name (https://github.com/ansible/ansible/issues/38760)
+- fix issue with inventory_hostname and delegated host vars mixing on connection settings.
+- if the ``type`` for a module parameter in the argument spec is callable, do not pass ``kwargs`` to avoid errors (https://github.com/ansible/ansible/issues/70017)
+- pause - handle exception when there is no stdout (https://github.com/ansible/ansible/pull/47851)
+- playbooks - detect and propagate failures in ``always`` blocks after ``rescue`` (https://github.com/ansible/ansible/issues/70000)
+- shell - fix quoting of mkdir command in creation of remote_tmp in order to allow spaces and other special characters (https://github.com/ansible/ansible/issues/69577).
+- splunk httpapi plugin - switch from splunk.enterprise_security to splunk.es in runtime.yml to reflect upstream change of Collection Name
+- ssh connection plugin - use ``get_option()`` rather than ``_play_context`` to ensure ``ANSBILE_SSH_ARGS`` are applied properly (https://github.com/ansible/ansible/issues/70437)
+- user - don't create home directory and missing parents when create_home == false (https://github.com/ansible/ansible/pull/70600).
+- win setup - Fix redirection path for the windows setup module
+- windows async - use full path when calling PowerShell to reduce reliance on environment vars being correct - https://github.com/ansible/ansible/issues/70655
+- winrm - preserve winrm forensic data on put_file failures
+
 v2.10.0b1
 =========
 
