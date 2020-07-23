@@ -710,10 +710,6 @@ class TaskExecutor:
             for k in plugin_vars + RETURN_VARS:
                 if k in cvars and cvars[k] is not None:
                     result["_ansible_delegated_vars"][k] = cvars[k]
-        else:
-            for k in plugin_vars + RETURN_VARS:
-                if k in cvars and cvars[k] is not None:
-                    result[k] = cvars[k]
 
         # and return
         display.debug("attempt loop complete, returning result")
