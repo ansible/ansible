@@ -1574,7 +1574,13 @@ class AnsibleModule(object):
             msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
             if self._options_context:
                 msg += " found in %s." % " -> ".join(self._options_context)
-            msg += " Supported parameters include: %s" % (', '.join(sorted(spec.keys())))
+            supported_parameters = list()
+            for key in sorted(spec.keys()):
+                if 'aliases' in spec[key] and spec[key]['aliases']:
+                    supported_parameters.append("%s (%s)" % (key, ', '.join(sorted(spec[key]['aliases']))))
+                else:
+                    supported_parameters.append(key)
+            msg += " Supported parameters include: %s" % (', '.join(supported_parameters))
             self.fail_json(msg=msg)
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
