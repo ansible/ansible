@@ -68,20 +68,13 @@
     path: HKCU:\{{ test_reg_path }}\nested\nest2
   register: actual
 
-- name: set expected value for reg key without sub keys or properties
-  set_fact:
-    expected:
-      changed: false
-      exists: true
-      failed: false
-      properties: {}
-      sub_keys: []
-  register: expected
-
 - name: assert get known reg key without sub keys and properties
   assert:
     that:
-      - actual == expected
+    - not actual is changed
+    - actual.exists
+    - actual.properties == {}
+    - actual.sub_keys == []
 
 - name: get non-existent reg key
   win_reg_stat:
