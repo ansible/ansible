@@ -40,11 +40,9 @@ def fake_now(monkeypatch):
 
 
 @pytest.fixture
-def date_facts(monkeypatch, fake_now):
+def date_facts(fake_now):
     """Return a predictable instance of collected date_time facts."""
 
-    monkeypatch.setenv('TZ', 'Australia/Melbourne')
-    time.tzset()
     collector = date_time.DateTimeFactCollector()
     data = collector.collect()
 
@@ -63,17 +61,21 @@ def date_facts(monkeypatch, fake_now):
         ('hour', '12'),
         ('minute', '34'),
         ('second', '56'),
-        ('epoch', '1594434896'),
         ('date', '2020-07-11'),
         ('time', '12:34:56'),
         ('iso8601_basic', '20200711T123456124356'),
         ('iso8601_basic_short', '20200711T123456'),
         ('iso8601_micro', '2020-07-11T02:34:56.124356Z'),
         ('iso8601', '2020-07-11T02:34:56Z'),
-        ('tz', 'AEST'),
-        ('tz_dst', 'AEDT'),
-        ('tz_offset', '+1000'),
     ),
 )
 def test_date_time_facts(date_facts, fact_name, fact_value):
     assert date_facts['date_time'][fact_name] == fact_value
+
+
+# Need tests for:
+#
+#   ('epoch', '1594434896'),
+#   ('tz', 'AEST'),
+#   ('tz_dst', 'AEDT'),
+#   ('tz_offset', '+1000'),

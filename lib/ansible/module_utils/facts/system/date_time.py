@@ -18,9 +18,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import time
-
 import datetime
+import time
 
 from ansible.module_utils.facts.collector import BaseFactCollector
 
@@ -49,7 +48,6 @@ class DateTimeFactCollector(BaseFactCollector):
         date_time_facts['second'] = now.strftime('%S')
         date_time_facts['epoch'] = now.strftime('%s')
         if date_time_facts['epoch'] == '' or date_time_facts['epoch'][0] == '%':
-            # NOTE: in this case, the epoch wont match the rest of the date_time facts? ie, it's a few milliseconds later..? -akl
             date_time_facts['epoch'] = str(int(epoch_ts))
         date_time_facts['date'] = now.strftime('%Y-%m-%d')
         date_time_facts['time'] = now.strftime('%H:%M:%S')
