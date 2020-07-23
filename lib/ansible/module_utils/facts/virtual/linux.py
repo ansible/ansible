@@ -203,7 +203,8 @@ class LinuxVirtual(Virtual):
                 found_virt = True
 
         # unassume guest
-        del virtual_facts['virtualization_role']
+        if not found_virt:
+            del virtual_facts['virtualization_role']
 
         if os.path.exists('/proc/self/status'):
             for line in get_file_lines('/proc/self/status'):
