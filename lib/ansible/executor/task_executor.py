@@ -707,13 +707,8 @@ class TaskExecutor:
         # also now add conneciton vars results when delegating
         if self._task.delegate_to:
             result["_ansible_delegated_vars"] = {'ansible_delegated_host': self._task.delegate_to}
-            for k in plugin_vars + RETURN_VARS:
-                if k in cvars and cvars[k] is not None:
-                    result["_ansible_delegated_vars"][k] = cvars[k]
-        else:
-            for k in plugin_vars + RETURN_VARS:
-                if k in cvars and cvars[k] is not None:
-                    result[k] = cvars[k]
+            for k in plugin_vars:
+                result["_ansible_delegated_vars"][k] = cvars.get(k)
 
         # and return
         display.debug("attempt loop complete, returning result")
