@@ -710,10 +710,10 @@ class LinuxHardware(Hardware):
                     serial = re.search(r"Unit serial number:\s+(\w+)", drivedata)
                     if serial:
                         d['serial'] = serial.group(1)
-            elif os.path.exists(serial_path):
-                with open(serial_path, 'r') as f:
-                    serial = f.read()
-                    d['serial'] = serial.strip('\n')
+            else:
+                serial = get_file_content(serial_path)
+                if serial:
+                    d['serial'] = serial
 
             for key, test in [('removable', '/removable'),
                               ('support_discard', '/queue/discard_granularity'),
