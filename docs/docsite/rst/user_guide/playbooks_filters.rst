@@ -1519,6 +1519,14 @@ To get the root and extension of a path or file name (new in version 2.0)::
     # with path == 'nginx.conf' the return would be ('nginx', '.conf')
     {{ path | splitext }}
 
+The ``splitext`` filter returns a string. The individual components can be accessed by using the ``first`` and ``last`` filters::
+
+    # with path == 'nginx.conf' the return would be 'nginx'
+    {{ path | splitext | first }} 
+
+    # with path == 'nginx.conf' the return would be 'conf'
+    {{ path | splitext | last }}
+
 To join one or more path components::
 
     {{ ('/etc', path, 'subdir', file) | path_join }}
