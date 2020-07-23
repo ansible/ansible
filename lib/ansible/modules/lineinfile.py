@@ -267,7 +267,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             try:
                 os.makedirs(b_destpath)
             except Exception as e:
-                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
+                module.fail_json(msg='Error creating %s Error description: %s' % (b_destpath, to_native(e)))
 
         b_lines = []
     else:
