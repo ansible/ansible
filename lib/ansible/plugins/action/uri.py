@@ -39,7 +39,9 @@ class ActionModule(ActionBase):
             if remote_src:
                 # everything is remote, so we just execute the module
                 # without changing any of the module arguments
-                raise _AnsibleActionDone(result=self._execute_module(task_vars=task_vars, wrap_async=self._task.async_val))
+                # call with ansible.legacy prefix to prevent collections collisions while allowing local override
+                raise _AnsibleActionDone(result=self._execute_module(module_name='ansible.legacy.uri',
+                                                                     task_vars=task_vars, wrap_async=self._task.async_val))
 
             kwargs = {}
 
@@ -83,7 +85,8 @@ class ActionModule(ActionBase):
             new_module_args = self._task.args.copy()
             new_module_args.update(kwargs)
 
-            result.update(self._execute_module('uri', module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
+            # call with ansible.legacy prefix to prevent collections collisions while allowing local override
+            result.update(self._execute_module('ansible.legacy.uri', module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))
         except AnsibleAction as e:
             result.update(e.result)
         finally:

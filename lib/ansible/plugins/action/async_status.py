@@ -40,7 +40,7 @@ class ActionModule(ActionBase):
             async_dir = self.get_shell_option('async_dir', default="~/.ansible_async")
 
         module_args = dict(jid=jid, mode=mode, _async_dir=async_dir)
-        status = self._execute_module(task_vars=task_vars,
+        status = self._execute_module(module_name='ansible.legacy.async_status', task_vars=task_vars,
                                       module_args=module_args)
         results = merge_hash(results, status)
         return results

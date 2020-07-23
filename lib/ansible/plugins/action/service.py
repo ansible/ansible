@@ -31,6 +31,10 @@ class ActionModule(ActionBase):
         'systemd': ['pattern', 'runlevel', 'sleep', 'arguments', 'args'],
     }
 
+    # HACK: list of unqualified service manager names that are/were built-in, we'll prefix these with `ansible.legacy` to
+    # avoid collisions with collections search
+    BUILTIN_SVC_MGR_MODULES = set(['openwrt_init', 'service', 'systemd', 'sysvinit'])
+
     def run(self, tmp=None, task_vars=None):
         ''' handler for package operations '''
 
@@ -53,12 +57,14 @@ class ActionModule(ActionBase):
 
         try:
             if module == 'auto':
-                facts = self._execute_module(module_name='setup', module_args=dict(gather_subset='!all', filter='ansible_service_mgr'), task_vars=task_vars)
+                facts = self._execute_module(
+                    module_name='ansible.legacy.setup',
+                    module_args=dict(gather_subset='!all', filter='ansible_service_mgr'), task_vars=task_vars)
                 self._display.debug("Facts %s" % facts)
                 module = facts.get('ansible_facts', {}).get('ansible_service_mgr', 'auto')
 
-            if not module or module == 'auto' or module not in self._shared_loader_obj.module_loader:
-                module = 'service'
+            if not module or module == 'auto' or not self._shared_loader_obj.module_loader.has_plugin(module):
+                module = 'ansible.legacy.service'
 
             if module != 'auto':
                 # run the 'service' module
@@ -76,6 +82,10 @@ class ActionModule(ActionBase):
                 new_module_args = get_action_args_with_defaults(
                     module, new_module_args, self._task.module_defaults, self._templar, self._task._ansible_internal_redirect_list
                 )
+
+                # collection prefix known internal modules to avoid collisions from collections search, while still allowing library/ overrides
+                if module in self.BUILTIN_SVC_MGR_MODULES:
+                    module = 'ansible.legacy.' + module
 
                 self._display.vvvv("Running %s" % module)
                 result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars, wrap_async=self._task.async_val))

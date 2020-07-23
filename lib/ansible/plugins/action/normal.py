@@ -47,6 +47,7 @@ class ActionModule(ActionBase):
 
             # hack to keep --verbose from showing all the setup module result
             # moved from setup module as now we filter out all _ansible_ from result
+            # FIXME: is this still accurate with gather_facts etc, or does it need support for FQ and other names?
             if self._task.action == 'setup':
                 result['_ansible_verbose_override'] = True
 
