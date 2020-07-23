@@ -291,7 +291,7 @@ class TestTaskExecutor(unittest.TestCase):
                                                    mock.call(module_prefix, collection_list=te._task.collections)])
 
         action_loader.get.assert_called_once_with(
-            'normal', task=te._task, connection=mock_connection,
+            'ansible.legacy.normal', task=te._task, connection=mock_connection,
             play_context=te._play_context, loader=te._loader,
             templar=mock_templar, shared_loader_obj=te._shared_loader_obj,
             collection_list=None)

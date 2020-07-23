@@ -163,6 +163,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             use_vars = task_vars
 
+        split_module_name = module_name.split('.')
+        collection_name = '.'.join(split_module_name[0:2]) if len(split_module_name) > 2 else ''
+        leaf_module_name = resource_from_fqcr(module_name)
+
         # Search module path(s) for named module.
         for mod_type in self._connection.module_implementation_preferences:
             # Check to determine if PowerShell modules are supported, and apply
@@ -171,17 +175,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # FIXME: This should be temporary and moved to an exec subsystem plugin where we can define the mapping
                 # for each subsystem.
                 win_collection = 'ansible.windows'
-
+                rewrite_collection_names = ['ansible.builtin', 'ansible.legacy', '']
                 # async_status, win_stat, win_file, win_copy, and win_ping are not just like their
                 # python counterparts but they are compatible enough for our
                 # internal usage
-                if module_name in ('stat', 'file', 'copy', 'ping') and self._task.action != module_name:
-                    module_name = '%s.win_%s' % (win_collection, module_name)
-                elif module_name in ['async_status']:
-                    module_name = '%s.%s' % (win_collection, module_name)
+                # NB: we only rewrite the module if it's not being called by the user (eg, an action calling something else)
+                # and if it's unqualified or FQ to a builtin
+                if leaf_module_name in ('stat', 'file', 'copy', 'ping') and \
+                        collection_name in rewrite_collection_names and self._task.action != module_name:
+                    module_name = '%s.win_%s' % (win_collection, leaf_module_name)
+                elif leaf_module_name == 'async_status' and collection_name in rewrite_collection_names:
+                    module_name = '%s.%s' % (win_collection, leaf_module_name)
 
+                # TODO: move this tweak down to the modules, not extensible here
                 # Remove extra quotes surrounding path parameters before sending to module.
-                if resource_from_fqcr(module_name) in ['win_stat', 'win_file', 'win_copy', 'slurp'] and module_args and \
+                if leaf_module_name in ['win_stat', 'win_file', 'win_copy', 'slurp'] and module_args and \
                         hasattr(self._connection._shell, '_unquote'):
                     for key in ('src', 'dest', 'path'):
                         if key in module_args:
@@ -724,7 +732,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             get_checksum=checksum,
             checksum_algorithm='sha1',
         )
-        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars,
+        mystat = self._execute_module(module_name='ansible.legacy.stat', module_args=module_args, task_vars=all_vars,
                                       wrap_async=False)
 
         if mystat.get('failed'):
@@ -1015,8 +1023,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if wrap_async and not self._connection.always_pipeline_modules:
             # configure, upload, and chmod the async_wrapper module
-            (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(module_name='async_wrapper', module_args=dict(),
-                                                                                                         task_vars=task_vars)
+            (async_module_style, shebang, async_module_data, async_module_path) = self._configure_module(
+                module_name='ansible.legacy.async_wrapper', module_args=dict(), task_vars=task_vars)
             async_module_remote_filename = self._connection._shell.get_remote_filename(async_module_path)
             remote_async_module_path = self._connection._shell.join_path(tmpdir, async_module_remote_filename)
             self._transfer_data(remote_async_module_path, async_module_data)
@@ -1255,7 +1263,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         diff = {}
         display.debug("Going to peek to see if file has changed permissions")
-        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, _diff_peek=True), task_vars=task_vars, persist_files=True)
+        peek_result = self._execute_module(
+            module_name='ansible.legacy.file', module_args=dict(path=destination, _diff_peek=True),
+            task_vars=task_vars, persist_files=True)
 
         if peek_result.get('failed', False):
             display.warning(u"Failed to get diff between '%s' and '%s': %s" % (os.path.basename(source), destination, to_text(peek_result.get(u'msg', u''))))
@@ -1271,7 +1281,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
                 display.debug(u"Slurping the file %s" % source)
-                dest_result = self._execute_module(module_name='slurp', module_args=dict(path=destination), task_vars=task_vars, persist_files=True)
+                dest_result = self._execute_module(
+                    module_name='ansible.legacy.slurp', module_args=dict(path=destination),
+                    task_vars=task_vars, persist_files=True)
                 if 'content' in dest_result:
                     dest_contents = dest_result['content']
                     if dest_result['encoding'] == u'base64':

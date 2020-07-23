@@ -132,6 +132,11 @@ Noteworthy plugin changes
 * Cache plugins in collections can be used to cache data from inventory plugins. Previously, cache plugins in collections could only be used for fact caching.
 * Some undocumented arguments from ``FILE_COMMON_ARGUMENTS`` have been removed; plugins using these, in particular action plugins, need to be adjusted. The undocumented arguments which were removed are ``src``, ``follow``, ``force``, ``content``, ``backup``, ``remote_src``, ``regexp``, ``delimiter``, and ``directory_mode``.
 
+Action plugins which execute modules should use fully-qualified module names
+----------------------------------------------------------------------------
+
+* Action plugins that call modules should pass explicit, fully-qualified module names to ``_execute_module()`` whenever possible (eg, ``ansible.builtin.file`` rather than ``file``). This ensures that the task's collection search order is not consulted to resolve the module. Otherwise, a module from a collection earlier in the search path could be used when not intended.
+
 Porting custom scripts
 ======================
 

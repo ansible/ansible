@@ -1345,29 +1345,30 @@ ERROR_ON_MISSING_HANDLER:
 CONNECTION_FACTS_MODULES:
   name: Map of connections to fact modules
   default:
-    asa: asa_facts
+    # use ansible.legacy names on unqualified facts modules to allow library/ overrides
+    asa: ansible.legacy.asa_facts
     cisco.asa.asa: cisco.asa.asa_facts
-    eos: eos_facts
+    eos: ansible.legacy.eos_facts
     arista.eos.eos: arista.eos.eos_facts
-    frr: frr_facts
+    frr: ansible.legacy.frr_facts
     frr.frr.frr: frr.frr.frr_facts
-    ios: ios_facts
+    ios: ansible.legacy.ios_facts
     cisco.ios.ios: cisco.ios.ios_facts
-    iosxr: iosxr_facts
+    iosxr: ansible.legacy.iosxr_facts
     cisco.iosxr.iosxr: cisco.iosxr.iosxr_facts
-    junos: junos_facts
+    junos: ansible.legacy.junos_facts
     junipernetworks.junos.junos: junipernetworks.junos.junos_facts
-    nxos: nxos_facts
+    nxos: ansible.legacy.nxos_facts
     cisco.nxos.nxos: cisco.nxos.nxos_facts
-    vyos: vyos_facts
+    vyos: ansible.legacy.vyos_facts
     vyos.vyos.vyos: vyos.vyos.vyos_facts
-    exos: exos_facts
+    exos: ansible.legacy.exos_facts
     extreme.exos.exos: extreme.exos.exos_facts
-    slxos: slxos_facts
+    slxos: ansible.legacy.slxos_facts
     extreme.slxos.slxos: extreme.slxos.slxos_facts
-    voss: voss_facts
+    voss: ansible.legacy.voss_facts
     extreme.voss.voss: extreme.voss.voss_facts
-    ironware: ironware_facts
+    ironware: ansible.legacy.ironware_facts
     community.network.ironware: community.network.ironware_facts
   description: "Which modules to run during a play's fact gathering stage based on connection"
   env: [{name: ANSIBLE_CONNECTION_FACTS_MODULES}]
