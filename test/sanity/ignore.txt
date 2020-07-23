@@ -115,8 +115,6 @@ docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
-examples/scripts/uptime.py future-import-boilerplate
-examples/scripts/uptime.py metaclass-boilerplate
 hacking/aws_config/build_iam_policy_framework.py future-import-boilerplate
 hacking/aws_config/build_iam_policy_framework.py metaclass-boilerplate
 hacking/build-ansible.py shebang # only run by release engineers, Python 3.6+ required
