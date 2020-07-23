@@ -1,14 +1,20 @@
-.. _debugging:
+.. _debugging_modules:
 
 *****************
 Debugging modules
 *****************
 
-.. _debugging_modules:
+.. contents::
+   :local:
 
-Ansible modules are put together as a zip file consisting of the module file and the various Python module boilerplate inside of a wrapper script. The file needs to be extracted from the wrapper in order to see what's actually going on in the module. The wrapper script provides some helper methods to do just that.
+.. _detailed_debugging:
 
-The follow steps use ``localhost`` as the target host, but they can be used when debugging against remote hosts as well. For a simpler approaches to debugging without using the temporary files, see :ref:`simple debugging <simple_debugging>`.
+Detailed debugging steps
+========================
+
+Ansible modules are put together as a zip file consisting of the module file and the various Python module boilerplate inside of a wrapper script. To see what is actually happening in the module, you need to extract the file from the wrapper. The wrapper script provides helper methods that let you do that.
+
+The following steps use ``localhost`` as the target host, but you can use the same steps to debug against remote hosts as well. For a simpler approach to debugging without using the temporary files, see :ref:`simple debugging <simple_debugging>`.
 
 
 #. Set :envvar:`ANSIBLE_KEEP_REMOTE_FILES` to ``1`` on the control host so Ansible will keep the remote module files instead of deleting them after the module finishes executing. Use the ``-vvv`` option to make Ansible more verbose. This will display the file name of the temporary module file.
@@ -93,10 +99,10 @@ The follow steps use ``localhost`` as the target host, but they can be used when
 
 .. _simple_debugging:
 
-Simple Debugging
+Simple debugging
 ================
 
-The easiest way to run a debugger in a module, either local or remote, is to use `epdb <https://pypi.org/project/epdb/>`_. Add ``import epdb; epdb.serve()`` in the module code on the control node at the desired break point. To connect to the debugger, run ``epdb.connect()``. See the documentation for how to specify the ``host`` and ``port``. If connecting to a remote node, make sure to use a port that is allowed by any firewall between the control node and the remote node.
+The easiest way to run a debugger in a module, either local or remote, is to use `epdb <https://pypi.org/project/epdb/>`_. Add ``import epdb; epdb.serve()`` in the module code on the control node at the desired break point. To connect to the debugger, run ``epdb.connect()``. See the `epdb documentation <https://pypi.org/project/epdb/>`_ for how to specify the ``host`` and ``port``. If connecting to a remote node, make sure to use a port that is allowed by any firewall between the control node and the remote node.
 
 The `q <https://pypi.org/project/q/>`_ library is another very useful debugging tool.
 
