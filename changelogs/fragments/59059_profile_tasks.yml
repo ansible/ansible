@@ -1,0 +1,2 @@
+bugfixes:
+- profile_tasks - typecast result before slicing it (https://github.com/ansible/ansible/issues/59059).

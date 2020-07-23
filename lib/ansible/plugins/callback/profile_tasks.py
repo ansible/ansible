@@ -173,7 +173,7 @@ class CallbackModule(CallbackBase):
         timestamp(self)
         self.current = None
 
-        results = self.stats.items()
+        results = list(self.stats.items())
 
         # Sort the tasks by the specified sort
         if self.sort_order is not None:
