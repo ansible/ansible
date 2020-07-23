@@ -21,8 +21,7 @@ class ActionModule(ActionBase):
         mod_args = self._task.args.copy()
 
         # deal with 'setup specific arguments'
-        if fact_module != 'setup':
-
+        if fact_module not in ['ansible.legacy.setup', 'ansible.builtin.setup', 'setup']:
             # network facts modules must support gather_subset
             if self._connection._load_name not in ('network_cli', 'httpapi', 'netconf'):
                 subset = mod_args.pop('gather_subset', None)
@@ -68,7 +67,7 @@ class ActionModule(ActionBase):
         if 'smart' in modules:
             connection_map = C.config.get_config_value('CONNECTION_FACTS_MODULES', variables=task_vars)
             network_os = self._task.args.get('network_os', task_vars.get('ansible_network_os', task_vars.get('ansible_facts', {}).get('network_os')))
-            modules.extend([connection_map.get(network_os or self._connection._load_name, 'setup')])
+            modules.extend([connection_map.get(network_os or self._connection._load_name, 'ansible.legacy.setup')])
             modules.pop(modules.index('smart'))
 
         failed = {}
@@ -104,7 +103,7 @@ class ActionModule(ActionBase):
             while jobs:
                 for module in jobs:
                     poll_args = {'jid': jobs[module]['ansible_job_id'], '_async_dir': os.path.dirname(jobs[module]['results_file'])}
-                    res = self._execute_module(module_name='async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
+                    res = self._execute_module(module_name='ansible.legacy.async_status', module_args=poll_args, task_vars=task_vars, wrap_async=False)
                     if res.get('finished', 0) == 1:
                         if res.get('failed', False):
                             failed[module] = res

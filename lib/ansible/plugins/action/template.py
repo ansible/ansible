@@ -168,7 +168,8 @@ class ActionModule(ActionBase):
                         follow=follow,
                     ),
                 )
-                copy_action = self._shared_loader_obj.action_loader.get('copy',
+                # call with ansible.legacy prefix to eliminate collisions with collections while still allowing local override
+                copy_action = self._shared_loader_obj.action_loader.get('ansible.legacy.copy',
                                                                         task=new_task,
                                                                         connection=self._connection,
                                                                         play_context=self._play_context,

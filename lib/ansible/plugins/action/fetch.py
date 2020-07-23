@@ -78,7 +78,7 @@ class ActionModule(ActionBase):
             # use slurp if permissions are lacking or privilege escalation is needed
             remote_data = None
             if remote_checksum in ('1', '2', None):
-                slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars)
+                slurpres = self._execute_module(module_name='ansible.legacy.slurp', module_args=dict(src=source), task_vars=task_vars)
                 if slurpres.get('failed'):
                     if not fail_on_missing and (slurpres.get('msg').startswith('file not found') or remote_checksum == '1'):
                         result['msg'] = "the remote file does not exist, not transferring, ignored"

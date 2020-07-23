@@ -101,8 +101,9 @@ class ActionModule(ActionBase):
                 self._fixup_perms2((self._connection._shell.tmpdir, tmp_src))
                 new_module_args['src'] = tmp_src
 
-            # execute the unarchive module now, with the updated args
-            result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
+            # execute the unarchive module now, with the updated args (using ansible.legacy prefix to eliminate collections
+            # collisions with local override
+            result.update(self._execute_module(module_name='ansible.legacy.unarchive', module_args=new_module_args, task_vars=task_vars))
         except AnsibleAction as e:
             result.update(e.result)
         finally:

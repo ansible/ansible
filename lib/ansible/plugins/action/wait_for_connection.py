@@ -88,7 +88,7 @@ class ActionModule(ActionBase):
             except AttributeError:
                 pass
 
-            ping_result = self._execute_module(module_name='ping', module_args=dict(), task_vars=task_vars)
+            ping_result = self._execute_module(module_name='ansible.legacy.ping', module_args=dict(), task_vars=task_vars)
 
             # Test module output
             if ping_result['ping'] != 'pong':
