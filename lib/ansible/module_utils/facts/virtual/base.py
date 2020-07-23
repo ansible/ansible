@@ -46,16 +46,24 @@ class Virtual:
         return virtual_facts
 
     def get_virtual_facts(self):
-        virtual_facts = {'virtualization_type': '',
-                         'virtualization_role': ''}
+        virtual_facts = {
+            'virtualization_type': '',
+            'virtualization_role': '',
+            'virtualization_tech_guest': set(),
+            'virtualization_tech_host': set(),
+        }
         return virtual_facts
 
 
 class VirtualCollector(BaseFactCollector):
     name = 'virtual'
     _fact_class = Virtual
-    _fact_ids = set(['virtualization_type',
-                     'virtualization_role'])
+    _fact_ids = set([
+        'virtualization_type',
+        'virtualization_role',
+        'virtualization_tech_guest',
+        'virtualization_tech_host',
+    ])
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}
