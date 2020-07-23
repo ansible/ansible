@@ -163,6 +163,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             use_vars = task_vars
 
+        split_module_name = module_name.split('.')
+        collection_name = '.'.join(split_module_name[0:2]) if len(split_module_name) > 2 else ''
         leaf_module_name = resource_from_fqcr(module_name)
 
         # Search module path(s) for named module.
@@ -173,14 +175,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # FIXME: This should be temporary and moved to an exec subsystem plugin where we can define the mapping
                 # for each subsystem.
                 win_collection = 'ansible.windows'
-
+                rewrite_collection_names = ['ansible.builtin', 'ansible.legacy', '']
                 # async_status, win_stat, win_file, win_copy, and win_ping are not just like their
                 # python counterparts but they are compatible enough for our
                 # internal usage
-                # FIXME: only do this substitution if we've resolved these to the builtin/library modules
-                if leaf_module_name in ('stat', 'file', 'copy', 'ping') and self._task.action != module_name:
+                # NB: we only rewrite the module if it's not being called by the user (eg, an action calling something else)
+                # and if it's unqualified or FQ to a builtin
+                if leaf_module_name in ('stat', 'file', 'copy', 'ping') and \
+                        collection_name in rewrite_collection_names and self._task.action != module_name:
                     module_name = '%s.win_%s' % (win_collection, leaf_module_name)
-                elif leaf_module_name == 'async_status':
+                elif leaf_module_name == 'async_status' and collection_name in rewrite_collection_names:
                     module_name = '%s.%s' % (win_collection, leaf_module_name)
 
                 # TODO: move this tweak down to the modules, not extensible here
