@@ -1519,7 +1519,7 @@ To get the root and extension of a path or file name (new in version 2.0)::
     # with path == 'nginx.conf' the return would be ('nginx', '.conf')
     {{ path | splitext }}
 
-Accessing the two tokens from splitext filter is easy but doesn't follow standard array way::
+The ``splitext`` filter returns a string. The individual components can be accessed by using the ``first`` and ``last`` filters::
 
     # with path == 'nginx.conf' the return would be 'nginx'
     {{ path | splitext | first }} 
