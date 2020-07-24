@@ -1703,3 +1703,17 @@ releases:
     - win_setup-redirection.yaml
     - with_seq_example.yml
     release_date: '2020-07-23'
+  2.10.0rc2:
+    changes:
+      bugfixes:
+      - Stop adding the connection variables to the output results
+      release_summary: '| Release Date: 2020-07-23
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - set_fact-connection_vars.yml
+    - v2.10.0rc2_summary.yaml
+    release_date: '2020-07-23'
