@@ -9,6 +9,7 @@ __metaclass__ = type
 import re
 
 from distutils.version import StrictVersion
+from functools import partial
 
 from voluptuous import ALLOW_EXTRA, PREVENT_EXTRA, All, Any, Invalid, Length, Required, Schema, Self, ValueInvalid
 from ansible.module_utils.six import string_types
@@ -226,7 +227,7 @@ json_value = Schema(Any(
 ))
 
 
-def version_added(v):
+def version_added(v, error_code='version-added-invalid'):
     if 'version_added' in v:
         version_added = v.get('version_added')
         if isinstance(version_added, string_types):
@@ -241,7 +242,7 @@ def version_added(v):
                     raise _add_ansible_error_code(
                         Invalid('version_added (%r) is not a valid ansible-base version: '
                                 '%s' % (version_added, exc)),
-                        error_code='version-added-invalid')
+                        error_code=error_code)
             else:
                 try:
                     version = SemanticVersion()
@@ -251,7 +252,7 @@ def version_added(v):
                         Invalid('version_added (%r) is not a valid collection version '
                                 '(see specification at https://semver.org/): '
                                 '%s' % (version_added, exc)),
-                        error_code='version-added-invalid')
+                        error_code=error_code)
     elif 'version_added_collection' in v:
         # Must have been manual intervention, since version_added_collection is only
         # added automatically when version_added is present
@@ -465,7 +466,7 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
                 doc_schema_dict,
                 extra=PREVENT_EXTRA
             ),
-            version_added,
+            partial(version_added, error_code='module-invalid-version-added'),
         )
     )
 
