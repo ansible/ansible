@@ -1,0 +1,2 @@
+bugfixes:
+  - reset logging level to INFO due to CVE-2019-14846.
