@@ -252,14 +252,22 @@ class ModuleUtilFinder(ast.NodeVisitor):
         if not node.module:
             return
 
-        if not node.module.startswith('ansible'):
+        # Relative path imports
+        module = node.module
+        if module.startswith('module_utils'):
+            if data_context().content.is_ansible:
+                module = 'ansible.' + module
+            if data_context().content.collection:
+                module = 'ansible_collections.%s.plugins.%s' % (data_context().content.collection.full_name, module)
+
+        if not module.startswith('ansible'):
             return
 
         # from ansible.module_utils import MODULE[, MODULE]
         # from ansible.module_utils.MODULE[.MODULE] import MODULE[, MODULE]
         # from ansible_collections.{ns}.{col}.plugins.module_utils import MODULE[, MODULE]
         # from ansible_collections.{ns}.{col}.plugins.module_utils.MODULE[.MODULE] import MODULE[, MODULE]
-        self.add_imports(['%s.%s' % (node.module, alias.name) for alias in node.names], node.lineno)
+        self.add_imports(['%s.%s' % (module, alias.name) for alias in node.names], node.lineno)
 
     def add_import(self, name, line_number):
         """
