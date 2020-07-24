@@ -227,7 +227,7 @@ json_value = Schema(Any(
 ))
 
 
-def version_added(v, error_code='version-added-invalid'):
+def version_added(v, error_code='version-added-invalid', accept_historical=False):
     if 'version_added' in v:
         version_added = v.get('version_added')
         if isinstance(version_added, string_types):
@@ -235,6 +235,8 @@ def version_added(v, error_code='version-added-invalid'):
             # - or we have a float and we are in ansible/ansible, in which case we're
             # also happy.
             if v.get('version_added_collection') == 'ansible.builtin':
+                if version_added == 'historical' and accept_historical:
+                    return v
                 try:
                     version = StrictVersion()
                     version.parse(version_added)
@@ -466,7 +468,7 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
                 doc_schema_dict,
                 extra=PREVENT_EXTRA
             ),
-            partial(version_added, error_code='module-invalid-version-added'),
+            partial(version_added, error_code='module-invalid-version-added', accept_historical=not for_collection),
         )
     )
 
