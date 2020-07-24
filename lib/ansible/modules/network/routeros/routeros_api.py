@@ -2,7 +2,19 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2020, Nikolay Dachev <nikolay@dachev.info>
-# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+
+# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from librouteros import connect
+    from librouteros.query import Key
+    HAS_LIB = True
+except Exception as e:
+    HAS_LIB = False
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.0.0',
@@ -18,7 +30,8 @@ author: Nikolay Dachev (@nikolaydachev)
 short_description: Ansible module for RouterOS API
 description:
   - Ansible module for RouterOS API with python librouteros.
-    This module can add, remove, update, query and execute arbitrary command in routeros via api
+    This module can add, remove, update, query and execute arbitrary command
+    in routeros via api
 options:
   hostname:
     description:
@@ -50,7 +63,8 @@ options:
     description:
       - Main path for all other arguments
         example "ip address"
-        If other arguments are not set, api will return the eqvivalent of RouterOS print
+        If other arguments are not set, api will return
+        the eqvivalent of RouterOS print
         Equivalent in RouterOS cli "/ip address print"
     required: true
     type: str
@@ -58,35 +72,47 @@ options:
     description:
       - Will add execute selected arguments in selected path.
         example "address=1.1.1.1/32 interface=ether1"
-        Equivalent in RouterOS cli "/ip address add address=1.1.1.1/32 interface=ether1"
-    type: str  
+        Equivalent in RouterOS cli
+         "/ip address add address=1.1.1.1/32 interface=ether1"
+    type: str
   remove:
     description:
       - Remove config/value from RouterOS by '.id'
-        example "*03" will remove config/value with "id=*03" in selected path from RouterOS configuration
+        example "*03" will remove config/value with "id=*03"
+        in selected path from RouterOS configuration
         Equivalent in RouterOS cli "/ip address remove numbers=1"
         note "number" in RouterOS cli is different from ".id"
     type: str
   update:
     description:
       - Update config/value in RouterOS by ".id" in selected
-        example ".id=*03 address=1.1.1.3/32" and path "ip address" will replace existing ip address with ".id=*03"
-        Equivalent in RouterOS cli "/ip address set address=1.1.1.3/32 numbers=1"
+        example ".id=*03 address=1.1.1.3/32" and path "ip address"
+        will replace existing ip address with ".id=*03"
+        Equivalent in RouterOS cli
+        "/ip address set address=1.1.1.3/32 numbers=1"
         note number in RouterOS cli is different from ".id"
     type: str
   query:
     description:
-      - Query given path and config/value for selected query attributes from RouterOS aip and return '.id'
-        WHERE is key word which extend query. WHERE format is key operator value - with spaces
+      - Query given path and config/value for selected query attributes from
+        RouterOS aip and return '.id'
+        WHERE is key word which extend query. WHERE format is
+        key operator value - with spaces
         WHERE valid operators are "==", "!=v, ">", "<"
-        example path "ip address", query ".id address" will return return only ".id" and "address" config/values for all in selected path
-        example path "ip address", query ".id address WHERE address == 1.1.1.3/32" will return only ".idv and "address" for items where address is eq to 1.1.1.3/32
-        example path "interface" query "mtu name WHERE mut > 1400" will return only interfaces "mtu,name" where mtu is bigger than 1400
+        example path "ip address", query ".id address" will return return
+        only ".id" and "address" config/values for all in selected path
+        example path "ip address",
+        query ".id address WHERE address == 1.1.1.3/32"
+        will return only ".idv and "address" for items
+        where address is eq to 1.1.1.3/32
+        example path "interface" query "mtu name WHERE mut > 1400" will
+        return only interfaces "mtu,name" where mtu is bigger than 1400
         Equivalent in RouterOS cli "/interface print where mtu > 1400"
     type: str
   cmd:
     description:
-      - Execute any/arbitrary command in selected path, after the command we should add ".id"
+      - Execute any/arbitrary command in selected path,
+        after the command we should add ".id"
         example path system script cmd run "*03"
         example path ip address cmd print (same as only execute path)
         Equivalent in RouterOS cli "/system script run number=0"
@@ -162,7 +188,7 @@ rmips:
     query_id : "{{ queryout['msg'][0]['.id'] }}"
 
 ---
-- name: update '.id = {{ query_id }}' taken with custom fact 'fquery_id' "{{ ip2 }} to {{ ip3 }}"
+- name: update '.id = {{ query_id }}' taken with custom fact 'fquery_id'
   routeros_api:
     hostname: "{{ hostname }}"
     password: "{{ password }}"
@@ -228,25 +254,21 @@ rmips:
 RETURN = '''
 ---
 message:
-    description: All outputs are in list with dicturnaty elements returned from RouterOS api
+    description: All outputs are in list with dicturnaty
+    elements returned from RouterOS api
     type: list
     returned: always
 '''
 
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from librouteros import connect
-    from librouteros.query import Key
-    HAS_LIB = True
-except:
-    HAS_LIB = False
 
 class ROS_api_module:
     def __init__(self, module_args):
-        self.module = AnsibleModule(argument_spec=module_args, supports_check_mode=False)
+        self.module = AnsibleModule(argument_spec=module_args,
+                                    supports_check_mode=False)
 
         if not HAS_LIB:
-            self.module.fail_json(msg='librouteros for Python is required for this module')
+            self.module.fail_json(msg='librouteros for Python is \
+                                       required for this module')
 
         # ros api config
         self.user = self.module.params['username']
@@ -255,7 +277,9 @@ class ROS_api_module:
         self.port = self.module.params['port']
         self.ssl = self.module.params['ssl']
 
-        self.path= self.list_remove_empty(self.module.params['path'].split(' '))
+        self.path = self.list_remove_empty(
+                    self.module.params['path'].split(' ')
+                    )
         self.add = self.module.params['add']
         self.remove = self.module.params['remove']
         self.update = self.module.params['update']
@@ -269,19 +293,21 @@ class ROS_api_module:
                 self.query = self.list_remove_empty(split[0].split(' '))
                 self.where = self.list_remove_empty(split[1].split(' '))
             else:
-                self.query = self.list_remove_empty(self.module.params['query'].split(' '))
+                self.query = self.list_remove_empty(
+                             self.module.params['query'].split(' ')
+                             )
 
         self.result = dict(
             message=[])
 
         # connect to routeros api
         try:
-            conn_status = {"connection":{"username" : self.user,
-                                         "hostname" : self.host,
-                                         "port" : self.port,
-                                         "ssl" : self.ssl,
-                                         "status" : "Connected"}}
-            if self.ssl == True:
+            conn_status = {"connection": {"username": self.user,
+                                          "hostname": self.host,
+                                          "port": self.port,
+                                          "ssl": self.ssl,
+                                          "status": "Connected"}}
+            if self.ssl is True:
                 if not self.port:
                     self.port = 8729
                     conn_status["connection"]["port"] = self.port
@@ -301,17 +327,17 @@ class ROS_api_module:
 
         # api call's
         if self.add:
-           self.api_add()
+            self.api_add()
         elif self.remove:
-           self.api_remove()
+            self.api_remove()
         elif self.update:
-           self.api_update()
+            self.api_update()
         elif self.query:
-           self.api_query()
+            self.api_query()
         elif self.arbitrary:
-           self.api_arbitrary()
+            self.api_arbitrary()
         else:
-           self.api_get_all()
+            self.api_get_all()
 
     def conn(self):
         self.api = connect(username=self.user,
@@ -330,13 +356,13 @@ class ROS_api_module:
                            port=self.port)
 
     def list_remove_empty(self, check_list):
-        while("" in check_list) : 
+        while("" in check_list):
             check_list.remove("")
         return check_list
 
-    def list_to_dic(self, l):
+    def list_to_dic(self, ldict):
         dict = {}
-        for p in l:
+        for p in ldict:
             if '=' not in p:
                 self.errors("missing '=' after '%s'" % p)
             p = p.split('=')
@@ -344,7 +370,7 @@ class ROS_api_module:
                 self.errors("'%s' must be '.id'" % p[0])
             dict[p[0]] = p[1]
         return dict
-        
+
     def api_add_path(self):
         self.api_path = self.api.path()
         for p in self.path:
@@ -360,9 +386,9 @@ class ROS_api_module:
 
     def api_add(self):
         param = self.list_to_dic(self.add.split(' '))
-        #self.api_path.add(**param)
         try:
-            self.result['message'].append("added: .id= %s" % self.api_path.add(**param))
+            self.result['message'].append("added: .id= %s"
+                                          % self.api_path.add(**param))
             self.return_result(True)
         except Exception as e:
             self.errors(e)
@@ -395,26 +421,33 @@ class ROS_api_module:
         try:
             if self.where:
                 if len(self.where) < 3:
-                    self.errors("invalid syntax for 'WHERE %s'" % ' '.join(self.where))
+                    self.errors("invalid syntax for 'WHERE %s'"
+                                % ' '.join(self.where))
 
                 where = []
                 if self.where[1] == '==':
-                    select = self.api_path.select(*keys).where(keys[self.where[0]] == self.where[2])
+                    select = self.api_path.select(*keys).where(
+                             keys[self.where[0]] == self.where[2])
                 elif self.where[1] == '!=':
-                    select = self.api_path.select(*keys).where(keys[self.where[0]] != self.where[2])
+                    select = self.api_path.select(*keys).where(
+                             keys[self.where[0]] != self.where[2])
                 elif self.where[1] == '>':
-                    select = self.api_path.select(*keys).where(keys[self.where[0]] > self.where[2])
+                    select = self.api_path.select(*keys).where(
+                             keys[self.where[0]] > self.where[2])
                 elif self.where[1] == '<':
-                    select = self.api_path.select(*keys).where(keys[self.where[0]] < self.where[2])
+                    select = self.api_path.select(*keys).where(
+                             keys[self.where[0]] < self.where[2])
                 else:
-                    self.errors("'%s' is not operator for 'where'" % self.where[1])
+                    self.errors("'%s' is not operator for 'where'"
+                                % self.where[1])
                 for row in select:
                     self.result['message'].append(row)
             else:
                 for row in self.api_path.select(*keys):
                     self.result['message'].append(row)
             if len(self.result['message']) < 1:
-                msg = "no results for '%s 'query' %s" % (' '.join(self.path), ' '.join(self.query))
+                msg = "no results for '%s 'query' %s" % (' '.join(self.path),
+                                                         ' '.join(self.query))
                 if self.where:
                     msg = msg + ' WHERE %s' % ' '.join(self.where)
                 self.result['message'].append(msg)
@@ -431,23 +464,25 @@ class ROS_api_module:
         try:
             arbitrary_result = self.api_path(arb_cmd, **param)
             for i in arbitrary_result:
-               self.result['message'].append(i)
+                self.result['message'].append(i)
             self.return_result(False)
         except Exception as e:
             self.errors(e)
 
     def return_result(self, ch_status=False, status=True):
-        if status != True:
-            self.module.fail_json(msg = self.result['message'])
+        if not status:
+            self.module.fail_json(msg=self.result['message'])
         else:
-            self.module.exit_json(changed=ch_status, msg=self.result['message'])
+            self.module.exit_json(changed=ch_status,
+                                  msg=self.result['message'])
 
     def errors(self, e):
-        if e.__class__.__name__ is 'TrapError':
+        if e.__class__.__name__ == 'TrapError':
             self.result['message'].append("%s" % e)
             self.return_result(False, True)
         self.result['message'].append("%s" % e)
         self.return_result(False, False)
+
 
 def main():
     # define available arguments/parameters a user can pass to the module
@@ -464,6 +499,7 @@ def main():
         cmd=dict(type='str', required=False),
         query=dict(type='str', required=False)
         ))
+
 
 if __name__ == '__main__':
     main()
