@@ -2078,13 +2078,7 @@ class ModuleValidator(Validator):
                     str(details.get('version_added', '0.0')),
                     collection_name=collection_name)
             except ValueError as e:
-                self.reporter.error(
-                    path=self.object_path,
-                    code='option-invalid-version-added',
-                    msg=('version_added for option (%s) is not a valid '
-                         'version for %s. Currently %r. Error: %s' %
-                         (option, collection_name, details.get('version_added', '0.0'), e))
-                )
+                # already reported during schema validation
                 continue
 
             if collection_name != self.collection_name:
