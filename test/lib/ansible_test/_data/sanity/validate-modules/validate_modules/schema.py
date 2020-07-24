@@ -241,7 +241,7 @@ def version_added(v):
                     raise _add_ansible_error_code(
                         Invalid('version_added (%r) is not a valid ansible-base version: '
                                 '%s' % (version_added, exc)),
-                        error_code='deprecation-either-date-or-version')
+                        error_code='version-added-invalid')
             else:
                 try:
                     version = SemanticVersion()
@@ -251,7 +251,7 @@ def version_added(v):
                         Invalid('version_added (%r) is not a valid collection version '
                                 '(see specification at https://semver.org/): '
                                 '%s' % (version_added, exc)),
-                        error_code='deprecation-either-date-or-version')
+                        error_code='version-added-invalid')
     elif 'version_added_collection' in v:
         # Must have been manual intervention, since version_added_collection is only
         # added automatically when version_added is present
