@@ -174,7 +174,8 @@ logger = None
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.DEBUG,
+        # NOTE: level is kept at INFO to avoid security disclosures caused by certain libraries when using DEBUG
+        logging.basicConfig(filename=path, level=logging.INFO,  # DO NOT set to logging.DEBUG
                             format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s')
 
         logger = logging.getLogger('ansible')
