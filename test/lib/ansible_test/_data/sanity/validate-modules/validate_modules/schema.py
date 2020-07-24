@@ -305,7 +305,7 @@ def list_dict_option_schema(for_collection):
     option_version_added = Schema(
         All({
             'suboptions': Any(None, *[{str_type: Self} for str_type in string_types]),
-        }, partial(version_added, error_code='option-invalid-version-added'),
+        }, partial(version_added, error_code='option-invalid-version-added')),
         extra=ALLOW_EXTRA
     )
 
