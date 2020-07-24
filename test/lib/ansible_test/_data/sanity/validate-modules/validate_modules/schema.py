@@ -460,8 +460,13 @@ def doc_schema(module_name, for_collection=False, deprecated_module=False):
 
         doc_schema_dict.update(deprecation_required_scheme)
     return Schema(
-        doc_schema_dict,
-        extra=PREVENT_EXTRA
+        All(
+            Schema(
+                doc_schema_dict,
+                extra=PREVENT_EXTRA
+            ),
+            version_added,
+        )
     )
 
 
