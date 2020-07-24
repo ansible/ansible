@@ -2,19 +2,10 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2020, Nikolay Dachev <nikolay@dachev.info>
-# GNU General Public License v3.0+
-# (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# GNU General Public License v3.0+ https://www.gnu.org/licenses/gpl-3.0.txt
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
-
-from ansible.module_utils.basic import AnsibleModule
-try:
-    from librouteros import connect
-    from librouteros.query import Key
-    HAS_LIB = True
-except Exception as e:
-    HAS_LIB = False
 
 ANSIBLE_METADATA = {
     'metadata_version': '1.0.0',
@@ -30,8 +21,8 @@ author: Nikolay Dachev (@nikolaydachev)
 short_description: Ansible module for RouterOS API
 description:
   - Ansible module for RouterOS API with python librouteros.
-    This module can add, remove, update, query and execute arbitrary command
-    in routeros via api
+     This module can add, remove, update, query and execute arbitrary command
+     in routeros via api
 options:
   hostname:
     description:
@@ -64,58 +55,58 @@ options:
       - Main path for all other arguments
         example "ip address"
         If other arguments are not set, api will return
-        the eqvivalent of RouterOS print
-        Equivalent in RouterOS cli "/ip address print"
+         the eqvivalent of RouterOS print
+         cli "/ip address print"
     required: true
     type: str
   add:
     description:
       - Will add execute selected arguments in selected path.
         example "address=1.1.1.1/32 interface=ether1"
-        Equivalent in RouterOS cli
+        equivalent in RouterOS cli
          "/ip address add address=1.1.1.1/32 interface=ether1"
     type: str
   remove:
     description:
       - Remove config/value from RouterOS by '.id'
-        example "*03" will remove config/value with "id=*03"
-        in selected path from RouterOS configuration
-        Equivalent in RouterOS cli "/ip address remove numbers=1"
-        note "number" in RouterOS cli is different from ".id"
+         example "*03" will remove config/value with "id=*03"
+         in selected path from RouterOS configuration
+         equivalent in RouterOS cli "/ip address remove numbers=1"
+         ,note "number" in RouterOS cli is different from ".id"
     type: str
   update:
     description:
       - Update config/value in RouterOS by ".id" in selected
-        example ".id=*03 address=1.1.1.3/32" and path "ip address"
-        will replace existing ip address with ".id=*03"
-        Equivalent in RouterOS cli
-        "/ip address set address=1.1.1.3/32 numbers=1"
-        note number in RouterOS cli is different from ".id"
+         example ".id=*03 address=1.1.1.3/32" and path "ip address"
+         will replace existing ip address with ".id=*03"
+         equivalent in RouterOS cli
+         "/ip address set address=1.1.1.3/32 numbers=1"
+         ,note number in RouterOS cli is different from ".id"
     type: str
   query:
     description:
       - Query given path and config/value for selected query attributes from
-        RouterOS aip and return '.id'
-        WHERE is key word which extend query. WHERE format is
-        key operator value - with spaces
-        WHERE valid operators are "==", "!=v, ">", "<"
-        example path "ip address", query ".id address" will return return
-        only ".id" and "address" config/values for all in selected path
-        example path "ip address",
-        query ".id address WHERE address == 1.1.1.3/32"
-        will return only ".idv and "address" for items
-        where address is eq to 1.1.1.3/32
-        example path "interface" query "mtu name WHERE mut > 1400" will
-        return only interfaces "mtu,name" where mtu is bigger than 1400
-        Equivalent in RouterOS cli "/interface print where mtu > 1400"
+         RouterOS aip and return '.id'
+         WHERE is key word which extend query. WHERE format is
+         key operator value - with spaces
+         WHERE valid operators are "==", "!=v, ">", "<"
+         example path "ip address", query ".id address" will return return
+         only ".id" and "address" config/values for all in selected path
+         example path "ip address",
+         query ".id address WHERE address == 1.1.1.3/32"
+         will return only ".idv and "address" for items
+         where address is eq to 1.1.1.3/32
+         example path "interface" query "mtu name WHERE mut > 1400" will
+         return only interfaces "mtu,name" where mtu is bigger than 1400
+         Equivalent in RouterOS cli "/interface print where mtu > 1400"
     type: str
   cmd:
     description:
       - Execute any/arbitrary command in selected path,
-        after the command we should add ".id"
-        example path system script cmd run "*03"
-        example path ip address cmd print (same as only execute path)
-        Equivalent in RouterOS cli "/system script run number=0"
+         after the command we should add ".id"
+         example path "system script" cmd "run .id=*03"
+         ,example path "ip address" cmd "print"
+         equivalent in RouterOS cli "/system script run number=0"
     type: str
 '''
 
@@ -255,10 +246,18 @@ RETURN = '''
 ---
 message:
     description: All outputs are in list with dicturnaty
-    elements returned from RouterOS api
+                  elements returned from RouterOS api
     type: list
     returned: always
 '''
+
+from ansible.module_utils.basic import AnsibleModule
+try:
+    from librouteros import connect
+    from librouteros.query import Key
+    HAS_LIB = True
+except Exception as e:
+    HAS_LIB = False
 
 
 class ROS_api_module:
