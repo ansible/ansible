@@ -700,6 +700,9 @@ class LinuxHardware(Hardware):
 
             sg_inq = self.module.get_bin_path('sg_inq')
 
+            # we can get NVMe device's serial number from /sys/block/<name>/device/serial
+            serial_path = "/sys/block/%s/device/serial" % (block)
+
             if sg_inq:
                 device = "/dev/%s" % (block)
                 rc, drivedata, err = self.module.run_command([sg_inq, device])
@@ -707,6 +710,10 @@ class LinuxHardware(Hardware):
                     serial = re.search(r"Unit serial number:\s+(\w+)", drivedata)
                     if serial:
                         d['serial'] = serial.group(1)
+            else:
+                serial = get_file_content(serial_path)
+                if serial:
+                    d['serial'] = serial
 
             for key, test in [('removable', '/removable'),
                               ('support_discard', '/queue/discard_granularity'),
