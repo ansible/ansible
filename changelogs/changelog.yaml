@@ -1717,3 +1717,17 @@ releases:
     - set_fact-connection_vars.yml
     - v2.10.0rc2_summary.yaml
     release_date: '2020-07-23'
+  2.10.0rc3:
+    changes:
+      bugfixes:
+      - reset logging level to INFO due to CVE-2019-14846.
+      release_summary: '| Release Date: 2020-07-24
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - keep_log_at_info.yml
+    - v2.10.0rc3_summary.yaml
+    release_date: '2020-07-24'
