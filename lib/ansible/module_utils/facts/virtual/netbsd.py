@@ -59,9 +59,9 @@ class NetBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
         if os.path.exists('/dev/xencons'):
             guest_tech.add('xen')
 
-        if virtual_facts['virtualization_type'] == '':
-            virtual_facts['virtualization_type'] = 'xen'
-            virtual_facts['virtualization_role'] = 'guest'
+            if virtual_facts['virtualization_type'] == '':
+                virtual_facts['virtualization_type'] = 'xen'
+                virtual_facts['virtualization_role'] = 'guest'
 
         virtual_facts['virtualization_tech_guest'] = list(guest_tech)
         virtual_facts['virtualization_tech_host'] = list(host_tech)
