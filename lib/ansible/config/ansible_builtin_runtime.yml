@@ -9467,8 +9467,8 @@ plugin_routing:
       redirect: ansible.netcommon.hwaddr
     parse_cli:
       redirect: ansible.netcommon.parse_cli
-    parse_cli_textsfm:
-      redirect: ansible.netcommon.parse_cli_textsfm
+    parse_cli_textfsm:
+      redirect: ansible.netcommon.parse_cli_textfsm
     parse_xml:
       redirect: ansible.netcommon.parse_xml
     type5_pw:
