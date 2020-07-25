@@ -85,6 +85,13 @@ options:
     default: "yes"
     version_added: "2.0"
     type: bool
+  validate_certs:
+    description:
+      - If C(no), passes the C(--trust-server-cert) flag to svn.
+      - If C(yes), does not pass the flag.
+    default: "no"
+    version_added: "2.11"
+    type: bool
 
 requirements:
     - subversion (the command line tool with C(svn) entrypoint)
@@ -119,7 +126,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class Subversion(object):
-    def __init__(self, module, dest, repo, revision, username, password, svn_path):
+    def __init__(self, module, dest, repo, revision, username, password, svn_path, validate_certs):
         self.module = module
         self.dest = dest
         self.repo = repo
@@ -127,6 +134,7 @@ class Subversion(object):
         self.username = username
         self.password = password
         self.svn_path = svn_path
+        self.validate_certs = validate_certs
 
     def has_option_password_from_stdin(self):
         rc, version, err = self.module.run_command([self.svn_path, '--version', '--quiet'], check_rc=True)
@@ -137,9 +145,10 @@ class Subversion(object):
         bits = [
             self.svn_path,
             '--non-interactive',
-            '--trust-server-cert',
             '--no-auth-cache',
         ]
+        if not self.validate_certs:
+            bits.append('--trust-server-cert')
         stdin_data = None
         if self.username:
             bits.extend(["--username", self.username])
@@ -257,6 +266,7 @@ def main():
             update=dict(type='bool', default=True),
             switch=dict(type='bool', default=True),
             in_place=dict(type='bool', default=False),
+            validate_certs=dict(type='bool', default=False),
         ),
         supports_check_mode=True,
     )
@@ -273,6 +283,7 @@ def main():
     checkout = module.params['checkout']
     update = module.params['update']
     in_place = module.params['in_place']
+    validate_certs = module.params['validate_certs']
 
     # We screenscrape a huge amount of svn commands so use C locale anytime we
     # call run_command()
@@ -281,7 +292,7 @@ def main():
     if not dest and (checkout or update or export):
         module.fail_json(msg="the destination directory must be specified unless checkout=no, update=no, and export=no")
 
-    svn = Subversion(module, dest, repo, revision, username, password, svn_path)
+    svn = Subversion(module, dest, repo, revision, username, password, svn_path, validate_certs)
 
     if not export and not update and not checkout:
         module.exit_json(changed=False, after=svn.get_remote_revision())
