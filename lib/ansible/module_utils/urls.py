@@ -1401,13 +1401,14 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     Module environment is optional (used for logging)
     '''
     method = method or ('POST' if data else 'GET')
-    return Request(module=module).open(method, url, data=data, headers=headers, use_proxy=use_proxy,
-                          force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
-                          url_username=url_username, url_password=url_password, http_agent=http_agent,
-                          force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
-                          client_cert=client_cert, client_key=client_key, cookies=cookies,
-                          use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
-                          unredirected_headers=unredirected_headers)
+    return Request(module=module).open(
+        method, url, data=data, headers=headers, use_proxy=use_proxy,
+        force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
+        url_username=url_username, url_password=url_password, http_agent=http_agent,
+        force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
+        client_cert=client_cert, client_key=client_key, cookies=cookies,
+        use_gssapi=use_gssapi, unix_socket=unix_socket, ca_path=ca_path,
+        unredirected_headers=unredirected_headers)
 
 
 def prepare_multipart(fields):
