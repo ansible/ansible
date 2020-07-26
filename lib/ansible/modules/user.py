@@ -2774,7 +2774,21 @@ class BusyBox(User):
         if rc is not None and rc != 0:
             self.module.fail_json(name=self.name, msg=err, rc=rc)
 
-        if self.password is not None:
+        # Since -D is given to adduser above, the user is created locked by
+        # default, so cannot be accessed even if they have a valid SSH key
+        # in place. If a password is given, we `chpasswd` and the account
+        # unlocks. But otherwise, we have to unlock it manually.
+        #
+        # https://github.com/ansible/ansible/issues/68676
+        # https://bugs.busybox.net/show_bug.cgi?id=10981
+        if self.password is None:
+            cmd = [self.module.get_bin_path('passwd', True)]
+            cmd += ['-u', self.name]
+            rc, out, err = self.execute_command(cmd)
+
+            if rc is not None and rc != 0:
+                self.module.fail_json(name=self.name, msg=err, rc=rc)
+        else:
             cmd = [self.module.get_bin_path('chpasswd', True)]
             cmd.append('--encrypted')
             data = '{name}:{password}'.format(name=self.name, password=self.password)
