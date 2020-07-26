@@ -1,2 +1,2 @@
 minor_changes:
-  - unarchive: Add ``create_dir`` option which creates the destination directory if set to true and it does not exists (https://github.com/ansible/ansible/pull/70903).
+  - unarchive - Add ``create_dir`` option which creates the destination directory if set to true and destination does not exist (https://github.com/ansible/ansible/pull/70903).
