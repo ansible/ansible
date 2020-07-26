@@ -43,7 +43,6 @@ import email.mime.application
 import email.parser
 import email.utils
 import functools
-import logging
 import mimetypes
 import netrc
 import os
@@ -1052,7 +1051,7 @@ class Request:
     def __init__(self, headers=None, use_proxy=True, force=False, timeout=10, validate_certs=True,
                  url_username=None, url_password=None, http_agent=None, force_basic_auth=False,
                  follow_redirects='urllib2', client_cert=None, client_key=None, cookies=None, unix_socket=None,
-                 ca_path=None):
+                 ca_path=None, module=None):
         """This class works somewhat similarly to the ``Session`` class of from requests
         by defining a cookiejar that an be used across requests as well as cascaded defaults that
         can apply to repeated requests
@@ -1070,6 +1069,8 @@ class Request:
         >>> r.open('GET', 'http://httpbin.org/get', headers=dict(baz='qux')).read()
 
         """
+
+        self.module = module
 
         self.headers = headers or {}
         if not isinstance(self.headers, dict):
@@ -1096,6 +1097,11 @@ class Request:
         if value is None:
             return fallback
         return value
+
+    def _log(self, message):
+        if self.module is None:
+            return
+        self.module.log(message)
 
     def open(self, method, url, data=None, headers=None, use_proxy=None,
              force=None, last_mod_time=None, timeout=None, validate_certs=None,
@@ -1145,10 +1151,6 @@ class Request:
         """
 
         method = method.upper()
-
-        logger = logging.getLogger(__name__)
-        logger.setLevel(logging.DEBUG)
-        logger.addHandler(logging.StreamHandler(sys.stdout))
 
         if headers is None:
             headers = {}
@@ -1204,7 +1206,7 @@ class Request:
                 url = urlunparse(parsed_list)
 
             if username and not force_basic_auth:
-                logger.info('Creating instance of passman')
+                self._log('Creating instance of passman')
                 passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
 
                 # this creates a password manager
@@ -1221,19 +1223,19 @@ class Request:
                 handlers.append(digest_authhandler)
 
             elif username and force_basic_auth:
-                logger.info('Forcing basic authentication via options')
+                self._log('Forcing basic authentication via options')
                 headers["Authorization"] = basic_auth_header(username, password)
 
             else:
                 try:
                     rc = netrc.netrc(os.environ.get('NETRC'))
                     login = rc.authenticators(parsed.hostname)
-                    logger.info('Trying NETRC configuration (via environment)')
+                    self._log('Trying NETRC configuration (via environment)')
                 except IOError:
                     login = None
 
                 if login:
-                    logger.info('Using NETRC configuration for basic authentication')
+                    self._log('Using NETRC configuration for basic authentication')
                     username, _, password = login
                     if username and password:
                         headers["Authorization"] = basic_auth_header(username, password)
@@ -1392,14 +1394,14 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
              force_basic_auth=False, follow_redirects='urllib2',
              client_cert=None, client_key=None, cookies=None,
              use_gssapi=False, unix_socket=None, ca_path=None,
-             unredirected_headers=None):
+             unredirected_headers=None, module=None):
     '''
     Sends a request via HTTP(S) or FTP using urllib2 (Python2) or urllib (Python3)
 
-    Does not require the module environment
+    Module environment is optional (used for logging)
     '''
     method = method or ('POST' if data else 'GET')
-    return Request().open(method, url, data=data, headers=headers, use_proxy=use_proxy,
+    return Request(module=module).open(method, url, data=data, headers=headers, use_proxy=use_proxy,
                           force=force, last_mod_time=last_mod_time, timeout=timeout, validate_certs=validate_certs,
                           url_username=url_username, url_password=url_password, http_agent=http_agent,
                           force_basic_auth=force_basic_auth, follow_redirects=follow_redirects,
@@ -1623,7 +1625,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
                      url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth,
                      follow_redirects=follow_redirects, client_cert=client_cert,
                      client_key=client_key, cookies=cookies, use_gssapi=use_gssapi,
-                     unix_socket=unix_socket, ca_path=ca_path)
+                     unix_socket=unix_socket, ca_path=ca_path, module=module)
         # Lowercase keys, to conform to py2 behavior, so that py3 and py2 are predictable
         info.update(dict((k.lower(), v) for k, v in r.info().items()))
 
