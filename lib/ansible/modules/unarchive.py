@@ -44,6 +44,11 @@ options:
       - This option is mutually exclusive with C(remote_src).
     type: bool
     default: yes
+  create_dir:
+    description:
+      - If true, module will not fail if the dest folder does not exists and will create the folder.
+    type: bool
+    default: no
   creates:
     description:
       - If the specified absolute path (file or directory) already exists, this step will B(not) be run.
@@ -819,6 +824,7 @@ def main():
             src=dict(type='path', required=True),
             dest=dict(type='path', required=True),
             remote_src=dict(type='bool', default=False),
+            create_dir=dict(type='bool', default=False),
             creates=dict(type='path'),
             list_files=dict(type='bool', default=False),
             keep_newer=dict(type='bool', default=False),
@@ -836,6 +842,7 @@ def main():
     b_dest = to_bytes(dest, errors='surrogate_or_strict')
     remote_src = module.params['remote_src']
     file_args = module.load_file_common_arguments(module.params)
+    create_dir = module.params['create_dir']
 
     # did tar file arrive?
     if not os.path.exists(src):
@@ -855,6 +862,14 @@ def main():
             module.fail_json(msg="Invalid archive '%s', the file is 0 bytes" % src)
     except Exception as e:
         module.fail_json(msg="Source '%s' not readable, %s" % (src, to_native(e)))
+
+    # create dest directory if create_dir is true
+    if create_dir:
+        try:
+            if not os.path.exists(b_dest):
+                os.makedirs(b_dest)
+        except Exception as e:
+            module.fail_json(msg="Cannot create directory %s, %s" % (dest, to_native(e)))
 
     # is dest OK to receive tar file?
     if not os.path.isdir(b_dest):

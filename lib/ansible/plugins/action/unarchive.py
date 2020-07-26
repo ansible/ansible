@@ -41,6 +41,7 @@ class ActionModule(ActionBase):
         source = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
         remote_src = boolean(self._task.args.get('remote_src', False), strict=False)
+        create_dir = boolean(self._task.args.get('create_dir', False), strict=False)
         creates = self._task.args.get('creates', None)
         decrypt = self._task.args.get('decrypt', True)
 
@@ -79,8 +80,8 @@ class ActionModule(ActionBase):
             except AnsibleError as e:
                 raise AnsibleActionFail(to_text(e))
 
-            if not remote_stat['exists'] or not remote_stat['isdir']:
-                raise AnsibleActionFail("dest '%s' must be an existing dir" % dest)
+            if (not remote_stat['exists'] or not remote_stat['isdir']) and (not create_dir):
+                raise AnsibleActionFail("dest '%s' must be an existing dir or create_dir option must be true" % dest)
 
             if not remote_src:
                 # transfer the file to a remote tmp location
