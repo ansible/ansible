@@ -469,11 +469,13 @@ def get_version(module, git_path, dest, ref="HEAD"):
     sha = to_native(stdout).rstrip('\n')
     return sha
 
+
 def get_ssh_version(module):
     cmd = "ssh -V"
     rc, stdout, stderr = module.run_command(cmd)
     ssh_version = to_native(stderr).rpartition('p1')[0].rpartition('OpenSSH_')[2]
     return ssh_version
+
 
 def get_submodule_versions(git_path, module, dest, version='HEAD'):
     cmd = [git_path, 'submodule', 'foreach', git_path, 'rev-parse', version]
