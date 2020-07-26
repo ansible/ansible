@@ -326,26 +326,24 @@ class AnsibleControlPersistBrokenPipeError(AnsibleError):
     pass
 
 
-def _handle_error(remaining_retries, command, return_tuple, no_log, host, display=display):
+def _handle_error(command, return_tuple, no_log, host, display=display):
+    # sshpass return codes are taken from http://manpages.ubuntu.com/manpages/trusty/man1/sshpass.1.html#return%20values
+    sshpass_return_codes = {
+        1: 'Invalid command line argument.',
+        2: 'Conflicting arguments given.',
+        3: 'General runtime error.',
+        4: 'Unrecognized response from ssh (parse error).',
+        5: 'Invalid/incorrect password.',
+        6: 'Host public key is unknown. sshpass exits without confirming the new key.',
+    }
 
     # sshpass errors
     if command == b'sshpass':
-        # Error 5 is invalid/incorrect password. Raise an exception to prevent retries from locking the account.
-        if return_tuple[0] == 5:
-            msg = 'Invalid/incorrect username/password. Skipping remaining {0} retries to prevent account lockout:'.format(remaining_retries)
-            if remaining_retries <= 0:
-                msg = 'Invalid/incorrect password:'
-            if no_log:
-                msg = '{0} <error censored due to no log>'.format(msg)
-            else:
-                msg = '{0} {1}'.format(msg, to_native(return_tuple[2]).rstrip())
-            raise AnsibleAuthenticationFailure(msg)
-
-        # sshpass returns codes are 1-6. We handle 5 previously, so this catches other scenarios.
-        # No exception is raised, so the connection is retried - except when attempting to use
-        # sshpass_prompt with an sshpass that won't let us pass -P, in which case we fail loudly.
-        elif return_tuple[0] in [1, 2, 3, 4, 6]:
-            msg = 'sshpass error:'
+        # sshpass returns codes are 1-6. Raise exception to prevent retries.
+        # The failures will not be resolved with a simple retry.
+        # Fail loudly when attempting to use sshpass_prompt with an sshpass that won't let us pass -P
+        if return_tuple in sshpass_return_codes:
+            msg = 'sshpass error: ' + sshpass_return_codes[return_tuple[0]]
             if no_log:
                 msg = '{0} <error censored due to no log>'.format(msg)
             else:
@@ -355,7 +353,9 @@ def _handle_error(remaining_retries, command, return_tuple, no_log, host, displa
                               'Upgrade sshpass to use sshpass_prompt, or otherwise switch to ssh keys.'
                     raise AnsibleError('{0} {1}'.format(msg, details))
                 msg = '{0} {1}'.format(msg, details)
+            raise AnsibleConnectionFailure(msg)
 
+    # ssh exits with the exit status of the remote command or with 255 if an error occurred.
     if return_tuple[0] == 255:
         SSH_ERROR = True
         for signature in b_NOT_SSH_ERRORS:
@@ -425,8 +425,7 @@ def _ssh_retry(func):
                     display.vvv(u"RETRYING BECAUSE OF CONTROLPERSIST BROKEN PIPE")
                     return_tuple = func(self, *args, **kwargs)
 
-                remaining_retries = remaining_tries - attempt - 1
-                _handle_error(remaining_retries, cmd[0], return_tuple, self._play_context.no_log, self.host)
+                _handle_error(cmd[0], return_tuple, self._play_context.no_log, self.host)
 
                 break
 

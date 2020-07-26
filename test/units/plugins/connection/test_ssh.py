@@ -549,8 +549,8 @@ class TestSSHConnectionRetries(object):
         self.conn.get_option = MagicMock()
         self.conn.get_option.return_value = True
 
-        exception_info = pytest.raises(AnsibleAuthenticationFailure, self.conn.exec_command, 'sshpass', 'some data')
-        assert exception_info.value.message == ('Invalid/incorrect username/password. Skipping remaining 5 retries to prevent account lockout: '
+        exception_info = pytest.raises(AnsibleConnectionFailure, self.conn.exec_command, 'sshpass', 'some data')
+        assert exception_info.value.message == ('sshpass error: Invalid/incorrect password. '
                                                 'Permission denied, please try again.')
         assert self.mock_popen.call_count == 1
 
