@@ -86,8 +86,8 @@ class VirtualSysctlDetectionMixin(object):
                         virtual_product_facts['virtualization_role'] = 'guest'
                         found_virt = True
 
-        virtual_product_facts['virtualization_tech_guest'] = list(guest_tech)
-        virtual_product_facts['virtualization_tech_host'] = list(host_tech)
+        virtual_product_facts['virtualization_tech_guest'] = guest_tech
+        virtual_product_facts['virtualization_tech_host'] = host_tech
         return virtual_product_facts
 
     def detect_virt_vendor(self, key):
@@ -107,6 +107,6 @@ class VirtualSysctlDetectionMixin(object):
                     virtual_vendor_facts['virtualization_type'] = 'vmm'
                     virtual_vendor_facts['virtualization_role'] = 'guest'
 
-        virtual_vendor_facts['virtualization_tech_guest'] = list(guest_tech)
-        virtual_vendor_facts['virtualization_tech_host'] = list(host_tech)
+        virtual_vendor_facts['virtualization_tech_guest'] = guest_tech
+        virtual_vendor_facts['virtualization_tech_host'] = host_tech
         return virtual_vendor_facts

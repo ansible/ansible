@@ -69,8 +69,8 @@ class FreeBSDVirtual(Virtual, VirtualSysctlDetectionMixin):
         if virtual_facts['virtualization_type'] == '':
             virtual_facts.update(virtual_vendor_facts)
 
-        virtual_facts['virtualization_tech_guest'] = list(guest_tech)
-        virtual_facts['virtualization_tech_host'] = list(host_tech)
+        virtual_facts['virtualization_tech_guest'] = guest_tech
+        virtual_facts['virtualization_tech_host'] = host_tech
         return virtual_facts
 
 

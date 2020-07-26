@@ -129,8 +129,8 @@ class SunOSVirtual(Virtual):
                         virtual_facts['virtualization_type'] = 'kvm'
                         virtual_facts['virtualization_role'] = 'guest'
 
-        virtual_facts['virtualization_tech_guest'] = list(guest_tech)
-        virtual_facts['virtualization_tech_host'] = list(host_tech)
+        virtual_facts['virtualization_tech_guest'] = guest_tech
+        virtual_facts['virtualization_tech_host'] = host_tech
         return virtual_facts
 
 

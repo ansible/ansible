@@ -62,8 +62,8 @@ class HPUXVirtual(Virtual):
                 virtual_facts['virtualization_type'] = 'guest'
                 virtual_facts['virtualization_role'] = 'HP nPar'
 
-        virtual_facts['virtualization_tech_guest'] = list(guest_tech)
-        virtual_facts['virtualization_tech_host'] = list(host_tech)
+        virtual_facts['virtualization_tech_guest'] = guest_tech
+        virtual_facts['virtualization_tech_host'] = host_tech
         return virtual_facts
 
 
