@@ -1,0 +1,2 @@
+minor_changes:
+  - "user - More options now get updated on user modify in the BusyBox ``user`` strategy (currently only used by Alpine). These options now get set: uid, primary group, gecos/comment, home directory, shell. (https://github.com/ansible/ansible/issues/66679)"

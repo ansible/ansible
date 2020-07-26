@@ -39,6 +39,7 @@ options:
     non_unique:
         description:
             - Optionally when used with the -u option, this option allows to change the user ID to a non-unique value.
+            - Not currently supported on BusyBox.
         type: bool
         default: no
         version_added: "1.1"
@@ -109,6 +110,7 @@ options:
         description:
             - "If set to C(yes) when used with C(home: ), attempt to move the user's old home
               directory to the specified directory if it isn't there already and the old home exists."
+            - Does not currently work on BusyBox.
         type: bool
         default: no
     system:
@@ -138,6 +140,7 @@ options:
         description:
             - Whether to generate a SSH key for the user in question.
             - This will B(not) overwrite an existing SSH key unless used with C(force=yes).
+            - Requires C(ssh-keygen) from OpenSSH, does not work with e.g., dropbear's C(dropbearkey).
         type: bool
         default: no
         version_added: "0.9"
@@ -187,7 +190,7 @@ options:
             - An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
             - Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
             - Since Ansible 2.6 you can remove the expiry time by specifying a negative value.
-              Currently supported on GNU/Linux and FreeBSD.
+              Currently supported on GNU/Linux (except BusyBox) and FreeBSD.
         type: float
         version_added: "1.9"
     password_lock:
@@ -195,7 +198,7 @@ options:
             - Lock the password (usermod -L, pw lock, usermod -C).
             - BUT implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
             - This option does not disable the user, only lock the password. Do not change the password in the same task.
-            - Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
+            - Currently supported on GNU/Linux (except BusyBox), FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
         type: bool
         version_added: "2.6"
     local:
@@ -206,6 +209,7 @@ options:
             - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
               exists somewhere other than C(/etc/passwd), this setting will not work properly.
             - This requires that the above commands as well as C(/etc/passwd) must exist on the target host, otherwise it will be a fatal error.
+            - Does not work on BusyBox.
         type: bool
         default: no
         version_added: "2.4"
@@ -247,6 +251,8 @@ notes:
     C(/Library/Preferences/com.apple.loginwindow.plist).
   - On FreeBSD, this module uses C(pw useradd) and C(chpass) to create, C(pw usermod) and C(chpass) to modify,
     C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
+  - On BusyBox-based Linuxes, this module uses C(adduser), C(deluser), C(passwd), C(chpasswd), C(delgroup),
+    and direct edits to C(/etc/passwd). The original C(/etc/passwd) is backed up before it is altered.
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
 seealso:
@@ -559,6 +565,10 @@ class User(object):
     def backup_shadow(self):
         if not self.module.check_mode and self.SHADOWFILE:
             return self.module.backup_local(self.SHADOWFILE)
+
+    def backup_passwd(self):
+        if not self.module.check_mode and self.PASSWORDFILE:
+            return self.module.backup_local(self.PASSWORDFILE)
 
     def remove_user_userdel(self):
         if self.local:
@@ -2846,6 +2856,90 @@ class BusyBox(User):
 
             if rc is not None and rc != 0:
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
+
+        # Handle updating GECOS, uid, gid, shell, homedir. Minimal busybox
+        # systems like Alpine have no built-in tool for this, so we have to
+        # either hack /etc/passwd or put have a dependency on the 'shadow'
+        # package which would give us `usermod`.
+        #
+        # There are still some features that this doesn't currently implement:
+        # - TODO: 'expires' (will require annoying /etc/shadow hacking like we
+        #         do for SunOS)
+        # - TODO: 'generate_ssh_key' (works if openssh is installed, Alpine
+        #         supports dropbear/dropbearkey first class - we don't above)
+        # - TODO: 'local'???
+        # - TODO: 'move_home'
+        # - TODO: 'non_unique' (uid uniqueness is not checked here right now)
+        # - TODO: 'password_lock' (can't use passwd -l here, it disables)
+
+        # First let's see if there's any work to do. This is an annoying chain
+        # of ifs.
+        str_info = [to_text(i) for i in info]
+        new_info = list(str_info)
+
+        # uid change
+        if self.uid is not None:
+            new_info[2] = self.uid
+
+        # primary group change - need to look up the gid and ensure it exists
+        if self.group is not None:
+            if not self.group_exists(g):
+                self.module.fail_json(
+                    msg="Group %s does not exist" % self.group)
+            ginfo = self.group_info(self.group)
+            new_info[3] = ginfo[2]
+
+        # gecos change
+        if self.comment is not None:
+            new_info[4] = self.comment
+
+        # home change
+        if self.home is not None:
+            new_info[5] = self.home
+
+        # shell change
+        if self.shell is not None:
+            new_info[6] = self.shell
+
+        # Did anything change?
+        if new_info != str_info:
+            if self.module.check_mode:
+                # In check mode, return rc=0 (not None) so we register a change,
+                # but do nothing else.
+                return 0, '', ''
+
+            if (not os.path.exists(self.PASSWORDFILE)
+                    or not os.access(self.PASSWORDFILE, os.W_OK | os.R_OK)):
+                self.module.fail_json(
+                    msg='User info changed and Ansible wants to update %s but '
+                        'it does not exist or is not read/writable.' %
+                        self.PASSWORDFILE)
+
+            # If we made it here, info changed, and we DO have access to update
+            # the passwd file. Let us begin.
+            # Before all else... create a backup
+            self.backup_passwd()
+
+            out_lines = []
+            try:
+                with open(self.PASSWORDFILE, 'r') as f:
+                    for line in f.readlines():
+                        # We only use this split for keying on the username so
+                        # we can get the right line.
+                        components = line.split(':', 1)
+                        if components[0] == self.name:
+                            out_lines.append(':'.join(new_info) + '\n')
+                        else:
+                            out_lines.append(line)
+                with open(self.PASSWORDFILE, 'w') as f:
+                    f.writelines(out_lines)
+                # Register the change
+                if rc is None:
+                    rc = 0
+            except Exception as e:
+                self.module.fail_json(
+                    msg="Something went wrong when trying to modify %s: %s" %
+                        (self.PASSWORDFILE, to_native(e)))
 
         return rc, out, err
 
