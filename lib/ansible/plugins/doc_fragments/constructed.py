@@ -29,4 +29,8 @@ options:
     description: Add hosts to group based on the values of a variable.
     type: list
     default: []
+  disable_lookups:
+    description:
+        - Prevent use of lookups in jinja2 expressions.
+    default: True
 '''

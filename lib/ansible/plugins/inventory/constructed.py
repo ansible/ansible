@@ -28,6 +28,7 @@ EXAMPLES = r'''
     # inventory.config file in YAML format
     plugin: constructed
     strict: False
+    disable_lookups: False  # needed to construct the variable gce_projects
     compose:
         var_sum: var1 + var2
 
@@ -46,6 +47,9 @@ EXAMPLES = r'''
 
         # complex group membership
         multi_group: (group_names | intersect(['alpha', 'beta', 'omega'])) | length >= 2
+
+        # add a variable from environment lookup
+        gce_projects: "lookup('env', 'GCE_PROJECTS')"
 
     keyed_groups:
         # this creates a group per distro (distro_CentOS, distro_Debian) and assigns the hosts that have matching values to it,
