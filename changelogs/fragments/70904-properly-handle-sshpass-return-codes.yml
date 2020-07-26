@@ -1,0 +1,2 @@
+bugfixes:
+  - SSH plugin - Raise an exception when ``sshpass`` return code is in range  1-6 (https://github.com/ansible/ansible/issues/58113).
