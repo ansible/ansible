@@ -469,6 +469,11 @@ def get_version(module, git_path, dest, ref="HEAD"):
     sha = to_native(stdout).rstrip('\n')
     return sha
 
+def get_ssh_version(module):
+    cmd = "ssh -V"
+    rc, stdout, stderr = module.run_command(cmd)
+    ssh_version = to_native(stderr).rpartition('p1')[0].rpartition('OpenSSH_')[2]
+    return ssh_version
 
 def get_submodule_versions(git_path, module, dest, version='HEAD'):
     cmd = [git_path, 'submodule', 'foreach', git_path, 'rev-parse', version]
@@ -1165,11 +1170,14 @@ def main():
             ssh_opts = "-o StrictHostKeyChecking=no"
 
     if module.params['accept_newhostkey']:
-        if ssh_opts is not None:
-            if ("-o StrictHostKeyChecking=no" not in ssh_opts) and ("-o StrictHostKeyChecking=accept-new" not in ssh_opts):
-                ssh_opts += " -o StrictHostKeyChecking=accept-new"
+        if get_ssh_version(module) < LooseVersion('7.5'):
+            module.warn("Your OpenSSH is older than 7.5, therefore accept_newhostkey option cannot be used.")
         else:
-            ssh_opts = "-o StrictHostKeyChecking=accept-new"
+            if ssh_opts is not None:
+                if ("-o StrictHostKeyChecking=no" not in ssh_opts) and ("-o StrictHostKeyChecking=accept-new" not in ssh_opts):
+                    ssh_opts += " -o StrictHostKeyChecking=accept-new"
+            else:
+                ssh_opts = "-o StrictHostKeyChecking=accept-new"
 
     # evaluate and set the umask before doing anything else
     if umask is not None:
