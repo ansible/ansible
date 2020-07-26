@@ -182,6 +182,7 @@ options:
            - A list of trusted GPG fingerprints to compare to the fingerprint of the
              GPG-signed commit.
            - Only used when I(verify_commit=yes).
+           - Use of this feature requires Git 2.6+ due to its reliance on git's C(--raw) flag to C(verify-commit) and C(verify-tag).
         type: list
         default: []
         version_added: "2.9"
@@ -958,7 +959,9 @@ def verify_commit_sign(git_path, module, dest, version, gpg_whitelist):
         git_sub = "verify-tag"
     else:
         git_sub = "verify-commit"
-    cmd = "%s %s %s --raw" % (git_path, git_sub, version)
+    cmd = "%s %s %s" % (git_path, git_sub, version)
+    if gpg_whitelist:
+        cmd += " --raw"
     (rc, out, err) = module.run_command(cmd, cwd=dest)
     if rc != 0:
         module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version, stdout=out, stderr=err, rc=rc)
