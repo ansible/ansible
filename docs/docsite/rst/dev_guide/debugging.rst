@@ -94,7 +94,7 @@ The following steps use ``localhost`` as the target host, but you can use the sa
       $ python AnsiballZ_ping.py execute
       {"invocation": {"module_args": {"data": "debugging_session"}}, "changed": false, "ping": "debugging_session"}
 
-    This subcommand takes care of setting the ``PYTHONPATH`` to use the exploded ``debug_dir/ansible/module_utils`` directory and invoking the script using the arguments in the ``args`` file. You can continue to run the module like this until you understand the problem. Then you can copy the changes back into your real module file and test that the real module works via ``ansible`` or ``ansible-playbook``.
+    This subcommand inserts the absolute path to ``debug_dir`` as the first item in ``sys.path`` and invokes the script using the arguments in the ``args`` file. You can continue to run the module like this until you understand the problem. Then you can copy the changes back into your real module file and test that the real module works via ``ansible`` or ``ansible-playbook``.
 
 
 .. _simple_debugging:
@@ -103,6 +103,8 @@ Simple debugging
 ================
 
 The easiest way to run a debugger in a module, either local or remote, is to use `epdb <https://pypi.org/project/epdb/>`_. Add ``import epdb; epdb.serve()`` in the module code on the control node at the desired break point. To connect to the debugger, run ``epdb.connect()``. See the `epdb documentation <https://pypi.org/project/epdb/>`_ for how to specify the ``host`` and ``port``. If connecting to a remote node, make sure to use a port that is allowed by any firewall between the control node and the remote node.
+
+This technique should work with any remote debugger, but we do not guarantee any particual remote debugging tool will work.
 
 The `q <https://pypi.org/project/q/>`_ library is another very useful debugging tool.
 
