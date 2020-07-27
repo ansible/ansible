@@ -200,6 +200,13 @@ options:
     type: bool
     default: "no"
     version_added: "2.10"
+  nobest:
+    description:
+      - Set best option to False, so that transactions are not limited to best candidates only.
+    required: false
+    type: bool
+    default: "no"
+    version_added: "2.11"
 notes:
   - When used with a `loop:` each package will be processed individually, it is much more efficient to pass the list directly to the `name` option.
   - Group removal doesn't work if the group was installed with Ansible because
@@ -331,6 +338,7 @@ class DnfModule(YumDnf):
 
         # DNF specific args that are not part of YumDnf
         self.allowerasing = self.module.params['allowerasing']
+        self.nobest = self.module.params['nobest']
 
     def is_lockfile_pid_valid(self):
         # FIXME? it looks like DNF takes care of invalid lock files itself?
@@ -573,6 +581,10 @@ class DnfModule(YumDnf):
         # Set skip_broken (in dnf this is strict=0)
         if self.skip_broken:
             conf.strict = 0
+
+        # Set best
+        if self.nobest:
+            conf.best = 0
 
         if self.download_only:
             conf.downloadonly = True
@@ -1273,6 +1285,7 @@ def main():
     # Extend yumdnf_argument_spec with dnf-specific features that will never be
     # backported to yum because yum is now in "maintenance mode" upstream
     yumdnf_argument_spec['argument_spec']['allowerasing'] = dict(default=False, type='bool')
+    yumdnf_argument_spec['argument_spec']['nobest'] = dict(default=False, type='bool')
 
     module = AnsibleModule(
         **yumdnf_argument_spec
