@@ -11,4 +11,4 @@
 - name: Verify dnf has not changed
   assert:
     that:
-      - "not 'changed' in dnf_result"
+      - "not dnf_result is changed"
