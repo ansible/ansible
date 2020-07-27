@@ -8,3 +8,4 @@ subversion_repo_url: http://127.0.0.1:{{ apache_port }}/svn/{{ subversion_repo_n
 subversion_repo_auth_url: http://127.0.0.1:{{ apache_port }}/svnauth/{{ subversion_repo_name }}
 subversion_username: subsvn_user'''
 subversion_password: Password123!
+subversion_external_repo_url: https://github.com/ansible/ansible-base-test-container  # GitHub serves SVN
