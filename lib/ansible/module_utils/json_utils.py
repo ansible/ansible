@@ -99,11 +99,12 @@ def extract_json(text, decoder=json.JSONDecoder()):
 
 
 def load_json(text):
+    """Method to load module response JSON data filtering out surrounding non-JSON
+    data. Prefers ``extract_json`` and falls back to ``_filter_non_json_lines``
+    """
+
     try:
-        return json.loads(text), []
-    except ValueError:
-        try:
-            return next(extract_json(text)), []
-        except (ValueError, StopIteration):
-            stripped, warnings = _filter_non_json_lines(text)
-            return json.loads(stripped), warnings
+        return next(extract_json(text)), []
+    except (ValueError, StopIteration):
+        stripped, warnings = _filter_non_json_lines(text)
+        return json.loads(stripped), warnings
