@@ -7,9 +7,8 @@
     state: latest
     cacheonly: true
   register: yum_result
-  ignore_errors: true
 
 - name: Verify yum failure
   assert:
     that:
-        - "yum_result is failed"
+        - "not 'changed' in yum_result"
