@@ -86,10 +86,12 @@ def to_bool(a, strict=False):
     result = False
     if a is None or isinstance(a, bool):
         result = a
-    try:
-        result = boolean(a, strict=strict)
-    except TypeError as e:
-        raise AnsibleFilterTypeError("Cannot convert into boolean: %s" % (to_native(e)))
+    else:
+        try:
+            result = boolean(a, strict=strict)
+        except TypeError as e:
+            raise AnsibleFilterTypeError("Cannot convert into boolean: %s" % (to_native(e)))
+
     return result
 
 
