@@ -23,7 +23,7 @@ import multiprocessing.pool as mp
 # steps do not exceed a time limit
 
 GATHER_TIMEOUT = None
-DEFAULT_GATHER_TIMEOUT = 10
+DEFAULT_GATHER_TIMEOUT = 60
 
 
 class TimeoutError(Exception):

@@ -25,7 +25,6 @@ import re
 import sys
 import time
 
-from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
 
 from ansible.module_utils._text import to_text
@@ -535,7 +534,9 @@ class LinuxHardware(Hardware):
 
         # start threads to query each mount
         results = {}
-        pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
+        # pool = ThreadPool(processes=min(len(mtab_entries), cpu_count()))
+        # use single thread, muti-thread sometimes hang
+        pool = ThreadPool(processes=1)
         maxtime = globals().get('GATHER_TIMEOUT') or timeout.DEFAULT_GATHER_TIMEOUT
         for fields in mtab_entries:
             # Transform octal escape sequences
@@ -597,7 +598,13 @@ class LinuxHardware(Hardware):
             return {}
         try:
             retval = collections.defaultdict(set)
-            for entry in os.listdir(link_dir):
+            devs = []
+            for dev in os.listdir(link_dir):
+                # Sometimes hang when Docker start/stop containers at the same moment
+                # since we don't care non-physical disks, so ignore all devicemapper deivces here
+                if not dev.startswith('dm-'):
+                    devs.append(dev)
+            for entry in devs:
                 try:
                     target = os.path.basename(os.readlink(os.path.join(link_dir, entry)))
                     retval[target].add(entry)
@@ -650,7 +657,14 @@ class LinuxHardware(Hardware):
             pcidata = None
 
         try:
-            block_devs = os.listdir("/sys/block")
+            # block_devs = os.listdir("/sys/block")
+            all_block_devs = os.listdir("/sys/block")
+            block_devs = []
+            for block_dev in all_block_devs:
+                if not block_dev.startswith('dm-'):
+                    # Sometimes hang when Docker start/stop containers at the same moment
+                    # since we don't care non-physical disks, so ignore all devicemapper deivces here
+                    block_devs.append(block_dev)
         except OSError:
             return device_facts
 
