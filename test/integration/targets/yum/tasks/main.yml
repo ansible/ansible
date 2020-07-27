@@ -69,3 +69,7 @@
 - import_tasks: lock.yml
   when:
     - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+
+- import_tasks: cacheonly.yml
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']

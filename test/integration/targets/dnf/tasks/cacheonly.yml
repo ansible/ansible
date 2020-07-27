@@ -1,0 +1,13 @@
+- name: Test cacheonly (clean before testing)
+  command: dnf clean all
+
+- name: Try installing from cache where it has been cleaned
+  dnf:
+    name: sos
+    state: latest
+    cacheonly: true
+  register: dnf_result
+
+  assert:
+    that:
+        - "dnf_result is failed"

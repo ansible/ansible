@@ -1,0 +1,13 @@
+- name: Test cacheonly (clean before testing)
+  command: yum clean all
+
+- name: Try installing from cache where it has been cleaned
+  yum:
+    name: sos
+    state: latest
+    cacheonly: true
+  register: yum_result
+
+  assert:
+    that:
+        - "yum_result is failed"
