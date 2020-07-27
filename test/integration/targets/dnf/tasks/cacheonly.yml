@@ -9,6 +9,7 @@
   register: dnf_result
   ignore_errors: true
 
+- name: Verify dnf failure
   assert:
     that:
         - "dnf_result is failed"
