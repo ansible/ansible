@@ -70,16 +70,19 @@ class StrategySentinel:
 _sentinel = StrategySentinel()
 
 
-def post_process_whens(result, task, loader, templar, myvars):
+def post_process_whens(result, task, templar):
+
+    cond = None
     if task.changed_when:
-        cond = Conditional(loader=loader)
+        cond = Conditional(loader=templar._loader)
         cond.when = task.changed_when
-        result['changed'] = cond.evaluate_conditional(templar, myvars)
+        result['changed'] = cond.evaluate_conditional(templar, templar.available_variables)
 
     if task.failed_when:
-        cond = Conditional(loader=loader)
+        if cond is None:
+            cond = Conditional(loader=templar._loader)
         cond.when = task.failed_when
-        failed_when_result = cond.evaluate_conditional(templar, myvars)
+        failed_when_result = cond.evaluate_conditional(templar, templar.available_variables)
         result['failed_when_result'] = result['failed'] = failed_when_result
 
 
@@ -647,12 +650,12 @@ class StrategyBase:
                         # this task added a new host (add_host module)
                         new_host_info = result_item.get('add_host', dict())
                         self._add_host(new_host_info, result_item)
-                        post_process_whens(result_item, original_task, self._loader, handler_templar, handler_templar.available_variables)
+                        post_process_whens(result_item, original_task, handler_templar)
 
                     elif 'add_group' in result_item:
                         # this task added a new group (group_by module)
                         self._add_group(original_host, result_item)
-                        post_process_whens(result_item, original_task, self._loader, handler_templar, handler_templar.available_variables)
+                        post_process_whens(result_item, original_task, handler_templar)
 
                     if 'ansible_facts' in result_item:
                         # if delegated fact and we are delegating facts, we need to change target host for them
