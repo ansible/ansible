@@ -8,7 +8,7 @@
     cacheonly: true
   register: dnf_result
 
-- name: Verify dnf failure
+- name: Verify dnf has not changed
   assert:
     that:
-        - "not 'changed' in dnf_result"
+      - "not 'changed' in dnf_result"
