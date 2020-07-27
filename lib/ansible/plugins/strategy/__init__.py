@@ -37,11 +37,11 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
-from ansible.inventory.host import Host
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.playbook.conditional import Conditional
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
@@ -68,6 +68,19 @@ class StrategySentinel:
 
 
 _sentinel = StrategySentinel()
+
+
+def post_process_whens(result, task, loader, templar, myvars):
+    if task.changed_when:
+        cond = Conditional(loader=loader)
+        cond.when = task.changed_when
+        result['changed'] = cond.evaluate_conditional(templar, myvars)
+
+    if task.failed_when:
+        cond = Conditional(loader=loader)
+        cond.when = task.failed_when
+        failed_when_result = cond.evaluate_conditional(templar, myvars)
+        result['failed_when_result'] = result['failed'] = failed_when_result
 
 
 def results_thread_main(strategy):
@@ -634,10 +647,12 @@ class StrategyBase:
                         # this task added a new host (add_host module)
                         new_host_info = result_item.get('add_host', dict())
                         self._add_host(new_host_info, result_item)
+                        post_process_whens(result_item, original_task, self._loader, handler_templar, handler_templar.available_variables)
 
                     elif 'add_group' in result_item:
                         # this task added a new group (group_by module)
                         self._add_group(original_host, result_item)
+                        post_process_whens(result_item, original_task, self._loader, handler_templar, handler_templar.available_variables)
 
                     if 'ansible_facts' in result_item:
                         # if delegated fact and we are delegating facts, we need to change target host for them
