@@ -1,0 +1,3 @@
+bugfixes:
+ - reboot - Add support for the runit init system, used on Void Linux, that
+   does not support the normal Linux syntax.
