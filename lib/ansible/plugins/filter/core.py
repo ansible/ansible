@@ -89,7 +89,7 @@ def to_bool(a, strict=False):
     try:
         result = boolean(a, strict=strict)
     except TypeError as e:
-        raise AnsibleFilterTypeError("Cannot convert into boolean: %s" % (to_native(e))
+        raise AnsibleFilterTypeError("Cannot convert into boolean: %s" % (to_native(e)))
     return result
 
 
