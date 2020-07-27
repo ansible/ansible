@@ -561,7 +561,10 @@ class StrategyBase:
                     if iterator.is_failed(original_host) and state and state.run_state == iterator.ITERATING_COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True
 
-                    if state and iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE:
+                    # We intentionally avoid the use of the iterator's get_active_state() method here
+                    # because that could return the state of the child block (if one exists), when
+                    # what we really want to know if _this_ block is a rescue block.
+                    if state and state.run_state == iterator.ITERATING_RESCUE:
                         self._tqm._stats.increment('rescued', original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
                             original_host.name,
