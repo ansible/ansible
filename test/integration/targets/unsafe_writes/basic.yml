@@ -1,0 +1,26 @@
+- hosts: testhost
+  gather_facts: false
+  vars:
+    testudir: '{{output_dir}}/unsafe_writes_test'
+    testufile: '{{testudir}}/unreplacablefile.txt'
+  tasks:
+    - name: create target dir
+      file: path={{testudir}} state=directory
+    - name: setup test file
+      copy: content=ORIGINAL dest={{testufile}}
+    - name: make target dir immutable (cannot write to file w/o unsafe_writes)
+      file: path={{testudir}} state=directory attributes="+i"
+      become: yes
+
+    - name: test overwriting file w/o unsafe
+      copy: content=NEW dest={{testufile}} unsafe_writes=False
+      ignore_errors: true
+      register: first
+
+    - name: ensure we properly failed
+      assert:
+        that:
+          - first is failed
+
+    - name: test overwriting file with unsafe
+      copy: content=NEW dest={{testufile}} unsafe_writes=True
