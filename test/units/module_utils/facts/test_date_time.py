@@ -50,29 +50,6 @@ def fake_date_facts(fake_now):
     return data
 
 
-@pytest.fixture
-def spy_strftime(mocker):
-    return mocker.spy(time, 'strftime')
-
-
-@pytest.fixture
-def date_facts(spy_strftime):
-    """
-    Return a collected facts instance and a mocker.spy object for time.strftime.
-
-    Do attempt to modify the time but instead observe the real calls since
-    it is not possibly to easily change the timezone for testing purposes.
-
-    Maybe something like https://github.com/wolfcw/libfaketime could be used
-    in the future.
-    """
-
-    collector = date_time.DateTimeFactCollector()
-    data = collector.collect()
-
-    return data, spy_strftime
-
-
 @pytest.mark.parametrize(
     ('fact_name', 'fact_value'),
     (
@@ -97,58 +74,41 @@ def test_date_time_facts(fake_date_facts, fact_name, fact_value):
     assert fake_date_facts['date_time'][fact_name] == fact_value
 
 
-def test_date_time_epoch(date_facts):
+def test_date_time_epoch(fake_date_facts):
     """Test that epoch call and format are correct"""
 
-    date_time = date_facts[0]['date_time']
-    spy_strftime = date_facts[1]
-    epoch_call = spy_strftime.call_args_list[9]
-
-    epoch_call.assert_called_with('%s')
-    assert date_time['epoch'].isdigit()
-    assert len(date_time['epoch']) == 10  # This length will not change any time soon
+    assert fake_date_facts['date_time']['epoch'].isdigit()
+    assert len(fake_date_facts['date_time']['epoch']) == 10  # This length will not change any time soon
 
 
-def test_date_time_tz(date_facts):
+def test_date_time_tz(fake_date_facts):
     """
     Test the timezone call is correct and the returned value is between
     two and five uppercase letters.
     """
 
-    date_time = date_facts[0]['date_time']
-    spy_strftime = date_facts[1]
-    tz_call = spy_strftime.call_args_list[15]
-
-    tz_call.assert_called_with('%z')
-    assert date_time['tz'].isupper()
-    assert 2 <= len(date_time['tz']) <= 5
-    assert not set(date_time['tz']).difference(set(string.ascii_uppercase))
+    assert fake_date_facts['date_time']['tz'].isupper()
+    assert 2 <= len(fake_date_facts['date_time']['tz']) <= 5
+    assert not set(fake_date_facts['date_time']['tz']).difference(set(string.ascii_uppercase))
 
 
-def test_date_time_tz_dst(date_facts):
+def test_date_time_tz_dst(fake_date_facts):
     """
     Test that daylight savings time timezone is between two and five
     uppercase letters.
     """
 
-    date_time = date_facts[0]['date_time']
-
-    assert date_time['tz_dst'].isupper()
-    assert 2 <= len(date_time['tz_dst']) <= 4
-    assert not set(date_time['tz_dst']).difference(set(string.ascii_uppercase))
+    assert fake_date_facts['date_time']['tz_dst'].isupper()
+    assert 2 <= len(fake_date_facts['date_time']['tz_dst']) <= 4
+    assert not set(fake_date_facts['date_time']['tz_dst']).difference(set(string.ascii_uppercase))
 
 
-def test_date_time_tz_offset(date_facts):
+def test_date_time_tz_offset(fake_date_facts):
     """
     Test that the timezone offset begins with a `+` or `-` and ends with a
     series of integers.
     """
 
-    date_time = date_facts[0]['date_time']
-    spy_strftime = date_facts[1]
-    tz_offset_call = spy_strftime.call_args_list[17]
-
-    tz_offset_call.assert_called_with('%z')
-    assert date_time['tz_offset'][0] in ['-', '+']
-    assert date_time['tz_offset'][1:].isdigit()
-    assert len(date_time['tz_offset']) == 5
+    assert fake_date_facts['date_time']['tz_offset'][0] in ['-', '+']
+    assert fake_date_facts['date_time']['tz_offset'][1:].isdigit()
+    assert len(fake_date_facts['date_time']['tz_offset']) == 5
