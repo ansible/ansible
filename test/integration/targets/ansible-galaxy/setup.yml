@@ -1,7 +1,5 @@
 - hosts: localhost
   tasks:
-    - debug:
-        var: ansible_distribution
     - name: install git
       package:
         name: git
