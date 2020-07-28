@@ -272,6 +272,9 @@ Use the following example as a guide for specifying roles in *requirements.yml*:
 
     # from locally cloned git repository (file:// requires full paths)
     - src: file:///home/bennojoy/nginx
+    
+    # from locally cloned repository
+    - name: ~/src/bennojoy/nginx
 
     # from GitHub
     - src: https://github.com/bennojoy/nginx

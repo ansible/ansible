@@ -38,6 +38,7 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.utils.display import Display
+from ansible.utils.path import unfrackpath
 
 display = Display()
 
@@ -64,7 +65,7 @@ class GalaxyRole(object):
 
         self.name = name
         self.version = version
-        self.src = src or name
+        self.src = unfrackpath(src or name)
         self.scm = scm
         self.paths = [os.path.join(x, self.name) for x in galaxy.roles_paths]
 

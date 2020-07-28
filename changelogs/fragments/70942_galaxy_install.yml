@@ -1,0 +1,2 @@
+bugfixes:
+  - galaxy - expand ``~`` (user home) from role src (https://github.com/ansible/ansible/pull/70942/).
