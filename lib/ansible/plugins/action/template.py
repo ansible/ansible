@@ -49,6 +49,7 @@ class ActionModule(ActionBase):
             follow = boolean(self._task.args.get('follow', False), strict=False)
             trim_blocks = boolean(self._task.args.get('trim_blocks', True), strict=False)
             lstrip_blocks = boolean(self._task.args.get('lstrip_blocks', False), strict=False)
+            preserve_trailing_newlines = boolean(self._task.args.get('preserve_trailing_newlines', True), strict=False)
         except TypeError as e:
             raise AnsibleActionFail(to_native(e))
 
@@ -136,7 +137,7 @@ class ActionModule(ActionBase):
                                                          variable_start_string=variable_start_string, variable_end_string=variable_end_string,
                                                          trim_blocks=trim_blocks, lstrip_blocks=lstrip_blocks,
                                                          available_variables=temp_vars):
-                    resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
+                    resultant = self._templar.do_template(template_data, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=False)
             except AnsibleAction:
                 raise
             except Exception as e:
@@ -151,7 +152,7 @@ class ActionModule(ActionBase):
 
             # remove 'template only' options:
             for remove in ('newline_sequence', 'block_start_string', 'block_end_string', 'variable_start_string', 'variable_end_string',
-                           'trim_blocks', 'lstrip_blocks', 'output_encoding'):
+                           'trim_blocks', 'lstrip_blocks', 'output_encoding', 'preserve_trailing_newlines'):
                 new_task.args.pop(remove, None)
 
             local_tempdir = tempfile.mkdtemp(dir=C.DEFAULT_LOCAL_TMP)

@@ -706,5 +706,18 @@
         - 'diff_result.stdout == ""'
         - "diff_result.rc == 0"
 
+- name: Test preserve_trailing_newlines
+  template:
+    src: preserve_trailing_newline.j2
+    dest: "{{ output_dir }}/preserve_trailing_newline.templated"
+    preserve_trailing_newlines: no
+  register: preserve_trailing_newlines_output
+
+- name: Verify templated file is without trailing newline
+  assert:
+    that:
+    - preserve_trailing_newlines_output.changed
+    - preserve_trailing_newlines_output.size == 0
+
 # aliases file requires root for template tests so this should be safe
 - include: backup_test.yml

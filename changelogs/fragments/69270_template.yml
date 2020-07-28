@@ -1,0 +1,2 @@
+minor_changes:
+- template - add configurable parameter for preserve_trailing_newlines (https://github.com/ansible/ansible/issues/69270).

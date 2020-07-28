@@ -25,6 +25,12 @@ options:
     type: bool
     default: no
     version_added: '2.4'
+  preserve_trailing_newlines:
+    description:
+    - Preserve the newline characters at the end of the input data.
+    type: bool
+    default: yes
+    version_added: '2.11'
 notes:
 - For Windows you can use M(win_template) which uses '\\r\\n' as C(newline_sequence) by default.
 seealso:

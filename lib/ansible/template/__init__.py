@@ -877,7 +877,7 @@ class Templar:
             # This only affects the scenario where the final result of templating
             # is a generator, and not where a filter creates a generator in the middle
             # of a template. See ``_unroll_iterator`` for the other case. This is probably
-            # unncessary
+            # unnecessary
             return list(thing)
 
         if USE_JINJA2_NATIVE:
