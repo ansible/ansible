@@ -182,8 +182,6 @@ class ActionModule(ActionBase):
             display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
             shutdown_result['rc'] = 0
 
-        result['start'] = datetime.utcnow()
-
         if shutdown_result['rc'] != 0:
             result['failed'] = True
             result['shutdown'] = False
@@ -229,8 +227,11 @@ class ActionModule(ActionBase):
         # Initiate shutdown
         shutdown_result = self.perform_shutdown(task_vars, distribution)
 
-        if reboot_shutdown['failed']:
+        if shutdown_result['failed']:
             result = shutdown_result
             return result
+
+        result['shutdown'] = True
+        result['changed'] = True
 
         return result
