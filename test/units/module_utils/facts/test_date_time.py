@@ -94,7 +94,7 @@ def test_date_time_tz(fake_date_facts):
 
 def test_date_time_tz_dst(fake_date_facts):
     """
-    Test that daylight savings time timezone is between two and five
+    Test that daylight savings time timezone is between two and four
     uppercase letters.
     """
 
