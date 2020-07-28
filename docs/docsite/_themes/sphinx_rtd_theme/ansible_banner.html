@@ -4,7 +4,7 @@
     if (location.host == "docs.testing.ansible.com") {
       document.write('<div id="testing_banner_id" class="admonition important">');
       para = document.createElement('p');
-      para.innerHTML('<b>This is the testing site for Ansible Documentation</b>. For the official documentation website visit the <a href="https://docs.ansible.com/latest/">official documentation website</a>.');
+      para.innerHTML = '<b>This is the testing site for Ansible Documentation</b>. For the official documentation website visit the <a href="https://docs.ansible.com/latest/">official documentation website</a>.';
       para.appendChild(banner_text);
       element = document.getElementById('testing_banner_id');
       element.appendChild(para);
