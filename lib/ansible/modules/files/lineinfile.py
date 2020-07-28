@@ -208,7 +208,7 @@ import tempfile
 
 # import module snippets
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 
 
 def write_changes(module, b_lines, dest):
@@ -263,7 +263,7 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
             try:
                 os.makedirs(b_destpath)
             except Exception as e:
-                module.fail_json(msg='Error creating %s Error code: %s Error description: %s' % (b_destpath, e[0], e[1]))
+                module.fail_json(msg='Error creating %s (%s)' % (to_text(b_destpath), to_text(e)))
 
         b_lines = []
     else:
