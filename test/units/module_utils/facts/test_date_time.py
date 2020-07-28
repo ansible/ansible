@@ -106,6 +106,7 @@ def test_date_time_epoch(date_facts):
 
     epoch_call.assert_called_with('%s')
     assert date_time['epoch'].isdigit()
+    assert len(date_time['epoch']) == 10  # This length will not change any time soon
 
 
 def test_date_time_tz(date_facts):
@@ -121,8 +122,7 @@ def test_date_time_tz(date_facts):
     tz_call.assert_called_with('%z')
     assert date_time['tz'].isupper()
     assert 2 <= len(date_time['tz']) <= 5
-    for letter in date_time['tz']:
-        assert letter in string.ascii_uppercase
+    assert not set(date_time['tz']).difference(set(string.ascii_uppercase))
 
 
 def test_date_time_tz_dst(date_facts):
@@ -135,8 +135,7 @@ def test_date_time_tz_dst(date_facts):
 
     assert date_time['tz_dst'].isupper()
     assert 2 <= len(date_time['tz_dst']) <= 4
-    for letter in date_time['tz_dst']:
-        assert letter in string.ascii_uppercase
+    assert not set(date_time['tz_dst']).difference(set(string.ascii_uppercase))
 
 
 def test_date_time_tz_offset(date_facts):
