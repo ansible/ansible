@@ -120,7 +120,7 @@ Codes
   no-default-for-required-parameter                            Documentation        Error                  Option is marked as required but specifies a default. Arguments with a default should not be marked as required
   nonexistent-parameter-documented                             Documentation        Error                  Argument is listed in DOCUMENTATION.options, but not accepted by the module
   option-incorrect-version-added                               Documentation        Error                  ``version_added`` for new option is incorrect
-  option-invalid-version-added                                 Documentation        Error                  ``version_added`` for new option is not a valid version number
+  option-invalid-version-added                                 Documentation        Error                  ``version_added`` for option is not a valid version number
   parameter-invalid                                            Documentation        Error                  Argument in argument_spec is not a valid python identifier
   parameter-invalid-elements                                   Documentation        Error                  Value for "elements" is valid only when value of "type" is ``list``
   implied-parameter-type-mismatch                              Documentation        Error                  Argument_spec implies ``type="str"`` but documentation defines it as different data type
@@ -132,6 +132,7 @@ Codes
   parameter-state-invalid-choice                               Parameters           Error                  Argument ``state`` includes ``get``, ``list`` or ``info`` as a choice.  Functionality should be in an ``_info`` or (if further conditions apply) ``_facts`` module.
   python-syntax-error                                          Syntax               Error                  Python ``SyntaxError`` while parsing module
   return-syntax-error                                          Documentation        Error                  ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
+  return-invalid-version-added                                 Documentation        Error                  ``version_added`` for return value is not a valid version number
   subdirectory-missing-init                                    Naming               Error                  Ansible module subdirectories must contain an ``__init__.py``
   try-except-missing-has                                       Imports              Warning                Try/Except ``HAS_`` expression missing
   undocumented-parameter                                       Documentation        Error                  Argument is listed in the argument_spec, but not documented in the module
