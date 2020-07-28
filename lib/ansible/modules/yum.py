@@ -1211,7 +1211,7 @@ class YumModule(YumDnf):
         # ceph.x86_64                               1:11.2.0-0.el7                    ceph
 
         # preprocess string and filter out empty lines so the regex below works
-        out = re.sub(r'\n[^\w]\W+(.*)', r' \1', check_update_output)
+        out = re.sub(r'\n[^\w\n]\W+(.*)', r' \1', check_update_output)
 
         available_updates = out.split('\n')
 
