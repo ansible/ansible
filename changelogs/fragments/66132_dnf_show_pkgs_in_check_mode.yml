@@ -1,0 +1,2 @@
+minor_changes:
+  - dnf - now shows specific package changes (installations/removals) under ``results`` in check_mode. (https://github.com/ansible/ansible/issues/66132)
