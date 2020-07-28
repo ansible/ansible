@@ -1160,16 +1160,18 @@ class ModuleValidator(Validator):
         try:
             collection_name = doc.get('version_added_collection')
             version_added = self._create_strict_version(
-                str(doc.get('version_added', '0.0') or '0.0'),
+                str(version_added_raw or '0.0'),
                 collection_name=collection_name)
         except ValueError as e:
-            version_added = doc.get('version_added', '0.0')
-            if version_added != 'historical' or self._is_new_module():
-                self.reporter.error(
-                    path=self.object_path,
-                    code='module-invalid-version-added',
-                    msg='version_added is not a valid version number: %r. Error: %s' % (version_added, e)
-                )
+            version_added = version_added_raw or '0.0'
+            if self._is_new_module() or version_added != 'historical':
+                # already reported during schema validation, except:
+                if version_added == 'historical':
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='module-invalid-version-added',
+                        msg='version_added is not a valid version number: %r. Error: %s' % (version_added, e)
+                    )
                 return
 
         if existing_doc and str(version_added_raw) != str(existing_doc.get('version_added')):
@@ -2076,13 +2078,7 @@ class ModuleValidator(Validator):
                     str(details.get('version_added', '0.0')),
                     collection_name=collection_name)
             except ValueError as e:
-                self.reporter.error(
-                    path=self.object_path,
-                    code='option-invalid-version-added',
-                    msg=('version_added for option (%s) is not a valid '
-                         'version for %s. Currently %r. Error: %s' %
-                         (option, collection_name, details.get('version_added', '0.0'), e))
-                )
+                # already reported during schema validation
                 continue
 
             if collection_name != self.collection_name:
