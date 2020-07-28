@@ -33,12 +33,8 @@ class ActionModule(ActionBase):
         'search_paths'
     ))
 
-#    DEFAULT_REBOOT_TIMEOUT = 600
     DEFAULT_CONNECT_TIMEOUT = None
     DEFAULT_PRE_SHUTDOWN_DELAY = 0
-#    DEFAULT_POST_REBOOT_DELAY = 0
-#    DEFAULT_TEST_COMMAND = 'whoami'
-#    DEFAULT_BOOT_TIME_COMMAND = 'cat /proc/sys/kernel/random/boot_id'
     DEFAULT_SHUTDOWN_MESSAGE = 'Shut down initiated by Ansible'
     DEFAULT_SHUTDOWN_COMMAND = 'shutdown'
     DEFAULT_SHUTDOWN_COMMAND_ARGS = '-h {delay_min} "{message}"'
@@ -182,13 +178,13 @@ class ActionModule(ActionBase):
             display.debug('{action}: AnsibleConnectionFailure caught and handled: {error}'.format(action=self._task.action, error=to_text(e)))
             shutdown_result['rc'] = 0
 
-        if shutdown_result['rc'] != 0:
-            result['failed'] = True
-            result['shutdown'] = False
-            result['msg'] = "Shutdown command failed. Error was {stdout}, {stderr}".format(
-                stdout=to_native(shutdown_result['stdout'].strip()),
-                stderr=to_native(shutdown_result['stderr'].strip()))
-            return result
+#        if shutdown_result['rc'] != 0:
+#            result['failed'] = True
+#            result['shutdown'] = False
+#            result['msg'] = "Shutdown command failed. Error was {stdout}, {stderr}".format(
+#                stdout=to_native(shutdown_result['stdout'].strip()),
+#                stderr=to_native(shutdown_result['stderr'].strip()))
+#            return result
 
         result['failed'] = False
         return result
