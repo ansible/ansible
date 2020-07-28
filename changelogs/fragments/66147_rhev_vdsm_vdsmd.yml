@@ -1,0 +1,2 @@
+minor_changes:
+  - virtualization facts - Detect ``vdsmd`` in addition to ``vdsm`` when trying to detect RHEV hosts. (https://github.com/ansible/ansible/issues/66147)
