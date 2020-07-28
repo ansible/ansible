@@ -48,6 +48,20 @@
         - "not dnf_result.changed"
 
 # INSTALL
+- name: install sos (check_mode)
+  dnf:
+    name: sos
+    state: present
+    update_cache: True
+  check_mode: True
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is success
+      - dnf_result.results|length > 0
+      - "dnf_result.results[0].startswith('Installed: ')"
+
 - name: install sos
   dnf:
     name: sos
@@ -74,6 +88,18 @@
         - "'results' in dnf_result"
 
 # INSTALL AGAIN
+- name: install sos again (check_mode)
+  dnf:
+    name: sos
+    state: present
+  check_mode: True
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is not changed
+      - dnf_result.results|length == 0
+
 - name: install sos again
   dnf:
     name: sos
@@ -188,12 +214,33 @@
         - "rpm_sos_result.rc == 0"
         - "rpm_pciutils_result.rc == 0"
 
+- name: uninstall sos and pciutils (check_mode)
+  dnf:
+    name:
+      - sos
+      - pciutils
+    state: removed
+  check_mode: True
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is success
+      - dnf_result.results|length == 2
+      - "dnf_result.results[0].startswith('Removed: ')"
+      - "dnf_result.results[1].startswith('Removed: ')"
+
 - name: uninstall sos and pciutils
   dnf:
     name:
       - sos
       - pciutils
     state: removed
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is changed
 
 - name: install non-existent rpm
   dnf:
@@ -237,6 +284,19 @@
   dnf:
     name: sos
     state: absent
+
+- name: Test download_only (check_mode)
+  dnf:
+    name: sos
+    state: latest
+    download_only: true
+  check_mode: true
+  register: dnf_result
+
+- assert:
+    that:
+      - dnf_result is success
+      - "dnf_result.results[0].startswith('Downloaded: ')"
 
 - name: Test download_only
   dnf:
