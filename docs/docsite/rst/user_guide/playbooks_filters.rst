@@ -240,6 +240,24 @@ for example::
     - set_fact:
         myvar: "{{ result.stdout | from_json }}"
 
+
+Filter `to_json` and Unicode support
+------------------------------------
+
+By default `to_json` and `to_nice_json` will convert data received to ASCII, so::
+
+    {{ 'München'| to_json }}
+
+will return::
+
+    'M\u00fcnchen'
+
+To keep Unicode characters, pass the parameter `ensure_ascii=False` to the filter::
+
+    {{ 'München'| to_json(ensure_ascii=False) }}
+
+    'München'
+
 .. versionadded:: 2.7
 
 To parse multi-document YAML strings, the ``from_yaml_all`` filter is provided.
