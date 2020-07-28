@@ -7,6 +7,7 @@ __metaclass__ = type
 
 import pytest
 import datetime
+import string
 import time
 
 from ansible.module_utils.facts.system import date_time
@@ -40,13 +41,36 @@ def fake_now(monkeypatch):
 
 
 @pytest.fixture
-def date_facts(fake_now):
+def fake_date_facts(fake_now):
     """Return a predictable instance of collected date_time facts."""
 
     collector = date_time.DateTimeFactCollector()
     data = collector.collect()
 
     return data
+
+
+@pytest.fixture
+def spy_strftime(mocker):
+    return mocker.spy(time, 'strftime')
+
+
+@pytest.fixture
+def date_facts(spy_strftime):
+    """
+    Return a collected facts instance and a mocker.spy object for time.strftime.
+
+    Do attempt to modify the time but instead observe the real calls since
+    it is not possibly to easily change the timezone for testing purposes.
+
+    Maybe something like https://github.com/wolfcw/libfaketime could be used
+    in the future.
+    """
+
+    collector = date_time.DateTimeFactCollector()
+    data = collector.collect()
+
+    return data, spy_strftime
 
 
 @pytest.mark.parametrize(
@@ -69,13 +93,63 @@ def date_facts(fake_now):
         ('iso8601', '2020-07-11T02:34:56Z'),
     ),
 )
-def test_date_time_facts(date_facts, fact_name, fact_value):
-    assert date_facts['date_time'][fact_name] == fact_value
+def test_date_time_facts(fake_date_facts, fact_name, fact_value):
+    assert fake_date_facts['date_time'][fact_name] == fact_value
 
 
-# Need tests for:
-#
-#   ('epoch', '1594434896'),
-#   ('tz', 'AEST'),
-#   ('tz_dst', 'AEDT'),
-#   ('tz_offset', '+1000'),
+def test_date_time_epoch(date_facts):
+    """Test that epoch call and format are correct"""
+
+    date_time = date_facts[0]['date_time']
+    spy_strftime = date_facts[1]
+    epoch_call = spy_strftime.call_args_list[9]
+
+    epoch_call.assert_called_with('%s')
+    assert date_time['epoch'].isdigit()
+
+
+def test_date_time_tz(date_facts):
+    """
+    Test the timezone call is correct and the returned value is between
+    two and five uppercase letters.
+    """
+
+    date_time = date_facts[0]['date_time']
+    spy_strftime = date_facts[1]
+    tz_call = spy_strftime.call_args_list[15]
+
+    tz_call.assert_called_with('%z')
+    assert date_time['tz'].isupper()
+    assert 2 <= len(date_time['tz']) <= 5
+    for letter in date_time['tz']:
+        assert letter in string.ascii_uppercase
+
+
+def test_date_time_tz_dst(date_facts):
+    """
+    Test that daylight savings time timezone is between two and five
+    uppercase letters.
+    """
+
+    date_time = date_facts[0]['date_time']
+
+    assert date_time['tz_dst'].isupper()
+    assert 2 <= len(date_time['tz_dst']) <= 4
+    for letter in date_time['tz_dst']:
+        assert letter in string.ascii_uppercase
+
+
+def test_date_time_tz_offset(date_facts):
+    """
+    Test that the timezone offset begins with a `+` or `-` and ends with a
+    series of integers.
+    """
+
+    date_time = date_facts[0]['date_time']
+    spy_strftime = date_facts[1]
+    tz_offset_call = spy_strftime.call_args_list[17]
+
+    tz_offset_call.assert_called_with('%z')
+    assert date_time['tz_offset'][0] in ['-', '+']
+    assert date_time['tz_offset'][1:].isdigit()
+    assert len(date_time['tz_offset']) == 5
