@@ -204,7 +204,7 @@
 
 - name: Ensure lgroupadd is present - Alpine
   command: apk add -U libuser
-  when: ansible_distribution != 'Alpine'
+  when: ansible_distribution == 'Alpine'
   tags:
     - user_test_local_mode
 
