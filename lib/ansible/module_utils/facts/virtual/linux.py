@@ -206,7 +206,7 @@ class LinuxVirtual(Virtual):
                         try:
                             with open(f) as virt_fh:
                                 comm_content = virt_fh.read().rstrip()
-                            if comm_content == 'vdsm':
+                            if comm_content in ('vdsm', 'vdsmd'):
                                 virtual_facts['virtualization_type'] = 'RHEV'
                                 break
                         except Exception:
