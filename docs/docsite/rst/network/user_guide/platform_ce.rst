@@ -82,7 +82,7 @@ Before you can use NETCONF to connect to a switch, you must:
 - install the ``ncclient`` python package on your control node(s) with ``pip install ncclient``
 - enable NETCONF on the CloudEngine OS device(s)
 
-To enable NETCONF on a new switch via Ansible, use the ``community.network.ce_config`` module via the CLI connection. Set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
+To enable NETCONF on a new switch using Ansible, use the ``community.network.ce_config`` module with the CLI connection. Set up your platform-level variables just like in the CLI example above, then run a playbook task like this:
 
 .. code-block:: yaml
 

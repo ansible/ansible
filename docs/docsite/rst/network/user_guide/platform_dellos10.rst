@@ -48,7 +48,7 @@ Example CLI ``group_vars/dellos10.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: ansible.netcommonnetwork_cli
+   ansible_connection: ansible.netcommon.network_cli
    ansible_network_os: dellemc.os10.os10
    ansible_user: myuser
    ansible_password: !vault...
