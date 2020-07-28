@@ -3808,6 +3808,8 @@ plugin_routing:
       redirect: community.azure.azure_rm_dnszone_facts
     azure_rm_networkinterface_facts:
       redirect: community.azure.azure_rm_networkinterface_facts
+    azure_rm_publicipaddress:
+      redirect: community.azure.azure_rm_publicipaddress
     azure_rm_publicipaddress_facts:
       redirect: community.azure.azure_rm_publicipaddress_facts
     azure_rm_securitygroup_facts:

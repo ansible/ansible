@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm_publicipaddress - Added missing redirection entry
