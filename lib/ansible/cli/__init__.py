@@ -318,6 +318,9 @@ class CLI(with_metaclass(ABCMeta, object)):
         # process tags
         if hasattr(options, 'tags') and not options.tags:
             # optparse defaults does not do what's expected
+            # More specifically, we want `--tags` to be additive. So we cannot
+            # simply change C.TAGS_RUN's default to ["all"] because then passing
+            # --tags foo would cause us to have ['all', 'foo']
             options.tags = ['all']
         if hasattr(options, 'tags') and options.tags:
             tags = set()
