@@ -171,13 +171,33 @@ The second example adds custom text for the link.
 Adding links to modules and plugins
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* Module links use the module name followed by ``_module`` for the anchor.
-* Plugin links use the plugin name followed by the plugin type. For example, :ref:`enable become plugin <enable_become>`).
+Ansible 2.10 and later require the extended Fully Qualified Collection Name (FQCN) as part of the links:
+
+.. code-block:: text
+
+  ansible_collections. + FQCN + _module
+
+For example:
+
+  .. code-block:: rst
+
+   :ref:`ansible.builtin.first_found lookup plugin <ansible_collections.ansible.builtin.first_found_lookup>`
+
+displays as :ref:`ansible.builtin.first_found lookup plugin <ansible_collections.ansible.builtin.first_found_lookup>`.
+
+Modules require different suffixes from other plugins:
+
+* Module links use this extended FQCN module name with ``_module`` for the anchor.
+* Plugin links use this extended FQCN plugin name with the plugin type (``_connection`` for example).
 
 .. code-block:: rst
 
-   :ref:`this module <this_module>``
-   :ref:`that connection plugin <that_connection>`
+   :ref:`arista.eos.eos_config <ansible_collections.arista.eos.eos_config_module>`
+   :ref:`community.kubernetes.kubectl connection plugin <ansible_collections.community.kubernetes.kubectl_connection>`
+
+.. note::
+
+	``ansible.builtin`` is the FQCN for modules included in ``ansible.base``. Documentation links are the only place you prepend ``ansible_collections`` to the FQCN. This is used by the documentation build scripts to correctly fetch documentation from collections on Ansible Galaxy.
 
 .. _local_toc:
 
