@@ -279,7 +279,7 @@ This creates a tarball of the built collection in the current directory which ca
     └── ...
 
 .. note::
-   * Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not wish to distribute.
+   * Certain files and folders are excluded when building the collection artifact. See :ref:`ignoring_files_and_folders_collections`  to exclude other files you would not want to distribute.
    * If you used the now-deprecated ``Mazer`` tool for any of your collections, delete any and all files it added to your :file:`releases/` directory before you build your collection with ``ansible-galaxy``.
    * The current Galaxy maximum tarball size is 2 MB.
 
@@ -430,7 +430,7 @@ To upload the collection artifact with the ``ansible-galaxy`` command:
 	The above command assumes you have retrieved and stored your API token as part of a Galaxy server list. See :ref:`galaxy_get_token` for details.
 
 The ``ansible-galaxy collection publish`` command triggers an import process, just as if you uploaded the collection through the Galaxy website.
-The command waits until the import process completes before reporting the status back. If you wish to continue
+The command waits until the import process completes before reporting the status back. If you want to continue
 without waiting for the import result, use the ``--no-wait`` argument and manually look at the import progress in your
 `My Imports <https://galaxy.ansible.com/my-imports/>`_ page.
 
