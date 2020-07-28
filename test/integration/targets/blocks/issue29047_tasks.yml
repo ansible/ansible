@@ -1,0 +1,12 @@
+---
+- block:
+    - fail:
+       msg: "expected failure in issue 29047 test"
+  rescue:
+    - name: Assert that ansible_failed_task is defined
+      assert:
+        that: ansible_failed_task is defined
+
+    - name: Assert that ansible_failed_result is defined
+      assert:
+        that: ansible_failed_result is defined

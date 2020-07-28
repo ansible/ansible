@@ -75,8 +75,11 @@ cat rc_test.out
 [ "$(grep -c 'DID NOT RUN' rc_test.out )" -eq 0 ]
 rm -f rc_test.out
 
+# https://github.com/ansible/ansible/issues/29047
+ansible-playbook -vv issue29047.yml
+
 # https://github.com/ansible/ansible/issues/61253
-ansible-playbook block_in_rescue.yml > rc_test.out
+ansible-playbook -vv block_in_rescue.yml > rc_test.out
 cat rc_test.out
 [ "$(grep -c 'rescued=1' rc_test.out)" -eq 1 ]
 [ "$(grep -c 'failed=0' rc_test.out)" -eq 1 ]
