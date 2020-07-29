@@ -2,7 +2,8 @@
   gather_facts: no
   tasks:
     - block:
-        - fail:
+        - name: "EXPECTED FAILURE"
+          fail:
             msg: "EXPECTED FAILURE"
       rescue:
         - block:

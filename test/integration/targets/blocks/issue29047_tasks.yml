@@ -1,5 +1,6 @@
 ---
-- block:
+- name: "EXPECTED FAILURE"
+  block:
     - fail:
        msg: "EXPECTED FAILURE"
   rescue:
