@@ -104,6 +104,24 @@
     server: '{{ pulp_v3_server }}'
     v3: true
 
+# fake.fake does not exist but we check the output to ensure it checked all 3
+# servers defined in the config. We hardcode to -vvv as that's what level the
+# message is shown
+- name: test install fallback on server list
+  command: ansible-galaxy collection install fake.fake -vvv
+  ignore_errors: yes
+  environment:
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  register: missing_fallback
+
+- name: assert test install fallback on server list
+  assert:
+    that:
+    - missing_fallback.rc == 1
+    - '"Collection ''fake.fake'' is not available from server pulp_v2" in missing_fallback.stdout'
+    - '"Collection ''fake.fake'' is not available from server pulp_v3" in missing_fallback.stdout'
+    - '"Collection ''fake.fake'' is not available from server galaxy_ng" in missing_fallback.stdout'
+
 - name: run ansible-galaxy collection download tests
   include_tasks: download.yml
   args:
