@@ -98,7 +98,7 @@ class Conditional:
                 if result:
                     result = res
 
-                # if debugging keep evaluating all, otherwise fast exist
+                # if debugging keep evaluating all, otherwise fast exit
                 if C.DEFAULT_DEBUG:
                     display.debug("Evaluated conditional (%s): %s " % (conditional, res))
                 elif not result:
