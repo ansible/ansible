@@ -1,0 +1,4 @@
+minor_changes:
+  - Allow inventory plugins access to extra vars by default
+  - Use extra_vars by default in compose
+  - Add option to pass extra vars to ansible-inventory
