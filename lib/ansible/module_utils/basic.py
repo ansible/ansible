@@ -1126,15 +1126,15 @@ class AnsibleModule(object):
 
     def set_mode_if_different(self, path, mode, changed, diff=None, expand=True):
 
+        if mode is None:
+            return changed
+
         # Remove paths so we do not warn about creating with default permissions
         # since we are calling this method on the path and setting the specified mode.
         try:
             self._created_files.remove(path)
         except KeyError:
             pass
-
-        if mode is None:
-            return changed
 
         b_path = to_bytes(path, errors='surrogate_or_strict')
         if expand:
