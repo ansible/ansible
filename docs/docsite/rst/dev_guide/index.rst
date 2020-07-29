@@ -36,7 +36,7 @@ Find the task that best describes what you want to do:
 
 * I want to refine my code:
 
-   * I want to :ref:`debug my module code <debugging>`.
+   * I want to :ref:`debug my module code <debugging_modules>`.
    * I want to :ref:`add tests <developing_testing>`.
    * I want to :ref:`document my module <module_documenting>`.
    * I want to :ref:`document my set of modules for a network platform <documenting_modules_network>`.

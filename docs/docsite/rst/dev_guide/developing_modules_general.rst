@@ -190,7 +190,7 @@ Exercising your module code
 ===========================
 
 Once you've modified the sample code above to do what you want, you can try out your module.
-Our :ref:`debugging tips <debugging>` will help if you run into bugs as you exercise your module code.
+Our :ref:`debugging tips <debugging_modules>` will help if you run into bugs as you exercise your module code.
 
 Exercising module code locally
 ------------------------------
