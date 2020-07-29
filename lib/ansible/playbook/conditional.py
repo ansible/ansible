@@ -91,8 +91,14 @@ class Conditional:
         result = True
         try:
             for conditional in self.when:
+
                 # do evaluation
-                res = self._check_conditional(conditional, templar, all_vars)
+                if conditional is None or conditional == '':
+                    res = True
+                elif isinstance(conditional, bool):
+                    res = conditional
+                else:
+                    res = self._check_conditional(conditional, templar, all_vars)
 
                 # only update if still true, preserve false
                 if result:
@@ -117,12 +123,6 @@ class Conditional:
         '''
 
         original = conditional
-        if conditional is None or conditional == '':
-            return True
-
-        # this allows for direct boolean assignments to conditionals "when: False"
-        if isinstance(conditional, bool):
-            return conditional
 
         if templar.is_template(conditional):
             display.warning('conditional statements should not include jinja2 '
