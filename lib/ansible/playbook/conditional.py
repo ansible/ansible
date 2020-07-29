@@ -91,9 +91,16 @@ class Conditional:
         result = True
         try:
             for conditional in self.when:
-                result = self._check_conditional(conditional, templar, all_vars)
+                # do evaluation
+                res = self._check_conditional(conditional, templar, all_vars)
+
+                # only update if still true, preserve false
+                if result:
+                    result = res
+
+                # if debugging keep evaluating all, otherwise fast exist
                 if C.DEFAULT_DEBUG:
-                    display.debug("Evaluated conditional (%s): %s " % (conditional, result))
+                    display.debug("Evaluated conditional (%s): %s " % (conditional, res))
                 elif not result:
                     break
 
