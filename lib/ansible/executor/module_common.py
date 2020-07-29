@@ -237,10 +237,6 @@ def _ansiballz_main():
         basedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'debug_dir')
         args_path = os.path.join(basedir, 'args')
 
-        if command == 'excommunicate':
-            print('The excommunicate debug command is deprecated and will be removed in 2.11.  Use execute instead.')
-            command = 'execute'
-
         if command == 'explode':
             # transform the ZIPDATA into an exploded directory of code and then
             # print the path to the code.  This is an easy way for people to look
