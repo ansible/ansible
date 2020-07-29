@@ -11,8 +11,6 @@ examples/play.yml shebang
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
-examples/scripts/uptime.py future-import-boilerplate
-examples/scripts/uptime.py metaclass-boilerplate
 hacking/build-ansible.py shebang # only run by release engineers, Python 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.6!skip # release process only, 3.6+ required
 hacking/build_library/build_ansible/announce.py compile-2.7!skip # release process only, 3.6+ required
