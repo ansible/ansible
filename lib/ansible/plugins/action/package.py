@@ -19,6 +19,7 @@ __metaclass__ = type
 
 from ansible.errors import AnsibleAction, AnsibleActionFail
 from ansible.executor.module_common import get_action_args_with_defaults
+from ansible.module_utils.facts.system.pkg_mgr import PKG_MGRS
 from ansible.plugins.action import ActionBase
 from ansible.utils.display import Display
 
@@ -29,8 +30,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    BUILTIN_PKG_MGR_MODULES = set(['apk', 'apt', 'dnf', 'homebrew', 'installp', 'macports', 'opkg', 'portage', 'pacman',
-                                   'pkg5', 'pkgin', 'pkgng', 'sorcery', 'svr4pkg', 'swdepot', 'swupd', 'urpmi', 'xbps', 'yum', 'zypper'])
+    BUILTIN_PKG_MGR_MODULES = set([manager['name'] for manager in PKG_MGRS])
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for package operations '''
