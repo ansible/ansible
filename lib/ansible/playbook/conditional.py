@@ -92,8 +92,9 @@ class Conditional:
         try:
             for conditional in self.when:
                 result = self._check_conditional(conditional, templar, all_vars)
-                display.debug("Evaluated conditional (%s): %s " % (conditional, result))
-                if not result:
+                if C.DEFAULT_DEBUG:
+                    display.debug("Evaluated conditional (%s): %s " % (conditional, result))
+                elif not result:
                     break
 
         except Exception as e:
