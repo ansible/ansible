@@ -1,0 +1,3 @@
+db_name: 'ansible_db'
+db_user1: 'ansible_db_user1'
+db_user2: 'ansible_db_user2'
