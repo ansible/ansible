@@ -1,0 +1,2 @@
+minor_changes:
+  - remove ``excommunicate`` debug command from AnsiballZ
