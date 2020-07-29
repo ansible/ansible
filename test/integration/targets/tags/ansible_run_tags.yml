@@ -1,0 +1,49 @@
+---
+- name: verify ansible_run_tags work as expected
+  hosts: testhost
+  gather_facts: False
+  tasks:
+    - debug:
+        var: ansible_run_tags
+      tags:
+        - always
+
+    - debug:
+        var: expect
+      tags:
+        - always
+
+    - assert:
+        that:
+          - ansible_run_tags == ['all']
+      when: expect == 'all'
+      tags:
+        - always
+
+    - assert:
+        that:
+          - ansible_run_tags|sort == ['tag1', 'tag3']
+      when: expect == 'list'
+      tags:
+        - always
+
+    - assert:
+        that:
+          - ansible_run_tags == ['untagged']
+      when: expect == 'untagged'
+      tags:
+        - always
+
+    - assert:
+        that:
+          - ansible_run_tags|sort == ['tag3', 'untagged']
+      when: expect == 'untagged_list'
+      tags:
+        - always
+
+    - assert:
+        that:
+          - ansible_run_tags == ['tagged']
+      when: expect == 'tagged'
+      tags:
+        - always
