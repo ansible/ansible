@@ -75,32 +75,22 @@ def test_date_time_facts(fake_date_facts, fact_name, fact_value):
 
 
 def test_date_time_epoch(fake_date_facts):
-    """Test that epoch call and format are correct"""
+    """Test that format of returned epoch value is correct"""
 
     assert fake_date_facts['date_time']['epoch'].isdigit()
     assert len(fake_date_facts['date_time']['epoch']) == 10  # This length will not change any time soon
 
 
-def test_date_time_tz(fake_date_facts):
+@pytest.mark.parametrize('fact_name', ('tz', 'tz_dst'))
+def test_date_time_tz(fake_date_facts, fact_name):
     """
-    Test the timezone call is correct and the returned value is between
-    two and five uppercase letters.
-    """
-
-    assert fake_date_facts['date_time']['tz'].isupper()
-    assert 2 <= len(fake_date_facts['date_time']['tz']) <= 5
-    assert not set(fake_date_facts['date_time']['tz']).difference(set(string.ascii_uppercase))
-
-
-def test_date_time_tz_dst(fake_date_facts):
-    """
-    Test that daylight savings time timezone is between two and four
-    uppercase letters.
+    Test the the returned value for timezone consists of only uppercase
+    letters and is the expected length.
     """
 
-    assert fake_date_facts['date_time']['tz_dst'].isupper()
-    assert 2 <= len(fake_date_facts['date_time']['tz_dst']) <= 4
-    assert not set(fake_date_facts['date_time']['tz_dst']).difference(set(string.ascii_uppercase))
+    assert fake_date_facts['date_time'][fact_name].isupper()
+    assert 2 <= len(fake_date_facts['date_time'][fact_name]) <= 5
+    assert not set(fake_date_facts['date_time'][fact_name]).difference(set(string.ascii_uppercase))
 
 
 def test_date_time_tz_offset(fake_date_facts):
