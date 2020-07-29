@@ -31,7 +31,7 @@
   when:
     - not gpg_version.stderr
     - gpg_version.stdout
-    - git_version.stdout is version("2.1.0", '>=')
+    - not (ansible_os_family == 'RedHat' and ansible_distribution_major_version is version('7', '<'))
 - include_tasks: localmods.yml
 - include_tasks: reset-origin.yml
 - include_tasks: ambiguous-ref.yml
