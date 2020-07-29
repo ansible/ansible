@@ -7,17 +7,17 @@ Ansible Base 2.10 Porting Guide
 
 .. warning::
 
-	Links on this page may not point to the most recent versions of modules. In preparation for the release of 2.10, many plugins and modules have migrated to Collections on  `Ansible Galaxy <https://galaxy.ansible.com>`_. For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/general/blob/master/README.rst>`_. We expect the 2.10 Porting Guide to change frequently up to the 2.10 release. Follow the conversations about collections on our various :ref:`communication` channels for the latest information on the status of the ``devel`` branch.
+	In preparation for the release of 2.10, many plugins and modules have migrated to Collections on  `Ansible Galaxy <https://galaxy.ansible.com>`_. For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/general/blob/master/README.rst>`_. We expect the 2.10 Porting Guide to change frequently up to the 2.10 release. Follow the conversations about collections on our various :ref:`communication` channels for the latest information on the status of the ``devel`` branch.
 
 This section discusses the behavioral changes between Ansible 2.9 and Ansible-base 2.10.
 
-It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
+It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible Base.
 
-We suggest you read this page along with `Ansible-base Changelog for 2.10 <https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with the `Ansible-base Changelog for 2.10 <https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst>`_ to understand what updates you may need to make.
 
-This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
+The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
-.. contents:: Topics
+.. contents::
 
 
 Playbook
@@ -118,6 +118,7 @@ The M(sysctl) module uses ``atomic_move()`` to operate on ``/etc/sysctl.conf`` o
 .. warning::
 
 	Links on this page may not point to the most recent versions of modules. We will update them when we can.
+
 
 Noteworthy module changes
 -------------------------
