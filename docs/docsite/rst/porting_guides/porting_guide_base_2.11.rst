@@ -2,12 +2,12 @@
 .. _porting_2.11_guide_base:
 
 *******************************
-Ansible Base 2.11 Porting Guide
+Ansible-base 2.11 Porting Guide
 *******************************
 
 This section discusses the behavioral changes between Ansible-base 2.10 and Ansible-base 2.11.
 
-It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible Base.
+It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible-base.
 
 We suggest you read this page along with the `Ansible-base Changelog for 2.11 <https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst>`_ to understand what updates you may need to make.
 

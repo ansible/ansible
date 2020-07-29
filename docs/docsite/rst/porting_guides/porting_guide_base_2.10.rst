@@ -2,7 +2,7 @@
 .. _porting_2.10_guide_base:
 
 *******************************
-Ansible Base 2.10 Porting Guide
+Ansible-base 2.10 Porting Guide
 *******************************
 
 .. warning::
@@ -11,7 +11,7 @@ Ansible Base 2.10 Porting Guide
 
 This section discusses the behavioral changes between Ansible 2.9 and Ansible-base 2.10.
 
-It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible Base.
+It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible-base.
 
 We suggest you read this page along with the `Ansible-base Changelog for 2.10 <https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst>`_ to understand what updates you may need to make.
 
