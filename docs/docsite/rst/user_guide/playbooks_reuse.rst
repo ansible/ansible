@@ -137,7 +137,7 @@ You can also use includes and imports in the :ref:`handlers` section of a playbo
    - name: restart mysql
      service:
        name: mysql
-       state:restarted
+       state: restarted
 
 You can trigger handlers from either an import or an include, but the procedure is different for each method of re-use. If you include the file, you must notify the include itself, which triggers all the tasks in ``restarts.yml``. If you import the file, you must notify the individual task(s) within ``restarts.yml``. You can mix direct tasks and handlers with included or imported tasks and handlers.
 
