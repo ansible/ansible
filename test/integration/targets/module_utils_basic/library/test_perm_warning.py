@@ -6,6 +6,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -13,12 +14,22 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         argument_spec={
-            'mode': {'type': 'raw'},
+            'dest': {'type': 'path'},
+            'call_fs_attributes': {'type': 'bool', 'default': True},
         },
-        supports_check_mode=True,
+        add_file_common_args=True,
     )
 
-    module.exit_json({'change': True})
+    results = {}
+
+    with tempfile.NamedTemporaryFile(delete=False) as tf:
+        file_args = module.load_file_common_arguments(module.params)
+        module.atomic_move(tf.name, module.params['dest'])
+
+        if module.params['call_fs_attributes']:
+            results['changed'] = module.set_fs_attributes_if_different(file_args, True)
+
+    module.exit_json(**results)
 
 
 if __name__ == '__main__':
