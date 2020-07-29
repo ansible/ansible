@@ -11,6 +11,8 @@ It is intended to assist in updating your playbooks, plugins and other parts of 
 
 We suggest you read this page along with the `Ansible-base Changelog for 2.11 <https://github.com/ansible/ansible/blob/stable-2.11/changelogs/CHANGELOG-v2.11.rst>`_ to understand what updates you may need to make.
 
+Ansible-base is mainly of interest for developers and users who only want to use a small, controlled subset of the available collections. Regular users should install ansible.
+
 The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
 .. contents::
