@@ -358,7 +358,7 @@ class Constructable(object):
         t = self.templar
 
         try:
-            use_extra = self.get_option('use_extra_vars'):
+            use_extra = self.get_option('use_extra_vars')
         except Exception:
             use_extra = False
 
