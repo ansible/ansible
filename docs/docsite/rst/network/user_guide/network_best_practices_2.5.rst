@@ -201,7 +201,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
          eos_facts:
          when: ansible_network_os == 'eos'
 
-       - name: Gather facts (ops)
+       - name: Gather facts (ios)
          ios_facts:
          when: ansible_network_os == 'ios'
 
