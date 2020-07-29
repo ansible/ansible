@@ -4,6 +4,7 @@ __metaclass__ = type
 
 import ast
 import os
+import re
 
 from . import types as t
 
@@ -207,6 +208,35 @@ def get_import_path(name, package=False):  # type: (str, bool) -> str
     return path
 
 
+def path_to_module(path):  # type: (str) -> str
+    """Convert the given path to a module name."""
+    module = os.path.splitext(path)[0].replace(os.path.sep, '.')
+
+    if module.endswith('.__init__'):
+        module = module[:-9]
+
+    return module
+
+
+def relative_to_absolute(name, level, module, path, lineno):  # type: (str, int, str, str, int) -> str
+    """Convert a relative import to an absolute import."""
+    if level <= 0:
+        absolute_name = name
+    elif not module:
+        display.warning('Cannot resolve relative import "%s%s" in unknown module at %s:%d' % ('.' * level, name, path, lineno))
+        absolute_name = 'relative.nomodule'
+    else:
+        parts = module.split('.')
+
+        if level >= len(parts):
+            display.warning('Cannot resolve relative import "%s%s" above module "%s" at %s:%d' % ('.' * level, name, module, path, lineno))
+            absolute_name = 'relative.abovelevel'
+        else:
+            absolute_name = '.'.join(parts[:-level] + [name])
+
+    return absolute_name
+
+
 class ModuleUtilFinder(ast.NodeVisitor):
     """AST visitor to find valid module_utils imports."""
     def __init__(self, path, module_utils):
@@ -228,6 +258,33 @@ class ModuleUtilFinder(ast.NodeVisitor):
 
             if package != 'ansible.module_utils' and package not in VIRTUAL_PACKAGES:
                 self.add_import(package, 0)
+
+        self.module = None
+
+        if data_context().content.is_ansible:
+            # Various parts of the Ansible source tree execute within diffent modules.
+            # To support import analysis, each file which uses relative imports must reside under a path defined here.
+            # The mapping is a tuple consisting of a path pattern to match and a replacement path.
+            # During analyis, any relative imports not covered here will result in warnings, which can be fixed by adding the appropriate entry.
+            path_map = (
+                ('^hacking/build_library/build_ansible/', 'build_ansible/'),
+                ('^lib/ansible/', 'ansible/'),
+                ('^test/lib/ansible_test/_data/sanity/validate-modules/', 'validate_modules/'),
+                ('^test/units/', 'test/units/'),
+                ('^test/lib/ansible_test/_internal/', 'ansible_test/_internal/'),
+                ('^test/integration/targets/.*/ansible_collections/(?P<ns>[^/]*)/(?P<col>[^/]*)/', r'ansible_collections/\g<ns>/\g<col>/'),
+                ('^test/integration/targets/.*/library/', 'ansible/modules/'),
+            )
+
+            for pattern, replacement in path_map:
+                if re.search(pattern, self.path):
+                    revised_path = re.sub(pattern, replacement, self.path)
+                    self.module = path_to_module(revised_path)
+                    break
+        else:
+            # This assumes that all files within the collection are executed by Ansible as part of the collection.
+            # While that will usually be true, there are exceptions which will result in this resolution being incorrect.
+            self.module = path_to_module(os.path.join(data_context().content.collection.directory, self.path))
 
     # noinspection PyPep8Naming
     # pylint: disable=locally-disabled, invalid-name
@@ -252,14 +309,16 @@ class ModuleUtilFinder(ast.NodeVisitor):
         if not node.module:
             return
 
-        if not node.module.startswith('ansible'):
+        module = relative_to_absolute(node.module, node.level, self.module, self.path, node.lineno)
+
+        if not module.startswith('ansible'):
             return
 
         # from ansible.module_utils import MODULE[, MODULE]
         # from ansible.module_utils.MODULE[.MODULE] import MODULE[, MODULE]
         # from ansible_collections.{ns}.{col}.plugins.module_utils import MODULE[, MODULE]
         # from ansible_collections.{ns}.{col}.plugins.module_utils.MODULE[.MODULE] import MODULE[, MODULE]
-        self.add_imports(['%s.%s' % (node.module, alias.name) for alias in node.names], node.lineno)
+        self.add_imports(['%s.%s' % (module, alias.name) for alias in node.names], node.lineno)
 
     def add_import(self, name, line_number):
         """
