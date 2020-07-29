@@ -88,16 +88,20 @@ class Conditional:
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
 
+        result = True
         try:
             for conditional in self.when:
+                display.debug("Evaluating conditional: %s" % conditional)
                 if not self._check_conditional(conditional, templar, all_vars):
-                    return False
+                    result = False
+                    display.debug("\tresult: %s" % result)
+                    break
         except Exception as e:
             raise AnsibleError(
                 "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds
             )
 
-        return True
+        return result
 
     def _check_conditional(self, conditional, templar, all_vars):
         '''
