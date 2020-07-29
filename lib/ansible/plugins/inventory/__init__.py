@@ -356,7 +356,17 @@ class Constructable(object):
     def _compose(self, template, variables):
         ''' helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars'''
         t = self.templar
-        t.available_variables = combine_vars(variables, self._vars)
+
+        try:
+            use_extra = self.get_option('use_extra_vars'):
+        except Exception:
+            use_extra = False
+
+        if use_extra:
+            t.available_variables = combine_vars(variables, self._vars)
+        else:
+            t.available_variables = variables
+
         return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
