@@ -1,10 +1,9 @@
 - hosts: localhost
   gather_facts: no
   tasks:
-    - name: EXPECTED FAILURE
-      block:
+    - block:
         - fail:
-            msg: Failure in block
+            msg: "EXPECTED FAILURE"
       rescue:
         - block:
           - debug:
