@@ -91,15 +91,13 @@ class Conditional:
         result = True
         try:
             for conditional in self.when:
-                display.debug("Evaluating conditional: %s" % conditional)
-                if not self._check_conditional(conditional, templar, all_vars):
-                    result = False
-                    display.debug("\tresult: %s" % result)
+                result = self._check_conditional(conditional, templar, all_vars)
+                display.debug("Evaluated conditional (%s): %s " % (conditional, result))
+                if not result:
                     break
+
         except Exception as e:
-            raise AnsibleError(
-                "The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds
-            )
+            raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (to_native(conditional), to_native(e)), obj=ds)
 
         return result
 
