@@ -74,7 +74,7 @@ ansible_collection_name
     The name of the collection the task that is executing is a part of. In the format of ``namespace.collection``
 
 ansible_run_tags
-    Contents of the ``--tags`` CLI option, which specifies which tags will be included for the current run.
+    Contents of the ``--tags`` CLI option, which specifies which tags will be included for the current run. Note that if ``--tags`` is not passed, this variable will default to ``["all"]``.
 
 ansible_search_path
     Current search path for action plugins and lookups, i.e where we search for relative paths when you do ``template: src=myfile``
