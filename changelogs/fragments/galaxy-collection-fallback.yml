@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-galaxy collection install - fix fallback mechanism if the AH server did not have the collection requested - https://github.com/ansible/ansible/issues/70940
