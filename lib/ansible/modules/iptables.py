@@ -72,8 +72,8 @@ options:
   protocol:
     description:
       - The protocol of the rule or of the packet to check.
-      - The specified protocol can be one of C(tcp), C(udp), C(udplite), C(icmp), C(esp),
-        C(ah), C(sctp) or the special keyword C(all), or it can be a numeric value,
+      - The specified protocol can be one of C(tcp), C(udp), C(udplite), C(icmp), C(ipv6-icmp) or C(icmpv6),
+        C(esp), C(ah), C(sctp) or the special keyword C(all), or it can be a numeric value,
         representing one of these protocols or a different one.
       - A protocol name from I(/etc/protocols) is also allowed.
       - A C(!) argument before the protocol inverts the test.
