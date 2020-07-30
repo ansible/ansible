@@ -32,7 +32,11 @@ class DateTimeFactCollector(BaseFactCollector):
         facts_dict = {}
         date_time_facts = {}
 
-        now = datetime.datetime.now()
+        # Store the timestamp once, then get local and UTC versions from that
+        epoch_ts = time.time()
+        now = datetime.datetime.fromtimestamp(epoch_ts)
+        utcnow = datetime.datetime.utcfromtimestamp(epoch_ts)
+
         date_time_facts['year'] = now.strftime('%Y')
         date_time_facts['month'] = now.strftime('%m')
         date_time_facts['weekday'] = now.strftime('%A')
@@ -44,12 +48,11 @@ class DateTimeFactCollector(BaseFactCollector):
         date_time_facts['second'] = now.strftime('%S')
         date_time_facts['epoch'] = now.strftime('%s')
         if date_time_facts['epoch'] == '' or date_time_facts['epoch'][0] == '%':
-            # NOTE: in this case, the epoch wont match the rest of the date_time facts? ie, it's a few milliseconds later..? -akl
-            date_time_facts['epoch'] = str(int(time.time()))
+            date_time_facts['epoch'] = str(int(epoch_ts))
         date_time_facts['date'] = now.strftime('%Y-%m-%d')
         date_time_facts['time'] = now.strftime('%H:%M:%S')
-        date_time_facts['iso8601_micro'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        date_time_facts['iso8601'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        date_time_facts['iso8601_micro'] = utcnow.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        date_time_facts['iso8601'] = utcnow.strftime("%Y-%m-%dT%H:%M:%SZ")
         date_time_facts['iso8601_basic'] = now.strftime("%Y%m%dT%H%M%S%f")
         date_time_facts['iso8601_basic_short'] = now.strftime("%Y%m%dT%H%M%S")
         date_time_facts['tz'] = time.strftime("%Z")
