@@ -44,10 +44,14 @@
               <a href="{{ meta['github_url'] }}" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
             {% else %}
               <!-- Ansible-specific additions for modules etc -->
-                {% if pagename.endswith('_module') %}
-                  <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode|default("blob") }}/{{ github_module_version }}{{ meta.get('source', '') }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
-                {% elif pagename.startswith('plugins') and meta.get('source', None) %}
-                  <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode|default("blob") }}/{{ github_root_dir }}/{{ pagename }}.py?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
+                {% if (pagename.endswith('_module')) or (pagename.endswith('_become'))
+                  or (pagename.endswith('_cache')) or (pagename.endswith('_callback'))
+                  or (pagename.endswith('_connection')) or (pagename.endswith('_inventory'))
+                  or (pagename.endswith('_lookup')) or (pagename.endswith('_shell'))
+                  or (pagename.endswith('_strategy')) or (pagename.endswith('_vars'))
+                 %}
+                <!--  <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode|default("blob") }}/{{ github_module_version }}{{ meta.get('source', '') }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a> -->
+                  <br>
                 {% elif pagename.startswith('cli') and meta.get('source', None) %}
                   <a href="https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/{{ theme_vcs_pageview_mode|default("blob") }}/{{ github_cli_version }}{{ meta.get('source', '') }}?description=%23%23%23%23%23%20SUMMARY%0A%3C!---%20Your%20description%20here%20--%3E%0A%0A%0A%23%23%23%23%23%20ISSUE%20TYPE%0A-%20Docs%20Pull%20Request%0A%0A%2Blabel:%20docsite_pr" class="fa fa-github"> {{ _('Edit on GitHub') }}</a>
                 {% elif (not 'list_of' in pagename) and (not 'category' in pagename) %}
