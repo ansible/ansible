@@ -1,0 +1,18 @@
+- block:
+    - name: Add IP to interface
+      command: ip address add 100.42.42.1/32 dev {{ ansible_facts.default_ipv4.interface }}
+      ignore_errors: yes
+
+    - name: Gather network facts
+      setup:
+        gather_subset: network
+
+    - name: Ensure broadcast is reported as empty
+      assert:
+        that:
+          - ansible_facts[ansible_facts['default_ipv4']['interface']]['ipv4_secondaries'][0]['broadcast'] == ''
+
+  always:
+    - name: Remove IP from interface
+      command: ip address delete 100.42.42.1/32 dev {{ ansible_facts.default_ipv4.interface }}
+      ignore_errors: yes
