@@ -173,7 +173,8 @@ class LinuxNetwork(Network):
                         if '/' in words[1]:
                             address, netmask_length = words[1].split('/')
                             if len(words) > 3:
-                                broadcast = words[3]
+                                if words[2] == 'brd':
+                                    broadcast = words[3]
                         else:
                             # pointopoint interfaces do not have a prefix
                             address = words[1]
