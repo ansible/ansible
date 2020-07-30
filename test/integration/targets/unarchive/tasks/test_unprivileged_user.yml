@@ -11,7 +11,6 @@
 - name: Test unarchiving twice as unprivileged user
   become: yes
   become_user: unarchivetest1
-  # when: ansible_distribution != "MacOSX"
   block:
     - name: prep our file
       copy:
