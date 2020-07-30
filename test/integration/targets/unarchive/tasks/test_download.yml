@@ -1,0 +1,34 @@
+# Test downloading a file before unarchiving it
+- name: create our unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    state: directory
+
+- name: Install packages to make TLS connections work on CentOS 6
+  pip:
+    name:
+      - urllib3==1.10.2
+      - ndg_httpsclient==0.4.4
+      - pyOpenSSL==16.2.0
+    state: present
+  when:
+    - ansible_facts.distribution == 'CentOS'
+    - not ansible_facts.python.has_sslcontext
+
+- name: unarchive a tar from an URL
+  unarchive:
+    src: "https://releases.ansible.com/ansible/ansible-latest.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    mode: "0700"
+    remote_src: yes
+  register: unarchive13
+
+- name: Test that unarchive succeeded
+  assert:
+    that:
+      - "unarchive13.changed == true"
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: '{{ remote_tmp_dir }}/test-unarchive-tar-gz'
+    state: absent
