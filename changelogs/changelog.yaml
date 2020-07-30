@@ -1731,3 +1731,57 @@ releases:
     - keep_log_at_info.yml
     - v2.10.0rc3_summary.yaml
     release_date: '2020-07-24'
+  2.10.0rc4:
+    changes:
+      bugfixes:
+      - 'Fix warning for default permission change when no mode is specified. Follow
+        up to https://github.com/ansible/ansible/issues/67794. (CVE-2020-1736)
+
+        '
+      - Fixes ansible-test traceback when plugin author is not a string or a list
+        of strings (https://github.com/ansible/ansible/pull/70507)
+      - Restore the ability for changed_when/failed_when to function with group_by
+        (#70844).
+      - ansible-galaxy collection download - fix downloading tar.gz files and collections
+        in git repositories (https://github.com/ansible/ansible/issues/70429)
+      - ansible-galaxy collection install - fix fallback mechanism if the AH server
+        did not have the collection requested - https://github.com/ansible/ansible/issues/70940
+      - ansible-test - Add ``pytest < 6.0.0`` constraint for managed installations
+        on Python 3.x to avoid issues with relative imports.
+      - ansible-test - Change detection now properly resolves relative imports instead
+        of treating them as absolute imports.
+      - ansible-test validate-modules - ``version_added`` on module level was not
+        validated for modules in collections (https://github.com/ansible/ansible/pull/70869).
+      - ansible-test validate-modules - return correct error codes ``option-invalid-version-added``
+        resp. ``return-invalid-version-added`` instead of the wrong error ``deprecation-either-date-or-version``
+        when an invalid value of ``version_added`` is specified for an option or a
+        return value (https://github.com/ansible/ansible/pull/70869).
+      - facts - fix incorrect UTC timestamp in ``iso8601_micro`` and ``iso8601``
+      - lineinfile - fix not subscriptable error in exception handling around file
+        creation
+      - reboot - Add support for the runit init system, used on Void Linux, that does
+        not support the normal Linux syntax.
+      minor_changes:
+      - default_callback - moving 'check_mode_markers' documentation in default_callback
+        doc_fragment (https://github.com/ansible-collections/community.general/issues/565).
+      release_summary: '| Release Date: 2020-07-30
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - 565_default_callback.yml
+    - 67794-default-permissions-warning-fix.yml
+    - 70507-validate-null-author.yaml
+    - 70524-fix-download-collections.yaml
+    - 70704-void-linux-reboot.yml
+    - 70869-ansible-test-validate-modules-version-added.yml
+    - ansible-test-pytest-cap.yml
+    - ansible-test-relative-import-analysis.yml
+    - changed_when_group_by.yml
+    - date-time-facts-fix-utctime.yml
+    - galaxy-collection-fallback.yml
+    - lineinfile_exc_fix.yml
+    - v2.10.0rc4_summary.yaml
+    release_date: '2020-07-30'
