@@ -291,6 +291,10 @@ class AnsibleUndefined(StrictUndefined):
     def __repr__(self):
         return 'AnsibleUndefined'
 
+    def __contains__(self, item):
+        # Return original Undefined object to preserve the first failure context
+        return self
+
 
 class AnsibleContext(Context):
     '''
