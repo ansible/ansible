@@ -104,3 +104,39 @@
   assert:
     that:
       - '"Skipping install, no requirements found" in install_no_requirements.stdout'
+
+- name: Test downloading a tar.gz collection artifact
+  block:
+
+    - name: get result of build basic collection on current directory
+      stat:
+        path: '{{ galaxy_dir }}/scratch/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz'
+      register: result
+
+    - name: create default skeleton
+      command: ansible-galaxy collection init ansible_test.my_collection {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch'
+      when: not result.stat.exists
+
+    - name: build the tar.gz
+      command:  ansible-galaxy collection build {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch/ansible_test/my_collection'
+      when: not result.stat.exists
+
+    - name: download a tar.gz file
+      command: ansible-galaxy collection download '{{ galaxy_dir }}/scratch/ansible_test/my_collection/ansible_test-my_collection-1.0.0.tar.gz'
+      args:
+        chdir: '{{ galaxy_dir }}/download'
+      register: download_collection
+
+    - name: get result of downloaded tar.gz
+      stat:
+        path: '{{ galaxy_dir }}/download/collections/ansible_test-my_collection-1.0.0.tar.gz'
+      register: download_collection_actual
+
+    - assert:
+        that:
+        - '"Downloading collection ''ansible_test.my_collection'' to" in download_collection.stdout'
+        - download_collection_actual.stat.exists
