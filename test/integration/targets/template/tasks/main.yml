@@ -706,5 +706,14 @@
         - 'diff_result.stdout == ""'
         - "diff_result.rc == 0"
 
+- debug:
+    msg: "{{ 'x' in y }}"
+  ignore_errors: yes
+  register: error
+
+- name: check that proper error message is emitted when in operator is used
+  assert:
+    that: "\"'y' is undefined\" in error.msg"
+
 # aliases file requires root for template tests so this should be safe
 - include: backup_test.yml
