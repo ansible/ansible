@@ -1,0 +1,28 @@
+- name: create our tar.gz unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    state: directory
+
+- name: unarchive a tar.gz file
+  unarchive:
+    src: '{{remote_tmp_dir}}/test-unarchive.tar.gz'
+    dest: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    remote_src: yes
+  register: unarchive02
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "unarchive02.changed == true"
+      # Verify that no file list is generated
+      - "'files' not in unarchive02"
+
+- name: verify that the file was unarchived
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt'
+    state: file
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    state: absent

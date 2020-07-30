@@ -1,0 +1,66 @@
+- name: create our unarchive destination
+  file:
+    path: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
+    state: directory
+
+- name: test that unarchive works with an archive that contains non-ascii filenames
+  unarchive:
+    # Both the filename of the tarball and the filename inside the tarball have
+    # nonascii chars
+    src: "test-unarchive-nonascii-くらとみ.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
+    mode: "u+rwX,go+rX"
+    remote_src: no
+  register: nonascii_result0
+
+- name: Check that file is really there
+  stat:
+    path: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz/storage/àâæçéèïîôœ(copy)!@#$%^&-().jpg"
+  register: nonascii_stat0
+
+- name: Assert that nonascii tests succeeded
+  assert:
+    that:
+      - "nonascii_result0.changed == true"
+      - "nonascii_stat0.stat.exists == true"
+
+- name: remove nonascii test
+  file:
+    path: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
+    state: absent
+
+- name: test non-ascii with different LC_ALL
+  block:
+    - name: create our unarchive destination
+      file:
+        path: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
+        state: directory
+
+    - name: test that unarchive works with an archive that contains non-ascii filenames
+      unarchive:
+        # Both the filename of the tarball and the filename inside the tarball have
+        # nonascii chars
+        src: "test-unarchive-nonascii-くらとみ.tar.gz"
+        dest: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
+        mode: "u+rwX,go+rX"
+        remote_src: no
+      register: nonascii_result0
+
+    - name: Check that file is really there
+      stat:
+        path: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz/storage/àâæçéèïîôœ(copy)!@#$%^&-().jpg"
+      register: nonascii_stat0
+
+    - name: Assert that nonascii tests succeeded
+      assert:
+        that:
+          - "nonascii_result0.changed == true"
+          - "nonascii_stat0.stat.exists == true"
+
+    - name: remove nonascii test
+      file:
+        path: "{{ remote_tmp_dir }}/test-unarchive-nonascii-くらとみ-tar-gz"
+        state: absent
+
+  environment:
+    LC_ALL: C
