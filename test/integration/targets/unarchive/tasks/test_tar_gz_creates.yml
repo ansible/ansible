@@ -1,0 +1,53 @@
+- name: create our tar.gz unarchive destination for creates
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    state: directory
+
+- name: unarchive a tar.gz file with creates set
+  unarchive:
+    src: '{{remote_tmp_dir}}/test-unarchive.tar.gz'
+    dest: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    creates: '{{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt'
+    remote_src: yes
+  register: unarchive02b
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "unarchive02b.changed == true"
+
+- name: verify that the file was unarchived
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt'
+    state: file
+
+- name: unarchive a tar.gz file with creates over an existing file
+  unarchive:
+    src: '{{remote_tmp_dir}}/test-unarchive.tar.gz'
+    dest: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    creates: '{{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt'
+    remote_src: yes
+  register: unarchive02c
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "unarchive02c.changed == false"
+
+- name: unarchive a tar.gz file with creates over an existing file using complex_args
+  unarchive:
+    src: "{{remote_tmp_dir}}/test-unarchive.tar.gz"
+    dest: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
+    remote_src: yes
+    creates: "{{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt"
+  register: unarchive02d
+
+- name: verify that the file was not marked as changed
+  assert:
+    that:
+      - "unarchive02d.changed == false"
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    state: absent

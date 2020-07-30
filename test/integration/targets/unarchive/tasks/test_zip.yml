@@ -1,0 +1,45 @@
+- name: create our zip unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-zip'
+    state: directory
+
+- name: unarchive a zip file
+  unarchive:
+    src: '{{remote_tmp_dir}}/test-unarchive.zip'
+    dest: '{{remote_tmp_dir}}/test-unarchive-zip'
+    list_files: True
+    remote_src: yes
+  register: unarchive03
+
+- name: verify that the file was marked as changed
+  assert:
+    that:
+      - "unarchive03.changed == true"
+      # Verify that file list is generated
+      - "'files' in unarchive03"
+      - "{{unarchive03['files']| length}} == 3"
+      - "'foo-unarchive.txt' in unarchive03['files']"
+      - "'foo-unarchive-777.txt' in unarchive03['files']"
+      - "'FOO-UNAR.TXT' in unarchive03['files']"
+
+- name: verify that the file was unarchived
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-zip/{{item}}'
+    state: file
+  with_items:
+    - foo-unarchive.txt
+    - foo-unarchive-777.txt
+    - FOO-UNAR.TXT
+
+- name: repeat the last request to verify no changes
+  unarchive:
+    src: '{{remote_tmp_dir}}/test-unarchive.zip'
+    dest: '{{remote_tmp_dir}}/test-unarchive-zip'
+    list_files: true
+    remote_src: true
+  register: unarchive03b
+
+- name: verify that the task was not marked as changed
+  assert:
+    that:
+      - "unarchive03b.changed == false"

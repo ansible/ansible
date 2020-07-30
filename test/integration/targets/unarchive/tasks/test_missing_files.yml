@@ -1,0 +1,47 @@
+# Test that unarchiving is performed if files are missing
+# https://github.com/ansible/ansible-modules-core/issues/1064
+- name: create our unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    state: directory
+
+- name: unarchive a tar that has directories
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive-dir.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    mode: "0700"
+    remote_src: yes
+  register: unarchive10
+
+- name: Test that unarchive succeeded
+  assert:
+    that:
+      - "unarchive10.changed == true"
+
+- name: Change the mode of the toplevel dir
+  file:
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz/unarchive-dir"
+    mode: "0701"
+
+- name: Remove a file from the extraction point
+  file:
+    path: "{{ remote_tmp_dir }}/test-unarchive-tar-gz/unarchive-dir/foo-unarchive.txt"
+    state: absent
+
+- name: unarchive a tar that has directories
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive-dir.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-unarchive-tar-gz"
+    mode: "0700"
+    remote_src: yes
+  register: unarchive10_1
+
+- name: Test that unarchive succeeded
+  assert:
+    that:
+      - "unarchive10_1.changed == true"
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: '{{ remote_tmp_dir }}/test-unarchive-tar-gz'
+    state: absent

@@ -564,7 +564,7 @@ class ZipArchive(object):
             except (KeyError, ValueError, OverflowError):
                 gid = st.st_gid
 
-            if run_uid != 0 and fut_gid not in groups:
+            if run_uid != 0 and (fut_group != run_group or fut_gid != run_gid) and fut_gid not in groups:
                 raise UnarchiveError('Cannot change group ownership of %s to %s, as user %s' % (path, fut_group, run_owner))
 
             if group and group != fut_group:
