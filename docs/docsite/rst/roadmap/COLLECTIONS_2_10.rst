@@ -2,7 +2,7 @@
 Ansible project 2.10
 ====================
 
-This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-base <https://pypi.org/project/ansible-base/>` package as well. All dates are subject to change, please see :ref:`base_roadmap_2_10` for the most recent updates on ansible-base.
+This release schedule includes dates for the `ansible <https://pypi.org/project/ansible/>`_ package, with a few dates for the `ansible-base <https://pypi.org/project/ansible-base/>`_ package as well. All dates are subject to change. See :ref:`base_roadmap_2_10` for the most recent updates on ansible-base.
 
 .. contents::
    :local:
@@ -16,7 +16,7 @@ Release Schedule
 - 2020-06-23: ansible-2.10 alpha freeze.
   No net new collections will be added to the ``ansible-2.10`` package after this date.
 - 2020-07-10: Ansible collections freeze date for content shuffling.
-  Content should be in its final collection for the ansible-2.10 release.
+  Content should be in its final collection for the ansible-2.10 series of releases. No more content should move out of the ``community.general`` or ``community.network`` collections.
 - 2020-08-13: ansible-base 2.10 Release date, see :ref:`base_roadmap_2_10`.
 - 2020-08-14: final ansible-2.10 alpha.
 - 2020-08-18: Ansible 2.10 beta freeze.
@@ -24,7 +24,7 @@ Release Schedule
 - 2020-09-01: ansible-2.10.0 beta1.
 - 2020-09-08: ansible-2.10 final freeze/rc1.
   - After this date only changes blocking a release are accepted.
-  - Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a community IRC meeting (on 9-10 and 9-17) to decide whether to bump the version of the collection for a fix.
+  - Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a community IRC meeting (on 9-10 and 9-17) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_.
 
 ** Additional release candidates to be published as needed as blockers are fixed **
 
