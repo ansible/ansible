@@ -9,3 +9,9 @@
 
     - debug:
         var: skipped_include
+
+    - assert:
+        that:
+          - skipped_include.results is undefined
+          - skipped_include.skip_reason is defined
+          - skipped_include is skipped
