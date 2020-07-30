@@ -10,6 +10,7 @@
   copy:
     src: foo.txt
     dest: "{{remote_tmp_dir}}/foo-unarchive.txt"
+    mode: preserve
 
 - name: prep a tar file
   shell: tar cvf test-unarchive.tar foo-unarchive.txt chdir={{remote_tmp_dir}}
@@ -27,6 +28,7 @@
   copy:
     src: foo.txt
     dest: '{{remote_tmp_dir}}/FOO-UNAR.TXT'
+    mode: preserve
 
 # This gets around an unzip timestamp bug in some distributions
 # Recent unzip on Ubuntu and BSD will randomly round some timestamps up.
@@ -84,6 +86,7 @@
   copy:
     src: foo.txt
     dest: '{{remote_tmp_dir}}/unarchive-dir/foo-unarchive.txt'
+    mode: preserve
 
 - name: prep a tar.gz file with directory
   shell: tar czvf test-unarchive-dir.tar.gz unarchive-dir  chdir={{remote_tmp_dir}}
