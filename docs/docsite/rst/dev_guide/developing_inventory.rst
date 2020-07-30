@@ -65,7 +65,7 @@ If you use the persistent cache, inventory plugins can also use the configured c
 Directory layout
 ----------------
 
-The `PluginLoader` class defines a property named `config`, which is a list of directories that will be searched for inventory plugins. By default, it may contain::
+The `PluginLoader` class defines a property named `config`, which is a list of directories that will be searched for inventory plugins. For example::
 
    /home/foo/.ansible/plugins/inventory
    /usr/share/ansible/plugins/inventory
@@ -82,9 +82,6 @@ Example::
 
       [defaults]
       inventory = /home/foo/ansible/inventories
-
-    /home/foo/.ansible/plugins/inventory/foo.py
-      (see below)
 
     /home/foo/ansible/.
                       ├── inventories
