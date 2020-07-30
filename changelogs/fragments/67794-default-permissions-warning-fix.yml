@@ -1,0 +1,4 @@
+bugfixes:
+  - >
+    Fix warning for default permission change when no mode is specified. Follow up
+    to https://github.com/ansible/ansible/issues/67794. (CVE-2020-1736)
