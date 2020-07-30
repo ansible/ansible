@@ -169,7 +169,7 @@ class ActionModule(ActionBase):
         if shutdown_bin[0] == '/':
             self._shutdown_command = shutdown_bin
         else:
-            default_search_paths = ['/sbin', '/usr/sbin', '/usr/local/sbin']
+            default_search_paths = ['/sbin', '/bin', '/usr/sbin', '/usr/bin', '/usr/local/sbin']
             search_paths = self._task.args.get('search_paths', default_search_paths)
 
             try:
