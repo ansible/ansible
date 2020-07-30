@@ -7,6 +7,7 @@
   copy:
     dest: "{{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt"
     content: boo
+    mode: preserve
 
 - name: unarchive a tar.gz file but avoid overwriting newer files (keep_newer=true)
   unarchive:
