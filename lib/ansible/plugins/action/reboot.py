@@ -117,13 +117,13 @@ class ActionModule(ActionBase):
         reboot_command = self._task.args.get('reboot_command')
         if reboot_command is not None:
             try:
-                reboot_command = check_type_str(reboot_command)
+                reboot_command = check_type_str(reboot_command, allow_conversion=False)
             except TypeError as e:
                 raise AnsibleError("Invalid value given for 'reboot_command': %s." % to_native(e))
 
             # No args were provided
             try:
-                args = reboot_command.split(' ', 1)[1]
+                return reboot_command.split(' ', 1)[1]
             except IndexError:
                 return ''
         else:
@@ -159,7 +159,7 @@ class ActionModule(ActionBase):
         reboot_command = self._task.args.get('reboot_command')
         if reboot_command is not None:
             try:
-                reboot_command = check_type_str(reboot_command)
+                reboot_command = check_type_str(reboot_command, allow_conversion=False)
             except TypeError as e:
                 raise AnsibleError("Invalid value given for 'reboot_command': %s." % to_native(e))
             shutdown_bin = reboot_command.split(' ', 1)[0]
@@ -167,7 +167,7 @@ class ActionModule(ActionBase):
             shutdown_bin = self._get_value_from_facts('SHUTDOWN_COMMANDS', distribution, 'DEFAULT_SHUTDOWN_COMMAND')
 
         if shutdown_bin[0] == '/':
-            self._shutdown_command = shutdown_bin
+            return shutdown_bin
         else:
             default_search_paths = ['/sbin', '/bin', '/usr/sbin', '/usr/bin', '/usr/local/sbin']
             search_paths = self._task.args.get('search_paths', default_search_paths)
@@ -198,8 +198,7 @@ class ActionModule(ActionBase):
             full_path = [x['path'] for x in find_result['files']]
             if not full_path:
                 raise AnsibleError('Unable to find command "{0}" in search paths: {1}'.format(shutdown_bin, search_paths))
-            self._shutdown_command = full_path[0]
-            return self._shutdown_command
+            return full_path[0]
 
     def deprecated_args(self):
         for arg, version in self.DEPRECATED_ARGS.items():
