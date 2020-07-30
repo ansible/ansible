@@ -16,6 +16,7 @@
       copy:
         src: foo.txt
         dest: "{{ user.home }}/foo-unarchive.txt"
+        mode: preserve
 
     - name: Prep a zip file as unarchivetest1 user
       shell: zip unarchivetest1-unarchive.zip foo-unarchive.txt
