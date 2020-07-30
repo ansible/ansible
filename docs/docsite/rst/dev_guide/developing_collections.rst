@@ -484,13 +484,13 @@ Removing the content from the old collection
 
 Create a PR against the old collection repo to remove the modules, module_utils, plugins, and docs_fragments related to this migration:
 
-#. If you are moving an action plugin, include the corresponding module with documentation.
-#. If you are moving a module, move any corresponding action plugin that should stay with it.
-#. Remove any entries about removed plugins from ``meta/action_groups.yml`` and ``meta/runtime.yml``. Ensure they are added into the new repo.
+#. If you are removing an action plugin, remove the corresponding module that contains the documentation.
+#. If you are removing a module, remove any corresponding action plugin that should stay with it.
+#. Remove any entries about removed plugins from ``meta/runtime.yml``. Ensure they are added into the new repo.
 #. Remove sanity ignore lines from ``tests/sanity/ignore\*.txt``
 #. Remove associated integration tests from ``tests/integrations/targets/`` and unit tests from ``tests/units/plugins/``.
-#. if you are moving from content from ``community.general`` or ``community.network``, remove entries from ``.github/BOTMETA.yml``.
-#. Carefully review ``meta/runtime.yml`` for any entries, in particular deprecated entries.
+#. if you are removing from content from ``community.general`` or ``community.network``, remove entries from ``.github/BOTMETA.yml``.
+#. Carefully review ``meta/runtime.yml`` for any entries you may need to remove or update, in particular deprecated entries.
 #. Update ``meta/runtime.yml`` to contain redirects for EVERY PLUGIN, pointing to the new collection name.
 #. If possible, do not yet add deprecation warnings to the new ``meta/runtime.yml`` entries, but only for a later major release. So the order should be:
     1. Remove content, add redirects in 3.0.0;
@@ -501,7 +501,7 @@ Create a PR against the old collection repo to remove the modules, module_utils,
 .. warning::
 
 	Maintainers for the old collection have to make sure that the PR is merged in a way that it does not break user experience and semantic versioning:
-  
+
 	#. A new version containing the merged PR must not be released before the collection the content has been moved to has been released again, with that content contained in it. Otherwise the redirects cannot work and users relying on that content will experience breakage.
 	#. Once 1.0.0 of the collection from which the content has been removed has been released, such PRs can only be merged for a new **major** version (i.e. 2.0.0, 3.0.0, etc.).
 
@@ -515,7 +515,7 @@ Create a PR in the new collection to:
 #. If it is an action plugin, include the corresponding module with documentation.
 #. If it is a module, check if it has a corresponding action plugin that should move with it.
 #. Check ``meta/ `` for relevant updates to ``action_groups.yml`` and ``runtime.yml`` if they exist.
-#. Carefully check ``tests/integration`` and ``tests/units``.
+#. Carefully check the moved ``tests/integration`` and ``tests/units`` and update for FQCN.
 #. Review ``tests/sanity/ignore-\*.txt`` entries.
 #. Update ``meta/runtime.yml``.
 
