@@ -7,14 +7,16 @@ Run Your First Command and Playbook
 
 Put the concepts you learned to work with this quick tutorial. Install Ansible, execute a network configuration command manually, execute the same command with Ansible, then create a playbook so you can execute the command any time on multiple network devices.
 
-.. contents:: Topics
+.. contents::
+  :local:
+  :maxdepth: 2
 
 Prerequisites
 ==================================================
 
 Before you work through this tutorial you need:
 
-- Ansible 2.5 (or higher) installed
+- Ansible 2.10 (or higher) installed
 - One or more network devices that are compatible with Ansible
 - Basic Linux command line knowledge
 - Basic knowledge of network switch & router configuration
@@ -24,14 +26,14 @@ Install Ansible
 
 Install Ansible using your preferred method. See :ref:`installation_guide`. Then return to this tutorial.
 
-Confirm the version of Ansible (must be >= 2.5):
+Confirm the version of Ansible (must be >= 2.10):
 
 .. code-block:: bash
 
    ansible --version
 
 
-Establish a Manual Connection to a Managed Node
+Establish a manual connection to a managed node
 ==================================================
 
 To confirm your credentials, connect to a network device manually and retrieve its configuration. Replace the sample user and device name with your real credentials. For example, for a VyOS router:
@@ -45,7 +47,7 @@ To confirm your credentials, connect to a network device manually and retrieve i
 This manual connection also establishes the authenticity of the network device, adding its RSA key fingerprint to your list of known hosts. (If you have connected to the device before, you have already established its authenticity.)
 
 
-Run Your First Network Ansible Command
+Run your first network Ansible command
 ==================================================
 
 Instead of manually connecting and running a command on the network device, you can retrieve its configuration with a single, stripped-down Ansible command:
