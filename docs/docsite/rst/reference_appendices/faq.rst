@@ -283,6 +283,20 @@ There are a few common errors that one might run into when trying to execute Ans
     zos1 ansible_shell_executable=/usr/lpp/bash/bin/bash
 
 
+Running under fakeroot
+----------------------
+
+Some issues arise as ``fakeroot`` does not create a full nor POSIX compliant system by default.
+It is known that it will not correctly expand the default tmp directory Ansible uses (:file:`~/.ansible/tmp`).
+If you see module failures, this is likely the problem.
+The simple workaround is to set ``remote_tmp`` to a path that will expand correctly (see documentation of the shell plugin you are using for specifics).
+
+For example, in the ansible config file (or via environment variable) you can set::
+
+    remote_tmp=$HOME/.ansible/tmp
+
+
+
 .. _use_roles:
 
 What is the best way to make content reusable/redistributable?
