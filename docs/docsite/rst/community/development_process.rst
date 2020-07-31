@@ -152,25 +152,25 @@ A basic changelog fragment is a ``.yaml`` file placed in the ``changelogs/fragme
 
 To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of the corresponding repository. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
 
-A single changelog fragment may contain multiple sections but most will only contain one section. The toplevel keys (bugfixes, major_changes, and so on) are defined in the `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our release note tool. Here are the valid sections and a description of each:
+A single changelog fragment may contain multiple sections but most will only contain one section. The toplevel keys (bugfixes, major_changes, and so on) are defined in the `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our `release note tool <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_. Here are the valid sections and a description of each:
 
 **breaking_changes**
-  Changes that break existing playbooks. This includes any changes to existing behavior that force users to update tasks. These entries are included in the :ref:`Ansible Porting Guides <porting_guides>`.
+  Changes that break existing playbooks or roles. This includes any change to existing behavior that forces users to update tasks. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **major_changes**
-  Major changes to Ansible itself. Generally does not include module or plugin changes.
+  Major changes to Ansible itself. Generally does not include module or plugin changes. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **minor_changes**
   Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters.
 
 **deprecated_features**
-  Features that have been deprecated and are scheduled for removal in a future release.
+  Features that have been deprecated and are scheduled for removal in a future release. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **removed_features**
-  Features that were previously deprecated and are now removed.
+  Features that were previously deprecated and are now removed. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **security_fixes**
-  Fixes that address CVEs or resolve security concerns. Include links to CVE information.
+  Fixes that address CVEs or resolve security concerns. Include links to CVE information. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **bugfixes**
   Fixes that resolve issues.
