@@ -12,8 +12,9 @@ Please note that this is not a complete list. If you believe any extra informati
    :maxdepth: 1
    :glob:
 
-   porting_guide_2.11
+   porting_guide_base_2.11
    porting_guide_2.10
+   porting_guide_base_2.10
    porting_guide_2.9
    porting_guide_2.8
    porting_guide_2.7
