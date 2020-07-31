@@ -232,6 +232,10 @@ The preferred way to install Ansible on a Mac is with ``pip``.
 
 The instructions can be found in :ref:`from_pip`. If you are running macOS version 10.12 or older, then you should upgrade to the latest ``pip`` to connect to the Python Package Index securely. It should be noted that pip must be run as a module on macOS, and the linked ``pip`` instructions will show you how to do that.
 
+.. note::
+
+	If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
+
 If you are installing on macOS Mavericks (10.9), you may encounter some noise from your compiler. A workaround is to do the following::
 
     $ CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install --user ansible
@@ -301,6 +305,10 @@ Ansible can be installed with ``pip``, the Python package manager. If ``pip`` is
     $ curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
     $ python get-pip.py --user
 
+.. note::
+
+  	If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
+
 Then install Ansible [1]_::
 
     $ python -m pip install --user ansible
@@ -361,6 +369,10 @@ Installing the development version of Ansible
 
     You should only run Ansible from ``devel`` if you are modifying the Ansible engine, or trying out features under development. This is a rapidly changing source of code and can become unstable at any point.
 
+.. note::
+
+    If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
+
 The development version of Ansible can be directly installed from GitHub with pip::
 
     $ python -m pip install --user https://github.com/ansible/ansible/archive/devel.tar.gz
@@ -375,6 +387,10 @@ See :ref:`from_source` for instructions on how to run Ansible directly from sour
 
 Virtual Environments
 ^^^^^^^^^^^^^^^^^^^^
+
+.. note::
+
+	If you have Ansible 2.9 or older installed, you need to use ``pip uninstall ansible`` first to remove older versions of Ansible before re-installing it.
 
 Ansible can also be installed inside a new or existing ``virtualenv``::
 
