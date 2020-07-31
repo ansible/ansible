@@ -377,14 +377,11 @@ class TaskExecutor:
                     'msg': 'Failed to template loop_control.label: %s' % to_text(e)
                 })
 
-            self._final_q.put(
-                TaskResult(
-                    self._host.name,
-                    self._task._uuid,
-                    res,
-                    task_fields=task_fields,
-                ),
-                block=False,
+            self._final_q.send_task_result(
+                self._host.name,
+                self._task._uuid,
+                res,
+                task_fields=task_fields,
             )
             results.append(res)
             del task_vars[loop_var]
@@ -671,7 +668,7 @@ class TaskExecutor:
                         result['_ansible_retry'] = True
                         result['retries'] = retries
                         display.debug('Retrying task, attempt %d of %d' % (attempt, retries))
-                        self._final_q.put(TaskResult(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs()), block=False)
+                        self._final_q.send_task_result(self._host.name, self._task._uuid, result, task_fields=self._task.dump_attrs())
                         time.sleep(delay)
                         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
         else:

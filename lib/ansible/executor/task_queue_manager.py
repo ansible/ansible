@@ -69,6 +69,16 @@ class FinalQueue(multiprocessing.queues.Queue):
             block=False
         )
 
+    def send_task_result(self, *args, **kwargs):
+        if isinstance(args[0], TaskResult):
+            tr = args[0]
+        else:
+            tr = TaskResult(*args, **kwargs)
+        self.put(
+            tr,
+            block=False
+        )
+
 
 class TaskQueueManager:
 
