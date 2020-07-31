@@ -1,0 +1,2 @@
+minor_changes:
+  - New callback hook, ``v2_playbook_on_meta_start``, which gets triggered whenever a meta task is executed by the strategy subsystem.
