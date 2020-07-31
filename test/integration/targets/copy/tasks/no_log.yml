@@ -1,0 +1,82 @@
+- block:
+
+    - set_fact:
+        dest: "{{ local_temp_dir }}/test_no_log"
+
+    - name: ensure playbook and dest files don't exist yet
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ local_temp_dir }}/test_no_log.yml"
+        - "{{ dest }}"
+
+    - name: create a playbook to run with command
+      copy:
+        dest: "{{local_temp_dir}}/test_no_log.yml"
+        content: !unsafe |
+          ---
+          - hosts: localhost
+            gather_facts: no
+            tasks:
+            - copy:
+                dest: "{{ dest }}"
+                content: "{{ secret }}"
+
+    - name: copy the secret while using -vvv and check mode
+      command: "ansible-playbook {{local_temp_dir}}/test_no_log.yml -vvv -e secret=SECRET -e dest={{dest}} --check"
+      register: result
+
+    - assert:
+        that:
+          - "'SECRET' not in result.stdout"
+
+    - name: copy the secret while using -vvv
+      command: "ansible-playbook {{local_temp_dir}}/test_no_log.yml -vvv -e secret=SECRET -e dest={{dest}}"
+      register: result
+
+    - assert:
+        that:
+          - "'SECRET' not in result.stdout"
+
+    - name: copy the secret while using -vvv and check mode again
+      command: "ansible-playbook {{local_temp_dir}}/test_no_log.yml -vvv -e secret=SECRET -e dest={{dest}} --check"
+      register: result
+
+    - assert:
+        that:
+          - "'SECRET' not in result.stdout"
+
+    - name: copy the secret while using -vvv again
+      command: "ansible-playbook {{local_temp_dir}}/test_no_log.yml -vvv -e secret=SECRET -e dest={{dest}}"
+      register: result
+
+    - assert:
+        that:
+          - "'SECRET' not in result.stdout"
+
+    - name: copy a new secret while using -vvv and check mode
+      command: "ansible-playbook {{local_temp_dir}}/test_no_log.yml -vvv -e secret=NEWSECRET -e dest={{dest}} --check"
+      register: result
+
+    - assert:
+        that:
+          - "'NEWSECRET' not in result.stdout"
+
+    - name: copy a new secret while using -vvv
+      command: "ansible-playbook {{local_temp_dir}}/test_no_log.yml -vvv -e secret=NEWSECRET -e dest={{dest}}"
+      register: result
+
+    - assert:
+        that:
+          - "'NEWSECRET' not in result.stdout"
+
+  always:
+
+    - name: remove temp test files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ local_temp_dir }}/test_no_log.yml"
+        - "{{ dest }}"
