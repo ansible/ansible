@@ -590,7 +590,7 @@ class DarwinStrategy(GenericStrategy):
     /usr/sbin/scutil to set ComputerName, HostName, and LocalHostName.
 
     HostName corresponds to what most platforms consider to be hostname.
-    It controls the name used on the commandline and SSH.
+    It controls the name used on the command line and SSH.
 
     However, macOS also has LocalHostName and ComputerName settings.
     LocalHostName controls the Bonjour/ZeroConf name, used by services
@@ -609,7 +609,7 @@ class DarwinStrategy(GenericStrategy):
         self.name_types = ('HostName', 'ComputerName', 'LocalHostName')
         self.scrubbed_name = self._scrub_hostname(self.module.params['name'])
 
-    def _maketrans(self, replace_chars, replacement_chars, delete_chars):
+    def _make_translation(self, replace_chars, replacement_chars, delete_chars):
         if PY3:
             return str.maketrans(replace_chars, replacement_chars, delete_chars)
 
@@ -625,7 +625,8 @@ class DarwinStrategy(GenericStrategy):
         return table
 
     def _scrub_hostname(self, name):
-        """LocalHostName only accepts valid DNS characters while HostName and ComputerName
+        """
+        LocalHostName only accepts valid DNS characters while HostName and ComputerName
         accept a much wider range of characters. This function aims to mimic how macOS
         translates a friendly name to the LocalHostName.
         """
@@ -634,7 +635,7 @@ class DarwinStrategy(GenericStrategy):
         name = to_text(name)
         replace_chars = u'\'"~`!@#$%^&*(){}[]/=?+\\|-_ '
         delete_chars = u".'"
-        table = self._maketrans(replace_chars, u'-' * len(replace_chars), delete_chars)
+        table = self._make_translation(replace_chars, u'-' * len(replace_chars), delete_chars)
         name = name.translate(table)
 
         # Replace multiple dashes with a single dash
