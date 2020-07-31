@@ -332,12 +332,11 @@ If you wish to install Ansible globally, run the following commands::
     Please make sure you have the latest version of ``pip`` before installing Ansible.
     If you have an older version of ``pip`` installed, you can upgrade by following `pip's upgrade instructions <https://pip.pypa.io/en/stable/installing/#upgrading-pip>`_ .
 
-Upgrading Ansible from version 2.9 and lower to version 2.10 or later
----------------------------------------------------------------------
+Upgrading Ansible from version 2.9 and older to version 2.10 or later
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Starting version 2.10, Ansible is made of two packages, and upgrading directly from previous minor version (`2.9.*
-` and below) using ``pip`` is blocked to prevent leaving Ansible broken.
-Trying to upgrade will display the following message, and no change will be performed:
+Starting in version 2.10, Ansible is made of two packages. You need to first uninstall the old Ansible version (2.9 or earlier) before upgrading.
+If you do not uninstall the older version of Ansible, you will see the following message, and no change will be performed:
 
 .. code-block:: console
 
