@@ -170,7 +170,7 @@ A single changelog fragment may contain multiple sections but most will only con
   Features that were previously deprecated and are now removed. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **security_fixes**
-  Fixes that address CVEs or resolve security concerns. Include links to CVE information. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+  Fixes that address CVEs or resolve security concerns. Include links to CVE information.
 
 **bugfixes**
   Fixes that resolve issues.
