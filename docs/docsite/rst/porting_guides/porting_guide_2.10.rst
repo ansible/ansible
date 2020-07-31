@@ -73,7 +73,7 @@ The following modules call ``atomic_move()`` but do not call ``set_fs_attributes
 
 
 Code Audit
-++++++++++
+~~~~~~~~~~
 
 The code was audited for modules that use ``atomic_move()`` but **do not** later call ``set_fs_attributes_if_different()`` or ``set_mode_if_different()``. Modules that provide no means for specifying the ``mode`` will not display a warning message since there is no way for the playbook author to remove the warning. The behavior of each module with regards to the default permissions of temporary files and the permissions of newly created files is explained below.
 
