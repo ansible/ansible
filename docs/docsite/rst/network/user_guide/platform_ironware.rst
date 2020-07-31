@@ -4,11 +4,12 @@
 IronWare Platform Options
 ***************************************
 
-IronWare supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IronWare in Ansible.
+IronWare is part of the `community.network <https://galaxy.ansible.com/community/network>`_ collection and supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on IronWare in Ansible.
 
-.. contents:: Topics
+.. contents::
+  :local:
 
-Connections Available
+Connections available
 ================================================================================
 
 .. table::
@@ -25,7 +26,7 @@ Connections Available
 
     Indirect Access       via a bastion (jump host)
 
-    Connection Settings   ``ansible_connection: network_cli``
+    Connection Settings   ``ansible_connection: ansible.netcommon.network_cli``
 
     |enable_mode|         supported: use ``ansible_become: yes``
                           with ``ansible_become_method: enable``
@@ -37,7 +38,7 @@ Connections Available
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation)
 
 
-For legacy playbooks, IronWare still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` as soon as possible.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: ansible.netcommon.network_cli`` instead.
 
 Using CLI in Ansible
 ====================
@@ -47,8 +48,8 @@ Example CLI ``group_vars/mlx.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: ironware
+   ansible_connection: ansible.netcommon.network_cli
+   ansible_network_os: community.network.ironware
    ansible_user: myuser
    ansible_password: !vault...
    ansible_become: yes
@@ -61,16 +62,16 @@ Example CLI ``group_vars/mlx.yml``
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
 
-Example CLI Task
+Example CLI task
 ----------------
 
 .. code-block:: yaml
 
    - name: Backup current switch config (ironware)
-     ironware_config:
+     community.network.ironware_config:
        backup: yes
      register: backup_ironware_location
-     when: ansible_network_os == 'ironware'
+     when: ansible_network_os == 'community.network.ironware'
 
 .. include:: shared_snippets/SSH_warning.txt
 

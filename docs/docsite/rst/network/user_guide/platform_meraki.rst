@@ -4,11 +4,12 @@
 Meraki Platform Options
 ***************************************
 
-Meraki only support supports the ``local`` connection type at this time.
+The `cisco.meraki <https://galaxy.ansible.com/cisco/meraki>`_ collection only supports the ``local`` connection type at this time.
 
-.. contents:: Topics
+.. contents::
+  :local:
 
-Connections Available
+Connections available
 ================================================================================
 
 .. table::
@@ -27,12 +28,12 @@ Connections Available
     ====================  ==========================================
 
 
-Example Meraki Task
+Example Meraki task
 -------------------
 
 .. code-block:: yaml
 
-  meraki_organization:
+  cisco.meraki.meraki_organization:
     auth_key: abc12345
     org_name: YourOrg
     state: present
