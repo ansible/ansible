@@ -1,6 +1,23 @@
-- name: Set hostname
+- name: macOS | Set hostname
   hostname:
-    name: bugs.acme.notld
+    name: bugs.acme.example.com
+
+# These tasks can be changed to a loop once https://github.com/ansible/ansible/issues/71031
+# is fixed
+- name: macOS | Set hostname specifiying macos strategy
+  hostname:
+    name: bugs.acme.example.com
+    use: macos
+
+- name: macOS | Set hostname specifiying macos strategy
+  hostname:
+    name: bugs.acme.example.com
+    use: macosx
+
+- name: macOS | Set hostname specifiying macos strategy
+  hostname:
+    name: bugs.acme.example.com
+    use: darwin
 
 - name: macOS | Get macOS hostname values
   command: scutil --get {{ item }}
@@ -14,7 +31,7 @@
 - name: macOS | Ensure all hostname values were set correctly
   assert:
     that:
-      - "['bugs.acme.notld', 'bugs.acme.notld', 'bugsacmecom'] == macos_scutil.results | map(attribute='stdout') | list"
+      - "['bugs.acme.example.com', 'bugs.acme.example.com', 'bugsacmeexamplecom'] == macos_scutil.results | map(attribute='stdout') | list"
 
 - name: macOS | Set to a hostname using spaces and punctuation
   hostname:

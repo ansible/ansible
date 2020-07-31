@@ -19,22 +19,24 @@ short_description: Manage hostname
 requirements: [ hostname ]
 description:
     - Set system's hostname. Supports most OSs/Distributions including those using C(systemd).
-    - Note, this module does *NOT* modify C(/etc/hosts). You need to modify it yourself using other modules like template or replace.
     - Windows, HP-UX, and AIX are not currently supported.
 notes:
+    - This module does B(NOT) modify C(/etc/hosts). You need to modify it yourself using other modules like M(template) or M(replace).
     - On macOS, this module uses C(scutil) to set C(HostName), C(ComputerName), and C(LocalHostName). Since C(LocalHostName)
       cannot contain spaces or most special characters, this module will replace characters when setting C(LocalHostName).
 options:
     name:
         description:
             - Name of the host
+            - If the value is a fully qualified domain name that does not resolve from the given host,
+              this will cause the module to hang for a few seconds while waiting for the name resolution attempt to timeout.
         type: str
         required: true
     use:
         description:
             - Which strategy to use to update the hostname.
             - If not set we try to autodetect, but this can be problematic, particularly with containers as they can present misleading information.
-        choices: ['generic', 'debian', 'sles', 'redhat', 'alpine', 'systemd', 'openrc', 'openbsd', 'solaris', 'freebsd']
+        choices: ['alpine', 'debian', 'freebsd', 'generic', 'macos', 'openbsd', 'openrc', 'redhat', 'sles', 'solaris', 'systemd']
         type: str
         version_added: '2.9'
 '''
@@ -43,6 +45,11 @@ EXAMPLES = '''
 - name: Set a hostname
   hostname:
     name: web01
+
+- name: Set a hostname specifying strategy
+  hostname:
+    name: web01
+    strategy: systemd
 '''
 
 import os
@@ -60,8 +67,21 @@ from ansible.module_utils.facts.system.service_mgr import ServiceMgrFactCollecto
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.six import PY3, text_type
 
-STRATS = {'generic': 'Generic', 'debian': 'Debian', 'sles': 'SLES', 'redhat': 'RedHat', 'alpine': 'Alpine',
-          'systemd': 'Systemd', 'openrc': 'OpenRC', 'openbsd': 'OpenBSD', 'solaris': 'Solaris', 'freebsd': 'FreeBSD'}
+STRATS = {
+    'alpine': 'Alpine',
+    'debian': 'Debian',
+    'freebsd': 'FreeBSD',
+    'generic': 'Generic',
+    'macos': 'Darwin',
+    'macosx': 'Darwin',
+    'darwin': 'Darwin',
+    'openbsd': 'OpenBSD',
+    'openrc': 'OpenRC',
+    'redhat': 'RedHat',
+    'sles': 'SLES',
+    'solaris': 'Solaris',
+    'systemd': 'Systemd',
+}
 
 
 class UnimplementedStrategy(object):
@@ -984,6 +1004,8 @@ def main():
     else:
         name_before = permanent_hostname
 
+    # NOTE: socket.getfqdn() calls gethostbyaddr(socket.gethostname()), which can be
+    # slow to return if the name does not resolve correctly.
     kw = dict(changed=changed, name=name,
               ansible_facts=dict(ansible_hostname=name.split('.')[0],
                                  ansible_nodename=name,
