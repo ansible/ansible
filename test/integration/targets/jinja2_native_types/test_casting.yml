@@ -8,6 +8,8 @@
       int_to_bool: "{{ i_one|bool }}"
       str_true_to_bool: "{{ s_true|bool }}"
       str_false_to_bool: "{{ s_false|bool }}"
+      list_to_json_str: "{{ list_one | to_json }}"
+      list_to_yaml_str: "{{ list_one | to_yaml }}"
 
 - assert:
     that:
@@ -25,3 +27,5 @@
         - 'str_true_to_bool|type_debug == "bool"'
         - 'str_false_to_bool is sameas false'
         - 'str_false_to_bool|type_debug == "bool"'
+        - 'list_to_json_str|type_debug in ["NativeJinjaText"]'
+        - 'list_to_yaml_str|type_debug in ["NativeJinjaText"]'
