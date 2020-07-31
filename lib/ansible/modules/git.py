@@ -471,8 +471,9 @@ def get_version(module, git_path, dest, ref="HEAD"):
 
 
 def get_ssh_version(module):
-    cmd = "ssh -V"
-    rc, stdout, stderr = module.run_command(cmd)
+    ssh_path = module.get_bin_path('ssh', True)
+    cmd = [ssh_path, '-V']
+    rc, stdout, stderr = module.run_command(cmd, check_rc=True)
     ssh_version = to_native(stderr).rpartition('p1')[0].rpartition('OpenSSH_')[2]
     return ssh_version
 
