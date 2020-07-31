@@ -1,6 +1,6 @@
-- hosts: testhost
+- hosts: localhost
   gather_facts: True
   tasks:
-  - bogus_facts:
+  - gather_facts:
     loop: [1,2,3]
     when: ansible_virtualization_type != 'docker'
