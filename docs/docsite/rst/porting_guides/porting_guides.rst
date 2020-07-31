@@ -13,6 +13,7 @@ Please note that this is not a complete list. If you believe any extra informati
    :glob:
 
    porting_guide_2.10
+   porting_guide_base_2.10
    porting_guide_2.9
    porting_guide_2.8
    porting_guide_2.7
