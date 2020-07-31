@@ -4,11 +4,12 @@
 ICX Platform Options
 ***************************************
 
-ICX supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on ICX in Ansible.
+ICX is part of the `community.network <https://galaxy.ansible.com/community/network>`_ collection supports Enable Mode (Privilege Escalation). This page offers details on how to use Enable Mode on ICX in Ansible.
 
-.. contents:: Topics
+.. contents::
+  :local:
 
-Connections Available
+Connections available
 ================================================================================
 
 .. table::
@@ -25,7 +26,7 @@ Connections Available
 
     Indirect Access       via a bastion (jump host)
 
-    Connection Settings   ``ansible_connection: network_cli``
+    Connection Settings   ``ansible_connection: ansible.netcommon.network_cli``
 
     |enable_mode|         supported: use ``ansible_become: yes`` with
                           ``ansible_become_method: enable`` and ``ansible_become_password:``
@@ -44,8 +45,8 @@ Example CLI ``group_vars/icx.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: icx
+   ansible_connection: ansible.netcommon.network_cli
+   ansible_network_os: community.network.icx
    ansible_user: myuser
    ansible_password: !vault...
    ansible_become: yes
@@ -58,16 +59,16 @@ Example CLI ``group_vars/icx.yml``
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
 
-Example CLI Task
+Example CLI task
 ----------------
 
 .. code-block:: yaml
 
    - name: Backup current switch config (icx)
-     icx_config:
+     community.network.icx_config:
        backup: yes
      register: backup_icx_location
-     when: ansible_network_os == 'icx'
+     when: ansible_network_os == 'community.network.icx'
 
 .. include:: shared_snippets/SSH_warning.txt
 
