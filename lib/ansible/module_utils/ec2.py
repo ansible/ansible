@@ -351,16 +351,16 @@ def ec2_connect(module):
 
     region, ec2_url, boto_params = get_aws_connection_info(module)
 
-    # If we have a region specified, connect to its endpoint.
-    if region:
-        try:
-            ec2 = connect_to_aws(boto.ec2, region, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError, boto.provider.ProfileNotFoundError) as e:
-            module.fail_json(msg=str(e))
-    # Otherwise, no region so we fallback to the old connection method
-    elif ec2_url:
+    # If ec2_url is present use it
+    if ec2_url:
         try:
             ec2 = boto.connect_ec2_endpoint(ec2_url, **boto_params)
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError, boto.provider.ProfileNotFoundError) as e:
+            module.fail_json(msg=str(e))
+    # Otherwise, if we have a region specified, connect to its endpoint.
+    elif region:
+        try:
+            ec2 = connect_to_aws(boto.ec2, region, **boto_params)
         except (boto.exception.NoAuthHandlerFound, AnsibleAWSError, boto.provider.ProfileNotFoundError) as e:
             module.fail_json(msg=str(e))
     else:
