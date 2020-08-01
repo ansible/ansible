@@ -25,6 +25,8 @@ Collections follow a simple data structure. None of the directories are required
     collection/
     ├── docs/
     ├── galaxy.yml
+    ├── meta/
+    │   └── runtime.yml
     ├── plugins/
     │   ├── modules/
     │   │   └── module1.py
@@ -193,6 +195,60 @@ command completion, or environment variables are presented throughout the
 :ref:`developing_testing` documentation; keep in mind that it is not needed for
 Ansible Collection Testing because the act of installing the stable release of
 Ansible containing `ansible-test` is expected to setup those things for you.
+
+.. _meta_runtime_yml:
+
+meta directory
+--------------
+
+A collection can store some additional metadata in a ``runtime.yml`` file in the collection's ``meta`` directory. The ``runtime.yml`` file supports the top level keys:
+
+- *requires_ansible*:
+
+  The version of Ansible required to use the collection.
+
+  .. code:: yaml
+
+     requires_ansible: ">=2.10"
+
+- *plugin_routing*:
+
+  A mapping of content in a collection that has been relocated or deprecated.
+  The top level keys of ``plugin_routing`` are types of plugins (for example, ``become``, ``connection``, and ``inventory``).
+  The individual resources under those types can define ``redirect`` for a new location and ``deprecation`` and ``tombstone`` to define a warning message and removal date or version.
+
+  .. code:: yaml
+
+     plugin_routing:
+       inventory:
+         kubevirt:
+           redirect: community.general.kubevirt
+         my_inventory:
+           tombstone:
+             removal_version: "2.0.0"
+             warning_text: my_inventory has been removed. Please use new_inventory instead.
+       modules:
+         my_module:
+           deprecation:
+             removal_date: "2021-11-30"
+             warning_text: my_module will be removed in a future release of this collection. Use new_module instead.
+         podman_image:
+           redirect: containers.podman.podman_image
+       module_utils:
+         ec2:
+           redirect: amazon.aws.ec2
+         util_dir.subdir.my_util:
+           redirect: namespace.name.my_util
+
+- *import_redirection*
+
+  A mapping of names for Python import statements and their redirected locations.
+
+  .. code:: yaml
+
+     import_redirection:
+       ansible.module_utils.old_utility:
+         redirect: ansible_collections.collection_name.plugins.module_utils.new_location
 
 
 .. _creating_collections_skeleton:
