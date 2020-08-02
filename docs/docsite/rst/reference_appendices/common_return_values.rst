@@ -20,23 +20,23 @@ backup_file
 ```````````
 For those modules that implement `backup=no|yes` when manipulating files, a path to the backup file created.
 
-    .. code-block:: JSON
+    .. code-block:: console
 
-      backup_file": "./foo.txt.32729.2020-07-30@06:24:19~"
+      "backup_file": "./foo.txt.32729.2020-07-30@06:24:19~"
     
 
 changed
 ```````
 A boolean indicating if the task had to make changes.
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "changed": true
 
 diff
 ````
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "diff": [
                 {
@@ -56,7 +56,7 @@ failed
 ``````
 A boolean that indicates if the task was failed or not.
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "failed": false
 
@@ -64,7 +64,7 @@ invocation
 ``````````
 Information on how the module was invoked.
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "invocation": {
                 "module_args": {
@@ -97,7 +97,7 @@ msg
 ```
 A string with a generic message relayed to the user.
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "msg": "line added"
 
@@ -105,7 +105,7 @@ rc
 ``
 Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc), this field contains 'return code' of these utilities.
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "rc": 257
 
@@ -113,7 +113,7 @@ results
 ```````
 If this key exists, it indicates that a loop was present for the task and that it contains a list of the normal module 'result' per item.
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "results": [
             {
@@ -224,7 +224,7 @@ skipped
 ```````
 A boolean that indicates if the task was skipped or not
 
-    .. code-block:: JSON
+    .. code-block:: console
     
         "skipped": true
 
@@ -234,7 +234,7 @@ Some modules execute command line utilities or are geared for executing commands
 
 
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "stderr": "ls: foo: No such file or directory"
 
@@ -244,7 +244,7 @@ When `stderr` is returned we also always provide this field which is a list of s
 
 
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "stderr_lines": [
                 "ls: doesntexist: No such file or directory"
@@ -256,7 +256,7 @@ Some modules execute command line utilities or are geared for executing commands
 
 
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "stdout": "foo!"
 
@@ -266,7 +266,7 @@ When `stdout` is returned, Ansible always provides a list of strings, each conta
 
 
 
-    .. code-block:: JSON
+    .. code-block:: console
 
         "stdout_lines": [
         "foo!"
