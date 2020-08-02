@@ -202,3 +202,15 @@
       - should_not_omit_1 is defined
       - should_not_omit_2 is defined
       - should_not_omit_3 == "__omit_place_holder__afb6b9bc3d20bfeaa00a1b23a5930f89"
+
+- name: Do something that defines a key twice
+  debug:
+    msg: "foo"
+  register: debug1
+  register: debug2
+
+- assert:
+    that:
+      - debug1 is undefined
+      - debug2 is defined
+      - debug2.msg == "foo"

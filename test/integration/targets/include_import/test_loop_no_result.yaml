@@ -1,0 +1,12 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - include_tasks: tasks/debug_item.yml
+      loop: true
+      ignore_errors: true
+      register: failed
+
+    - assert:
+        that:
+          - failed is failed
+          - "'Invalid data passed to' in failed.msg"

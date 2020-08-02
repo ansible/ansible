@@ -114,3 +114,8 @@ test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
 
 # https://github.com/ansible/ansible/issues/66764
 ANSIBLE_HOST_PATTERN_MISMATCH=error ansible-playbook empty_group_warning/playbook.yml
+
+# This provides coverage of a weird case, looping with no "result" after.
+# We set loop to something weird/non-iterable. We want it to be truthy for the
+# coverage branch, but not iterable so 'result' doesn't get added in.
+ansible-playbook test_loop_no_result.yaml "$@"
