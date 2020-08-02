@@ -255,12 +255,6 @@ The sequence above creates this output::
               3866363862363335620a376466656164383032633338306162326639643635663936623939666238
               3161
 
-<<<<<<< HEAD
-You can add the output from any of the examples above to any playbook, variables file, or role for future use. Encrypted variables are larger than plain-text variables, but they protect your sensitive content while leaving the rest of the playbook, variables file, or role in plain text so you can easily read it.
-
-Viewing encrypted variables
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-=======
 To encrypt a multi line string (such as an ssh-key) and give it the name of 'my_ssh_key':
 
 .. code-block:: bash
@@ -279,7 +273,11 @@ Result::
               306333333939646332316137373365313432
 
 See also :ref:`single_encrypted_variable`
->>>>>>> Adding changelog and multi-line example
+
+You can add the output from any of the examples above to any playbook, variables file, or role for future use. Encrypted variables are larger than plain-text variables, but they protect your sensitive content while leaving the rest of the playbook, variables file, or role in plain text so you can easily read it.
+
+Viewing encrypted variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can view the original value of an encrypted variable using the debug module. You must pass the password that was used to encrypt the variable. For example, if you stored the variable created by the last example above in a file called 'vars.yml', you could view the unencrypted value of that variable like this:
 
