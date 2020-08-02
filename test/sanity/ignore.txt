@@ -213,6 +213,7 @@ test/integration/targets/module_utils/module_utils/sub/bar/__init__.py pylint:bl
 test/integration/targets/module_utils/module_utils/sub/bar/bar.py pylint:blacklisted-name
 test/integration/targets/module_utils/module_utils/yak/zebra/foo.py pylint:blacklisted-name
 test/integration/targets/old_style_modules_posix/library/helloworld.sh shebang
+test/integration/targets/parsing/roles/test_good_parsing/tasks/main.yml yamllint:key-duplicates
 test/integration/targets/template/files/encoding_1252_utf-8.expected no-smart-quotes
 test/integration/targets/template/files/encoding_1252_windows-1252.expected no-smart-quotes
 test/integration/targets/template/files/foo.dos.txt line-endings
