@@ -2,5 +2,5 @@
   gather_facts: True
   tasks:
   - bogus_facts:
-    loop: [1,2,3]
+    loop: [1, 2, 3]
     when: ansible_facts['virtualization_type'] != 'docker'
