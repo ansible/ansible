@@ -37,7 +37,7 @@ playbook = 'pause-1.yml'
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -53,7 +53,7 @@ pause_test.close()
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -71,7 +71,7 @@ pause_test.close()
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -91,7 +91,7 @@ playbook = 'pause-2.yml'
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -107,7 +107,7 @@ pause_test.close()
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -125,7 +125,7 @@ pause_test.close()
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -146,7 +146,7 @@ playbook = 'pause-3.yml'
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -161,7 +161,7 @@ pause_test.close()
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -179,7 +179,7 @@ pause_test.close()
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -200,7 +200,7 @@ playbook = 'pause-4.yml'
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -216,7 +216,7 @@ pause_test.close()
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -235,7 +235,7 @@ pause_test.close()
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
@@ -256,7 +256,7 @@ playbook = 'pause-5.yml'
 pause_test = pexpect.spawn(
     'ansible-playbook',
     args=[playbook] + args,
-    timeout=10,
+    timeout=30,
     env=os.environ
 )
 
