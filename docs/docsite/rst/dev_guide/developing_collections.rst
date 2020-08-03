@@ -211,6 +211,8 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
 
      requires_ansible: ">=2.10,<2.11"
 
+  .. note:: although the version is a `PEP440 Version Specifier <https://www.python.org/dev/peps/pep-0440/#version-specifiers>`_ under the hood, Ansible deviates from PEP440 behavior by truncating prerelease segments from the Ansible version. This means that Ansible 2.11.0b1 is compatible with something that ``requires_ansible: ">=2.11"``.
+
 - *plugin_routing*:
 
   Content in a collection that Ansible needs to load from another location or that has been deprecated/removed.
