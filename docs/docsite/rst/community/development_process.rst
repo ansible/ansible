@@ -43,7 +43,7 @@ Here's an overview of the PR lifecycle:
 Automated PR review: ansibullbot
 --------------------------------
 
-Because Ansible receives many pull requests, and because we love automating things, we've automated several steps of the process of reviewing and merging pull requests with a tool called Ansibullbot, or Ansibot for short.
+Because Ansible receives many pull requests, and because we love automating things, we have automated several steps of the process of reviewing and merging pull requests with a tool called Ansibullbot, or Ansibot for short.
 
 `Ansibullbot <https://github.com/ansible/ansibullbot/blob/master/ISSUE_HELP.md>`_ serves many functions:
 
@@ -139,11 +139,7 @@ We don't merge every PR. Here are some tips for making your PR useful, attractiv
 Changelogs
 ----------
 
-Changelogs help users and developers keep up with changes to Ansible.
-Ansible builds a changelog for each release from fragments.
-You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-base.
-You don't have to add a changelog fragment for PRs that add new
-modules and plugins, because our tooling does that for you automatically.
+Changelogs help users and developers keep up with changes to Ansible. Ansible builds a changelog for each release from fragments. You **must** add a changelog fragment to any PR that changes functionality or fixes a bug in ansible-base. You do not have to add a changelog fragment for PRs that add new modules and plugins, because our tooling does that for you automatically.
 
 We build short summary changelogs for minor releases as well as for major releases. If you backport a bugfix, include a changelog fragment with the backport PR.
 
@@ -152,35 +148,29 @@ We build short summary changelogs for minor releases as well as for major releas
 Creating a changelog fragment
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A basic changelog fragment is a ``.yaml`` file placed in the
-``changelogs/fragments/`` directory.  Each file contains a yaml dict with
-keys like ``bugfixes`` or ``major_changes`` followed by a list of
-changelog entries of bugfixes or features.  Each changelog entry is
-rst embedded inside of the yaml file which means that certain
-constructs would need to be escaped so they can be interpreted by rst
-and not by yaml (or escaped for both yaml and rst if that's your
-desire).  Each PR **must** use a new fragment file rather than adding to
-an existing one, so we can trace the change back to the PR that introduced it.
+A basic changelog fragment is a ``.yaml`` file placed in the ``changelogs/fragments/`` directory.  Each file contains a yaml dict with keys like ``bugfixes`` or ``major_changes`` followed by a list of changelog entries of bugfixes or features.  Each changelog entry is rst embedded inside of the yaml file which means that certain constructs would need to be escaped so they can be interpreted by rst and not by yaml (or escaped for both yaml and rst if you prefer).  Each PR **must** use a new fragment file rather than adding to an existing one, so we can trace the change back to the PR that introduced it.
 
-To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of corresponding repository.
-The file name should include the PR number and a description of the change.
-It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
+To create a changelog entry, create a new file with a unique name in the ``changelogs/fragments/`` directory of the corresponding repository. The file name should include the PR number and a description of the change. It must end with the file extension ``.yaml``. For example: ``40696-user-backup-shadow-file.yaml``
 
-A single changelog fragment may contain multiple sections but most will only contain one section.
-The toplevel keys (bugfixes, major_changes, and so on) are defined in the
-`config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our release note tool. Here are the valid sections and a description of each:
+A single changelog fragment may contain multiple sections but most will only contain one section. The toplevel keys (bugfixes, major_changes, and so on) are defined in the `config file <https://github.com/ansible/ansible/blob/devel/changelogs/config.yaml>`_ for our `release note tool <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst>`_. Here are the valid sections and a description of each:
+
+**breaking_changes**
+  Changes that break existing playbooks or roles. This includes any change to existing behavior that forces users to update tasks. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **major_changes**
-  Major changes to Ansible itself. Generally does not include module or plugin changes.
+  Major changes to Ansible itself. Generally does not include module or plugin changes. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **minor_changes**
   Minor changes to Ansible, modules, or plugins. This includes new features, new parameters added to modules, or behavior changes to existing parameters.
 
 **deprecated_features**
-  Features that have been deprecated and are scheduled for removal in a future release.
+  Features that have been deprecated and are scheduled for removal in a future release. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
 
 **removed_features**
-  Features that were previously deprecated and are now removed.
+  Features that were previously deprecated and are now removed. Displayed in both the changelogs and the :ref:`Porting Guides <porting_guides>`.
+
+**security_fixes**
+  Fixes that address CVEs or resolve security concerns. Include links to CVE information.
 
 **bugfixes**
   Fixes that resolve issues.
@@ -188,8 +178,7 @@ The toplevel keys (bugfixes, major_changes, and so on) are defined in the
 **known_issues**
   Known issues that are currently not fixed or will not be fixed.
 
-Each changelog entry must contain a link to its issue between parentheses at the end.
-If there is no corresponding issue, the entry must contain a link to the PR itself.
+Each changelog entry must contain a link to its issue between parentheses at the end. If there is no corresponding issue, the entry must contain a link to the PR itself.
 
 Most changelog entries will be ``bugfixes`` or ``minor_changes``. When writing a changelog entry that pertains to a particular module, start the entry with ``- [module name] -`` and the following sentence with a lowercase letter.
 
@@ -222,9 +211,7 @@ Once you've written the changelog fragment for your PR, commit the file and incl
 Backporting merged PRs
 ======================
 
-All Ansible PRs must be merged to the ``devel`` branch first.
-After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a
-pull request to backport the change to a previous stable branch.
+All Ansible PRs must be merged to the ``devel`` branch first. After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a pull request to backport the change to a previous stable branch.
 
 We do **not** backport features.
 
