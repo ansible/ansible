@@ -35,6 +35,7 @@ A boolean indicating if the task had to make changes.
 
 diff
 ````
+Information on differences between the previous and current state. Often a dictionary with entries ``before`` and ``after``, which will then be formatted by the callback plugin to a diff view.
 
     .. code-block:: console
 
@@ -49,8 +50,6 @@ diff
                     "after_header": "foo.txt (file attributes)",
                     "before_header": "foo.txt (file attributes)"
                 }
-
-Information on differences between the previous and current state. Often a dictionary with entries ``before`` and ``after``, which will then be formatted by the callback plugin to a diff view.
 
 failed
 ``````
@@ -144,7 +143,7 @@ If this key exists, it indicates that a loop was present for the task and that i
                 "msg": "line added"
             },
             {
-                "ansible_loop_var": "item",
+                "ansible_loop_var": "item", 
                 "backup": "foo.txt.83187.2020-07-30@07:03:05~",
                 "changed": true,
                 "diff": [
