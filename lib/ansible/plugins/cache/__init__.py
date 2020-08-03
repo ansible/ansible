@@ -368,8 +368,7 @@ class CachePluginAdjudicator(MutableMapping):
         self._cache[key] = value
 
     def flush(self):
-        for key in self._cache.keys():
-            self._plugin.delete(key)
+        self._plugin.flush()
         self._cache = {}
 
     def update(self, value):
