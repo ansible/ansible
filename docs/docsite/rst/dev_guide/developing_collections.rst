@@ -205,17 +205,18 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
 
 - *requires_ansible*:
 
-  The version of Ansible required to use the collection.
+  The version of Ansible required to use the collection. Multiple versions can be separated with a comma.
 
   .. code:: yaml
 
-     requires_ansible: ">=2.10"
+     requires_ansible: ">=2.10,<2.11"
 
 - *plugin_routing*:
 
-  A mapping of content in a collection that has been relocated or deprecated.
-  The top level keys of ``plugin_routing`` are types of plugins (for example, ``become``, ``connection``, and ``inventory``).
-  The individual resources under those types can define ``redirect`` for a new location and ``deprecation`` and ``tombstone`` to define a warning message and removal date or version.
+  Content in a collection that Ansible needs to load from another location or that has been deprecated/removed.
+  The top level keys of ``plugin_routing`` are types of plugins, with individual plugin names as subkeys.
+  To define a new location for a plugin, set the ``redirect`` field to another name.
+  To deprecate a plugin, use the ``deprecation`` field to provide a custom warning message and the removal date or version. If the plugin has been renamed or moved to a new location, the ``redirect`` field should also be provided. If a plugin is being removed entirely, ``tombstone`` can be used for the fatal error message and removal date or version.
 
   .. code:: yaml
 
@@ -226,12 +227,13 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
          my_inventory:
            tombstone:
              removal_version: "2.0.0"
-             warning_text: my_inventory has been removed. Please use new_inventory instead.
+             warning_text: my_inventory has been removed. Please use other_inventory instead.
        modules:
          my_module:
            deprecation:
              removal_date: "2021-11-30"
-             warning_text: my_module will be removed in a future release of this collection. Use new_module instead.
+             warning_text: my_module will be removed in a future release of this collection. Use another.collection.new_module instead.
+           redirect: another.collection.new_module
          podman_image:
            redirect: containers.podman.podman_image
        module_utils:
