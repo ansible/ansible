@@ -124,6 +124,10 @@ also has powerful configuration management and deployment features.
        Examples of basic commands
    :ref:`working_with_playbooks`
        Learning Ansible's configuration management language
+   `Ansible Demos <https://github.com/ansible/product-demos>`_
+       Demonstrations of different Ansible usecases
+   `RHEL Labs <https://katacoda.com/rhel-labs>`_
+       Labs to provide further knowledge on different topics
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_
