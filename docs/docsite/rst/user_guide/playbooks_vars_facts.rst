@@ -496,13 +496,9 @@ You can use facts in conditionals (see :ref:`playbooks_conditionals`) and also i
 Package requirements for fact gathering
 ---------------------------------------
 
-Some fact gathering depends on installed binaries on the remote host. If the binary is absent, the fact is set to a default value.
+On some distros, you may see missing fact values or facts set to default values because the packages that support gathering those facts are not installed by default. You can install the necessary packages on your remote hosts using the OS package manager. Known dependencies include:
 
-We recommended that you install these binaries on the remote host using default OS package manager.
-
-The following lists required binaries:
-
-* Linux Network fact gathering -  Depends on  the ``ip`` binary from the ``iproute2`` package.
+* Linux Network fact gathering -  Depends on  the ``ip`` binary, commonly included in the ``iproute2`` package.
 
 .. _fact_caching:
 
