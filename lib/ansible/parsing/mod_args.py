@@ -131,9 +131,9 @@ class ModuleArgsParser:
 
         tokens = split_args(module_string)
         if len(tokens) > 1:
-            return (tokens[0], " ".join(tokens[1:]))
+            return (tokens[0].strip(), " ".join(tokens[1:]))
         else:
-            return (tokens[0], "")
+            return (tokens[0].strip(), "")
 
     def _normalize_parameters(self, thing, action=None, additional_args=None):
         '''
