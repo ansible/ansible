@@ -166,7 +166,7 @@ You can also use the new ``gather_network_resources`` parameter with the network
 
   - hosts: arista
     gather_facts: True
-    gather_subset: min
+    gather_subset: interfaces
     module_defaults:
       arista.eos.eos_facts:
         gather_network_resources: interfaces
@@ -175,27 +175,39 @@ The playbook returns the following interface facts:
 
 .. code-block:: yaml
 
-  ansible_facts:
-     ansible_network_resources:
-        interfaces:
-        - enabled: true
-          name: Ethernet1
-          mtu: '1476'
-        - enabled: true
-          name: Loopback0
-        - enabled: true
-          name: Loopback1
-        - enabled: true
-          mtu: '1476'
-          name: Tunnel0
-        - enabled: true
-          name: Ethernet1
-        - enabled: true
-          name: Tunnel1
-        - enabled: true
-          name: Ethernet1
+          "network_resources": {
+                "interfaces": [
+                    {
+                        "description": "test-interface",
+                        "enabled": true,
+                        "mtu": "512",
+                        "name": "Ethernet1"
+                    },
+                    {
+                        "enabled": true,
+                        "mtu": "3000",
+                        "name": "Ethernet2"
+                    },
+                    {
+                        "enabled": true,
+                        "name": "Ethernet3"
+                    },
+                    {
+                        "enabled": true,
+                        "name": "Ethernet4"
+                    },
+                    {
+                        "enabled": true,
+                        "name": "Ethernet5"
+                    },
+                    {
+                        "enabled": true,
+                        "name": "Ethernet6"
+                    },
+                ]
+            }
 
 
 Note that this returns a subset of what is returned by just setting ``gather_subset: interfaces``.
 
-You can store these facts and use them directly in another task, such as with the :ref:`eos_interfaces <eos_interfaces_module>` resource module.
+You can store these facts and use them directly in another task, such as with the :ref:`eos_interfaces <ansible_collections.arista.eos.eos_interfaces_module>` resource module.
