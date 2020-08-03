@@ -16,7 +16,7 @@ def collection_resolve_package_path(path):
         if str(parent) == ANSIBLE_COLLECTIONS_PATH:
             return parent
 
-    raise Exception('File "%s" not found in collection path "%s".' % (str(path), ANSIBLE_COLLECTIONS_PATH))
+    raise Exception('File "%s" not found in collection path "%s".' % (path, ANSIBLE_COLLECTIONS_PATH))
 
 
 # this monkeypatch to py.path.local.LocalPath.pypkgpath fixes PEP420 resolution for collections in pytest < 6.0.0
