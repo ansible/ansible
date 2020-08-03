@@ -44,9 +44,13 @@ def pytest_configure():
 
     _AnsibleCollectionFinder(paths=[os.path.dirname(ANSIBLE_COLLECTIONS_PATH)])._install()  # pylint: disable=protected-access
 
-    import _pytest.pathlib
-    if hasattr(_pytest.pathlib, 'resolve_package_path'):
-        _pytest.pathlib.resolve_package_path = collection_resolve_package_path
+    try:
+        from _pytest import pathlib as _pytest_pathlib
+    except ImportError:
+        _pytest_pathlib = None
+
+    if hasattr(_pytest_pathlib, 'resolve_package_path'):
+        _pytest_pathlib.resolve_package_path = collection_resolve_package_path
     else:
         # looks like pytest <= 6.0.0, use the old hack against py.path
         # noinspection PyProtectedMember
