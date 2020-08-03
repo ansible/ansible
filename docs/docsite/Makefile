@@ -118,7 +118,7 @@ config: ../templates/config.rst.j2
 # For now, if we're building on devel, just build base docs.  In the future we'll want to build docs that
 # are the latest versions on galaxy (using a different antsibull-docs subcommand)
 plugins:
-	if expr "$(VERSION)" : '.*[.]dev[0-9]\+$$' &> /dev/null; then \
+	if expr "$(VERSION)" : '.*[.]dev[0-9]\{1,\}$$' &> /dev/null; then \
 		$(PLUGIN_FORMATTER) base -o rst $(PLUGIN_ARGS);\
 	else \
 		$(PLUGIN_FORMATTER) full -o rst $(PLUGIN_ARGS);\
