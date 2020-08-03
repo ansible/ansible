@@ -280,6 +280,7 @@ autoclass_content = 'both'
 intersphinx_mapping = {'python': ('https://docs.python.org/2/', (None, '../python2.inv')),
                        'python3': ('https://docs.python.org/3/', (None, '../python3.inv')),
                        'jinja2': ('http://jinja.palletsprojects.com/', (None, '../jinja2.inv')),
+                       'ansible_2_10': ('https://docs.ansible.com/ansible/2.10/', (None, '../ansible_2_10.inv')),
                        'ansible_2_9': ('https://docs.ansible.com/ansible/2.9/', (None, '../ansible_2_9.inv')),
                        'ansible_2_8': ('https://docs.ansible.com/ansible/2.8/', (None, '../ansible_2_8.inv')),
                        'ansible_2_7': ('https://docs.ansible.com/ansible/2.7/', (None, '../ansible_2_7.inv')),
