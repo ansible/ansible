@@ -769,26 +769,31 @@ class PathMapper:
         if path.startswith('test/lib/ansible_test/_internal/sanity/'):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks
+                'integration': 'ansible-test',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_data/sanity/'):
             return {
                 'sanity': 'all',  # test infrastructure, run all sanity checks
+                'integration': 'ansible-test',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_internal/units/'):
             return {
                 'units': 'all',  # test infrastructure, run all unit tests
+                'integration': 'ansible-test',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_data/units/'):
             return {
                 'units': 'all',  # test infrastructure, run all unit tests
+                'integration': 'ansible-test',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_data/pytest/'):
             return {
                 'units': 'all',  # test infrastructure, run all unit tests
+                'integration': 'ansible-test',  # run ansible-test self tests
             }
 
         if path.startswith('test/lib/ansible_test/_data/requirements/'):
