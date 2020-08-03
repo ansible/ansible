@@ -59,7 +59,9 @@ To match strings against a substring or a regular expression, use the ``match``,
             msg: "matched pattern 4"
           when: url is regex("example.com/\w+/foo")
 
-``match`` succeeds if it finds the pattern at the beginning of the string, while ``search`` succeeds if it finds the pattern anywhere within string. By default, ``regex`` works like ``search``, but ``regex`` can be configured to perform other tests as well.
+``match`` succeeds if it finds the pattern at the beginning of the string, while ``search`` succeeds if it finds the pattern anywhere within string. By default, ``regex`` works like ``search``, but ``regex`` can be configured to perform other tests as well, by passing the ``match_type`` keyword argument. In particular, ``match_type`` determines the ``re`` method that gets used to perform the search. The full list can be found in the relevant Python documentation `here <https://docs.python.org/3/library/re.html#regular-expression-objects>`_.
+
+All of the string tests also take optional ``ignorecase`` and ``multiline`` arguments. These correspond to ``re.I`` and ``re.M`` from Python's ``re`` library, respectively.
 
 .. _testing_vault:
 
