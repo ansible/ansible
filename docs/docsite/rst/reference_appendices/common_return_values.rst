@@ -137,31 +137,7 @@ If this key exists, it indicates that a loop was present for the task and that i
                     "module_args": {
                         "attributes": null,
                         "backrefs": false,
-                        "backup": true,
-                        "content": null,
-                        "create": false,
-                        "delimiter": null,
-                        "directory_mode": null,
-                        "firstmatch": false,
-                        "follow": false,
-                        "force": null,
-                        "group": null,
-                        "insertafter": null,
-                        "insertbefore": null,
-                        "line": "foo",
-                        "mode": null,
-                        "owner": null,
-                        "path": "foo.txt",
-                        "regexp": null,
-                        "remote_src": null,
-                        "selevel": null,
-                        "serole": null,
-                        "setype": null,
-                        "seuser": null,
-                        "src": null,
-                        "state": "present",
-                        "unsafe_writes": null,
-                        "validate": null
+                        "backup": true
                     }
                 },
                 "item": "foo",
@@ -188,31 +164,7 @@ If this key exists, it indicates that a loop was present for the task and that i
                     "module_args": {
                         "attributes": null,
                         "backrefs": false,
-                        "backup": true,
-                        "content": null,
-                        "create": false,
-                        "delimiter": null,
-                        "directory_mode": null,
-                        "firstmatch": false,
-                        "follow": false,
-                        "force": null,
-                        "group": null,
-                        "insertafter": null,
-                        "insertbefore": null,
-                        "line": "bar",
-                        "mode": null,
-                        "owner": null,
-                        "path": "foo.txt",
-                        "regexp": null,
-                        "remote_src": null,
-                        "selevel": null,
-                        "serole": null,
-                        "setype": null,
-                        "seuser": null,
-                        "src": null,
-                        "state": "present",
-                        "unsafe_writes": null,
-                        "validate": null
+                        "backup": true
                     }
                 },
                 "item": "bar",
@@ -232,8 +184,6 @@ stderr
 ``````
 Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc), this field contains the error output of these utilities.
 
-
-
     .. code-block:: console
 
         "stderr": "ls: foo: No such file or directory"
@@ -241,8 +191,6 @@ Some modules execute command line utilities or are geared for executing commands
 stderr_lines
 ````````````
 When `stderr` is returned we also always provide this field which is a list of strings, one item per line from the original.
-
-
 
     .. code-block:: console
 
@@ -254,8 +202,6 @@ stdout
 ``````
 Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc). This field contains the normal output of these utilities.
 
-
-
     .. code-block:: console
 
         "stdout": "foo!"
@@ -263,8 +209,6 @@ Some modules execute command line utilities or are geared for executing commands
 stdout_lines
 ````````````
 When `stdout` is returned, Ansible always provides a list of strings, each containing one item per line from the original output.
-
-
 
     .. code-block:: console
 
