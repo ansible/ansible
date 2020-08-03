@@ -500,7 +500,7 @@ def is_binary_file(path):
 
     with open_binary_file(path) as path_fd:
         # noinspection PyTypeChecker
-        return b'\0' in path_fd.read(1024)
+        return b'\0' in path_fd.read(2048)
 
 
 def generate_password():
