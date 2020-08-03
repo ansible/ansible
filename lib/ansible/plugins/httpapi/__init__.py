@@ -62,8 +62,9 @@ class HttpApiBase(AnsiblePlugin):
             * True if the code has been handled in a way that the request
             may be resent without changes.
             * False if the error cannot be handled or recovered from by the
-            plugin. This will result in the HTTPError being returned to the
-            caller to deal with as appropriate.
+            plugin. This will result in the HTTPError being raised as an
+            exception for the caller to deal with as appropriate (most likely
+            by failing).
             * Any other value returned is taken as a valid response from the
             server without making another request. In many cases, this can just
             be the original exception.
