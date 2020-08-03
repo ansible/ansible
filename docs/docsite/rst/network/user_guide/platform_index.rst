@@ -60,11 +60,11 @@ Settings by Platform
     Network OS                       ``ansible_network_os:``  network_cli  netconf  httpapi  local
     ===============================  =======================  ===========  =======  =======  ===========
     `Arista EOS`_ `[†]`_                ``eos``                  ✓                     ✓        ✓
+    `Ciena SAOS6`_                      ``saos6``                ✓                              ✓
     `Cisco ASA`_ `[†]`_                      ``asa``                  ✓                              ✓
     `Cisco IOS`_ `[†]`_                 ``ios``                  ✓                              ✓
     `Cisco IOS XR`_ `[†]`_              ``iosxr``                ✓                              ✓
     `Cisco NX-OS`_ `[†]`_               ``nxos``                 ✓                     ✓        ✓
-    `Ciena SAOS6`_                      ``saos6``                ✓                              ✓
     `Cloudengine OS`_                   ``ce``                   ✓            ✓                 ✓
     `Dell OS6`_                         ``dellos6``              ✓                              ✓
     `Dell OS9`_                        ``dellos9``              ✓                              ✓
@@ -90,11 +90,11 @@ Settings by Platform
     ===============================  =======================  ===========  =======  =======  ===========
 
 .. _Arista EOS: https://galaxy.ansible.com/arista/eos
+.. _Ciena SAOS6: https://galaxy.ansible.com/ciena/saos6
 .. _Cisco ASA: https://galaxy.ansible.com/cisco/asa
 .. _Cisco IOS: https://galaxy.ansible.com/cisco/ios
 .. _Cisco IOS XR: https://galaxy.ansible.com/cisco/iosxr
 .. _Cisco NX-OS: https://galaxy.ansible.com/cisco/nxos
-.. _Ciena SAOS6: https://galaxy.ansible.com/ciena/saos6
 .. _Cloudengine OS: https://galaxy.ansible.com/community/network
 .. _Dell OS6: https://github.com/ansible-collections/dellemc.os6
 .. _Dell OS9: https://github.com/ansible-collections/dellemc.os9
