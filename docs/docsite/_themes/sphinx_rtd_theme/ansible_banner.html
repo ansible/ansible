@@ -1,5 +1,8 @@
 <!--- Based on sphinx versionwarning extension. Extension currently only works on READTHEDOCS -->
   <script>
+    startsWith = function(str, needle) {
+      return str.slice(0, needle.length) == needle
+    }
     // Create a banner if we're not on the official docs site
     if (location.host == "docs.testing.ansible.com") {
       document.write('<div id="testing_banner_id" class="admonition important">');
@@ -12,10 +15,10 @@
     }
     {% if (not READTHEDOCS) and (available_versions is defined) %}
       // Create a banner if we're not the latest version
-      current_url = window.location.href;
-      if ((current_url.search("latest") > -1) || (current_url.search("/{{ latest_version }}/") > -1)) {
+      current_url_path = window.location.pathname;
+      if (startsWith(current_url_path, "/ansible/latest/") || startsWith(current_url_path, "/ansible/{{ latest_version }}/")) {
        // no banner for latest release
-      } else if (current_url.search("devel") > -1) {
+      } else if (startsWith(current_url_path, "/ansible/devel/")) {
         document.write('<div id="banner_id" class="admonition caution">');
         para = document.createElement('p');
         banner_text=document.createTextNode("You are reading the *devel* version of the Ansible documentation - this version is not guaranteed stable. Use the version selection to the left if you want the latest stable released version.");
