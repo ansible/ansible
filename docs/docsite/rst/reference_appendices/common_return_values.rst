@@ -20,54 +20,200 @@ backup_file
 ```````````
 For those modules that implement `backup=no|yes` when manipulating files, a path to the backup file created.
 
+    .. code-block:: console
+
+      "backup_file": "./foo.txt.32729.2020-07-30@06:24:19~"
+    
+
 changed
 ```````
 A boolean indicating if the task had to make changes.
 
+    .. code-block:: console
+
+        "changed": true
+
 diff
 ````
-
 Information on differences between the previous and current state. Often a dictionary with entries ``before`` and ``after``, which will then be formatted by the callback plugin to a diff view.
+
+    .. code-block:: console
+
+        "diff": [
+                {
+                    "after": "",
+                    "after_header": "foo.txt (content)",
+                    "before": "",
+                    "before_header": "foo.txt (content)"
+                },
+                {
+                    "after_header": "foo.txt (file attributes)",
+                    "before_header": "foo.txt (file attributes)"
+                }
 
 failed
 ``````
 A boolean that indicates if the task was failed or not.
 
+    .. code-block:: console
+
+        "failed": false
+
 invocation
 ``````````
 Information on how the module was invoked.
+
+    .. code-block:: console
+
+        "invocation": {
+                "module_args": {
+                    "_original_basename": "foo.txt",
+                    "attributes": null,
+                    "backup": true,
+                    "checksum": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+                    "content": null,
+                    "delimiter": null,
+                    "dest": "./foo.txt",
+                    "directory_mode": null,
+                    "follow": false,
+                    "force": true,
+                    "group": null,
+                    "local_follow": null,
+                    "mode": "666",
+                    "owner": null,
+                    "regexp": null,
+                    "remote_src": null,
+                    "selevel": null,
+                    "serole": null,
+                    "setype": null,
+                    "seuser": null,
+                    "src": "/Users/foo/.ansible/tmp/ansible-tmp-1596115458.110205-105717464505158/source",
+                    "unsafe_writes": null,
+                    "validate": null
+                }
 
 msg
 ```
 A string with a generic message relayed to the user.
 
+    .. code-block:: console
+
+        "msg": "line added"
+
 rc
 ``
 Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc), this field contains 'return code' of these utilities.
+
+    .. code-block:: console
+
+        "rc": 257
 
 results
 ```````
 If this key exists, it indicates that a loop was present for the task and that it contains a list of the normal module 'result' per item.
 
+    .. code-block:: console
+
+        "results": [
+            {
+                "ansible_loop_var": "item",
+                "backup": "foo.txt.83170.2020-07-30@07:03:05~",
+                "changed": true,
+                "diff": [
+                    {
+                        "after": "",
+                        "after_header": "foo.txt (content)",
+                        "before": "",
+                        "before_header": "foo.txt (content)"
+                    },
+                    {
+                        "after_header": "foo.txt (file attributes)",
+                        "before_header": "foo.txt (file attributes)"
+                    }
+                ],
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "attributes": null,
+                        "backrefs": false,
+                        "backup": true
+                    }
+                },
+                "item": "foo",
+                "msg": "line added"
+            },
+            {
+                "ansible_loop_var": "item", 
+                "backup": "foo.txt.83187.2020-07-30@07:03:05~",
+                "changed": true,
+                "diff": [
+                    {
+                        "after": "",
+                        "after_header": "foo.txt (content)",
+                        "before": "",
+                        "before_header": "foo.txt (content)"
+                    },
+                    {
+                        "after_header": "foo.txt (file attributes)",
+                        "before_header": "foo.txt (file attributes)"
+                    }
+                ],
+                "failed": false,
+                "invocation": {
+                    "module_args": {
+                        "attributes": null,
+                        "backrefs": false,
+                        "backup": true
+                    }
+                },
+                "item": "bar",
+                "msg": "line added"
+            }
+            ]
+
 skipped
 ```````
 A boolean that indicates if the task was skipped or not
+
+    .. code-block:: console
+    
+        "skipped": true
 
 stderr
 ``````
 Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc), this field contains the error output of these utilities.
 
+    .. code-block:: console
+
+        "stderr": "ls: foo: No such file or directory"
+
 stderr_lines
 ````````````
 When `stderr` is returned we also always provide this field which is a list of strings, one item per line from the original.
+
+    .. code-block:: console
+
+        "stderr_lines": [
+                "ls: doesntexist: No such file or directory"
+                ]
 
 stdout
 ``````
 Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc). This field contains the normal output of these utilities.
 
+    .. code-block:: console
+
+        "stdout": "foo!"
+
 stdout_lines
 ````````````
 When `stdout` is returned, Ansible always provides a list of strings, each containing one item per line from the original output.
+
+    .. code-block:: console
+
+        "stdout_lines": [
+        "foo!"
+        ]
 
 
 .. _internal_return_values:
