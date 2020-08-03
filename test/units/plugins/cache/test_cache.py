@@ -29,11 +29,12 @@ from ansible.plugins.loader import cache_loader
 import pytest
 
 
-class TestCachePluginAdjudicator:
-    # memory plugin cache
-    cache = CachePluginAdjudicator()
-    cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
-    cache['cache_key_2'] = {'key': 'value'}
+class TestCachePluginAdjudicator(unittest.TestCase):
+    def setUp(self):
+        # memory plugin cache
+        self.cache = CachePluginAdjudicator()
+        self.cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
+        self.cache['cache_key_2'] = {'key': 'value'}
 
     def test___setitem__(self):
         self.cache['new_cache_key'] = {'new_key1': ['new_value1', 'new_value2']}
@@ -76,6 +77,23 @@ class TestCachePluginAdjudicator:
     def test_update(self):
         self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
         assert self.cache['cache_key']['key2'] == 'updatedvalue'
+
+    def test_flush(self):
+        # Fake that the cache already has some data in it but the adjudicator
+        # hasn't loaded it in.
+        self.cache._plugin.set('monkey', 'animal')
+        self.cache._plugin.set('wolf', 'animal')
+        self.cache._plugin.set('another wolf', 'another animal')
+
+        # The adjudicator does't know about the new entries
+        assert len(self.cache) == 2
+        # But the cache itself does
+        assert len(self.cache._plugin._cache) == 3
+
+        # If we call flush, both the adjudicator and the cache should flush
+        self.cache.flush()
+        assert len(self.cache) == 0
+        assert len(self.cache._plugin._cache) == 0
 
 
 class TestFactCache(unittest.TestCase):

@@ -274,7 +274,7 @@ After the ``parse`` method is complete, the contents of ``self._cache`` is used 
 You have three other cache methods available:
   - ``set_cache_plugin`` forces the cache plugin to be set with the contents of ``self._cache`` before the ``parse`` method completes
   - ``update_cache_if_changed`` sets the cache plugin only if ``self._cache`` has been modified before the ``parse`` method completes
-  - ``clear_cache`` deletes the keys in ``self._cache`` from your cache plugin
+  - ``clear_cache`` flushes the cache, ultimately by calling the cache plugin's ``flush()`` method, whose implementation is dependent upon the particular cache plugin in use. Note that if the user is using the same cache backend for facts and inventory, both will get flushed. To avoid this, the user can specify a distinct cache backend in their inventory plugin configuration.
 
 .. _inventory_source_common_format:
 
