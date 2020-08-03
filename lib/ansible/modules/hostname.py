@@ -36,7 +36,7 @@ options:
         description:
             - Which strategy to use to update the hostname.
             - If not set we try to autodetect, but this can be problematic, particularly with containers as they can present misleading information.
-        choices: ['alpine', 'debian', 'freebsd', 'generic', 'macos', 'openbsd', 'openrc', 'redhat', 'sles', 'solaris', 'systemd']
+        choices: ['alpine', 'debian', 'freebsd', 'generic', 'macos', 'macosx', 'darwin', 'openbsd', 'openrc', 'redhat', 'sles', 'solaris', 'systemd']
         type: str
         version_added: '2.9'
 '''
