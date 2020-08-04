@@ -4,9 +4,11 @@ Build Your Inventory
 
 Running a playbook without an inventory requires several command-line flags. Also, running a playbook against a single device is not a huge efficiency gain over making the same change manually. The next step to harnessing the full power of Ansible is to use an inventory file to organize your managed nodes into groups with information like the ``ansible_network_os`` and the SSH user. A fully-featured inventory file can serve as the source of truth for your network. Using an inventory file, a single playbook can maintain hundreds of network devices with a single command. This page shows you how to build an inventory file, step by step.
 
-.. contents:: Topics
+.. contents::
+  :local:
+  :maxdepth: 2
 
-Basic Inventory
+Basic inventory
 ==================================================
 
 First, group your inventory logically. Best practice is to group servers and network devices by their What (application, stack or microservice), Where (datacenter or region), and When (development stage):
@@ -18,6 +20,35 @@ First, group your inventory logically. Best practice is to group servers and net
 Avoid spaces, hyphens, and preceding numbers (use ``floor_19``, not ``19th_floor``) in your group names. Group names are case sensitive.
 
 This tiny example data center illustrates a basic group structure. You can group groups using the syntax ``[metagroupname:children]`` and listing groups as members of the metagroup. Here, the group ``network`` includes all leafs and all spines; the group ``datacenter`` includes all network devices plus all webservers.
+
+.. code-block:: YAML
+
+  ---
+
+  leafs:
+    leaf01
+    leaf02
+
+  spines:
+    spine01
+    spine02
+
+  network:
+    children:
+      leafs
+      spines
+
+  webservers:
+    webserver01
+    webserver02
+
+  datacenter:
+    children:
+      network
+      webservers
+
+
+You can also create this same inventory in INI format.
 
 .. code-block:: ini
 
@@ -42,118 +73,168 @@ This tiny example data center illustrates a basic group structure. You can group
    webservers
 
 
-Add Variables to Inventory
+Add variables to the inventory
 ================================================================================
 
-Next, you can set values for many of the variables you needed in your first Ansible command in the inventory, so you can skip them in the ansible-playbook command. In this example, the inventory includes each network device's IP, OS, and SSH user. If your network devices are only accessible by IP, you must add the IP to the inventory file. If you access your network devices using hostnames, the IP is not necessary.
+Next, you can set values for many of the variables you needed in your first Ansible command in the inventory, so you can skip them in the ``ansible-playbook`` command. In this example, the inventory includes each network device's IP, OS, and SSH user. If your network devices are only accessible by IP, you must add the IP to the inventory file. If you access your network devices using hostnames, the IP is not necessary.
 
-.. code-block:: ini
+.. code-block:: YAML
 
-   [leafs]
-   leaf01 ansible_host=10.16.10.11 ansible_network_os=vyos ansible_user=my_vyos_user
-   leaf02 ansible_host=10.16.10.12 ansible_network_os=vyos ansible_user=my_vyos_user
+  ---
 
-   [spines]
-   spine01 ansible_host=10.16.10.13 ansible_network_os=vyos ansible_user=my_vyos_user
-   spine02 ansible_host=10.16.10.14 ansible_network_os=vyos ansible_user=my_vyos_user
+  leafs:
+    hosts:
+      leaf01:
+        ansible_host: 10.16.10.11
+        ansible_network_os: vyos.vyos.vyos
+        ansible_user: my_vyos_user
+      leaf02:
+        ansible_host: 10.16.10.12
+        ansible_network_os: vyos.vyos.vyos
+        ansible_user: my_vyos_user
 
-   [network:children]
-   leafs
-   spines
+  spines:
+    hosts:
+      spine01:
+        ansible_host: 10.16.10.13
+        ansible_network_os: vyos.vyos.vyos
+        ansible_user: my_vyos_user
+      spine02:
+        ansible_host: 10.16.10.14
+        ansible_network_os: vyos.vyos.vyos
+        ansible_user: my_vyos_user
 
-   [servers]
-   server01 ansible_host=10.16.10.15 ansible_user=my_server_user
-   server02 ansible_host=10.16.10.16 ansible_user=my_server_user
+  network:
+    children:
+      leafs
+      spines
 
-   [datacenter:children]
-   leafs
-   spines
-   servers
+  webservers:
+    hosts:
+      webserver01:
+        ansible_host: 10.16.10.15
+        ansible_user: my_server_user
+      webserver02:
+        ansible_host: 10.16.10.16
+        ansible_user: my_server_user
+
+  datacenter:
+    children:
+      network
+      webservers
+
 
 Group Variables within Inventory
 ================================================================================
 
 When devices in a group share the same variable values, such as OS or SSH user, you can reduce duplication and simplify maintenance by consolidating these into group variables:
 
-.. code-block:: ini
+.. code-block:: YAML
 
-   [leafs]
-   leaf01 ansible_host=10.16.10.11
-   leaf02 ansible_host=10.16.10.12
+  ---
 
-   [leafs:vars]
-   ansible_network_os=vyos
-   ansible_user=my_vyos_user
+  leafs:
+    hosts:
+      leaf01:
+        ansible_host: 10.16.10.11
+      leaf02:
+        ansible_host: 10.16.10.12
+    vars:
+      ansible_network_os: vyos.vyos.vyos
+      ansible_user: my_vyos_user
 
-   [spines]
-   spine01 ansible_host=10.16.10.13
-   spine02 ansible_host=10.16.10.14
+  spines:
+    hosts:
+      spine01:
+        ansible_host: 10.16.10.13
+    spine02:
+        ansible_host: 10.16.10.14
+    vars:
+      ansible_network_os: vyos.vyos.vyos
+      ansible_user: my_vyos_user
 
-   [spines:vars]
-   ansible_network_os=vyos
-   ansible_user=my_vyos_user
+  network:
+    children:
+      leafs
+      spines
 
-   [network:children]
-   leafs
-   spines
+  webservers:
+    hosts:
+      webserver01:
+        ansible_host: 10.16.10.15
+      webserver02:
+        ansible_host: 10.16.10.16
+    vars:
+      ansible_user: my_server_user
 
-   [servers]
-   server01 ansible_host=10.16.10.15
-   server02 ansible_host=10.16.10.16
+  datacenter:
+    children:
+      network
+      webservers
 
-   [datacenter:children]
-   leafs
-   spines
-   servers
-
-Variable Syntax
+Variable syntax
 ================================================================================
 
-The syntax for variable values is different in inventory, in playbooks and in ``group_vars`` files, which are covered below. Even though playbook and ``group_vars`` files are both written in YAML, you use variables differently in each.
+The syntax for variable values is different in inventory, in playbooks, and in the ``group_vars`` files, which are covered below. Even though playbook and ``group_vars`` files are both written in YAML, you use variables differently in each.
 
-- In an ini-style inventory file you **must** use the syntax ``key=value`` for variable values: ``ansible_network_os=vyos``.
-- In any file with the ``.yml`` or ``.yaml`` extension, including playbooks and ``group_vars`` files, you **must** use YAML syntax: ``key: value``
+- In an ini-style inventory file you **must** use the syntax ``key=value`` for variable values: ``ansible_network_os=vyos.vyos.vyos``.
+- In any file with the ``.yml`` or ``.yaml`` extension, including playbooks and ``group_vars`` files, you **must** use YAML syntax: ``key: value``.
 
-  - In ``group_vars`` files, use the full ``key`` name: ``ansible_network_os: vyos``.
-  - In playbooks, use the short-form ``key`` name, which drops the ``ansible`` prefix: ``network_os: vyos``
+- In ``group_vars`` files, use the full ``key`` name: ``ansible_network_os: vyos.vyos.vyos``.
+- In playbooks, use the short-form ``key`` name, which drops the ``ansible`` prefix: ``network_os: vyos.vyos.vyos``.
 
 
-Group Inventory by Platform
+Group inventory by platform
 ================================================================================
 
 As your inventory grows, you may want to group devices by platform. This allows you to specify platform-specific variables easily for all devices on that platform:
 
-.. code-block:: ini
+.. code-block:: YAML
 
-   [vyos_leafs]
-   leaf01 ansible_host=10.16.10.11
-   leaf02 ansible_host=10.16.10.12
+  ---
 
-   [vyos_spines]
-   spine01 ansible_host=10.16.10.13
-   spine02 ansible_host=10.16.10.14
+  vyos_leafs:
+    hosts:
+      leaf01:
+        ansible_host: 10.16.10.11
+      leaf02:
+        ansible_host: 10.16.10.12
 
-   [vyos:children]
-   vyos_leafs
-   vyos_spines
+  vyos_spines:
+    hosts:
+      spine01:
+        ansible_host: 10.16.10.13
+      spine02:
+        ansible_host: 10.16.10.14
 
-   [vyos:vars]
-   ansible_connection=network_cli
-   ansible_network_os=vyos
-   ansible_user=my_vyos_user
+  vyos:
+    children:
+      vyos_leafs:
+      vyos_spines:
+    vars:
+      ansible_connection: ansible.netcommon.network_cli
+      ansible_network_os: vyos.vyos.vyos
+      ansible_user: my_vyos_user
 
-   [network:children]
-   vyos
+  network:
+    children:
+      vyos:
 
-   [servers]
-   server01 ansible_host=10.16.10.15
-   server02 ansible_host=10.16.10.16
+  webservers:
+    hosts:
+      webserver01:
+        ansible_host: 10.16.10.15
+      webserver02:
+        ansible_host: 10.16.10.16
+    vars:
+      ansible_user: my_server_user
 
-   [datacenter:children]
-   vyos
-   servers
+  datacenter:
+    children:
+      network:
+      webservers:
 
-With this setup, you can run first_playbook.yml with only two flags:
+With this setup, you can run ``first_playbook.yml`` with only two flags:
 
 .. code-block:: console
 
@@ -162,7 +243,7 @@ With this setup, you can run first_playbook.yml with only two flags:
 With the ``-k`` flag, you provide the SSH password(s) at the prompt. Alternatively, you can store SSH and other secrets and passwords securely in your group_vars files with ``ansible-vault``.
 
 
-Protecting Sensitive Variables with ``ansible-vault``
+Protecting sensitive variables with ``ansible-vault``
 ================================================================================
 
 The ``ansible-vault`` command provides encryption for files and/or individual variables like passwords. This tutorial will show you how to encrypt a single SSH password. You can use the commands below to encrypt other sensitive information, such as database passwords, privilege-escalation passwords and more.
