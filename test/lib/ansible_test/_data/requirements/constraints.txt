@@ -17,7 +17,6 @@ idna < 2.6, >= 2.5 # linode requires idna < 2.9, >= 2.5, requests requires idna 
 paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6
 pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 2.6
 pytest < 5.0.0 ; python_version == '2.7' # pytest 5.0.0 and later will no longer support python 2.7
-pytest < 6.0.0 ; python_version > '2.7' # pytest 6.0.0 and later have issues with relative imports (further investigation required)
 pytest-forked < 1.0.2 ; python_version < '2.7' # pytest-forked 1.0.2 and later require python 2.7 or later
 pytest-forked >= 1.0.2 ; python_version >= '2.7' # pytest-forked before 1.0.2 does not work with pytest 4.2.0+ (which requires python 2.7+)
 ntlm-auth >= 1.3.0 # message encryption support using cryptography
