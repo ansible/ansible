@@ -57,6 +57,15 @@ options:
         description:
             - A regular expression or pattern which should be matched against the file content.
         type: str
+    read_whole_file:
+        description:
+            - When doing a C(contains) search, determines whether the whole file should be read into
+              memory or if the regex should be applied to the file line-by-line.
+            - Setting this to C(true) can have performance and memory implications for large files.
+            - This uses C(re.search()) instead of C(re.match()).
+        type: bool
+        default: false
+        version_added: "2.11"
     paths:
         description:
             - List of paths of directories to search. All paths must be fully qualified.
@@ -283,11 +292,12 @@ def sizefilter(st, size):
     return False
 
 
-def contentfilter(fsname, pattern):
+def contentfilter(fsname, pattern, read_whole_file=False):
     """
     Filter files which contain the given expression
     :arg fsname: Filename to scan for lines matching a pattern
     :arg pattern: Pattern to look for inside of line
+    :arg read_whole_file: If true, the whole file is read into memory before the regex is applied against it. Otherwise, the regex is applied line-by-line.
     :rtype: bool
     :returns: True if one of the lines in fsname matches the pattern. Otherwise False
     """
@@ -298,6 +308,9 @@ def contentfilter(fsname, pattern):
 
     try:
         with open(fsname) as f:
+            if read_whole_file:
+                return bool(prog.search(f.read()))
+
             for line in f:
                 if prog.match(line):
                     return True
@@ -363,6 +376,7 @@ def main():
             patterns=dict(type='list', default=['*'], aliases=['pattern'], elements='str'),
             excludes=dict(type='list', aliases=['exclude'], elements='str'),
             contains=dict(type='str'),
+            read_whole_file=dict(type='bool', default=False),
             file_type=dict(type='str', default="file", choices=['any', 'directory', 'file', 'link']),
             age=dict(type='str'),
             age_stamp=dict(type='str', default="mtime", choices=['atime', 'ctime', 'mtime']),
@@ -445,7 +459,7 @@ def main():
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
                         if pfilter(fsobj, params['patterns'], params['excludes'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
-                           sizefilter(st, size) and contentfilter(fsname, params['contains']):
+                           sizefilter(st, size) and contentfilter(fsname, params['contains'], params['read_whole_file']):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
