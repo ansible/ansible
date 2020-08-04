@@ -63,6 +63,9 @@ options:
               memory or if the regex should be applied to the file line-by-line.
             - Setting this to C(true) can have performance and memory implications for large files.
             - This uses C(re.search()) instead of C(re.match()).
+        type: bool
+        default: false
+        version_added: "2.11"
     paths:
         description:
             - List of paths of directories to search. All paths must be fully qualified.
