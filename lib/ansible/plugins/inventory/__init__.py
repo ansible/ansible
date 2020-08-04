@@ -232,7 +232,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.set_options(direct=config)
         if 'cache' in self._options and self.get_option('cache'):
             cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
-            cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
+            cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]) is not None)
             self._cache = get_cache_plugin(self.get_option('cache_plugin'), **cache_options)
 
         return config
@@ -320,7 +320,7 @@ class Cacheable(object):
     def load_cache_plugin(self):
         plugin_name = self.get_option('cache_plugin')
         cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
-        cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]))
+        cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]) is not None)
         self._cache = get_cache_plugin(plugin_name, **cache_options)
 
     def get_cache_key(self, path):

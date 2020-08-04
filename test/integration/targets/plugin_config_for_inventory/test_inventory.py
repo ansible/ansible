@@ -18,6 +18,31 @@ DOCUMENTATION = '''
                 - seine-et-marne
                 - haute-garonne
             required: False
+        cache:
+            description: cache
+            type: bool
+            default: false
+            required: False
+        cache_plugin:
+            description: cache plugin
+            type: str
+            default: none
+            required: False
+        cache_timeout:
+            description: test cache parameter
+            type: integer
+            default: 7
+            required: False
+        cache_connection:
+            description: cache connection
+            type: str
+            default: /tmp/foo
+            required: False
+        cache_prefix:
+            description: cache prefix
+            type: str
+            default: prefix_
+            required: False
 '''
 
 EXAMPLES = '''
@@ -49,3 +74,10 @@ class InventoryModule(BaseInventoryPlugin):
         self.inventory.add_group(group)
         self.inventory.add_host(group=group, host=host)
         self.inventory.set_variable(host, 'departments', departments)
+
+        # Ensure the timeout we're given gets sent to the cache plugin
+        if self.get_option('cache'):
+            given_timeout = self.get_option('cache_timeout')
+            cache_timeout = self._cache._plugin.get_option('_timeout')
+            self.inventory.set_variable(host, 'given_timeout', given_timeout)
+            self.inventory.set_variable(host, 'cache_timeout', cache_timeout)
