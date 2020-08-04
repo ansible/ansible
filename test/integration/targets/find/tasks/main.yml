@@ -114,3 +114,82 @@
           - 'find_test3.matched == 1'
           - 'find_test3.files[0].pw_name is defined'
           - 'find_test3.files[0].gr_name is defined'
+
+- name: Copy some files into the test dir
+  copy:
+      src: "{{ item }}"
+      dest: "{{ output_dir_test }}/{{ item }}"
+      mode: 0644
+  with_items:
+      - a.txt
+      - log.txt
+
+- name: Ensure '$' only matches the true end of the file with read_whole_file, not a line
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.txt"
+      contains: "KO$"
+      read_whole_file: true
+  register: whole_no_match
+
+- debug: var=whole_no_match
+
+- assert:
+      that:
+          - whole_no_match.matched == 0
+
+- name: Match the end of the file successfully
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.txt"
+      contains: "OK$"
+      read_whole_file: true
+  register: whole_match
+
+- debug: var=whole_match
+
+- assert:
+      that:
+          - whole_match.matched == 1
+
+- name: When read_whole_file=False, $ should match an individual line
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.txt"
+      contains: ".*KO$"
+      read_whole_file: false
+  register: match_end_of_line
+
+- debug: var=match_end_of_line
+
+- assert:
+      that:
+          - match_end_of_line.matched == 1
+
+- name: When read_whole_file=True, match across line boundaries
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.txt"
+      contains: "has\na few"
+      read_whole_file: true
+  register: match_line_boundaries
+
+- debug: var=match_line_boundaries
+
+- assert:
+      that:
+          - match_line_boundaries.matched == 1
+
+- name: When read_whole_file=False, do not match across line boundaries
+  find:
+      paths: "{{ output_dir_test }}"
+      patterns: "*.txt"
+      contains: "has\na few"
+      read_whole_file: false
+  register: no_match_line_boundaries
+
+- debug: var=no_match_line_boundaries
+
+- assert:
+      that:
+          - no_match_line_boundaries.matched == 0
