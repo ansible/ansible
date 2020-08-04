@@ -148,7 +148,7 @@ run, Ansible will attempt to change ownership of the module file using
 :command:`chown` for systems which support doing so as an unprivileged user.
 
 New in Ansible 2.11, at this point, Ansible will try :command:`chmod +a` which
-is a MacOS-specific way of setting ACLs on files.
+is a macOS-specific way of setting ACLs on files.
 
 New in Ansible 2.10, if all of the above fails, Ansible will then check the
 value of the configuration setting ``ansible_common_remote_group``. Many
