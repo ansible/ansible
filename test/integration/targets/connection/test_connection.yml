@@ -1,4 +1,5 @@
 - hosts: "{{ target_hosts }}"
+  gather_facts: no
   serial: 1
   tasks:
 
@@ -40,6 +41,3 @@
 
   ### test wait_for_connection plugin
   - wait_for_connection:
-
-  - command: rc-service sshd restart
-    when: ansible_distribution == 'Alpine'
