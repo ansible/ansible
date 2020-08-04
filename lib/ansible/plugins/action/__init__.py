@@ -510,7 +510,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
           file with chown which only works in case the remote_user is
           privileged or the remote systems allows chown calls by unprivileged
           users (e.g. HP-UX)
-        * If the above fails, we next try 'chmod +a' which is a MacOS way of
+        * If the above fails, we next try 'chmod +a' which is a macOS way of
           setting ACLs on files.
         * If the above fails, we check if ansible_common_remote_group is set.
           If it is, we attempt to chgrp the file to its value. This is useful
