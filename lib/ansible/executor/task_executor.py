@@ -628,7 +628,7 @@ class TaskExecutor:
                 else:
                     # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                     af = wrap_var(result['ansible_facts'])
-                    vars_copy.update(namespace_facts(af))
+                    vars_copy['ansible_facts'] = combine_vars(vars_copy.get('ansible_facts', {}), namespace_facts(af))
                     if C.INJECT_FACTS_AS_VARS:
                         vars_copy.update(clean_facts(af))
 
@@ -692,7 +692,7 @@ class TaskExecutor:
             else:
                 # TODO: cleaning of facts should eventually become part of taskresults instead of vars
                 af = wrap_var(result['ansible_facts'])
-                variables.update(namespace_facts(af))
+                variables['ansible_facts'] = combine_vars(variables.get('ansible_facts', {}), namespace_facts(af))
                 if C.INJECT_FACTS_AS_VARS:
                     variables.update(clean_facts(af))
 
