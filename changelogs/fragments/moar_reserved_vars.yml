@@ -1,0 +1,2 @@
+bugfixes:
+  - Handle more varnames that can create conflicts, expand function in general, handle jinja2 globasl in particular.

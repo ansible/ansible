@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: false
+  vars:
+    namesapce: jinja2 uses me internally
+  tasks:
+    - debug: msg={{namespace}}
