@@ -1,6 +1,6 @@
 - hosts: localhost
   gather_facts: false
   vars:
-    namespace: jinja2 uses me internally
+    lipsum: jinja2 uses me internally
   tasks:
-    - debug: msg={{namespace}}
+    - debug:
