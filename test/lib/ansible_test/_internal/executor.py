@@ -498,7 +498,9 @@ def command_posix_integration(args):
 
     all_targets = tuple(walk_posix_integration_targets(include_hidden=True))
     internal_targets = command_integration_filter(args, all_targets)
+    print('aaaa')
     command_integration_filtered(args, internal_targets, all_targets, inventory_path)
+    print('aaab')
 
 
 def command_network_integration(args):
@@ -1434,6 +1436,7 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
     :type remote_temp_path: str | None
     """
     display.info('Running %s integration test script' % target.name)
+    print('aaba')
 
     env_config = None
 
@@ -1465,8 +1468,10 @@ def command_integration_script(args, target, test_dir, inventory_path, temp_path
                 cmd += ['-e', '@%s' % config_path]
 
             module_coverage = 'non_local/' not in target.aliases
+            print('aabb')
             intercept_command(args, cmd, target_name=target.name, env=env, cwd=cwd, temp_path=temp_path,
                               remote_temp_path=remote_temp_path, module_coverage=module_coverage)
+            print('aabc')
 
 
 def command_integration_role(args, target, start_at_task, test_dir, inventory_path, temp_path, remote_temp_path=None):
