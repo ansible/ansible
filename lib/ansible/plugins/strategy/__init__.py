@@ -1138,8 +1138,7 @@ class StrategyBase:
 
         skipped = False
         msg = ''
-        # The top-level conditions should only compare meta_action
-        self._tqm.send_callback('v2_playbook_on_meta_start', task)
+        self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
         if meta_action == 'noop':
             # FIXME: issue a callback for the noop here?
             if task.when:

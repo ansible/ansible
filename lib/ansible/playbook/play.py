@@ -266,7 +266,10 @@ class Play(Base, Taggable, CollectionSearch):
         # task, so we can be sure to run handlers at certain points
         # of the playbook execution
         flush_block = Block.load(
-            data={'meta': 'flush_handlers'},
+            data={
+                'meta': 'flush_handlers',
+                'implicit': True,
+            },
             play=self,
             variable_manager=self._variable_manager,
             loader=self._loader

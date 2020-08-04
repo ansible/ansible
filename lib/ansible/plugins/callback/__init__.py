@@ -380,9 +380,6 @@ class CallbackBase(AnsiblePlugin):
     def v2_playbook_on_task_start(self, task, is_conditional):
         self.playbook_on_task_start(task.name, is_conditional)
 
-    def v2_playbook_on_meta_start(self, task):
-        pass  # no v1 correspondence
-
     # FIXME: not called
     def v2_playbook_on_cleanup_task_start(self, task):
         pass  # no v1 correspondence

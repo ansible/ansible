@@ -77,6 +77,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')
     _failed_when = FieldAttribute(isa='list', default=list)
+    _implicit = FieldAttribute(isa='bool', default=False, private=True, inherit=False)
     _loop = FieldAttribute()
     _loop_control = FieldAttribute(isa='class', class_type=LoopControl, inherit=False)
     _notify = FieldAttribute(isa='list')

@@ -1,2 +1,2 @@
 minor_changes:
-  - New callback hook, ``v2_playbook_on_meta_start``, which gets triggered whenever a meta task is executed by the strategy subsystem.
+  - callback plugins - ``meta`` tasks now get sent to ``v2_playbook_on_task_start``. Explicit callbacks are always sent. Plugins can opt in to receiving implicit ones.
