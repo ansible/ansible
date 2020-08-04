@@ -1,9 +1,9 @@
 .. _developing_modules_general:
 .. _module_dev_tutorial_sample:
 
-*******************************************
+**************************
 Developing Ansible modules
-*******************************************
+**************************
 
 A module is a reusable, standalone script that Ansible runs on your behalf, either locally or remotely. Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepts arguments, and returns information to Ansible by printing a JSON string to stdout before exiting. 
 
@@ -18,7 +18,7 @@ Preparing an environment for developing Ansible modules
 =======================================================
 
 Installing prerequisites via apt (Ubuntu)
-------------------------------
+-----------------------------------------
 
 Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
 
@@ -28,7 +28,7 @@ Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
     sudo apt install build-essential libssl-dev libffi-dev python-dev
 
 Creating a common development environment
-------------------------------
+-----------------------------------------
 
 1. Clone the Ansible repository:
    ``$ git clone https://github.com/ansible/ansible.git``
@@ -49,7 +49,7 @@ Creating a common development environment
 
 
 Creating a module
-=====================
+=================
 
 To create a module:
 
@@ -189,14 +189,14 @@ To create a module:
 
 
 Verifying your module code
-===========================
+==========================
 
 Once you've modified the sample code above to do what you want, you can try out your module.
 Our :ref:`debugging tips <debugging_modules>` will help if you run into bugs as you verify your module code.
 
 
 Verifying your module code locally
-------------------------------
+----------------------------------
 
 If your module does not need to target a remote host, you can quickly and easily exercise your code locally like this:
 
@@ -225,7 +225,7 @@ This should return output like this:
 
 
 Verifying your module code in a playbook
-------------------------------------
+----------------------------------------
 
 The next step in verifying your new module is to consume it with an Ansible playbook.
 
@@ -247,13 +247,13 @@ The next step in verifying your new module is to consume it with an Ansible play
 - Run the playbook and analyze the output: ``$ ansible-playbook ./testmod.yml``
 
 Testing your newly-created module
-====================
+=================================
 
 The following two examples will get you started with testing your module code. Please review our :ref:`testing <developing_testing>` section for more detailed
 information, including instructions for :ref:`testing module documentation <testing_module_documentation>`, adding :ref:`integration tests <testing_integration>`, and more.
 
 Performing sanity tests
-------------
+-----------------------
 
 You can run through Ansible's sanity checks in a container:
 
@@ -263,7 +263,7 @@ You can run through Ansible's sanity checks in a container:
 	Note that this example requires Docker to be installed and running. If you'd rather not use a container for this, you can choose to use ``--venv`` instead of ``--docker``.
 
 Performing unit tests
-----------
+---------------------
 
 You can add unit tests for your module in ``./test/units/modules``. You must first set up your testing environment. In this example, we're using Python 3.5.
 
