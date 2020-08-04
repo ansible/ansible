@@ -67,3 +67,5 @@ ANSIBLE_SCP_IF_SSH=true ./posix.sh "$@" "${scp_args[@]}"
 ANSIBLE_SSH_TRANSFER_METHOD=piped ./posix.sh "$@"
 
 echo 'made it here'
+
+exit 1
