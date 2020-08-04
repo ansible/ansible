@@ -1,3 +1,4 @@
 needs/ssh
 shippable/posix/group1
 skip/aix
+disabled
