@@ -798,9 +798,16 @@ class TarXzArchive(TgzArchive):
         self.zipflag = '-J'
 
 
+# Class to handle zstd compressed tar files
+class TarZstdArchive(TgzArchive):
+    def __init__(self, src, b_dest, file_args, module):
+        super(TarZstdArchive, self).__init__(src, b_dest, file_args, module)
+        self.zipflag = '--zstd'
+
+
 # try handlers in order and return the one that works or bail if none work
 def pick_handler(src, dest, file_args, module):
-    handlers = [ZipArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive]
+    handlers = [ZipArchive, TgzArchive, TarArchive, TarBzipArchive, TarXzArchive, TarZstdArchive]
     reasons = set()
     for handler in handlers:
         obj = handler(src, dest, file_args, module)
