@@ -8,7 +8,7 @@ set -ux
             -e ansible_password=foo \
             -e ansible_user=definitelynotroot \
         -i test_connection.inventory \
-            ssh-pipelining
+            ssh-no-pipelining
         ret=$?
         # 124 is EXIT_TIMEDOUT from gnu coreutils
         # 143 is 128+SIGTERM(15) from BusyBox
