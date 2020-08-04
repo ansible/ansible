@@ -1,0 +1,6 @@
+plugin: constructed
+strict: true
+use_extra_vars: True
+compose:
+  example: " 'hello' +  from_extras"
+
