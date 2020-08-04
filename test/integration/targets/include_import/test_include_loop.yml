@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: skipped include undefined loop
+      include_tasks: doesnt_matter.yml
+      loop: '{{ lkjsdflkjsdlfkjsdlfkjsdf }}'
+      when: false
+      register: skipped_include
+
+    - debug:
+        var: skipped_include
+
+    - assert:
+        that:
+          - skipped_include.results is undefined
+          - skipped_include.skip_reason is defined
+          - skipped_include is skipped
