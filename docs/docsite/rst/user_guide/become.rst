@@ -147,7 +147,10 @@ Next, if POSIX ACLs are **not** available or :command:`setfacl` could not be
 run, Ansible will attempt to change ownership of the module file using
 :command:`chown` for systems which support doing so as an unprivileged user.
 
-New in Ansible 2.10, if the :command:`chown` fails, Ansible will then check the
+New in Ansible 2.11, at this point, Ansible will try :command:`chmod +a` which
+is a macOS-specific way of setting ACLs on files.
+
+New in Ansible 2.10, if all of the above fails, Ansible will then check the
 value of the configuration setting ``ansible_common_remote_group``. Many
 systems will allow a given user to change the group ownership of a file to a
 group the user is in. As a result, if the second unprivileged user (the
