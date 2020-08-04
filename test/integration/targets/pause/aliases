@@ -1,3 +1,4 @@
 needs/target/setup_pexpect
 shippable/posix/group1
 skip/aix
+disabled
