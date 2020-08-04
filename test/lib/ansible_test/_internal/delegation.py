@@ -368,7 +368,11 @@ def delegate_docker(args, exclude, require, integration_targets):
                 cmd_options += ['--user', 'pytest']
 
             try:
+                print(1)
+                print((args, test_id, cmd))
+                print(cmd_options)
                 docker_exec(args, test_id, cmd, options=cmd_options)
+                print(2)
                 # docker_exec will throw SubprocessError if not successful
                 # If we make it here, all the prep work earlier and the docker_exec line above were all successful.
                 success = True

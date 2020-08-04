@@ -311,7 +311,7 @@ def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=Fal
     :rtype: str | None, str | None
     """
     env = docker_environment()
-    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
+    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data, cmd_verbosity=0)
 
 
 def docker_environment():
