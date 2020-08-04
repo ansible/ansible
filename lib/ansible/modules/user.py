@@ -38,6 +38,7 @@ options:
     non_unique:
         description:
             - Optionally when used with the C(-u) option, this option allows to change the user ID to a non-unique value.
+            - Not supported on distributions using BusyBox.
         type: bool
         default: no
         version_added: "1.1"
@@ -148,6 +149,7 @@ options:
         description:
             - Whether to generate a SSH key for the user in question.
             - This will B(not) overwrite an existing SSH key unless used with O(force=yes).
+            - Requires C(ssh-keygen) from OpenSSH.
         type: bool
         default: no
         version_added: "0.9"
@@ -217,6 +219,7 @@ options:
             - This will check C(/etc/passwd) for an existing account before invoking commands. If the local account database
               exists somewhere other than C(/etc/passwd), this setting will not work properly.
             - This requires that the above commands as well as C(/etc/passwd) must exist on the target host, otherwise it will be a fatal error.
+            - Not supported on distributions using BusyBox.
         type: bool
         default: no
         version_added: "2.4"
@@ -311,6 +314,8 @@ notes:
     C(/Library/Preferences/com.apple.loginwindow.plist).
   - On FreeBSD, this module uses C(pw useradd) and C(chpass) to create, C(pw usermod) and C(chpass) to modify,
     C(pw userdel) remove, C(pw lock) to lock, and C(pw unlock) to unlock accounts.
+  - On distributions using BusyBox, this module uses C(adduser), C(chpasswd), C(deluser), and C(delgroup).
+    The C(/etc/passwd) file is modified directly by this module.
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
 seealso:
