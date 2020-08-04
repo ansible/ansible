@@ -15,7 +15,7 @@ Ansible ships thousands of default modules, and you can easily write your own cu
 .. _environment_setup:
 
 Preparing an environment for developing Ansible modules
-=================
+=======================================================
 
 Installing prerequisites via apt (Ubuntu)
 ------------------------------
