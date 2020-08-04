@@ -114,3 +114,5 @@ test "$(grep -c 'ok=3' test_allow_single_role_dup.out)" = 1
 
 # https://github.com/ansible/ansible/issues/66764
 ANSIBLE_HOST_PATTERN_MISMATCH=error ansible-playbook empty_group_warning/playbook.yml
+
+ansible-playbook test_include_loop.yml "$@"
