@@ -1,0 +1,24 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - block:
+      - name: Test nested undefined var fails, single node
+        debug:
+          msg: "{{ [{ 'key': nested_and_undefined }] }}"
+        register: result
+        ignore_errors: yes
+
+      - assert:
+          that:
+            - "\"'nested_and_undefined' is undefined\" in result.msg"
+
+      - name: Test nested undefined var fails, multiple nodes
+        debug:
+          msg: "{{ [{ 'key': nested_and_undefined}] }} second_node"
+        register: result
+        ignore_errors: yes
+
+      - assert:
+          that:
+            - "\"'nested_and_undefined' is undefined\" in result.msg"
+      when: lookup('pipe', ansible_python_interpreter ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.10', '>=')
