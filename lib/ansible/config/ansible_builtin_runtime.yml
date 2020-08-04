@@ -9485,7 +9485,7 @@ plugin_routing:
     fortianalyzer:
       redirect: community.network.fortianalyzer
     fortimanager:
-      redirect: fortinet.fortios.fortimanager
+      redirect: fortinet.fortimanager.fortimanager
     ftd:
       redirect: community.network.ftd
     vmware:
