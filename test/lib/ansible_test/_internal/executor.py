@@ -1198,6 +1198,7 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
                 display.verbosity = args.verbosity = verbosity
 
     finally:
+        print('FINALLY')
         if not args.explain:
             if args.coverage:
                 coverage_temp_path = os.path.join(common_temp_path, ResultType.COVERAGE.name)
@@ -1215,7 +1216,9 @@ def command_integration_filtered(args, targets, all_targets, inventory_path, pre
                 targets=results,
             )
 
+            print('2')
             write_json_test_results(ResultType.DATA, result_name, data)
+            print('3')
 
     if failed:
         raise ApplicationError('The %d integration test(s) listed below (out of %d) failed. See error output above for details:\n%s' % (
@@ -1929,14 +1932,11 @@ class EnvironmentDescription:
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
         known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
 
-        print(1)
         for version in sorted(versions):
             self.check_python_pip_association(version, python_paths, pip_paths, pip_interpreters, warnings)
-        print(2)
 
         for warning in warnings:
             display.warning(warning, unique=True)
-        print(3)
 
         self.data = dict(
             python_paths=python_paths,
@@ -1946,8 +1946,6 @@ class EnvironmentDescription:
             known_hosts_hash=known_hosts_hash,
             warnings=warnings,
         )
-        print(self.data)
-        print(4)
 
     @staticmethod
     def check_python_pip_association(version, python_paths, pip_paths, pip_interpreters, warnings):
