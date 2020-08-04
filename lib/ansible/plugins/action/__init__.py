@@ -518,7 +518,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
           file with chown which only works in case the remote_user is
           privileged or the remote systems allows chown calls by unprivileged
           users (e.g. HP-UX)
-        * If the chown fails, we check if ansible_common_remote_group is set.
+        * If the above fails, we next try 'chmod +a' which is a macOS way of
+          setting ACLs on files.
+        * If the above fails, we check if ansible_common_remote_group is set.
           If it is, we attempt to chgrp the file to its value. This is useful
           if the remote_user has a group in common with the become_user. As the
           remote_user, we can chgrp the file to that group and allow the
@@ -571,12 +573,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if execute:
             chmod_mode = 'rx'
             setfacl_mode = 'r-x'
+            # Apple patches their "file_cmds" chmod with ACL support
+            chmod_acl_mode = '{0} allow read,execute'.format(become_user)
         else:
             chmod_mode = 'rX'
             # TODO: this form fails silently on freebsd.  We currently
             # never call _fixup_perms2() with execute=False but if we
             # start to we'll have to fix this.
             setfacl_mode = 'r-X'
+            # Apple
+            chmod_acl_mode = '{0} allow read'.format(become_user)
 
         # Step 3a: Are we able to use setfacl to add user ACLs to the file?
         res = self._remote_set_user_facl(
@@ -613,7 +619,15 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 'Unprivileged become user would be unable to read the '
                 'file.')
 
-        # Step 3d: Common group
+        # Step 3d: Try macOS's special chmod + ACL
+        # macOS chmod's +a flag takes its own argument. As a slight hack, we
+        # pass that argument as the first element of remote_paths. So we end
+        # up running `chmod +a [that argument] [file 1] [file 2] ...`
+        res = self._remote_chmod([chmod_acl_mode] + remote_paths, '+a')
+        if res['rc'] == 0:
+            return remote_paths
+
+        # Step 3e: Common group
         # Otherwise, we're a normal user. We failed to chown the paths to the
         # unprivileged user, but if we have a common group with them, we should
         # be able to chown it to that.

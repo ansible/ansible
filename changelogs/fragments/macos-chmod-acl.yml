@@ -1,0 +1,2 @@
+minor_changes:
+  - When connecting as an unprivileged user, and becoming an unprivileged user, we now fall back to also trying ``chmod +a`` which works on macOS and makes use of ACLs.
