@@ -25,6 +25,8 @@ Collections follow a simple data structure. None of the directories are required
     collection/
     ├── docs/
     ├── galaxy.yml
+    ├── meta/
+    │   └── runtime.yml
     ├── plugins/
     │   ├── modules/
     │   │   └── module1.py
@@ -193,6 +195,64 @@ command completion, or environment variables are presented throughout the
 :ref:`developing_testing` documentation; keep in mind that it is not needed for
 Ansible Collection Testing because the act of installing the stable release of
 Ansible containing `ansible-test` is expected to setup those things for you.
+
+.. _meta_runtime_yml:
+
+meta directory
+--------------
+
+A collection can store some additional metadata in a ``runtime.yml`` file in the collection's ``meta`` directory. The ``runtime.yml`` file supports the top level keys:
+
+- *requires_ansible*:
+
+  The version of Ansible required to use the collection. Multiple versions can be separated with a comma.
+
+  .. code:: yaml
+
+     requires_ansible: ">=2.10,<2.11"
+
+  .. note:: although the version is a `PEP440 Version Specifier <https://www.python.org/dev/peps/pep-0440/#version-specifiers>`_ under the hood, Ansible deviates from PEP440 behavior by truncating prerelease segments from the Ansible version. This means that Ansible 2.11.0b1 is compatible with something that ``requires_ansible: ">=2.11"``.
+
+- *plugin_routing*:
+
+  Content in a collection that Ansible needs to load from another location or that has been deprecated/removed.
+  The top level keys of ``plugin_routing`` are types of plugins, with individual plugin names as subkeys.
+  To define a new location for a plugin, set the ``redirect`` field to another name.
+  To deprecate a plugin, use the ``deprecation`` field to provide a custom warning message and the removal date or version. If the plugin has been renamed or moved to a new location, the ``redirect`` field should also be provided. If a plugin is being removed entirely, ``tombstone`` can be used for the fatal error message and removal date or version.
+
+  .. code:: yaml
+
+     plugin_routing:
+       inventory:
+         kubevirt:
+           redirect: community.general.kubevirt
+         my_inventory:
+           tombstone:
+             removal_version: "2.0.0"
+             warning_text: my_inventory has been removed. Please use other_inventory instead.
+       modules:
+         my_module:
+           deprecation:
+             removal_date: "2021-11-30"
+             warning_text: my_module will be removed in a future release of this collection. Use another.collection.new_module instead.
+           redirect: another.collection.new_module
+         podman_image:
+           redirect: containers.podman.podman_image
+       module_utils:
+         ec2:
+           redirect: amazon.aws.ec2
+         util_dir.subdir.my_util:
+           redirect: namespace.name.my_util
+
+- *import_redirection*
+
+  A mapping of names for Python import statements and their redirected locations.
+
+  .. code:: yaml
+
+     import_redirection:
+       ansible.module_utils.old_utility:
+         redirect: ansible_collections.collection_name.plugins.module_utils.new_location
 
 
 .. _creating_collections_skeleton:
