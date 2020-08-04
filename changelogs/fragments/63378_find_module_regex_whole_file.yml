@@ -1,0 +1,2 @@
+minor_changes:
+  - find module - Now has a ``read_whole_file`` boolean parameter which allows for reading the whole file and doing an ``re.search()`` regex evaluation on it when searching using the ``contains`` option. This allows (for example) for ensuring the very end of the file matches a pattern.
