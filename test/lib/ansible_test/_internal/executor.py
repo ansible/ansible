@@ -1929,11 +1929,14 @@ class EnvironmentDescription:
         pip_interpreters = dict((v, self.get_shebang(pip_paths[v])) for v in sorted(pip_paths) if pip_paths[v])
         known_hosts_hash = self.get_hash(os.path.expanduser('~/.ssh/known_hosts'))
 
+        print(1)
         for version in sorted(versions):
             self.check_python_pip_association(version, python_paths, pip_paths, pip_interpreters, warnings)
+        print(2)
 
         for warning in warnings:
             display.warning(warning, unique=True)
+        print(3)
 
         self.data = dict(
             python_paths=python_paths,
@@ -1943,6 +1946,8 @@ class EnvironmentDescription:
             known_hosts_hash=known_hosts_hash,
             warnings=warnings,
         )
+        print(self.data)
+        print(4)
 
     @staticmethod
     def check_python_pip_association(version, python_paths, pip_paths, pip_interpreters, warnings):
