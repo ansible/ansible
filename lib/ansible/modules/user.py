@@ -3018,8 +3018,8 @@ def main():
             shell=dict(type='str'),
             password=dict(type='str', no_log=True),
             login_class=dict(type='str'),
-            password_expire_max=dict(type='int', no_log=True),
-            password_expire_min=dict(type='int', no_log=True),
+            password_expire_max=dict(type='int', no_log=False),
+            password_expire_min=dict(type='int', no_log=False),
             # following options are specific to macOS
             hidden=dict(type='bool'),
             # following options are specific to selinux
