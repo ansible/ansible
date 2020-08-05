@@ -109,6 +109,12 @@ You can read more about privilege escalation in :ref:`become`.
 
 Congratulations! You have contacted your nodes using Ansible. You used a basic inventory file and an ad-hoc command to direct Ansible to connect to specific remote nodes, copy a module file there and execute it, and return output. You have a fully working infrastructure.
 
+Resources
+=================================
+
+* https://github.com/ansible/product-demos
+* https://katacoda.com/rhel-labs
+
 Next steps
 ==========
 Next you can read about more real-world cases in :ref:`intro_adhoc`,
