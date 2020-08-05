@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -ux
-
+apk add coreutils
         timeout 5 ansible -m ping \
             -e ansible_connection=ssh \
             -e ansible_sshpass_prompt=notThis: \
