@@ -23,6 +23,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
+from ansible.utils.sentinel import Sentinel
 
 
 class Taggable:
@@ -34,28 +35,31 @@ class Taggable:
         if isinstance(ds, list):
             return ds
         elif isinstance(ds, string_types):
-            value = ds.split(',')
-            if isinstance(value, list):
+            if ',' in ds:
+                value = ds.split(',')
                 return [x.strip() for x in value]
             else:
-                return [ds]
+                return ds
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
+
+    def _post_validate_tags(self, attr, value, templar):
+        # This is here to keep evaluate_tags() in sync with general post validation
+        parent_value = Sentinel
+        if hasattr(self, '_parent') and hasattr(self._parent, '_post_validate_tags'):
+            parent_value = self._parent._post_validate_tags(self._parent._tags, getattr(self._parent, 'tags'), templar)
+        value = templar.template(value)
+        if hasattr(self, '_extend_post_validated_value'):
+            return self._extend_post_validated_value(value, parent_value)
+        else:
+            return value
 
     def evaluate_tags(self, only_tags, skip_tags, all_vars):
         ''' this checks if the current item should be executed depending on tag options '''
 
         if self.tags:
             templar = Templar(loader=self._loader, variables=all_vars)
-            tags = templar.template(self.tags)
-
-            _temp_tags = set()
-            for tag in tags:
-                if isinstance(tag, list):
-                    _temp_tags.update(tag)
-                else:
-                    _temp_tags.add(tag)
-            tags = _temp_tags
+            tags = set(self._post_validate_tags(self._tags, self.tags, templar))
             self.tags = list(tags)
         else:
             # this makes isdisjoint work for untagged

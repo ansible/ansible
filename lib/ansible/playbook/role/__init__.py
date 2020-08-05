@@ -34,6 +34,7 @@ from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.vars import combine_vars
+from ansible.utils.sentinel import Sentinel
 
 
 __all__ = ['Role', 'hash_params']
@@ -197,10 +198,10 @@ class Role(Base, Conditional, Taggable, CollectionSearch):
         # update self._attributes directly, to avoid squashing
         for (attr_name, _) in iteritems(self._valid_attrs):
             if attr_name in ('when', 'tags'):
-                self._attributes[attr_name] = self._extend_value(
-                    self._attributes[attr_name],
-                    role_include._attributes[attr_name],
-                )
+                if not self._attributes[attr_name] is Sentinel:
+                    self._attributes[attr_name] = self._attributes[attr_name]
+                else:
+                    self._attributes[attr_name] = role_include._attributes[attr_name]
             else:
                 self._attributes[attr_name] = role_include._attributes[attr_name]
 

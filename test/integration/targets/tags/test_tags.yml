@@ -5,6 +5,11 @@
   vars:
     the_tags:
       - tag3
+    extend_tags:
+      - tag4
+      - tag5
+    additional_tags:
+      - tag6
   tasks:
     - name: Task_with_tag
       debug: msg=
@@ -31,3 +36,23 @@
     - name: Task_with_templated_tags
       debug: msg=templated
       tags: "{{ the_tags }}"
+    - name: Block_with_extend
+      tags: "{{ extend_tags }}"
+      block:
+      - name: Task_in_block_with_implicit_extended_tags
+        debug:
+        # Tag inherits and extends - no tags is implicitly
+        # tags: "{{ extend_tags }}"
+      - name: Task_in_block_with_extended_tags
+        debug:
+        tags: "{{ extend_tags }}"
+      - name: modifiy extend_tags to verify correct templar is used
+        set_fact:
+          extend_tags:
+            - tag5
+            - tag7
+      - name: Task_in_block_with_added_tag
+        debug:
+        tags: "{{ additional_tags }}"
+      - name: Task_in_block_with_dynamic_inherited_tag
+        debug:

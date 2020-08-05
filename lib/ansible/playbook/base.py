@@ -426,6 +426,12 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
                     value = method(attribute, getattr(self, name), templar)
                 elif attribute.isa == 'class':
                     value = getattr(self, name)
+                elif attribute.isa == 'list' and attribute.extend and hasattr(self, '_parent'):
+                    parent_value = Sentinel
+                    if self._parent:
+                        parent_value = templar.template(getattr(self._parent, name))
+                    value = templar.template(getattr(self, name))
+                    value = self._extend_post_validated_value(value, parent_value, prepend=attribute.prepend)
                 else:
                     # if the attribute contains a variable, template it now
                     value = templar.template(getattr(self, name))
@@ -493,13 +499,62 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         except TypeError as e:
             raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds, orig_exc=e)
 
-    def _extend_value(self, value, new_value, prepend=False):
+    def _post_validate_environment(self, attr, value, templar):
         '''
-        Will extend the value given with new_value (and will turn both
-        into lists if they are not so already). The values are run through
-        a set to remove duplicate values.
+        Override post validation of vars on the play, as we don't want to
+        template these too early.
         '''
+        parent_value = Sentinel
+        if hasattr(self, '_parent') and self._parent:
+            parent_value = self._parent._post_validate_environment(self._parent._environment, getattr(self._parent, 'environment'), templar)
+        env = {}
 
+        if value == [] and parent_value is Sentinel or not parent_value:
+            return []
+
+        if value is not None:
+            value = self._extend_post_validated_value(value, parent_value, prepend=True)
+
+            def _parse_env_kv(k, v):
+                try:
+                    env[k] = templar.template(v, convert_bare=False)
+                except AnsibleUndefinedVariable as e:
+                    error = to_native(e)
+                    if hasattr(self, 'action') and self.action in ('setup', 'gather_facts') and 'ansible_facts.env' in error or 'ansible_env' in error:
+                        # ignore as fact gathering is required for 'env' facts
+                        return
+                    raise
+
+            if isinstance(value, list):
+                for env_item in value:
+                    if isinstance(env_item, dict):
+                        for k in env_item:
+                            _parse_env_kv(k, env_item[k])
+                    else:
+                        isdict = templar.template(env_item, convert_bare=False)
+                        if isinstance(isdict, dict):
+                            env.update(isdict)
+                        else:
+                            display.warning("could not parse environment value, skipping: %s" % value)
+
+            elif isinstance(value, dict):
+                # should not really happen
+                env = dict()
+                for env_item in value:
+                    _parse_env_kv(env_item, value[env_item])
+            else:
+                # at this point it should be a simple string, also should not happen
+                env = templar.template(value, convert_bare=False)
+        elif not parent_value is Sentinel:
+            env = parent_value
+
+        return env
+
+    def _extend_value(self, value, new_value, prepend=False):
+        # Here for backwards compatibility - use _extend_post_validated_value instead
+        return self._extend_post_validated_value(value, new_value, prepend=prepend)
+
+    def _extend_post_validated_value(self, value, new_value, prepend=False):
         if not isinstance(value, list):
             value = [value]
         if not isinstance(new_value, list):
@@ -602,10 +657,10 @@ class Base(FieldAttributeBase):
     _vars = FieldAttribute(isa='dict', priority=100, inherit=False, static=True)
 
     # module default params
-    _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True)
+    _module_defaults = FieldAttribute(isa='list', extend=True, prepend=True, always_post_validate=True)
 
     # flags and misc. settings
-    _environment = FieldAttribute(isa='list', extend=True, prepend=True)
+    _environment = FieldAttribute(isa='list', extend=True, prepend=True, always_post_validate=True)
     _no_log = FieldAttribute(isa='bool')
     _run_once = FieldAttribute(isa='bool')
     _ignore_errors = FieldAttribute(isa='bool')

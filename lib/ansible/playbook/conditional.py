@@ -31,6 +31,7 @@ from ansible.module_utils.six import text_type
 from ansible.module_utils._text import to_native
 from ansible.playbook.attribute import FieldAttribute
 from ansible.utils.display import Display
+from ansible.utils.sentinel import Sentinel
 
 display = Display()
 
@@ -75,6 +76,16 @@ class Conditional:
 
         return results
 
+    def _post_validate_when(self, attr, value, templar):
+        # This is here to keep evaluate_conditional() in sync with general post validation
+        parent_value = Sentinel
+        if hasattr(self, '_parent') and hasattr(self._parent, '_post_validate_when'):
+            parent_value = self._parent._post_validate_when(self._parent._when, getattr(self._parent, 'when'), templar)
+        if hasattr(self, '_extend_post_validated_value'):
+            return self._extend_post_validated_value(value, parent_value)
+        else:
+            return value
+
     def evaluate_conditional(self, templar, all_vars):
         '''
         Loops through the conditionals set on this object, returning
@@ -87,7 +98,9 @@ class Conditional:
         ds = None
         if hasattr(self, '_ds'):
             ds = getattr(self, '_ds')
+            self.when = self._post_validate_when(getattr(self, '_when'), getattr(self, 'when'), templar)
 
+        conditional = self.when
         try:
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):

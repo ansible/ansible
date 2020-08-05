@@ -87,3 +87,73 @@
       - assert:
           that:
             foo.msg == "Hello world!"
+
+- name: test inheriting and extending variable module_defaults
+  vars:
+    test_file: /tmp/ansible-test.module_defaults.foo
+    defaults_1:
+      - debug:
+          msg: initial msg
+      - file:
+          path: "{{ test_file }}"
+      - fail:
+          msg: initial failure msg
+    defaults_2:
+      - debug:
+          msg: new msg
+  block:
+
+    - name: create a block with a templated value for module_defaults
+      module_defaults: "{{ defaults_1 }}"
+      block:
+
+        - name: block containing tasks that inherit + extend module_defaults
+          block:
+
+            - debug:
+              register: result
+
+            - assert:
+                that:
+                  - result.msg == "initial msg"
+
+            - debug:
+              register: result
+              module_defaults: "{{ defaults_2 }}"
+
+            - assert:
+                that:
+                  - result.msg == "new msg"
+
+            - name: test that the parent value was extended rather than overridden
+              file:
+                state: absent
+              register: result
+
+            - assert:
+                that:
+                  - not result is failed
+
+            - name: test post validation for inheriting templated defaults
+              set_fact:
+                defaults_1:
+                  - debug:
+                      msg: updated msg
+
+            - name: test that inheriting defaults_1 has the updated values
+              debug:
+              register: result
+
+            - assert:
+                that:
+                  - result.msg == "updated msg"
+
+            - file:
+                state: absent
+              ignore_errors: yes
+              register: result
+
+            - assert:
+                that:
+                  - result is failed
+                  - 'result.msg == "missing required arguments: path"'

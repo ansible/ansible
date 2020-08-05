@@ -37,16 +37,18 @@ class TestConditional(unittest.TestCase):
     def test_true_boolean(self):
         self.cond.when = [True]
         m = MagicMock()
+        m.is_template.return_value = False
         ret = self.cond.evaluate_conditional(m, {})
         self.assertTrue(ret)
-        self.assertFalse(m.is_template.called)
+        self.assertFalse(m.is_template.return_value)
 
     def test_false_boolean(self):
         self.cond.when = [False]
         m = MagicMock()
+        m.is_template.return_value = False
         ret = self.cond.evaluate_conditional(m, {})
         self.assertFalse(ret)
-        self.assertFalse(m.is_template.called)
+        self.assertFalse(m.is_template.return_value)
 
     def test_undefined(self):
         when = [u"{{ some_undefined_thing }}"]

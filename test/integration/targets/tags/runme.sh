@@ -48,6 +48,18 @@ export LC_ALL=en_US.UTF-8
 [ "$("${COMMAND[@]}" --tags tag3 | grep -F Task_with | xargs)" = \
 "Task_with_always_tag TAGS: [always] Task_with_templated_tags TAGS: [tag3]" ]
 
+# Run extend tags
+[ "$("${COMMAND[@]}" --tags tag4 | grep -F Task_in_block_with_extended_tags | xargs)" = \
+"Task_in_block_with_extended_tags TAGS: [tag4, tag5]" ]
+
+# Run extend tags with added tags
+[ "$("${COMMAND[@]}" --tags tag6 | grep -F Task_in_block_with_added_tag | xargs)" = \
+"Task_in_block_with_added_tag TAGS: [tag4, tag5, tag6]" ]
+
+# Run extend tags with dynamically modified inherited tags
+[ "$("${COMMAND[@]}" --tags tag4,tag7 | grep -F Task_in_block_with_dynamic_inherited_tag | xargs)" = \
+"Task_in_block_with_dynamic_inherited_tag TAGS: [tag4, tag5]" ]
+
 # Run tagged
 [ "$("${COMMAND[@]}" --tags tagged | grep -F Task_with | xargs)" = \
 "Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_with_csv_tags TAGS: [tag1, tag2] Task_with_templated_tags TAGS: [tag3]" ]
