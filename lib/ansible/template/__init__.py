@@ -179,7 +179,7 @@ def is_template(data, jinja_env):
     comment = False
     d2 = jinja_env.preprocess(data)
 
-    # This wraps a lot of code, but this is due to lex returing a generator
+    # This wraps a lot of code, but this is due to lex returning a generator
     # so we may get an exception at any part of the loop
     try:
         for token in jinja_env.lex(d2):

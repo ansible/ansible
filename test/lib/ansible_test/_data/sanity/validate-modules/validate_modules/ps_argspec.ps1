@@ -69,7 +69,7 @@ $powershell = [PowerShell]::Create()
 $powershell.Runspace.SessionStateProxy.SetVariable("ErrorActionPreference", "Stop")
 
 # Load the PowerShell module utils as the module may be using them to refer to shared module options. Currently we
-# can only load the PowerShell utils due to cross platform compatiblity issues.
+# can only load the PowerShell utils due to cross platform compatibility issues.
 if ($manifest.Contains('ps_utils')) {
     foreach ($util_info in $manifest.ps_utils.GetEnumerator()) {
         $util_name = $util_info.Key

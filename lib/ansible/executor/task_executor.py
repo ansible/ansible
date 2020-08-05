@@ -423,7 +423,7 @@ class TaskExecutor:
         try:
             # TODO: remove play_context as this does not take delegation into account, task itself should hold values
             #  for connection/shell/become/terminal plugin options to finalize.
-            #  Kept for now for backwards compatiblity and a few functions that are still exclusive to it.
+            #  Kept for now for backwards compatibility and a few functions that are still exclusive to it.
 
             # apply the given task's information to the connection info,
             # which may override some fields already set by the play or

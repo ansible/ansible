@@ -288,7 +288,7 @@ portable between the two. The following changes were made:
     * True, False and None are reserved keywords (these are reserved keywords
       on Python 3 as opposed to Python 2)
 
-:arg ident: A text string of indentifier to check. Note: It is callers
+:arg ident: A text string of identifier to check. Note: It is callers
     responsibility to convert ident to text if it is not already.
 
 Originally posted at http://stackoverflow.com/a/29586366
