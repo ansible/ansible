@@ -19,8 +19,8 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-No notable changes
-
+The ``bool`` Jinja filter has been updated to conform the rest of Ansible's boolean handling (mixed Jinja/Python and YAML), so now it will be more consistent with the rest
+of the system. Previouslly this was only doing a partial 'positive' match so most values were considered ``False`` if not one of ``'yes', 'on', '1', 'true', 1``, now this has been expanded to ``'y', 'yes', 'on', '1', 'true', 't', 1, 1.0, True`` (case insenstivie match). Also a ``strict`` (False by default) option has been added so ``False`` can also be contrasted against a set list instead of being 'not true' when set to ``True``. This means that non True nor False values will produce an error as a 'non boolean value'.
 
 Command Line
 ============

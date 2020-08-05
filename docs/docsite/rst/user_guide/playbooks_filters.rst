@@ -188,7 +188,11 @@ You can cast values as certain types. For example, if you expect the input "True
 
    - debug:
      msg: test
-     when: some_string_value | bool
+     when: some_string_value | bool(strict=True)
+
+.. note:
+    * The ``strict`` option will also match values to the expected list to get 'false', instead of considering 'false' anything that is 'not true'.
+      Everything else will be considered a 'non boolean' and throw an error.
 
 If you want to perform a mathematical comparison on a fact and you want Ansible to recognize it as an integer instead of a string::
 
