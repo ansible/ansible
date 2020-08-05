@@ -114,6 +114,8 @@ Resources
 * [Product Demos](https://github.com/ansible/product-demos)
 * [Katakoda](https://katacoda.com/rhel-labs)
 * [Workshops](https://github.com/ansible/workshops)
+* [Ansible Examples](https://github.com/ansible/ansible-examples)
+* [Ansible Baseline](https://github.com/ansible/ansible-baseline)
 
 Next steps
 ==========
