@@ -239,7 +239,7 @@
         that:
           - getent_shadow[2] == '5'
           - getent_shadow[3] == '10'
-  when: ansible_facts.system == '*'
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
 
 # https://github.com/ansible/ansible/issues/42484
 # Skipping macOS for now since there is a bug when changing home directory
