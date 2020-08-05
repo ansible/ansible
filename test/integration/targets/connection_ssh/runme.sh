@@ -2,7 +2,7 @@
 
 set -ux
 #apk add coreutils
-        timeout -s9 ansible -m ping \
+        timeout -s9 5 ansible -m ping \
             -e ansible_connection=ssh \
             -e ansible_sshpass_prompt=notThis: \
             -e ansible_password=foo \
