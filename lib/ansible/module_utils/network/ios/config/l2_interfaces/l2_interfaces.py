@@ -177,16 +177,77 @@ class L2_Interfaces(ConfigBase):
                   the current configuration
         """
         commands = []
-
         for interface in want:
             for each in have:
                 if each['name'] == interface['name']:
+                    if 'trunk' in each:
+                        if 'allowed_vlans' in each['trunk']:
+                            have_vlan_unparse = self._vlan_unparse(each['trunk']['allowed_vlans'])
+                            want_vlan_unparse = self._vlan_unparse(interface['trunk']['allowed_vlans'])
+                            interface['trunk']['allowed_vlans'] = self._vlan_parse(have_vlan_unparse + want_vlan_unparse)
                     break
             else:
                 continue
             commands.extend(self._set_config(interface, each, module))
 
         return commands
+
+
+    def _vlan_unparse(self, vlans_gathered):
+
+        '''
+            Input: vlan from network_ressources l2_interface trunk vlan_allowed
+            Output: array of int with all the vlan number designed by the list
+        '''
+
+        result = []
+        for sequence_or_number in vlans_gathered:
+            if str(sequence_or_number).find('-') != -1 :
+                sequence = sequence_or_number
+                start, end = sequence.split('-')
+                for number in range(int(start),int(end)+1):
+                    result.append(int(number))
+            else:
+                number = sequence_or_number
+                result.append(int(number))
+        return result
+
+
+    def _vlan_parse(self, vlan_list):
+
+        '''
+            Input: vlan list of interger
+            Output: array of number and concatened sequel
+        '''
+        sorted_list = sorted(set(vlan_list))
+
+        if sorted_list[0] < 1 or sorted_list[-1] > 4094:
+            raise AnsibleFilterError('Valid VLAN range is 1-4094')
+
+        parse_list = []
+        idx = 0
+        while idx < len(sorted_list):
+            start = idx
+            end = start
+            while end < len(sorted_list) - 1:
+                if sorted_list[end + 1] - sorted_list[end] == 1:
+                    end += 1
+                else:
+                    break
+
+            if start == end:
+                # Single VLAN
+                parse_list.append(str(sorted_list[idx]))
+            elif start + 1 == end:
+                # Run of 2 VLANs
+                parse_list.append(str(sorted_list[start]))
+                parse_list.append(str(sorted_list[end]))
+            else:
+                # Run of 3 or more VLANs
+                parse_list.append(str(sorted_list[start]) + '-' + str(sorted_list[end]))
+            idx = end + 1
+        return parse_list
+
 
     def _state_deleted(self, want, have):
         """ The command generator when state is deleted
