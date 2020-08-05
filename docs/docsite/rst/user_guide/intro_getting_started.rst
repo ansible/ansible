@@ -111,9 +111,9 @@ Congratulations! You have contacted your nodes using Ansible. You used a basic i
 
 Resources
 =================================
-
-* https://github.com/ansible/product-demos
-* https://katacoda.com/rhel-labs
+* [Product Demos](https://github.com/ansible/product-demos)
+* [Katakoda](https://katacoda.com/rhel-labs)
+* [Workshops](https://github.com/ansible/workshops)
 
 Next steps
 ==========
