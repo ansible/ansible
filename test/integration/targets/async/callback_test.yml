@@ -2,6 +2,6 @@
   gather_facts: false
   tasks:
     - name: Async poll callback test
-      command: /bin/sleep 5
+      command: sleep 5
       async: 6
       poll: 1
