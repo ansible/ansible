@@ -30,6 +30,6 @@ TTY_IFY_DATA = {
 }
 
 
-@pytest.mark.parametrize('text, expected', TTY_IFY_DATA.items())
+@pytest.mark.parametrize('text, expected', sorted(TTY_IFY_DATA.items()))
 def test_ttyify(text, expected):
     assert DocCLI.tty_ify(text) == expected
