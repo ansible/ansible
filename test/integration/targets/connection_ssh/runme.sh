@@ -2,7 +2,7 @@
 
 set -ux
 #apk add coreutils
-        timeout 5 ansible -m ping \
+        timeout -s9 ansible -m ping \
             -e ansible_connection=ssh \
             -e ansible_sshpass_prompt=notThis: \
             -e ansible_password=foo \
@@ -12,7 +12,7 @@ set -ux
         ret=$?
         # 124 is EXIT_TIMEDOUT from gnu coreutils
         # 143 is 128+SIGTERM(15) from BusyBox
-        if [[ $ret -ne 124 && $ret -ne 143 ]]; then
+        if [[ $ret -ne 137 ]]; then
             echo "Expected to time out and we did not. Exiting with failure."
             exit 1
         fi
