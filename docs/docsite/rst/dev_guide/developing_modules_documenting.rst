@@ -223,17 +223,24 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
   * For example, whether ``check_mode`` is or is not supported.
 
 
-Linking within module documentation
------------------------------------
+Linking and other format macros within module documentation
+-----------------------------------------------------------
 
-You can link from your module documentation to other module docs, other resources on docs.ansible.com, and resources elsewhere on the internet. The correct formats for these links are:
+You can link from your module documentation to other module docs, other resources on docs.ansible.com, and resources elsewhere on the internet with the help of some pre-defined macros. The correct formats for these macros are:
 
 * ``L()`` for links with a heading. For example: ``See L(Ansible Tower,https://www.ansible.com/products/tower).`` As of Ansible 2.10, do not use ``L()`` for relative links between Ansible documentation and collection documentation.
 * ``U()`` for URLs. For example: ``See U(https://www.ansible.com/products/tower) for an overview.``
 * ``R()`` for cross-references with a heading (added in Ansible 2.10). For example: ``See R(Cisco IOS Platform Guide,ios_platform_options)``.  Use the RST anchor for the cross-reference. See :ref:`adding_anchors_rst` for details.
-* ``I()`` for option names. For example: ``Required if I(state=present).``
-* ``C()`` for files and option values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.``
 * ``M()`` for module names. For example: ``See also M(ansible.builtin.yum) or M(community.general.apt_rpm)``.
+
+There are also some macros which do not create links but we use them to display certain types of
+content in a uniform way:
+
+* ``I()`` for option names. For example: ``Required if I(state=present).``  This is italicized in
+  the documentation.
+* ``C()`` for files and option values. For example: ``If not set the environment variable C(ACME_PASSWORD) will be used.``  This displays with a mono-space font in the documentation.
+* ``B()`` currently has no standardized usage.  It is displayed in boldface in the documentation.
+* ``HORIZONTALLINE`` is used sparingly as a separator in long descriptions.  It becomes a horizontal rule (the ``<hr>`` html tag) in the documentation.
 
 .. note::
 

@@ -1,0 +1,7 @@
+minor_changes:
+  - ansible-doc will now format, ``L()``, ``R()``, and ``HORIZONTALLINE`` in
+    plugin docs just as the website docs do.  https://github.com/ansible/ansible/pull/71070
+  - Fixed ansible-doc to not substitute for words followed by parenthesis.  For
+    instance, ``IBM(International Business Machines)`` will no longer be
+    substituted with a link to a non-existent module.
+    https://github.com/ansible/ansible/pull/71070
