@@ -39,17 +39,17 @@ options:
     required: false
   state:
     description:
-      - Attribute that specifies if the build has to be created or deleted.
+      - Attribute that specifies if the build is to be created or deleted.
     required: false
     default: present
     choices: ['present', 'absent']
   token:
     description:
-      - API token used to authenticate alternatively to password.
+      - API token used to authenticate with the Jenkins server.
     required: false
   url:
     description:
-      - URL where the Jenkins server is accessible.
+      - URL of the Jenkins server.
     required: false
     default: http://localhost:8080
   user:
