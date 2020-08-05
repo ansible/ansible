@@ -111,11 +111,11 @@ Congratulations! You have contacted your nodes using Ansible. You used a basic i
 
 Resources
 =================================
-* [Product Demos](https://github.com/ansible/product-demos)
-* [Katakoda](https://katacoda.com/rhel-labs)
-* [Workshops](https://github.com/ansible/workshops)
-* [Ansible Examples](https://github.com/ansible/ansible-examples)
-* [Ansible Baseline](https://github.com/ansible/ansible-baseline)
+- `Product Demos <https://github.com/ansible/product-demos>`_
+- `Katakoda <https://katacoda.com/rhel-labs>`_
+- `Workshops <https://github.com/ansible/workshops>`_
+- `Ansible Examples <https://github.com/ansible/ansible-examples>`_
+- `Ansible Baseline <https://github.com/ansible/ansible-baseline>`_
 
 Next steps
 ==========
