@@ -17,6 +17,7 @@ set -ux
             exit 1
         fi
 
+ps auxwww
 
 echo 'made it here'
 
