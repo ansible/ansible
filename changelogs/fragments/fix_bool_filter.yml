@@ -1,0 +1,2 @@
+bugfixes:
+  - bring bool filter into alignment with other booleanization.
