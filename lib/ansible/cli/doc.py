@@ -8,6 +8,7 @@ __metaclass__ = type
 import datetime
 import json
 import os
+import re
 import textwrap
 import traceback
 import yaml
@@ -71,10 +72,35 @@ class DocCLI(CLI):
     # default ignore list for detailed views
     IGNORE = ('module', 'docuri', 'version_added', 'short_description', 'now_date', 'plainexamples', 'returndocs', 'collection')
 
+    # Warning: If you add more elements here, you also need to add it to the docsite build (in the
+    # ansible-community/antsibull repo)
+    _ITALIC = re.compile(r"\bI\(([^)]+)\)")
+    _BOLD = re.compile(r"\bB\(([^)]+)\)")
+    _MODULE = re.compile(r"\bM\(([^)]+)\)")
+    _LINK = re.compile(r"\bL\(([^)]+), *([^)]+)\)")
+    _URL = re.compile(r"\bU\(([^)]+)\)")
+    _REF = re.compile(r"\bR\(([^)]+), *([^)]+)\)")
+    _CONST = re.compile(r"\bC\(([^)]+)\)")
+    _RULER = re.compile(r"\bHORIZONTALLINE\b")
+
     def __init__(self, args):
 
         super(DocCLI, self).__init__(args)
         self.plugin_list = set()
+
+    @classmethod
+    def tty_ify(cls, text):
+
+        t = cls._ITALIC.sub(r"`\1'", text)    # I(word) => `word'
+        t = cls._BOLD.sub(r"*\1*", t)         # B(word) => *word*
+        t = cls._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
+        t = cls._URL.sub(r"\1", t)                      # U(word) => word
+        t = cls._LINK.sub(r"\1 <\2>", t)                # L(word, url) => word <url>
+        t = cls._REF.sub(r"\1", t)                      # R(word, sphinx-ref) => word
+        t = cls._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
+        t = cls._RULER.sub("\n{0}\n".format("-" * 13), t)   # HORIZONTALLINE => -------
+
+        return t
 
     def init_parser(self):
 
