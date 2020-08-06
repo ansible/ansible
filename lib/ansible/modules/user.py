@@ -599,23 +599,27 @@ class User(object):
 
     def set_password_expire_max(self):
         command_name = 'chage'
-
         cmd = [self.module.get_bin_path(command_name, True)]
         cmd.append('-M')
         cmd.append(self.password_expire_max)
         cmd.append(self.name)
-
-        return self.execute_command(cmd)
+        if self.password_expire_max == spwd.getspnam(self.name).sp_max:
+            self.module.exit_json(changed=False)
+        else:
+            self.execute_command(cmd)
+            self.module.exit_json(changed=True)
 
     def set_password_expire_min(self):
         command_name = 'chage'
-
         cmd = [self.module.get_bin_path(command_name, True)]
         cmd.append('-m')
         cmd.append(self.password_expire_min)
         cmd.append(self.name)
-
-        return self.execute_command(cmd)
+        if self.password_expire_min == spwd.getspnam(self.name).sp_min:
+            self.module.exit_json(changed=False)
+        else:
+            self.execute_command(cmd)
+            self.module.exit_json(changed=True)
 
     def remove_user_userdel(self):
         if self.local:
@@ -3162,15 +3166,11 @@ def main():
     # deal with password expire max
     if user.password_expire_max:
         if user.user_exists():
-            if module.check_mode:
-                module.exit_json(changed=True)
             (rc, out, err) = user.password_expire_set_max()
 
     # deal with password expire min
     if user.password_expire_min:
         if user.user_exists():
-            if module.check_mode:
-                module.exit_json(changed=True)
             (rc, out, err) = user.password_expire_set_min()
 
     module.exit_json(**result)

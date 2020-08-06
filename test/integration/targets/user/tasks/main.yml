@@ -237,8 +237,8 @@
     - name: Ensure password expiration was set properly
       assert:
         that:
-          - getent_shadow[2] == '5'
-          - getent_shadow[3] == '10'
+          - ansible_facts.getent_shadow['ansibulluser'][2] == '5'
+          - ansible_facts.getent_shadow['ansibulluser'][3] == '10'
   when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
 
 # https://github.com/ansible/ansible/issues/42484
