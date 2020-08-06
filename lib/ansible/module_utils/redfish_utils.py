@@ -6,6 +6,7 @@ __metaclass__ = type
 
 import json
 from ansible.module_utils.urls import open_url
+from ansible.module_utils._text import to_native
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six.moves import http_client
 from ansible.module_utils.six.moves.urllib.error import URLError, HTTPError
@@ -37,7 +38,7 @@ class RedfishUtils(object):
                             force_basic_auth=True, validate_certs=False,
                             follow_redirects='all',
                             use_proxy=False, timeout=self.timeout)
-            data = json.loads(resp.read())
+            data = json.loads(to_native(resp.read()))
             headers = dict((k.lower(), v) for (k, v) in resp.info().items())
         except HTTPError as e:
             msg = self._get_extended_message(e)
