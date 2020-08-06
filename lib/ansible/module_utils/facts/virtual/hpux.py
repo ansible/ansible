@@ -32,28 +32,38 @@ class HPUXVirtual(Virtual):
 
     def get_virtual_facts(self):
         virtual_facts = {}
+        host_tech = set()
+        guest_tech = set()
+
         if os.path.exists('/usr/sbin/vecheck'):
             rc, out, err = self.module.run_command("/usr/sbin/vecheck")
             if rc == 0:
+                guest_tech.add('HP vPar')
                 virtual_facts['virtualization_type'] = 'guest'
                 virtual_facts['virtualization_role'] = 'HP vPar'
         if os.path.exists('/opt/hpvm/bin/hpvminfo'):
             rc, out, err = self.module.run_command("/opt/hpvm/bin/hpvminfo")
             if rc == 0 and re.match('.*Running.*HPVM vPar.*', out):
+                guest_tech.add('HPVM vPar')
                 virtual_facts['virtualization_type'] = 'guest'
                 virtual_facts['virtualization_role'] = 'HPVM vPar'
             elif rc == 0 and re.match('.*Running.*HPVM guest.*', out):
+                guest_tech.add('HPVM IVM')
                 virtual_facts['virtualization_type'] = 'guest'
                 virtual_facts['virtualization_role'] = 'HPVM IVM'
             elif rc == 0 and re.match('.*Running.*HPVM host.*', out):
+                guest_tech.add('HPVM')
                 virtual_facts['virtualization_type'] = 'host'
                 virtual_facts['virtualization_role'] = 'HPVM'
         if os.path.exists('/usr/sbin/parstatus'):
             rc, out, err = self.module.run_command("/usr/sbin/parstatus")
             if rc == 0:
+                guest_tech.add('HP nPar')
                 virtual_facts['virtualization_type'] = 'guest'
                 virtual_facts['virtualization_role'] = 'HP nPar'
 
+        virtual_facts['virtualization_tech_guest'] = guest_tech
+        virtual_facts['virtualization_tech_host'] = host_tech
         return virtual_facts
 
 

@@ -35,141 +35,218 @@ class LinuxVirtual(Virtual):
     # For more information, check: http://people.redhat.com/~rjones/virt-what/
     def get_virtual_facts(self):
         virtual_facts = {}
+
+        # We want to maintain compatibility with the old "virtualization_type"
+        # and "virtualization_role" entries, so we need to track if we found
+        # them. We won't return them until the end, but if we found them early,
+        # we should avoid updating them again.
+        found_virt = False
+
+        # But as we go along, we also want to track virt tech the new way.
+        host_tech = set()
+        guest_tech = set()
+
         # lxc/docker
         if os.path.exists('/proc/1/cgroup'):
             for line in get_file_lines('/proc/1/cgroup'):
                 if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
-                    virtual_facts['virtualization_type'] = 'docker'
-                    virtual_facts['virtualization_role'] = 'guest'
-                    return virtual_facts
+                    guest_tech.add('docker')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'docker'
+                        virtual_facts['virtualization_role'] = 'guest'
+                        found_virt = True
                 if re.search('/lxc/', line) or re.search('/machine.slice/machine-lxc', line):
-                    virtual_facts['virtualization_type'] = 'lxc'
-                    virtual_facts['virtualization_role'] = 'guest'
-                    return virtual_facts
+                    guest_tech.add('lxc')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'lxc'
+                        virtual_facts['virtualization_role'] = 'guest'
+                        found_virt = True
 
         # lxc does not always appear in cgroups anymore but sets 'container=lxc' environment var, requires root privs
         if os.path.exists('/proc/1/environ'):
             for line in get_file_lines('/proc/1/environ', line_sep='\x00'):
                 if re.search('container=lxc', line):
-                    virtual_facts['virtualization_type'] = 'lxc'
-                    virtual_facts['virtualization_role'] = 'guest'
-                    return virtual_facts
+                    guest_tech.add('lxc')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'lxc'
+                        virtual_facts['virtualization_role'] = 'guest'
+                        found_virt = True
                 if re.search('container=podman', line):
-                    virtual_facts['virtualization_type'] = 'podman'
-                    virtual_facts['virtualization_role'] = 'guest'
-                    return virtual_facts
+                    guest_tech.add('podman')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'podman'
+                        virtual_facts['virtualization_role'] = 'guest'
+                        found_virt = True
                 if re.search('^container=.', line):
-                    virtual_facts['virtualization_type'] = 'container'
-                    virtual_facts['virtualization_role'] = 'guest'
-                    return virtual_facts
+                    guest_tech.add('container')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'container'
+                        virtual_facts['virtualization_role'] = 'guest'
+                        found_virt = True
 
         if os.path.exists('/proc/vz') and not os.path.exists('/proc/lve'):
             virtual_facts['virtualization_type'] = 'openvz'
             if os.path.exists('/proc/bc'):
-                virtual_facts['virtualization_role'] = 'host'
+                host_tech.add('openvz')
+                if not found_virt:
+                    virtual_facts['virtualization_role'] = 'host'
             else:
-                virtual_facts['virtualization_role'] = 'guest'
-            return virtual_facts
+                guest_tech.add('openvz')
+                if not found_virt:
+                    virtual_facts['virtualization_role'] = 'guest'
+            found_virt = True
 
         systemd_container = get_file_content('/run/systemd/container')
         if systemd_container:
-            virtual_facts['virtualization_type'] = systemd_container
-            virtual_facts['virtualization_role'] = 'guest'
-            return virtual_facts
+            guest_tech.add(systemd_container)
+            if not found_virt:
+                virtual_facts['virtualization_type'] = systemd_container
+                virtual_facts['virtualization_role'] = 'guest'
+                found_virt = True
 
         if os.path.exists("/proc/xen"):
-            virtual_facts['virtualization_type'] = 'xen'
-            virtual_facts['virtualization_role'] = 'guest'
+            is_xen_host = False
             try:
                 for line in get_file_lines('/proc/xen/capabilities'):
                     if "control_d" in line:
-                        virtual_facts['virtualization_role'] = 'host'
+                        is_xen_host = True
             except IOError:
                 pass
-            return virtual_facts
+
+            if is_xen_host:
+                host_tech.add('xen')
+                if not found_virt:
+                    virtual_facts['virtualization_type'] = 'xen'
+                    virtual_facts['virtualization_role'] = 'host'
+            else:
+                if not found_virt:
+                    virtual_facts['virtualization_type'] = 'xen'
+                    virtual_facts['virtualization_role'] = 'guest'
+            found_virt = True
 
         # assume guest for this block
-        virtual_facts['virtualization_role'] = 'guest'
+        if not found_virt:
+            virtual_facts['virtualization_role'] = 'guest'
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
 
         if product_name in ('KVM', 'KVM Server', 'Bochs', 'AHV'):
-            virtual_facts['virtualization_type'] = 'kvm'
-            return virtual_facts
+            guest_tech.add('kvm')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'kvm'
+                found_virt = True
 
         if product_name == 'RHEV Hypervisor':
-            virtual_facts['virtualization_type'] = 'RHEV'
-            return virtual_facts
+            guest_tech.add('RHEV')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'RHEV'
+                found_virt = True
 
         if product_name in ('VMware Virtual Platform', 'VMware7,1'):
-            virtual_facts['virtualization_type'] = 'VMware'
-            return virtual_facts
+            guest_tech.add('VMware')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'VMware'
+                found_virt = True
 
         if product_name in ('OpenStack Compute', 'OpenStack Nova'):
-            virtual_facts['virtualization_type'] = 'openstack'
-            return virtual_facts
+            guest_tech.add('openstack')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'openstack'
+                found_virt = True
 
         bios_vendor = get_file_content('/sys/devices/virtual/dmi/id/bios_vendor')
 
         if bios_vendor == 'Xen':
-            virtual_facts['virtualization_type'] = 'xen'
-            return virtual_facts
+            guest_tech.add('xen')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'xen'
+                found_virt = True
 
         if bios_vendor == 'innotek GmbH':
-            virtual_facts['virtualization_type'] = 'virtualbox'
-            return virtual_facts
+            guest_tech.add('virtualbox')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'virtualbox'
+                found_virt = True
 
         if bios_vendor in ('Amazon EC2', 'DigitalOcean', 'Hetzner'):
-            virtual_facts['virtualization_type'] = 'kvm'
-            return virtual_facts
+            guest_tech.add('kvm')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'kvm'
+                found_virt = True
 
         sys_vendor = get_file_content('/sys/devices/virtual/dmi/id/sys_vendor')
 
         KVM_SYS_VENDORS = ('QEMU', 'oVirt', 'Amazon EC2', 'DigitalOcean', 'Google', 'Scaleway', 'Nutanix')
         if sys_vendor in KVM_SYS_VENDORS:
-            virtual_facts['virtualization_type'] = 'kvm'
-            return virtual_facts
+            guest_tech.add('kvm')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'kvm'
+                found_virt = True
 
         # FIXME: This does also match hyperv
         if sys_vendor == 'Microsoft Corporation':
-            virtual_facts['virtualization_type'] = 'VirtualPC'
-            return virtual_facts
+            guest_tech.add('VirtualPC')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'VirtualPC'
+                found_virt = True
 
         if sys_vendor == 'Parallels Software International Inc.':
-            virtual_facts['virtualization_type'] = 'parallels'
-            return virtual_facts
+            guest_tech.add('parallels')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'parallels'
+                found_virt = True
 
         if sys_vendor == 'OpenStack Foundation':
-            virtual_facts['virtualization_type'] = 'openstack'
-            return virtual_facts
+            guest_tech.add('openstack')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'openstack'
+                found_virt = True
 
         # unassume guest
-        del virtual_facts['virtualization_role']
+        if not found_virt:
+            del virtual_facts['virtualization_role']
 
         if os.path.exists('/proc/self/status'):
             for line in get_file_lines('/proc/self/status'):
                 if re.match(r'^VxID:\s+\d+', line):
-                    virtual_facts['virtualization_type'] = 'linux_vserver'
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'linux_vserver'
                     if re.match(r'^VxID:\s+0', line):
-                        virtual_facts['virtualization_role'] = 'host'
+                        host_tech.add('linux_vserver')
+                        if not found_virt:
+                            virtual_facts['virtualization_role'] = 'host'
                     else:
-                        virtual_facts['virtualization_role'] = 'guest'
-                    return virtual_facts
+                        guest_tech.add('linux_vserver')
+                        if not found_virt:
+                            virtual_facts['virtualization_role'] = 'guest'
+                    found_virt = True
 
         if os.path.exists('/proc/cpuinfo'):
             for line in get_file_lines('/proc/cpuinfo'):
                 if re.match('^model name.*QEMU Virtual CPU', line):
-                    virtual_facts['virtualization_type'] = 'kvm'
+                    guest_tech.add('kvm')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'kvm'
                 elif re.match('^vendor_id.*User Mode Linux', line):
-                    virtual_facts['virtualization_type'] = 'uml'
+                    guest_tech.add('uml')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'uml'
                 elif re.match('^model name.*UML', line):
-                    virtual_facts['virtualization_type'] = 'uml'
+                    guest_tech.add('uml')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'uml'
                 elif re.match('^machine.*CHRP IBM pSeries .emulated by qemu.', line):
-                    virtual_facts['virtualization_type'] = 'kvm'
+                    guest_tech.add('kvm')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'kvm'
                 elif re.match('^vendor_id.*PowerVM Lx86', line):
-                    virtual_facts['virtualization_type'] = 'powervm_lx86'
+                    guest_tech.add('powervm_lx86')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'powervm_lx86'
                 elif re.match('^vendor_id.*IBM/S390', line):
-                    virtual_facts['virtualization_type'] = 'PR/SM'
+                    guest_tech.add('PR/SM')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'PR/SM'
                     lscpu = self.module.get_bin_path('lscpu')
                     if lscpu:
                         rc, out, err = self.module.run_command(["lscpu"])
@@ -178,16 +255,24 @@ class LinuxVirtual(Virtual):
                                 data = line.split(":", 1)
                                 key = data[0].strip()
                                 if key == 'Hypervisor':
-                                    virtual_facts['virtualization_type'] = data[1].strip()
+                                    tech = data[1].strip()
+                                    guest_tech.add(tech)
+                                    if not found_virt:
+                                        virtual_facts['virtualization_type'] = tech
                     else:
-                        virtual_facts['virtualization_type'] = 'ibm_systemz'
+                        guest_tech.add('ibm_systemz')
+                        if not found_virt:
+                            virtual_facts['virtualization_type'] = 'ibm_systemz'
                 else:
                     continue
                 if virtual_facts['virtualization_type'] == 'PR/SM':
-                    virtual_facts['virtualization_role'] = 'LPAR'
+                    if not found_virt:
+                        virtual_facts['virtualization_role'] = 'LPAR'
                 else:
-                    virtual_facts['virtualization_role'] = 'guest'
-                return virtual_facts
+                    if not found_virt:
+                        virtual_facts['virtualization_role'] = 'guest'
+                if not found_virt:
+                    found_virt = True
 
         # Beware that we can have both kvm and virtualbox running on a single system
         if os.path.exists("/proc/modules") and os.access('/proc/modules', os.R_OK):
@@ -197,8 +282,10 @@ class LinuxVirtual(Virtual):
                 modules.append(data[0])
 
             if 'kvm' in modules:
-                virtual_facts['virtualization_type'] = 'kvm'
-                virtual_facts['virtualization_role'] = 'host'
+                host_tech.add('kvm')
+                if not found_virt:
+                    virtual_facts['virtualization_type'] = 'kvm'
+                    virtual_facts['virtualization_role'] = 'host'
 
                 if os.path.isdir('/rhev/'):
                     # Check whether this is a RHEV hypervisor (is vdsm running ?)
@@ -206,23 +293,32 @@ class LinuxVirtual(Virtual):
                         try:
                             with open(f) as virt_fh:
                                 comm_content = virt_fh.read().rstrip()
+
                             if comm_content in ('vdsm', 'vdsmd'):
-                                virtual_facts['virtualization_type'] = 'RHEV'
+                                # We add both kvm and RHEV to host_tech in this case.
+                                # It's accurate. RHEV uses KVM.
+                                host_tech.add('RHEV')
+                                if not found_virt:
+                                    virtual_facts['virtualization_type'] = 'RHEV'
                                 break
                         except Exception:
                             pass
 
-                return virtual_facts
+                found_virt = True
 
             if 'vboxdrv' in modules:
-                virtual_facts['virtualization_type'] = 'virtualbox'
-                virtual_facts['virtualization_role'] = 'host'
-                return virtual_facts
+                host_tech.add('virtualbox')
+                if not found_virt:
+                    virtual_facts['virtualization_type'] = 'virtualbox'
+                    virtual_facts['virtualization_role'] = 'host'
+                    found_virt = True
 
             if 'virtio' in modules:
-                virtual_facts['virtualization_type'] = 'kvm'
-                virtual_facts['virtualization_role'] = 'guest'
-                return virtual_facts
+                host_tech.add('kvm')
+                if not found_virt:
+                    virtual_facts['virtualization_type'] = 'kvm'
+                    virtual_facts['virtualization_role'] = 'guest'
+                    found_virt = True
 
         # In older Linux Kernel versions, /sys filesystem is not available
         # dmidecode is the safest option to parse virtualization related values
@@ -234,20 +330,28 @@ class LinuxVirtual(Virtual):
                 # Strip out commented lines (specific dmidecode output)
                 vendor_name = ''.join([line.strip() for line in out.splitlines() if not line.startswith('#')])
                 if vendor_name.startswith('VMware'):
-                    virtual_facts['virtualization_type'] = 'VMware'
-                    virtual_facts['virtualization_role'] = 'guest'
-                    return virtual_facts
+                    guest_tech.add('VMware')
+                    if not found_virt:
+                        virtual_facts['virtualization_type'] = 'VMware'
+                        virtual_facts['virtualization_role'] = 'guest'
+                        found_virt = True
 
         if os.path.exists('/dev/kvm'):
-            virtual_facts['virtualization_type'] = 'kvm'
-            virtual_facts['virtualization_role'] = 'host'
-            return virtual_facts
+            host_tech.add('kvm')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'kvm'
+                virtual_facts['virtualization_role'] = 'host'
+                found_virt = True
 
         # If none of the above matches, return 'NA' for virtualization_type
         # and virtualization_role. This allows for proper grouping.
-        virtual_facts['virtualization_type'] = 'NA'
-        virtual_facts['virtualization_role'] = 'NA'
+        if not found_virt:
+            virtual_facts['virtualization_type'] = 'NA'
+            virtual_facts['virtualization_role'] = 'NA'
+            found_virt = True
 
+        virtual_facts['virtualization_tech_guest'] = guest_tech
+        virtual_facts['virtualization_tech_host'] = host_tech
         return virtual_facts
 
 
