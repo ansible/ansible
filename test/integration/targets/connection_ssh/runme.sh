@@ -22,7 +22,7 @@ if command -v sshpass > /dev/null; then
             -e ansible_sshpass_prompt=notThis: \
             -e ansible_password=foo \
             -e ansible_user=definitelynotroot \
-        -i test_connection.inventory \
+            -i test_connection.inventory \
             ssh-pipelining
         ret=$?
         # 124 is EXIT_TIMEDOUT from gnu coreutils
