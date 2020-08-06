@@ -603,7 +603,7 @@ class StrategyBase:
 
                 for result_item in result_items:
                     if '_ansible_notify' in result_item:
-                        if task_result.is_changed():
+                        if result_item.get('changed', False):
                             # The shared dictionary for notified handlers is a proxy, which
                             # does not detect when sub-objects within the proxy are modified.
                             # So, per the docs, we reassign the list so the proxy picks up and
