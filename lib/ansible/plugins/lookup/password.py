@@ -323,7 +323,10 @@ class LookupModule(LookupBase):
             encrypt = params['encrypt']
             if encrypt and not salt:
                 changed = True
-                salt = random_salt(BaseHash.algorithms[encrypt].salt_size)
+                try:
+                    salt = random_salt(BaseHash.algorithms[encrypt].salt_size)
+                except KeyError:
+                    salt = random_salt()
 
             if changed and b_path != to_bytes('/dev/null'):
                 content = _format_content(plaintext_password, salt, encrypt=encrypt)

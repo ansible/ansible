@@ -99,6 +99,7 @@ class CryptHash(BaseHash):
             raise AnsibleError("invalid salt size")
         elif not self.algo_data.salt_exact and len(ret) > self.algo_data.salt_size:
             raise AnsibleError("invalid salt size")
+        return ret
 
     def _rounds(self, rounds):
         if rounds == self.algo_data.implicit_rounds:
