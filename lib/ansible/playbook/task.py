@@ -503,7 +503,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     else:
                         parent_value = _parent._attributes.get(attr, Sentinel)
 
-                    if extend and not value is Sentinel:
+                    if extend and value is not Sentinel:
                         value = value
                     else:
                         value = parent_value

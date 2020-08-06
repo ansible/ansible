@@ -319,7 +319,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                             parent_value = _parent._get_parent_attribute(attr)
                         else:
                             parent_value = _parent._attributes.get(attr, Sentinel)
-                        if extend and not value is Sentinel:
+                        if extend and value is not Sentinel:
                             value = value
                         else:
                             value = parent_value
@@ -328,7 +328,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
             if self._role and (value is Sentinel or extend):
                 try:
                     parent_value = self._role._attributes.get(attr, Sentinel)
-                    if extend and not value is Sentinel:
+                    if extend and value is not Sentinel:
                         value = value
                     else:
                         value = parent_value
@@ -338,7 +338,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                         dep_chain.reverse()
                         for dep in dep_chain:
                             dep_value = dep._attributes.get(attr, Sentinel)
-                            if extend and not value is Sentinel:
+                            if extend and value is not Sentinel:
                                 value = value
                             else:
                                 value = dep_value
@@ -351,7 +351,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                 try:
                     play_value = self._play._attributes.get(attr, Sentinel)
                     if play_value is not Sentinel:
-                        if extend and not value is Sentinel:
+                        if extend and value is not Sentinel:
                             value = value
                         else:
                             value = play_value
