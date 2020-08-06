@@ -313,6 +313,55 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         '''
         return value
 
+    def _post_validate_environment(self, attr, value, templar):
+        '''
+        Override post validation of vars on the play, as we don't want to
+        template these too early.
+        '''
+        parent_value = Sentinel
+        if hasattr(self, '_parent') and self._parent and hasattr(self._parent, '_post_validate_environment'):
+            parent_value = self._parent._post_validate_environment(self._parent._environment, getattr(self._parent, 'environment'), templar)
+        env = {}
+
+        if value == [] and parent_value is Sentinel or not parent_value:
+            return []
+
+        if value is not None:
+            value = self._extend_post_validated_value(value, parent_value, prepend=True)
+
+            def _parse_env_kv(k, v):
+                try:
+                    env[k] = templar.template(v, convert_bare=False)
+                except AnsibleUndefinedVariable as e:
+                    error = to_native(e)
+                    if self.action in ('setup', 'gather_facts') and 'ansible_facts.env' in error or 'ansible_env' in error:
+                        # ignore as fact gathering is required for 'env' facts
+                        return
+                    raise
+
+            if isinstance(value, list):
+                for env_item in value:
+                    if isinstance(env_item, dict):
+                        for k in env_item:
+                            _parse_env_kv(k, env_item[k])
+                    else:
+                        isdict = templar.template(env_item, convert_bare=False)
+                        if isinstance(isdict, dict):
+                            env.update(isdict)
+                        else:
+                            display.warning("could not parse environment value, skipping: %s" % value)
+
+            elif isinstance(value, dict):
+                # should not really happen
+                env = dict()
+                for env_item in value:
+                    _parse_env_kv(env_item, value[env_item])
+            else:
+                # at this point it should be a simple string, also should not happen
+                env = templar.template(value, convert_bare=False)
+
+        return env
+
     def _post_validate_changed_when(self, attr, value, templar):
         '''
         changed_when is evaluated after the execution of the task is complete,
