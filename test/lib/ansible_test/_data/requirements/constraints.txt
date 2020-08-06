@@ -47,6 +47,9 @@ setuptools < 45 ; python_version == '2.7' # setuptools 45 and later require pyth
 # freeze antsibull-changelog for consistent test results
 antsibull-changelog == 0.7.0
 
+# Make sure we have a new enough antsibull for the CLI args we use
+antsibull >= 0.21.0
+
 # freeze pylint and its requirements for consistent test results
 astroid == 2.2.5
 isort == 4.3.15
