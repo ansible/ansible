@@ -96,7 +96,7 @@ class IPAClient(object):
                 if status_code not in [200, 201, 204]:
                     self._fail('login', info['msg'])
 
-                self.headers = {'Cookie': info['set-cookie']}
+                self.headers = {'Cookie': info.get('set-cookie')}
             except Exception as e:
                 self._fail('login', to_native(e))
         if not self.headers:
