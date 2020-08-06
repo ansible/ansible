@@ -1,0 +1,38 @@
+- name: create our unarchive destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
+    state: directory
+
+- name: create a directory with quotable chars
+  file:
+    path: '{{ remote_tmp_dir }}/test-quotes~root'
+    state: directory
+
+- name: unarchive into directory with quotable chars
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-quotes~root"
+    remote_src: yes
+  register: unarchive08
+
+- name: Test that unarchive succeeded
+  assert:
+    that:
+      - "unarchive08.changed == true"
+
+- name: unarchive into directory with quotable chars a second time
+  unarchive:
+    src: "{{ remote_tmp_dir }}/test-unarchive.tar.gz"
+    dest: "{{ remote_tmp_dir }}/test-quotes~root"
+    remote_src: yes
+  register: unarchive09
+
+- name: Test that unarchive did nothing
+  assert:
+    that:
+      - "unarchive09.changed == false"
+
+- name: remove quotable chars test
+  file:
+    path: '{{ remote_tmp_dir }}/test-quotes~root'
+    state: absent
