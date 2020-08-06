@@ -130,7 +130,7 @@ When you use the ``roles`` option at the play level, Ansible treats the roles as
 
 - Any ``pre_tasks`` defined in the play.
 - Any handlers triggered by pre_tasks.
-- Each role listed in ``roles:``, in the order listed. Any role dependencies defined in the roles ``meta/main.yml`` run first, subject to tag filtering and conditionals. See :ref:`role_dependencies` for more details.
+- Each role listed in ``roles:``, in the order listed. Any role dependencies defined in the role's ``meta/main.yml`` run first, subject to tag filtering and conditionals. See :ref:`role_dependencies` for more details.
 - Any ``tasks`` defined in the play.
 - Any handlers triggered by the roles or tasks.
 - Any ``post_tasks`` defined in the play.
