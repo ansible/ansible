@@ -429,10 +429,12 @@ class ConfigManager(object):
         defs = self.get_configuration_definitions(plugin_type, plugin_name)
         if config in defs:
 
+            aliases = defs[config].get('aliases', [])
+
             # direct setting via plugin arguments, can set to None so we bypass rest of processing/defaults
             direct_aliases = []
             if direct:
-                direct_aliases = [direct[alias] for alias in defs[config].get('aliases', []) if alias in direct]
+                direct_aliases = [direct[alias] for alias in aliases if alias in direct]
             if direct and config in direct:
                 value = direct[config]
                 origin = 'Direct'
@@ -447,9 +449,20 @@ class ConfigManager(object):
                     origin = 'var: %s' % origin
 
                 # use playbook keywords if you have em
-                if value is None and keys and config in keys:
-                    value, origin = keys[config], 'keyword'
-                    origin = 'keyword: %s' % origin
+                if value is None and keys:
+                    if config in keys:
+                        value = keys[config]
+                        keyword = config
+
+                    elif aliases:
+                        for alias in aliases:
+                            if alias in keys:
+                                value = keys[alias]
+                                keyword = alias
+                                break
+
+                    if value is not None:
+                        origin = 'keyword: %s' % keyword
 
                 # env vars are next precedence
                 if value is None and defs[config].get('env'):
