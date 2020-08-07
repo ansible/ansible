@@ -24,7 +24,10 @@ try:
     import passlib
     import passlib.hash
     from passlib.utils.handlers import HasRawSalt
-    from passlib.utils.binary import bcrypt64
+    try:
+        from passlib.utils.binary import bcrypt64
+    except ImportError:
+        from passlib.utils import bcrypt64
     PASSLIB_AVAILABLE = True
 except Exception:
     pass
