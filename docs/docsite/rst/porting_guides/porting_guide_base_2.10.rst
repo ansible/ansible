@@ -152,9 +152,3 @@ Porting custom scripts
 ======================
 
 No notable changes
-
-
-Networking
-==========
-
-No notable changes
