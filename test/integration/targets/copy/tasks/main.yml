@@ -61,6 +61,8 @@
     - import_tasks: acls.yml
       when: ansible_system == 'Linux'
 
+    - import_tasks: no_log.yml
+
     # https://github.com/ansible/ansible/issues/57618
     - name: Test diff contents
       copy:
