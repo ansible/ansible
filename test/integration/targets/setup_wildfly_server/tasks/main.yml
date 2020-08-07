@@ -63,6 +63,7 @@
   template:
     src: launch.sh.j2
     dest: '{{ wf_homedir }}/bin/launch.sh'
+    mode: '0755'
 
 - name: Make scripts executable
   shell: 'chmod +x {{ wf_homedir }}/bin/*.sh'
