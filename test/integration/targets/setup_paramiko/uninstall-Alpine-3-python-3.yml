@@ -1,0 +1,4 @@
+- name: Uninstall Paramiko for Python 3 on Alpine
+  pip:
+    name: paramiko
+    state: absent
