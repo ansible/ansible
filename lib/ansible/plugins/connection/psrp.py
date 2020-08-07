@@ -40,7 +40,7 @@ options:
     - name: ansible_winrm_pass
     - name: ansible_winrm_password
     aliases:
-    - password  # Needed for --ask-pass to come through on delegation  
+    - password  # Needed for --ask-pass to come through on delegation
   port:
     description:
     - The port for PSRP to connect on the remote target.
