@@ -39,4 +39,4 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
 
     def close(self):
-        super(Connection, sefl).close()
+        super(Connection, self).close()
