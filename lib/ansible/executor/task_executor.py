@@ -507,7 +507,8 @@ class TaskExecutor:
 
         if self._task.delegate_to:
             # use vars from delegated host (which already include task vars) instead of original host
-            cvars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+            delegate_vars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+            cvars = combine_vars(variables, delegate_vars)
             orig_vars = templar.available_variables
         else:
             # just use normal host vars
