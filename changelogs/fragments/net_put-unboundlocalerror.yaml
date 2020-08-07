@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - net_put - Fixed UnboundLocalError when there is no change
+    This is a backport from U(https://github.com/ansible-collections/ansible.netcommon/pull/6)
