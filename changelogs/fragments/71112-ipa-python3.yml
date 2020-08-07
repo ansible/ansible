@@ -1,0 +1,2 @@
+bugfixes:
+   - ipa_hostgroup - fix an issue with load-balanced ipa and cookie handling with Python 3 - (https://github.com/ansible/ansible/issues/71110).
