@@ -1,2 +1,2 @@
 security_fixes:
-  - Sanitize no_log values from any response keys that might be returned from the uri module.
+  - Sanitize no_log values from any response keys that might be returned from the uri module (CVE-2020-14330).
