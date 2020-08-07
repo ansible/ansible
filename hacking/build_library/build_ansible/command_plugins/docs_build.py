@@ -77,6 +77,10 @@ def generate_full_docs(args):
 
     with TemporaryDirectory() as tmp_dir:
         sh.git(['clone', 'https://github.com/ansible-community/ansible-build-data'], _cwd=tmp_dir)
+        # This is wrong.  Once ansible and ansible-base major.minor versions get out of sync this
+        # will stop working.  We probably need to walk all subdirectories in reverse version order
+        # looking for the latest ansible version which uses something compatible with
+        # ansible_base_major_ver.
         deps_files = glob.glob(os.path.join(tmp_dir, 'ansible-build-data',
                                             ansible_base_major_ver, '*.deps'))
         if not deps_files:
@@ -88,7 +92,7 @@ def generate_full_docs(args):
         for filename in deps_files:
             with open(filename, 'r') as f:
                 deps_data = yaml.safe_load(f.read())
-            new_version = Version(deps_data['_ansible_base_version'])
+            new_version = Version(deps_data['_ansible_version'])
             if new_version > latest_ver:
                 latest_ver = new_version
                 latest = filename
