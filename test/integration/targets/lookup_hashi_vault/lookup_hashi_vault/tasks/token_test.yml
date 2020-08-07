@@ -6,11 +6,12 @@
         secret1: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/secret1 auth_method=token token=' ~ user_token) }}"
         secret2: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/secret2 token=' ~ user_token) }}"
         secret3: "{{ lookup('hashi_vault', conn_params ~ ' secret=' ~ vault_base_path ~ '/secret2  token=' ~ user_token) }}"
+        secret4: "{{ lookup('hashi_vault', conn_params ~ ' secret=' ~ vault_base_path ~ '/secret4?version=2  token=' ~ user_token) }}"
 
     - name: 'Check secret values'
       fail:
         msg: 'unexpected secret values'
-      when: secret1['data']['value'] != 'foo1' or secret2['data']['value'] != 'foo2' or secret3['data']['value'] != 'foo2'
+      when: secret1['data']['value'] != 'foo1' or secret2['data']['value'] != 'foo2' or secret3['data']['value'] != 'foo2' or secret4['data']['value'] != 'foo5'
 
     - name: 'Failure expected when erroneous credentials are used'
       vars:
@@ -30,7 +31,7 @@
 
     - name: 'Failure expected when inexistent secret is read'
       vars:
-        secret_inexistent: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/secret4 token=' ~ user_token) }}"
+        secret_inexistent: "{{ lookup('hashi_vault', conn_params ~ 'secret=' ~ vault_base_path ~ '/non_existent_secret4 token=' ~ user_token) }}"
       debug:
         msg: 'Failure is expected ({{ secret_inexistent }})'
       register: test_inexistent

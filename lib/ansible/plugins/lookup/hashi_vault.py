@@ -269,7 +269,7 @@ class LookupModule(LookupBase):
 
         for param in vault_args:
             try:
-                key, value = param.split('=')
+                key, value = param.split('=', 1)
             except ValueError:
                 raise AnsibleError("hashi_vault lookup plugin needs key=value pairs, but received %s" % terms)
             vault_dict[key] = value
