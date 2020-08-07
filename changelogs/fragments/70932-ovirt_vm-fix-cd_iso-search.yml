@@ -1,0 +1,2 @@
+bugfixes:
+- ovirt_vm - fix cd_iso search
