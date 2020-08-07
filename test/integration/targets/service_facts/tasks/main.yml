@@ -3,6 +3,10 @@
 # Copyright: (c) 2020, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+- name: skip broken distros
+  meta: end_host
+  when: ansible_distribution == 'Alpine'
+
 - name: Gather service facts
   service_facts:
 

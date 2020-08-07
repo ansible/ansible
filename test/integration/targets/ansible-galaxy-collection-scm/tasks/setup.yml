@@ -1,7 +1,7 @@
 - name: ensure git is installed
   package:
     name: git
-  when: ansible_distribution != "MacOSX"
+  when: ansible_distribution not in ["MacOSX", "Alpine"]
   register: git_install
 
 - name: set git global user.email if not already set

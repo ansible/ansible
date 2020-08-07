@@ -1,0 +1,3 @@
+- name: Install Paramiko for Python 3 on Alpine
+  pip: # no apk package manager in core, just use pip
+    name: paramiko

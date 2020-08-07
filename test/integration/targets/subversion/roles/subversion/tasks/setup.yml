@@ -11,6 +11,11 @@
   package:
     name: '{{ subversion_packages }}'
     state: present
+  when: ansible_distribution != 'Alpine'
+
+- name: install SVN pre-reqs - Alpine
+  command: 'apk add -U {{ subversion_packages|join(" ") }}'
+  when: ansible_distribution == 'Alpine'
 
 - name: upgrade SVN pre-reqs
   package:
@@ -55,9 +60,9 @@
 
 - name: start test Apache SVN site - non Red Hat
   command: apachectl -k start -f {{ subversion_server_dir }}/subversion.conf
-  when: not ansible_os_family == 'RedHat'
+  when: ansible_os_family not in ['RedHat', 'Alpine']
 
 # On Red Hat based OS', we can't use apachectl to start up own instance, just use the raw httpd
 - name: start test Apache SVN site - Red Hat
   command: httpd -k start -f {{ subversion_server_dir }}/subversion.conf
-  when: ansible_os_family == 'RedHat'
+  when: ansible_os_family in ['RedHat', 'Alpine']

@@ -15,7 +15,7 @@
       package:
         name: git
         state: present
-      when: ansible_distribution != "MacOSX"
+      when: ansible_distribution not in ["MacOSX", "Alpine"]
       register: git_install
 
     - include_tasks: pip.yml

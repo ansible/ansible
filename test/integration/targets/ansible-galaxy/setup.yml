@@ -3,7 +3,7 @@
     - name: install git
       package:
         name: git
-      when: ansible_distribution != "MacOSX"
+      when: ansible_distribution not in ["MacOSX", "Alpine"]
       register: git_install
     - name: save install result
       copy:

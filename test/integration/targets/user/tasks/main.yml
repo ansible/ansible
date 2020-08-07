@@ -17,6 +17,10 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+- name: skip broken distros
+  meta: end_host
+  when: ansible_distribution == 'Alpine'
+
 ## user add
 
 - name: remove the test user
