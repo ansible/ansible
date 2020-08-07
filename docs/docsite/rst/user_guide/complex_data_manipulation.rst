@@ -141,7 +141,7 @@ Another way is to avoid adding elements to the list in the first place, so you c
 Complex Type transformations
 =============================
 
-Jinja provides filters for simple data type transformations (int, bool, etc), but when you want to transform data structures things are not as easy.
+Jinja provides filters for simple data type transformations (``int``, ``bool``, etc), but when you want to transform data structures things are not as easy.
 You can use loops and list comprehensions as shown above to help, also other filters and lookups can be chained and leveraged to achieve more complex transformations.
 
 
