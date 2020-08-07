@@ -13,6 +13,9 @@ options:
     type: str
     vars:
     - name: ansible_password
+    # Tests that an aliased key gets the -k option which hardcodes the value to password
+    aliases:
+    - password
 """
 
 from ansible.plugins.connection import ConnectionBase
