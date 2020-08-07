@@ -1,0 +1,2 @@
+bugfixes:
+- Address compat with rpmfluff-0.6 for integration tests
