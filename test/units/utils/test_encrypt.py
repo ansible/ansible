@@ -166,3 +166,26 @@ def test_random_salt():
     assert len(res) == 8
     for res_char in res:
         assert res_char in expected_salt_candidate_chars
+
+
+def test_invalid_crypt_salt():
+    pytest.raises(
+        AnsibleError,
+        encrypt.CryptHash('bcrypt')._salt,
+        '_',
+        None
+    )
+    encrypt.CryptHash('bcrypt')._salt('1234567890123456789012', None)
+    pytest.raises(
+        AnsibleError,
+        encrypt.CryptHash('bcrypt')._salt,
+        'kljsdf',
+        None
+    )
+    encrypt.CryptHash('sha256_crypt')._salt('123456', None)
+    pytest.raises(
+        AnsibleError,
+        encrypt.CryptHash('sha256_crypt')._salt,
+        '1234567890123456789012',
+        None
+    )
