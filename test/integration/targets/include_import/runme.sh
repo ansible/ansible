@@ -5,7 +5,7 @@ set -eux
 export ANSIBLE_ROLES_PATH=./roles
 
 function gen_task_files() {
-    for i in $(seq -f '%03g' 1 39); do
+    for i in $(printf "%03d " {1..39}); do
         echo -e "- name: Hello Message\n  debug:\n    msg: Task file ${i}" > "tasks/hello/tasks-file-${i}.yml"
     done
 }

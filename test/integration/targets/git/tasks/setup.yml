@@ -11,7 +11,7 @@
 - name: SETUP | install git
   package:
     name: '{{ item }}'
-  when: ansible_distribution != "MacOSX"
+  when: ansible_distribution not in ["MacOSX", "Alpine"]
   notify:
     - cleanup
   with_items: "{{ git_required_packages[ansible_os_family | default('default') ] | default(git_required_packages.default) }}"

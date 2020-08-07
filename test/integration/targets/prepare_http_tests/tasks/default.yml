@@ -22,19 +22,19 @@
     dest: "/etc/pki/trust/anchors/ansible.pem"
   when: ansible_os_family == 'Suse'
 
-- name: Debian - Retrieve test cacert
+- name: Debian/Alpine - Retrieve test cacert
   get_url:
     url: "http://ansible.http.tests/cacert.pem"
     dest: "/usr/local/share/ca-certificates/ansible.crt"
-  when: ansible_os_family == 'Debian'
+  when: ansible_os_family in ['Debian', 'Alpine']
 
 - name: Redhat - Update ca trust
   command: update-ca-trust extract
   when: ansible_os_family == 'RedHat'
 
-- name: Debian/Suse - Update ca certificates
+- name: Debian/Alpine/Suse - Update ca certificates
   command: update-ca-certificates
-  when: ansible_os_family == 'Debian' or ansible_os_family == 'Suse'
+  when: ansible_os_family in ['Debian', 'Alpine', 'Suse']
 
 - name: FreeBSD - Retrieve test cacert
   get_url:

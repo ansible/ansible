@@ -19,17 +19,23 @@
 
 - when: faketime_pkg | default(false, true)
   block:
-    - name: install cron and faketime packages
+    - name: install faketime packages
       package:
         name: '{{ faketime_pkg }}'
       register: faketime_package_installed
       until: faketime_package_installed is success
+      when: ansible_distribution != 'Alpine'
+
+    - name: install faketime packages - Alpine
+      command: apk add -U {{ faketime_pkg }} --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+      when: ansible_distribution == 'Alpine'
 
     - name: Find libfaketime path
       shell: '{{ list_pkg_files }} {{ faketime_pkg }} | grep -F libfaketime.so.1'
       args:
         warn: false
       register: libfaketime_path
+      when: list_pkg_files is defined
 
     - when: ansible_service_mgr == 'systemd'
       block:
@@ -68,3 +74,11 @@
     daemon-reload: "{{ (ansible_service_mgr == 'systemd') | ternary(true, omit) }}"
     name: '{{ cron_service }}'
     state: restarted
+  when: ansible_distribution != 'Alpine'
+
+- name: enable cron service - Alpine
+  command: nohup crond
+  environment:
+    FAKETIME: "+0y x10"
+    LD_PRELOAD: "/usr/lib/faketime/libfaketime.so.1"
+  when: ansible_distribution == 'Alpine'

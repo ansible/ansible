@@ -100,7 +100,9 @@
 - assert:
     that: remove_cron_file is not changed
 
+# BusyBox does not have /etc/cron.d
 - name: Removing a cron file when the name is specified is allowed (#57471)
+  when: ansible_distribution != 'Alpine'
   block:
   - name: Cron file creation
     cron:
@@ -124,6 +126,7 @@
       that: not cron_file_stats.stat.exists
 
 - name: Allow non-ascii chars in job (#69492)
+  when: ansible_distribution != 'Alpine'
   block:
   - name: Cron file creation
     cron:
@@ -155,6 +158,7 @@
       that: not cron_file_stats.stat.exists
 
 - name: Allow non-ascii chars in cron_file (#69492)
+  when: ansible_distribution != 'Alpine'
   block:
   - name: Cron file creation with non-ascii filename (これは日本語です; This is Japanese)
     cron:

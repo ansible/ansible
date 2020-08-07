@@ -1,7 +1,6 @@
 - name: Create unarchivetest1 user
   user:
     name: unarchivetest1
-    uid: 1002610001
     group: "{{ group_table[ansible_facts['distribution']] | default(omit) }}"
   register: user
   vars:

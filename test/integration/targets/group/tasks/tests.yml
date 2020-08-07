@@ -198,7 +198,13 @@
   args:
     name: libuser
     state: present
-  when: ansible_facts.system in ['Linux']
+  when: ansible_facts.system in ['Linux'] and ansible_distribution != 'Alpine'
+  tags:
+    - user_test_local_mode
+
+- name: Ensure lgroupadd is present - Alpine
+  command: apk add -U libuser --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+  when: ansible_distribution == 'Alpine'
   tags:
     - user_test_local_mode
 
