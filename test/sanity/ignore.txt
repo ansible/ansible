@@ -101,6 +101,7 @@ lib/ansible/modules/apt_repository.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/apt_repository.py validate-modules:undocumented-parameter
 lib/ansible/modules/dnf.py validate-modules:doc-required-mismatch
 lib/ansible/modules/dnf.py validate-modules:parameter-invalid
+lib/ansible/modules/package_facts.py validate-modules:doc-choices-do-not-match-spec
 lib/ansible/modules/yum.py pylint:blacklisted-name
 lib/ansible/modules/yum.py validate-modules:parameter-invalid
 lib/ansible/modules/yum_repository.py validate-modules:doc-default-does-not-match-spec
