@@ -236,10 +236,6 @@ test/lib/ansible_test/_data/setup/ConfigureRemotingForAnsible.ps1 pslint:PSCusto
 test/lib/ansible_test/_data/setup/windows-httptester.ps1 pslint:PSCustomUseLiteralPath
 test/support/integration/plugins/module_utils/ansible_tower.py future-import-boilerplate
 test/support/integration/plugins/module_utils/ansible_tower.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/azure_rm_common.py future-import-boilerplate
-test/support/integration/plugins/module_utils/azure_rm_common.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/azure_rm_common_rest.py future-import-boilerplate
-test/support/integration/plugins/module_utils/azure_rm_common_rest.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/cloud.py future-import-boilerplate
 test/support/integration/plugins/module_utils/cloud.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/compat/ipaddress.py future-import-boilerplate

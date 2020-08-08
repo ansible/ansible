@@ -1,1 +1,0 @@
-azure_rm_mariadbfirewallrule_info.py
