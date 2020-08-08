@@ -514,12 +514,12 @@ def main():
                         action = 'stop'
                 elif module.params['state'] == 'try-restarted':
                     if is_running_service(result['status']):
-                        action = module.params['state'][:-2]
+                        action = 'try-restart'
                 else:
                     if not is_running_service(result['status']):
                         action = 'start'
                     else:
-                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded/try-restarted
+                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
                     result['state'] = 'started'
 
                 if action:
