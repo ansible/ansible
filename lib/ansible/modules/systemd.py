@@ -27,8 +27,9 @@ options:
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
               C(restarted) will always bounce the service. C(reloaded) will always reload.
+              C(try-restarted) will only restart the service if it is running.
         type: str
-        choices: [ reloaded, restarted, started, stopped ]
+        choices: [ reloaded, restarted, started, stopped, try-restarted ]
     enabled:
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
@@ -104,6 +105,11 @@ EXAMPLES = '''
   systemd:
     name: httpd
     state: reloaded
+
+- name: Restart service httpd if it is running
+  systemd:
+    name: httpd
+    state: try-restarted
 
 - name: Enable service httpd and ensure it is not masked
   systemd:
@@ -319,7 +325,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', aliases=['service', 'unit']),
-            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped']),
+            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped', 'try-restarted']),
             enabled=dict(type='bool'),
             force=dict(type='bool'),
             masked=dict(type='bool'),
@@ -510,7 +516,7 @@ def main():
                     if not is_running_service(result['status']):
                         action = 'start'
                     else:
-                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded
+                        action = module.params['state'][:-2]  # remove 'ed' from restarted/reloaded/try-restarted
                     result['state'] = 'started'
 
                 if action:
