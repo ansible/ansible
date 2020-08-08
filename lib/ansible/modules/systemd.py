@@ -512,6 +512,9 @@ def main():
                 elif module.params['state'] == 'stopped':
                     if is_running_service(result['status']) or is_deactivating_service(result['status']):
                         action = 'stop'
+                elif module.params['state'] == 'try-restarted':
+                    if is_running_service(result['status']):
+                        action = module.params['state'][:-2]
                 else:
                     if not is_running_service(result['status']):
                         action = 'start'
