@@ -38,10 +38,11 @@ This table links to the release notes for each major release. These release note
 ==============================      =================================================
 Ansible Release                     Status
 ==============================      =================================================
-devel                               In development (2.10 unreleased, trunk)
+devel                               In development (2.11 unreleased, trunk)
+`2.10 Release Notes`_               Maintained (security **and** general bug fixes)
 `2.9 Release Notes`_                Maintained (security **and** general bug fixes)
 `2.8 Release Notes`_                Maintained (security **and** critical bug fixes)
-`2.7 Release Notes`_                Maintained (security fixes)
+`2.7 Release Notes`_                Unmaintained (end of life)
 `2.6 Release Notes`_                Unmaintained (end of life)
 `2.5 Release Notes`_                Unmaintained (end of life)
 <2.5                                Unmaintained (end of life)
@@ -55,6 +56,8 @@ You can download the releases from `<https://releases.ansible.com/ansible/>`_.
 
 .. Comment: devel used to point here but we're currently revamping our changelog process and have no
    link to a static changelog for devel _2.6: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
+.. _2.10 Release Notes:
+.. _2.10: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
 .. _2.9 Release Notes:
 .. _2.9: https://github.com/ansible/ansible/blob/stable-2.9/changelogs/CHANGELOG-v2.9.rst
 .. _2.8 Release Notes:
