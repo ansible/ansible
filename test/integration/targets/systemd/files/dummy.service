@@ -1,0 +1,6 @@
+[Unit]
+Description=Dummy Service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/sleep 3600
