@@ -3,4 +3,4 @@ Description=Dummy Service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/sleep 3600
+ExecStart=/bin/sleep 3600
