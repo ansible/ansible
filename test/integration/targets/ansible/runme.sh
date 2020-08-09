@@ -36,6 +36,18 @@ env -u ANSIBLE_PLAYBOOK_DIR ANSIBLE_CONFIG=./playbookdir_cfg.ini ansible localho
 # test adhoc callback triggers
 ANSIBLE_STDOUT_CALLBACK=callback_debug ANSIBLE_LOAD_CALLBACK_PLUGINS=1 ansible --playbook-dir . testhost -i ../../inventory -m ping | grep -E '^v2_' | diff -u adhoc-callback.stdout -
 
+# CB_WANTS_IMPLICIT isn't anything in Ansible itself.
+# Our test cb plugin just accepts it. It lets us avoid copypasting the whole
+# plugin just for two tests.
+CB_WANTS_IMPLICIT=1 ANSIBLE_STDOUT_CALLBACK=callback_meta ANSIBLE_LOAD_CALLBACK_PLUGINS=1 ansible-playbook -i ../../inventory --extra-vars @./vars.yml playbook.yml | grep 'saw implicit task'
+
+set +e
+if ANSIBLE_STDOUT_CALLBACK=callback_meta ANSIBLE_LOAD_CALLBACK_PLUGINS=1 ansible-playbook -i ../../inventory --extra-vars @./vars.yml playbook.yml | grep 'saw implicit task'; then
+  echo "Callback got implicit task and should not have"
+  exit 1
+fi
+set -e
+
 # Test that no tmp dirs are left behind when running ansible-config
 TMP_DIR=~/.ansible/tmptest
 if [[ -d "$TMP_DIR" ]]; then
