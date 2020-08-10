@@ -269,7 +269,7 @@ In YAML:
           ansible_host: 192.0.2.50
 
 In the above example, running Ansible against the host alias "jumper" will connect to 192.0.2.50 on port 5555.
-This only works for hosts with static IPs, or when you are connecting through tunnels.
+This can be useful when you are connecting through tunnels.
 
 .. note::
    Values passed in the INI format using the ``key=value`` syntax are interpreted differently depending on where they are declared:
