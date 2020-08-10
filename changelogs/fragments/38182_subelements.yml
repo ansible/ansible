@@ -1,0 +1,2 @@
+minor_changes:
+- subelements - clarify the lookup plugin documentation for parameter handling (https://github.com/ansible/ansible/issues/38182).
