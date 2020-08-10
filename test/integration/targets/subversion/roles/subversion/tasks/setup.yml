@@ -14,7 +14,7 @@
   when: ansible_distribution != 'Alpine'
 
 - name: install SVN pre-reqs - Alpine
-  command: 'apk add -U {{ subversion_packages|join(" ") }}'
+  command: 'apk add -U -u {{ subversion_packages|join(" ") }}'
   when: ansible_distribution == 'Alpine'
 
 - name: upgrade SVN pre-reqs
