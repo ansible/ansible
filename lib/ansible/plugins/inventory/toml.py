@@ -4,7 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
     inventory: toml
     version_added: "2.8"
     short_description: Uses a specific TOML file as an inventory source.
@@ -15,7 +15,8 @@ DOCUMENTATION = '''
         - Requires the 'toml' python library
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
+# Following are examples of 3 different inventories in TOML format
 example1: |
     [all.vars]
     has_java = false
