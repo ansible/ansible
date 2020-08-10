@@ -39,7 +39,7 @@ This table links to the release notes for each major release. These release note
 Ansible Release                     Status
 ==============================      =================================================
 devel                               In development (2.11 unreleased, trunk)
-`2.10 Release Notes`_               Maintained (security **and** general bug fixes)
+`2.10 ansible-base Release Notes`_               Maintained (security **and** general bug fixes)
 `2.9 Release Notes`_                Maintained (security **and** general bug fixes)
 `2.8 Release Notes`_                Maintained (security fixes)
 `2.7 Release Notes`_                Unmaintained (end of life)
