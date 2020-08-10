@@ -16,6 +16,7 @@ As you write more playbooks and roles, you might have some special use cases. Fo
    playbooks_environment
    playbooks_error_handling
    playbooks_advanced_syntax
+   complex_data_manipulation
    ../plugins/plugins
    playbooks_prompts
    playbooks_tags
