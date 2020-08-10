@@ -286,7 +286,8 @@ class SanityIgnoreParser:
                 self.parse_errors.append((line_no, 1, "Line cannot be empty or contain only a comment"))
                 continue
 
-            parts = line.split(' ')
+            parts = line.replace('  ', ' ')
+            parts = parts.split(' ')
             path = parts[0]
             codes = parts[1:]
 
