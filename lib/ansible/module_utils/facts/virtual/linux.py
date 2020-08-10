@@ -57,12 +57,14 @@ class LinuxVirtual(Virtual):
                     if not found_virt:
                         virtual_facts['virtualization_type'] = 'docker'
                         virtual_facts['virtualization_role'] = 'guest'
+                        virtual_facts['container'] = True
                         found_virt = True
                 if re.search('/lxc/', line) or re.search('/machine.slice/machine-lxc', line):
                     guest_tech.add('lxc')
                     if not found_virt:
                         virtual_facts['virtualization_type'] = 'lxc'
                         virtual_facts['virtualization_role'] = 'guest'
+                        virtual_facts['container'] = True
                         found_virt = True
 
         # lxc does not always appear in cgroups anymore but sets 'container=lxc' environment var, requires root privs
@@ -73,18 +75,21 @@ class LinuxVirtual(Virtual):
                     if not found_virt:
                         virtual_facts['virtualization_type'] = 'lxc'
                         virtual_facts['virtualization_role'] = 'guest'
+                        virtual_facts['container'] = True
                         found_virt = True
                 if re.search('container=podman', line):
                     guest_tech.add('podman')
                     if not found_virt:
                         virtual_facts['virtualization_type'] = 'podman'
                         virtual_facts['virtualization_role'] = 'guest'
+                        virtual_facts['container'] = True
                         found_virt = True
                 if re.search('^container=.', line):
                     guest_tech.add('container')
                     if not found_virt:
                         virtual_facts['virtualization_type'] = 'container'
                         virtual_facts['virtualization_role'] = 'guest'
+                        virtual_facts['container'] = True
                         found_virt = True
 
         if os.path.exists('/proc/vz') and not os.path.exists('/proc/lve'):
@@ -97,6 +102,7 @@ class LinuxVirtual(Virtual):
                 guest_tech.add('openvz')
                 if not found_virt:
                     virtual_facts['virtualization_role'] = 'guest'
+                    virtual_facts['container'] = True
             found_virt = True
 
         systemd_container = get_file_content('/run/systemd/container')
@@ -105,6 +111,7 @@ class LinuxVirtual(Virtual):
             if not found_virt:
                 virtual_facts['virtualization_type'] = systemd_container
                 virtual_facts['virtualization_role'] = 'guest'
+                virtual_facts['container'] = True
                 found_virt = True
 
         if os.path.exists("/proc/xen"):
