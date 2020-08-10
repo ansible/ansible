@@ -6,7 +6,6 @@ Network automation leverages the basic Ansible concepts, but there are important
 
 .. contents::
   :local:
-  :maxdepth: 2
 
 Execution on the control node
 ================================================================================
@@ -24,13 +23,13 @@ Because network modules execute on the control node instead of on the managed no
    :header: "Value of ansible_connection", "Protocol", "Requires", "Persistent?"
    :widths: 30, 10, 10, 10
 
-   "network_cli", "CLI over SSH", "network_os setting", "yes"
-   "netconf", "XML over SSH", "network_os setting", "yes"
-   "httpapi", "API over HTTP/HTTPS", "network_os setting", "yes"
+   "ansible.netcommon.network_cli", "CLI over SSH", "network_os setting", "yes"
+   "ansible.netcommon.netconf", "XML over SSH", "network_os setting", "yes"
+   "ansible.netcommon.httpapi", "API over HTTP/HTTPS", "network_os setting", "yes"
    "local", "depends on provider", "provider setting", "no"
 
 .. note::
-  ``httpapi`` deprecates ``eos_eapi`` and ``nxos_nxapi``. See :ref:`httpapi_plugins` for details and an example.
+  ``ansible.netcommon.httpapi`` deprecates ``eos_eapi`` and ``nxos_nxapi``. See :ref:`httpapi_plugins` for details and an example.
 
 The ``ansible_connection: local`` has been deprecated. Please use one of the persistent connection types listed above instead. With persistent connections, you can define the hosts and credentials only once, rather than in every task. You also need to set the ``network_os`` variable for the specific network platform you are communicating with. For more details on using each connection type on various platforms, see the :ref:`platform-specific <platform_options>` pages.
 
@@ -40,10 +39,10 @@ Collections organized by network platform
 
 A network platform is a set of network devices with a common operating system that can be managed by an Ansible collection, for example:
 
-- Arista: :ref:`arista.eos <https://galaxy.ansible.com/arista/eos>`_
-- Cisco: :ref:`cisco.ios https://galaxy.ansible.com/cisco/ios`_, :ref:`cisco.iosxr https://galaxy.ansible.com/cisco/iosxr`_, :ref:`cisco.nxos https://galaxy.ansible.com/cisco/nxos`_
-- Juniper: :ref:`junipernetworks.junos <https://galaxy.ansible.com/junipernetworks/junos`_
-- VyOS :ref:`vyos.vyos https://galaxy.ansible.com/vyos/vyos`_
+- Arista: `arista.eos <https://galaxy.ansible.com/arista/eos>`_
+- Cisco: `cisco.ios <https://galaxy.ansible.com/cisco/ios>`_, `cisco.iosxr <https://galaxy.ansible.com/cisco/iosxr>`_, `cisco.nxos <https://galaxy.ansible.com/cisco/nxos>`_
+- Juniper: `junipernetworks.junos <https://galaxy.ansible.com/junipernetworks/junos>`_
+- VyOS `vyos.vyos <https://galaxy.ansible.com/vyos/vyos>`_
 
 All modules within a network platform share certain requirements. Some network platforms have specific differences - see the :ref:`platform-specific <platform_options>` documentation for details.
 

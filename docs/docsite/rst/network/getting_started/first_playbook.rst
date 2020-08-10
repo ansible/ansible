@@ -9,7 +9,6 @@ Put the concepts you learned to work with this quick tutorial. Install Ansible, 
 
 .. contents::
   :local:
-  :maxdepth: 2
 
 Prerequisites
 ==================================================

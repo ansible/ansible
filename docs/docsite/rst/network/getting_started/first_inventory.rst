@@ -6,7 +6,6 @@ Running a playbook without an inventory requires several command-line flags. Als
 
 .. contents::
   :local:
-  :maxdepth: 2
 
 Basic inventory
 ==================================================
@@ -261,75 +260,75 @@ You can use the :ref:`ansible-inventory` CLI command to display the inventory as
           "hostvars": {
               "leaf01": {
                   "ansible_connection": "ansible.netcommon.network_cli",
-              "ansible_host": "10.16.10.11",
-              "ansible_network_os": "vyos.vyos.vyos",
-              "ansible_user": "my_vyos_user"
-          },
-          "leaf02": {
-              "ansible_connection": "ansible.netcommon.network_cli",
-              "ansible_host": "10.16.10.12",
-              "ansible_network_os": "vyos.vyos.vyos",
-              "ansible_user": "my_vyos_user"
-          },
-          "spine01": {
-              "ansible_connection": "ansible.netcommon.network_cli",
-              "ansible_host": "10.16.10.13",
-              "ansible_network_os": "vyos.vyos.vyos",
-              "ansible_user": "my_vyos_user"
-          },
-          "spine02": {
-              "ansible_connection": "ansible.netcommon.network_cli",
-              "ansible_host": "10.16.10.14",
-              "ansible_network_os": "vyos.vyos.vyos",
-              "ansible_user": "my_vyos_user"
-          },
-          "webserver01": {
-              "ansible_host": "10.16.10.15",
-              "ansible_user": "my_server_user"
-          },
-          "webserver02": {
-              "ansible_host": "10.16.10.16",
-              "ansible_user": "my_server_user"
+                  "ansible_host": "10.16.10.11",
+                  "ansible_network_os": "vyos.vyos.vyos",
+                  "ansible_user": "my_vyos_user"
+              },
+              "leaf02": {
+                  "ansible_connection": "ansible.netcommon.network_cli",
+                  "ansible_host": "10.16.10.12",
+                  "ansible_network_os": "vyos.vyos.vyos",
+                  "ansible_user": "my_vyos_user"
+              },
+              "spine01": {
+                  "ansible_connection": "ansible.netcommon.network_cli",
+                  "ansible_host": "10.16.10.13",
+                  "ansible_network_os": "vyos.vyos.vyos",
+                  "ansible_user": "my_vyos_user"
+              },
+              "spine02": {
+                  "ansible_connection": "ansible.netcommon.network_cli",
+                  "ansible_host": "10.16.10.14",
+                  "ansible_network_os": "vyos.vyos.vyos",
+                  "ansible_user": "my_vyos_user"
+              },
+              "webserver01": {
+                  "ansible_host": "10.16.10.15",
+                  "ansible_user": "my_server_user"
+              },
+              "webserver02": {
+                  "ansible_host": "10.16.10.16",
+                  "ansible_user": "my_server_user"
+              }
           }
+      },
+      "all": {
+          "children": [
+              "datacenter",
+              "ungrouped"
+          ]
+      },
+      "datacenter": {
+          "children": [
+              "network",
+              "webservers"
+          ]
+      },
+      "leafs": {
+          "hosts": [
+              "leaf01",
+              "leaf02"
+          ]
+      },
+      "network": {
+          "children": [
+              "leafs",
+              "spines"
+          ]
+      },
+      "spines": {
+          "hosts": [
+              "spine01",
+              "spine02"
+          ]
+      },
+      "webservers": {
+          "hosts": [
+              "webserver01",
+              "webserver02"
+          ]
       }
-  },
-  "all": {
-      "children": [
-          "datacenter",
-          "ungrouped"
-      ]
-  },
-  "datacenter": {
-      "children": [
-          "network",
-          "webservers"
-      ]
-  },
-  "leafs": {
-      "hosts": [
-          "leaf01",
-          "leaf02"
-      ]
-  },
-  "network": {
-      "children": [
-          "leafs",
-          "spines"
-      ]
-  },
-  "spines": {
-      "hosts": [
-          "spine01",
-          "spine02"
-      ]
-  },
-  "webservers": {
-      "hosts": [
-          "webserver01",
-          "webserver02"
-      ]
-  }
-}
+    }
 
 .. _network_vault:
 
