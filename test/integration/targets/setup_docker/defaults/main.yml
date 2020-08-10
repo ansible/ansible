@@ -8,7 +8,7 @@ docker_packages:
 
 docker_pip_extra_packages: []
 docker_pip_packages:
-  - docker
+  - docker<4.3.0
 
 docker_cleanup_packages:
   - docker
