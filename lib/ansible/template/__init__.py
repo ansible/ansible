@@ -76,7 +76,6 @@ from jinja2 import __version__ as j2_version
 USE_JINJA2_NATIVE = False
 if C.DEFAULT_JINJA2_NATIVE:
     try:
-        from jinja2.filters import FILTERS
         from jinja2.nativetypes import NativeEnvironment as Environment
         from ansible.template.native_helpers import ansible_native_concat as j2_concat
         from ansible.template.native_helpers import NativeJinjaText
@@ -637,7 +636,7 @@ class Templar:
                     orig_filter = self._filters[string_filter]
                 except KeyError:
                     try:
-                        orig_filter = FILTERS[string_filter]
+                        orig_filter = self.environment.filters[string_filter]
                     except KeyError:
                         continue
                 self._filters[string_filter] = _wrap_native_text(orig_filter)
