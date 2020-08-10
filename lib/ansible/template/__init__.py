@@ -506,10 +506,13 @@ class JinjaPluginIntercept(MutableMapping):
 
                 method_map = getattr(plugin_impl, self._method_map_name)
 
-                for f in iteritems(method_map()):
-                    fq_name = '.'.join((parent_prefix, f[0]))
+                for func_name, func in iteritems(method_map()):
+                    fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
-                    self._collection_jinja_func_cache[fq_name] = _unroll_iterator(f[1])
+                    if USE_JINJA2_NATIVE and func_name in C.STRING_TYPE_FILTERS:
+                        self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
+                    else:
+                        self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func)
 
             function_impl = self._collection_jinja_func_cache[key]
             return function_impl
