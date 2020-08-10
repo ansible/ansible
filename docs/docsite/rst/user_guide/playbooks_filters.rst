@@ -146,7 +146,7 @@ Transforming lists into dictionaries
 
 .. versionadded:: 2.7
 
-Use the ``items2dict``filter to transform a list into a dictionary, mapping the content into ``key: value`` pairs::
+Use the ``items2dict`` filter to transform a list into a dictionary, mapping the content into ``key: value`` pairs::
 
     {{ tags | items2dict }}
 
@@ -1540,7 +1540,7 @@ To get the root and extension of a path or file name (new in version 2.0)::
 The ``splitext`` filter returns a string. The individual components can be accessed by using the ``first`` and ``last`` filters::
 
     # with path == 'nginx.conf' the return would be 'nginx'
-    {{ path | splitext | first }} 
+    {{ path | splitext | first }}
 
     # with path == 'nginx.conf' the return would be 'conf'
     {{ path | splitext | last }}
