@@ -654,7 +654,7 @@ class PluginLoader:
         #       we need to make sure we don't want to add additional directories
         #       (add_directory()) once we start using the iterator.
         #       We can use _get_paths_with_context() since add_directory() forces a cache refresh.
-        for path_with_context in (p for p in self._get_paths_with_cointext() if p.path not in self._searched_paths and os.path.isdir(to_bytes(p.path))):
+        for path_with_context in (p for p in self._get_paths_with_context() if p.path not in self._searched_paths and os.path.isdir(to_bytes(p.path))):
             path = path_with_context.path
             b_path = to_bytes(path)
             display.debug('trying %s' % path)
