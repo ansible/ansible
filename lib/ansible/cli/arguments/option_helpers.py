@@ -348,7 +348,7 @@ def add_runas_prompt_options(parser, runas_group=None):
 def add_runtask_options(parser):
     """Add options for commands that run a task"""
     parser.add_argument('-e', '--extra-vars', dest="extra_vars", action="append",
-                        help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
+                        help="set additional variables as key=value or YAML/JSON, if filename prepend with @. Can be given multiple times.", default=[])
 
 
 def add_subset_options(parser):
