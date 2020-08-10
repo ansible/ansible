@@ -150,6 +150,50 @@ The following playbook uses the :ref:`eos_l3_interfaces <eos_l3_interfaces_modul
     assert:
       that: not result.changed
 
+Example: Acquiring and updating VLANs on a network device
+==========================================================
+
+This example shows how you can use resource modules to:
+
+#. Retrieve the current configuration on a network device.
+#. Save that configuration locally.
+#. Update that configuration and apply it to the network device.
+
+This example uses the ``cisco.ios.ios_vlans`` resource module to retrieve and update the VLANs on an IOS device.
+
+1. Retrieve the current IOS VLAN configuration:
+
+.. code-block:: yaml
+
+  - name: Gather VLAN information as structured data
+    cisco.ios.ios_facts:
+       gather_subset:
+        - '!all'
+        - '!min'
+       gather_network_resources:
+       - 'vlans'
+
+2. Store the VLAN configuration locally:
+
+.. code-block:: yaml
+
+  - name: Store VLAN facts to host_vars
+    copy:
+      content: "{{ ansible_network_resources | to_nice_yaml }}"
+      dest: "{{ playbook_dir }}/host_vars/{{ inventory_hostname }}"
+
+3. Modify the stored file to update the VLAN configuration locally.
+
+4. Merge the updated VLAN configuration with the existing configuration on the device:
+
+.. code-block:: yaml
+
+  - name: Make VLAN config changes by updating stored facts on the controller.
+    cisco.ios.ios_vlans:
+      config: "{{ vlans }}"
+      state: merged
+    tags: update_config
+
 .. seealso::
 
   `Network Features in Ansible 2.9 <https://www.ansible.com/blog/network-features-coming-soon-in-ansible-engine-2.9>`_
