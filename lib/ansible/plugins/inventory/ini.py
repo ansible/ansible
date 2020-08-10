@@ -29,49 +29,47 @@ DOCUMENTATION = '''
           The YAML inventory plugin processes variable values consistently and correctly.
 '''
 
-EXAMPLES = '''
-  example1: |
-      # example cfg file
-      [web]
-      host1
-      host2 ansible_port=222 # defined inline, interpreted as an integer
+EXAMPLES = '''# fmt: ini
+# Example 1
+[web]
+host1
+host2 ansible_port=222 # defined inline, interpreted as an integer
 
-      [web:vars]
-      http_port=8080 # all members of 'web' will inherit these
-      myvar=23 # defined in a :vars section, interpreted as a string
+[web:vars]
+http_port=8080 # all members of 'web' will inherit these
+myvar=23 # defined in a :vars section, interpreted as a string
 
-      [web:children] # child groups will automatically add their hosts to parent group
-      apache
-      nginx
+[web:children] # child groups will automatically add their hosts to parent group
+apache
+nginx
 
-      [apache]
-      tomcat1
-      tomcat2 myvar=34 # host specific vars override group vars
-      tomcat3 mysecret="'03#pa33w0rd'" # proper quoting to prevent value changes
+[apache]
+tomcat1
+tomcat2 myvar=34 # host specific vars override group vars
+tomcat3 mysecret="'03#pa33w0rd'" # proper quoting to prevent value changes
 
-      [nginx]
-      jenkins1
+[nginx]
+jenkins1
 
-      [nginx:vars]
-      has_java = True # vars in child groups override same in parent
+[nginx:vars]
+has_java = True # vars in child groups override same in parent
 
-      [all:vars]
-      has_java = False # 'all' is 'top' parent
+[all:vars]
+has_java = False # 'all' is 'top' parent
 
-  example2: |
-      # other example config
-      host1 # this is 'ungrouped'
+# Example 2
+host1 # this is 'ungrouped'
 
-      # both hosts have same IP but diff ports, also 'ungrouped'
-      host2 ansible_host=127.0.0.1 ansible_port=44
-      host3 ansible_host=127.0.0.1 ansible_port=45
+# both hosts have same IP but diff ports, also 'ungrouped'
+host2 ansible_host=127.0.0.1 ansible_port=44
+host3 ansible_host=127.0.0.1 ansible_port=45
 
-      [g1]
-      host4
+[g1]
+host4
 
-      [g2]
-      host4 # same host as above, but member of 2 groups, will inherit vars from both
-            # inventory hostnames are unique
+[g2]
+host4 # same host as above, but member of 2 groups, will inherit vars from both
+      # inventory hostnames are unique
 '''
 
 import ast
