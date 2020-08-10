@@ -61,6 +61,16 @@ DOCUMENTATION = """
         ini:
           - {key: host_key_auto_add, section: paramiko_connection}
         type: boolean
+      gss_auth:
+        default: False
+        description: enable GSS-API Authentication
+        env:
+            - name: ANSIBLE_PARAMIKO_GSS_AUTH
+        ini:
+        - section: paramiko_connection
+          key: gss_auth
+          version_added: '2.9'
+        type: boolean
       look_for_keys:
         default: True
         description: 'TODO: write it'
@@ -345,6 +355,7 @@ class Connection(ConnectionBase):
                 username=self._play_context.remote_user,
                 allow_agent=allow_agent,
                 look_for_keys=self.get_option('look_for_keys'),
+                gss_auth=self.get_option('gss_auth'),
                 key_filename=key_filename,
                 password=conn_password,
                 timeout=self._play_context.timeout,

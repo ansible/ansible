@@ -1703,6 +1703,14 @@ PARAMIKO_HOST_KEY_AUTO_ADD:
   ini:
   - {key: host_key_auto_add, section: paramiko_connection}
   type: boolean
+PARAMIKO_GSS_AUTH:
+  name: gss auth
+  default: False
+  description: 'Enable GSS-API Authentication'
+  env: [{name: ANSIBLE_PARAMIKO_GSS_AUTH}]
+  ini:
+  - {key: gss_auth, section: paramiko_connection}
+  type: boolean
 PARAMIKO_LOOK_FOR_KEYS:
   name: look for keys
   default: True
