@@ -1,5 +1,5 @@
 automerge: false
-collection_redirect: false
+collection_redirect: true
 notifications: false
 files:
   .github/BOTMETA.yml:
