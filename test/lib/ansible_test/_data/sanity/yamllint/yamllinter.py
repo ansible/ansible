@@ -182,7 +182,7 @@ class YamlChecker:
 
         docs = {}
 
-        fmt_re = re.compile('^# fmt:\s+(\S+)', flags=re.M)
+        fmt_re = re.compile(r'^# fmt:\s+(\S+)', flags=re.M)
 
         def check_assignment(statement, doc_types=None):
             """Check the given statement for a documentation assignment."""
