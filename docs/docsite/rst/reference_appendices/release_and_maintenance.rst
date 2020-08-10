@@ -35,18 +35,18 @@ Release status
 ``````````````
 This table links to the release notes for each major release. These release notes (changelogs) contain the dates and significant changes in each minor release.
 
-==============================      =================================================
-Ansible Release                     Status
-==============================      =================================================
-devel                               In development (2.11 unreleased, trunk)
-`2.10 ansible-base Release Notes`_               Maintained (security **and** general bug fixes)
-`2.9 Release Notes`_                Maintained (security **and** general bug fixes)
-`2.8 Release Notes`_                Maintained (security fixes)
-`2.7 Release Notes`_                Unmaintained (end of life)
-`2.6 Release Notes`_                Unmaintained (end of life)
-`2.5 Release Notes`_                Unmaintained (end of life)
-<2.5                                Unmaintained (end of life)
-==============================      =================================================
+==================================      =================================================
+Ansible Release                         Status
+==================================      =================================================
+devel                                   In development (2.11 unreleased, trunk)
+`2.10 ansible-base Release Notes`_      Maintained (security **and** general bug fixes)
+`2.9 Release Notes`_                    Maintained (security **and** general bug fixes)
+`2.8 Release Notes`_                    Maintained (security fixes)
+`2.7 Release Notes`_                    Unmaintained (end of life)
+`2.6 Release Notes`_                    Unmaintained (end of life)
+`2.5 Release Notes`_                    Unmaintained (end of life)
+<2.5                                    Unmaintained (end of life)
+==================================      =================================================
 
 You can download the releases from `<https://releases.ansible.com/ansible/>`_.
 
