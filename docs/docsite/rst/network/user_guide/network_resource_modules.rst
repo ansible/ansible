@@ -189,7 +189,7 @@ This example uses the ``cisco.ios.ios_vlans`` resource module to retrieve and up
 .. code-block:: yaml
 
   - name: Make VLAN config changes by updating stored facts on the controller.
-   cisoc.ios.ios_vlans:
+    cisco.ios.ios_vlans:
       config: "{{ vlans }}"
       state: merged
     tags: update_config
