@@ -21,31 +21,41 @@ Avoid spaces, hyphens, and preceding numbers (use ``floor_19``, not ``19th_floor
 
 This tiny example data center illustrates a basic group structure. You can group groups using the syntax ``[metagroupname:children]`` and listing groups as members of the metagroup. Here, the group ``network`` includes all leafs and all spines; the group ``datacenter`` includes all network devices plus all webservers.
 
-.. code-block:: YAML
+.. code-block:: yaml
 
   ---
 
   leafs:
-    leaf01
-    leaf02
+    hosts:
+      leaf01:
+        ansible_host: 10.16.10.11
+      leaf02:
+        ansible_host: 10.16.10.12
 
   spines:
-    spine01
-    spine02
+    hosts:
+      spine01:
+        ansible_host: 10.16.10.13
+      spine02:
+        ansible_host: 10.16.10.14
 
   network:
     children:
-      leafs
-      spines
+      leafs:
+      spines:
 
   webservers:
-    webserver01
-    webserver02
+    hosts:
+      webserver01:
+        ansible_host: 10.16.10.15
+      webserver02:
+        ansible_host: 10.16.10.16
 
   datacenter:
     children:
-      network
-      webservers
+      network:
+      webservers:
+
 
 
 You can also create this same inventory in INI format.
@@ -78,7 +88,7 @@ Add variables to the inventory
 
 Next, you can set values for many of the variables you needed in your first Ansible command in the inventory, so you can skip them in the ``ansible-playbook`` command. In this example, the inventory includes each network device's IP, OS, and SSH user. If your network devices are only accessible by IP, you must add the IP to the inventory file. If you access your network devices using hostnames, the IP is not necessary.
 
-.. code-block:: YAML
+.. code-block:: yaml
 
   ---
 
@@ -106,8 +116,8 @@ Next, you can set values for many of the variables you needed in your first Ansi
 
   network:
     children:
-      leafs
-      spines
+      leafs:
+      spines:
 
   webservers:
     hosts:
@@ -120,16 +130,16 @@ Next, you can set values for many of the variables you needed in your first Ansi
 
   datacenter:
     children:
-      network
-      webservers
+      network:
+      webservers:
 
 
-Group Variables within Inventory
+Group variables within inventory
 ================================================================================
 
 When devices in a group share the same variable values, such as OS or SSH user, you can reduce duplication and simplify maintenance by consolidating these into group variables:
 
-.. code-block:: YAML
+.. code-block:: yaml
 
   ---
 
@@ -147,7 +157,7 @@ When devices in a group share the same variable values, such as OS or SSH user, 
     hosts:
       spine01:
         ansible_host: 10.16.10.13
-    spine02:
+      spine02:
         ansible_host: 10.16.10.14
     vars:
       ansible_network_os: vyos.vyos.vyos
@@ -155,8 +165,8 @@ When devices in a group share the same variable values, such as OS or SSH user, 
 
   network:
     children:
-      leafs
-      spines
+      leafs:
+      spines:
 
   webservers:
     hosts:
@@ -169,8 +179,8 @@ When devices in a group share the same variable values, such as OS or SSH user, 
 
   datacenter:
     children:
-      network
-      webservers
+      network:
+      webservers:
 
 Variable syntax
 ================================================================================
@@ -189,36 +199,32 @@ Group inventory by platform
 
 As your inventory grows, you may want to group devices by platform. This allows you to specify platform-specific variables easily for all devices on that platform:
 
-.. code-block:: YAML
+.. code-block:: yaml
 
   ---
 
-  vyos_leafs:
+  leafs:
     hosts:
       leaf01:
         ansible_host: 10.16.10.11
       leaf02:
         ansible_host: 10.16.10.12
 
-  vyos_spines:
+  spines:
     hosts:
       spine01:
         ansible_host: 10.16.10.13
       spine02:
         ansible_host: 10.16.10.14
 
-  vyos:
+  network:
     children:
-      vyos_leafs:
-      vyos_spines:
+      leafs:
+      spines:
     vars:
       ansible_connection: ansible.netcommon.network_cli
       ansible_network_os: vyos.vyos.vyos
       ansible_user: my_vyos_user
-
-  network:
-    children:
-      vyos:
 
   webservers:
     hosts:
@@ -238,10 +244,94 @@ With this setup, you can run ``first_playbook.yml`` with only two flags:
 
 .. code-block:: console
 
-   ansible-playbook -i inventory -k first_playbook.yml
+   ansible-playbook -i inventory.yml -k first_playbook.yml
 
-With the ``-k`` flag, you provide the SSH password(s) at the prompt. Alternatively, you can store SSH and other secrets and passwords securely in your group_vars files with ``ansible-vault``.
+With the ``-k`` flag, you provide the SSH password(s) at the prompt. Alternatively, you can store SSH and other secrets and passwords securely in your group_vars files with ``ansible-vault``. See :ref:`network_vault` for details.
 
+Verifying the inventory
+=========================
+
+You can use the :ref:`ansible-inventory` CLI command to display the inventory as Ansible sees it.
+
+.. code-block:: console
+
+  $ ansible-inventory -i test.yml --list
+    {
+      "_meta": {
+          "hostvars": {
+              "leaf01": {
+                  "ansible_connection": "ansible.netcommon.network_cli",
+              "ansible_host": "10.16.10.11",
+              "ansible_network_os": "vyos.vyos.vyos",
+              "ansible_user": "my_vyos_user"
+          },
+          "leaf02": {
+              "ansible_connection": "ansible.netcommon.network_cli",
+              "ansible_host": "10.16.10.12",
+              "ansible_network_os": "vyos.vyos.vyos",
+              "ansible_user": "my_vyos_user"
+          },
+          "spine01": {
+              "ansible_connection": "ansible.netcommon.network_cli",
+              "ansible_host": "10.16.10.13",
+              "ansible_network_os": "vyos.vyos.vyos",
+              "ansible_user": "my_vyos_user"
+          },
+          "spine02": {
+              "ansible_connection": "ansible.netcommon.network_cli",
+              "ansible_host": "10.16.10.14",
+              "ansible_network_os": "vyos.vyos.vyos",
+              "ansible_user": "my_vyos_user"
+          },
+          "webserver01": {
+              "ansible_host": "10.16.10.15",
+              "ansible_user": "my_server_user"
+          },
+          "webserver02": {
+              "ansible_host": "10.16.10.16",
+              "ansible_user": "my_server_user"
+          }
+      }
+  },
+  "all": {
+      "children": [
+          "datacenter",
+          "ungrouped"
+      ]
+  },
+  "datacenter": {
+      "children": [
+          "network",
+          "webservers"
+      ]
+  },
+  "leafs": {
+      "hosts": [
+          "leaf01",
+          "leaf02"
+      ]
+  },
+  "network": {
+      "children": [
+          "leafs",
+          "spines"
+      ]
+  },
+  "spines": {
+      "hosts": [
+          "spine01",
+          "spine02"
+      ]
+  },
+  "webservers": {
+      "hosts": [
+          "webserver01",
+          "webserver02"
+      ]
+  }
+}
+
+.. _network_vault:
 
 Protecting sensitive variables with ``ansible-vault``
 ================================================================================
@@ -291,8 +381,8 @@ This is an example using an extract from a  YAML inventory, as the INI format do
 
   vyos: # this is a group in yaml inventory, but you can also do under a host
     vars:
-      ansible_connection: network_cli
-      ansible_network_os: vyos
+      ansible_connection: ansible.netcommon.network_cli
+      ansible_network_os: vyos.vyos.vyos
       ansible_user: my_vyos_user
       ansible_password:  !vault |
            $ANSIBLE_VAULT;1.2;AES256;my_user

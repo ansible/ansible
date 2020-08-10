@@ -27,18 +27,18 @@ To demonstrate the concept of what a role is, the example ``playbook.yml`` below
    ---
    - name: configure cisco routers
      hosts: routers
-     connection: network_cli
+     connection: ansble.netcommon.network_cli
      gather_facts: no
      vars:
        dns: "8.8.8.8 8.8.4.4"
 
      tasks:
       - name: configure hostname
-        ios_config:
+        cisco.ios.ios_config:
           lines: hostname {{ inventory_hostname }}
 
       - name: configure DNS
-        ios_config:
+        cisco.ios.ios_config:
           lines: ip name-server {{dns}}
 
 If you run this playbook using the ``ansible-playbook`` command, you'll see the output below.  This example used ``-l`` option to limit the playbook to only executing on the **rtr1** node.
@@ -113,11 +113,11 @@ Next, move the content of the ``vars`` and ``tasks`` sections from the original 
    [user@ansible system-demo]$ cat tasks/main.yml
    ---
    - name: configure hostname
-     ios_config:
+     cisco.ios.ios_config:
        lines: hostname {{ inventory_hostname }}
 
    - name: configure DNS
-     ios_config:
+     cisco.ios.ios_config:
        lines: ip name-server {{dns}}
 
 Next, move the variables into the ``vars/main.yml`` file:
@@ -135,7 +135,7 @@ Finally, modify the original Ansible Playbook to remove the ``tasks`` and ``vars
    ---
    - name: configure cisco routers
      hosts: routers
-     connection: network_cli
+     connection: ansible.netcommon.network_cli
      gather_facts: no
 
      roles:
@@ -211,7 +211,7 @@ Add a new ``vars`` section to the playbook to override the default behavior (whe
    ---
    - name: configure cisco routers
      hosts: routers
-     connection: network_cli
+     connection: ansible.netcommon.network_cli
      gather_facts: no
      vars:
        dns: 1.1.1.1
