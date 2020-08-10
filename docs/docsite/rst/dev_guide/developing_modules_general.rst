@@ -7,7 +7,7 @@ Developing Ansible modules
 
 A module is a reusable, standalone script that Ansible runs on your behalf, either locally or remotely. Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepts arguments, and returns information to Ansible by printing a JSON string to stdout before exiting. 
 
-Ansible ships thousands of default modules, and you can easily write your own custom module. If you're writing a module for local use, you can choose any programming language and follow your own rules. Use this topic to know how to create an Ansible module in Python. After you create a module, you must add it locally to the appropriate directory so that Ansible can find and execute it. For details about adding a module locally, see :ref:`developing_locally`.
+If you need functionality that is not available in any of the thousands of Ansible modules found in collections, you can easily write your own custom module. When you write a module for local use, you can choose any programming language and follow your own rules. Use this topic to learn how to create an Ansible module in Python. After you create a module, you must add it locally to the appropriate directory so that Ansible can find and execute it. For details about adding a module locally, see :ref:`developing_locally`.
 
 .. contents:: Topics
    :local:
@@ -27,8 +27,8 @@ Due to dependencies (for example ansible -> paramiko -> pynacl -> libffi):
     sudo apt update
     sudo apt install build-essential libssl-dev libffi-dev python-dev
 
-Creating a common development environment
------------------------------------------
+Creating a development environment (platform-agnostic steps)
+------------------------------------------------------------
 
 1. Clone the Ansible repository:
    ``$ git clone https://github.com/ansible/ansible.git``
@@ -262,8 +262,8 @@ You can run through Ansible's sanity checks in a container:
 .. note:: 
 	Note that this example requires Docker to be installed and running. If you'd rather not use a container for this, you can choose to use ``--venv`` instead of ``--docker``.
 
-Performing unit tests
----------------------
+Adding unit tests
+-----------------
 
 You can add unit tests for your module in ``./test/units/modules``. You must first set up your testing environment. In this example, we're using Python 3.5.
 
