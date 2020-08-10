@@ -65,6 +65,8 @@ options:
     description:
       - Whether to disable the GPG checking of signatures of packages being
         installed. Has an effect only if state is I(present) or I(latest).
+      - This setting affects packages installed from a repository as well as
+        "local" packages installed from the filesystem or a URL.
     type: bool
     default: 'no'
 
@@ -1202,6 +1204,26 @@ class DnfModule(YumDnf):
                         msg="Failed to download packages: {0}".format(to_text(e)),
                         results=[],
                     )
+
+                # Validate GPG. This is NOT done in dnf.Base (it's done in the
+                # upstream CLI subclass of dnf.Base)
+                if not self.disable_gpg_check:
+                    for package in self.base.transaction.install_set:
+                        fail = False
+                        gpgres, gpgerr = self.base._sig_check_pkg(package)
+                        if gpgres == 0:  # validated successfully
+                            continue
+                        elif gpgres == 1:  # validation failed, install cert?
+                            try:
+                                self.base._get_key_for_package(package)
+                            except dnf.exceptions.Error as e:
+                                fail = True
+                        else:  # fatal error
+                            fail = True
+
+                        if fail:
+                            msg = 'Failed to validate GPG signature for {0}'.format(package)
+                            self.module.fail_json(msg=msg)
 
                 if self.download_only:
                     for package in self.base.transaction.install_set:
