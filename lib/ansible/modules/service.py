@@ -418,7 +418,7 @@ class Service(object):
 
             # Write out the contents of the list into our temporary file.
             for rcline in new_rc_conf:
-                os.write(TMP_RCCONF, rcline)
+                os.write(TMP_RCCONF, rcline.encode())
 
             # Close temporary file.
             os.close(TMP_RCCONF)
