@@ -14,6 +14,7 @@ else
     target="shippable/posix/"
 fi
 
+target="ping"
 stage="${S:-prod}"
 provider="${P:-default}"
 
