@@ -216,9 +216,9 @@ You can either copy the inventory and ini config out from the cloned git repo, o
 
 .. code-block:: bash
 
-    $ wget https://github.com/ansible/ansible/raw/devel/contrib/inventory/packet_net.py
+    $ wget https://github.com/ansible/ansible/raw/stable-2.9/contrib/inventory/packet_net.py
     $ chmod +x packet_net.py
-    $ wget https://github.com/ansible/ansible/raw/devel/contrib/inventory/packet_net.ini
+    $ wget https://github.com/ansible/ansible/raw/stable-2.9/contrib/inventory/packet_net.ini
 
 In order to understand what the inventory script gives to Ansible you can run:
 
