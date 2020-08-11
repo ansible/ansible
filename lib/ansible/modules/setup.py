@@ -69,7 +69,7 @@ notes:
       with C(facter_) and C(ohai_) so it's easy to tell their source. All variables are
       bubbled up to the caller. Using the ansible facts and choosing to not
       install I(facter) and I(ohai) means you can avoid Ruby-dependencies on your
-      remote systems. (See also M(facter) and M(ohai).)
+      remote systems. (See also M(community.general.facter) and M(community.general.ohai).)
     - The filter option filters only the first level subkey below ansible_facts.
     - If the target host is Windows, you will not currently have the ability to use
       C(filter) as this is provided by a simpler implementation of the module.

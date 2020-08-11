@@ -14,7 +14,7 @@ version_added: "0.2"
 short_description: Manage user accounts
 description:
     - Manage user accounts and user attributes.
-    - For Windows targets, use the M(win_user) module instead.
+    - For Windows targets, use the M(ansible.windows.win_user) module instead.
 options:
     name:
         description:
@@ -250,9 +250,9 @@ notes:
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
 seealso:
-- module: authorized_key
-- module: group
-- module: win_user
+- module: ansible.builtin.authorized_key
+- module: ansible.builtin.group
+- module: ansible.windows.win_user
 author:
 - Stephen Fromm (@sfromm)
 '''

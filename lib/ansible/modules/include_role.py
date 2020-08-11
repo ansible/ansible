@@ -17,7 +17,7 @@ description:
   - Dynamically loads and executes a specified role as a task.
   - May be used only where Ansible tasks are allowed - inside C(pre_tasks), C(tasks), or C(post_tasks) playbook objects, or as a task inside a role.
   - Task-level keywords, loops, and conditionals apply only to the C(include_role) statement itself.
-  - To apply keywords to the tasks within the role, pass them using the C(apply) option or use M(import_role) instead.
+  - To apply keywords to the tasks within the role, pass them using the C(apply) option or use M(ansible.builtin.import_role) instead.
   - Ignores some keywords, like C(until) and C(retries).
   - This module is also supported for Windows targets.
 version_added: "2.2"
@@ -71,12 +71,12 @@ notes:
   - Before Ansible 2.4, as with C(include), this task could be static or dynamic, If static, it implied that it won't
     need templating, loops or conditionals and will show included tasks in the C(--list) options. Ansible would try to
     autodetect what is needed, but you can set C(static) to C(yes) or C(no) at task level to control this.
-  - After Ansible 2.4, you can use M(import_role) for C(static) behaviour and this action for C(dynamic) one.
+  - After Ansible 2.4, you can use M(ansible.builtin.import_role) for C(static) behaviour and this action for C(dynamic) one.
 seealso:
-- module: import_playbook
-- module: import_role
-- module: import_tasks
-- module: include_tasks
+- module: ansible.builtin.import_playbook
+- module: ansible.builtin.import_role
+- module: ansible.builtin.import_tasks
+- module: ansible.builtin.include_tasks
 - ref: playbooks_reuse_includes
   description: More information related to including and importing playbooks, roles and tasks.
 '''

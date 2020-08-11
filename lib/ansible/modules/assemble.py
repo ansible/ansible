@@ -75,9 +75,9 @@ options:
     type: str
     version_added: '2.0'
 seealso:
-- module: copy
-- module: template
-- module: win_copy
+- module: ansible.builtin.copy
+- module: ansible.builtin.template
+- module: ansible.windows.win_copy
 author:
 - Stephen Fromm (@sfromm)
 extends_documentation_fragment:
