@@ -182,7 +182,7 @@ class YamlChecker:
 
         docs = {}
 
-        fmt_re = re.compile(r'^# fmt:\s+(\S+)', flags=re.M)
+        fmt_re = re.compile(r'^# fmt:\s+(\S+)')
 
         def check_assignment(statement, doc_types=None):
             """Check the given statement for a documentation assignment."""
@@ -193,7 +193,7 @@ class YamlChecker:
                 if doc_types and target.id not in doc_types:
                     continue
 
-                fmt_match = fmt_re.search(statement.value.s)
+                fmt_match = fmt_re.match(statement.value.s.lstrip())
                 fmt = 'yaml'
                 if fmt_match:
                     fmt = fmt_match.group(1)
