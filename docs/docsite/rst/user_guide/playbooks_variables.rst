@@ -216,7 +216,7 @@ You can define different variables for each individual host, or set shared varia
 .. _playbook_variables:
 
 Defining variables in a playbook
--------------------------------
+--------------------------------
 
 You can define variables directly in a playbook::
 
@@ -263,7 +263,7 @@ The contents of each variables file is a simple YAML dictionary, as shown in the
 .. _passing_variables_on_the_command_line:
 
 Defining variables at runtime
-----------------------------
+-----------------------------
 
 You can define variables when you run your playbook by passing variables at the command line using the ``--extra-vars`` (or ``-e``) argument. You can also request user input with a ``vars_prompt`` (see :ref:`playbooks_prompts`). When you pass variables at the command line, use a single quoted string, that contains one or more variables, in one of the formats below.
 
