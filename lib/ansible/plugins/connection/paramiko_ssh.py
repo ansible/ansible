@@ -69,7 +69,7 @@ DOCUMENTATION = """
         ini:
         - section: paramiko_connection
           key: gss_auth
-          version_added: '2.9'
+          version_added: '2.11'
         type: boolean
       look_for_keys:
         default: True
