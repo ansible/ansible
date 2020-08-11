@@ -112,7 +112,7 @@ releases of Ansible, there can sometimes be exceptions for critical issues.
 .. _release_changelogs:
 
 Changelogs
-~~~~~~~~~~
+^^^^^^^^^^^^
 
 We generate changelogs based on fragments. Here is the generated changelog for 2.9_ as an example. When creating new features or fixing bugs, create a changelog fragment describing the change. A changelog entry is not needed for new modules or plugins. Details for those items will be generated from the module documentation.
 
@@ -120,7 +120,7 @@ We've got :ref:`examples and instructions on creating changelog fragments <chang
 
 
 Release candidates
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 
 Before a new release or version of Ansible or ``ansible-base`` can be done, it will typically go
 through a release candidate process.
@@ -145,7 +145,7 @@ final release.
 .. _release_freezing:
 
 Feature freeze
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 While there is a pending release candidate, the focus of core developers and
 maintainers will on fixes towards the release candidate.
