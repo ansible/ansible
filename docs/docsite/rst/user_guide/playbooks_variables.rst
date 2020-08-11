@@ -1,7 +1,7 @@
 .. _playbooks_variables:
 
 ***************
-Using Variables's 
+Using Variables 
 ***************
 
 With Ansible, you can execute the tasks and playbooks on multiple systems from a single command. These systems can have similar or different configurations. Ansible uses variables to manage the differences in system configurations - it stores your system's configuration information in a variable. For example, you can create a variable to store information about the system architecture or hostname. Instead of executing the same task or playbook on each system separately, Ansible uses variables (as placeholders) that represent the configuration information of different systems. When you execute a task or a playbook, the variables are replaced by the system's configuration information, and the task is executed on multiple systems simultaneously.
