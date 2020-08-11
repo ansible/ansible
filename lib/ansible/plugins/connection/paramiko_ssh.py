@@ -350,12 +350,15 @@ class Connection(ConnectionBase):
             if LooseVersion(paramiko.__version__) >= LooseVersion('2.2.0'):
                 ssh_connect_kwargs['auth_timeout'] = self._play_context.timeout
 
+            # paramiko 1.15.0 introduced gss_auth parameter
+            if LooseVersion(paramiko.__version__) >= LooseVersion('1.15.0'):
+                ssh_connect_kwargs['gss_auth'] = self.get_option('gss_auth')
+
             ssh.connect(
                 self._play_context.remote_addr.lower(),
                 username=self._play_context.remote_user,
                 allow_agent=allow_agent,
                 look_for_keys=self.get_option('look_for_keys'),
-                gss_auth=self.get_option('gss_auth'),
                 key_filename=key_filename,
                 password=conn_password,
                 timeout=self._play_context.timeout,
