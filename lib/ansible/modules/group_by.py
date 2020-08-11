@@ -32,7 +32,7 @@ notes:
 - Spaces in group names are converted to dashes '-'.
 - This module is also supported for Windows targets.
 seealso:
-- module: add_host
+- module: ansible.builtin.add_host
 author:
 - Jeroen Hoekx (@jhoekx)
 '''

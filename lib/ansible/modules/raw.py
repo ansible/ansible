@@ -31,29 +31,29 @@ description:
        case is installing C(python) on a system without python installed by default.
        Another is speaking to any devices such as
        routers that do not have any Python installed. In any other case, using
-       the M(shell) or M(command) module is much more appropriate.
+       the M(ansible.builtin.shell) or M(ansible.builtin.command) module is much more appropriate.
      - Arguments given to C(raw) are run directly through the configured remote shell.
      - Standard output, error output and return code are returned when
        available.
      - There is no change handler support for this module.
      - This module does not require python on the remote system, much like
-       the M(script) module.
+       the M(ansible.builtin.script) module.
      - This module is also supported for Windows targets.
 notes:
     - "If using raw from a playbook, you may need to disable fact gathering
       using C(gather_facts: no) if you're using C(raw) to bootstrap python
       onto the machine."
     - If you want to execute a command securely and predictably, it may be
-      better to use the M(command) or M(shell) modules instead.
+      better to use the M(ansible.builtin.command) or M(ansible.builtin.shell) modules instead.
     - The C(environment) keyword does not work with raw normally, it requires a shell
       which means it only works if C(executable) is set or using the module
       with privilege escalation (C(become)).
     - This module is also supported for Windows targets.
 seealso:
-- module: command
-- module: shell
-- module: win_command
-- module: win_shell
+- module: ansible.builtin.command
+- module: ansible.builtin.shell
+- module: ansible.windows.win_command
+- module: ansible.windows.win_shell
 author:
     - Ansible Core Team
     - Michael DeHaan

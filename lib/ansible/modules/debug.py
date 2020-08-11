@@ -41,8 +41,8 @@ options:
 notes:
     - This module is also supported for Windows targets.
 seealso:
-- module: assert
-- module: fail
+- module: ansible.builtin.assert
+- module: ansible.builtin.fail
 author:
 - Dag Wieers (@dagwieers)
 - Michael DeHaan
