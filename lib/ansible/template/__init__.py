@@ -398,10 +398,11 @@ class AnsibleContext(Context):
 
 
 class JinjaPluginIntercept(MutableMapping):
-    def __init__(self, delegatee, pluginloader, *args, **kwargs):
+    def __init__(self, delegatee, pluginloader, jinja2_native, *args, **kwargs):
         super(JinjaPluginIntercept, self).__init__(*args, **kwargs)
         self._delegatee = delegatee
         self._pluginloader = pluginloader
+        self._jinja2_native = jinja2_native
 
         if self._pluginloader.class_name == 'FilterModule':
             self._method_map_name = 'filters'
@@ -509,7 +510,7 @@ class JinjaPluginIntercept(MutableMapping):
                 for func_name, func in iteritems(method_map()):
                     fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
-                    if USE_JINJA2_NATIVE and func_name in C.STRING_TYPE_FILTERS:
+                    if self._jinja2_native and func_name in C.STRING_TYPE_FILTERS:
                         self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
                     else:
                         self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func)
@@ -554,8 +555,8 @@ class AnsibleEnvironment(Environment):
     def __init__(self, *args, **kwargs):
         super(AnsibleEnvironment, self).__init__(*args, **kwargs)
 
-        self.filters = JinjaPluginIntercept(self.filters, filter_loader)
-        self.tests = JinjaPluginIntercept(self.tests, test_loader)
+        self.filters = JinjaPluginIntercept(self.filters, filter_loader, jinja2_native=False)
+        self.tests = JinjaPluginIntercept(self.tests, test_loader, jinja2_native=False)
 
 
 if USE_JINJA2_NATIVE:
@@ -573,8 +574,8 @@ if USE_JINJA2_NATIVE:
         def __init__(self, *args, **kwargs):
             super(AnsibleNativeEnvironment, self).__init__(*args, **kwargs)
 
-            self.filters = JinjaPluginIntercept(self.filters, filter_loader)
-            self.tests = JinjaPluginIntercept(self.tests, test_loader)
+            self.filters = JinjaPluginIntercept(self.filters, filter_loader, jinja2_native=True)
+            self.tests = JinjaPluginIntercept(self.tests, test_loader, jinja2_native=True)
 
 
 class Templar:
@@ -688,7 +689,7 @@ class Templar:
         for fp in self._filter_loader.all():
             self._filters.update(fp.filters())
 
-        if USE_JINJA2_NATIVE:
+        if self.jinja2_native:
             for string_filter in C.STRING_TYPE_FILTERS:
                 try:
                     orig_filter = self._filters[string_filter]
