@@ -8,7 +8,7 @@ matrix:
   exclude:
     - env: T=none
   include:
-    - env: T=rhel/8.2/2 S=prod
+    - env: T=rhel/8.2/2 S=dev
 
 branches:
   except:
