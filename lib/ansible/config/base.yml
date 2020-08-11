@@ -1845,7 +1845,7 @@ SHOW_CUSTOM_STATS:
   type: bool
 STRING_TYPE_FILTERS:
   name: Filters to preserve strings
-  default: [string, to_json, to_nice_json, to_yaml, ppretty, json]
+  default: [string, to_json, to_nice_json, to_yaml, to_nice_yaml, ppretty, json]
   description:
     - "This list of filters avoids 'type conversion' when templating variables"
     - Useful when you want to avoid conversion into lists or dictionaries for JSON strings, for example.

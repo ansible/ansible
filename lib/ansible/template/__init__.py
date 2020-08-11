@@ -78,6 +78,7 @@ if C.DEFAULT_JINJA2_NATIVE:
     try:
         from jinja2.nativetypes import NativeEnvironment as Environment
         from ansible.template.native_helpers import ansible_native_concat as j2_concat
+        from ansible.template.native_helpers import NativeJinjaText
         USE_JINJA2_NATIVE = True
     except ImportError:
         from jinja2 import Environment
@@ -256,6 +257,10 @@ def _unroll_iterator(func):
             return list(ret)
         return ret
 
+    return _update_wrapper(wrapper, func)
+
+
+def _update_wrapper(wrapper, func):
     # This code is duplicated from ``functools.update_wrapper`` from Py3.7.
     # ``functools.update_wrapper`` was failing when the func was ``functools.partial``
     for attr in ('__module__', '__name__', '__qualname__', '__doc__', '__annotations__'):
@@ -269,6 +274,19 @@ def _unroll_iterator(func):
         getattr(wrapper, attr).update(getattr(func, attr, {}))
     wrapper.__wrapped__ = func
     return wrapper
+
+
+def _wrap_native_text(func):
+    """Wrapper function, that intercepts the result of a filter
+    and wraps it into NativeJinjaText which is then used
+    in ``ansible_native_concat`` to indicate that it is a text
+    which should not be passed into ``literal_eval``.
+    """
+    def wrapper(*args, **kwargs):
+        ret = func(*args, **kwargs)
+        return NativeJinjaText(ret)
+
+    return _update_wrapper(wrapper, func)
 
 
 class AnsibleUndefined(StrictUndefined):
@@ -488,10 +506,13 @@ class JinjaPluginIntercept(MutableMapping):
 
                 method_map = getattr(plugin_impl, self._method_map_name)
 
-                for f in iteritems(method_map()):
-                    fq_name = '.'.join((parent_prefix, f[0]))
+                for func_name, func in iteritems(method_map()):
+                    fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
-                    self._collection_jinja_func_cache[fq_name] = _unroll_iterator(f[1])
+                    if USE_JINJA2_NATIVE and func_name in C.STRING_TYPE_FILTERS:
+                        self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
+                    else:
+                        self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func)
 
             function_impl = self._collection_jinja_func_cache[key]
             return function_impl
@@ -611,6 +632,17 @@ class Templar:
 
         for fp in self._filter_loader.all():
             self._filters.update(fp.filters())
+
+        if USE_JINJA2_NATIVE:
+            for string_filter in C.STRING_TYPE_FILTERS:
+                try:
+                    orig_filter = self._filters[string_filter]
+                except KeyError:
+                    try:
+                        orig_filter = self.environment.filters[string_filter]
+                    except KeyError:
+                        continue
+                self._filters[string_filter] = _wrap_native_text(orig_filter)
 
         return self._filters.copy()
 
