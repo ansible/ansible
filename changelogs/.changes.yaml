@@ -1513,6 +1513,49 @@ releases:
     - v2.9.11_summary.yaml
     - win_async_full_path.yml
     release_date: '2020-07-20'
+  2.9.12:
+    codename: Immigrant Song
+    fragments:
+    - 32386_debconf_password.yml
+    - 38760-slackware-os-dist.yml
+    - 55658_hashi_vault.yml
+    - 56800-fix-yum-list-repoquery.yml
+    - 59059_profile_tasks.yml
+    - 609-mysql_user_fix_overriding_password_to_the_same.yml
+    - 67794-atomic_move-default-perms.yml
+    - 67794-default-permissions-warning-fix.yml
+    - 69578-shell-remote_tmp-quoting.yaml
+    - 70000-playbook-detect-failure-in-always.yml
+    - 70238_selector.yml
+    - 70426-allow-non-ascii-chars-in-cron.yml
+    - 70600-user-module-dont-create-home-when-create_home-is-false.yml
+    - 70649_time_clock.yml
+    - 70657-template-connection-vars.yaml
+    - 70683-terminal-ansi-re.yaml
+    - 70704-void-linux-reboot.yml
+    - 70762-sanitize-uri-keys.yml
+    - 70932-ovirt_vm-fix-cd_iso-search.yml
+    - 70984-templating-ansibleundefined-in-operator.yml
+    - 71097-ansible-test-acme-container.yml
+    - 71112-ipa-python3.yml
+    - ansible-test-pytest-cap.yml
+    - ansible-test-relative-import-analysis.yml
+    - copy-sanitize-check-mode-invocation-args.yaml
+    - date-time-facts-fix-utctime.yml
+    - delegate_has_hostvars.yml
+    - delegation_password.yml
+    - fix_nxos_user_role.yaml
+    - galaxy-collection-fallback.yml
+    - keep_log_at_info.yml
+    - lineinfile_exc_fix.yml
+    - linux-network-facts-broadcast-address.yaml
+    - net_put-unboundlocalerror.yaml
+    - no_fact_loop_loss.yml
+    - redfish-fix-payload-decode-python35.yml
+    - rpmfluff-compat-fixes.yml
+    - unarchive-check-future-gid-against-run-gid.yml
+    - v2.9.12_summary.yaml
+    release_date: '2020-08-10'
   2.9.2:
     codename: Immigrant Song
     fragments:

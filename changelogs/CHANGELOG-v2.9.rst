@@ -5,6 +5,71 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.12
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-08-10
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - the ACME test container was updated, it now supports external account creation and has a basic OCSP responder (https://github.com/ansible/ansible/pull/71097, https://github.com/ansible/acme-test-container/releases/tag/2.0.0).
+- debconf - add a note about no_log=True since module might expose sensitive information to logs (https://github.com/ansible/ansible/issues/32386).
+
+Security Fixes
+--------------
+
+- **security issue** - copy - Redact the value of the no_log 'content' parameter in the result's invocation.module_args in check mode. Previously when used with check mode and with '-vvv', the module would not censor the content if a change would be made to the destination path. (CVE-2020-14332)
+
+- **security issue** atomic_move - change default permissions when creating temporary files so they are not world readable (https://github.com/ansible/ansible/issues/67794) (CVE-2020-1736)
+
+- Fix warning for default permission change when no mode is specified. Follow up to https://github.com/ansible/ansible/issues/67794. (CVE-2020-1736)
+
+- Sanitize no_log values from any response keys that might be returned from the uri module (CVE-2020-14330).
+- reset logging level to INFO due to CVE-2019-14846.
+
+Bugfixes
+--------
+
+- Address compat with rpmfluff-0.6 for integration tests
+- Ensure password passed in by -k is used on delegated hosts that do not have ansible_password set
+- Template connection variables before using them (https://github.com/ansible/ansible/issues/70598).
+- Terminal plugins - add "\e[m" to the list of ANSI sequences stripped from device output
+- add magic/connection vars updates from delegated host info.
+- ansible-galaxy collection install - fix fallback mechanism if the AH server did not have the collection requested - https://github.com/ansible/ansible/issues/70940
+- ansible-test - Add ``pytest < 6.0.0`` constraint for managed installations on Python 3.x to avoid issues with relative imports.
+- ansible-test - Change detection now properly resolves relative imports instead of treating them as absolute imports.
+- api - time.clock is removed in Python 3.8, add backward compatible code (https://github.com/ansible/ansible/issues/70649).
+- avoid clobbering existing facts inside loop when task also returns ansible_facts.
+- basic - use PollSelector implementation when DefaultSelector fails (https://github.com/ansible/ansible/issues/70238).
+- cron - encode and decode crontab files in UTF-8 explicitly to allow non-ascii chars in cron filepath and job (https://github.com/ansible/ansible/issues/69492)
+- ensure delegated vars can resolve hostvars object and access vars from hostvars[inventory_hostname].
+- facts - account for Slackware OS with ``+`` in the name (https://github.com/ansible/ansible/issues/38760)
+- facts - fix incorrect UTC timestamp in ``iso8601_micro`` and ``iso8601``
+- fix issue with inventory_hostname and delegated host vars mixing on connection settings.
+- hashi_vault - Handle equal sign in key=value (https://github.com/ansible/ansible/issues/55658).
+- ipa_hostgroup - fix an issue with load-balanced ipa and cookie handling with Python 3 - (https://github.com/ansible/ansible/issues/71110).
+- lineinfile - fix not subscriptable error in exception handling around file creation
+- linux network facts - get the correct value for broadcast address (https://github.com/ansible/ansible/issues/64384)
+- mysql_user - fix overriding password to the same (https://github.com/ansible-collections/community.general/issues/543).
+- net_put - Fixed UnboundLocalError when there is no change This is a backport from U(https://github.com/ansible-collections/ansible.netcommon/pull/6)
+- nxos_user - do not fail when a custom role is used (https://github.com/ansible-collections/cisco.nxos/pull/130)
+- ovirt_vm - fix cd_iso search
+- playbooks - detect and propagate failures in ``always`` blocks after ``rescue`` (https://github.com/ansible/ansible/issues/70000)
+- profile_tasks - typecast result before slicing it (https://github.com/ansible/ansible/issues/59059).
+- reboot - Add support for the runit init system, used on Void Linux, that does not support the normal Linux syntax.
+- redfish_info, redfish_config, redfish_command - Fix Redfish response payload decode on Python 3.5 (https://github.com/ansible/ansible/issues/65889)
+- shell - fix quoting of mkdir command in creation of remote_tmp in order to allow spaces and other special characters (https://github.com/ansible/ansible/issues/69577).
+- templating - fix error message for ``x in y`` when y is undefined (https://github.com/ansible/ansible/issues/70984)
+- unarchive - check ``fut_gid`` against ``run_gid`` in addition to supplemental groups (https://github.com/ansible/ansible/issues/49284)
+- user - don't create home directory and missing parents when create_home == false (https://github.com/ansible/ansible/pull/70600).
+- yum - fix yum list crashing if repoquery (used internally) prints errors in stdout (https://github.com/ansible/ansible/issues/56800)
+
 v2.9.11
 =======
 
@@ -229,28 +294,32 @@ Removed Features (previously deprecated)
 
 - ldap_attr, ldap_entry - The ``params`` option has been removed in Ansible-2.10 as it circumvents Ansible's option handling.  Setting ``bind_pw`` with the ``params`` option was disallowed in Ansible-2.7, 2.8, and 2.9 as it was insecure.  For information about this policy, see the discussion at: https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html This fixes CVE-2020-1746
 
-Bugfixes
---------
+Security Fixes
+--------------
 
 - **security issue** - The ``subversion`` module provided the password via the svn command line option ``--password`` and can be retrieved from the host's /proc/<pid>/cmdline file. Update the module to use the secure ``--password-from-stdin`` option instead, and add a warning in the module and in the documentation if svn version is too old to support it. (CVE-2020-1739)
 
 - **security issue** win_unzip - normalize paths in archive to ensure extracted files do not escape from the target directory (CVE-2020-1737)
 
 - **security_issue** - create temporary vault file with strict permissions when editing and prevent race condition (CVE-2020-1740)
+- Ensure we get an error when creating a remote tmp if it already exists. CVE-2020-1733
+- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2020-1735.
+- ansible-galaxy - Error when install finds a tar with a file that will be extracted outside the collection install directory - CVE-2020-10691
+
+Bugfixes
+--------
+
 - Alter task_executor's start_connection to support newer modules from collections which expect to send task UUID.
 - Ansible.ModuleUtils.WebRequest - actually set no proxy when ``use_proxy: no`` is set on a Windows module - https://github.com/ansible/ansible/issues/68528
 - Ensure DataLoader temp files are removed at appropriate times and that we observe the LOCAL_TMP setting.
 - Ensure we don't allow ansible_facts subkey of ansible_facts to override top level, also fix 'deprefixing' to prevent key transforms.
-- Ensure we get an error when creating a remote tmp if it already exists. CVE-2020-1733
 - Fact Delegation - Add ability to indicate which facts must always be delegated. Primarily for ``discovered_interpreter_python`` right now, but extensible later. (https://github.com/ansible/ansible/issues/61002)
 - Fix nxos_lacp replace operation (https://github.com/ansible/ansible/pull/64074).
 - Handle equal sign in password while using passwordstore lookup plugin.
-- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2020-1735.
 - In vmware_guest_network module use appropriate network while creating or reconfiguring (https://github.com/ansible/ansible/issues/65968).
 - Log additional messages from persistent connection modules that may be missed if the module fails or returns early.
 - `vmware_content_deploy_template`'s `cluster` argument no longer fails with an error message about resource pools.
 - ansible command now correctly sends v2_playbook_on_start to callbacks
-- ansible-galaxy - Error when install finds a tar with a file that will be extracted outside the collection install directory - CVE-2020-10691
 - ansible-galaxy collection - Preserve executable bit on build and preserve mode on install from what tar member is set to - https://github.com/ansible/ansible/issues/68415
 - dense callback - fix plugin access to its configuration variables and remove a warning message (https://github.com/ansible/ansible/issues/64628).
 - display - Improve method of removing extra new line after warnings so it does not break Tower/Runner (https://github.com/ansible/ansible/pull/68517)
@@ -1192,8 +1261,8 @@ Removed Features (previously deprecated)
 
 - redis_kv - Remove deprecated lookup plugin (https://github.com/ansible/ansible/issues/59948)
 
-Bugfixes
---------
+Security Fixes
+--------------
 
 - **security issue** - Convert CLI provided passwords to text initially, to prevent unsafe context being lost when converting from bytes->text during post processing of PlayContext. This prevents CLI provided passwords from being incorrectly templated (CVE-2019-14856)
 
@@ -1202,6 +1271,10 @@ Bugfixes
 - **security issue** - TaskExecutor - Ensure we don't erase unsafe context in TaskExecutor.run on bytes. Only present in 2.9.0beta1 (https://github.com/ansible/ansible/issues/62237)
 
 - **security issue** - properly hide parameters marked with ``no_log`` in suboptions when invalid parameters are passed to the module (CVE-2019-14858)
+
+Bugfixes
+--------
+
 - Add missing directory provided via ``--playbook-dir`` to adjacent collection loading
 - Add no_log to credentials field to avoid disclosures, also switch type to jsonarg to avoid having users responsible for transformations.
 - Add nxos_telemetry replaced state (https://github.com/ansible/ansible/pull/62368).
