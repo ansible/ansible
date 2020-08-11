@@ -5,6 +5,39 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.14
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-08-10
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- debconf - add a note about no_log=True since module might expose sensitive information to logs (https://github.com/ansible/ansible/issues/32386).
+
+Security Fixes
+--------------
+
+- **security issue** - copy - Redact the value of the no_log 'content' parameter in the result's invocation.module_args in check mode. Previously when used with check mode and with '-vvv', the module would not censor the content if a change would be made to the destination path. (CVE-2020-14332)
+
+- **security issue** atomic_move - change default permissions when creating temporary files so they are not world readable (https://github.com/ansible/ansible/issues/67794) (CVE-2020-1736)
+
+- Fix warning for default permission change when no mode is specified. Follow up to https://github.com/ansible/ansible/issues/67794. (CVE-2020-1736)
+
+- Sanitize no_log values from any response keys that might be returned from the uri module (CVE-2020-14330).
+
+Bugfixes
+--------
+
+- Address compat with rpmfluff-0.6 for integration tests
+- add constraints file for ``anisble_runner`` test since an update to ``psutil`` is now causing test failures
+- ansible-test - Add ``pytest < 6.0.0`` constraint for managed installations on Python 3.x to avoid issues with relative imports.
+
 v2.8.13
 =======
 
@@ -75,19 +108,23 @@ Removed Features (previously deprecated)
 
 - ldap_attr, ldap_entry - The ``params`` option has been removed in Ansible-2.10 as it circumvents Ansible's option handling.  Setting ``bind_pw`` with the ``params`` option was disallowed in Ansible-2.7, 2.8, and 2.9 as it was insecure.  For information about this policy, see the discussion at: https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html This fixes CVE-2020-1746
 
-Bugfixes
---------
+Security Fixes
+--------------
 
 - **security issue** - The ``subversion`` module provided the password via the svn command line option ``--password`` and can be retrieved from the host's /proc/<pid>/cmdline file. Update the module to use the secure ``--password-from-stdin`` option instead, and add a warning in the module and in the documentation if svn version is too old to support it. (CVE-2020-1739)
 
 - **security issue** win_unzip - normalize paths in archive to ensure extracted files do not escape from the target directory (CVE-2020-1737)
 
 - **security_issue** - create temporary vault file with strict permissions when editing and prevent race condition (CVE-2020-1740)
+- Ensure we get an error when creating a remote tmp if it already exists. CVE-2020-1733
+- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2020-1735.
+
+Bugfixes
+--------
+
 - Ensure DataLoader temp files are removed at appropriate times and that we observe the LOCAL_TMP setting.
 - Ensure we don't allow ansible_facts subkey of ansible_facts to override top level, also fix 'deprefixing' to prevent key transforms.
-- Ensure we get an error when creating a remote tmp if it already exists. CVE-2020-1733
 - Fact Delegation - Add ability to indicate which facts must always be delegated. Primarily for ``discovered_interpreter_python`` right now, but extensible later. (https://github.com/ansible/ansible/issues/61002)
-- In fetch action, avoid using slurp return to set up dest, also ensure no dir traversal CVE-2020-1735.
 - acl - fixed module failure if there are spaces in a path
 
 v2.8.10
@@ -240,13 +277,17 @@ Minor Changes
 - ansible-test defaults to redacting sensitive values (disable with the ``--no-redact`` option)
 - dnf - Properly handle idempotent transactions with package name wildcard globs (https://github.com/ansible/ansible/issues/62809)
 
+Security Fixes
+--------------
+
+- **security issue** - Convert CLI provided passwords to text initially, to prevent unsafe context being lost when converting from bytes->text during post processing of PlayContext. This prevents CLI provided passwords from being incorrectly templated (CVE-2019-14856)
+
+- **security issue** - properly hide parameters marked with ``no_log`` in suboptions when invalid parameters are passed to the module (CVE-2019-14858)
+
 Bugfixes
 --------
 
 - **SECURITY** - CVE-2019-14846 - Several Ansible plugins could disclose aws credentials in log files.  inventory/aws_ec2.py, inventory/aws_rds.py, lookup/aws_account_attribute.py, and lookup/aws_secret.py, lookup/aws_ssm.py use the boto3 library from the Ansible process. The boto3 library logs credentials at log level DEBUG.  If Ansible's logging was enabled (by setting LOG_PATH to a value) Ansible would set the global log level to DEBUG.  This was inherited by boto and would then log boto credentials to the file specified by LOG_PATH.  This did not affect aws ansible modules as those are executed in a separate process.  This has been fixed by switching to log level INFO
-- **security issue** - Convert CLI provided passwords to text initially, to prevent unsafe context being lost when converting from bytes->text during post processing of PlayContext. This prevents CLI provided passwords from being incorrectly templated (CVE-2019-14856)
-
-- **security issue** - properly hide parameters marked with ``no_log`` in suboptions when invalid parameters are passed to the module (CVE-2019-14858)
 - ACI modules - Fix a whitespace issue in filters for ACI 4.2 strict validation
 - ACME modules: fix bug in ACME v1 account update code
 - ACME modules: support Buypass' ACME v1 endpoint
