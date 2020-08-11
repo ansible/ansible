@@ -618,9 +618,9 @@ DEFAULT_FACT_PATH:
   name: local fact path
   default: ~
   description:
-    - "This option allows you to globally configure a custom path for 'local_facts' for the implied M(setup) task when using fact gathering."
-    - "If not set, it will fallback to the default from the M(setup) module: ``/etc/ansible/facts.d``."
-    - "This does **not** affect  user defined tasks that use the M(setup) module."
+    - "This option allows you to globally configure a custom path for 'local_facts' for the implied M(ansible.builtin.setup) task when using fact gathering."
+    - "If not set, it will fallback to the default from the M(ansible.builtin.setup) module: ``/etc/ansible/facts.d``."
+    - "This does **not** affect  user defined tasks that use the M(ansible.builtin.setup) module."
   env: [{name: ANSIBLE_FACT_PATH}]
   ini:
   - {key: fact_path, section: defaults}
@@ -674,9 +674,9 @@ DEFAULT_GATHER_SUBSET:
   name: Gather facts subset
   default: ['all']
   description:
-      - Set the `gather_subset` option for the M(setup) task in the implicit fact gathering.
+      - Set the `gather_subset` option for the M(ansible.builtin.setup) task in the implicit fact gathering.
         See the module documentation for specifics.
-      - "It does **not** apply to user defined M(setup) tasks."
+      - "It does **not** apply to user defined M(ansible.builtin.setup) tasks."
   env: [{name: ANSIBLE_GATHER_SUBSET}]
   ini:
     - key: gather_subset
@@ -688,17 +688,17 @@ DEFAULT_GATHER_TIMEOUT:
   default: 10
   description:
     - Set the timeout in seconds for the implicit fact gathering.
-    - "It does **not** apply to user defined M(setup) tasks."
+    - "It does **not** apply to user defined M(ansible.builtin.setup) tasks."
   env: [{name: ANSIBLE_GATHER_TIMEOUT}]
   ini:
   - {key: gather_timeout, section: defaults}
   type: integer
   yaml: {key: defaults.gather_timeout}
 DEFAULT_HANDLER_INCLUDES_STATIC:
-  name: Make handler M(include) static
+  name: Make handler M(ansible.builtin.include) static
   default: False
   description:
-    - "Since 2.0 M(include) can be 'dynamic', this setting (if True) forces that if the include appears in a ``handlers`` section to be 'static'."
+    - "Since 2.0 M(ansible.builtin.include) can be 'dynamic', this setting (if True) forces that if the include appears in a ``handlers`` section to be 'static'."
   env: [{name: ANSIBLE_HANDLER_INCLUDES_STATIC}]
   ini:
   - {key: handler_includes_static, section: defaults}
@@ -865,7 +865,7 @@ DEFAULT_LOOKUP_PLUGIN_PATH:
 DEFAULT_MANAGED_STR:
   name: Ansible managed
   default: 'Ansible managed'
-  description: Sets the macro for the 'ansible_managed' variable available for M(template) and M(win_template) modules.  This is only relevant for those two modules.
+  description: Sets the macro for the 'ansible_managed' variable available for M(ansible.builtin.template) and M(ansible.windows.win_template) modules.  This is only relevant for those two modules.
   env: []
   ini:
   - {key: ansible_managed, section: defaults}

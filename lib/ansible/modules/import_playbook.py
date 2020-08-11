@@ -25,10 +25,10 @@ options:
 notes:
   - This is a core feature of Ansible, rather than a module, and cannot be overridden like a module.
 seealso:
-- module: import_role
-- module: import_tasks
-- module: include_role
-- module: include_tasks
+- module: ansible.builtin.import_role
+- module: ansible.builtin.import_tasks
+- module: ansible.builtin.include_role
+- module: ansible.builtin.include_tasks
 - ref: playbooks_reuse_includes
   description: More information related to including and importing playbooks, roles and tasks.
 '''

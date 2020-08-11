@@ -16,7 +16,7 @@ description:
   - Much like the C(roles:) keyword, this task loads a role, but it allows you to control when the role tasks run in
     between other tasks of the play.
   - Most keywords, loops and conditionals will only be applied to the imported tasks, not to this statement itself. If
-    you want the opposite behavior, use M(include_role) instead.
+    you want the opposite behavior, use M(ansible.builtin.include_role) instead.
 version_added: '2.4'
 options:
   name:
@@ -54,13 +54,13 @@ notes:
   - Handlers are made available to the whole play.
   - Since Ansible 2.7 variables defined in C(vars) and C(defaults) for the role are exposed at playbook parsing time.
     Due to this, these variables will be accessible to roles and tasks executed before the location of the
-    M(import_role) task.
-  - Unlike M(include_role) variable exposure is not configurable, and will always be exposed.
+    M(ansible.builtin.import_role) task.
+  - Unlike M(ansible.builtin.include_role) variable exposure is not configurable, and will always be exposed.
 seealso:
-- module: import_playbook
-- module: import_tasks
-- module: include_role
-- module: include_tasks
+- module: ansible.builtin.import_playbook
+- module: ansible.builtin.import_tasks
+- module: ansible.builtin.include_role
+- module: ansible.builtin.include_tasks
 - ref: playbooks_reuse_includes
   description: More information related to including and importing playbooks, roles and tasks.
 '''

@@ -43,9 +43,9 @@ options:
 notes:
      - This module is also supported for Windows targets.
 seealso:
-- module: debug
-- module: fail
-- module: meta
+- module: ansible.builtin.debug
+- module: ansible.builtin.fail
+- module: ansible.builtin.meta
 author:
     - Ansible Core Team
     - Michael DeHaan

@@ -19,7 +19,7 @@ version_added: "2.0"
 short_description: Return a list of files based on specific criteria
 description:
     - Return a list of files based on specific criteria. Multiple criteria are AND'd together.
-    - For Windows targets, use the M(win_find) module instead.
+    - For Windows targets, use the M(ansible.windows.win_find) module instead.
 options:
     age:
         description:
@@ -128,7 +128,7 @@ options:
         type: int
         version_added: "2.6"
 seealso:
-- module: win_find
+- module: ansible.windows.win_find
 '''
 
 

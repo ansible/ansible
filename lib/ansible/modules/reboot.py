@@ -15,7 +15,7 @@ notes:
     to specify locations to search if the default paths do not work.
 description:
     - Reboot a machine, wait for it to go down, come back up, and respond to commands.
-    - For Windows targets, use the M(win_reboot) module instead.
+    - For Windows targets, use the M(ansible.windows.win_reboot) module instead.
 version_added: "2.7"
 options:
   pre_reboot_delay:
@@ -71,7 +71,7 @@ options:
     default: 'cat /proc/sys/kernel/random/boot_id'
     version_added: '2.10'
 seealso:
-- module: win_reboot
+- module: ansible.windows.win_reboot
 author:
     - Matt Davis (@nitzmahone)
     - Sam Doran (@samdoran)

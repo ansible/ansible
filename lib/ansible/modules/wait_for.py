@@ -17,13 +17,13 @@ description:
        This does not produce an error.
      - Waiting for a port to become available is useful for when services are not immediately available after their init scripts return
        which is true of certain Java application servers.
-     - It is also useful when starting guests with the M(virt) module and needing to pause until they are ready.
+     - It is also useful when starting guests with the M(community.libvirt.virt) module and needing to pause until they are ready.
      - This module can also be used to wait for a regex match a string to be present in a file.
      - In Ansible 1.6 and later, this module can also be used to wait for a file to be available or
        absent on the filesystem.
      - In Ansible 1.8 and later, this module can also be used to wait for active connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
-     - For Windows targets, use the M(win_wait_for) module instead.
+     - For Windows targets, use the M(ansible.windows.win_wait_for) module instead.
 version_added: "0.7"
 options:
   host:
@@ -105,9 +105,9 @@ notes:
   - When waiting for a path, symbolic links will be followed.  Many other modules that manipulate files do not follow symbolic links,
     so operations on the path using other modules may not work exactly as expected.
 seealso:
-- module: wait_for_connection
-- module: win_wait_for
-- module: win_wait_for_process
+- module: ansible.builtin.wait_for_connection
+- module: ansible.windows.win_wait_for
+- module: community.windows.win_wait_for_process
 author:
     - Jeroen Hoekx (@jhoekx)
     - John Jarvis (@jarv)

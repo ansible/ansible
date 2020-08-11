@@ -25,7 +25,7 @@ options:
         - C(refresh_inventory) (added in Ansible 2.0) forces the reload of the inventory, which in the case of dynamic inventory scripts means they will be
           re-executed. If the dynamic inventory script is using a cache, Ansible cannot know this and has no way of refreshing it (you can disable the cache
           or, if available for your specific inventory datasource (e.g. aws), you can use the an inventory plugin instead of an inventory script).
-          This is mainly useful when additional hosts are created and users wish to use them instead of using the M(add_host) module.
+          This is mainly useful when additional hosts are created and users wish to use them instead of using the M(ansible.builtin.add_host) module.
         - C(noop) (added in Ansible 2.0) This literally does 'nothing'. It is mainly used internally and not recommended for general use.
         - C(clear_facts) (added in Ansible 2.1) causes the gathered facts for the hosts specified in the play's list of hosts to be cleared,
           including the fact cache.
@@ -37,14 +37,14 @@ options:
     required: true
 notes:
     - C(meta) is not really a module nor action_plugin as such it cannot be overwritten.
-    - C(clear_facts) will remove the persistent facts from M(set_fact) using C(cacheable=True),
+    - C(clear_facts) will remove the persistent facts from M(ansible.builtin.set_fact) using C(cacheable=True),
       but not the current host variable it creates for the current run.
     - Looping on meta tasks is not supported.
     - Skipping C(meta) tasks using tags is not supported.
     - This module is also supported for Windows targets.
 seealso:
-- module: assert
-- module: fail
+- module: ansible.builtin.assert
+- module: ansible.builtin.fail
 author:
     - Ansible Core Team
 '''

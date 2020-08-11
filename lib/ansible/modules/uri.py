@@ -15,7 +15,7 @@ short_description: Interacts with webservices
 description:
   - Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE
     HTTP authentication mechanisms.
-  - For Windows targets, use the M(win_uri) module instead.
+  - For Windows targets, use the M(ansible.windows.win_uri) module instead.
 version_added: "1.1"
 options:
   url:
@@ -177,10 +177,10 @@ options:
 notes:
   - The dependency on httplib2 was removed in Ansible 2.1.
   - The module returns all the HTTP headers in lower-case.
-  - For Windows targets, use the M(win_uri) module instead.
+  - For Windows targets, use the M(ansible.windows.win_uri) module instead.
 seealso:
-- module: get_url
-- module: win_uri
+- module: ansible.builtin.get_url
+- module: ansible.windows.win_uri
 author:
 - Romeo Theriault (@romeotheriault)
 extends_documentation_fragment: files
