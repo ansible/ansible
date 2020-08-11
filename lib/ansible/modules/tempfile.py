@@ -17,8 +17,8 @@ short_description: Creates temporary files and directories
 description:
   - The C(tempfile) module creates temporary files and directories. C(mktemp) command takes different parameters on various systems, this module helps
     to avoid troubles related to that. Files/directories created by module are accessible only by creator. In case you need to make them world-accessible
-    you need to use M(file) module.
-  - For Windows targets, use the M(win_tempfile) module instead.
+    you need to use M(ansible.builtin.file) module.
+  - For Windows targets, use the M(ansible.windows.win_tempfile) module instead.
 options:
   state:
     description:
@@ -42,8 +42,8 @@ options:
     type: str
     default: ""
 seealso:
-- module: file
-- module: win_tempfile
+- module: ansible.builtin.file
+- module: ansible.windows.win_tempfile
 author:
   - Krzysztof Magosa (@krzysztof-magosa)
 '''

@@ -21,15 +21,15 @@ description:
      - The C(unarchive) module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
      - By default, it will copy the source file from the local system to the target before unpacking.
      - Set C(remote_src=yes) to unpack an archive which already exists on the target.
-     - If checksum validation is desired, use M(get_url) or M(uri) instead to fetch the file and set C(remote_src=yes).
-     - For Windows targets, use the M(win_unzip) module instead.
+     - If checksum validation is desired, use M(ansible.builtin.get_url) or M(ansible.builtin.uri) instead to fetch the file and set C(remote_src=yes).
+     - For Windows targets, use the M(community.windows.win_unzip) module instead.
 options:
   src:
     description:
       - If C(remote_src=no) (default), local path to archive file to copy to the target server; can be absolute or relative. If C(remote_src=yes), path on the
         target server to existing archive file to unpack.
       - If C(remote_src=yes) and C(src) contains C(://), the remote machine will download the file from the URL first. (version_added 2.0). This is only for
-        simple cases, for full download support use the M(get_url) module.
+        simple cases, for full download support use the M(ansible.builtin.get_url) module.
     type: path
     required: true
   dest:
@@ -106,9 +106,9 @@ notes:
     - Existing files/directories in the destination which are not in the archive
       are ignored for purposes of deciding if the archive should be unpacked or not.
 seealso:
-- module: archive
-- module: iso_extract
-- module: win_unzip
+- module: community.general.archive
+- module: community.general.iso_extract
+- module: community.windows.win_unzip
 author: Michael DeHaan
 '''
 

@@ -20,12 +20,12 @@ description:
      - The command(s) will not be
        processed through the shell, so variables like C($HOSTNAME) and operations
        like C("*"), C("<"), C(">"), C("|"), C(";") and C("&") will not work.
-       Use the M(shell) module if you need these features.
+       Use the M(ansible.builtin.shell) module if you need these features.
      - To create C(command) tasks that are easier to read than the ones using space-delimited
        arguments, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task)
        or use C(cmd) parameter.
      - Either a free form command or C(cmd) parameter is required, see the examples.
-     - For Windows targets, use the M(win_command) module instead.
+     - For Windows targets, use the M(ansible.windows.win_command) module instead.
 options:
   free_form:
     description:
@@ -81,21 +81,21 @@ options:
     type: bool
     default: yes
 notes:
-    -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(shell) module instead.
+    -  If you want to run a command through the shell (say you are using C(<), C(>), C(|), etc), you actually want the M(ansible.builtin.shell) module instead.
        Parsing shell metacharacters can lead to unexpected commands being executed if quoting is not done correctly so it is more secure to
        use the C(command) module when possible.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command.
        For instance, if you only want to run a command if a certain file does not exist, use this."
     -  Check mode is supported when passing C(creates) or C(removes). If running in check mode and either of these are specified, the module will
        check for the existence of the file and report the correct changed status. If these are not supplied, the task will be skipped.
-    -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(shell) module instead.
-    -  For Windows targets, use the M(win_command) module instead.
-    -  For rebooting systems, use the M(reboot) or M(win_reboot) module.
+    -  The C(executable) parameter is removed since version 2.4. If you have a need for this parameter, use the M(ansible.builtin.shell) module instead.
+    -  For Windows targets, use the M(ansible.windows.win_command) module instead.
+    -  For rebooting systems, use the M(ansible.builtin.reboot) or M(ansible.windows.win_reboot) module.
 seealso:
-- module: raw
-- module: script
-- module: shell
-- module: win_command
+- module: ansible.builtin.raw
+- module: ansible.builtin.script
+- module: ansible.builtin.shell
+- module: ansible.windows.win_command
 author:
     - Ansible Core Team
     - Michael DeHaan

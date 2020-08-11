@@ -13,7 +13,7 @@ short_description: Pause playbook execution
 description:
   - Pauses playbook execution for a set amount of time, or until a prompt is acknowledged.
     All parameters are optional. The default behavior is to pause with a prompt.
-  - To pause/wait/sleep per host, use the M(wait_for) module.
+  - To pause/wait/sleep per host, use the M(ansible.builtin.wait_for) module.
   - You can use C(ctrl+c) if you wish to advance a pause earlier than it is set to expire or if you need to abort a playbook run entirely.
     To continue early press C(ctrl+c) and then C(c). To abort a playbook press C(ctrl+c) and then C(a).
   - The pause module integrates into async/parallelized playbooks without any special considerations (see Rolling Updates).

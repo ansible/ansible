@@ -77,7 +77,7 @@ options:
 notes:
   - This module is also supported for Windows targets.
 seealso:
-- module: set_fact
+- module: ansible.builtin.set_fact
 - ref: playbooks_delegation
   description: More information related to task delegation.
 '''

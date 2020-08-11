@@ -18,8 +18,9 @@ extends_documentation_fragment: files
 description:
 - Set attributes of files, symlinks or directories.
 - Alternatively, remove files, symlinks or directories.
-- Many other modules support the same options as the C(file) module - including M(copy), M(template), and M(assemble).
-- For Windows targets, use the M(win_file) module instead.
+- Many other modules support the same options as the C(file) module - including M(ansible.builtin.copy),
+  M(ansible.builtin.template), and M(ansible.builtin.assemble).
+- For Windows targets, use the M(ansible.windows.win_file) module instead.
 options:
   path:
     description:
@@ -37,7 +38,7 @@ options:
       do not exist. Since Ansible 1.7 they will be created with the supplied permissions.
     - If C(file), without any other options this works mostly as a 'stat' and will return the current state of C(path).
       Even with other options (i.e C(mode)), the file will be modified but will NOT be created if it does not exist;
-      see the C(touch) value or the M(copy) or M(template) module if you want that behavior.
+      see the C(touch) value or the M(ansible.builtin.copy) or M(ansible.builtin.template) module if you want that behavior.
     - If C(hard), the hard link will be created or changed.
     - If C(link), the symbolic link will be created or changed.
     - If C(touch) (new in 1.4), an empty file will be created if the C(path) does not
@@ -105,11 +106,11 @@ options:
     default: "%Y%m%d%H%M.%S"
     version_added: '2.7'
 seealso:
-- module: assemble
-- module: copy
-- module: stat
-- module: template
-- module: win_file
+- module: ansible.builtin.assemble
+- module: ansible.builtin.copy
+- module: ansible.builtin.stat
+- module: ansible.builtin.template
+- module: ansible.windows.win_file
 author:
 - Ansible Core Team
 - Michael DeHaan

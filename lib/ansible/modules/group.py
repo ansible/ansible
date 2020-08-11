@@ -19,7 +19,7 @@ requirements:
 - groupmod
 description:
     - Manage presence of groups on a host.
-    - For Windows targets, use the M(win_group) module instead.
+    - For Windows targets, use the M(ansible.windows.win_group) module instead.
 options:
     name:
         description:
@@ -58,8 +58,8 @@ options:
         default: no
         version_added: "2.8"
 seealso:
-- module: user
-- module: win_group
+- module: ansible.builtin.user
+- module: ansible.windows.win_group
 author:
 - Stephen Fromm (@sfromm)
 '''

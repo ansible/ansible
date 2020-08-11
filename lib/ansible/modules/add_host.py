@@ -38,7 +38,7 @@ notes:
   because you can now have multiple sources.  An example was added that shows how to partially restore the previous behaviour.
 - Windows targets are supported by this module.
 seealso:
-- module: group_by
+- module: ansible.builtin.group_by
 author:
 - Ansible Core Team
 - Seth Vidal (@skvidal)

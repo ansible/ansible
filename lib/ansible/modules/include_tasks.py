@@ -20,8 +20,8 @@ options:
   file:
     description:
       - The name of the imported file is specified directly without any other option.
-      - Unlike M(import_tasks), most keywords, including loop, with_items, and conditionals, apply to this statement.
-      - The do until loop is not supported on M(include_tasks).
+      - Unlike M(ansible.builtin.import_tasks), most keywords, including loop, with_items, and conditionals, apply to this statement.
+      - The do until loop is not supported on M(ansible.builtin.include_tasks).
     type: str
     version_added: '2.7'
   apply:
@@ -37,10 +37,10 @@ options:
 notes:
   - This is a core feature of the Ansible, rather than a module, and cannot be overridden like a module.
 seealso:
-- module: import_playbook
-- module: import_role
-- module: import_tasks
-- module: include_role
+- module: ansible.builtin.import_playbook
+- module: ansible.builtin.import_role
+- module: ansible.builtin.import_tasks
+- module: ansible.builtin.include_role
 - ref: playbooks_reuse_includes
   description: More information related to including and importing playbooks, roles and tasks.
 '''

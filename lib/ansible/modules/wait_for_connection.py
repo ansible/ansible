@@ -43,9 +43,9 @@ options:
 notes:
 - This module is also supported for Windows targets.
 seealso:
-- module: wait_for
-- module: win_wait_for
-- module: win_wait_for_process
+- module: ansible.builtin.wait_for
+- module: ansible.windows.win_wait_for
+- module: ansible.windows.win_wait_for_process
 author:
 - Dag Wieers (@dagwieers)
 '''

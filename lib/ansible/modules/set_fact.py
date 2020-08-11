@@ -46,7 +46,7 @@ notes:
     - Since 'cacheable' is now a module param, 'cacheable' is no longer a valid fact name as of Ansible 2.4.
     - This module is also supported for Windows targets.
 seealso:
-- module: include_vars
+- module: ansible.builtin.include_vars
 - ref: ansible_variable_precedence
   description: More information related to variable precedence and which type of variable wins over others.
 author:

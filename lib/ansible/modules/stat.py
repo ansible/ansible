@@ -14,7 +14,7 @@ version_added: "1.3"
 short_description: Retrieve file or file system status
 description:
      - Retrieves facts for a file similar to the Linux/Unix 'stat' command.
-     - For Windows targets, use the M(win_stat) module instead.
+     - For Windows targets, use the M(ansible.windows.win_stat) module instead.
 options:
   path:
     description:
@@ -62,8 +62,8 @@ options:
     aliases: [ attr, attributes ]
     version_added: "2.3"
 seealso:
-- module: file
-- module: win_stat
+- module: ansible.builtin.file
+- module: ansible.windows.win_stat
 author: Bruce Pennypacker (@bpennypacker)
 '''
 
