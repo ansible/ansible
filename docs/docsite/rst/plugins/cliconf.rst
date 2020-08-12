@@ -9,7 +9,7 @@ Cliconf Plugins
 
 .. warning::
 
-	Links on this page may not point to the most recent versions of plugins. In preparation for the release of 2.10, many plugins and modules have migrated to Collections on  `Ansible Galaxy <https://galaxy.ansible.com>`_. For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/general/blob/master/README.rst>`_.
+	Links on this page may not point to the most recent versions of plugins. In preparation for the release of 2.10, many plugins and modules have migrated to Collections on  `Ansible Galaxy <https://galaxy.ansible.com>`_. For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/overview/blob/master/README.rst>`_.
 
 Cliconf plugins are abstractions over the CLI interface to network devices. They provide a standard interface
 for Ansible to execute tasks on those network devices.
