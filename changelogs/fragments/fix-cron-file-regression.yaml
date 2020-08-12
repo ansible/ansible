@@ -1,0 +1,2 @@
+bugfixes:
+  - cron - cron file should not be empty after adding var (https://github.com/ansible/ansible/pull/71207)

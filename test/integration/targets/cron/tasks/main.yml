@@ -100,6 +100,32 @@
 - assert:
     that: remove_cron_file is not changed
 
+- name: Non regression test - cron file should not be empty after adding var (#71207)
+  when: ansible_distribution != 'Alpine'
+  block:
+  - name: Cron file creation
+    cron:
+      cron_file: cron_filename
+      name: "simple cron job"
+      job: 'echo "_o/"'
+      user: root
+
+  - name: Add var to the cron file
+    cron:
+      cron_file: cron_filename
+      env: yes
+      name: FOO
+      value: bar
+      user: root
+
+  - name: "Ensure cron_file still contains job string"
+    replace:
+      path: /etc/cron.d/cron_filename
+      regexp: "_o/"
+      replace: "OK"
+    register: find_chars
+    failed_when: (find_chars is not changed) or (find_chars is failed)
+
 # BusyBox does not have /etc/cron.d
 - name: Removing a cron file when the name is specified is allowed (#57471)
   when: ansible_distribution != 'Alpine'
