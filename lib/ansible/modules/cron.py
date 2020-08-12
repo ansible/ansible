@@ -255,6 +255,7 @@ class CronTab(object):
             try:
                 f = open(self.b_cron_file, 'rb')
                 self.n_existing = to_native(f.read(), errors='surrogate_or_strict')
+                self.lines = self.n_existing.splitlines()
                 f.close()
             except IOError:
                 # cron file does not exist
