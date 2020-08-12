@@ -1,4 +1,0 @@
-security_fixes:
-  - >
-    **security issue** atomic_move - change default permissions when creating
-    temporary files so they are not world readable (https://github.com/ansible/ansible/issues/67794) (CVE-2020-1736)
