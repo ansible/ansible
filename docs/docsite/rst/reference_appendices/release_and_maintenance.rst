@@ -34,6 +34,7 @@ This table links to the release notes for each major Ansible release. These rele
 Ansible Release                         Status
 ==================================      =================================================
 devel                                   In development (2.11 unreleased, trunk)
+`2.10 Release Notes`_                   In development (2.10 alpha/beta)
 `2.9 Release Notes`_                    Maintained (security **and** general bug fixes)
 `2.8 Release Notes`_                    Maintained (security fixes)
 `2.7 Release Notes`_                    Unmaintained (end of life)
@@ -45,6 +46,8 @@ devel                                   In development (2.11 unreleased, trunk)
 
 .. Comment: devel used to point here but we're currently revamping our changelog process and have no
    link to a static changelog for devel _2.6: https://github.com/ansible/ansible/blob/devel/CHANGELOG.md
+.. _2.10 Release Notes:
+.. _2.10: https://github.com/ansible-community/ansible-build-data/blob/main/2.10/CHANGELOG-v2.10.rst
 .. _2.9 Release Notes:
 .. _2.9: https://github.com/ansible/ansible/blob/stable-2.9/changelogs/CHANGELOG-v2.9.rst
 .. _2.8 Release Notes:
@@ -97,7 +100,7 @@ devel                                   In development (2.11 unreleased, trunk)
 
 
 .. _2.10 ansible-base Release Notes:
-.. _2.10: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
+.. _2.10-base: https://github.com/ansible/ansible/blob/stable-2.10/changelogs/CHANGELOG-v2.10.rst
 .. _support_life:
 .. _methods:
 
@@ -179,7 +182,7 @@ to remove the feature permanently.
 Ansible deprecation cycle
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Since Ansible is a package of individual collections, the deprecation cycle depends on the collection maintainers. We recommend the collection maintainers deprecate a feature in one Ansible major version and do not remove that feature for one year, or at least until the next major Ansible version. For example, deprecate the feature in 2.10.2, and do not remove the feature until 2.11.0.  This is up to each collection maintainer and cannot be guaranteed.
+Since Ansible is a package of individual collections, the deprecation cycle depends on the collection maintainers. We recommend the collection maintainers deprecate a feature in one Ansible major version and do not remove that feature for one year, or at least until the next major Ansible version. For example, deprecate the feature in 2.10.2, and do not remove the feature until 2.12.0.  Collections should use semantic versioning, such that the major collection version cannot be changed within an Ansible major version. Thus the removal should not happen before the next major Ansible release. This is up to each collection maintainer and cannot be guaranteed.
 
 ansible-base deprecation cycle
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
