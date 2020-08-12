@@ -2939,13 +2939,13 @@ plugin_routing:
     emc_vnx_sg_member:
       redirect: community.general.emc_vnx_sg_member
     gluster_heal_facts:
-      redirect: community.general.gluster_heal_info
+      redirect: gluster.gluster.gluster_heal_info
     gluster_heal_info:
-      redirect: community.general.gluster_heal_info
+      redirect: gluster.gluster.gluster_heal_info
     gluster_peer:
-      redirect: community.general.gluster_peer
+      redirect: gluster.gluster.gluster_peer
     gluster_volume:
-      redirect: community.general.gluster_volume
+      redirect: gluster.gluster.gluster_volume
     ss_3par_cpg:
       redirect: community.general.ss_3par_cpg
     ibm_sa_domain:
