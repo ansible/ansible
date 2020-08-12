@@ -21,8 +21,10 @@ How to run
 .. note::
    To run sanity tests using docker, always use the default docker image
    by passing the ``--docker`` or ``--docker default`` argument.
-   Also use the ``--docker-keep-git`` argument when running all sanity test
-   or validate-modules test subset to avoid git related errors.
+
+.. note::
+   When using docker and the ``--base-branch`` argument,
+   also use the ``--docker-keep-git`` argument to avoid git related errors.
 
 .. code:: shell
 
@@ -35,7 +37,7 @@ How to run
    ansible-test sanity lib/ansible/modules/files/template.py
 
    # Run all tests inside docker (good if you don't have dependencies installed)
-   ansible-test sanity --docker default --docker-keep-git
+   ansible-test sanity --docker default
 
    # Run validate-modules against a specific file
    ansible-test sanity --test validate-modules lib/ansible/modules/files/template.py
