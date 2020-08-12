@@ -21,7 +21,7 @@ How to run
 .. note::
    To run sanity tests using docker, always use the default docker image
    by passing the ``--docker`` or ``--docker default`` argument.
-   Also use the ``--docker-keep-git`` argument when running all sunity test
+   Also use the ``--docker-keep-git`` argument when running all sanity test
    or validate-modules test subset to avoid git related errors.
 
 .. code:: shell
