@@ -89,7 +89,6 @@
       copy:
         src: "mini_http_lambda.py"
         dest: "{{output_dir}}/mini_http_lambda.py"
-        mode: '0644'
 
     - name: bundle lambda into a zip
       archive:
