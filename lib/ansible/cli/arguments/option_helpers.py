@@ -341,6 +341,8 @@ def add_runtask_options(parser):
     """Add options for commands that run a task"""
     parser.add_argument('-e', '--extra-vars', dest="extra_vars", action="append",
                         help="set additional variables as key=value or YAML/JSON, if filename prepend with @", default=[])
+    parser.add_argument('-T', '--timeout', dest="timeout", action="store",
+                        help="set task timeout limit in seconds, must be positive integer.", default=None)
 
 
 def add_subset_options(parser):
