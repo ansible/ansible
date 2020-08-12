@@ -1,0 +1,2 @@
+minor_changes:
+  - added 'timeout' feature to adhoc and console CLIs, corresponding to the recent 'timeout' task keyword.
