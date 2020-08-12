@@ -564,9 +564,9 @@ class StrategyBase:
                     # Use of get_active_state() here helps detect proper state if, say, we are in a rescue
                     # block from an included file (include_tasks). In a non-included rescue case, a rescue
                     # that starts with a new 'block' will have an active state of ITERATING_TASKS, so we also
-                    # check state.run_state to handle that case.
+                    # check the current state block tree to see if any blocks are rescuing.
                     if state and (iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE or
-                                  state.run_state == iterator.ITERATING_RESCUE):
+                                  iterator.is_any_block_rescuing(state)):
                         self._tqm._stats.increment('rescued', original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
                             original_host.name,

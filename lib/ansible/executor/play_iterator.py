@@ -514,6 +514,17 @@ class PlayIterator:
             return self.get_active_state(state.always_child_state)
         return state
 
+    def is_any_block_rescuing(self, state):
+        '''
+        Given the current HostState state, determines if the current block, or any child blocks,
+        are in rescue mode.
+        '''
+        if state.run_state == self.ITERATING_RESCUE:
+            return True
+        if state.tasks_child_state is not None:
+            return self.is_any_block_rescuing(state.tasks_child_state)
+        return False
+
     def get_original_task(self, host, task):
         # now a noop because we've changed the way we do caching
         return (None, None)
