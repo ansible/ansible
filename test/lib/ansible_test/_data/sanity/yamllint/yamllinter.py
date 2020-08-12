@@ -6,6 +6,7 @@ __metaclass__ = type
 import ast
 import json
 import os
+import re
 import sys
 
 import yaml
@@ -114,6 +115,10 @@ class YamlChecker:
         for key, value in docs.items():
             yaml_data = value['yaml']
             lineno = value['lineno']
+            fmt = value['fmt']
+
+            if fmt != 'yaml':
+                continue
 
             if yaml_data.startswith('\n'):
                 yaml_data = yaml_data[1:]
@@ -177,6 +182,8 @@ class YamlChecker:
 
         docs = {}
 
+        fmt_re = re.compile(r'^# fmt:\s+(\S+)')
+
         def check_assignment(statement, doc_types=None):
             """Check the given statement for a documentation assignment."""
             for target in statement.targets:
@@ -186,10 +193,16 @@ class YamlChecker:
                 if doc_types and target.id not in doc_types:
                     continue
 
+                fmt_match = fmt_re.match(statement.value.s.lstrip())
+                fmt = 'yaml'
+                if fmt_match:
+                    fmt = fmt_match.group(1)
+
                 docs[target.id] = dict(
                     yaml=statement.value.s,
                     lineno=statement.lineno,
-                    end_lineno=statement.lineno + len(statement.value.s.splitlines())
+                    end_lineno=statement.lineno + len(statement.value.s.splitlines()),
+                    fmt=fmt.lower(),
                 )
 
         module_ast = self.parse_module(path, contents)
