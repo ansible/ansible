@@ -58,7 +58,7 @@ A new warning will be displayed when all of the following conditions are true:
 
     - The file at the final destination, not the temporary file, does not exist
     - A module supports setting ``mode`` but it was not specified for the task
-    - The module calls ``atomic_move()`` but does not later call ``set_fs_attributes_if_different()`` or ``set_mode_if_different()`` with a ``mode`` specified
+    - The module calls ``atomic_move()`` but does not later call ``set_fs_attributes_if_different()`` or ``set_mode_if_different()``
 
 The following modules call ``atomic_move()`` but do not call ``set_fs_attributes_if_different()``  or ``set_mode_if_different()`` and do not support setting ``mode``. This means for files they create, the default permissions have changed and there is no indication:
 
