@@ -75,7 +75,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.check_mode = None
         self.diff = None
         self.forks = None
-        self.timeout = None
+        self.task_timeout = None
 
         cmd.Cmd.__init__(self)
 
@@ -184,7 +184,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         result = None
         try:
             check_raw = module in ('command', 'shell', 'script', 'raw')
-            task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.timeout)
+            task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.task_timeout)
             play_ds = dict(
                 name="Ansible Shell",
                 hosts=self.cwd,
@@ -367,7 +367,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
                 if timeout <= 0:
                     display.error('The timeout must be greater than or equal to 1')
                 else:
-                    self.timeout = timeout
+                    self.task_timeout = timeout
             except TypeError as e:
                 display.error('The timeout must be a valid integer: %s' % to_text(e))
         else:
@@ -438,7 +438,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.check_mode = context.CLIARGS['check']
         self.diff = context.CLIARGS['diff']
         self.forks = context.CLIARGS['forks']
-        self.timeout = context.CLIARGS['timeout']
+        self.timeout = context.CLIARGS['task_timeout']
 
         # dynamically add modules as commands
         self.modules = self.list_modules()

@@ -67,7 +67,7 @@ class AdHocCLI(CLI):
         check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
 
         mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)},
-                  'timeout': context.CLIARGS['timeout']}
+                  'timeout': context.CLIARGS['task_timeout']}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
         if context.CLIARGS['module_name'] not in ('include_role', 'include_tasks') and any(frozenset((async_val, poll))):
