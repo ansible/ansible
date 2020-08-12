@@ -84,3 +84,8 @@ cat rc_test.out
 [ "$(grep -c 'rescued=2' rc_test.out)" -eq 1 ]
 [ "$(grep -c 'failed=0' rc_test.out)" -eq 1 ]
 rm -f rc_test.out
+ansible-playbook -vv multi-block.yml -i ../../inventory > rc_test.out
+cat rc_test.out
+[ "$(grep -c 'rescued=1' rc_test.out)" -eq 1 ]
+[ "$(grep -c 'failed=0' rc_test.out)" -eq 1 ]
+rm -f rc_test.out
