@@ -1,4 +1,4 @@
- Copyright: (c) 2014, Nandor Sivok <dominis@haxor.hu>
+# Copyright: (c) 2014, Nandor Sivok <dominis@haxor.hu>
 # Copyright: (c) 2016, Redhat Inc
 # Copyright: (c) 2018, Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
@@ -184,7 +184,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         result = None
         try:
             check_raw = module in ('command', 'shell', 'script', 'raw')
-            task=dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.timeout)
+            task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.timeout)
             play_ds = dict(
                 name="Ansible Shell",
                 hosts=self.cwd,
