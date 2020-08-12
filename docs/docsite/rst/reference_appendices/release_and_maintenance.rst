@@ -3,6 +3,8 @@
 Release and maintenance
 =======================
 
+This section describes the Ansible and ``ansible-base`` releases. Ansible is the package that most users install. ``ansible-base`` is primarily for developers.
+
 .. contents::
    :local:
 
