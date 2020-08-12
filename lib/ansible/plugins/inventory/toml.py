@@ -15,76 +15,75 @@ DOCUMENTATION = r'''
         - Requires the 'toml' python library
 '''
 
-EXAMPLES = r'''
-# Following are examples of 3 different inventories in TOML format
-example1: |
-    [all.vars]
-    has_java = false
+EXAMPLES = r'''# fmt: toml
+# Example 1
+[all.vars]
+has_java = false
 
-    [web]
-    children = [
-        "apache",
-        "nginx"
-    ]
-    vars = { http_port = 8080, myvar = 23 }
+[web]
+children = [
+    "apache",
+    "nginx"
+]
+vars = { http_port = 8080, myvar = 23 }
 
-    [web.hosts]
-    host1 = {}
-    host2 = { ansible_port = 222 }
+[web.hosts]
+host1 = {}
+host2 = { ansible_port = 222 }
 
-    [apache.hosts]
-    tomcat1 = {}
-    tomcat2 = { myvar = 34 }
-    tomcat3 = { mysecret = "03#pa33w0rd" }
+[apache.hosts]
+tomcat1 = {}
+tomcat2 = { myvar = 34 }
+tomcat3 = { mysecret = "03#pa33w0rd" }
 
-    [nginx.hosts]
-    jenkins1 = {}
+[nginx.hosts]
+jenkins1 = {}
 
-    [nginx.vars]
-    has_java = true
+[nginx.vars]
+has_java = true
 
-example2: |
-    [all.vars]
-    has_java = false
+# Example 2
+[all.vars]
+has_java = false
 
-    [web]
-    children = [
-        "apache",
-        "nginx"
-    ]
+[web]
+children = [
+    "apache",
+    "nginx"
+]
 
-    [web.vars]
-    http_port = 8080
-    myvar = 23
+[web.vars]
+http_port = 8080
+myvar = 23
 
-    [web.hosts.host1]
-    [web.hosts.host2]
-    ansible_port = 222
+[web.hosts.host1]
+[web.hosts.host2]
+ansible_port = 222
 
-    [apache.hosts.tomcat1]
+[apache.hosts.tomcat1]
 
-    [apache.hosts.tomcat2]
-    myvar = 34
+[apache.hosts.tomcat2]
+myvar = 34
 
-    [apache.hosts.tomcat3]
-    mysecret = "03#pa33w0rd"
+[apache.hosts.tomcat3]
+mysecret = "03#pa33w0rd"
 
-    [nginx.hosts.jenkins1]
+[nginx.hosts.jenkins1]
 
-    [nginx.vars]
-    has_java = true
+[nginx.vars]
+has_java = true
 
-example3: |
-    [ungrouped.hosts]
-    host1 = {}
-    host2 = { ansible_host = "127.0.0.1", ansible_port = 44 }
-    host3 = { ansible_host = "127.0.0.1", ansible_port = 45 }
+# Example 3
+[ungrouped.hosts]
+host1 = {}
+host2 = { ansible_host = "127.0.0.1", ansible_port = 44 }
+host3 = { ansible_host = "127.0.0.1", ansible_port = 45 }
 
-    [g1.hosts]
-    host4 = {}
+[g1.hosts]
+host4 = {}
 
-    [g2.hosts]
-    host4 = {}
+[g2.hosts]
+host4 = {}
 '''
 
 import os
