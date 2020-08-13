@@ -96,15 +96,14 @@ def results_thread_main(strategy):
             elif isinstance(result, CallbackSend):
                 strategy._tqm.send_callback(result.method_name, *result.args, **result.kwargs)
             elif isinstance(result, TaskResult):
-                strategy._results_lock.acquire()
-                # only handlers have the listen attr, so this must be a handler
-                # we split up the results into two queues here to make sure
-                # handler and regular result processing don't cross wires
-                if 'listen' in result._task_fields:
-                    strategy._handler_results.append(result)
-                else:
-                    strategy._results.append(result)
-                strategy._results_lock.release()
+                with strategy._results_lock:
+                    # only handlers have the listen attr, so this must be a handler
+                    # we split up the results into two queues here to make sure
+                    # handler and regular result processing don't cross wires
+                    if 'listen' in result._task_fields:
+                        strategy._handler_results.append(result)
+                    else:
+                        strategy._results.append(result)
             else:
                 display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
         except (IOError, EOFError):
