@@ -417,11 +417,11 @@ def extract_filename_from_headers(headers):
 
 
 def is_url(checksum):
-     """
-     Returns True if checksum value has supported URL scheme, else False."""
-     supported_schemes = ('http', 'https', 'ftp', 'file')
-     
-     return urlsplit(checksum).scheme in supported_schemes
+    """
+    Returns True if checksum value has supported URL scheme, else False."""
+    supported_schemes = ('http', 'https', 'ftp', 'file')
+
+    return urlsplit(checksum).scheme in supported_schemes
 
 
 # ==============================================================
