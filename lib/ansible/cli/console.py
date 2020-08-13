@@ -92,6 +92,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
         opt_help.add_fork_options(self.parser)
         opt_help.add_module_options(self.parser)
         opt_help.add_basedir_options(self.parser)
+        opt_help.add_runtask_options(self.parser)
+        opt_help.add_tasknoplay_options(self.parser)
 
         # options unique to shell
         self.parser.add_argument('pattern', help='host pattern', metavar='pattern', default='all', nargs='?')

@@ -44,6 +44,7 @@ class AdHocCLI(CLI):
         opt_help.add_fork_options(self.parser)
         opt_help.add_module_options(self.parser)
         opt_help.add_basedir_options(self.parser)
+        opt_help.add_tasknoplay_options(self.parser)
 
         # options unique to ansible ad-hoc
         self.parser.add_argument('-a', '--args', dest='module_args',
