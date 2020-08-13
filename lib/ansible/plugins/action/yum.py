@@ -48,15 +48,10 @@ class ActionModule(ActionBase):
         del tmp  # tmp no longer has any effect
 
         # Carry-over concept from the package action plugin
-        module = 'auto'
-
         if 'use' in self._task.args and 'use_backend' in self._task.args:
             raise AnsibleActionFail("parameters are mutually exclusive: ('use', 'use_backend')")
 
-        use_backend = self._task.args.get('use', self._task.args.get('use_backend', None))
-
-        if use_backend:
-            module = use_backend
+        module = self._task.args.get('use', self._task.args.get('use_backend', 'auto'))
 
         if module == 'auto':
             try:
