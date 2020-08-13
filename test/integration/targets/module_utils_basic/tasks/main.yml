@@ -1,0 +1,33 @@
+- name: Run task with no mode
+  test_perm_warning:
+    dest: "{{ remote_tmp_dir }}/endangerdisown"
+  register: no_mode_results
+
+- name: Run task with mode
+  test_perm_warning:
+    mode: '0644'
+    dest: "{{ remote_tmp_dir }}/groveestablish"
+  register: with_mode_results
+
+- name: Run task without calling set_fs_attributes_if_different()
+  test_perm_warning:
+    call_fs_attributes: no
+    dest: "{{ remote_tmp_dir }}/referabletank"
+  register: skip_fs_attributes
+
+- stat:
+    path: "{{ remote_tmp_dir }}/{{ item }}"
+  loop:
+    - endangerdisown
+    - groveestablish
+  register: files
+
+- name: Ensure we get a warning when appropriate
+  assert:
+    that:
+      - no_mode_results.warnings | default([], True) | length == 1
+      - "'created with default permissions' in no_mode_results.warnings[0]"
+      - files.results[0]['stat']['mode'] == '0600'
+      - files.results[1]['stat']['mode'] == '0644'
+      - with_mode_results.warnings is not defined  # The Jinja version on CentOS 6 does not support default([], True)
+      - skip_fs_attributes.warnings | default([], True) | length == 1
