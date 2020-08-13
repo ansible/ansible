@@ -4,7 +4,7 @@
 Roles
 *****
 
-Roles let you automatically load related vars_files, tasks, handlers, and other Ansible artifacts based on a known file structure. Once you group your content in roles, you can easily re-use them and share them with other users.
+Roles let you automatically load related vars_files, tasks, handlers, and other Ansible artifacts based on a known file structure. Once you group your content in roles, you can easily reuse them and share them with other users.
 
 .. contents::
    :local:
@@ -98,9 +98,9 @@ Using roles
 
 You can use roles in three ways:
 
-- at the play level with the ``roles`` option,
-- at the tasks level with ``include_role``, or
-- at the tasks level with ``import_role``
+- at the play level with the ``roles`` option: This is the classic way of using roles in a play.
+- at the tasks level with ``include_role``: You can reuse roles dynamically anywhere in the ``tasks`` section of a play using ``include_role``.
+- at the tasks level with ``import_role``: You can reuse roles statically anywhere in the ``tasks`` section of a play using ``import_role``.
 
 .. _roles_keyword:
 
@@ -162,10 +162,10 @@ When you add a tag to the ``role`` option, Ansible applies the tag to ALL tasks 
 
 When using ``vars:`` within the ``roles:`` section of a playbook, the variables are added to the play variables, making them available to all tasks within the play before and after the role. This behavior can be changed by :ref:`DEFAULT_PRIVATE_ROLE_VARS`.
 
-Including roles: dynamic re-use
--------------------------------
+Including roles: dynamic reuse
+------------------------------
 
-You can re-use roles dynamically anywhere in the ``tasks`` section of a play using ``include_role``. While roles added in a ``roles`` section run before any other tasks in a playbook, included roles run in the order they are defined. If there are other tasks before an ``include_role`` task, the other tasks will run first.
+You can reuse roles dynamically anywhere in the ``tasks`` section of a play using ``include_role``. While roles added in a ``roles`` section run before any other tasks in a playbook, included roles run in the order they are defined. If there are other tasks before an ``include_role`` task, the other tasks will run first.
 
 To include a role:
 
@@ -209,10 +209,10 @@ You can conditionally include a role:
             name: some_role
           when: "ansible_facts['os_family'] == 'RedHat'"
 
-Importing roles: static re-use
-------------------------------
+Importing roles: static reuse
+-----------------------------
 
-You can re-use roles statically anywhere in the ``tasks`` section of a play using ``import_role``. The behavior is the same as using the ``roles`` keyword. For example:
+You can reuse roles statically anywhere in the ``tasks`` section of a play using ``import_role``. The behavior is the same as using the ``roles`` keyword. For example:
 
 .. code-block:: yaml
 
@@ -321,8 +321,8 @@ Role dependencies are stored in the ``meta/main.yml`` file within the role direc
 
 Ansible always executes role dependencies before the role that includes them. Ansible executes recursive role dependencies as well. If one role depends on a second role, and the second role depends on a third role, Ansible executes the third role, then the second role, then the first role.
 
-Running role dependencies multiple times
-----------------------------------------
+Running role dependencies multiple times in one playbook
+--------------------------------------------------------
 
 Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters defined on the role are different for each definition. If two roles in a playbook both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters or use ``allow_duplicates: true`` in the dependent (third) role. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
@@ -386,7 +386,8 @@ Embedding modules and plugins in roles
 
 If you write a custom module (see :ref:`developing_modules`) or a plugin (see :ref:`developing_plugins`), you might wish to distribute it as part of a role. For example, if you write a module that helps configure your company's internal software, and you want other people in your organization to use this module, but you do not want to tell everyone how to configure their Ansible library path, you can include the module in your internal_config role.
 
-Alongside the 'tasks' and 'handlers' structure of a role, add a directory named 'library'.  In this 'library' directory, then include the module directly inside of it.
+To add a module or a plugin to a role:
+Alongside the 'tasks' and 'handlers' structure of a role, add a directory named 'library' and then include the module directly inside the 'library' directory.
 
 Assuming you had this:
 
