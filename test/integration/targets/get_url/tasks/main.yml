@@ -411,7 +411,7 @@
   get_url:
     url: 'http://localhost:{{ http_port }}/27617.txt'
     dest: '{{ remote_tmp_dir }}/27617sha256_with_file_scheme.txt'
-    checksum: 'file://{{ files_dir }}/sha256sum.txt'
+    checksum: 'sha256:file://{{ files_dir }}/sha256sum.txt'
   register: result_sha256_with_file_scheme
 
 - stat:
