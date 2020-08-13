@@ -765,7 +765,6 @@ class Templar:
         Use a keyword that maps to the attr you are setting. Applies to ``self.environment`` by default, to
         set context on another object, it must be in ``mapping``.
         """
-        # NOTE remove in favor of copy_with_new_env?
         mapping = {
             'available_variables': self,
             'searchpath': self.environment.loader,
