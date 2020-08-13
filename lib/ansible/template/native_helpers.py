@@ -17,10 +17,7 @@ from ansible.module_utils.common.collections import is_sequence, Mapping
 from ansible.module_utils.common.text.converters import container_to_text
 from ansible.module_utils.six import PY2, text_type
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
-
-
-class NativeJinjaText(text_type):
-    pass
+from ansible.utils.native_jinja import NativeJinjaText
 
 
 def _fail_on_undefined(data):

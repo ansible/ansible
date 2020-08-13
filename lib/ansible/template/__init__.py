@@ -81,7 +81,7 @@ if C.DEFAULT_JINJA2_NATIVE:
     try:
         from jinja2.nativetypes import NativeEnvironment
         from ansible.template.native_helpers import ansible_native_concat
-        from ansible.template.native_helpers import NativeJinjaText
+        from ansible.utils.native_jinja import NativeJinjaText
         USE_JINJA2_NATIVE = True
     except ImportError:
         from jinja2 import Environment
@@ -653,6 +653,8 @@ class Templar:
 
         :returns: Copy of Templar with updated environment.
         """
+        # We need to use __new__ to skip __init__, mainly not to create a new
+        # environment there only to override it below
         new_env = object.__new__(environment_class)
         new_env.__dict__.update(self.environment.__dict__)
 
@@ -1029,7 +1031,10 @@ class Templar:
                     ran = wrap_var(ran)
                 else:
                     try:
-                        ran = wrap_var(",".join(ran))
+                        if self.jinja2_native and isinstance(ran[0], NativeJinjaText):
+                            ran = wrap_var(NativeJinjaText(",".join(ran)))
+                        else:
+                            ran = wrap_var(",".join(ran))
                     except TypeError:
                         # Lookup Plugins should always return lists.  Throw an error if that's not
                         # the case:
