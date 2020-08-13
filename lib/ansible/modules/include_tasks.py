@@ -46,6 +46,7 @@ seealso:
 '''
 
 EXAMPLES = r'''
+ dsdqqqdqsd
 - hosts: all
   tasks:
     - debug:
