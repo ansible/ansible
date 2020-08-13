@@ -1,0 +1,6 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - ping:
+      loop_with: 'items'
+      loop: [1,2,3]

@@ -1,0 +1,2 @@
+bugfixes:
+  - ensure private attributes stay private.

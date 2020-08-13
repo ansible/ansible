@@ -286,9 +286,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         return LoopControl.load(data=ds, variable_manager=self._variable_manager, loader=self._loader)
 
-    def _validate_attributes(self, ds):
+    def _validate_attributes(self, ds, allow_private=False):
         try:
-            super(Task, self)._validate_attributes(ds)
+            super(Task, self)._validate_attributes(ds, allow_private=allow_private)
         except AnsibleParserError as e:
             e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
             raise e

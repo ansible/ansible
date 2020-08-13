@@ -197,7 +197,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         ''' infrequently used method to do some pre-processing of legacy terms '''
         return ds
 
-    def load_data(self, ds, variable_manager=None, loader=None):
+    def load_data(self, ds, variable_manager=None, loader=None, allow_private=False):
         ''' walk the input datastructure and assign any values '''
 
         if ds is None:
@@ -220,7 +220,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # something we can more easily parse, and then call the validation
         # function on it to ensure there are no incorrect key values
         ds = self.preprocess_data(ds)
-        self._validate_attributes(ds)
+        self._validate_attributes(ds, allow_private=allow_private)
 
         # Walk all attributes in the class. We sort them based on their priority
         # so that certain fields can be loaded before others, if they are dependent.
@@ -261,7 +261,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
         return value
 
-    def _validate_attributes(self, ds):
+    def _validate_attributes(self, ds, allow_private=False):
         '''
         Ensures that there are no keys in the datastructure which do
         not map to attributes for this object.
@@ -271,6 +271,10 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         for key in ds:
             if key not in valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
+
+            if not allow_private and self._valid_attrs[key].private:
+                raise AnsibleParserError("'%s' cannot be set as it is a private attribute for a %s" % (key, self.__class__.__name__), obj=ds)
+
 
     def validate(self, all_vars=None):
         ''' validation that is done at parse time, not load time '''
