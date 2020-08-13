@@ -275,7 +275,6 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             if not allow_private and self._valid_attrs[key].private:
                 raise AnsibleParserError("'%s' cannot be set as it is a private attribute for a %s" % (key, self.__class__.__name__), obj=ds)
 
-
     def validate(self, all_vars=None):
         ''' validation that is done at parse time, not load time '''
         all_vars = {} if all_vars is None else all_vars
