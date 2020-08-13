@@ -1,0 +1,2 @@
+bugfixes:
+- Fixed Ansible Reports Validate Not Supported by Netconf Server when Enabled in Netconf - (https://github.com/ansible-collections/ansible.netcommon/issues/119).
