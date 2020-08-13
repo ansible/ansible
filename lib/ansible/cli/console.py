@@ -364,12 +364,12 @@ class ConsoleCLI(CLI, cmd.Cmd):
         if arg:
             try:
                 timeout = int(arg)
-                if timeout <= 0:
-                    display.error('The timeout must be greater than or equal to 1')
+                if timeout < 0:
+                    display.error('The timeout must be greater than or equal to 1, use 0 to disable')
                 else:
                     self.task_timeout = timeout
             except TypeError as e:
-                display.error('The timeout must be a valid integer: %s' % to_text(e))
+                display.error('The timeout must be a valid positive integer, or 0 to disable: %s' % to_text(e))
         else:
             display.display('Usage: timeout <seconds>')
 
@@ -438,7 +438,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
         self.check_mode = context.CLIARGS['check']
         self.diff = context.CLIARGS['diff']
         self.forks = context.CLIARGS['forks']
-        self.timeout = context.CLIARGS['task_timeout']
+        self.task_timeout = context.CLIARGS['task_timeout']
 
         # dynamically add modules as commands
         self.modules = self.list_modules()
