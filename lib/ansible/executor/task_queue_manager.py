@@ -40,6 +40,7 @@ from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
+from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
 
@@ -350,11 +351,8 @@ class TaskQueueManager:
                 defunct = True
         return defunct
 
+    @lock_decorator(attr='_callback_lock')
     def send_callback(self, method_name, *args, **kwargs):
-        with self._callback_lock:
-            self._send_callback(method_name, *args, **kwargs)
-
-    def _send_callback(self, method_name, *args, **kwargs):
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
