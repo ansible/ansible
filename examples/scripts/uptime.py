@@ -53,7 +53,7 @@ class ResultsCollectorJSONCallback(CallbackBase):
 def main():
     host_list = ['localhost', 'www.example.com', 'www.google.com']
     # since the API is constructed for CLI it expects certain options to always be set in the context object
-    context.CLIARGS = ImmutableDict(connection='smart', module_path=['/to/mymodules', '/usr/share/ansible'], forks=10, become=None,
+    context.CLIARGS = ImmutableDict(connection='smart', module_path=['/to/mymodules', '/usr/share/ansible'], forks=10, become=False,
                                     become_method=None, become_user=None, check=False, diff=False)
     # required for
     # https://github.com/ansible/ansible/blob/devel/lib/ansible/inventory/manager.py#L204
