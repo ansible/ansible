@@ -122,8 +122,8 @@ class LookupModule(LookupBase):
                     # because jinja2_native is true globally, we need this text not to be processed by
                     # literal_eval anywhere in Ansible
                     res = NativeJinjaText(
-                            templar.template(template_data, preserve_trailing_newlines=True,
-                                             convert_data=convert_data_p, escape_backslashes=False)
+                        templar.template(template_data, preserve_trailing_newlines=True,
+                                         convert_data=convert_data_p, escape_backslashes=False)
                     )
                 else:
                     with self._templar.set_temporary_context(variable_start_string=variable_start_string,
