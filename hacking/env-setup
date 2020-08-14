@@ -67,7 +67,7 @@ gen_egg_info()
         # see https://github.com/ansible/ansible/pull/11967
         \rm -rf "$PREFIX_PYTHONPATH"/ansible*.egg-info
     fi
-    $PYTHON_BIN setup.py egg_info
+    ANSIBLE_SKIP_CONFLICT_CHECK=1 $PYTHON_BIN setup.py egg_info
 }
 
 if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
