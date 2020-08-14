@@ -483,14 +483,6 @@ def ssh_supports_acceptnewhostkey(module):
     return supports_acceptnewhostkey
 
 
-def get_ssh_version(module):
-    ssh_path = module.get_bin_path('ssh', True)
-    cmd = [ssh_path, '-V']
-    rc, stdout, stderr = module.run_command(cmd, check_rc=True)
-    ssh_version = to_native(stderr).rpartition('p1')[0].rpartition('OpenSSH_')[2]
-    return ssh_version
-
-
 def get_submodule_versions(git_path, module, dest, version='HEAD'):
     cmd = [git_path, 'submodule', 'foreach', git_path, 'rev-parse', version]
     (rc, out, err) = module.run_command(cmd, cwd=dest)
