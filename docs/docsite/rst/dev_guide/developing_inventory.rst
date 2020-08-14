@@ -18,8 +18,8 @@ If you use :ref:`inventory plugins <inventory_plugins>` instead, you can leverag
 
 .. _inventory_sources:
 
-What are inventory sources?
-===========================
+Inventory sources
+=================
 
 Inventory sources are the input strings that inventory plugins work with.
 An inventory source can be a path to a file or to a script, or it can be raw data that the plugin can interpret.
@@ -45,8 +45,8 @@ The table below shows some examples of inventory plugins and the source types th
 
 .. _developing_inventory_inventory_plugins:
 
-What are inventory plugins?
-===========================
+Inventory plugins
+=================
 
 Like most plugin types (except modules), inventory plugins must be developed in Python. They execute on the controller and should therefore adhere to the :ref:`control_node_requirements`.
 
@@ -55,7 +55,7 @@ Most of the documentation in :ref:`developing_plugins` also applies here. You sh
 Normally, inventory plugins are executed at the start of a run, and before the playbooks, plays, or roles are loaded.
 However, you can use the ``meta: refresh_inventory`` task to clear the current inventory and execute the inventory plugins again, and this task will generate a new inventory.
 
-If you use the persistent cache, inventory plugins can also use the configured cache plugin to store and retrieve data. This data retrieval avoids making repeated and costly external calls.
+If you use the persistent cache, inventory plugins can also use the configured cache plugin to store and retrieve data. Caching inventory avoids making repeated and costly external calls.
 
 .. _developing_an_inventory_plugin:
 
@@ -147,7 +147,7 @@ The base class does some minimal assignment for reuse in other methods.
         self.inventory = inventory
         self.templar = Templar(loader=loader)
 
-It is upto the plugin now to parse the provided inventory source and translate it to Ansible inventory.
+It is up to the plugin now to parse the provided inventory source and translate it into Ansible inventory.
 To facilitate this, the example below uses a few helper functions:
 
 .. code-block:: python
@@ -284,7 +284,7 @@ For example, if you use the integrated caching, ``cache_plugin``, ``cache_timeou
 The 'auto' plugin
 -----------------
 
-From Ansible 2.5 onwards, we include the :ref:`auto inventory plugin <auto_inventory>` that is enabled by default. This plugin loads other plugins that use the common YAML configuration format and specifies a ``plugin`` field with a matching inventory plugin name. The 'auto' plugin makes it easier to use your plugin without having to update configurations.
+From Ansible 2.5 onwards, we include the :ref:`auto inventory plugin <auto_inventory>` and enable it by default. If the ``plugin`` field in your standard configuration file matches the name of your inventory plugin, the ``auto`` inventory plugin will load your plugin. The 'auto' plugin makes it easier to use your plugin without having to update configurations.
 
 
 .. _inventory_scripts:
@@ -336,7 +336,7 @@ When called with the argument ``--host <hostname>`` (where <hostname> is a host 
         "VAR002": "VALUE",
     }
 
-Printing variables is optional. If the script does not do it, the script should print an empty hash or dictionary.
+Printing variables is optional. If the script does not print variables, it should print an empty hash or dictionary.
 
 .. _inventory_script_tuning:
 
