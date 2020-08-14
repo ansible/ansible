@@ -475,10 +475,8 @@ def ssh_supports_acceptnewhostkey(module):
     supports_acceptnewhostkey = True
     try:
         cmd = [ssh_path, '-o', 'StrictHostKeyChecking=accept-new', '-V']
-        rc, stdout, stderr = module.run_command(cmd, check_rc=True)
-        if "unsupported option" in stderr:
-            supports_acceptnewhostkey = False
-    except OSError:
+        rc, stdout, stderr = module.run_command(cmd)
+    except Exception:
         supports_acceptnewhostkey = False
     return supports_acceptnewhostkey
 
