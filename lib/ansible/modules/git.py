@@ -469,6 +469,7 @@ def get_version(module, git_path, dest, ref="HEAD"):
     sha = to_native(stdout).rstrip('\n')
     return sha
 
+
 def ssh_supports_acceptnewhostkey(module):
     ssh_path = module.get_bin_path('ssh', True)
     supports_acceptnewhostkey = True
@@ -477,7 +478,7 @@ def ssh_supports_acceptnewhostkey(module):
         rc, stdout, stderr = module.run_command(cmd, check_rc=True)
         if b"unsupported option" in err:
             supports_acceptnewhostkey = False
-    except:
+    except OSError:
         supports_acceptnewhostkey = False
     return supports_acceptnewhostkey
 
@@ -1185,7 +1186,7 @@ def main():
             ssh_opts = "-o StrictHostKeyChecking=no"
 
     if module.params['accept_newhostkey']:
-        if ssh_supports_acceptnewhostkey(module) == False:
+        if not ssh_supports_acceptnewhostkey(module):
             module.warn("Your ssh client does not support accept_newhostkey option, therefore it cannot be used.")
         else:
             if ssh_opts is not None:
