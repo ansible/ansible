@@ -1,0 +1,25 @@
+fixtures:
+    taskvars_in: taskvars_in.json
+    taskvars_out: taskvars_out.json
+connection:
+    transport: 'ssh'
+hostvars:
+    '127.0.0.1': {}
+    '::1': {}
+    'localhost': {}
+_play_context:
+   private_key_file: ~/test.pem
+task_args:
+   private_key: ~/.ssh/id_rsa
+   dest: /tmp/deleteme
+   src: /tmp/deleteme
+
+asserts:
+    - "hasattr(SAM._connection, 'ismock')"
+    - "SAM._connection.transport == 'local'"
+    - "self._play_context.shell == 'sh'"
+    - "self.execute_called"
+    - "self.final_module_args['_local_rsync_path'] == 'rsync'"
+    - "self.final_module_args['src'] == '/tmp/deleteme'"
+    - "self.final_module_args['dest'] == 'root@el6host:/tmp/deleteme'"
+    - "self.final_module_args['private_key'] == '~/.ssh/id_rsa'"

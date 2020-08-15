@@ -251,6 +251,23 @@ class TestSynchronizeAction(unittest.TestCase):
         x = SynchronizeTester()
         x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote_su'))
 
+    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_basic_with_private_key(self):
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'basic_with_private_key'))
+
+    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_delegate_remote_with_private_key(self):
+        # delegate to other remote host and use the module param private_key
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote_with_private_key'))
+
+    @patch('ansible.plugins.action.synchronize.connection_loader', FakePluginLoader)
+    def test_delegate_remote_play_context_private_key(self):
+        # delegate to other remote host and use the play context private_key
+        x = SynchronizeTester()
+        x.runtest(fixturepath=os.path.join(self.fixturedir, 'delegate_remote_play_context_private_key'))
+
     @patch.object(ActionModule, '_low_level_execute_command', side_effect=BreakPoint)
     @patch.object(ActionModule, '_remote_expand_user', side_effect=ActionModule._remote_expand_user, autospec=True)
     def test_remote_user_not_in_local_tmpdir(self, spy_remote_expand_user, ll_ec):
