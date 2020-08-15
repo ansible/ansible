@@ -1,0 +1,2 @@
+bugfixes:
+- zabbix_proxy - fixed support for Zabbix 5.0

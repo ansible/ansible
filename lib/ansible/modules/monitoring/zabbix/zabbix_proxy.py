@@ -139,6 +139,7 @@ RETURN = r''' # '''
 import traceback
 import atexit
 
+from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 try:
     from zabbix_api import ZabbixAPI
@@ -153,6 +154,7 @@ class Proxy(object):
     def __init__(self, module, zbx):
         self._module = module
         self._zapi = zbx
+        self._zbx_api_version = zbx.api_version()[:5]
         self.existing_data = None
 
     def proxy_exists(self, proxy_name):
@@ -203,6 +205,10 @@ class Proxy(object):
         if 'interface' in self.existing_data and \
            len(self.existing_data['interface']) > 0:
             old_interface = self.existing_data['interface']
+
+        if LooseVersion(self._zbx_api_version) >= LooseVersion('5.0.0'):
+            if old_interface:
+                old_interface['details'] = str(old_interface['details'])
 
         final_interface = old_interface.copy()
         final_interface.update(new_interface)
