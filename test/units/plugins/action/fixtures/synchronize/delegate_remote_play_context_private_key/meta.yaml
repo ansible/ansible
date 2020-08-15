@@ -1,0 +1,28 @@
+fixtures:
+    taskvars_in: task_vars_in.json
+    taskvars_out: task_vars_out.json
+task_args:
+    src: /tmp/deleteme
+    dest: /tmp/deleteme
+_task:
+    delegate_to: u1404    
+_play_context:
+    shell: None
+    remote_addr: u1404
+    remote_user: root
+    private_key_file: ~/test.pem
+connection:
+    transport: 'ssh'
+hostvars:
+    '127.0.0.1': {}
+    '::1': {}
+    'localhost': {}
+asserts:
+    - "hasattr(SAM._connection, 'ismock')"
+    - "SAM._connection.transport == 'ssh'"
+    - "self._play_context.shell == None"
+    - "self.execute_called"
+    - "self.final_module_args['_local_rsync_path'] == 'rsync'"
+    - "self.final_module_args['src'] == '/tmp/deleteme'"
+    - "self.final_module_args['dest'] == 'root@el6host:/tmp/deleteme'"
+    - "self.final_module_args['private_key'] == '~/test.pem'"
