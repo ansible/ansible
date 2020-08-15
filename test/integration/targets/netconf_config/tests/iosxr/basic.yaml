@@ -27,8 +27,8 @@
   register: result
   ignore_errors: True
 
-  - assert:
-      that:
-        - "'failed' not in result"
+- assert:
+    that:
+      - "'failed' not in result"
 
 - debug: msg="END netconf_config iosxr/basic.yaml on connection={{ ansible_connection }}"
