@@ -1,0 +1,5 @@
+minor_changes:
+- zabbix_host - now supports providing ``details`` for snmp interfaces.
+
+bugfixes:
+- zabbix_host - fixed support for Zabbix 5.0
