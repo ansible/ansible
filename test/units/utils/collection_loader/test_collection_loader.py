@@ -134,6 +134,7 @@ def test_finder_coll():
     for test_dict in tests:
         # splat the dict values to our locals
         globals().update(test_dict)
+        global name, test_paths  # declare the names that we have just splatted
         parent_pkg = name.rpartition('.')[0]
         for paths in test_paths:
             paths = [os.path.join(p, parent_pkg.replace('.', '/')) for p in paths]
