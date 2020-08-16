@@ -429,6 +429,10 @@ class VariableManager:
         # if we have a task and we're delegating to another host, figure out the
         # variables for that host now so we don't have to rely on hostvars later
         if task and task.delegate_to is not None and include_delegate_to:
+            # connection variables must not be propagated to the delegated host
+            for connection_var in C.COMMON_CONNECTION_VARS:
+                if connection_var in all_vars:
+                    del all_vars[connection_var]
             all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
 
         # 'vars' magic var
