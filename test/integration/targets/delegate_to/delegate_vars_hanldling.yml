@@ -6,6 +6,25 @@
         name: delegatetome
         ansible_host: 127.0.0.4
 
+- name: ensure connection variables are reset when delegated_to is used
+  hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: ensure local connection is used for localhost
+      assert:
+        that:
+          - ansible_connection == 'local'
+          - ansible_host == 'testhost'
+        msg: "ansible_connection, ansible_host: {{ ansible_connection, ansible_host }}"
+
+    - name: ensure SSH connection is used with the delegated host
+      assert:
+        that:
+          - ansible_connection == 'ssh'
+          - ansible_host == '127.0.0.4'
+        msg: "ansible_connection, ansible_host: {{ ansible_connection, ansible_host }}"
+      delegate_to: delegatetome
+
 - name: ensure we dont use orig host vars if delegated one does not define them
   hosts: testhost
   gather_facts: false
