@@ -12,7 +12,9 @@ Ansible offers a task debugger so you can fix errors during execution instead of
 Enabling the debugger
 =====================
 
-The debugger is not enabled by default. If you want to invoke the debugger during playbook execution, you must enable it in one of three ways:
+The debugger is not enabled by default. If you want to invoke the debugger during playbook execution, you must enable it first.
+
+Use one of these three methods to enable the debugger:
 
  * with the debugger keyword
  * in configuration or an environment variable, or
