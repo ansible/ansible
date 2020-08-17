@@ -54,6 +54,10 @@ def _validate_install_ansible_base():
     """Validate that we can install ansible-base. Currently this only
     cares about upgrading to ansible-base from ansible<2.10
     """
+    # Skip common commands we can ignore
+    if set(('sdist', 'egg_info')).intersection(sys.argv):
+        return
+
     if os.getenv('ANSIBLE_SKIP_CONFLICT_CHECK', '') not in ('', '0'):
         return
 
