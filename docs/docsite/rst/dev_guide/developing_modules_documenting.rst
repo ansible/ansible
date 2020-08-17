@@ -44,7 +44,9 @@ After the shebang and UTF-8 coding, there should be a `copyright line <https://w
     # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
     # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-Major additions to the module (for instance, rewrites) may add additional copyright lines. Any legal review will include the source control history, so an exhaustive copyright header is not necessary. When adding a second copyright line for a significant feature or rewrite, add the newer line above the older one:
+Major additions to the module (for instance, rewrites) may add additional copyright lines. Any legal review will include the source control history, so an exhaustive copyright header is not necessary.
+Please do not edit the existing copyright year. This simplifies project administration and is unlikely to cause any interesting legal issues.
+When adding a second copyright line for a significant feature or rewrite, add the newer line above the older one:
 
 .. code-block:: python
 
