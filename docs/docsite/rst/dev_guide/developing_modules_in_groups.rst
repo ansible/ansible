@@ -20,7 +20,7 @@ This list of prerequisites is designed to help ensure that you develop high-qual
 * We encourage PEP 8 compliance. See :ref:`testing_pep8` for more information.
 * We encourage supporting :ref:`Python 2.6+ and Python 3.5+ <developing_python_3>`.
 * Look at Ansible Galaxy and review the naming conventions in your functional area (such as cloud, networking, databases).
-* With great power comes great responsibility: Ansible collection maintainers have a duty to help keep content up to date. As with all successful community projects, collection maintainers should keep a watchful eye for reported issues and contributions.
+* With great power comes great responsibility: Ansible collection maintainers have a duty to help keep content up to date and release collections they are responsible for regularly. As with all successful community projects, collection maintainers should keep a watchful eye for reported issues and contributions.
 * We strongly recommend unit and/or integration tests. Unit tests are especially valuable when external resources (such as cloud or network devices) are required. For more information see :ref:`developing_testing` and the `Testing Working Group <https://github.com/ansible/community/blob/master/meetings/README.md>`_.
 
 
