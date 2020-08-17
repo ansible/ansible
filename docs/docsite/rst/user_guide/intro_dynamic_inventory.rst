@@ -28,7 +28,7 @@ Ansible integrates seamlessly with `Cobbler <https://cobbler.github.io>`_, a Lin
 While primarily used to kickoff OS installations and manage DHCP and DNS, Cobbler has a generic
 layer that can represent data for multiple configuration management systems (even at the same time) and serve as a 'lightweight CMDB'.
 
-To tie your Ansible inventory to Cobbler, copy `this script <https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file. Run ``cobblerd`` any time you use Ansible and use the ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``) to communicate with Cobbler using Cobbler's XMLRPC API.
+To tie your Ansible inventory to Cobbler, copy `this script <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/cobbler.py>`_ to ``/etc/ansible`` and ``chmod +x`` the file. Run ``cobblerd`` any time you use Ansible and use the ``-i`` command line option (e.g. ``-i /etc/ansible/cobbler.py``) to communicate with Cobbler using Cobbler's XMLRPC API.
 
 Add a ``cobbler.ini`` file in ``/etc/ansible`` so Ansible knows where the Cobbler server is and some cache improvements can be used. For example:
 
@@ -111,7 +111,7 @@ So in other words, you can use those variables in arguments/actions as well.
 Inventory script example: AWS EC2
 =================================
 
-If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.githubusercontent.com/ansible-collections/community.aws/master/scripts/inventory/ec2.py>`_ script.
+If you use Amazon Web Services EC2, maintaining an inventory file might not be the best approach, because hosts may come and go over time, be managed by external applications, or you might even be using AWS autoscaling. For this reason, you can use the `EC2 external inventory  <https://raw.githubusercontent.com/ansible-collections/community.aws/main/scripts/inventory/ec2.py>`_ script.
 
 You can use this script in one of two ways. The easiest is to use Ansible's ``-i`` command line option and specify the path to the script after marking it executable:
 
@@ -119,7 +119,7 @@ You can use this script in one of two ways. The easiest is to use Ansible's ``-i
 
     ansible -i ec2.py -u ubuntu us-east-1d -m ping
 
-The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You must also copy the `ec2.ini  <https://raw.githubusercontent.com/ansible-collections/community.aws/master/scripts/inventory/ec2.ini>`_ file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
+The second option is to copy the script to `/etc/ansible/hosts` and `chmod +x` it. You must also copy the `ec2.ini  <https://raw.githubusercontent.com/ansible-collections/community.aws/main/scripts/inventory/ec2.ini>`_ file to `/etc/ansible/ec2.ini`. Then you can run ansible as you would normally.
 
 To make a successful API call to AWS, you must configure Boto (the Python interface to AWS). You can do this in `several ways <http://docs.pythonboto.org/en/latest/boto_config_tut.html>`_ available, but the simplest is to export two environment variables:
 
@@ -133,7 +133,7 @@ You can test the script by itself to make sure your config is correct:
 .. code-block:: bash
 
     cd /etc/ansible/
-    wget https://raw.githubusercontent.com/ansible-collections/community.aws/master/scripts/inventory/ec2.py
+    wget https://raw.githubusercontent.com/ansible-collections/community.aws/main/scripts/inventory/ec2.py
     ./ec2.py --list
 
 After a few moments, you should see your entire EC2 inventory across all regions in JSON.
@@ -254,7 +254,7 @@ To see the complete list of variables available for an instance, run the script 
 .. code-block:: bash
 
     cd /etc/ansible
-    wget https://raw.githubusercontent.com/ansible-collections/community.aws/master/scripts/inventory/ec2.py
+    wget https://raw.githubusercontent.com/ansible-collections/community.aws/main/scripts/inventory/ec2.py
     ./ec2.py --host ec2-12-12-12-12.compute-1.amazonaws.com
 
 Note that the AWS inventory script will cache results to avoid repeated API calls, and this cache setting is configurable in ec2.ini.  To
