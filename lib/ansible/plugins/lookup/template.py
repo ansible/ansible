@@ -121,20 +121,19 @@ class LookupModule(LookupBase):
 
 
                 with templar.set_temporary_context(variable_start_string=variable_start_string,
-                                                         variable_end_string=variable_end_string,
-                                                         available_variables=vars, searchpath=searchpath):
+                                                   variable_end_string=variable_end_string,
+                                                   available_variables=vars, searchpath=searchpath):
                     if USE_JINJA2_NATIVE:
                         res = templar.do_template(template_data, preserve_trailing_newlines=True,
-                                                        escape_backslashes=False)
+                                                  escape_backslashes=False)
                     else:
                         res = templar.template(template_data, preserve_trailing_newlines=True,
-                                                         convert_data=convert_data_p, escape_backslashes=False)
+                                               convert_data=convert_data_p, escape_backslashes=False)
 
                 # because jinja2_native is true globally, we need this text not to be processed by
                 # literal_eval anywhere in Ansible
                 if USE_JINJA2_NATIVE and not jinja2_native:
                     res = NativeJinjaText(res)
-
 
                 ret.append(res)
             else:
