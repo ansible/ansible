@@ -84,6 +84,11 @@ class LookupModule(LookupBase):
         variable_start_string = kwargs.get('variable_start_string', None)
         variable_end_string = kwargs.get('variable_end_string', None)
 
+        if USE_JINJA2_NATIVE and not jinja2_native:
+            templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
+        else:
+            templar = self._templar
+
         for term in terms:
             display.debug("File lookup term: %s" % term)
 
@@ -114,27 +119,23 @@ class LookupModule(LookupBase):
                 vars.update(generate_ansible_template_vars(lookupfile))
                 vars.update(lookup_template_vars)
 
-                if USE_JINJA2_NATIVE and not jinja2_native:
-                    templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment,
-                                                              variable_start_string=variable_start_string,
-                                                              variable_end_string=variable_end_string,
-                                                              available_variables=vars, searchpath=searchpath)
-                    # because jinja2_native is true globally, we need this text not to be processed by
-                    # literal_eval anywhere in Ansible
-                    res = NativeJinjaText(
-                        templar.template(template_data, preserve_trailing_newlines=True,
-                                         convert_data=convert_data_p, escape_backslashes=False)
-                    )
-                else:
-                    with self._templar.set_temporary_context(variable_start_string=variable_start_string,
-                                                             variable_end_string=variable_end_string,
-                                                             available_variables=vars, searchpath=searchpath):
-                        if USE_JINJA2_NATIVE:
-                            res = self._templar.do_template(template_data, preserve_trailing_newlines=True,
-                                                            escape_backslashes=False)
-                        else:
-                            res = self._templar.template(template_data, preserve_trailing_newlines=True,
+
+                with templar.set_temporary_context(variable_start_string=variable_start_string,
+                                                         variable_end_string=variable_end_string,
+                                                         available_variables=vars, searchpath=searchpath):
+                    if USE_JINJA2_NATIVE:
+                        res = templar.do_template(template_data, preserve_trailing_newlines=True,
+                                                        escape_backslashes=False)
+                    else:
+                        res = templar.template(template_data, preserve_trailing_newlines=True,
                                                          convert_data=convert_data_p, escape_backslashes=False)
+
+                # because jinja2_native is true globally, we need this text not to be processed by
+                # literal_eval anywhere in Ansible
+                if USE_JINJA2_NATIVE and not jinja2_native:
+                    res = NativeJinjaText(res)
+
+
                 ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)
