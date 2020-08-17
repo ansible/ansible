@@ -298,3 +298,11 @@
     {{ ansible_python_interpreter|default('/usr/bin/python') }} -c 'import os; os.fdopen(os.dup(0), "r")'
   async: 1
   poll: 1
+
+- name: run async poll callback test playbook
+  command: ansible-playbook {{ role_path }}/callback_test.yml
+  register: callback_output
+
+- assert:
+    that:
+      - '"ASYNC POLL on localhost" in callback_output.stdout'
