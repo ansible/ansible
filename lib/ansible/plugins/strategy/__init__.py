@@ -37,6 +37,7 @@ from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
+from ansible.executor.task_queue_manager import CallbackSend
 from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
@@ -92,16 +93,19 @@ def results_thread_main(strategy):
             result = strategy._final_q.get()
             if isinstance(result, StrategySentinel):
                 break
+            elif isinstance(result, CallbackSend):
+                strategy._tqm.send_callback(result.method_name, *result.args, **result.kwargs)
+            elif isinstance(result, TaskResult):
+                with strategy._results_lock:
+                    # only handlers have the listen attr, so this must be a handler
+                    # we split up the results into two queues here to make sure
+                    # handler and regular result processing don't cross wires
+                    if 'listen' in result._task_fields:
+                        strategy._handler_results.append(result)
+                    else:
+                        strategy._results.append(result)
             else:
-                strategy._results_lock.acquire()
-                # only handlers have the listen attr, so this must be a handler
-                # we split up the results into two queues here to make sure
-                # handler and regular result processing don't cross wires
-                if 'listen' in result._task_fields:
-                    strategy._handler_results.append(result)
-                else:
-                    strategy._results.append(result)
-                strategy._results_lock.release()
+                display.warning('Received an invalid object (%s) in the result queue: %r' % (type(result), result))
         except (IOError, EOFError):
             break
         except Queue.Empty:
