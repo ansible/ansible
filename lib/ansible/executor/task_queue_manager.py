@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 import tempfile
+import time
 
 from ansible import constants as C
 from ansible import context
@@ -30,13 +31,10 @@ from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import string_types
 from ansible.module_utils._text import to_text, to_native
-from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
-from ansible.utils.collection_loader import AnsibleCollectionRef
-from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
@@ -137,6 +135,9 @@ class TaskQueueManager:
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
+        loaded_callbacks = set()
+
+        # first, load callbacks in the core distribution and configured callback paths
         for callback_plugin in callback_loader.all(class_only=True):
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
@@ -149,19 +150,34 @@ class TaskQueueManager:
             elif callback_name == 'tree' and self._run_tree:
                 # special case for ansible cli option
                 pass
+            # eg, ad-hoc doesn't allow non-default callbacks
             elif not self._run_additional_callbacks or (callback_needs_whitelist and (
                     C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                 # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
                 continue
 
             callback_obj = callback_plugin()
+            loaded_callbacks.add(callback_name)  # mark as loaded so we skip in second pass
             callback_obj.set_options()
             self._callback_plugins.append(callback_obj)
 
-        for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)):
-            # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
-            callback_obj = callback_loader.get(callback_plugin_name)
-            self._callback_plugins.append(callback_obj)
+        # eg, ad-hoc doesn't allow non-default callbacks
+        if self._run_additional_callbacks:
+            # Second pass over everything in the whitelist we haven't already loaded, try to explicitly load. This will catch
+            # collection-hosted callbacks, as well as formerly-core callbacks that have been redirected to collections.
+            for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if c not in loaded_callbacks):
+                # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
+                callback_obj, plugin_load_context = callback_loader.get_with_context(callback_plugin_name)
+                if callback_obj:
+                    loaded_as_name = callback_obj._redirected_names[-1]
+                    if loaded_as_name in loaded_callbacks:
+                        display.warning("Skipping callback '%s', already loaded as '%s'." % (callback_plugin_name, loaded_as_name))
+                        continue
+                    loaded_callbacks.add(loaded_as_name)
+                    callback_obj.set_options()
+                    self._callback_plugins.append(callback_obj)
+                else:
+                    display.warning("Skipping '%s', unable to load or use as a callback" % callback_plugin_name)
 
         self._callbacks_loaded = True
 
@@ -178,8 +194,8 @@ class TaskQueueManager:
             self.load_callbacks()
 
         all_vars = self._variable_manager.get_vars(play=play)
-        warn_if_reserved(all_vars)
         templar = Templar(loader=self._loader, variables=all_vars)
+        warn_if_reserved(all_vars, templar.environment.globals.keys())
 
         new_play = play.copy()
         new_play.post_validate(templar)
@@ -255,6 +271,15 @@ class TaskQueueManager:
 
     def _cleanup_processes(self):
         if hasattr(self, '_workers'):
+            for attempts_remaining in range(C.WORKER_SHUTDOWN_POLL_COUNT - 1, -1, -1):
+                if not any(worker_prc and worker_prc.is_alive() for worker_prc in self._workers):
+                    break
+
+                if attempts_remaining:
+                    time.sleep(C.WORKER_SHUTDOWN_POLL_DELAY)
+                else:
+                    display.warning('One or more worker processes are still running and will be terminated.')
+
             for worker_prc in self._workers:
                 if worker_prc and worker_prc.is_alive():
                     try:

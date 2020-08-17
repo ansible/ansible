@@ -1,0 +1,47 @@
+- name: create test download dir
+  file:
+    path: '{{ galaxy_dir }}/download'
+    state: directory
+
+- name: download a git repository
+  command: >
+    ansible-galaxy collection download
+    git+https://github.com/ansible-collections/amazon.aws.git,37875c5b4ba5bf3cc43e07edf29f3432fd76def5
+    git+https://github.com/AlanCoding/awx.git#awx_collection,750c22a150d04eef1cb625fd4f83cce57949416c
+  args:
+    chdir: '{{ galaxy_dir }}/download'
+  register: download_collection
+
+- name: check that the amazon.aws collection was downloaded
+  stat:
+    path: '{{ galaxy_dir }}/download/collections/amazon-aws-1.0.0.tar.gz'
+  register: download_collection_amazon_actual
+
+- name: check that the awx.awx collection was downloaded
+  stat:
+    path: '{{ galaxy_dir }}/download/collections/awx-awx-0.0.1-devel.tar.gz'
+  register: download_collection_awx_actual
+
+- assert:
+    that:
+      - '"Downloading collection ''amazon.aws'' to" in download_collection.stdout'
+      - '"Downloading collection ''awx.awx'' to" in download_collection.stdout'
+      - download_collection_amazon_actual.stat.exists
+      - download_collection_awx_actual.stat.exists
+
+- name: test the downloaded repository can be installed
+  command: 'ansible-galaxy collection install -r requirements.yml'
+  args:
+    chdir: '{{ galaxy_dir }}/download/collections/'
+
+- name: list installed collections
+  command: 'ansible-galaxy collection list'
+  register: installed_collections
+
+- assert:
+    that:
+      - "'amazon.aws' in installed_collections.stdout"
+      - "'awx.awx' in installed_collections.stdout"
+
+- include_tasks: ./empty_installed_collections.yml
+  when: cleanup

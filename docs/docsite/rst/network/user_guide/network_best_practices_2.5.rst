@@ -201,7 +201,7 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
          eos_facts:
          when: ansible_network_os == 'eos'
 
-       - name: Gather facts (ops)
+       - name: Gather facts (ios)
          ios_facts:
          when: ansible_network_os == 'ios'
 
@@ -483,4 +483,4 @@ If you receive an connection error please double check the inventory and playboo
 
   * :ref:`network_guide`
   * :ref:`intro_inventory`
-  * :ref:`Vault best practices <best_practices_for_variables_and_vaults>`
+  * :ref:`Keeping vaulted variables visible <tip_for_variables_and_vaults>`

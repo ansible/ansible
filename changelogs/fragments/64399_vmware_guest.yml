@@ -1,2 +1,0 @@
-bugfixes:
-- Handle slashes in VMware network name (https://github.com/ansible/ansible/issues/64399).

@@ -1,3 +1,0 @@
-bugfixes:
-- "ACME modules: support Buypass' ACME v1 endpoint"
-- "ACME modules: fix bug in ACME v1 account update code"

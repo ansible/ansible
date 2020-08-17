@@ -182,15 +182,9 @@ When creating a new module there are a few things to keep in mind:
 - Use the full cmdlet name instead of aliases, e.g. ``Remove-Item`` over ``rm``
 - Use named parameters with cmdlets, e.g. ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
 
-A very basic powershell module `win_environment <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/windows/win_environment.ps1>`_ is included below. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met.
+A very basic Powershell module `win_environment <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_environment.ps1>`_ incorporates best practices for Powershell modules. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met.
 
-.. .. include:: ../../../../lib/ansible/modules/windows/win_environment.ps1
-..    :code: powershell
-
-.. literalinclude:: ../../../../lib/ansible/modules/windows/win_environment.ps1
-   :language: powershell
-
-A slightly more advanced module is `win_uri <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/windows/win_uri.ps1>`_ which additionally shows how to use different parameter types (bool, str, int, list, dict, path) and a selection of choices for parameters, how to fail a module and how to handle exceptions.
+A slightly more advanced module is `win_uri <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_uri.ps1>`_ which additionally shows how to use different parameter types (bool, str, int, list, dict, path) and a selection of choices for parameters, how to fail a module and how to handle exceptions.
 
 As part of the new ``AnsibleModule`` wrapper, the input parameters are defined and validated based on an argument
 spec. The following options can be set at the root level of the argument spec:
@@ -215,9 +209,12 @@ options set:
 - ``aliases``: A list of aliases for the module option
 - ``choices``: A list of valid values for the module option, if ``type=list`` then each list value is validated against the choices and not the list itself
 - ``default``: The default value for the module option if not set
+- ``deprecated_aliases``: A list of hashtables that define aliases that are deprecated and the versions they will be removed in. Each entry must contain the keys ``name`` and ``collection_name`` with either ``version`` or ``date``
 - ``elements``: When ``type=list``, this sets the type of each list value, the values are the same as ``type``
 - ``no_log``: Will sanitise the input value before being returned in the ``module_invocation`` return value
 - ``removed_in_version``: States when a deprecated module option is to be removed, a warning is displayed to the end user if set
+- ``removed_at_date``: States the date (YYYY-MM-DD) when a deprecated module option will be removed, a warning is displayed to the end user if set
+- ``removed_from_collection``: States from which collection the deprecated module option will be removed; must be specified if one of ``removed_in_version`` and ``removed_at_date`` is specified
 - ``required``: Will fail when the module option is not set
 - ``type``: The type of the module option, if not set then it defaults to ``str``. The valid types are;
     * ``bool``: A boolean value
@@ -393,6 +390,126 @@ at the end of the file. For example
     Export-ModuleMember -Function Invoke-CustomUtil, Get-CustomInfo
 
 
+Exposing shared module options
+++++++++++++++++++++++++++++++
+
+PowerShell module utils can easily expose common module options that a module can use when building its argument spec.
+This allows common features to be stored and maintained in one location and have those features used by multiple
+modules with minimal effort. Any new features or bugifxes added to one of these utils are then automatically used by
+the various modules that call that util.
+
+An example of this would be to have a module util that handles authentication and communication against an API This
+util can be used by multiple modules to expose a common set of module options like the API endpoint, username,
+password, timeout, cert validation, etc, without having to add those options to each module spec.
+
+The standard convention for a module util that has a shared argument spec would have
+
+- A ``Get-<namespace.name.util name>Spec`` function that outputs the common spec for a module
+    * It is highly recommended to make this function name be unique to the module to avoid any conflicts with other utils that can be loaded
+    * The format of the output spec is a Hashtable in the same format as the ``$spec`` used for normal modules
+- A function that takes in an ``AnsibleModule`` object called under the ``-Module`` parameter which it can use to get the shared options
+
+Because these options can be shared across various module it is highly recommended to keep the module option names and
+aliases in the shared spec as specific as they can be. For example do not have a util option called ``password``,
+rather you should prefix it with a unique name like ``acme_password``.
+
+.. warning::
+    Failure to have a unique option name or alias can prevent the util being used by module that also use those names or
+    aliases for its own options.
+
+The following is an example module util called ``ServiceAuth.psm1`` in a collection that implements a common way for
+modules to authentication with a service.
+
+.. code-block:: powershell
+
+    Invoke-MyServiceResource {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory=$true)]
+            [ValidateScript({ $_.GetType().FullName -eq 'Ansible.Basic.AnsibleModule' })]
+            $Module,
+
+            [Parameter(Mandatory=$true)]
+            [String]
+            $ResourceId
+
+            [String]
+            $State = 'present'
+        )
+
+        # Process the common module options known to the util
+        $params = @{
+            ServerUri = $Module.Params.my_service_url
+        }
+        if ($Module.Params.my_service_username) {
+            $params.Credential = Get-MyServiceCredential
+        }
+
+        if ($State -eq 'absent') {
+            Remove-MyService @params -ResourceId $ResourceId
+        } else {
+            New-MyService @params -ResourceId $ResourceId
+        }
+    }
+
+    Get-MyNamespaceMyCollectionServiceAuthSpec {
+        # Output the util spec
+        @{
+            options = @{
+                my_service_url = @{ type = 'str'; required = $true }
+                my_service_username = @{ type = 'str' }
+                my_service_password = @{ type = 'str'; no_log = $true }
+            }
+
+            required_together = @(
+                ,@('my_service_username', 'my_service_password')
+            )
+        }
+    }
+
+    $exportMembers = @{
+        Function = 'Get-MyNamespaceMyCollectionServiceAuthSpec', 'Invoke-MyServiceResource'
+    }
+    Export-ModuleMember @exportMembers
+
+
+For a module to take advantage of this common argument spec it can be set out like
+
+.. code-block:: powershell
+
+    #!powershell
+
+    # Include the module util ServiceAuth.psm1 from the my_namespace.my_collection collection
+    #AnsibleRequires -PowerShell ansible_collections.my_namespace.my_collection.plugins.module_utils.ServiceAuth
+
+    # Create the module spec like normal
+    $spec = @{
+        options = @{
+            resource_id = @{ type = 'str'; required = $true }
+            state = @{ type = 'str'; choices = 'absent', 'present' }
+        }
+    }
+
+    # Create the module from the module spec but also include the util spec to merge into our own.
+    $module = [Ansible.Basic.AnsibleModule]::Create($args, $spec, @(Get-MyNamespaceMyCollectionServiceAuthSpec))
+
+    # Call the ServiceAuth module util and pass in the module object so it can access the module options.
+    Invoke-MyServiceResource -Module $module -ResourceId $module.Params.resource_id -State $module.params.state
+
+    $module.ExitJson()
+
+
+.. note::
+    Options defined in the module spec will always have precedence over a util spec. Any list values under the same key
+    in a util spec will be appended to the module spec for that same key. Dictionary values will add any keys that are
+    missing from the module spec and merge any values that are lists or dictionaries. This is similar to how the doc
+    fragment plugins work when extending module documentation.
+
+To document these shared util options for a module, create a doc fragment plugin that documents the options implemented
+by the module util and extend the module docs for every module that implements the util to include that fragment in
+its docs.
+
+
 Windows playbook module testing
 ===============================
 
@@ -511,7 +628,7 @@ tests for win_stat:
 - Create a copy of ``./test/integration/inventory.winrm.template`` and name it ``inventory.winrm``.
 - Fill in entries under ``[windows]`` and set the required variables that are needed to connect to the host.
 - :ref:`Install the required Python modules <windows_winrm>` to support WinRM and a configured authentication method.
-- To execute the integration tests, run ``ansible-test windows-integration win_stat``; you can replace ``win_stat`` with the role you wish to test.
+- To execute the integration tests, run ``ansible-test windows-integration win_stat``; you can replace ``win_stat`` with the role you want to test.
 
 This will execute all the tests currently defined for that role. You can set
 the verbosity level using the ``-v`` argument just as you would with

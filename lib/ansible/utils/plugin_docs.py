@@ -40,7 +40,83 @@ def merge_fragment(target, source):
         target[key] = value
 
 
-def add_fragments(doc, filename, fragment_loader):
+def _process_versions_and_dates(fragment, is_module, return_docs, callback):
+    def process_deprecation(deprecation, top_level=False):
+        if not isinstance(deprecation, MutableMapping):
+            return
+        if (is_module or top_level) and 'removed_in' in deprecation:  # used in module deprecations
+            callback(deprecation, 'removed_in', 'removed_from_collection')
+        if 'removed_at_date' in deprecation:
+            callback(deprecation, 'removed_at_date', 'removed_from_collection')
+        if not (is_module or top_level) and 'version' in deprecation:  # used in plugin option deprecations
+            callback(deprecation, 'version', 'removed_from_collection')
+
+    def process_option_specifiers(specifiers):
+        for specifier in specifiers:
+            if not isinstance(specifier, MutableMapping):
+                continue
+            if 'version_added' in specifier:
+                callback(specifier, 'version_added', 'version_added_collection')
+            if isinstance(specifier.get('deprecated'), MutableMapping):
+                process_deprecation(specifier['deprecated'])
+
+    def process_options(options):
+        for option in options.values():
+            if not isinstance(option, MutableMapping):
+                continue
+            if 'version_added' in option:
+                callback(option, 'version_added', 'version_added_collection')
+            if not is_module:
+                if isinstance(option.get('env'), list):
+                    process_option_specifiers(option['env'])
+                if isinstance(option.get('ini'), list):
+                    process_option_specifiers(option['ini'])
+                if isinstance(option.get('vars'), list):
+                    process_option_specifiers(option['vars'])
+            if isinstance(option.get('suboptions'), MutableMapping):
+                process_options(option['suboptions'])
+
+    def process_return_values(return_values):
+        for return_value in return_values.values():
+            if not isinstance(return_value, MutableMapping):
+                continue
+            if 'version_added' in return_value:
+                callback(return_value, 'version_added', 'version_added_collection')
+            if isinstance(return_value.get('contains'), MutableMapping):
+                process_return_values(return_value['contains'])
+
+    if not fragment:
+        return
+
+    if return_docs:
+        process_return_values(fragment)
+        return
+
+    if 'version_added' in fragment:
+        callback(fragment, 'version_added', 'version_added_collection')
+    if isinstance(fragment.get('deprecated'), MutableMapping):
+        process_deprecation(fragment['deprecated'], top_level=True)
+    if isinstance(fragment.get('options'), MutableMapping):
+        process_options(fragment['options'])
+
+
+def add_collection_to_versions_and_dates(fragment, collection_name, is_module, return_docs=False):
+    def add(options, option, collection_name_field):
+        if collection_name_field not in options:
+            options[collection_name_field] = collection_name
+
+    _process_versions_and_dates(fragment, is_module, return_docs, add)
+
+
+def remove_current_collection_from_versions_and_dates(fragment, collection_name, is_module, return_docs=False):
+    def remove(options, option, collection_name_field):
+        if options.get(collection_name_field) == collection_name:
+            del options[collection_name_field]
+
+    _process_versions_and_dates(fragment, is_module, return_docs, remove)
+
+
+def add_fragments(doc, filename, fragment_loader, is_module=False):
 
     fragments = doc.pop('extends_documentation_fragment', [])
 
@@ -80,6 +156,12 @@ def add_fragments(doc, filename, fragment_loader):
 
         fragment = AnsibleLoader(fragment_yaml, file_name=filename).get_single_data()
 
+        real_collection_name = 'ansible.builtin'
+        real_fragment_name = getattr(fragment_class, '_load_name')
+        if real_fragment_name.startswith('ansible_collections.'):
+            real_collection_name = '.'.join(real_fragment_name.split('.')[1:3])
+        add_collection_to_versions_and_dates(fragment, real_collection_name, is_module=is_module)
+
         if 'notes' in fragment:
             notes = fragment.pop('notes')
             if notes:
@@ -116,16 +198,25 @@ def add_fragments(doc, filename, fragment_loader):
         raise AnsibleError('unknown doc_fragment(s) in file {0}: {1}'.format(filename, to_native(', '.join(unknown_fragments))))
 
 
-def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False):
+def get_docstring(filename, fragment_loader, verbose=False, ignore_errors=False, collection_name=None, is_module=False):
     """
     DOCUMENTATION can be extended using documentation fragments loaded by the PluginLoader from the doc_fragments plugins.
     """
 
     data = read_docstring(filename, verbose=verbose, ignore_errors=ignore_errors)
 
-    # add fragments to documentation
     if data.get('doc', False):
-        add_fragments(data['doc'], filename, fragment_loader=fragment_loader)
+        # add collection name to versions and dates
+        if collection_name is not None:
+            add_collection_to_versions_and_dates(data['doc'], collection_name, is_module=is_module)
+
+        # add fragments to documentation
+        add_fragments(data['doc'], filename, fragment_loader=fragment_loader, is_module=is_module)
+
+    if data.get('returndocs', False):
+        # add collection name to versions and dates
+        if collection_name is not None:
+            add_collection_to_versions_and_dates(data['returndocs'], collection_name, is_module=is_module, return_docs=True)
 
     return data['doc'], data['plainexamples'], data['returndocs'], data['metadata']
 

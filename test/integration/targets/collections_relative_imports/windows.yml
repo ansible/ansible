@@ -1,0 +1,11 @@
+- hosts: windows
+  gather_facts: no
+  tasks:
+  - name: test out relative imports on Windows modules
+    my_ns.my_col.win_relative:
+    register: win_relative
+
+  - name: assert relative imports on Windows modules
+    assert:
+      that:
+      - win_relative.data == 'CSRel4.Invoke() -> Invoke-FromPSRel3 -> Invoke-FromPSRel2 -> Invoke-FromPSRel1'

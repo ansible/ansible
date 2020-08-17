@@ -1,0 +1,12 @@
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - shell: sleep 100
+      timeout: 1
+      ignore_errors: true
+      register: time
+
+    - assert:
+        that:
+            - time is failed
+            - '"The shell action failed to execute in the expected time frame" in time["msg"]'

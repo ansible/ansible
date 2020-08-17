@@ -10,7 +10,7 @@
   description:
   - The namespace of the collection.
   - This can be a company/brand/organization or product namespace under which all content lives.
-  - May only contain alphanumeric characters and underscores. Additionally namespaces cannot start with underscores or
+  - May only contain alphanumeric lowercase characters and underscores. Namespaces cannot start with underscores or
     numbers and cannot contain consecutive underscores.
   required: yes
   type: str

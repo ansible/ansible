@@ -3,7 +3,7 @@
 # License: GNU General Public License v3 or later (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt )
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division)
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import pytest
@@ -48,13 +48,13 @@ class TestBoolean:
 
     def test_junk_values_strict(self):
         with pytest.raises(TypeError):
-            assert boolean("flibbity", strict=True)is False
+            assert boolean("flibbity", strict=True) is False
 
         with pytest.raises(TypeError):
-            assert boolean(42, strict=True)is False
+            assert boolean(42, strict=True) is False
 
         with pytest.raises(TypeError):
-            assert boolean(42.0, strict=True)is False
+            assert boolean(42.0, strict=True) is False
 
         with pytest.raises(TypeError):
-            assert boolean(object(), strict=True)is False
+            assert boolean(object(), strict=True) is False

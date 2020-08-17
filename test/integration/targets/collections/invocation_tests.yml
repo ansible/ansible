@@ -1,0 +1,5 @@
+- hosts: testhost
+  gather_facts: false
+  tasks:
+    - name: run action that invokes module from another collection
+      me.mycoll1.action1: desc="this should run me.mycoll2.module1"

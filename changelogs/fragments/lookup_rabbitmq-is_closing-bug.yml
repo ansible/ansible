@@ -1,2 +1,0 @@
-bugfixes:
-  - rabbitmq lookup plugin - Fix for rabbitmq lookups failing when using pika v1.0.0 and newer.

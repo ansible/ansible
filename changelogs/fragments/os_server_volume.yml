@@ -1,2 +1,0 @@
-minor_changes:
-- Attach an attached/detached volume from OpenStack VM's should return similar information in os_server_volume module.

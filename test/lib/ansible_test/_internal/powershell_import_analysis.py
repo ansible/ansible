@@ -5,8 +5,16 @@ __metaclass__ = type
 import os
 import re
 
+from .io import (
+    read_text_file,
+)
+
 from .util import (
     display,
+)
+
+from .util_common import (
+    resolve_csharp_ps_util,
 )
 
 from .data import (
@@ -45,11 +53,11 @@ def get_powershell_module_utils_name(path):  # type: (str) -> str
     base_path = data_context().content.module_utils_powershell_path
 
     if data_context().content.collection:
-        prefix = 'ansible_collections.' + data_context().content.collection.prefix + '.plugins.module_utils.'
+        prefix = 'ansible_collections.' + data_context().content.collection.prefix + 'plugins.module_utils.'
     else:
         prefix = ''
 
-    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.sep, '.')
+    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.path.sep, '.')
 
     return name
 
@@ -71,27 +79,27 @@ def extract_powershell_module_utils_imports(path, module_utils):
     """
     imports = set()
 
-    with open(path, 'r') as module_fd:
-        code = module_fd.read()
+    code = read_text_file(path)
 
-        if '# POWERSHELL_COMMON' in code:
-            imports.add('Ansible.ModuleUtils.Legacy')
+    if data_context().content.is_ansible and '# POWERSHELL_COMMON' in code:
+        imports.add('Ansible.ModuleUtils.Legacy')
 
-        lines = code.splitlines()
-        line_number = 0
+    lines = code.splitlines()
+    line_number = 0
 
-        for line in lines:
-            line_number += 1
-            match = re.search(r'(?i)^#\s*(?:requires\s+-module(?:s?)|ansiblerequires\s+-powershell)\s*((?:Ansible|ansible_collections)\..+)', line)
+    for line in lines:
+        line_number += 1
+        match = re.search(r'(?i)^#\s*(?:requires\s+-module(?:s?)|ansiblerequires\s+-powershell)\s*((?:Ansible|ansible_collections|\.)\..+)', line)
 
-            if not match:
-                continue
+        if not match:
+            continue
 
-            import_name = match.group(1)
+        import_name = resolve_csharp_ps_util(match.group(1), path)
 
-            if import_name in module_utils:
-                imports.add(import_name)
-            else:
-                display.warning('%s:%d Invalid module_utils import: %s' % (path, line_number, import_name))
+        if import_name in module_utils:
+            imports.add(import_name)
+        elif data_context().content.is_ansible or \
+                import_name.startswith('ansible_collections.%s' % data_context().content.prefix):
+            display.warning('%s:%d Invalid module_utils import: %s' % (path, line_number, import_name))
 
     return imports

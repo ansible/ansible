@@ -1,1 +1,0 @@
-ovirt_disk_info.py

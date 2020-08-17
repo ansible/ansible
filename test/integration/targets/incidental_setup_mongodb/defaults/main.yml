@@ -1,0 +1,46 @@
+mongodb_version: "4.0"
+
+apt:
+  keyserver: "keyserver.ubuntu.com"
+  keyserver_id: "9DA31620334BD75D9DCB49F368818C72E52529D4"
+  repo: "deb [ arch=amd64 ] http://repo.mongodb.org/apt/ubuntu {{ansible_distribution_release}}/mongodb-org/{{mongodb_version}} multiverse"
+
+mongodb_packages:
+  mongod: mongodb-org-server
+  mongos: mongodb-org-mongos
+  mongo: mongodb-org-shell
+
+yum:
+  name: mongodb-org
+  description: "Official MongoDB {{mongodb_version}} yum repo"
+  baseurl: https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/{{mongodb_version}}/x86_64/
+  gpgcheck: 1
+  gpgkey: https://www.mongodb.org/static/pgp/server-{{mongodb_version}}.asc
+  redhat8url: https://repo.mongodb.org/yum/redhat/7/mongodb-org/{{mongodb_version}}/x86_64/
+  fedoraurl: https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/{{mongodb_version}}/x86_64/
+
+debian_packages_py2:
+  - python-dev
+  - python-setuptools
+  - python-pip
+
+debian_packages_py36:
+  - python3.6-dev
+  - python3-setuptools
+  - python3-pip
+
+redhat_packages_py2:
+  - python-devel
+  - python-setuptools
+  - python-pip
+
+redhat_packages_py3:
+  - python3-devel
+  - python3-setuptools
+  - python3-pip
+
+# Do not install requests[security] via pip. It will cause test failures.
+# See https://github.com/ansible/ansible/pull/66319
+pip_packages:
+  - psutil
+  - pymongo

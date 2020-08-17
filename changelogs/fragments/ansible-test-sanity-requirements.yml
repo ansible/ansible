@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now properly installs requirements for multiple Python versions when running sanity tests

@@ -3,15 +3,18 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division)
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import sys
+import datetime
 
 import pytest
 
 
 EMPTY_INVOCATION = {u'module_args': {}}
+DATETIME = datetime.datetime.strptime('2020-07-13 12:50:00', '%Y-%m-%d %H:%M:%S')
 
 
 class TestAnsibleModuleExitJson:
@@ -25,6 +28,10 @@ class TestAnsibleModuleExitJson:
          {'msg': 'success', 'changed': True, 'invocation': EMPTY_INVOCATION}),
         ({'msg': 'nochange', 'changed': False},
          {'msg': 'nochange', 'changed': False, 'invocation': EMPTY_INVOCATION}),
+        ({'msg': 'message', 'date': DATETIME.date()},
+         {'msg': 'message', 'date': DATETIME.date().isoformat(), 'invocation': EMPTY_INVOCATION}),
+        ({'msg': 'message', 'datetime': DATETIME},
+         {'msg': 'message', 'datetime': DATETIME.isoformat(), 'invocation': EMPTY_INVOCATION}),
     )
 
     # pylint bug: https://github.com/PyCQA/pylint/issues/511
@@ -56,10 +63,42 @@ class TestAnsibleModuleExitJson:
         assert return_val == expected
 
     @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_fail_json_msg_positional(self, am, capfd):
+        with pytest.raises(SystemExit) as ctx:
+            am.fail_json('This is the msg')
+        assert ctx.value.code == 1
+
+        out, err = capfd.readouterr()
+        return_val = json.loads(out)
+        # Fail_json should add failed=True
+        assert return_val == {'msg': 'This is the msg', 'failed': True,
+                              'invocation': EMPTY_INVOCATION}
+
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
+    def test_fail_json_msg_as_kwarg_after(self, am, capfd):
+        """Test that msg as a kwarg after other kwargs works"""
+        with pytest.raises(SystemExit) as ctx:
+            am.fail_json(arbitrary=42, msg='This is the msg')
+        assert ctx.value.code == 1
+
+        out, err = capfd.readouterr()
+        return_val = json.loads(out)
+        # Fail_json should add failed=True
+        assert return_val == {'msg': 'This is the msg', 'failed': True,
+                              'arbitrary': 42,
+                              'invocation': EMPTY_INVOCATION}
+
+    @pytest.mark.parametrize('stdin', [{}], indirect=['stdin'])
     def test_fail_json_no_msg(self, am):
-        with pytest.raises(AssertionError) as ctx:
+        with pytest.raises(TypeError) as ctx:
             am.fail_json()
-        assert ctx.value.args[0] == "implementation error -- msg to explain the error is required"
+
+        if sys.version_info < (3,):
+            error_msg = "fail_json() takes exactly 2 arguments (1 given)"
+        else:
+            error_msg = "fail_json() missing 1 required positional argument: 'msg'"
+
+        assert ctx.value.args[0] == error_msg
 
 
 class TestAnsibleModuleExitValuesRemoved:

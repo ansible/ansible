@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now properly registers its own code in a virtual environment when running from an install

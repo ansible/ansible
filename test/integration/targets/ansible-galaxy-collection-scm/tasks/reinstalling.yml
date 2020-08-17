@@ -1,0 +1,31 @@
+- name: Rerun installing a collection with a dep
+  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#/collection_1/'
+  register: installed
+
+- assert:
+    that:
+      - "'Skipping' in installed.stdout"
+      - "'Created' not in installed.stdout"
+
+- name: Only reinstall the collection
+  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#/collection_1/ --force'
+  register: installed
+
+- assert:
+    that:
+      - "'Created collection for ansible_test.collection_1' in installed.stdout"
+      - "'Created collection for ansible_test.collection_2' not in installed.stdout"
+      - "'Skipping' in installed.stdout"
+
+- name: Reinstall the collection and dependency
+  command: 'ansible-galaxy collection install git+file://{{ galaxy_dir }}/development/ansible_test/.git#/collection_1/ --force-with-deps'
+  register: installed
+
+- assert:
+    that:
+      - "'Created collection for ansible_test.collection_1' in installed.stdout"
+      - "'Created collection for ansible_test.collection_2' in installed.stdout"
+      - "'Skipping' not in installed.stdout"
+
+- include_tasks: ./empty_installed_collections.yml
+  when: cleanup

@@ -1,0 +1,62 @@
+---
+# Beware: most of our tests here are run in parallel.
+# To add new tests you'll need to add a new host to the inventory and a matching
+# '{{ inventory_hostname }}'.yml file in roles/ec2_instance/tasks/
+#
+#  Please make sure you tag your instances with
+#     tags:
+#       "tag:TestId": "{{ ec2_instance_tag_TestId }}"
+#  And delete them based off that tag at the end of your specific set of tests
+#
+# ###############################################################################
+#
+# A Note about ec2 environment variable name preference:
+#  - EC2_URL -> AWS_URL
+#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
+#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
+#  - EC2_REGION -> AWS_REGION
+#
+
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- name: "Wrap up all tests and setup AWS credentials"
+  module_defaults:
+    ec2_instance:
+      <<: *aws_connection_info
+    ec2_instance_info:
+      <<: *aws_connection_info
+    ec2_key:
+      <<: *aws_connection_info
+    ec2_eni:
+      <<: *aws_connection_info
+    iam_role:
+      <<: *aws_connection_info
+  block:
+    - debug:
+        msg: "{{ inventory_hostname }} start: {{ lookup('pipe','date') }}"
+    - include_tasks: '{{ inventory_hostname }}.yml'
+    - debug:
+        msg: "{{ inventory_hostname }} finish: {{ lookup('pipe','date') }}"
+
+  always:
+    - set_fact:
+        _role_complete: True
+    - vars:
+        completed_hosts: '{{ ansible_play_hosts_all | map("extract", hostvars, "_role_complete") | list | select("defined") | list | length }}'
+        hosts_in_play: '{{ ansible_play_hosts_all | length }}'
+      debug:
+        msg: "{{ completed_hosts }} of {{ hosts_in_play }} complete"
+    - include_tasks: env_cleanup.yml
+      vars:
+        completed_hosts: '{{ ansible_play_hosts_all | map("extract", hostvars, "_role_complete") | list | select("defined") | list | length }}'
+        hosts_in_play: '{{ ansible_play_hosts_all | length }}'
+      when:
+      - aws_cleanup
+      - completed_hosts == hosts_in_play

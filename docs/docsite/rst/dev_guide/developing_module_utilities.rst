@@ -72,6 +72,6 @@ please see the `source code for module_utils <https://github.com/ansible/ansible
 - ``pycompat24.py`` - Exception workaround for Python 2.4
 - ``service.py`` - Utilities to enable modules to work with Linux services (placeholder, not in use)
 - ``shell.py`` - Functions to allow modules to create shells and work with shell commands
-- ``six/__init__.py`` - Bundled copy of the `Six Python library <https://pythonhosted.org/six/>`_ to aid in writing code compatible with both Python 2 and Python 3
+- ``six/__init__.py`` - Bundled copy of the `Six Python library <https://pypi.org/project/six/>`_ to aid in writing code compatible with both Python 2 and Python 3
 - ``splitter.py`` - String splitting and manipulation utilities for working with Jinja2 templates
 - ``urls.py`` - Utilities for working with http and https requests

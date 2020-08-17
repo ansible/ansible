@@ -1,2 +1,0 @@
-- name: Remove test registry
-  include_tasks: ../handlers/cleanup.yml

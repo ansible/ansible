@@ -40,22 +40,25 @@ from .cloud import (
     CloudEnvironmentConfig,
 )
 
+from .io import (
+    make_dirs,
+    open_text_file,
+    read_binary_file,
+    read_text_file,
+    write_text_file,
+)
+
 from .util import (
     ApplicationWarning,
     ApplicationError,
     SubprocessError,
     display,
     remove_tree,
-    make_dirs,
-    is_shippable,
-    is_binary_file,
     find_executable,
     raw_command,
     get_available_port,
     generate_pip_command,
     find_python,
-    get_docker_completion,
-    get_remote_completion,
     cmd_quote,
     ANSIBLE_LIB_ROOT,
     ANSIBLE_TEST_DATA_ROOT,
@@ -64,14 +67,17 @@ from .util import (
     tempdir,
     open_zipfile,
     SUPPORTED_PYTHON_VERSIONS,
+    str_to_version,
 )
 
 from .util_common import (
+    get_docker_completion,
+    get_network_settings,
+    get_remote_completion,
     get_python_path,
     intercept_command,
     named_temporary_file,
     run_command,
-    write_text_file,
     write_json_test_results,
     ResultType,
     handle_layout_messages,
@@ -100,13 +106,8 @@ from .target import (
     TIntegrationTarget,
 )
 
-from .changes import (
-    ShippableChanges,
-    LocalChanges,
-)
-
-from .git import (
-    Git,
+from .ci import (
+    get_ci_provider,
 )
 
 from .classification import (
@@ -181,10 +182,46 @@ def create_shell_command(command):
     return cmd
 
 
-def install_command_requirements(args, python_version=None):
+def get_setuptools_version(args, python):  # type: (EnvironmentConfig, str) -> t.Tuple[int]
+    """Return the setuptools version for the given python."""
+    try:
+        return str_to_version(raw_command([python, '-c', 'import setuptools; print(setuptools.__version__)'], capture=True)[0])
+    except SubprocessError:
+        if args.explain:
+            return tuple()  # ignore errors in explain mode in case setuptools is not aleady installed
+
+        raise
+
+
+def get_cryptography_requirement(args, python_version):  # type: (EnvironmentConfig, str) -> str
+    """
+    Return the correct cryptography requirement for the given python version.
+    The version of cryptograpy installed depends on the python version and setuptools version.
+    """
+    python = find_python(python_version)
+    setuptools_version = get_setuptools_version(args, python)
+
+    if setuptools_version >= (18, 5):
+        if python_version == '2.6':
+            # cryptography 2.2+ requires python 2.7+
+            # see https://github.com/pyca/cryptography/blob/master/CHANGELOG.rst#22---2018-03-19
+            cryptography = 'cryptography < 2.2'
+        else:
+            cryptography = 'cryptography'
+    else:
+        # cryptography 2.1+ requires setuptools 18.5+
+        # see https://github.com/pyca/cryptography/blob/62287ae18383447585606b9d0765c0f1b8a9777c/setup.py#L26
+        cryptography = 'cryptography < 2.1'
+
+    return cryptography
+
+
+def install_command_requirements(args, python_version=None, context=None, enable_pyyaml_check=False):
     """
     :type args: EnvironmentConfig
     :type python_version: str | None
+    :type context: str | None
+    :type enable_pyyaml_check: bool
     """
     if not args.explain:
         make_dirs(ResultType.COVERAGE.path)
@@ -215,7 +252,37 @@ def install_command_requirements(args, python_version=None):
 
     pip = generate_pip_command(find_python(python_version))
 
-    commands = [generate_pip_install(pip, args.command, packages=packages)]
+    # skip packages which have aleady been installed for python_version
+
+    try:
+        package_cache = install_command_requirements.package_cache
+    except AttributeError:
+        package_cache = install_command_requirements.package_cache = {}
+
+    installed_packages = package_cache.setdefault(python_version, set())
+    skip_packages = [package for package in packages if package in installed_packages]
+
+    for package in skip_packages:
+        packages.remove(package)
+
+    installed_packages.update(packages)
+
+    if args.command != 'sanity':
+        install_ansible_test_requirements(args, pip)
+
+        # make sure setuptools is available before trying to install cryptography
+        # the installed version of setuptools affects the version of cryptography to install
+        run_command(args, generate_pip_install(pip, '', packages=['setuptools']))
+
+        # install the latest cryptography version that the current requirements can support
+        # use a custom constraints file to avoid the normal constraints file overriding the chosen version of cryptography
+        # if not installed here later install commands may try to install an unsupported version due to the presence of older setuptools
+        # this is done instead of upgrading setuptools to allow tests to function with older distribution provided versions of setuptools
+        run_command(args, generate_pip_install(pip, '',
+                                               packages=[get_cryptography_requirement(args, python_version)],
+                                               constraints=os.path.join(ANSIBLE_TEST_DATA_ROOT, 'cryptography-constraints.txt')))
+
+    commands = [generate_pip_install(pip, args.command, packages=packages, context=context)]
 
     if isinstance(args, IntegrationConfig):
         for cloud_platform in get_cloud_platforms(args):
@@ -223,10 +290,14 @@ def install_command_requirements(args, python_version=None):
 
     commands = [cmd for cmd in commands if cmd]
 
+    if not commands:
+        return  # no need to detect changes or run pip check since we are not making any changes
+
     # only look for changes when more than one requirements file is needed
     detect_pip_changes = len(commands) > 1
 
     # first pass to install requirements, changes expected unless environment is already set up
+    install_ansible_test_requirements(args, pip)
     changes = run_pip_commands(args, pip, commands, detect_pip_changes)
 
     if changes:
@@ -237,14 +308,36 @@ def install_command_requirements(args, python_version=None):
             raise ApplicationError('Conflicts detected in requirements. The following commands reported changes during verification:\n%s' %
                                    '\n'.join((' '.join(cmd_quote(c) for c in cmd) for cmd in changes)))
 
-    # ask pip to check for conflicts between installed packages
+    if args.pip_check:
+        # ask pip to check for conflicts between installed packages
+        try:
+            run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
+        except SubprocessError as ex:
+            if ex.stderr.strip() == 'ERROR: unknown command "check"':
+                display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
+            else:
+                raise
+
+    if enable_pyyaml_check:
+        # pyyaml may have been one of the requirements that was installed, so perform an optional check for it
+        check_pyyaml(args, python_version, required=False)
+
+
+def install_ansible_test_requirements(args, pip):  # type: (EnvironmentConfig, t.List[str]) -> None
+    """Install requirements for ansible-test for the given pip if not already installed."""
     try:
-        run_command(args, pip + ['check', '--disable-pip-version-check'], capture=True)
-    except SubprocessError as ex:
-        if ex.stderr.strip() == 'ERROR: unknown command "check"':
-            display.warning('Cannot check pip requirements for conflicts because "pip check" is not supported.')
-        else:
-            raise
+        installed = install_command_requirements.installed
+    except AttributeError:
+        installed = install_command_requirements.installed = set()
+
+    if tuple(pip) in installed:
+        return
+
+    # make sure basic ansible-test requirements are met, including making sure that pip is recent enough to support constraints
+    # virtualenvs created by older distributions may include very old pip versions, such as those created in the centos6 test container (pip 6.0.8)
+    run_command(args, generate_pip_install(pip, 'ansible-test', use_constraints=False))
+
+    installed.add(tuple(pip))
 
 
 def run_pip_commands(args, pip, commands, detect_pip_changes=False):
@@ -292,7 +385,16 @@ def generate_egg_info(args):
     if args.explain:
         return
 
-    egg_info_path = ANSIBLE_LIB_ROOT + '.egg-info'
+    ansible_version = get_ansible_version()
+
+    # inclusion of the version number in the path is optional
+    # see: https://setuptools.readthedocs.io/en/latest/formats.html#filename-embedded-metadata
+    egg_info_path = ANSIBLE_LIB_ROOT + '_base-%s.egg-info' % ansible_version
+
+    if os.path.exists(egg_info_path):
+        return
+
+    egg_info_path = ANSIBLE_LIB_ROOT + '_base.egg-info'
 
     if os.path.exists(egg_info_path):
         return
@@ -316,24 +418,29 @@ License: GPLv3+
     write_text_file(pkg_info_path, pkg_info.lstrip(), create_directories=True)
 
 
-def generate_pip_install(pip, command, packages=None):
+def generate_pip_install(pip, command, packages=None, constraints=None, use_constraints=True, context=None):
     """
     :type pip: list[str]
     :type command: str
     :type packages: list[str] | None
+    :type constraints: str | None
+    :type use_constraints: bool
+    :type context: str | None
     :rtype: list[str] | None
     """
-    constraints = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
-    requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % command)
+    constraints = constraints or os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
+    requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % ('%s.%s' % (command, context) if context else command))
 
     options = []
 
     if os.path.exists(requirements) and os.path.getsize(requirements):
         options += ['-r', requirements]
 
-    if data_context().content.is_ansible:
-        if command == 'sanity':
-            options += ['-r', os.path.join(data_context().content.root, 'test', 'sanity', 'requirements.txt')]
+    if command == 'sanity' and data_context().content.is_ansible:
+        requirements = os.path.join(data_context().content.sanity_path, 'code-smell', '%s.requirements.txt' % context)
+
+        if os.path.exists(requirements) and os.path.getsize(requirements):
+            options += ['-r', requirements]
 
     if command == 'units':
         requirements = os.path.join(data_context().content.unit_path, 'requirements.txt')
@@ -358,7 +465,10 @@ def generate_pip_install(pip, command, packages=None):
     if not options:
         return None
 
-    return pip + ['install', '--disable-pip-version-check', '-c', constraints] + options
+    if use_constraints:
+        options.extend(['-c', constraints])
+
+    return pip + ['install', '--disable-pip-version-check'] + options
 
 
 def command_shell(args):
@@ -544,9 +654,11 @@ def network_inventory(remotes):
             ansible_host=remote.connection.hostname,
             ansible_user=remote.connection.username,
             ansible_ssh_private_key_file=os.path.abspath(remote.ssh_key.key),
-            ansible_network_os=remote.platform,
-            ansible_connection='local'
         )
+
+        settings = get_network_settings(remote.args, remote.platform, remote.version)
+
+        options.update(settings.inventory_vars)
 
         groups[remote.platform].append(
             '%s %s' % (
@@ -897,12 +1009,7 @@ def command_integration_filter(args,  # type: TIntegrationConfig
             Add the integration config vars file to the payload file list.
             This will preserve the file during delegation even if the file is ignored by source control.
             """
-            if data_context().content.collection:
-                working_path = data_context().content.collection.directory
-            else:
-                working_path = ''
-
-            files.append((vars_file_src, os.path.join(working_path, data_context().content.integration_vars_path)))
+            files.append((vars_file_src, data_context().content.integration_vars_path))
 
         data_context().register_payload_callback(integration_config_callback)
 
@@ -1190,12 +1297,12 @@ def inject_httptester(args):
     """
     comment = ' # ansible-test httptester\n'
     append_lines = ['127.0.0.1 %s%s' % (host, comment) for host in HTTPTESTER_HOSTS]
+    hosts_path = '/etc/hosts'
 
-    with open('/etc/hosts', 'r+') as hosts_fd:
-        original_lines = hosts_fd.readlines()
+    original_lines = read_text_file(hosts_path).splitlines(True)
 
-        if not any(line.endswith(comment) for line in original_lines):
-            hosts_fd.writelines(append_lines)
+    if not any(line.endswith(comment) for line in original_lines):
+        write_text_file(hosts_path, ''.join(original_lines + append_lines))
 
     # determine which forwarding mechanism to use
     pfctl = find_executable('pfctl', required=False)
@@ -1294,7 +1401,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     integration = dict(
         JUNIT_OUTPUT_DIR=ResultType.JUNIT.path,
         ANSIBLE_CALLBACK_WHITELIST=','.join(sorted(set(callback_plugins))),
-        ANSIBLE_TEST_CI=args.metadata.ci_provider,
+        ANSIBLE_TEST_CI=args.metadata.ci_provider or get_ci_provider().code,
         ANSIBLE_TEST_COVERAGE='check' if args.coverage_check else ('yes' if args.coverage else ''),
         OUTPUT_DIR=test_dir,
         INVENTORY_PATH=os.path.abspath(inventory_path),
@@ -1385,7 +1492,7 @@ def command_integration_role(args, target, start_at_task, test_dir, inventory_pa
             win_output_dir=r'C:\ansible_testing',
         ))
     elif isinstance(args, NetworkIntegrationConfig):
-        hosts = target.name[:target.name.find('_')]
+        hosts = target.network_platform
         gather_facts = False
     else:
         hosts = 'testhost'
@@ -1494,16 +1601,12 @@ def detect_changes(args):
     :type args: TestConfig
     :rtype: list[str] | None
     """
-    if args.changed and is_shippable():
-        display.info('Shippable detected, collecting parameters from environment.')
-        paths = detect_changes_shippable(args)
+    if args.changed:
+        paths = get_ci_provider().detect_changes(args)
     elif args.changed_from or args.changed_path:
         paths = args.changed_path or []
         if args.changed_from:
-            with open(args.changed_from, 'r') as changes_fd:
-                paths += changes_fd.read().splitlines()
-    elif args.changed:
-        paths = detect_changes_local(args)
+            paths += read_text_file(args.changed_from).splitlines()
     else:
         return None  # change detection not enabled
 
@@ -1516,85 +1619,6 @@ def detect_changes(args):
         display.info(path, verbosity=1)
 
     return paths
-
-
-def detect_changes_shippable(args):
-    """Initialize change detection on Shippable.
-    :type args: TestConfig
-    :rtype: list[str] | None
-    """
-    git = Git()
-    result = ShippableChanges(args, git)
-
-    if result.is_pr:
-        job_type = 'pull request'
-    elif result.is_tag:
-        job_type = 'tag'
-    else:
-        job_type = 'merge commit'
-
-    display.info('Processing %s for branch %s commit %s' % (job_type, result.branch, result.commit))
-
-    if not args.metadata.changes:
-        args.metadata.populate_changes(result.diff)
-
-    return result.paths
-
-
-def detect_changes_local(args):
-    """
-    :type args: TestConfig
-    :rtype: list[str]
-    """
-    git = Git()
-    result = LocalChanges(args, git)
-
-    display.info('Detected branch %s forked from %s at commit %s' % (
-        result.current_branch, result.fork_branch, result.fork_point))
-
-    if result.untracked and not args.untracked:
-        display.warning('Ignored %s untracked file(s). Use --untracked to include them.' %
-                        len(result.untracked))
-
-    if result.committed and not args.committed:
-        display.warning('Ignored %s committed change(s). Omit --ignore-committed to include them.' %
-                        len(result.committed))
-
-    if result.staged and not args.staged:
-        display.warning('Ignored %s staged change(s). Omit --ignore-staged to include them.' %
-                        len(result.staged))
-
-    if result.unstaged and not args.unstaged:
-        display.warning('Ignored %s unstaged change(s). Omit --ignore-unstaged to include them.' %
-                        len(result.unstaged))
-
-    names = set()
-
-    if args.tracked:
-        names |= set(result.tracked)
-    if args.untracked:
-        names |= set(result.untracked)
-    if args.committed:
-        names |= set(result.committed)
-    if args.staged:
-        names |= set(result.staged)
-    if args.unstaged:
-        names |= set(result.unstaged)
-
-    if not args.metadata.changes:
-        args.metadata.populate_changes(result.diff)
-
-        for path in result.untracked:
-            if is_binary_file(path):
-                args.metadata.changes[path] = ((0, 0),)
-                continue
-
-            with open(path, 'r') as source_fd:
-                line_count = len(source_fd.read().splitlines())
-
-            args.metadata.changes[path] = ((1, line_count),)
-
-    return sorted(names)
 
 
 def get_integration_filter(args, targets):
@@ -1761,27 +1785,29 @@ def get_integration_remote_filter(args, targets):
     :type targets: tuple[IntegrationTarget]
     :rtype: list[str]
     """
-    parts = args.remote.split('/', 1)
-
-    platform = parts[0]
+    remote = args.parsed_remote
 
     exclude = []
 
     common_integration_filter(args, targets, exclude)
 
-    skip = 'skip/%s/' % platform
-    skipped = [target.name for target in targets if skip in target.aliases]
-    if skipped:
-        exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
-                        % (skip.rstrip('/'), platform, ', '.join(skipped)))
+    skips = {
+        'skip/%s' % remote.platform: remote.platform,
+        'skip/%s/%s' % (remote.platform, remote.version): '%s %s' % (remote.platform, remote.version),
+        'skip/%s%s' % (remote.platform, remote.version): '%s %s' % (remote.platform, remote.version),  # legacy syntax, use above format
+    }
 
-    skip = 'skip/%s/' % args.remote.replace('/', '')
-    skipped = [target.name for target in targets if skip in target.aliases]
-    if skipped:
-        exclude.append(skip)
-        display.warning('Excluding tests marked "%s" which are not supported on %s: %s'
-                        % (skip.rstrip('/'), args.remote.replace('/', ' '), ', '.join(skipped)))
+    if remote.arch:
+        skips.update({
+            'skip/%s/%s' % (remote.arch, remote.platform): '%s on %s' % (remote.platform, remote.arch),
+            'skip/%s/%s/%s' % (remote.arch, remote.platform, remote.version): '%s %s on %s' % (remote.platform, remote.version, remote.arch),
+        })
+
+    for skip, description in skips.items():
+        skipped = [target.name for target in targets if skip in target.skips]
+        if skipped:
+            exclude.append(skip + '/')
+            display.warning('Excluding tests marked "%s" which are not supported on %s: %s' % (skip, description, ', '.join(skipped)))
 
     python_version = get_python_version(args, get_remote_completion(), args.remote)
 
@@ -2046,7 +2072,7 @@ class EnvironmentDescription:
         :type path: str
         :rtype: str
         """
-        with open(path) as script_fd:
+        with open_text_file(path) as script_fd:
             return script_fd.readline().strip()
 
     @staticmethod
@@ -2060,8 +2086,7 @@ class EnvironmentDescription:
 
         file_hash = hashlib.md5()
 
-        with open(path, 'rb') as file_fd:
-            file_hash.update(file_fd.read())
+        file_hash.update(read_binary_file(path))
 
         return file_hash.hexdigest()
 

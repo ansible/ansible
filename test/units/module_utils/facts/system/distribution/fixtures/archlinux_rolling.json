@@ -1,0 +1,31 @@
+{
+    "name": "Archlinux rolling",
+    "distro": {
+        "codename": "n/a",
+        "id": "arch",
+        "name": "Arch",
+        "version": "rolling",
+        "version_best": "rolling",
+        "lsb_release_info": {
+            "lsb_version": "1.4",
+            "distributor_id": "Arch",
+            "description": "Arch Linux",
+            "release": "rolling",
+            "codename": "n/a"
+        },
+        "os_release_info": {}
+    },
+    "input": {
+        "/etc/arch-release": "Arch Linux release\n",
+        "/etc/lsb-release": "LSB_VERSION=1.4\nDISTRIB_ID=Arch\nDISTRIB_RELEASE=rolling\nDISTRIB_DESCRIPTION=\"Arch Linux\"\n",
+        "/usr/lib/os-release": "NAME=\"Arch Linux\"\nPRETTY_NAME=\"Arch Linux\"\nID=arch\nBUILD_ID=rolling\nANSI_COLOR=\"0;36\"\nHOME_URL=\"https://www.archlinux.org/\"\nDOCUMENTATION_URL=\"https://wiki.archlinux.org/\"\nSUPPORT_URL=\"https://bbs.archlinux.org/\"\nBUG_REPORT_URL=\"https://bugs.archlinux.org/\"\nLOGO=archlinux\n"
+    },
+    "platform.dist": ["arch", "rolling", "n/a"],
+    "result": {
+        "distribution": "Archlinux",
+        "distribution_version": "rolling",
+        "distribution_release": "n/a",
+        "distribution_major_version": "rolling",
+        "os_family": "Archlinux"
+    }
+}

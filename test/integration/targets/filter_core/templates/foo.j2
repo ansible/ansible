@@ -1,0 +1,62 @@
+This is a test of various filter plugins found in Ansible (ex: core.py), and
+not so much a test of the core filters in Jinja2.
+
+Dumping the same structure to YAML
+
+{{ some_structure | to_nice_yaml }}
+
+Dumping the same structure to JSON, but don't pretty print
+
+{{ some_structure | to_json(sort_keys=true) }}
+
+Dumping the same structure to YAML, but don't pretty print
+
+{{ some_structure | to_yaml }}
+
+From a recorded task, the changed, failed, success, and skipped
+tests are shortcuts to ask if those tasks produced changes, failed,
+succeeded, or skipped (as one might guess).
+
+Changed = {{ some_registered_var is changed }}
+Failed  = {{ some_registered_var is failed }}
+Success = {{ some_registered_var is successful }}
+Skipped = {{ some_registered_var is skipped }}
+
+The mandatory filter fails if a variable is not defined and returns the value.
+To avoid breaking this test, this variable is already defined.
+
+a = {{ a | mandatory }}
+
+There are various casts available
+
+int = {{ a | int }}
+bool = {{ 1 | bool }}
+
+String quoting
+
+quoted = {{ 'quoted' | quote }}
+
+The fileglob module returns the list of things matching a pattern.
+
+fileglob = {{ (playbook_dir + '/files/fileglob/*') | fileglob | map('basename') | sort | join(', ') }}
+
+There are also various string operations that work on paths.  These do not require
+files to exist and are passthrus to the python os.path functions
+
+/etc/motd with basename = {{ '/etc/motd' | basename }}
+/etc/motd with dirname  = {{ '/etc/motd' | dirname }}
+
+path_join_simple = {{ ('/etc', 'subdir', 'test') | path_join }}
+path_join_with_slash = {{ ('/etc', 'subdir', '/test') | path_join }}
+path_join_relative = {{ ('etc', 'subdir', 'test') | path_join }}
+
+TODO: realpath follows symlinks.  There isn't a test for this just now.
+
+TODO: add tests for set theory operations like union
+
+regex_replace = {{ 'foo' | regex_replace('^foo', 'bar') }}
+# Check regex_replace with multiline
+{{ '#foo\n#foot' | regex_replace('^#foo', '#bar', multiline=True) }}
+regex_search = {{ 'test_value_0001' | regex_search('([0-9]+)$')}}
+regex_findall = {{ 'car\ntar\nfoo\nbar\n' | regex_findall('^.ar$', multiline=True)|to_json }}
+regex_escape = {{ '^f.*o(.*)$' | regex_escape() }}

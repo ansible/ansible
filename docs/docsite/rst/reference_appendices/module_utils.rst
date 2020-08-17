@@ -16,7 +16,7 @@ To use this functionality, include ``from ansible.module_utils.basic import Ansi
 
 .. autoclass:: ansible.module_utils.basic.AnsibleModule
    :members:
-
+   :noindex:
 
 Basic
 ------

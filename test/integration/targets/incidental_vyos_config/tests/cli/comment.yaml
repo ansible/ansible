@@ -1,0 +1,34 @@
+---
+- debug: msg="START cli/comment.yaml on connection={{ ansible_connection }}"
+
+- name: setup
+  vyos.vyos.vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    match: none
+
+- name: configure using comment
+  vyos.vyos.vyos_config:
+    lines: set system host-name foo
+    comment: this is a test
+  register: result
+
+- assert:
+    that:
+      - "result.changed == true"
+      - "'set system host-name foo' in result.commands"
+
+- name: collect system commits
+  vyos.vyos.vyos_command:
+    commands: show system commit
+  register: result
+
+- assert:
+    that:
+      - "'this is a test' in result.stdout_lines[0][1]"
+
+- name: teardown
+  vyos.vyos.vyos_config:
+    lines: set system host-name {{ inventory_hostname_short }}
+    match: none
+
+- debug: msg="END cli/comment.yaml on connection={{ ansible_connection }}"

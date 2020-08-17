@@ -1,3 +1,0 @@
-interface Ethernet1/1
-  description Configured by Ansible
-  no shutdown

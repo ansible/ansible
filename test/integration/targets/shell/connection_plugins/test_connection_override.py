@@ -26,9 +26,6 @@ class Connection(ConnectionBase):
         self._shell_type = 'powershell'  # Set a shell type that is not sh
         super(Connection, self).__init__(*args, **kwargs)
 
-    def transport(self):
-        pass
-
     def _connect(self):
         pass
 

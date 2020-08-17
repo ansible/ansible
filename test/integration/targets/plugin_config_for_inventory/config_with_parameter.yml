@@ -1,0 +1,5 @@
+plugin: test_inventory
+departments:
+  - paris
+cache: yes
+cache_timeout: 0

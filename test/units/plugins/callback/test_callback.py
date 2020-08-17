@@ -52,22 +52,6 @@ class TestCallback(unittest.TestCase):
 
 class TestCallbackResults(unittest.TestCase):
 
-    def test_get_item(self):
-        cb = CallbackBase()
-        results = {'item': 'some_item'}
-        res = cb._get_item(results)
-        self.assertEqual(res, 'some_item')
-
-    def test_get_item_no_log(self):
-        cb = CallbackBase()
-        results = {'item': 'some_item', '_ansible_no_log': True}
-        res = cb._get_item(results)
-        self.assertEqual(res, "(censored due to no_log)")
-
-        results = {'item': 'some_item', '_ansible_no_log': False}
-        res = cb._get_item(results)
-        self.assertEqual(res, "some_item")
-
     def test_get_item_label(self):
         cb = CallbackBase()
         results = {'item': 'some_item'}

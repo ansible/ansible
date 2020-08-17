@@ -104,7 +104,9 @@ def split_host_pattern(pattern):
     """
 
     if isinstance(pattern, list):
-        return list(itertools.chain(*map(split_host_pattern, pattern)))
+        results = (split_host_pattern(p) for p in pattern)
+        # flatten the results
+        return list(itertools.chain.from_iterable(results))
     elif not isinstance(pattern, string_types):
         pattern = to_text(pattern, errors='surrogate_or_strict')
 
@@ -381,27 +383,27 @@ class InventoryManager(object):
             if pattern_hash not in self._hosts_patterns_cache:
 
                 patterns = split_host_pattern(pattern)
-                hosts[:] = self._evaluate_patterns(patterns)
+                hosts = self._evaluate_patterns(patterns)
 
                 # mainly useful for hostvars[host] access
                 if not ignore_limits and self._subset:
                     # exclude hosts not in a subset, if defined
                     subset_uuids = set(s._uuid for s in self._evaluate_patterns(self._subset))
-                    hosts[:] = [h for h in hosts if h._uuid in subset_uuids]
+                    hosts = [h for h in hosts if h._uuid in subset_uuids]
 
                 if not ignore_restrictions and self._restriction:
                     # exclude hosts mentioned in any restriction (ex: failed hosts)
-                    hosts[:] = [h for h in hosts if h.name in self._restriction]
+                    hosts = [h for h in hosts if h.name in self._restriction]
 
                 self._hosts_patterns_cache[pattern_hash] = deduplicate_list(hosts)
 
             # sort hosts list if needed (should only happen when called from strategy)
             if order in ['sorted', 'reverse_sorted']:
-                hosts[:] = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
+                hosts = sorted(self._hosts_patterns_cache[pattern_hash][:], key=attrgetter('name'), reverse=(order == 'reverse_sorted'))
             elif order == 'reverse_inventory':
-                hosts[:] = self._hosts_patterns_cache[pattern_hash][::-1]
+                hosts = self._hosts_patterns_cache[pattern_hash][::-1]
             else:
-                hosts[:] = self._hosts_patterns_cache[pattern_hash][:]
+                hosts = self._hosts_patterns_cache[pattern_hash][:]
                 if order == 'shuffle':
                     shuffle(hosts)
                 elif order not in [None, 'inventory']:
@@ -580,7 +582,7 @@ class InventoryManager(object):
     def list_hosts(self, pattern="all"):
         """ return a list of hostnames for a pattern """
         # FIXME: cache?
-        result = [h for h in self.get_hosts(pattern)]
+        result = self.get_hosts(pattern)
 
         # allow implicit localhost if pattern matches and no other results
         if len(result) == 0 and pattern in C.LOCALHOST:
@@ -590,7 +592,7 @@ class InventoryManager(object):
 
     def list_groups(self):
         # FIXME: cache?
-        return sorted(self._inventory.groups.keys(), key=lambda x: x)
+        return sorted(self._inventory.groups.keys())
 
     def restrict_to_hosts(self, restriction):
         """

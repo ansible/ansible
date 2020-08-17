@@ -1,0 +1,31 @@
+- name: Get Jinja2 version
+  shell: "{{ ansible_python_interpreter }} -c 'import jinja2; print(jinja2.__version__)'"
+  register: jinja2_version
+
+- name: Print Jinja2 version
+  debug: var=jinja2_version.stdout
+
+- name: Test urldecode filter
+  set_fact:
+    urldecoded_string: key="@{}é&%£ foo bar '(;\<>""°)
+
+- name: Test urlencode filter
+  set_fact:
+    urlencoded_string: 'key%3D%22%40%7B%7D%C3%A9%26%25%C2%A3%20foo%20bar%20%27%28%3B%5C%3C%3E%22%22%C2%B0%29'
+
+- name: Verify urlencode / urldecode isomorphism
+  assert:
+    that:
+    - urldecoded_string == urlencoded_string|urldecode
+    - urlencoded_string == urldecoded_string|urlencode
+
+- name: Verify urlencode handles dicts properly
+  assert:
+    that:
+      - "{'foo': 'bar'}|urlencode == 'foo=bar'"
+      - "{'foo': 'bar', 'baz': 'buz'}|urlencode == 'foo=bar&baz=buz'"
+      - "()|urlencode == ''"
+
+# Needed (temporarily) due to coverage reports not including the last task.
+- assert:
+    that: true

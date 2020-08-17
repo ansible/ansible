@@ -112,6 +112,25 @@
         - "yum_result is not changed"
   when: ansible_distribution == 'CentOS'
 
+# This test case is unfortunately distro specific because we have to specify
+# repo names which are not the same across Fedora/RHEL/CentOS for base/updates
+- name: install sos again with disable all and enable select repo(s)
+  yum:
+    name: sos
+    state: present
+    enablerepo:
+      - "base"
+      - "updates"
+    disablerepo: "*"
+  register: yum_result
+  when: ansible_distribution == 'CentOS'
+- name: verify no change on fourth install with missing repo enablerepo (yum)
+  assert:
+    that:
+        - "yum_result is success"
+        - "yum_result is not changed"
+  when: ansible_distribution == 'CentOS'
+
 - name: install sos again with only missing repo enablerepo
   yum:
     name: sos
@@ -557,18 +576,39 @@
       - "not yum_result is changed"
       - "'Packages providing httpd not installed due to update_only specified' in yum_result.results"
 
-- name: try to install not compatible arch rpm, should fail
+- name: try to install uncompatible arch rpm on non-ppc64le, should fail
   yum:
     name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/banner-1.3.4-3.el7.ppc64le.rpm
     state: present
   register: yum_result
   ignore_errors: True
+  when:
+    - ansible_architecture not in ['ppc64le']
 
-- name: verify that yum failed
+- name: verify that yum failed on non-ppc64le
   assert:
     that:
         - "not yum_result is changed"
         - "yum_result is failed"
+  when:
+    - ansible_architecture not in ['ppc64le']
+
+- name: try to install uncompatible arch rpm on ppc64le, should fail
+  yum:
+    name: https://s3.amazonaws.com/ansible-ci-files/test/integration/targets/yum/tinyproxy-1.10.0-3.el7.x86_64.rpm
+    state: present
+  register: yum_result
+  ignore_errors: True
+  when:
+    - ansible_architecture in ['ppc64le']
+
+- name: verify that yum failed on ppc64le
+  assert:
+    that:
+        - "not yum_result is changed"
+        - "yum_result is failed"
+  when:
+    - ansible_architecture in ['ppc64le']
 
 # setup for testing installing an RPM from url
 
@@ -798,3 +838,31 @@
   # actually honored and those releases are EOL'd so we have no expectation they
   # will ever be fixed
   when: not ((ansible_distribution == "Fedora") and (ansible_distribution_major_version|int < 26))
+
+- name: Check that packages with Provides are handled correctly in state=absent
+  block:
+    - name: Install test packages
+      yum:
+        name:
+          - https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/test-package-that-provides-toaster-1.3.3.7-1.el7.noarch.rpm
+          - https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/toaster-1.2.3.4-1.el7.noarch.rpm
+      register: install
+
+    - name: Remove toaster
+      yum:
+        name: toaster
+        state: absent
+      register: remove
+
+    - name: rpm -qa
+      command: rpm -qa
+      register: rpmqa
+
+    - assert:
+        that:
+          - install is successful
+          - install is changed
+          - remove is successful
+          - remove is changed
+          - "'toaster-1.2.3.4' not in rpmqa.stdout"
+          - "'test-package-that-provides-toaster' in rpmqa.stdout"

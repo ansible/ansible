@@ -1,4 +1,0 @@
-cloud/vcenter
-unsupported
-skip/python2.6
-zuul/vmware/vcenter_only

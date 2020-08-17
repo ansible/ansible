@@ -1,0 +1,4 @@
+- hosts: localhost
+  gather_facts: no
+  roles:
+    - { role: lookup_password }

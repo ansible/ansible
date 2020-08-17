@@ -1,0 +1,48 @@
+- block:
+    - name: Create a group to chown to
+      group:
+        name: testgroup
+
+    - name: Create a user to chown to
+      user:
+        name: testuser
+        groups:
+        - testgroup
+
+    - name: create our tar.gz unarchive destination for chown
+      file:
+        path: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
+        state: directory
+
+    - name: unarchive a tar.gz file with owner and group set to the above user
+      unarchive:
+        src: "{{remote_tmp_dir}}/test-unarchive.tar.gz"
+        dest: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
+        remote_src: yes
+        owner: testuser
+        group: testgroup
+      register: unarchive02e
+
+    - name: Stat a file in the directory we unarchived to
+      stat:
+        path: "{{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt"
+      register: unarchive02e_file_stat
+
+    - name: verify results
+      assert:
+        that:
+          - unarchive02e is changed
+          - unarchive02e_file_stat.stat.exists
+          - unarchive02e_file_stat.stat.pw_name == 'testuser'
+          - unarchive02e_file_stat.stat.gr_name == 'testgroup'
+
+  always:
+    - name: Remove testuser
+      user:
+        name: testuser
+        state: absent
+
+    - name: Remove testgroup
+      group:
+        name: testgroup
+        state: absent

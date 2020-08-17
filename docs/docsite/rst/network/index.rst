@@ -10,7 +10,7 @@ Ansible Network modules extend the benefits of simple, powerful, agentless autom
 
 If you're new to Ansible, or new to using Ansible for network management, start with :ref:`network_getting_started`. If you are already familiar with network automation with Ansible, see :ref:`network_advanced`.
 
-For documentation on using a particular network module, consult the :ref:`list of all network modules<network_modules>`. Some network modules are maintained by the Ansible community - here's a list of :ref:`network modules maintained by the Ansible Network Team<network_supported>`.
+For documentation on using a particular network module, consult the :ref:`list of all network modules<network_modules>`. Network modules for various hardware are supported by different teams including the hardware vendors themselves, volunteers from the Ansible community, and the Ansible Network Team.
 
 .. toctree::
    :maxdepth: 3

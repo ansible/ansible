@@ -415,7 +415,7 @@ def test_Request_open_last_mod(urlopen_mock, install_opener_mock):
     args = urlopen_mock.call_args[0]
     req = args[0]
 
-    assert req.headers.get('If-modified-since') == now.strftime('%a, %d %b %Y %H:%M:%S -0000')
+    assert req.headers.get('If-modified-since') == now.strftime('%a, %d %b %Y %H:%M:%S GMT')
 
 
 def test_Request_open_headers_not_dict(urlopen_mock, install_opener_mock):

@@ -3,6 +3,58 @@
   environment:
     ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
   tasks:
+    - name: module with missing description return docs
+      command: ansible-doc test_docs_missing_description
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is failed
+          - |
+            "ERROR! Unable to retrieve documentation from 'test_docs_missing_description' due to: All (sub-)options and return values must have a 'description' field"
+            in result.stderr
+
+    - name: module with suboptions
+      command: ansible-doc test_docs_suboptions
+      register: result
+      ignore_errors: true
+
+    - set_fact:
+        actual_output: >-
+          {{ result.stdout | regex_replace('^(> [A-Z_]+ +\().+library/([a-z_]+.py)\)$', '\1library/\2)', multiline=true) }}
+        expected_output: "{{ lookup('file', 'test_docs_suboptions.output') }}"
+
+    - assert:
+        that:
+          - result is succeeded
+          - actual_output == expected_output
+
+    - name: module with return docs
+      command: ansible-doc test_docs_returns
+      register: result
+      ignore_errors: true
+
+    - set_fact:
+        actual_output: >-
+          {{ result.stdout | regex_replace('^(> [A-Z_]+ +\().+library/([a-z_]+.py)\)$', '\1library/\2)', multiline=true) }}
+        expected_output: "{{ lookup('file', 'test_docs_returns.output') }}"
+
+    - assert:
+        that:
+          - result is succeeded
+          - actual_output == expected_output
+
+    - name: module with broken return docs
+      command: ansible-doc test_docs_returns_broken
+      register: result
+      ignore_errors: true
+
+    - assert:
+        that:
+          - result is failed
+          - '"ERROR! module test_docs_returns_broken missing documentation (or could not parse documentation)" in result.stderr'
+
     - name: non-existent module
       command: ansible-doc test_does_not_exist
       register: result
@@ -49,6 +101,7 @@
     - name: documented module with removed status
       command: ansible-doc test_docs_removed_status
       register: result
+
     - assert:
         that:
           - '"WARNING" not in result.stderr'
@@ -58,48 +111,39 @@
     - name: empty module
       command: ansible-doc test_empty
       register: result
+      ignore_errors: true
+
     - assert:
         that:
-          - 'result.stdout == ""'
-          - 'result.stderr == ""'
+          - result is failed
 
     - name: module with no documentation
       command: ansible-doc test_no_docs
       register: result
-    - assert:
-        that:
-          - 'result.stdout == ""'
-          - 'result.stderr == ""'
+      ignore_errors: true
 
-    - name: module with no documentation and no metadata
-      command: ansible-doc test_no_docs_no_metadata
-      register: result
     - assert:
         that:
-          - 'result.stdout == ""'
-          - 'result.stderr == ""'
+          - result is failed
 
-    - name: module with no documentation and no status in metadata
-      command: ansible-doc test_no_docs_no_status
-      ignore_errors: yes
+    - name: deprecated module with both removed date and version (date should get precedence)
+      command: ansible-doc test_docs_removed_precedence
       register: result
-    - assert:
-        that:
-          - 'result is failed'
-          - '"ERROR! module test_no_docs_no_status missing documentation (or could not parse documentation): test_no_docs_no_status did not contain a DOCUMENTATION attribute" in result.stderr'
 
-    - name: module with no documentation and non-iterable status in metadata
-      command: ansible-doc test_no_docs_non_iterable_status
-      ignore_errors: yes
-      register: result
     - assert:
         that:
-          - 'result is failed'
-          - '"ERROR! module test_no_docs_non_iterable_status missing documentation (or could not parse documentation): test_no_docs_non_iterable_status did not contain a DOCUMENTATION attribute" in result.stderr'
+          - '"DEPRECATED" in result.stdout'
+          - '"Reason: Updated module released with more functionality" in result.stdout'
+          - '"Will be removed in a release after 2022-06-01" in result.stdout'
+          - '"Alternatives: new_module" in result.stdout'
 
-    - name: module with no documentation and removed status
-      command: ansible-doc test_no_docs_removed_status
+    - name: documented module with YAML anchors
+      command: ansible-doc test_docs_yaml_anchors
       register: result
+    - set_fact:
+        actual_output: >-
+          {{ result.stdout | regex_replace('^(> [A-Z_]+ +\().+library/([a-z_]+.py)\)$', '\1library/\2)', multiline=true) }}
+        expected_output: "{{ lookup('file', 'test_docs_yaml_anchors.output') }}"
     - assert:
         that:
-          - '"[WARNING]: module test_no_docs_removed_status has been removed" in result.stderr'
+          - actual_output == expected_output

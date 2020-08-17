@@ -26,32 +26,15 @@ from ansible.plugins.cache.base import BaseCacheModule
 from ansible.plugins.cache.memory import CacheModule as MemoryCache
 from ansible.plugins.loader import cache_loader
 
-HAVE_MEMCACHED = True
-try:
-    import memcache
-except ImportError:
-    HAVE_MEMCACHED = False
-else:
-    # Use an else so that the only reason we skip this is for lack of
-    # memcached, not errors importing the plugin
-    from ansible.plugins.cache.memcached import CacheModule as MemcachedCache
-
-HAVE_REDIS = True
-try:
-    import redis
-except ImportError:
-    HAVE_REDIS = False
-else:
-    from ansible.plugins.cache.redis import CacheModule as RedisCache
-
 import pytest
 
 
-class TestCachePluginAdjudicator:
-    # memory plugin cache
-    cache = CachePluginAdjudicator()
-    cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
-    cache['cache_key_2'] = {'key': 'value'}
+class TestCachePluginAdjudicator(unittest.TestCase):
+    def setUp(self):
+        # memory plugin cache
+        self.cache = CachePluginAdjudicator()
+        self.cache['cache_key'] = {'key1': 'value1', 'key2': 'value2'}
+        self.cache['cache_key_2'] = {'key': 'value'}
 
     def test___setitem__(self):
         self.cache['new_cache_key'] = {'new_key1': ['new_value1', 'new_value2']}
@@ -94,6 +77,23 @@ class TestCachePluginAdjudicator:
     def test_update(self):
         self.cache.update({'cache_key': {'key2': 'updatedvalue'}})
         assert self.cache['cache_key']['key2'] == 'updatedvalue'
+
+    def test_flush(self):
+        # Fake that the cache already has some data in it but the adjudicator
+        # hasn't loaded it in.
+        self.cache._plugin.set('monkey', 'animal')
+        self.cache._plugin.set('wolf', 'animal')
+        self.cache._plugin.set('another wolf', 'another animal')
+
+        # The adjudicator does't know about the new entries
+        assert len(self.cache) == 2
+        # But the cache itself does
+        assert len(self.cache._plugin._cache) == 3
+
+        # If we call flush, both the adjudicator and the cache should flush
+        self.cache.flush()
+        assert len(self.cache) == 0
+        assert len(self.cache._plugin._cache) == 0
 
 
 class TestFactCache(unittest.TestCase):
@@ -178,25 +178,8 @@ class TestAbstractClass(unittest.TestCase):
 
         self.assertIsInstance(CacheModule3(), CacheModule3)
 
-    @unittest.skipUnless(HAVE_MEMCACHED, 'python-memcached module not installed')
-    def test_memcached_cachemodule(self):
-        self.assertIsInstance(MemcachedCache(), MemcachedCache)
-
-    @unittest.skipUnless(HAVE_MEMCACHED, 'python-memcached module not installed')
-    def test_memcached_cachemodule_with_loader(self):
-        self.assertIsInstance(cache_loader.get('memcached'), MemcachedCache)
-
     def test_memory_cachemodule(self):
         self.assertIsInstance(MemoryCache(), MemoryCache)
 
     def test_memory_cachemodule_with_loader(self):
         self.assertIsInstance(cache_loader.get('memory'), MemoryCache)
-
-    @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
-    def test_redis_cachemodule(self):
-        self.assertIsInstance(RedisCache(), RedisCache)
-
-    @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
-    def test_redis_cachemodule_with_loader(self):
-        # The _uri option is required for the redis plugin
-        self.assertIsInstance(cache_loader.get('redis', **{'_uri': '127.0.0.1:6379:1'}), RedisCache)

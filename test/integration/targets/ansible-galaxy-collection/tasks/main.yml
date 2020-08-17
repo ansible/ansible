@@ -1,0 +1,130 @@
+---
+- name: set some facts for tests
+  set_fact:
+    galaxy_dir: "{{ remote_tmp_dir }}/galaxy"
+
+- name: create scratch dir used for testing
+  file:
+    path: '{{ galaxy_dir }}/scratch'
+    state: directory
+
+- name: run ansible-galaxy collection init tests
+  import_tasks: init.yml
+
+- name: run ansible-galaxy collection build tests
+  import_tasks: build.yml
+
+- name: configure pulp
+  include_tasks: pulp.yml
+
+- name: configure galaxy_ng
+  include_tasks: galaxy_ng.yml
+
+- name: create test ansible.cfg that contains the Galaxy server list
+  template:
+    src: ansible.cfg.j2
+    dest: '{{ galaxy_dir }}/ansible.cfg'
+
+- name: run ansible-galaxy collection publish tests for {{ test_name }}
+  include_tasks: publish.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  vars:
+    test_name: '{{ item.name }}'
+    test_server: '{{ item.server }}'
+    is_pulp: '{{ item.pulp|default(false) }}'
+    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
+  loop:
+  - name: pulp_v2
+    server: '{{ pulp_v2_server }}'
+    pulp: true
+  - name: pulp_v3
+    server: '{{ pulp_v3_server }}'
+    pulp: true
+    v3: true
+  - name: galaxy_ng
+    server: '{{ galaxy_ng_server }}'
+    pulp: true
+    v3: true
+
+# We use a module for this so we can speed up the test time.
+- name: setup test collections for install and download test
+  loop:
+    # For pulp interactions, we only upload to galaxy_ng which shares
+    # the same repo and distribution with pulp_ansible
+    # However, we use galaxy_ng only, since collections are unique across
+    # pulp repositories, and galaxy_ng maintains a 2nd list of published collections
+    - galaxy_ng
+  environment:
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  async: 300
+  poll: 0
+  register: setup_collections
+  setup_collections:
+    server: '{{ item }}'
+    collections: '{{ collection_list }}'
+
+- name: Wait for setup_collections
+  async_status:
+    jid: '{{ item.ansible_job_id }}'
+    mode: status
+  retries: 300
+  delay: 1
+  loop: '{{ setup_collections.results }}'
+  register: setup_collections_wait
+  until: setup_collections_wait is finished
+
+# The above setup_collections uses --no-wait
+# pause for good measure.
+- name: precautionary wait
+  pause:
+    seconds: 5
+
+- name: run ansible-galaxy collection install tests for {{ test_name }}
+  include_tasks: install.yml
+  vars:
+    test_name: '{{ item.name }}'
+    test_server: '{{ item.server }}'
+    vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
+    requires_auth: '{{ item.requires_auth|default(false) }}'
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  loop:
+  - name: galaxy_ng
+    server: '{{ galaxy_ng_server }}'
+    v3: true
+    requires_auth: true
+  - name: pulp_v2
+    server: '{{ pulp_v2_server }}'
+  - name: pulp_v3
+    server: '{{ pulp_v3_server }}'
+    v3: true
+
+# fake.fake does not exist but we check the output to ensure it checked all 3
+# servers defined in the config. We hardcode to -vvv as that's what level the
+# message is shown
+- name: test install fallback on server list
+  command: ansible-galaxy collection install fake.fake -vvv
+  ignore_errors: yes
+  environment:
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  register: missing_fallback
+
+- name: assert test install fallback on server list
+  assert:
+    that:
+    - missing_fallback.rc == 1
+    - '"Collection ''fake.fake'' is not available from server pulp_v2" in missing_fallback.stdout'
+    - '"Collection ''fake.fake'' is not available from server pulp_v3" in missing_fallback.stdout'
+    - '"Collection ''fake.fake'' is not available from server galaxy_ng" in missing_fallback.stdout'
+
+- name: run ansible-galaxy collection download tests
+  include_tasks: download.yml
+  args:
+    apply:
+      environment:
+        ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'

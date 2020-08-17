@@ -132,14 +132,14 @@ This playbook, ``verify-apache.yml``, contains a single play with variables, the
 
 In the example above, the second task notifies the handler. A single task can notify more than one handler::
 
-   - name: template configuration file
-     template:
-       src: template.j2
-       dest: /etc/foo.conf
-     notify:
+    - name: template configuration file
+      template:
+        src: template.j2
+        dest: /etc/foo.conf
+      notify:
         - restart memcached
         - restart apache
-    handlers:
+      handlers:
         - name: restart memcached
           service:
             name: memcached
@@ -157,9 +157,9 @@ By default, handlers run after all the tasks in a particular play have been comp
 If you need handlers to run before the end of the play, add a task to flush them using the :ref:`meta module <meta_module>`, which executes Ansible actions::
 
     tasks:
-       - shell: some tasks go here
-       - meta: flush_handlers
-       - shell: some other tasks
+      - shell: some tasks go here
+      - meta: flush_handlers
+      - shell: some other tasks
 
 The ``meta: flush_handlers`` task triggers any handlers that have been notified at that point in the play.
 
@@ -191,21 +191,21 @@ Instead, place variables in the task parameters of your handler. You can load th
 Handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
 
     handlers:
-        - name: restart memcached
-          service:
-            name: memcached
-            state: restarted
-          listen: "restart web services"
-        - name: restart apache
-          service:
-            name: apache
-            state: restarted
-          listen: "restart web services"
+      - name: restart memcached
+        service:
+          name: memcached
+          state: restarted
+        listen: "restart web services"
+      - name: restart apache
+        service:
+          name: apache
+          state: restarted
+        listen: "restart web services"
 
     tasks:
-        - name: restart everything
-          command: echo "this task will restart the web services"
-          notify: "restart web services"
+      - name: restart everything
+        command: echo "this task will restart the web services"
+        notify: "restart web services"
 
 This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names,
 making it easier to share handlers among playbooks and roles (especially when using 3rd party roles from

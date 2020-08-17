@@ -4,8 +4,13 @@ __metaclass__ = type
 
 import ast
 import os
+import re
 
 from . import types as t
+
+from .io import (
+    read_binary_file,
+)
 
 from .util import (
     display,
@@ -61,10 +66,10 @@ def get_python_module_utils_imports(compile_targets):
                     for result in matches:
                         results.add(result)
 
-        import_path = os.path.join('lib/', '%s.py' % import_name.replace('.', '/'))
+        import_path = get_import_path(import_name)
 
         if import_path not in imports_by_target_path:
-            import_path = os.path.join('lib/', import_name.replace('.', '/'), '__init__.py')
+            import_path = get_import_path(import_name, package=True)
 
             if import_path not in imports_by_target_path:
                 raise ApplicationError('Cannot determine path for module_utils import: %s' % import_name)
@@ -113,6 +118,11 @@ def get_python_module_utils_imports(compile_targets):
 
     for module_util in sorted(imports):
         if not imports[module_util]:
+            package_path = get_import_path(module_util, package=True)
+
+            if os.path.exists(package_path) and not os.path.getsize(package_path):
+                continue  # ignore empty __init__.py files
+
             display.warning('No imports found which use the "%s" module_util.' % module_util)
 
     return imports
@@ -123,14 +133,17 @@ def get_python_module_utils_name(path):  # type: (str) -> str
     base_path = data_context().content.module_utils_path
 
     if data_context().content.collection:
-        prefix = 'ansible_collections.' + data_context().content.collection.prefix
+        prefix = 'ansible_collections.' + data_context().content.collection.prefix + 'plugins.module_utils'
     else:
-        prefix = 'ansible.module_utils.'
+        prefix = 'ansible.module_utils'
 
     if path.endswith('/__init__.py'):
         path = os.path.dirname(path)
 
-    name = prefix + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.sep, '.')
+    if path == base_path:
+        name = prefix
+    else:
+        name = prefix + '.' + os.path.splitext(os.path.relpath(path, base_path))[0].replace(os.path.sep, '.')
 
     return name
 
@@ -143,9 +156,6 @@ def enumerate_module_utils():
 
     for path in data_context().content.walk_files(data_context().content.module_utils_path):
         ext = os.path.splitext(path)[1]
-
-        if path == os.path.join(data_context().content.module_utils_path, '__init__.py'):
-            continue
 
         if ext != '.py':
             continue
@@ -161,20 +171,70 @@ def extract_python_module_utils_imports(path, module_utils):
     :type module_utils: set[str]
     :rtype: set[str]
     """
-    with open(path, 'r') as module_fd:
-        code = module_fd.read()
+    # Python code must be read as bytes to avoid a SyntaxError when the source uses comments to declare the file encoding.
+    # See: https://www.python.org/dev/peps/pep-0263
+    # Specifically: If a Unicode string with a coding declaration is passed to compile(), a SyntaxError will be raised.
+    code = read_binary_file(path)
 
-        try:
-            tree = ast.parse(code)
-        except SyntaxError as ex:
-            # Treat this error as a warning so tests can be executed as best as possible.
-            # The compile test will detect and report this syntax error.
-            display.warning('%s:%s Syntax error extracting module_utils imports: %s' % (path, ex.lineno, ex.msg))
-            return set()
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as ex:
+        # Treat this error as a warning so tests can be executed as best as possible.
+        # The compile test will detect and report this syntax error.
+        display.warning('%s:%s Syntax error extracting module_utils imports: %s' % (path, ex.lineno, ex.msg))
+        return set()
 
-        finder = ModuleUtilFinder(path, module_utils)
-        finder.visit(tree)
-        return finder.imports
+    finder = ModuleUtilFinder(path, module_utils)
+    finder.visit(tree)
+    return finder.imports
+
+
+def get_import_path(name, package=False):  # type: (str, bool) -> str
+    """Return a path from an import name."""
+    if package:
+        filename = os.path.join(name.replace('.', '/'), '__init__.py')
+    else:
+        filename = '%s.py' % name.replace('.', '/')
+
+    if name.startswith('ansible.module_utils.') or name == 'ansible.module_utils':
+        path = os.path.join('lib', filename)
+    elif data_context().content.collection and (
+            name.startswith('ansible_collections.%s.plugins.module_utils.' % data_context().content.collection.full_name) or
+            name == 'ansible_collections.%s.plugins.module_utils' % data_context().content.collection.full_name):
+        path = '/'.join(filename.split('/')[3:])
+    else:
+        raise Exception('Unexpected import name: %s' % name)
+
+    return path
+
+
+def path_to_module(path):  # type: (str) -> str
+    """Convert the given path to a module name."""
+    module = os.path.splitext(path)[0].replace(os.path.sep, '.')
+
+    if module.endswith('.__init__'):
+        module = module[:-9]
+
+    return module
+
+
+def relative_to_absolute(name, level, module, path, lineno):  # type: (str, int, str, str, int) -> str
+    """Convert a relative import to an absolute import."""
+    if level <= 0:
+        absolute_name = name
+    elif not module:
+        display.warning('Cannot resolve relative import "%s%s" in unknown module at %s:%d' % ('.' * level, name, path, lineno))
+        absolute_name = 'relative.nomodule'
+    else:
+        parts = module.split('.')
+
+        if level >= len(parts):
+            display.warning('Cannot resolve relative import "%s%s" above module "%s" at %s:%d' % ('.' * level, name, module, path, lineno))
+            absolute_name = 'relative.abovelevel'
+        else:
+            absolute_name = '.'.join(parts[:-level] + [name])
+
+    return absolute_name
 
 
 class ModuleUtilFinder(ast.NodeVisitor):
@@ -199,6 +259,33 @@ class ModuleUtilFinder(ast.NodeVisitor):
             if package != 'ansible.module_utils' and package not in VIRTUAL_PACKAGES:
                 self.add_import(package, 0)
 
+        self.module = None
+
+        if data_context().content.is_ansible:
+            # Various parts of the Ansible source tree execute within diffent modules.
+            # To support import analysis, each file which uses relative imports must reside under a path defined here.
+            # The mapping is a tuple consisting of a path pattern to match and a replacement path.
+            # During analyis, any relative imports not covered here will result in warnings, which can be fixed by adding the appropriate entry.
+            path_map = (
+                ('^hacking/build_library/build_ansible/', 'build_ansible/'),
+                ('^lib/ansible/', 'ansible/'),
+                ('^test/lib/ansible_test/_data/sanity/validate-modules/', 'validate_modules/'),
+                ('^test/units/', 'test/units/'),
+                ('^test/lib/ansible_test/_internal/', 'ansible_test/_internal/'),
+                ('^test/integration/targets/.*/ansible_collections/(?P<ns>[^/]*)/(?P<col>[^/]*)/', r'ansible_collections/\g<ns>/\g<col>/'),
+                ('^test/integration/targets/.*/library/', 'ansible/modules/'),
+            )
+
+            for pattern, replacement in path_map:
+                if re.search(pattern, self.path):
+                    revised_path = re.sub(pattern, replacement, self.path)
+                    self.module = path_to_module(revised_path)
+                    break
+        else:
+            # This assumes that all files within the collection are executed by Ansible as part of the collection.
+            # While that will usually be true, there are exceptions which will result in this resolution being incorrect.
+            self.module = path_to_module(os.path.join(data_context().content.collection.directory, self.path))
+
     # noinspection PyPep8Naming
     # pylint: disable=locally-disabled, invalid-name
     def visit_Import(self, node):
@@ -207,10 +294,9 @@ class ModuleUtilFinder(ast.NodeVisitor):
         """
         self.generic_visit(node)
 
-        for alias in node.names:
-            if alias.name.startswith('ansible.module_utils.'):
-                # import ansible.module_utils.MODULE[.MODULE]
-                self.add_import(alias.name, node.lineno)
+        # import ansible.module_utils.MODULE[.MODULE]
+        # import ansible_collections.{ns}.{col}.plugins.module_utils.module_utils.MODULE[.MODULE]
+        self.add_imports([alias.name for alias in node.names], node.lineno)
 
     # noinspection PyPep8Naming
     # pylint: disable=locally-disabled, invalid-name
@@ -223,11 +309,16 @@ class ModuleUtilFinder(ast.NodeVisitor):
         if not node.module:
             return
 
-        if node.module == 'ansible.module_utils' or node.module.startswith('ansible.module_utils.'):
-            for alias in node.names:
-                # from ansible.module_utils import MODULE[, MODULE]
-                # from ansible.module_utils.MODULE[.MODULE] import MODULE[, MODULE]
-                self.add_import('%s.%s' % (node.module, alias.name), node.lineno)
+        module = relative_to_absolute(node.module, node.level, self.module, self.path, node.lineno)
+
+        if not module.startswith('ansible'):
+            return
+
+        # from ansible.module_utils import MODULE[, MODULE]
+        # from ansible.module_utils.MODULE[.MODULE] import MODULE[, MODULE]
+        # from ansible_collections.{ns}.{col}.plugins.module_utils import MODULE[, MODULE]
+        # from ansible_collections.{ns}.{col}.plugins.module_utils.MODULE[.MODULE] import MODULE[, MODULE]
+        self.add_imports(['%s.%s' % (module, alias.name) for alias in node.names], node.lineno)
 
     def add_import(self, name, line_number):
         """
@@ -236,7 +327,7 @@ class ModuleUtilFinder(ast.NodeVisitor):
         """
         import_name = name
 
-        while len(name) > len('ansible.module_utils.'):
+        while self.is_module_util_name(name):
             if name in self.module_utils:
                 if name not in self.imports:
                     display.info('%s:%d imports module_utils: %s' % (self.path, line_number, name), verbosity=5)
@@ -252,3 +343,20 @@ class ModuleUtilFinder(ast.NodeVisitor):
         # Treat this error as a warning so tests can be executed as best as possible.
         # This error should be detected by unit or integration tests.
         display.warning('%s:%d Invalid module_utils import: %s' % (self.path, line_number, import_name))
+
+    def add_imports(self, names, line_no):  # type: (t.List[str], int) -> None
+        """Add the given import names if they are module_utils imports."""
+        for name in names:
+            if self.is_module_util_name(name):
+                self.add_import(name, line_no)
+
+    @staticmethod
+    def is_module_util_name(name):  # type: (str) -> bool
+        """Return True if the given name is a module_util name for the content under test. External module_utils are ignored."""
+        if data_context().content.is_ansible and name.startswith('ansible.module_utils.'):
+            return True
+
+        if data_context().content.collection and name.startswith('ansible_collections.%s.plugins.module_utils.' % data_context().content.collection.full_name):
+            return True
+
+        return False

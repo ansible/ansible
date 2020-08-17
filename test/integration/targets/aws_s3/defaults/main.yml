@@ -1,3 +1,0 @@
----
-# defaults file for s3
-bucket_name: '{{resource_prefix}}'

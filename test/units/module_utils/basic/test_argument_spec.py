@@ -14,7 +14,9 @@ import pytest
 
 from units.compat.mock import MagicMock
 from ansible.module_utils import basic
-from ansible.module_utils.six import integer_types
+from ansible.module_utils.api import basic_auth_argument_spec, rate_limit_argument_spec, retry_argument_spec
+from ansible.module_utils.common.warnings import get_deprecation_messages, get_warning_messages
+from ansible.module_utils.six import integer_types, string_types
 from ansible.module_utils.six.moves import builtins
 
 
@@ -83,9 +85,30 @@ INVALID_SPECS = (
     # unknown parameter
     ({'arg': {'type': 'int'}}, {'other': 'bad', '_ansible_module_name': 'ansible_unittest'},
      'Unsupported parameters for (ansible_unittest) module: other Supported parameters include: arg'),
+    ({'arg': {'type': 'int', 'aliases': ['argument']}}, {'other': 'bad', '_ansible_module_name': 'ansible_unittest'},
+     'Unsupported parameters for (ansible_unittest) module: other Supported parameters include: arg (argument)'),
     # parameter is required
     ({'arg': {'required': True}}, {}, 'missing required arguments: arg'),
 )
+
+BASIC_AUTH_VALID_ARGS = [
+    {'api_username': 'user1', 'api_password': 'password1', 'api_url': 'http://example.com', 'validate_certs': False},
+    {'api_username': 'user1', 'api_password': 'password1', 'api_url': 'http://example.com', 'validate_certs': True},
+]
+
+RATE_LIMIT_VALID_ARGS = [
+    {'rate': 1, 'rate_limit': 1},
+    {'rate': '1', 'rate_limit': 1},
+    {'rate': 1, 'rate_limit': '1'},
+    {'rate': '1', 'rate_limit': '1'},
+]
+
+RETRY_VALID_ARGS = [
+    {'retries': 1, 'retry_pause': 1.5},
+    {'retries': '1', 'retry_pause': '1.5'},
+    {'retries': 1, 'retry_pause': '1.5'},
+    {'retries': '1', 'retry_pause': 1.5},
+]
 
 
 @pytest.fixture
@@ -100,6 +123,7 @@ def complex_argspec():
         baz=dict(fallback=(basic.env_fallback, ['BAZ'])),
         bar1=dict(type='bool'),
         bar3=dict(type='list', elements='path'),
+        bar_str=dict(type='list', elements=str),
         zardoz=dict(choices=['one', 'two']),
         zardoz2=dict(type='list', choices=['one', 'two', 'three']),
         zardoz3=dict(type='str', aliases=['zodraz'], deprecated_aliases=[dict(name='zodraz', version='9.99')]),
@@ -211,6 +235,48 @@ def test_validator_function(mocker, stdin):
     assert am.params['arg'] == 27
 
 
+@pytest.mark.parametrize('stdin', BASIC_AUTH_VALID_ARGS, indirect=['stdin'])
+def test_validate_basic_auth_arg(mocker, stdin):
+    kwargs = dict(
+        argument_spec=basic_auth_argument_spec()
+    )
+    am = basic.AnsibleModule(**kwargs)
+    assert isinstance(am.params['api_username'], string_types)
+    assert isinstance(am.params['api_password'], string_types)
+    assert isinstance(am.params['api_url'], string_types)
+    assert isinstance(am.params['validate_certs'], bool)
+
+
+@pytest.mark.parametrize('stdin', RATE_LIMIT_VALID_ARGS, indirect=['stdin'])
+def test_validate_rate_limit_argument_spec(mocker, stdin):
+    kwargs = dict(
+        argument_spec=rate_limit_argument_spec()
+    )
+    am = basic.AnsibleModule(**kwargs)
+    assert isinstance(am.params['rate'], integer_types)
+    assert isinstance(am.params['rate_limit'], integer_types)
+
+
+@pytest.mark.parametrize('stdin', RETRY_VALID_ARGS, indirect=['stdin'])
+def test_validate_retry_argument_spec(mocker, stdin):
+    kwargs = dict(
+        argument_spec=retry_argument_spec()
+    )
+    am = basic.AnsibleModule(**kwargs)
+    assert isinstance(am.params['retries'], integer_types)
+    assert isinstance(am.params['retry_pause'], float)
+
+
+@pytest.mark.parametrize('stdin', [{'arg': '123'}, {'arg': 123}], indirect=['stdin'])
+def test_validator_string_type(mocker, stdin):
+    # Custom callable that is 'str'
+    argspec = {'arg': {'type': str}}
+    am = basic.AnsibleModule(argspec)
+
+    assert isinstance(am.params['arg'], string_types)
+    assert am.params['arg'] == '123'
+
+
 @pytest.mark.parametrize('argspec, expected, stdin', [(s[0], s[2], s[1]) for s in INVALID_SPECS],
                          indirect=['stdin'])
 def test_validator_fail(stdin, capfd, argspec, expected):
@@ -238,7 +304,7 @@ class TestComplexArgSpecs:
         """Test that the complex argspec issues a warning if we specify an option both with its canonical name and its alias"""
         am = basic.AnsibleModule(**complex_argspec)
         assert isinstance(am.params['foo'], str)
-        assert 'Both option foo and its alias dup are set.' in am._warnings
+        assert 'Both option foo and its alias dup are set.' in get_warning_messages()
         assert am.params['foo'] == 'hello2'
 
     @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bam': 'test'}], indirect=['stdin'])
@@ -338,8 +404,18 @@ class TestComplexArgSpecs:
         """Test a deprecated alias"""
         am = basic.AnsibleModule(**complex_argspec)
 
-        assert "Alias 'zodraz' is deprecated." in am._deprecations[0]['msg']
-        assert am._deprecations[0]['version'] == '9.99'
+        assert "Alias 'zodraz' is deprecated." in get_deprecation_messages()[0]['msg']
+        assert get_deprecation_messages()[0]['version'] == '9.99'
+
+    @pytest.mark.parametrize('stdin', [{'foo': 'hello', 'bar_str': [867, '5309']}], indirect=['stdin'])
+    def test_list_with_elements_callable_str(self, capfd, mocker, stdin, complex_argspec):
+        """Test choices with list"""
+        am = basic.AnsibleModule(**complex_argspec)
+        assert isinstance(am.params['bar_str'], list)
+        assert isinstance(am.params['bar_str'][0], string_types)
+        assert isinstance(am.params['bar_str'][1], string_types)
+        assert am.params['bar_str'][0] == '867'
+        assert am.params['bar_str'][1] == '5309'
 
 
 class TestComplexOptions:
@@ -593,3 +669,40 @@ class TestLoadFileCommonArguments:
         res = am.load_file_common_arguments(params=extended_params)
 
         assert res == final_params
+
+
+@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
+def test_no_log_true(stdin, capfd):
+    """Explicitly mask an argument (no_log=True)."""
+    arg_spec = {
+        "arg_pass": {"no_log": True}
+    }
+    am = basic.AnsibleModule(arg_spec)
+    # no_log=True is picked up by both am._log_invocation and list_no_log_values
+    # (called by am._handle_no_log_values). As a result, we can check for the
+    # value in am.no_log_values.
+    assert "testing" in am.no_log_values
+
+
+@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
+def test_no_log_false(stdin, capfd):
+    """Explicitly log and display an argument (no_log=False)."""
+    arg_spec = {
+        "arg_pass": {"no_log": False}
+    }
+    am = basic.AnsibleModule(arg_spec)
+    assert "testing" not in am.no_log_values and not get_warning_messages()
+
+
+@pytest.mark.parametrize("stdin", [{"arg_pass": "testing"}], indirect=["stdin"])
+def test_no_log_none(stdin, capfd):
+    """Allow Ansible to make the decision by matching the argument name
+    against PASSWORD_MATCH."""
+    arg_spec = {
+        "arg_pass": {}
+    }
+    am = basic.AnsibleModule(arg_spec)
+    # Omitting no_log is only picked up by _log_invocation, so the value never
+    # makes it into am.no_log_values. Instead we can check for the warning
+    # emitted by am._log_invocation.
+    assert len(get_warning_messages()) > 0

@@ -8,7 +8,7 @@ Requirements
 
 To use the modules, you'll need the following:
 
-- Run Ansible from source. For assistance, view `running from source <./intro_installation.html/#running-from-source>`_
+- Run Ansible from source. For assistance, view :ref:`from_source`.
 - `OpenShift Rest Client <https://github.com/openshift/openshift-restclient-python>`_ installed on the host that will execute the modules
 
 
@@ -36,7 +36,7 @@ Next, include it in a playbook, as follows:
 
 Because the role is referenced, ``hello-world`` is able to access the modules, and use them to deploy an application.
 
-The modules are found in the ``library`` folder of the role. Each includes full documentation for parameters and the returned data structure. However, not all modules include examples, only those where `testing data <https://github.com/openshift/openshift-restclient-python/tree/master/openshift/ansiblegen/examples>`_ has been created.
+The modules are found in the ``library`` folder of the role. Each includes full documentation for parameters and the returned data structure. However, not all modules include examples, only those where `testing data <https://github.com/openshift/openshift-restclient-python/tree/release-0.8/openshift/ansiblegen/examples>`_ has been created.
 
 Authenticating with the API
 ---------------------------

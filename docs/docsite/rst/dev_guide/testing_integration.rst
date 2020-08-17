@@ -64,7 +64,7 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
 .. note:: Running integration tests within Docker
 
-   To protect your system from any potential changes caused by integration tests, and to ensure a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for options.
+   To protect your system from any potential changes caused by integration tests, and to ensure a sensible set of dependencies are available we recommend that you always run integration tests with the ``--docker`` option, for example ``--docker centos8``. See the `list of supported docker images <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/docker.txt>`_ for options (the ``default`` image is used for sanity and unit tests, as well as for platform independent integration tests such as those for cloud modules).
 
 .. note:: Avoiding pulling new Docker images
 
@@ -190,10 +190,19 @@ Ansible needs fairly wide ranging powers to run the tests in an AWS account.  Th
 testing-policies
 ----------------
 
-``hacking/aws_config/testing_policies`` contains a set of policies that are required for all existing AWS module tests.
-The ``hacking/aws_config/setup_iam.yml`` playbook can be used to add all of those policies to an IAM group (using
-``-e iam_group=GROUP_NAME``. Once the group is created, you'll need to create a user and make the user a member of the
-group. The policies are designed to minimize the rights of that user.  Please note that while this policy does limit
+The GitHub repository `mattclay/aws-terminator <https://github.com/mattclay/aws-terminator/>`_
+contains two sets of policies used for all existing AWS module integratoin tests.
+The `hacking/aws_config/setup_iam.yml` playbook can be used to setup two groups:
+
+  - `ansible-integration-ci` will have the policies applied necessary to run any
+    integration tests not marked as `unsupported` and are designed to mirror those
+    used by Ansible's CI.
+  - `ansible-integration-unsupported` will have the additional policies applied
+    necessary to run the integraion tests marked as `unsupported` including tests
+    for managing IAM roles, users and groups.
+
+Once the groups have been created, you'll need to create a user and make the user a member of these
+groups. The policies are designed to minimize the rights of that user.  Please note that while this policy does limit
 the user to one region, this does not fully restrict the user (primarily due to the limitations of the Amazon ARN
 notation). The user will still have wide privileges for viewing account definitions, and will also able to manage
 some resources that are not related to testing (for example, AWS lambdas with different names).  Tests should not
@@ -210,61 +219,7 @@ privileges.
 Network Tests
 =============
 
-Starting with Ansible 2.4, all network modules MUST include unit tests that cover all functionality. You must add unit tests for each new network module and for each added feature. Please submit the unit tests and the code in a single PR. Integration tests are also strongly encouraged.
-
-Writing network integration tests
----------------------------------
-
-For guidance on writing network test see the `adding tests for Network modules guide <https://github.com/ansible/community/blob/master/group-network/network_test.rst>`_.
-
-
-Running network integration tests locally
------------------------------------------
-
-Ansible uses Shippable to run an integration test suite on every PR, including new tests introduced by that PR. To find and fix problems in network modules, run the network integration test locally before you submit a PR.
-
-To run the network integration tests, use a command in the form::
-
-    ansible-test network-integration --inventory /path/to/inventory tests_to_run
-
-First, define a network inventory file::
-
-    cd test/integration
-    cp inventory.network.template inventory.networking
-    ${EDITOR:-vi} inventory.networking
-    # Add in machines for the platform(s) you wish to test
-
-To run all Network tests for a particular platform::
-
-    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_.*
-
-This example will run against all vyos modules. Note that ``vyos_.*`` is a regex match, not a bash wildcard - include the `.` if you modify this example.
-
-
-To run integration tests for a specific module::
-
-    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_vlan
-
-To run a single test case on a specific module::
-
-    # Only run vyos_vlan/tests/cli/basic.yaml
-    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking vyos_vlan --testcase basic
-
-To run integration tests for a specific transport::
-
-    # Only run nxapi test
-    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking  --tags="nxapi" nxos_.*
-
-    # Skip any cli tests
-    ansible-test network-integration --inventory  /path/to/ansible/test/integration/inventory.networking  --skip-tags="cli" nxos_.*
-
-See `test/integration/targets/nxos_bgp/tasks/main.yaml <https://github.com/ansible/ansible/blob/devel/test/integration/targets/nxos_bgp/tasks/main.yaml>`_ for how this is implemented in the tests.
-
-For more options::
-
-    ansible-test network-integration --help
-
-If you need additional help or feedback, reach out in ``#ansible-network`` on Freenode.
+For guidance on writing network test see :ref:`testing_resource_modules`.
 
 
 Where to find out more

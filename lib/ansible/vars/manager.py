@@ -133,6 +133,8 @@ class VariableManager:
         self._inventory = data.get('inventory', None)
         self._options_vars = data.get('options_vars', dict())
         self.safe_basedir = data.get('safe_basedir', False)
+        self._loader = None
+        self._hostvars = None
 
     @property
     def extra_vars(self):
@@ -179,6 +181,20 @@ class VariableManager:
             _hosts_all=_hosts_all,
         )
 
+        _vars_sources = {}
+
+        def _combine_and_track(data, new_data, source):
+            '''
+            Wrapper function to update var sources dict and call combine_vars()
+
+            See notes in the VarsWithSources docstring for caveats and limitations of the source tracking
+            '''
+            if C.DEFAULT_DEBUG:
+                # Populate var sources dict
+                for key in new_data:
+                    _vars_sources[key] = source
+            return combine_vars(data, new_data)
+
         # default for all cases
         basedirs = []
         if self.safe_basedir:  # avoid adhoc/console loading cwd
@@ -188,7 +204,7 @@ class VariableManager:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
-                all_vars = combine_vars(all_vars, role.get_default_vars())
+                all_vars = _combine_and_track(all_vars, role.get_default_vars(), "role '%s' defaults" % role.name)
 
         if task:
             # set basedirs
@@ -204,7 +220,8 @@ class VariableManager:
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
             if task._role is not None and (play or task.action == 'include_role'):
-                all_vars = combine_vars(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()))
+                all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()),
+                                              "role '%s' defaults" % task._role.name)
 
         if host:
             # THE 'all' group and the rest of groups for a host, used below
@@ -229,7 +246,7 @@ class VariableManager:
                             raise AnsibleError("Invalid vars plugin %s from %s" % (plugin._load_name, plugin._original_path))
                 return data
 
-            # internal fuctions that actually do the work
+            # internal functions that actually do the work
             def _plugins_inventory(entities):
                 ''' merges all entities by inventory source '''
                 return get_vars_from_inventory_sources(self._loader, self._inventory._sources, entities, stage)
@@ -238,10 +255,10 @@ class VariableManager:
                 ''' merges all entities adjacent to play '''
                 data = {}
                 for path in basedirs:
-                    data = combine_vars(data, get_vars_from_path(self._loader, path, entities, stage))
+                    data = _combine_and_track(data, get_vars_from_path(self._loader, path, entities, stage), "path '%s'" % path)
                 return data
 
-            # configurable functions that are sortable via config, rememer to add to _ALLOWED if expanding this list
+            # configurable functions that are sortable via config, remember to add to _ALLOWED if expanding this list
             def all_inventory():
                 return all_group.get_vars()
 
@@ -270,8 +287,8 @@ class VariableManager:
                 '''
                 data = {}
                 for group in host_groups:
-                    data[group] = combine_vars(data[group], _plugins_inventory(group))
-                    data[group] = combine_vars(data[group], _plugins_play(group))
+                    data[group] = _combine_and_track(data[group], _plugins_inventory(group), "inventory group_vars for '%s'" % group)
+                    data[group] = _combine_and_track(data[group], _plugins_play(group), "playbook group_vars for '%s'" % group)
                 return data
 
             # Merge groups as per precedence config
@@ -279,14 +296,14 @@ class VariableManager:
             for entry in C.VARIABLE_PRECEDENCE:
                 if entry in self._ALLOWED:
                     display.debug('Calling %s to load vars for %s' % (entry, host.name))
-                    all_vars = combine_vars(all_vars, locals()[entry]())
+                    all_vars = _combine_and_track(all_vars, locals()[entry](), "group vars, precedence entry '%s'" % entry)
                 else:
                     display.warning('Ignoring unknown variable precedence entry: %s' % (entry))
 
             # host vars, from inventory, inventory adjacent and play adjacent via plugins
-            all_vars = combine_vars(all_vars, host.get_vars())
-            all_vars = combine_vars(all_vars, _plugins_inventory([host]))
-            all_vars = combine_vars(all_vars, _plugins_play([host]))
+            all_vars = _combine_and_track(all_vars, host.get_vars(), "host vars for '%s'" % host)
+            all_vars = _combine_and_track(all_vars, _plugins_inventory([host]), "inventory host_vars for '%s'" % host)
+            all_vars = _combine_and_track(all_vars, _plugins_play([host]), "playbook host_vars for '%s'" % host)
 
             # finally, the facts caches for this host, if it exists
             # TODO: cleaning of facts should eventually become part of taskresults instead of vars
@@ -296,15 +313,15 @@ class VariableManager:
 
                 # push facts to main namespace
                 if C.INJECT_FACTS_AS_VARS:
-                    all_vars = combine_vars(all_vars, wrap_var(clean_facts(facts)))
+                    all_vars = _combine_and_track(all_vars, wrap_var(clean_facts(facts)), "facts")
                 else:
                     # always 'promote' ansible_local
-                    all_vars = combine_vars(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}))
+                    all_vars = _combine_and_track(all_vars, wrap_var({'ansible_local': facts.get('ansible_local', {})}), "facts")
             except KeyError:
                 pass
 
         if play:
-            all_vars = combine_vars(all_vars, play.get_vars())
+            all_vars = _combine_and_track(all_vars, play.get_vars(), "play vars")
 
             vars_files = play.get_vars_files()
             try:
@@ -338,7 +355,7 @@ class VariableManager:
                                 data = preprocess_vars(self._loader.load_from_file(vars_file, unsafe=True))
                                 if data is not None:
                                     for item in data:
-                                        all_vars = combine_vars(all_vars, item)
+                                        all_vars = _combine_and_track(all_vars, item, "play vars_files from '%s'" % vars_file)
                                 break
                             except AnsibleFileNotFound:
                                 # we continue on loader failures
@@ -369,39 +386,40 @@ class VariableManager:
             # unless the user has disabled this via a config option
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
-                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
+                    all_vars = _combine_and_track(all_vars, role.get_vars(include_params=False), "role '%s' vars" % role.name)
 
         # next, we merge in the vars from the role, which will specifically
         # follow the role dependency chain, and then we merge in the tasks
         # vars (which will look at parent blocks/task includes)
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False))
-            all_vars = combine_vars(all_vars, task.get_vars())
+                all_vars = _combine_and_track(all_vars, task._role.get_vars(task.get_dep_chain(), include_params=False),
+                                              "role '%s' vars" % task._role.name)
+            all_vars = _combine_and_track(all_vars, task.get_vars(), "task vars")
 
         # next, we merge in the vars cache (include vars) and nonpersistent
         # facts cache (set_fact/register), in that order
         if host:
             # include_vars non-persistent cache
-            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+            all_vars = _combine_and_track(all_vars, self._vars_cache.get(host.get_name(), dict()), "include_vars")
             # fact non-persistent cache
-            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
+            all_vars = _combine_and_track(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()), "set_fact")
 
         # next, we merge in role params and task include params
         if task:
             if task._role:
-                all_vars = combine_vars(all_vars, task._role.get_role_params(task.get_dep_chain()))
+                all_vars = _combine_and_track(all_vars, task._role.get_role_params(task.get_dep_chain()), "role '%s' params" % task._role.name)
 
             # special case for include tasks, where the include params
             # may be specified in the vars field for the task, which should
             # have higher precedence than the vars/np facts above
-            all_vars = combine_vars(all_vars, task.get_include_params())
+            all_vars = _combine_and_track(all_vars, task.get_include_params(), "include params")
 
         # extra vars
-        all_vars = combine_vars(all_vars, self._extra_vars)
+        all_vars = _combine_and_track(all_vars, self._extra_vars, "extra vars")
 
         # magic variables
-        all_vars = combine_vars(all_vars, magic_variables)
+        all_vars = _combine_and_track(all_vars, magic_variables, "magic vars")
 
         # special case for the 'environment' magic variable, as someone
         # may have set it as a variable and we don't want to stomp on it
@@ -419,7 +437,11 @@ class VariableManager:
             all_vars['vars'] = all_vars.copy()
 
         display.debug("done with get_vars()")
-        return all_vars
+        if C.DEFAULT_DEBUG:
+            # Use VarsWithSources wrapper class to display var sources
+            return VarsWithSources.new_vars_with_sources(all_vars, _vars_sources)
+        else:
+            return all_vars
 
     def _get_magic_variables(self, play, host, task, include_hostvars, include_delegate_to,
                              _hosts=None, _hosts_all=None):
@@ -431,12 +453,13 @@ class VariableManager:
         variables = {}
         variables['playbook_dir'] = os.path.abspath(self._loader.get_basedir())
         variables['ansible_playbook_python'] = sys.executable
+        variables['ansible_config_file'] = C.CONFIG_FILE
 
         if play:
             # This is a list of all role names of all dependencies for all roles for this play
-            dependency_role_names = list(set([d._role_name for r in play.roles for d in r.get_all_dependencies()]))
+            dependency_role_names = list(set([d.get_name() for r in play.roles for d in r.get_all_dependencies()]))
             # This is a list of all role names of all roles for this play
-            play_role_names = [r._role_name for r in play.roles]
+            play_role_names = [r.get_name() for r in play.roles]
 
             # ansible_role_names includes all role names, dependent or directly referenced by the play
             variables['ansible_role_names'] = list(set(dependency_role_names + play_role_names))
@@ -454,9 +477,11 @@ class VariableManager:
 
         if task:
             if task._role:
-                variables['role_name'] = task._role.get_name()
+                variables['role_name'] = task._role.get_name(include_role_fqcn=False)
                 variables['role_path'] = task._role._role_path
                 variables['role_uuid'] = text_type(task._role._uuid)
+                variables['ansible_collection_name'] = task._role._role_collection
+                variables['ansible_role_name'] = task._role.get_name()
 
         if self._inventory is not None:
             variables['groups'] = self._inventory.get_groups_dict()
@@ -480,7 +505,7 @@ class VariableManager:
                 # however this would take work in the templating engine, so for now we'll add both
                 variables['play_hosts'] = variables['ansible_play_batch']
 
-        # the 'omit' value alows params to be left out if the variable they are based on is undefined
+        # the 'omit' value allows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
         # Set options vars
         for option, option_value in iteritems(self._options_vars):
@@ -527,6 +552,7 @@ class VariableManager:
             has_loop = False
             items = [None]
 
+        # since host can change per loop, we keep dict per host name resolved
         delegated_host_vars = dict()
         item_var = getattr(task.loop_control, 'loop_var', 'item')
         cache_items = False
@@ -543,27 +569,12 @@ class VariableManager:
                 raise AnsibleError(message="Undefined delegate_to host for task:", obj=task._ds)
             if not isinstance(delegated_host_name, string_types):
                 raise AnsibleError(message="the field 'delegate_to' has an invalid type (%s), and could not be"
-                                           " converted to a string type." % type(delegated_host_name),
-                                   obj=task._ds)
+                                           " converted to a string type." % type(delegated_host_name), obj=task._ds)
+
             if delegated_host_name in delegated_host_vars:
                 # no need to repeat ourselves, as the delegate_to value
                 # does not appear to be tied to the loop item variable
                 continue
-
-            # a dictionary of variables to use if we have to create a new host below
-            # we set the default port based on the default transport here, to make sure
-            # we use the proper default for windows
-            new_port = C.DEFAULT_REMOTE_PORT
-            if C.DEFAULT_TRANSPORT == 'winrm':
-                new_port = 5986
-
-            new_delegated_host_vars = dict(
-                ansible_delegated_host=delegated_host_name,
-                ansible_host=delegated_host_name,  # not redundant as other sources can change ansible_host
-                ansible_port=new_port,
-                ansible_user=C.DEFAULT_REMOTE_USER,
-                ansible_connection=C.DEFAULT_TRANSPORT,
-            )
 
             # now try to find the delegated-to host in inventory, or failing that,
             # create a new host on the fly so we can fetch variables for it
@@ -573,21 +584,16 @@ class VariableManager:
                 # try looking it up based on the address field, and finally
                 # fall back to creating a host on the fly to use for the var lookup
                 if delegated_host is None:
-                    if delegated_host_name in C.LOCALHOST:
-                        delegated_host = self._inventory.localhost
+                    for h in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
+                        # check if the address matches, or if both the delegated_to host
+                        # and the current host are in the list of localhost aliases
+                        if h.address == delegated_host_name:
+                            delegated_host = h
+                            break
                     else:
-                        for h in self._inventory.get_hosts(ignore_limits=True, ignore_restrictions=True):
-                            # check if the address matches, or if both the delegated_to host
-                            # and the current host are in the list of localhost aliases
-                            if h.address == delegated_host_name:
-                                delegated_host = h
-                                break
-                        else:
-                            delegated_host = Host(name=delegated_host_name)
-                            delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars)
+                        delegated_host = Host(name=delegated_host_name)
             else:
                 delegated_host = Host(name=delegated_host_name)
-                delegated_host.vars = combine_vars(delegated_host.vars, new_delegated_host_vars)
 
             # now we go fetch the vars for the delegated-to host and save them in our
             # master dictionary of variables to be used later in the TaskExecutor/PlayContext
@@ -596,8 +602,9 @@ class VariableManager:
                 host=delegated_host,
                 task=task,
                 include_delegate_to=False,
-                include_hostvars=False,
+                include_hostvars=True,
             )
+            delegated_host_vars[delegated_host_name]['inventory_hostname'] = vars_copy.get('inventory_hostname')
 
         _ansible_loop_cache = None
         if has_loop and cache_items:
@@ -661,3 +668,52 @@ class VariableManager:
             self._vars_cache[host] = combine_vars(self._vars_cache[host], {varname: value})
         else:
             self._vars_cache[host][varname] = value
+
+
+class VarsWithSources(MutableMapping):
+    '''
+    Dict-like class for vars that also provides source information for each var
+
+    This class can only store the source for top-level vars. It does no tracking
+    on its own, just shows a debug message with the information that it is provided
+    when a particular var is accessed.
+    '''
+    def __init__(self, *args, **kwargs):
+        ''' Dict-compatible constructor '''
+        self.data = dict(*args, **kwargs)
+        self.sources = {}
+
+    @classmethod
+    def new_vars_with_sources(cls, data, sources):
+        ''' Alternate constructor method to instantiate class with sources '''
+        v = cls(data)
+        v.sources = sources
+        return v
+
+    def get_source(self, key):
+        return self.sources.get(key, None)
+
+    def __getitem__(self, key):
+        val = self.data[key]
+        # See notes in the VarsWithSources docstring for caveats and limitations of the source tracking
+        display.debug("variable '%s' from source: %s" % (key, self.sources.get(key, "unknown")))
+        return val
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+
+    def __delitem__(self, key):
+        del self.data[key]
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self):
+        return len(self.data)
+
+    # Prevent duplicate debug messages by defining our own __contains__ pointing at the underlying dict
+    def __contains__(self, key):
+        return self.data.__contains__(key)
+
+    def copy(self):
+        return VarsWithSources.new_vars_with_sources(self.data.copy(), self.sources.copy())

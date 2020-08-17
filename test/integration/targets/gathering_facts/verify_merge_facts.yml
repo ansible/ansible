@@ -1,0 +1,41 @@
+- name: rune one and two, verify merge is as expected
+  hosts: localhost
+  vars:
+    ansible_facts_modules:
+        - facts_one
+        - facts_two
+  tasks:
+
+    - name: populate original
+      include_vars:
+        name: original
+        file: one_two.json
+
+    - name: fail if ref file is updated
+      assert:
+        msg: '{{ansible_facts}} vs {{original}}'
+        that:
+            - ansible_facts|to_json(indent=4, sort_keys=True) == original|to_json(indent=4, sort_keys=True)
+
+    - name: clear existing facts for next play
+      meta: clear_facts
+
+
+- name: rune two and one, verify merge is as expected
+  hosts: localhost
+  vars:
+    ansible_facts_modules:
+        - facts_two
+        - facts_one
+  tasks:
+
+    - name: populate original
+      include_vars:
+        name: original
+        file: two_one.json
+
+    - name: fail if ref file is updated
+      assert:
+        msg: '{{ansible_facts}} vs {{original}}'
+        that:
+            - ansible_facts|to_json(indent=4, sort_keys=True) == original|to_json(indent=4, sort_keys=True)

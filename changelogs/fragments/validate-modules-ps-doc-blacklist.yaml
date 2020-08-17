@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-test - Do not try to validate PowerShell modules ``setup.ps1``, ``slurp.ps1``, and ``async_status.ps1``

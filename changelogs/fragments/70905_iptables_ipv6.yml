@@ -1,0 +1,2 @@
+minor_changes:
+- iptables - add a note about ipv6-icmp in protocol parameter (https://github.com/ansible/ansible/issues/70905).

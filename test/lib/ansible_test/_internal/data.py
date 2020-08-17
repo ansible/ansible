@@ -40,15 +40,6 @@ from .provider.layout import (
 )
 
 
-class UnexpectedSourceRoot(ApplicationError):
-    """Exception generated when a source root is found below a layout root."""
-    def __init__(self, source_root, layout_root):  # type: (str, str) -> None
-        super(UnexpectedSourceRoot, self).__init__('Source root "%s" cannot be below layout root "%s".' % (source_root, layout_root))
-
-        self.source_root = source_root
-        self.layout_root = layout_root
-
-
 class DataContext:
     """Data context providing details about the current execution environment for ansible-test."""
     def __init__(self):
@@ -121,12 +112,13 @@ class DataContext:
         layout_provider = find_path_provider(LayoutProvider, layout_providers, root, walk)
 
         try:
-            source_provider = find_path_provider(SourceProvider, source_providers, root, walk)
+            # Begin the search for the source provider at the layout provider root.
+            # This intentionally ignores version control within subdirectories of the layout root, a condition which was previously an error.
+            # Doing so allows support for older git versions for which it is difficult to distinguish between a super project and a sub project.
+            # It also provides a better user experience, since the solution for the user would effectively be the same -- to remove the nested version control.
+            source_provider = find_path_provider(SourceProvider, source_providers, layout_provider.root, walk)
         except ProviderNotFoundForPath:
             source_provider = UnversionedSource(layout_provider.root)
-
-        if source_provider.root != layout_provider.root and is_subdir(source_provider.root, layout_provider.root):
-            raise UnexpectedSourceRoot(source_provider.root, layout_provider.root)
 
         layout = layout_provider.create(layout_provider.root, source_provider.get_paths(layout_provider.root))
 

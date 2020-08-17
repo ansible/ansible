@@ -1,5 +1,7 @@
 # Copyright (c) 2019 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 
 class ModuleDocFragment(object):
@@ -31,7 +33,7 @@ options:
     - name: ansible_remote_tmp
   set_module_language:
     description:
-    - Controls if we set the locale for moduels when executing on the
+    - Controls if we set the locale for modules when executing on the
       target.
     - Windows only supports C(no) as an option.
     type: bool

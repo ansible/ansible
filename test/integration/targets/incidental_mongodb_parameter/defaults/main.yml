@@ -1,0 +1,21 @@
+---
+# defaults file for test_mongodb_user
+mongodb_admin_user: test_root
+mongodb_admin_password: saE_Rr9!gE6gh#e~R#nZ
+mongod_auth: false
+kill_signal: SIGTERM
+# Should be one of
+# --storageEngine wiredTiger --wiredTigerEngineConfigString="cache_size=200M"
+# --storageEngine mmapv1 --nojournal
+mongod_storage_engine_opts: "--storageEngine wiredTiger --wiredTigerEngineConfigString='cache_size=200M'"
+mongodb_user: mongodb
+mongodb_user_list:
+  - { "name": "user1", "password": "password1", "roles": "read", "database": "test" }
+  - { "name": "user2", "password": "password2", "roles": "readWrite", "database": "test" }
+  - { "name": "user3", "password": "password3", "roles": "dbAdmin", "database": "test" }
+  - { "name": "user4", "password": "password4", "roles": "userAdmin", "database": "test" }
+  - { "name": "user5", "password": "password5", "roles": "clusterAdmin", "database": "admin" }
+  - { "name": "user6", "password": "password6", "roles": "readAnyDatabase", "database": "admin" }
+  - { "name": "user7", "password": "password7", "roles": "readWriteAnyDatabase", "database": "admin" }
+  - { "name": "user8", "password": "password8", "roles": "userAdminAnyDatabase", "database": "admin" }
+  - { "name": "user9", "password": "password9", "roles": "dbAdminAnyDatabase", "database": "admin" }

@@ -1,0 +1,111 @@
+- name: set up aws connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token | default(omit) }}"
+      region: "{{ aws_region }}"
+  no_log: yes
+
+- name: "remove Instances"
+  ec2_instance:
+    state: absent
+    filters:
+      vpc-id: "{{ testing_vpc.vpc.id }}"
+    wait: yes
+    <<: *aws_connection_info
+  ignore_errors: yes
+  retries: 10
+
+- name: "remove ENIs"
+  ec2_eni_info:
+    filters:
+      vpc-id: "{{ testing_vpc.vpc.id }}"
+    <<: *aws_connection_info
+  register: enis
+
+- name: "delete all ENIs"
+  ec2_eni:
+    state: absent
+    eni_id: "{{ item.id }}"
+    <<: *aws_connection_info
+  until: removed is not failed
+  with_items: "{{ enis.network_interfaces }}"
+  ignore_errors: yes
+  retries: 10
+
+- name: "remove the security group"
+  ec2_group:
+    state: absent
+    name: "{{ resource_prefix }}-sg"
+    description: a security group for ansible tests
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    <<: *aws_connection_info
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: "remove routing rules"
+  ec2_vpc_route_table:
+    state: absent
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    tags:
+      created: "{{ resource_prefix }}-route"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}"
+    subnets:
+      - "{{ testing_subnet_a.subnet.id }}"
+      - "{{ testing_subnet_b.subnet.id }}"
+    <<: *aws_connection_info
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: "remove internet gateway"
+  ec2_vpc_igw:
+    state: absent
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    <<: *aws_connection_info
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: "remove subnet A"
+  ec2_vpc_subnet:
+    state: absent
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    cidr: "{{ subnet_a_cidr }}"
+    <<: *aws_connection_info
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: "remove subnet B"
+  ec2_vpc_subnet:
+    state: absent
+    vpc_id: "{{ testing_vpc.vpc.id }}"
+    cidr: "{{ subnet_b_cidr }}"
+    <<: *aws_connection_info
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10
+
+- name: "remove the VPC"
+  ec2_vpc_net:
+    state: absent
+    name: "{{ vpc_name }}"
+    cidr_block: "{{ vpc_cidr }}"
+    tags:
+      Name: Ansible Testing VPC
+    tenancy: default
+    <<: *aws_connection_info
+  register: removed
+  until: removed is not failed
+  ignore_errors: yes
+  retries: 10

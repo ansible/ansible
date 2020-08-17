@@ -1,0 +1,4 @@
+---
+- name: Set fact1
+  set_fact:
+    fact1: yay

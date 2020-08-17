@@ -1,4 +1,0 @@
----
-
-minor_changes:
-  - vmware_guest - Don't search for VMDK if filename is defined.

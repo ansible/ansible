@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible.utils.encrypt now returns `AnsibleError` instead of crypt.crypt's `OSError` on Python 3.9

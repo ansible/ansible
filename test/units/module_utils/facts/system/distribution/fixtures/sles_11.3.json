@@ -1,0 +1,23 @@
+{
+    "name": "SLES 11.3",
+    "input": {
+        "/etc/SuSE-release": "SUSE Linux Enterprise Server 11 (x86_64)\nVERSION = 11\nPATCHLEVEL = 3"
+    },
+    "platform.dist": ["SuSE", "11", "x86_64"],
+    "distro": {
+        "codename": "",
+        "id": "sles",
+        "name": "SUSE Linux Enterprise Server",
+        "version": "11",
+        "version_best": "11",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    },
+    "result": {
+        "distribution": "SLES",
+        "distribution_major_version": "11",
+        "distribution_release": "3",
+        "os_family": "Suse",
+        "distribution_version": "11.3"
+    }
+}

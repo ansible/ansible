@@ -1,0 +1,5 @@
+docker_prereq_packages: []
+
+docker_packages:
+  - docker-ce-19.03.1
+  - docker-ce-cli-19.03.1

@@ -117,15 +117,15 @@ Modules removed
 The following modules no longer exist:
 
 * Apstra's ``aos_*`` modules.  See the new modules at  `https://github.com/apstra <https://github.com/apstra>`_.
-* ec2_ami_find use :ref:`ec2_ami_facts <ec2_ami_facts_module>` instead.
-* kubernetes use :ref:`k8s <k8s_module>` instead.
-* nxos_ip_interface use :ref:`nxos_l3_interface <nxos_l3_interface_module>` instead.
-* nxos_portchannel use :ref:`nxos_linkagg <nxos_linkagg_module>` instead.
-* nxos_switchport use :ref:`nxos_l2_interface <nxos_l2_interface_module>` instead.
-* oc use :ref:`k8s <k8s_module>` instead.
-* panos_nat_policy use :ref:`panos_nat_rule <panos_nat_rule_module>` instead.
-* panos_security_policy use :ref:`panos_security_rule <panos_security_rule_module>` instead.
-* vsphere_guest use :ref:`vmware_guest <vmware_guest_module>` instead.
+* ec2_ami_find use :ref:`ec2_ami_facts <ansible_2_9:ec2_ami_facts_module>` instead.
+* kubernetes use :ref:`k8s <ansible_2_9:k8s_module>` instead.
+* nxos_ip_interface use :ref:`nxos_l3_interface <ansible_2_9:nxos_l3_interface_module>` instead.
+* nxos_portchannel use :ref:`nxos_linkagg <ansible_2_9:nxos_linkagg_module>` instead.
+* nxos_switchport use :ref:`nxos_l2_interface <ansible_2_9:nxos_l2_interface_module>` instead.
+* oc use :ref:`k8s <ansible_2_9:k8s_module>` instead.
+* panos_nat_policy use :ref:`panos_nat_rule <ansible_2_9:panos_nat_rule_module>` instead.
+* panos_security_policy use :ref:`panos_security_rule <ansible_2_9:panos_security_rule_module>` instead.
+* vsphere_guest use :ref:`vmware_guest <ansible_2_9:vmware_guest_module>` instead.
 
 
 Deprecation notices
@@ -724,6 +724,11 @@ Network resource modules
 ------------------------
 
 Ansible 2.9 introduced the first batch of network resource modules. Sections of a network device's configuration can be thought of as a resource provided by that device. Network resource modules are intentionally scoped to configure a single resource and you can combine them as building blocks to configure complex network services. The older modules are deprecated in Ansible 2.9 and will be removed in Ansible 2.13. You should scan the list of deprecated modules above and replace them with the new network resource modules in your playbooks. See `Ansible Network Features in 2.9 <https://www.ansible.com/blog/network-features-coming-soon-in-ansible-engine-2.9>`_ for details.
+
+Improved ``gather_facts`` support for network devices
+-----------------------------------------------------
+
+In Ansible 2.9, the ``gather_facts`` keyword now supports gathering network device facts in standardized key/value pairs. You can feed these network facts into further tasks to manage the network device. You can also use the new ``gather_network_resources`` parameter with the network ``*_facts`` modules (such as :ref:`eos_facts <eos_facts_module>`) to return just a subset of the device configuration.  See :ref:`network_gather_facts` for an example.
 
 Top-level connection arguments removed in 2.9
 ---------------------------------------------

@@ -4,11 +4,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'core'}
-
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
     inventory: toml
     version_added: "2.8"
     short_description: Uses a specific TOML file as an inventory source.
@@ -19,75 +15,75 @@ DOCUMENTATION = '''
         - Requires the 'toml' python library
 '''
 
-EXAMPLES = '''
-example1: |
-    [all.vars]
-    has_java = false
+EXAMPLES = r'''# fmt: toml
+# Example 1
+[all.vars]
+has_java = false
 
-    [web]
-    children = [
-        "apache",
-        "nginx"
-    ]
-    vars = { http_port = 8080, myvar = 23 }
+[web]
+children = [
+    "apache",
+    "nginx"
+]
+vars = { http_port = 8080, myvar = 23 }
 
-    [web.hosts]
-    host1 = {}
-    host2 = { ansible_port = 222 }
+[web.hosts]
+host1 = {}
+host2 = { ansible_port = 222 }
 
-    [apache.hosts]
-    tomcat1 = {}
-    tomcat2 = { myvar = 34 }
-    tomcat3 = { mysecret = "03#pa33w0rd" }
+[apache.hosts]
+tomcat1 = {}
+tomcat2 = { myvar = 34 }
+tomcat3 = { mysecret = "03#pa33w0rd" }
 
-    [nginx.hosts]
-    jenkins1 = {}
+[nginx.hosts]
+jenkins1 = {}
 
-    [nginx.vars]
-    has_java = true
+[nginx.vars]
+has_java = true
 
-example2: |
-    [all.vars]
-    has_java = false
+# Example 2
+[all.vars]
+has_java = false
 
-    [web]
-    children = [
-        "apache",
-        "nginx"
-    ]
+[web]
+children = [
+    "apache",
+    "nginx"
+]
 
-    [web.vars]
-    http_port = 8080
-    myvar = 23
+[web.vars]
+http_port = 8080
+myvar = 23
 
-    [web.hosts.host1]
-    [web.hosts.host2]
-    ansible_port = 222
+[web.hosts.host1]
+[web.hosts.host2]
+ansible_port = 222
 
-    [apache.hosts.tomcat1]
+[apache.hosts.tomcat1]
 
-    [apache.hosts.tomcat2]
-    myvar = 34
+[apache.hosts.tomcat2]
+myvar = 34
 
-    [apache.hosts.tomcat3]
-    mysecret = "03#pa33w0rd"
+[apache.hosts.tomcat3]
+mysecret = "03#pa33w0rd"
 
-    [nginx.hosts.jenkins1]
+[nginx.hosts.jenkins1]
 
-    [nginx.vars]
-    has_java = true
+[nginx.vars]
+has_java = true
 
-example3: |
-    [ungrouped.hosts]
-    host1 = {}
-    host2 = { ansible_host = "127.0.0.1", ansible_port = 44 }
-    host3 = { ansible_host = "127.0.0.1", ansible_port = 45 }
+# Example 3
+[ungrouped.hosts]
+host1 = {}
+host2 = { ansible_host = "127.0.0.1", ansible_port = 44 }
+host3 = { ansible_host = "127.0.0.1", ansible_port = 45 }
 
-    [g1.hosts]
-    host4 = {}
+[g1.hosts]
+host4 = {}
 
-    [g2.hosts]
-    host4 = {}
+[g2.hosts]
+host4 = {}
 '''
 
 import os
@@ -109,11 +105,6 @@ except ImportError:
     HAS_TOML = False
 
 display = Display()
-
-WARNING_MSG = (
-    'The TOML inventory format is marked as preview, which means that it is not guaranteed to have a backwards '
-    'compatible interface.'
-)
 
 
 if HAS_TOML and hasattr(toml, 'TomlEncoder'):
@@ -235,8 +226,6 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleParserError(
                 'The TOML inventory plugin requires the python "toml" library'
             )
-
-        display.warning(WARNING_MSG)
 
         super(InventoryModule, self).parse(inventory, loader, path)
         self.set_options()

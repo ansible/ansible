@@ -6,3 +6,4 @@
 jinja2
 PyYAML
 cryptography
+packaging

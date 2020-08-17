@@ -153,13 +153,13 @@
       include_role:
         name: "{{ host_var_role_name }}"
 
-    - name: assert that host varible for role name calls 2 diff roles
+    - name: assert that host variable for role name calls 2 diff roles
       assert:
         that:
           - _role2_result is not none
       when: inventory_hostname == 'testhost2'
 
-    - name: assert that host varible for role name calls 2 diff roles
+    - name: assert that host variable for role name calls 2 diff roles
       assert:
         that:
           - _role3_result is not none

@@ -1,0 +1,21 @@
+- name: Add repository
+  yum_repository:
+    file: docker-ce
+    name: docker-ce-stable
+    description: Docker CE Stable - $basearch
+    baseurl: https://download.docker.com/linux/fedora/$releasever/$basearch/stable
+    enabled: yes
+    gpgcheck: yes
+    gpgkey: https://download.docker.com/linux/fedora/gpg
+
+- name: Update cache
+  command: dnf makecache
+  args:
+    warn: no
+
+- name: Install docker
+  dnf:
+    name: "{{ docker_packages }}"
+    state: present
+    enablerepo: docker-ce-test
+  notify: cleanup docker

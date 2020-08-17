@@ -49,7 +49,6 @@ class HostVars(Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
     def __init__(self, inventory, variable_manager, loader):
-        self._lookup = dict()
         self._inventory = inventory
         self._loader = loader
         self._variable_manager = variable_manager
@@ -76,6 +75,19 @@ class HostVars(Mapping):
             return AnsibleUndefined(name="hostvars['%s']" % host_name)
 
         return self._variable_manager.get_vars(host=host, include_hostvars=False)
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+        # Methods __getstate__ and __setstate__ of VariableManager do not
+        # preserve _loader and _hostvars attributes to improve pickle
+        # performance and memory utilization. Since HostVars holds values
+        # of those attributes already, assign them if needed.
+        if self._variable_manager._loader is None:
+            self._variable_manager._loader = self._loader
+
+        if self._variable_manager._hostvars is None:
+            self._variable_manager._hostvars = self
 
     def __getitem__(self, host_name):
         data = self.raw_get(host_name)

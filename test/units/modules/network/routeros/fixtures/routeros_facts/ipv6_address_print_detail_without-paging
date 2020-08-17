@@ -1,3 +1,0 @@
-Flags: X - disabled, I - invalid, D - dynamic, G - global, L - link-local
- 0 DL address=fe80::21c:42ff:fe36:5290/64 from-pool="" interface=ether1
-      actual-interface=ether1 eui-64=no advertise=no no-dad=no

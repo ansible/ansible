@@ -1,0 +1,2 @@
+bugfixes:
+  - Skip literal_eval for string filters results in native jinja. (https://github.com/ansible/ansible/issues/70831)

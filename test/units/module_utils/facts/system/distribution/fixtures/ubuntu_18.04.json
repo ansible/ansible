@@ -1,0 +1,39 @@
+{
+    "name": "Ubuntu 18.04",
+    "distro": {
+        "codename": "bionic",
+        "id": "ubuntu",
+        "name": "Ubuntu",
+        "version": "18.04",
+        "version_best": "18.04.3",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "Ubuntu",
+            "version": "18.04.3 LTS (Bionic Beaver)",
+            "id": "ubuntu",
+            "id_like": "debian",
+            "pretty_name": "Ubuntu 18.04.3 LTS",
+            "version_id": "18.04",
+            "home_url": "https://www.ubuntu.com/",
+            "support_url": "https://help.ubuntu.com/",
+            "bug_report_url": "https://bugs.launchpad.net/ubuntu/",
+            "privacy_policy_url": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+            "version_codename": "bionic",
+            "ubuntu_codename": "bionic",
+            "codename": "bionic"
+        }
+    },
+    "input": {
+        "/etc/os-release": "NAME=\"Ubuntu\"\nVERSION=\"18.04.3 LTS (Bionic Beaver)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 18.04.3 LTS\"\nVERSION_ID=\"18.04\"\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nVERSION_CODENAME=bionic\nUBUNTU_CODENAME=bionic\n",
+        "/etc/lsb-release": "DISTRIB_ID=Ubuntu\nDISTRIB_RELEASE=18.04\nDISTRIB_CODENAME=bionic\nDISTRIB_DESCRIPTION=\"Ubuntu 18.04.3 LTS\"\n",
+        "/usr/lib/os-release": "NAME=\"Ubuntu\"\nVERSION=\"18.04.3 LTS (Bionic Beaver)\"\nID=ubuntu\nID_LIKE=debian\nPRETTY_NAME=\"Ubuntu 18.04.3 LTS\"\nVERSION_ID=\"18.04\"\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nVERSION_CODENAME=bionic\nUBUNTU_CODENAME=bionic\n"
+    },
+    "platform.dist": ["ubuntu", "18.04", "bionic"],
+    "result": {
+        "distribution": "Ubuntu",
+        "distribution_version": "18.04",
+        "distribution_release": "bionic",
+        "distribution_major_version": "18",
+        "os_family": "Debian"
+    }
+}

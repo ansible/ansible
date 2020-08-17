@@ -13,7 +13,7 @@ Using patterns
 
 You use a pattern almost any time you execute an ad-hoc command or a playbook. The pattern is the only element of an :ref:`ad-hoc command<intro_adhoc>` that has no flag. It is usually the second element::
 
-    ansible <pattern> -m <module_name> -a "<module options>""
+    ansible <pattern> -m <module_name> -a "<module options>"
 
 For example::
 

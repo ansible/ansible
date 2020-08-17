@@ -7,21 +7,25 @@ import atexit
 import datetime
 import time
 import os
-import platform
-import random
 import re
 import tempfile
 
 from .. import types as t
 
+from ..encoding import (
+    to_bytes,
+)
+
+from ..io import (
+    read_text_file,
+)
+
 from ..util import (
     ApplicationError,
     display,
-    is_shippable,
     import_plugins,
     load_plugins,
     ABC,
-    to_bytes,
     ANSIBLE_TEST_CONFIG_ROOT,
 )
 
@@ -36,6 +40,10 @@ from ..target import (
 
 from ..config import (
     IntegrationConfig,
+)
+
+from ..ci import (
+    get_ci_provider,
 )
 
 from ..data import (
@@ -190,12 +198,7 @@ class CloudBase(ABC):
         def config_callback(files):  # type: (t.List[t.Tuple[str, str]]) -> None
             """Add the config file to the payload file list."""
             if self._get_cloud_config(self._CONFIG_PATH, ''):
-                if data_context().content.collection:
-                    working_path = data_context().content.collection.directory
-                else:
-                    working_path = ''
-
-                pair = (self.config_path, os.path.join(working_path, os.path.relpath(self.config_path, data_context().content.root)))
+                pair = (self.config_path, os.path.relpath(self.config_path, data_context().content.root))
 
                 if pair not in files:
                     display.info('Including %s config: %s -> %s' % (self.platform, pair[0], pair[1]), verbosity=3)
@@ -287,6 +290,7 @@ class CloudProvider(CloudBase):
         """
         super(CloudProvider, self).__init__(args)
 
+        self.ci_provider = get_ci_provider()
         self.remove_config = False
         self.config_static_name = 'cloud-config-%s%s' % (self.platform, config_extension)
         self.config_static_path = os.path.join(data_context().content.integration_path, self.config_static_name)
@@ -308,7 +312,7 @@ class CloudProvider(CloudBase):
 
     def setup(self):
         """Setup the cloud resource before delegation and register a cleanup callback."""
-        self.resource_prefix = self._generate_resource_prefix()
+        self.resource_prefix = self.ci_provider.generate_resource_prefix()
 
         atexit.register(self.cleanup)
 
@@ -365,11 +369,10 @@ class CloudProvider(CloudBase):
         """
         :rtype: str
         """
-        with open(self.config_template_path, 'r') as template_fd:
-            lines = template_fd.read().splitlines()
-            lines = [l for l in lines if not l.startswith('#')]
-            config = '\n'.join(lines).strip() + '\n'
-            return config
+        lines = read_text_file(self.config_template_path).splitlines()
+        lines = [line for line in lines if not line.startswith('#')]
+        config = '\n'.join(lines).strip() + '\n'
+        return config
 
     @staticmethod
     def _populate_config_template(template, values):
@@ -383,21 +386,6 @@ class CloudProvider(CloudBase):
             template = template.replace('@%s' % key, value)
 
         return template
-
-    @staticmethod
-    def _generate_resource_prefix():
-        """
-        :rtype: str
-        """
-        if is_shippable():
-            return 'shippable-%s-%s' % (
-                os.environ['SHIPPABLE_BUILD_NUMBER'],
-                os.environ['SHIPPABLE_JOB_NUMBER'],
-            )
-
-        node = re.sub(r'[^a-zA-Z0-9]+', '-', platform.node().split('.')[0]).lower()
-
-        return 'ansible-test-%s-%d' % (node, random.randint(10000000, 99999999))
 
 
 class CloudEnvironment(CloudBase):

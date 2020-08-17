@@ -23,8 +23,8 @@ import os
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
-from ansible.module_utils.six import iteritems, string_types
 from ansible.module_utils._text import to_native
+from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.plugins.loader import lookup_loader
@@ -36,7 +36,7 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.utils.collection_loader import AnsibleCollectionLoader
+from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
 from ansible.utils.sentinel import Sentinel
 
@@ -91,6 +91,10 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
 
+        # This is a reference of all the candidate action names for transparent execution of module_defaults with redirected content
+        # This isn't a FieldAttribute to prevent it from being set via the playbook
+        self._ansible_internal_redirect_list = []
+
         self._role = role
         self._parent = None
 
@@ -111,16 +115,19 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             path = "%s:%s" % (self._parent._play._ds._data_source, self._parent._play._ds._line_number)
         return path
 
-    def get_name(self):
+    def get_name(self, include_role_fqcn=True):
         ''' return the name of the task '''
 
-        if self._role and self.name and ("%s : " % self._role._role_name) not in self.name:
-            return "%s : %s" % (self._role.get_name(), self.name)
+        if self._role:
+            role_name = self._role.get_name(include_role_fqcn=include_role_fqcn)
+
+        if self._role and self.name and role_name not in self.name:
+            return "%s : %s" % (role_name, self.name)
         elif self.name:
             return self.name
         else:
             if self._role:
-                return "%s : %s" % (self._role.get_name(), self.action)
+                return "%s : %s" % (role_name, self.action)
             else:
                 return "%s" % (self.action,)
 
@@ -160,7 +167,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
         new_ds['loop_with'] = loop_name
         new_ds['loop'] = v
-        # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead", version="2.10")
+        # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead",
+        #                    version="2.10", collection_name='ansible.builtin')
 
     def preprocess_data(self, ds):
         '''
@@ -179,16 +187,16 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             new_ds.ansible_pos = ds.ansible_pos
 
         # since this affects the task action parsing, we have to resolve in preprocess instead of in typical validator
-        default_collection = AnsibleCollectionLoader().default_collection
+        default_collection = AnsibleCollectionConfig.default_collection
 
-        # use the parent value if our ds doesn't define it
-        collections_list = ds.get('collections', self.collections)
-
+        collections_list = ds.get('collections')
         if collections_list is None:
-            collections_list = []
-
-        if isinstance(collections_list, string_types):
-            collections_list = [collections_list]
+            # use the parent value if our ds doesn't define it
+            collections_list = self.collections
+        else:
+            # Validate this untemplated field early on to guarantee we are dealing with a list.
+            # This is also done in CollectionSearch._load_collections() but this runs before that call.
+            collections_list = self.get_validated_value('collections', self._collections, collections_list, None)
 
         if default_collection and not self._role:  # FIXME: and not a collections role
             if collections_list:
@@ -216,6 +224,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                 raise
             # But if it wasn't, we can add the yaml object now to get more detail
             raise AnsibleParserError(to_native(e), obj=ds, orig_exc=e)
+        else:
+            self._ansible_internal_redirect_list = args_parser.internal_redirect_list[:]
 
         # the command/shell/script modules used to support the `cmd` arg,
         # which corresponds to what we now call _raw_params, so move that
@@ -255,7 +265,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                 if action in ('include',) and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
                                        " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
-                                       " for currently supported syntax regarding included files and variables", version="2.12")
+                                       " for currently supported syntax regarding included files and variables",
+                                       version="2.12", collection_name='ansible.builtin')
                     new_ds['vars'][k] = v
                 elif C.INVALID_TASK_ATTRIBUTE_FAILED or k in self._valid_attrs:
                     new_ds[k] = v
@@ -290,7 +301,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if self._parent:
             self._parent.post_validate(templar)
 
-        if AnsibleCollectionLoader().default_collection:
+        if AnsibleCollectionConfig.default_collection:
             pass
 
         super(Task, self).post_validate(templar)
@@ -389,6 +400,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
     def copy(self, exclude_parent=False, exclude_tasks=False):
         new_me = super(Task, self).copy()
 
+        # if the task has an associated list of candidate names, copy it to the new object too
+        new_me._ansible_internal_redirect_list = self._ansible_internal_redirect_list[:]
+
         new_me._parent = None
         if self._parent and not exclude_parent:
             new_me._parent = self._parent.copy(exclude_tasks=exclude_tasks)
@@ -409,6 +423,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
             if self._role:
                 data['role'] = self._role.serialize()
+
+            if self._ansible_internal_redirect_list:
+                data['_ansible_internal_redirect_list'] = self._ansible_internal_redirect_list[:]
 
         return data
 
@@ -437,6 +454,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             r.deserialize(role_data)
             self._role = r
             del data['role']
+
+        self._ansible_internal_redirect_list = data.get('_ansible_internal_redirect_list', [])
 
         super(Task, self).deserialize(data)
 

@@ -65,7 +65,7 @@ def _return_datastructure_name(obj):
     elif isinstance(obj, tuple(list(integer_types) + [float])):
         yield to_native(obj, nonstring='simplerepr')
     else:
-        raise TypeError('Unknown parameter type: %s, %s' % (type(obj), obj))
+        raise TypeError('Unknown parameter type: %s' % (type(obj)))
 
 
 def list_no_log_values(argument_spec, params):
@@ -86,7 +86,10 @@ def list_no_log_values(argument_spec, params):
             no_log_object = params.get(arg_name, None)
 
             if no_log_object:
-                no_log_values.update(_return_datastructure_name(no_log_object))
+                try:
+                    no_log_values.update(_return_datastructure_name(no_log_object))
+                except TypeError as e:
+                    raise TypeError('Failed to convert "%s": %s' % (arg_name, to_native(e)))
 
         # Get no_log values from suboptions
         sub_argument_spec = arg_opts.get('options')
@@ -115,7 +118,7 @@ def list_no_log_values(argument_spec, params):
     return no_log_values
 
 
-def list_deprecations(argument_spec, params):
+def list_deprecations(argument_spec, params, prefix=''):
     """Return a list of deprecations
 
     :arg argument_spec: An argument spec dictionary from a module
@@ -129,11 +132,33 @@ def list_deprecations(argument_spec, params):
 
     deprecations = []
     for arg_name, arg_opts in argument_spec.items():
-        if arg_opts.get('removed_in_version') is not None and arg_name in params:
-            deprecations.append({
-                'msg': "Param '%s' is deprecated. See the module docs for more information" % arg_name,
-                'version': arg_opts.get('removed_in_version')
-            })
+        if arg_name in params:
+            if prefix:
+                sub_prefix = '%s["%s"]' % (prefix, arg_name)
+            else:
+                sub_prefix = arg_name
+            if arg_opts.get('removed_at_date') is not None:
+                deprecations.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
+                    'date': arg_opts.get('removed_at_date'),
+                    'collection_name': arg_opts.get('removed_from_collection'),
+                })
+            elif arg_opts.get('removed_in_version') is not None:
+                deprecations.append({
+                    'msg': "Param '%s' is deprecated. See the module docs for more information" % sub_prefix,
+                    'version': arg_opts.get('removed_in_version'),
+                    'collection_name': arg_opts.get('removed_from_collection'),
+                })
+            # Check sub-argument spec
+            sub_argument_spec = arg_opts.get('options')
+            if sub_argument_spec is not None:
+                sub_arguments = params[arg_name]
+                if isinstance(sub_arguments, Mapping):
+                    sub_arguments = [sub_arguments]
+                if isinstance(sub_arguments, list):
+                    for sub_params in sub_arguments:
+                        if isinstance(sub_params, Mapping):
+                            deprecations.extend(list_deprecations(sub_argument_spec, sub_params, prefix=sub_prefix))
 
     return deprecations
 

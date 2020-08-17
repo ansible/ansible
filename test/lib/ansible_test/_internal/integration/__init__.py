@@ -10,6 +10,10 @@ import tempfile
 
 from .. import types as t
 
+from ..encoding import (
+    to_bytes,
+)
+
 from ..target import (
     analyze_integration_target_dependencies,
     walk_integration_targets,
@@ -22,20 +26,23 @@ from ..config import (
     WindowsIntegrationConfig,
 )
 
+from ..io import (
+    make_dirs,
+    write_text_file,
+    read_text_file,
+)
+
 from ..util import (
     ApplicationError,
     display,
-    make_dirs,
     COVERAGE_CONFIG_NAME,
     MODE_DIRECTORY,
     MODE_DIRECTORY_WRITE,
     MODE_FILE,
-    to_bytes,
 )
 
 from ..util_common import (
     named_temporary_file,
-    write_text_file,
     ResultType,
 )
 
@@ -136,8 +143,7 @@ def check_inventory(args, inventory_path):  # type: (IntegrationConfig, str) -> 
     """Check the given inventory for issues."""
     if args.docker or args.remote:
         if os.path.exists(inventory_path):
-            with open(inventory_path) as inventory_file:
-                inventory = inventory_file.read()
+            inventory = read_text_file(inventory_path)
 
             if 'ansible_ssh_private_key_file' in inventory:
                 display.warning('Use of "ansible_ssh_private_key_file" in inventory with the --docker or --remote option is unsupported and will likely fail.')
@@ -164,14 +170,10 @@ def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, s
         Add the inventory file to the payload file list.
         This will preserve the file during delegation even if it is ignored or is outside the content and install roots.
         """
-        if data_context().content.collection:
-            working_path = data_context().content.collection.directory
-        else:
-            working_path = ''
+        inventory_path = get_inventory_relative_path(args)
+        inventory_tuple = inventory_path_src, inventory_path
 
-        inventory_path = os.path.join(working_path, get_inventory_relative_path(args))
-
-        if os.path.isfile(inventory_path_src) and os.path.relpath(inventory_path_src, data_context().content.root) != inventory_path:
+        if os.path.isfile(inventory_path_src) and inventory_tuple not in files:
             originals = [item for item in files if item[1] == inventory_path]
 
             if originals:
@@ -182,7 +184,7 @@ def delegate_inventory(args, inventory_path_src):  # type: (IntegrationConfig, s
             else:
                 display.notice('Sourcing inventory file "%s" from "%s".' % (inventory_path, inventory_path_src))
 
-            files.append((inventory_path_src, inventory_path))
+            files.append(inventory_tuple)
 
     data_context().register_payload_callback(inventory_callback)
 

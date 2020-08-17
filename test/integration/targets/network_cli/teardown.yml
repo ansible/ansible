@@ -1,0 +1,14 @@
+- hosts: vyos
+  connection: ansible.netcommon.network_cli
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Get rid of user (undo everything from setup.yml)
+      register: result
+      vyos.vyos.vyos_config:
+        lines:
+          - delete system login user atester full-name "Ansible Tester"
+          - delete system login user atester authentication plaintext-password testymctest
+          - delete system login user jsmith level admin
+          - set service ssh disable-password-authentication

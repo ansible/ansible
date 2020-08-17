@@ -31,6 +31,9 @@
 #    Which should be converted to:
 #        var|string is search('foo')
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import argparse
 import os
 import re

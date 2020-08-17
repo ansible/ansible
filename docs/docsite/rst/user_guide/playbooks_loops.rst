@@ -121,18 +121,16 @@ To loop over a dict, use the  :ref:`dict2items <dict_filter>`:
 
 .. code-block:: yaml
 
-    - name: create a tag dictionary of non-empty tags
-      set_fact:
-        tags_dict: "{{ (tags_dict|default({}))|combine({item.key: item.value}) }}"
-      loop: "{{ tags|dict2items }}"
+    - name: Using dict2items
+      debug:
+        msg: "{{ item.key }} - {{ item.value }}"
+      loop: "{{ tag_data | dict2items }}"
       vars:
-        tags:
+        tag_data:
           Environment: dev
           Application: payment
-          Another: "{{ doesnotexist|default() }}"
-      when: item.value != ""
 
-Here, we don't want to set empty tags, so we create a dictionary containing only non-empty tags.
+Here, we are iterating over `tag_data` and printing the key and the value from it.
 
 Registering variables with a loop
 =================================
@@ -354,6 +352,8 @@ To keep track of where you are in a loop, use the ``index_var`` directive with `
     loop_control:
       index_var: my_idx
 
+.. note:: `index_var` is 0 indexed.
+
 Defining inner and outer variable names with ``loop_var``
 ---------------------------------------------------------
 .. versionadded:: 2.1
@@ -430,7 +430,7 @@ Migrating from with_X to loop
    :ref:`playbooks_reuse_roles`
        Playbook organization by roles
    :ref:`playbooks_best_practices`
-       Best practices in playbooks
+       Tips and tricks for playbooks
    :ref:`playbooks_conditionals`
        Conditional statements in playbooks
    :ref:`playbooks_variables`

@@ -1,0 +1,52 @@
+plugin_routing:
+  action:
+    uses_redirected_action:
+      redirect: testns.testcoll.subclassed_normal
+  callback:
+    removedcallback:
+      tombstone:
+        removal_date: '2020-01-01'
+  connection:
+    redirected_local:
+      redirect: ansible.builtin.local
+  modules:
+    multilevel1:
+      redirect: testns.testcoll.multilevel2
+    multilevel2:
+      redirect: testns.testcoll.multilevel3
+    multilevel3:
+      redirect: testns.testcoll.ping
+    uses_redirected_action:
+      redirect: ansible.builtin.ping
+    setup.ps1: ansible.windows.setup
+    looped_ping:
+      redirect: testns.testcoll.looped_ping2
+    looped_ping2:
+      redirect: testns.testcoll.looped_ping
+    bogus_redirect:
+      redirect: bogus.collection.shouldbomb
+    deprecated_ping:
+      deprecation:
+        removal_date: 2020-12-31
+        warning_text: old_ping will be removed in a future release of this collection. Use new_ping instead.
+    foobar_facts:
+      redirect: foobar_info
+    aliased_ping:
+      redirect: ansible.builtin.ping
+    dead_ping:
+      tombstone:
+        removal_date: 2019-12-31
+        warning_text: dead_ping has been removed
+  module_utils:
+    moved_out_root:
+      redirect: testns.content_adj.sub1.foomodule
+    formerly_testcoll_pkg:
+      redirect: ansible_collections.testns.othercoll.plugins.module_utils.formerly_testcoll_pkg
+    formerly_testcoll_pkg.submod:
+      redirect: ansible_collections.testns.othercoll.plugins.module_utils.formerly_testcoll_pkg.submod
+    missing_redirect_target_collection:
+      redirect: bogusns.boguscoll.bogusmu
+    missing_redirect_target_module:
+      redirect: testns.othercoll.bogusmu
+
+requires_ansible: '>=2.11'

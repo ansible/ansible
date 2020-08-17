@@ -1,0 +1,19 @@
+---
+esxi_hosts:
+  - DC0_C0_H0
+  - DC0_C0_H1
+  - DC0_C0_H2
+esxi_password: 'pass'
+esxi_user: 'user'
+rw_datastore: LocalDS_0
+ro_datastore: LocalDS_1
+virtual_machines:
+  - name: DC0_H0_VM0
+    folder: /F0/DC0/vm/F0
+  - name: DC0_H0_VM1
+    folder: /F0/DC0/vm/F0
+virtual_machines_in_cluster:
+  - name: DC0_C0_RP0_VM0
+    cluster: '{{ ccr1 }}'
+  - name: DC0_C0_RP0_VM1
+    cluster: '{{ ccr1 }}'

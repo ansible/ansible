@@ -1,0 +1,12 @@
+v2_playbook_on_start
+v2_on_any
+v2_playbook_on_play_start
+v2_on_any
+v2_playbook_on_task_start
+v2_on_any
+v2_runner_on_start
+v2_on_any
+v2_runner_on_ok
+v2_on_any
+v2_playbook_on_stats
+v2_on_any

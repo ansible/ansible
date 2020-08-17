@@ -16,25 +16,7 @@ DOCUMENTATION = '''
       - default_callback
     requirements:
       - set as stdout in configuration
-    options:
-      check_mode_markers:
-        name: Show markers when running in check mode
-        description:
-        - "Toggle to control displaying markers when running in check mode. The markers are C(DRY RUN)
-        at the beggining and ending of playbook execution (when calling C(ansible-playbook --check))
-        and C(CHECK MODE) as a suffix at every play and task that is run in check mode."
-        type: bool
-        default: no
-        version_added: 2.9
-        env:
-          - name: ANSIBLE_CHECK_MODE_MARKERS
-        ini:
-          - key: check_mode_markers
-            section: defaults
 '''
-
-# NOTE: check_mode_markers functionality is also implemented in the following derived plugins:
-#       debug.py, yaml.py, dense.py. Maybe their documentation needs updating, too.
 
 
 from ansible import constants as C
@@ -42,7 +24,6 @@ from ansible import context
 from ansible.playbook.task_include import TaskInclude
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
-
 
 # These values use ansible.constants for historical reasons, mostly to allow
 # unmodified derivative plugins to work. However, newer options added to the
@@ -57,7 +38,8 @@ COMPAT_OPTIONS = (('display_skipped_hosts', C.DISPLAY_SKIPPED_HOSTS),
                   ('display_ok_hosts', True),
                   ('show_custom_stats', C.SHOW_CUSTOM_STATS),
                   ('display_failed_stderr', False),
-                  ('check_mode_markers', False),)
+                  ('check_mode_markers', False),
+                  ('show_per_host_start', False))
 
 
 class CallbackModule(CallbackBase):
@@ -88,6 +70,8 @@ class CallbackModule(CallbackBase):
             try:
                 value = self.get_option(option)
             except (AttributeError, KeyError):
+                self._display.deprecated("'%s' is subclassing DefaultCallback without the corresponding doc_fragment." % self._load_name,
+                                         version='2.14', collection_name='ansible.builtin')
                 value = constant
             setattr(self, option, value)
 
@@ -350,8 +334,9 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_include(self, included_file):
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
-        if 'item' in included_file._args:
-            msg += " => (item=%s)" % (self._get_item_label(included_file._args),)
+        label = self._get_item_label(included_file._vars)
+        if label:
+            msg += " => (item=%s)" % label
         self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_stats(self, stats):

@@ -114,7 +114,7 @@ Before the introduction of AnsiBallZ in Ansible 2.1, using ``__file__`` worked i
 
 Ansible 2.8 will no longer create a temporary file for ``AnsibleModule``; instead it will read the file out of a zip file. This change should speed up module execution, but it does mean that starting with Ansible 2.8, referencing ``__file__`` will always fail in ``AnsibleModule``.
 
-If you are the author of a third-party module which uses ``__file__`` with ``AnsibleModule``, please update your module(s) now, while the use of ``__file__`` is deprecated but still available. The most common use of ``__file__`` is to find a directory to write a temporary file. In Ansible 2.5 and above, you can use the ``tmpdir`` attribute on an ``AnsibleModule`` instance instead, as shown in this code from the :ref:`apt module <apt_module>`:
+If you are the author of a third-party module which uses ``__file__`` with ``AnsibleModule``, please update your module(s) now, while the use of ``__file__`` is deprecated but still available. The most common use of ``__file__`` is to find a directory to write a temporary file. In Ansible 2.5 and above, you can use the ``tmpdir`` attribute on an ``AnsibleModule`` instance instead, as shown in this code from the :ref:`apt module <ansible_2_7:apt_module>`:
 
 .. code-block:: diff
 
@@ -175,19 +175,19 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.11. Please update your playbooks accordingly.
 
-* ``na_cdot_aggregate`` use :ref:`na_ontap_aggregate <na_ontap_aggregate_module>` instead.
-* ``na_cdot_license`` use :ref:`na_ontap_license <na_ontap_license_module>` instead.
-* ``na_cdot_lun`` use :ref:`na_ontap_lun <na_ontap_lun_module>` instead.
-* ``na_cdot_qtree`` use :ref:`na_ontap_qtree <na_ontap_qtree_module>` instead.
-* ``na_cdot_svm`` use :ref:`na_ontap_svm <na_ontap_svm_module>` instead.
-* ``na_cdot_user`` use :ref:`na_ontap_user <na_ontap_user_module>` instead.
-* ``na_cdot_user_role`` use :ref:`na_ontap_user_role <na_ontap_user_role_module>` instead.
-* ``na_cdot_volume`` use :ref:`na_ontap_volume <na_ontap_volume_module>` instead.
-* ``sf_account_manager`` use :ref:`na_elementsw_account<na_elementsw_account_module>` instead.
-* ``sf_check_connections`` use :ref:`na_elementsw_check_connections<na_elementsw_check_connections_module>` instead.
-* ``sf_snapshot_schedule_manager`` use :ref:`na_elementsw_snapshot_schedule<na_elementsw_snapshot_schedule_module>` instead.
-* ``sf_volume_access_group_manager`` use :ref:`na_elementsw_access_group<na_elementsw_access_group_module>` instead.
-* ``sf_volume_manager`` use :ref:`na_elementsw_volume<na_elementsw_volume_module>` instead.
+* ``na_cdot_aggregate`` use :ref:`na_ontap_aggregate <ansible_2_7:na_ontap_aggregate_module>` instead.
+* ``na_cdot_license`` use :ref:`na_ontap_license <ansible_2_7:na_ontap_license_module>` instead.
+* ``na_cdot_lun`` use :ref:`na_ontap_lun <ansible_2_7:na_ontap_lun_module>` instead.
+* ``na_cdot_qtree`` use :ref:`na_ontap_qtree <ansible_2_7:na_ontap_qtree_module>` instead.
+* ``na_cdot_svm`` use :ref:`na_ontap_svm <ansible_2_7:na_ontap_svm_module>` instead.
+* ``na_cdot_user`` use :ref:`na_ontap_user <ansible_2_7:na_ontap_user_module>` instead.
+* ``na_cdot_user_role`` use :ref:`na_ontap_user_role <ansible_2_7:na_ontap_user_role_module>` instead.
+* ``na_cdot_volume`` use :ref:`na_ontap_volume <ansible_2_7:na_ontap_volume_module>` instead.
+* ``sf_account_manager`` use :ref:`na_elementsw_account<ansible_2_7:na_elementsw_account_module>` instead.
+* ``sf_check_connections`` use :ref:`na_elementsw_check_connections<ansible_2_7:na_elementsw_check_connections_module>` instead.
+* ``sf_snapshot_schedule_manager`` use :ref:`na_elementsw_snapshot_schedule<ansible_2_7:na_elementsw_snapshot_schedule_module>` instead.
+* ``sf_volume_access_group_manager`` use :ref:`na_elementsw_access_group<ansible_2_7:na_elementsw_access_group_module>` instead.
+* ``sf_volume_manager`` use :ref:`na_elementsw_volume<ansible_2_7:na_elementsw_volume_module>` instead.
 
 Noteworthy module changes
 -------------------------

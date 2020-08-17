@@ -1,2 +1,0 @@
-minor_changes:
-    - ansible-test no longer tries to install sanity test dependencies on unsupported Python versions

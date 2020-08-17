@@ -22,8 +22,8 @@ import re
 import shlex
 import pkgutil
 import xml.etree.ElementTree as ET
+import ntpath
 
-from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.shell import ShellBase
 
@@ -67,40 +67,20 @@ class ShellModule(ShellBase):
     # Used by various parts of Ansible to do Windows specific changes
     _IS_WINDOWS = True
 
-    env = dict()
-
-    # We're being overly cautious about which keys to accept (more so than
-    # the Windows environment is capable of doing), since the powershell
-    # env provider's limitations don't appear to be documented.
-    safe_envkey = re.compile(r'^[\d\w_]{1,255}$')
-
     # TODO: add binary module support
-
-    def assert_safe_env_key(self, key):
-        if not self.safe_envkey.match(key):
-            raise AnsibleError("Invalid PowerShell environment key: %s" % key)
-        return key
-
-    def safe_env_value(self, key, value):
-        if len(value) > 32767:
-            raise AnsibleError("PowerShell environment value for key '%s' exceeds 32767 characters in length" % key)
-        # powershell single quoted literals need single-quote doubling as their only escaping
-        value = value.replace("'", "''")
-        return to_text(value, errors='surrogate_or_strict')
 
     def env_prefix(self, **kwargs):
         # powershell/winrm env handling is handled in the exec wrapper
         return ""
 
     def join_path(self, *args):
-        parts = []
-        for arg in args:
-            arg = self._unquote(arg).replace('/', '\\')
-            parts.extend([a for a in arg.split('\\') if a])
-        path = '\\'.join(parts)
-        if path.startswith('~'):
-            return path
-        return path
+        # use normpath() to remove doubled slashed and convert forward to backslashes
+        parts = [ntpath.normpath(self._unquote(arg)) for arg in args]
+
+        # Becuase ntpath.join treats any component that begins with a backslash as an absolute path,
+        # we have to strip slashes from at least the beginning, otherwise join will ignore all previous
+        # path components except for the drive.
+        return ntpath.join(parts[0], *[part.strip('\\') for part in parts[1:]])
 
     def get_remote_filename(self, pathname):
         # powershell requires that script files end with .ps1
@@ -135,6 +115,8 @@ class ShellModule(ShellBase):
     def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
         # Windows does not have an equivalent for the system temp files, so
         # the param is ignored
+        if not basefile:
+            basefile = self.__class__._generate_temp_dir_name()
         basefile = self._escape(self._unquote(basefile))
         basetmpdir = tmpdir if tmpdir else self.get_option('remote_tmp')
 

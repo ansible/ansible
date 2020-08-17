@@ -9,10 +9,13 @@ and the current ansible_facts regarding the distribution version.
 This assumes a working ansible version in the path.
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-import os.path
-import subprocess
 import json
+import os.path
+import platform
+import subprocess
 import sys
 
 from ansible.module_utils import distro
@@ -37,6 +40,7 @@ filelist = [
     '/etc/altlinux-release',
     '/etc/os-release',
     '/etc/coreos/update.conf',
+    '/etc/flatcar/update.conf',
     '/usr/lib/os-release',
 ]
 
@@ -80,10 +84,20 @@ output = {
         'name': distro.name(),
         'version': distro.version(),
         'version_best': distro.version(best=True),
+        'lsb_release_info': distro.lsb_release_info(),
+        'os_release_info': distro.os_release_info(),
     },
     'input': fcont,
     'platform.dist': dist,
     'result': ansible_facts,
 }
+
+system = platform.system()
+if system != 'Linux':
+    output['platform.system'] = system
+
+release = platform.release()
+if release:
+    output['platform.release'] = release
 
 print(json.dumps(output, indent=4))

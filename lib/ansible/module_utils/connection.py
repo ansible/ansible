@@ -26,6 +26,9 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import hashlib
 import json
@@ -135,8 +138,10 @@ class Connection(object):
         reqid = req['id']
 
         if not os.path.exists(self.socket_path):
-            raise ConnectionError('socket_path does not exist or cannot be found.'
-                                  '\nSee the socket_path issue category in Network Debug and Troubleshooting Guide')
+            raise ConnectionError(
+                'socket path %s does not exist or cannot be found. See Troubleshooting socket '
+                'path issues in the Network Debug and Troubleshooting Guide' % self.socket_path
+            )
 
         try:
             data = json.dumps(req, cls=AnsibleJSONEncoder)
@@ -149,8 +154,11 @@ class Connection(object):
         try:
             out = self.send(data)
         except socket.error as e:
-            raise ConnectionError('unable to connect to socket. See the socket_path issue category in Network Debug and Troubleshooting Guide',
-                                  err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
+            raise ConnectionError(
+                'unable to connect to socket %s. See Troubleshooting socket path issues '
+                'in the Network Debug and Troubleshooting Guide' % self.socket_path,
+                err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc()
+            )
 
         try:
             response = json.loads(out)
@@ -198,7 +206,11 @@ class Connection(object):
 
         except socket.error as e:
             sf.close()
-            raise ConnectionError('unable to connect to socket', err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
+            raise ConnectionError(
+                'unable to connect to socket %s. See the socket path issue category in '
+                'Network Debug and Troubleshooting Guide' % self.socket_path,
+                err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc()
+            )
 
         sf.close()
 

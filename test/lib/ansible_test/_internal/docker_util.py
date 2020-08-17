@@ -6,6 +6,11 @@ import json
 import os
 import time
 
+from .io import (
+    open_binary_file,
+    read_text_file,
+)
+
 from .util import (
     ApplicationError,
     common_environment,
@@ -41,8 +46,7 @@ def get_docker_container_id():
     if not os.path.exists(path):
         return None
 
-    with open(path) as cgroup_fd:
-        contents = cgroup_fd.read()
+    contents = read_text_file(path)
 
     paths = [line.split(':')[2] for line in contents.splitlines()]
     container_ids = set(path.split('/')[2] for path in paths if path.startswith('/docker/'))
@@ -74,8 +78,11 @@ def get_docker_networks(args, container_id):
     :rtype: list[str]
     """
     results = docker_inspect(args, container_id)
-    networks = sorted(results[0]['NetworkSettings']['Networks'])
-    return networks
+    # podman doesn't return Networks- just silently return None if it's missing...
+    networks = results[0]['NetworkSettings'].get('Networks')
+    if networks is None:
+        return None
+    return sorted(networks)
 
 
 def docker_pull(args, image):
@@ -110,7 +117,7 @@ def docker_put(args, container_id, src, dst):
     :type dst: str
     """
     # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    with open(src, 'rb') as src_fd:
+    with open_binary_file(src) as src_fd:
         docker_exec(args, container_id, ['dd', 'of=%s' % dst, 'bs=%s' % BUFFER_SIZE],
                     options=['-i'], stdin=src_fd, capture=True)
 
@@ -123,17 +130,18 @@ def docker_get(args, container_id, src, dst):
     :type dst: str
     """
     # avoid 'docker cp' due to a bug which causes 'docker rm' to fail
-    with open(dst, 'wb') as dst_fd:
+    with open_binary_file(dst, 'wb') as dst_fd:
         docker_exec(args, container_id, ['dd', 'if=%s' % src, 'bs=%s' % BUFFER_SIZE],
                     options=['-i'], stdout=dst_fd, capture=True)
 
 
-def docker_run(args, image, options, cmd=None):
+def docker_run(args, image, options, cmd=None, create_only=False):
     """
     :type args: EnvironmentConfig
     :type image: str
     :type options: list[str] | None
     :type cmd: list[str] | None
+    :type create_only[bool] | False
     :rtype: str | None, str | None
     """
     if not options:
@@ -142,15 +150,38 @@ def docker_run(args, image, options, cmd=None):
     if not cmd:
         cmd = []
 
+    if create_only:
+        command = 'create'
+    else:
+        command = 'run'
+
     for _iteration in range(1, 3):
         try:
-            return docker_command(args, ['run'] + options + [image] + cmd, capture=True)
+            return docker_command(args, [command] + options + [image] + cmd, capture=True)
         except SubprocessError as ex:
             display.error(ex)
             display.warning('Failed to run docker image "%s". Waiting a few seconds before trying again.' % image)
             time.sleep(3)
 
     raise ApplicationError('Failed to run docker image "%s".' % image)
+
+
+def docker_start(args, container_id, options):  # type: (EnvironmentConfig, str, t.List[str]) -> (t.Optional[str], t.Optional[str])
+    """
+    Start a docker container by name or ID
+    """
+    if not options:
+        options = []
+
+    for _iteration in range(1, 3):
+        try:
+            return docker_command(args, ['start'] + options + [container_id], capture=True)
+        except SubprocessError as ex:
+            display.error(ex)
+            display.warning('Failed to start docker container "%s". Waiting a few seconds before trying again.' % container_id)
+            time.sleep(3)
+
+    raise ApplicationError('Failed to run docker container "%s".' % container_id)
 
 
 def docker_images(args, image):
@@ -268,7 +299,7 @@ def docker_version(args):
     return json.loads(stdout)
 
 
-def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=False):
+def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=False, data=None):
     """
     :type args: CommonConfig
     :type cmd: list[str]
@@ -276,10 +307,11 @@ def docker_command(args, cmd, capture=False, stdin=None, stdout=None, always=Fal
     :type stdin: file | None
     :type stdout: file | None
     :type always: bool
+    :type data: str | None
     :rtype: str | None, str | None
     """
     env = docker_environment()
-    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always)
+    return run_command(args, ['docker'] + cmd, env=env, capture=capture, stdin=stdin, stdout=stdout, always=always, data=data)
 
 
 def docker_environment():

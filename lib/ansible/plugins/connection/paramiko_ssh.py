@@ -129,7 +129,6 @@ DOCUMENTATION = """
 #timeout=self._play_context.timeout,
 """
 
-import warnings
 import os
 import socket
 import tempfile
@@ -142,7 +141,6 @@ from termios import tcflush, TCIFLUSH
 from distutils.version import LooseVersion
 from binascii import hexlify
 
-from ansible import constants as C
 from ansible.errors import (
     AnsibleAuthenticationFailure,
     AnsibleConnectionFailure,
@@ -257,21 +255,21 @@ class Connection(ConnectionBase):
             getattr(self._play_context, 'ssh_common_args', '') or '',
             getattr(self._play_context, 'ssh_args', '') or '',
         ]
-        if ssh_args is not None:
-            args = self._split_ssh_args(' '.join(ssh_args))
-            for i, arg in enumerate(args):
-                if arg.lower() == 'proxycommand':
-                    # _split_ssh_args split ProxyCommand from the command itself
-                    proxy_command = args[i + 1]
-                else:
-                    # ProxyCommand and the command itself are a single string
-                    match = SETTINGS_REGEX.match(arg)
-                    if match:
-                        if match.group(1).lower() == 'proxycommand':
-                            proxy_command = match.group(2)
 
-                if proxy_command:
-                    break
+        args = self._split_ssh_args(' '.join(ssh_args))
+        for i, arg in enumerate(args):
+            if arg.lower() == 'proxycommand':
+                # _split_ssh_args split ProxyCommand from the command itself
+                proxy_command = args[i + 1]
+            else:
+                # ProxyCommand and the command itself are a single string
+                match = SETTINGS_REGEX.match(arg)
+                if match:
+                    if match.group(1).lower() == 'proxycommand':
+                        proxy_command = match.group(2)
+
+            if proxy_command:
+                break
 
         proxy_command = proxy_command or self.get_option('proxy_command')
 
@@ -326,9 +324,11 @@ class Connection(ConnectionBase):
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
 
+        conn_password = self.get_option('password') or self._play_context.password
+
         allow_agent = True
 
-        if self._play_context.password is not None:
+        if conn_password is not None:
             allow_agent = False
 
         try:
@@ -346,7 +346,7 @@ class Connection(ConnectionBase):
                 allow_agent=allow_agent,
                 look_for_keys=self.get_option('look_for_keys'),
                 key_filename=key_filename,
-                password=self._play_context.password,
+                password=conn_password,
                 timeout=self._play_context.timeout,
                 port=port,
                 **ssh_connect_kwargs
@@ -517,25 +517,23 @@ class Connection(ConnectionBase):
         path = os.path.expanduser("~/.ssh")
         makedirs_safe(path)
 
-        f = open(filename, 'w')
+        with open(filename, 'w') as f:
 
-        for hostname, keys in iteritems(self.ssh._host_keys):
+            for hostname, keys in iteritems(self.ssh._host_keys):
 
-            for keytype, key in iteritems(keys):
+                for keytype, key in iteritems(keys):
 
-                # was f.write
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-                if not added_this_time:
-                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
+                    # was f.write
+                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    if not added_this_time:
+                        f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
-        for hostname, keys in iteritems(self.ssh._host_keys):
+            for hostname, keys in iteritems(self.ssh._host_keys):
 
-            for keytype, key in iteritems(keys):
-                added_this_time = getattr(key, '_added_by_ansible_this_time', False)
-                if added_this_time:
-                    f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
-
-        f.close()
+                for keytype, key in iteritems(keys):
+                    added_this_time = getattr(key, '_added_by_ansible_this_time', False)
+                    if added_this_time:
+                        f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
     def reset(self):
         self.close()

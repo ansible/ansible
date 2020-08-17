@@ -31,40 +31,6 @@ from ansible.errors import AnsibleError
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.loader import become_loader
-# from ansible.plugins.connection.accelerate import Connection as AccelerateConnection
-# from ansible.plugins.connection.chroot import Connection as ChrootConnection
-# from ansible.plugins.connection.funcd import Connection as FuncdConnection
-# from ansible.plugins.connection.jail import Connection as JailConnection
-# from ansible.plugins.connection.libvirt_lxc import Connection as LibvirtLXCConnection
-from ansible.plugins.connection.lxc import Connection as LxcConnection
-from ansible.plugins.connection.local import Connection as LocalConnection
-from ansible.plugins.connection.paramiko_ssh import Connection as ParamikoConnection
-from ansible.plugins.connection.ssh import Connection as SSHConnection
-from ansible.plugins.connection.docker import Connection as DockerConnection
-# from ansible.plugins.connection.winrm import Connection as WinRmConnection
-from ansible.plugins.connection.network_cli import Connection as NetworkCliConnection
-from ansible.plugins.connection.httpapi import Connection as HttpapiConnection
-
-pytest.importorskip("ncclient")
-
-PY3 = sys.version_info[0] == 3
-builtin_import = __import__
-
-mock_ncclient = MagicMock(name='ncclient')
-
-
-def import_mock(name, *args):
-    if name.startswith('ncclient'):
-        return mock_ncclient
-    return builtin_import(name, *args)
-
-
-if PY3:
-    with patch('builtins.__import__', side_effect=import_mock):
-        from ansible.plugins.connection.netconf import Connection as NetconfConnection
-else:
-    with patch('__builtin__.__import__', side_effect=import_mock):
-        from ansible.plugins.connection.netconf import Connection as NetconfConnection
 
 
 class TestConnectionBaseClass(unittest.TestCase):
@@ -115,66 +81,6 @@ class TestConnectionBaseClass(unittest.TestCase):
                 pass
 
         self.assertIsInstance(ConnectionModule3(self.play_context, self.in_stream), ConnectionModule3)
-
-#    def test_accelerate_connection_module(self):
-#        self.assertIsInstance(AccelerateConnection(), AccelerateConnection)
-#
-#    def test_chroot_connection_module(self):
-#        self.assertIsInstance(ChrootConnection(), ChrootConnection)
-#
-#    def test_funcd_connection_module(self):
-#        self.assertIsInstance(FuncdConnection(), FuncdConnection)
-#
-#    def test_jail_connection_module(self):
-#        self.assertIsInstance(JailConnection(), JailConnection)
-#
-#    def test_libvirt_lxc_connection_module(self):
-#        self.assertIsInstance(LibvirtLXCConnection(), LibvirtLXCConnection)
-
-    def test_lxc_connection_module(self):
-        self.assertIsInstance(LxcConnection(self.play_context, self.in_stream), LxcConnection)
-
-    def test_local_connection_module(self):
-        self.assertIsInstance(LocalConnection(self.play_context, self.in_stream), LocalConnection)
-
-    def test_paramiko_connection_module(self):
-        self.assertIsInstance(ParamikoConnection(self.play_context, self.in_stream), ParamikoConnection)
-
-    def test_ssh_connection_module(self):
-        self.assertIsInstance(SSHConnection(self.play_context, self.in_stream), SSHConnection)
-
-    @mock.patch('ansible.plugins.connection.docker.Connection._old_docker_version', return_value=('false', 'garbage', '', 1))
-    @mock.patch('ansible.plugins.connection.docker.Connection._new_docker_version', return_value=('docker version', '1.2.3', '', 0))
-    def test_docker_connection_module_too_old(self, mock_new_docker_verison, mock_old_docker_version):
-        self.assertRaisesRegexp(AnsibleError, '^docker connection type requires docker 1.3 or higher$',
-                                DockerConnection, self.play_context, self.in_stream, docker_command='/fake/docker')
-
-    @mock.patch('ansible.plugins.connection.docker.Connection._old_docker_version', return_value=('false', 'garbage', '', 1))
-    @mock.patch('ansible.plugins.connection.docker.Connection._new_docker_version', return_value=('docker version', '1.3.4', '', 0))
-    def test_docker_connection_module(self, mock_new_docker_verison, mock_old_docker_version):
-        self.assertIsInstance(DockerConnection(self.play_context, self.in_stream, docker_command='/fake/docker'),
-                              DockerConnection)
-
-    # old version and new version fail
-    @mock.patch('ansible.plugins.connection.docker.Connection._old_docker_version', return_value=('false', 'garbage', '', 1))
-    @mock.patch('ansible.plugins.connection.docker.Connection._new_docker_version', return_value=('false', 'garbage', '', 1))
-    def test_docker_connection_module_wrong_cmd(self, mock_new_docker_version, mock_old_docker_version):
-        self.assertRaisesRegexp(AnsibleError, '^Docker version check (.*?) failed: ',
-                                DockerConnection, self.play_context, self.in_stream, docker_command='/fake/docker')
-
-#    def test_winrm_connection_module(self):
-#        self.assertIsInstance(WinRmConnection(), WinRmConnection)
-
-    def test_network_cli_connection_module(self):
-        self.play_context.network_os = 'eos'
-        self.assertIsInstance(NetworkCliConnection(self.play_context, self.in_stream), NetworkCliConnection)
-
-    def test_netconf_connection_module(self):
-        self.assertIsInstance(NetconfConnection(self.play_context, self.in_stream), NetconfConnection)
-
-    def test_httpapi_connection_module(self):
-        self.play_context.network_os = 'eos'
-        self.assertIsInstance(HttpapiConnection(self.play_context, self.in_stream), HttpapiConnection)
 
     def test_check_password_prompt(self):
         local = (

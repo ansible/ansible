@@ -63,6 +63,39 @@
     testns.testcoll.uses_leaf_mu_module_import_from:
     register: from_out
 
+  # module with multiple levels of the same nested package name and imported as a function
+  - name: exec module with multiple levels of the same nested package name imported as a function
+    testns.testcoll.uses_nested_same_as_func:
+    register: from_nested_func
+
+  # module with multiple levels of the same nested package name and imported as a module
+  - name: exec module with multiple levels of the same nested package name imported as a module
+    testns.testcoll.uses_nested_same_as_module:
+    register: from_nested_module
+
+  # module using a bunch of collection-level redirected module_utils
+  - name: exec module using a bunch of collection-level redirected module_utils
+    testns.testcoll.uses_collection_redirected_mu:
+    register: from_redirected_mu
+
+  # module with bogus MU
+  - name: exec module with bogus MU
+    testns.testcoll.uses_mu_missing:
+    ignore_errors: true
+    register: from_missing_mu
+
+  # module with redirected MU, redirect collection not found
+  - name: exec module with a missing redirect target collection
+    testns.testcoll.uses_mu_missing_redirect_collection:
+    ignore_errors: true
+    register: from_missing_redir_collection
+
+  # module with redirected MU, redirect module not found
+  - name: exec module with a missing redirect target module
+    testns.testcoll.uses_mu_missing_redirect_module:
+    ignore_errors: true
+    register: from_missing_redir_module
+
   - assert:
       that:
       - testmodule_out.source == 'user'
@@ -79,6 +112,22 @@
       - flat_out.mu_result == 'thingtocall in leaf'
       - from_out.mu_result == 'thingtocall in leaf'
       - from_out.mu2_result == 'thingtocall in secondary'
+      - from_out.mu3_result == 'thingtocall in subpkg.submod'
+      - from_out.mu4_result == 'thingtocall in subpkg_with_init'
+      - from_out.mu5_result == 'thingtocall in mod_in_subpkg_with_init'
+      - from_out.mu6_result == 'thingtocall in subpkg.submod'
+      - from_nested_func.mu_result == 'hello from nested_same'
+      - from_nested_module.mu_result == 'hello from nested_same'
+      - from_redirected_mu.mu_result == 'hello from ansible_collections.testns.content_adj.plugins.module_utils.sub1.foomodule'
+      - from_redirected_mu.mu_result2 == 'hello from testns.othercoll.formerly_testcoll_pkg.thing'
+      - from_redirected_mu.mu_result3 == 'hello from formerly_testcoll_pkg.submod.thing'
+      - from_missing_mu is failed
+      - "'Could not find imported module support' in from_missing_mu.msg"
+      - from_missing_redir_collection is failed
+      - "'unable to locate collection bogusns.boguscoll' in from_missing_redir_collection.msg"
+      - from_missing_redir_module is failed
+      - "'Could not find imported module support code for ansible_collections.testns.testcoll.plugins.modules.uses_mu_missing_redirect_module' in from_missing_redir_module.msg"
+
 
 - hosts: testhost
   tasks:
@@ -94,6 +143,25 @@
       - lookup('testns.testcoll.mylookup') == 'mylookup_from_user_dir'
       - lookup('testns.testcoll.mylookup2') == 'mylookup2_from_user_dir'
       - lookup('testns.testcoll.lookup_subdir.my_subdir_lookup') == 'subdir_lookup_from_user_dir'
+
+  - debug:
+      msg: "{{ 'foo'|testns.testbroken.broken }}"
+    register: result
+    ignore_errors: true
+
+  - assert:
+      that:
+        - |
+          'This is a broken filter plugin.' in result.msg
+
+  - debug:
+      msg: "{{ 'foo'|missing.collection.filter }}"
+    register: result
+    ignore_errors: true
+
+  - assert:
+      that:
+        - result is failed
 
 # ensure that the synthetic ansible.builtin collection limits to builtin plugins, that ansible.legacy loads overrides
 # from legacy plugin dirs, and that a same-named plugin loaded from a real collection is not masked by the others
@@ -354,24 +422,22 @@
   - include_tasks: includeme.yml
 
 
-- name: test a collection-hosted connection plugin against a host from a collection-hosted inventory plugin
-  hosts: dynamic_host_a
+- import_playbook: test_collection_meta.yml
+- name: Test FQCN handlers
+  hosts: testhost
   vars:
-    ansible_connection: testns.testcoll.localconn
-    ansible_localconn_connectionvar: from_play
-  tasks:
-  - raw: echo 'hello world'
-    register: connection_out
+    handler_counter: 0
+  roles:
+    - testns.testcoll.test_fqcn_handlers
 
-  - assert:
-      that:
-      - connection_out.stdout == "localconn ran echo 'hello world'"
-      # ensure that the connection var we overrode above made it into the running config
-      - connection_out.stderr == "connectionvar is from_play"
+- name: Ensure a collection role can call a standalone role
+  hosts: testhost
+  roles:
+    - testns.testcoll.call_standalone
 
-- hosts: testhost
+# Issue https://github.com/ansible/ansible/issues/69054
+- name: Test collection as string
+  hosts: testhost
+  collections: foo
   tasks:
-  - assert:
-      that:
-      - hostvars['dynamic_host_a'] is defined
-      - hostvars['dynamic_host_a'].connection_out.stdout == "localconn ran echo 'hello world'"
+    - debug: msg="Test"

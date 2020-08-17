@@ -22,14 +22,23 @@ def params():
 
 def test_list_deprecations():
     argument_spec = {
-        'old': {'type': 'str', 'removed_in_version': '2.5'}
+        'old': {'type': 'str', 'removed_in_version': '2.5'},
+        'foo': {'type': 'dict', 'options': {'old': {'type': 'str', 'removed_in_version': 1.0}}},
+        'bar': {'type': 'list', 'elements': 'dict', 'options': {'old': {'type': 'str', 'removed_in_version': '2.10'}}},
     }
 
     params = {
         'name': 'rod',
         'old': 'option',
+        'foo': {'old': 'value'},
+        'bar': [{'old': 'value'}, {}],
     }
     result = list_deprecations(argument_spec, params)
-    for item in result:
-        assert item['msg'] == "Param 'old' is deprecated. See the module docs for more information"
-        assert item['version'] == '2.5'
+    assert len(result) == 3
+    result.sort(key=lambda entry: entry['msg'])
+    assert result[0]['msg'] == """Param 'bar["old"]' is deprecated. See the module docs for more information"""
+    assert result[0]['version'] == '2.10'
+    assert result[1]['msg'] == """Param 'foo["old"]' is deprecated. See the module docs for more information"""
+    assert result[1]['version'] == 1.0
+    assert result[2]['msg'] == "Param 'old' is deprecated. See the module docs for more information"
+    assert result[2]['version'] == '2.5'

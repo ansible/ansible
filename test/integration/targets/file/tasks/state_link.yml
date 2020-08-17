@@ -345,3 +345,61 @@
         - "{{ output_dir }}/test_follow1_link"
 
 # END #56928
+
+
+# Test failure with src and no state parameter
+- name: Specify src without state
+  file:
+    src: "{{ output_file }}"
+    dest: "{{ output_dir }}/link.txt"
+  ignore_errors: yes
+  register: src_state
+
+- name: Ensure src without state failed
+  assert:
+    that:
+      - src_state is failed
+      - "'src option requires state to be' in src_state.msg"
+
+# Test creating a symlink when the destination exists and is a file
+- name: create a test file
+  copy:
+    dest: '{{ output_dir }}/file.txt'
+    content: 'this is a test file\n'
+    mode: 0666
+
+- name: Create a symlink with dest already a file
+  file:
+    src: '{{ output_file }}'
+    dest: '{{ output_dir }}/file.txt'
+    state: link
+  ignore_errors: true
+  register: dest_is_existing_file_fail
+
+- name: Stat to make sure the symlink was not created
+  stat:
+    path: '{{ output_dir }}/file.txt'
+    follow: false
+  register: dest_is_existing_file_fail_stat
+
+- name: Forcefully a symlink with dest already a file
+  file:
+    src: '{{ output_file }}'
+    dest: '{{ output_dir }}/file.txt'
+    state: link
+    force: true
+  register: dest_is_existing_file_force
+
+- name: Stat to make sure the symlink was created
+  stat:
+    path: '{{ output_dir }}/file.txt'
+    follow: false
+  register: dest_is_existing_file_force_stat
+
+- assert:
+    that:
+    - dest_is_existing_file_fail is failed
+    - not dest_is_existing_file_fail_stat.stat.islnk
+    - dest_is_existing_file_force is changed
+    - dest_is_existing_file_force_stat.stat.exists
+    - dest_is_existing_file_force_stat.stat.islnk

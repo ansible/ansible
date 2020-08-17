@@ -1,0 +1,43 @@
+{
+    "name": "RedHat 7.7",
+    "distro": {
+        "codename": "Maipo",
+        "id": "rhel",
+        "name": "Red Hat Enterprise Linux Server",
+        "version": "7.7",
+        "version_best": "7.7",
+        "lsb_release_info": {},
+        "os_release_info": {
+            "name": "Red Hat Enterprise Linux Server",
+            "version": "7.7 (Maipo)",
+            "id": "rhel",
+            "id_like": "fedora",
+            "variant": "Server",
+            "variant_id": "server",
+            "version_id": "7.7",
+            "pretty_name": "Red Hat Enterprise Linux Server 7.7 (Maipo)",
+            "ansi_color": "0;31",
+            "cpe_name": "cpe:/o:redhat:enterprise_linux:7.7:GA:server",
+            "home_url": "https://www.redhat.com/",
+            "bug_report_url": "https://bugzilla.redhat.com/",
+            "redhat_bugzilla_product": "Red Hat Enterprise Linux 7",
+            "redhat_bugzilla_product_version": "7.7",
+            "redhat_support_product": "Red Hat Enterprise Linux",
+            "redhat_support_product_version": "7.7",
+            "codename": "Maipo"
+        }
+    },
+    "input": {
+        "/etc/redhat-release": "Red Hat Enterprise Linux Server release 7.7 (Maipo)\n",
+        "/etc/system-release": "Red Hat Enterprise Linux Server release 7.7 (Maipo)\n",
+        "/etc/os-release": "NAME=\"Red Hat Enterprise Linux Server\"\nVERSION=\"7.7 (Maipo)\"\nID=\"rhel\"\nID_LIKE=\"fedora\"\nVARIANT=\"Server\"\nVARIANT_ID=\"server\"\nVERSION_ID=\"7.7\"\nPRETTY_NAME=\"Red Hat Enterprise Linux Server 7.7 (Maipo)\"\nANSI_COLOR=\"0;31\"\nCPE_NAME=\"cpe:/o:redhat:enterprise_linux:7.7:GA:server\"\nHOME_URL=\"https://www.redhat.com/\"\nBUG_REPORT_URL=\"https://bugzilla.redhat.com/\"\n\nREDHAT_BUGZILLA_PRODUCT=\"Red Hat Enterprise Linux 7\"\nREDHAT_BUGZILLA_PRODUCT_VERSION=7.7\nREDHAT_SUPPORT_PRODUCT=\"Red Hat Enterprise Linux\"\nREDHAT_SUPPORT_PRODUCT_VERSION=\"7.7\"\n"
+    },
+    "platform.dist": ["rhel", "7.7", "Maipo"],
+    "result": {
+        "distribution": "RedHat",
+        "distribution_version": "7.7",
+        "distribution_release": "Maipo",
+        "distribution_major_version": "7",
+        "os_family": "RedHat"
+    }
+}

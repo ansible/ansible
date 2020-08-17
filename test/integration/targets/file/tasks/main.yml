@@ -25,25 +25,29 @@
 - set_fact:
     remote_file_expanded: '{{ echo.stdout }}'
 
-# Include the tests
+# Import the test tasks
 - name: Run tests for state=link
-  include: state_link.yml
+  import_tasks: state_link.yml
 
 - name: Run tests for directory as dest
-  include: directory_as_dest.yml
+  import_tasks: directory_as_dest.yml
 
 - name: Run tests for unicode
-  include: unicode_path.yml
+  import_tasks: unicode_path.yml
   environment:
     LC_ALL: C
     LANG: C
 
 - name: decide to include or not include selinux tests
-  include: selinux_tests.yml
+  include_tasks: selinux_tests.yml
   when: selinux_installed is defined and selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
 
 - name: Initialize the test output dir
-  include: initialize.yml
+  import_tasks: initialize.yml
+
+- name: Test _diff_peek
+  import_tasks: diff_peek.yml
+
 
 # These tests need to be organized by state parameter into separate files later
 
@@ -56,6 +60,25 @@
     that:
       - "file_result.changed == false"
       - "file_result.state == 'file'"
+
+- name: Make sure file does not exist
+  file:
+    path: /tmp/ghost
+    state: absent
+
+- name: Target a file that does not exist
+  file:
+    path: /tmp/ghost
+  ignore_errors: yes
+  register: ghost_file_result
+
+- name: Validate ghost file results
+  assert:
+    that:
+      - ghost_file_result is failed
+      - ghost_file_result is not changed
+      - ghost_file_result.state == 'absent'
+      - "'cannot continue' in ghost_file_result.msg"
 
 - name: verify that we are checking an absent file
   file: path={{output_dir}}/bar.txt state=absent
@@ -265,7 +288,7 @@
   copy: src=foobar dest={{output_dir}}
 
 - name: check what would be removed if folder state was absent and diff is enabled
-  file: 
+  file:
     path: "{{ item }}"
     state: absent
   check_mode: yes

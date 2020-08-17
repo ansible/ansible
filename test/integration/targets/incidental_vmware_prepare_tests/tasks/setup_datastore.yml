@@ -1,0 +1,42 @@
+---
+- name: Mount NFS (ro_datastore) datastores to ESXi
+  vmware_host_datastore:
+    hostname: '{{ item }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    datastore_name: '{{ ro_datastore }}'
+    datastore_type: '{{ infra.datastores[ro_datastore].type }}'
+    nfs_server: '{{ infra.datastores[ro_datastore].server }}'
+    nfs_path: '{{ infra.datastores[ro_datastore].path }}'
+    nfs_ro: '{{ infra.datastores[ro_datastore].ro }}'
+    state: present
+    validate_certs: no
+  with_items: "{{ esxi_hosts }}"
+
+- name: Mount NFS (rw_datastore) datastores on the ESXi
+  vmware_host_datastore:
+    hostname: '{{ item }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    datastore_name: '{{ rw_datastore }}'
+    datastore_type: '{{ infra.datastores[rw_datastore].type }}'
+    nfs_server: '{{ infra.datastores[rw_datastore].server }}'
+    nfs_path: '{{ infra.datastores[rw_datastore].path }}'
+    nfs_ro: '{{ infra.datastores[rw_datastore].ro }}'
+    state: present
+    validate_certs: no
+  with_items: "{{ esxi_hosts }}"
+
+- vmware_host_scanhba:
+    refresh_storage: true
+    cluster_name: '{{ ccr1 }}'
+
+- name: The vcenter needs a bit of time to refresh the DS list
+  vmware_datastore_info:
+    validate_certs: false
+    cluster: '{{ ccr1 }}'
+  register: setup_datastore_datatstore_info
+  failed_when: setup_datastore_datatstore_info.datastores|selectattr('type', 'equalto', 'NFS')|list|length != 2
+  until: setup_datastore_datatstore_info is succeeded
+  retries: 60
+  delay: 1

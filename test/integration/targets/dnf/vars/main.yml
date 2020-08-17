@@ -1,0 +1,4 @@
+dnf_log_files:
+    - /var/log/dnf.log
+    - /var/log/dnf.rpm.log
+    - /var/log/dnf.librepo.log

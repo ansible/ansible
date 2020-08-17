@@ -1,3 +1,0 @@
-bugfixes:
-- ansible-galaxy - Ensure we preserve the new URL when appending ``/api`` for the case where
-  the GET succeeds on galaxy.ansible.com

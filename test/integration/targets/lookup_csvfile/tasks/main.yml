@@ -1,0 +1,69 @@
+- set_fact:
+    this_will_error: "{{ lookup('csvfile', 'file=people.csv delimiter=, col=1') }}"
+  ignore_errors: yes
+  register: no_keyword
+
+- set_fact:
+    this_will_error: "{{ lookup('csvfile', 'foo file=people.csv delimiter=, col=1 thisarg=doesnotexist') }}"
+  ignore_errors: yes
+  register: invalid_arg
+
+- set_fact:
+    this_will_error: "{{ lookup('csvfile', 'foo file=doesnotexist delimiter=, col=1') }}"
+  ignore_errors: yes
+  register: missing_file
+
+- name: Make sure we failed above
+  assert:
+    that:
+      - no_keyword is failed
+      - >
+        "Search key is required but was not found" in no_keyword.msg
+      - >
+        "not in paramvals" in invalid_arg.msg
+      - missing_file is failed
+      - >
+        "need string or buffer" in missing_file.msg or "expected str, bytes or os.PathLike object" in missing_file.msg
+
+- name: Check basic comma-separated file
+  assert:
+    that:
+      - lookup('csvfile', 'Smith file=people.csv delimiter=, col=1') == "Jane"
+      - lookup('csvfile', 'German von Lastname file=people.csv delimiter=, col=1') == "Demo"
+
+- name: Check tab-separated file
+  assert:
+    that:
+      - lookup('csvfile', 'electronics file=tabs.csv delimiter=TAB col=1') == "tvs"
+      - lookup('csvfile', 'fruit file=tabs.csv delimiter=TAB col=1') == "bananas"
+      - lookup('csvfile', 'fruit file=tabs.csv delimiter="\t" col=1') == "bananas"
+
+- name: Check \x1a-separated file
+  assert:
+    that:
+      - lookup('csvfile', 'again file=x1a.csv delimiter=\x1a col=1') == "because"
+
+- name: Check CSV file with CRLF line endings
+  assert:
+    that:
+      - lookup('csvfile', 'this file file=crlf.csv delimiter=, col=2') == "crlf"
+      - lookup('csvfile', 'ansible file=crlf.csv delimiter=, col=1') == "parses"
+
+- name: Check file with multi word filename
+  assert:
+    that:
+      - lookup('csvfile', 'maybe file="cool list of things.csv" delimiter=, col=3') == "work"
+
+- name: Test default behavior
+  assert:
+    that:
+      - lookup('csvfile', 'notfound file=people.csv delimiter=, col=2') == []
+      - lookup('csvfile', 'notfound file=people.csv delimiter=, col=2, default=what?') == "what?"
+
+# NOTE: For historical reasons, this is correct; quotes in the search field must
+# be treated literally as if they appear (escaped as required) in the field in the
+# file. They cannot be used to surround the search text in general.
+- name: Test quotes in the search field
+  assert:
+    that:
+      - lookup('csvfile', '"The Rock" Johnson file=people.csv delimiter=, col=1') == "Dwayne"

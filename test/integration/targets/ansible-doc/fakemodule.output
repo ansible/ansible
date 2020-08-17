@@ -1,0 +1,15 @@
+> TESTNS.TESTCOL.FAKEMODULE    (./collections/ansible_collections/testns/testcol/plugins/modules/fakemodule.py)
+
+        this is a fake module
+
+OPTIONS (= is mandatory):
+
+- _notreal
+        really not a real option
+        [Default: (null)]
+
+
+AUTHOR: me
+
+SHORT_DESCIPTOIN: fake module
+

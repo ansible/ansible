@@ -6,12 +6,13 @@
 Testing Ansible
 ***************
 
-.. contents:: Topics
-
 This document describes how to:
 
 * Run tests locally using ``ansible-test``
 * Extend
+
+.. contents::
+   :local:
 
 Requirements
 ============
@@ -35,7 +36,7 @@ An API key is required to use this feature.
 
     Recommended for integration tests.
 
-See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/runner/completion/remote.txt>`_ for additional details.
+See the `list of supported platforms and versions <https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/completion/remote.txt>`_ for additional details.
 
 Environment Variables
 ---------------------
@@ -48,7 +49,7 @@ When using environment variables to manipulate tests there some limitations to k
     Example: ``ANSIBLE_KEEP_REMOTE_FILES=1`` can be set when running ``ansible-test integration --venv``. However, using the ``--docker`` option would
     require running ``ansible-test shell`` to gain access to the Docker environment. Once at the shell prompt, the environment variable could be set
     and the tests executed. This is useful for debugging tests inside a container by following the
-    :ref:`Debugging AnsibleModule-based modules <debugging_ansiblemodule_based_modules>` instructions.
+    :ref:`Debugging AnsibleModule-based modules <debugging_modules>` instructions.
 
 Interactive Shell
 =================

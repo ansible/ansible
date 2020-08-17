@@ -1,0 +1,24 @@
+{
+    "platform.dist": ["linuxmint", "19.1", "tessa"],
+    "input": {
+        "/usr/lib/os-release": "NAME=\"Linux Mint\"\nVERSION=\"19.1 (Tessa)\"\nID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME=\"Linux Mint 19.1\"\nVERSION_ID=\"19.1\"\nHOME_URL=\"https://www.linuxmint.com/\"\nSUPPORT_URL=\"https://forums.ubuntu.com/\"\nBUG_REPORT_URL=\"http: //linuxmint-troubleshooting-guide.readthedocs.io/en/latest/\"\nPRIVACY_POLICY_URL=\"https://www.linuxmint.com/\"\nVERSION_CODENAME=tessa\nUBUNTU_CODENAME=bionic\n",
+        "/etc/lsb-release": "DISTRIB_ID=LinuxMint\nDISTRIB_RELEASE=19.1\nDISTRIB_CODENAME=tessa\nDISTRIB_DESCRIPTION=\"Linux Mint 19.1 Tessa\"\n"
+    },
+    "result": {
+        "distribution_release": "tessa",
+        "distribution": "Linux Mint",
+        "distribution_major_version": "19",
+        "os_family": "Debian",
+        "distribution_version": "19.1"
+    },
+    "name": "Linux Mint 19.1",
+    "distro": {
+        "codename": "tessa",
+        "version": "19.1",
+        "id": "linuxmint",
+        "version_best": "19.1",
+        "name": "Linux Mint",
+        "os_release_info": {},
+        "lsb_release_info": {}
+    }
+}

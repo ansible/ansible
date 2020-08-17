@@ -230,7 +230,7 @@ class AnsibleCallbackError(AnsibleRuntimeError):
 
 
 class AnsibleTemplateError(AnsibleRuntimeError):
-    '''A template related errror'''
+    '''A template related error'''
     pass
 
 
@@ -311,4 +311,31 @@ class AnsibleActionFail(AnsibleAction):
 
 class _AnsibleActionDone(AnsibleAction):
     ''' an action runtime early exit'''
+    pass
+
+
+class AnsiblePluginError(AnsibleError):
+    ''' base class for Ansible plugin-related errors that do not need AnsibleError contextual data '''
+    def __init__(self, message=None, plugin_load_context=None):
+        super(AnsiblePluginError, self).__init__(message)
+        self.plugin_load_context = plugin_load_context
+
+
+class AnsiblePluginRemovedError(AnsiblePluginError):
+    ''' a requested plugin has been removed '''
+    pass
+
+
+class AnsiblePluginCircularRedirect(AnsiblePluginError):
+    '''a cycle was detected in plugin redirection'''
+    pass
+
+
+class AnsibleCollectionUnsupportedVersionError(AnsiblePluginError):
+    '''a collection is not supported by this version of Ansible'''
+    pass
+
+
+class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
+    ''' a Jinja filter templating failure due to bad type'''
     pass

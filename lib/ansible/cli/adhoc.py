@@ -64,7 +64,7 @@ class AdHocCLI(CLI):
         return options
 
     def _play_ds(self, pattern, async_val, poll):
-        check_raw = context.CLIARGS['module_name'] in ('command', 'win_command', 'shell', 'win_shell', 'script', 'raw')
+        check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
 
         mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)}}
 
@@ -160,6 +160,7 @@ class AdHocCLI(CLI):
                 forks=context.CLIARGS['forks'],
             )
 
+            self._tqm.load_callbacks()
             self._tqm.send_callback('v2_playbook_on_start', playbook)
 
             result = self._tqm.run(play)

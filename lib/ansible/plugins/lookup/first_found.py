@@ -49,7 +49,7 @@ EXAMPLES = """
       files:
         - path/tasks.yaml
         - path/other_tasks.yaml
-  loop: "{{ q('first_found', params, errors='ignore') }}"
+  loop: "{{ query('first_found', params, errors='ignore') }}"
 
 - name: |
         copy first existing file found to /some/file,
@@ -88,7 +88,7 @@ EXAMPLES = """
   vars:
     params:
       files:
-        - '{{ansible_os_distribution}}.yml'
+        - '{{ansible_distribution}}.yml'
         - '{{ansible_os_family}}.yml'
         - default.yml
       paths:

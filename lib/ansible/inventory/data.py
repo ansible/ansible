@@ -41,7 +41,6 @@ class InventoryData(object):
 
     def __init__(self):
 
-        # the inventory object holds a list of groups
         self.groups = {}
         self.hosts = {}
 
@@ -255,19 +254,20 @@ class InventoryData(object):
 
     def add_child(self, group, child):
         ''' Add host or group to group '''
-
+        added = False
         if group in self.groups:
             g = self.groups[group]
             if child in self.groups:
-                g.add_child_group(self.groups[child])
+                added = g.add_child_group(self.groups[child])
             elif child in self.hosts:
-                g.add_host(self.hosts[child])
+                added = g.add_host(self.hosts[child])
             else:
                 raise AnsibleError("%s is not a known host nor group" % child)
             self._groups_dict_cache = {}
             display.debug('Group %s now contains %s' % (group, child))
         else:
             raise AnsibleError("%s is not a known group" % group)
+        return added
 
     def get_groups_dict(self):
         """

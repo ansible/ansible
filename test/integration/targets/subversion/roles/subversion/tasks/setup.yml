@@ -1,0 +1,68 @@
+---
+- name: clean out the checkout dir
+  file:
+    path: '{{ subversion_test_dir }}'
+    state: '{{ item }}'
+  loop:
+  - absent
+  - directory
+
+- name: install SVN pre-reqs
+  package:
+    name: '{{ subversion_packages }}'
+    state: present
+  when: ansible_distribution != 'Alpine'
+
+- name: install SVN pre-reqs - Alpine
+  command: 'apk add -U -u {{ subversion_packages|join(" ") }}'
+  when: ansible_distribution == 'Alpine'
+
+- name: upgrade SVN pre-reqs
+  package:
+    name: '{{ upgrade_packages }}'
+    state: latest
+  when:
+    - upgrade_packages | default([])
+
+- name: create SVN home folder
+  file:
+    path: '{{ subversion_server_dir }}'
+    state: directory
+
+- name: setup selinux when enabled
+  include_tasks: setup_selinux.yml
+  when: ansible_selinux.status == "enabled"
+
+- name: template out configuration file
+  template:
+    src: subversion.conf.j2
+    dest: '{{ subversion_server_dir }}/subversion.conf'
+
+- name: create a test repository
+  script: create_repo.sh {{ subversion_repo_name }}
+  args:
+    chdir: '{{ subversion_server_dir }}'
+    creates: '{{ subversion_server_dir }}/{{ subversion_repo_name }}'
+
+- name: apply ownership for all SVN directories
+  file:
+    path: '{{ subversion_server_dir }}'
+    owner: '{{ apache_user }}'
+    group: '{{ apache_group }}'
+    recurse: True
+
+- name: add test user to htpasswd for Subversion site
+  htpasswd:
+    path: '{{ subversion_server_dir }}/svn-auth-users'
+    name: '{{ subversion_username }}'
+    password: '{{ subversion_password }}'
+    state: present
+
+- name: start test Apache SVN site - non Red Hat
+  command: apachectl -k start -f {{ subversion_server_dir }}/subversion.conf
+  when: ansible_os_family not in ['RedHat', 'Alpine']
+
+# On Red Hat based OS', we can't use apachectl to start up own instance, just use the raw httpd
+- name: start test Apache SVN site - Red Hat
+  command: httpd -k start -f {{ subversion_server_dir }}/subversion.conf
+  when: ansible_os_family in ['RedHat', 'Alpine']

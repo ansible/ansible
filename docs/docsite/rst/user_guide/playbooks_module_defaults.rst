@@ -3,7 +3,7 @@
 Module defaults
 ===============
 
-If you find yourself calling the same module repeatedly with the same arguments, it can be useful to define default arguments for that particular module using the ``module_defaults`` attribute.
+If you frequently call the same module with the same arguments, it can be useful to define default arguments for that particular module using the ``module_defaults`` attribute.
 
 Here is a basic example::
 
@@ -33,7 +33,7 @@ The ``module_defaults`` attribute can be used at the play, block, and task level
         debug:
           msg: "a default message"
 
-It's also possible to remove any previously established defaults for a module by specifying an empty dict::
+You can remove any previously established defaults for a module by specifying an empty dict::
 
     - file:
         state: touch
@@ -82,8 +82,7 @@ Module defaults groups
 
 .. versionadded:: 2.7
 
-Ansible 2.7 adds a preview-status feature to group together modules that share common sets of parameters. This makes
-it easier to author playbooks making heavy use of API-based modules such as cloud modules.
+Ansible 2.7 adds a preview-status feature to group together modules that share common sets of parameters. This makes it easier to author playbooks making heavy use of API-based modules such as cloud modules.
 
 +---------+---------------------------+-----------------+
 | Group   | Purpose                   | Ansible Version |

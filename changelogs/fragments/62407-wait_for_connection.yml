@@ -1,2 +1,0 @@
-bugfixes:
-- Remove a temp directory created by wait_for_connection action plugin (https://github.com/ansible/ansible/issues/62407).

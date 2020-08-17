@@ -3,6 +3,7 @@
 # Simplified BSD License (see licenses/simplified_bsd.txt or https://opensource.org/licenses/BSD-2-Clause)
 
 from __future__ import absolute_import, division, print_function
+__metaclass__ = type
 
 FILE_ATTRIBUTES = {
     'A': 'noatime',
@@ -65,7 +66,9 @@ except ImportError:
 
 try:
     from systemd import journal
-    has_journal = True
+    # Makes sure that systemd.journal has method sendv()
+    # Double check that journal has method sendv (some packages don't)
+    has_journal = hasattr(journal, 'sendv')
 except ImportError:
     has_journal = False
 
@@ -78,6 +81,8 @@ except ImportError:
 
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
+
+from ansible.module_utils.compat import selectors
 
 from ._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.text.converters import (
@@ -193,6 +198,12 @@ from ansible.module_utils.common.validation import (
 )
 from ansible.module_utils.common._utils import get_all_subclasses as _get_all_subclasses
 from ansible.module_utils.parsing.convert_bool import BOOLEANS, BOOLEANS_FALSE, BOOLEANS_TRUE, boolean
+from ansible.module_utils.common.warnings import (
+    deprecate,
+    get_deprecation_messages,
+    get_warning_messages,
+    warn,
+)
 
 # Note: When getting Sequence from collections, it matches with strings. If
 # this matters, make sure to check for strings before checking for sequencetype
@@ -231,29 +242,14 @@ FILE_COMMON_ARGUMENTS = dict(
     # created files (these are used by set_fs_attributes_if_different and included in
     # load_file_common_arguments)
     mode=dict(type='raw'),
-    owner=dict(),
-    group=dict(),
-    seuser=dict(),
-    serole=dict(),
-    selevel=dict(),
-    setype=dict(),
-    attributes=dict(aliases=['attr']),
-
-    # The following are not about perms and should not be in a rewritten file_common_args
-    src=dict(),  # Maybe dest or path would be appropriate but src is not
-    follow=dict(type='bool', default=False),  # Maybe follow is appropriate because it determines whether to follow symlinks for permission purposes too
-    force=dict(type='bool'),
-
-    # not taken by the file module, but other action plugins call the file module so this ignores
-    # them for now. In the future, the caller should take care of removing these from the module
-    # arguments before calling the file module.
-    content=dict(no_log=True),  # used by copy
-    backup=dict(),  # Used by a few modules to create a remote backup before updating the file
-    remote_src=dict(),  # used by assemble
-    regexp=dict(),  # used by assemble
-    delimiter=dict(),  # used by assemble
-    directory_mode=dict(),  # used by copy
-    unsafe_writes=dict(type='bool'),  # should be available to any module using atomic_move
+    owner=dict(type='str'),
+    group=dict(type='str'),
+    seuser=dict(type='str'),
+    serole=dict(type='str'),
+    selevel=dict(type='str'),
+    setype=dict(type='str'),
+    attributes=dict(type='str', aliases=['attr']),
+    unsafe_writes=dict(type='bool', default=False),  # should be available to any module using atomic_move
 )
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
@@ -395,7 +391,7 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
             if omit_me in stringy_value:
                 return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
 
-    elif isinstance(value, datetime.datetime):
+    elif isinstance(value, (datetime.datetime, datetime.date)):
         value = value.isoformat()
     else:
         raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
@@ -405,7 +401,13 @@ def _remove_values_conditions(value, no_log_strings, deferred_removals):
 
 def remove_values(value, no_log_strings):
     """ Remove strings in no_log_strings from value.  If value is a container
-    type, then remove a lot more"""
+    type, then remove a lot more.
+
+    Use of deferred_removals exists, rather than a pure recursive solution,
+    because of the potential to hit the maximum recursion depth when dealing with
+    large amounts of data (see issue #24560).
+    """
+
     deferred_removals = deque()
 
     no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
@@ -426,6 +428,88 @@ def remove_values(value, no_log_strings):
                     new_data.add(new_elem)
                 else:
                     raise TypeError('Unknown container type encountered when removing private values from output')
+
+    return new_value
+
+
+def _sanitize_keys_conditions(value, no_log_strings, ignore_keys, deferred_removals):
+    """ Helper method to sanitize_keys() to build deferred_removals and avoid deep recursion. """
+    if isinstance(value, (text_type, binary_type)):
+        return value
+
+    if isinstance(value, Sequence):
+        if isinstance(value, MutableSequence):
+            new_value = type(value)()
+        else:
+            new_value = []  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+
+    if isinstance(value, Set):
+        if isinstance(value, MutableSet):
+            new_value = type(value)()
+        else:
+            new_value = set()  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+
+    if isinstance(value, Mapping):
+        if isinstance(value, MutableMapping):
+            new_value = type(value)()
+        else:
+            new_value = {}  # Need a mutable value
+        deferred_removals.append((value, new_value))
+        return new_value
+
+    if isinstance(value, tuple(chain(integer_types, (float, bool, NoneType)))):
+        return value
+
+    if isinstance(value, (datetime.datetime, datetime.date)):
+        return value
+
+    raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
+
+
+def sanitize_keys(obj, no_log_strings, ignore_keys=frozenset()):
+    """ Sanitize the keys in a container object by removing no_log values from key names.
+
+    This is a companion function to the `remove_values()` function. Similar to that function,
+    we make use of deferred_removals to avoid hitting maximum recursion depth in cases of
+    large data structures.
+
+    :param obj: The container object to sanitize. Non-container objects are returned unmodified.
+    :param no_log_strings: A set of string values we do not want logged.
+    :param ignore_keys: A set of string values of keys to not sanitize.
+
+    :returns: An object with sanitized keys.
+    """
+
+    deferred_removals = deque()
+
+    no_log_strings = [to_native(s, errors='surrogate_or_strict') for s in no_log_strings]
+    new_value = _sanitize_keys_conditions(obj, no_log_strings, ignore_keys, deferred_removals)
+
+    while deferred_removals:
+        old_data, new_data = deferred_removals.popleft()
+
+        if isinstance(new_data, Mapping):
+            for old_key, old_elem in old_data.items():
+                if old_key in ignore_keys or old_key.startswith('_ansible'):
+                    new_data[old_key] = _sanitize_keys_conditions(old_elem, no_log_strings, ignore_keys, deferred_removals)
+                else:
+                    # Sanitize the old key. We take advantage of the sanitizing code in
+                    # _remove_values_conditions() rather than recreating it here.
+                    new_key = _remove_values_conditions(old_key, no_log_strings, None)
+                    new_data[new_key] = _sanitize_keys_conditions(old_elem, no_log_strings, ignore_keys, deferred_removals)
+        else:
+            for elem in old_data:
+                new_elem = _sanitize_keys_conditions(elem, no_log_strings, ignore_keys, deferred_removals)
+                if isinstance(new_data, MutableSequence):
+                    new_data.append(new_elem)
+                elif isinstance(new_data, MutableSet):
+                    new_data.add(new_elem)
+                else:
+                    raise TypeError('Unknown container type encountered when removing private values from keys')
 
     return new_value
 
@@ -567,7 +651,7 @@ def missing_required_lib(library, reason=None, url=None):
     if url:
         msg += " See %s for more info." % url
 
-    msg += (" Please read module documentation and install in the appropriate location."
+    msg += (" Please read the module documentation and install it in the appropriate location."
             " If the required library is installed, but Ansible is using the wrong Python interpreter,"
             " please consult the documentation on ansible_python_interpreter")
     return msg
@@ -579,9 +663,9 @@ class AnsibleFallbackNotFound(Exception):
 
 class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
-                 check_invalid_arguments=None, mutually_exclusive=None, required_together=None,
-                 required_one_of=None, add_file_common_args=False, supports_check_mode=False,
-                 required_if=None, required_by=None):
+                 mutually_exclusive=None, required_together=None,
+                 required_one_of=None, add_file_common_args=False,
+                 supports_check_mode=False, required_if=None, required_by=None):
 
         '''
         Common code for quickly building an ansible module in Python
@@ -598,14 +682,6 @@ class AnsibleModule(object):
         self.bypass_checks = bypass_checks
         self.no_log = no_log
 
-        # Check whether code set this explicitly for deprecation purposes
-        if check_invalid_arguments is None:
-            check_invalid_arguments = True
-            module_set_check_invalid_arguments = False
-        else:
-            module_set_check_invalid_arguments = True
-        self.check_invalid_arguments = check_invalid_arguments
-
         self.mutually_exclusive = mutually_exclusive
         self.required_together = required_together
         self.required_one_of = required_one_of
@@ -620,8 +696,6 @@ class AnsibleModule(object):
         # May be used to set modifications to the environment for any
         # run_command invocation
         self.run_command_environ_update = {}
-        self._warnings = []
-        self._deprecations = []
         self._clean = {}
         self._string_conversion_action = ''
 
@@ -654,7 +728,7 @@ class AnsibleModule(object):
         # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
 
-        self._check_arguments(check_invalid_arguments)
+        self._check_arguments()
 
         # check exclusive early
         if not bypass_checks:
@@ -696,15 +770,6 @@ class AnsibleModule(object):
         # finally, make sure we're in a sane working dir
         self._set_cwd()
 
-        # Do this at the end so that logging parameters have been set up
-        # This is to warn third party module authors that the functionality is going away.
-        # We exclude uri and zfs as they have their own deprecation warnings for users and we'll
-        # make sure to update their code to stop using check_invalid_arguments when 2.9 rolls around
-        if module_set_check_invalid_arguments and self._name not in ('uri', 'zfs'):
-            self.deprecate('Setting check_invalid_arguments is deprecated and will be removed.'
-                           ' Update the code for this module  In the future, AnsibleModule will'
-                           ' always check for invalid arguments.', version='2.9')
-
     @property
     def tmpdir(self):
         # if _ansible_tmpdir was not set and we have a remote_tmp,
@@ -745,31 +810,31 @@ class AnsibleModule(object):
         return self._tmpdir
 
     def warn(self, warning):
+        warn(warning)
+        self.log('[WARNING] %s' % warning)
 
-        if isinstance(warning, string_types):
-            self._warnings.append(warning)
-            self.log('[WARNING] %s' % warning)
+    def deprecate(self, msg, version=None, date=None, collection_name=None):
+        if version is not None and date is not None:
+            raise AssertionError("implementation error -- version and date must not both be set")
+        deprecate(msg, version=version, date=date, collection_name=collection_name)
+        # For compatibility, we accept that neither version nor date is set,
+        # and treat that the same as if version would haven been set
+        if date is not None:
+            self.log('[DEPRECATION WARNING] %s %s' % (msg, date))
         else:
-            raise TypeError("warn requires a string not a %s" % type(warning))
-
-    def deprecate(self, msg, version=None):
-        if isinstance(msg, string_types):
-            self._deprecations.append({
-                'msg': msg,
-                'version': version
-            })
             self.log('[DEPRECATION WARNING] %s %s' % (msg, version))
-        else:
-            raise TypeError("deprecate requires a string not a %s" % type(msg))
 
-    def load_file_common_arguments(self, params):
+    def load_file_common_arguments(self, params, path=None):
         '''
         many modules deal with files, this encapsulates common
         options that the file module accepts such that it is directly
         available to all modules and they can share code.
+
+        Allows to overwrite the path/dest module argument by providing path.
         '''
 
-        path = params.get('path', params.get('dest', None))
+        if path is None:
+            path = params.get('path', params.get('dest', None))
         if path is None:
             return {}
         else:
@@ -910,11 +975,12 @@ class AnsibleModule(object):
             f.close()
         except Exception:
             return (False, None)
+
         path_mount_point = self.find_mount_point(path)
+
         for line in mount_data:
             (device, mount_point, fstype, options, rest) = line.split(' ', 4)
-
-            if path_mount_point == mount_point:
+            if to_bytes(path_mount_point) == to_bytes(mount_point):
                 for fs in self._selinux_special_fs:
                     if fs in fstype:
                         special_context = self.selinux_context(path_mount_point)
@@ -1426,7 +1492,7 @@ class AnsibleModule(object):
         alias_warnings = []
         alias_results, self._legal_inputs = handle_aliases(spec, param, alias_warnings=alias_warnings)
         for option, alias in alias_warnings:
-            self._warnings.append('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
+            warn('Both option %s and its alias %s are set.' % (option_prefix + option, option_prefix + alias))
 
         deprecated_aliases = []
         for i in spec.keys():
@@ -1436,9 +1502,9 @@ class AnsibleModule(object):
 
         for deprecation in deprecated_aliases:
             if deprecation['name'] in param.keys():
-                self._deprecations.append(
-                    {'msg': "Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
-                     'version': deprecation['version']})
+                deprecate("Alias '%s' is deprecated. See the module docs for more information" % deprecation['name'],
+                          version=deprecation.get('version'), date=deprecation.get('date'),
+                          collection_name=deprecation.get('collection_name'))
         return alias_results
 
     def _handle_no_log_values(self, spec=None, param=None):
@@ -1452,9 +1518,12 @@ class AnsibleModule(object):
         except TypeError as te:
             self.fail_json(msg="Failure when processing no_log parameters. Module invocation will be hidden. "
                                "%s" % to_native(te), invocation={'module_args': 'HIDDEN DUE TO FAILURE'})
-        self._deprecations.extend(list_deprecations(spec, param))
 
-    def _check_arguments(self, check_invalid_arguments, spec=None, param=None, legal_inputs=None):
+        for message in list_deprecations(spec, param):
+            deprecate(message['msg'], version=message.get('version'), date=message.get('date'),
+                      collection_name=message.get('collection_name'))
+
+    def _check_arguments(self, spec=None, param=None, legal_inputs=None):
         self._syslog_facility = 'LOG_USER'
         unsupported_parameters = set()
         if spec is None:
@@ -1466,7 +1535,7 @@ class AnsibleModule(object):
 
         for k in list(param.keys()):
 
-            if check_invalid_arguments and k not in legal_inputs:
+            if k not in legal_inputs:
                 unsupported_parameters.add(k)
 
         for k in PASS_VARS:
@@ -1490,7 +1559,13 @@ class AnsibleModule(object):
             msg = "Unsupported parameters for (%s) module: %s" % (self._name, ', '.join(sorted(list(unsupported_parameters))))
             if self._options_context:
                 msg += " found in %s." % " -> ".join(self._options_context)
-            msg += " Supported parameters include: %s" % (', '.join(sorted(spec.keys())))
+            supported_parameters = list()
+            for key in sorted(spec.keys()):
+                if 'aliases' in spec[key] and spec[key]['aliases']:
+                    supported_parameters.append("%s (%s)" % (key, ', '.join(sorted(spec[key]['aliases']))))
+                else:
+                    supported_parameters.append(key)
+            msg += " Supported parameters include: %s" % (', '.join(supported_parameters))
             self.fail_json(msg=msg)
         if self.check_mode and not self.supports_check_mode:
             self.exit_json(skipped=True, msg="remote module (%s) does not support check mode" % self._name)
@@ -1635,7 +1710,7 @@ class AnsibleModule(object):
     def safe_eval(self, value, locals=None, include_exceptions=False):
         return safe_eval(value, locals, include_exceptions)
 
-    def _check_type_str(self, value):
+    def _check_type_str(self, value, param=None, prefix=''):
         opts = {
             'error': False,
             'warn': False,
@@ -1648,12 +1723,22 @@ class AnsibleModule(object):
             return check_type_str(value, allow_conversion)
         except TypeError:
             common_msg = 'quote the entire value to ensure it does not change.'
+            from_msg = '{0!r}'.format(value)
+            to_msg = '{0!r}'.format(to_text(value))
+
+            if param is not None:
+                if prefix:
+                    param = '{0}{1}'.format(prefix, param)
+
+                from_msg = '{0}: {1!r}'.format(param, value)
+                to_msg = '{0}: {1!r}'.format(param, to_text(value))
+
             if self._string_conversion_action == 'error':
                 msg = common_msg.capitalize()
                 raise TypeError(to_native(msg))
             elif self._string_conversion_action == 'warn':
-                msg = ('The value {0!r} (type {0.__class__.__name__}) in a string field was converted to {1!r} (type string). '
-                       'If this does not look like what you expect, {2}').format(value, to_text(value), common_msg)
+                msg = ('The value "{0}" (type {1.__class__.__name__}) was converted to "{2}" (type string). '
+                       'If this does not look like what you expect, {3}').format(from_msg, value, to_msg, common_msg)
                 self.warn(to_native(msg))
                 return to_native(value, errors='surrogate_or_strict')
 
@@ -1728,7 +1813,7 @@ class AnsibleModule(object):
 
                     options_legal_inputs = list(spec.keys()) + list(options_aliases.keys())
 
-                    self._check_arguments(self.check_invalid_arguments, spec, param, options_legal_inputs)
+                    self._check_arguments(spec, param, options_legal_inputs)
 
                     # check exclusive early
                     if not self.bypass_checks:
@@ -1738,7 +1823,7 @@ class AnsibleModule(object):
 
                     if not self.bypass_checks:
                         self._check_required_arguments(spec, param)
-                        self._check_argument_types(spec, param)
+                        self._check_argument_types(spec, param, new_prefix)
                         self._check_argument_values(spec, param)
 
                         self._check_required_together(v.get('required_together', None), param)
@@ -1773,9 +1858,17 @@ class AnsibleModule(object):
     def _handle_elements(self, wanted, param, values):
         type_checker, wanted_name = self._get_wanted_type(wanted, param)
         validated_params = []
+        # Get param name for strings so we can later display this value in a useful error message if needed
+        # Only pass 'kwargs' to our checkers and ignore custom callable checkers
+        kwargs = {}
+        if wanted_name == 'str' and isinstance(wanted, string_types):
+            if isinstance(param, string_types):
+                kwargs['param'] = param
+            elif isinstance(param, dict):
+                kwargs['param'] = list(param.keys())[0]
         for value in values:
             try:
-                validated_params.append(type_checker(value))
+                validated_params.append(type_checker(value, **kwargs))
             except (TypeError, ValueError) as e:
                 msg = "Elements value for option %s" % param
                 if self._options_context:
@@ -1784,7 +1877,7 @@ class AnsibleModule(object):
                 self.fail_json(msg=msg)
         return validated_params
 
-    def _check_argument_types(self, spec=None, param=None):
+    def _check_argument_types(self, spec=None, param=None, prefix=''):
         ''' ensure all arguments have the requested type '''
 
         if spec is None:
@@ -1802,8 +1895,18 @@ class AnsibleModule(object):
                 continue
 
             type_checker, wanted_name = self._get_wanted_type(wanted, k)
+            # Get param name for strings so we can later display this value in a useful error message if needed
+            # Only pass 'kwargs' to our checkers and ignore custom callable checkers
+            kwargs = {}
+            if wanted_name == 'str' and isinstance(type_checker, string_types):
+                kwargs['param'] = list(param.keys())[0]
+
+                # Get the name of the parent key if this is a nested option
+                if prefix:
+                    kwargs['prefix'] = prefix
+
             try:
-                param[k] = type_checker(value)
+                param[k] = type_checker(value, **kwargs)
                 wanted_elements = v.get('elements', None)
                 if wanted_elements:
                     if wanted != 'list' or not isinstance(param[k], list):
@@ -1870,10 +1973,19 @@ class AnsibleModule(object):
 
     def _log_to_syslog(self, msg):
         if HAS_SYSLOG:
-            module = 'ansible-%s' % self._name
-            facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
-            syslog.openlog(str(module), 0, facility)
-            syslog.syslog(syslog.LOG_INFO, msg)
+            try:
+                module = 'ansible-%s' % self._name
+                facility = getattr(syslog, self._syslog_facility, syslog.LOG_USER)
+                syslog.openlog(str(module), 0, facility)
+                syslog.syslog(syslog.LOG_INFO, msg)
+            except TypeError as e:
+                self.fail_json(
+                    msg='Failed to log to syslog (%s). To proceed anyway, '
+                        'disable syslog logging by setting no_target_syslog '
+                        'to True in your Ansible config.' % to_native(e),
+                    exception=traceback.format_exc(),
+                    msg_to_log=msg,
+                )
 
     def debug(self, msg):
         if self._debug:
@@ -1940,15 +2052,14 @@ class AnsibleModule(object):
         for param in self.params:
             canon = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
-            no_log = arg_opts.get('no_log', False)
+            no_log = arg_opts.get('no_log', None)
 
-            if self.boolean(no_log):
-                log_args[param] = 'NOT_LOGGING_PARAMETER'
-            # try to capture all passwords/passphrase named fields missed by no_log
-            elif PASSWORD_MATCH.search(param) and arg_opts.get('type', 'str') != 'bool' and not arg_opts.get('choices', False):
-                # skip boolean and enums as they are about 'password' state
+            # try to proactively capture password/passphrase fields
+            if no_log is None and PASSWORD_MATCH.search(param):
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
                 self.warn('Module did not set no_log for %s' % param)
+            elif self.boolean(no_log):
+                log_args[param] = 'NOT_LOGGING_PARAMETER'
             else:
                 param_val = self.params[param]
                 if not isinstance(param_val, (text_type, binary_type)):
@@ -1997,9 +2108,12 @@ class AnsibleModule(object):
 
         bin_path = None
         try:
-            bin_path = get_bin_path(arg, required, opt_dirs)
+            bin_path = get_bin_path(arg=arg, opt_dirs=opt_dirs)
         except ValueError as e:
-            self.fail_json(msg=to_text(e))
+            if required:
+                self.fail_json(msg=to_text(e))
+            else:
+                return bin_path
 
         return bin_path
 
@@ -2044,8 +2158,9 @@ class AnsibleModule(object):
             else:
                 self.warn(kwargs['warnings'])
 
-        if self._warnings:
-            kwargs['warnings'] = self._warnings
+        warnings = get_warning_messages()
+        if warnings:
+            kwargs['warnings'] = warnings
 
         if 'deprecations' in kwargs:
             if isinstance(kwargs['deprecations'], list):
@@ -2053,14 +2168,16 @@ class AnsibleModule(object):
                     if isinstance(d, SEQUENCETYPE) and len(d) == 2:
                         self.deprecate(d[0], version=d[1])
                     elif isinstance(d, Mapping):
-                        self.deprecate(d['msg'], version=d.get('version', None))
+                        self.deprecate(d['msg'], version=d.get('version'), date=d.get('date'),
+                                       collection_name=d.get('collection_name'))
                     else:
-                        self.deprecate(d)
+                        self.deprecate(d)  # pylint: disable=ansible-deprecated-no-version
             else:
-                self.deprecate(kwargs['deprecations'])
+                self.deprecate(kwargs['deprecations'])  # pylint: disable=ansible-deprecated-no-version
 
-        if self._deprecations:
-            kwargs['deprecations'] = self._deprecations
+        deprecations = get_deprecation_messages()
+        if deprecations:
+            kwargs['deprecations'] = deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
         print('\n%s' % self.jsonify(kwargs))
@@ -2072,12 +2189,11 @@ class AnsibleModule(object):
         self._return_formatted(kwargs)
         sys.exit(0)
 
-    def fail_json(self, **kwargs):
+    def fail_json(self, msg, **kwargs):
         ''' return from the module, with an error message '''
 
-        if 'msg' not in kwargs:
-            raise AssertionError("implementation error -- msg to explain the error is required")
         kwargs['failed'] = True
+        kwargs['msg'] = msg
 
         # Add traceback if debug or high verbosity and it is missing
         # NOTE: Badly named as exception, it really always has been a traceback
@@ -2359,15 +2475,6 @@ class AnsibleModule(object):
             self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)),
                            exception=traceback.format_exc())
 
-    def _read_from_pipes(self, rpipes, rfds, file_descriptor):
-        data = b('')
-        if file_descriptor in rfds:
-            data = os.read(file_descriptor.fileno(), self.get_buffer_size(file_descriptor))
-            if data == b(''):
-                rpipes.remove(file_descriptor)
-
-        return data
-
     def _clean_args(self, args):
 
         if not self._clean:
@@ -2453,9 +2560,10 @@ class AnsibleModule(object):
             are expanded before running the command. When ``True`` a string such as
             ``$SHELL`` will be expanded regardless of escaping. When ``False`` and
             ``use_unsafe_shell=False`` no path or variable expansion will be done.
-        :kw pass_fds: When running on python3 this argument
+        :kw pass_fds: When running on Python 3 this argument
             dictates which file descriptors should be passed
-            to an underlying ``Popen`` constructor.
+            to an underlying ``Popen`` constructor. On Python 2, this will
+            set ``close_fds`` to False.
         :kw before_communicate_callback: This function will be called
             after ``Popen`` object will be created
             but before communicating to the process.
@@ -2566,6 +2674,8 @@ class AnsibleModule(object):
         )
         if PY3 and pass_fds:
             kwargs["pass_fds"] = pass_fds
+        elif PY2 and pass_fds:
+            kwargs['close_fds'] = False
 
         # store the pwd
         prev_dir = os.getcwd()
@@ -2594,9 +2704,20 @@ class AnsibleModule(object):
             # the communication logic here is essentially taken from that
             # of the _communicate() function in ssh.py
 
-            stdout = b('')
-            stderr = b('')
-            rpipes = [cmd.stdout, cmd.stderr]
+            stdout = b''
+            stderr = b''
+            try:
+                selector = selectors.DefaultSelector()
+            except OSError:
+                # Failed to detect default selector for the given platform
+                # Select PollSelector which is supported by major platforms
+                selector = selectors.PollSelector()
+
+            selector.register(cmd.stdout, selectors.EVENT_READ)
+            selector.register(cmd.stderr, selectors.EVENT_READ)
+            if os.name == 'posix':
+                fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stdout.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
+                fcntl.fcntl(cmd.stderr.fileno(), fcntl.F_SETFL, fcntl.fcntl(cmd.stderr.fileno(), fcntl.F_GETFL) | os.O_NONBLOCK)
 
             if data:
                 if not binary_data:
@@ -2607,9 +2728,15 @@ class AnsibleModule(object):
                 cmd.stdin.close()
 
             while True:
-                rfds, wfds, efds = select.select(rpipes, [], rpipes, 1)
-                stdout += self._read_from_pipes(rpipes, rfds, cmd.stdout)
-                stderr += self._read_from_pipes(rpipes, rfds, cmd.stderr)
+                events = selector.select(1)
+                for key, event in events:
+                    b_chunk = key.fileobj.read()
+                    if b_chunk == b(''):
+                        selector.unregister(key.fileobj)
+                    if key.fileobj == cmd.stdout:
+                        stdout += b_chunk
+                    elif key.fileobj == cmd.stderr:
+                        stderr += b_chunk
                 # if we're checking for prompts, do it now
                 if prompt_re:
                     if prompt_re.search(stdout) and not data:
@@ -2619,12 +2746,12 @@ class AnsibleModule(object):
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and
                 # the process is terminated
-                if (not rpipes or not rfds) and cmd.poll() is not None:
+                if (not events or not selector.get_map()) and cmd.poll() is not None:
                     break
                 # No pipes are left to read but process is not yet terminated
                 # Only then it is safe to wait for the process to be finished
-                # NOTE: Actually cmd.poll() is always None here if rpipes is empty
-                elif not rpipes and cmd.poll() is None:
+                # NOTE: Actually cmd.poll() is always None here if no selectors are left
+                elif not selector.get_map() and cmd.poll() is None:
                     cmd.wait()
                     # The process is terminated. Since no pipes to read from are
                     # left, there is no need to call select() again.
@@ -2632,6 +2759,7 @@ class AnsibleModule(object):
 
             cmd.stdout.close()
             cmd.stderr.close()
+            selector.close()
 
             rc = cmd.returncode
         except (OSError, IOError) as e:

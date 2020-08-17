@@ -5,6 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import sys
+
 import argparse
 from operator import attrgetter
 
@@ -13,9 +15,7 @@ from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.inventory.host import Host
 from ansible.module_utils._text import to_bytes, to_native
-from ansible.plugins.loader import vars_loader
 from ansible.utils.vars import combine_vars
 from ansible.utils.display import Display
 from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_path
@@ -23,6 +23,7 @@ from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_
 display = Display()
 
 INTERNAL_VARS = frozenset(['ansible_diff_mode',
+                           'ansible_config_file',
                            'ansible_facts',
                            'ansible_forks',
                            'ansible_inventory_sources',
@@ -160,9 +161,9 @@ class InventoryCLI(CLI):
                         f.write(results)
                 except (OSError, IOError) as e:
                     raise AnsibleError('Unable to write to destination file (%s): %s' % (to_native(outfile), to_native(e)))
-            exit(0)
+            sys.exit(0)
 
-        exit(1)
+        sys.exit(1)
 
     @staticmethod
     def dump(stuff):
@@ -239,9 +240,8 @@ class InventoryCLI(CLI):
     @staticmethod
     def _show_vars(dump, depth):
         result = []
-        if context.CLIARGS['show_vars']:
-            for (name, val) in sorted(dump.items()):
-                result.append(InventoryCLI._graph_name('{%s = %s}' % (name, val), depth))
+        for (name, val) in sorted(dump.items()):
+            result.append(InventoryCLI._graph_name('{%s = %s}' % (name, val), depth))
         return result
 
     @staticmethod
@@ -260,9 +260,11 @@ class InventoryCLI(CLI):
         if group.name != 'all':
             for host in sorted(group.hosts, key=attrgetter('name')):
                 result.append(self._graph_name(host.name, depth))
-                result.extend(self._show_vars(self._get_host_variables(host), depth + 1))
+                if context.CLIARGS['show_vars']:
+                    result.extend(self._show_vars(self._get_host_variables(host), depth + 1))
 
-        result.extend(self._show_vars(self._get_group_variables(group), depth))
+        if context.CLIARGS['show_vars']:
+            result.extend(self._show_vars(self._get_group_variables(group), depth))
 
         return result
 

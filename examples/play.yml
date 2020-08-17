@@ -1,0 +1,525 @@
+#!/usr/bin/env ansible-playbook
+# ^ Trick: the above line can be used to make your play an executable
+# you also must add 'x' permissions to the file
+#
+# this file is based on phred's 'pedantically commented playbook'
+# https://github.com/phred/ansible-examples/blob/master/pedantically_commented_playbook.yml
+#
+---
+# ^^^ YAML documents can begin with the document separator "---"
+# and end with the "...", neither is needed for Ansible # as it does not
+# support multiple YAML documents per file, but some linters incorrectly insist
+# you must have it ....
+#
+# The '#' is a comment character, so any line starting with it will be ignored by Ansible.
+
+# Blank lines are ignored, so can be used # to create spacing to your taste.
+
+# Note about YAML: like Python, cares about whitespace, it requires actual spaces, tabs won't work.
+# Indent consistently throughout.
+# Two-space or four space indents is what most users prefer, but do whatever you like.
+#
+# If you're new to YAML, keep in mind that YAML documents, like XML
+# documents, represent a tree-like structure of nodes and text. More
+# familiar with JSON?  Think of YAML as a strict (with spaces) but also more flexible
+# JSON (fewer significant characters, e.g., :, "", {}, [] and liberal quoting).
+# Also, JSON is a subset of YAML, so most YAML parser can read JSON just the same.
+#
+# The curious may read more about YAML at:
+# http://www.yaml.org/spec/1.1/current.html
+# there is a 1.2, but Ansible uses pyyaml which is mostly 1.1
+
+# the following line configures 'vim' to handle 2 space indents.
+# vim:ff=unix ts=2 sw=2 ai expandtab
+
+###
+# Notice the minus (-) on the line below, this is the start of a 'list' in YAML
+# In Ansible this is the 'list of plays' which starts this playbook.
+# Plays map the inventory hosts to the tasks, the most minimal play you can have
+# just requires 'hosts'
+
+- hosts: all
+  ###########
+  # Play keyword: hosts
+  # Required: yes
+  # Description:
+  #   The selection of hosts (or host) that the tasks in this play play should apply to.
+  #
+  ## Example values:
+  #   hosts: all -- applies to all hosts
+  #   hosts: host1 -- apply ONLY to the host that inventory defines as 'host1'
+  #   hosts: group1 -- apply to all hosts in group1
+  #   hosts: group1,group2 -- apply to hosts in group1 & group2
+  #   hosts: group1,host1 -- hosts in group1 AND host
+  #
+  ## now using host patterns (TODO: url)
+  #   hosts: group1,!group3 -- hosts in group1 that are not in group3
+  #   hosts: group1,&group3 -- hosts in group1 that are also in group3
+  #   hosts: group1:&group3 -- same as above, but using : instead of , as separator
+  #   hosts: group1:!group2:&group3 -- hosts in group1 what are not in group2 but are also in group3
+  #
+  ## Using a variable value for 'hosts'
+  #
+  # You can, in fact, set hosts to a variable, for example:
+  #
+  #   hosts: '{{mygroups}}' -- apply to all hosts specified in the variable 'mygroups'
+  #
+  # This is handy for testing playbooks, running the same playbook against a
+  # staging environment before running it against production, occasional
+  # maintenance tasks, and other cases where you want to run the playbook
+  # against just a few systems rather than a whole group.
+  # Note that the variable cannot be set in inventory, since we need to know the hosts
+  # before we can use inventory variables. So normally 'extra vars' are used, as you can
+  # see below.
+  #
+  # If you set hosts as shown above, then you can specify which hosts to
+  # apply the playbook to on each run as so:
+  #
+  #   ansible-playbook playbook.yml --extra-vars="mygroups=staging"
+  #
+  # Use --extra-vars to set the variable to any combination of groups, hostnames,
+  # or host patterns just like the examples in the previous section.
+  #
+
+  name: my heavily commented play
+  ###########
+  # Play keyword: name
+  # Default: play###
+  # Required: no
+  # Description: Just a description to document the play
+
+  gather_facts: yes
+  ###########
+  # Play keyword:  gather_facts
+  # Default: None
+  # Required: no
+  # Description:
+  #   This controls if the play will trigger a 'fact gathering task' (aka 'gather_facts' or 'setup' action) to get information about the remote target.
+  #   These facts normally provide useful variables on which to base decisions and task inputs. For example `ansible_os_distribution` can tell us if
+  #   the target is a RHEL, Ubuntu or FreeBSD machine (among others), number of CPUs, RAM, etc.
+  # TODO: url to fact gathering
+
+  remote_user: login_user
+  ###########
+  # Play keyword:  user
+  # Default: depends on connection plugin, for ssh it is 'current user executing Ansible'
+  # Required: no
+  # Description:
+  #   Remote user to login on remote targets and 'normally' execute the tasks as
+
+  become: True
+  ###########
+  # Play keyword: become
+  # Default: False
+  # Required: no
+  # Description:
+  #   If True, always use privilege escalation to run tasks from this play, just like passing the
+  #   --become flag to ansible or ansible-playbook.
+
+
+  become_user: root
+  ###########
+  # Play keyword: become_user
+  # Default: None
+  # Required: no
+  # Description:
+  #   When using privilege escalation this is the user you 'become' after login with the remote_user
+  #   for example you login to the remote as 'login_user' then you 'become' root to execute the tasks
+
+  become_method: sudo
+  ###########
+  # Play keyword: become_method
+  # Default: sudo
+  # Required: no
+  # Description:
+  #   When using privilege escalation this chooses the become plugin to use for privilege escalation.
+  #   use `ansible-doc -t become -l` to list all the options.
+
+  connection: ssh
+  ###########
+  # Play keyword: connection
+  # Default: ssh
+  # Required: no
+  # Description:
+  #   This sets which connection plugin Ansible will use to try to communicate with the target host.
+  #   notable options are paramiko (python implementation of ssh, mostly useful in corner cases in which the ssh cli
+  #   does not work well with the target. Also 'local' which forces a 'local fork' to execute the task, but normally
+  #   what you really want is `delegate_to: localhost` see examples below in 'Run things locally!' entry.
+  #   use `ansible-doc -t connection -l` to list all the options.
+
+  vars:
+  ###########
+  # Play keyword: vars
+  # Default: none
+  # Required: no
+  # Description:
+  #   Mapping of variables defined for this play, normally for use in templates or as variables for tasks.
+
+    # to get the value just use {{color}} to reference that value
+    color: brown
+
+    # Mapping structures allow complex variables structures, to use you can reference
+    #  the variable name with {{web['memcache']}} when using nested key value or {{web}}
+    # when using the whole structure..
+    web:
+      memcache: 192.168.1.2
+      httpd: apache
+
+    # lists use a slightly different notation {{ mylist[1] }} to get 'b', they are 0 indexed.
+    mylist:
+       - a
+       - b
+       - c
+
+    # Variables can be dynamically set via Jinja templates, to be filled when consumed.
+    #
+    # In this playbook, this will always evaluate to False, because 'color'
+    #  is set to 'brown' above.
+    #
+    # When ansible interprets the following, it will first expand 'color' to
+    # 'brown' and then evaluate 'brown' == 'blue' as a Jinja expression.
+    is_color_blue: "{{ color == 'blue' }}"
+
+    # TODO: (url variables)
+
+  vars_files:
+  ##########
+  # Play keyword: vars_files
+  # Required: no
+  # Description:
+  #   Specifies a list of YAML files to load variables from.
+  #
+  #   Always evaluated after the 'vars' section, no matter which section
+  #   occurs first in the playbook.  Examples are below.
+  #
+  #   Example YAML for a file to be included by vars_files:
+  #   ---
+  #   monitored_by: phobos.mars.nasa.gov
+  #   fish_sticks: "good with custard"
+  #   ... # (END OF DOCUMENT)
+  #
+  #   Remove the indentation & comments of course, the '---' should be at
+  #   the left margin in the variables file.
+  #
+    # Include a file from this absolute path
+    - /srv/ansible/vars/vars_file.yml
+
+    # Include a file from a path relative to this playbook
+    - vars/vars_file.yml
+
+    # By the way, variables set in 'vars' or as extra vars are available here.
+    - vars/{{something}}.yml
+
+    # It's also possible to pass an array of files, in which case
+    # Ansible will loop over the array and include the first file that
+    # exists.  If none exist, ansible-playbook will halt with an error.
+    #
+    # An excellent way to handle platform-specific differences.
+    - [ 'vars/{{platform}}.yml', vars/default.yml ]
+
+    # Files in vars_files process in order, so later files can
+    # provide more specific configuration:
+    - [ 'vars/{{host}}.yml' ]
+
+    # Hey, but if you're doing host-specific variable files, you might
+    # consider setting the variable for a group in your inventory and
+    # adding your host to that group. Just a thought.
+
+
+  vars_prompt:
+  ##########
+  # Play keyword: vars_prompt
+  # Required: no
+  # Description:
+  #   A list of variables that Ansible will prompt for manual input each time this playbook
+  #   runs.  Used for sensitive data and also things like release numbers that
+  #   vary on each deployment.
+  #
+  #   Ansible won't prompts for this value if already provided, like when
+  #   passed through --extra-vars, but not from inventory.
+  #
+  #   Also it won't prompt if it detects that it is a non interactive session.
+  #   For example, when called from cron.
+  #
+    - name: passphrase
+      prompt: "Please enter the passphrase for the SSL certificate"
+      private: yes
+      #   The input won't be echoed back to the terminal when private (default yes)
+
+    # Not sensitive, but something that should vary on each playbook run.
+    - name: release_version
+      prompt: "Please enter a release tag"
+      private: no
+
+    # you can even have a default
+    - name: package_version
+      prompt: "Please enter a package version"
+      default: '1.0'
+
+    # You can find more advanced features in https://docs.ansible.com/ansible/latest/user_guide/playbooks_prompts.html
+
+  roles:
+  ##########
+  # Play keyword: roles
+  # Required: no
+  # Description: A list of roles to import and execute in this play. Executes AFTER pre_tasks and play fact gathering, but before 'tasks'.
+  # TODO url roles + url to 'play stages'
+
+  tasks:
+  ##########
+  # Play keyword: tasks
+  # Required: no
+  # Description: A list of tasks to perform in this play. Executes AFTER roles and before post_tasks
+
+    # A simple task
+    # Each task must have an action. 'name' is optional but very useful to document what the task does
+    - name: Check that the target can execute Ansible tasks
+      action: ping
+
+    ##########
+    # Ansible modules do the work!, 'action' is not needed, you can use the 'action itself' as part of the task
+    - file: path=/tmp/secret mode=0600 owner=root group=root
+    #
+    # Format 'action' like above:
+    # <modulename>: <module parameters>
+    #
+    # Test your parameters using:
+    #   ansible -m <module> -a "<module parameters>"
+    #
+    # Documentation for the stock modules:
+    # http://ansible.github.com/modules.html
+
+    # normally most will want to use 'k: v' notation instead of 'k=v' used above (but useful for adhoc execution).
+    # while both formats are mostly interchangable, `k: v` is more explicit, 'type friendly' and simpler to escape.
+    - name: Ensure secret is locked down
+      file:
+         path: /tmp/secret
+         mode: '0600'
+         owner: root
+         group: root
+
+    # note that 'action options' are indented inside the option, while 'task keywords' stay on the top level
+
+    ##########
+    # Use variables in the task! It expands on use.
+    - name: Paint the server
+      command: echo {{color}}
+
+    # you can also define variables at the task level
+    - name: Ensure secret is locked down
+      file:
+         path: '{{secret_file}}'
+         mode: '0600'
+         owner: root
+         group: root
+      vars:
+        secret_file: /tmp/secret
+
+    ##########
+    # Trigger handlers when things change!
+    #
+    # Most Ansible actions can detect and report when something changed.
+    # Like if file permissions were not the same as requested,
+    # a file's content is different or a package was installed (or removed)
+    # When a change is reported, the task assumes the 'changed' status.
+    # Ansible can optionally notify one or more Handlers.
+    # Handlers are like normal tasks, the main difference is that they only
+    # run when notified.
+    # A common use is to restart a service after updating it's configuration file.
+    # https://docs.ansible.com/ansible/latest/user_guide/playbooks_intro.html#handlers-running-operations-on-change
+
+    # TODO: explain handler per stage execution
+
+    # This will call the "Restart Apache" handler whenever 'copy' alters
+    # the remote httpd.conf.
+    - name: Update the Apache config
+      copy:
+        src: httpd.conf
+        dest: /etc/httpd/httpd.conf
+      notify: Restart Apache
+
+    # Here's how to specify more than one handler
+    - name: Update our app's configuration
+      copy:
+        src: myapp.conf
+        dest: /etc/myapp/production.conf
+      notify:
+        - Restart Apache
+        - Restart Redis
+
+    ##########
+    # Include tasks from another file!
+    #
+    # Ansible can insert a list of tasks from another file. The file
+    # must represent a list of tasks, which is different than a play.
+    #
+    # Task list format:
+    #   ---
+    #   - name: create user
+    #     user: name={{myuser}} color={{color}}
+    #
+    #   - name: add user to group
+    #     user: name={{myuser}} groups={{hisgroup}} append=true
+    #   ... # (END OF DOCUMENT)
+    #
+    #   A 'tasks' YAML file represents a list of tasks. Don't use playbook
+    #   YAML for a 'tasks' file.
+    #
+    #   Remove the indentation & comments of course, the '---' should be at
+    #   the left margin in the variables file.
+
+    # TODO: point at import_playbook, includes and roles
+    # In this example the user will be 'sklar'
+    #  and 'color' will be 'red' inside new_user.yml
+    - import_tasks: tasks/new_user.yml
+      vars:
+        myuser: sklar
+        color: red
+
+    # In this example the user will be 'mosh'
+    #  and $color will be 'mauve' inside new_user.yml
+    - import_tasks: tasks/new_user.yml
+      vars:
+        myuser: mosh
+        color: mauve
+
+
+    ##########
+    # Run a task on each thing in a list!
+    #
+    # Ansible provides a simple loop facility. If 'loop' is provided for
+    # a task, then the task will be run once for each item in the provided
+    # list.  Each iteration will create the 'item' variable with a different value.
+    - name: Create a file named via variable in /tmp
+      file: path=/tmp/{{item}} state=touched
+      loop:
+        - tangerine
+        - lemon
+
+    - name: Loop using a variable
+      file: path=/tmp/{{item}} state=touched
+      loop: '{{mylist}}'
+      vars:
+        # defined here, but could be anywhere before the task runs
+        # also note that YAML lists can be flush with their key,
+        # we normally indent for clarity, but this form is also correct.
+        mylist:
+        - tangerine
+        - lemon
+    ##########
+    # Conditionally execute tasks!
+    #
+    # Sometimes you only want to run an action when a under certain conditions.
+    # Ansible supports using conditional Jinja expression, executing the task only when 'True'.
+    #
+    # If you're trying to run an task only when a value changes,
+    # consider rewriting the task as a handler and using 'notify' (see below).
+    #
+    - name: "shutdown all ubuntu"
+      command: /sbin/shutdown -t now
+      when: '{{is_ubuntu|bool}}'
+
+    - name: "shutdown the if host is in the government"
+      command: /sbin/shutdown -t now
+      when: "{{inventory_hostname in groups['government']}}"
+
+      # another way to write the same.
+    - name: "shutdown the if host is in the government"
+      command: /sbin/shutdown -t now
+      when: "{{'government' in group_names}}"
+
+    # Ansible has some built in variables, you can check them here (TODO url)
+    # inventory_hostname is the name of the current host the task is executing for (derived from the hosts: keyword)
+    # group_names has the list of groups the current host (inventory_hostname) is part of
+    # groups is a mapping of the inventory groups with the list of hosts that belong to them
+
+    ##########
+    # Run things as other users!
+    #
+    # Each task has optional keywords that control which
+    # user a task should run as and whether or not to use privilege escalation
+    # (like sudo or su) to switch to that user.
+
+    - name: login in as postgres and dump all postgres databases
+      shell: pg_dumpall -w -f /tmp/backup.psql
+      remote_user: postgres
+      become: False
+
+    - name: login normally, but sudo to postgres to dump all postgres databases
+      shell: pg_dumpall -w -f /tmp/backup.psql
+      become: true
+      become_user: postgres
+      become_method: sudo
+
+    ##########
+    # Run things locally!
+    #
+    # Each task can also be delegated to the control host
+    - name: create tempfile
+      local_action: shell dd if=/dev/urandom of=/tmp/random.txt count=100
+
+    # which is equivalent to the following
+    - name: create tempfile
+      shell: dd if=/dev/urandom of=/tmp/random.txt count=100
+      delegate_to: localhost
+    # delegate_to can use any target, but for the case above, it is the same as using local_action
+    # TODO url to delegation and implicit localhost
+
+  handlers:
+  ##########
+  # Play keyword: handlers
+  # Required: no
+  # Description:
+  #   Handlers are tasks that run when another task has changed something.
+  #   See above for examples on how to trigger them.
+  #   The format to define a handler is exactly the same as for tasks.
+  #   Note that if multiple tasks notify the same handler in a playbook run
+  #   that handler will only run once for that host.
+  #
+  #   Handlers are referred to by name or using the listen keyword.
+  #   They will be run in the order declared in the playbook.
+  # For example: if a task were to notify the handlers in reverse order like so:
+  #
+  #   - task: ensure file does not exist
+  #     file:
+  #       name: /tmp/lock.txt
+  #       state: absent
+  #     notify:
+  #     - Restart application
+  #     - Restart nginx
+  #
+  # The "Restart nginx" handler will still run before the "Restart application"
+  # handler because it is declared first in this playbook.
+
+    # this one can only be called by name
+    - name: Restart nginx
+      service:
+         name: nginx
+         state: restarted
+
+    # this one can be called by name or via any entry in the listen keyword
+    - name: redis restarter
+      service:
+         name: redis
+         state: restarted
+      listen:
+        - Restart redis
+
+    # Any module can be used for the handler action
+    # even though this can be triggered multiple ways and times
+    # it will only execute once per host
+    - name: restart application that should really be a service
+      command: /srv/myapp/restart.sh
+      listen:
+        - Restart application
+        - restart myapp
+
+    # It's also possible to include handlers from another file.  Structure is
+    # the same as a tasks file, see the tasks section above for an example.
+    - import_tasks: handlers/site.yml
+
+
+# NOTE: this is not a complete list of all possible keywords in a play or task (TODO: url playbook object and keywords), just an example of very common options.
+
+# below is the "totally optional" YAML "End of document" marker.
+...

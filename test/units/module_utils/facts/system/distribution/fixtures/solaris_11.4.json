@@ -1,0 +1,35 @@
+{
+    "name": "Solaris 11.4",
+    "uname_r": "5.11",
+    "platform.dist": ["", "", ""],
+    "distro": {
+        "codename": "",
+        "id": "",
+        "name": "",
+        "version": "",
+        "version_best": "",
+        "os_release_info": {
+            "support_url": "https://support.oracle.com/",
+            "name": "Oracle Solaris",
+            "pretty_name": "Oracle Solaris 11.4",
+            "version": "11.4",
+            "id": "solaris",
+            "version_id": "11.4",
+            "build_id": "11.4.0.0.1.15.0",
+            "home_url": "https://www.oracle.com/solaris/",
+            "cpe_name": "cpe:/o:oracle:solaris:11:4"
+        },
+        "lsb_release_info": {}
+    },
+    "input": {
+        "/etc/release": "                            Oracle Solaris 11.4 SPARC\n    Copyright (c) 1983, 2018, Oracle and/or its affiliates.  All rights reserved.\n                           Assembled 14 September 2018\n"
+    },
+    "platform.system": "SunOS",
+    "result": {
+        "distribution_release": "Oracle Solaris 11.4 SPARC",
+        "distribution": "Solaris",
+        "os_family": "Solaris",
+        "distribution_major_version": "11",
+        "distribution_version": "11.4"
+    }
+}

@@ -1,2 +1,0 @@
-bugfixes:
-- "docker_container - make sure that when image is missing, check mode indicates a change (image will be pulled)."

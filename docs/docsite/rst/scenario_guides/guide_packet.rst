@@ -31,7 +31,7 @@ To use the modules and inventory script you'll need a Packet API token. You can 
 
 If you're not comfortable exporting your API token, you can pass it as a parameter to the modules.
 
-On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.net/developers/api/projects/>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or via one of the available `CLIs <https://www.packet.net/developers/integrations/>`_.
+On Packet, devices and reserved IP addresses belong to `projects <https://www.packet.com/developers/api/#projects>`_. In order to use the packet_device module, you need to specify the UUID of the project in which you want to create or manage devices. You can find a project's UUID in the Packet portal `here <https://app.packet.net/portal#/projects/list/table/>`_ (it's just under the project table) or via one of the available `CLIs <https://www.packet.net/developers/integrations/>`_.
 
 
 If you want to use a new SSH keypair in this tutorial, you can generate it to ``./id_rsa`` and ``./id_rsa.pub`` as:
@@ -46,7 +46,7 @@ If you want to use an existing keypair, just copy the private and public key ove
 Device Creation
 ===============
 
-The following code block is a simple playbook that creates one `Type 0 <https://www.packet.net/bare-metal/servers/type-0/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters via a `CLI client <https://www.packet.net/developers/integrations/>`_.
+The following code block is a simple playbook that creates one `Type 0 <https://www.packet.com/cloud/servers/t1-small/>`_ server (the 'plan' parameter). You have to supply 'plan' and 'operating_system'. 'location' defaults to 'ewr1' (Parsippany, NJ). You can find all the possible values for the parameters via a `CLI client <https://www.packet.net/developers/integrations/>`_.
 
 .. code-block:: yaml
 
@@ -126,7 +126,7 @@ More Complex Playbooks
 In this example, we'll create a CoreOS cluster with `user data <https://support.packet.com/kb/articles/user-data>`_.
 
 
-The CoreOS cluster will use `etcd <https://coreos.com/etcd/>`_ for discovery of other servers in the cluster. Before provisioning your servers, you'll need to generate a discovery token for your cluster:
+The CoreOS cluster will use `etcd <https://etcd.io/>`_ for discovery of other servers in the cluster. Before provisioning your servers, you'll need to generate a discovery token for your cluster:
 
 .. code-block:: bash
 
@@ -183,7 +183,7 @@ The following playbook will create an SSH key, 3 Packet servers, and then wait u
 
 As with most Ansible modules, the default states of the Packet modules are idempotent, meaning the resources in your project will remain the same after re-runs of a playbook. Thus, we can keep the ``packet_sshkey`` module call in our playbook. If the public key is already in your Packet account, the call will have no effect.
 
-The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoresOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
+The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoreOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
 
 The ``packet_device`` module has a ``wait_for_public_IPv`` that is used to specify the version of the IP address to wait for (valid values are ``4`` or ``6`` for IPv4 or IPv6). If specified, Ansible will wait until the GET API call for a device contains an Internet-routeable IP address of the specified version. When referring to an IP address of a created device in subsequent module calls, it's wise to use the ``wait_for_public_IPv`` parameter, or ``state: active`` in the packet_device module call.
 
@@ -206,9 +206,11 @@ Once you create a couple of devices, you might appreciate the dynamic inventory 
 Dynamic Inventory Script
 ========================
 
-The dynamic inventory script queries the Packet API for a list of hosts, and exposes it to Ansible so you can easily identify and act on Packet devices. You can find it in Ansible's git repo at `contrib/inventory/packet_net.py <https://github.com/ansible/ansible/blob/devel/contrib/inventory/packet_net.py>`_.
+The dynamic inventory script queries the Packet API for a list of hosts, and exposes it to Ansible so you can easily identify and act on Packet devices.
 
-The inventory script is configurable via a `ini file <https://github.com/ansible/ansible/blob/devel/contrib/inventory/packet_net.ini>`_.
+You can find it in Ansible Community General Collection's git repo at `scripts/inventory/packet_net.py <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.py>`_.
+
+The inventory script is configurable via a `ini file <https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.ini>`_.
 
 If you want to use the inventory script, you must first export your Packet API token to a PACKET_API_TOKEN environment variable.
 
@@ -216,9 +218,9 @@ You can either copy the inventory and ini config out from the cloned git repo, o
 
 .. code-block:: bash
 
-    $ wget https://github.com/ansible/ansible/raw/devel/contrib/inventory/packet_net.py
+    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.py
     $ chmod +x packet_net.py
-    $ wget https://github.com/ansible/ansible/raw/devel/contrib/inventory/packet_net.ini
+    $ wget https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/packet_net.ini
 
 In order to understand what the inventory script gives to Ansible you can run:
 

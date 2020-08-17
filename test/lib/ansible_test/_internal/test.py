@@ -3,7 +3,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
-import os
 import re
 
 from . import types as t
@@ -152,7 +151,15 @@ class TestResult:
             ),
         ]
 
-        report = self.junit.TestSuite.to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')
+        # the junit_xml API is changing in version 2.0.0
+        # TestSuite.to_xml_string is being replaced with to_xml_report_string
+        # see: https://github.com/kyrus/python-junit-xml/blob/63db26da353790500642fd02cae1543eb41aab8b/junit_xml/__init__.py#L249-L261
+        try:
+            to_xml_string = self.junit.to_xml_report_string
+        except AttributeError:
+            to_xml_string = self.junit.TestSuite.to_xml_string
+
+        report = to_xml_string(test_suites=test_suites, prettyprint=True, encoding='utf-8')
 
         if args.explain:
             return
@@ -192,7 +199,7 @@ One or more of the following situations may be responsible:
 
         timestamp = datetime.datetime.utcnow().replace(microsecond=0).isoformat()
 
-        # hack to avoid requiring junit-xml, which isn't pre-installed on Shippable outside our test containers
+        # hack to avoid requiring junit-xml, which may not be pre-installed outside our test containers
         xml = '''
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites disabled="0" errors="1" failures="0" tests="1" time="0.0">

@@ -1,0 +1,57 @@
+# Because hwclock usually isn't available inside Docker containers in Shippable
+# these tasks will detect if hwclock works and only run hwclock tests if it is
+# supported. That is why it is recommended to run these tests locally with
+# `--docker-privileged` on centos6, centos7 and ubuntu1404 images. Example
+# command to run on centos6:
+#
+#   ansible-test integration --docker centos6 --docker-privileged -v timezone
+
+##
+## set path to timezone config files
+##
+
+- name: set config file path on Debian
+  set_fact:
+    timezone_config_file: '/etc/timezone'
+  when: ansible_os_family == 'Debian'
+
+- name: set config file path on RedHat
+  set_fact:
+    timezone_config_file: '/etc/sysconfig/clock'
+  when: ansible_os_family == 'RedHat'
+
+##
+## set path to hwclock config files
+##
+
+- name: set config file path on Debian
+  set_fact:
+    hwclock_config_file: '/etc/default/rcS'
+  when: ansible_os_family == 'Debian'
+
+- name: set config file path on RedHat
+  set_fact:
+    hwclock_config_file: '/etc/sysconfig/clock'
+  when: ansible_os_family == 'RedHat'
+
+- name: Run tests
+  # Skip tests on Fedora because dbus fails to start unless the container is run in priveleged mode.
+  # Even then, it starts unreliably. This may be due to the move to cgroup v2 in Fedora 31.
+  # https://www.redhat.com/sysadmin/fedora-31-control-group-v2
+  # Just skip Fedora rather than version-limiting because F30 goes EOL within a month of this writing
+  # and that is the oldest version we currently test in CI. F31+ are affected by the issue
+  # and making the tests work on them is something to deal with in community.general, not here.
+  when: ansible_distribution != 'Fedora'
+  block:
+    - name: set timezone to Etc/UTC
+      timezone:
+        name: Etc/UTC
+      register: original_timezone
+
+    - block:
+        - include_tasks: test.yml
+      always:
+        - name: Restore original system timezone - {{ original_timezone.diff.before.name }}
+          timezone:
+            name: "{{ original_timezone.diff.before.name }}"
+          when: original_timezone is changed

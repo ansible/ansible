@@ -1,0 +1,1 @@
+../../../../../../plugins/modules/win_ping.py

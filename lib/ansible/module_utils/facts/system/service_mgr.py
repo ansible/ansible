@@ -52,6 +52,16 @@ class ServiceMgrFactCollector(BaseFactCollector):
                     return True
         return False
 
+    @staticmethod
+    def is_systemd_managed_offline(module):
+        # tools must be installed
+        if module.get_bin_path('systemctl'):
+            # check if /sbin/init is a symlink to systemd
+            # on SUSE, /sbin/init may be missing if systemd-sysvinit package is not installed.
+            if os.path.islink('/sbin/init') and os.path.basename(os.readlink('/sbin/init')) == 'systemd':
+                return True
+        return False
+
     def collect(self, module=None, collected_facts=None):
         facts_dict = {}
 
@@ -129,6 +139,8 @@ class ServiceMgrFactCollector(BaseFactCollector):
                 service_mgr_name = 'upstart'
             elif os.path.exists('/sbin/openrc'):
                 service_mgr_name = 'openrc'
+            elif self.is_systemd_managed_offline(module=module):
+                service_mgr_name = 'systemd'
             elif os.path.exists('/etc/init.d/'):
                 service_mgr_name = 'sysvinit'
 

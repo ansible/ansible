@@ -1,5 +1,5 @@
-
-from __future__ import print_function
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import os
@@ -9,8 +9,6 @@ import sys
 import warnings
 
 from collections import defaultdict
-from distutils.command.build_scripts import build_scripts as BuildScripts
-from distutils.command.sdist import sdist as SDist
 
 try:
     from setuptools import setup, find_packages
@@ -23,8 +21,90 @@ except ImportError:
           " install setuptools).", file=sys.stderr)
     sys.exit(1)
 
-sys.path.insert(0, os.path.abspath('lib'))
-from ansible.release import __version__, __author__
+# `distutils` must be imported after `setuptools` or it will cause explosions
+# with `setuptools >=48.0.0, <49.1`.
+# Refs:
+# * https://github.com/ansible/ansible/issues/70456
+# * https://github.com/pypa/setuptools/issues/2230
+# * https://github.com/pypa/setuptools/commit/bd110264
+from distutils.command.build_scripts import build_scripts as BuildScripts
+from distutils.command.sdist import sdist as SDist
+
+
+def find_package_info(*file_paths):
+    try:
+        with open(os.path.join(*file_paths), 'r') as f:
+            info_file = f.read()
+    except Exception:
+        raise RuntimeError("Unable to find package info.")
+
+    # The version line must have the form
+    # __version__ = 'ver'
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              info_file, re.M)
+    author_match = re.search(r"^__author__ = ['\"]([^'\"]*)['\"]",
+                             info_file, re.M)
+
+    if version_match and author_match:
+        return version_match.group(1), author_match.group(1)
+    raise RuntimeError("Unable to find package info.")
+
+
+def _validate_install_ansible_base():
+    """Validate that we can install ansible-base. Currently this only
+    cares about upgrading to ansible-base from ansible<2.10
+    """
+    if os.getenv('ANSIBLE_SKIP_CONFLICT_CHECK', '') not in ('', '0'):
+        return
+
+    # Save these for later restoring things to pre invocation
+    sys_modules = sys.modules.copy()
+    sys_modules_keys = set(sys_modules)
+
+    # Make sure `lib` isn't in `sys.path` that could confuse this
+    sys_path = sys.path[:]
+    abspath = os.path.abspath
+    sys.path[:] = [p for p in sys.path if abspath(p) != abspath('lib')]
+
+    try:
+        from ansible.release import __version__
+    except ImportError:
+        pass
+    else:
+        version_tuple = tuple(int(v) for v in __version__.split('.')[:2])
+        if version_tuple < (2, 10):
+            stars = '*' * 76
+            raise RuntimeError(
+                '''
+
+    %s
+
+    Cannot install ansible-base with a pre-existing ansible==%s
+    installation.
+
+    Installing ansible-base with ansible-2.9 or older currently installed with
+    pip is known to cause problems. Please uninstall ansible and install the new
+    version:
+
+        pip uninstall ansible
+        pip install ansible-base
+
+    If you want to skip the conflict checks and manually resolve any issues
+    afterwards, set the ANSIBLE_SKIP_CONFLICT_CHECK environment variable:
+
+        ANSIBLE_SKIP_CONFLICT_CHECK=1 pip install ansible-base
+
+    %s
+                ''' % (stars, __version__, stars)
+            )
+    finally:
+        sys.path[:] = sys_path
+        for key in sys_modules_keys.symmetric_difference(sys.modules):
+            sys.modules.pop(key, None)
+        sys.modules.update(sys_modules)
+
+
+_validate_install_ansible_base()
 
 
 SYMLINK_CACHE = 'SYMLINK_CACHE.json'
@@ -236,22 +316,6 @@ def substitute_crypto_to_req(req):
     return [r for r in req if is_not_crypto(r)] + [crypto_backend]
 
 
-def read_extras():
-    """Specify any extra requirements for installation."""
-    extras = dict()
-    extra_requirements_dir = 'packaging/requirements'
-    for extra_requirements_filename in os.listdir(extra_requirements_dir):
-        filename_match = re.search(r'^requirements-(\w*).txt$', extra_requirements_filename)
-        if not filename_match:
-            continue
-        extra_req_file_path = os.path.join(extra_requirements_dir, extra_requirements_filename)
-        try:
-            extras[filename_match.group(1)] = read_file(extra_req_file_path).splitlines()
-        except RuntimeError:
-            pass
-    return extras
-
-
 def get_dynamic_setup_params():
     """Add dynamically calculated setup params to static ones."""
     return {
@@ -260,10 +324,11 @@ def get_dynamic_setup_params():
         'install_requires': substitute_crypto_to_req(
             read_requirements('requirements.txt'),
         ),
-        'extras_require': read_extras(),
     }
 
 
+here = os.path.abspath(os.path.dirname(__file__))
+__version__, __author__ = find_package_info(here, 'lib', 'ansible', 'release.py')
 static_setup_params = dict(
     # Use the distutils SDist so that symlinks are not expanded
     # Use a custom Build for the same reason
@@ -274,7 +339,7 @@ static_setup_params = dict(
         'install_scripts': InstallScriptsCommand,
         'sdist': SDistCommand,
     },
-    name='ansible',
+    name='ansible-base',
     version=__version__,
     description='Radically simple IT automation',
     author=__author__,

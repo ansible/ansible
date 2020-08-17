@@ -1,7 +1,0 @@
-{
-  "dest": "/tmp/deleteme", 
-  "src": "/tmp/deleteme", 
-  "private_key": "/home/jtanner/workspace/issues/AP-15905/.vagrant/machines/default/virtualbox/private_key", 
-  "dest_port": 2202, 
-  "_local_rsync_path": "rsync"
-}

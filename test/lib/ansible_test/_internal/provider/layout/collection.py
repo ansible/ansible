@@ -33,7 +33,7 @@ class CollectionLayout(LayoutProvider):
 
         collection_root = os.path.dirname(os.path.dirname(root))
         collection_dir = os.path.relpath(root, collection_root)
-        collection_namespace, collection_name = collection_dir.split(os.sep)
+        collection_namespace, collection_name = collection_dir.split(os.path.sep)
 
         collection_root = os.path.dirname(collection_root)
 

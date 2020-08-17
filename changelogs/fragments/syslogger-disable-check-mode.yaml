@@ -1,2 +1,0 @@
-bugfixes:
-  - syslogger callback plugin - remove check mode support since it did nothing anyway

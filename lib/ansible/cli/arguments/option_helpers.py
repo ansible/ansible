@@ -178,6 +178,7 @@ def version(prog=None):
         cpath = C.DEFAULT_MODULE_PATH
     result = result + "\n  configured module search path = %s" % cpath
     result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
+    result = result + "\n  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS)
     result = result + "\n  executable location = %s" % sys.argv[0]
     result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
     return result
@@ -318,8 +319,8 @@ def add_runas_options(parser):
     runas_group.add_argument("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
                              help="run operations with become (does not imply password prompting)")
     runas_group.add_argument('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD,
-                             help="privilege escalation method to use (default=%(default)s), use "
-                                  "`ansible-doc -t become -l` to list valid choices.")
+                             help='privilege escalation method to use (default=%s)' % C.DEFAULT_BECOME_METHOD +
+                                  ', use `ansible-doc -t become -l` to list valid choices.')
     runas_group.add_argument('--become-user', default=None, dest='become_user', type=str,
                              help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
 

@@ -9,6 +9,9 @@
 #    - Abhijeet Kasurde (@Akasurde)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import time
 import glob
@@ -37,7 +40,7 @@ yumdnf_argument_spec = dict(
         install_repoquery=dict(type='bool', default=True),
         install_weak_deps=dict(type='bool', default=True),
         list=dict(type='str'),
-        name=dict(type='list', aliases=['pkg'], default=[]),
+        name=dict(type='list', elements='str', aliases=['pkg'], default=[]),
         releasever=dict(default=None),
         security=dict(type='bool', default=False),
         skip_broken=dict(type='bool', default=False),

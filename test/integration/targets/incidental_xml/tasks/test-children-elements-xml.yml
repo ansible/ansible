@@ -1,0 +1,30 @@
+---
+  - name: Setup test fixture
+    copy:
+      src: fixtures/ansible-xml-beers.xml
+      dest: /tmp/ansible-xml-beers.xml
+
+
+  - name: Add child element with xml format
+    xml:
+      path: /tmp/ansible-xml-beers.xml
+      xpath: /business/beers
+      input_type: xml
+      add_children:
+      - '<beer>Old Rasputin</beer>'
+    register: children_elements
+
+  - name: Compare to expected result
+    copy:
+      src: results/test-add-children-elements.xml
+      dest: /tmp/ansible-xml-beers.xml
+    check_mode: yes
+    diff: yes
+    register: comparison
+
+  - name: Test expected result
+    assert:
+      that:
+      - children_elements.changed == true
+      - comparison.changed == false  # identical
+    #command: diff -u {{ role_path }}/results/test-add-children-elements.xml /tmp/ansible-xml-beers.xml

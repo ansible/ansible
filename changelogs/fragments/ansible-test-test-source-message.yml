@@ -1,2 +1,0 @@
-bugfixes:
-    - ansible-test now shows the correct source path instead of ``%s`` for collection role based test targets when the ``-v`` option is used

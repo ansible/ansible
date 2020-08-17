@@ -35,10 +35,8 @@ more information.
 import os
 import re
 import sys
-import json
 import shlex
 import logging
-import optparse
 import subprocess
 
 
@@ -53,7 +51,7 @@ _OS_RELEASE_BASENAME = 'os-release'
 #:
 #: * Value: Normalized value.
 NORMALIZED_OS_ID = {
-    'ol': 'oracle',  # Oracle Enterprise Linux
+    'ol': 'oracle',  # Oracle Linux
 }
 
 #: Translation table for normalizing the "Distributor ID" attribute returned by
@@ -64,9 +62,11 @@ NORMALIZED_OS_ID = {
 #:
 #: * Value: Normalized value.
 NORMALIZED_LSB_ID = {
-    'enterpriseenterprise': 'oracle',  # Oracle Enterprise Linux
+    'enterpriseenterpriseas': 'oracle',  # Oracle Enterprise Linux 4
+    'enterpriseenterpriseserver': 'oracle',  # Oracle Linux 5
     'redhatenterpriseworkstation': 'rhel',  # RHEL 6, 7 Workstation
     'redhatenterpriseserver': 'rhel',  # RHEL 6, 7 Server
+    'redhatenterprisecomputenode': 'rhel',  # RHEL 6 ComputeNode
 }
 
 #: Translation table for normalizing the distro ID derived from the file name
@@ -95,8 +95,7 @@ _DISTRO_RELEASE_IGNORE_BASENAMES = (
     'oem-release',
     _OS_RELEASE_BASENAME,
     'system-release',
-    # Fixed in upstream via https://github.com/nir0s/distro/pull/246
-    'plesk-release'
+    'plesk-release',
 )
 
 
@@ -219,6 +218,7 @@ def id():
     "openbsd"       OpenBSD
     "netbsd"        NetBSD
     "freebsd"       FreeBSD
+    "midnightbsd"   MidnightBSD
     ==============  =========================================
 
     If you have a need to get distros for reliable IDs added into this set,
@@ -665,7 +665,7 @@ class LinuxDistribution(object):
           distro release file can be found, the data source for the distro
           release file will be empty.
 
-        * ``include_name`` (bool): Controls whether uname command output is
+        * ``include_uname`` (bool): Controls whether uname command output is
           included as a data source. If the uname command is not available in
           the program execution path the data source for the uname command will
           be empty.
@@ -1023,8 +1023,6 @@ class LinuxDistribution(object):
             # * commands or their arguments (not allowed in os-release)
             if '=' in token:
                 k, v = token.split('=', 1)
-                if isinstance(v, bytes):
-                    v = v.decode('utf-8')
                 props[k.lower()] = v
             else:
                 # Ignore any tokens that are not variable assignments
@@ -1068,7 +1066,7 @@ class LinuxDistribution(object):
                 stdout = _check_output(cmd, stderr=devnull)
             except OSError:  # Command not found
                 return {}
-        content = stdout.decode(sys.getfilesystemencoding()).splitlines()
+        content = self._to_str(stdout).splitlines()
         return self._parse_lsb_release_content(content)
 
     @staticmethod
@@ -1103,7 +1101,7 @@ class LinuxDistribution(object):
                 stdout = _check_output(cmd, stderr=devnull)
             except OSError:
                 return {}
-        content = stdout.decode(sys.getfilesystemencoding()).splitlines()
+        content = self._to_str(stdout).splitlines()
         return self._parse_uname_content(content)
 
     @staticmethod
@@ -1122,6 +1120,20 @@ class LinuxDistribution(object):
             props['name'] = name
             props['release'] = version
         return props
+
+    @staticmethod
+    def _to_str(text):
+        encoding = sys.getfilesystemencoding()
+        encoding = 'utf-8' if encoding == 'ascii' else encoding
+
+        if sys.version_info[0] >= 3:
+            if isinstance(text, bytes):
+                return text.decode(encoding)
+        else:
+            if isinstance(text, unicode):  # noqa pylint: disable=undefined-variable
+                return text.encode(encoding)
+
+        return text
 
     @cached_property
     def _distro_release_info(self):
@@ -1225,8 +1237,6 @@ class LinuxDistribution(object):
         Returns:
             A dictionary containing all information items.
         """
-        if isinstance(line, bytes):
-            line = line.decode('utf-8')
         matches = _DISTRO_RELEASE_CONTENT_REVERSED_PATTERN.match(
             line.strip()[::-1])
         distro_info = {}
@@ -1250,22 +1260,11 @@ def main():
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler(sys.stdout))
 
-    parser = optparse.OptionParser(description="OS distro info tool")
-    parser.add_option(
-        '--json',
-        '-j',
-        help="Output in machine readable format",
-        action="store_true")
-    args, opts = parser.parse_args()
-
-    if args.json:
-        logger.info(json.dumps(info(), indent=4, sort_keys=True))
-    else:
-        logger.info('Name: %s', name(pretty=True))
-        distribution_version = version(pretty=True)
-        logger.info('Version: %s', distribution_version)
-        distribution_codename = codename()
-        logger.info('Codename: %s', distribution_codename)
+    logger.info('Name: %s', name(pretty=True))
+    distribution_version = version(pretty=True)
+    logger.info('Version: %s', distribution_version)
+    distribution_codename = codename()
+    logger.info('Codename: %s', distribution_codename)
 
 
 if __name__ == '__main__':

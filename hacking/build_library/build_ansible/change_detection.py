@@ -4,17 +4,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-"""
-This file contains common code for building ansible. If you want to use code from here at runtime,
-it needs to be moved out of this file and the implementation looked over to figure out whether API
-should be changed before being made public.
-"""
-
-import os.path
-
 
 def update_file_if_different(filename, b_data):
-    '''
+    """
     Replace file content only if content is different.
 
     This preserves timestamps in case the file content has not changed.  It performs multiple
@@ -22,7 +14,7 @@ def update_file_if_different(filename, b_data):
 
     :arg filename: The filename to write to
     :b_data: Byte string containing the data to write to the file
-    '''
+    """
     try:
         with open(filename, 'rb') as f:
             b_data_old = f.read()

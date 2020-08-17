@@ -8,15 +8,15 @@ import sys
 from . import types as t
 
 from .util import (
-    is_shippable,
-    docker_qualify_image,
     find_python,
     generate_pip_command,
-    get_docker_completion,
     ApplicationError,
 )
 
 from .util_common import (
+    docker_qualify_image,
+    get_docker_completion,
+    get_remote_completion,
     CommonConfig,
 )
 
@@ -34,6 +34,29 @@ except AttributeError:
     TIntegrationConfig = None  # pylint: disable=invalid-name
 
 
+class ParsedRemote:
+    """A parsed version of a "remote" string."""
+    def __init__(self, arch, platform, version):  # type: (t.Optional[str], str, str) -> None
+        self.arch = arch
+        self.platform = platform
+        self.version = version
+
+    @staticmethod
+    def parse(value):  # type: (str) -> t.Optional['ParsedRemote']
+        """Return a ParsedRemote from the given value or None if the syntax is invalid."""
+        parts = value.split('/')
+
+        if len(parts) == 2:
+            arch = None
+            platform, version = parts
+        elif len(parts) == 3:
+            arch, platform, version = parts
+        else:
+            return None
+
+        return ParsedRemote(arch, platform, version)
+
+
 class EnvironmentConfig(CommonConfig):
     """Configuration common to all commands which execute in an environment."""
     def __init__(self, args, command):
@@ -45,6 +68,7 @@ class EnvironmentConfig(CommonConfig):
 
         self.local = args.local is True
         self.venv = args.venv
+        self.venv_system_site_packages = args.venv_system_site_packages
 
         self.python = args.python if 'python' in args else None  # type: str
 
@@ -52,11 +76,20 @@ class EnvironmentConfig(CommonConfig):
         self.docker_raw = args.docker  # type: str
         self.remote = args.remote  # type: str
 
+        if self.remote:
+            self.parsed_remote = ParsedRemote.parse(self.remote)
+
+            if not self.parsed_remote or not self.parsed_remote.platform or not self.parsed_remote.version:
+                raise ApplicationError('Unrecognized remote "%s" syntax. Use "platform/version" or "arch/platform/version".' % self.remote)
+        else:
+            self.parsed_remote = None
+
         self.docker_privileged = args.docker_privileged if 'docker_privileged' in args else False  # type: bool
         self.docker_pull = args.docker_pull if 'docker_pull' in args else False  # type: bool
         self.docker_keep_git = args.docker_keep_git if 'docker_keep_git' in args else False  # type: bool
         self.docker_seccomp = args.docker_seccomp if 'docker_seccomp' in args else None  # type: str
         self.docker_memory = args.docker_memory if 'docker_memory' in args else None
+        self.docker_terminate = args.docker_terminate if 'docker_terminate' in args else None  # type: str
 
         if self.docker_seccomp is None:
             self.docker_seccomp = get_docker_completion().get(self.docker_raw, {}).get('seccomp', 'default')
@@ -79,6 +112,8 @@ class EnvironmentConfig(CommonConfig):
         self.python_version = self.python or actual_major_minor
         self.python_interpreter = args.python_interpreter
 
+        self.pip_check = args.pip_check
+
         self.delegate = self.docker or self.remote or self.venv
         self.delegate_args = []  # type: t.List[str]
 
@@ -87,6 +122,12 @@ class EnvironmentConfig(CommonConfig):
 
         self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
         self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
+
+        if self.get_delegated_completion().get('httptester', 'enabled') == 'disabled':
+            self.httptester = False
+
+        if self.get_delegated_completion().get('pip-check', 'enabled') == 'disabled':
+            self.pip_check = False
 
         if args.check_python and args.check_python != actual_major_minor:
             raise ApplicationError('Running under Python %s instead of Python %s as expected.' % (actual_major_minor, args.check_python))
@@ -114,6 +155,18 @@ class EnvironmentConfig(CommonConfig):
         """
         return generate_pip_command(self.python_executable)
 
+    def get_delegated_completion(self):
+        """Returns a dictionary of settings specific to the selected delegation system, if any. Otherwise returns an empty dictionary.
+        :rtype: dict[str, str]
+        """
+        if self.docker:
+            return get_docker_completion().get(self.docker_raw, {})
+
+        if self.remote:
+            return get_remote_completion().get(self.remote, {})
+
+        return {}
+
 
 class TestConfig(EnvironmentConfig):
     """Configuration common to all test commands."""
@@ -140,6 +193,7 @@ class TestConfig(EnvironmentConfig):
         self.unstaged = args.unstaged  # type: bool
         self.changed_from = args.changed_from  # type: str
         self.changed_path = args.changed_path  # type: t.List[str]
+        self.base_branch = args.base_branch  # type: str
 
         self.lint = args.lint if 'lint' in args else False  # type: bool
         self.junit = args.junit if 'junit' in args else False  # type: bool
@@ -155,13 +209,8 @@ class TestConfig(EnvironmentConfig):
             """Add the metadata file to the payload file list."""
             config = self
 
-            if data_context().content.collection:
-                working_path = data_context().content.collection.directory
-            else:
-                working_path = ''
-
             if self.metadata_path:
-                files.append((os.path.abspath(config.metadata_path), os.path.join(working_path, config.metadata_path)))
+                files.append((os.path.abspath(config.metadata_path), config.metadata_path))
 
         data_context().register_payload_callback(metadata_callback)
 
@@ -192,16 +241,8 @@ class SanityConfig(TestConfig):
         self.skip_test = args.skip_test  # type: t.List[str]
         self.list_tests = args.list_tests  # type: bool
         self.allow_disabled = args.allow_disabled  # type: bool
-
-        if args.base_branch:
-            self.base_branch = args.base_branch  # str
-        elif is_shippable():
-            self.base_branch = os.environ.get('BASE_BRANCH', '')  # str
-
-            if self.base_branch:
-                self.base_branch = 'origin/%s' % self.base_branch
-        else:
-            self.base_branch = ''
+        self.enable_optional_errors = args.enable_optional_errors  # type: bool
+        self.info_stderr = self.lint
 
 
 class IntegrationConfig(TestConfig):
@@ -233,8 +274,12 @@ class IntegrationConfig(TestConfig):
         self.no_temp_workdir = args.no_temp_workdir
         self.no_temp_unicode = args.no_temp_unicode
 
+        if self.get_delegated_completion().get('temp-unicode', 'enabled') == 'disabled':
+            self.no_temp_unicode = True
+
         if self.list_targets:
             self.explain = True
+            self.info_stderr = True
 
     def get_ansible_config(self):  # type: () -> str
         """Return the path to the Ansible config for the given config."""
@@ -284,6 +329,8 @@ class NetworkIntegrationConfig(IntegrationConfig):
         super(NetworkIntegrationConfig, self).__init__(args, 'network-integration')
 
         self.platform = args.platform  # type: t.List[str]
+        self.platform_collection = dict(args.platform_collection or [])  # type: t.Dict[str, str]
+        self.platform_connection = dict(args.platform_connection or [])  # type: t.Dict[str, str]
         self.inventory = args.inventory  # type: str
         self.testcase = args.testcase  # type: str
 
@@ -305,30 +352,3 @@ class UnitsConfig(TestConfig):
             self.requirements = True
         elif self.requirements_mode == 'skip':
             self.requirements = False
-
-
-class CoverageConfig(EnvironmentConfig):
-    """Configuration for the coverage command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageConfig, self).__init__(args, 'coverage')
-
-        self.group_by = frozenset(args.group_by) if 'group_by' in args and args.group_by else set()  # type: t.FrozenSet[str]
-        self.all = args.all if 'all' in args else False  # type: bool
-        self.stub = args.stub if 'stub' in args else False  # type: bool
-        self.coverage = False  # temporary work-around to support intercept_command in cover.py
-
-
-class CoverageReportConfig(CoverageConfig):
-    """Configuration for the coverage report command."""
-    def __init__(self, args):
-        """
-        :type args: any
-        """
-        super(CoverageReportConfig, self).__init__(args)
-
-        self.show_missing = args.show_missing  # type: bool
-        self.include = args.include  # type: str
-        self.omit = args.omit  # type: str

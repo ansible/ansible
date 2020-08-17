@@ -1,1 +1,0 @@
-gcp_container_node_pool_info.py

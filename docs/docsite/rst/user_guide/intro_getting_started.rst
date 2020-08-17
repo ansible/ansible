@@ -5,9 +5,10 @@ Getting Started
 ***************
 
 Now that you have read the :ref:`installation guide<installation_guide>` and installed Ansible on a control node, you are ready to learn how Ansible works. A basic Ansible command or playbook:
-  * selects machines to execute against from inventory
-  * connects to those machines (or network devices, or other managed nodes), usually over SSH
-  * copies one or more modules to the remote machines and starts execution there
+
+* selects machines to execute against from inventory
+* connects to those machines (or network devices, or other managed nodes), usually over SSH
+* copies one or more modules to the remote machines and starts execution there
 
 Ansible can do much more, but you should understand the most common use case before exploring all the powerful configuration, deployment, and orchestration features of Ansible. This page illustrates the basic process with a simple inventory and an ad-hoc command. Once you understand how Ansible works, you can read more details about :ref:`ad-hoc commands<intro_adhoc>`, organize your infrastructure with :ref:`inventory<intro_inventory>`, and harness the full power of Ansible with :ref:`playbooks<playbooks_intro>`.
 
@@ -47,10 +48,14 @@ Confirm that you can connect using SSH to all the nodes in your inventory using 
 Beyond the basics
 -----------------
 You can override the default remote user name in several ways, including:
-  * passing the ``-u`` parameter at the command line
-  * setting user information in your inventory file
-  * setting user information in your configuration file
-  * setting environment variables
+
+* passing the ``-u`` parameter at the command line
+
+* setting user information in your inventory file
+
+* setting user information in your configuration file
+
+* setting environment variables
 
 See :ref:`general_precedence_rules` for details on the (sometimes unintuitive) precedence of each method of passing user information. You can read more about connections in :ref:`connections`.
 
@@ -104,6 +109,14 @@ You can read more about privilege escalation in :ref:`become`.
 
 Congratulations! You have contacted your nodes using Ansible. You used a basic inventory file and an ad-hoc command to direct Ansible to connect to specific remote nodes, copy a module file there and execute it, and return output. You have a fully working infrastructure.
 
+Resources
+=================================
+- `Product Demos <https://github.com/ansible/product-demos>`_
+- `Katakoda <https://katacoda.com/rhel-labs>`_
+- `Workshops <https://github.com/ansible/workshops>`_
+- `Ansible Examples <https://github.com/ansible/ansible-examples>`_
+- `Ansible Baseline <https://github.com/ansible/ansible-baseline>`_
+
 Next steps
 ==========
 Next you can read about more real-world cases in :ref:`intro_adhoc`,
@@ -119,6 +132,10 @@ also has powerful configuration management and deployment features.
        Examples of basic commands
    :ref:`working_with_playbooks`
        Learning Ansible's configuration management language
+   `Ansible Demos <https://github.com/ansible/product-demos>`_
+       Demonstrations of different Ansible usecases
+   `RHEL Labs <https://katacoda.com/rhel-labs>`_
+       Labs to provide further knowledge on different topics
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

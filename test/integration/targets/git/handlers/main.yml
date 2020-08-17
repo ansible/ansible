@@ -1,11 +1,7 @@
-- name: remove git
-  package:
-    name: git
-    state: absent
-
-- name: remove git from FreeBSD
-  pkgng:
-    name: git
-    state: absent
-    autoremove: yes
-  when: ansible_distribution == "FreeBSD"
+- name: cleanup
+  include_tasks: "{{ cleanup_filename }}"
+  with_first_found:
+    - "cleanup-{{ ansible_distribution | lower }}.yml"
+    - "cleanup-default.yml"
+  loop_control:
+    loop_var: cleanup_filename

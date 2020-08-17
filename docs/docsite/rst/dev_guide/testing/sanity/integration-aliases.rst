@@ -72,7 +72,7 @@ Platform versions, as specified using the ``--remote`` option with ``/`` removed
 - ``skip/freebsd11.1`` - Skip tests on FreeBSD 11.1.
 - ``skip/rhel7.6`` - Skip tests on RHEL 7.6.
 
-Windows verssions, as specified using the ``--windows`` option can also be skipped:
+Windows versions, as specified using the ``--windows`` option can also be skipped:
 
 - ``skip/windows/2008`` - Skip tests on Windows Server 2008.
 - ``skip/windows/2012-R2`` - Skip tests on Windows Server 2012 R2.

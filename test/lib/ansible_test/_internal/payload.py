@@ -68,14 +68,14 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
     if not ANSIBLE_SOURCE_ROOT:
         # reconstruct the bin directory which is not available when running from an ansible install
         files.extend(create_temporary_bin_files(args))
-        filters.update(dict((path[3:], make_executable) for path in ANSIBLE_BIN_SYMLINK_MAP.values() if path.startswith('../')))
+        filters.update(dict((os.path.join('ansible', path[3:]), make_executable) for path in ANSIBLE_BIN_SYMLINK_MAP.values() if path.startswith('../')))
 
     if not data_context().content.is_ansible:
         # exclude unnecessary files when not testing ansible itself
         files = [f for f in files if
                  is_subdir(f[1], 'bin/') or
                  is_subdir(f[1], 'lib/ansible/') or
-                 (is_subdir(f[1], 'test/lib/ansible_test/') and not is_subdir(f[1], 'test/lib/ansible_test/tests/'))]
+                 is_subdir(f[1], 'test/lib/ansible_test/')]
 
         if not isinstance(args, (ShellConfig, IntegrationConfig)):
             # exclude built-in ansible modules when they are not needed
@@ -83,12 +83,35 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
 
         collection_layouts = data_context().create_collection_layouts()
 
+        content_files = []
+        extra_files = []
+
         for layout in collection_layouts:
-            # include files from each collection in the same collection root as the content being tested
-            files.extend((os.path.join(layout.root, path), os.path.join(layout.collection.directory, path)) for path in layout.all_files())
+            if layout == data_context().content:
+                # include files from the current collection (layout.collection.directory will be added later)
+                content_files.extend((os.path.join(layout.root, path), path) for path in data_context().content.all_files())
+            else:
+                # include files from each collection in the same collection root as the content being tested
+                extra_files.extend((os.path.join(layout.root, path), os.path.join(layout.collection.directory, path)) for path in layout.all_files())
+    else:
+        # when testing ansible itself the ansible source is the content
+        content_files = files
+        # there are no extra files when testing ansible itself
+        extra_files = []
 
     for callback in data_context().payload_callbacks:
-        callback(files)
+        # execute callbacks only on the content paths
+        # this is done before placing them in the appropriate subdirectory (see below)
+        callback(content_files)
+
+    # place ansible source files under the 'ansible' directory on the delegated host
+    files = [(src, os.path.join('ansible', dst)) for src, dst in files]
+
+    if data_context().content.collection:
+        # place collection files under the 'ansible_collections/{namespace}/{collection}' directory on the delegated host
+        files.extend((src, os.path.join(data_context().content.collection.directory, dst)) for src, dst in content_files)
+        # extra files already have the correct destination path
+        files.extend(extra_files)
 
     # maintain predictable file order
     files = sorted(set(files))
@@ -97,7 +120,7 @@ def create_payload(args, dst_path):  # type: (CommonConfig, str) -> None
 
     start = time.time()
 
-    with tarfile.TarFile.gzopen(dst_path, mode='w', compresslevel=4) as tar:
+    with tarfile.TarFile.open(dst_path, mode='w:gz', compresslevel=4, format=tarfile.GNU_FORMAT) as tar:
         for src, dst in files:
             display.info('%s -> %s' % (src, dst), verbosity=4)
             tar.add(src, dst, filter=filters.get(dst))

@@ -3,7 +3,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import parser
+import warnings
+
+with warnings.catch_warnings():
+    # The parser module is deprecated as of Python 3.9.
+    # This implementation will need to be updated to use another solution.
+    # Until then, disable the deprecation warnings to prevent test failures.
+    warnings.simplefilter('ignore', DeprecationWarning)
+    import parser
+
 import sys
 
 

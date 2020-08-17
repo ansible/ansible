@@ -1,2 +1,0 @@
-minor_changes:
-- vmware_datastore_cluster - Added basic SDRS configuration (https://github.com/ansible/ansible/issues/65154).

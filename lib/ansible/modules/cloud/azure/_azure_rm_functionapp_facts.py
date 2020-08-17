@@ -1,1 +1,0 @@
-azure_rm_functionapp_info.py

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - dnf - Properly handle idempotent transactions with package name wildcard globs (https://github.com/ansible/ansible/issues/62809)

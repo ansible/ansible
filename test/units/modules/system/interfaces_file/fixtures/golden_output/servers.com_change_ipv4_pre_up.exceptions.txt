@@ -1,9 +1,0 @@
-fail_json message: Error: interface eth0 not found
-options:
-{
-    "address_family": "inet",
-    "iface": "eth0",
-    "option": "pre-up",
-    "state": "present",
-    "value": "XXXX_ipv4"
-}

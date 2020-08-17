@@ -11,16 +11,17 @@ DOCUMENTATION = """
     short_description: read data from a TSV or CSV file
     description:
       - The csvfile lookup reads the contents of a file in CSV (comma-separated value) format.
-        The lookup looks for the row where the first column matches keyname, and returns the value in the second column, unless a different column is specified.
+        The lookup looks for the row where the first column matches keyname (which can be multiple words)
+        and returns the value in the C(col) column (default 1, which indexed from 0 means the second column in the file).
     options:
       col:
-        description:  column to return (0 index).
+        description:  column to return (0 indexed).
         default: "1"
       default:
         description: what to return if the value is not found in the file.
         default: ''
       delimiter:
-        description: field separator in the file, for a tab you can specify "TAB" or "t".
+        description: field separator in the file, for a tab you can specify C(TAB) or C(\\t).
         default: TAB
       file:
         description: name of the CSV/TSV file to open.
@@ -31,6 +32,10 @@ DOCUMENTATION = """
         version_added: "2.1"
     notes:
       - The default is for TSV files (tab delimited) not CSV (comma delimited) ... yes the name is misleading.
+      - As of version 2.11, the search parameter (text that must match the first column of the file) and filename parameter can be multi-word.
+      - For historical reasons, in the search keyname, quotes are treated
+        literally and cannot be used around the string unless they appear
+        (escaped as required) in the first column of the file you are parsing.
 """
 
 EXAMPLES = """
@@ -62,6 +67,7 @@ import codecs
 import csv
 
 from ansible.errors import AnsibleError, AnsibleAssertionError
+from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils.six import PY2
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -129,8 +135,12 @@ class LookupModule(LookupBase):
         ret = []
 
         for term in terms:
-            params = term.split()
-            key = params[0]
+            kv = parse_kv(term)
+
+            if '_raw_params' not in kv:
+                raise AnsibleError('Search key is required but was not found')
+
+            key = kv['_raw_params']
 
             paramvals = {
                 'col': "1",          # column to return
@@ -142,8 +152,9 @@ class LookupModule(LookupBase):
 
             # parameters specified?
             try:
-                for param in params[1:]:
-                    name, value = param.split('=')
+                for name, value in kv.items():
+                    if name == '_raw_params':
+                        continue
                     if name not in paramvals:
                         raise AnsibleAssertionError('%s not in paramvals' % name)
                     paramvals[name] = value

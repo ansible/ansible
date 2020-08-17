@@ -1,0 +1,3 @@
+- name: Make sure pkg_resources can be imported by plugins
+  debug:
+    msg: "{{ lookup('import_pkg_resources') }}"

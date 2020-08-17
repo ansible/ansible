@@ -1,0 +1,4 @@
+# make sure tasks with an undefined variable in the name are gracefully handled
+- name: "Task name with undefined variable: {{ not_defined }}"
+  debug:
+    msg: Hello
