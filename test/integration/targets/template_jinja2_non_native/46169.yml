@@ -15,16 +15,18 @@
         that:
           - diff_result.stdout == ""
 
-    - set_fact:
-        non_native_lookup: "{{ lookup('template', 'templates/46169.json.j2') }}"
+    - block:
+      - set_fact:
+          non_native_lookup: "{{ lookup('template', 'templates/46169.json.j2') }}"
 
-    - assert:
-        that:
-          - non_native_lookup | type_debug == 'NativeJinjaUnsafeText'
+      - assert:
+          that:
+            - non_native_lookup | type_debug == 'NativeJinjaUnsafeText'
 
-    - set_fact:
-        native_lookup: "{{ lookup('template', 'templates/46169.json.j2', jinja2_native=true) }}"
+      - set_fact:
+          native_lookup: "{{ lookup('template', 'templates/46169.json.j2', jinja2_native=true) }}"
 
-    - assert:
-        that:
-          - native_lookup | type_debug == 'dict'
+      - assert:
+          that:
+            - native_lookup | type_debug == 'dict'
+      when: lookup('pipe', ansible_python_interpreter ~ ' -c "import jinja2; print(jinja2.__version__)"') is version('2.10', '>=')
