@@ -204,7 +204,7 @@ examples to get you started:
 Configuration
 .............
 You can control the behavior of the inventory script by defining environment variables, or
-creating a docker.yml file (sample provided in https://raw.githubusercontent.com/ansible-collections/community.general/master/scripts/inventory/docker.py). The order of precedence is the docker.yml
+creating a docker.yml file (sample provided in https://raw.githubusercontent.com/ansible-collections/community.general/main/scripts/inventory/docker.py). The order of precedence is the docker.yml
 file and then environment variables.
 
 
