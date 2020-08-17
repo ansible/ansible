@@ -84,7 +84,7 @@ Regional and Language-specific channels
 ---------------------------------------
 
 - ``#ansible-es`` - Channel for Spanish speaking Ansible community.
-- ``#ansibleu`` - Channel for the European Ansible Community.
+- ``#ansible-eu`` - Channel for the European Ansible Community.
 - ``#ansible-fr`` - Channel for French speaking Ansible community.
 - ``#ansiblezh`` - Channel for Zurich/Swiss Ansible community.
 
