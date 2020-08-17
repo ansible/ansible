@@ -23,7 +23,7 @@ Enabling the debugger with the ``debugger`` keyword
 
 .. versionadded:: 2.5
 
-You can use the ``debugger`` keyword to enable (or disable) the debugger for a specific play, role, block or task. This is especially useful when developing or extending playbooks, plays, and roles. You can enable the debugger on new or updated tasks. If they fail, you can fix the errors efficiently. The ``debugger`` keyword accepts five values:
+You can use the ``debugger`` keyword to enable (or disable) the debugger for a specific play, role, block, or task. This option is especially useful when developing or extending playbooks, plays, and roles. You can enable the debugger on new or updated tasks. If they fail, you can fix the errors efficiently. The ``debugger`` keyword accepts five values:
 
 .. table::
    :class: documentation-table
