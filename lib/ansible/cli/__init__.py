@@ -476,7 +476,17 @@ class CLI(with_metaclass(ABCMeta, object)):
         return loader, inventory, variable_manager
 
     @staticmethod
-    def get_host_list(inventory, subset, pattern='all'):
+    def _flush_cache(inventory, variable_manager):
+        for host in inventory.list_hosts():
+            hostname = host.get_name()
+            variable_manager.clear_facts(hostname)
+
+    @staticmethod
+    def get_host_list(inventory, subset, pattern='all', variable_manager=None):
+
+        # flush fact cache if requested
+        if variable_manager is not None and context.CLIARGS['flush_cache']:
+            CLI._flush_cache(inventory, variable_manager)
 
         no_hosts = False
         if len(inventory.list_hosts()) == 0:

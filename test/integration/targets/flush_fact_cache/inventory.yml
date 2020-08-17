@@ -1,0 +1,6 @@
+all:
+  hosts:
+    host1:
+      ansible_host: 127.0.0.1
+      ansible_connection: local
+      ansible_python_interpreter: "{{ ansible_playbook_python }}"

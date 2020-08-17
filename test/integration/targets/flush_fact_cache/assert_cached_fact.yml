@@ -1,0 +1,5 @@
+---
+- hosts: host1
+  tasks:
+    - assert:
+        that: "cached_fact | default('undefined') == result"

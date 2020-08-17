@@ -129,7 +129,7 @@ class InventoryCLI(CLI):
 
         results = None
         if context.CLIARGS['host']:
-            hosts = self.inventory.get_hosts(context.CLIARGS['host'])
+            hosts = CLI.get_host_list(self.inventory, None, pattern=context.CLIARGS['host'], variable_manager=self.vm)
             if len(hosts) != 1:
                 raise AnsibleOptionsError("You must pass a single valid host to --host parameter")
 
@@ -139,8 +139,10 @@ class InventoryCLI(CLI):
             results = self.dump(myvars)
 
         elif context.CLIARGS['graph']:
+            CLI.get_host_list(self.inventory, None, variable_manager=self.vm)
             results = self.inventory_graph()
         elif context.CLIARGS['list']:
+            CLI.get_host_list(self.inventory, None, variable_manager=self.vm)
             top = self._get_group('all')
             if context.CLIARGS['yaml']:
                 results = self.yaml_inventory(top)

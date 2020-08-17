@@ -1,0 +1,2 @@
+minor_changes:
+  - Move '--flush-cache' to inventory options to add support to flush the cache for adhoc, ansible-inventory, and ansible-console.

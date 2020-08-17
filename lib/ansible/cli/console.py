@@ -431,7 +431,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         self.loader, self.inventory, self.variable_manager = self._play_prereqs()
 
-        hosts = self.get_host_list(self.inventory, context.CLIARGS['subset'], self.pattern)
+        hosts = self.get_host_list(self.inventory, context.CLIARGS['subset'], self.pattern, self.variable_manager)
 
         self.groups = self.inventory.list_groups()
         self.hosts = [x.name for x in hosts]

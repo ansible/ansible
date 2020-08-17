@@ -97,7 +97,7 @@ class AdHocCLI(CLI):
         loader, inventory, variable_manager = self._play_prereqs()
 
         try:
-            hosts = self.get_host_list(inventory, context.CLIARGS['subset'], pattern)
+            hosts = self.get_host_list(inventory, context.CLIARGS['subset'], pattern, variable_manager)
         except AnsibleError:
             if context.CLIARGS['subset']:
                 raise
