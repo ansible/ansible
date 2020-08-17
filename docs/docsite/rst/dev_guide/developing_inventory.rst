@@ -4,19 +4,16 @@
 Developing dynamic inventory
 ****************************
 
-.. contents:: Topics
-   :local:
+Ansible can pull inventory information from dynamic sources, including cloud sources, by using the supplied :ref:`inventory plugins <inventory_plugins>`. For details about how to pull inventory information, see :ref:`dynamic_inventory`. If the source you want is not currently covered by existing plugins, you can create your own inventory plugin as with any other plugin type.
 
-As described in :ref:`dynamic_inventory`, Ansible can pull inventory information from dynamic sources,
-including cloud sources, using the supplied :ref:`inventory plugins <inventory_plugins>`.
-If the source you want is not currently covered by existing plugins, you can create your own as with any other plugin type.
-
-In previous versions you had to create a script or program that can output JSON in the correct format when invoked with the proper arguments.
+In previous versions, you had to create a script or program that could output JSON in the correct format when invoked with the proper arguments.
 You can still use and write inventory scripts, as we ensured backwards compatibility via the :ref:`script inventory plugin <script_inventory>`
 and there is no restriction on the programming language used.
-If you choose to write a script, however, you will need to implement some features yourself
-such as caching, configuration management, dynamic variable and group composition, and other features.
-If you use :ref:`inventory plugins <inventory_plugins>` instead, you can leverage the Ansible codebase to add these common features.
+If you choose to write a script, however, you will need to implement some features yourself such as caching, configuration management, dynamic variable and group composition, and so on.
+If you use :ref:`inventory plugins <inventory_plugins>` instead, you can leverage the Ansible codebase and add these common features automatically.
+
+.. contents:: Topics
+   :local:
 
 
 .. _inventory_sources:
@@ -27,7 +24,7 @@ Inventory sources
 Inventory sources are the input strings that inventory plugins work with.
 An inventory source can be a path to a file or to a script, or it can be raw data that the plugin can interpret.
 
-The table below shows some examples of inventory plugins and the kinds of source you can pass to them with ``-i`` on the command line.
+The table below shows some examples of inventory plugins and the source types that you can pass to them with ``-i`` on the command line.
 
 +--------------------------------------------+-----------------------------------------+
 |  Plugin                                    | Source                                  |
@@ -51,14 +48,14 @@ The table below shows some examples of inventory plugins and the kinds of source
 Inventory plugins
 =================
 
-Like most plugin types (except modules), inventory plugins must be developed in Python. They execute on the controller and should therefore match the :ref:`control_node_requirements`.
+Like most plugin types (except modules), inventory plugins must be developed in Python. They execute on the controller and should therefore adhere to the :ref:`control_node_requirements`.
 
 Most of the documentation in :ref:`developing_plugins` also applies here. You should read that document first for a general understanding and then come back to this document for specifics on inventory plugins.
 
-Inventory plugins normally only execute at the start of a run, before playbooks, plays, and roles are loaded.
-However, you can use the ``meta: refresh_inventory`` task to clear the current inventory and to execute the inventory plugins again, which will generate a new inventory.
+Normally, inventory plugins are executed at the start of a run, and before the playbooks, plays, or roles are loaded.
+However, you can use the ``meta: refresh_inventory`` task to clear the current inventory and execute the inventory plugins again, and this task will generate a new inventory.
 
-If you use the persistent cache, inventory plugins can also use the configured cache plugin to store and retrieve data. This avoids repeating costly external calls.
+If you use the persistent cache, inventory plugins can also use the configured cache plugin to store and retrieve data. Caching inventory avoids making repeated and costly external calls.
 
 .. _developing_an_inventory_plugin:
 
@@ -75,11 +72,9 @@ The first thing you want to do is use the base class:
 
         NAME = 'myplugin'  # used internally by Ansible, it should match the file name but not required
 
-If the inventory plugin is in a collection the NAME should be in the format of 'namespace.collection_name.myplugin'.
+If the inventory plugin is in a collection, the NAME should be in the 'namespace.collection_name.myplugin' format. The base class has a couple of methods that each plugin should implement and a few helpers for parsing the inventory source and updating the inventory.
 
-This class has a couple of methods each plugin should implement and a few helpers for parsing the inventory source and updating the inventory.
-
-After you have the basic plugin working you might want to to incorporate other features by adding more base classes:
+After you have the basic plugin working, you can incorporate other features by adding more base classes:
 
 .. code-block:: python
 
@@ -89,14 +84,14 @@ After you have the basic plugin working you might want to to incorporate other f
 
         NAME = 'myplugin'
 
-For the bulk of the work in the plugin, We mostly want to deal with 2 methods ``verify_file`` and ``parse``.
+For the bulk of the work in a plugin, we mostly want to deal with 2 methods ``verify_file`` and ``parse``.
 
 .. _inventory_plugin_verify_file:
 
-verify_file
-^^^^^^^^^^^
+verify_file method
+^^^^^^^^^^^^^^^^^^
 
-This method is used by Ansible to make a quick determination if the inventory source is usable by the plugin. It does not need to be 100% accurate as there might be overlap in what plugins can handle and Ansible will try the enabled plugins (in order) by default.
+Ansible uses this method to quickly determine if the inventory source is usable by the plugin. The determination does not need to be 100% accurate, as there might be an overlap in what plugins can handle and by default Ansible will try the enabled plugins as per their sequence.
 
 .. code-block:: python
 
@@ -109,9 +104,9 @@ This method is used by Ansible to make a quick determination if the inventory so
                 valid = True
         return valid
 
-In this case, from the :ref:`virtualbox inventory plugin <virtualbox_inventory>`, we screen for specific file name patterns to avoid attempting to consume any valid yaml file. You can add any type of condition here, but the most common one is 'extension matching'. If you implement extension matching for YAML configuration files the path suffix <plugin_name>.<yml|yaml> should be accepted. All valid extensions should be documented in the plugin description.
+In the above example, from the :ref:`virtualbox inventory plugin <virtualbox_inventory>`, we screen for specific file name patterns to avoid attempting to consume any valid YAML file. You can add any type of condition here, but the most common one is 'extension matching'. If you implement extension matching for YAML configuration files, the path suffix <plugin_name>.<yml|yaml> should be accepted. All valid extensions should be documented in the plugin description.
 
-Another example that actually does not use a 'file' but the inventory source string itself,
+The following is another example that does not use a 'file' but the inventory source string itself,
 from the :ref:`host list <host_list_inventory>` plugin:
 
 .. code-block:: python
@@ -130,11 +125,10 @@ This method is just to expedite the inventory process and avoid unnecessary pars
 
 .. _inventory_plugin_parse:
 
-parse
-^^^^^
+parse method
+^^^^^^^^^^^^
 
-This method does the bulk of the work in the plugin.
-
+This method does the bulk of the work in the plugin. 
 It takes the following parameters:
 
  * inventory: inventory object with existing data and the methods to add hosts/groups/variables to inventory
@@ -153,7 +147,7 @@ The base class does some minimal assignment for reuse in other methods.
         self.inventory = inventory
         self.templar = Templar(loader=loader)
 
-It is up to the plugin now to deal with the inventory source provided and translate that into the Ansible inventory.
+It is up to the plugin now to parse the provided inventory source and translate it into Ansible inventory.
 To facilitate this, the example below uses a few helper functions:
 
 .. code-block:: python
@@ -190,7 +184,7 @@ To facilitate this, the example below uses a few helper functions:
                     self.inventory.add_host(server['name'])
                     self.inventory.set_variable(server['name'], 'ansible_host', server['external_ip'])
 
-The specifics will vary depending on API and structure returned. But one thing to keep in mind, if the inventory source or any other issue crops up you should ``raise AnsibleParserError`` to let Ansible know that the source was invalid or the process failed.
+The specifics will vary depending on API and structure returned. Remember that if you get an inventory source error or any other issue, you should ``raise AnsibleParserError`` to let Ansible know that the source was invalid or the process failed.
 
 For examples on how to implement an inventory plugin, see the source code here:
 `lib/ansible/plugins/inventory <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/inventory>`_.
@@ -200,7 +194,7 @@ For examples on how to implement an inventory plugin, see the source code here:
 inventory cache
 ^^^^^^^^^^^^^^^
 
-Extend the inventory plugin documentation with the inventory_cache documentation fragment and use the Cacheable base class to have the caching system at your disposal.
+To cache the inventory, extend the inventory plugin documentation with the inventory_cache documentation fragment and use the Cacheable base class.
 
 .. code-block:: yaml
 
@@ -213,7 +207,7 @@ Extend the inventory plugin documentation with the inventory_cache documentation
 
         NAME = 'myplugin'
 
-Next, load the cache plugin specified by the user to read from and update the cache. If your inventory plugin uses YAML based configuration files and the ``_read_config_data`` method, the cache plugin is loaded within that method. If your inventory plugin does not use ``_read_config_data``, you must load the cache explicitly with ``load_cache_plugin``.
+Next, load the cache plugin specified by the user to read from and update the cache. If your inventory plugin uses YAML-based configuration files and the ``_read_config_data`` method, the cache plugin is loaded within that method. If your inventory plugin does not use ``_read_config_data``, you must load the cache explicitly with ``load_cache_plugin``.
 
 .. code-block:: python
 
@@ -224,7 +218,7 @@ Next, load the cache plugin specified by the user to read from and update the ca
 
         self.load_cache_plugin()
 
-Before using the cache, retrieve a unique cache key using the ``get_cache_key`` method. This needs to be done by all inventory modules using the cache, so you don't use/overwrite other parts of the cache.
+Before using the cache plugin, you must retrieve a unique cache key by using the ``get_cache_key`` method. This task needs to be done by all inventory modules using the cache, so that you don't use/overwrite other parts of the cache.
 
 .. code-block:: python
 
@@ -272,25 +266,25 @@ Now that you've enabled caching, loaded the correct plugin, and retrieved a uniq
 After the ``parse`` method is complete, the contents of ``self._cache`` is used to set the cache plugin if the contents of the cache have changed.
 
 You have three other cache methods available:
-  - ``set_cache_plugin`` forces the cache plugin to be set with the contents of ``self._cache`` before the ``parse`` method completes
-  - ``update_cache_if_changed`` sets the cache plugin only if ``self._cache`` has been modified before the ``parse`` method completes
+  - ``set_cache_plugin`` forces the cache plugin to be set with the contents of ``self._cache``, before the ``parse`` method completes
+  - ``update_cache_if_changed`` sets the cache plugin only if ``self._cache`` has been modified, before the ``parse`` method completes
   - ``clear_cache`` flushes the cache, ultimately by calling the cache plugin's ``flush()`` method, whose implementation is dependent upon the particular cache plugin in use. Note that if the user is using the same cache backend for facts and inventory, both will get flushed. To avoid this, the user can specify a distinct cache backend in their inventory plugin configuration.
 
 .. _inventory_source_common_format:
 
-Inventory source common format
-------------------------------
+Common format for inventory sources
+-----------------------------------
 
-To simplify development, most plugins use a mostly standard configuration file as the inventory source, YAML based and with just one required field ``plugin`` which should contain the name of the plugin that is expected to consume the file.
-Depending on other common features used, other fields might be needed, but each plugin can also add its own custom options as needed.
-For example, if you use the integrated caching, ``cache_plugin``, ``cache_timeout`` and other cache related fields could be present.
+To simplify development, most plugins use a standard YAML-based configuration file as the inventory source. The file has only one required field ``plugin``, which should contain the name of the plugin that is expected to consume the file.
+Depending on other common features used, you might need other fields, and you can add custom options in each plugin as required.
+For example, if you use the integrated caching, ``cache_plugin``, ``cache_timeout`` and other cache-related fields could be present.
 
 .. _inventory_development_auto:
 
 The 'auto' plugin
 -----------------
 
-Since Ansible 2.5, we include the :ref:`auto inventory plugin <auto_inventory>` enabled by default, which itself just loads other plugins if they use the common YAML configuration format that specifies a ``plugin`` field that matches an inventory plugin name, this makes it easier to use your plugin w/o having to update configurations.
+From Ansible 2.5 onwards, we include the :ref:`auto inventory plugin <auto_inventory>` and enable it by default. If the ``plugin`` field in your standard configuration file matches the name of your inventory plugin, the ``auto`` inventory plugin will load your plugin. The 'auto' plugin makes it easier to use your plugin without having to update configurations.
 
 
 .. _inventory_scripts:
@@ -307,13 +301,11 @@ Even though we now have inventory plugins, we still support inventory scripts, n
 Inventory script conventions
 ----------------------------
 
-Inventory scripts must accept the ``--list`` and ``--host <hostname>`` arguments, other arguments are allowed but Ansible will not use them.
-They might still be useful for when executing the scripts directly.
+Inventory scripts must accept the ``--list`` and ``--host <hostname>`` arguments. Although other arguments are allowed, Ansible will not use them.
+Such arguments might still be useful for executing the scripts directly.
 
 When the script is called with the single argument ``--list``, the script must output to stdout a JSON-encoded hash or
-dictionary containing all of the groups to be managed.
-Each group's value should be either a hash or dictionary containing a list of each host, any child groups,
-and potential group variables, or simply a list of hosts::
+dictionary that contains all the groups to be managed. Each group's value should be either a hash or dictionary containing a list of each host, any child groups, and potential group variables, or simply a list of hosts::
 
 
     {
@@ -334,9 +326,9 @@ and potential group variables, or simply a list of hosts::
 
     }
 
-If any of the elements of a group are empty they may be omitted from the output.
+If any of the elements of a group are empty, they may be omitted from the output.
 
-When called with the argument ``--host <hostname>`` (where <hostname> is a host from above), the script must print either an empty JSON hash/dictionary, or a hash/dictionary of variables to make available to templates and playbooks. For example::
+When called with the argument ``--host <hostname>`` (where <hostname> is a host from above), the script must print either an empty JSON hash/dictionary, or a hash/dictionary of variables to make them available to templates and playbooks. For example::
 
 
     {
@@ -344,7 +336,7 @@ When called with the argument ``--host <hostname>`` (where <hostname> is a host 
         "VAR002": "VALUE",
     }
 
-Printing variables is optional. If the script does not do this, it should print an empty hash or dictionary.
+Printing variables is optional. If the script does not print variables, it should print an empty hash or dictionary.
 
 .. _inventory_script_tuning:
 
@@ -353,17 +345,11 @@ Tuning the external inventory script
 
 .. versionadded:: 1.3
 
-The stock inventory script system detailed above works for all versions of Ansible,
-but calling ``--host`` for every host can be rather inefficient,
-especially if it involves API calls to a remote subsystem.
+The stock inventory script system mentioned above works for all versions of Ansible, but calling ``--host`` for every host can be rather inefficient, especially if it involves API calls to a remote subsystem.
 
-To avoid this inefficiency, if the inventory script returns a top level element called "_meta",
-it is possible to return all of the host variables in one script execution.
-When this meta element contains a value for "hostvars",
-the inventory script will not be invoked with ``--host`` for each host.
-This results in a significant performance increase for large numbers of hosts.
+To avoid this inefficiency, if the inventory script returns a top-level element called "_meta", it is possible to return all the host variables in a single script execution. When this meta element contains a value for "hostvars", the inventory script will not be invoked with ``--host`` for each host. This behavior results in a significant performance increase for large numbers of hosts.
 
-The data to be added to the top level JSON dictionary looks like this::
+The data to be added to the top-level JSON dictionary looks like this::
 
     {
 
@@ -398,10 +384,7 @@ For example::
 
 .. _replacing_inventory_ini_with_dynamic_provider:
 
-If you intend to replace an existing static inventory file with an inventory script,
-it must return a JSON object which contains an 'all' group that includes every
-host in the inventory as a member and every group in the inventory as a child.
-It should also include an 'ungrouped' group which contains all hosts which are not members of any other group.
+If you intend to replace an existing static inventory file with an inventory script, it must return a JSON object which contains an 'all' group that includes every host in the inventory as a member and every group in the inventory as a child. It should also include an 'ungrouped' group which contains all hosts which are not members of any other group.
 A skeleton example of this JSON object is:
 
 .. code-block:: json
