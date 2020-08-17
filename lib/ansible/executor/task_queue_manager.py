@@ -21,7 +21,9 @@ __metaclass__ = type
 
 import os
 import tempfile
+import threading
 import time
+import multiprocessing.queues
 
 from ansible import constants as C
 from ansible import context
@@ -29,7 +31,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.stats import AggregateStats
 from ansible.executor.task_result import TaskResult
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
@@ -38,12 +40,43 @@ from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
+from ansible.utils.lock import lock_decorator
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
 
 __all__ = ['TaskQueueManager']
 
 display = Display()
+
+
+class CallbackSend:
+    def __init__(self, method_name, *args, **kwargs):
+        self.method_name = method_name
+        self.args = args
+        self.kwargs = kwargs
+
+
+class FinalQueue(multiprocessing.queues.Queue):
+    def __init__(self, *args, **kwargs):
+        if PY3:
+            kwargs['ctx'] = multiprocessing_context
+        super(FinalQueue, self).__init__(*args, **kwargs)
+
+    def send_callback(self, method_name, *args, **kwargs):
+        self.put(
+            CallbackSend(method_name, *args, **kwargs),
+            block=False
+        )
+
+    def send_task_result(self, *args, **kwargs):
+        if isinstance(args[0], TaskResult):
+            tr = args[0]
+        else:
+            tr = TaskResult(*args, **kwargs)
+        self.put(
+            tr,
+            block=False
+        )
 
 
 class TaskQueueManager:
@@ -95,9 +128,11 @@ class TaskQueueManager:
         self._unreachable_hosts = dict()
 
         try:
-            self._final_q = multiprocessing_context.Queue()
+            self._final_q = FinalQueue()
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
+
+        self._callback_lock = threading.Lock()
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
@@ -316,6 +351,7 @@ class TaskQueueManager:
                 defunct = True
         return defunct
 
+    @lock_decorator(attr='_callback_lock')
     def send_callback(self, method_name, *args, **kwargs):
         for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
