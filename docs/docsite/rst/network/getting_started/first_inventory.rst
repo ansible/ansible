@@ -339,13 +339,13 @@ The ``ansible-vault`` command provides encryption for files and/or individual va
 
 First you must create a password for ansible-vault itself. It is used as the encryption key, and with this you can encrypt dozens of different passwords across your Ansible project. You can access all those secrets (encrypted values) with a single password (the ansible-vault password) when you run your playbooks. Here's a simple example.
 
-Create a file and write your password for ansible-vault to it:
+1. Create a file and write your password for ansible-vault to it:
 
 .. code-block:: console
 
    echo "my-ansible-vault-pw" > ~/my-ansible-vault-pw-file
 
-Create the encrypted ssh password for your VyOS network devices, pulling your ansible-vault password from the file you just created:
+2. Create the encrypted ssh password for your VyOS network devices, pulling your ansible-vault password from the file you just created:
 
 .. code-block:: console
 
