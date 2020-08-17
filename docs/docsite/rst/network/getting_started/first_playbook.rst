@@ -61,7 +61,7 @@ The flags in this command set seven values:
   - the connection method (-c, the method for connecting and executing ansible)
   - the user (-u, the username for the SSH connection)
   - the SSH connection method (-k, please prompt for the password)
-  - the module (-m, the ansible module to run, using the fully qualified collection name (FQCNO))
+  - the module (-m, the Ansible module to run, using the fully qualified collection name (FQCN))
   - an extra variable ( -e, in this case, setting the network OS value)
 
 NOTE: If you use ``ssh-agent`` with ssh keys, Ansible loads them automatically. You can omit ``-k`` flag.

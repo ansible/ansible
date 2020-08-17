@@ -27,7 +27,7 @@ To demonstrate the concept of what a role is, the example ``playbook.yml`` below
    ---
    - name: configure cisco routers
      hosts: routers
-     connection: ansble.netcommon.network_cli
+     connection: ansible.netcommon.network_cli
      gather_facts: no
      vars:
        dns: "8.8.8.8 8.8.4.4"
