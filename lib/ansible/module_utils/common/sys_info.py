@@ -5,13 +5,23 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
+import errno
 import platform
 
 from ansible.module_utils import distro
 from ansible.module_utils.common._utils import get_all_subclasses
+from ansible.module_utils.common.text.converters import to_native
+from ansible.module_utils.common.process import get_bin_path
 
 
 __all__ = ('get_distribution', 'get_distribution_version', 'get_platform_subclass')
+
+HAVE_SELINUX = False
+try:
+    import selinux
+    HAVE_SELINUX = True
+except ImportError:
+    pass
 
 
 def get_distribution():
@@ -157,3 +167,82 @@ def get_platform_subclass(cls):
         subclass = cls
 
     return subclass
+
+
+def selinux_mls_enabled():
+    """
+    Detect whether using selinux that is MLS-aware. While this means you can
+    set the level/range with selinux.lsetfilecon(), it may or may not mean that
+    you will get the selevel as part of the context returned by
+    selinux.lgetfilecon().
+    """
+
+    if not HAVE_SELINUX:
+        return False
+    if selinux.is_selinux_mls_enabled() == 1:
+        return True
+    else:
+        return False
+
+
+def selinux_initial_context():
+    context = [None, None, None]
+    if selinux_mls_enabled():
+        context.append(None)
+    return context
+
+
+def selinux_enabled(self):
+    if not HAVE_SELINUX:
+        try:
+            seenabled = get_bin_path('selinuxenabled')
+        except ValueError:
+            seenabled = None
+
+        if seenabled is not None:
+            # FIXME: Need to move run_command
+            (rc, out, err) = self.run_command(seenabled)
+            if rc == 0:
+                raise OSError(rc, "Aborting, target uses selinux but python bindings (libselinux-python) aren't installed!")
+        return False
+    if selinux.is_selinux_enabled() == 1:
+        return True
+    else:
+        return False
+
+
+def selinux_context(path):
+    context = selinux_initial_context()
+    if not HAVE_SELINUX or not selinux_enabled():
+        return context
+    try:
+        ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise OSError(to_native('path %s does not exist' % path))
+        else:
+            raise OSError(to_native('failed to retrieve selinux context'))
+    if ret[0] == -1:
+        return context
+    # Limit split to 4 because the selevel, the last in the list,
+    # may contain ':' characters
+    context = ret[1].split(':', 3)
+    return context
+
+
+def selinux_default_context(path, mode=0):
+    """If selinux fails to find a default, return an array of None"""
+
+    context = selinux_initial_context()
+    if not HAVE_SELINUX or not selinux_enabled():
+        return context
+    try:
+        ret = selinux.matchpathcon(to_native(path, errors='surrogate_or_strict'), mode)
+    except OSError:
+        return context
+    if ret[0] == -1:
+        return context
+    # Limit split to 4 because the selevel, the last in the list,
+    # may contain ':' characters
+    context = ret[1].split(':', 3)
+    return context

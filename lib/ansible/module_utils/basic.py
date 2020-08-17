@@ -72,13 +72,6 @@ try:
 except ImportError:
     has_journal = False
 
-HAVE_SELINUX = False
-try:
-    import selinux
-    HAVE_SELINUX = True
-except ImportError:
-    pass
-
 # Python2 & 3 way to get NoneType
 NoneType = type(None)
 
@@ -150,9 +143,15 @@ from ansible.module_utils.common.file import (
     get_flags_from_attributes,
 )
 from ansible.module_utils.common.sys_info import (
+    HAVE_SELINUX,
     get_distribution,
     get_distribution_version,
     get_platform_subclass,
+    selinux_enabled,
+    selinux_mls_enabled,
+    selinux_initial_context,
+    selinux_default_context,
+    selinux_context,
 )
 from ansible.module_utils.pycompat24 import get_exception, literal_eval
 from ansible.module_utils.common.parameters import (
@@ -873,73 +872,55 @@ class AnsibleModule(object):
             selevel=selevel, secontext=secontext, attributes=attributes,
         )
 
-    # Detect whether using selinux that is MLS-aware.
-    # While this means you can set the level/range with
-    # selinux.lsetfilecon(), it may or may not mean that you
-    # will get the selevel as part of the context returned
-    # by selinux.lgetfilecon().
-
     def selinux_mls_enabled(self):
-        if not HAVE_SELINUX:
-            return False
-        if selinux.is_selinux_mls_enabled() == 1:
-            return True
-        else:
-            return False
+        return selinux_mls_enabled()
 
     def selinux_enabled(self):
-        if not HAVE_SELINUX:
-            seenabled = self.get_bin_path('selinuxenabled')
-            if seenabled is not None:
-                (rc, out, err) = self.run_command(seenabled)
-                if rc == 0:
-                    self.fail_json(msg="Aborting, target uses selinux but python bindings (libselinux-python) aren't installed!")
-            return False
-        if selinux.is_selinux_enabled() == 1:
-            return True
-        else:
-            return False
-
-    # Determine whether we need a placeholder for selevel/mls
-    def selinux_initial_context(self):
-        context = [None, None, None]
-        if self.selinux_mls_enabled():
-            context.append(None)
-        return context
-
-    # If selinux fails to find a default, return an array of None
-    def selinux_default_context(self, path, mode=0):
-        context = self.selinux_initial_context()
-        if not HAVE_SELINUX or not self.selinux_enabled():
-            return context
         try:
-            ret = selinux.matchpathcon(to_native(path, errors='surrogate_or_strict'), mode)
-        except OSError:
-            return context
-        if ret[0] == -1:
-            return context
-        # Limit split to 4 because the selevel, the last in the list,
-        # may contain ':' characters
-        context = ret[1].split(':', 3)
-        return context
+            return selinux_enabled()
+        except OSError as e:
+            self.fail_json(msg=e.strerror)
+
+    def selinux_initial_context(self):
+        return selinux_initial_context()
+
+    def selinux_default_context(self, path, mode=0):
+        return selinux_default_context()
+        # MOVE
+        # context = self.selinux_initial_context()
+        # if not HAVE_SELINUX or not self.selinux_enabled():
+        #     return context
+        # try:
+        #     ret = selinux.matchpathcon(to_native(path, errors='surrogate_or_strict'), mode)
+        # except OSError:
+        #     return context
+        # if ret[0] == -1:
+        #     return context
+        # # Limit split to 4 because the selevel, the last in the list,
+        # # may contain ':' characters
+        # context = ret[1].split(':', 3)
+        # return context
 
     def selinux_context(self, path):
-        context = self.selinux_initial_context()
-        if not HAVE_SELINUX or not self.selinux_enabled():
-            return context
-        try:
-            ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                self.fail_json(path=path, msg='path %s does not exist' % path)
-            else:
-                self.fail_json(path=path, msg='failed to retrieve selinux context')
-        if ret[0] == -1:
-            return context
-        # Limit split to 4 because the selevel, the last in the list,
-        # may contain ':' characters
-        context = ret[1].split(':', 3)
-        return context
+        return selinux_context()
+
+        # MOVE
+        # context = self.selinux_initial_context()
+        # if not HAVE_SELINUX or not self.selinux_enabled():
+        #     return context
+        # try:
+        #     ret = selinux.lgetfilecon_raw(to_native(path, errors='surrogate_or_strict'))
+        # except OSError as e:
+        #     if e.errno == errno.ENOENT:
+        #         self.fail_json(path=path, msg='path %s does not exist' % path)
+        #     else:
+        #         self.fail_json(path=path, msg='failed to retrieve selinux context')
+        # if ret[0] == -1:
+        #     return context
+        # # Limit split to 4 because the selevel, the last in the list,
+        # # may contain ':' characters
+        # context = ret[1].split(':', 3)
+        # return context
 
     def user_and_group(self, path, expand=True):
         b_path = to_bytes(path, errors='surrogate_or_strict')
@@ -2327,13 +2308,32 @@ class AnsibleModule(object):
         self.set_attributes_if_different(dest, current_attribs, True)
 
     def atomic_move(self, src, dest, unsafe_writes=False):
-        '''atomically move src to dest, copying attributes from dest, returns true on success
+        '''
+        Atomically move src to dest, copying attributes from dest, returns true on success
         it uses os.rename to ensure this as it is an atomic operation, rest of the function is
-        to work around limitations, corner cases and ensure selinux context is saved if possible'''
+        to work around limitations, corner cases and ensure selinux context is saved if possible
+        '''
+
         context = None
         dest_stat = None
         b_src = to_bytes(src, errors='surrogate_or_strict')
         b_dest = to_bytes(dest, errors='surrogate_or_strict')
+
+        try:
+            # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
+            os.rename(b_src, b_dest)
+        except (IOError, OSError) as e:
+            if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY, errno.EBUSY]:
+                # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
+                # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
+                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, to_native(e)), exception=traceback.format_exc())
+        else:
+            return
+
+
+
+
+
         if os.path.exists(b_dest):
             try:
                 dest_stat = os.stat(b_dest)
@@ -2460,20 +2460,22 @@ class AnsibleModule(object):
     def _unsafe_writes(self, src, dest):
         # sadly there are some situations where we cannot ensure atomicity, but only if
         # the user insists and we get the appropriate error we update the file unsafely
-        try:
-            out_dest = in_src = None
-            try:
-                out_dest = open(dest, 'wb')
-                in_src = open(src, 'rb')
-                shutil.copyfileobj(in_src, out_dest)
-            finally:  # assuring closed files in 2.4 compatible way
-                if out_dest:
-                    out_dest.close()
-                if in_src:
-                    in_src.close()
-        except (shutil.Error, OSError, IOError) as e:
-            self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)),
-                           exception=traceback.format_exc())
+
+        # MOVE
+        # try:
+        #     out_dest = in_src = None
+        #     try:
+        #         out_dest = open(dest, 'wb')
+        #         in_src = open(src, 'rb')
+        #         shutil.copyfileobj(in_src, out_dest)
+        #     finally:  # assuring closed files in 2.4 compatible way
+        #         if out_dest:
+        #             out_dest.close()
+        #         if in_src:
+        #             in_src.close()
+        # except (shutil.Error, OSError, IOError) as e:
+        #     self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, to_native(e)),
+        #                    exception=traceback.format_exc())
 
     def _clean_args(self, args):
 
