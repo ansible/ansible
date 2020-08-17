@@ -54,6 +54,14 @@ def _validate_install_ansible_base():
     """Validate that we can install ansible-base. Currently this only
     cares about upgrading to ansible-base from ansible<2.10
     """
+    # Skip common commands we can ignore
+    # Do NOT add bdist_wheel here, we don't ship wheels
+    # and bdist_wheel is the only place we can prevent pip
+    # from installing, as pip creates a wheel, and installs the wheel
+    # and we have no influence over installation within a wheel
+    if set(('sdist', 'egg_info')).intersection(sys.argv):
+        return
+
     if os.getenv('ANSIBLE_SKIP_CONFLICT_CHECK', '') not in ('', '0'):
         return
 
