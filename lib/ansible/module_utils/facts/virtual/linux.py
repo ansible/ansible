@@ -47,8 +47,6 @@ class LinuxVirtual(Virtual):
         host_tech = set()
         guest_tech = set()
 
-        # assume container is False
-        virtual_facts['container'] = False
         # lxc/docker
         if os.path.exists('/proc/1/cgroup'):
             for line in get_file_lines('/proc/1/cgroup'):
@@ -57,14 +55,12 @@ class LinuxVirtual(Virtual):
                     if not found_virt:
                         virtual_facts['virtualization_type'] = 'docker'
                         virtual_facts['virtualization_role'] = 'guest'
-                        virtual_facts['container'] = True
                         found_virt = True
                 if re.search('/lxc/', line) or re.search('/machine.slice/machine-lxc', line):
                     guest_tech.add('lxc')
                     if not found_virt:
                         virtual_facts['virtualization_type'] = 'lxc'
                         virtual_facts['virtualization_role'] = 'guest'
-                        virtual_facts['container'] = True
                         found_virt = True
 
         # lxc does not always appear in cgroups anymore but sets 'container=lxc' environment var, requires root privs
@@ -75,21 +71,18 @@ class LinuxVirtual(Virtual):
                     if not found_virt:
                         virtual_facts['virtualization_type'] = 'lxc'
                         virtual_facts['virtualization_role'] = 'guest'
-                        virtual_facts['container'] = True
                         found_virt = True
                 if re.search('container=podman', line):
                     guest_tech.add('podman')
                     if not found_virt:
                         virtual_facts['virtualization_type'] = 'podman'
                         virtual_facts['virtualization_role'] = 'guest'
-                        virtual_facts['container'] = True
                         found_virt = True
                 if re.search('^container=.', line):
                     guest_tech.add('container')
                     if not found_virt:
                         virtual_facts['virtualization_type'] = 'container'
                         virtual_facts['virtualization_role'] = 'guest'
-                        virtual_facts['container'] = True
                         found_virt = True
 
         if os.path.exists('/proc/vz') and not os.path.exists('/proc/lve'):
@@ -102,7 +95,6 @@ class LinuxVirtual(Virtual):
                 guest_tech.add('openvz')
                 if not found_virt:
                     virtual_facts['virtualization_role'] = 'guest'
-                    virtual_facts['container'] = True
             found_virt = True
 
         systemd_container = get_file_content('/run/systemd/container')
@@ -111,7 +103,6 @@ class LinuxVirtual(Virtual):
             if not found_virt:
                 virtual_facts['virtualization_type'] = systemd_container
                 virtual_facts['virtualization_role'] = 'guest'
-                virtual_facts['container'] = True
                 found_virt = True
 
         if os.path.exists("/proc/xen"):
@@ -362,6 +353,10 @@ class LinuxVirtual(Virtual):
 
         virtual_facts['virtualization_tech_guest'] = guest_tech
         virtual_facts['virtualization_tech_host'] = host_tech
+        # Determine if we are running in a container
+        virtual_facts['container'] = bool(
+            virtual_facts['virtualization_role'] == 'guest'
+            and (virtual_facts['virtualization_type'] in ('docker', 'lxc', 'podman', 'container', 'openvz') or systemd_container))
         return virtual_facts
 
 
