@@ -26,7 +26,7 @@ Playbook
 ========
 
 * Fixed a bug on boolean keywords that made random strings return 'False', now they should return an error if they are not a proper boolean
-  Example: `diff: yes-` was returning `False`.
+  Example: ``diff: yes-`` was returning ``False``.
 * A new fact, ``ansible_processor_nproc`` reflects the number of vcpus
   available to processes (falls back to the number of vcpus available to
   the scheduler).
@@ -50,7 +50,7 @@ Modules
 Change to Default File Permissions
 ----------------------------------
 
-To address CVE-2020-1736, the default permissions for certain files created by Ansible using ``atomic_move()`` were changed from ``0o666`` to ``0o600``. The default permissions value was only used for the temporary file before it was moved into its place or newly created files. If the file existed when the new temporary file was moved into place, Ansible would use the permissions of the existing file. If there was no existing file, Ansible would retain the default file permissions, combined with the system ``umask``, of the temporary file.
+To address `CVE-2020-1736 <https://nvd.nist.gov/vuln/detail/CVE-2020-1736>`_, the default permissions for certain files created by Ansible using ``atomic_move()`` were changed from ``0o666`` to ``0o600``. The default permissions value was only used for the temporary file before it was moved into its place or newly created files. If the file existed when the new temporary file was moved into place, Ansible would use the permissions of the existing file. If there was no existing file, Ansible would retain the default file permissions, combined with the system ``umask``, of the temporary file.
 
 Most modules that call ``atomic_move()`` also call ``set_fs_attributes_if_different()`` or ``set_mode_if_different()``, which will set the permissions of the file to what is specified in the task.
 
