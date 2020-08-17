@@ -1,0 +1,4 @@
+bugfixes:
+- TOML inventory - Ensure we register dump functions for ``AnsibleUnsafe`` to support dumping unsafe values.
+  Note that the TOML format has no functionality to mark that the data is unsafe for re-consumption.
+  (https://github.com/ansible/ansible/issues/71307)
