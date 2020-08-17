@@ -20,9 +20,11 @@ Release Schedule
 - 2020-08-13: ansible-base 2.10 Release date, see :ref:`base_roadmap_2_10`.
 - 2020-08-14: final ansible-2.10 alpha.
 - 2020-08-18: Ansible 2.10 beta freeze.
+
   - No new modules or major features will be added after this date. In practice this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community-crypto-1.1.0; ansible-2.10.0 could ship with community-crypto-1.1.1.  It would not ship with community-crypto-1.2.0.
 - 2020-09-01: ansible-2.10.0 beta1.
 - 2020-09-10: ansible-2.10 final freeze/rc1.
+
   - After this date only changes blocking a release are accepted.
   - Collections will only be updated to a new version if a blocker is approved.  Collection owners should discuss any blockers at a community IRC meeting (on 9-10 and 9-17) to decide whether to bump the version of the collection for a fix. See the `Community IRC meeting agenda <https://github.com/ansible/community/issues/539>`_.
 
