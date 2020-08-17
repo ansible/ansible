@@ -66,15 +66,15 @@ Here's what a simple playbook looks like::
 
     ---
     - hosts: webservers
-    serial: 5 # update 5 machines at a time
-    roles:
-    - common
-    - webapp
+      serial: 5 # update 5 machines at a time
+      roles:
+      - common
+      - webapp
 
     - hosts: content_servers
-    roles:
-    - common
-    - content
+      roles:
+      - common
+      - content
 
 .. _ansible_search_path:
 
