@@ -35,7 +35,7 @@ Installing vCenter SSL certificates for Ansible
 Installing ESXi SSL certificates for Ansible
 --------------------------------------------
 
-* Enable SSH Service on ESXi either by using Ansible VMware module `vmware_host_service_manager <https://github.com/ansible/ansible/blob/devel/lib/ansible/modules/cloud/vmware/vmware_host_config_manager.py>`_ or manually using vSphere Web interface.
+* Enable SSH Service on ESXi either by using Ansible VMware module `vmware_host_service_manager <https://github.com/ansible-collections/vmware/blob/main/plugins/modules/vmware_host_config_manager.py>`_ or manually using vSphere Web interface.
 
 * SSH to ESXi server using administrative credentials, and navigate to directory ``/etc/vmware/ssl``
 

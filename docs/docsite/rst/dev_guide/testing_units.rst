@@ -153,10 +153,8 @@ directory, which is then included directly.
 Module test case common code
 ````````````````````````````
 
-Keep common code as specific as possible within the `test/units/` directory structure. For
-example, if it's specific to testing Amazon modules, it should be in
-`test/units/modules/cloud/amazon/`. Don't import common unit test code from directories
-outside the current or parent directories.
+Keep common code as specific as possible within the `test/units/` directory structure.
+Don't import common unit test code from directories outside the current or parent directories.
 
 Don't import other unit tests from a unit test. Any common code should be in dedicated
 files that aren't themselves tests.
@@ -168,15 +166,10 @@ Fixtures files
 To mock out fetching results from devices, or provide other complex data structures that
 come from external libraries, you can use ``fixtures`` to read in pre-generated data.
 
-Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
+You can check how `fixtures <https://github.com/ansible/ansible/tree/devel/test/units/module_utils/facts/fixtures/cpuinfo>`_
+are used in `cpuinfo fact tests <https://github.com/ansible/ansible/blob/9f72ff80e3fe173baac83d74748ad87cb6e20e64/test/units/module_utils/facts/hardware/linux_data.py#L384>`_
 
-Data is loaded using the ``load_fixture`` method
-
-See `eos_banner test
-<https://github.com/ansible/ansible/blob/devel/test/units/modules/network/eos/test_eos_banner.py>`_
-for a practical example.
-
-If you are simulating APIs you may find that python placebo is useful.  See
+If you are simulating APIs you may find that Python placebo is useful.  See
 :ref:`testing_units_modules` for more information.
 
 
