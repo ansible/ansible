@@ -102,7 +102,7 @@ def strftime(string_format, second=None):
     ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
     if second is not None:
         try:
-            second = int(second)
+            second = float(second)
         except Exception:
             raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
     return time.strftime(string_format, time.localtime(second))
