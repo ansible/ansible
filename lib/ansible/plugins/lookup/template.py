@@ -119,7 +119,6 @@ class LookupModule(LookupBase):
                 vars.update(generate_ansible_template_vars(lookupfile))
                 vars.update(lookup_template_vars)
 
-
                 with templar.set_temporary_context(variable_start_string=variable_start_string,
                                                    variable_end_string=variable_end_string,
                                                    available_variables=vars, searchpath=searchpath):
