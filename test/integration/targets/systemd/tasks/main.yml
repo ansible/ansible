@@ -72,4 +72,11 @@
               - result is failed
               - result is search("Could not find the requested service {{ fake_service }}")
 
+    - name: check that the module works even when systemd is offline (eg in chroot)
+      systemd:
+          name: "{{ running_names.stdout_lines|random }}"
+          state: started
+      environment:
+          SYSTEMD_OFFLINE: 1
+
   when: 'systemctl_check.rc == 0'
