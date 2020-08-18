@@ -34,6 +34,7 @@ from ansible.executor.task_result import TaskResult
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.play_context import PlayContext
+from ansible.playbook.task import Task
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
@@ -359,6 +360,13 @@ class TaskQueueManager:
             if getattr(callback_plugin, 'disabled', False):
                 continue
 
+            # a plugin can opt in to implicit tasks (such as meta). It does this
+            # by declaring self.wants_implicit_tasks = True.
+            wants_implicit_tasks = getattr(
+                callback_plugin,
+                'wants_implicit_tasks',
+                False)
+
             # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
             for possible in [method_name, 'v2_on_any']:
@@ -370,6 +378,12 @@ class TaskQueueManager:
 
             # send clean copies
             new_args = []
+
+            # If we end up being given an implicit task, we'll set this flag in
+            # the loop below. If the plugin doesn't care about those, then we
+            # check and continue to the next iteration of the outer loop.
+            is_implicit_task = False
+
             for arg in args:
                 # FIXME: add play/task cleaners
                 if isinstance(arg, TaskResult):
@@ -378,6 +392,12 @@ class TaskQueueManager:
                 # elif isinstance(arg, Task):
                 else:
                     new_args.append(arg)
+
+                if isinstance(arg, Task) and arg.implicit:
+                    is_implicit_task = True
+
+            if is_implicit_task and not wants_implicit_tasks:
+                continue
 
             for method in methods:
                 try:

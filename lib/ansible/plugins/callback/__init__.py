@@ -74,6 +74,7 @@ class CallbackBase(AnsiblePlugin):
             self._display.vvvv('Loading callback plugin %s of type %s, v%s from %s' % (name, ctype, version, sys.modules[self.__module__].__file__))
 
         self.disabled = False
+        self.wants_implicit_tasks = False
 
         self._plugin_options = {}
         if options is not None:
