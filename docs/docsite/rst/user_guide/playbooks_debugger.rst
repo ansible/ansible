@@ -4,22 +4,28 @@
 Debugging tasks
 ***************
 
-Ansible offers a task debugger so you can try to fix errors during execution instead of fixing them in the playbook and then running it again. You have access to all of the features of the debugger in the context of the task. You can check or set the value of variables, update module arguments, and re-run the task with the new variables and arguments. The debugger lets you resolve the cause of the failure and continue with playbook execution.
+Ansible offers a task debugger so you can fix errors during execution instead of editing your playbook and running it again to see if your change worked. You have access to all of the features of the debugger in the context of the task. You can check or set the value of variables, update module arguments, and re-run the task with the new variables and arguments. The debugger lets you resolve the cause of the failure and continue with playbook execution.
 
 .. contents::
    :local:
 
-Invoking the debugger
+Enabling the debugger
 =====================
 
-There are multiple ways to invoke the debugger.
+The debugger is not enabled by default. If you want to invoke the debugger during playbook execution, you must enable it first.
 
-Using the debugger keyword
---------------------------
+Use one of these three methods to enable the debugger:
+
+ * with the debugger keyword
+ * in configuration or an environment variable, or
+ * as a strategy
+
+Enabling the debugger with the ``debugger`` keyword
+---------------------------------------------------
 
 .. versionadded:: 2.5
 
-The ``debugger`` keyword can be used on any block where you provide a ``name`` attribute, such as a play, role, block or task. The ``debugger`` keyword accepts five values:
+You can use the ``debugger`` keyword to enable (or disable) the debugger for a specific play, role, block, or task. This option is especially useful when developing or extending playbooks, plays, and roles. You can enable the debugger on new or updated tasks. If they fail, you can fix the errors efficiently. The ``debugger`` keyword accepts five values:
 
 .. table::
    :class: documentation-table
@@ -33,22 +39,29 @@ The ``debugger`` keyword can be used on any block where you provide a ``name`` a
 
    on_failed                 Only invoke the debugger if a task fails
 
-   on_unreachable            Only invoke the debugger if a host was unreachable
+   on_unreachable            Only invoke the debugger if a host is unreachable
 
    on_skipped                Only invoke the debugger if the task is skipped
 
    ========================= ======================================================
 
-When you use the ``debugger`` keyword, the setting you use overrides any global configuration to enable or disable the debugger. If you define ``debugger`` at two different levels, for example in a role and in a task, the more specific definition wins: the definition on a task overrides the definition on a block, which overrides the definition on a role or play.
+When you use the ``debugger`` keyword, the value you specify overrides any global configuration to enable or disable the debugger. If you define ``debugger`` at multiple levels, such as in a role and in a task, Ansible honors the most granular definition. The definition at the play or role level applies to all blocks and tasks within that play or role, unless they specify a different value. The definition at the block level overrides the definition at the play or role level, and applies to all tasks within that block, unless they specify a different value. The definition at the task level always applies to the task; it overrides the definitions at the block, play, or role level.
 
-Here are examples of invoking the debugger with the ``debugger`` keyword::
+Examples of using the ``debugger`` keyword
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    # on a task
+Example of setting the ``debugger`` keyword on a task:
+
+.. code-block:: yaml
+
     - name: Execute a command
       command: "false"
       debugger: on_failed
 
-    # on a play
+Example of setting the ``debugger`` keyword on a play:
+
+.. code-block:: yaml
+
     - name: My play
       hosts: all
       debugger: on_skipped
@@ -57,7 +70,10 @@ Here are examples of invoking the debugger with the ``debugger`` keyword::
           command: "true"
           when: False
 
-In the example below, the task will open the debugger when it fails, because the task-level definition overrides the play-level definition::
+Example of setting the ``debugger`` keyword at multiple levels:
+
+.. code-block:: yaml
+
 
     - name: Play
       hosts: all
@@ -67,50 +83,51 @@ In the example below, the task will open the debugger when it fails, because the
           command: "false"
           debugger: on_failed
 
-In configuration or an environment variable
--------------------------------------------
+In this example, the debugger is set to ``never`` at the play level and to ``on_failed`` at the task level. If the task fails, Ansible invokes the debugger, because the definition on the task overrides the definition on its parent play.
+
+Enabling the debugger in configuration or an environment variable
+-----------------------------------------------------------------
 
 .. versionadded:: 2.5
 
-You can turn the task debugger on or off globally with a setting in ansible.cfg or with an environment variable. The only options are ``True`` or ``False``. If you set the configuration option or environment variable to ``True``, Ansible runs the debugger on failed tasks by default.
+You can enable the task debugger globally with a setting in ansible.cfg or with an environment variable. The only options are ``True`` or ``False``. If you set the configuration option or environment variable to ``True``, Ansible runs the debugger on failed tasks by default.
 
-To invoke the task debugger from ansible.cfg::
+To enable the task debugger from ansible.cfg, add this setting to the defaults section::
 
     [defaults]
     enable_task_debugger = True
 
-To use an an environment variable to invoke the task debugger::
+To enable the task debugger with an environment variable, pass the variable when you run your playbook::
 
     ANSIBLE_ENABLE_TASK_DEBUGGER=True ansible-playbook -i hosts site.yml
 
-When you invoke the debugger using this method, any failed task will invoke the debugger, unless it is explicitly disabled for that role, play, block, or task. If you need more granular control what conditions trigger the debugger, use the ``debugger`` keyword.
+When you enable the debugger globally, every failed task invokes the debugger, unless the role, play, block, or task explicity disables the debugger. If you need more granular control over what conditions trigger the debugger, use the ``debugger`` keyword.
 
-As a strategy
--------------
+Enabling the debugger as a strategy
+-----------------------------------
+
+If you are running legacy playbooks or roles, you may see the debugger enabled as a :ref:`strategy <strategy_plugins>`. You can do this at the play level, in ansible.cfg, or with the environment variable ``ANSIBLE_STRATEGY=debug``. For example:
+
+.. code-block:: yaml
+
+   - hosts: test
+     strategy: debug
+     tasks:
+     ...
+
+Or in ansible.cfg::
+
+    [defaults]
+    strategy = debug
 
 .. note::
 
    This backwards-compatible method, which matches Ansible versions before 2.5, may be removed in a future release.
 
-To use the ``debug`` strategy, change the ``strategy`` attribute like this::
+Resolving errors in the debugger
+================================
 
-    - hosts: test
-      strategy: debug
-      tasks:
-      ...
-
-You can also set the strategy to ``debug`` with the environment variable ``ANSIBLE_STRATEGY=debug``, or by modifying ``ansible.cfg``:
-
-.. code-block:: yaml
-
-    [defaults]
-    strategy = debug
-
-
-Using the debugger
-==================
-
-Once you invoke the debugger, you can use the seven :ref:`debugger commands <available_commands>` to work through the error Ansible encountered. For example, the playbook below defines the ``var1`` variable but uses the ``wrong_var`` variable, which is undefined, by mistake.
+After Ansible invokes the debugger, you can use the seven :ref:`debugger commands <available_commands>` to resolve the error that Ansible encountered. Consider this example playbook, which defines the ``var1`` variable but uses the undefined ``wrong_var`` variable in a task by mistake.
 
 .. code-block:: yaml
 
@@ -158,7 +175,7 @@ If you run this playbook, Ansible invokes the debugger when the task fails. From
     PLAY RECAP *********************************************************************
     192.0.2.10               : ok=1    changed=0    unreachable=0    failed=0
 
-As the example above shows, once the task arguments use ``var1`` instead of ``wrong_var``, the task runs successfully.
+Changing the task arguments in the debugger to use ``var1`` instead of ``wrong_var`` makes the task run successfully.
 
 .. _available_commands:
 
@@ -295,11 +312,10 @@ Quit command
 
 ``q`` or ``quit`` quits the debugger. The playbook execution is aborted.
 
-Debugging and the free strategy
-===============================
+How the debugger interacts with the free strategy
+=================================================
 
-If you use the debugger with the ``free`` strategy, Ansible does not queue or execute any further tasks while the debugger is active. However, previously queued tasks remain in the queue and run as soon as you exit the debugger. If you use ``redo`` to reschedule a task from the debugger, other queued task may execute before your rescheduled task.
-
+With the default ``linear`` strategy enabled, Ansible halts execution while the debugger is active, and runs the debugged task immediately after you enter the ``redo`` command. With the ``free`` strategy enabled, however, Ansible does not wait for all hosts, and may queue later tasks on one host before a task fails on another host. With the ``free`` strategy, Ansible does not queue or execute any tasks while the debugger is active. However, all queued tasks remain in the queue and run as soon as you exit the debugger. If you use ``redo`` to reschedule a task from the debugger, other queued tasks may execute before your rescheduled task. For more information about strategies, see :ref:`playbooks_strategies`.
 
 .. seealso::
 
