@@ -41,7 +41,7 @@ options:
   user:
     description:
       - The specific user whose crontab should be modified.
-      - When unset, this parameter defaults to using C(root).
+      - When unset, this parameter defaults to the current user.
     type: str
   job:
     description:
@@ -222,7 +222,7 @@ class CronTab(object):
     """
         CronTab object to write time based crontab file
 
-        user      - the user of the crontab (defaults to root)
+        user      - the user of the crontab (defaults to current user)
         cron_file - a cron file under /etc/cron.d, or an absolute path
     """
 
