@@ -3,3 +3,6 @@
   tasks:
     - debug:
         msg: "{{ username }}"
+
+    - name: explicitly refresh inventory
+      meta: refresh_inventory

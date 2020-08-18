@@ -1138,22 +1138,20 @@ class StrategyBase:
 
         skipped = False
         msg = ''
-        # The top-level conditions should only compare meta_action
+        self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+
+        # These don't support "when" conditionals
+        if meta_action in ('noop', 'flush_handlers', 'refresh_inventory', 'reset_connection') and task.when:
+            self._cond_not_supported_warn(meta_action)
+
         if meta_action == 'noop':
-            # FIXME: issue a callback for the noop here?
-            if task.when:
-                self._cond_not_supported_warn(meta_action)
             msg = "noop"
         elif meta_action == 'flush_handlers':
-            if task.when:
-                self._cond_not_supported_warn(meta_action)
             self._flushed_hosts[target_host] = True
             self.run_handlers(iterator, play_context)
             self._flushed_hosts[target_host] = False
             msg = "ran handlers"
         elif meta_action == 'refresh_inventory':
-            if task.when:
-                self._cond_not_supported_warn(meta_action)
             self._inventory.refresh_inventory()
             self._set_hosts_cache(iterator._play)
             msg = "inventory successfully refreshed"
@@ -1180,6 +1178,8 @@ class StrategyBase:
                     if host.name not in self._tqm._unreachable_hosts:
                         iterator._host_states[host.name].run_state = iterator.ITERATING_COMPLETE
                 msg = "ending play"
+            else:
+                skipped = True
         elif meta_action == 'end_host':
             if _evaluate_conditional(target_host):
                 iterator._host_states[target_host.name].run_state = iterator.ITERATING_COMPLETE
@@ -1210,9 +1210,6 @@ class StrategyBase:
             # We also add "magic" variables back into the variables dict to make sure
             # a certain subset of variables exist.
             play_context.update_vars(all_vars)
-
-            if task.when:
-                self._cond_not_supported_warn(meta_action)
 
             if target_host in self._active_connections:
                 connection = Connection(self._active_connections[target_host])
