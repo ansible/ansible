@@ -133,8 +133,10 @@ class Conditional:
             disable_lookups = hasattr(conditional, '__UNSAFE__')
             conditional = templar.template(conditional, disable_lookups=disable_lookups)
             if bare_vars_warning and not isinstance(conditional, bool):
-                display.deprecated('evaluating %r as a bare variable, this behaviour will go away and you might need to add |bool'
-                                   ' to the expression in the future. Also see CONDITIONAL_BARE_VARS configuration toggle' % original,
+                display.deprecated('evaluating %r as a bare variable, this behaviour will go away and you might need to add " | bool"'
+                                   ' (if you would like to evaluate input string from prompt) or " is truthy"'
+                                   ' (if you would like to apply Python\'s evaluation method) to the expression in the future. '
+                                   'Also see CONDITIONAL_BARE_VARS configuration toggle' % original,
                                    version="2.12", collection_name='ansible.builtin')
             if not isinstance(conditional, text_type) or conditional == "":
                 return conditional
