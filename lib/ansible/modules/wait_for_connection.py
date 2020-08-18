@@ -45,7 +45,7 @@ notes:
 seealso:
 - module: ansible.builtin.wait_for
 - module: ansible.windows.win_wait_for
-- module: ansible.windows.win_wait_for_process
+- module: community.windows.win_wait_for_process
 author:
 - Dag Wieers (@dagwieers)
 '''
