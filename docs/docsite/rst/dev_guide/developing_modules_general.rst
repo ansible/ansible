@@ -5,7 +5,7 @@
 Developing Ansible modules
 **************************
 
-A module is a reusable, standalone script that Ansible runs on your behalf, either locally or remotely. Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepts arguments, and returns information to Ansible by printing a JSON string to stdout before exiting. 
+A module is a reusable, standalone script that Ansible runs on your behalf, either locally or remotely. Modules interact with your local machine, an API, or a remote system to perform specific tasks like changing a database password or spinning up a cloud instance. Each module can be used by the Ansible API, or by the :command:`ansible` or :command:`ansible-playbook` programs. A module provides a defined interface, accepts arguments, and returns information to Ansible by printing a JSON string to stdout before exiting.
 
 If you need functionality that is not available in any of the thousands of Ansible modules found in collections, you can easily write your own custom module. When you write a module for local use, you can choose any programming language and follow your own rules. Use this topic to learn how to create an Ansible module in Python. After you create a module, you must add it locally to the appropriate directory so that Ansible can find and execute it. For details about adding a module locally, see :ref:`developing_locally`.
 
@@ -48,145 +48,56 @@ Creating a development environment (platform-agnostic steps)
    ``$ . venv/bin/activate && . hacking/env-setup``
 
 
+Creating an info or a facts module
+==================================
+
+Ansible gathers information about the target machines using facts modules, and gathers information on other objects or files using info modules.
+If you find yourself trying to add ``state: info`` or ``state: list`` to an existing module, that is often a sign that a new dedicated ``_facts`` or ``_info`` module is needed.
+
+In Ansible 2.8 and onwards, we have two type of information modules, they are ``*_info`` and ``*_facts``.
+
+If a module is named ``<something>_facts``, it should be because its main purpose is returning ``ansible_facts``. Do not name modules that do not do this with ``_facts``.
+Only use ``ansible_facts`` for information that is specific to the host machine, for example network interfaces and their configuration, which operating system and which programs are installed.
+
+Modules that query/return general information (and not ``ansible_facts``) should be named ``_info``.
+General information is non-host specific information, for example information on online/cloud services (you can access different accounts for the same online service from the same host), or information on VMs and containers accessible from the machine, or information on individual files or programs.
+
+Info and facts modules, are just like any other Ansible Module, with a few minor requirements:
+
+1. They MUST be named ``<something>_info`` or ``<something>_facts``, where <something> is singular.
+2. Info ``*_info`` modules MUST return in the form of the :ref:`result dictionary<common_return_values>` so other modules can access them.
+3. Fact ``*_facts`` modules MUST return in the ``ansible_facts`` field of the :ref:`result dictionary<common_return_values>` so other modules can access them.
+4. They MUST support :ref:`check_mode <check_mode_dry>`.
+5. They MUST NOT make any changes to the system.
+6. They MUST document the :ref:`return fields<return_block>` and :ref:`examples<examples_block>`.
+
+To create an info module:
+
+1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/``. If you are developing module using collection, ``$ cd plugins/modules/`` inside your collection development tree.
+2. Create your new module file: ``$ touch my_test_info.py``.
+3. Paste the content below into your new info module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
+4. Modify and extend the code to do what you want your new info module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean and concise module code.
+
+.. literalinclude:: ../../../../examples/scripts/my_test_info.py
+   :language: python
+
+Use the same process to create a facts module.
+
+.. literalinclude:: ../../../../examples/scripts/my_test_facts.py
+   :language: python
+
 Creating a module
 =================
 
 To create a module:
 
-1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/``
-2. Create your new module file: ``$ touch my_test.py``
+1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/``. If you are developing module using collection, ``$ cd plugins/modules/`` inside your collection development tree.
+2. Create your new module file: ``$ touch my_test.py``.
 3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
 4. Modify and extend the code to do what you want your new module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean and concise module code.
 
-.. code-block:: python
-
-    #!/usr/bin/python
-
-    # Copyright: (c) 2018, Terry Jones <terry.jones@example.org>
-    # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
-    from __future__ import (absolute_import, division, print_function)
-    __metaclass__ = type
-
-    DOCUMENTATION = r'''
-    ---
-    module: my_test
-
-    short_description: This is my test module
-
-    version_added: "2.4"
-
-    description:
-        - "This is my longer description explaining my test module."
-
-    options:
-        name:
-            description:
-                - This is the message to send to the test module.
-            required: true
-            type: str
-        new:
-            description:
-                - Control to demo if the result of this module is changed or not.
-            required: false
-            type: bool
-
-    extends_documentation_fragment:
-        - azure
-
-    author:
-        - Your Name (@yourhandle)
-    '''
-
-    EXAMPLES = r'''
-    # Pass in a message
-    - name: Test with a message
-      my_test:
-        name: hello world
-
-    # pass in a message and have changed true
-    - name: Test with a message and changed output
-      my_test:
-        name: hello world
-        new: true
-
-    # fail the module
-    - name: Test failure of the module
-      my_test:
-        name: fail me
-    '''
-
-    RETURN = r'''
-    original_message:
-        description: The original name param that was passed in
-        type: str
-        returned: always
-    message:
-        description: The output message that the test module generates
-        type: str
-        returned: always
-    '''
-
-    from ansible.module_utils.basic import AnsibleModule
-
-    def run_module():
-        # define available arguments/parameters a user can pass to the module
-        module_args = dict(
-            name=dict(type='str', required=True),
-            new=dict(type='bool', required=False, default=False)
-        )
-
-        # seed the result dict in the object
-        # we primarily care about changed and state
-        # changed is if this module effectively modified the target
-        # state will include any data that you want your module to pass back
-        # for consumption, for example, in a subsequent task
-        result = dict(
-            changed=False,
-            original_message='',
-            message=''
-        )
-
-        # the AnsibleModule object will be our abstraction working with Ansible
-        # this includes instantiation, a couple of common attr would be the
-        # args/params passed to the execution, as well as if the module
-        # supports check mode
-        module = AnsibleModule(
-            argument_spec=module_args,
-            supports_check_mode=True
-        )
-
-        # if the user is working with this module in only check mode we do not
-        # want to make any changes to the environment, just return the current
-        # state with no modifications
-        if module.check_mode:
-            module.exit_json(**result)
-
-        # manipulate or modify the state as needed (this is going to be the
-        # part where your module will do what it needs to do)
-        result['original_message'] = module.params['name']
-        result['message'] = 'goodbye'
-
-        # use whatever logic you need to determine whether or not this module
-        # made any modifications to your target
-        if module.params['new']:
-            result['changed'] = True
-
-        # during the execution of the module, if there is an exception or a
-        # conditional state that effectively causes a failure, run
-        # AnsibleModule.fail_json() to pass in the message and the result
-        if module.params['name'] == 'fail me':
-            module.fail_json(msg='You requested this to fail', **result)
-
-        # in the event of a successful module execution, you will want to
-        # simple AnsibleModule.exit_json(), passing the key/value results
-        module.exit_json(**result)
-
-    def main():
-        run_module()
-
-    if __name__ == '__main__':
-        main()
-
+.. literalinclude:: ../../../../examples/scripts/my_test.py
+   :language: python
 
 Verifying your module code
 ==========================
@@ -259,7 +170,7 @@ You can run through Ansible's sanity checks in a container:
 
 ``$ ansible-test sanity -v --docker --python 2.7 MODULE_NAME``
 
-.. note:: 
+.. note::
 	Note that this example requires Docker to be installed and running. If you'd rather not use a container for this, you can choose to use ``--venv`` instead of ``--docker``.
 
 Adding unit tests
@@ -269,7 +180,7 @@ You can add unit tests for your module in ``./test/units/modules``. You must fir
 
 - Install the requirements (outside of your virtual environment): ``$ pip3 install -r ./test/lib/ansible_test/_data/requirements/units.txt``
 - Run ``. hacking/env-setup``
-- To run all tests do the following: ``$ ansible-test units --python 3.5``. If you are using a CI enviornment, these tests will run automatically. 
+- To run all tests do the following: ``$ ansible-test units --python 3.5``. If you are using a CI environment, these tests will run automatically.
 
 .. note:: Ansible uses pytest for unit testing.
 
