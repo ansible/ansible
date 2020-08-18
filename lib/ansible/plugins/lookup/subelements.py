@@ -18,8 +18,9 @@ DOCUMENTATION = """
       skip_missing:
         default: False
         description:
-          - If set to True, the lookup plugin will skip the lists items that do not contain the given subkey.
-            If False, the plugin will yield an error and complain about the missing subkey.
+          - Lookup accepts this flag from a dictionary as optional. See Example section for more information.
+          - If set to C(True), the lookup plugin will skip the lists items that do not contain the given subkey.
+          - If set to C(False), the plugin will yield an error and complain about the missing subkey.
 """
 
 EXAMPLES = """
@@ -74,7 +75,7 @@ EXAMPLES = """
 
     - name: list groups for users that have them, don't error if groups key is missing
       debug: var=item
-      loop: "{{lookup('subelements', users, 'groups', {'skip_missing': True})}}"
+      loop: "{{ q('subelements', users, 'groups', {'skip_missing': True}) }}"
 """
 
 RETURN = """
