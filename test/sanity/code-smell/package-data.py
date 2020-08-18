@@ -54,6 +54,9 @@ def assemble_files_to_ship(complete_file_list):
         '.mailmap',
         # Possibly should be included
         'examples/scripts/uptime.py',
+        'examples/scripts/my_test.py',
+        'examples/scripts/my_test_info.py',
+        'examples/scripts/my_test_facts.py',
         'examples/DOCUMENTATION.yml',
         'examples/play.yml',
         'examples/hosts.yaml',
