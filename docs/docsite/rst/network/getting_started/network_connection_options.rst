@@ -4,7 +4,7 @@
 Working with network connection options
 ***************************************
 
-Network modules can support multiple connection protocols, such as ``network_cli``, ``netconf``, and ``httpapi``. These connections include some common options you can set to control how the connection to your network device behaves.
+Network modules can support multiple connection protocols, such as ``ansible.netcommon.network_cli``, ``ansible.netcommon.netconf``, and ``ansible.netcommon.httpapi``. These connections include some common options you can set to control how the connection to your network device behaves.
 
 Common options are:
 
@@ -27,7 +27,7 @@ Using vars (per task):
 .. code-block:: yaml
 
   - name: save running-config
-    ios_command:
+    cisco.ios.ios_command:
       commands: copy running-config startup-config
       vars:
         ansible_command_timeout: 30
