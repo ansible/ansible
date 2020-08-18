@@ -97,6 +97,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         self._role = role
         self._parent = None
+        self.implicit = False
 
         if task_include:
             self._parent = task_include
@@ -411,6 +412,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         if self._role:
             new_me._role = self._role
 
+        new_me.implicit = self.implicit
+
         return new_me
 
     def serialize(self):
@@ -426,6 +429,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
             if self._ansible_internal_redirect_list:
                 data['_ansible_internal_redirect_list'] = self._ansible_internal_redirect_list[:]
+
+            data['implicit'] = self.implicit
 
         return data
 
@@ -456,6 +461,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
             del data['role']
 
         self._ansible_internal_redirect_list = data.get('_ansible_internal_redirect_list', [])
+
+        self.implicit = data.get('implicit', False)
 
         super(Task, self).deserialize(data)
 
