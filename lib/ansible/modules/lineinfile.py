@@ -131,7 +131,7 @@ seealso:
 - module: ansible.builtin.file
 - module: ansible.builtin.replace
 - module: ansible.builtin.template
-- module: ansible.windows.win_lineinfile
+- module: community.windows.win_lineinfile
 author:
     - Daniel Hokka Zakrissoni (@dhozac)
     - Ahti Kitsik (@ahtik)

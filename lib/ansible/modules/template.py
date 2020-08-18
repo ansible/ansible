@@ -26,7 +26,7 @@ options:
     default: no
     version_added: '2.4'
 notes:
-- For Windows you can use M(win_template) which uses '\\r\\n' as C(newline_sequence) by default.
+- For Windows you can use M(ansible.windows.win_template) which uses '\\r\\n' as C(newline_sequence) by default.
 seealso:
 - module: ansible.builtin.copy
 - module: ansible.windows.win_copy
