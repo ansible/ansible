@@ -250,7 +250,7 @@ notes:
   - On all other platforms, this module uses C(useradd) to create, C(usermod) to modify, and
     C(userdel) to remove accounts.
 seealso:
-- module: ansible.builtin.authorized_key
+- module: ansible.posix.authorized_key
 - module: ansible.builtin.group
 - module: ansible.windows.win_user
 author:

@@ -17,7 +17,7 @@ version_added: '2.1'
 short_description: Add or remove YUM repositories
 description:
   - Add or remove YUM repositories in RPM-based Linux distributions.
-  - If you wish to update an existing repository definition use M(ansible.builtin.ini_file) instead.
+  - If you wish to update an existing repository definition use M(community.general.ini_file) instead.
 
 options:
   async:
