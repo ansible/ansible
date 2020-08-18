@@ -194,7 +194,6 @@ class StrategyBase:
         self._final_q = tqm._final_q
         self._step = context.CLIARGS.get('step', False)
         self._diff = context.CLIARGS.get('diff', False)
-        self.flush_cache = context.CLIARGS.get('flush_cache', False)
 
         # the task cache is a dictionary of tuples of (host.name, task._uuid)
         # used to find the original task object of in-flight tasks and to store
@@ -1139,6 +1138,7 @@ class StrategyBase:
 
         skipped = False
         msg = ''
+        # The top-level conditions should only compare meta_action
         if meta_action == 'noop':
             # FIXME: issue a callback for the noop here?
             if task.when:
@@ -1151,7 +1151,7 @@ class StrategyBase:
             self.run_handlers(iterator, play_context)
             self._flushed_hosts[target_host] = False
             msg = "ran handlers"
-        elif meta_action == 'refresh_inventory' or self.flush_cache:
+        elif meta_action == 'refresh_inventory':
             if task.when:
                 self._cond_not_supported_warn(meta_action)
             self._inventory.refresh_inventory()
