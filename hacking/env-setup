@@ -1,3 +1,4 @@
+
 # usage: source hacking/env-setup [-q]
 #    modifies environment for running Ansible from checkout
 
@@ -21,7 +22,7 @@ prepend_path()
 PYTHONPATH=${PYTHONPATH-""}
 PATH=${PATH-""}
 MANPATH=${MANPATH-$(manpath)}
-PYTHON=$(which python 2>/dev/null || which python3 2>/dev/null)
+PYTHON=$(command -v python || command -v python3)
 PYTHON_BIN=${PYTHON_BIN-$PYTHON}
 
 verbosity=${1-info} # Defaults to `info' if unspecified
