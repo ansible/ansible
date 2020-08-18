@@ -44,7 +44,7 @@ This table gives examples of valid and invalid variable names:
 Simple variables
 ================
 
-Simple variables combine a variable name with a single value. You can use this syntax (and the syntax for lists and dictionaries shown below) in a variety of places. For details about setting the variables in inventory, in playbooks, in reusable files, in roles, or at the command line, see :ref:`setting_variables`.
+Simple variables combine a variable name with a single value. You can use this syntax (and the syntax for lists and dictionaries shown below) in a variety of places. For details about setting variables in inventory, in playbooks, in reusable files, in roles, or at the command line, see :ref:`setting_variables`.
 
 Defining simple variables
 -------------------------
