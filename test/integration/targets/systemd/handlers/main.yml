@@ -7,3 +7,7 @@
   file:
     path: /etc/systemd/system/dummy.service
     state: absent
+
+- name: reload systemd
+  systemd:
+    daemon-reload: yes

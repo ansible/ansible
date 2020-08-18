@@ -88,6 +88,7 @@
       notify:
         - stop dummy
         - remove dummy
+        - reload systemd
 
     - name: try-restart result should not restart dummy service when it is not running
       systemd:
@@ -110,9 +111,5 @@
         that:
           - 'running_try_restart is changed'
           - 'inactive_try_restart is not changed'
-
-    - name: Reload systemd
-      systemd:
-        daemon-reload: yes
 
   when: 'systemctl_check.rc == 0'
