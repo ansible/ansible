@@ -79,4 +79,43 @@
       environment:
           SYSTEMD_OFFLINE: 1
 
+    - name: Create dummy service
+      copy:
+        src: dummy.service
+        dest: /etc/systemd/system/dummy.service
+        owner: root
+        mode: 0640
+
+    - name: try-restart result should not restart dummy service when it is not running
+      systemd:
+        name: dummy
+        state: tried-restarting
+      register: inactive_try_restart
+
+    - name: Start dummy service
+      systemd:
+        name: dummy
+        state: started
+
+    - name: try-restart result should restart dummy serivce when it is running
+      systemd:
+        name: dummy
+        state: tried-restarting
+      register: running_try_restart
+
+    - assert:
+        that:
+          - 'running_try_restart is changed'
+          - 'inactive_try_restart is not changed'
+
+    - name: Stop dummy service
+      systemd:
+        name: dummy
+        state: stopped
+
+    - name: Remove dummy service
+      file:
+        path: /etc/systemd/system/dummy.service
+        state: absent
+
   when: 'systemctl_check.rc == 0'
