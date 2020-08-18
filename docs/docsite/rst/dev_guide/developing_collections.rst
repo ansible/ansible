@@ -92,9 +92,9 @@ module_utils
 When coding with ``module_utils`` in a collection, the Python ``import`` statement needs to take into account the FQCN along with the ``ansible_collections`` convention. The resulting Python import will look like ``from ansible_collections.{namespace}.{collection}.plugins.module_utils.{util} import {something}``
 
 The following example snippets show a Python and PowerShell module using both default Ansible ``module_utils`` and
-those provided by a collection. In this example the namespace is ``ansible_example``, the collection is ``community``.
+those provided by a collection. In this example the namespace is ``community``, the collection is ``test_collection``.
 In the Python example the ``module_util`` in question is called ``qradar`` such that the FQCN is
-``ansible_example.community.plugins.module_utils.qradar``:
+``community.test_collection.plugins.module_utils.qradar``:
 
 .. code-block:: python
 
@@ -103,7 +103,7 @@ In the Python example the ``module_util`` in question is called ``qradar`` such 
 
     from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
     from ansible.module_utils.six.moves.urllib.error import HTTPError
-    from ansible_collections.ansible_example.community.plugins.module_utils.qradar import QRadarRequest
+    from ansible_collections.community.test_collection.plugins.module_utils.qradar import QRadarRequest
 
     argspec = dict(
         name=dict(required=True, type='str'),
@@ -128,13 +128,13 @@ Note that importing something from an ``__init__.py`` file requires using the fi
     from ansible_collections.namespace.collection_name.plugins.callback.__init__ import CustomBaseClass
 
 In the PowerShell example the ``module_util`` in question is called ``hyperv`` such that the FCQN is
-``ansible_example.community.plugins.module_utils.hyperv``:
+``community.test_collection.plugins.module_utils.hyperv``:
 
 .. code-block:: powershell
 
     #!powershell
     #AnsibleRequires -CSharpUtil Ansible.Basic
-    #AnsibleRequires -PowerShell ansible_collections.ansible_example.community.plugins.module_utils.hyperv
+    #AnsibleRequires -PowerShell ansible_collections.community.test_collection.plugins.module_utils.hyperv
 
     $spec = @{
         name = @{ required = $true; type = "str" }
@@ -218,7 +218,7 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
   Content in a collection that Ansible needs to load from another location or that has been deprecated/removed.
   The top level keys of ``plugin_routing`` are types of plugins, with individual plugin names as subkeys.
   To define a new location for a plugin, set the ``redirect`` field to another name.
-  To deprecate a plugin, use the ``deprecation`` field to provide a custom warning message and the removal date or version. If the plugin has been renamed or moved to a new location, the ``redirect`` field should also be provided. If a plugin is being removed entirely, ``tombstone`` can be used for the fatal error message and removal date or version.
+  To deprecate a plugin, use the ``deprecation`` field to provide a custom warning message and the removal version or date. If the plugin has been renamed or moved to a new location, the ``redirect`` field should also be provided. If a plugin is being removed entirely, ``tombstone`` can be used for the fatal error message and removal version or date.
 
   .. code:: yaml
 
@@ -252,7 +252,7 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
 
      import_redirection:
        ansible.module_utils.old_utility:
-         redirect: ansible_collections.collection_name.plugins.module_utils.new_location
+         redirect: ansible_collections.namespace_name.collection_name.plugins.module_utils.new_location
 
 
 .. _creating_collections_skeleton:
@@ -293,7 +293,7 @@ Currently the ``ansible-galaxy collection`` command implements the following sub
 * ``publish``: Publish a built collection artifact to Galaxy.
 * ``install``: Install one or more collections.
 
-To learn more about the ``ansible-galaxy`` cli tool, see the :ref:`ansible-galaxy` man page.
+To learn more about the ``ansible-galaxy`` command-line tool, see the :ref:`ansible-galaxy` man page.
 
 
 .. _docfragments_collections:
@@ -359,7 +359,7 @@ By default the build step will include all the files in the collection directory
 * ``*.retry``
 * ``tests/output``
 * previously built artifacts in the root directory
-* Various version control directories like ``.git/``
+* various version control directories like ``.git/``
 
 To exclude other files and folders when building the collection, you can set a list of file glob-like patterns in the
 ``build_ignore`` key in the collection's ``galaxy.yml`` file. These patterns use the following special characters for
@@ -524,13 +524,15 @@ will be the version displayed everywhere in Galaxy; however, users will still be
 Collection versions use `Semantic Versioning <https://semver.org/>`_ for version numbers. Please read the official documentation for details and examples. In summary:
 
 * Increment major (for example: x in `x.y.z`) version number for an incompatible API change.
-* Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner.
+* Increment minor (for example: y in `x.y.z`) version number for new functionality in a backwards compatible manner (for example new modules/plugins, parameters, return values).
 * Increment patch (for example: z in `x.y.z`) version number for backwards compatible bug fixes.
 
 .. _migrate_to_collection:
 
 Migrating Ansible content to a different collection
 ====================================================
+
+First, look at `Ansible Collection Checklist <https://github.com/ansible-collections/overview/blob/master/collection_requirements.rst>`_.
 
 To migrate content from one collection to another, you need to create three PRs as follows:
 
@@ -714,7 +716,7 @@ If you clone a fork, add the original repository as a remote ``upstream``::
     cd ~/dev/ansible/collections/ansible_collections/community/general
     git remote add upstream git@github.com:ansible-collections/community.general.git
 
-Now you can use this checkout of ``community.general`` in playbooks and roles with whichever version of Ansible you have installed locally, including a local checkout of the ``devel`` branch.
+Now you can use this checkout of ``community.general`` in playbooks and roles with whichever version of Ansible you have installed locally, including a local checkout of the ``main`` branch.
 
 For collections hosted in the ``ansible_collections`` GitHub org, create a branch and commit your changes on the branch. When you are done (remember to add tests, see :ref:`testing_collections`), push your changes to your fork of the collection and create a Pull Request. For other collections, especially for collections not hosted on GitHub, check the ``README.md`` of the collection for information on contributing to it.
 
