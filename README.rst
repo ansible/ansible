@@ -12,7 +12,7 @@ changes like zero-downtime rolling updates with load balancers easy. More inform
 Design Principles
 =================
 
-*  Have a dead simple setup process and a minimal learning curve.
+*  Have a dead-simple setup process with a minimal learning curve.
 *  Manage machines very quickly and in parallel.
 *  Avoid custom-agents and additional open ports, be agentless by
    leveraging the existing SSH daemon.
