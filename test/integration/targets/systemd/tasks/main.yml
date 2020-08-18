@@ -85,6 +85,9 @@
         dest: /etc/systemd/system/dummy.service
         owner: root
         mode: 0640
+      notify:
+        - stop dummy
+        - remove dummy
 
     - name: try-restart result should not restart dummy service when it is not running
       systemd:
@@ -108,14 +111,8 @@
           - 'running_try_restart is changed'
           - 'inactive_try_restart is not changed'
 
-    - name: Stop dummy service
+    - name: Reload systemd
       systemd:
-        name: dummy
-        state: stopped
-
-    - name: Remove dummy service
-      file:
-        path: /etc/systemd/system/dummy.service
-        state: absent
+        daemon-reload: yes
 
   when: 'systemctl_check.rc == 0'

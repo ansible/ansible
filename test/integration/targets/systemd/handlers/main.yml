@@ -1,0 +1,9 @@
+- name: stop dummy
+  systemd:
+    name: dummy
+    state: stopped
+
+- name: remove dummy
+  file:
+    path: /etc/systemd/system/dummy.service
+    state: absent
