@@ -92,7 +92,6 @@ class TaskInclude(Task):
 
         return task
 
-
     def _validate_attributes(self, ds):
 
         ds = super(TaskInclude, self)._validate_attributes(ds)
