@@ -193,8 +193,19 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         if hasattr(self, '_play') and self._play:
             self._play.dump_me(depth + 2)
 
-    def preprocess_data(self, ds):
-        ''' infrequently used method to do some pre-processing of legacy terms '''
+    def preprocess_data(self, ds, allow_private=False):
+        ''' minimal check of data as passed by playbook before other processing happens '''
+
+        if not isinstance(ds, dict):
+            raise AnsibleAssertionError('while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds)))
+
+        for key in ds:
+            try:
+                if not allow_private and self._valid_attrs[key].private:
+                    raise AnsibleParserError("'%s' cannot be set as it is a private attribute for a %s" % (key, self.__class__.__name__), obj=ds)
+            except KeyError:
+                pass  # we can ignore invalid attributes as they are handled later on in _validate_attributes
+
         return ds
 
     def load_data(self, ds, variable_manager=None, loader=None, allow_private=False):
@@ -219,8 +230,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         # call the preprocess_data() function to massage the data into
         # something we can more easily parse, and then call the validation
         # function on it to ensure there are no incorrect key values
-        ds = self.preprocess_data(ds)
-        self._validate_attributes(ds, allow_private=allow_private)
+        ds = self.preprocess_data(ds, allow_private=allow_private)
+        self._validate_attributes(ds)
 
         # Walk all attributes in the class. We sort them based on their priority
         # so that certain fields can be loaded before others, if they are dependent.
@@ -261,7 +272,7 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
             raise AnsibleParserError("'%s' is not a valid value for debugger. Must be one of %s" % (value, ', '.join(valid_values)), obj=self.get_ds())
         return value
 
-    def _validate_attributes(self, ds, allow_private=False):
+    def _validate_attributes(self, ds):
         '''
         Ensures that there are no keys in the datastructure which do
         not map to attributes for this object.
@@ -271,9 +282,6 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         for key in ds:
             if key not in valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
-
-            if not allow_private and self._valid_attrs[key].private:
-                raise AnsibleParserError("'%s' cannot be set as it is a private attribute for a %s" % (key, self.__class__.__name__), obj=ds)
 
     def validate(self, all_vars=None):
         ''' validation that is done at parse time, not load time '''

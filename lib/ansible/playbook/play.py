@@ -115,13 +115,12 @@ class Play(Base, Taggable, CollectionSearch):
             p.vars = vars.copy()
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
-    def preprocess_data(self, ds):
+    def preprocess_data(self, ds, allow_private=False):
         '''
         Adjusts play datastructure to cleanup old/legacy items
         '''
 
-        if not isinstance(ds, dict):
-            raise AnsibleAssertionError('while preprocessing data (%s), ds should be a dict but was a %s' % (ds, type(ds)))
+        ds = super(Play, self).preprocess_data(ds, allow_private=allow_private)
 
         # The use of 'user' in the Play datastructure was deprecated to
         # line up with the same change for Tasks, due to the fact that
@@ -136,7 +135,7 @@ class Play(Base, Taggable, CollectionSearch):
             ds['remote_user'] = ds['user']
             del ds['user']
 
-        return super(Play, self).preprocess_data(ds)
+        return ds
 
     def _load_tasks(self, attr, ds):
         '''

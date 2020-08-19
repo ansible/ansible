@@ -171,7 +171,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         # display.deprecated("with_ type loops are being phased out, use the 'loop' keyword instead",
         #                    version="2.10", collection_name='ansible.builtin')
 
-    def preprocess_data(self, ds):
+    def preprocess_data(self, ds, allow_private=False):
         '''
         tasks are especially complex arguments so need pre-processing.
         keep it short.
@@ -179,6 +179,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         if not isinstance(ds, dict):
             raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
+
+        ds = super(Task, self).preprocess_data(ds, allow_private=allow_private)
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure suitable for the
@@ -274,7 +276,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                 else:
                     display.warning("Ignoring invalid attribute: %s" % k)
 
-        return super(Task, self).preprocess_data(new_ds)
+        return new_ds
 
     def _load_loop_control(self, attr, ds):
         if not isinstance(ds, dict):
@@ -286,9 +288,9 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
         return LoopControl.load(data=ds, variable_manager=self._variable_manager, loader=self._loader)
 
-    def _validate_attributes(self, ds, allow_private=False):
+    def _validate_attributes(self, ds):
         try:
-            super(Task, self)._validate_attributes(ds, allow_private=allow_private)
+            super(Task, self)._validate_attributes(ds)
         except AnsibleParserError as e:
             if 'is not a valid attribute' in e.message:
                 e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'

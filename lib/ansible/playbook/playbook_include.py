@@ -124,14 +124,13 @@ class PlaybookInclude(Base, Conditional, Taggable):
 
         return pb
 
-    def preprocess_data(self, ds):
+    def preprocess_data(self, ds, allow_private=False):
         '''
         Regorganizes the data for a PlaybookInclude datastructure to line
         up with what we expect the proper attributes to be
         '''
 
-        if not isinstance(ds, dict):
-            raise AnsibleAssertionError('ds (%s) should be a dict but was a %s' % (ds, type(ds)))
+        ds = super(PlaybookInclude, self).preprocess_data(new_ds, allow_private=allow_private)
 
         # the new, cleaned datastructure, which will have legacy
         # items reduced to a standard structure
@@ -152,7 +151,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
                         raise AnsibleParserError("vars for import_playbook statements must be specified as a dictionary", obj=ds)
                 new_ds[k] = v
 
-        return super(PlaybookInclude, self).preprocess_data(new_ds)
+        return new_ds
 
     def _preprocess_import(self, ds, new_ds, k, v):
         '''

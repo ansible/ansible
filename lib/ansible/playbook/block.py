@@ -102,19 +102,20 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     break
         return is_block
 
-    def preprocess_data(self, ds):
+    def preprocess_data(self, ds, allow_private=False):
         '''
         If a simple task is given, an implicit block for that single task
         is created, which goes in the main portion of the block
         '''
+        ds = super(Block, self).preprocess_data(ds)
 
         if not Block.is_block(ds):
             if isinstance(ds, list):
-                return super(Block, self).preprocess_data(dict(block=ds))
+                return super(Block, self).preprocess_data(dict(block=ds), allow_private=allow_private)
             else:
-                return super(Block, self).preprocess_data(dict(block=[ds]))
+                return super(Block, self).preprocess_data(dict(block=[ds]), allow_private=allow_private)
 
-        return super(Block, self).preprocess_data(ds)
+        return ds
 
     def _load_block(self, attr, ds):
         try:
