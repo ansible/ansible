@@ -6783,11 +6783,11 @@ plugin_routing:
     hcloud_subnetwork:
       redirect: hetzner.hcloud.hcloud_subnetwork
     skydive_capture:
-      redirect: skydive.skydive.skydive_capture
+      redirect: community.skydive.skydive_capture
     skydive_edge:
-      redirect: skydive.skydive.skydive_edge
+      redirect: community.skydive.skydive_edge
     skydive_node:
-      redirect: skydive.skydive.skydive_node
+      redirect: community.skydive.skydive_node
     cyberark_authentication:
       redirect: cyberark.pas.cyberark_authentication
     cyberark_user:
@@ -8662,9 +8662,9 @@ plugin_routing:
     network.routeros.routeros:
       redirect: community.network.network.routeros.routeros
     network.skydive:
-      redirect: skydive.skydive.network.skydive
+      redirect: community.skydive.network.skydive
     network.skydive.api:
-      redirect: skydive.skydive.network.skydive.api
+      redirect: community.skydive.network.skydive.api
     network.slxos:
       redirect: community.network.network.slxos
     network.slxos.slxos:
@@ -9410,7 +9410,7 @@ plugin_routing:
     hcloud:
       redirect: hetzner.hcloud.hcloud
     skydive:
-      redirect: skydive.skydive.skydive
+      redirect: community.skydive.skydive
     azure:
       redirect: azure.azcollection.azure
     azure_tags:
@@ -9633,7 +9633,7 @@ plugin_routing:
     aws_ssm:
       redirect: amazon.aws.aws_ssm
     skydive:
-      redirect: skydive.skydive.skydive
+      redirect: community.skydive.skydive
     cpm_metering:
       redirect: wti.remote.cpm_metering
     cpm_status:
