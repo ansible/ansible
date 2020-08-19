@@ -277,10 +277,8 @@ class FieldAttributeBase(with_metaclass(BaseMeta, object)):
         Ensures that there are no keys in the datastructure which do
         not map to attributes for this object.
         '''
-
-        valid_attrs = frozenset(self._valid_attrs.keys())
         for key in ds:
-            if key not in valid_attrs:
+            if key not in self._valid_attrs:
                 raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (key, self.__class__.__name__), obj=ds)
 
     def validate(self, all_vars=None):
