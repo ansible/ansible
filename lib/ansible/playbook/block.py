@@ -94,17 +94,23 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
     @staticmethod
     def is_block(ds):
+        '''
+        determine if what is passed is a block,
+        since task/task list is possible for implicit blocks
+        '''
+        # rescue and always both require block to be present
         return bool(isinstance(ds, dict) and 'block' in ds)
 
     def preprocess_data(self, ds, allow_private=False):
 
+        # you might get a task or task list instead, which will get implicit block later on
         if Block.is_block(ds):
             ds = super(Block, self).preprocess_data(ds)
         else:
-            # If a simple task is given, an implicit block for that single task is created, which goes in the main portion of the block
+            # no need to preprocess data as each entry will go through that as load_data is triggered for each list item
             if not isinstance(ds, list):
+                # If a simple task is given, ensure its a list for the implicit block
                 ds = [ds]
-
         return ds
 
     def _load_block(self, attr, ds):
