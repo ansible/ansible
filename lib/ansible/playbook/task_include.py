@@ -92,9 +92,10 @@ class TaskInclude(Task):
 
         return task
 
-    def preprocess_data(self, ds, allow_private=False):
 
-        ds = super(TaskInclude, self).preprocess_data(ds, allow_private=allow_private)
+    def _validate_attributes(self, ds):
+
+        ds = super(TaskInclude, self)._validate_attributes(ds)
 
         diff = set(ds.keys()).difference(self.VALID_INCLUDE_KEYWORDS)
         for k in diff:
