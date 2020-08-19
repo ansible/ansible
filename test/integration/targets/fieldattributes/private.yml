@@ -3,4 +3,4 @@
   tasks:
     - ping:
       loop_with: 'items'
-      loop: [1,[2],3]
+      loop: [1, [2], 3]
