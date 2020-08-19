@@ -105,12 +105,13 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
         # you might get a task or task list instead, which will get implicit block later on
         if Block.is_block(ds):
-            ds = super(Block, self).preprocess_data(ds)
+            ds = super(Block, self).preprocess_data(ds, allow_private=allow_private)
         else:
             # no need to preprocess data as each entry will go through that as load_data is triggered for each list item
             if not isinstance(ds, list):
                 # If a simple task is given, ensure its a list for the implicit block
                 ds = [ds]
+
         return ds
 
     def _validate_attributes(self, ds):
