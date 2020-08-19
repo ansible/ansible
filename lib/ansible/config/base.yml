@@ -48,7 +48,7 @@ ANSIBLE_COW_WHITELIST:
 ANSIBLE_FORCE_COLOR:
   name: Force color output
   default: False
-  description: This options forces color mode even when running without a TTY or the "nocolor" setting is True.
+  description: This option forces color mode even when running without a TTY or the "nocolor" setting is True.
   env: [{name: ANSIBLE_FORCE_COLOR}]
   ini:
   - {key: force_color, section: defaults}
@@ -90,7 +90,7 @@ ANSIBLE_PIPELINING:
     - This can result in a very significant performance improvement when enabled.
     - "However this conflicts with privilege escalation (become). For example, when using 'sudo:' operations you must first
       disable 'requiretty' in /etc/sudoers on all managed hosts, which is why it is disabled by default."
-    - This options is disabled if ``ANSIBLE_KEEP_REMOTE_FILES`` is enabled.
+    - This option is disabled if ``ANSIBLE_KEEP_REMOTE_FILES`` is enabled.
   env:
     - name: ANSIBLE_PIPELINING
     - name: ANSIBLE_SSH_PIPELINING
