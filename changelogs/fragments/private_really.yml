@@ -1,2 +1,2 @@
 bugfixes:
-  - ensure private attributes stay private.
+  - "ensure playbook objects' private attributes stay private."
