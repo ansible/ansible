@@ -94,13 +94,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
     @staticmethod
     def is_block(ds):
-        is_block = False
-        if isinstance(ds, dict):
-            for attr in ('block', 'rescue', 'always'):
-                if attr in ds:
-                    is_block = True
-                    break
-        return is_block
+        return bool(isinstance(ds, dict) and 'block' in ds)
 
     def preprocess_data(self, ds, allow_private=False):
 
