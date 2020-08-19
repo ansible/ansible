@@ -659,6 +659,7 @@ class PluginLoader:
             b_path = to_bytes(path)
             display.debug('trying %s' % path)
             plugin_load_context.load_attempts.append(path)
+            internal = path_with_context.internal
             try:
                 full_paths = (os.path.join(b_path, f) for f in os.listdir(b_path))
             except OSError as e:
@@ -672,10 +673,8 @@ class PluginLoader:
                 # For all other plugins we want .pyc and .pyo should be valid
                 if any(full_path.endswith(x) for x in C.MODULE_IGNORE_EXTS):
                     continue
-
                 splitname = os.path.splitext(full_name)
                 base_name = splitname[0]
-                internal = path_context.internal
                 try:
                     extension = splitname[1]
                 except IndexError:
