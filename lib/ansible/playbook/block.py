@@ -113,6 +113,13 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                 ds = [ds]
         return ds
 
+    def _validate_attributes(self, ds):
+
+        if Block.is_block(ds):
+            ds = super(Block, self)._validate_attributes(ds)
+
+        return ds
+
     def _load_block(self, attr, ds):
         try:
             return load_list_of_tasks(
