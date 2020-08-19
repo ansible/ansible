@@ -178,3 +178,9 @@ run_test_dryrun check_nomarkers_wet
 
 # Test the dry run without check markers
 run_test_dryrun check_nomarkers_dry --check
+
+# Make sure implicit meta tasks are not printed
+ansible-playbook -i host1,host2 no_implicit_meta_banners.yml > meta_test.out
+cat meta_test.out
+[ "$(grep -c 'TASK \[meta\]' meta_test.out)" -eq 0 ]
+rm -f meta_test.out
