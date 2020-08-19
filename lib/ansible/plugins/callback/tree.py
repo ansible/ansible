@@ -13,16 +13,16 @@ DOCUMENTATION = '''
     short_description: Save host events to files
     version_added: "2.0"
     options:
-        version_added: '2.11'
         directory:
+            version_added: '2.11'
             description: directory that will contain the per host JSON files. Also set by the ``--tree`` option when using adhoc.
-        ini:
-            - section: callback_tree
-              key: directory
-        env:
-            - name: ANSIBLE_CALLBACK_TREE_DIR
-        default: "~/.ansible/tree"
-        type: path
+            ini:
+                - section: callback_tree
+                  key: directory
+            env:
+                - name: ANSIBLE_CALLBACK_TREE_DIR
+            default: "~/.ansible/tree"
+            type: path
     description:
         - "This callback is used by the Ansible (adhoc) command line option `-t|--tree`"
         - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a command line option.
