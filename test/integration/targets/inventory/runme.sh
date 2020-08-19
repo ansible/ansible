@@ -34,3 +34,6 @@ ansible-playbook -i ../../inventory --limit @"${empty_limit_file}" playbook.yml
 ansible-playbook -i ../../inventory "$@" strategy.yml
 ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=always ansible-playbook -i ../../inventory "$@" strategy.yml
 ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=never ansible-playbook -i ../../inventory "$@" strategy.yml
+
+# test extra vars
+ansible-inventory -i testhost, -i ./extra_vars_constructed.yml --list -e 'from_extras=hey ' "$@"|grep '"example": "hellohey"'
