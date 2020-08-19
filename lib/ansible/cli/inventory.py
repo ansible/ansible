@@ -64,6 +64,7 @@ class InventoryCLI(CLI):
         opt_help.add_inventory_options(self.parser)
         opt_help.add_vault_options(self.parser)
         opt_help.add_basedir_options(self.parser)
+        opt_help.add_runtask_options(self.parser)
 
         # remove unused default options
         self.parser.add_argument('-l', '--limit', help=argparse.SUPPRESS, action=opt_help.UnrecognizedArgument, nargs='?')

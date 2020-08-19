@@ -34,7 +34,7 @@ from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.template import Templar
 from ansible.utils.display import Display
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, load_extra_vars
 
 display = Display()
 
@@ -159,6 +159,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self._options = {}
         self.inventory = None
         self.display = display
+        self._vars = {}
 
     def parse(self, inventory, loader, path, cache=True):
         ''' Populates inventory from the given data. Raises an error on any parse failure
@@ -177,6 +178,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
         self.loader = loader
         self.inventory = inventory
         self.templar = Templar(loader=loader)
+        self._vars = load_extra_vars(loader)
 
     def verify_file(self, path):
         ''' Verify if file is usable by this plugin, base does minimal accessibility check
@@ -229,7 +231,7 @@ class BaseInventoryPlugin(AnsiblePlugin):
             # configs are dictionaries
             raise AnsibleParserError('inventory source has invalid structure, it should be a dictionary, got: %s' % type(config))
 
-        self.set_options(direct=config)
+        self.set_options(direct=config, var_options=self._vars)
         if 'cache' in self._options and self.get_option('cache'):
             cache_option_keys = [('_uri', 'cache_connection'), ('_timeout', 'cache_timeout'), ('_prefix', 'cache_prefix')]
             cache_options = dict((opt[0], self.get_option(opt[1])) for opt in cache_option_keys if self.get_option(opt[1]) is not None)
@@ -354,7 +356,17 @@ class Constructable(object):
     def _compose(self, template, variables):
         ''' helper method for plugins to compose variables for Ansible based on jinja2 expression and inventory vars'''
         t = self.templar
-        t.available_variables = variables
+
+        try:
+            use_extra = self.get_option('use_extra_vars')
+        except Exception:
+            use_extra = False
+
+        if use_extra:
+            t.available_variables = combine_vars(variables, self._vars)
+        else:
+            t.available_variables = variables
+
         return t.template('%s%s%s' % (t.environment.variable_start_string, template, t.environment.variable_end_string), disable_lookups=True)
 
     def _set_composite_vars(self, compose, variables, host, strict=False):
