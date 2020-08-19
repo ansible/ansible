@@ -74,6 +74,7 @@ class StrategyModule(StrategyBase):
         self.noop_task = Task()
         self.noop_task.action = 'meta'
         self.noop_task.args['_raw_params'] = 'noop'
+        self.noop_task.implicit = True
         self.noop_task.set_loader(iterator._play._loader)
 
         return self._create_noop_block_from(original_block, parent)
@@ -88,6 +89,7 @@ class StrategyModule(StrategyBase):
         noop_task = Task()
         noop_task.action = 'meta'
         noop_task.args['_raw_params'] = 'noop'
+        noop_task.implicit = True
         noop_task.set_loader(iterator._play._loader)
 
         host_tasks = {}
