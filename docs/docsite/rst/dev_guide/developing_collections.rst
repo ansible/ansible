@@ -716,7 +716,7 @@ If you clone a fork, add the original repository as a remote ``upstream``::
     cd ~/dev/ansible/collections/ansible_collections/community/general
     git remote add upstream git@github.com:ansible-collections/community.general.git
 
-Now you can use this checkout of ``community.general`` in playbooks and roles with whichever version of Ansible you have installed locally, including a local checkout of the ``main`` branch.
+Now you can use this checkout of ``community.general`` in playbooks and roles with whichever version of Ansible you have installed locally, including a local checkout of ``ansible/ansible``'s ``devel`` branch.
 
 For collections hosted in the ``ansible_collections`` GitHub org, create a branch and commit your changes on the branch. When you are done (remember to add tests, see :ref:`testing_collections`), push your changes to your fork of the collection and create a Pull Request. For other collections, especially for collections not hosted on GitHub, check the ``README.md`` of the collection for information on contributing to it.
 
