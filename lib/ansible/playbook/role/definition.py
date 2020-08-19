@@ -66,7 +66,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
     def load(data, variable_manager=None, loader=None):
         raise AnsibleError("not implemented")
 
-    def preprocess_data(self, ds):
+    def preprocess_data(self, ds, allow_private=False):
         # role names that are simply numbers can be parsed by PyYAML
         # as integers even when quoted, so turn it into a string type
         if isinstance(ds, int):
@@ -76,7 +76,7 @@ class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
             raise AnsibleAssertionError()
 
         if isinstance(ds, dict):
-            ds = super(RoleDefinition, self).preprocess_data(ds)
+            ds = super(RoleDefinition, self).preprocess_data(ds, allow_private=allow_private)
 
         # save the original ds for use later
         self._ds = ds
