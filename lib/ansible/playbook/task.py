@@ -290,7 +290,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         try:
             super(Task, self)._validate_attributes(ds, allow_private=allow_private)
         except AnsibleParserError as e:
-            e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
+            if 'is not a valid attribute' in e.message:
+                e.message += '\nThis error can be suppressed as a warning using the "invalid_task_attribute_failed" configuration'
             raise e
 
     def post_validate(self, templar):
