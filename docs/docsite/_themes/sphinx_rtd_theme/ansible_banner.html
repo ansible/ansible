@@ -6,7 +6,7 @@
     // Create a banner if we're not on the official docs site
     if (location.host == "docs.testing.ansible.com") {
       document.write('<div id="testing_banner_id" class="admonition important">');
-      document.write('<p>This is the testing site for Ansible Documentation. Unless you are reviewing pre-production changes, please visit the <a href="https://docs.ansible.com/ansible/latest/">official documentation website</a>');   
+      document.write('<p>This is the testing site for Ansible Documentation. Unless you are reviewing pre-production changes, please visit the <a href="https://docs.ansible.com/ansible/latest/">official documentation website</a></p>');
       document.write('</div>');
     }
     {% if (not READTHEDOCS) and (available_versions is defined) %}
