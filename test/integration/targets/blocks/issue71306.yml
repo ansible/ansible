@@ -4,7 +4,8 @@
     - block:
       - block:
         - block:
-          - fail:
+          - name: EXPECTED FAILURE
+            fail:
             when: ansible_host == "host1"
 
           - debug:
