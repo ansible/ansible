@@ -15,7 +15,7 @@ DOCUMENTATION = r'''
 module: fetch
 short_description: Fetch files from remote nodes
 description:
-- This module works like M(copy), but in reverse.
+- This module works like M(ansible.builtin.copy), but in reverse.
 - It is used for fetching files from remote machines and storing them locally in a file tree, organized by hostname.
 - Files that already exist at I(dest) will be overwritten if they are different than the I(src).
 - This module is also supported for Windows targets.
@@ -58,7 +58,7 @@ options:
     type: bool
     default: no
 notes:
-- When running fetch with C(become), the M(slurp) module will also be
+- When running fetch with C(become), the M(ansible.builtin.slurp) module will also be
   used to fetch the contents of the file for determining the remote
   checksum. This effectively doubles the transfer size, and
   depending on the file size can consume all available memory on the
@@ -72,8 +72,8 @@ notes:
   non-failing behaviour.
 - This module is also supported for Windows targets.
 seealso:
-- module: copy
-- module: slurp
+- module: ansible.builtin.copy
+- module: ansible.builtin.slurp
 author:
 - Ansible Core Team
 - Michael DeHaan
