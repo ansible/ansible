@@ -4,11 +4,12 @@
 NXOS Platform Options
 ***************************************
 
-Cisco NXOS supports multiple connections. This page offers details on how each connection works in Ansible and how to use it.
+The `Cisco NXOS <https://galaxy.ansible.com/cisco/nxos>`_ supports multiple connections. This page offers details on how each connection works in Ansible and how to use it.
 
-.. contents:: Topics
+.. contents::
+  :local:
 
-Connections Available
+Connections available
 ================================================================================
 
 .. table::
@@ -25,13 +26,8 @@ Connections Available
 
     Indirect Access       via a bastion (jump host)                   via a web proxy
 
-    Connection Settings   ``ansible_connection: network_cli``         ``ansible_connection: httpapi``
-
-                                                                      OR
-
-                                                                      ``ansible_connection: local``
-                                                                      with ``transport: nxapi``
-                                                                      in the ``provider`` dictionary
+    Connection Settings   ``ansible_connection:``                     ``ansible_connection:``
+                            ``ansible.netcommon.network_cli``             ``ansible.netcommon.httpapi``
 
     |enable_mode|         supported: use ``ansible_become: yes``      not supported by NX-API
                           with ``ansible_become_method: enable``
@@ -43,7 +39,7 @@ Connections Available
 .. |enable_mode| replace:: Enable Mode |br| (Privilege Escalation) |br| supported as of 2.5.3
 
 
-For legacy playbooks, NXOS still supports ``ansible_connection: local``. We recommend modernizing to use ``ansible_connection: network_cli`` or ``ansible_connection: httpapi`` as soon as possible.
+The ``ansible_connection: local`` has been deprecated. Please use ``ansible_connection: ansible.netcommon.network_cli`` or ``ansible_connection: ansible.netcommon.httpapi`` instead.
 
 Using CLI in Ansible
 ====================
@@ -53,8 +49,8 @@ Example CLI ``group_vars/nxos.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: nxos
+   ansible_connection: ansible.netcommon.network_cli
+   ansible_network_os: cisco.nxos.nxos
    ansible_user: myuser
    ansible_password: !vault...
    ansible_become: yes
@@ -67,16 +63,16 @@ Example CLI ``group_vars/nxos.yml``
 - If you are accessing your host directly (not through a bastion/jump host) you can remove the ``ansible_ssh_common_args`` configuration.
 - If you are accessing your host through a bastion/jump host, you cannot include your SSH password in the ``ProxyCommand`` directive. To prevent secrets from leaking out (for example in ``ps`` output), SSH does not support providing passwords via environment variables.
 
-Example CLI Task
+Example CLI task
 ----------------
 
 .. code-block:: yaml
 
    - name: Backup current switch config (nxos)
-     nxos_config:
+     cisco.nxos.nxos_config:
        backup: yes
      register: backup_nxos_location
-     when: ansible_network_os == 'nxos'
+     when: ansible_network_os == 'cisco.nxos.nxos'
 
 
 
@@ -91,10 +87,10 @@ Before you can use NX-API to connect to a switch, you must enable NX-API. To ena
 .. code-block:: yaml
 
    - name: Enable NX-API
-      nxos_nxapi:
+      cisco.nxos.nxos_nxapi:
           enable_http: yes
           enable_https: yes
-      when: ansible_network_os == 'nxos'
+      when: ansible_network_os == 'cisco.nxos.nxos'
 
 To find out more about the options for enabling HTTP/HTTPS and local http see the :ref:`nxos_nxapi <nxos_nxapi_module>` module documentation.
 
@@ -105,8 +101,8 @@ Example NX-API ``group_vars/nxos.yml``
 
 .. code-block:: yaml
 
-   ansible_connection: httpapi
-   ansible_network_os: nxos
+   ansible_connection: ansible.netcommon.httpapi
+   ansible_network_os: cisco.nxos.nxos
    ansible_user: myuser
    ansible_password: !vault...
    proxy_env:
@@ -116,23 +112,23 @@ Example NX-API ``group_vars/nxos.yml``
 - If you are accessing your host through a web proxy using ``https``, change ``http_proxy`` to ``https_proxy``.
 
 
-Example NX-API Task
+Example NX-API task
 -------------------
 
 .. code-block:: yaml
 
    - name: Backup current switch config (nxos)
-     nxos_config:
+     cisco.nxos.nxos_config:
        backup: yes
      register: backup_nxos_location
      environment: "{{ proxy_env }}"
-     when: ansible_network_os == 'nxos'
+     when: ansible_network_os == 'cisco.nxos.nxos'
 
 In this example the ``proxy_env`` variable defined in ``group_vars`` gets passed to the ``environment`` option of the module used in the task.
 
 .. include:: shared_snippets/SSH_warning.txt
 
-Cisco Nexus Platform Support Matrix
+Cisco Nexus platform support matrix
 ===================================
 
 The following platforms and software versions have been certified by Cisco to work with this version of Ansible.
