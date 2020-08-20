@@ -29,7 +29,7 @@ An ``inventory`` file is a YAML or INI-like configuration file that defines the 
 
 In our example, the inventory file defines the groups ``eos``, ``ios``, ``vyos`` and a "group of groups" called ``switches``. Further details about subgroups and inventory files can be found in the :ref:`Ansible inventory Group documentation <subgroups>`.
 
-Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using the ``[my_group:vars]`` capability in your inventory file. Here's what it would look like if you specified your SSH passwords (encrypted with Ansible Vault) among your variables:
+Because Ansible is a flexible tool, there are a number of ways to specify connection information and credentials. We recommend using the ``[my_group:vars]`` capability in your inventory file.
 
 .. code-block:: ini
 
@@ -54,13 +54,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
    ansible_become_method=enable
    ansible_network_os=eos
    ansible_user=my_eos_user
-   ansible_password= !vault |
-                     $ANSIBLE_VAULT;1.1;AES256
-                     37373735393636643261383066383235363664386633386432343236663533343730353361653735
-                     6131363539383931353931653533356337353539373165320a316465383138636532343463633236
-                     37623064393838353962386262643230303438323065356133373930646331623731656163623333
-                     3431353332343530650a373038366364316135383063356531633066343434623631303166626532
-                     9562
+   ansible_password=my_eos_password
 
    [ios]
    ios01 ansible_host=ios-01.example.net
@@ -72,13 +66,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
    ansible_become_method=enable
    ansible_network_os=ios
    ansible_user=my_ios_user
-   ansible_password= !vault |
-                     $ANSIBLE_VAULT;1.1;AES256
-                     34623431313336343132373235313066376238386138316466636437653938623965383732373130
-                     3466363834613161386538393463663861636437653866620a373136356366623765373530633735
-                     34323262363835346637346261653137626539343534643962376139366330626135393365353739
-                     3431373064656165320a333834613461613338626161633733343566666630366133623265303563
-                     8472
+   ansible_password=my_ios_password
 
    [vyos]
    vyos01 ansible_host=vyos-01.example.net
@@ -88,13 +76,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
    [vyos:vars]
    ansible_network_os=vyos
    ansible_user=my_vyos_user
-   ansible_password= !vault |
-                     $ANSIBLE_VAULT;1.1;AES256
-                     39336231636137663964343966653162353431333566633762393034646462353062633264303765
-                     6331643066663534383564343537343334633031656538370a333737656236393835383863306466
-                     62633364653238323333633337313163616566383836643030336631333431623631396364663533
-                     3665626431626532630a353564323566316162613432373738333064366130303637616239396438
-                     9853
+   ansible_password=my_vyos_password
 
 If you use ssh-agent, you do not need the ``ansible_password`` lines. If you use ssh keys, but not ssh-agent, and you have multiple keys, specify the key to use for each connection in the ``[group:vars]`` section with ``ansible_ssh_private_key_file=/path/to/correct/key``. For more information on ``ansible_ssh_`` options see :ref:`behavioral_parameters`.
 
@@ -106,6 +88,21 @@ Ansible vault for password encryption
 -------------------------------------
 
 The "Vault" feature of Ansible allows you to keep sensitive data such as passwords or keys in encrypted files, rather than as plain text in your playbooks or roles. These vault files can then be distributed or placed in source control. See :ref:`playbooks_vault` for more information.
+
+Here's what it would look like if you specified your SSH passwords (encrypted with Ansible Vault) among your variables:
+
+.. code-block:: yaml
+
+   ansible_connection: ansible.netcommon.network_cli
+   ansible_network_os: vyos.vyos.vyos
+   ansible_user: my_vyos_user
+   ansible_ssh_pass: !vault |
+                     $ANSIBLE_VAULT;1.1;AES256
+                     39336231636137663964343966653162353431333566633762393034646462353062633264303765
+                     6331643066663534383564343537343334633031656538370a333737656236393835383863306466
+                     62633364653238323333633337313163616566383836643030336631333431623631396364663533
+                     3665626431626532630a353564323566316162613432373738333064366130303637616239396438
+                     9853
 
 Common inventory variables
 --------------------------
@@ -134,7 +131,7 @@ Certain network platforms, such as Arista EOS and Cisco IOS, have the concept of
 .. code-block:: ini
 
    [eos:vars]
-   ansible_connection=network_cli
+   ansible_connection=ansible.netcommon.network_cli
    ansible_network_os=eos
    ansible_become=yes
    ansible_become_method=enable
@@ -198,15 +195,15 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
        # Collect data
        #
        - name: Gather facts (eos)
-         eos_facts:
+         arista.eos.eos_facts:
          when: ansible_network_os == 'eos'
 
        - name: Gather facts (ios)
-         ios_facts:
+         cisco.ios.ios_facts:
          when: ansible_network_os == 'ios'
 
        - name: Gather facts (vyos)
-         vyos_facts:
+         vyos.vyos.vyos_facts:
          when: ansible_network_os == 'vyos'
 
        ###
@@ -255,13 +252,13 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
        #
 
        - name: Backup switch (eos)
-         eos_config:
+         arista.eos.eos_config:
            backup: yes
          register: backup_eos_location
          when: ansible_network_os == 'eos'
 
        - name: backup switch (vyos)
-         vyos_config:
+         vyos.vyos.vyos_config:
            backup: yes
          register: backup_vyos_location
          when: ansible_network_os == 'vyos'
@@ -343,17 +340,17 @@ This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.
 
   ---
   - name: Run Arista command
-    eos_command:
+    arista.eos.eos_command:
       commands: show ip int br
     when: ansible_network_os == 'eos'
 
   - name: Run Cisco NXOS command
-    nxos_command:
+    cisco.nxos.nxos_command:
       commands: show ip int br
     when: ansible_network_os == 'nxos'
 
   - name: Run Vyos command
-    vyos_command:
+    vyos.vyos.vyos_command:
       commands: show interface
     when: ansible_network_os == 'vyos'
 
@@ -373,7 +370,7 @@ You can replace these platform-specific modules with the network agnostic ``cli_
       - name: Run cli_command on Arista and display results
         block:
         - name: Run cli_command on Arista
-          cli_command:
+          ansible.netcommon.cli_command:
             command: show ip int br
           register: result
 
@@ -385,7 +382,7 @@ You can replace these platform-specific modules with the network agnostic ``cli_
       - name: Run cli_command on Cisco IOS and display results
         block:
         - name: Run cli_command on Cisco IOS
-          cli_command:
+          ansible.netcommon.cli_command:
             command: show ip int br
           register: result
 
@@ -397,7 +394,7 @@ You can replace these platform-specific modules with the network agnostic ``cli_
       - name: Run cli_command on Vyos and display results
         block:
         - name: Run cli_command on Vyos
-          cli_command:
+          ansible.netcommon.cli_command:
             command: show interfaces
           register: result
 
@@ -418,7 +415,7 @@ If you use groups and group_vars by platform type, this playbook can be further 
 
     tasks:
       - name: Run show command
-        cli_command:
+        ansible.netcommon.cli_command:
           command: "{{show_interfaces}}"
         register: command_output
 
@@ -434,7 +431,7 @@ The ``cli_command`` also supports multiple prompts.
 
   ---
   - name: Change password to default
-    cli_command:
+    ansible.netcommon.cli_command:
       command: "{{ item }}"
       prompt:
         - "New password"
@@ -449,7 +446,7 @@ The ``cli_command`` also supports multiple prompts.
       - "set system root-authentication plain-text-password"
       - "commit"
 
-See the :ref:`cli_command <cli_command_module>` for full documentation on this command.
+See the :ref:`ansible.netcommon.cli_command <cli_command_module>` for full documentation on this command.
 
 
 Implementation Notes
@@ -468,7 +465,7 @@ For more information, see :ref:`magic_variables_and_hostvars`.
 Get running configuration
 -------------------------
 
-The :ref:`eos_config <eos_config_module>` and :ref:`vyos_config <vyos_config_module>` modules have a ``backup:`` option that when set will cause the module to create a full backup of the current ``running-config`` from the remote device before any changes are made. The backup file is written to the ``backup`` folder in the playbook root directory. If the directory does not exist, it is created.
+The :ref:`arista.eos.eos_config <eos_config_module>` and :ref:`vyos.vyos.vyos_config <vyos_config_module>` modules have a ``backup:`` option that when set will cause the module to create a full backup of the current ``running-config`` from the remote device before any changes are made. The backup file is written to the ``backup`` folder in the playbook root directory. If the directory does not exist, it is created.
 
 To demonstrate how we can move the backup file to a different location, we register the result and move the file to the path stored in ``backup_path``.
 
