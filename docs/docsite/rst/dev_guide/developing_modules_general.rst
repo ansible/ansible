@@ -48,8 +48,6 @@ Common environment setup
    ``$ . venv/bin/activate && . hacking/env-setup``
 
 
-=====================
-=======
 Creating an info or a facts module
 ==================================
 
