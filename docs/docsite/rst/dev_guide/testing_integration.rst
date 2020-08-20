@@ -72,7 +72,7 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
 Run as follows for all POSIX platform tests executed by our CI system in a fedora32 docker container::
 
-    ansible-test integration shippable/ --docker fedora32 --docker-no-pull
+    ansible-test integration shippable/ --docker fedora32
 
 You can target a specific tests as well, such as for individual modules::
 
@@ -96,7 +96,7 @@ Destructive Tests
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
 to a virtual environment, such as Docker.  They won't reformat your filesystem::
 
-    ansible-test integration destructive/ --docker fedora32 --docker-no-pull
+    ansible-test integration destructive/ --docker fedora32
 
 Windows Tests
 =============
