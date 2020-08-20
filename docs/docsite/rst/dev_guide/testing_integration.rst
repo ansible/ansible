@@ -16,6 +16,10 @@ Some tests may require credentials.  Credentials may be specified with `credenti
 
 Some tests may require root.
 
+.. note::
+  Every new module and plugin should have integration tests, even if the tests cannot be run on Ansible CI infrastructure.
+  In this case, the tests should be marked with the ``unsupported`` alias in `aliases file <https://docs.ansible.com/ansible/latest/dev_guide/testing/sanity/integration-aliases.html>`_.
+
 Quick Start
 ===========
 
