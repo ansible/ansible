@@ -8,6 +8,7 @@ for test_strategy in linear free; do
 
   grep -q "META: end_host conditional evaluated to false, continuing execution for testhost" <<< "$out"
   grep -q "META: ending play for testhost2" <<< "$out"
+  grep -q '"skip_reason": "end_host conditional evaluated to False, continuing execution for testhost"' <<< "$out"
   grep -q "play not ended for testhost" <<< "$out"
   grep -qv "play not ended for testhost2" <<< "$out"
 done
