@@ -4,3 +4,4 @@ skip/osx
 skip/freebsd
 skip/rhel
 needs/root
+disabled  # broken with newer mongodb (4.0.20)
