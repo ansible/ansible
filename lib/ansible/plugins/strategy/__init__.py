@@ -1138,6 +1138,7 @@ class StrategyBase:
 
         skipped = False
         msg = ''
+        skip_reason = '%s conditional evaluated to False' % meta_action
         self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
 
         # These don't support "when" conditionals
@@ -1163,6 +1164,7 @@ class StrategyBase:
                 msg = "facts cleared"
             else:
                 skipped = True
+                skip_reason += ', not clearing facts and fact cache for %s' % target_host.name
         elif meta_action == 'clear_host_errors':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
@@ -1172,6 +1174,7 @@ class StrategyBase:
                 msg = "cleared host errors"
             else:
                 skipped = True
+                skip_reason += ', not clearing host error state for %s' % target_host.name
         elif meta_action == 'end_play':
             if _evaluate_conditional(target_host):
                 for host in self._inventory.get_hosts(iterator._play.hosts):
@@ -1180,6 +1183,7 @@ class StrategyBase:
                 msg = "ending play"
             else:
                 skipped = True
+                skip_reason += ', continuing play'
         elif meta_action == 'end_host':
             if _evaluate_conditional(target_host):
                 iterator._host_states[target_host.name].run_state = iterator.ITERATING_COMPLETE
@@ -1187,6 +1191,8 @@ class StrategyBase:
                 msg = "ending play for %s" % target_host.name
             else:
                 skipped = True
+                skip_reason += ", continuing execution for %s" % target_host.name
+                # TODO: Nix msg here? Left for historical reasons, but skip_reason exists now.
                 msg = "end_host conditional evaluated to false, continuing execution for %s" % target_host.name
         elif meta_action == 'reset_connection':
             all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
@@ -1233,12 +1239,16 @@ class StrategyBase:
         result = {'msg': msg}
         if skipped:
             result['skipped'] = True
+            result['skip_reason'] = skip_reason
         else:
             result['changed'] = False
 
         display.vv("META: %s" % msg)
 
-        return [TaskResult(target_host, task, result)]
+        res = TaskResult(target_host, task, result)
+        if skipped:
+            self._tqm.send_callback('v2_runner_on_skipped', res)
+        return [res]
 
     def get_hosts_left(self, iterator):
         ''' returns list of available hosts for this iterator by filtering out unreachables '''
