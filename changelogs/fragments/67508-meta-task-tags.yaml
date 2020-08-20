@@ -1,2 +1,2 @@
-minor_changes:
-  - User-defined ``meta`` tasks now support tags. Internally-created ``meta`` tasks continue to always run regardless of tags. (https://github.com/ansible/ansible/issues/64558)
+breaking_changes:
+  - The ``meta`` module now supports tags for user-defined tasks. Internal ``meta`` tasks continue to always run. (https://github.com/ansible/ansible/issues/64558)

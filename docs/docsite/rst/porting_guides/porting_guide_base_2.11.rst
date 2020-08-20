@@ -39,6 +39,7 @@ Modules
 =======
 
 * The ``apt_key`` module has explicitly defined ``file`` as mutually exclusive with ``data``, ``keyserver`` and ``url``. They cannot be used together anymore.
+* The ``meta`` module now supports tags for user-defined tasks. Set the task's tags to 'always' to maintain the previous behavior. Internal ``meta`` tasks continue to always run.
 
 
 Modules removed
