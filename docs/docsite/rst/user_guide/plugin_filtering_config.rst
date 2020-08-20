@@ -1,7 +1,7 @@
 .. _plugin_filtering_config:
 
-Blacklisting modules
-====================
+Rejecting modules
+=================
 
 If you want to avoid using certain modules, you can add them to a reject list to prevent Ansible from loading them. To reject plugins, create a yaml configuration file. The default location for this file is :file:`/etc/ansible/plugin_filters.yml`. You can select a different path for the reject list using the :ref:`PLUGIN_FILTERS_CFG` setting in the ``defaults`` section of your ansible.cfg. Here is an example reject list:
 
