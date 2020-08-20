@@ -145,7 +145,7 @@ For example, to run tests for the ``ping`` module on a Ubuntu 18.04 container::
 
     ansible-test integration ping --docker ubuntu1804
 
-Use the ``--docker-no-pull`` option to avoid pulling the latest container image::
+Use the ``--docker-no-pull`` option to avoid pulling the latest container image every time you run the tests::
 
     ansible-test integration ping --docker ubuntu1804 --docker-no-pull
 
