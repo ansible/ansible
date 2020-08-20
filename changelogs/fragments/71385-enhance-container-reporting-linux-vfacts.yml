@@ -1,0 +1,2 @@
+minor_changes:
+  - Add additional check to ensure 'container' virtual fact get's added to guest_tech when appropriate
