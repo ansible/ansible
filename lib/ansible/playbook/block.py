@@ -374,7 +374,7 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
                     filtered_block = evaluate_block(task)
                     if filtered_block.has_tasks():
                         tmp_list.append(filtered_block)
-                elif (task.action == 'meta' or
+                elif ((task.action == 'meta' and task.implicit) or
                         (task.action == 'include' and task.evaluate_tags([], self._play.skip_tags, all_vars=all_vars)) or
                         task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars)):
                     tmp_list.append(task)

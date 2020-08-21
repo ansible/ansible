@@ -40,7 +40,6 @@ notes:
     - C(clear_facts) will remove the persistent facts from M(ansible.builtin.set_fact) using C(cacheable=True),
       but not the current host variable it creates for the current run.
     - Looping on meta tasks is not supported.
-    - Skipping C(meta) tasks using tags is not supported.
     - This module is also supported for Windows targets.
 seealso:
 - module: ansible.builtin.assert
