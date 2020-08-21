@@ -163,23 +163,6 @@
     - ansible_distribution_version == "18.04"
   notify: Remove debian_packages_py36
 
-- name: Install redhat_packages_py2
-  yum:
-    name: "{{ redhat_packages_py2 }}"
-  when:
-    - ansible_os_family == "RedHat"
-    - ansible_distribution_version|float < 8
-    - not (ansible_os_family == "RedHat" and ansible_distribution_version|float < 8)
-  notify: Remove redhat_packages_py2
-
-- name: Install redhat_packages_py3
-  yum:
-    name: "{{ redhat_packages_py3 }}"
-  when:
-    - ansible_os_family == "RedHat"
-    - ansible_distribution_version|float >= 8
-  notify: Remove redhat_packages_py3
-
 - name: Install pip packages
   pip:
     name: "{{ pip_packages }}"
