@@ -9,19 +9,19 @@ Requirements
 To use the modules, you'll need the following:
 
 - Run Ansible from source. For assistance, view :ref:`from_source`.
-- `OpenShift Rest Client <https://github.com/openshift/openshift-restclient-python>`_ installed on the host that will execute the modules
+- `OpenShift Rest Client <https://github.com/openshift/openshift-restclient-python>`_ installed on the host that will execute the modules.
 
 
 Installation and use
 --------------------
 
-The individual modules, as of this writing, are not part of the Ansible repository, but they can be accessed by installing the role, `ansible.kubernetes-modules <https://galaxy.ansible.com/ansible/kubernetes-modules/>`_, and including it in a playbook.
+The Kubernetes modules are part of the `Ansible Kubernetes collection <https://github.com/ansible-collections/community.kubernetes>`_.
 
-To install, run the following:
+To install the collection, run the following:
 
 .. code-block:: bash
 
-    $ ansible-galaxy install ansible.kubernetes-modules
+    $ ansible-galaxy collection install community.kubernetes
 
 Next, include it in a playbook, as follows:
 
@@ -29,14 +29,23 @@ Next, include it in a playbook, as follows:
 
     ---
     - hosts: localhost
-      remote_user: root
-      roles:
-        - role: ansible.kubernetes-modules
-        - role: hello-world
+      tasks:
+      - name: Create a pod
+        community.kubernetes.k8s:
+          state: present
+          definition:
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: "utilitypod-1"
+              namespace: default
+              labels:
+                app: galaxy
+            spec:
+              containers:
+              - name: utilitypod
+                image: busybox
 
-Because the role is referenced, ``hello-world`` is able to access the modules, and use them to deploy an application.
-
-The modules are found in the ``library`` folder of the role. Each includes full documentation for parameters and the returned data structure. However, not all modules include examples, only those where `testing data <https://github.com/openshift/openshift-restclient-python/tree/release-0.8/openshift/ansiblegen/examples>`_ has been created.
 
 Authenticating with the API
 ---------------------------
@@ -50,6 +59,5 @@ To disable SSL certificate verification, set ``verify_ssl`` to false.
 Filing issues
 `````````````
 
-If you find a bug or have a suggestion regarding individual modules or the role, please file issues at `OpenShift Rest Client issues <https://github.com/openshift/openshift-restclient-python/issues>`_.
-
-There is also a utility module, k8s_common.py, that is part of the `Ansible <https://github.com/ansible/ansible>`_ repo. If you find a bug or have suggestions regarding it, please file issues at `Ansible issues <https://github.com/ansible/ansible/issues>`_.
+If you find a bug or have a suggestion regarding modules, please file issues at `Ansible Kubernetes collection <https://github.com/ansible-collections/community.kubernetes>`_.
+If you find a bug regarding OpenShift client, please file issues at `OpenShift REST Client issues <https://github.com/openshift/openshift-restclient-python/issues>`_.
