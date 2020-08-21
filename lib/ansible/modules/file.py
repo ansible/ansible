@@ -881,7 +881,7 @@ def check_group_exists(module, group):
         try:
             getgrnam(group).gr_gid
         except KeyError:
-            module.fail_json(msg='failed to look up group %s. Create group up to this point in real play' % group)
+            module.warn('failed to look up group %s. Create group up to this point in real play' % group)
 
 
 def main():
