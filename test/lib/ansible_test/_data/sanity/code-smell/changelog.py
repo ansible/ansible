@@ -21,6 +21,10 @@ def main():
             continue
 
         if path.startswith('changelogs/fragments/.'):
+            if path in ('changelogs/fragments/.keep', 'changelogs/fragments/.gitkeep'):
+                continue
+
+            print('%s:%d:%d: file must not be a dotfile' % (path, 0, 0))
             continue
 
         ext = os.path.splitext(path)[1]
