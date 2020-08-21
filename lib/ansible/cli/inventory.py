@@ -140,7 +140,7 @@ class InventoryCLI(CLI):
 
         elif context.CLIARGS['graph']:
             if context.CLIARGS['flush_cache']:
-                CLI._flush_cache(sefl.inventory, self.vm)
+                CLI._flush_cache(self.inventory, self.vm)
             results = self.inventory_graph()
         elif context.CLIARGS['list']:
             if context.CLIARGS['flush_cache']:
