@@ -539,22 +539,21 @@
 # Test the module fails in check_mode when directory and owner/group do not exist
 - name: owner does not exist in check_mode
   file:
-    path: /nonexistent
+    path: '{{ output_dir }}/nonexistent'
     owner: nonexistent
   check_mode: yes
-  ignore_errors: yes
   register: owner_no_exist
 
 - name: owner does not exist in check_mode, using uid
   file:
-    path: /nonexistent
+    path: '{{ output_dir }}/nonexistent'
     owner: 1111111
   check_mode: yes
   register: owner_uid_no_exist
 
 - name: group does not exist in check_mode
   file:
-    path: /nonexistent
+    path: '{{ output_dir }}/nonexistent'
     state: directory
     group: nonexistent
   check_mode: yes
@@ -562,7 +561,7 @@
 
 - name: group does not exist in check_mode, using gid
   file:
-    path: /nonexistent
+    path: '{{ output_dir }}/nonexistent'
     state: directory
     group: 1111111
   check_mode: yes
