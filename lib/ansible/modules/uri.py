@@ -277,7 +277,7 @@ EXAMPLES = r'''
     method: POST
     src: /path/to/my/file.json
     remote_src: yes
-    
+
 - name: Create workspaces in Log analytics Azure
   uri:
     url: https://www.mms.microsoft.com/Embedded/Api/ConfigDataSources/LogManagementData/Save
@@ -287,7 +287,8 @@ EXAMPLES = r'''
     return_content: true
     headers:
       Content-Type: application/json
-      x-ms-client-workspace-path: /subscriptions/{{ common.azure.subscription_id }}/resourcegroups/{{ lw_resource_group }}/providers/microsoft.operationalinsights/workspaces/{{ lw_workspaces }}
+      x-ms-client-workspace-path: /subscriptions/{{ common.azure.subscription_id }}/resourcegroups/
+      \{{ lw_resource_group }}/providers/microsoft.operationalinsights/workspaces/{{ lw_workspaces }}
       x-ms-client-platform: ibiza
       x-ms-client-auth-token: "{{ token_az }}"
     body:
