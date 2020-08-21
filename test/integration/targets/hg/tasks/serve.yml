@@ -1,0 +1,32 @@
+# Here we set up an hg server to clone from
+
+- name: Create a directory to use
+  file:
+    path: "{{ output_dir }}/hgtest"
+    state: directory
+
+- name: Add a file to it
+  copy:
+    dest: "{{ output_dir }}/hgtest/file.txt"
+    content: howdy
+    mode: 0644
+
+- name: Create repo
+  command: hg init
+  args:
+    chdir: "{{ output_dir }}/hgtest"
+
+- name: Commit in it
+  shell: hg add . && hg --config ui.username=ansible-test commit -m 'commit message here'
+  args:
+    chdir: "{{ output_dir }}/hgtest"
+
+- name: Create a tag in it
+  shell: hg --config ui.username=ansible-test tag 1.2.3.4
+  args:
+    chdir: "{{ output_dir }}/hgtest"
+
+- name: hg serve
+  command: hg serve -d --pid-file {{ output_dir }}/hg.pid -E /tmp/foo
+  args:
+    chdir: "{{ output_dir }}/hgtest"

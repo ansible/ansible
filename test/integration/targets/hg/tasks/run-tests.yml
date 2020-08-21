@@ -18,13 +18,10 @@
 
 
 - name: set where to extract the repo
-  set_fact: checkout_dir={{ output_dir }}/epdb
+  set_fact: checkout_dir={{ output_dir }}/hgtest-clone
 
 - name: set what repo to use
-  set_fact: repo=https://bitbucket.org/rpathsync/epdb
-
-- name: clean out the output_dir
-  shell: rm -rf {{ output_dir }}/*
+  set_fact: repo=http://localhost:8000
 
 - name: verify that mercurial is installed so this test can continue
   shell: which hg
@@ -74,7 +71,7 @@
       - "not hg_result2.changed"
 
 - name: Checkout non-existent repo clone
-  hg: repo=https://bitbucket.org/pyro46/pythonscript_1 clone=no update=no
+  hg: repo=http://localhost:8000/foo clone=no update=no
   register: hg_result3
   ignore_errors: true
 
@@ -82,5 +79,5 @@
   assert:
     that:
       - hg_result3.msg
-      - "'abort: HTTP Error 404: Not Found' in hg_result3.msg"
+      - hg_result3 is failed
       - "not hg_result3.changed"
