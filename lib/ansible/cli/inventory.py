@@ -139,10 +139,12 @@ class InventoryCLI(CLI):
             results = self.dump(myvars)
 
         elif context.CLIARGS['graph']:
-            CLI.get_host_list(self.inventory, None, variable_manager=self.vm)
+            if context.CLIARGS['flush_cache']:
+                CLI._flush_cache(sefl.inventory, self.vm)
             results = self.inventory_graph()
         elif context.CLIARGS['list']:
-            CLI.get_host_list(self.inventory, None, variable_manager=self.vm)
+            if context.CLIARGS['flush_cache']:
+                CLI._flush_cache(self.inventory, self.vm)
             top = self._get_group('all')
             if context.CLIARGS['yaml']:
                 results = self.yaml_inventory(top)
