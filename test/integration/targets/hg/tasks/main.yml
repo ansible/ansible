@@ -32,6 +32,7 @@
   - name: test mercurial
     include_tasks: run-tests.yml
 
+  always:
   - name: kill hg server
     include_tasks: stop-serving.yml
 
