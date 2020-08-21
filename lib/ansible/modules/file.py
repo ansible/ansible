@@ -919,7 +919,7 @@ def main():
     path = params['path']
     src = params['src']
 
-    if state != 'absent':
+    if state != 'absent' and module.check_mode:
         file_args = module.load_file_common_arguments(module.params)
         if file_args['owner']:
             check_owner_exists(module, file_args['owner'])

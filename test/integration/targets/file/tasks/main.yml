@@ -571,7 +571,7 @@
 - assert:
     that:
     - owner_no_exist.msg is search('failed to look up user')
-    - owner_uid_no_exist is search('failed to look up user with uid')
+    - owner_uid_no_exist.msg is search('failed to look up user with uid')
     - group_no_exist.msg is search('failed to look up group')
     - group_gid_no_exist.msg is search('failed to look up group with gid')
 
