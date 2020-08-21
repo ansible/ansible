@@ -74,13 +74,17 @@ outside of those test subdirectories.  They will also not reconfigure or bounce 
 
    Use the ``--docker-no-pull`` option to avoid pulling the latest container image. This is required when using custom local images that are not available for download.
 
-Run as follows for all POSIX platform tests executed by our CI system::
+Run as follows for all POSIX platform tests executed by our CI system in a fedora32 docker container::
 
-    ansible-test integration --docker fedora29 -v shippable/
+    ansible-test integration shippable/ --docker fedora32
 
 You can target a specific tests as well, such as for individual modules::
 
-    ansible-test integration -v ping
+    ansible-test integration ping
+
+You can use the ``-v`` option to make the output more verbose::
+
+    ansible-test integration lineinfile -vvv
 
 Use the following command to list all the available targets::
 
@@ -96,7 +100,7 @@ Destructive Tests
 These tests are allowed to install and remove some trivial packages.  You will likely want to devote these
 to a virtual environment, such as Docker.  They won't reformat your filesystem::
 
-    ansible-test integration --docker fedora29 -v destructive/
+    ansible-test integration destructive/ --docker fedora32
 
 Windows Tests
 =============
@@ -136,14 +140,14 @@ the Ansible continuous integration (CI) system is recommended.
 Running Integration Tests
 -------------------------
 
-To run all CI integration test targets for POSIX platforms in a Ubuntu 16.04 container::
+To run all CI integration test targets for POSIX platforms in a Ubuntu 18.04 container::
 
-    ansible-test integration --docker ubuntu1604 -v shippable/
+    ansible-test integration shippable/ --docker ubuntu1804
 
 You can also run specific tests or select a different Linux distribution.
-For example, to run tests for the ``ping`` module on a Ubuntu 14.04 container::
+For example, to run tests for the ``ping`` module on a Ubuntu 18.04 container::
 
-    ansible-test integration -v ping --docker ubuntu1404
+    ansible-test integration ping --docker ubuntu1804
 
 Container Images
 ----------------
@@ -165,9 +169,9 @@ Python 3
 
 To test with Python 3 use the following images:
 
-  - fedora29
+  - centos8
+  - fedora32
   - opensuse15
-  - ubuntu1604py3
   - ubuntu1804
 
 
