@@ -87,8 +87,6 @@ class AnsibleCoreCI:
         else:
             self.name = '%s-%s' % (self.platform, self.version)
 
-        self.resource = 'jobs'
-
         # Assign each supported platform to one provider.
         # This is used to determine the provider from the platform when no provider is specified.
         providers = dict(
@@ -157,9 +155,6 @@ class AnsibleCoreCI:
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
         if self.provider in ('aws', 'azure', 'ibmps', 'ibmvpc'):
-            if self.provider != 'aws':
-                self.resource = self.provider
-
             if args.remote_aws_region:
                 # permit command-line override of region selection
                 region = args.remote_aws_region
@@ -370,7 +365,7 @@ class AnsibleCoreCI:
 
     @property
     def _uri(self):
-        return '%s/%s/%s/%s' % (self.endpoint, self.stage, self.resource, self.instance_id)
+        return '%s/%s/%s/%s' % (self.endpoint, self.stage, self.provider, self.instance_id)
 
     def _start(self, auth):
         """Start instance."""
