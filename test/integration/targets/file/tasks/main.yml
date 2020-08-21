@@ -550,7 +550,6 @@
     path: /nonexistent
     owner: 1111111
   check_mode: yes
-  ignore_errors: yes
   register: owner_uid_no_exist
 
 - name: group does not exist in check_mode
@@ -559,7 +558,6 @@
     state: directory
     group: nonexistent
   check_mode: yes
-  ignore_errors: yes
   register: group_no_exist
 
 - name: group does not exist in check_mode, using gid
@@ -568,18 +566,13 @@
     state: directory
     group: 1111111
   check_mode: yes
-  ignore_errors: yes
   register: group_gid_no_exist
 
 - assert:
     that:
-    - owner_no_exist is failed
     - owner_no_exist.msg is search('failed to look up user')
-    - owner_uid_no_exist is failed
     - owner_uid_no_exist is search('failed to look up user with uid')
-    - group_no_exist is failed
     - group_no_exist.msg is search('failed to look up group')
-    - group_gid_no_exist is failed
     - group_gid_no_exist.msg is search('failed to look up group with gid')
 
 # https://github.com/ansible/ansible/issues/50943

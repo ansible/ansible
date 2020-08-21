@@ -862,12 +862,12 @@ def check_owner_exists(module, owner):
         try:
             getpwuid(uid).pw_name
         except KeyError:
-            module.fail_json(msg='failed to look up user with uid %s' % uid)
+            module.warn('failed to look up user with uid %s. Create user up to this point in real play' % uid)
     except ValueError:
         try:
             getpwnam(owner).pw_uid
         except KeyError:
-            module.fail_json(msg='failed to look up user %s' % owner)
+            module.warn('failed to look up user %s. Create user up to this point in real play' % owner)
 
 
 def check_group_exists(module, group):
@@ -876,12 +876,12 @@ def check_group_exists(module, group):
         try:
             getgrgid(gid).gr_name
         except KeyError:
-            module.fail_json(msg='failed to look up group with gid %s' % gid)
+            module.warn('failed to look up group with gid %s. Create group up to this point in real play' % gid)
     except ValueError:
         try:
             getgrnam(group).gr_gid
         except KeyError:
-            module.fail_json(msg='failed to look up group %s' % group)
+            module.fail_json(msg='failed to look up group %s. Create group up to this point in real play' % group)
 
 
 def main():
