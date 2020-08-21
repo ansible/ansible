@@ -155,6 +155,7 @@ class AnsibleCoreCI:
 
         if self.provider in ('aws', 'azure', 'ibmps', 'ibmvpc'):
             if args.remote_aws_region:
+                display.warning('The --remote-aws-region option is obsolete and will be removed in a future version of ansible-test.')
                 # permit command-line override of region selection
                 region = args.remote_aws_region
                 # use a dedicated CI key when overriding the region selection
