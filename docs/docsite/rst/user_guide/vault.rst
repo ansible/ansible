@@ -7,7 +7,7 @@ Encrypting content with Ansible Vault
 Ansible Vault encrypts variables and files so you can protect sensitive content such as passwords or keys rather than leaving it visible as plaintext in playbooks or roles. To use Ansible Vault you need one or more passwords to encrypt and decrypt content. If you store your vault passwords in a third-party tool such as a secret manager, you need a script to access them. Use the passwords with the :ref:`ansible-vault` command-line tool to create and view encrypted variables, create encrypted files, encrypt existing files, or edit, re-key, or decrypt files. You can then place encrypted content under source control and share it more safely.
 
 .. warning::
-    * Encryption with Ansible Vault ONLY protects 'data at rest'.  Once the content is decrypted ('data in use'), play and plugin authors are responsible for avoiding any secret disclosure, see :ref:`no_log <keep_secret_data>` for details on hiding output.
+    * Encryption with Ansible Vault ONLY protects 'data at rest'.  Once the content is decrypted ('data in use'), play and plugin authors are responsible for avoiding any secret disclosure, see :ref:`no_log <keep_secret_data>` for details on hiding output and :ref:`vault_securing_editor` for security considerations on editors you use with Ansible Vault.
 
 You can use encrypted variables and files in ad-hoc commands and playbooks by supplying the passwords you used to encrypt them. You can modify your ``ansible.cfg`` file to specify the location of a password file or to always prompt for the password.
 
@@ -288,6 +288,11 @@ Ansible Vault can encrypt any structured data file used by Ansible, including:
 
 The full file is encrypted in the vault.
 
+.. note::
+
+	Ansible Vault uses an editor to create or modify encrypted files. See :ref:`vault_securing_editor` for some guidance on securing the editor.
+
+
 Advantages and disadvantages of encrypting files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -394,6 +399,73 @@ If you have an encrypted file that you no longer want to keep encrypted, you can
 .. code-block:: bash
 
     ansible-vault decrypt foo.yml bar.yml baz.yml
+
+
+.. _vault_securing_editor:
+
+Steps to secure your editor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Ansible Vault relies on your configured editor, which can be a source of disclosures. Most editors have ways to prevent loss of data, but these normally rely on extra plain text files that can have a clear text copy of your secrets. Consult your editor documentation to configure the editor to avoid disclosing secure data. The following sections provide some guidance on common editors but should not be taken as a complete guide to securing your editor.
+
+
+vim
+...
+
+You can set the following ``vim`` options in command mode to avoid cases of disclosure. There may be more settings you need to modify to ensure security, especially when using plugins, so consult the ``vim`` documentation.
+
+
+1. Disable swapfiles that act like an autosave in case of crash or interruption.
+
+.. code-block:: text
+
+  set noswapfile
+
+2. Disable creation of backup files.
+
+.. code-block:: text
+
+  set nobackup
+  set nowritebackup
+
+3. Disable the viminfo file from copying data from your current session.
+
+.. code-block:: text
+
+  set viminfo=
+
+4. Disable copying to the system clipboard.
+
+.. code-block:: text
+
+  set clipboard=
+
+
+You can optionally add these settings in ``.vimrc`` for all files, or just specific paths or extensions. See the ``vim`` manual for details.
+
+
+Emacs
+......
+
+You can set the following Emacs options to avoid cases of disclosure. There may be more settings you need to modify to ensure security, especially when using plugins, so consult the Emacs documentation.
+
+1. Do not copy data to the system clipboard.
+
+.. code-block:: text
+
+  (setq x-select-enable-clipboard nil)
+
+2. Disable creation of backup files.
+
+.. code-block:: text
+
+  (setq make-backup-files nil)
+
+3. Disable autosave files.
+
+.. code-block:: text
+
+  (setq auto-save-default nil)
 
 
 .. _playbooks_vault:
