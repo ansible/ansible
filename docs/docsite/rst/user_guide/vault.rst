@@ -290,7 +290,7 @@ The full file is encrypted in the vault.
 
 .. note::
 
-	Ansible Vault uses and editor to create or modify encrypted files. See :ref:`vault_securing_editor` for some guidance on securing the editor.
+	Ansible Vault uses an editor to create or modify encrypted files. See :ref:`vault_securing_editor` for some guidance on securing the editor.
 
 
 Advantages and disadvantages of encrypting files
