@@ -183,8 +183,6 @@ class Conditional:
                         )
             try:
                 e = templar.environment.overlay()
-                e.filters.update(templar.environment.filters)
-                e.tests.update(templar.environment.tests)
 
                 res = e._parse(conditional, None, None)
                 res = generate(res, e, None, None)
