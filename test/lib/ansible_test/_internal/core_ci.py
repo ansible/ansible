@@ -51,7 +51,6 @@ from .data import (
 
 AWS_ENDPOINTS = {
     'us-east-1': 'https://14blg63h2i.execute-api.us-east-1.amazonaws.com',
-    'us-east-2': 'https://g5xynwbk96.execute-api.us-east-2.amazonaws.com',
 }
 
 
