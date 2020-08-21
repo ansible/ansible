@@ -163,7 +163,12 @@ class AnsibleCoreCI:
                 region = 'us-east-1'
 
             self.path = "%s-%s" % (self.path, region)
-            self.endpoints = (AWS_ENDPOINTS[region],)
+
+            if self.args.remote_endpoint:
+                self.endpoints = (self.args.remote_endpoint,)
+            else:
+                self.endpoints = (AWS_ENDPOINTS[region],)
+
             self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
@@ -177,8 +182,11 @@ class AnsibleCoreCI:
                 # 90 seconds
                 self.retries = 7
         elif self.provider == 'parallels':
-            self.endpoints = self._get_parallels_endpoints()
-            self.max_threshold = 6
+            if self.args.remote_endpoint:
+                self.endpoints = (self.args.remote_endpoint,)
+            else:
+                self.endpoints = self._get_parallels_endpoints()
+                self.max_threshold = 6
 
             self.ssh_key = SshKey(args)
             self.port = None

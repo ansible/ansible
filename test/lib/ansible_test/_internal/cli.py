@@ -957,6 +957,11 @@ def add_environments(parser, isolated_delegation=True):
                         choices=['default', 'aws', 'azure', 'parallels', 'ibmvpc', 'ibmps'],
                         default='default')
 
+    remote.add_argument('--remote-endpoint',
+                        metavar='ENDPOINT',
+                        help='remote provisioning endpoint to use (default: auto)',
+                        default=None)
+
     remote.add_argument('--remote-aws-region',
                         metavar='REGION',
                         help='remote aws region to use: %(choices)s (default: auto)',
