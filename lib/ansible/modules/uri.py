@@ -287,7 +287,7 @@ EXAMPLES = r'''
     return_content: true
     headers:
       Content-Type: application/json
-      x-ms-client-workspace-path: /subscriptions/{{ sub_id }}/resourcegroups/{{ res_group }}/providers/microsoft.operationalinsights/workspaces/{{ lw_workspaces }}
+      x-ms-client-workspace-path: /subscriptions/{{ sub_id }}/resourcegroups/{{ res_group }}/providers/microsoft.operationalinsights/workspaces/{{ w_spaces }}
       x-ms-client-platform: ibiza
       x-ms-client-auth-token: "{{ token_az }}"
     body:
