@@ -14,7 +14,7 @@ export LC_ALL=en_US.UTF-8
 
 # Run everything by default
 [ "$("${COMMAND[@]}" | grep -F Task_with | xargs)" = \
-"Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: [] Task_with_csv_tags TAGS: [tag1, tag2] Task_with_templated_tags TAGS: [tag3]" ]
+"Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: [] Task_with_csv_tags TAGS: [tag1, tag2] Task_with_templated_tags TAGS: [tag3] Task_with_meta_tags TAGS: [meta_tag]" ]
 
 # Run the exact tags, and always
 [ "$("${COMMAND[@]}" --tags tag | grep -F Task_with | xargs)" = \
@@ -22,11 +22,15 @@ export LC_ALL=en_US.UTF-8
 
 # Skip one tag
 [ "$("${COMMAND[@]}" --skip-tags tag | grep -F Task_with | xargs)" = \
-"Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: [] Task_with_csv_tags TAGS: [tag1, tag2] Task_with_templated_tags TAGS: [tag3]" ]
+"Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: [] Task_with_csv_tags TAGS: [tag1, tag2] Task_with_templated_tags TAGS: [tag3] Task_with_meta_tags TAGS: [meta_tag]" ]
 
 # Skip a unicode tag
 [ "$("${COMMAND[@]}" --skip-tags 'くらとみ' | grep -F Task_with | xargs)" = \
-"Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: [] Task_with_csv_tags TAGS: [tag1, tag2] Task_with_templated_tags TAGS: [tag3]" ]
+"Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: [] Task_with_csv_tags TAGS: [tag1, tag2] Task_with_templated_tags TAGS: [tag3] Task_with_meta_tags TAGS: [meta_tag]" ]
+
+# Skip a meta task tag
+[ "$("${COMMAND[@]}" --skip-tags meta_tag | grep -F Task_with | xargs)" = \
+"Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_without_tag TAGS: [] Task_with_csv_tags TAGS: [tag1, tag2] Task_with_templated_tags TAGS: [tag3]" ]
 
 # Run just a unicode tag and always
 [ "$("${COMMAND[@]}" --tags 'くらとみ' | grep -F Task_with | xargs)" = \
@@ -48,9 +52,13 @@ export LC_ALL=en_US.UTF-8
 [ "$("${COMMAND[@]}" --tags tag3 | grep -F Task_with | xargs)" = \
 "Task_with_always_tag TAGS: [always] Task_with_templated_tags TAGS: [tag3]" ]
 
+# Run meta tags
+[ "$("${COMMAND[@]}" --tags meta_tag | grep -F Task_with | xargs)" = \
+"Task_with_always_tag TAGS: [always] Task_with_meta_tags TAGS: [meta_tag]" ]
+
 # Run tagged
 [ "$("${COMMAND[@]}" --tags tagged | grep -F Task_with | xargs)" = \
-"Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_with_csv_tags TAGS: [tag1, tag2] Task_with_templated_tags TAGS: [tag3]" ]
+"Task_with_tag TAGS: [tag] Task_with_always_tag TAGS: [always] Task_with_unicode_tag TAGS: [くらとみ] Task_with_list_of_tags TAGS: [café, press] Task_with_csv_tags TAGS: [tag1, tag2] Task_with_templated_tags TAGS: [tag3] Task_with_meta_tags TAGS: [meta_tag]" ]
 
 # Run untagged
 [ "$("${COMMAND[@]}" --tags untagged | grep -F Task_with | xargs)" = \

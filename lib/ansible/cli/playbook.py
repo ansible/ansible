@@ -162,7 +162,7 @@ class PlaybookCLI(CLI):
                                 if isinstance(task, Block):
                                     taskmsg += _process_block(task)
                                 else:
-                                    if task.action == 'meta':
+                                    if task.action == 'meta' and task.implicit:
                                         continue
 
                                     all_tags.update(task.tags)
