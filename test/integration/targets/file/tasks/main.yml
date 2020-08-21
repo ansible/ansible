@@ -547,7 +547,7 @@
 - name: owner does not exist in check_mode, using uid
   file:
     path: '{{ output_dir }}/nonexistent'
-    owner: 1111111
+    owner: '1111111'
   check_mode: yes
   register: owner_uid_no_exist
 
@@ -563,7 +563,7 @@
   file:
     path: '{{ output_dir }}/nonexistent'
     state: directory
-    group: 1111111
+    group: '1111111'
   check_mode: yes
   register: group_gid_no_exist
 
