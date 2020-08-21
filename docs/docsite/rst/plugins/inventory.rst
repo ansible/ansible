@@ -15,7 +15,7 @@ Inventory plugins allow users to point at data sources to compile the inventory 
 Enabling inventory plugins
 --------------------------
 
-Most inventory plugins shipped with Ansible are enabled by default or can be used by via the ``auto`` plugin.
+Most inventory plugins shipped with Ansible are enabled by default or can be used by with the ``auto`` plugin.
 
 In some circumstances, for example, if the inventory plugin does not use a YAML configuration file, you may need to enable the specific plugin. You can do this by setting ``enable_plugins`` in your :ref:`ansible.cfg <ansible_configuration_settings>` file in the ``[inventory]`` section. Modifying this will override the default list of enabled plugins. Here is the default list of enabled plugins that ships with Ansible:
 
@@ -50,7 +50,7 @@ To start using an inventory plugin with a YAML configuration source, create a fi
    # demo.aws_ec2.yml
    plugin: amazon.aws.aws_ec2
 
-Each plugin should document any naming restrictions. In addition, the YAML config file must end with the extension ``yml`` or ``yaml`` to be enabled by default via the ``auto`` plugin (otherwise, see the section above on enabling plugins).
+Each plugin should document any naming restrictions. In addition, the YAML config file must end with the extension ``yml`` or ``yaml`` to be enabled by default with the ``auto`` plugin (otherwise, see the section above on enabling plugins).
 
 After providing any required options, you can view the populated inventory with ``ansible-inventory -i demo.aws_ec2.yml --graph``:
 
