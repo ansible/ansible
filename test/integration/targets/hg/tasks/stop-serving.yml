@@ -1,0 +1,7 @@
+- name: Get pid of hg server
+  slurp:
+    src: "{{ output_dir }}/hg.pid"
+  register: pid
+
+- name: kill hg server
+  command: kill {{ pid.content | b64decode }}
