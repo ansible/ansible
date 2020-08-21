@@ -563,8 +563,7 @@
 - name: owner does not exist in check_mode, using uid
   file:
     path: '/tmp/nonexistent'
-    owner: '1111111'
-    state: touch
+    owner: '111111'
   check_mode: yes
   ignore_errors: yes
   register: owner_uid_no_exist
@@ -572,13 +571,13 @@
 - name: create owner using uid
   user:
     name: test_uid
-    uid: 1111111
+    uid: 111111
 
 # I don't use state=touch here intentionally to fail and catch warnings
 - name: owner exists in check_mode, using uid
   file:
     path: '/tmp/nonexistent'
-    owner: '1111111'
+    owner: '111111'
     state: touch
   check_mode: yes
   ignore_errors: yes
@@ -588,7 +587,7 @@
 - name: group does not exist in check_mode
   file:
     path: '/tmp/nonexistent'
-    group: nonexistent
+    group: nonexistent1
   check_mode: yes
   register: group_no_exist
   ignore_errors: yes
@@ -610,7 +609,7 @@
 - name: group does not exist in check_mode, using gid
   file:
     path: '/tmp/nonexistent'
-    group: '1111111'
+    group: '111112'
   check_mode: yes
   register: group_gid_no_exist
   ignore_errors: yes
@@ -618,13 +617,13 @@
 - name: create group with gid
   group:
     name: test_gid
-    gid: 1111112
+    gid: 111112
 
 # I don't use state=touch here intentionally to fail and catch warnings
 - name: group exists in check_mode, using gid
   file:
     path: '/tmp/nonexistent'
-    group: '1111112'
+    group: '111112'
   check_mode: yes
   register: group_gid_exists
   ignore_errors: yes
