@@ -30,7 +30,3 @@
   command: hg serve -d --pid-file {{ output_dir }}/hg.pid -E /tmp/foo
   args:
     chdir: "{{ output_dir }}/hgtest"
-
-- name: foo
-  command: hg clone http://localhost:8000 hello
-
