@@ -473,10 +473,9 @@ def get_version(module, git_path, dest, ref="HEAD"):
 def ssh_supports_acceptnewhostkey(module):
     ssh_path = module.get_bin_path('ssh', True)
     supports_acceptnewhostkey = True
-    try:
-        cmd = [ssh_path, '-o', 'StrictHostKeyChecking=accept-new', '-V']
-        rc, stdout, stderr = module.run_command(cmd)
-    except Exception:
+    cmd = [ssh_path, '-o', 'StrictHostKeyChecking=accept-new', '-V']
+    rc, stdout, stderr = module.run_command(cmd)
+    if rc != 0:
         supports_acceptnewhostkey = False
     return supports_acceptnewhostkey
 
