@@ -278,6 +278,20 @@ EXAMPLES = r'''
     src: /path/to/my/file.json
     remote_src: yes
 
+- name: Create workspaces in Log analytics Azure
+  uri:
+    url: https://www.mms.microsoft.com/Embedded/Api/ConfigDataSources/LogManagementData/Save
+    method: POST
+    body_format: json
+    status_code: [200, 202]
+    return_content: true
+    headers:
+      Content-Type: application/json
+      x-ms-client-workspace-path: /subscriptions/{{ sub_id }}/resourcegroups/{{ res_group }}/providers/microsoft.operationalinsights/workspaces/{{ w_spaces }}
+      x-ms-client-platform: ibiza
+      x-ms-client-auth-token: "{{ token_az }}"
+    body:
+
 - name: Pause play until a URL is reachable from this host
   uri:
     url: "http://192.0.2.1/some/test"
