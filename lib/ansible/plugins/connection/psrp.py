@@ -328,6 +328,12 @@ except ImportError as err:
     HAS_PYPSRP = False
     PYPSRP_IMP_ERR = err
 
+NEWER_PYPSRP = True
+try:
+    import pypsrp.pwsh_scripts
+except ImportError:
+    NEWER_PYPSRP = False
+
 display = Display()
 
 
@@ -453,13 +459,12 @@ class Connection(ConnectionBase):
         # The new method that uses PSRP directly relies on a feature added in pypsrp 0.4.0 (release 2019-09-19). In
         # case someone still has an older version present we warn them asking to update their library to a newer
         # release and fallback to the old WSMV shell.
-        try:
-            import pypsrp.pwsh_scripts
+        if NEWER_PYPSRP:
             rc, stdout, stderr, local_sha1 = self._put_file_new(in_path, out_path)
 
-        except ImportError:
+        else:
             display.deprecated("Older pypsrp library detected, please update to pypsrp>=0.4.0 to use the newer copy "
-                               "method over PSRP.", version="2.13")
+                               "method over PSRP.", version="2.13", collection_name='ansible.builtin')
             rc, stdout, stderr, local_sha1 = self._put_file_old(in_path, out_path)
 
         if rc != 0:
