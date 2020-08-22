@@ -50,7 +50,7 @@ from .data import (
 )
 
 AWS_ENDPOINTS = {
-    'us-east-1': 'https://14blg63h2i.execute-api.us-east-1.amazonaws.com',
+    'us-east-1': 'https://ansible-core-ci.testing.ansible.com',
 }
 
 
@@ -239,7 +239,7 @@ class AnsibleCoreCI:
         sleep = 3
 
         for _iteration in range(1, 10):
-            response = client.get('https://s3.amazonaws.com/ansible-ci-files/ansible-test/parallels-endpoints.txt')
+            response = client.get('https://ansible-ci-files.s3.amazonaws.com/ansible-test/parallels-endpoints.txt')
 
             if response.status_code == 200:
                 endpoints = tuple(response.response.splitlines())
