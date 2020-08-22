@@ -947,9 +947,8 @@ def add_environments(parser, isolated_delegation=True):
 
     remote.add_argument('--remote-stage',
                         metavar='STAGE',
-                        help='remote stage to use: %(choices)s',
-                        choices=['prod', 'dev'],
-                        default='prod')
+                        help='remote stage to use: prod, dev',
+                        default='prod').completer = complete_remote_stage
 
     remote.add_argument('--remote-provider',
                         metavar='PROVIDER',
@@ -1060,6 +1059,16 @@ def add_extra_docker_options(parser, integration=True):
     # noinspection PyTypeChecker
     docker.add_argument('--docker-memory',
                         help='memory limit for docker in bytes', type=int)
+
+
+# noinspection PyUnusedLocal
+def complete_remote_stage(prefix, parsed_args, **_):  # pylint: disable=unused-argument
+    """
+    :type prefix: unicode
+    :type parsed_args: any
+    :rtype: list[str]
+    """
+    return [stage for stage in ('prod', 'dev') if stage.startswith(prefix)]
 
 
 def complete_target(prefix, parsed_args, **_):
