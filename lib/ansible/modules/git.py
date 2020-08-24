@@ -472,7 +472,7 @@ def get_version(module, git_path, dest, ref="HEAD"):
 
 def ssh_supports_acceptnewhostkey(module):
     try:
-        ssh_path = module.get_bin_path('ssh', True)
+        ssh_path = get_bin_path('ssh')
     except ValueError as err:
         module.fail_json(
             msg='Remote host is missing ssh command, so you cannot '
