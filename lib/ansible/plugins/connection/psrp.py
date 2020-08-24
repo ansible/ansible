@@ -446,80 +446,95 @@ class Connection(ConnectionBase):
 
     def put_file(self, in_path, out_path):
         super(Connection, self).put_file(in_path, out_path)
-        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._psrp_host)
+        display.vvv("PUT %s TO %s" % (in_path, out_path),
+                    host=self._psrp_host)
 
         out_path = self._shell._unquote(out_path)
-        script = u'''begin {
-    $ErrorActionPreference = "Stop"
 
-    $path = '%s'
-    $fd = [System.IO.File]::Create($path)
-    $algo = [System.Security.Cryptography.SHA1CryptoServiceProvider]::Create()
-    $bytes = @()
-} process {
-    $bytes = [System.Convert]::FromBase64String($input)
-    $algo.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0) > $null
-    $fd.Write($bytes, 0, $bytes.Length)
-} end {
-    $fd.Close()
-    $algo.TransformFinalBlock($bytes, 0, 0) > $null
-    $hash = [System.BitConverter]::ToString($algo.Hash)
-    $hash = $hash.Replace("-", "").ToLowerInvariant()
+        # because we are dealing with base64 data we need to get the max size
+        # of the bytes that the base64 size would equal
+        max_b64_size = int(self.runspace.connection.max_payload_size -
+                           (self.runspace.connection.max_payload_size / 4 * 3))
+        buffer_size = max_b64_size - (max_b64_size % 1024)
 
-    Write-Output -InputObject "{`"sha1`":`"$hash`"}"
-}''' % self._shell._escape(out_path)
+        # setup the file stream with read only mode
+        setup_script = '''$ErrorActionPreference = "Stop"
+        $path = '%s'
+        $fd = [System.IO.File]::Create($path)
+        $fd.Close()
+        if (Test-Path -Path $path -PathType Leaf) {
+            $fs = New-Object -TypeName System.IO.FileStream -ArgumentList @(
+                $path,
+                [System.IO.FileMode]::Create,
+                [System.IO.FileAccess]::Write
+            )
+        } elseif (Test-Path -Path $path -PathType Container) {
+            Write-Output -InputObject "[DIR]"
+        } else {
+            Write-Error -Message "$path does not exist"
+            $host.SetShouldExit(1)
+        }''' % (self._shell._escape(out_path))
 
-        cmd_parts = self._shell._encode_script(script, as_list=True,
-                                               strict_mode=False,
-                                               preserve_rc=False)
+        # read the file stream at the offset and return the b64 string
+        write_script = '''
+        $bytes = [System.Convert]::FromBase64String("%s")
+        $fs.Seek(0, [System.IO.SeekOrigin]::End)
+        $fs.Write($bytes, 0, $bytes.Length)
+        Clear-Variable $bytes
+        $fs.Close()
+        '''
+
+        # need to run the setup script outside of the local scope so the
+        # file stream stays active between fetch operations
+        rc, stdout, stderr = self._exec_psrp_script(setup_script,
+                                                    use_local_scope=False,
+                                                    force_stop=True)
+        if rc != 0:
+            raise AnsibleError("failed to setup file stream for put '%s': %s"
+                               % (out_path, to_native(stderr)))
+        elif stdout.strip() == '[DIR]':
+            # to be consistent with other connection plugins, we assume the caller has created the target dir
+            return
+
         b_in_path = to_bytes(in_path, errors='surrogate_or_strict')
         if not os.path.exists(b_in_path):
             raise AnsibleFileNotFound('file or module does not exist: "%s"'
                                       % to_native(in_path))
 
-        in_size = os.path.getsize(b_in_path)
-        buffer_size = int(self.runspace.connection.max_payload_size / 4 * 3)
+        # to be consistent with other connection plugins, we assume the caller has created the target dir
+        offset = 0
+        with open(b_in_path, 'rb') as in_file:
+            for data in iter((lambda: in_file.read(buffer_size)), b""):
+                display.vvvv("PSRP PUT %s to %s (offset=%d, size=%d)" %
+                              (in_path, out_path, offset, len(data)),
+                              host=self._psrp_host)
+                b64_data = base64.b64encode(data)
+                rc, stdout, stderr = self._exec_psrp_script(write_script % (b64_data.decode("utf-8")), force_stop=True)
+                offset += len(data)
 
-        # copying files is faster when using the raw WinRM shell and not PSRP
-        # we will create a WinRS shell just for this process
-        # TODO: speed this up as there is overhead creating a shell for this
-        with WinRS(self.runspace.connection, codepage=65001) as shell:
-            process = Process(shell, cmd_parts[0], cmd_parts[1:])
-            process.begin_invoke()
+            end_script = '''
+            $fs.Close()
+            $hash = (Get-FileHash $path -Algorithm SHA1).Hash
+            Write-Output -InputObject "{`"sha1`":`"$hash`"}"
+            '''
+            rc, stdout, stderr = self._exec_psrp_script(end_script, force_stop=True)
+            if rc != 0:
+                display.warning("failed to close remote file stream of file "
+                                "'%s': %s" % (out_path, to_native(stderr)))
 
-            offset = 0
-            with open(b_in_path, 'rb') as src_file:
-                for data in iter((lambda: src_file.read(buffer_size)), b""):
-                    offset += len(data)
-                    display.vvvvv("PSRP PUT %s to %s (offset=%d, size=%d" %
-                                  (in_path, out_path, offset, len(data)),
-                                  host=self._psrp_host)
-                    b64_data = base64.b64encode(data) + b"\r\n"
-                    process.send(b64_data, end=(src_file.tell() == in_size))
+            put_output = json.loads(stdout)
+            remote_sha1 = put_output.get("sha1")
 
-                # the file was empty, return empty buffer
-                if offset == 0:
-                    process.send(b"", end=True)
+            if not remote_sha1:
+                raise AnsibleError("Remote sha1 was not returned, stdout: '%s', "
+                                   "stderr: '%s'" % (to_native(stdout),
+                                                     to_native(stderr)))
 
-            process.end_invoke()
-            process.signal(SignalCode.CTRL_C)
-
-        if process.rc != 0:
-            raise AnsibleError(to_native(process.stderr))
-
-        put_output = json.loads(process.stdout)
-        remote_sha1 = put_output.get("sha1")
-
-        if not remote_sha1:
-            raise AnsibleError("Remote sha1 was not returned, stdout: '%s', "
-                               "stderr: '%s'" % (to_native(process.stdout),
-                                                 to_native(process.stderr)))
-
-        local_sha1 = secure_hash(in_path)
-        if not remote_sha1 == local_sha1:
-            raise AnsibleError("Remote sha1 hash %s does not match local hash "
-                               "%s" % (to_native(remote_sha1),
-                                       to_native(local_sha1)))
+            local_sha1 = secure_hash(in_path).upper()
+            if not remote_sha1 == local_sha1:
+                raise AnsibleError("Remote sha1 hash %s does not match local hash "
+                                   "%s" % (to_native(remote_sha1),
+                                           to_native(local_sha1)))
 
     def fetch_file(self, in_path, out_path):
         super(Connection, self).fetch_file(in_path, out_path)
