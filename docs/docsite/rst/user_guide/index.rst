@@ -75,6 +75,10 @@ Advanced features and reference
 * Rejecting :ref:`specific modules <plugin_filtering_config>`
 * Module :ref:`maintenance <modules_support>`
 
+Traditional Table of Contents
+=============================
+
+If you prefer to read the entire User Guide, here's a list of the pages in order:
 
 .. toctree::
    :maxdepth: 2
