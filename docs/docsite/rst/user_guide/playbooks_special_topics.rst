@@ -8,20 +8,8 @@ As you write more playbooks and roles, you might have some special use cases. Fo
 .. toctree::
    :maxdepth: 1
 
-   become
-   playbooks_async
-   playbooks_checkmode
-   playbooks_debugger
-   playbooks_delegation
-   playbooks_environment
-   playbooks_error_handling
    playbooks_advanced_syntax
    complex_data_manipulation
    ../plugins/plugins
-   playbooks_prompts
-   playbooks_tags
-   vault
-   playbooks_startnstep
    ../reference_appendices/playbooks_keywords
-   playbooks_lookups
    playbooks_module_defaults
