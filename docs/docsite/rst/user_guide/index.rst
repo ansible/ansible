@@ -127,6 +127,7 @@ If you prefer to read the entire User Guide, here's a list of the pages in order
    sample_setup
    modules
    ../plugins/plugins
+   ../playbooks_keywords
    intro_bsd
    windows
    collections_using
