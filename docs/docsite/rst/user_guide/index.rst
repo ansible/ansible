@@ -1,3 +1,5 @@
+.. _user_guide_index:
+
 ##########
 User Guide
 ##########
@@ -25,8 +27,9 @@ Interacting with data
 * I want to retrieve data about my systems. How do I access :ref:`Ansible facts <playbooks_vars_facts>`?
 * I need to access sensitive data like passwords with Ansible. How can I protect that data with :ref:`Ansible vault <vault>`?
 * I want to change the data I have, so I can use it in a task. How do I use :ref:`filters <playbooks_filters>` to transform my data?
-* I need to retrieve data from an external source. How do I use :ref:`lookups <playbooks_lookups>` to access databases and APIs?
-* I want to ask the person who runs my playbook to supply data. How do I get user input with :ref:`prompts <playbooks_prompts>`?
+* I need to retrieve data from an external datastore. How do I use :ref:`lookups <playbooks_lookups>` to access databases and APIs?
+* I want to ask playbook users to supply data. How do I get user input with :ref:`prompts <playbooks_prompts>`?
+* I use certain modules frequently. How do I streamline my inventory and playbooks by :ref:`setting default values for module parameters <playbooks_module_defaults>`?
 
 Writing tasks, plays, and playbooks
 ===================================
@@ -40,7 +43,7 @@ Writing tasks, plays, and playbooks
   * Running tasks only when certain conditions apply with :ref:`conditionals <playbooks_conditionals>` and evaluating conditions with :ref:`tests <playbooks_tests>`
   * Grouping a set of tasks together with :ref:`blocks <playbooks_blocks>`
   * Running tasks only when something has changed with :ref:`handlers <playbooks_handlers>`
-  * Managing task errors and failures seamlessly
+  * Changing the way Ansible :ref:`handles failures <playbooks_error_handling>`)
   * Setting remote environment values
 
 * I want to leverage the power of re-usable Ansible artifacts. How do I create re-usable :ref:`files <playbooks_reuse>` and :ref:`roles <playbooks_reuse_roles>`?
@@ -51,16 +54,24 @@ Executing playbooks
 
 Once your playbook is ready to run, you may want to review these advanced topics:
 
-* Previewing the results of my playbook with :ref:`check mode and diff <check_mode_dry>`
+* Executing "dry run" playbooks with :ref:`check mode and diff <check_mode_dry>`
 * Running playbooks while troubleshooting with :ref:`start and step <playbooks_startnstep>`
 * Correcting tasks during execution with the :ref:`Ansible debugger <playbooks_debugger>`
 * Controlling how my playbook executes with :ref:`strategies and more <playbooks_strategies>`
-* Running playbooks :ref:`asynchronously <playbooks_async>`
+* Running tasks, plays, and playbooks :ref:`asynchronously <playbooks_async>`
+
+Advanced features
+=================
+
+* Using :ref:`advanced syntax <playbooks_advanced_syntax>`
+* Manipulating :ref:`complex data <complex_data_manipulation>`
+* Using :ref:`plugins <plugins_lookup>`
+* Using :ref:`playbook keywords <playbook_keywords>`
+
 
 .. toctree::
    :maxdepth: 2
 
-Getting Started
    quickstart
    basic_concepts
    intro_getting_started
