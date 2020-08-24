@@ -48,4 +48,4 @@ moving much of the plugins into smaller collection repositories that will be shi
 The following links have more information about this process:
 
 - https://groups.google.com/d/msg/ansible-devel/oKqgCeYTs-M/cHrOgMw8CAAJ
-- https://github.com/ansible-collections/overview/blob/master/README.rst
+- https://github.com/ansible-collections/overview/blob/main/README.rst
