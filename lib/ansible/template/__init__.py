@@ -252,7 +252,20 @@ def _unroll_iterator(func):
     explicitly use ``|list`` to unroll.
     """
     def wrapper(*args, **kwargs):
-        ret = func(*args, **kwargs)
+        try:
+            ret = func(*args, **kwargs)
+        except (UndefinedError, AnsibleUndefinedVariable):
+            raise
+        except Exception as e:
+            if 'undefined' in to_native(e):
+                from jinja2.runtime import Undefined
+                from jinja2.exceptions import UndefinedError
+                undefined_input = any(isinstance(arg, (Undefined, AnsibleUndefined)) for arg in args)
+                undefined_input |= any(isinstance(kwargs[kwarg], (Undefined, AnsibleUndefined)) for kwarg in kwargs)
+                if undefined_input:
+                    # Warn that the function seems to be masking undefined errors?
+                    raise AnsibleUndefinedVariable("%s" % to_native(e))
+            raise
         if _is_rolled(ret):
             return list(ret)
         return ret
