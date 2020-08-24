@@ -3435,15 +3435,13 @@ files:
     maintainers: glitchcrab
     labels: cloud
     migrated_to: community.general
-  $module_utils/mysql.py:
-    migrated_to: community.mysql
   $module_utils/net_tools/nios/:
     support: core
     labels:
     - networking
     - infoblox
     maintainers: sganesh-infoblox
-  $module_utils/mysql.py: *id004
+  $module_utils/mysql.py: 
     migrated_to: infoblox.nios_modules
   $module_utils/netapp:
     maintainers: $team_netapp
