@@ -37,8 +37,9 @@ Writing tasks, plays, and playbooks
   * Executing tasks with elevated privileges or as a different user with :ref:`become <become>`
   * Repeating a task once for each item in a list with :ref:`loops <playbooks_loops>`
   * Executing tasks on a different machine with :ref:`delegation <playbooks_delegation>`
-  * Executing tasks only when certain conditions apply with :ref:`conditionals <playbooks_conditionals>` and evaluating conditions with :ref:`tests <playbooks_tests>`
+  * Running tasks only when certain conditions apply with :ref:`conditionals <playbooks_conditionals>` and evaluating conditions with :ref:`tests <playbooks_tests>`
   * Grouping a set of tasks together with :ref:`blocks <playbooks_blocks>`
+  * Running tasks only when something has changed with :ref:`handlers <playbooks_handlers>`
   * Managing task errors and failures seamlessly
   * Setting remote environment values
 
