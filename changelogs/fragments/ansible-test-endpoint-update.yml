@@ -1,0 +1,7 @@
+minor_changes:
+  - ansible-test - Allow custom ``--remote-stage`` options for development and testing.
+  - ansible-test - Update built-in service endpoints for the ``--remote`` option.
+  - ansible-test - Show a warning when the obsolete ``--remote-aws-region`` option is used.
+  - ansible-test - Support custom remote endpoints with the ``--remote-endpoint`` option.
+  - ansible-test - Remove the discontinued ``us-east-2`` choice from the ``--remote-aws-region`` option.
+  - ansible-test - Request remote resources by provider name for all provider types.
