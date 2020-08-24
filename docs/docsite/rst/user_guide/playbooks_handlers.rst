@@ -5,7 +5,13 @@ Handlers: running operations on change
 
 Sometimes you want a task to run only when a change is made on a machine. For example, you may want to restart a service if a task updates the configuration of that service, but not if the configuration is unchanged. Ansible uses handlers to address this use case. Handlers are tasks that only run when notified. Each handler should have a globally unique name.
 
-This playbook, ``verify-apache.yml``, contains a single play with variables, the remote user, and a handler::
+.. contents::
+   :local:
+
+Handler example
+---------------
+
+This playbook, ``verify-apache.yml``, contains a single play with a handler::
 
     ---
     - name: verify apache installation
@@ -35,7 +41,7 @@ This playbook, ``verify-apache.yml``, contains a single play with variables, the
             name: httpd
             state: restarted
 
-In the example above, the second task notifies the handler. A single task can notify more than one handler::
+In this example playbook, the second task notifies the handler. A single task can notify more than one handler::
 
     - name: template configuration file
       template:
