@@ -12,6 +12,17 @@ DOCUMENTATION = '''
       - invoked in the command line
     short_description: Save host events to files
     version_added: "2.0"
+    options:
+        directory:
+            version_added: '2.11'
+            description: directory that will contain the per host JSON files. Also set by the ``--tree`` option when using adhoc.
+            ini:
+                - section: callback_tree
+                  key: directory
+            env:
+                - name: ANSIBLE_CALLBACK_TREE_DIR
+            default: "~/.ansible/tree"
+            type: path
     description:
         - "This callback is used by the Ansible (adhoc) command line option `-t|--tree`"
         - This produces a JSON dump of events in a directory, a file for each host, the directory used MUST be passed as a command line option.
@@ -22,7 +33,7 @@ import os
 from ansible.constants import TREE_DIR
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.plugins.callback import CallbackBase
-from ansible.utils.path import makedirs_safe
+from ansible.utils.path import makedirs_safe, unfrackpath
 
 
 class CallbackModule(CallbackBase):
@@ -35,13 +46,16 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'tree'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self):
-        super(CallbackModule, self).__init__()
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+        ''' override to set self.tree '''
 
-        self.tree = TREE_DIR
-        if not self.tree:
-            self.tree = os.path.expanduser("~/.ansible/tree")
-            self._display.warning("The tree callback is defaulting to ~/.ansible/tree, as an invalid directory was provided: %s" % self.tree)
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        if TREE_DIR:
+            # TREE_DIR comes from the CLI option --tree, only avialable for adhoc
+            self.tree = unfrackpath(TREE_DIR)
+        else:
+            self.tree = self.get_option('directory')
 
     def write_tree_file(self, hostname, buf):
         ''' write something into treedir/hostname '''
@@ -49,15 +63,18 @@ class CallbackModule(CallbackBase):
         buf = to_bytes(buf)
         try:
             makedirs_safe(self.tree)
-            path = os.path.join(self.tree, hostname)
+        except (OSError, IOError) as e:
+            self._display.warning(u"Unable to access or create the configured directory (%s): %s" % (to_text(self.tree), to_text(e)))
+
+        try:
+            path = to_bytes(os.path.join(self.tree, hostname))
             with open(path, 'wb+') as fd:
                 fd.write(buf)
         except (OSError, IOError) as e:
             self._display.warning(u"Unable to write to %s's file: %s" % (hostname, to_text(e)))
 
     def result_to_tree(self, result):
-        if self.tree:
-            self.write_tree_file(result._host.get_name(), self._dump_results(result._result))
+        self.write_tree_file(result._host.get_name(), self._dump_results(result._result))
 
     def v2_runner_on_ok(self, result):
         self.result_to_tree(result)
