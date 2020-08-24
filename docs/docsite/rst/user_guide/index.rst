@@ -11,7 +11,7 @@ Getting started
 
 * I'd like an overview of how Ansible works. Where can I find:
 
-  * a :ref:`quick video overview <quickstart>`
+  * a :ref:`quick video overview <quickstart_guide>`
   * a :ref:`text introduction <intro_getting_started>`
 
 * I'm ready to learn about Ansible. What :ref:`basic_concepts` do I need to learn?
@@ -28,12 +28,12 @@ Interacting with data
 =====================
 
 * I want to use a single playbook against multiple systems with different attributes. How do I use :ref:`variables <playbooks_variables>` to handle the differences?
-* I want to retrieve data about my systems. How do I access :ref:`Ansible facts <playbooks_vars_facts>`?
+* I want to retrieve data about my systems. How do I access :ref:`Ansible facts <vars_and_facts>`?
 * I need to access sensitive data like passwords with Ansible. How can I protect that data with :ref:`Ansible vault <vault>`?
 * I want to change the data I have, so I can use it in a task. How do I use :ref:`filters <playbooks_filters>` to transform my data?
 * I need to retrieve data from an external datastore. How do I use :ref:`lookups <playbooks_lookups>` to access databases and APIs?
 * I want to ask playbook users to supply data. How do I get user input with :ref:`prompts <playbooks_prompts>`?
-* I use certain modules frequently. How do I streamline my inventory and playbooks by :ref:`setting default values for module parameters <playbooks_module_defaults>`?
+* I use certain modules frequently. How do I streamline my inventory and playbooks by :ref:`setting default values for module parameters <module_defaults>`?
 
 Writing tasks, plays, and playbooks
 ===================================
@@ -46,7 +46,7 @@ Writing tasks, plays, and playbooks
   * Executing tasks on a different machine with :ref:`delegation <playbooks_delegation>`
   * Running tasks only when certain conditions apply with :ref:`conditionals <playbooks_conditionals>` and evaluating conditions with :ref:`tests <playbooks_tests>`
   * Grouping a set of tasks together with :ref:`blocks <playbooks_blocks>`
-  * Running tasks only when something has changed with :ref:`handlers <playbooks_handlers>`
+  * Running tasks only when something has changed with :ref:`handlers <handlers>`
   * Changing the way Ansible :ref:`handles failures <playbooks_error_handling>`)
   * Setting remote :ref:`environment values <playbooks_environment>`
 
@@ -56,11 +56,11 @@ Writing tasks, plays, and playbooks
 Executing playbooks
 ===================
 
-Once your playbook is ready to run, you may want to review these advanced topics:
+Once your playbook is ready to run, you may need to use these topics:
 
 * Executing "dry run" playbooks with :ref:`check mode and diff <check_mode_dry>`
-* Running playbooks while troubleshooting with :ref:`start and step <playbooks_startnstep>`
-* Correcting tasks during execution with the :ref:`Ansible debugger <playbooks_debugger>`
+* Running playbooks while troubleshooting with :ref:`start and step <playbooks_start_and_step>`
+* Correcting tasks during execution with the :ref:`Ansible debugger <playbook_debugger>`
 * Controlling how my playbook executes with :ref:`strategies and more <playbooks_strategies>`
 * Running tasks, plays, and playbooks :ref:`asynchronously <playbooks_async>`
 
@@ -86,15 +86,40 @@ If you prefer to read the entire User Guide, here's a list of the pages in order
    quickstart
    basic_concepts
    intro_getting_started
+   intro_adhoc
    intro_inventory
    intro_dynamic_inventory
    intro_patterns
-   intro_adhoc
    connection_details
    command_line_tools
-   playbooks
-   become
+   playbooks_variables
+   playbooks_vars_facts
    vault
+   playbooks_filters
+   playbooks_lookups
+   playbooks_prompts
+   playbooks_module_defaults
+   playbooks
+   playbooks_best_practices
+   become
+   playbooks_looks
+   playbooks_delegation
+   playbooks_conditionals
+   playbooks_tests
+   playbooks_blocks
+   playbooks_handlers
+   playbooks_error_handling
+   playbooks_environment
+   playbooks_reuse
+   playbooks_reuse_roles
+   playbooks_reuse_includes
+   playbooks_checkmode
+   playbooks_startnstep
+   playbooks_debugger
+   playbooks_strategies
+   playbooks_async
+   playbooks_advanced_syntax
+   plugin_filtering_config
    sample_setup
    modules
    ../plugins/plugins
