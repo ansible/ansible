@@ -259,7 +259,6 @@ def _unroll_iterator(func):
         except Exception as e:
             if 'undefined' in to_native(e):
                 from jinja2.runtime import Undefined
-                from jinja2.exceptions import UndefinedError
                 undefined_input = any(isinstance(arg, (Undefined, AnsibleUndefined)) for arg in args)
                 undefined_input |= any(isinstance(kwargs[kwarg], (Undefined, AnsibleUndefined)) for kwarg in kwargs)
                 if undefined_input:

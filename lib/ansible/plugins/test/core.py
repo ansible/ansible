@@ -22,6 +22,7 @@ __metaclass__ = type
 import re
 import operator as py_operator
 from distutils.version import LooseVersion, StrictVersion
+from jinja2.exceptions import UndefinedError
 
 from ansible import errors
 from ansible.module_utils._text import to_text
@@ -170,6 +171,8 @@ def version_compare(value, version, operator='eq', strict=False):
     try:
         method = getattr(py_operator, operator)
         return method(Version(str(value)), Version(str(version)))
+    except UndefinedError as e:
+        raise errors.AnsibleUndefinedVariable('Version comparison: %s' % e)
     except Exception as e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 

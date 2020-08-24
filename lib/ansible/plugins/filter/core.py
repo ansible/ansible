@@ -38,9 +38,10 @@ import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
+from jinja2.exceptions import UndefinedError
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError, AnsibleUndefinedVariable
 from ansible.module_utils.six import iteritems, string_types, integer_types, reraise
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -103,6 +104,8 @@ def strftime(string_format, second=None):
     if second is not None:
         try:
             second = float(second)
+        except UndefinedError as e:
+            raise AnsibleUndefinedVariable(to_native(e))
         except Exception:
             raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
     return time.strftime(string_format, time.localtime(second))
@@ -247,6 +250,8 @@ def randomize_list(mylist, seed=None):
             r.shuffle(mylist)
         else:
             shuffle(mylist)
+    except UndefinedError as e:
+        raise AnsibleUndefinedVariable(to_native(e))
     except Exception:
         pass
     return mylist
@@ -255,6 +260,8 @@ def randomize_list(mylist, seed=None):
 def get_hash(data, hashtype='sha1'):
     try:
         h = hashlib.new(hashtype)
+    except UndefinedError as e:
+        raise AnsibleUndefinedVariable(to_native(e))
     except Exception as e:
         # hash is not supported?
         raise AnsibleFilterError(e)
