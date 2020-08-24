@@ -3,7 +3,7 @@
 Working with playbooks
 ======================
 
-Playbooks are Ansible's configuration, deployment, and orchestration language. They can describe a policy you want your remote systems to enforce, or a set of steps in a general IT process.
+Playbooks record and execute Ansible's configuration, deployment, and orchestration functions. They can describe a policy you want your remote systems to enforce, or a set of steps in a general IT process.
 
 If Ansible modules are the tools in your workshop, playbooks are your instruction manuals, and your inventory of hosts are your raw material.
 
@@ -19,16 +19,6 @@ You should look at `Example Playbooks <https://github.com/ansible/ansible-exampl
 .. toctree::
    :maxdepth: 2
 
-   playbooks_intro
-   playbooks_best_practices
-   playbooks_reuse
-   playbooks_reuse_roles
-   playbooks_variables
-   playbooks_vars_facts
    playbooks_templating
-   playbooks_conditionals
-   playbooks_loops
-   playbooks_blocks
    playbooks_special_topics
-   playbooks_strategies
    guide_rolling_upgrade
