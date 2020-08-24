@@ -48,7 +48,7 @@ Writing tasks, plays, and playbooks
   * Grouping a set of tasks together with :ref:`blocks <playbooks_blocks>`
   * Running tasks only when something has changed with :ref:`handlers <playbooks_handlers>`
   * Changing the way Ansible :ref:`handles failures <playbooks_error_handling>`)
-  * Setting remote environment values
+  * Setting remote :ref:`environment values <playbooks_environment>`
 
 * I want to leverage the power of re-usable Ansible artifacts. How do I create re-usable :ref:`files <playbooks_reuse>` and :ref:`roles <playbooks_reuse_roles>`?
 * I need to incorporate one file or playbook inside another. What is the difference between :ref:`including and importing <playbooks_reuse_includes>`?
@@ -64,14 +64,15 @@ Once your playbook is ready to run, you may want to review these advanced topics
 * Controlling how my playbook executes with :ref:`strategies and more <playbooks_strategies>`
 * Running tasks, plays, and playbooks :ref:`asynchronously <playbooks_async>`
 
-Advanced features
-=================
+Advanced features and reference
+===============================
 
 * Using :ref:`advanced syntax <playbooks_advanced_syntax>`
 * Manipulating :ref:`complex data <complex_data_manipulation>`
 * Using :ref:`plugins <plugins_lookup>`
 * Using :ref:`playbook keywords <playbook_keywords>`
 * Using :ref:`command-line tools <command_line_tools>`
+* Module :ref:`maintenance <modules_support>`
 
 
 .. toctree::
