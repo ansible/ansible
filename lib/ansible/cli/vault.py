@@ -312,7 +312,7 @@ class VaultCLI(CLI):
         # read from stdin
         if self.encrypt_string_read_stdin:
             if sys.stdout.isatty():
-                display.display("Reading plaintext input from stdin. (ctrl-d to end input)", stderr=True)
+                display.display("Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a newline)", stderr=True)
 
             stdin_text = sys.stdin.read()
             if stdin_text == '':

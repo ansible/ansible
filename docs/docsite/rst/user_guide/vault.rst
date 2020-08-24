@@ -218,7 +218,7 @@ To encrypt the string 'letmein' read from stdin, add the vault ID 'test' using t
 
 The command above creates this output::
 
-    Reading plaintext input from stdin. (ctrl-d to end input)
+    Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a new line)
     db_password: !vault |
               $ANSIBLE_VAULT;1.2;AES256;dev
               61323931353866666336306139373937316366366138656131323863373866376666353364373761
@@ -237,7 +237,7 @@ The command above triggers this prompt:
 
 .. code-block:: text
 
-    Reading plaintext input from stdin. (ctrl-d to end input)
+    Reading plaintext input from stdin. (ctrl-d to end input, twice if your content does not already have a new line)
 
 Type the string to encrypt (for example, 'hunter2'), hit ctrl-d, and wait.
 
