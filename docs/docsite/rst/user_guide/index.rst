@@ -4,7 +4,7 @@
 User Guide
 ##########
 
-Welcome to the Ansible User Guide! This guide covers how to work with Ansible, including using the command line, working with inventory, and writing playbooks. This page outlines the most common situations and questions that bring readers to this section. If you prefer a traditional table of contents, you can find one at the bottom of the page.
+Welcome to the Ansible User Guide! This guide covers how to work with Ansible, including using the command line, working with inventory, interacting with data, writing tasks, plays, and playbooks; executing playbooks, and reference materials. This page outlines the most common situations and questions that bring readers to this section. If you prefer a traditional table of contents, you can find one at the bottom of the page.
 
 Getting started
 ===============
@@ -17,8 +17,8 @@ Getting started
 * I'm ready to learn about Ansible. What :ref:`basic_concepts` do I need to learn?
 * I want to use Ansible without writing a playbook. How do I use :ref:`ad-hoc commands <intro_adhoc>`?
 
-Using inventory
-===============
+Working with inventory
+======================
 
 * I have a list of servers and devices I want to automate. How do I create :ref:`inventory <intro_inventory>` to track them?
 * I use cloud services and constantly have servers and devices starting and stopping. How do I track them using :ref:`dynamic inventory <intro_dynamic_inventory>`?
@@ -72,6 +72,7 @@ Advanced features and reference
 * Using :ref:`plugins <plugins_lookup>`
 * Using :ref:`playbook keywords <playbook_keywords>`
 * Using :ref:`command-line tools <command_line_tools>`
+* Rejecting :ref:`specific modules <plugin_filtering_config>`
 * Module :ref:`maintenance <modules_support>`
 
 
