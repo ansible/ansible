@@ -46,8 +46,7 @@ from .data import (
 )
 
 AWS_ENDPOINTS = {
-    'us-east-1': 'https://14blg63h2i.execute-api.us-east-1.amazonaws.com',
-    'us-east-2': 'https://g5xynwbk96.execute-api.us-east-2.amazonaws.com',
+    'us-east-1': 'https://ansible-core-ci.testing.ansible.com',
 }
 
 
@@ -75,7 +74,6 @@ class AnsibleCoreCI:
         self.ci_provider = get_ci_provider()
         self.auth_context = AuthContext()
         self.name = name if name else '%s-%s' % (self.platform, self.version)
-        self.resource = 'jobs'
 
         # Assign each supported platform to one provider.
         # This is used to determine the provider from the platform when no provider is specified.
@@ -117,10 +115,8 @@ class AnsibleCoreCI:
         self.path = os.path.expanduser('~/.ansible/test/instances/%s-%s-%s' % (self.name, self.provider, self.stage))
 
         if self.provider in ('aws', 'azure'):
-            if self.provider != 'aws':
-                self.resource = self.provider
-
             if args.remote_aws_region:
+                display.warning('The --remote-aws-region option is obsolete and will be removed in a future version of ansible-test.')
                 # permit command-line override of region selection
                 region = args.remote_aws_region
                 # use a dedicated CI key when overriding the region selection
@@ -129,7 +125,12 @@ class AnsibleCoreCI:
                 region = 'us-east-1'
 
             self.path = "%s-%s" % (self.path, region)
-            self.endpoints = (AWS_ENDPOINTS[region],)
+
+            if self.args.remote_endpoint:
+                self.endpoints = (self.args.remote_endpoint,)
+            else:
+                self.endpoints = (AWS_ENDPOINTS[region],)
+
             self.ssh_key = SshKey(args)
 
             if self.platform == 'windows':
@@ -137,8 +138,11 @@ class AnsibleCoreCI:
             else:
                 self.port = 22
         elif self.provider == 'parallels':
-            self.endpoints = self._get_parallels_endpoints()
-            self.max_threshold = 6
+            if self.args.remote_endpoint:
+                self.endpoints = (self.args.remote_endpoint,)
+            else:
+                self.endpoints = self._get_parallels_endpoints()
+                self.max_threshold = 6
 
             self.ssh_key = SshKey(args)
             self.port = None
@@ -188,7 +192,7 @@ class AnsibleCoreCI:
         sleep = 3
 
         for _iteration in range(1, 10):
-            response = client.get('https://s3.amazonaws.com/ansible-ci-files/ansible-test/parallels-endpoints.txt')
+            response = client.get('https://ansible-ci-files.s3.amazonaws.com/ansible-test/parallels-endpoints.txt')
 
             if response.status_code == 200:
                 endpoints = tuple(response.response.splitlines())
@@ -322,7 +326,7 @@ class AnsibleCoreCI:
 
     @property
     def _uri(self):
-        return '%s/%s/%s/%s' % (self.endpoint, self.stage, self.resource, self.instance_id)
+        return '%s/%s/%s/%s' % (self.endpoint, self.stage, self.provider, self.instance_id)
 
     def _start(self, auth):
         """Start instance."""
