@@ -9,7 +9,7 @@ Collections are a distribution format for Ansible content. You can use collectio
 You can publish and use collections through `Ansible Galaxy <https://galaxy.ansible.com>`_.
 
 * For details on how to *use* collections see :ref:`collections`.
-* For the current development status of Collections and FAQ see `Ansible Collections Overview and FAQ <https://github.com/ansible-collections/overview/blob/master/README.rst>`_.
+* For the current development status of Collections and FAQ see `Ansible Collections Overview and FAQ <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
 
 .. contents::
    :local:
@@ -532,7 +532,7 @@ Collection versions use `Semantic Versioning <https://semver.org/>`_ for version
 Migrating Ansible content to a different collection
 ====================================================
 
-First, look at `Ansible Collection Checklist <https://github.com/ansible-collections/overview/blob/master/collection_requirements.rst>`_.
+First, look at `Ansible Collection Checklist <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_.
 
 To migrate content from one collection to another, you need to create three PRs as follows:
 
