@@ -9,7 +9,11 @@ Welcome to the Ansible User Guide! This guide covers how to work with Ansible, i
 Getting started
 ===============
 
-* I'm new to Ansible. Do you have a :ref:`quick video overview <quickstart>` of how Ansible works?
+* I'd like an overview of how Ansible works. Where can I find:
+
+  * a :ref:`quick video overview <quickstart>`
+  * a :ref:`text introduction <intro_getting_started>`
+
 * I'm ready to learn about Ansible. What :ref:`basic_concepts` do I need to learn?
 * I want to use Ansible without writing a playbook. How do I use :ref:`ad-hoc commands <intro_adhoc>`?
 
@@ -67,6 +71,7 @@ Advanced features
 * Manipulating :ref:`complex data <complex_data_manipulation>`
 * Using :ref:`plugins <plugins_lookup>`
 * Using :ref:`playbook keywords <playbook_keywords>`
+* Using :ref:`command-line tools <command_line_tools>`
 
 
 .. toctree::
