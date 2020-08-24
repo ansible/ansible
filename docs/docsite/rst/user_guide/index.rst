@@ -52,6 +52,7 @@ Writing tasks, plays, and playbooks
 
 * I want to leverage the power of re-usable Ansible artifacts. How do I create re-usable :ref:`files <playbooks_reuse>` and :ref:`roles <playbooks_reuse_roles>`?
 * I need to incorporate one file or playbook inside another. What is the difference between :ref:`including and importing <playbooks_reuse_includes>`?
+* I want to run selected parts of my playbook. How do I add and use :ref:`tags <tags>`?
 
 Executing playbooks
 ===================
@@ -100,9 +101,10 @@ If you prefer to read the entire User Guide, here's a list of the pages in order
    playbooks_prompts
    playbooks_module_defaults
    playbooks
+   playbooks_intro
    playbooks_best_practices
    become
-   playbooks_looks
+   playbooks_loops
    playbooks_delegation
    playbooks_conditionals
    playbooks_tests
@@ -113,12 +115,14 @@ If you prefer to read the entire User Guide, here's a list of the pages in order
    playbooks_reuse
    playbooks_reuse_roles
    playbooks_reuse_includes
+   playbooks_tags
    playbooks_checkmode
    playbooks_startnstep
    playbooks_debugger
    playbooks_strategies
    playbooks_async
    playbooks_advanced_syntax
+   complex_data_manipulation
    plugin_filtering_config
    sample_setup
    modules
