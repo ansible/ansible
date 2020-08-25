@@ -14,7 +14,7 @@ description:
   underlying transport but instead runs in a PowerShell interpreter.
 version_added: "2.7"
 requirements:
-- pypsrp>=0.4.0 (Python library)
+- pypsrp (Python library)
 options:
   # transport options
   remote_addr:
@@ -463,8 +463,6 @@ class Connection(ConnectionBase):
             rc, stdout, stderr, local_sha1 = self._put_file_new(in_path, out_path)
 
         else:
-            display.deprecated("Older pypsrp library detected, please update to pypsrp>=0.4.0 to use the newer copy "
-                               "method over PSRP.", version="2.13", collection_name='ansible.builtin')
             rc, stdout, stderr, local_sha1 = self._put_file_old(in_path, out_path)
 
         if rc != 0:
