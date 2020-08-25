@@ -93,7 +93,7 @@
     - name: try-restart result should not restart dummy service when it is not running
       systemd:
         name: dummy
-        state: tried-restarting
+        state: conditionally-restarted
       register: inactive_try_restart
 
     - name: Start dummy service
@@ -104,7 +104,7 @@
     - name: try-restart result should restart dummy serivce when it is running
       systemd:
         name: dummy
-        state: tried-restarting
+        state: conditionally-restarted
       register: running_try_restart
 
     - assert:

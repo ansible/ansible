@@ -109,7 +109,7 @@ EXAMPLES = '''
 - name: Restart service httpd if it is running
   systemd:
     name: httpd
-    state: tried-restarting
+    state: conditionally-restarted
 
 - name: Enable service httpd and ensure it is not masked
   systemd:
@@ -325,7 +325,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(type='str', aliases=['service', 'unit']),
-            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped', 'tried-restarting']),
+            state=dict(type='str', choices=['reloaded', 'restarted', 'started', 'stopped', 'conditionally-restarted']),
             enabled=dict(type='bool'),
             force=dict(type='bool'),
             masked=dict(type='bool'),
@@ -512,7 +512,7 @@ def main():
                 elif module.params['state'] == 'stopped':
                     if is_running_service(result['status']) or is_deactivating_service(result['status']):
                         action = 'stop'
-                elif module.params['state'] == 'tried-restarting':
+                elif module.params['state'] == 'conditionally-restarted':
                     if is_running_service(result['status']):
                         action = 'try-restart'
                 else:
