@@ -1,0 +1,5 @@
+bugfixes:
+- psrp - Use native PSRP mechanism when copying files to support custom endpoints
+
+deprecated_features:
+- psrp - Set the minimum version of ``pypsrp`` to ``0.4.0``.
