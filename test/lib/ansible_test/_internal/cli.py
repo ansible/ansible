@@ -926,6 +926,7 @@ def add_environments(parser, isolated_delegation=True):
             remote_provider=None,
             remote_aws_region=None,
             remote_terminate=None,
+            remote_endpoint=None,
             python_interpreter=None,
         )
 
