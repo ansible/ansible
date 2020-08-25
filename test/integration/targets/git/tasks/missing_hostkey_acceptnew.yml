@@ -16,7 +16,8 @@
     - assert:
         that:
           - git_result is failed
-          # - "'does not support' in git_result.warnings" (how to handle this?)
+          - git_result.warnings is search("does not support")
+
   when: ssh_supports_accept_newhostkey.rc != 0
 
 - name: MISSING-HOSTKEY | checkout ssh://git@github.com repo without accept_newhostkey (expected fail)
