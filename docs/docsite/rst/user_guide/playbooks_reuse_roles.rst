@@ -258,12 +258,22 @@ Ansible only executes each role once, even if you define it multiple times, unle
         - bar
         - foo
 
-You have two options to force Ansible to run a role more than once:
+You have two options to force Ansible to run a role more than once.
 
-  #. Pass different parameters in each role definition.
-  #. Add ``allow_duplicates: true`` to the ``meta/main.yml`` file for the role.
+Passing different parameters
+----------------------------
 
-Example 1 - passing different parameters:
+You can pass different parameters in each role definition as:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: webservers
+      roles:
+        - { role: foo, vars: { message: "first" } }
+        - { role: foo, vars: { message: "second" } }
+
+or
 
 .. code-block:: yaml
 
@@ -273,11 +283,16 @@ Example 1 - passing different parameters:
         - role: foo
           vars:
             message: "first"
-        - { role: foo, vars: { message: "second" } }
+        - role: foo
+          vars:
+            message: "second"
 
 In this example, because each role definition has different parameters, Ansible runs ``foo`` twice.
 
-Example 2 - using ``allow_duplicates: true``:
+Using ``allow_duplicates: true``
+--------------------------------
+
+Add ``allow_duplicates: true`` to the ``meta/main.yml`` file for the role:
 
 .. code-block:: yaml
 
