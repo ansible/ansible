@@ -97,6 +97,20 @@ with_together
         msg: "{{ item.0 }} - {{ item.1 }}"
       loop: "{{ list_one|zip(list_two)|list }}"
 
+Another example with complex data
+
+.. code-block:: yaml+jinja
+
+    - name: with_together -> loop
+      debug:
+        msg: "{{ item.0 }} - {{ item.1 }} - {{ item.2 }}"
+      loop: "{{ data[0]|zip(*data[1:])|list }}"
+      vars:
+        data:
+          - ['a', 'b', 'c']
+          - ['d', 'e', 'f']
+          - ['g', 'h', 'i']
+
 with_dict
 ---------
 
