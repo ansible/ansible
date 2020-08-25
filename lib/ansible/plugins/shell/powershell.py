@@ -43,12 +43,24 @@ def _parse_clixml(data, stream="Error"):
     message encoded in the XML data. CLIXML is used by PowerShell to encode
     multiple objects in stderr.
     """
-    clixml = ET.fromstring(data.split(b"\r\n", 1)[-1])
-    namespace_match = re.match(r'{(.*)}', clixml.tag)
-    namespace = "{%s}" % namespace_match.group(1) if namespace_match else ""
+    lines = []
 
-    strings = clixml.findall("./%sS" % namespace)
-    lines = [e.text.replace('_x000D__x000A_', '') for e in strings if e.attrib.get('S') == stream]
+    # There are some scenarios where the stderr contains a nested CLIXML element like
+    # '<# CLIXML\r\n<# CLIXML\r\n<Objs>...</Objs><Objs>...</Objs>'.
+    # Parse each individual <Objs> element and add the error strings to our stderr list.
+    # https://github.com/ansible/ansible/issues/69550
+    while data:
+        end_idx = data.find(b"</Objs>") + 7
+        current_element = data[data.find(b"<Objs "):end_idx]
+        data = data[end_idx:]
+
+        clixml = ET.fromstring(current_element)
+        namespace_match = re.match(r'{(.*)}', clixml.tag)
+        namespace = "{%s}" % namespace_match.group(1) if namespace_match else ""
+
+        strings = clixml.findall("./%sS" % namespace)
+        lines.extend([e.text.replace('_x000D__x000A_', '') for e in strings if e.attrib.get('S') == stream])
+
     return to_bytes('\r\n'.join(lines))
 
 
