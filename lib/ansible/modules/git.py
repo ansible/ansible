@@ -325,6 +325,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import b, string_types
 from ansible.module_utils._text import to_native, to_text
+from ansible.module_utils.common.process import get_bin_path
 
 
 def relocate_repo(module, result, repo_dir, old_repo_dir, worktree_dir):
