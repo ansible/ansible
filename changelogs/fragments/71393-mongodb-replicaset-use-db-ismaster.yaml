@@ -1,10 +1,3 @@
 ---
 bugfixes:
-  - Fixes (https://github.com/ansible-collections/community.mongodb/issues/136).
-    Previously the module queried the local.system.replset collection to
-    determine the replicaset name. This required authentication if it was
-    enabled. The module now uses the db.isMaster command to determine this
-    and this does not require authentication. The module previously only
-    authenticated when login details were provided and authentication was
-    enabled. The module will now always authenticate if login details
-    are provided.
+  - mongodb_replicaset - fixes authentication to determine replicaset name (https://github.com/ansible-collections/community.mongodb/issues/136).
