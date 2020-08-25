@@ -1,0 +1,2 @@
+bugfixes:
+- powershell - fix escaping of strings that broken modules like fetch when dealing with special chars - https://github.com/ansible/ansible/issues/62781

@@ -220,6 +220,7 @@ test/integration/targets/template/templates/encoding_1252.j2 no-smart-quotes
 test/integration/targets/unicode/unicode.yml no-smart-quotes
 test/integration/targets/win_exec_wrapper/library/test_fail.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_exec_wrapper/tasks/main.yml no-smart-quotes  # We are explicitly testing smart quote support for env vars
+test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explictly testing smart quotes in the file name to fetch
 test/integration/targets/win_module_utils/library/legacy_only_new_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_module_utils/library/legacy_only_old_way_win_line_ending.ps1 line-endings  # Explicitly tests that we still work with Windows line endings
 test/integration/targets/win_script/files/test_script.ps1 pslint:PSAvoidUsingWriteHost # Keep
