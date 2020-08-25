@@ -24,7 +24,7 @@ Control node requirements
 
 Currently Ansible can be run from any machine with Python 2 (version 2.7) or Python 3 (versions 3.5 and higher) installed.
 This includes Red Hat, Debian, CentOS, macOS, any of the BSDs, and so on.
-Windows is not supported for the control node.
+Windows is not supported for the control node, read more about this in `Matt Davis's blog post <http://blog.rolpdog.com/2020/03/why-no-ansible-controller-for-windows.html>`_.
 
 When choosing a control node, bear in mind that any management system benefits from being run near the machines being managed. If you are running Ansible in a cloud, consider running it from a machine inside that cloud. In most cases this will work better than on the open Internet.
 
