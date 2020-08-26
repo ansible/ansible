@@ -189,3 +189,24 @@ def test_invalid_crypt_salt():
         '1234567890123456789012',
         None
     )
+
+
+def test_passlib_bcrypt_salt(recwarn):
+    passlib_exc = pytest.importorskip("passlib.exc")
+
+    secret = 'foo'
+    salt = '1234567890123456789012'
+    repaired_salt = '123456789012345678901u'
+    expected = '$2b$12$123456789012345678901uMv44x.2qmQeefEGb3bcIRc1mLuO7bqa'
+
+    p = encrypt.PasslibHash('bcrypt')
+
+    result = p.hash(secret, salt=salt)
+    passlib_warnings = [w.message for w in recwarn if isinstance(w.message, passlib_exc.PasslibHashWarning)]
+    assert len(passlib_warnings) == 0
+    assert result == expected
+
+    recwarn.clear()
+
+    result = p.hash(secret, salt=repaired_salt)
+    assert result == expected
