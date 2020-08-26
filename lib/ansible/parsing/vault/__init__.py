@@ -1264,9 +1264,9 @@ class VaultAES256:
 
     @classmethod
     def _get_salt(cls):
-        custom_salt = os.getenv('ANSIBLE_VAULT_SALT')
-        if custom_salt:
-            return to_bytes(custom_salt)
+        vault_salt = C.DEFAULT_VAULT_ENCRYPT_SALT
+        if vault_salt:
+            return to_bytes(vault_salt)
         return os.urandom(32)
 
     @classmethod
