@@ -4,25 +4,16 @@
 Network Debug and Troubleshooting Guide
 ***************************************
 
+This section discusses how to debug and troubleshoot network modules in Ansible.
+
 .. contents::
    :local:
-
-
-Introduction
-============
-
-Starting with Ansible version 2.1, you can now use the familiar Ansible models of playbook authoring and module development to manage heterogeneous networking devices. Ansible supports a growing number of network devices using both CLI over SSH and API (when available) transports.
-
-This section discusses how to debug and troubleshoot network modules in Ansible 2.3.
-
 
 
 How to troubleshoot
 ===================
 
-This section covers troubleshooting issues with Network Modules.
-
-Errors generally fall into one of the following categories:
+Ansible network automation errors generally fall into one of the following categories:
 
 :Authentication issues:
   * Not correctly specifying credentials
@@ -36,7 +27,7 @@ Errors generally fall into one of the following categories:
 
 .. warning:: ``unable to open shell``
 
-  The ``unable to open shell`` message is new in Ansible 2.3, it means that the ``ansible-connection`` daemon has not been able to successfully
+  The ``unable to open shell`` message means that the ``ansible-connection`` daemon has not been able to successfully
   talk to the remote network device. This generally means that there is an authentication issue. See the "Authentication and connection issues" section
   in this document for more information.
 
@@ -47,11 +38,11 @@ Enabling Networking logging and how to read the logfile
 
 **Platforms:** Any
 
-Ansible 2.3 features improved logging to help diagnose and troubleshoot issues regarding Ansible Networking modules.
+Ansible includes logging to help diagnose and troubleshoot issues regarding Ansible Networking modules.
 
-Because logging is very verbose it is disabled by default. It can be enabled via the :envvar:`ANSIBLE_LOG_PATH` and :envvar:`ANSIBLE_DEBUG` options on the ansible-controller, that is the machine running ansible-playbook.
+Because logging is very verbose, it is disabled by default. It can be enabled with the :envvar:`ANSIBLE_LOG_PATH` and :envvar:`ANSIBLE_DEBUG` options on the ansible-controller, that is the machine running ``ansible-playbook``.
 
-Before running ``ansible-playbook`` run the following commands to enable logging::
+Before running ``ansible-playbook``, run the following commands to enable logging::
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
@@ -104,19 +95,21 @@ Enabling Networking device interaction logging
 
 **Platforms:** Any
 
-Ansible 2.8 features added logging of device interaction in log file to help diagnose and troubleshoot
-issues regarding Ansible Networking modules. The messages are logged in file pointed by ``log_path`` configuration
-option in Ansible configuration file or by set :envvar:`ANSIBLE_LOG_PATH` as mentioned in above section.
+Ansible includes logging of device interaction in the log file to help diagnose and troubleshoot
+issues regarding Ansible Networking modules. The messages are logged in the file pointed to by the ``log_path`` configuration
+option in the Ansible configuration file or by setting the  :envvar:`ANSIBLE_LOG_PATH`.
 
 .. warning::
-  The device interaction messages consist of command executed on target device and the returned response, as this
+  The device interaction messages consist of command executed on the target device and the returned response. Since this
   log data can contain sensitive information including passwords in plain text it is disabled by default.
   Additionally, in order to prevent accidental leakage of data, a warning will be shown on every task with this
-  setting enabled specifying which host has it enabled and where the data is being logged.
+  setting enabled, specifying which host has it enabled and where the data is being logged.
 
-Be sure to fully understand the security implications of enabling this option. The device interaction logging can be enabled either globally by setting in configuration file or by setting environment or enabled on per task basis by passing special variable to task.
+Be sure to fully understand the security implications of enabling this option. The device interaction logging can be enabled either globally by setting in configuration file or by setting environment or enabled on per task basis by passing a special variable to the task.
 
-Before running ``ansible-playbook`` run the following commands to enable logging::
+Before running ``ansible-playbook`` run the following commands to enable logging:
+
+.. code-block:: text
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
@@ -127,7 +120,7 @@ Enable device interaction logging for a given task
 .. code-block:: yaml
 
   - name: get version information
-    ios_command:
+    cisco.ios.ios_command:
       commands:
         - show version
     vars:
@@ -141,14 +134,15 @@ To make this a global setting, add the following to your ``ansible.cfg`` file:
    [persistent_connection]
    log_messages = True
 
-or enable environment variable `ANSIBLE_PERSISTENT_LOG_MESSAGES`
+or enable the environment variable `ANSIBLE_PERSISTENT_LOG_MESSAGES`:
+
+.. code-block:: text
 
    # Enable device interaction logging
    export ANSIBLE_PERSISTENT_LOG_MESSAGES=True
 
-If the task is failing at the time on connection initialization itself it is recommended to enable this option
-globally else if an individual task is failing intermittently this option can be enabled for that task itself to
-find the root cause.
+If the task is failing on connection initialization itself, you should enable this option
+globally. If an individual task is failing intermittently this option can be enabled for that task itself to find the root cause.
 
 After Ansible has finished running you can inspect the log file which has been created on the ansible-controller
 
@@ -170,26 +164,28 @@ For Ansible this can be done by ensuring you are only running against one remote
 
 `ad-hoc` refers to running Ansible to perform some quick command using ``/usr/bin/ansible``, rather than the orchestration language, which is ``/usr/bin/ansible-playbook``. In this case we can ensure connectivity by attempting to execute a single command on the remote device::
 
-  ansible -m eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=local' -u admin -k
+  ansible -m arista.eos.eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=ansible.netcommon.network_cli' -u admin -k
 
 In the above example, we:
 
 * connect to ``switch1.example.net`` specified in the inventory file ``inventory``
-* use the module ``eos_command``
+* use the module ``arista.eos.eos_command``
 * run the command ``?``
 * connect using the username ``admin``
-* inform ansible to prompt for the ssh password by specifying ``-k``
+* inform the ``ansible`` command to prompt for the SSH password by specifying ``-k``
 
-If you have SSH keys configured correctly, you don't need to specify the ``-k`` parameter
+If you have SSH keys configured correctly, you don't need to specify the ``-k`` parameter.
 
-If the connection still fails you can combine it with the enable_network_logging parameter. For example::
+If the connection still fails you can combine it with the enable_network_logging parameter. For example:
+
+.. code-block:: text
 
    # Specify the location for the log file
    export ANSIBLE_LOG_PATH=~/ansible.log
    # Enable Debug
    export ANSIBLE_DEBUG=True
-   # Run with 4*v for connection level verbosity
-   ansible -m eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=local' -u admin -k
+   # Run with ``-vvvv`` for connection level verbosity
+   ansible -m arista.eos.eos_command -a 'commands=?' -i inventory switch1.example.net -e 'ansible_connection=ansible.netcommon.network_cli' -u admin -k
 
 Then review the log file and find the relevant error message in the rest of this document.
 
@@ -202,7 +198,7 @@ Troubleshooting socket path issues
 
 **Platforms:** Any
 
-The ``Socket path does not exist or cannot be found``  and ``Unable to connect to socket`` messages are new in Ansible 2.5. These messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist.
+The ``Socket path does not exist or cannot be found``  and ``Unable to connect to socket`` messages indicate that the socket used to communicate with the remote network device is unavailable or does not exist.
 
 For example:
 
@@ -259,7 +255,7 @@ Category "Unable to open shell"
 
 **Platforms:** Any
 
-The ``unable to open shell`` message is new in Ansible 2.3. This message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable :ref:logging`a_note_about_logging` to find the underlying issues.
+The ``unable to open shell`` message means that the ``ansible-connection`` daemon has not been able to successfully talk to the remote network device. This generally means that there is an authentication issue. It is a "catch all" message, meaning you need to enable :ref:`logging <a_note_about_logging>` to find the underlying issues.
 
 
 
@@ -508,21 +504,18 @@ Suggestions to resolve:
   .. code-block:: yaml
 
       - name: save running-config
-        ios_command:
+        cisco.ios.ios_command:
           commands: copy running-config startup-config
           provider: "{{ cli }}"
           timeout: 30
 
-  For network_cli, netconf connection type (applicable from 2.7 onwards):
-
-  .. FIXME: Detail error here
 
   Suggestions to resolve:
 
   .. code-block:: yaml
 
       - name: save running-config
-        ios_command:
+        cisco.ios.ios_command:
           commands: copy running-config startup-config
         vars:
           ansible_command_timeout: 60
@@ -611,7 +604,7 @@ This section details issues are caused by issues with the Playbook itself.
 Error: "Unable to enter configuration mode"
 -------------------------------------------
 
-**Platforms:** eos and ios
+**Platforms:** Arista EOS and Cisco IOS
 
 This occurs when you attempt to run a task that requires privileged mode in a user mode shell.
 
@@ -629,35 +622,7 @@ For example:
 
 Suggestions to resolve:
 
-In Ansible prior to 2.5 :
-Add ``authorize: yes`` to the task. For example:
-
-.. code-block:: yaml
-
-  - name: configure hostname
-    ios_system:
-      provider:
-        hostname: foo
-        authorize: yes
-    register: result
-
-If the user requires a password to go into privileged mode, this can be specified with ``auth_pass``; if ``auth_pass`` isn't set, the environment variable `ANSIBLE_NET_AUTHORIZE` will be used instead.
-
-
-Add ``authorize: yes`` to the task. For example:
-
-.. code-block:: yaml
-
-  - name: configure hostname
-    ios_system:
-    provider:
-      hostname: foo
-      authorize: yes
-      auth_pass: "{{ mypasswordvar }}"
-  register: result
-
-
-.. note:: Starting with Ansible 2.5 we recommend using ``connection: network_cli`` and ``become: yes``
+ Use ``connection: ansible.netcommon.network_cli`` and ``become: yes``
 
 
 Proxy Issues
@@ -668,10 +633,8 @@ Proxy Issues
 delegate_to vs ProxyCommand
 ---------------------------
 
-The new connection framework for Network Modules in Ansible 2.3 that uses ``cli`` transport
-no longer supports the use of the ``delegate_to`` directive.
 In order to use a bastion or intermediate jump host to connect to network devices over ``cli``
-transport, network modules now support the use of ``ProxyCommand``.
+transport, network modules support the use of ``ProxyCommand``.
 
 To use ``ProxyCommand``, configure the proxy settings in the Ansible inventory
 file to specify the proxy host.
@@ -751,8 +714,8 @@ Example Ansible inventory file
     junos01
 
     [junos:vars]
-    ansible_connection=netconf
-    ansible_network_os=junos
+    ansible_connection=ansible.netcommon.netconf
+    ansible_network_os=junipernetworks.junos.junos
     ansible_user=myuser
     ansible_password=!vault...
 
@@ -768,11 +731,11 @@ Miscellaneous Issues
 ====================
 
 
-Intermittent failure while using ``network_cli`` connection type
-----------------------------------------------------------------
+Intermittent failure while using ``ansible.netcommon.network_cli`` connection type
+------------------------------------------------------------------------------------
 
 If the command prompt received in response is not matched correctly within
-the ``network_cli`` connection plugin the task might fail intermittently with truncated
+the ``ansible.netcommon.network_cli`` connection plugin the task might fail intermittently with truncated
 response or with the error message ``operation requires privilege escalation``.
 Starting in 2.7.1 a new buffer read timer is added to ensure prompts are matched properly
 and a complete response is send in output. The timer default value is 0.2 seconds and
@@ -783,7 +746,7 @@ Example Per task timer setting
 .. code-block:: yaml
 
   - name: gather ios facts
-    ios_facts:
+    cisco.ios.ios_facts:
       gather_subset: all
     register: result
     vars:
@@ -800,10 +763,10 @@ To make this a global setting, add the following to your ``ansible.cfg`` file:
 This timer delay per command executed on remote host can be disabled by setting the value to zero.
 
 
-Task failure due to mismatched error regex within command response using ``network_cli`` connection type
---------------------------------------------------------------------------------------------------------
+Task failure due to mismatched error regex within command response using ``ansible.netcommon.network_cli`` connection type
+----------------------------------------------------------------------------------------------------------------------------
 
-In Ansible 2.9 and later, the network_cli connection plugin configuration options are added
+In Ansible 2.9 and later, the ``ansible.netcommon.network_cli`` connection plugin configuration options are added
 to handle the stdout and stderr regex to identify if the command execution response consist
 of a normal response or an error response. These options can be set group/host variables or as
 tasks variables.
@@ -813,7 +776,7 @@ Example: For mismatched error response
 .. code-block:: yaml
 
   - name: fetch logs from remote host
-    ios_command:
+    cisco.ios.ios_command:
       commands:
         - show logging
 
@@ -836,7 +799,7 @@ Modify the error regex for individual task.
 .. code-block:: yaml
 
   - name: fetch logs from remote host
-    ios_command:
+    cisco.ios.ios_command:
       commands:
         - show logging
     vars:
@@ -849,10 +812,10 @@ The terminal plugin regex options ``ansible_terminal_stderr_re`` and ``ansible_t
 the ``re.compile`` python method.
 
 
-Intermittent failure while using ``network_cli`` connection type due to slower network or remote target host
-------------------------------------------------------------------------------------------------------------
+Intermittent failure while using ``ansible.netcommon.network_cli`` connection type due to slower network or remote target host
+----------------------------------------------------------------------------------------------------------------------------------
 
-In Ansible 2.9 and later, the ``network_cli`` connection plugin configuration option is added to control
+In Ansible 2.9 and later, the ``ansible.netcommon.network_cli`` connection plugin configuration option is added to control
 the number of attempts to connect to a remote host. The default number of attempts is three.
 After every retry attempt the delay between retries is increased by power of 2 in seconds until either the
 maximum attempts are exhausted or either the ``persistent_command_timeout`` or ``persistent_connect_timeout`` timers are triggered.
