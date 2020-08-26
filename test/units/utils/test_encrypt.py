@@ -166,3 +166,47 @@ def test_random_salt():
     assert len(res) == 8
     for res_char in res:
         assert res_char in expected_salt_candidate_chars
+
+
+def test_invalid_crypt_salt():
+    pytest.raises(
+        AnsibleError,
+        encrypt.CryptHash('bcrypt')._salt,
+        '_',
+        None
+    )
+    encrypt.CryptHash('bcrypt')._salt('1234567890123456789012', None)
+    pytest.raises(
+        AnsibleError,
+        encrypt.CryptHash('bcrypt')._salt,
+        'kljsdf',
+        None
+    )
+    encrypt.CryptHash('sha256_crypt')._salt('123456', None)
+    pytest.raises(
+        AnsibleError,
+        encrypt.CryptHash('sha256_crypt')._salt,
+        '1234567890123456789012',
+        None
+    )
+
+
+def test_passlib_bcrypt_salt(recwarn):
+    passlib_exc = pytest.importorskip("passlib.exc")
+
+    secret = 'foo'
+    salt = '1234567890123456789012'
+    repaired_salt = '123456789012345678901u'
+    expected = '$2b$12$123456789012345678901uMv44x.2qmQeefEGb3bcIRc1mLuO7bqa'
+
+    p = encrypt.PasslibHash('bcrypt')
+
+    result = p.hash(secret, salt=salt)
+    passlib_warnings = [w.message for w in recwarn if isinstance(w.message, passlib_exc.PasslibHashWarning)]
+    assert len(passlib_warnings) == 0
+    assert result == expected
+
+    recwarn.clear()
+
+    result = p.hash(secret, salt=repaired_salt)
+    assert result == expected
