@@ -7,6 +7,7 @@ __metaclass__ = type
 import crypt
 import multiprocessing
 import random
+import re
 import string
 import sys
 
@@ -23,7 +24,10 @@ try:
     import passlib
     import passlib.hash
     from passlib.utils.handlers import HasRawSalt
-
+    try:
+        from passlib.utils.binary import bcrypt64
+    except ImportError:
+        from passlib.utils import bcrypt64
     PASSLIB_AVAILABLE = True
 except Exception:
     pass
@@ -61,12 +65,12 @@ def random_salt(length=8):
 
 
 class BaseHash(object):
-    algo = namedtuple('algo', ['crypt_id', 'salt_size', 'implicit_rounds'])
+    algo = namedtuple('algo', ['crypt_id', 'salt_size', 'implicit_rounds', 'salt_exact'])
     algorithms = {
-        'md5_crypt': algo(crypt_id='1', salt_size=8, implicit_rounds=None),
-        'bcrypt': algo(crypt_id='2a', salt_size=22, implicit_rounds=None),
-        'sha256_crypt': algo(crypt_id='5', salt_size=16, implicit_rounds=5000),
-        'sha512_crypt': algo(crypt_id='6', salt_size=16, implicit_rounds=5000),
+        'md5_crypt': algo(crypt_id='1', salt_size=8, implicit_rounds=None, salt_exact=False),
+        'bcrypt': algo(crypt_id='2a', salt_size=22, implicit_rounds=None, salt_exact=True),
+        'sha256_crypt': algo(crypt_id='5', salt_size=16, implicit_rounds=5000, salt_exact=False),
+        'sha512_crypt': algo(crypt_id='6', salt_size=16, implicit_rounds=5000, salt_exact=False),
     }
 
     def __init__(self, algorithm):
@@ -91,7 +95,14 @@ class CryptHash(BaseHash):
 
     def _salt(self, salt, salt_size):
         salt_size = salt_size or self.algo_data.salt_size
-        return salt or random_salt(salt_size)
+        ret = salt or random_salt(salt_size)
+        if re.search(r'[^./0-9A-Za-z]', ret):
+            raise AnsibleError("invalid characters in salt")
+        if self.algo_data.salt_exact and len(ret) != self.algo_data.salt_size:
+            raise AnsibleError("invalid salt size")
+        elif not self.algo_data.salt_exact and len(ret) > self.algo_data.salt_size:
+            raise AnsibleError("invalid salt size")
+        return ret
 
     def _rounds(self, rounds):
         if rounds == self.algo_data.implicit_rounds:
@@ -148,9 +159,15 @@ class PasslibHash(BaseHash):
         if not salt:
             return None
         elif issubclass(self.crypt_algo, HasRawSalt):
-            return to_bytes(salt, encoding='ascii', errors='strict')
+            ret = to_bytes(salt, encoding='ascii', errors='strict')
         else:
-            return to_text(salt, encoding='ascii', errors='strict')
+            ret = to_text(salt, encoding='ascii', errors='strict')
+
+        # Ensure the salt has the correct padding
+        if self.algorithm == 'bcrypt':
+            ret = bcrypt64.repair_unused(ret)
+
+        return ret
 
     def _clean_rounds(self, rounds):
         algo_data = self.algorithms.get(self.algorithm)
