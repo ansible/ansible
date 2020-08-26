@@ -104,7 +104,7 @@ def run_coverage(args, output_file, command, cmd):  # type: (CoverageConfig, str
     env = common_environment()
     env.update(dict(COVERAGE_FILE=output_file))
 
-    cmd = ['python', '-m', 'coverage', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
+    cmd = ['python', '-m', 'coverage.__main__', command, '--rcfile', COVERAGE_CONFIG_PATH] + cmd
 
     intercept_command(args, target_name='coverage', env=env, cmd=cmd, disable_coverage=True)
 
