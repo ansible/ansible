@@ -414,9 +414,12 @@ class JinjaPluginIntercept(MutableMapping):
 
         self._collection_jinja_func_cache = {}
 
-        self._get_ansible_plugins()
+        self._ansible_plugins_loaded = False
 
-    def _get_ansible_plugins(self):
+    def _load_ansible_plugins(self):
+        if self._ansible_plugins_loaded:
+            return
+
         for plugin in self._pluginloader.all():
             method_map = getattr(plugin, self._method_map_name)
             self._delegatee.update(method_map())
@@ -428,9 +431,13 @@ class JinjaPluginIntercept(MutableMapping):
                 else:
                     self._delegatee[plugin_name] = _unroll_iterator(plugin)
 
+        self._ansible_plugins_loaded = True
+
     # FUTURE: we can cache FQ filter/test calls for the entire duration of a run, since a given collection's impl's
     # aren't supposed to change during a run
     def __getitem__(self, key):
+        self._load_ansible_plugins()
+
         try:
             if not isinstance(key, string_types):
                 raise ValueError('key must be a string')
