@@ -133,6 +133,34 @@ We use:
       """"""""""""""""""""""""""""
 
 
+Syntax Highlighting - Pygments
+------------------------------
+
+The Ansible documentation supports a range of `Pygments lexers <http://pygments.org/>`_
+for `syntax highlighting <https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#code-examples>`_ to make our code examples look good.
+
+The following values are supported:
+
+* none (no highlighting)
+* default (similar to python3 but with a fallback to none without warning highlighting fails)
+* guess (let Pygments guess the lexer based on contents, only works with certain well-recognizable languages)
+* python
+* bash
+* jinja
+* yaml+jinja
+* console
+* shell-session
+* Any other lexer alias that `Pygments supports <http://pygments.org/docs/lexers>`_
+
+For example, you can highlight Python code using following syntax:
+
+.. code-block:: rst
+
+      .. code-block:: python
+
+         def my_beautiful_code():
+            pass
+
 Internal navigation
 -------------------
 
