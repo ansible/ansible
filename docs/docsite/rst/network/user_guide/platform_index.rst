@@ -54,40 +54,40 @@ Settings by Platform
 .. table::
     :name: network-platform-table
 
-    ===============================  =======================  ===========  =======  =======  ===========
-    ..                                                        ``ansible_connection:`` settings available
-    --------------------------------------------------------  ------------------------------------------
-    Network OS                       ``ansible_network_os:``  network_cli  netconf  httpapi  local
-    ===============================  =======================  ===========  =======  =======  ===========
-    `Arista EOS`_ `[†]`_                ``eos``                  ✓                     ✓        ✓
-    `Ciena SAOS6`_                      ``saos6``                ✓                              ✓
-    `Cisco ASA`_ `[†]`_                      ``asa``                  ✓                              ✓
-    `Cisco IOS`_ `[†]`_                 ``ios``                  ✓                              ✓
-    `Cisco IOS XR`_ `[†]`_              ``iosxr``                ✓                              ✓
-    `Cisco NX-OS`_ `[†]`_               ``nxos``                 ✓                     ✓        ✓
-    `Cloudengine OS`_                   ``ce``                   ✓            ✓                 ✓
-    `Dell OS6`_                         ``dellos6``              ✓                              ✓
-    `Dell OS9`_                        ``dellos9``              ✓                              ✓
-    `Dell OS10`_                        ``dellos10``             ✓                              ✓
-    `Ericsson ECCLI`_                   ``eric_eccli``           ✓                              ✓
-    `Extreme EXOS`_                     ``exos``                 ✓                     ✓
-    `Extreme IronWare`_                 ``ironware``             ✓                              ✓
-    `Extreme NOS`_                     ``nos``                  ✓
-    `Extreme SLX-OS`_                   ``slxos``                ✓
-    `Extreme VOSS`_                     ``voss``                 ✓
-    `F5 BIG-IP`_                                                                                ✓
-    `F5 BIG-IQ`_                                                                                ✓
-    `Junos OS`_ `[†]`_                  ``junos``                ✓            ✓                 ✓
-    `Lenovo CNOS`_                      ``cnos``                 ✓                              ✓
-    `Lenovo ENOS`_                      ``enos``                 ✓                              ✓
-    `Meraki`_                           ``meraki``                                              ✓
-    `MikroTik RouterOS`_                ``routeros``             ✓
-    `Nokia SR OS`_                      ``sros``                 ✓                              ✓
-    `Pluribus Netvisor`_                ``netvisor``             ✓
-    `Ruckus ICX`_                       ``icx``                  ✓
-    `VyOS`_ `[†]`_                      ``vyos``                 ✓                              ✓
-    OS that supports Netconf `[†]`_  ``<network-os>``                      ✓                 ✓
-    ===============================  =======================  ===========  =======  =======  ===========
+    ===============================  ================================  ===========  =======  =======  ===========
+    ..                                                                 ``ansible_connection:`` settings available
+    -----------------------------------------------------------------  ------------------------------------------
+    Network OS                       ``ansible_network_os:``           network_cli  netconf  httpapi  local
+    ===============================  ================================  ===========  =======  =======  ===========
+    `Arista EOS`_ `[†]`_             ``arista.eos.eos``                ✓                     ✓        ✓
+    `Ciena SAOS6`_                   ``ciena.saos6.saos6``             ✓                              ✓
+    `Cisco ASA`_ `[†]`_              ``cisco.asa.asa``                 ✓                              ✓
+    `Cisco IOS`_ `[†]`_              ``cisco.ios.ios``                 ✓                              ✓
+    `Cisco IOS XR`_ `[†]`_           ``cisco.iosxr.iosxr``             ✓                              ✓
+    `Cisco NX-OS`_ `[†]`_            ``cisco.nxos.nxos``               ✓                     ✓        ✓
+    `Cloudengine OS`_                ``community.network.ce``          ✓            ✓                 ✓
+    `Dell OS6`_                      ``dellemc.os6.os6``               ✓                              ✓
+    `Dell OS9`_                      ``dellemc.os9.os9``               ✓                              ✓
+    `Dell OS10`_                     ``dellemc.os10.0s10``             ✓                              ✓
+    `Ericsson ECCLI`_                ``community.network.eric_eccli``  ✓                              ✓
+    `Extreme EXOS`_                  ``community.network.exos``        ✓                     ✓
+    `Extreme IronWare`_              ``community.network.ironware``    ✓                              ✓
+    `Extreme NOS`_                   ``community.network.nos``         ✓
+    `Extreme SLX-OS`_                ``community.network.slxos``       ✓
+    `Extreme VOSS`_                  ``community.network.voss``        ✓
+    `F5 BIG-IP`_                                                                                      ✓
+    `F5 BIG-IQ`_                                                                                      ✓
+    `Junos OS`_ `[†]`_               ``junipernetworks.junos.junos``   ✓            ✓                 ✓
+    `Lenovo CNOS`_                   ``community.network.cnos``        ✓                              ✓
+    `Lenovo ENOS`_                   ``community.network.enos``        ✓                              ✓
+    `Meraki`_                                                                                         ✓
+    `MikroTik RouterOS`_             ``community.network.routeros``    ✓
+    `Nokia SR OS`_                                                                                    ✓
+    `Pluribus Netvisor`_             ``community.network.netvisor``    ✓
+    `Ruckus ICX`_                    ``community.network.icx``         ✓
+    `VyOS`_ `[†]`_                   ``vyos.vyos.vyos``                ✓                              ✓
+    OS that supports Netconf `[†]`_  ``<network-os>``                               ✓                 ✓
+    ===============================  ================================  ===========  =======  =======  ===========
 
 .. _Arista EOS: https://galaxy.ansible.com/arista/eos
 .. _Ciena SAOS6: https://galaxy.ansible.com/ciena/saos6
@@ -98,7 +98,7 @@ Settings by Platform
 .. _Cloudengine OS: https://galaxy.ansible.com/community/network
 .. _Dell OS6: https://github.com/ansible-collections/dellemc.os6
 .. _Dell OS9: https://github.com/ansible-collections/dellemc.os9
-.. _Dell OS10: https://galaxy.ansible.com/dellemc_networking/os10
+.. _Dell OS10: https://galaxy.ansible.com/dellemc/os10
 .. _Ericsson ECCLI: https://galaxy.ansible.com/community/network
 .. _Extreme EXOS: https://galaxy.ansible.com/community/network
 .. _Extreme IronWare: https://galaxy.ansible.com/community/network
