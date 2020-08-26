@@ -1,0 +1,2 @@
+minor_changes:
+  - Add support for custom salt for vault encoding to make it deterministic (https://github.com/ansible/ansible/issues/35480).
