@@ -14,7 +14,7 @@ Prerequisites
 
 This example requires the following:
 
-* **Ansible 2.5** (or higher) installed. See :ref:`intro_installation_guide` for more information.
+* **Ansible 2.10** (or higher) installed. See :ref:`intro_installation_guide` for more information.
 * One or more network devices that are compatible with Ansible.
 * Basic understanding of YAML :ref:`yaml_syntax`.
 * Basic understanding of Jinja2 templates. See :ref:`playbooks_templating` for more information.
@@ -35,7 +35,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
 
    [all:vars]
    # these defaults can be overridden for any group in the [group:vars] section
-   ansible_connection=network_cli
+   ansible_connection=ansible.netcommon.network_cli
    ansible_user=ansible
 
    [switches:children]
@@ -52,7 +52,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
    [eos:vars]
    ansible_become=yes
    ansible_become_method=enable
-   ansible_network_os=eos
+   ansible_network_os=arista.eos.eos
    ansible_user=my_eos_user
    ansible_password=my_eos_password
 
@@ -64,7 +64,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
    [ios:vars]
    ansible_become=yes
    ansible_become_method=enable
-   ansible_network_os=ios
+   ansible_network_os=cisco.ios.ios
    ansible_user=my_ios_user
    ansible_password=my_ios_password
 
@@ -74,7 +74,7 @@ Because Ansible is a flexible tool, there are a number of ways to specify connec
    vyos03 ansible_host=vyos-03.example.net
 
    [vyos:vars]
-   ansible_network_os=vyos
+   ansible_network_os=vyos.vyos.vyos
    ansible_user=my_vyos_user
    ansible_password=my_vyos_password
 
@@ -111,9 +111,9 @@ The following variables are common for all platforms in the inventory, though th
 
 :ansible_connection:
 
-  Ansible uses the ansible-connection setting to determine how to connect to a remote device. When working with Ansible Networking, set this to ``network_cli`` so Ansible treats the remote node as a network device with a limited execution environment. Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
+  Ansible uses the ansible-connection setting to determine how to connect to a remote device. When working with Ansible Networking, set this to an appropriate network connection option, such as``ansible.netcommon.network_cli``, so Ansible treats the remote node as a network device with a limited execution environment. Without this setting, Ansible would attempt to use ssh to connect to the remote and execute the Python script on the network device, which would fail because Python generally isn't available on network devices.
 :ansible_network_os:
-  Informs Ansible which Network platform this hosts corresponds to. This is required when using ``network_cli`` or ``netconf``.
+  Informs Ansible which Network platform this hosts corresponds to. This is required when using the ``ansible.netcommon.*`` connection options.
 :ansible_user: The user to connect to the remote device (switch) as. Without this the user that is running ``ansible-playbook`` would be used.
   Specifies which user on the network device the connection
 :ansible_password:
@@ -126,13 +126,13 @@ The following variables are common for all platforms in the inventory, though th
 Privilege escalation
 --------------------
 
-Certain network platforms, such as Arista EOS and Cisco IOS, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible supports ``become`` when using ``connection: network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
+Certain network platforms, such as Arista EOS and Cisco IOS, have the concept of different privilege modes. Certain network modules, such as those that modify system state including users, will only work in high privilege states. Ansible supports ``become`` when using ``connection: ansible.netcommon.network_cli``. This allows privileges to be raised for the specific tasks that need them. Adding ``become: yes`` and ``become_method: enable`` informs Ansible to go into privilege mode before executing the task, as shown here:
 
 .. code-block:: ini
 
    [eos:vars]
    ansible_connection=ansible.netcommon.network_cli
-   ansible_network_os=eos
+   ansible_network_os=arista.eos.eos
    ansible_become=yes
    ansible_become_method=enable
 
@@ -142,16 +142,16 @@ For more information, see the :ref:`using become with network modules<become_net
 Jump hosts
 ----------
 
-If the Ansible Controller doesn't have a direct route to the remote device and you need to use a Jump Host, please see the :ref:`Ansible Network Proxy Command <network_delegate_to_vs_ProxyCommand>` guide for details on how to achieve this.
+If the Ansible Controller does not have a direct route to the remote device and you need to use a Jump Host, please see the :ref:`Ansible Network Proxy Command <network_delegate_to_vs_ProxyCommand>` guide for details on how to achieve this.
 
 Example 1: collecting facts and creating backup files with a playbook
 =====================================================================
 
 Ansible facts modules gather system information 'facts' that are available to the rest of your playbook.
 
-Ansible Networking ships with a number of network-specific facts modules. In this example, we use the ``_facts`` modules :ref:`eos_facts <eos_facts_module>`, :ref:`ios_facts <ios_facts_module>` and :ref:`vyos_facts <vyos_facts_module>` to connect to the remote networking device. As the credentials are not explicitly passed via module arguments, Ansible uses the username and password from the inventory file.
+Ansible Networking ships with a number of network-specific facts modules. In this example, we use the ``_facts`` modules :ref:`arista.eos.eos_facts <ansible_collections.arista.eos.eos_facts_module>`, :ref:`cisco.ios.ios_facts <ansible_collections.cisco.ios.ios_facts_module>` and :ref:`vyos.vyos.vyos_facts <ansible_collections.vyos.vyos.vyos_facts_module>` to connect to the remote networking device. As the credentials are not explicitly passed with module arguments, Ansible uses the username and password from the inventory file.
 
-Ansible's "Network Fact modules" gather information from the system and store the results in facts prefixed with ``ansible_net_``. The data collected by these modules is documented in the `Return Values` section of the module docs, in this case :ref:`eos_facts <eos_facts_module>` and :ref:`vyos_facts <vyos_facts_module>`. We can use the facts, such as ``ansible_net_version`` late on in the "Display some facts" task.
+Ansible's "Network Fact modules" gather information from the system and store the results in facts prefixed with ``ansible_net_``. The data collected by these modules is documented in the `Return Values` section of the module docs, in this case :ref:`arista.eos.eos_facts <ansible_collections.arista.eos.eos_facts_module>` and :ref:`vyos.vyos.vyos_facts <ansible_collections.vyos.vyos.vyos_facts_module>`. We can use the facts, such as ``ansible_net_version`` late on in the "Display some facts" task.
 
 To ensure we call the correct mode (``*_facts``) the task is conditionally run based on the group defined in the inventory file, for more information on the use of conditionals in Ansible Playbooks see :ref:`the_when_statement`.
 
@@ -196,15 +196,15 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
        #
        - name: Gather facts (eos)
          arista.eos.eos_facts:
-         when: ansible_network_os == 'eos'
+         when: ansible_network_os == 'arista.eos.eos'
 
        - name: Gather facts (ios)
          cisco.ios.ios_facts:
-         when: ansible_network_os == 'ios'
+         when: ansible_network_os == 'cisco.ios.ios'
 
        - name: Gather facts (vyos)
          vyos.vyos.vyos_facts:
-         when: ansible_network_os == 'vyos'
+         when: ansible_network_os == 'vyos.vyos.vyos'
 
        ###
        # Demonstrate variables
@@ -255,13 +255,13 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
          arista.eos.eos_config:
            backup: yes
          register: backup_eos_location
-         when: ansible_network_os == 'eos'
+         when: ansible_network_os == 'arista.eos.eos'
 
        - name: backup switch (vyos)
          vyos.vyos.vyos_config:
            backup: yes
          register: backup_vyos_location
-         when: ansible_network_os == 'vyos'
+         when: ansible_network_os == 'vyos.vyos.vyos'
 
        - name: Create backup dir
          file:
@@ -273,13 +273,13 @@ Next, create a playbook file called ``facts-demo.yml`` containing the following:
          copy:
            src: "{{ backup_eos_location.backup_path }}"
            dest: "/tmp/backups/{{ inventory_hostname }}/{{ inventory_hostname }}.bck"
-         when: ansible_network_os == 'eos'
+         when: ansible_network_os == 'arista.eos.eos'
 
        - name: Copy backup files into /tmp/backups/ (vyos)
          copy:
            src: "{{ backup_vyos_location.backup_path }}"
            dest: "/tmp/backups/{{ inventory_hostname }}/{{ inventory_hostname }}.bck"
-         when: ansible_network_os == 'vyos'
+         when: ansible_network_os == 'vyos.vyos.vyos'
 
 Step 3: Running the playbook
 ----------------------------
@@ -325,10 +325,10 @@ Example 2: simplifying playbooks with network agnostic modules
 
 (This example originally appeared in the `Deep Dive on cli_command for Network Automation <https://www.ansible.com/blog/deep-dive-on-cli-command-for-network-automation>`_ blog post by Sean Cavanaugh -`@IPvSean <https://github.com/IPvSean>`_).
 
-If you have two or more network platforms in your environment, you can use the network agnostic modules to simplify your playbooks. You can use network agnostic modules such as ``cli_command`` or ``cli_config`` in place of the platform-specific modules such as ``eos_config``, ``ios_config``, and ``junos_config``. This reduces the number of tasks and conditionals you need in your playbooks.
+If you have two or more network platforms in your environment, you can use the network agnostic modules to simplify your playbooks. You can use network agnostic modules such as ``ansible.netcommon.cli_command`` or ``ansible.netcommon.cli_config`` in place of the platform-specific modules such as ``arista.eos.eos_config``, ``cisco.ios.ios_config``, and ``junipernetworks.junos.junos_config``. This reduces the number of tasks and conditionals you need in your playbooks.
 
 .. note::
-  Network agnostic modules require the :ref:`network_cli <network_cli_connection>` connection plugin.
+  Network agnostic modules require the :ref:`ansible.netcommon.network_cli <ansible_collections.ansible.netcommon.network_cli_connection>` connection plugin.
 
 
 Sample playbook with platform-specific modules
@@ -342,29 +342,29 @@ This example assumes three platforms, Arista EOS, Cisco NXOS, and Juniper JunOS.
   - name: Run Arista command
     arista.eos.eos_command:
       commands: show ip int br
-    when: ansible_network_os == 'eos'
+    when: ansible_network_os == 'arista.eos.eos'
 
   - name: Run Cisco NXOS command
     cisco.nxos.nxos_command:
       commands: show ip int br
-    when: ansible_network_os == 'nxos'
+    when: ansible_network_os == 'cisco.nxos.nxos'
 
   - name: Run Vyos command
     vyos.vyos.vyos_command:
       commands: show interface
-    when: ansible_network_os == 'vyos'
+    when: ansible_network_os == 'vyos.vyos.vyos'
 
 Simplified playbook with ``cli_command`` network agnostic module
 ----------------------------------------------------------------
 
-You can replace these platform-specific modules with the network agnostic ``cli_command`` module as follows:
+You can replace these platform-specific modules with the network agnostic ``ansible.netcommon.cli_command`` module as follows:
 
 .. code-block:: yaml
 
   ---
   - hosts: network
     gather_facts: false
-    connection: network_cli
+    connection: ansible.netcommon.network_cli
 
     tasks:
       - name: Run cli_command on Arista and display results
@@ -377,7 +377,7 @@ You can replace these platform-specific modules with the network agnostic ``cli_
         - name: Display result to terminal window
           debug:
             var: result.stdout_lines
-        when: ansible_network_os == 'eos'
+        when: ansible_network_os == 'arista.eos.eos'
 
       - name: Run cli_command on Cisco IOS and display results
         block:
@@ -389,7 +389,7 @@ You can replace these platform-specific modules with the network agnostic ``cli_
         - name: Display result to terminal window
           debug:
             var: result.stdout_lines
-        when: ansible_network_os == 'ios'
+        when: ansible_network_os == 'cisco.ios.ios'
 
       - name: Run cli_command on Vyos and display results
         block:
@@ -401,7 +401,7 @@ You can replace these platform-specific modules with the network agnostic ``cli_
         - name: Display result to terminal window
           debug:
             var: result.stdout_lines
-        when: ansible_network_os == 'vyos'
+        when: ansible_network_os == 'vyos.vyos.vyos'
 
 
 If you use groups and group_vars by platform type, this playbook can be further simplified to :
@@ -422,10 +422,10 @@ If you use groups and group_vars by platform type, this playbook can be further 
 
 You can see a full example of this using group_vars and also a configuration backup example at `Network agnostic examples <https://github.com/network-automation/agnostic_example>`_.
 
-Using multiple prompts with the  ``cli_command``
-------------------------------------------------
+Using multiple prompts with the  ``ansible.netcommon.cli_command``
+-------------------------------------------------------------------
 
-The ``cli_command`` also supports multiple prompts.
+The ``ansible.netcommon.cli_command`` also supports multiple prompts.
 
 .. code-block:: yaml
 
@@ -465,7 +465,7 @@ For more information, see :ref:`magic_variables_and_hostvars`.
 Get running configuration
 -------------------------
 
-The :ref:`arista.eos.eos_config <eos_config_module>` and :ref:`vyos.vyos.vyos_config <vyos_config_module>` modules have a ``backup:`` option that when set will cause the module to create a full backup of the current ``running-config`` from the remote device before any changes are made. The backup file is written to the ``backup`` folder in the playbook root directory. If the directory does not exist, it is created.
+The :ref:`arista.eos.eos_config <ansible_collections.arista.eos.eos_config_module>` and :ref:`vyos.vyos.vyos_config <ansible_collections.vyos.vyos.vyos_config_module>` modules have a ``backup:`` option that when set will cause the module to create a full backup of the current ``running-config`` from the remote device before any changes are made. The backup file is written to the ``backup`` folder in the playbook root directory. If the directory does not exist, it is created.
 
 To demonstrate how we can move the backup file to a different location, we register the result and move the file to the path stored in ``backup_path``.
 
