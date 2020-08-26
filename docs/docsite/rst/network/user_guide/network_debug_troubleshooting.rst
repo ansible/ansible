@@ -27,7 +27,7 @@ Ansible network automation errors generally fall into one of the following categ
 
 .. warning:: ``unable to open shell``
 
-  The ``unable to open shell`` means that the ``ansible-connection`` daemon has not been able to successfully
+  The ``unable to open shell`` message means that the ``ansible-connection`` daemon has not been able to successfully
   talk to the remote network device. This generally means that there is an authentication issue. See the "Authentication and connection issues" section
   in this document for more information.
 
