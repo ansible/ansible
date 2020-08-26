@@ -1,0 +1,2 @@
+bugfixes:
+  - Output is no longer wrapped to 79 columns in absence of a TTY. (https://github.com/ansible/ansible/issues/71461)

@@ -430,7 +430,7 @@ class Display(with_metaclass(Singleton, object)):
         try:
             star_len = self.columns - get_text_width(msg)
         except EnvironmentError:
-            star_len = self.columns - len(msg)
+            star_len = min(self.columns, 79) - len(msg)
         if star_len <= 3:
             star_len = 3
         stars = u"*" * star_len
@@ -534,5 +534,6 @@ class Display(with_metaclass(Singleton, object)):
         if os.isatty(1):
             tty_size = unpack('HHHH', fcntl.ioctl(1, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
         else:
-            tty_size = 0
+            # Avoid wrapping in absence of a tty
+            tty_size = sys.maxsize
         self.columns = max(79, tty_size - 1)
