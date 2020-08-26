@@ -7,15 +7,11 @@ Httpapi Plugins
    :local:
    :depth: 2
 
-.. warning::
-
-	Links on this page may not point to the most recent versions of plugins. In preparation for the release of 2.10, many plugins and modules have migrated to Collections on  `Ansible Galaxy <https://galaxy.ansible.com>`_. For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/overview/blob/main/README.rst>`_.
-
 Httpapi plugins tell Ansible how to interact with a remote device's HTTP-based API and execute tasks on the
 device.
 
-Each plugin represents a particular dialect of API. Some are platform-specific (Arista eAPI, Cisco NXAPI), while
-others might be usable on a variety of platforms (RESTCONF).
+Each plugin represents a particular dialect of API. Some are platform-specific (Arista eAPI, Cisco NXAPI), while others might be usable on a variety of platforms (RESTCONF). Ansible loads the appropriate httpapi plugin automatically based on the ``ansible_network_os`` variable.
+
 
 .. _enabling_httpapi:
 
@@ -55,14 +51,14 @@ The following sample playbook shows the httpapi plugin for an Arista network dev
         debug:
           var: command_output.stdout[0]["version"]
 
-See the full working example at https://github.com/network-automation/httpapi.
+See the full working example `on GitHub <https://github.com/network-automation/httpapi>`_.
 
 .. _httpapi_plugin_list:
 
-Plugin List
------------
+Viewing httpapi plugins
+-----------------------
 
-These plugins have migrated to a collection. Updates on where to find and how to use them will be coming soon.
+These plugins have migrated to collections on `Ansible Galaxy <https://galaxy.ansible.com>`_. If you installed Ansible version 2.10 or later using ``pip``, you have access to several httpapi plugins. To list all available httpapi plugins on your control node, type ``ansible-doc -t httpapi -l``. To view plugin-specific documentation and examples, use ``ansible-doc -t httpapi``.
 
 .. seealso::
 
