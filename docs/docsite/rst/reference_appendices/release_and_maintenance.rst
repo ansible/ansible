@@ -8,6 +8,7 @@ Release and maintenance
 .. _support_life:
 .. _methods:
 .. _development_and_stable_version_maintenance_workflow:
+.. _changelogs_how_to:
 .. _release_changelogs:
 .. _release_freezing:
 
