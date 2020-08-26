@@ -49,6 +49,7 @@ options:
           substring to look for as would be found in the output of the I(ps)
           command as a stand-in for a status result.
         - If the string is found, the service will be assumed to be started.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         version_added: "0.7"
     enabled:
@@ -60,11 +61,13 @@ options:
         description:
         - For OpenRC init scripts (e.g. Gentoo) only.
         - The runlevel that this service belongs to.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         default: default
     arguments:
         description:
         - Additional arguments provided on the command line.
+        - While using remote hosts with systemd this setting will be ignored.
         type: str
         aliases: [ args ]
     use:
