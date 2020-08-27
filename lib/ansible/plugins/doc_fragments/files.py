@@ -25,8 +25,6 @@ options:
       number which will have unexpected results.
     - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or
       C(u=rw,g=r,o=r)).
-    - As of Ansible 2.6, the mode may also be the special string C(preserve).
-    - When set to C(preserve) the file will be given the same permissions as the source file.
     type: raw
   owner:
     description:
