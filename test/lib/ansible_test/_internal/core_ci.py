@@ -111,6 +111,7 @@ class AnsibleCoreCI:
                 'centos arch=power',  # avoid ibmvpc as default for no-arch centos to avoid making centos default to power
             ),
             parallels=(
+                'macos',
                 'osx',
             ),
         )
