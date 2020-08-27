@@ -191,7 +191,6 @@ class TestStrategyBase(unittest.TestCase):
             forks=3,
         )
         tqm._initialize_processes(3)
-        tqm.hostvars = dict()
 
         mock_task = MagicMock()
         mock_task._uuid = 'abcd'
@@ -523,7 +522,6 @@ class TestStrategyBase(unittest.TestCase):
             forks=5,
         )
         tqm._initialize_processes(3)
-        tqm.hostvars = dict()
 
         try:
             strategy_base = StrategyBase(tqm=tqm)
