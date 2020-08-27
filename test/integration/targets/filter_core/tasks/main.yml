@@ -601,3 +601,10 @@
       bar: 123
     thing_items: '{{ thing_dict.items() }}'
     thing_range: '{{ range(10) }}'
+
+- name: Assert that quote works on None
+  assert:
+    that:
+      - thing|quote == "''"
+  vars:
+    thing: null
