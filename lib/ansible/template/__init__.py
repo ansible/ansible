@@ -1042,7 +1042,7 @@ class Templar:
         try:
             # allows template header overrides to change jinja2 options.
             if overrides is None:
-                myenv = self.environment.overlay()
+                myenv = self.environment
             else:
                 myenv = self.environment.overlay(overrides)
 
