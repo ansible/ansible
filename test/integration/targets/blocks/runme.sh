@@ -74,3 +74,12 @@ cat rc_test.out
 [ "$(grep -c 'Failure in always' rc_test.out )" -eq 1 ]
 [ "$(grep -c 'DID NOT RUN' rc_test.out )" -eq 0 ]
 rm -f rc_test.out
+
+# https://github.com/ansible/ansible/issues/71306
+set +e
+exit_code=0
+ansible-playbook -i host1,host2 -vv issue71306.yml > rc_test.out || exit_code=$?
+set -e
+cat rc_test.out
+[ $exit_code -eq 0 ]
+rm -f rc_test_out
