@@ -1,3 +1,0 @@
-comment = 'dummy extension used to test postgresql_ext Ansible module'
-default_version = '3.0'
-relocatable = true
