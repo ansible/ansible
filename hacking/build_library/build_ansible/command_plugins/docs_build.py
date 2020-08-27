@@ -44,8 +44,8 @@ def generate_base_docs(args):
         #
         modified_deps_file = os.path.join(tmp_dir, 'ansible.deps')
 
-        # The _acd_version doesn't matter
-        deps_file_contents = {'_acd_version': ansible_base__version__,
+        # The _ansible_version doesn't matter since we're only building docs for base
+        deps_file_contents = {'_ansible_version': ansible_base__version__,
                               '_ansible_base_version': ansible_base__version__}
 
         with open(modified_deps_file, 'w') as f:
@@ -53,7 +53,7 @@ def generate_base_docs(args):
 
         # Generate the plugin rst
         return antsibull_docs.run(['antsibull-docs', 'stable', '--deps-file', modified_deps_file,
-                                   '--ansible-base-cache', str(args.top_dir),
+                                   '--ansible-base-source', str(args.top_dir),
                                    '--dest-dir', args.output_dir])
 
         # If we make this more than just a driver for antsibull:
@@ -112,7 +112,7 @@ def generate_full_docs(args):
 
         # Generate the plugin rst
         return antsibull_docs.run(['antsibull-docs', 'stable', '--deps-file', modified_deps_file,
-                                   '--ansible-base-cache', str(args.top_dir),
+                                   '--ansible-base-source', str(args.top_dir),
                                    '--dest-dir', args.output_dir])
 
         # If we make this more than just a driver for antsibull:
