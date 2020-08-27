@@ -616,10 +616,9 @@ def download_collections(collections, output_path, apis, validate_certs, no_deps
                     shutil.copy(requirement.b_path, to_bytes(dest_path, errors='surrogate_or_strict'))
                 elif requirement.api is None and requirement.b_path:
                     temp_path = to_text(b_temp_path, errors='surrogate_or_string')
-                    scm_build_path = os.path.join(temp_path, 'tmp_build-%s' % collection_filename)
-                    os.makedirs(to_bytes(scm_build_path, errors='surrogate_or_strict'), mode=0o0755)
-                    temp_download_path = build_collection(os.path.join(temp_path, name), scm_build_path, True)
-                    shutil.move(to_bytes(temp_download_path, errors='surrogate_or_strict'), to_bytes(dest_path, errors='surrogate_or_strict'))
+                    temp_download_path = build_collection(requirement.b_path, temp_path, True)
+                    shutil.move(to_bytes(temp_download_path, errors='surrogate_or_strict'),
+                                to_bytes(dest_path, errors='surrogate_or_strict'))
                 else:
                     b_temp_download_path = requirement.download(b_temp_path)
                     shutil.move(b_temp_download_path, to_bytes(dest_path, errors='surrogate_or_strict'))
