@@ -1,0 +1,3 @@
+bugfixes:
+- quote filter - normalize how ``None`` is handled, to match Python3 behavior
+  (https://github.com/ansible/ansible/issues/32174)
