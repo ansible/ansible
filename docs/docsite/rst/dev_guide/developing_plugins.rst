@@ -36,7 +36,7 @@ You should return errors encountered during plugin execution by raising ``Ansibl
     except Exception as e:
         raise AnsibleError('Something happened, this was original exception: %s' % to_native(e))
 
-Since Ansible evaluates variables lazily, filter and test plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable``.
+Since Ansible evaluates variables only when they are needed, filter and test plugins should propagate the exceptions ``jinja2.exceptions.UndefinedError`` and ``AnsibleUndefinedVariable`` to ensure undefined variables are only fatal when necessary.
 
 .. code-block:: python
 
