@@ -287,13 +287,14 @@ def get_certificates(client, module, domain_name=None, statuses=None):
             module.fail_json(msg="Couldn't obtain certificate metadata for domain %s" % certificate['DomainName'],
                              exception=traceback.format_exc(),
                              **camel_dict_to_snake_dict(e.response))
-        try:
-            cert_data.update(get_certificate_with_backoff(client, certificate['CertificateArn']))
-        except botocore.exceptions.ClientError as e:
-            if e.response['Error']['Code'] != "RequestInProgressException":
-                module.fail_json(msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'],
-                                 exception=traceback.format_exc(),
-                                 **camel_dict_to_snake_dict(e.response))
+        if cert_data['Status'] not in ['PENDING_VALIDATION', 'VALIDATION_TIMED_OUT', 'FAILED']:
+            try:
+                cert_data.update(get_certificate_with_backoff(client, certificate['CertificateArn']))
+            except botocore.exceptions.ClientError as e:
+                if e.response['Error']['Code'] != "RequestInProgressException":
+                    module.fail_json(msg="Couldn't obtain certificate data for domain %s" % certificate['DomainName'],
+                                     exception=traceback.format_exc(),
+                                     **camel_dict_to_snake_dict(e.response))
         cert_data = camel_dict_to_snake_dict(cert_data)
         try:
             tags = list_certificate_tags_with_backoff(client, certificate['CertificateArn'])

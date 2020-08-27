@@ -1,0 +1,2 @@
+bugfixes:
+- aws_acm_info - fix `KeyError` failure when retrieving keys with a `Failed` status (https://github.com/ansible-collections/community.aws/issues/198)
