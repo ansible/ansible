@@ -233,20 +233,12 @@ COLLECTIONS_PATHS:
   default: ~/.ansible/collections:/usr/share/ansible/collections
   type: pathspec
   env:
-  - name: ANSIBLE_COLLECTIONS_PATHS
-    deprecated:
-      why: all PATH-type options are singular PATH
-      version: "2.14"
-      alternatives: the "ANSIBLE_COLLECTIONS_PATH" environment variable
+  - name: ANSIBLE_COLLECTIONS_PATHS  # TODO: Deprecate this and ini once PATH has been in a few releases.
   - name: ANSIBLE_COLLECTIONS_PATH
     version_added: '2.10'
   ini:
   - key: collections_paths
     section: defaults
-    deprecated:
-      why: all path-type options are singular path
-      version: "2.14"
-      alternatives: the "collections_path" ini setting
   - key: collections_path
     section: defaults
     version_added: '2.10'
