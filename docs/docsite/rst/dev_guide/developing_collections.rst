@@ -731,8 +731,6 @@ We recommend that you use the `antsibull-changelog <https://github.com/ansible-c
 
 	Ansible here refers to the Ansible 2.10 or later release that includes a curated set of collections.
 
-If your collection is part of Ansible but you are not using this tool, your collection should include the properly formatted ``changelog.yaml`` file or your changelogs will not be part of the combined Ansible CHANGELOG.rst and Porting Guide at release.  See the `changlog.yaml format <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelog.yaml-format.md>`_ for details.
-
 Understanding antsibull-changelog
 ---------------------------------
 
@@ -773,6 +771,21 @@ The following changelog fragment categories are consumed by the Ansible changelo
 * ``deprecated_features``
 * ``removed_features``
 
+Including collection changelogs into Ansible
+=============================================
+
+
+If your collection is part of Ansible, use one of the following three options  to include your changelog into the Ansible release changelog:
+
+* Use the ``antsibull-changelog`` tool.
+
+* If are not using this tool, include the properly formatted ``changelog.yaml`` file  into your collection. See the `changlog.yaml format <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelog.yaml-format.md>`_ for details.
+
+* Add a link to own changelogs or release notes in any format by opening an issue at https://github.com/ansible-community/ansible-build-data/ with the HTML link to that information.
+
+.. note::
+	
+  For the first two options, Ansible pulls the changelog details from Galaxy so your changelogs must be included in the collection version on Galaxy that is included in the upcoming Ansible release.
 
 .. seealso::
 
