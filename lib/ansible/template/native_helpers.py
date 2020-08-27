@@ -14,8 +14,12 @@ from jinja2.runtime import StrictUndefined
 
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common.text.converters import container_to_text
-from ansible.module_utils.six import PY2
+from ansible.module_utils.six import PY2, text_type
 from ansible.parsing.yaml.objects import AnsibleVaultEncryptedUnicode
+
+
+class NativeJinjaText(text_type):
+    pass
 
 
 def ansible_native_concat(nodes):
@@ -50,6 +54,16 @@ def ansible_native_concat(nodes):
             # See https://github.com/ansible/ansible/issues/52158
             # We do that only here because it is taken care of by to_text() in the else block below already.
             str(out)
+
+        if isinstance(out, NativeJinjaText):
+            # Sometimes (e.g. ``| string``) we need to mark variables
+            # in a special way so that they remain strings and are not
+            # passed into literal_eval.
+            # See:
+            # https://github.com/ansible/ansible/issues/70831
+            # https://github.com/pallets/jinja/issues/1200
+            # https://github.com/ansible/ansible/issues/70831#issuecomment-664190894
+            return out
     else:
         if isinstance(nodes, types.GeneratorType):
             nodes = chain(head, nodes)
