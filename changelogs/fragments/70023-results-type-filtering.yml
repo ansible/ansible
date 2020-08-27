@@ -1,0 +1,5 @@
+bugfixes:
+- Strategy - Ensure we only process expected types from the results queue
+  and produce warnings for any object we receive from the queue that doesn't
+  match our expectations.
+  (https://github.com/ansible/ansible/issues/70023)
