@@ -18,7 +18,6 @@ Release Summary
 Minor Changes
 -------------
 
-- known_hosts - update documentation to use correct parameters (https://github.com/ansible/ansible/issues/71417).
 - ansible-test - the ACME test container was updated, it now supports external account creation and has a basic OCSP responder (https://github.com/ansible/ansible/pull/71097, https://github.com/ansible/acme-test-container/releases/tag/2.0.0).
 - debconf - add a note about no_log=True since module might expose sensitive information to logs (https://github.com/ansible/ansible/issues/32386).
 
