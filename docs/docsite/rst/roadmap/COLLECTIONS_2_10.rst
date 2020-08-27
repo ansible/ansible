@@ -13,16 +13,20 @@ Release Schedule
 .. note:: Dates subject to change.
 .. note:: We plan to post weekly alpha releases to the `PyPI ansible project <https://pypi.org/project/ansible/>`_ for testing.
 
+.. warning::
+    We initially were going to have feature freeze on 2020-08-18. We tried this but decided to
+    change course.  Instead, we'll enter feature freeze when ansible-2.10.0 beta1 is released.
+
 - 2020-06-23: ansible-2.10 alpha freeze.
   No net new collections will be added to the ``ansible-2.10`` package after this date.
 - 2020-07-10: Ansible collections freeze date for content shuffling.
   Content should be in its final collection for the ansible-2.10 series of releases. No more content should move out of the ``community.general`` or ``community.network`` collections.
 - 2020-08-13: ansible-base 2.10 Release date, see :ref:`base_roadmap_2_10`.
 - 2020-08-14: final ansible-2.10 alpha.
-- 2020-08-18: Ansible 2.10 beta freeze.
+- 2020-09-01: ansible-2.10.0 beta1 and feature freeze.
 
   - No new modules or major features will be added after this date. In practice this means we will freeze the semver collection versions to compatible release versions. For example, if the version of community.crypto on this date was community-crypto-1.1.0; ansible-2.10.0 could ship with community-crypto-1.1.1.  It would not ship with community-crypto-1.2.0.
-- 2020-09-01: ansible-2.10.0 beta1.
+
 - 2020-09-10: ansible-2.10 final freeze/rc1.
 
   - After this date only changes blocking a release are accepted.
