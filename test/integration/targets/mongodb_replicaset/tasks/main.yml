@@ -33,8 +33,6 @@
 # test with yaml list
 - name: Create replicaset with module
   mongodb_replicaset:
-    login_user: admin
-    login_password: secret
     login_host: "localhost"
     login_port: 3001
     login_database: "admin"
@@ -119,28 +117,6 @@
   assert:
     that: mongodb_replicaset.changed == False
 
-- name: Test with bad password
-  mongodb_replicaset:
-    login_user: "{{ mongodb_admin_user }}"
-    login_password: XXXXXXXXXXXXXXXX
-    login_host: "localhost"
-    login_port: 3001
-    login_database: "admin"
-    replica_set: "{{ mongodb_replicaset1 }}"
-    election_timeout_millis: 1000
-    members:
-     - "localhost:3001"
-     - "localhost:3002"
-     - "localhost:3003"
-  register: mongodb_replicaset_bad_pw
-  ignore_errors: True
-
-- name: Assert login failed
-  assert:
-    that:
-      - "mongodb_replicaset_bad_pw.rc == 1"
-      - "'Authentication failed' in mongodb_replicaset_bad_pw.module_stderr"
-
   #############################################################
 
 - include_tasks: mongod_teardown.yml
@@ -157,8 +133,6 @@
 # Test with python style list
 - name: Create replicaset with module
   mongodb_replicaset:
-    login_user: admin
-    login_password: secret
     login_host: "localhost"
     login_port: 3001
     login_database: "admin"
@@ -196,8 +170,6 @@
 # Test with csv string
 - name: Create replicaset with module
   mongodb_replicaset:
-    login_user: admin
-    login_password: secret
     login_host: "localhost"
     login_port: 3001
     login_database: "admin"
@@ -234,8 +206,6 @@
 # Test with arbiter_at_index
 - name: Create replicaset with module
   mongodb_replicaset:
-    login_user: admin
-    login_password: secret
     login_host: "localhost"
     login_port: 3001
     login_database: "admin"
@@ -277,8 +247,6 @@
 # Test with chainingAllowed
 - name: Create replicaset with module
   mongodb_replicaset:
-    login_user: admin
-    login_password: secret
     login_host: "localhost"
     login_port: 3001
     login_database: "admin"
@@ -323,8 +291,6 @@
 # Test with 5 mongod processes
 - name: Create replicaset with module
   mongodb_replicaset:
-    login_user: admin
-    login_password: secret
     login_host: "localhost"
     login_port: 3001
     login_database: "admin"
@@ -371,8 +337,6 @@
 # Test withheartbeatTimeoutSecs
 - name: Create replicaset with module
   mongodb_replicaset:
-    login_user: admin
-    login_password: secret
     login_host: "localhost"
     login_port: 3001
     login_database: "admin"
@@ -410,8 +374,6 @@
 # Test with heartbeatTimeoutSecs
 - name: Create replicaset with module protocolVersion 0 (Mongodb 3.0)
   mongodb_replicaset:
-    login_user: admin
-    login_password: secret
     login_host: "localhost"
     login_port: 3001
     login_database: "admin"
@@ -427,8 +389,6 @@
 
 - name: Create replicaset with module protocolVersion 1 (MongoDB 4.0+)
   mongodb_replicaset:
-    login_user: admin
-    login_password: secret
     login_host: "localhost"
     login_port: 3001
     login_database: "admin"
