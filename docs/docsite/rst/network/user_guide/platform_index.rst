@@ -90,6 +90,7 @@ Settings by Platform
     ===============================  ================================  ===========  =======  =======  ===========
 
 .. _Arista EOS: https://galaxy.ansible.com/arista/eos
+.. _Ciena SAOS6: https://galaxy.ansible.com/ciena/saos6
 .. _Cisco ASA: https://galaxy.ansible.com/cisco/asa
 .. _Cisco IOS: https://galaxy.ansible.com/cisco/ios
 .. _Cisco IOS XR: https://galaxy.ansible.com/cisco/iosxr
