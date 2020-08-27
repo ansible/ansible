@@ -562,7 +562,7 @@ def get_current_bucket_tags_dict(s3_client, bucket_name):
     try:
         current_tags = s3_client.get_bucket_tagging(Bucket=bucket_name).get('TagSet')
     except ClientError as e:
-        if e.response['Error']['Code'] == 'NoSuchTagSet':
+        if e.response['Error']['Code'] == 'NoSuchTagSetError':
             return {}
         raise e
 
