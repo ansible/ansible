@@ -113,7 +113,7 @@ options:
     description:
       - Disable module RPM filtering and make all RPMs from the repository
         available. The default is C(None).
-    version_added: '2.11'
+    version_added: '2.12'
     type: bool
   http_caching:
     description:
