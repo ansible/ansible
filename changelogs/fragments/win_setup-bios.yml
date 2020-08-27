@@ -1,0 +1,2 @@
+bugfixes:
+- setup - Add a null check for ``Win32_Bios.ReleaseData`` to avoid a failure when that value is not set - https://github.com/ansible/ansible/issues/69736

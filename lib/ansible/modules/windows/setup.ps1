@@ -158,11 +158,15 @@ if($gather_subset.Contains('bios')) {
     $win32_bios = Get-LazyCimInstance Win32_Bios
     $win32_cs = Get-LazyCimInstance Win32_ComputerSystem
     $ansible_facts += @{
-        ansible_bios_date = $win32_bios.ReleaseDate.ToString("MM/dd/yyyy")
+        ansible_bios_date = $null
         ansible_bios_version = $win32_bios.SMBIOSBIOSVersion
         ansible_product_name = $win32_cs.Model.Trim()
         ansible_product_serial = $win32_bios.SerialNumber
         # ansible_product_version = ([string] $win32_cs.SystemFamily)
+    }
+
+    if ($win32_bios.ReleaseDate) {
+        $ansible_facts.ansible_bios_date = $win32_bios.ReleaseDate.ToString("MM/dd/yyyy")
     }
 }
 
