@@ -1,0 +1,2 @@
+minor_changes:    
+  - known_hosts - fix reference to non-existent parameter in example (https://github.com/ansible/ansible/issues/71417)
