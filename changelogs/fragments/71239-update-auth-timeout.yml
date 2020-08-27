@@ -1,0 +1,2 @@
+minor_changes:
+- Updated network integration auth timeout to 90 secs.
