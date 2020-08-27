@@ -47,4 +47,10 @@
               - 'not systemd_test0.changed'
               - 'systemd_test0.state == "started"'
 
+    - name: check that the module works even when systemd is offline (eg in chroot)
+      systemd:
+          name: "{{ running_names.stdout_lines|random }}"
+          state: started
+      environment:
+          SYSTEMD_OFFLINE: 1
   when: 'systemctl_check.rc == 0'
