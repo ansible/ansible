@@ -29,7 +29,7 @@ failed: [testhost] (item=debug-2) => {
 ok: [testhost] => (item=debug-3) => {
     "msg": "debug-3"
 }
-fatal: [testhost]: FAILED! => {"msg": "All items completed"}
+fatal: [testhost]: FAILED! => {"msg": "One or more items failed"}
 ...ignoring
 
 TASK [EXPECTED FAILURE Failed task to be rescued] ******************************
