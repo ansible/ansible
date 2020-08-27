@@ -110,6 +110,8 @@ def strftime(string_format, second=None):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
+    if a is None:
+        a = u''
     return shlex_quote(to_text(a))
 
 
