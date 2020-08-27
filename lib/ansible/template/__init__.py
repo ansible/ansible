@@ -246,25 +246,13 @@ def _is_rolled(value):
     )
 
 
-def _unroll_iterator(func):
+def _unroll_iterator(func, recover_from_undefined=False):
     """Wrapper function, that intercepts the result of a filter
     and auto unrolls a generator, so that users are not required to
     explicitly use ``|list`` to unroll.
     """
     def wrapper(*args, **kwargs):
-        try:
-            ret = func(*args, **kwargs)
-        except (UndefinedError, AnsibleUndefinedVariable):
-            raise
-        except Exception as e:
-            if 'undefined' in to_native(e):
-                from jinja2.runtime import Undefined
-                undefined_input = any(isinstance(arg, (Undefined, AnsibleUndefined)) for arg in args)
-                undefined_input |= any(isinstance(kwargs[kwarg], (Undefined, AnsibleUndefined)) for kwarg in kwargs)
-                if undefined_input:
-                    # Warn that the function seems to be masking undefined errors?
-                    raise AnsibleUndefinedVariable("%s" % to_native(e))
-            raise
+        ret = validate_input_and_call(func, recover_from_undefined, *args, **kwargs)
         if _is_rolled(ret):
             return list(ret)
         return ret
@@ -272,10 +260,33 @@ def _unroll_iterator(func):
     return _update_wrapper(wrapper, func)
 
 
+def validate_defined_input(validate=True):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        setattr(wrapper, '_validate_defined_input', validate)
+        return _update_wrapper(wrapper, func)
+    return decorator
+
+
+def _validate_defined_input(*args, **kwargs):
+    """ returns None or raises jinja2.exceptions.UndefinedError """
+    for arg in args:
+        bool(arg)
+    for kwarg in kwargs:
+        bool(kwargs[kwarg])
+
+
+def _handle_undefined_input(func, recover_from_undefined):
+    def wrapper(*args, **kwargs):
+        return validate_input_and_call(func, recover_from_undefined, *args, **kwargs)
+    return _update_wrapper(wrapper, func)
+
+
 def _update_wrapper(wrapper, func):
     # This code is duplicated from ``functools.update_wrapper`` from Py3.7.
     # ``functools.update_wrapper`` was failing when the func was ``functools.partial``
-    for attr in ('__module__', '__name__', '__qualname__', '__doc__', '__annotations__'):
+    for attr in ('__module__', '__name__', '__qualname__', '__doc__', '__annotations__', '_validate_defined_input'):
         try:
             value = getattr(func, attr)
         except AttributeError:
@@ -288,17 +299,46 @@ def _update_wrapper(wrapper, func):
     return wrapper
 
 
-def _wrap_native_text(func):
+def _wrap_native_text(func, recover_from_undefined=False):
     """Wrapper function, that intercepts the result of a filter
     and wraps it into NativeJinjaText which is then used
     in ``ansible_native_concat`` to indicate that it is a text
     which should not be passed into ``literal_eval``.
     """
     def wrapper(*args, **kwargs):
-        ret = func(*args, **kwargs)
+
+        ret = validate_input_and_call(func, recover_from_undefined, *args, **kwargs)
         return NativeJinjaText(ret)
 
     return _update_wrapper(wrapper, func)
+
+
+def validate_input_and_call(func, recover_from_undefined, *args, **kwargs):
+    # Update the default to False when the deprecated behavior below is removed to mirror the behavior of jinja2 builtins
+    validate_defined_input = getattr(func, '_validate_defined_input', None)
+
+    if validate_defined_input:
+        _validate_defined_input(*args, **kwargs)
+
+    try:
+        return func(*args, **kwargs)
+    except (UndefinedError, AnsibleUndefinedVariable):
+        raise
+    except Exception as e:
+        # Since 3rd party plugins could previously mask UndefinedError without obvious repercussion,
+        # validate the input here to reraise the correct type with a deprecation warning for backwards compatibility
+        # recover_from_undefined correlates to fail_on_undefined, which indicates when Ansible needs to handle undef vars in a non-fatal way
+        if validate_defined_input is None and recover_from_undefined:
+            try:
+                _validate_defined_input(*args, **kwargs)
+            except UndefinedError:
+                display.deprecated("The function '%s' should propagate jinja2.exception.UndefinedError, handle undefined "
+                                   "options, or define Ansible's behavior for the function with the validate_defined_input "
+                                   "decorator. For backwards compatibility, Ansible is making the assumption this should "
+                                   "have been an UndefinedError. The original error: %s"
+                                   % (func.__name__, to_native(e)), version=2.14)
+                raise
+        raise
 
 
 class AnsibleUndefined(StrictUndefined):
@@ -522,9 +562,9 @@ class JinjaPluginIntercept(MutableMapping):
                     fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
                     if USE_JINJA2_NATIVE and func_name in C.STRING_TYPE_FILTERS:
-                        self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func)
+                        self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func, recover_from_undefined=bool(not fail_on_undefined))
                     else:
-                        self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func)
+                        self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func, recover_from_undefined=bool(not fail_on_undefined))
 
             function_impl = self._collection_jinja_func_cache[key]
             return function_impl
@@ -632,7 +672,7 @@ class Templar:
         self._no_type_regex = re.compile(r'.*?\|\s*(?:%s)(?:\([^\|]*\))?\s*\)?\s*(?:%s)' %
                                          ('|'.join(C.STRING_TYPE_FILTERS), self.environment.variable_end_string))
 
-    def _get_filters(self):
+    def _get_filters(self, recover_from_undefined=False):
         '''
         Returns filter plugins, after loading and caching them if need be
         '''
@@ -654,11 +694,11 @@ class Templar:
                         orig_filter = self.environment.filters[string_filter]
                     except KeyError:
                         continue
-                self._filters[string_filter] = _wrap_native_text(orig_filter)
+                self._filters[string_filter] = _wrap_native_text(orig_filter, recover_from_undefined)
 
         return self._filters.copy()
 
-    def _get_tests(self):
+    def _get_tests(self, recover_from_undefined=False):
         '''
         Returns tests plugins, after loading and caching them if need be
         '''
@@ -668,7 +708,8 @@ class Templar:
 
         self._tests = dict()
         for fp in self._test_loader.all():
-            self._tests.update(fp.tests())
+            for name, func in fp.tests().items():
+                self._tests[name] = _handle_undefined_input(func, recover_from_undefined)
 
         return self._tests.copy()
 
@@ -1035,10 +1076,10 @@ class Templar:
                     setattr(myenv, key, ast.literal_eval(val.strip()))
 
             # Adds Ansible custom filters and tests
-            myenv.filters.update(self._get_filters())
+            myenv.filters.update(self._get_filters(recover_from_undefined=bool(not fail_on_undefined)))
             for k in myenv.filters:
-                myenv.filters[k] = _unroll_iterator(myenv.filters[k])
-            myenv.tests.update(self._get_tests())
+                myenv.filters[k] = _unroll_iterator(myenv.filters[k], recover_from_undefined=bool(not fail_on_undefined))
+            myenv.tests.update(self._get_tests(recover_from_undefined=bool(not fail_on_undefined)))
 
             if escape_backslashes:
                 # Allow users to specify backslashes in playbooks as "\\" instead of as "\\\\".

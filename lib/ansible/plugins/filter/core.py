@@ -38,10 +38,9 @@ import datetime
 from functools import partial
 from random import Random, SystemRandom, shuffle
 
-from jinja2.exceptions import UndefinedError
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.six import iteritems, string_types, integer_types, reraise
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -49,7 +48,7 @@ from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
-from ansible.template import recursive_check_defined
+from ansible.template import recursive_check_defined, validate_defined_input
 from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
@@ -99,13 +98,12 @@ def to_datetime(string, format="%Y-%m-%d %H:%M:%S"):
     return datetime.datetime.strptime(string, format)
 
 
+@validate_defined_input(validate=True)
 def strftime(string_format, second=None):
     ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
     if second is not None:
         try:
             second = float(second)
-        except UndefinedError as e:
-            raise AnsibleUndefinedVariable(to_native(e))
         except Exception:
             raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
     return time.strftime(string_format, time.localtime(second))
@@ -242,6 +240,7 @@ def rand(environment, end, start=None, step=None, seed=None):
         raise AnsibleFilterError('random can only be used on sequences and integers')
 
 
+@validate_defined_input(validate=True)
 def randomize_list(mylist, seed=None):
     try:
         mylist = list(mylist)
@@ -250,8 +249,6 @@ def randomize_list(mylist, seed=None):
             r.shuffle(mylist)
         else:
             shuffle(mylist)
-    except UndefinedError as e:
-        raise AnsibleUndefinedVariable(to_native(e))
     except Exception:
         pass
     return mylist
@@ -260,8 +257,6 @@ def randomize_list(mylist, seed=None):
 def get_hash(data, hashtype='sha1'):
     try:
         h = hashlib.new(hashtype)
-    except UndefinedError as e:
-        raise AnsibleUndefinedVariable(to_native(e))
     except Exception as e:
         # hash is not supported?
         raise AnsibleFilterError(e)

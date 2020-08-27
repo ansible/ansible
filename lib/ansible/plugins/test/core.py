@@ -22,13 +22,13 @@ __metaclass__ = type
 import re
 import operator as py_operator
 from distutils.version import LooseVersion, StrictVersion
-from jinja2.exceptions import UndefinedError
 
 from ansible import errors
 from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.utils.display import Display
+from ansible.template import validate_defined_input
 
 display = Display()
 
@@ -147,6 +147,7 @@ def search(value, pattern='', ignorecase=False, multiline=False):
     return regex(value, pattern, ignorecase, multiline, 'search')
 
 
+@validate_defined_input(validate=True)
 def version_compare(value, version, operator='eq', strict=False):
     ''' Perform a version comparison on a value '''
     op_map = {
@@ -171,8 +172,6 @@ def version_compare(value, version, operator='eq', strict=False):
     try:
         method = getattr(py_operator, operator)
         return method(Version(str(value)), Version(str(version)))
-    except UndefinedError as e:
-        raise errors.AnsibleUndefinedVariable('Version comparison: %s' % e)
     except Exception as e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
 

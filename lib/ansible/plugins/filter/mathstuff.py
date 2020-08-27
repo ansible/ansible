@@ -26,15 +26,15 @@ __metaclass__ = type
 import itertools
 import math
 
-from jinja2.exceptions import UndefinedError
 from jinja2.filters import environmentfilter
 
-from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.common.text import formatters
 from ansible.module_utils.six import binary_type, text_type
 from ansible.module_utils.six.moves import zip, zip_longest
 from ansible.module_utils.common._collections_compat import Hashable, Mapping, Iterable
 from ansible.module_utils._text import to_native, to_text
+from ansible.template import validate_defined_input
 from ansible.utils.display import Display
 
 try:
@@ -46,6 +46,7 @@ except ImportError:
 display = Display()
 
 
+@validate_defined_input(validate=True)
 @environmentfilter
 def unique(environment, a, case_sensitive=False, attribute=None):
 
@@ -65,8 +66,6 @@ def unique(environment, a, case_sensitive=False, attribute=None):
     except TypeError as e:
         error = e
         _do_fail(e)
-    except UndefinedError as e:
-        raise AnsibleUndefinedVariable(to_native(e))
     except Exception as e:
         error = e
         _do_fail(e)
@@ -163,30 +162,29 @@ def inversepower(x, base=2):
         raise AnsibleFilterTypeError('root() can only be used on numbers: %s' % to_native(e))
 
 
+@validate_defined_input(validate=True)
 def human_readable(size, isbits=False, unit=None):
     ''' Return a human readable string '''
     try:
         return formatters.bytes_to_human(size, isbits, unit)
     except TypeError as e:
         raise AnsibleFilterTypeError("human_readable() failed on bad input: %s" % to_native(e))
-    except UndefinedError as e:
-        raise AnsibleUndefinedVariable("human_readable() failed on undefined input: %s" % to_native(e))
     except Exception:
         raise AnsibleFilterError("human_readable() can't interpret following string: %s" % size)
 
 
+@validate_defined_input(validate=True)
 def human_to_bytes(size, default_unit=None, isbits=False):
     ''' Return bytes count from a human readable string '''
     try:
         return formatters.human_to_bytes(size, default_unit, isbits)
     except TypeError as e:
         raise AnsibleFilterTypeError("human_to_bytes() failed on bad input: %s" % to_native(e))
-    except UndefinedError as e:
-        raise AnsibleUndefinedVariable("human_to_bytes() failed on undefined input:  %s" % to_native(e))
     except Exception:
         raise AnsibleFilterError("human_to_bytes() can't interpret following string: %s" % size)
 
 
+@validate_defined_input(validate=True)
 def rekey_on_member(data, key, duplicates='error'):
     """
     Rekey a dict of dicts on another member
@@ -218,8 +216,6 @@ def rekey_on_member(data, key, duplicates='error'):
             raise AnsibleFilterError("Key {0} was not found".format(key))
         except TypeError as e:
             raise AnsibleFilterTypeError(to_native(e))
-        except UndefinedError as e:
-            raise AnsibleUndefinedVariable(to_native(e))
         except Exception as e:
             raise AnsibleFilterError(to_native(e))
 
