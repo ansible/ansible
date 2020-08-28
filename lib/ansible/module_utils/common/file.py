@@ -158,8 +158,8 @@ class FileLock:
 
         self.lockfd = open(lock_path, 'w')
 
-        if lock_timeout <= 0:
-            fcntl.flock(self.lockfd, fcntl.LOCK_EX)
+        if lock_timeout <= 0 and lock_timeout != None:
+            fcntl.flock(self.lockfd, fcntl.LOCK_EX | fcntl.LOCK_NB)
             os.chmod(lock_path, stat.S_IWRITE | stat.S_IREAD)
             return True
 
