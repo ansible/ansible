@@ -35,7 +35,7 @@ DOCUMENTATION = """
             - Controls whether to use Jinja2 native types.
             - It is off by default even if global jinja2_native is True.
             - Has no effect if global jinja2_native is False.
-            - This is offers more flexibility than the template module which does not use Jinja2 native types at all.
+            - This offers more flexibility than the template module which does not use Jinja2 native types at all.
             - Mutually exclusive with the convert_data option.
         default: False
         version_added: '2.11'
@@ -122,16 +122,12 @@ class LookupModule(LookupBase):
                 with templar.set_temporary_context(variable_start_string=variable_start_string,
                                                    variable_end_string=variable_end_string,
                                                    available_variables=vars, searchpath=searchpath):
-                    if USE_JINJA2_NATIVE:
-                        res = templar.do_template(template_data, preserve_trailing_newlines=True,
-                                                  escape_backslashes=False)
-                    else:
-                        res = templar.template(template_data, preserve_trailing_newlines=True,
-                                               convert_data=convert_data_p, escape_backslashes=False)
+                    res = templar.template(template_data, preserve_trailing_newlines=True,
+                                           convert_data=convert_data_p, escape_backslashes=False)
 
-                # because jinja2_native is true globally, we need this text not to be processed by
-                # literal_eval anywhere in Ansible
                 if USE_JINJA2_NATIVE and not jinja2_native:
+                    # jinja2_native is true globally but off for the lookup, we need this text
+                    # not to be processed by literal_eval anywhere in Ansible
                     res = NativeJinjaText(res)
 
                 ret.append(res)
