@@ -184,7 +184,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
   :suboptions:
 
     * If this option takes a dict or list of dicts, you can define the structure here.
-    * See :ref:`azure.azcollection.azure_rm_securitygroup_module`, :ref:`azure.azcollection.azure_rm_azurefirewall_module`, and :ref:`openstack.cloud.baremetal_node_action_module` for examples.
+    * See :ref:`ansible_collections.azure.azcollection.azure_rm_securitygroup_module`, :ref:`ansible_collections.azure.azcollection.azure_rm_azurefirewall_module`, and :ref:`ansible_collections.openstack.cloud.baremetal_node_action_module` for examples.
 
 :requirements:
 
