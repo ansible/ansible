@@ -122,10 +122,13 @@ class TaskExecutor:
                     # create the overall result item
                     res = dict(results=item_results)
 
-                    # loop through the item results, and set the global changed/failed result flags based on any item.
+                    # loop through the item results and set the global changed/failed/skipped result flags based on any item.
+                    res['skipped'] = True
                     for item in item_results:
                         if 'changed' in item and item['changed'] and not res.get('changed'):
                             res['changed'] = True
+                        if res['skipped'] and ('skipped' not in item or ('skipped' in item and not item['skipped'])):
+                            res['skipped'] = False
                         if 'failed' in item and item['failed']:
                             item_ignore = item.pop('_ansible_ignore_errors')
                             if not res.get('failed'):
@@ -147,6 +150,8 @@ class TaskExecutor:
 
                     if not res.get('failed', False):
                         res['msg'] = 'All items completed'
+                    if res['skipped']:
+                        res['msg'] = 'All items skipped'
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
