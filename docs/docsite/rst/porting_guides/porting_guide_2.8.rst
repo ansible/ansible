@@ -373,6 +373,12 @@ add ``$ErrorActionPreference = "Continue"`` to the top of the module. This chang
 of the EAP that was accidentally removed in a previous release and ensure that modules are more resilient to errors
 that may occur in execution.
 
+* Version 2.8.14 of Ansible changed the default mode of file-based tasks to ``0o600`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered and no longer consider a flaw in Ansible. As a result, the ``mode`` change has been reverted in 2.8.15, and ``mode`` will now default to ``0o666`` as in previous versions of Ansible.
+* Affected modules included known_hosts, service, authorized_key, interfaces_file, pam_limits, pamd, redhat_subscription, selinux, and sysctrl. If you are using Ansible 2.8.14 and seeing new failures in these modules, upgrade to 2.8.15.
+* To avoid the issue raised in CVE-2020-1736, specify a ``mode`` parameter in all file-based tasks that accept it.
+
+
+
 Modules removed
 ---------------
 
