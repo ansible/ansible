@@ -1,0 +1,2 @@
+minor_changes:
+  - Fix the ``FileLock`` from module_utils immediately returning instead of waiting for the lock as expected (https://github.com/ansible/ansible/pull/71511)
