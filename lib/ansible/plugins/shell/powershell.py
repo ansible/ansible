@@ -120,9 +120,9 @@ class ShellModule(ShellBase):
     def remove(self, path, recurse=False):
         path = self._escape(self._unquote(path))
         if recurse:
-            return self._encode_script('''Remove-Item "%s" -Force -Recurse;''' % path)
+            return self._encode_script('''Remove-Item '%s' -Force -Recurse;''' % path)
         else:
-            return self._encode_script('''Remove-Item "%s" -Force;''' % path)
+            return self._encode_script('''Remove-Item '%s' -Force;''' % path)
 
     def mkdtemp(self, basefile=None, system=False, mode=None, tmpdir=None):
         # Windows does not have an equivalent for the system temp files, so
@@ -147,15 +147,15 @@ class ShellModule(ShellBase):
         if user_home_path == '~':
             script = 'Write-Output (Get-Location).Path'
         elif user_home_path.startswith('~\\'):
-            script = 'Write-Output ((Get-Location).Path + "%s")' % self._escape(user_home_path[1:])
+            script = "Write-Output ((Get-Location).Path + '%s')" % self._escape(user_home_path[1:])
         else:
-            script = 'Write-Output "%s"' % self._escape(user_home_path)
+            script = "Write-Output '%s'" % self._escape(user_home_path)
         return self._encode_script(script)
 
     def exists(self, path):
         path = self._escape(self._unquote(path))
         script = '''
-            If (Test-Path "%s")
+            If (Test-Path '%s')
             {
                 $res = 0;
             }
@@ -163,7 +163,7 @@ class ShellModule(ShellBase):
             {
                 $res = 1;
             }
-            Write-Output "$res";
+            Write-Output '$res';
             Exit $res;
          ''' % path
         return self._encode_script(script)
@@ -171,14 +171,14 @@ class ShellModule(ShellBase):
     def checksum(self, path, *args, **kwargs):
         path = self._escape(self._unquote(path))
         script = '''
-            If (Test-Path -PathType Leaf "%(path)s")
+            If (Test-Path -PathType Leaf '%(path)s')
             {
                 $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
-                $fp = [System.IO.File]::Open("%(path)s", [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
+                $fp = [System.IO.File]::Open('%(path)s', [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
                 [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
                 $fp.Dispose();
             }
-            ElseIf (Test-Path -PathType Container "%(path)s")
+            ElseIf (Test-Path -PathType Container '%(path)s')
             {
                 Write-Output "3";
             }
@@ -264,22 +264,11 @@ class ShellModule(ShellBase):
             return m.group(1)
         return value
 
-    def _escape(self, value, include_vars=False):
-        '''Return value escaped for use in PowerShell command.'''
-        # http://www.techotopia.com/index.php/Windows_PowerShell_1.0_String_Quoting_and_Escape_Sequences
-        # http://stackoverflow.com/questions/764360/a-list-of-string-replacements-in-python
-        subs = [('\n', '`n'), ('\r', '`r'), ('\t', '`t'), ('\a', '`a'),
-                ('\b', '`b'), ('\f', '`f'), ('\v', '`v'), ('"', '`"'),
-                ('\'', '`\''), ('`', '``'), ('\x00', '`0')]
-        if include_vars:
-            subs.append(('$', '`$'))
-        pattern = '|'.join('(%s)' % re.escape(p) for p, s in subs)
-        substs = [s for p, s in subs]
-
-        def replace(m):
-            return substs[m.lastindex - 1]
-
-        return re.sub(pattern, replace, value)
+    def _escape(self, value):
+        '''Return value escaped for use in PowerShell single quotes.'''
+        # There are 5 chars that need to be escaped in a single quote.
+        # https://github.com/PowerShell/PowerShell/blob/b7cb335f03fe2992d0cbd61699de9d9aafa1d7c1/src/System.Management.Automation/engine/parser/CharTraits.cs#L265-L272
+        return re.compile(u"(['\u2018\u2019\u201a\u201b])").sub(u'\\1\\1', value)
 
     def _encode_script(self, script, as_list=False, strict_mode=True, preserve_rc=True):
         '''Convert a PowerShell script to a single base64-encoded command.'''
