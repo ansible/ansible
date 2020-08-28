@@ -336,7 +336,7 @@ def validate_input_and_call(func, recover_from_undefined, *args, **kwargs):
                                    "options, or define Ansible's behavior for the function with the validate_defined_input "
                                    "decorator. For backwards compatibility, Ansible is making the assumption this should "
                                    "have been an UndefinedError. The original error: %s"
-                                   % (func.__name__, to_native(e)), version=2.14)
+                                   % (func.__name__, to_native(e)), version=2.14, collection_name=None)
                 raise
         raise
 
@@ -562,9 +562,9 @@ class JinjaPluginIntercept(MutableMapping):
                     fq_name = '.'.join((parent_prefix, func_name))
                     # FIXME: detect/warn on intra-collection function name collisions
                     if USE_JINJA2_NATIVE and func_name in C.STRING_TYPE_FILTERS:
-                        self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func, recover_from_undefined=bool(not fail_on_undefined))
+                        self._collection_jinja_func_cache[fq_name] = _wrap_native_text(func, recover_from_undefined=True)
                     else:
-                        self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func, recover_from_undefined=bool(not fail_on_undefined))
+                        self._collection_jinja_func_cache[fq_name] = _unroll_iterator(func, recover_from_undefined=True)
 
             function_impl = self._collection_jinja_func_cache[key]
             return function_impl
