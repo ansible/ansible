@@ -51,6 +51,9 @@ Modules
 
 	Links on this page may not point to the most recent versions of modules. We will update them when we can.
 
+* Version 2.10.0 of ansible-base changed the default mode of file-based tasks to ``0o600`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered and no longer consider a flaw in ansible-base. As a result, the ``mode`` change has been reverted in 2.10.1, and ``mode`` will now default to ``0o666`` as in previous versions of Ansible and previous RCs of ansible-base.
+* Users who deem it necessary to work around the concern put forward by CVE-2020-1736 are encouraged to specify a ``mode`` parameter in their file-based tasks which accept it.
+
 
 Noteworthy module changes
 -------------------------
