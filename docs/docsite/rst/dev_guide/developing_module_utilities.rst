@@ -63,7 +63,7 @@ Ansible ships with an extensive library of ``module_utils`` files. You can find 
 
 Several commonly-used utilities migrated to collections in Ansible 2.10, including:
 
-- ``ismount.py`` migrated to ```ansible.posix.plugins.module_utils.mount.py - Single helper function that fixes os.path.ismount
+- ``ismount.py`` migrated to ``ansible.posix.plugins.module_utils.mount.py`` - Single helper function that fixes os.path.ismount
 - ``known_hosts.py`` migrated to ``community.general.plugins.module_utils.known_hosts.py`` - utilities for working with known_hosts file
 
 For a list of migrated content with destination collections, see https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml.

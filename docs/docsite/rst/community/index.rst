@@ -8,7 +8,7 @@ Welcome to the Ansible Community Guide!
 
 The purpose of this guide is to teach you everything you need to know about being a contributing member of the Ansible community. All types of contributions are welcome and necessary to Ansible's continued success.
 
-This page outlines the most common situations and questions that bring readers to this section. If you prefer a :ref:`Traditional Table of Contents`, you can find one at the bottom of the page.
+This page outlines the most common situations and questions that bring readers to this section. If you prefer a :ref:`traditional table of contents <community_toc>`, you can find one at the bottom of the page.
 
 
 Getting started
@@ -55,6 +55,8 @@ Working with the Ansible repo
 * I have an open pull request with a failing test. How do I learn about Ansible's :ref:`testing (CI) process <developing_testing>`?
 * I am ready to step up as a collection maintainer. What are the :ref:`guidelines for maintainers <maintainers>`?
 * A module in a collection I maintain is obsolete. How do I :ref:`deprecate a module <deprecating_modules>`?
+
+.. _community_toc:
 
 Traditional Table of Contents
 =============================

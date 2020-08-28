@@ -9,7 +9,7 @@ Developing Ansible modules is easy, but often it is not necessary. Before you st
 
 1. Does a similar module already exist?
 
-An existing module may cover the functionality you want. Ansible collections include thousands of modules. Search our :ref:`list of included collections <list_of_collections>` or `Ansible Galaxy <https://galaxy.ansible.com>`_to see if there's a module that does what you need.
+An existing module may cover the functionality you want. Ansible collections include thousands of modules. Search our :ref:`list of included collections <list_of_collections>` or `Ansible Galaxy <https://galaxy.ansible.com>`_ to see if an existing module does what you need.
 
 2. Should you use or develop an action plugin instead of a module?
 
