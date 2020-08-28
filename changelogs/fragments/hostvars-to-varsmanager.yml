@@ -1,0 +1,3 @@
+minor_changes:
+  - hostvars - ``HostVars`` is now instantiated in ``VariableManager`` instead of in ``TaskQueueManager``
+  - hostvars - removed unused ``HostVars#set_variable_manager``
