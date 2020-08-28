@@ -39,7 +39,7 @@
 - name: verify with_subelements in subkeys results
   assert:
     that:
-        - _subelements_missing_subkeys.skipped is not defined
+        - _subelements_missing_subkeys is not skipped
         - _subelements_missing_subkeys.results|length == 2
         - "_xk == 'k'"
         - "_xl == 'l'"
