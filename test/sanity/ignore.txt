@@ -6061,6 +6061,7 @@ test/integration/targets/win_psmodule/files/module/template.psm1 pslint!skip
 test/integration/targets/win_psmodule/files/setup_modules.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_reboot/templates/post_reboot.ps1 pslint:PSCustomUseLiteralPath
 test/integration/targets/win_regmerge/templates/win_line_ending.j2 line-endings
+test/integration/targets/win_fetch/tasks/main.yml no-smart-quotes  # We are explictly testing smart quotes in the file name to fetch
 test/integration/targets/win_script/files/test_script.ps1 pslint:PSAvoidUsingWriteHost # Keep
 test/integration/targets/win_script/files/test_script_creates_file.ps1 pslint:PSAvoidUsingCmdletAliases
 test/integration/targets/win_script/files/test_script_removes_file.ps1 pslint:PSCustomUseLiteralPath
