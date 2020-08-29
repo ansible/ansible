@@ -902,7 +902,7 @@ class TestIptables(ModuleTestCase):
             '/sbin/iptables',
             '-t',
             'filter',
-            '-I',
+            '-C',
             'INPUT',
             '-j',
             'ACCEPT',
