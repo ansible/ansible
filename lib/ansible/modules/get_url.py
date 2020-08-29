@@ -177,6 +177,13 @@ options:
     type: bool
     default: no
     version_added: '2.11'
+  preserve_mtime:
+    description:
+      - Preserve "Last-Modified" datetime and set it as mtime of fetched file.
+      - If a "src" value is started "file:", it keeps mtime of the "src" file as mtime of the "dest" file.
+    type: bool
+    default: no
+    version_added: '2.11'
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files
@@ -195,6 +202,13 @@ EXAMPLES = r'''
     url: http://example.com/path/file.conf
     dest: /etc/foo.conf
     mode: '0440'
+
+- name: Download foo.conf and set Last-Modified time as atime,ctime and mtime
+  get_url:
+    url: http://example.com/path/file.conf
+    dest: /etc/foo.conf
+    mode: '0440'
+    preserve_mtime: yes
 
 - name: Download file and force basic auth
   get_url:
@@ -333,6 +347,11 @@ url:
     returned: always
     type: str
     sample: https://www.ansible.com/
+last_modified:
+    description: the Last-Modified value from the response header
+    returned: always
+    type: float
+    sample: 1424348972.575
 '''
 
 import datetime
@@ -340,6 +359,7 @@ import os
 import re
 import shutil
 import tempfile
+import time
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule
@@ -356,6 +376,17 @@ def url_filename(url):
     if fn == '':
         return 'index.html'
     return fn
+
+
+def date_to_timestamp(module, last_mod_time):
+    # convert HTTP-date(Last-Modified) string data to timestamp
+    last_mod_timestamp = None
+    try:
+        dt = datetime.datetime.strptime(last_mod_time, "%a, %d %b %Y %H:%M:%S %Z")
+        last_mod_timestamp = time.mktime(dt.timetuple())
+    except (ValueError, TypeError):
+        module.warn("failed to convert Last-Modified({0}) to timestamp. It should follow RFC 7232 format.".format(last_mod_time))
+    return last_mod_timestamp
 
 
 def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest=''):
@@ -455,6 +486,7 @@ def main():
         timeout=dict(type='int', default=10),
         headers=dict(type='dict'),
         tmp_dest=dict(type='path'),
+        preserve_mtime=dict(type='bool'),
     )
 
     module = AnsibleModule(
@@ -483,6 +515,7 @@ def main():
     timeout = module.params['timeout']
     headers = module.params['headers']
     tmp_dest = module.params['tmp_dest']
+    preserve_mtime = module.params['preserve_mtime']
 
     result = dict(
         changed=False,
@@ -491,6 +524,7 @@ def main():
         dest=dest,
         elapsed=0,
         url=url,
+        last_modified=None,
     )
 
     dest_is_dir = os.path.isdir(dest)
@@ -576,6 +610,14 @@ def main():
     tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
     result['elapsed'] = (datetime.datetime.utcnow() - start).seconds
     result['src'] = tmpsrc
+
+    # Preserve Last-Modified datetime of fetched file as mtime
+    if info.get('last-modified'):
+        tmpsrc_stat = os.stat(tmpsrc)
+        atime = tmpsrc_stat.st_atime
+        result['last_modified'] = mtime = date_to_timestamp(module, info['last-modified'])
+        if preserve_mtime and mtime:
+            os.utime(tmpsrc, (atime, mtime))
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.

@@ -543,3 +543,106 @@
         KRB5_CONFIG: '{{ krb5_config }}'
         KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
   when: krb5_config is defined
+
+#https://github.com/ansible/ansible/issues/57837
+- name: Define Last Modified datetime data to 03/21/1970 00:00:00 for testing
+  set_fact:
+    last_modified_time: "197003210000.00"
+    last_modified_timestamp: 6825600.0
+
+- name: Create test file of src for testing with preserve_mtime
+  copy:
+    content: "Hello, World!"
+    dest: "{{ files_dir }}/hello.txt"
+
+- name: Set "03/21/1970 00:00:00" as Last-Modified time
+  file:
+    path: "{{ files_dir }}/hello.txt"
+    state: file
+    modification_time: "{{ last_modified_time }}"
+
+- name: Get test file with preserve_mtime via http
+  get_url:
+    url: "http://localhost:{{ http_port }}/hello.txt"
+    dest: "{{ remote_tmp_dir }}/with_ptime.txt"
+    preserve_mtime: yes
+  register: result_with_ptime
+
+- name: Assert that Last-Modified time set properly based on http response if preserve_mtime enabled
+  assert:
+    that:
+      result_with_ptime.last_modified == last_modified_timestamp
+
+- name: Get status of downloaded file(with_ptime.txt)
+  stat:
+    path: "{{ remote_tmp_dir }}/with_ptime.txt"
+  register: result_stat_with_ptime
+
+- name: Assert that Last-Modified time is set as mtime of with_ptime.txt
+  assert:
+    that:
+      result_stat_with_ptime.stat.mtime == last_modified_timestamp
+
+- name: Get test file without preserve_mtime via http
+  get_url:
+    url: "http://localhost:{{ http_port }}/hello.txt"
+    dest: "{{ remote_tmp_dir }}/without_ptime.txt"
+  register: result_without_ptime
+
+- name: Assert that Last-Modified time set properly based on http response even if preserve_mtime disabled
+  assert:
+    that:
+      result_without_ptime.last_modified == last_modified_timestamp
+
+- name: Get status of downloaded file(without_ptime.txt)
+  stat:
+    path: "{{ remote_tmp_dir }}/without_ptime.txt"
+  register: result_stat_without_ptime
+
+- name: Assert that Last-Modified time is not set as mtime of without_ptime.txt
+  assert:
+    that:
+      result_stat_without_ptime.stat.mtime != last_modified_timestamp
+
+- name: Get local test file with preserve_mtime
+  get_url:
+    url: 'file://{{ files_dir }}/hello.txt'
+    dest: '{{ remote_tmp_dir }}/with_ptime_local.txt'
+    preserve_mtime: yes
+  register: result_with_ptime_local
+    
+- name: Assert that Last-Modified time set properly based on mtime of src-file if preserve_mtime enabled
+  assert:
+    that:
+      result_with_ptime_local.last_modified == last_modified_timestamp
+
+- name: Get status of downloaded file(with_ptime_local.txt) with preserve_mtime
+  stat:
+    path: '{{ remote_tmp_dir }}/with_ptime_local.txt'
+  register: result_stat_with_ptime_local
+        
+- name: Assert that Last-Modified time is set as mtime of with_ptime_local.txt
+  assert:
+    that:
+      result_stat_with_ptime_local.stat.mtime == last_modified_timestamp
+
+- name: Get local test file without preserve_mtime
+  get_url:
+    url: 'file://{{ files_dir }}/hello.txt'
+    dest: '{{ remote_tmp_dir }}/without_ptime_local.txt'
+  register: result_without_ptime_local
+
+- name: Assert that Last-Modified time set properly based on localfile even if preserve_mtime disabled
+  assert:
+    that:
+      result_without_ptime_local.last_modified == last_modified_timestamp
+
+- name: Get status of downloaded file(without_ptime_local.txt) with preserve_mtime
+  stat:
+    path: '{{ remote_tmp_dir }}/without_ptime_local.txt'
+  register: result_stat_without_ptime_local
+
+- name: Assert that Last-Modified time is not set as mtime of without_ptime_local.txt
+  assert:
+    that:
+      result_stat_without_ptime_local.stat.mtime != last_modified_timestamp

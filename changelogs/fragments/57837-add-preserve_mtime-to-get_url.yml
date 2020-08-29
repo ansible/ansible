@@ -1,0 +1,2 @@
+minor_changes:
+  - get_url - Add preserve_mtime option to keep Last-Modified datetime as mtime (https://github.com/ansible/ansible/issues/57837).
