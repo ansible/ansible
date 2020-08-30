@@ -265,7 +265,7 @@ code is tested against the actual data which will be sent from that version of t
 even when the version is very obscure and unlikely to be available during testing.
 
 How to run unit test Ansible modules
-================================
+====================================
 
 Please use this link: :ref:`testing_units#running-tests`
 
