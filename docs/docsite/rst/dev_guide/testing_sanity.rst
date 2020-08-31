@@ -29,6 +29,9 @@ How to run
    # Run all sanity tests
    ansible-test sanity
 
+   # Run all sanity tests including disabled ones
+   ansible-test sanity --allow-disabled
+
    # Run all sanity tests against against certain files
    ansible-test sanity lib/ansible/modules/files/template.py
 
