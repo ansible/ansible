@@ -359,7 +359,7 @@ to the latest version.
 Installing the development version of ``ansible-base``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In Ansible 2.10 and later, The ansible/ansible repository contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``.
+In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``.
 
 .. note::
 
@@ -404,7 +404,7 @@ Ansible can also be installed inside a new or existing ``virtualenv``::
 Running ``ansible-base`` from source (devel)
 ---------------------------------------------
 
-In Ansible 2.10 and later, The ansible/ansible repository contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``.
+In Ansible 2.10 and later, The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``.
 
 .. note::
 
