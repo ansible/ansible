@@ -4,7 +4,7 @@
 Ansible and Python 3
 ********************
 
-The ansible-base code runs on both Python 2 and Python 3 because we want Ansible to be able to manage a wide
+The ``ansible-base`` code runs on both Python 2 and Python 3 because we want Ansible to be able to manage a wide
 variety of machines. Contributors to ansible-base and to Ansible Collections should be aware of the tips in this document so that they can write code that will run on the same versions of Python as the rest of Ansible.
 
 .. contents::
