@@ -267,7 +267,11 @@ even when the version is very obscure and unlikely to be available during testin
 How to run unit test Ansible modules
 ====================================
 
-Please use this link: :ref:`testing_units#running-tests`
+.. code:: shell
+
+   ansible-test units --docker -v
+
+Please refer to this link for more information: :ref:`testing_units#running-tests`
 
 Ansible special cases for unit testing
 ======================================
