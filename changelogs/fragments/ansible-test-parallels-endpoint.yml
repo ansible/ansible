@@ -1,0 +1,2 @@
+minor_changes:
+    - ansible-test - Use new endpoint for Parallels based instances with the ``--remote`` option.
