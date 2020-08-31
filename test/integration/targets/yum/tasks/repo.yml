@@ -152,6 +152,7 @@
       yum:
         name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
         state: present
+        disable_gpg_check: true
       register: yum_result
 
     - name: Check dinginessentail with rpm
@@ -175,6 +176,7 @@
       yum:
         name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
         state: present
+        disable_gpg_check: true
       register: yum_result
 
     - name: Check dinginessentail with rpm
@@ -198,6 +200,7 @@
       yum:
         name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
         state: present
+        disable_gpg_check: true
       register: yum_result
 
     - name: Check dinginessentail with rpm
@@ -221,6 +224,7 @@
       yum:
         name: "{{ repodir }}/dinginessentail-1.0-2.{{ ansible_architecture }}.rpm"
         state: present
+        disable_gpg_check: true
       register: yum_result
 
     - name: Check dinginessentail with rpm
@@ -358,6 +362,7 @@
         name: "{{ repodir }}/dinginessentail-1.0-1.{{ ansible_architecture }}.rpm"
         state: present
         allow_downgrade: yes
+        disable_gpg_check: yes
       register: yum_result
 
     - name: Check dinginessentail with rpm
@@ -387,6 +392,7 @@
         yum:
           name: "{{ pkgs }}"
           state: present
+          disable_gpg_check: true
         vars:
           pkgs:
             - "{{ repodir }}/dinginessentail-1.1-1.x86_64.rpm"
@@ -427,6 +433,7 @@
         yum:
           name: "{{ pkgs }}"
           state: present
+          disable_gpg_check: true
         vars:
           pkgs:
             - "{{ repodir }}/dinginessentail-1.0-1.x86_64.rpm"
@@ -436,6 +443,7 @@
         yum:
           name: "{{ repodir }}/dinginessentail-1.1-1.x86_64.rpm,{{ repodir_i686 }}/dinginessentail-1.1-1.i686.rpm"
           state: present
+          disable_gpg_check: yes
         register: yum_result
 
       - name: check dinginessentail with rpm
@@ -471,6 +479,7 @@
       yum:
         name: "1:dinginessentail-1.0-2.{{ ansible_architecture }}"
         state: present
+        disable_gpg_check: true
       register: yum_result
 
     - name: Check dinginessentail with rpm
@@ -511,6 +520,7 @@
       yum:
         name: "dinginessentail-1.0-2.{{ ansible_architecture }}"
         state: present
+        disable_gpg_check: true
       register: yum_result
 
     - name: Check dinginessentail with rpm
