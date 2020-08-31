@@ -638,6 +638,7 @@
   yum:
     name: "/tmp/{{ pkg_name }}.rpm"
     state: present
+    disable_gpg_check: true
   register: yum_result
 
 - name: verify installation
@@ -683,6 +684,7 @@
   yum:
     name: "{{ pkg_url }}"
     state: present
+    disable_gpg_check: true
   register: yum_result
 
 - name: verify installation
@@ -846,6 +848,7 @@
         name:
           - https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/test-package-that-provides-toaster-1.3.3.7-1.el7.noarch.rpm
           - https://ansible-ci-files.s3.amazonaws.com/test/integration/targets/yum/toaster-1.2.3.4-1.el7.noarch.rpm
+        disable_gpg_check: true
       register: install
 
     - name: Remove toaster
