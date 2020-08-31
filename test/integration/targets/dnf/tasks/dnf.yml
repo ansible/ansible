@@ -557,6 +557,7 @@
   dnf:
     name: "/tmp/{{ pkg_name }}.rpm"
     state: present
+    disable_gpg_check: true
   register: dnf_result
 
 - name: verify installation
@@ -586,6 +587,7 @@
   dnf:
     name: "{{ pkg_url }}"
     state: present
+    disable_gpg_check: true
   register: dnf_result
 
 - name: verify installation
