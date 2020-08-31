@@ -258,12 +258,22 @@ Ansible only executes each role once, even if you define it multiple times, unle
         - bar
         - foo
 
-You have two options to force Ansible to run a role more than once:
+You have two options to force Ansible to run a role more than once.
 
-  #. Pass different parameters in each role definition.
-  #. Add ``allow_duplicates: true`` to the ``meta/main.yml`` file for the role.
+Passing different parameters
+----------------------------
 
-Example 1 - passing different parameters:
+You can pass different parameters in each role definition as:
+
+.. code-block:: yaml
+
+    ---
+    - hosts: webservers
+      roles:
+        - { role: foo, vars: { message: "first" } }
+        - { role: foo, vars: { message: "second" } }
+
+or
 
 .. code-block:: yaml
 
@@ -273,11 +283,16 @@ Example 1 - passing different parameters:
         - role: foo
           vars:
             message: "first"
-        - { role: foo, vars: { message: "second" } }
+        - role: foo
+          vars:
+            message: "second"
 
 In this example, because each role definition has different parameters, Ansible runs ``foo`` twice.
 
-Example 2 - using ``allow_duplicates: true``:
+Using ``allow_duplicates: true``
+--------------------------------
+
+Add ``allow_duplicates: true`` to the ``meta/main.yml`` file for the role:
 
 .. code-block:: yaml
 
@@ -324,7 +339,7 @@ Ansible always executes role dependencies before the role that includes them. An
 Running role dependencies multiple times in one playbook
 --------------------------------------------------------
 
-Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters defined on the role are different for each definition. If two roles in a playbook both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters or use ``allow_duplicates: true`` in the dependent (third) role. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
+Ansible treats duplicate role dependencies like duplicate roles listed under ``roles:``: Ansible only executes role dependencies once, even if defined multiple times, unless the parameters, tags, or when clause defined on the role are different for each definition. If two roles in a playbook both list a third role as a dependency, Ansible only runs that role dependency once, unless you pass different parameters, tags, when clause, or use ``allow_duplicates: true`` in the dependent (third) role. See :ref:`Galaxy role dependencies <galaxy_dependencies>` for more details.
 
 For example, a role named ``car`` depends on a role named ``wheel`` as follows:
 

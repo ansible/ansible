@@ -169,32 +169,32 @@ Host Inventory
 ``````````````
 
 Once your nodes are spun up, you'll probably want to talk to them again.  With a cloud setup, it's best to not maintain a static list of cloud hostnames
-in text files.  Rather, the best way to handle this is to use the ec2 dynamic inventory script. See :ref:`dynamic_inventory`.
+in text files.  Rather, the best way to handle this is to use the aws_ec2 inventory plugin. See :ref:`dynamic_inventory`.
 
-This will also dynamically select nodes that were even created outside of Ansible, and allow Ansible to manage them.
-
-See :ref:`dynamic_inventory` for how to use this, then return to this chapter.
+The plugin will also return instances that were created outside of Ansible and allow Ansible to manage them.
 
 .. _aws_tags_and_groups:
 
 Tags And Groups And Variables
 `````````````````````````````
 
-When using the ec2 inventory script, hosts automatically appear in groups based on how they are tagged in EC2.
+When using the inventory plugin, you can configure extra inventory structure based on the metadata returned by AWS.
 
-For instance, if a host is given the "class" tag with the value of "webserver",
-it will be automatically discoverable via a dynamic group like so::
+For instance, you might use ``keyed_groups`` to create groups from instance tags::
+
+    plugin: aws_ec2
+    keyed_groups:
+      - prefix: tag
+        key: tags
+
+
+You can then target all instances with a "class" tag where the value is "webserver" in a play::
 
    - hosts: tag_class_webserver
      tasks:
        - ping
 
-Using this philosophy can be a great way to keep systems separated by the function they perform.
-
-In this example, if we wanted to define variables that are automatically applied to each machine tagged with the 'class' of 'webserver', 'group_vars'
-in ansible can be used.  See :ref:`splitting_out_vars`.
-
-Similar groups are available for regions and other classifications, and can be similarly assigned variables using the same mechanism.
+You can also use these groups with 'group_vars' to set variables that are automatically applied to matching instances.  See :ref:`splitting_out_vars`.
 
 .. _aws_pull:
 

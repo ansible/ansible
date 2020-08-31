@@ -30,7 +30,7 @@ For example::
 
     ---
     - name: wait for interface to be admin enabled
-      eos_command:
+      arista.eos.eos_command:
           commands:
               - show interface Ethernet4 | json
           wait_for:
@@ -49,7 +49,7 @@ results in an interface.  For instance::
 
     ---
     - name: wait for interfaces to be admin enabled
-      eos_command:
+      arista.eos.eos_command:
           commands:
               - show interface Ethernet4 | json
               - show interface Ethernet5 | json
@@ -70,19 +70,19 @@ command index in ``[]``, where ``0`` is the first command in the commands list,
 Handling prompts in network modules
 ===================================
 
-Network devices may require that you answer a prompt before performing a change on the device. Individual network modules such as :ref:`ios_command <ios_command_module>` and :ref:`nxos_command <nxos_command_module>` can handle this with a ``prompt`` parameter.
+Network devices may require that you answer a prompt before performing a change on the device. Individual network modules such as :ref:`cisco.ios.ios_command <ansible_collections.cisco.ios.ios_command_module>` and :ref:`cisco.nxos.nxos_command <ansible_collections.cisco.nxos.nxos_command_module>` can handle this with a ``prompt`` parameter.
 
 .. note::
 
 	``prompt`` is a Python regex. If you add special characters such as ``?`` in the ``prompt`` value, the prompt won't match and you will get a timeout. To avoid this, ensure that the ``prompt`` value is a Python regex that matches the actual device prompt. Any special characters must be handled correctly in the ``prompt`` regex.
 
-You can also use the :ref:`cli_command <cli_command_module>` to handle multiple prompts.
+You can also use the :ref:`ansible.netcommon.cli_command <ansible_collections.ansible.netcommon.cli_command_module>` to handle multiple prompts.
 
 .. code-block:: yaml
 
   ---
   - name: multiple prompt, multiple answer (mandatory check for all prompts)
-    cli_command:
+    ansible.netcommon.cli_command:
       command: "copy sftp sftp://user@host//user/test.img"
       check_all: True
       prompt:
@@ -104,7 +104,7 @@ In the following example, the second answer would be ignored and ``y`` would be 
 
   ---
    - name: reboot ios device
-     cli_command:
+     ansible.netcommon.cli_command:
        command: reload
        prompt:
          - Save\?
