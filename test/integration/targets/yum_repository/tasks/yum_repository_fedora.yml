@@ -66,6 +66,7 @@
   dnf:
     name: libbdplus
     state: present
+    disable_gpg_check: yes
   register: lib_result
 
 - name: check that libbdplus was successfully installed
