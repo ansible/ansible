@@ -145,7 +145,7 @@ You can specify a pattern as a regular expression by starting the pattern with `
 Patterns and ansible-playbook flags
 -----------------------------------
 
-You can change the behavior of the patterns defined in playbooks using command-line options. For example, you can run a playbook that defines ``hosts: all`` on a single host by specifying ``-i 127.0.0.2,``. This works even if the host you target is not defined in your inventory. You can also limit the hosts you target on a particular run with the ``--limit`` flag::
+You can change the behavior of the patterns defined in playbooks using command-line options. For example, you can run a playbook that defines ``hosts: all`` on a single host by specifying ``-i 127.0.0.2,`` (note the trailing comma). This works even if the host you target is not defined in your inventory. You can also limit the hosts you target on a particular run with the ``--limit`` flag::
 
     ansible-playbook site.yml --limit datacenter2
 
