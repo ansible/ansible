@@ -291,7 +291,7 @@ Become and network automation
 
 As of version 2.6, Ansible supports ``become`` for privilege escalation (entering ``enable`` mode or privileged EXEC mode) on all Ansible-maintained network platforms that support ``enable`` mode. Using ``become`` replaces the ``authorize`` and ``auth_pass`` options in a ``provider`` dictionary.
 
-You must set the connection type to either ``connection: network_cli`` or ``connection: httpapi`` to use ``become`` for privilege escalation on network devices. Check the :ref:`platform_options` and :ref:`network_modules` documentation for details.
+You must set the connection type to either ``connection: ansible.netcommon.network_cli`` or ``connection: ansible.netcommon.httpapi`` to use ``become`` for privilege escalation on network devices. Check the :ref:`platform_options` documentation for details.
 
 You can use escalated privileges on only the specific tasks that need them, on an entire play, or on all plays. Adding ``become: yes`` and ``become_method: enable`` instructs Ansible to enter ``enable`` mode before executing the task, play, or playbook where those parameters are set.
 
@@ -306,7 +306,7 @@ To set ``enable`` mode for a specific task, add ``become`` at the task level:
 .. code-block:: yaml
 
    - name: Gather facts (eos)
-     eos_facts:
+     arista.eos.eos_facts:
        gather_subset:
          - "!hardware"
      become: yes
@@ -321,7 +321,7 @@ To set enable mode for all tasks in a single play, add ``become`` at the play le
      become_method: enable
      tasks:
        - name: Gather facts (eos)
-         eos_facts:
+         arista.eos.eos_facts:
            gather_subset:
              - "!hardware"
 
@@ -334,8 +334,8 @@ Often you wish for all tasks in all plays to run using privilege mode, that is b
 
 .. code-block:: yaml
 
-   ansible_connection: network_cli
-   ansible_network_os: eos
+   ansible_connection: ansible.netcommon.network_cli
+   ansible_network_os: arista.eos.eos
    ansible_user: myuser
    ansible_become: yes
    ansible_become_method: enable
@@ -407,7 +407,8 @@ task:
 
 .. code-block:: yaml
 
-    - win_whoami:
+    - Check my user name
+      ansible.windows.win_whoami:
       become: yes
 
 The output will look something similar to the below:
@@ -534,7 +535,7 @@ If running on a version of Ansible that is older than 2.5 or the normal
   .. code-block:: yaml
 
     - name: grant the ansible user the SeTcbPrivilege right
-      win_user_right:
+      ansible.windows.win_user_right:
         name: SeTcbPrivilege
         users: '{{ansible_user}}'
         action: add
@@ -632,7 +633,7 @@ or with this Ansible task:
 .. code-block:: yaml
 
    - name: allow blank password on become
-     win_regedit:
+     ansible.windows.win_regedit:
        path: HKLM:\SYSTEM\CurrentControlSet\Control\Lsa
        name: LimitBlankPasswordUse
        data: 0
@@ -707,7 +708,7 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
 .. code-block:: yaml
 
   - name: copy a file from a fileshare with custom credentials
-    win_copy:
+    ansible.windows.win_copy:
       src: \\server\share\data\file.txt
       dest: C:\temp\file.txt
       remote_src: yes
@@ -719,12 +720,12 @@ Here are some examples of how to use ``become_flags`` with Windows tasks:
       ansible_become_flags: logon_type=new_credentials logon_flags=netcredentials_only
 
   - name: run a command under a batch logon
-    win_whoami:
+    ansible.windows.win_whoami:
     become: yes
     become_flags: logon_type=batch
 
   - name: run a command and not load the user profile
-    win_whomai:
+    ansible.windows.win_whomai:
     become: yes
     become_flags: logon_flags=
 
