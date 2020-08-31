@@ -9,6 +9,16 @@ fi
 set -eux
 
 source virtualenv.sh
+# This is needed due to a change in setuptools >= 50.0.0
+# when installing ruamel.yaml without a wheel (which happens on FreeBSD).
+#
+# It is not clear how long this environment variable will work, so this may
+# break with newer versions of setuptools.
+#
+# See https://setuptools.readthedocs.io/en/latest/history.html#v50-0-0
+#
+export SETUPTOOLS_USE_DISTUTILS=stdlib
+
 pip install openshift -c constraints.txt
 
 ./server.py &
