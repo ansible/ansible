@@ -172,7 +172,7 @@ def check_required_arguments(argument_spec, module_parameters):
 
     Raises TypeError if the check fails
 
-    :arg argument_spec: Argument spec dicitionary containing all parameters
+    :arg argument_spec: Argument spec dictionary containing all parameters
         and their specification
     :arg module_paramaters: Dictionary of module parameters
 
@@ -272,6 +272,89 @@ def check_required_if(requirements, module_parameters):
         for missing in results:
             msg = "%s is %s but %s of the following are missing: %s" % (
                 missing['parameter'], missing['value'], missing['requires'], ', '.join(missing['missing']))
+            raise TypeError(to_native(msg))
+
+    return results
+
+
+def check_mutually_exclusive_if(requirements, module_parameters):
+    """Check parameters that are conditionally mutually exclusive
+
+    Raises TypeError if the check fails
+
+    :arg requirements: List of lists specifying a parameter, value, parameters
+        mutually exclusive when the given parameter is the specified value, and optionally
+        a boolean indicating any or all parameters are required.
+
+        Example:
+            mutually_exclusive_if=[
+                ['state', 'present', ('path',), True],
+                ['someint', 99, ('bool_param', 'string_param')],
+            ]
+
+    :arg module_paramaters: Dictionary of module parameters
+
+    :returns: Empty list or raises TypeError if the check fails.
+        The results attribute of the exception contains a list of dictionaries.
+        Each dictionary is the result of evaluting each item in requirements.
+        Each return dictionary contains the following keys:
+
+            :key mutually_exclusive: List of parameters that are present but not required conditionally
+            :key requires: 'any' or 'all'
+            :key paramater: Parameter name that has the requirement
+            :key value: Original value of the paramater
+            :key requirements: Original required parameters
+
+        Example:
+            [
+                {
+                    'parameter': 'someint',
+                    'value': 99
+                    'requirements': ('bool_param', 'string_param'),
+                    'mutually_exclusive': ['string_param'],
+                    'requires': 'all',
+                }
+            ]
+
+    """
+    results = []
+    if requirements is None:
+        return results
+
+    for req in requirements:
+        mutually_exclusive = {}
+        mutually_exclusive['mutually_exclusive'] = []
+        max_mutex_count = 0
+        is_one_of = False
+        if len(req) == 4:
+            key, val, requirements, is_one_of = req
+        else:
+            key, val, requirements = req
+
+        # is_one_of is True at least one requirement should be
+        # present, else all requirements should be present.
+        if is_one_of:
+            max_mutex_count = len(requirements)
+            mutually_exclusive['requires'] = 'any'
+        else:
+            mutually_exclusive['requires'] = 'all'
+
+        if key in module_parameters and module_parameters[key] == val:
+            for check in requirements:
+                count = count_terms(check, module_parameters)
+                if count != 0:
+                    mutually_exclusive['mutually_exclusive'].append(check)
+
+        if len(mutually_exclusive['mutually_exclusive']) and len(mutually_exclusive['mutually_exclusive']) >= max_mutex_count:
+            mutually_exclusive['parameter'] = key
+            mutually_exclusive['value'] = val
+            mutually_exclusive['requirements'] = requirements
+            results.append(mutually_exclusive)
+
+    if results:
+        for mutex in results:
+            msg = "%s is %s with %s of the following parameters which are mutually exclusive: %s" % (
+                mutex['parameter'], mutex['value'], mutex['requires'], ', '.join(mutex['mutually_exclusive']))
             raise TypeError(to_native(msg))
 
     return results

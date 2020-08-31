@@ -177,6 +177,7 @@ from ansible.module_utils.six.moves import map, reduce, shlex_quote
 from ansible.module_utils.common.validation import (
     check_missing_parameters,
     check_mutually_exclusive,
+    check_mutually_exclusive_if,
     check_required_arguments,
     check_required_by,
     check_required_if,
@@ -665,7 +666,8 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False,
-                 supports_check_mode=False, required_if=None, required_by=None):
+                 supports_check_mode=False, required_if=None, required_by=None,
+                 mutually_exclusive_if=None):
 
         '''
         Common code for quickly building an ansible module in Python
@@ -683,6 +685,7 @@ class AnsibleModule(object):
         self.no_log = no_log
 
         self.mutually_exclusive = mutually_exclusive
+        self.mutually_exclusive_if = mutually_exclusive_if
         self.required_together = required_together
         self.required_one_of = required_one_of
         self.required_if = required_if
@@ -733,6 +736,7 @@ class AnsibleModule(object):
         # check exclusive early
         if not bypass_checks:
             self._check_mutually_exclusive(mutually_exclusive)
+            self._check_mutually_exclusive_if(mutually_exclusive_if)
 
         self._set_defaults(pre=True)
 
@@ -1574,6 +1578,18 @@ class AnsibleModule(object):
         if param is None:
             param = self.params
         return count_terms(check, param)
+
+    def _check_mutually_exclusive_if(self, spec, param=None):
+        if param is None:
+            param = self.params
+
+        try:
+            check_mutually_exclusive_if(spec, param)
+        except TypeError as e:
+            msg = to_native(e)
+            if self._options_context:
+                msg += " found in %s" % " -> ".join(self._options_context)
+            self.fail_json(msg=msg)
 
     def _check_mutually_exclusive(self, spec, param=None):
         if param is None:
