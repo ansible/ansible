@@ -71,7 +71,7 @@ Advanced features and reference
 * Using :ref:`advanced syntax <playbooks_advanced_syntax>`
 * Manipulating :ref:`complex data <complex_data_manipulation>`
 * Using :ref:`plugins <plugins_lookup>`
-* Using :ref:`playbook keywords <playbook_keywords>`
+* Using :ref:`playbook keywords <playbooks_keywords>`
 * Using :ref:`command-line tools <command_line_tools>`
 * Rejecting :ref:`specific modules <plugin_filtering_config>`
 * Module :ref:`maintenance <modules_support>`
