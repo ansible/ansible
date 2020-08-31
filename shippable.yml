@@ -29,6 +29,12 @@ matrix:
     - env: T=osx/10.11/1 S=dev
     - env: T=osx/10.11/1 S=dev
     - env: T=osx/10.11/1 S=dev
+    - env: T=osx/10.11/1 S=dev
+    - env: T=osx/10.11/1 S=dev
+    - env: T=osx/10.11/1 S=dev
+    - env: T=osx/10.11/1 S=dev
+    - env: T=osx/10.11/1 S=dev
+    - env: T=osx/10.11/1 S=dev
 
 branches:
   except:
