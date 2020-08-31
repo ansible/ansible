@@ -187,8 +187,7 @@ class AnsibleCoreCI:
             if self.args.remote_endpoint:
                 self.endpoints = (self.args.remote_endpoint,)
             else:
-                self.endpoints = self._get_parallels_endpoints()
-                self.max_threshold = 6
+                self.endpoints = (AWS_ENDPOINTS['us-east-1'],)
 
             self.ssh_key = SshKey(args)
             self.port = None
