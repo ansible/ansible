@@ -618,6 +618,7 @@
   yum:
     name: "/tmp/{{ pkg_name }}.rpm"
     state: present
+    disable_gpg_check: true
   register: yum_result
 
 - name: verify installation
@@ -663,6 +664,7 @@
   yum:
     name: "{{ pkg_url }}"
     state: present
+    disable_gpg_check: true
   register: yum_result
 
 - name: verify installation
