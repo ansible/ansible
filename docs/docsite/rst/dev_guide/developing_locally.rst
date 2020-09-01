@@ -5,28 +5,28 @@
 Adding modules and plugins locally
 **********************************
 
-The easiest, quickest, and the most popular way to extend Ansible is to use a local module or a plugin. You can create them or copy existing ones for local use. You can store a local module or plugin on your Ansible control node and share it with your team or organization. You can also share a local plugin or module by embedding it in a role and publishing it on Ansible Galaxy. If you are using roles on Ansible Galaxy, then you are already using local modules and plugins without realizing it.
+The easiest, quickest, and the most popular way to extend Ansible is to use a local module or a plugin. You can create them or copy existing ones for local use. You can store a local module or plugin on your Ansible control node and share it with your team or organization. You can also share a local plugin or module by including it in a collection or embedding it in a role, then publishing the collection or role on Ansible Galaxy. If you are using roles on Ansible Galaxy, then you are already using local modules and plugins without realizing it.
 
-If you are using an existing module or plugin but Ansible can't find it, this page is all you need. However, if you want to create a plugin or a module, go to :ref:`developing_plugins` and :ref:`developing_modules_general` topics and then return to this page to know how to add it locally. 
+If you are using an existing module or plugin but Ansible can't find it, this page is all you need. However, if you want to create a plugin or a module, go to :ref:`developing_plugins` and :ref:`developing_modules_general` topics and then return to this page to know how to add it locally.
 
 Extending Ansible with local modules and plugins offers lots of shortcuts such as:
 
 * You can copy other people's modules and plugins.
-* If you're writing a new module, you can choose any programming language you like.
-* You don't have to clone the main Ansible repo.
-* You don't have to open a pull request.
-* You don't have to add tests (though we recommend that you do!).
+* When writing a new module, you can choose any programming language you like.
+* You do not have to clone any repositories.
+* You do not have to open a pull request.
+* You do not have to add tests (though we recommend that you do!).
 
-To save a local module or plugin such that Ansible can find and use it, add the module or plugin in the appropriate directory (the directories are specified in later parts of this topic). 
+To save a local module or plugin such that Ansible can find and use it, add the module or plugin in the appropriate directory (the directories are specified in later parts of this topic).
 
 .. contents::
    :local:
 
 .. _modules_vs_plugins:
 
-Modules and plugins: what's the difference?
-===========================================
-If you're looking to add local functionality to Ansible, you might wonder whether you need a module or a plugin. Here's a quick overview to help you decide between the two:
+Modules and plugins: what is the difference?
+============================================
+If you are looking to add local functionality to Ansible, you might wonder whether you need a module or a plugin. Here is a quick overview to help you decide between the two:
 
 * Modules are reusable, standalone scripts that can be used by the Ansible API, the :command:`ansible` command, or the :command:`ansible-playbook` command. Modules provide a defined interface. Each module accepts arguments and returns information to Ansible by printing a JSON string to stdout before exiting. Modules execute on the target system (usually that means on a remote system) in separate processes.
 * :ref:`Plugins <plugins_lookup>` augment Ansible's core functionality and execute on the control node within the ``/usr/bin/ansible`` process. Plugins offer options and extensions for the core features of Ansible - transforming data, logging output, connecting to inventory, and more.
@@ -51,7 +51,7 @@ To confirm that ``my_custom_module`` is available:
 
 * type ``ansible localhost -m my_custom_module``. You should see the output for that module.
 
-or 
+or
 
 * type ``ansible-doc -t module my_custom_module``. You should see the documentation for that module.
 

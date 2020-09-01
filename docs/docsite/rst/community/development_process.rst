@@ -4,15 +4,19 @@
 The Ansible Development Cycle
 *****************************
 
-The Ansible development cycle happens on two levels. At a macro level, the team plans releases and tracks progress with roadmaps and projects. At a micro level, each PR has its own lifecycle.
+Ansible developers (including community contributors) add new features, fix bugs, and update code in many different repositories. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``. Other repositories contain plugins and modules that enable Ansible to execute specific tasks, like adding a user to a particular database or configuring a particular network device. These repositories contain the source code for collections.
+
+Development on ``ansible-base`` occurs on two levels. At the macro level, the ``ansible-base`` developers and maintainers plan releases and track progress with roadmaps and projects. At the micro level, each PR has its own lifecycle.
+
+Development on collections also occurs at the macro and micro levels. Each collection has its own macro development cycle. For more information on the collections development cycle, see :ref:`contributing_maintained_collections`. The micro-level lifecycle of a PR is similar in collections and in ``ansible-base``.
 
 .. contents::
    :local:
 
-Macro development: roadmaps, releases, and projects
-===================================================
+Macro development: ``ansible-base`` roadmaps, releases, and projects
+=====================================================================
 
-If you want to follow the conversation about what features will be added to Ansible for upcoming releases and what bugs are being fixed, you can watch these resources:
+If you want to follow the conversation about what features will be added to ``ansible-base`` for upcoming releases and what bugs are being fixed, you can watch these resources:
 
 * the :ref:`roadmaps`
 * the :ref:`Ansible Release Schedule <release_and_maintenance>`
@@ -27,7 +31,7 @@ If you want to follow the conversation about what features will be added to Ansi
 Micro development: the lifecycle of a PR
 ========================================
 
-Ansible accepts code through **pull requests** ("PRs" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of a collection or ansible-base.
+If you want to contribute a feature or fix a bug in ``ansible-base`` or in a collection, you must open a **pull request** ("PR" for short). GitHub provides a great overview of `how the pull request process works <https://help.github.com/articles/about-pull-requests/>`_ in general. The ultimate goal of any pull request is to get merged and become part of a collection or ``ansible-base``.
 Here's an overview of the PR lifecycle:
 
 * Contributor opens a PR
@@ -132,7 +136,7 @@ Once a human applies the ``shipit`` label, the :ref:`committers <community_commi
 Making your PR merge-worthy
 ===========================
 
-We don't merge every PR. Here are some tips for making your PR useful, attractive, and merge-worthy.
+We do not merge every PR. Here are some tips for making your PR useful, attractive, and merge-worthy.
 
 .. _community_changelogs:
 
@@ -204,14 +208,14 @@ Here are some examples:
 
 You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.9/changelogs/fragments>`_ for the 2.9 release.
 
-Once you've written the changelog fragment for your PR, commit the file and include it with the pull request.
+After you have written the changelog fragment for your PR, commit the file and include it with the pull request.
 
 .. _backport_process:
 
-Backporting merged PRs
-======================
+Backporting merged PRs in ``ansible-base``
+===========================================
 
-All Ansible PRs must be merged to the ``devel`` branch first. After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a pull request to backport the change to a previous stable branch.
+All ``ansible-base`` PRs must be merged to the ``devel`` branch first. After a pull request has been accepted and merged to the ``devel`` branch, the following instructions will help you create a pull request to backport the change to a previous stable branch.
 
 We do **not** backport features.
 

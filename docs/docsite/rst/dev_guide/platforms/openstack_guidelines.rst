@@ -3,10 +3,7 @@
 OpenStack Ansible Modules
 =========================
 
-These are a set of modules for interacting with OpenStack as either an admin
-or an end user. If the module does not begin with ``os_``, it's either deprecated
-or soon to be. This document serves as developer coding guidelines for
-modules intended to be here.
+The OpenStack collection (on `Galaxy <https://galaxy.ansible.com/openstack/cloud>`_, source code `repository <https://opendev.org/openstack/ansible-collections-openstack.git>`_) contains modules for interacting with OpenStack as either an admin or an end user. If the module does not begin with ``os_``, it is either deprecated or soon to be deprecated. This document serves as developer coding guidelines for modules in this collection.
 
 .. contents::
    :local:

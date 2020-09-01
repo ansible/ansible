@@ -8,7 +8,7 @@ Welcome to the Ansible Community Guide!
 
 The purpose of this guide is to teach you everything you need to know about being a contributing member of the Ansible community. All types of contributions are welcome and necessary to Ansible's continued success.
 
-This page outlines the most common situations and questions that bring readers to this section. If you prefer a traditional table of contents, there's one at the bottom of the page.
+This page outlines the most common situations and questions that bring readers to this section. If you prefer a :ref:`traditional table of contents <community_toc>`, you can find one at the bottom of the page.
 
 
 Getting started
@@ -34,7 +34,7 @@ Going deeper
 ============
 
 * I think Ansible is broken. How do I :ref:`report a bug <reporting_bugs>`?
-* I need functionality that Ansible doesn't offer. How do I :ref:`request a feature <request_features>`?
+* I need functionality that Ansible does not offer. How do I :ref:`request a feature <request_features>`?
 * How do I :ref:`contribute to an Ansible-maintained collection <contributing_maintained_collections>`?
 * I am waiting for a particular feature. How do I see what is :ref:`planned for future Ansible Releases <roadmaps>`?
 * I have a specific Ansible interest or expertise (for example, VMware, Linode, and so on.). How do I get involved in a :ref:`working group <working_group_list>`?
@@ -45,9 +45,9 @@ Going deeper
 Working with the Ansible repo
 =============================
 
-* I want to code my first changes to Ansible. How do I :ref:`set up my Python development environment <environment_setup>`?
+* I want to make my first code changes to a collection or to ``ansible-base``. How do I :ref:`set up my Python development environment <environment_setup>`?
 * I would like to get more efficient as a developer. How can I find :ref:`editors, linters, and other tools <other_tools_and_programs>` that will support my Ansible development efforts?
-* I want my PR to meet Ansible's guidelines. Where can I find  guidance on :ref:`coding in Ansible <developer_guide>`?
+* I want my code to meet Ansible's guidelines. Where can I find  guidance on :ref:`coding in Ansible <developer_guide>`?
 * I want to learn more about Ansible roadmaps, releases, and projects. How do I find information on :ref:`the development cycle <community_development_process>`?
 * I would like to connect Ansible to a new API or other resource. How do I :ref:`create a collection <developing_modules_in_groups>`?
 * My pull request is marked ``needs_rebase``. How do I :ref:`rebase my PR <rebase_guide>`?
@@ -56,10 +56,12 @@ Working with the Ansible repo
 * I am ready to step up as a collection maintainer. What are the :ref:`guidelines for maintainers <maintainers>`?
 * A module in a collection I maintain is obsolete. How do I :ref:`deprecate a module <deprecating_modules>`?
 
+.. _community_toc:
+
 Traditional Table of Contents
 =============================
 
-If you prefer to read the entire Community Guide, here's a list of the pages in order:
+If you prefer to read the entire Community Guide, here is a list of the pages in order:
 
 .. toctree::
    :maxdepth: 2
