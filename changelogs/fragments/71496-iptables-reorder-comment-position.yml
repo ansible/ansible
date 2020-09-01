@@ -1,0 +1,2 @@
+minor_changes:
+  - iptables - reorder comment postition to be at the end (https://github.com/ansible/ansible/issues/71444).
