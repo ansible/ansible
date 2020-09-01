@@ -51,3 +51,26 @@
     that:
     - '"use --force to re-create the collection artifact" in build_existing_no_force.stderr'
     - '"Created collection for ansible_test.my_collection" in build_existing_force.stdout'
+
+- name: build collection containing ignored files
+  command: ansible-galaxy collection build
+  args:
+    chdir: '{{ galaxy_dir }}/scratch/ansible_test/ignore'
+
+- name: list the created tar contents
+  command: tar -tf {{ galaxy_dir }}/scratch/ansible_test/ignore/ansible_test-ignore-1.0.0.tar.gz
+  args:
+    warn: false
+  register: tar_output
+
+- name: assert ignored files are not present in the archive
+  assert:
+    that:
+    - item not in tar_output.stdout_lines
+  loop: '{{ collection_ignored_files }}'
+
+- name: assert ignored directories are not present in the archive
+  assert:
+    that:
+    - item not in tar_output.stdout_lines
+  loop: '{{ collection_ignored_directories }}'
