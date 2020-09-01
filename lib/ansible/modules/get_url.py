@@ -502,16 +502,16 @@ def main():
             with open(checksum_tmpsrc) as f:
                 lines = [line.rstrip('\n') for line in f]
             os.remove(checksum_tmpsrc)
-            checksum_map = {}
+            checksum_map = []
             for line in lines:
                 parts = line.split(None, 1)
                 if len(parts) == 2:
-                    checksum_map[parts[0]] = parts[1]
+                    checksum_map.append((parts[0], parts[1]))
             filename = url_filename(url)
 
             # Look through each line in the checksum file for a hash corresponding to
             # the filename in the url, returning the first hash that is found.
-            for cksum in (s for (s, f) in checksum_map.items() if f.strip('./') == filename):
+            for cksum in (s for (s, f) in checksum_map if f.strip('./') == filename):
                 checksum = cksum
                 break
             else:
