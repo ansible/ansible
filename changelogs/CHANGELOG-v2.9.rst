@@ -5,6 +5,52 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.13
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-08-31
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Updated network integration auth timeout to 90 secs.
+- ansible-test - Remove ``pytest < 6.0.0`` constraint for managed installations on Python 3.x now that pytest 6 is supported.
+- known_hosts - fix reference to non-existent parameter in example (https://github.com/ansible/ansible/issues/71417)
+
+Security Fixes
+--------------
+
+- The fix for CVE-2020-1736 has been reverted. Users are encouraged to specify a ``mode`` parameter in their file-based tasks when the files being manipulated contain sensitive data.
+- dnf - Previously, regardless of the ``disable_gpg_check`` option, packages were not GPG validated. They are now. (CVE-2020-14365)
+
+Bugfixes
+--------
+
+- Confirmed commit fails with TypeError in IOS XR netconf plugin (https://github.com/ansible-collections/cisco.iosxr/issues/74)
+- Fix an exit code for a non-failing playbook (https://github.com/ansible/ansible/issues/71306)
+- Fix execution of the meta tasks 'clear_facts', 'clear_host_errors', 'end_play', 'end_host', and 'reset_connection' when the CLI flag '--flush-cache' is provided.
+- Fix statistics reporting when rescue block contains another block (issue https://github.com/ansible/ansible/issues/61253).
+- Fixed Ansible reporting validate not supported by netconf server when enabled in netconf - (https://github.com/ansible-collections/ansible.netcommon/issues/119).
+- TOML inventory - Ensure we register dump functions for ``AnsibleUnsafe`` to support dumping unsafe values. Note that the TOML format has no functionality to mark that the data is unsafe for re-consumption. (https://github.com/ansible/ansible/issues/71307)
+- ansible-test units - fixed collection location code to work under pytest >= 6.0.0
+- aws_acm_info - fix `KeyError` failure when retrieving keys with a `Failed` status (https://github.com/ansible-collections/community.aws/issues/198)
+- cron - cron file should not be empty after adding var (https://github.com/ansible/ansible/pull/71207)
+- mongodb_replicaset - fixes authentication to determine replicaset name (https://github.com/ansible-collections/community.mongodb/issues/136).
+- powershell - fix escaping of strings that broken modules like fetch when dealing with special chars - https://github.com/ansible/ansible/issues/62781
+- powershell - fix the CLIXML parser when it contains nested CLIXML objects - https://github.com/ansible/ansible/issues/69550
+- psrp - Use native PSRP mechanism when copying files to support custom endpoints
+- setup - Add a null check for ``Win32_Bios.ReleaseData`` to avoid a failure when that value is not set - https://github.com/ansible/ansible/issues/69736
+- strftime filter - Input epoch is allowed to be a float (https://github.com/ansible/ansible/issues/71257)
+- systemd - fixed chroot usage on new versions of systemd, that broke because of upstream changes in systemctl output
+- systemd - made the systemd module work correctly when the SYSTEMD_OFFLINE environment variable is set
+- zabbix_host - fixed inventory_mode key error, which occurs with Zabbix 4.4.1 or more (https://github.com/ansible/ansible/issues/65304).
+- zabbix_proxy - fixed support for Zabbix 5.0
+
 v2.9.12
 =======
 

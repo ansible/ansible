@@ -1556,6 +1556,34 @@ releases:
     - unarchive-check-future-gid-against-run-gid.yml
     - v2.9.12_summary.yaml
     release_date: '2020-08-10'
+  2.9.13:
+    codename: Immigrant Song
+    fragments:
+    - 60552-aws_acm_info-failed.yml
+    - 65304-fix_zabbix_host_inventory_mode_key_error.yml
+    - 70922-fix-block-in-rescue.yml
+    - 71195-netconf_config_validate_issue.yaml
+    - 71197-systemctl-ignore-message.yaml
+    - 71239-update-auth-timeout.yml
+    - 71257-strftime-float.yml
+    - 71306-fix-exit-code-no-failure.yml
+    - 71307-toml-dumps-unsafe.yml
+    - 71393-mongodb-replicaset-use-db-ismaster.yaml
+    - 71417-fix-non-existant-parameter-reference.yml
+    - ansible-test-pytest-cap-revert.yml
+    - community-zabbix-53.yaml
+    - cve-2020-1736-revert.yml
+    - dnf_gpg.yml
+    - fix-cron-file-regression.yaml
+    - fix_meta_tasks_with_flush_cache.yml
+    - iosxr_netconf_config_commit_fix.yaml
+    - powershell-fix-quoting.yaml
+    - powershell-nested-clixml.yml
+    - psrp-copy.yaml
+    - pytest-collections-fix.yml
+    - v2.9.13_summary.yaml
+    - win_setup-bios.yml
+    release_date: '2020-08-31'
   2.9.2:
     codename: Immigrant Song
     fragments:
