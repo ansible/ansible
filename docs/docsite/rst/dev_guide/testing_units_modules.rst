@@ -264,15 +264,6 @@ By using previously stored data from various versions of an API we can ensure th
 code is tested against the actual data which will be sent from that version of the system
 even when the version is very obscure and unlikely to be available during testing.
 
-How to run unit test Ansible modules
-====================================
-
-.. code:: shell
-
-   ansible-test units --docker -v
-
-Please refer to this link for more information: :ref:`testing_units#running-tests`
-
 Ansible special cases for unit testing
 ======================================
 
