@@ -371,6 +371,11 @@ add ``$ErrorActionPreference = "Continue"`` to the top of the module. This chang
 of the EAP that was accidentally removed in a previous release and ensure that modules are more resilient to errors
 that may occur in execution.
 
+* Version 2.8.14 of Ansible changed the default mode of file-based tasks to ``0o600 & ~umask`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered. As a result, the ``mode`` change has been reverted in 2.8.15, and ``mode`` will now default to ``0o666 & ~umask`` as in previous versions of Ansible.
+* If you changed any tasks to specify less restrictive permissions while using 2.8.14, those changes will be unnecessary (but will do no harm) in 2.8.15.
+* To avoid the issue raised in CVE-2020-1736, specify a ``mode`` parameter in all file-based tasks that accept it.
+
+
 Modules removed
 ---------------
 
