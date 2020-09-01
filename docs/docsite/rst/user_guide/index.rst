@@ -71,7 +71,7 @@ Advanced features and reference
 * Using :ref:`advanced syntax <playbooks_advanced_syntax>`
 * Manipulating :ref:`complex data <complex_data_manipulation>`
 * Using :ref:`plugins <plugins_lookup>`
-* Using :ref:`playbook keywords <playbooks_keywords>`
+* Using :ref:`playbook keywords <playbook_keywords>`
 * Using :ref:`command-line tools <command_line_tools>`
 * Rejecting :ref:`specific modules <plugin_filtering_config>`
 * Module :ref:`maintenance <modules_support>`
@@ -127,7 +127,7 @@ If you prefer to read the entire User Guide, here's a list of the pages in order
    sample_setup
    modules
    ../plugins/plugins
-   ../playbooks_keywords
+   ../reference_appendices/playbooks_keywords
    intro_bsd
    windows
    collections_using
