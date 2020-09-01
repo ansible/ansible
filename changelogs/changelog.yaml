@@ -1918,3 +1918,19 @@ releases:
     - unarchive-check-future-gid-against-run-gid.yml
     - v2.10.1rc1_summary.yaml
     release_date: '2020-08-31'
+  2.10.1rc2:
+    changes:
+      release_summary: '| Release Date: 2020-09-01
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+      security_fixes:
+      - The fix for CVE-2020-1736 has been reverted. Users are encouraged to specify
+        a ``mode`` parameter in their file-based tasks when the files being manipulated
+        contain sensitive data.
+    codename: When the Levee Breaks
+    fragments:
+    - cve-2020-1736-revert.yml
+    - v2.10.1rc2_summary.yaml
+    release_date: '2020-09-01'
