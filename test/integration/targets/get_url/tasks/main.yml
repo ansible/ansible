@@ -335,11 +335,17 @@
     dest: '{{ files_dir }}/27617.txt'
     content: "ptux"
 
+- name: create duplicate src file
+  copy:
+    dest: '{{ files_dir }}/71420.txt'
+    content: "ptux"
+
 - name: create sha1 checksum file of src
   copy:
     dest: '{{ files_dir }}/sha1sum.txt'
     content: |
       a97e6837f60cec6da4491bab387296bbcd72bdba  27617.txt
+      a97e6837f60cec6da4491bab387296bbcd72bdba  71420.txt
       3911340502960ca33aece01129234460bfeb2791  not_target1.txt
       1b4b6adf30992cedb0f6edefd6478ff0a593b2e4  not_target2.txt
 
@@ -348,6 +354,7 @@
     dest: '{{ files_dir }}/sha256sum.txt'
     content: |
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  27617.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  71420.txt
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  not_target2.txt
 
@@ -356,6 +363,7 @@
     dest: '{{ files_dir }}/sha256sum_with_dot.txt'
     content: |
       b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./27617.txt
+      b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.  ./71420.txt
       30949cc401e30ac494d695ab8764a9f76aae17c5d73c67f65e9b558f47eff892  ./not_target1.txt
       d0dbfc1945bc83bf6606b770e442035f2c4e15c886ee0c22fb3901ba19900b5b  ./not_target2.txt
 
@@ -418,6 +426,50 @@
     path: "{{ remote_tmp_dir }}/27617sha256_with_dot.txt"
   register: stat_result_sha256_with_file_scheme
 
+- name: download 71420.txt with sha1 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}'
+    checksum: 'sha1:http://localhost:{{ http_port }}/sha1sum.txt'
+  register: result_sha1_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420.txt"
+  register: stat_result_sha1_71420
+
+- name: download 71420.txt with sha256 checksum url
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum.txt'
+  register: result_sha256_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420.txt"
+  register: stat_result_sha256_71420
+
+- name: download 71420.txt with sha256 checksum url with dot leading paths
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256_with_dot.txt'
+    checksum: 'sha256:http://localhost:{{ http_port }}/sha256sum_with_dot.txt'
+  register: result_sha256_with_dot_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420sha256_with_dot.txt"
+  register: stat_result_sha256_with_dot_71420
+
+- name: download 71420.txt with sha256 checksum url with file scheme
+  get_url:
+    url: 'http://localhost:{{ http_port }}/71420.txt'
+    dest: '{{ remote_tmp_dir }}/71420sha256_with_file_scheme.txt'
+    checksum: 'sha256:file://{{ files_dir }}/sha256sum.txt'
+  register: result_sha256_with_file_scheme_71420
+
+- stat:
+    path: "{{ remote_tmp_dir }}/71420sha256_with_dot.txt"
+  register: stat_result_sha256_with_file_scheme_71420
+
 - name: Assert that the file was downloaded
   assert:
     that:
@@ -429,6 +481,14 @@
       - "stat_result_sha256.stat.exists == true"
       - "stat_result_sha256_with_dot.stat.exists == true"
       - "stat_result_sha256_with_file_scheme.stat.exists == true"
+      - result_sha1_71420 is changed
+      - result_sha256_71420 is changed
+      - result_sha256_with_dot_71420 is changed
+      - result_sha256_with_file_scheme_71420 is changed
+      - "stat_result_sha1_71420.stat.exists == true"
+      - "stat_result_sha256_71420.stat.exists == true"
+      - "stat_result_sha256_with_dot_71420.stat.exists == true"
+      - "stat_result_sha256_with_file_scheme_71420.stat.exists == true"
 
 #https://github.com/ansible/ansible/issues/16191
 - name: Test url split with no filename
