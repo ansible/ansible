@@ -5,6 +5,22 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.15
+=======
+
+Release Summary
+---------------
+
+| Release Date: 2020-08-31
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Security Fixes
+--------------
+
+- The fix for CVE-2020-1736 has been reverted. Users are encouraged to specify a ``mode`` parameter in their file-based tasks when the files being manipulated contain sensitive data.
+- dnf - Previously, regardless of the ``disable_gpg_check`` option, packages were not GPG validated. They are now. (CVE-2020-14365)
+
 v2.8.14
 =======
 
@@ -36,7 +52,6 @@ Bugfixes
 
 - Address compat with rpmfluff-0.6 for integration tests
 - add constraints file for ``anisble_runner`` test since an update to ``psutil`` is now causing test failures
-- ansible-test - Add ``pytest < 6.0.0`` constraint for managed installations on Python 3.x to avoid issues with relative imports.
 
 v2.8.13
 =======

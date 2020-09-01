@@ -1677,12 +1677,18 @@ releases:
     - 67794-atomic_move-default-perms.yml
     - 67794-default-permissions-warning-fix.yml
     - 70762-sanitize-uri-keys.yml
-    - ansible-test-pytest-cap.yml
     - copy-sanitize-check-mode-invocation-args.yaml
     - rpmfluff-compat-fixes.yml
     - test-ansible-runner-pin-psutil.yml
     - v2.8.14_summary.yaml
     release_date: '2020-08-10'
+  2.8.15:
+    codename: How Many More Times
+    fragments:
+    - cve-2020-1736-revert.yml
+    - dnf_gpg.yml
+    - v2.8.15_summary.yaml
+    release_date: '2020-08-31'
   2.8.2:
     codename: How Many More Times
     fragments:
