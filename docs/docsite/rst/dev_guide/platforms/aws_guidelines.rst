@@ -4,12 +4,7 @@
 Guidelines for Ansible Amazon AWS module development
 ****************************************************
 
-The Ansible AWS modules and these guidelines are maintained by the Ansible AWS Working Group.  For
-further information see
-the `AWS working group community page <https://github.com/ansible/community/wiki/aws>`_.
-If you are planning to contribute AWS modules to Ansible then getting in touch with the working
-group will be a good way to start, especially because a similar module may already be under
-development.
+The Ansible AWS collection (on `Galaxy <https://galaxy.ansible.com/community/aws>`_, source code `repository <https://github.com/ansible-collections/community.aws>`_) is maintained by the Ansible AWS Working Group.  For further information see the `AWS working group community page <https://github.com/ansible/community/wiki/aws>`_. If you are planning to contribute AWS modules to Ansible then getting in touch with the working group is a good way to start, especially because a similar module may already be under development.
 
 .. contents::
    :local:
@@ -156,7 +151,7 @@ or:
 Supporting Module Defaults
 --------------------------
 
-The existing AWS modules support using :ref:`module_defaults <module_defaults>` for common 
+The existing AWS modules support using :ref:`module_defaults <module_defaults>` for common
 authentication parameters.  To do the same for your new module, add an entry for it in
 ``lib/ansible/config/module_defaults.yml``.  These entries take the form of:
 

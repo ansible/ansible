@@ -5,7 +5,7 @@
 Ansible module architecture
 ***************************
 
-If you're working on Ansible's Core code, writing an Ansible module, or developing an action plugin, this deep dive helps you understand how Ansible's program flow executes. If you're just using Ansible Modules in playbooks, you can skip this section.
+If you are working on the ``ansible-base`` code, writing an Ansible module, or developing an action plugin, you may need to understand how Ansible's program flow executes. If you are just using Ansible Modules in playbooks, you can skip this section.
 
 .. contents::
    :local:

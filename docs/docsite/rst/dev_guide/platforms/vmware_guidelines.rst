@@ -4,8 +4,7 @@
 Guidelines for VMware module development
 ****************************************
 
-The VMware modules and these guidelines are maintained by the VMware Working Group. For
-further information see the `team community page <https://github.com/ansible/community/wiki/VMware>`_.
+The Ansible VMware collection (on `Galaxy <https://galaxy.ansible.com/community/vmware>`_, source code `repository <https://github.com/ansible-collections/vmware>`_) is maintained by the VMware Working Group. For further information see the `team community page <https://github.com/ansible/community/wiki/VMware>`_.
 
 .. contents::
    :local:

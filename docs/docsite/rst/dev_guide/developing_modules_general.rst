@@ -9,7 +9,7 @@ A module is a reusable, standalone script that Ansible runs on your behalf, eith
 
 If you need functionality that is not available in any of the thousands of Ansible modules found in collections, you can easily write your own custom module. When you write a module for local use, you can choose any programming language and follow your own rules. Use this topic to learn how to create an Ansible module in Python. After you create a module, you must add it locally to the appropriate directory so that Ansible can find and execute it. For details about adding a module locally, see :ref:`developing_locally`.
 
-.. contents:: Topics
+.. contents::
    :local:
 
 .. _environment_setup:
@@ -91,7 +91,7 @@ Creating a module
 
 To create a module:
 
-1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/``. If you are developing module using collection, ``$ cd plugins/modules/`` inside your collection development tree.
+1. Navigate to the correct directory for your new module: ``$ cd lib/ansible/modules/``. If you are developing a module in a :ref:`collection <developing_collections>`, ``$ cd plugins/modules/`` inside your collection development tree.
 2. Create your new module file: ``$ touch my_test.py``.
 3. Paste the content below into your new module file. It includes the :ref:`required Ansible format and documentation <developing_modules_documenting>` and some example code.
 4. Modify and extend the code to do what you want your new module to do. See the :ref:`programming tips <developing_modules_best_practices>` and :ref:`Python 3 compatibility <developing_python_3>` pages for pointers on writing clean and concise module code.
@@ -102,7 +102,7 @@ To create a module:
 Verifying your module code
 ==========================
 
-Once you've modified the sample code above to do what you want, you can try out your module.
+After you modify the sample code above to do what you want, you can try out your module.
 Our :ref:`debugging tips <debugging_modules>` will help if you run into bugs as you verify your module code.
 
 
@@ -196,19 +196,10 @@ test/units/modules/.../test/my_test.py``
 Contributing back to Ansible
 ============================
 
-If you would like to contribute to the main Ansible repository
-by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_
-of the Ansible repository and develop against a new feature
-branch using the ``devel`` branch as a starting point.
-When you you have a good working code change, you can
-submit a pull request to the Ansible repository by selecting
-your feature branch as a source and the Ansible devel branch as
-a target.
+If you would like to contribute to ``ansible-base`` by adding a new feature or fixing a bug, `create a fork <https://help.github.com/articles/fork-a-repo/>`_ of the ansible/ansible repository and develop against a new feature branch using the ``devel`` branch as a starting point. When you you have a good working code change, you can submit a pull request to the Ansible repository by selecting your feature branch as a source and the Ansible devel branch as a target.
 
-If you want to contribute your module back to the upstream Ansible repo,
-review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`programming tips <developing_modules_best_practices>`,
-and :ref:`strategy for maintaining Python 2 and Python 3 compatibility <developing_python_3>`, as well as
-information about :ref:`testing <developing_testing>` before you open a pull request.
+If you want to contribute a module to an :ref:`Ansible collection <contributing_maintained_collections>`, review our :ref:`submission checklist <developing_modules_checklist>`, :ref:`programming tips <developing_modules_best_practices>`, and :ref:`strategy for maintaining Python 2 and Python 3 compatibility <developing_python_3>`, as well as information about :ref:`testing <developing_testing>` before you open a pull request.
+
 The :ref:`Community Guide <ansible_community_guide>` covers how to open a pull request and what happens next.
 
 

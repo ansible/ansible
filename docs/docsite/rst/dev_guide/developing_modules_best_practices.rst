@@ -13,7 +13,7 @@ As you design and develop modules, follow these basic conventions and tips for c
 Scoping your module(s)
 ======================
 
-Especially if you want to contribute your module(s) back to Ansible Core, make sure each module includes enough logic and functionality, but not too much. If you're finding these guidelines tricky, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
+Especially if you want to contribute your module(s) to an existing Ansible Collection, make sure each module includes enough logic and functionality, but not too much. If these guidelines seem confusing, consider :ref:`whether you really need to write a module <module_dev_should_you>` at all.
 
 * Each module should have a concise and well-defined functionality. Basically, follow the UNIX philosophy of doing one thing well.
 * Do not add ``get``, ``list`` or ``info`` state options to an existing module - create a new ``_info`` or ``_facts`` module.
@@ -31,8 +31,8 @@ Designing module interfaces
 General guidelines & tips
 =========================
 
-* Each module should be self-contained in one file, so it can be auto-transferred by Ansible.
-* Module name MUST use underscores instead of hyphens or spaces as a word separator. Using hyphens and spaces will prevent Ansible from importing your module.
+* Each module should be self-contained in one file, so it can be auto-transferred by ``ansible-base``.
+* Module name MUST use underscores instead of hyphens or spaces as a word separator. Using hyphens and spaces will prevent ``ansible-base`` from importing your module.
 * Always use the ``hacking/test-module.py`` script when developing modules - it will warn you about common pitfalls.
 * If you have a local module that returns facts specific to your installations, a good name for this module is ``site_facts``.
 * Eliminate or minimize dependencies. If your module has dependencies, document them at the top of the module file and raise JSON error messages when dependency import fails.
@@ -46,7 +46,7 @@ Functions and Methods
 * Each function should be concise and should describe a meaningful amount of work.
 * "Don't repeat yourself" is generally a good philosophy.
 * Function names should use underscores: ``my_function_name``.
-* Each function's name should describes what it does.
+* The name of each function should describe what the function does.
 * Each function should have a docstring.
 * If your code is too nested, that's usually a sign the loop body could benefit from being a function. Parts of our existing code are not the best examples of this at times.
 
