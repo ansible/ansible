@@ -118,10 +118,6 @@ Writing modules
 
   .. seealso:: `The Python Relative Import Docs <https://www.python.org/dev/peps/pep-0328/#guido-s-decision>`_ go into more detail of how to write relative imports.
 
-* Version 2.9.12 of Ansible changed the default mode of file-based tasks to ``0o600`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered and no longer consider a flaw in Ansible. As a result, the ``mode`` change has been reverted in 2.9.13, and ``mode`` will now default to ``0o666`` as in previous versions of Ansible.
-* If you changed any tasks to specify less restrictive permissions while using 2.9.12, those changes will be unnecessary (but will do no harm) in 2.9.13.
-* To avoid the issue raised in CVE-2020-1736, specify a ``mode`` parameter in all file-based tasks that accept it.
-
 
 Modules removed
 ---------------
