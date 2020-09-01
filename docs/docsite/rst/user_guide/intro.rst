@@ -10,11 +10,6 @@ Before we start exploring the main components of Ansible -- playbooks, configura
 
    ../installation_guide/index
    ../dev_guide/overview_architecture
-   intro_getting_started
-   intro_inventory
-   intro_dynamic_inventory
-   intro_patterns
-   intro_adhoc
    ../installation_guide/intro_configuration
    intro_bsd
    intro_windows
