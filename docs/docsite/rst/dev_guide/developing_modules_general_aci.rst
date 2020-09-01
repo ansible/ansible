@@ -18,9 +18,9 @@ What's covered in this section:
 
 Introduction
 ============
-Ansible already ships with a large collection of Cisco ACI modules, however the ACI object model is huge and covering all possible functionality would easily cover more than 1500 individual modules.
+The `cisco.aci collection <https://galaxy.ansible.com/cisco/aci>`_ already includes a large number of Cisco ACI modules, however the ACI object model is huge and covering all possible functionality would easily cover more than 1500 individual modules.
 
-If you are in need of specific functionality, you have 2 options:
+If you need specific functionality, you have 2 options:
 
 - Learn the ACI object model and use the low-level APIC REST API using the :ref:`aci_rest <aci_rest_module>` module
 - Write your own dedicated modules, which is actually quite easy

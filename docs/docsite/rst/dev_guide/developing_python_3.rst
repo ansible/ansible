@@ -4,14 +4,11 @@
 Ansible and Python 3
 ********************
 
-.. contents:: Topics
-   :local:
+The ``ansible-base`` code runs on both Python 2 and Python 3 because we want Ansible to be able to manage a wide
+variety of machines. Contributors to ansible-base and to Ansible Collections should be aware of the tips in this document so that they can write code that will run on the same versions of Python as the rest of Ansible.
 
-Ansible maintains a single code base that runs on both
-Python 2 and Python 3 because we want Ansible to be able to manage a wide
-variety of machines.  Contributors to Ansible should be aware of the tips in
-this document so that they can write code that will run on the same versions
-of Python as the rest of Ansible.
+.. contents::
+   :local:
 
 To ensure that your code runs on Python 3 as well as on Python 2, learn the tips and tricks and idioms
 described here. Most of these considerations apply to all three types of Ansible code:
@@ -20,8 +17,7 @@ described here. Most of these considerations apply to all three types of Ansible
 2. modules - the code which Ansible transmits to and invokes on the managed machine.
 3. shared ``module_utils`` code - the common code that's used by modules to perform tasks and sometimes used by controller-side code as well
 
-However, the three types of code do not use the same string strategy. If you're developing a module or some ``module_utils`` code, be sure
-to read the section on string strategy carefully.
+However, the three types of code do not use the same string strategy. If you're developing a module or some ``module_utils`` code, be sure to read the section on string strategy carefully.
 
 Minimum version of Python 3.x and Python 2.x
 ============================================
@@ -405,8 +401,4 @@ does have support for the older, percent-formatting.
 Testing modules on Python 3
 ===================================
 
-Ansible modules are slightly harder to code to support Python 3 than normal code from other
-projects. A lot of mocking has to go into unit testing an Ansible module, so
-it's harder to test that your changes have fixed everything or to to make sure
-that later commits haven't regressed the Python 3 support. Review our :ref:`testing <developing_testing>` pages
-for more information.
+Ansible modules are slightly harder to code to support Python 3 than normal code from other projects. A lot of mocking has to go into unit testing an Ansible module, so it's harder to test that your changes have fixed everything or to to make sure that later commits haven't regressed the Python 3 support. Review our :ref:`testing <developing_testing>` pages for more information.
