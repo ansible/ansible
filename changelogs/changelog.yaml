@@ -1551,11 +1551,6 @@ releases:
   2.10.0rc1:
     changes:
       bugfixes:
-      - '**security issue** atomic_move - change default permissions when creating
-        temporary files so they are not world readable (https://github.com/ansible/ansible/issues/67794)
-        (CVE-2020-1736)
-
-        '
       - 'Address the deprecation of the use of stdlib distutils in packaging. It''s
         a short-term hotfix for the problem (https://github.com/ansible/ansible/issues/70456,
         https://github.com/pypa/setuptools/issues/2230, https://github.com/pypa/setuptools/commit/bd110264)
@@ -1659,6 +1654,11 @@ releases:
 
         '
       security_fixes:
+      - '**security issue** atomic_move - change default permissions when creating
+        temporary files so they are not world readable (https://github.com/ansible/ansible/issues/67794)
+        (CVE-2020-1736)
+
+        '
       - Sanitize no_log values from any response keys that might be returned from
         the uri module (CVE-2020-14330).
     codename: When the Levee Breaks
@@ -1800,3 +1800,121 @@ releases:
     - lineinfile_exc_fix.yml
     - v2.10.0rc4_summary.yaml
     release_date: '2020-07-30'
+  2.10.1rc1:
+    changes:
+      bugfixes:
+      - ANSIBLE_COLLECTIONS_PATHS - remove deprecation so that users of Ansible 2.9
+        and 2.10+ can use the same var when specifying a collection path without a
+        warning.
+      - Confirmed commit fails with TypeError in IOS XR netconf plugin (https://github.com/ansible-collections/cisco.iosxr/issues/74)
+      - Ensure password passed in by -k is used on delegated hosts that do not have
+        ansible_password set
+      - Fix an exit code for a non-failing playbook (https://github.com/ansible/ansible/issues/71306)
+      - Fix execution of the meta tasks 'clear_facts', 'clear_host_errors', 'end_play',
+        'end_host', and 'reset_connection' when the CLI flag '--flush-cache' is provided.
+      - Fix statistics reporting when rescue block contains another block (issue https://github.com/ansible/ansible/issues/61253).
+      - Fixed Ansible reporting validate not supported by netconf server when enabled
+        in netconf - (https://github.com/ansible-collections/ansible.netcommon/issues/119).
+      - Skip literal_eval for string filters results in native jinja. (https://github.com/ansible/ansible/issues/70831)
+      - Strategy - Ensure we only process expected types from the results queue and
+        produce warnings for any object we receive from the queue that doesn't match
+        our expectations. (https://github.com/ansible/ansible/issues/70023)
+      - TOML inventory - Ensure we register dump functions for ``AnsibleUnsafe`` to
+        support dumping unsafe values. Note that the TOML format has no functionality
+        to mark that the data is unsafe for re-consumption. (https://github.com/ansible/ansible/issues/71307)
+      - ansible-galaxy download - fix bug when downloading a collection in a SCM subdirectory
+      - ansible-test units - fixed collection location code to work under pytest >=
+        6.0.0
+      - avoid clobbering existing facts inside loop when task also returns ansible_facts.
+      - cron - cron file should not be empty after adding var (https://github.com/ansible/ansible/pull/71207)
+      - fortimanager httpapi plugin - fix redirect to point to the ``fortinet.fortimanager``
+        collection (https://github.com/ansible/ansible/pull/71073).
+      - gluster modules - fix redirect to point to the ``gluster.gluster`` collection
+        (https://github.com/ansible/ansible/pull/71240).
+      - linux network facts - get the correct value for broadcast address (https://github.com/ansible/ansible/issues/64384)
+      - native jinja2 types - properly handle Undefined in nested data.
+      - powershell - fix escaping of strings that broken modules like fetch when dealing
+        with special chars - https://github.com/ansible/ansible/issues/62781
+      - powershell - fix the CLIXML parser when it contains nested CLIXML objects
+        - https://github.com/ansible/ansible/issues/69550
+      - psrp - Use native PSRP mechanism when copying files to support custom endpoints
+      - strftime filter - Input epoch is allowed to be a float (https://github.com/ansible/ansible/issues/71257)
+      - systemd - fixed chroot usage on new versions of systemd, that broke because
+        of upstream changes in systemctl output
+      - systemd - made the systemd module work correctly when the SYSTEMD_OFFLINE
+        environment variable is set
+      - templating - fix error message for ``x in y`` when y is undefined (https://github.com/ansible/ansible/issues/70984)
+      - unarchive - check ``fut_gid`` against ``run_gid`` in addition to supplemental
+        groups (https://github.com/ansible/ansible/issues/49284)
+      minor_changes:
+      - Fixed ansible-doc to not substitute for words followed by parenthesis.  For
+        instance, ``IBM(International Business Machines)`` will no longer be substituted
+        with a link to a non-existent module. https://github.com/ansible/ansible/pull/71070
+      - Updated network integration auth timeout to 90 secs.
+      - ansible-doc will now format, ``L()``, ``R()``, and ``HORIZONTALLINE`` in plugin
+        docs just as the website docs do.  https://github.com/ansible/ansible/pull/71070
+      - ansible-test - Remove ``pytest < 6.0.0`` constraint for managed installations
+        on Python 3.x now that pytest 6 is supported.
+      - ansible-test - the ACME test container was updated, it now supports external
+        account creation and has a basic OCSP responder (https://github.com/ansible/ansible/pull/71097,
+        https://github.com/ansible/acme-test-container/releases/tag/2.0.0).
+      - galaxy - add documentation about galaxy parameters in examples/ansible.cfg
+        (https://github.com/ansible/ansible/issues/68402).
+      - iptables - add a note about ipv6-icmp in protocol parameter (https://github.com/ansible/ansible/issues/70905).
+      - setup.py - Skip doing conflict checks for ``sdist`` and ``egg_info`` commands
+        (https://github.com/ansible/ansible/pull/71310)
+      - subelements - clarify the lookup plugin documentation for parameter handling
+        (https://github.com/ansible/ansible/issues/38182).
+      release_summary: '| Release Date: 2020-08-31
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+      security_fixes:
+      - '**security issue** - copy - Redact the value of the no_log ''content'' parameter
+        in the result''s invocation.module_args in check mode. Previously when used
+        with check mode and with ''-vvv'', the module would not censor the content
+        if a change would be made to the destination path. (CVE-2020-14332)
+
+        '
+      - dnf - Previously, regardless of the ``disable_gpg_check`` option, packages
+        were not GPG validated. They are now. (CVE-2020-14365)
+    codename: When the Levee Breaks
+    fragments:
+    - 38182_subelements.yml
+    - 68402_galaxy.yml
+    - 70023-results-type-filtering.yml
+    - 70831-skip-literal_eval-string-filter-native-jinja.yml
+    - 70905_iptables_ipv6.yml
+    - 70922-fix-block-in-rescue.yml
+    - 70984-templating-ansibleundefined-in-operator.yml
+    - 71073-fortimanager-httpapi-redirect.yml
+    - 71097-ansible-test-acme-container.yml
+    - 71195-netconf_config_validate_issue.yaml
+    - 71197-systemctl-ignore-message.yaml
+    - 71238-update-auth-timeout.yml
+    - 71240-gluster-modules-redirect.yml
+    - 71257-strftime-float.yml
+    - 71279-skip-conflict-check.yml
+    - 71306-fix-exit-code-no-failure.yml
+    - 71307-toml-dumps-unsafe.yml
+    - ansible-doc-formats.yml
+    - ansible-test-pytest-cap-revert.yml
+    - copy-sanitize-check-mode-invocation-args.yaml
+    - delegation_password.yml
+    - dnf_gpg.yml
+    - fix-cron-file-regression.yaml
+    - fix_meta_tasks_with_flush_cache.yml
+    - galaxy-download-scm.yaml
+    - galaxy_collections_paths-remove-dep.yml
+    - iosxr_netconf_config_commit_fix.yaml
+    - linux-network-facts-broadcast-address.yaml
+    - native-jinja2-types-properly-handle-nested-undefined.yml
+    - no_fact_loop_loss.yml
+    - powershell-fix-quoting.yaml
+    - powershell-nested-clixml.yml
+    - psrp-copy.yaml
+    - pytest-collections-fix.yml
+    - unarchive-check-future-gid-against-run-gid.yml
+    - v2.10.1rc1_summary.yaml
+    release_date: '2020-08-31'

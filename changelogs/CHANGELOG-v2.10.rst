@@ -5,6 +5,65 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.1rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2020-08-31
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- Fixed ansible-doc to not substitute for words followed by parenthesis.  For instance, ``IBM(International Business Machines)`` will no longer be substituted with a link to a non-existent module. https://github.com/ansible/ansible/pull/71070
+- Updated network integration auth timeout to 90 secs.
+- ansible-doc will now format, ``L()``, ``R()``, and ``HORIZONTALLINE`` in plugin docs just as the website docs do.  https://github.com/ansible/ansible/pull/71070
+- ansible-test - Remove ``pytest < 6.0.0`` constraint for managed installations on Python 3.x now that pytest 6 is supported.
+- ansible-test - the ACME test container was updated, it now supports external account creation and has a basic OCSP responder (https://github.com/ansible/ansible/pull/71097, https://github.com/ansible/acme-test-container/releases/tag/2.0.0).
+- galaxy - add documentation about galaxy parameters in examples/ansible.cfg (https://github.com/ansible/ansible/issues/68402).
+- iptables - add a note about ipv6-icmp in protocol parameter (https://github.com/ansible/ansible/issues/70905).
+- setup.py - Skip doing conflict checks for ``sdist`` and ``egg_info`` commands (https://github.com/ansible/ansible/pull/71310)
+- subelements - clarify the lookup plugin documentation for parameter handling (https://github.com/ansible/ansible/issues/38182).
+
+Security Fixes
+--------------
+
+- **security issue** - copy - Redact the value of the no_log 'content' parameter in the result's invocation.module_args in check mode. Previously when used with check mode and with '-vvv', the module would not censor the content if a change would be made to the destination path. (CVE-2020-14332)
+- dnf - Previously, regardless of the ``disable_gpg_check`` option, packages were not GPG validated. They are now. (CVE-2020-14365)
+
+Bugfixes
+--------
+
+- ANSIBLE_COLLECTIONS_PATHS - remove deprecation so that users of Ansible 2.9 and 2.10+ can use the same var when specifying a collection path without a warning.
+- Confirmed commit fails with TypeError in IOS XR netconf plugin (https://github.com/ansible-collections/cisco.iosxr/issues/74)
+- Ensure password passed in by -k is used on delegated hosts that do not have ansible_password set
+- Fix an exit code for a non-failing playbook (https://github.com/ansible/ansible/issues/71306)
+- Fix execution of the meta tasks 'clear_facts', 'clear_host_errors', 'end_play', 'end_host', and 'reset_connection' when the CLI flag '--flush-cache' is provided.
+- Fix statistics reporting when rescue block contains another block (issue https://github.com/ansible/ansible/issues/61253).
+- Fixed Ansible reporting validate not supported by netconf server when enabled in netconf - (https://github.com/ansible-collections/ansible.netcommon/issues/119).
+- Skip literal_eval for string filters results in native jinja. (https://github.com/ansible/ansible/issues/70831)
+- Strategy - Ensure we only process expected types from the results queue and produce warnings for any object we receive from the queue that doesn't match our expectations. (https://github.com/ansible/ansible/issues/70023)
+- TOML inventory - Ensure we register dump functions for ``AnsibleUnsafe`` to support dumping unsafe values. Note that the TOML format has no functionality to mark that the data is unsafe for re-consumption. (https://github.com/ansible/ansible/issues/71307)
+- ansible-galaxy download - fix bug when downloading a collection in a SCM subdirectory
+- ansible-test units - fixed collection location code to work under pytest >= 6.0.0
+- avoid clobbering existing facts inside loop when task also returns ansible_facts.
+- cron - cron file should not be empty after adding var (https://github.com/ansible/ansible/pull/71207)
+- fortimanager httpapi plugin - fix redirect to point to the ``fortinet.fortimanager`` collection (https://github.com/ansible/ansible/pull/71073).
+- gluster modules - fix redirect to point to the ``gluster.gluster`` collection (https://github.com/ansible/ansible/pull/71240).
+- linux network facts - get the correct value for broadcast address (https://github.com/ansible/ansible/issues/64384)
+- native jinja2 types - properly handle Undefined in nested data.
+- powershell - fix escaping of strings that broken modules like fetch when dealing with special chars - https://github.com/ansible/ansible/issues/62781
+- powershell - fix the CLIXML parser when it contains nested CLIXML objects - https://github.com/ansible/ansible/issues/69550
+- psrp - Use native PSRP mechanism when copying files to support custom endpoints
+- strftime filter - Input epoch is allowed to be a float (https://github.com/ansible/ansible/issues/71257)
+- systemd - fixed chroot usage on new versions of systemd, that broke because of upstream changes in systemctl output
+- systemd - made the systemd module work correctly when the SYSTEMD_OFFLINE environment variable is set
+- templating - fix error message for ``x in y`` when y is undefined (https://github.com/ansible/ansible/issues/70984)
+- unarchive - check ``fut_gid`` against ``run_gid`` in addition to supplemental groups (https://github.com/ansible/ansible/issues/49284)
+
 v2.10.0
 =======
 
@@ -249,6 +308,7 @@ Security Fixes
 - **security issue** - The ``subversion`` module provided the password via the svn command line option ``--password`` and can be retrieved from the host's /proc/<pid>/cmdline file. Update the module to use the secure ``--password-from-stdin`` option instead, and add a warning in the module and in the documentation if svn version is too old to support it. (CVE-2020-1739)
 - **security issue** - Update ``AnsibleUnsafeText`` and ``AnsibleUnsafeBytes`` to maintain unsafe context by overriding ``.encode`` and ``.decode``. This prevents future issues with ``to_text``, ``to_bytes``, or ``to_native`` removing the unsafe wrapper when converting between string types (CVE-2019-14856)
 - **security issue** - properly hide parameters marked with ``no_log`` in suboptions when invalid parameters are passed to the module (CVE-2019-14858)
+- **security issue** atomic_move - change default permissions when creating temporary files so they are not world readable (https://github.com/ansible/ansible/issues/67794) (CVE-2020-1736)
 - **security issue** win_unzip - normalize paths in archive to ensure extracted files do not escape from the target directory (CVE-2020-1737)
 - **security_issue** - create temporary vault file with strict permissions when editing and prevent race condition (CVE-2020-1740)
 - Ensure we get an error when creating a remote tmp if it already exists. CVE-2020-1733
@@ -259,7 +319,6 @@ Security Fixes
 Bugfixes
 --------
 
-- **security issue** atomic_move - change default permissions when creating temporary files so they are not world readable (https://github.com/ansible/ansible/issues/67794) (CVE-2020-1736)
 - ActionBase - Add new ``cleanup`` method that is explicitly run by the ``TaskExecutor`` to ensure that the shell plugins ``tmpdir`` is always removed. This change means that individual action plugins need not be responsible for removing the temporary directory, which ensures that we don't have code paths that accidentally leave behind the temporary directory.
 - Add example setting for ``collections_paths`` parameter to ``examples/ansible.cfg``
 - Add missing gcp modules to gcp module defaults group
