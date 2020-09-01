@@ -206,7 +206,7 @@ Here are some examples:
       remote_src=True even if mode was not set as a parameter.  This failed on
       filesystems which do not have permission bits (https://github.com/ansible/ansible/issues/29444).
 
-You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.10/changelogs/fragments>`_ for the 2.9 release.
+You can find more example changelog fragments in the `changelog directory <https://github.com/ansible/ansible/tree/stable-2.10/changelogs/fragments>`_ for the 2.10 release.
 
 After you have written the changelog fragment for your PR, commit the file and include it with the pull request.
 
