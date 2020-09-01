@@ -1,0 +1,2 @@
+bugfixes:
+- runas - make sure we retreive the best ``SYSTEM`` token that is available when using ``become_user: SYSTEM``

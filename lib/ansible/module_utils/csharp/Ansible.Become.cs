@@ -322,7 +322,6 @@ namespace Ansible.Become
         {
             List<SafeNativeHandle> userTokens = new List<SafeNativeHandle>();
 
-            SafeNativeHandle systemToken = null;
             bool impersonated = false;
             string becomeSid = username;
             if (logonType != LogonType.NewCredentials)
@@ -339,7 +338,8 @@ namespace Ansible.Become
 
                 // Try and impersonate a SYSTEM token, we need a SYSTEM token to either become a well known service
                 // account or have administrative rights on the become access token.
-                systemToken = GetPrimaryTokenForUser(new SecurityIdentifier("S-1-5-18"), new List<string>() { "SeTcbPrivilege" });
+                SafeNativeHandle systemToken = GetPrimaryTokenForUser(new SecurityIdentifier("S-1-5-18"),
+                    new List<string>() { "SeTcbPrivilege" });
                 if (systemToken != null)
                 {
                     try
@@ -357,11 +357,9 @@ namespace Ansible.Become
 
             try
             {
-                if (becomeSid == "S-1-5-18")
-                    userTokens.Add(systemToken);
                 // Cannot use String.IsEmptyOrNull() as an empty string is an account that doesn't have a pass.
                 // We only use S4U if no password was defined or it was null
-                else if (!SERVICE_SIDS.Contains(becomeSid) && password == null && logonType != LogonType.NewCredentials)
+                if (!SERVICE_SIDS.Contains(becomeSid) && password == null && logonType != LogonType.NewCredentials)
                 {
                     // If no password was specified, try and duplicate an existing token for that user or use S4U to
                     // generate one without network credentials
@@ -381,31 +379,23 @@ namespace Ansible.Become
                 }
                 else
                 {
-                    string domain = null;
-                    switch (becomeSid)
+                    if ((new List<string>() { "S-1-5-18", "S-1-5-19", "S-1-5-20" }).Contains(becomeSid))
                     {
-                        case "S-1-5-19":
-                            logonType = LogonType.Service;
-                            domain = "NT AUTHORITY";
-                            username = "LocalService";
-                            break;
-                        case "S-1-5-20":
-                            logonType = LogonType.Service;
-                            domain = "NT AUTHORITY";
-                            username = "NetworkService";
-                            break;
-                        default:
-                            // Trying to become a local or domain account
-                            if (username.Contains(@"\"))
-                            {
-                                string[] userSplit = username.Split(new char[1] { '\\' }, 2);
-                                domain = userSplit[0];
-                                username = userSplit[1];
-                            }
-                            else if (!username.Contains("@"))
-                                domain = ".";
-                            break;
+                        // Service accounts only work with the Service logon type, we also want to localize the account name.
+                        logonType = LogonType.Service;
+                        NTAccount becomeAccount = (NTAccount)new SecurityIdentifier(becomeSid).Translate(typeof(NTAccount));
+                        username = becomeAccount.Value;
                     }
+
+                    string domain = null;
+                    if (username.Contains(@"\"))
+                    {
+                        string[] userSplit = username.Split(new char[1] { '\\' }, 2);
+                        domain = userSplit[0];
+                        username = userSplit[1];
+                    }
+                    else if (!username.Contains("@"))
+                        domain = ".";
 
                     SafeNativeHandle hToken = TokenUtil.LogonUser(username, domain, password, logonType,
                         LogonProvider.Default);
