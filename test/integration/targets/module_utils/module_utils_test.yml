@@ -61,6 +61,17 @@
         - result.deprecations[0].msg == "Alias 'baz' is deprecated. See the module docs for more information"
         - result.deprecations[0].version == '9.99'
 
+  - name: Test that aliases are not in the argument_spec
+    test_file_common_args_alias_not_in_argument_spec:
+      owner: 'bar'
+    register: result
+
+  - name: Assert that aliases are not in the argument_spec
+    assert:
+      that:
+        - result.argument_spec.owner is undefined
+        - result.params.foo == 'bar'
+
   - block:
       - name: Get a string with a \0 in it
         command: echo -e 'hi\0foo'

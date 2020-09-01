@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix FILE_COMMON_ARGUMENTS colliding with aliases from module arguments defined by the argument_spec (https://github.com/ansible/ansible/issues/62315).

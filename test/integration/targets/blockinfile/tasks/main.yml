@@ -80,6 +80,23 @@
     that:
       - 'not blockinfile_test1.changed'
 
+- name: check diff when using content alias
+  blockinfile:
+    path: "{{ output_dir_test }}/sshd_config"
+    content: |
+      PasswordAuthentication yes
+  diff: true
+  register: blockinfile_test2
+
+- debug:
+    var: blockinfile_test2
+    verbosity: 1
+
+- name: validate diff
+  assert:
+    that:
+      - '"PasswordAuthentication yes" in blockinfile_test2.diff[0].after'
+
 - name: Create a file with blockinfile
   blockinfile:
     path: "{{ output_dir_test }}/empty.txt"

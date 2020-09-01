@@ -299,6 +299,21 @@ class TestComplexArgSpecs:
         assert isinstance(am.params['foo'], str)
         assert am.params['foo'] == 'hello'
 
+    @pytest.mark.parametrize('stdin', [{'foo': 'bar'}, {'owner': 'bar'}], indirect=['stdin'])
+    def test_file_common_args_alias_not_in_argument_spec(self, stdin):
+        am = basic.AnsibleModule(
+            add_file_common_args=True,
+            argument_spec=dict(
+                foo=dict(required=True, aliases=['owner']),
+                baz=dict(aliases=['mode'], no_log=True),
+            )
+        )
+
+        assert set(['foo', 'baz']).issubset(am.argument_spec.keys())
+        assert am.argument_spec['baz']['no_log']
+        assert 'owner' not in am.argument_spec
+        assert 'mode' not in am.argument_spec
+
     @pytest.mark.parametrize('stdin', [{'foo': 'hello1', 'dup': 'hello2'}], indirect=['stdin'])
     def test_complex_duplicate_warning(self, stdin, complex_argspec):
         """Test that the complex argspec issues a warning if we specify an option both with its canonical name and its alias"""

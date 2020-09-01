@@ -28,6 +28,7 @@ from contextlib import contextmanager
 
 from ansible.executor.powershell.module_manifest import PSModuleDepFinder
 from ansible.module_utils.basic import FILE_COMMON_ARGUMENTS
+from ansible.module_utils.common.parameters import handle_aliases
 from ansible.module_utils.six import reraise
 from ansible.module_utils._text import to_bytes, to_text
 
@@ -153,9 +154,17 @@ def get_py_argument_spec(filename, collection):
             # This is the only modification to argument_spec done by AnsibleModule itself, and which is
             # not caught by setup_env's AnsibleModule replacement
             if fake.kwargs.get('add_file_common_args'):
+                aliases, legal_inputs = handle_aliases(argument_spec, {})
                 for k, v in FILE_COMMON_ARGUMENTS.items():
-                    if k not in argument_spec:
+                    file_common_aliases = v.get('aliases', ())
+                    if (k not in argument_spec
+                            and k not in aliases
+                            and not any(
+                                a in argument_spec or a in aliases
+                                for a in file_common_aliases)):
                         argument_spec[k] = v
+                        for a in file_common_aliases:
+                            aliases[a] = k
             return argument_spec, fake.args, fake.kwargs
         except KeyError:
             return fake.args[0], fake.args, fake.kwargs
