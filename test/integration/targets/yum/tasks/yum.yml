@@ -869,3 +869,10 @@
           - remove is changed
           - "'toaster-1.2.3.4' not in rpmqa.stdout"
           - "'test-package-that-provides-toaster' in rpmqa.stdout"
+  always:
+    - name: Remove test packages
+      yum:
+        name:
+          - test-package-that-provides-toaster
+          - toaster
+        state: absent
