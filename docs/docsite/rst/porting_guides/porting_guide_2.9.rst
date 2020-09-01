@@ -74,6 +74,11 @@ Modules
 * The ``win_get_url`` and ``win_uri`` module now sends requests with a default ``User-Agent`` of ``ansible-httpget``. This can be changed by using the ``http_agent`` key.
 * The ``apt`` module now honors ``update_cache=false`` while installing its own dependency and skips the cache update. Explicitly setting ``update_cache=true`` or omitting the param ``update_cache`` will result in a cache update while installing its own dependency.
 
+* Version 2.9.12 of Ansible changed the default mode of file-based tasks to ``0o600 & ~umask`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered. As a result, the mode change has been reverted in 2.9.13, and mode will now default to ``0o666 & ~umask`` as in previous versions of Ansible.
+* If you changed any tasks to specify less restrictive permissions while using 2.9.12, those changes will be unnecessary (but will do no harm) in 2.9.13.
+* To avoid the issue raised in CVE-2020-1736, specify a ``mode`` parameter in all file-based tasks that accept it.
+
+
 Renaming from ``_facts`` to ``_info``
 --------------------------------------
 
