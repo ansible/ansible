@@ -70,9 +70,9 @@ Correct. Do not use "cdrom," "CD-Rom," "CDROM," "cd-rom" or any other variation.
 
 Command line
 +++++++++++++++++++
-Correct. Do not use "command-line" or "commandline." 
+Correct. Do not use "command-line" or "commandline" as a noun. If used as an adjective, "command-line" is appropriate, for example "command-line arguments".
 
-Use to describes where to place options for a command, but not where to type the command. Use "shell prompt" instead to describe where to type commands. The line on the display screen where a command is expected. Generally, the command line is the line that contains the most recently displayed command prompt.
+Use "command line" to describes where to place options for a command, but not where to type the command. Use "shell prompt" instead to describe where to type commands. The line on the display screen where a command is expected. Generally, the command line is the line that contains the most recently displayed command prompt.
 
 
 Daylight saving time (DST)
