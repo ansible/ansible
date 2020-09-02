@@ -10,6 +10,7 @@
       nogroup: "{{ lookup('inventory_hostnames', 'nogroup01', wantlist=true) }}"
       doesnotexist: "{{ lookup('inventory_hostnames', 'doesnotexist', wantlist=true) }}"
       all: "{{ lookup('inventory_hostnames', 'all', wantlist=true) }}"
+      from_patterns: "{{ lookup('inventory_hostnames', 't?s?03', wantlist=True) }}"
 
   - assert:
       that:
@@ -19,3 +20,4 @@
         - nogroup == ['nogroup01']
         - doesnotexist == []
         - all|length == 12
+        - from_patterns == ['test03']
