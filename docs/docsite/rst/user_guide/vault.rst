@@ -534,7 +534,7 @@ If your task or playbook requires multiple encrypted variables or files that you
 
     ansible-playbook --vault-id dev@dev-password --vault-id prod@prompt site.yml
 
-By default the vault ID labels (dev, prod etc.) are only hints. Ansible attempts to decrypt vault content with each password. The password with the same label as the encrypted data will be tried first, after that each vault secret will be tried in the order they were provided on the command line.
+By default the vault ID labels (dev, prod and so on) are only hints. Ansible attempts to decrypt vault content with each password. The password with the same label as the encrypted data will be tried first, after that each vault secret will be tried in the order they were provided on the command line.
 
 Where the encrypted data has no label, or the label does not match any of the provided labels, the passwords will be tried in the order they are specified. In the example above, the 'dev' password will be tried first, then the 'prod' password for cases where Ansible doesn't know which vault ID is used to encrypt something.
 

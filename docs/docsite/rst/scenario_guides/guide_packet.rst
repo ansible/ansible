@@ -87,7 +87,7 @@ The 'device_ids' and 'hostnames' parameters are mutually exclusive. The followin
 
 - hostnames: [mydev1, mydev2]
 
-In addition, hostnames can contain a special '%d' formatter along with a 'count' parameter that lets you easily expand hostnames that follow a simple name and number pattern; i.e. ``hostnames: "mydev%d", count: 2`` will expand to [mydev1, mydev2].
+In addition, hostnames can contain a special '%d' formatter along with a 'count' parameter that lets you easily expand hostnames that follow a simple name and number pattern; in other words, ``hostnames: "mydev%d", count: 2`` will expand to [mydev1, mydev2].
 
 If your playbook acts on existing Packet devices, you can only pass the 'hostname' and 'device_ids' parameters. The following playbook shows how you can reboot a specific Packet device by setting the 'hostname' parameter:
 

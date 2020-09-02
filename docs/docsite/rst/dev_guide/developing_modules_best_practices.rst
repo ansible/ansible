@@ -134,7 +134,7 @@ Modules must output valid JSON only. Follow these guidelines for creating correc
 * Be consistent about returns (some modules are too random), unless it is detrimental to the state/action.
 * Make returns reusable--most of the time you don't want to read it, but you do want to process it and re-purpose it.
 * Return diff if in diff mode. This is not required for all modules, as it won't make sense for certain ones, but please include it when applicable.
-* Enable your return values to be serialized as JSON with Python's standard `JSON encoder and decoder <https://docs.python.org/3/library/json.html>`_ library. Basic python types (strings, int, dicts, lists, etc) are serializable.
+* Enable your return values to be serialized as JSON with Python's standard `JSON encoder and decoder <https://docs.python.org/3/library/json.html>`_ library. Basic python types (strings, int, dicts, lists, and so on) are serializable.
 * Do not return an object via exit_json(). Instead, convert the fields you need from the object into the fields of a dictionary and return the dictionary.
 * Results from many hosts will be aggregated at once, so your module should return only relevant output. Returning the entire contents of a log file is generally bad form.
 

@@ -18,7 +18,7 @@ Let's start with a quick definition of each type of plugin:
 Loops and list comprehensions
 =============================
 
-Most programming languages have loops (``for``, ``while``, etc.) and list comprehensions to do transformations on lists including lists of objects. Jinja2 has a few filters that provide this functionality: ``map``, ``select``, ``reject``, ``selectattr``, ``rejectattr``.
+Most programming languages have loops (``for``, ``while``, and so on) and list comprehensions to do transformations on lists including lists of objects. Jinja2 has a few filters that provide this functionality: ``map``, ``select``, ``reject``, ``selectattr``, ``rejectattr``.
 
 - map: this is a basic for loop that just allows you to change every item in a list, using the 'attribute' keyword you can do the transformation based on attributes of the list elements.
 - select/reject: this is a for loop with a condition, that allows you to create a subset of a list that matches (or not) based on the result of the condition.
@@ -141,7 +141,7 @@ Another way is to avoid adding elements to the list in the first place, so you c
 Complex Type transformations
 =============================
 
-Jinja provides filters for simple data type transformations (``int``, ``bool``, etc), but when you want to transform data structures things are not as easy.
+Jinja provides filters for simple data type transformations (``int``, ``bool``, and so on), but when you want to transform data structures things are not as easy.
 You can use loops and list comprehensions as shown above to help, also other filters and lookups can be chained and leveraged to achieve more complex transformations.
 
 
@@ -150,7 +150,7 @@ You can use loops and list comprehensions as shown above to help, also other fil
 Create dictionary from list
 ---------------------------
 
-In most languages it is easy to create a dictionary (a.k.a. map/associative array/hash etc.) from a list of pairs, in Ansible there are a couple of ways to do it and the best one for you might depend on the source of your data.
+In most languages it is easy to create a dictionary (a.k.a. map/associative array/hash and so on) from a list of pairs, in Ansible there are a couple of ways to do it and the best one for you might depend on the source of your data.
 
 
 These example produces ``{"a": "b", "c": "d"}``

@@ -691,7 +691,7 @@ Example ssh config file (~/.ssh/config)
 
   # Note: Due to the way that Paramiko reads the SSH Config file,
   # you need to specify the NETCONF port that the host uses.
-  # i.e. It does not automatically use ansible_port
+  # In other words, it does not automatically use ansible_port
   # As a result you need either:
 
   Host junos01
