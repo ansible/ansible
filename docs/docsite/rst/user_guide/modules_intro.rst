@@ -31,7 +31,7 @@ You can access the documentation for each module from the command line with the 
 
     ansible-doc yum
 
-For a list of all available modules, see the :ref:`Collection docs <collections>`, or run the following at a command prompt::
+For a list of all available modules, see the :ref:`Collection docs <list_of_collections>`, or run the following at a command prompt::
 
     ansible-doc -l
 
