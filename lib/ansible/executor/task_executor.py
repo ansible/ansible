@@ -702,6 +702,8 @@ class TaskExecutor:
         # may be item-specific, ie. "notify: service {{item}}"
         if self._task.notify is not None:
             result['_ansible_notify'] = self._task.notify
+        if self._task.on_changed is not None:
+            result['_ansible_on_changed'] = self._task.on_changed
 
         # add the delegated vars to the result, so we can reference them
         # on the results side without having to do any further templating
