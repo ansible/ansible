@@ -5,6 +5,16 @@ Frequently Asked Questions
 
 Here are some commonly asked questions and their answers.
 
+.. _collections_transition:
+
+Where did all the modules go?
++++++++++++++++++++++++++++++
+
+In July, 2019, we announced that collections would be the `future of Ansible content delivery <https://www.ansible.com/blog/the-future-of-ansible-content-delivery>`_. A collection is a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. In Ansible 2.9 we added support for collections. In Ansible 2.10 we extracted most modules from the main ansible/ansible repository and placed them in :ref:`collections <list_of_collections>`. Collections may be maintained by the Ansible team, by the Ansible community, or by Ansible partners. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ now contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``.
+
+* To learn more about using collections, see :ref:`collections`.
+* To learn more about developing collections, see :ref:`developing_collections`.
+* To learn more about contributing to existing collections, see :ref:`contributing_maintained_collections`.
 
 .. _set_environment:
 
