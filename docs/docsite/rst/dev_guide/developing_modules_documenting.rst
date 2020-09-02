@@ -330,12 +330,14 @@ Per playbook best practices, each example should include a ``name:`` line::
 
     EXAMPLES = r'''
     - name: Ensure foo is installed
-      modulename:
+      namespace.collection.modulename:
         name: foo
         state: present
     '''
 
 The ``name:`` line should be capitalized and not include a trailing dot.
+
+Use a fully qualified collection name (FQCN) as a part of the module's name like in the example above. For modules in ``ansible-base``, use the ``ansible.builtin.`` identifier, for example ``ansible.builtin.debug``.
 
 If your examples use boolean options, use yes/no values. Since the documentation generates boolean values as yes/no, having the examples use these values as well makes the module documentation more consistent.
 
