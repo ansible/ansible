@@ -934,14 +934,7 @@ class Templar:
         Useful when guarding passing a string for templating, but when
         you want to allow the templating engine to make the final
         assessment which may result in ``TemplateSyntaxError``.
-
-        If using ANSIBLE_JINJA2_NATIVE we bypass this and return True
-        always to be able to convert data to native types even if it
-        is not a template.
         '''
-        if USE_JINJA2_NATIVE:
-            return True
-
         env = self.environment
         if isinstance(data, string_types):
             for marker in (env.block_start_string, env.variable_start_string, env.comment_start_string):
