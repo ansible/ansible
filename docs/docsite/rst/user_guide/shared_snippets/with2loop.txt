@@ -1,8 +1,6 @@
-With the release of Ansible 2.5, the recommended way to perform loops is the use the new ``loop`` keyword instead of ``with_X`` style loops.
+In most cases, loops work best with the ``loop`` keyword instead of ``with_X`` style loops. The ``loop`` syntax is usually best expressed using filters instead of more complex use of ``query`` or ``lookup``.
 
-In many cases, ``loop`` syntax is better expressed using filters instead of more complex use of ``query`` or ``lookup``.
-
-The following examples will show how to convert many common ``with_`` style loops to ``loop`` and filters.
+These examples show how to convert many common ``with_`` style loops to ``loop`` and filters.
 
 with_list
 ---------
