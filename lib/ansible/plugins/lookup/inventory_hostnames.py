@@ -34,41 +34,20 @@ RETURN = """
     type: list
 """
 
-from ansible.inventory.manager import split_host_pattern, order_patterns
+from ansible.errors import AnsibleError
+from ansible.inventory.manager import InventoryManager
 from ansible.plugins.lookup import LookupBase
-from ansible.utils.helpers import deduplicate_list
 
 
 class LookupModule(LookupBase):
-
-    def get_hosts(self, variables, pattern):
-        hosts = []
-        if pattern[0] in ('!', '&'):
-            obj = pattern[1:]
-        else:
-            obj = pattern
-
-        if obj in variables['groups']:
-            hosts = variables['groups'][obj]
-        elif obj in variables['groups']['all']:
-            hosts = [obj]
-        return hosts
-
     def run(self, terms, variables=None, **kwargs):
+        manager = InventoryManager(self._loader, parse=False)
+        for group, hosts in variables['groups'].items():
+            manager.add_group(group)
+            for host in hosts:
+                manager.add_host(host, group=group)
 
-        host_list = []
-
-        for term in terms:
-            patterns = order_patterns(split_host_pattern(term))
-
-            for p in patterns:
-                that = self.get_hosts(variables, p)
-                if p.startswith("!"):
-                    host_list = [h for h in host_list if h not in that]
-                elif p.startswith("&"):
-                    host_list = [h for h in host_list if h in that]
-                else:
-                    host_list.extend(that)
-
-        # return unique list
-        return deduplicate_list(host_list)
+        try:
+            return [h.name for h in manager.get_hosts(pattern=terms)]
+        except AnsibleError:
+            return []
