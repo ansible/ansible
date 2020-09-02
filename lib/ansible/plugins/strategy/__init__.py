@@ -495,8 +495,6 @@ class StrategyBase:
             if target_handler is not None:
                 found = True
                 handlers.append(target_handler)
-                #if target_handler.notify_host(original_host):
-                #    self._tqm.send_callback('v2_playbook_on_notify', target_handler, original_host)
 
             for listening_handler_block in iterator._play.handlers:
                 for listening_handler in listening_handler_block.block:
@@ -513,8 +511,6 @@ class StrategyBase:
                         found = True
 
                     handlers.append(listening_handler)
-                    #if listening_handler.notify_host(original_host):
-                    #    self._tqm.send_callback('v2_playbook_on_notify', listening_handler, original_host)
 
             # and if none were found, then we raise an error
             if not found:
@@ -544,7 +540,6 @@ class StrategyBase:
                 return self._inventory.hosts[host_name]
             else:
                 return self._inventory.get_host(host_name)
-
 
         cur_pass = 0
         while True:
