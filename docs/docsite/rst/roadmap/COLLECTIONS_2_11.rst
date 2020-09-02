@@ -26,7 +26,7 @@ Release schedule
 
 ** Additional release candidates to be published as needed as blockers are fixed **
 
-- ????-??-?? Ansible 2.10 GA release date.
+- ????-??-?? Ansible 2.11 GA release date.
 
 .. note::
 
