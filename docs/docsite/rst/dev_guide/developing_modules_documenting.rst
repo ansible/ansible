@@ -394,12 +394,12 @@ Here are two example ``RETURN`` sections, one with three simple fields and one w
 
     RETURN = r'''
     packages:
-        description: Information about package requirements
+        description: Information about package requirements.
         returned: success
         type: complex
         contains:
             missing:
-                description: Packages that are missing from the system
+                description: Packages that are missing from the system.
                 returned: success
                 type: list
                 sample:
