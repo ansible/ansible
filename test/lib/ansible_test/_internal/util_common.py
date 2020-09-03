@@ -18,7 +18,6 @@ from .util import (
     COVERAGE_CONFIG_NAME,
     display,
     find_python,
-    is_shippable,
     remove_tree,
     MODE_DIRECTORY,
     MODE_FILE_EXECUTE,

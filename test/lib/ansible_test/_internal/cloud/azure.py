@@ -7,7 +7,6 @@ import os
 from ..util import (
     ApplicationError,
     display,
-    is_shippable,
     ConfigParser,
 )
 
@@ -51,13 +50,10 @@ class AzureCloudProvider(CloudProvider):
 
         aci = self._create_ansible_core_ci()
 
-        if os.path.isfile(aci.ci_key):
+        if aci.available:
             return
 
         if os.path.isfile(self.SHERLOCK_CONFIG_PATH):
-            return
-
-        if is_shippable():
             return
 
         super(AzureCloudProvider, self).filter(targets, exclude)
