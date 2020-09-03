@@ -591,7 +591,7 @@ APIC error messages
 The following error messages may occur and this section can help you understand what exactly is going on and how to fix/avoid them.
 
     APIC Error 122: unknown managed object class 'polUni'
-        In case you receive this error while you are certain your aci_rest payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (e.g. the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload, which are easier to construct correctly and modify later.
+        In case you receive this error while you are certain your aci_rest payload and object classes are seemingly correct, the issue might be that your payload is not in fact correct JSON (for example, the sent payload is using single quotes, rather than double quotes), and as a result the APIC is not correctly parsing your object classes from the payload. One way to avoid this is by using a YAML or an XML formatted payload, which are easier to construct correctly and modify later.
 
 
     APIC Error 400: invalid data at line '1'. Attributes are missing, tag 'attributes' must be specified first, before any other tag
@@ -619,7 +619,7 @@ All below issues either have been reported to the vendor, and most can simply be
     Specific requests may not reflect changes correctly (`#35401 <https://github.com/ansible/ansible/issues/35041>`_)
         There is a known issue where specific requests to the APIC do not properly reflect changed in the resulting output, even when we request those changes explicitly from the APIC. In one instance using the path ``api/node/mo/uni/infra.xml`` fails, where ``api/node/mo/uni/infra/.xml`` does work correctly.
 
-        **NOTE:** A workaround is to register the task return values (e.g. ``register: this``) and influence when the task should report a change by adding: ``changed_when: this.imdata != []``.
+        **NOTE:** A workaround is to register the task return values (for example, ``register: this``) and influence when the task should report a change by adding: ``changed_when: this.imdata != []``.
 
 
     Specific requests are known to not be idempotent (`#35050 <https://github.com/ansible/ansible/issues/35050>`_)

@@ -256,7 +256,7 @@ when a term comes up on the mailing list.
 
     Lookup Plugin
         A lookup plugin is a way to get data into Ansible from the outside world.
-        Lookup plugins are an extension of Jinja2 and can be accessed in templates, e.g.,
+        Lookup plugins are an extension of Jinja2 and can be accessed in templates, for example,
         ``{{ lookup('file','/path/to/file') }}``.
         These are how such things as ``with_items``, are implemented.
         There are also lookup plugins like ``file`` which loads data from
@@ -307,7 +307,7 @@ when a term comes up on the mailing list.
         things.  Ansible uses it as a conductor would conduct an orchestra.
         A datacenter or cloud architecture is full of many systems, playing
         many parts -- web servers, database servers, maybe load balancers,
-        monitoring systems, continuous integration systems, etc.  In
+        monitoring systems, continuous integration systems, and so on.  In
         performing any process, it is necessary to touch systems in particular
         orders, often to simulate rolling updates or to deploy software
         correctly.  Some system may perform some steps, then others, then
@@ -381,7 +381,7 @@ when a term comes up on the mailing list.
     Roles
         Roles are units of organization in Ansible.  Assigning a role to
         a group of :term:`hosts <Host>` (or a set of :term:`groups <group>`,
-        or :term:`host patterns <Globbing>`, etc.) implies that they should
+        or :term:`host patterns <Globbing>`, and so on) implies that they should
         implement a specific behavior.  A role may include applying certain
         variable values, certain :term:`tasks`, and certain :term:`handlers`
         -- or just one or more of these things.  Because of the file structure
@@ -419,7 +419,7 @@ when a term comes up on the mailing list.
         Native OpenSSH as an Ansible transport is specified with ``-c ssh``
         (or a config file, or a directive in the :term:`playbook <playbooks>`)
         and can be useful if wanting to login via Kerberized SSH or using SSH
-        jump hosts, etc.  In 1.2.1, ``ssh`` will be used by default if the
+        jump hosts, and so on.  In 1.2.1, ``ssh`` will be used by default if the
         OpenSSH binary on the control machine is sufficiently new.
         Previously, Ansible selected ``paramiko`` as a default.  Using
         a client that supports ``ControlMaster`` and ``ControlPersist`` is
@@ -485,7 +485,7 @@ when a term comes up on the mailing list.
         usage of YAML stemmed from Michael DeHaan's first use of it inside of
         Cobbler around 2006.  YAML is fairly popular in the dynamic language
         community and the format has libraries available for serialization in
-        many languages (Python, Perl, Ruby, etc.).
+        many languages (Python, Perl, Ruby, and so on).
 
 .. seealso::
 

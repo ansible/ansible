@@ -104,7 +104,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :description:
 
   * A detailed description (generally two or more sentences).
-  * Must be written in full sentences, i.e. with capital letters and periods/full stops.
+  * Must be written in full sentences, in other words, with capital letters and periods/full stops.
   * Shouldn't mention the module name.
   * Make use of multiple entries rather than using one long paragraph.
   * Don't quote complete values unless it is required by YAML.
@@ -112,7 +112,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :version_added:
 
   * The version of Ansible when the module was added.
-  * This is a string, and not a float, i.e. ``version_added: '2.1'``
+  * This is a string, and not a float, for example, ``version_added: '2.1'``
 
 :author:
 
@@ -178,8 +178,8 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 
   :version_added:
 
-    * Only needed if this option was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
-    * This is a string, and not a float, i.e. ``version_added: '2.3'``.
+    * Only needed if this option was extended after initial Ansible release, in other words, this is greater than the top level `version_added` field.
+    * This is a string, and not a float, for example, ``version_added: '2.3'``.
 
   :suboptions:
 
@@ -367,8 +367,8 @@ Otherwise, for each value returned, provide the following fields. All fields are
   :sample:
     One or more examples.
   :version_added:
-    Only needed if this return was extended after initial Ansible release, i.e. this is greater than the top level `version_added` field.
-    This is a string, and not a float, i.e. ``version_added: '2.3'``.
+    Only needed if this return was extended after initial Ansible release, in other words, this is greater than the top level `version_added` field.
+    This is a string, and not a float, for example, ``version_added: '2.3'``.
   :contains:
     Optional. To describe nested return values, set ``type: complex``, ``type: dict``, or ``type: list``/``elements: dict`` and repeat the elements above for each sub-field.
 

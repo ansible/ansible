@@ -13,7 +13,7 @@ Become plugins work to ensure that Ansible can use certain privilege escalation 
 commands to work with the target machine as well as the modules required to execute the tasks specified in
 the play.
 
-These utilities (``sudo``, ``su``, ``doas``, etc) generally let you 'become' another user to execute a command
+These utilities (``sudo``, ``su``, ``doas``, and so on) generally let you 'become' another user to execute a command
 with the permissions of that user.
 
 

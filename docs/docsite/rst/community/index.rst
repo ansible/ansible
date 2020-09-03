@@ -37,7 +37,7 @@ Going deeper
 * I need functionality that Ansible does not offer. How do I :ref:`request a feature <request_features>`?
 * How do I :ref:`contribute to an Ansible-maintained collection <contributing_maintained_collections>`?
 * I am waiting for a particular feature. How do I see what is :ref:`planned for future Ansible Releases <roadmaps>`?
-* I have a specific Ansible interest or expertise (for example, VMware, Linode, and so on.). How do I get involved in a :ref:`working group <working_group_list>`?
+* I have a specific Ansible interest or expertise (for example, VMware, Linode, and so on). How do I get involved in a :ref:`working group <working_group_list>`?
 * I would like to participate in conversations about features and fixes. How do I review GitHub issues and pull requests?
 * I found a typo or another problem on docs.ansible.com. How can I :ref:`improve the documentation <community_documentation_contributions>`?
 

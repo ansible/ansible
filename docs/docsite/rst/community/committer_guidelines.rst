@@ -15,7 +15,7 @@ If you abuse the trust and break components and builds, and so on, the trust lev
 Features, high-level design, and roadmap
 ========================================
 
-As a core team member, you are an integral part of the team that develops the :ref:`roadmap <roadmaps>`. Please be engaged, and push for the features and fixes that you want to see. Also keep in mind that Red Hat, as a company, will commit to certain features, fixes, APIs, and so on. for various releases. Red Hat, the company, and the Ansible team must get these committed features (and so on.) completed and released as scheduled. Obligations to users, the community, and customers must come first. Because of these commitments, a feature you want to develop yourself may not get into a release if it impacts a lot of other parts within Ansible.
+As a core team member, you are an integral part of the team that develops the :ref:`roadmap <roadmaps>`. Please be engaged, and push for the features and fixes that you want to see. Also keep in mind that Red Hat, as a company, will commit to certain features, fixes, APIs, and so on, for various releases. Red Hat, the company, and the Ansible team must get these changes completed and released as scheduled. Obligations to users, the community, and customers must come first. Because of these commitments, a feature you want to develop yourself may not get into a release if it affects a lot of other parts within Ansible.
 
 Any other new features and changes to high level design should go through the proposal process (TBD), to ensure the community and core team have had a chance to review the idea and approve it. The core team has sole responsibility for merging new features based on proposals.
 
@@ -49,7 +49,7 @@ Individuals with direct commit access to ansible/ansible are entrusted with powe
   - Commit directly.
   - Merge your own PRs. Someone else should have a chance to review and approve the PR merge. If you are a Core Committer, you have a small amount of leeway here for very minor changes.
   - Forget about alternate environments. Consider the alternatives--yes, people have bad environments, but they are the ones who need us the most.
-  - Drag your community team members down. Always discuss the technical merits, but you should never address the person's limitations (you can later go for beers and call them idiots, but not in IRC/GitHub/and so on.).
+  - Drag your community team members down. Always discuss the technical merits, but you should never address the person's limitations (you can later go for beers and call them idiots, but not in IRC/GitHub/and so on).
   - Forget about the maintenance burden. Some things are really cool to have, but they might not be worth shoehorning in if the maintenance burden is too great.
   - Break playbooks. Always keep backwards compatibility in mind.
   - Forget to keep it simple. Complexity breeds all kinds of problems.
@@ -57,11 +57,11 @@ Individuals with direct commit access to ansible/ansible are entrusted with powe
 * Do
 
   - Squash, avoid merges whenever possible, use GitHub's squash commits or cherry pick if needed (bisect thanks you).
-  - Be active. Committers who have no activity on the project (through merges, triage, commits, and so on.) will have their permissions suspended.
+  - Be active. Committers who have no activity on the project (through merges, triage, commits, and so on) will have their permissions suspended.
   - Consider backwards compatibility (goes back to "don't break existing playbooks").
   - Write tests. PRs with tests are looked at with more priority than PRs without tests that should have them included. While not all changes require tests, be sure to add them for bug fixes or functionality changes.
   - Discuss with other committers, specially when you are unsure of something.
-  - Document! If your PR is a new feature or a change to behavior, make sure you've updated all associated documentation or have notified the right people to do so. It also helps to add the version of Core against which this documentation is compatible (to avoid confusion with stable versus devel docs, for backwards compatibility, and so on.).
+  - Document! If your PR is a new feature or a change to behavior, make sure you've updated all associated documentation or have notified the right people to do so. It also helps to add the version of ``ansible-base`` against which this documentation is compatible (to avoid confusion between stable and devel docs, for backwards compatibility, and so on).
   - Consider scope, sometimes a fix can be generalized
   - Keep it simple, then things are maintainable, debuggable and intelligible.
 

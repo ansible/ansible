@@ -197,7 +197,7 @@ As always with :ref:`delegation <playbooks_delegation>`, the action will be exec
      :code:`when: inventory_hostname == ansible_play_hosts_all[0]` construct.
 
 .. note::
-    Any conditional (i.e `when:`) will use the variables of the 'first host' to decide if the task runs or not, no other hosts will be tested.
+    Any conditional (in other words, `when:`) will use the variables of the 'first host' to decide if the task runs or not, no other hosts will be tested.
 
 .. note::
     If you want to avoid the default behavior of setting the fact for all hosts, set ``delegate_facts: True`` for the specific task or block.
