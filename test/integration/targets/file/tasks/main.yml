@@ -143,6 +143,16 @@
       - "file_attributes_result_4 is not changed"
   when: file_attributes_result_4 is changed
 
+- name: create user
+  user:
+    name: test1
+    uid: 1234
+
+- name: create group
+  group:
+    name: test1
+    gid: 1234
+
 - name: change ownership and group
   file: path={{output_dir}}/baz.txt owner=1234 group=1234
 
@@ -329,6 +339,11 @@
   assert:
     that:
       - "file9_result.uid != 1234"
+
+- name: create user
+  user:
+    name: test2
+    uid: 1235
 
 - name: change the ownership of a directory with recurse=yes
   file: path={{output_dir}}/foobar owner=1235 recurse=yes
@@ -538,6 +553,110 @@
   assert:
     that:
     - result.mode == '0444'
+
+# https://github.com/ansible/ansible/issues/67307
+# Test the module fails in check_mode when directory and owner/group do not exist
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner does not exist in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    owner: nonexistent
+  check_mode: yes
+  register: owner_no_exist
+  ignore_errors: yes
+
+- name: create owner
+  user:
+    name: nonexistent
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner exist in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    owner: nonexistent
+  check_mode: yes
+  register: owner_exists
+  ignore_errors: yes
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner does not exist in check_mode, using uid
+  file:
+    path: '/tmp/nonexistent'
+    owner: '111111'
+  check_mode: yes
+  ignore_errors: yes
+  register: owner_uid_no_exist
+
+- name: create owner using uid
+  user:
+    name: test_uid
+    uid: 111111
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: owner exists in check_mode, using uid
+  file:
+    path: '/tmp/nonexistent'
+    owner: '111111'
+    state: touch
+  check_mode: yes
+  ignore_errors: yes
+  register: owner_uid_exists
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group does not exist in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    group: nonexistent1
+  check_mode: yes
+  register: group_no_exist
+  ignore_errors: yes
+
+- name: create group
+  group:
+    name: nonexistent1
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group exists in check_mode
+  file:
+    path: '/tmp/nonexistent'
+    group: nonexistent1
+  check_mode: yes
+  register: group_exists
+  ignore_errors: yes
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group does not exist in check_mode, using gid
+  file:
+    path: '/tmp/nonexistent'
+    group: '111112'
+  check_mode: yes
+  register: group_gid_no_exist
+  ignore_errors: yes
+
+- name: create group with gid
+  group:
+    name: test_gid
+    gid: 111112
+
+# I don't use state=touch here intentionally to fail and catch warnings
+- name: group exists in check_mode, using gid
+  file:
+    path: '/tmp/nonexistent'
+    group: '111112'
+  check_mode: yes
+  register: group_gid_exists
+  ignore_errors: yes
+
+- assert:
+    that:
+    - owner_no_exist.warnings[0] is search('failed to look up user')
+    - owner_uid_no_exist.warnings[0] is search('failed to look up user with uid')
+    - group_no_exist.warnings[0] is search('failed to look up group')
+    - group_gid_no_exist.warnings[0] is search('failed to look up group with gid')
+    - owner_exists.warnings is not defined
+    - owner_uid_exists.warnings is not defined
+    - group_exists.warnings is not defined
+    - group_gid_exists.warnings is not defined
 
 # https://github.com/ansible/ansible/issues/50943
 # Need to use /tmp as nobody can't access output_dir at all
