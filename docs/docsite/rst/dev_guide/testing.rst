@@ -123,7 +123,7 @@ Here's how:
    sent may have mistakes or malicious code that could have a negative impact on your system. We recommend
    doing all testing on a virtual machine, whether a cloud instance, or locally.  Some users like Vagrant
    or Docker for this, but they are optional. It is also useful to have virtual machines of different Linux or
-   other flavors, since some features (apt rather than yum, for example) are specific to those OS versions.
+   other flavors, since some features (for example, package managers such as apt or yum) are specific to those OS versions.
 
 
 Create a fresh area to work::
