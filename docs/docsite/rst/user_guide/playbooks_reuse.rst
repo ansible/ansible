@@ -84,8 +84,8 @@ See :ref:`ansible_variable_precedence` for more details on variable inheritance 
 
 .. _dynamic_vs_static:
 
-Comparing includes and imports: dynamic vs. static
---------------------------------------------------
+Comparing includes and imports: dynamic and static re-use
+------------------------------------------------------------
 
 Each approach to re-using distributed Ansible artifacts has advantages and limitations. You may choose dynamic re-use for some playbooks and static re-use for others. Although you can use both dynamic and static re-use in a single playbook, it is best to select one approach per playbook. Mixing static and dynamic re-use can introduce difficult-to-diagnose bugs into your playbooks. This table summarizes the main differences so you can choose the best approach for each playbook you create.
 

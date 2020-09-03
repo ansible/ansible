@@ -108,7 +108,7 @@ Ansible 2.7 adds a preview-status feature to group together modules that share c
 
 * The `docker_stack <docker_stack_module>`_ module is not included in the ``docker`` defaults group.
 
-Use the groups with ``module_defaults`` by prefixing the group name with ``group/`` - e.g. ``group/aws``.
+Use the groups with ``module_defaults`` by prefixing the group name with ``group/`` - for example ``group/aws``.
 
 In a playbook, you can set module defaults for whole groups of modules, such as setting a common AWS region.
 

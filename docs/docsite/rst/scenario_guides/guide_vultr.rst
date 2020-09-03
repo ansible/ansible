@@ -164,7 +164,7 @@ Run all Vultr tests:
   $ ansible-test integration cloud/vultr/ -v --diff --allow-unsupported
 
 
-To run a specific test, e.g. vultr_account_info:
+To run a specific test, for example vultr_account_info:
 
 .. code-block:: shell
 

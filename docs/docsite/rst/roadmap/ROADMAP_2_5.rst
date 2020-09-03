@@ -97,7 +97,7 @@ AWS
 
   - ec2_instance
   - ec2_vpc: Allow the addition of secondary IPv4 CIDRS to existing VPCs.
-  - AWS Network Load Balancer support (NLB module, ASG support, etc)
+  - AWS Network Load Balancer support (NLB module, ASG support, and so on)
   - rds_instance
 
 Azure

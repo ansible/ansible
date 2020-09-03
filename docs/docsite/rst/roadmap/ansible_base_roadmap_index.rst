@@ -7,7 +7,7 @@ The ``ansible-base`` team develops a roadmap for each major and minor ``ansible-
 
 We incorporate team and community feedback in each roadmap, and aim for further transparency and better inclusion of both community desires and submissions.
 
-Each roadmap offers a *best guess*, based on the ``ansible-base`` team's experience and on requests and feedback from the community, of what will be included in a given release. However, some items on the roadmap may be dropped due to time constraints, lack of community maintainers, etc.
+Each roadmap offers a *best guess*, based on the ``ansible-base`` team's experience and on requests and feedback from the community, of what will be included in a given release. However, some items on the roadmap may be dropped due to time constraints, lack of community maintainers, and so on.
 
 Each roadmap is published both as an idea of what is upcoming in ``ansible-base``, and as a medium for seeking further feedback from the community.
 

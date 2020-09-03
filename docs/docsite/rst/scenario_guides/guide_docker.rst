@@ -262,7 +262,7 @@ Configuration File
 Using a configuration file provides a means for defining a set of Docker APIs from which to build an inventory.
 
 The default name of the file is derived from the name of the inventory script. By default the script will look for
-basename of the script (i.e. docker) with an extension of '.yml'.
+basename of the script (in other words, docker) with an extension of '.yml'.
 
 You can also override the default name of the script by defining DOCKER_CONFIG_FILE in the environment.
 

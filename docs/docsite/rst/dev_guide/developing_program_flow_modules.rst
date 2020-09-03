@@ -63,7 +63,7 @@ values as :term:`JSON`, and various file operations.
 .. note:: In Ansible, up to version 2.0.x, the official Python modules used the
     :ref:`module_replacer` framework.  For module authors, :ref:`Ansiballz` is
     largely a superset of :ref:`module_replacer` functionality, so you usually
-    do not need to know about one versus the other.
+    do not need to understand the differences between them.
 
 .. _flow_powershell_modules:
 

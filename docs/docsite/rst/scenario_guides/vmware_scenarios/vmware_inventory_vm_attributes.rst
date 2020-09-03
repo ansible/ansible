@@ -545,7 +545,7 @@ Detailed information about the files that comprise the virtual machine.
 file (vim.vm.FileLayoutEx.FileInfo, optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    Information about all the files that constitute the virtual machine including configuration files, disks, swap file, suspend file, log files, core files, memory file etc.
+    Information about all the files that constitute the virtual machine including configuration files, disks, swap file, suspend file, log files, core files, memory file and so on.
 
 disk (vim.vm.FileLayoutEx.DiskLayout, optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

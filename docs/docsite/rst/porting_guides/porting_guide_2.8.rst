@@ -246,7 +246,7 @@ best solution is to explicitly set ``ansible_python_interpreter`` to the path
 of the correct interpreter for those target systems.
 
 You can still set ``ansible_python_interpreter`` to a specific path at any
-variable level (as a host variable, in vars files, in playbooks, etc.).
+variable level (as a host variable, in vars files, in playbooks, and so on).
 If you prefer to use the Python interpreter discovery behavior, use
 one of the four new values for ``ansible_python_interpreter`` introduced in
 Ansible 2.8:
@@ -286,7 +286,7 @@ use the discovered Python, regardless of whether :command:`/usr/bin/python` exis
 :literal:`auto_legacy` setting provides compatibility with previous versions of Ansible that always
 defaulted to :command:`/usr/bin/python`.
 
-If you installed Python and dependencies (``boto``, etc.) to
+If you installed Python and dependencies (``boto``, and so on) to
 :command:`/usr/bin/python` as a workaround on distros with a different default Python
 interpreter (for example, Ubuntu 16.04+, RHEL8, Fedora 23+), you have two
 options:

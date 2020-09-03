@@ -101,7 +101,7 @@ Gender References
 ~~~~~~~~~~~~~~~~~~
 Do not use gender-specific pronouns in documentation. It is far less awkward to read a sentence that uses "they" and "their" rather than "he/she" and "his/hers." 
 
-It is fine to use "you" when giving instructions and "the user," "new users," etc. in more general explanations. 
+It is fine to use "you" when giving instructions and "the user," "new users," and so on. in more general explanations. 
 
 Never use "one" in place of "you" when writing technical documentation. Using "one" is far too formal.
 
@@ -137,7 +137,7 @@ In professionally printed material (particularly books, magazines, and newspaper
 
 Lists
 ~~~~~~~
-Keep the structure of bulleted lists equivalent and consistent. If one bullet is a verb phrase, they should all be verb phrases. If one is a complete sentence, they should all be complete sentences, etc.
+Keep the structure of bulleted lists equivalent and consistent. If one bullet is a verb phrase, they should all be verb phrases. If one is a complete sentence, they should all be complete sentences, and so on.
 
 Capitalize the first word of each bullet. Unless it is obvious that it is just a list of items, such as a list of items like:
 * computer
@@ -189,7 +189,7 @@ Use a semicolon to separate items in a series if the items contain commas:
 
 - Everyday I have coffee, toast, and fruit for breakfast; a salad for lunch; and a peanut butter sandwich, cookies, ice cream, and chocolate cake for dinner.
 
-Use a semicolon before a conjunctive adverb (however, therefore, otherwise, namely, for example, etc.):
+Use a semicolon before a conjunctive adverb (however, therefore, otherwise, namely, for example, and so on):
 - I think; therefore, I am.
 
 Spacing after sentences

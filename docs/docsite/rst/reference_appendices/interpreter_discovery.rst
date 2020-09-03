@@ -47,5 +47,5 @@ auto_silent
   Same as ``auto``, but does not issue warnings.
 
 You can still set ``ansible_python_interpreter`` to a specific path at any
-variable level (for example, in host_vars, in vars files, in playbooks, etc.).
+variable level (for example, in host_vars, in vars files, in playbooks, and so on).
 Setting a specific path completely disables automatic interpreter discovery; Ansible always uses the path specified.
