@@ -611,7 +611,7 @@ is True by default.  If purge is False then any existing tags will not be modifi
 
 This function is useful when using boto3 'add_tags' and 'remove_tags' functions. Be sure to use the
 other helper function `boto3_tag_list_to_ansible_dict` to get an appropriate tag dict before
-calling this function. Since the AWS APIs are not uniform (for example, EC2 against Lambda) this will work
+calling this function. Since the AWS APIs are not uniform (for example, EC2 is different from Lambda) this will work
 without modification for some (Lambda) and others may need modification before using these values
 (such as EC2, with requires the tags to unset to be in the form `[{'Key': key1}, {'Key': key2}]`).
 
