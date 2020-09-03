@@ -366,7 +366,7 @@ Otherwise, for each value returned, provide the following fields. All fields are
     One or more examples.
   :version_added:
     Only needed if this return was extended after initial Ansible release, in other words, this is greater than the top level `version_added` field.
-    This is a string, and not a float, in other words, ``version_added: '2.3'``.
+    This is a string, and not a float, for example, ``version_added: '2.3'``.
   :contains:
     Optional. To describe nested return values, set ``type: complex``, ``type: dict``, or ``type: list``/``elements: dict`` and repeat the elements above for each sub-field.
 
