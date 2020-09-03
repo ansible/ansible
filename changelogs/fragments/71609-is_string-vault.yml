@@ -1,0 +1,3 @@
+bugfixes:
+- is_string/vault - Ensure the is_string helper properly identifies AnsibleVaultEncryptedUnicode
+  as a string (https://github.com/ansible/ansible/pull/71609)
