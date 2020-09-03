@@ -64,7 +64,7 @@ After providing any required options, you can view the populated inventory with 
 
 If you are using an inventory plugin in a playbook-adjacent collection and want to test your setup with ``ansible-inventory``, you will need to use the ``--playbook-dir`` flag.
 
-Your inventory source might be a directory of inventory configuration files. The constructed inventory plugin only operates on those hosts already in inventory, so you may want the constructed inventory configuration parsed at a particular point (such as last). Ansible parses the directory recursively, alphabetically. You cannot configure the parsing approach, so name your files to make it work predictably. Inventory plugins that extend constructed features directly can work around that restriction by adding constructed options in addition to the inventory plugin options. Otherwise, you can use ``-i`` with multiple sources to impose a specific order, e.g. ``-i demo.aws_ec2.yml -i clouds.yml -i constructed.yml``.
+Your inventory source might be a directory of inventory configuration files. The constructed inventory plugin only operates on those hosts already in inventory, so you may want the constructed inventory configuration parsed at a particular point (such as last). Ansible parses the directory recursively, alphabetically. You cannot configure the parsing approach, so name your files to make it work predictably. Inventory plugins that extend constructed features directly can work around that restriction by adding constructed options in addition to the inventory plugin options. Otherwise, you can use ``-i`` with multiple sources to impose a specific order, for example ``-i demo.aws_ec2.yml -i clouds.yml -i constructed.yml``.
 
 You can create dynamic groups using host variables with the constructed ``keyed_groups`` option. The option ``groups`` can also be used to create groups and ``compose`` creates and modifies host variables. Here is an aws_ec2 example utilizing constructed features:
 
@@ -105,7 +105,7 @@ Now the output of ``ansible-inventory -i demo.aws_ec2.yml --graph``:
       |  |--ec2-12-345-678-901.compute-1.amazonaws.com
       |--@ungrouped
 
-If a host does not have the variables in the configuration above (i.e. ``tags.Name``, ``tags``, ``private_ip_address``), the host will not be added to groups other than those that the inventory plugin creates and the ``ansible_host`` host variable will not be modified.
+If a host does not have the variables in the configuration above (in other words, ``tags.Name``, ``tags``, ``private_ip_address``), the host will not be added to groups other than those that the inventory plugin creates and the ``ansible_host`` host variable will not be modified.
 
 Inventory plugins that support caching can use the general settings for the fact cache defined in the ``ansible.cfg`` file's ``[defaults]`` section or define inventory-specific settings in the ``[inventory]`` section. Individual plugins can define plugin-specific cache settings in their config file:
 

@@ -141,7 +141,7 @@ To provision the environment as is, run the following:
 Unlike setting up a single Windows instance with Vagrant, these hosts can also
 be accessed using the IP address directly as well as through the forwarded
 ports. It is easier to access it over the host only network adapter as the
-normal protocol ports are used, e.g. RDP is still over ``3389``. In cases where
+normal protocol ports are used, for example RDP is still over ``3389``. In cases where
 the host cannot be resolved using the host only network IP, the following
 protocols can be access over ``127.0.0.1`` using these forwarded ports:
 
@@ -179,8 +179,8 @@ When creating a new module there are a few things to keep in mind:
 - Ensure the code runs under Powershell v3 and higher on Windows Server 2008 and higher; if higher minimum Powershell or OS versions are required, ensure the documentation reflects this clearly
 - Ansible runs modules under strictmode version 2.0. Be sure to test with that enabled by putting ``Set-StrictMode -Version 2.0`` at the top of your dev script
 - Favor native Powershell cmdlets over executable calls if possible
-- Use the full cmdlet name instead of aliases, e.g. ``Remove-Item`` over ``rm``
-- Use named parameters with cmdlets, e.g. ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
+- Use the full cmdlet name instead of aliases, for example ``Remove-Item`` over ``rm``
+- Use named parameters with cmdlets, for example ``Remove-Item -Path C:\temp`` over ``Remove-Item C:\temp``
 
 A very basic Powershell module `win_environment <https://github.com/ansible-collections/ansible.windows/blob/master/plugins/modules/win_environment.ps1>`_ incorporates best practices for Powershell modules. It demonstrates how to implement check-mode and diff-support, and also shows a warning to the user when a specific condition is met.
 
@@ -400,7 +400,7 @@ the various modules that call that util.
 
 An example of this would be to have a module util that handles authentication and communication against an API This
 util can be used by multiple modules to expose a common set of module options like the API endpoint, username,
-password, timeout, cert validation, etc, without having to add those options to each module spec.
+password, timeout, cert validation, and so on without having to add those options to each module spec.
 
 The standard convention for a module util that has a shared argument spec would have
 

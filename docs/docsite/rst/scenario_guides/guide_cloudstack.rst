@@ -27,7 +27,7 @@ Or alternatively starting with Debian 9 and Ubuntu 16.04:
 
     $ sudo apt install python-cs
 
-.. note:: cs also includes a command line interface for ad-hoc interaction with the CloudStack API e.g. ``$ cs listVirtualMachines state=Running``.
+.. note:: cs also includes a command line interface for ad-hoc interaction with the CloudStack API, for example ``$ cs listVirtualMachines state=Running``.
 
 Limitations and Known Issues
 ````````````````````````````
@@ -58,7 +58,7 @@ The structure of the ini file must look like this:
 
 .. versionadded:: 2.4
 
-The ENV variables support ``CLOUDSTACK_*`` as written in the documentation of the library ``cs``,  like e.g ``CLOUDSTACK_TIMEOUT``, ``CLOUDSTACK_METHOD``, etc. has been implemented into Ansible. It is even possible to have some incomplete config in your cloudstack.ini:
+The ENV variables support ``CLOUDSTACK_*`` as written in the documentation of the library ``cs``, like ``CLOUDSTACK_TIMEOUT``, ``CLOUDSTACK_METHOD``, and so on. has been implemented into Ansible. It is even possible to have some incomplete config in your cloudstack.ini:
 
 .. code-block:: bash
 
@@ -84,7 +84,7 @@ and fulfill the missing data by either setting ENV variables or tasks params:
 
 Regions
 ```````
-If you use more than one CloudStack region, you can define as many sections as you want and name them as you like, e.g.:
+If you use more than one CloudStack region, you can define as many sections as you want and name them as you like, for example:
 
 .. code-block:: bash
 
@@ -163,7 +163,7 @@ Below you see an example how it can be used in combination with Ansible's block 
             CLOUDSTACK_PROJECT: web-app
             CLOUDSTACK_ZONE: sf-1
 
-.. Note:: You are still able overwrite the environment variables using the module arguments, e.g. ``zone: sf-2``
+.. Note:: You are still able overwrite the environment variables using the module arguments, for example ``zone: sf-2``
 
 .. Note:: Unlike ``CLOUDSTACK_REGION`` these additional environment variables are ignored in the CLI ``cs``.
 
@@ -275,7 +275,7 @@ In the third task we add static NAT to the VMs having a public IP defined.
 
 .. Note:: The public IP addresses must have been acquired in advance, also see ``cs_ip_address``
 
-.. Note:: For some modules, e.g. ``cs_sshkeypair`` you usually want this to be executed only once, not for every VM. Therefore you would make a separate play for it targeting localhost. You find an example in the use cases below.
+.. Note:: For some modules, for example ``cs_sshkeypair`` you usually want this to be executed only once, not for every VM. Therefore you would make a separate play for it targeting localhost. You find an example in the use cases below.
 
 Use Case: Provisioning on a Basic Networking CloudStack setup
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

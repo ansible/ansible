@@ -13,7 +13,7 @@ Why test your Ansible contributions?
 
 If you're a developer, one of the most valuable things you can do is to look at GitHub issues and help fix bugs, since bug-fixing is almost always prioritized over feature development.  Even for non-developers, helping to test pull requests for bug fixes and features is still immensely valuable.
 
-Ansible users who understand how to write playbooks and roles should be able to test their work.  GitHub pull requests will automatically run a variety of tests (e.g., Shippable) that show bugs in action.  However, contributors must also test their work outside of the automated GitHub checks and show evidence of these tests in the PR to ensure that their work will be more likely to be reviewed and merged.
+Ansible users who understand how to write playbooks and roles should be able to test their work.  GitHub pull requests will automatically run a variety of tests (for example, Shippable) that show bugs in action.  However, contributors must also test their work outside of the automated GitHub checks and show evidence of these tests in the PR to ensure that their work will be more likely to be reviewed and merged.
 
 Read on to learn how Ansible is tested, how to test your contributions locally, and how to extend testing capabilities.
 
@@ -123,7 +123,7 @@ Here's how:
    sent may have mistakes or malicious code that could have a negative impact on your system. We recommend
    doing all testing on a virtual machine, whether a cloud instance, or locally.  Some users like Vagrant
    or Docker for this, but they are optional. It is also useful to have virtual machines of different Linux or
-   other flavors, since some features (apt vs. yum, for example) are specific to those OS versions.
+   other flavors, since some features (for example, package managers such as apt or yum) are specific to those OS versions.
 
 
 Create a fresh area to work::

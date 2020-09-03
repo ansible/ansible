@@ -102,7 +102,7 @@ A string with a generic message relayed to the user.
 
 rc
 ``
-Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc), this field contains 'return code' of these utilities.
+Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, and so on), this field contains 'return code' of these utilities.
 
     .. code-block:: console
 
@@ -181,7 +181,7 @@ A boolean that indicates if the task was skipped or not
 
 stderr
 ``````
-Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc), this field contains the error output of these utilities.
+Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, and so on), this field contains the error output of these utilities.
 
     .. code-block:: console
 
@@ -199,7 +199,7 @@ When `stderr` is returned we also always provide this field which is a list of s
 
 stdout
 ``````
-Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, etc). This field contains the normal output of these utilities.
+Some modules execute command line utilities or are geared for executing commands directly (raw, shell, command, and so on). This field contains the normal output of these utilities.
 
     .. code-block:: console
 
