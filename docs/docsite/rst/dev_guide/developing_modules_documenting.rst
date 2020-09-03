@@ -112,7 +112,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
 :version_added:
 
   * The version of Ansible when the module was added.
-  * This is a string, and not a float, in other words, ``version_added: '2.1'``
+  * This is a string, and not a float, for example, ``version_added: '2.1'``
 
 :author:
 
