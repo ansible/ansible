@@ -17,7 +17,7 @@ from ansible.module_utils._text import to_bytes, to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
 from ansible.module_utils.six import string_types
 from ansible.plugins.action import ActionBase
-from ansible.template import generate_ansible_template_vars
+from ansible.template import generate_ansible_template_vars, AnsibleEnvironment
 
 
 class ActionModule(ActionBase):
@@ -131,12 +131,19 @@ class ActionModule(ActionBase):
                 temp_vars = task_vars.copy()
                 temp_vars.update(generate_ansible_template_vars(source, dest))
 
-                with self._templar.set_temporary_context(searchpath=searchpath, newline_sequence=newline_sequence,
-                                                         block_start_string=block_start_string, block_end_string=block_end_string,
-                                                         variable_start_string=variable_start_string, variable_end_string=variable_end_string,
-                                                         trim_blocks=trim_blocks, lstrip_blocks=lstrip_blocks,
-                                                         available_variables=temp_vars):
-                    resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
+                # force templar to use AnsibleEnvironment to prevent issues with native types
+                # https://github.com/ansible/ansible/issues/46169
+                templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment,
+                                                          searchpath=searchpath,
+                                                          newline_sequence=newline_sequence,
+                                                          block_start_string=block_start_string,
+                                                          block_end_string=block_end_string,
+                                                          variable_start_string=variable_start_string,
+                                                          variable_end_string=variable_end_string,
+                                                          trim_blocks=trim_blocks,
+                                                          lstrip_blocks=lstrip_blocks,
+                                                          available_variables=temp_vars)
+                resultant = templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
             except AnsibleAction:
                 raise
             except Exception as e:

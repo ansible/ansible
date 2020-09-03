@@ -17,7 +17,9 @@ DOCUMENTATION = """
         description: list of files to template
       convert_data:
         type: bool
-        description: whether to convert YAML into data. If False, strings that are YAML will be left untouched.
+        description:
+            - Whether to convert YAML into data. If False, strings that are YAML will be left untouched.
+            - Mutually exclusive with the jinja2_native option.
       variable_start_string:
         description: The string marking the beginning of a print statement.
         default: '{{'
@@ -28,6 +30,16 @@ DOCUMENTATION = """
         default: '}}'
         version_added: '2.8'
         type: str
+      jinja2_native:
+        description:
+            - Controls whether to use Jinja2 native types.
+            - It is off by default even if global jinja2_native is True.
+            - Has no effect if global jinja2_native is False.
+            - This offers more flexibility than the template module which does not use Jinja2 native types at all.
+            - Mutually exclusive with the convert_data option.
+        default: False
+        version_added: '2.11'
+        type: bool
 """
 
 EXAMPLES = """
@@ -51,8 +63,12 @@ import os
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.template import generate_ansible_template_vars
+from ansible.template import generate_ansible_template_vars, AnsibleEnvironment, USE_JINJA2_NATIVE
 from ansible.utils.display import Display
+
+if USE_JINJA2_NATIVE:
+    from ansible.utils.native_jinja import NativeJinjaText
+
 
 display = Display()
 
@@ -60,13 +76,18 @@ display = Display()
 class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
-
         convert_data_p = kwargs.get('convert_data', True)
         lookup_template_vars = kwargs.get('template_vars', {})
+        jinja2_native = kwargs.get('jinja2_native', False)
         ret = []
 
         variable_start_string = kwargs.get('variable_start_string', None)
         variable_end_string = kwargs.get('variable_end_string', None)
+
+        if USE_JINJA2_NATIVE and not jinja2_native:
+            templar = self._templar.copy_with_new_env(environment_class=AnsibleEnvironment)
+        else:
+            templar = self._templar
 
         for term in terms:
             display.debug("File lookup term: %s" % term)
@@ -98,12 +119,16 @@ class LookupModule(LookupBase):
                 vars.update(generate_ansible_template_vars(lookupfile))
                 vars.update(lookup_template_vars)
 
-                # do the templating
-                with self._templar.set_temporary_context(variable_start_string=variable_start_string,
-                                                         variable_end_string=variable_end_string,
-                                                         available_variables=vars, searchpath=searchpath):
-                    res = self._templar.template(template_data, preserve_trailing_newlines=True,
-                                                 convert_data=convert_data_p, escape_backslashes=False)
+                with templar.set_temporary_context(variable_start_string=variable_start_string,
+                                                   variable_end_string=variable_end_string,
+                                                   available_variables=vars, searchpath=searchpath):
+                    res = templar.template(template_data, preserve_trailing_newlines=True,
+                                           convert_data=convert_data_p, escape_backslashes=False)
+
+                if USE_JINJA2_NATIVE and not jinja2_native:
+                    # jinja2_native is true globally but off for the lookup, we need this text
+                    # not to be processed by literal_eval anywhere in Ansible
+                    res = NativeJinjaText(res)
 
                 ret.append(res)
             else:
