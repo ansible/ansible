@@ -179,7 +179,7 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
   :version_added:
 
     * Only needed if this option was extended after initial Ansible release, in other words, this is greater than the top level `version_added` field.
-    * This is a string, and not a float, in other words, ``version_added: '2.3'``.
+    * This is a string, and not a float, for example, ``version_added: '2.3'``.
 
   :suboptions:
 
