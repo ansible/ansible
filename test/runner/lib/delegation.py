@@ -68,6 +68,10 @@ from lib.target import (
     IntegrationTarget,
 )
 
+from lib.ci import (
+    get_ci_provider,
+)
+
 
 def check_delegation_args(args):
     """
@@ -91,6 +95,8 @@ def delegate(args, exclude, require, integration_targets):
     :rtype: bool
     """
     if isinstance(args, TestConfig):
+        args.metadata.ci_provider = get_ci_provider().code
+
         with tempfile.NamedTemporaryFile(prefix='metadata-', suffix='.json', dir=os.getcwd()) as metadata_fd:
             args.metadata_path = os.path.basename(metadata_fd.name)
             args.metadata.to_file(args.metadata_path)
@@ -472,8 +478,10 @@ def generate_command(args, python_interpreter, path, options, exclude, require):
     if isinstance(args, ShellConfig):
         cmd = create_shell_command(cmd)
     elif isinstance(args, SanityConfig):
-        if args.base_branch:
-            cmd += ['--base-branch', args.base_branch]
+        base_branch = args.base_branch or get_ci_provider().get_base_branch()
+
+        if base_branch:
+            cmd += ['--base-branch', base_branch]
 
     return cmd
 

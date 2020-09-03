@@ -6,7 +6,6 @@ import os
 from lib.util import (
     ApplicationError,
     display,
-    is_shippable,
     ConfigParser,
 )
 
@@ -33,10 +32,7 @@ class AwsCloudProvider(CloudProvider):
 
         aci = self._create_ansible_core_ci()
 
-        if os.path.isfile(aci.ci_key):
-            return
-
-        if is_shippable():
+        if aci.available:
             return
 
         super(AwsCloudProvider, self).filter(targets, exclude)
