@@ -26,7 +26,7 @@ want to implement some functionality that uses a new feature of boto3, it should
 feature actually needs to be run, with a message stating the missing feature and minimum required
 version of boto3.
 
-Use feature testing (for example ``hasattr('boto3.module', 'shiny_new_method')``) to check whether boto3
+Use feature testing (for example, ``hasattr('boto3.module', 'shiny_new_method')``) to check whether boto3
 supports a feature rather than version checking. For example, from the ``ec2`` module:
 
 .. code-block:: python

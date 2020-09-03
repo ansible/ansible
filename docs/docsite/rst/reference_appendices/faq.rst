@@ -515,7 +515,7 @@ The ``mkpasswd`` utility that is available on most Linux systems is also a great
     mkpasswd --method=sha-512
 
 
-If this utility is not installed on your system (for example you are using macOS) then you can still easily
+If this utility is not installed on your system (for example, you are using MacOS) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://foss.heptapod.net/python-libs/passlib/-/wikis/home>`_
 password hashing library is installed:
 

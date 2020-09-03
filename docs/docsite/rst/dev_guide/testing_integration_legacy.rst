@@ -29,7 +29,7 @@ Over time the above list will be reduced as tests are ported to the ``ansible-te
 Running Cloud Tests
 ====================
 
-Cloud tests exercise capabilities of cloud modules (for example ec2_key).  These are
+Cloud tests exercise capabilities of cloud modules (for example, ec2_key).  These are
 not 'tests run in the cloud' so much as tests that leverage the cloud modules
 and are organized by cloud provider.
 
@@ -68,7 +68,7 @@ The testing-iam-policy.json.j2 file contains a policy which can be given to the 
 running the tests to give close to minimum rights required to run the tests.  Please note
 that this does not fully restrict the user; The user has wide privileges for viewing
 account definitions and is also able to manage some resources that are not related to
-testing (for example AWS lambdas with different names) primarily due to the limitations of the
+testing (for example, AWS lambdas with different names) primarily due to the limitations of the
 Amazon ARN notation.  At the very least the policy limits the user to one region, however
 tests should not be run in a primary production account in any case.
 

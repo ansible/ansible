@@ -45,7 +45,7 @@ After stepping through the tutorial you will have:
 * Your Client ID, which is found in the "client id" box in the "Configure" page of your application in the Azure portal
 * Your Secret key, generated when you created the application. You cannot show the key after creation.
   If you lost the key, you must create a new one in the "Configure" page of your application.
-* And finally, a tenant ID. It's a UUID (for example ABCDEFGH-1234-ABCD-1234-ABCDEFGHIJKL) pointing to the AD containing your
+* And finally, a tenant ID. It's a UUID (for example, ABCDEFGH-1234-ABCD-1234-ABCDEFGHIJKL) pointing to the AD containing your
   application. You will find it in the URL from within the Azure portal, or in the "view endpoints" of any given URL.
 
 
