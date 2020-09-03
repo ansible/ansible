@@ -37,6 +37,7 @@ class IterableStub:
 
 class FakeAnsibleVaultEncryptedUnicode(Sequence):
     __ENCRYPTED__ = True
+
     def __init__(self, data):
         self.data = data
 
