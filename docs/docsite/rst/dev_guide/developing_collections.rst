@@ -80,7 +80,7 @@ The ``ansible-doc`` command requires the fully qualified collection name (FQCN) 
 plugins directory
 ------------------
 
-Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on, without having to import a role in every play.
+Add a 'per plugin type' specific subdirectory here, including ``module_utils`` which is usable not only by modules, but by most plugins by using their FQCN. This is a way to distribute modules, lookups, filters, and so on without having to import a role in every play.
 
 Vars plugins are unsupported in collections. Cache plugins may be used in collections for fact caching, but are not supported for inventory plugins.
 
@@ -565,7 +565,7 @@ Create a PR against the old collection repo to remove the modules, module_utils,
 	Maintainers for the old collection have to make sure that the PR is merged in a way that it does not break user experience and semantic versioning:
 
 	#. A new version containing the merged PR must not be released before the collection the content has been moved to has been released again, with that content contained in it. Otherwise the redirects cannot work and users relying on that content will experience breakage.
-	#. Once 1.0.0 of the collection from which the content has been removed has been released, such PRs can only be merged for a new **major** version (i.e. 2.0.0, 3.0.0, etc.).
+	#. Once 1.0.0 of the collection from which the content has been removed has been released, such PRs can only be merged for a new **major** version (in other words, 2.0.0, 3.0.0, and so on).
 
 
 Adding the content to the new collection

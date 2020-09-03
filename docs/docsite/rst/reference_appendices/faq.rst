@@ -150,7 +150,7 @@ requires Python 2, you can also report a bug on our `bug tracker
 
 Do not replace the shebang lines of your python modules. Ansible will do this for you automatically at deploy time.
 
-Also, this works for ANY interpreter, i.e ruby: ``ansible_ruby_interpreter``, perl: ``ansible_perl_interpreter``, etc,
+Also, this works for ANY interpreter, for example ruby: ``ansible_ruby_interpreter``, perl: ``ansible_perl_interpreter``, and so on,
 so you can use this for custom modules written in any scripting language and control the interpreter location.
 
 Keep in mind that if you put ``env`` in your module shebang line (``#!/usr/bin/env <other>``),
@@ -515,7 +515,7 @@ The ``mkpasswd`` utility that is available on most Linux systems is also a great
     mkpasswd --method=sha-512
 
 
-If this utility is not installed on your system (e.g. you are using macOS) then you can still easily
+If this utility is not installed on your system (for example, you are using macOS) then you can still easily
 generate these passwords using Python. First, ensure that the `Passlib <https://foss.heptapod.net/python-libs/passlib/-/wikis/home>`_
 password hashing library is installed:
 
@@ -608,8 +608,8 @@ We also offer free web-based training classes on a regular basis. See our
 
 .. _web_interface:
 
-Is there a web interface / REST API / etc?
-++++++++++++++++++++++++++++++++++++++++++
+Is there a web interface / REST API / GUI?
+++++++++++++++++++++++++++++++++++++++++++++
 
 Yes! Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :ref:`ansible_tower`.
 
@@ -692,7 +692,7 @@ but you can still access the original via ``hostvars``::
 
    original_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
 
-This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, etc.
+This works for all overridden connection variables, like ``ansible_user``, ``ansible_port``, and so on.
 
 
 .. _scp_protocol_error_filename:

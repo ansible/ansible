@@ -7,7 +7,7 @@ How to build your inventory
 
 Ansible works against multiple managed nodes or "hosts" in your infrastructure at the same time, using a list or group of lists known as inventory. Once your inventory is defined, you use :ref:`patterns <intro_patterns>` to select the hosts or groups you want Ansible to run against.
 
-The default location for inventory is a file called ``/etc/ansible/hosts``. You can specify a different inventory file at the command line using the ``-i <path>`` option. You can also use multiple inventory files at the same time, and/or pull inventory from dynamic or cloud sources or different formats (YAML, ini, etc), as described in :ref:`intro_dynamic_inventory`.
+The default location for inventory is a file called ``/etc/ansible/hosts``. You can specify a different inventory file at the command line using the ``-i <path>`` option. You can also use multiple inventory files at the same time, and/or pull inventory from dynamic or cloud sources or different formats (YAML, ini, and so on), as described in :ref:`intro_dynamic_inventory`.
 Introduced in version 2.4, Ansible has :ref:`inventory_plugins` to make this flexible and customizable.
 
 .. contents::
@@ -72,8 +72,8 @@ Hosts in multiple groups
 
 You can (and probably will) put each host in more than one group. For example a production webserver in a datacenter in Atlanta might be included in groups called [prod] and [atlanta] and [webservers]. You can create groups that track:
 
-* What - An application, stack or microservice. (For example, database servers, web servers, etc).
-* Where - A datacenter or region, to talk to local DNS, storage, etc. (For example, east, west).
+* What - An application, stack or microservice. (For example, database servers, web servers, and so on).
+* Where - A datacenter or region, to talk to local DNS, storage, and so on. (For example, east, west).
 * When - The development stage, to avoid testing on production resources. (For example, prod, test).
 
 Extending the previous YAML inventory to include what, when, and where would look like:
@@ -421,7 +421,7 @@ All hosts in the 'raleigh' group will have the variables defined in these files
 available to them. This can be very useful to keep your variables organized when a single
 file gets too big, or when you want to use :ref:`Ansible Vault<playbooks_vault>` on some group variables.
 
-You can also add ``group_vars/`` and ``host_vars/`` directories to your playbook directory. The ``ansible-playbook`` command looks for these directories in the current working directory by default. Other Ansible commands (for example, ``ansible``, ``ansible-console``, etc.) will only look for ``group_vars/`` and ``host_vars/`` in the inventory directory. If you want other commands to load group and host variables from a playbook directory, you must provide the ``--playbook-dir`` option on the command line.
+You can also add ``group_vars/`` and ``host_vars/`` directories to your playbook directory. The ``ansible-playbook`` command looks for these directories in the current working directory by default. Other Ansible commands (for example, ``ansible``, ``ansible-console``, and so on) will only look for ``group_vars/`` and ``host_vars/`` in the inventory directory. If you want other commands to load group and host variables from a playbook directory, you must provide the ``--playbook-dir`` option on the command line.
 If you load inventory files from both the playbook directory and the inventory directory, variables in the playbook directory will override variables set in the inventory directory.
 
 Keeping your inventory file and variables in a git repo (or other version control)
@@ -611,7 +611,7 @@ ansible_shell_executable
     This sets the shell the ansible controller will use on the target machine,
     overrides ``executable`` in :file:`ansible.cfg` which defaults to
     :command:`/bin/sh`.  You should really only change it if is not possible
-    to use :command:`/bin/sh` (i.e. :command:`/bin/sh` is not installed on the target
+    to use :command:`/bin/sh` (in other words, if :command:`/bin/sh` is not installed on the target
     machine or cannot be run from sudo.).
 
 Examples from an Ansible-INI host file:

@@ -235,7 +235,7 @@ Not supported by all connection plugins
 
 Privilege escalation methods must also be supported by the connection plugin
 used. Most connection plugins will warn if they do not support become. Some
-will just ignore it as they always run as root (jail, chroot, etc).
+will just ignore it as they always run as root (jail, chroot, and so on).
 
 Only one method may be enabled per host
 ---------------------------------------

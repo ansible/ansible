@@ -38,13 +38,13 @@ ansible_index_var
     The name of the value provided to ``loop_control.index_var``. Added in ``2.9``
 
 ansible_parent_role_names
-    When the current role is being executed by means of an :ref:`include_role <include_role_module>` or :ref:`import_role <import_role_module>` action, this variable contains a list of all parent roles, with the most recent role (i.e. the role that included/imported this role) being the first item in the list.
-    When multiple inclusions occur, this list lists the *last* role (i.e. the role that included this role) as the *first* item in the list. It is also possible that a specific role exists more than once in this list.
+    When the current role is being executed by means of an :ref:`include_role <include_role_module>` or :ref:`import_role <import_role_module>` action, this variable contains a list of all parent roles, with the most recent role (in other words, the role that included/imported this role) being the first item in the list.
+    When multiple inclusions occur, this list lists the *last* role (in other words, the role that included this role) as the *first* item in the list. It is also possible that a specific role exists more than once in this list.
 
     For example: When role **A** includes role **B**, inside role B, ``ansible_parent_role_names`` will equal to ``['A']``. If role **B** then includes role **C**, the list becomes ``['B', 'A']``.
 
 ansible_parent_role_paths
-    When the current role is being executed by means of an :ref:`include_role <include_role_module>` or :ref:`import_role <import_role_module>` action, this variable contains a list of all parent roles, with the most recent role (i.e. the role that included/imported this role) being the first item in the list.
+    When the current role is being executed by means of an :ref:`include_role <include_role_module>` or :ref:`import_role <import_role_module>` action, this variable contains a list of all parent roles, with the most recent role (in other words, the role that included/imported this role) being the first item in the list.
     Please refer to ``ansible_parent_role_names`` for the order of items in this list.
 
 ansible_play_batch
@@ -77,7 +77,7 @@ ansible_run_tags
     Contents of the ``--tags`` CLI option, which specifies which tags will be included for the current run. Note that if ``--tags`` is not passed, this variable will default to ``["all"]``.
 
 ansible_search_path
-    Current search path for action plugins and lookups, i.e where we search for relative paths when you do ``template: src=myfile``
+    Current search path for action plugins and lookups, in other words, where we search for relative paths when you do ``template: src=myfile``
 
 ansible_skip_tags
     Contents of the ``--skip-tags`` CLI option, which specifies which tags will be skipped for the current run.
@@ -110,7 +110,7 @@ inventory_file
     The file name of the inventory source in which the `inventory_hostname` was first defined
 
 omit
-    Special variable that allows you to 'omit' an option in a task, i.e ``- user: name=bob home={{ bobs_home|default(omit) }}``
+    Special variable that allows you to 'omit' an option in a task, for example ``- user: name=bob home={{ bobs_home|default(omit) }}``
 
 play_hosts
     Deprecated, the same as ansible_play_batch
