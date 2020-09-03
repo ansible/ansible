@@ -225,6 +225,9 @@ import shutil
 import sys
 import time
 
+from pwd import getpwnam, getpwuid
+from grp import getgrnam, getgrgid
+
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes, to_native
 
@@ -860,6 +863,34 @@ def ensure_hardlink(path, src, follow, force, timestamps):
     return {'dest': path, 'src': src, 'changed': changed, 'diff': diff}
 
 
+def check_owner_exists(module, owner):
+    try:
+        uid = int(owner)
+        try:
+            getpwuid(uid).pw_name
+        except KeyError:
+            module.warn('failed to look up user with uid %s. Create user up to this point in real play' % uid)
+    except ValueError:
+        try:
+            getpwnam(owner).pw_uid
+        except KeyError:
+            module.warn('failed to look up user %s. Create user up to this point in real play' % owner)
+
+
+def check_group_exists(module, group):
+    try:
+        gid = int(group)
+        try:
+            getgrgid(gid).gr_name
+        except KeyError:
+            module.warn('failed to look up group with gid %s. Create group up to this point in real play' % gid)
+    except ValueError:
+        try:
+            getgrnam(group).gr_gid
+        except KeyError:
+            module.warn('failed to look up group %s. Create group up to this point in real play' % group)
+
+
 def main():
 
     global module
@@ -894,6 +925,13 @@ def main():
     follow = params['follow']
     path = params['path']
     src = params['src']
+
+    if module.check_mode and state != 'absent':
+        file_args = module.load_file_common_arguments(module.params)
+        if file_args['owner']:
+            check_owner_exists(module, file_args['owner'])
+        if file_args['group']:
+            check_group_exists(module, file_args['group'])
 
     timestamps = {}
     timestamps['modification_time'] = keep_backward_compatibility_on_timestamps(params['modification_time'], state)
