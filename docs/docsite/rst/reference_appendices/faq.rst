@@ -609,7 +609,7 @@ We also offer free web-based training classes on a regular basis. See our
 .. _web_interface:
 
 Is there a web interface / REST API / GUI?
-++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++
 
 Yes! Ansible, Inc makes a great product that makes Ansible even more powerful and easy to use. See :ref:`ansible_tower`.
 
