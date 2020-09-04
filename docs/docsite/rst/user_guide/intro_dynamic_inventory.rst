@@ -197,7 +197,7 @@ Note that the OpenStack dynamic inventory script will cache results to avoid rep
 Other inventory scripts
 =======================
 
-You can find all included inventory scripts in the `contrib/inventory directory <https://github.com/ansible/ansible/tree/stable-2.9/contrib/inventory>`_. General usage is similar across all inventory scripts. You can also :ref:`write your own inventory script <developing_inventory>`.
+In Ansible 2.10 and later, inventory scripts moved to their associated collections. Many are now in the `community.general scripts/inventory directory <https://github.com/ansible-collections/community.general/tree/main/scripts/inventory>`_. We recommend you use :ref:`inventory_plugins` instead.
 
 .. _using_multiple_sources:
 
