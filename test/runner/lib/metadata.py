@@ -5,7 +5,6 @@ import json
 
 from lib.util import (
     display,
-    is_shippable,
 )
 
 from lib.diff import (
@@ -22,11 +21,7 @@ class Metadata(object):
         self.cloud_config = None  # type: dict [str, str]
         self.instance_config = None  # type: list[dict[str, str]]
         self.change_description = None  # type: ChangeDescription
-
-        if is_shippable():
-            self.ci_provider = 'shippable'
-        else:
-            self.ci_provider = ''
+        self.ci_provider = None  # type: t.Optional[str]
 
     def populate_changes(self, diff):
         """

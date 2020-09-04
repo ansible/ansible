@@ -7,7 +7,6 @@ import time
 from lib.util import (
     display,
     ApplicationError,
-    is_shippable,
     run_command,
     SubprocessError,
     ConfigParser,
@@ -45,10 +44,7 @@ class TowerCloudProvider(CloudProvider):
 
         aci = get_tower_aci(self.args)
 
-        if os.path.isfile(aci.ci_key):
-            return
-
-        if is_shippable():
+        if aci.available:
             return
 
         super(TowerCloudProvider, self).filter(targets, exclude)
