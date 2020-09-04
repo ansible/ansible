@@ -32,7 +32,7 @@ from ansible.galaxy.collection import (
     validate_collection_path,
     verify_collections
 )
-from ansible.galaxy.login import GalaxyLogin
+from ansible.galaxy.oauth_device_flow import GitHubOAuthTokenCreator
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.token import BasicAuthToken, GalaxyToken, KeycloakToken, NoTokenSentinel
 from ansible.module_utils.ansible_release import __version__ as ansible_version
@@ -1420,16 +1420,11 @@ class GalaxyCLI(CLI):
             if C.GALAXY_TOKEN:
                 github_token = C.GALAXY_TOKEN
             else:
-                login = GalaxyLogin(self.galaxy)
-                github_token = login.create_github_token()
+                github_token = GitHubOAuthTokenCreator().github_interactive_device_flow_auth()
         else:
             github_token = context.CLIARGS['token']
 
         galaxy_response = self.api.authenticate(github_token)
-
-        if context.CLIARGS['token'] is None and C.GALAXY_TOKEN is None:
-            # Remove the token we created
-            login.remove_github_token()
 
         # Store the Galaxy token
         token = GalaxyToken()
