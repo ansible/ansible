@@ -14,7 +14,14 @@ In July, 2019, we announced that collections would be the `future of Ansible con
 
 * To learn more about using collections, see :ref:`collections`.
 * To learn more about developing collections, see :ref:`developing_collections`.
-* To learn more about contributing to existing collections, see :ref:`contributing_maintained_collections`.
+* To learn more about contributing to existing collections, see the individual collection repository for guidelines, or see :ref:`contributing_maintained_collections` to contribute to one of the Ansible-maintained collections.
+
+.. _find_my_module:
+
+Where did this specific module go?
+++++++++++++++++++++++++++++++++++
+
+IF you are searching for a specific module, you can check the `runtime.yml <https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml>`_ file, which lists the first destination for each module that we extracted from the main ansible/ansible repository. Some modules have moved again since then. You can also search on `Ansible Galaxy <https://galaxy.ansible.com/>`_ or ask on one of our :ref:`IRC channels <communication_irc>`.
 
 .. _set_environment:
 
