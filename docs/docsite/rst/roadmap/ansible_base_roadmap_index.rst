@@ -24,5 +24,4 @@ See :ref:`Ansible communication channels <communication>` for details on how to 
    :glob:
    :caption: ansible-base Roadmaps
 
-   ROADMAP_2_11
    ROADMAP_2_10
