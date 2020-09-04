@@ -26,3 +26,4 @@ See :ref:`Ansible communication channels <communication>` for details on how to 
 
    ansible_base_roadmap_index
    ansible_roadmap_index
+   old_roadmap_index
