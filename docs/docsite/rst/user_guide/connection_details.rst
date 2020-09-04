@@ -50,7 +50,7 @@ or as a group variable in inventory:
 Setting up SSH keys
 -------------------
 
-By default, Ansible assumes you are using SSH keys to connect to remote machines.  SSH keys are encouraged, but you can use password authentication if needed with the ``--ask-pass`` option. If you need to provide a password for :ref:`privilege escalation <become>` (sudo, pbrun, etc.), use ``--ask-become-pass``.
+By default, Ansible assumes you are using SSH keys to connect to remote machines.  SSH keys are encouraged, but you can use password authentication if needed with the ``--ask-pass`` option. If you need to provide a password for :ref:`privilege escalation <become>` (sudo, pbrun, and so on), use ``--ask-become-pass``.
 
 .. include:: shared_snippets/SSH_password_prompt.txt
 

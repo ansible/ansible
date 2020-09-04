@@ -704,7 +704,7 @@ Noteworthy module changes
 * The deprecated ``force`` option in ``win_firewall_rule`` has been removed.
 * :ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` provider creates authority key identifiers if not explicitly disabled with ``ownca_create_authority_key_identifier: no``. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available.
 * :ref:`openssl_certificate <openssl_certificate_module>`'s ``ownca`` and ``selfsigned`` providers create subject key identifiers if not explicitly disabled with ``ownca_create_subject_key_identifier: never_create`` resp. ``selfsigned_create_subject_key_identifier: never_create``. If a subject key identifier is provided by the CSR, it is taken; if not, it is created from the public key. This is only the case for the ``cryptography`` backend, which is selected by default if the ``cryptography`` library is available.
-* :ref:`openssh_keypair <openssh_keypair_module>` now applies the same file permissions and ownership to both public and private keys (both get the same ``mode``, ``owner``, ``group``, etc.). If you need to change permissions / ownership on one key, use the :ref:`file <file_module>` to modify it after it is created.
+* :ref:`openssh_keypair <openssh_keypair_module>` now applies the same file permissions and ownership to both public and private keys (both get the same ``mode``, ``owner``, ``group``, and so on). If you need to change permissions / ownership on one key, use the :ref:`file <file_module>` to modify it after it is created.
 
 
 Plugins

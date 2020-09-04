@@ -271,7 +271,7 @@ JSON string format
     ansible-playbook release.yml --extra-vars '{"version":"1.23.45","other_variable":"foo"}'
     ansible-playbook arcade.yml --extra-vars '{"pacman":"mrs","ghosts":["inky","pinky","clyde","sue"]}'
 
-When passing variables with ``--extra-vars``, you must escape quotes and other special characters appropriately for both your markup (e.g. JSON), and for your shell::
+When passing variables with ``--extra-vars``, you must escape quotes and other special characters appropriately for both your markup (for example, JSON), and for your shell::
 
     ansible-playbook arcade.yml --extra-vars "{\"name\":\"Conan O\'Brien\"}"
     ansible-playbook arcade.yml --extra-vars '{"name":"Conan O'\\\''Brien"}'

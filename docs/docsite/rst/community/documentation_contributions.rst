@@ -53,7 +53,7 @@ A great documentation GitHub issue or PR includes:
 
 - a specific title
 - a detailed description of the problem (even for a PR - it's hard to evaluate a suggested change unless we know what problem it's meant to solve)
-- links to other information (related issues/PRs, external documentation, pages on docs.ansible.com, and so on.)
+- links to other information (related issues/PRs, external documentation, pages on docs.ansible.com, and so on)
 
 
 Verifying your documentation PR

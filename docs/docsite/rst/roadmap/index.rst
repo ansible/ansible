@@ -22,12 +22,8 @@ See :ref:`Ansible communication channels <communication>` for details on how to 
 .. toctree::
    :maxdepth: 1
    :glob:
-   :caption: Ansible Release Roadmaps
+   :caption: Ansible Roadmaps
 
-   COLLECTIONS_2_10
-   ROADMAP_2_10
-   ROADMAP_2_9
-   ROADMAP_2_8
-   ROADMAP_2_7
-   ROADMAP_2_6
-   ROADMAP_2_5
+   ansible_base_roadmap_index
+   ansible_roadmap_index
+   old_roadmap_index

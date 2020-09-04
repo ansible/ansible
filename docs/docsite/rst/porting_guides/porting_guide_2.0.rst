@@ -288,15 +288,15 @@ Since the ansible-2.0 plugin system is more advanced, it is easier to adapt your
 
 You may find the following tips useful:
 
-* Check whether the ansible-2.0 class(es) are available and if they are missing (ansible-1.9.x) mimic them with the needed methods (e.g. ``__init__``)
+* Check whether the ansible-2.0 class(es) are available and if they are missing (ansible-1.9.x) mimic them with the needed methods (for example, ``__init__``)
 
-* When ansible-2.0 python modules are imported, and they fail (ansible-1.9.x), catch the ``ImportError`` exception and perform the equivalent imports for ansible-1.9.x. With possible translations (e.g. importing specific methods).
+* When ansible-2.0 python modules are imported, and they fail (ansible-1.9.x), catch the ``ImportError`` exception and perform the equivalent imports for ansible-1.9.x. With possible translations (for example, importing specific methods).
 
 * Use the existence of these methods as a qualifier to what version of Ansible you are running. So rather than using version checks, you can do capability checks instead. (See examples below)
 
 * Document for each if-then-else case for which specific version each block is needed. This will help others to understand how they have to adapt their plugins, but it will also help you to remove the older ansible-1.9.x support when it is deprecated.
 
-* When doing plugin development, it is very useful to have the ``warning()`` method during development, but it is also important to emit warnings for deadends (cases that you expect should never be triggered) or corner cases (e.g. cases where you expect misconfigurations).
+* When doing plugin development, it is very useful to have the ``warning()`` method during development, but it is also important to emit warnings for deadends (cases that you expect should never be triggered) or corner cases (for example, cases where you expect misconfigurations).
 
 * It helps to look at other plugins in ansible-1.9.x and ansible-2.0 to understand how the API works and what modules, classes and methods are available.
 
