@@ -665,6 +665,9 @@ end {
                     b64_data = base64.b64encode(b_data)
                     yield [to_text(b64_data)]
 
+                if offset == 0:  # empty file
+                    yield [""]
+
         rc, stdout, stderr = self._exec_psrp_script(copy_script, read_gen(), arguments=[out_path], force_stop=True)
 
         return rc, stdout, stderr, sha1_hash.hexdigest()
