@@ -209,7 +209,6 @@ A collection can store some additional metadata in a ``runtime.yml`` file in the
 
   The version of Ansible required to use the collection. Multiple versions can be separated with a comma.
 
-<<<<<<< HEAD
   .. code:: yaml
 
      requires_ansible: ">=2.10,<2.11"
@@ -658,6 +657,8 @@ Testing collections
 ===================
 
 The main tool for testing collections is ``ansible-test``, Ansible's testing tool described in :ref:`developing_testing`. You can run several compile and sanity checks, as well as run unit and integration tests for plugins using ``ansible-test``. When you test collections, test against the ansible-base version(s) you are targeting.
+
+Executing sanity, integration, and unit tests is largely identical to performing these tests within Ansible's mainline code. ``ansible-test`` executes against modules implemented from the relative path ``ansible_collections/..`` For example, ``ansible-test`` may be executed against IOS modules from the default collection location of ``~/.ansible/collections/ansible_collections/cisco/ios/``. Tests may also be executed while in a custom directory, such as ``~/work/ansible_collections/cisco/ios/``, as long as it is the current path. Also, collections must not be executed from within Ansible's source tree and cannot reside within a directory comprised of a symbolic link.
 
 You must always execute ``ansible-test`` from the root directory of a collection. You can run ``ansible-test`` in Docker containers without installing any special requirements. The Ansible team uses this approach in Shippable both in the ansible/ansible GitHub repository and in the large community collections such as `community.general <https://github.com/ansible-collections/community.general/>`_ and `community.network <https://github.com/ansible-collections/community.network/>`_. The examples below demonstrate running tests in Docker containers.
 
