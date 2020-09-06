@@ -269,8 +269,8 @@ documentation for a full list with examples.
 
 .. seealso::
 
-   :ref:`all_modules`
-       All the documentation for Ansible modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`working_with_playbooks`
        An introduction to playbooks
    :ref:`playbooks_delegation`
