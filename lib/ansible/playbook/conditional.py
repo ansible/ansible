@@ -182,6 +182,7 @@ class Conditional:
                             inside_yield=inside_yield
                         )
             try:
+                # FIXME should we use something other than a private _parse method?
                 res = templar.environment._parse(conditional, None, None)
                 res = generate(res, templar.environment, None, None)
                 parsed = ast.parse(res, mode='exec')
