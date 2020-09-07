@@ -5,6 +5,30 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.1rc3
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2020-09-07
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Add ``macos/10.15`` as a supported value for the ``--remote`` option.
+- ansible-test - Allow custom ``--remote-stage`` options for development and testing.
+- ansible-test - Fix ``ansible-test coverage`` reporting sub-commands (``report``, ``html``, ``xml``) on Python 2.6.
+- ansible-test - Remove the discontinued ``us-east-2`` choice from the ``--remote-aws-region`` option.
+- ansible-test - Request remote resources by provider name for all provider types.
+- ansible-test - Show a warning when the obsolete ``--remote-aws-region`` option is used.
+- ansible-test - Support custom remote endpoints with the ``--remote-endpoint`` option.
+- ansible-test - Update built-in service endpoints for the ``--remote`` option.
+- ansible-test - Use new endpoint for Parallels based instances with the ``--remote`` option.
+- ansible-test - default container now uses default-test-container 2.7.0 and ansible-base-test-container 1.6.0. This brings in Python 3.9.0rc1 for testing.
+
 v2.10.1rc2
 ==========
 
