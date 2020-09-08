@@ -217,6 +217,24 @@
   ignore_errors: yes
   register: version_bad_value
 
+- name: Try version with both strict and version_type
+  debug:
+    msg: "{{ '1.0' is version('1.0', strict=False, version_type='loose') }}"
+  ignore_errors: yes
+  register: version_strict_version_type
+
+- name: Try version with bad version_type
+  debug:
+    msg: "{{ '1.0' is version('1.0', version_type='boom') }}"
+  ignore_errors: yes
+  register: version_bad_version_type
+
+- name: Try version with bad semver
+  debug:
+    msg: "{{ 'nope' is version('nopenope', version_type='semver') }}"
+  ignore_errors: yes
+  register: version_bad_semver
+
 - name: Assert version tests work
   assert:
     that:
@@ -234,8 +252,12 @@
       - "'2.0' is version('1.0', '>', true)"
       - "'1.0' is version('1.0', '<=', true)"
       - "'1.0' is version('1.0', '>=', true)"
+      - "'1.2.3' is version('2.0.0', 'lt', version_type='semver')"
       - version_bad_operator is failed
       - version_bad_value is failed
+      - version_strict_version_type is failed
+      - version_bad_version_type is failed
+      - version_bad_semver is failed
 
 - name: Assert any tests work
   assert:
