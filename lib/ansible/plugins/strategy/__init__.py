@@ -71,22 +71,6 @@ class StrategySentinel:
 _sentinel = StrategySentinel()
 
 
-def post_process_whens(result, task, templar):
-
-    cond = None
-    if task.changed_when:
-        cond = Conditional(loader=templar._loader)
-        cond.when = task.changed_when
-        result['changed'] = cond.evaluate_conditional(templar, templar.available_variables)
-
-    if task.failed_when:
-        if cond is None:
-            cond = Conditional(loader=templar._loader)
-        cond.when = task.failed_when
-        failed_when_result = cond.evaluate_conditional(templar, templar.available_variables)
-        result['failed_when_result'] = result['failed'] = failed_when_result
-
-
 def results_thread_main(strategy):
     while True:
         try:
@@ -657,13 +641,11 @@ class StrategyBase:
                     if 'add_host' in result_item:
                         # this task added a new host (add_host module)
                         new_host_info = result_item.get('add_host', dict())
-                        self._add_host(new_host_info, result_item)
-                        post_process_whens(result_item, original_task, handler_templar)
+                        self._add_host(new_host_info, result_item, not original_task.changed_when)
 
                     elif 'add_group' in result_item:
                         # this task added a new group (group_by module)
-                        self._add_group(original_host, result_item)
-                        post_process_whens(result_item, original_task, handler_templar)
+                        self._add_group(original_host, result_item, not original_task.changed_when)
 
                     if 'ansible_facts' in result_item:
                         # if delegated fact and we are delegating facts, we need to change target host for them
@@ -810,7 +792,7 @@ class StrategyBase:
 
         return ret_results
 
-    def _add_host(self, host_info, result_item):
+    def _add_host(self, host_info, result_item, result_override=True):
         '''
         Helper function to add a new host to inventory based on a task result.
         '''
@@ -847,9 +829,10 @@ class StrategyBase:
             if changed:
                 self._inventory.reconcile_inventory()
 
-            result_item['changed'] = changed
+            if result_override:
+                result_item['changed'] = changed
 
-    def _add_group(self, host, result_item):
+    def _add_group(self, host, result_item, result_override=True):
         '''
         Helper function to add a group (if it does not exist), and to assign the
         specified host to that group.
@@ -894,7 +877,8 @@ class StrategyBase:
         if changed:
             self._inventory.reconcile_inventory()
 
-        result_item['changed'] = changed
+        if result_override:
+            result_item['changed'] = changed
 
     def _copy_included_file(self, included_file):
         '''
