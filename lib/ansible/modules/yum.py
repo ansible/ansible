@@ -544,6 +544,10 @@ class YumModule(YumDnf):
 
         return False
 
+    def is_ovirt_node(self):
+        with open('/etc/os-release') as f:
+            return 'VARIANT_ID="ovirt-node"' in f.read()
+
     def is_installed(self, repoq, pkgspec, qf=None, is_pkg=False):
         if qf is None:
             qf = "%{epoch}:%{name}-%{version}-%{release}.%{arch}\n"
@@ -661,7 +665,8 @@ class YumModule(YumDnf):
             if self.releasever:
                 myrepoq.extend('--releasever=%s' % self.releasever)
 
-            cmd = myrepoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
+            cmd = myrepoq + ["--qf", qf] if self.is_ovirt_node() else myrepoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
+            cmd.insert(1, pkgspec)
             rc, out, err = self.module.run_command(cmd)
 
             if rc == 0:
