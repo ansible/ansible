@@ -12,4 +12,4 @@
     - assert:
         that:
           - '"foo[0]" in result.msg'
-          - '"list object has no element 0" in result.msg'
+          - '"object has no element 0" in result.msg'
