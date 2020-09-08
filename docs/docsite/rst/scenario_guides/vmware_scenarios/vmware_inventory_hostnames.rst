@@ -4,9 +4,10 @@
 Using VMware dynamic inventory plugin - Hostnames
 *************************************************
 
-.. contents:: Topics
+.. contents::
+  :local:
 
-VMware dynamic inventory plugin - Customizing hostnames
+VMware dynamic inventory plugin - customizing hostnames
 =======================================================
 
 
@@ -36,14 +37,14 @@ To install the latest ``community.vmware`` collection:
 
 To use this VMware dynamic inventory plugin:
 
- 1. Enable it first by specifying the following in the ``ansible.cfg`` file:
+1. Enable it first by specifying the following in the ``ansible.cfg`` file:
 
 .. code-block:: ini
 
   [inventory]
   enable_plugins = community.vmware.vmware_vm_inventory
 
- 2. Create a file that ends in ``.vmware.yml`` or ``.vmware.yaml`` in your working directory.
+2. Create a file that ends in ``vmware.yml`` or ``vmware.yaml`` in your working directory.
 
 The ``vmware_vm_inventory`` inventory plugin takes in the same authentication information as any other VMware modules does.
 
@@ -67,7 +68,7 @@ the ``config.name`` property from the virtual machine and populate it in the inv
 
 You can check all allowed properties for the given virtual machine at :ref:`vmware_inventory_vm_attributes`.
 
-Executing ``ansible-inventory --list -i <filename>.vmware.yml`` will create a list of the virtual machines that are ready to be configured using Ansible.
+Executing ``ansible-inventory --list -i <filename>.vmware.yml`` creates a list of the virtual machines that are ready to be configured using Ansible.
 
 What to expect
 --------------
