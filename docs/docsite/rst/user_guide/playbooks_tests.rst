@@ -153,6 +153,14 @@ This test also accepts a 3rd parameter, ``strict`` which defines if strict versi
 
     {{ sample_version_var is version('1.0', operator='lt', strict=True) }}
 
+As of Ansible 2.11 the ``version`` test accepts a ``version_type`` parameter which is mutually exclusive with ``strict``, and accepts the following values::
+
+    loose, strict, semver, semantic
+
+Using ``version_type`` to compare a semantic version would be achieved like the following::
+
+    {{ sample_semver_var is version('2.0.0-rc.1+build.123', 'lt', version_type='semver') }}
+
 When using ``version`` in a playbook or role, don't use ``{{ }}`` as described in the `FAQ <https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#when-should-i-use-also-how-to-interpolate-variables-or-dynamic-variable-names>`_::
 
     vars:
