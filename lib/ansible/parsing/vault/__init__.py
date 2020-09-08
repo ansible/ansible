@@ -872,6 +872,7 @@ class VaultEditor:
         try:
             # drop the user into an editor on the tmp file
             subprocess.call(cmd)
+            user_input = ("Put anything into console when You are done editing decrypted file")
         except Exception as e:
             # if an error happens, destroy the decrypted file
             self._shred_file(tmp_path)
