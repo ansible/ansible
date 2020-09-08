@@ -61,7 +61,7 @@ class CollectionRequirement:
     _FILE_MAPPING = [(b'MANIFEST.json', 'manifest_file'), (b'FILES.json', 'files_file')]
 
     def __init__(self, namespace, name, b_path, api, versions, requirement, force, parent=None, metadata=None,
-                 files=None, skip=False, allow_pre_releases=False):
+                 files=None, skip=False, allow_pre_releases=False, upgrade=False):
         """Represents a collection requirement, the versions that are available to be installed as well as any
         dependencies the collection has.
 
@@ -87,6 +87,7 @@ class CollectionRequirement:
         self.api = api
         self._versions = set(versions)
         self.force = force
+        self.upgrade = upgrade
         self.skip = skip
         self.required_by = []
         self.allow_pre_releases = allow_pre_releases
@@ -190,6 +191,8 @@ class CollectionRequirement:
                 version = self.latest_version if self.latest_version != '*' else 'unknown'
                 msg = "Cannot meet requirement %s:%s as it is already installed at version '%s'. Use %s to overwrite" \
                       % (to_text(self), requirement, version, force_flag)
+                if not is_exact_requirement(requirement):
+                    msg += ' or --upgrade to only overwrite collections and their dependencies when more recent compatible versions are found'
                 raise AnsibleError(msg)
             elif parent is None:
                 msg = "Cannot meet requirement %s for dependency %s" % (requirement, to_text(self))
@@ -313,7 +316,6 @@ class CollectionRequirement:
         display.display('Created collection for %s at %s' % (collection_name, to_text(b_collection_output_path)))
 
     def set_latest_version(self):
-        self.versions = set([self.latest_version])
         self._get_metadata()
 
     def verify(self, remote_collection, path, b_temp_tar_path):
@@ -504,14 +506,13 @@ class CollectionRequirement:
                                      metadata=meta, files=files, skip=skip, allow_pre_releases=allow_pre_release)
 
     @staticmethod
-    def from_name(collection, apis, requirement, force, parent=None, allow_pre_release=False):
+    def from_name(collection, apis, requirement, force, parent=None, allow_pre_release=False, upgrade=False):
         namespace, name = collection.split('.', 1)
         galaxy_meta = None
 
         for api in apis:
             try:
-                if not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or
-                        requirement.startswith('!=')):
+                if is_exact_requirement(requirement):
                     # Exact requirement
                     allow_pre_release = True
 
@@ -543,7 +544,7 @@ class CollectionRequirement:
             raise AnsibleError("Failed to find collection %s:%s" % (collection, requirement))
 
         req = CollectionRequirement(namespace, name, None, api, versions, requirement, force, parent=parent,
-                                    metadata=galaxy_meta, allow_pre_releases=allow_pre_release)
+                                    metadata=galaxy_meta, allow_pre_releases=allow_pre_release, upgrade=upgrade)
         return req
 
 
@@ -667,7 +668,7 @@ def publish_collection(collection_path, api, wait, timeout):
 
 
 def install_collections(collections, output_path, apis, validate_certs, ignore_errors, no_deps, force, force_deps,
-                        allow_pre_release=False):
+                        allow_pre_release=False, upgrade=False):
     """Install Ansible collections to the path specified.
 
     :param collections: The collections to install, should be a list of tuples with (name, requirement, Galaxy server).
@@ -686,7 +687,7 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
         with _display_progress():
             dependency_map = _build_dependency_map(collections, existing_collections, b_temp_path, apis,
                                                    validate_certs, force, force_deps, no_deps,
-                                                   allow_pre_release=allow_pre_release)
+                                                   allow_pre_release=allow_pre_release, upgrade=upgrade)
 
         display.display("Starting collection install process")
         with _display_progress():
@@ -1166,15 +1167,17 @@ def find_existing_collections(path, fallback_metadata=False):
 
 
 def _build_dependency_map(collections, existing_collections, b_temp_path, apis, validate_certs, force, force_deps,
-                          no_deps, allow_pre_release=False):
+                          no_deps, allow_pre_release=False, upgrade=False):
     dependency_map = {}
 
     # First build the dependency map on the actual requirements
     for name, version, source, req_type in collections:
         _get_collection_info(dependency_map, existing_collections, name, version, source, b_temp_path, apis,
-                             validate_certs, (force or force_deps), allow_pre_release=allow_pre_release, req_type=req_type)
+                             validate_certs, (force or force_deps), allow_pre_release=allow_pre_release,
+                             req_type=req_type, upgrade=upgrade)
 
-    checked_parents = set([to_text(c) for c in dependency_map.values() if c.skip])
+    # if upgrade is true we need to check deps
+    checked_parents = set([to_text(c) for c in dependency_map.values() if (c.skip and not upgrade)])
     while len(dependency_map) != len(checked_parents):
         while not no_deps:  # Only parse dependencies if no_deps was not set
             parents_to_check = set(dependency_map.keys()).difference(checked_parents)
@@ -1188,7 +1191,7 @@ def _build_dependency_map(collections, existing_collections, b_temp_path, apis, 
                     for dep_name, dep_requirement in parent_info.dependencies.items():
                         _get_collection_info(dependency_map, existing_collections, dep_name, dep_requirement,
                                              parent_info.api, b_temp_path, apis, validate_certs, force_deps,
-                                             parent=parent, allow_pre_release=allow_pre_release)
+                                             parent=parent, allow_pre_release=allow_pre_release, upgrade=upgrade)
 
                     checked_parents.add(parent)
 
@@ -1258,7 +1261,7 @@ def _collections_from_scm(collection, requirement, b_temp_path, force, parent=No
 
 
 def _get_collection_info(dep_map, existing_collections, collection, requirement, source, b_temp_path, apis,
-                         validate_certs, force, parent=None, allow_pre_release=False, req_type=None):
+                         validate_certs, force, parent=None, allow_pre_release=False, req_type=None, upgrade=False):
     dep_msg = ""
     if parent:
         dep_msg = " - as dependency of %s" % parent
@@ -1325,11 +1328,15 @@ def _get_collection_info(dep_map, existing_collections, collection, requirement,
             display.vvvv("Collection requirement '%s' is the name of a collection" % collection)
             if collection in dep_map:
                 collection_info = dep_map[collection]
-                collection_info.add_requirement(parent, requirement)
             else:
                 apis = [source] if source else apis
                 collection_info = CollectionRequirement.from_name(collection, apis, requirement, force, parent=parent,
-                                                                  allow_pre_release=allow_pre_release)
+                                                                  allow_pre_release=allow_pre_release, upgrade=upgrade)
+            if collection_info.upgrade:
+                # Get the latest requirement that meets the version constraints
+                collection_info = get_updated_version(collection_info, existing_collections, parent, requirement)
+            else:
+                collection_info.add_requirement(parent, requirement)
 
         update_dep_map_collection_info(dep_map, existing_collections, collection_info, parent, requirement)
 
@@ -1341,6 +1348,28 @@ def get_collection_info_from_req(dep_map, collection):
         collection_info.add_requirement(None, collection.latest_version)
     else:
         collection_info = collection
+    return collection_info
+
+
+def get_updated_version(collection_info, existing_collections, parent, requirement):
+    existing = [c for c in existing_collections if to_text(c) == to_text(collection_info)]
+    if existing and is_exact_requirement(requirement):
+        display.vvvv("Ignoring --upgrade option for collection '{0}' because an exact requirement '{1}' was provided".format(existing[0], requirement))
+    elif existing:
+        # Find the latest upgraded version that meets the requirements
+        for latest_candidate in sorted([v for v in collection_info.versions if v != '*'], key=SemanticVersion, reverse=True):
+            if SemanticVersion(collection_info.latest_version) <= SemanticVersion(existing[0].latest_version):
+                break
+            try:
+                collection_info.add_requirement(parent, latest_candidate)
+            except Exception:
+                pass
+            else:
+                collection_info.version = latest_candidate
+                collection_info.force = True
+                break
+    else:
+        collection_info.add_requirement(parent, requirement)
     return collection_info
 
 
@@ -1555,3 +1584,7 @@ def get_galaxy_metadata_path(b_path):
         if os.path.exists(b_path):
             return b_path
     return b_default_path
+
+
+def is_exact_requirement(requirement):
+    return not (requirement == '*' or requirement.startswith('<') or requirement.startswith('>') or requirement.startswith('!='))
