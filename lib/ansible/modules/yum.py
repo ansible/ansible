@@ -665,7 +665,7 @@ class YumModule(YumDnf):
             if self.releasever:
                 myrepoq.extend('--releasever=%s' % self.releasever)
 
-            cmd = myrepoq + ["--qf", qf] if self.is_ovirt_node() else myrepoq + ["--pkgnarrow=updates", "--qf", qf, pkgspec]
+            cmd = myrepoq + ["--qf", qf] if self.is_ovirt_node() else myrepoq + ["--pkgnarrow=updates", "--qf", qf]
             cmd.insert(1, pkgspec)
             rc, out, err = self.module.run_command(cmd)
 
