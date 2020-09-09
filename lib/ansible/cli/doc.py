@@ -661,6 +661,10 @@ class DocCLI(CLI):
         if doc.pop('action', False):
             text.append("  * note: %s\n" % "This module has a corresponding action plugin.")
 
+        if doc.pop('orphaned', False):
+            text.append('ORPHANED: This module needs maintainers!')
+            text.append('')
+
         if doc.get('options', False):
             text.append("OPTIONS (= is mandatory):\n")
             DocCLI.add_fields(text, doc.pop('options'), limit, opt_indent)

@@ -176,6 +176,15 @@ def add_fragments(doc, filename, fragment_loader, is_module=False):
                     doc['seealso'] = []
                 doc['seealso'].extend(seealso)
 
+        if 'orphaned' in fragment and 'orphaned' not in doc:
+            # In case of the whole bunch of modules is orphaned,
+            # we can put the flag to the corresponding fragment
+            # and override this for certain modules if needed, i.e.,
+            # the fragment's value is replaced by the module's value.
+            orphaned = fragment.pop('orphaned')
+            if orphaned:
+                doc['orphaned'] = orphaned
+
         if 'options' not in fragment:
             raise Exception("missing options in fragment (%s), possibly misformatted?: %s" % (fragment_name, filename))
 

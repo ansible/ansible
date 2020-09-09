@@ -28,6 +28,7 @@ def read_docstring(filename, verbose=True, ignore_errors=True):
         'returndocs': None,
         'metadata': None,  # NOTE: not used anymore, kept for compat
         'seealso': None,
+        'orphaned': None,
     }
 
     string_to_vars = {

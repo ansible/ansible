@@ -223,6 +223,9 @@ All fields in the ``DOCUMENTATION`` block are lower-case. All fields are require
   * Details of any important information that doesn't fit in one of the above sections.
   * For example, whether ``check_mode`` is or is not supported.
 
+:orphaned:
+
+  * A boolean flag indicating if the module needs maintainers, for example, ``orphaned: true``.
 
 Linking and other format macros within module documentation
 -----------------------------------------------------------
