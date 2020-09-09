@@ -39,9 +39,16 @@ options:
     filter:
         version_added: "1.1"
         description:
-            - If supplied, only return facts that match this shell-style (fnmatch) wildcard.
+            - If supplied, only return facts that match one of the shell-style
+              (fnmatch) pattern. An empty list basically means 'no filter'.
+              As of Ansible 2.11, the type has changed from string to list
+              and the default has became an empty list. A simple string is
+              still accepted and works as a single pattern. The behaviour
+              prior to Ansible 2.11 remains.
         required: false
-        default: "*"
+        type: list
+        elements: str
+        default: []
     fact_path:
         version_added: "1.3"
         description:
@@ -105,6 +112,13 @@ EXAMPLES = """
       - '!any'
       - facter
 
+- name: Collect only selected facts
+  setup:
+    filter:
+      - 'ansible_distribution'
+      - 'ansible_machine_id'
+      - 'ansible_*_mb'
+
 # Display only facts about certain interfaces.
 # ansible all -m setup -a 'filter=ansible_eth[0-2]'
 
@@ -141,7 +155,7 @@ def main():
         argument_spec=dict(
             gather_subset=dict(default=["all"], required=False, type='list'),
             gather_timeout=dict(default=10, required=False, type='int'),
-            filter=dict(default="*", required=False),
+            filter=dict(default=[], required=False, type='list', elements='str'),
             fact_path=dict(default='/etc/ansible/facts.d', required=False, type='path'),
         ),
         supports_check_mode=True,

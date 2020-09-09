@@ -122,6 +122,24 @@
           - 'ansible_virtualization_role|default("UNDEF_VIRT") == "UNDEF_VIRT"'
           - 'ansible_env|default("UNDEF_ENV") != "UNDEF_ENV"'
 
+- hosts: facthost24
+  tags: [ 'fact_min' ]
+  connection: local
+  gather_facts: no
+  tasks:
+    - setup:
+        filter:
+            - "*env*"
+            - "*virt*"
+
+    - name: Test that retrieving all facts filtered to env and virt works
+      assert:
+        that:
+          - 'ansible_interfaces|default("UNDEF_NET") == "UNDEF_NET"'
+          - 'ansible_mounts|default("UNDEF_MOUNT") == "UNDEF_MOUNT"'
+          - 'ansible_virtualization_role|default("UNDEF_VIRT") != "UNDEF_VIRT"'
+          - 'ansible_env|default("UNDEF_ENV") != "UNDEF_ENV"'
+
 - hosts: facthost13
   tags: [ 'fact_min' ]
   connection: local
