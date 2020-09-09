@@ -5,6 +5,23 @@ Frequently Asked Questions
 
 Here are some commonly asked questions and their answers.
 
+.. _collections_transition:
+
+Where did all the modules go?
++++++++++++++++++++++++++++++
+
+In July, 2019, we announced that collections would be the `future of Ansible content delivery <https://www.ansible.com/blog/the-future-of-ansible-content-delivery>`_. A collection is a distribution format for Ansible content that can include playbooks, roles, modules, and plugins. In Ansible 2.9 we added support for collections. In Ansible 2.10 we extracted most modules from the main ansible/ansible repository and placed them in :ref:`collections <list_of_collections>`. Collections may be maintained by the Ansible team, by the Ansible community, or by Ansible partners. The `ansible/ansible repository <https://github.com/ansible/ansible>`_ now contains the code for basic features and functions, such as copying module code to managed nodes. This code is also known as ``ansible-base``.
+
+* To learn more about using collections, see :ref:`collections`.
+* To learn more about developing collections, see :ref:`developing_collections`.
+* To learn more about contributing to existing collections, see the individual collection repository for guidelines, or see :ref:`contributing_maintained_collections` to contribute to one of the Ansible-maintained collections.
+
+.. _find_my_module:
+
+Where did this specific module go?
+++++++++++++++++++++++++++++++++++
+
+IF you are searching for a specific module, you can check the `runtime.yml <https://github.com/ansible/ansible/blob/devel/lib/ansible/config/ansible_builtin_runtime.yml>`_ file, which lists the first destination for each module that we extracted from the main ansible/ansible repository. Some modules have moved again since then. You can also search on `Ansible Galaxy <https://galaxy.ansible.com/>`_ or ask on one of our :ref:`IRC channels <communication_irc>`.
 
 .. _set_environment:
 
