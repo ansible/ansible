@@ -56,6 +56,9 @@ def removal_version(value, is_ansible):
         else:
             version = SemanticVersion()
             version.parse(value)
+            if version.major != 0 and (version.minor != 0 or version.patch != 0):
+                raise Invalid('removal_version (%r) must be a major release, not a minor or patch release '
+                              '(see specification at https://semver.org/)' % (value, ))
     except ValueError:
         raise Invalid(msg)
     return value
