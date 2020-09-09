@@ -9,11 +9,15 @@ import re
 import sys
 import yaml
 
+from distutils.version import StrictVersion
+from functools import partial
+
 from voluptuous import Any, MultipleInvalid, PREVENT_EXTRA
 from voluptuous import Required, Schema, Invalid
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import string_types
+from ansible.utils.version import SemanticVersion
 
 
 def isodate(value):
@@ -32,7 +36,28 @@ def isodate(value):
     return value
 
 
-def validate_metadata_file(path):
+def removal_version(value, is_ansible):
+    """Validate a removal version string."""
+    "Validate a removal version"
+    msg = (
+        'Removal version must be a string' if is_ansible else
+        'Removal version must be a semantic version (https://semver.org/)'
+    )
+    if not isinstance(value, string_types):
+        raise Invalid(msg)
+    try:
+        if is_ansible:
+            version = StrictVersion()
+            version.parse(value)
+        else:
+            version = SemanticVersion()
+            version.parse(value)
+    except ValueError:
+        raise Invalid(msg)
+    return value
+
+
+def validate_metadata_file(path, is_ansible):
     """Validate explicit runtime metadata file"""
     try:
         with open(path, 'r') as f_path:
@@ -51,19 +76,19 @@ def validate_metadata_file(path):
 
     # plugin_routing schema
 
-    deprecation_tombstoning_schema = Any(Schema(
-        {
-            Required('removal_date'): Any(isodate),
-            'warning_text': Any(*string_types),
-        },
+    deprecation_tombstoning_schema = Schema(
+        Any(
+            {
+                Required('removal_version'): partial(removal_version, is_ansible=is_ansible),
+                'warning_text': Any(*string_types),
+            },
+            {
+                Required('removal_date'): Any(isodate),
+                'warning_text': Any(*string_types),
+            }
+        ),
         extra=PREVENT_EXTRA
-    ), Schema(
-        {
-            Required('removal_version'): Any(*string_types),
-            'warning_text': Any(*string_types),
-        },
-        extra=PREVENT_EXTRA
-    ))
+    )
 
     plugin_routing_schema = Any(
         Schema({
@@ -143,7 +168,7 @@ def main():
             print('%s:%d:%d: %s' % (path, 0, 0, ("Should be called '%s'" % collection_runtime_file)))
             continue
 
-        validate_metadata_file(path)
+        validate_metadata_file(path, is_ansible=path not in (collection_legacy_file, collection_runtime_file))
 
 
 if __name__ == '__main__':
