@@ -241,8 +241,8 @@ This key contains a list of dictionaries that will be presented to the user. Key
 
 .. seealso::
 
-   :ref:`all_modules`
-       Learn about available modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    `GitHub modules directory <https://github.com/ansible/ansible/tree/devel/lib/ansible/modules>`_
        Browse source of core and extras modules
    `Mailing List <https://groups.google.com/group/ansible-devel>`_

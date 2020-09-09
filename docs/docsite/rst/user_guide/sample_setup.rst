@@ -273,8 +273,8 @@ in the directory structure example at the start of this section.
        Learn about YAML syntax
    :ref:`working_with_playbooks`
        Review the basic playbook features
-   :ref:`all_modules`
-       Learn about available modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    :ref:`intro_patterns`

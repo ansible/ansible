@@ -196,8 +196,8 @@ Now that you understand the basic elements of Ansible execution, you are ready t
 
    :ref:`intro_configuration`
        All about the Ansible config file
-   :ref:`all_modules`
-       A list of available modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`working_with_playbooks`
        Using Ansible for configuration management & deployment
    `Mailing List <https://groups.google.com/group/ansible-project>`_

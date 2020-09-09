@@ -139,8 +139,8 @@ The `ansible-lint default rules <https://docs.ansible.com/ansible-lint/rules/def
        Learn about YAML syntax
    :ref:`playbooks_best_practices`
        Tips for managing playbooks in the real world
-   :ref:`all_modules`
-       Learn about available modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`developing_modules`
        Learn to extend Ansible by writing your own modules
    :ref:`intro_patterns`

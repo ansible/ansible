@@ -483,8 +483,8 @@ For example vars plugins, see the source code for the `vars plugins included wit
 
 .. seealso::
 
-   :ref:`all_modules`
-       List of all modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`developing_api`
        Learn about the Python API for task execution
    :ref:`developing_inventory`

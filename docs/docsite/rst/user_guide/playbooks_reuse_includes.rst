@@ -22,8 +22,8 @@ The content on this page has been moved to :ref:`playbooks_reuse`.
        Conditionals in playbooks
    :ref:`playbooks_loops`
        Loops in playbooks
-   :ref:`all_modules`
-       Learn about available modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`developing_modules`
        Learn how to extend Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
