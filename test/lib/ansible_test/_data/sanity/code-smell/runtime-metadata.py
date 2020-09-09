@@ -12,7 +12,7 @@ import yaml
 from distutils.version import StrictVersion
 from functools import partial
 
-from voluptuous import Any, MultipleInvalid, PREVENT_EXTRA
+from voluptuous import All, Any, MultipleInvalid, PREVENT_EXTRA
 from voluptuous import Required, Schema, Invalid
 from voluptuous.humanize import humanize_error
 
@@ -61,6 +61,11 @@ def removal_version(value, is_ansible):
     return value
 
 
+def any_value(v):
+    """Accepts anything."""
+    return v
+
+
 def validate_metadata_file(path, is_ansible):
     """Validate explicit runtime metadata file"""
     try:
@@ -80,18 +85,28 @@ def validate_metadata_file(path, is_ansible):
 
     # plugin_routing schema
 
-    deprecation_tombstoning_schema = Schema(
-        Any(
+    deprecation_tombstoning_schema = All(
+        # The first schema validates the input, and the second makes sure no extra keys are specified
+        Schema(
             {
-                Required('removal_version'): partial(removal_version, is_ansible=is_ansible),
-                'warning_text': Any(*string_types),
-            },
-            {
-                Required('removal_date'): Any(isodate),
+                'removal_version': partial(removal_version, is_ansible=is_ansible),
+                'removal_date': Any(isodate),
                 'warning_text': Any(*string_types),
             }
         ),
-        extra=PREVENT_EXTRA
+        Schema(
+            Any(
+                {
+                    Required('removal_version'): any_value,
+                    'warning_text': any_value,
+                },
+                {
+                    Required('removal_date'): any_value,
+                    'warning_text': any_value,
+                }
+            ),
+            extra=PREVENT_EXTRA
+        )
     )
 
     plugin_routing_schema = Any(
