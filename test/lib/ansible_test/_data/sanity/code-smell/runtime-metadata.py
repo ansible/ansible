@@ -29,6 +29,10 @@ def isodate(value):
     msg = 'Expected ISO 8601 date string (YYYY-MM-DD), or YAML date'
     if not isinstance(value, string_types):
         raise Invalid(msg)
+    # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
+    # we have to do things manually.
+    if not re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$', value):
+        raise Invalid(msg)
     try:
         datetime.datetime.strptime(value, '%Y-%m-%d').date()
     except ValueError:
