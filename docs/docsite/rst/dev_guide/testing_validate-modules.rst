@@ -94,7 +94,6 @@ Codes
   invalid-module-schema                                        Documentation        Error                  ``AnsibleModule`` schema validation error
   invalid-removal-version                                      Documentation        Error                  The version at which a feature is supposed to be removed cannot be parsed (for collections, it must be a semantic version, see https://semver.org/)
   invalid-requires-extension                                   Naming               Error                  Module ``#AnsibleRequires -CSharpUtil`` should not end in .cs, Module ``#Requires`` should not end in .psm1
-  invalid-tagged-version                                       Documentation        Error                  All version numbers specified in code have to be explicitly tagged with the collection name, in other words, ``community.general:1.2.3`` or ``ansible.builtin:2.10``
   last-line-main-call                                          Syntax               Error                  Call to ``main()`` not the last line (or ``removed_module()`` in the case of deprecated & docs only modules)
   missing-doc-fragment                                         Documentation        Error                  ``DOCUMENTATION`` fragment missing
   missing-existing-doc-fragment                                Documentation        Warning                Pre-existing ``DOCUMENTATION`` fragment missing
