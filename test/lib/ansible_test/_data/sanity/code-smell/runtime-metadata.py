@@ -7,10 +7,10 @@ import datetime
 import os
 import re
 import sys
-import yaml
-
 from distutils.version import StrictVersion
 from functools import partial
+
+import yaml
 
 from voluptuous import All, Any, MultipleInvalid, PREVENT_EXTRA
 from voluptuous import Required, Schema, Invalid
@@ -42,7 +42,6 @@ def isodate(value):
 
 def removal_version(value, is_ansible):
     """Validate a removal version string."""
-    "Validate a removal version"
     msg = (
         'Removal version must be a string' if is_ansible else
         'Removal version must be a semantic version (https://semver.org/)'
@@ -64,9 +63,9 @@ def removal_version(value, is_ansible):
     return value
 
 
-def any_value(v):
+def any_value(value):
     """Accepts anything."""
-    return v
+    return value
 
 
 def validate_metadata_file(path, is_ansible):
