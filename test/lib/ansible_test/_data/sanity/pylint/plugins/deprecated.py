@@ -82,7 +82,7 @@ MSGS = {
               "Only one of version and date must be specified",
               {'minversion': (2, 6)}),
     'E9511': ("Removal version (%r) must be a major release, not a minor or "
-              "patch release (see specification at https://semver.org/)",
+              "patch release (see the specification at https://semver.org/)",
               "removal-version-must-be-major",
               "Used when a call to Display.deprecated or "
               "AnsibleModule.deprecate for a collection specifies a version "
