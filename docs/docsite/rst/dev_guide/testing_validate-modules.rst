@@ -129,6 +129,7 @@ Codes
   parameter-list-no-elements                                   Parameters           Error                  argument in argument_spec "type" is specified as ``list`` without defining "elements"
   parameter-state-invalid-choice                               Parameters           Error                  Argument ``state`` includes ``get``, ``list`` or ``info`` as a choice.  Functionality should be in an ``_info`` or (if further conditions apply) ``_facts`` module.
   python-syntax-error                                          Syntax               Error                  Python ``SyntaxError`` while parsing module
+  removal-version-must-be-major                                Documentation        Error                  According to the semantic versioning specification (https://semver.org/), the only versions in which features are allowed to be removed are major versions (x.0.0)
   return-syntax-error                                          Documentation        Error                  ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
   return-invalid-version-added                                 Documentation        Error                  ``version_added`` for return value is not a valid version number
   subdirectory-missing-init                                    Naming               Error                  Ansible module subdirectories must contain an ``__init__.py``
@@ -160,4 +161,5 @@ Codes
   required_if-value-type                                       Documentation        Error                  required_if entry's value is not of the type specified for its key
   required_by-collision                                        Documentation        Error                  required_by entry has repeated terms
   required_by-unknown                                          Documentation        Error                  required_by entry contains option which does not appear in argument_spec (potentially an alias of an option?)
+  version-added-must-be-major-or-minor                         Documentation        Error                  According to the semantic versioning specification (https://semver.org/), the only versions in which features are allowed to be added are major and minor versions (x.y.0)
 ============================================================   ==================   ====================   =========================================================================================

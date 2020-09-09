@@ -161,6 +161,11 @@ def check_removal_version(v, version_name, collection_name_name, error_code='inv
     try:
         parsed_version = SemanticVersion()
         parsed_version.parse(version)
+        if parsed_version.major != 0 and (parsed_version.minor != 0 or parsed_version.patch != 0):
+            raise _add_ansible_error_code(
+                Invalid('%s (%r) must be a major release, not a minor or patch release (see specification at '
+                        'https://semver.org/)' % (version_name, version)),
+                error_code='removal-version-must-be-major')
     except ValueError as exc:
         raise _add_ansible_error_code(
             Invalid('%s (%r) is not a valid collection version (see specification at https://semver.org/): '
@@ -285,6 +290,12 @@ def version_added(v, error_code='version-added-invalid', accept_historical=False
                 try:
                     version = SemanticVersion()
                     version.parse(version_added)
+                    if version.major != 0 and version.patch != 0:
+                        raise _add_ansible_error_code(
+                            Invalid('version_added (%r) must be a major or minor release, '
+                                    'not a patch release (see specification at '
+                                    'https://semver.org/)' % (version_added, )),
+                            error_code='version-added-must-be-major-or-minor')
                 except ValueError as exc:
                     raise _add_ansible_error_code(
                         Invalid('version_added (%r) is not a valid collection version '
