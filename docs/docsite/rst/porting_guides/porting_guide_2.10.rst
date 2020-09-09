@@ -534,6 +534,11 @@ Ansible-base
 - When deprecations are done in code, they to specify a ``collection_name`` so that deprecation warnings can mention which collection - or ansible-base - is deprecating a feature. This affects all ``Display.deprecated()`` or ``AnsibleModule.deprecate()`` or ``Ansible.Basic.Deprecate()`` calls, and ``removed_in_version``/``removed_at_date`` or ``deprecated_aliases`` in module argument specs.
 - ansible-test now uses a different ``default`` test container for Ansible Collections
 
+ansible.posix
+~~~~~~~~~~~~~
+
+- Bootstrap Collection (https://github.com/ansible-collections/ansible.posix/pull/1).
+
 community.general
 ~~~~~~~~~~~~~~~~~
 
