@@ -147,7 +147,6 @@ lib/ansible/modules/iptables.py pylint:blacklisted-name
 lib/ansible/modules/iptables.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/service.py validate-modules:nonexistent-parameter-documented
 lib/ansible/modules/service.py validate-modules:use-run-command-not-popen
-lib/ansible/modules/setup.py validate-modules:doc-missing-type
 lib/ansible/modules/setup.py validate-modules:parameter-list-no-elements
 lib/ansible/modules/setup.py validate-modules:parameter-type-not-in-doc
 lib/ansible/modules/systemd.py validate-modules:parameter-invalid

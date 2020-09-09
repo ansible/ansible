@@ -34,6 +34,7 @@ import sys
 
 from ansible.module_utils.facts import timeout
 from ansible.module_utils.facts import collector
+from ansible.module_utils.common.collections import is_string
 
 
 class AnsibleFactCollector(collector.BaseFactCollector):
@@ -53,11 +54,14 @@ class AnsibleFactCollector(collector.BaseFactCollector):
         self.filter_spec = filter_spec
 
     def _filter(self, facts_dict, filter_spec):
-        # assume a filter_spec='' is equilv to filter_spec='*'
+        # assume filter_spec='' or filter_spec=[] is equivalent to filter_spec='*'
         if not filter_spec or filter_spec == '*':
             return facts_dict
 
-        return [(x, y) for x, y in facts_dict.items() if fnmatch.fnmatch(x, filter_spec)]
+        if is_string(filter_spec):
+            filter_spec = [filter_spec]
+
+        return [(x, y) for x, y in facts_dict.items() for f in filter_spec if not f or fnmatch.fnmatch(x, f)]
 
     def collect(self, module=None, collected_facts=None):
         collected_facts = collected_facts or {}
@@ -111,7 +115,7 @@ def get_ansible_collector(all_collector_classes,
                           gather_timeout=None,
                           minimal_gather_subset=None):
 
-    filter_spec = filter_spec or '*'
+    filter_spec = filter_spec or []
     gather_subset = gather_subset or ['all']
     gather_timeout = gather_timeout or timeout.DEFAULT_GATHER_TIMEOUT
     minimal_gather_subset = minimal_gather_subset or frozenset()
