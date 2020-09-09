@@ -1163,6 +1163,8 @@ def main():
     # We screenscrape a huge amount of git commands so use C locale anytime we
     # call run_command()
     module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+    if 'GIT_TERMINAL_PROMPT' not in os.environment:
+        module.run_command_environ_update['GIT_TERMINAL_PROMPT'] = 0
 
     if separate_git_dir:
         separate_git_dir = os.path.realpath(separate_git_dir)
