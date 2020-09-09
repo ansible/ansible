@@ -931,28 +931,17 @@ class TaskExecutor:
                 if k.startswith('ansible_%s_' % self._connection._load_name) and k not in options:
                     options['_extras'][k] = templar.template(variables[k])
 
-        task_keys = self._task.dump_attrs()
+        # The connection options are threaded through the play_context for
+        # now. This is something we ultimately want to avoid, but the first
+        # step is to get connection plugins pulling the options through the
+        # config system instead of directly accessing play_context.
+        current_context = self._play_context.dump_attrs()
 
-        if self._play_context.password:
-            # The connection password is threaded through the play_context for
-            # now. This is something we ultimately want to avoid, but the first
-            # step is to get connection plugins pulling the password through the
-            # config system instead of directly accessing play_context.
-            task_keys['password'] = self._play_context.password
-
-        # set options with 'templated vars' specific to this plugin and dependent ones
-        self._connection.set_options(task_keys=task_keys, var_options=options)
-        varnames.extend(self._set_plugin_options('shell', variables, templar, task_keys))
+        self._connection.set_options(task_keys=current_context, var_options=options)
+        varnames.extend(self._set_plugin_options('shell', variables, templar, current_context))
 
         if self._connection.become is not None:
-            if self._play_context.become_pass:
-                # FIXME: eventually remove from task and play_context, here for backwards compat
-                # keep out of play objects to avoid accidental disclosure, only become plugin should have
-                # The become pass is already in the play_context if given on
-                # the CLI (-K). Make the plugin aware of it in this case.
-                task_keys['become_pass'] = self._play_context.become_pass
-
-            varnames.extend(self._set_plugin_options('become', variables, templar, task_keys))
+            varnames.extend(self._set_plugin_options('become', variables, templar, current_context))
 
             # FOR BACKWARDS COMPAT:
             for option in ('become_user', 'become_flags', 'become_exe', 'become_pass'):
