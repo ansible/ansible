@@ -466,8 +466,8 @@ Read the `Ansible Galaxy documentation <https://galaxy.ansible.com/docs/>`_ page
        Loops in playbooks
    :ref:`tags`
        Using tags to select or skip roles/tasks in long playbooks
-   :ref:`all_modules`
-       List of available modules
+   :ref:`list_of_collections`
+       Browse existing collections, modules, and plugins
    :ref:`developing_modules`
        Extending Ansible by writing your own modules
    `GitHub Ansible examples <https://github.com/ansible/ansible-examples>`_
