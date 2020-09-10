@@ -79,6 +79,8 @@ Module documentation should briefly and accurately define what each module and o
     * If an option is only sometimes required, describe the conditions. For example, "Required when I(state=present)."
     * If your module allows ``check_mode``, reflect this fact in the documentation.
 
+To create clear, concise, consistent, and useful documentation, follow the :ref:`style guide <style_guide>`.
+
 Each documentation field is described below. Before committing your module documentation, please test it at the command line and as HTML:
 
 * As long as your module file is :ref:`available locally <local_modules>`, you can use ``ansible-doc -t module my_module_name`` to view your module documentation at the command line. Any parsing errors will be obvious - you can view details by adding ``-vvv`` to the command.
