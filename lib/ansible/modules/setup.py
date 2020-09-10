@@ -48,7 +48,6 @@ options:
               and the default has became an empty list. A simple string is
               still accepted and works as a single pattern. The behaviour
               prior to Ansible 2.11 remains.
-        type: str
         required: false
         type: list
         elements: str
