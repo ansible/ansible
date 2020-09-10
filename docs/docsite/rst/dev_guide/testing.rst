@@ -174,6 +174,32 @@ Some ideas of what to test are:
 * Test to see if any Python backtraces returned (that's a bug)
 * Test on different operating systems, or against different library versions
 
+Run sanity tests
+````````````````
+
+.. code:: shell
+
+   ansible-test sanity
+
+More information: :ref:`testing_sanity`
+
+Run unit tests
+``````````````
+
+.. code:: shell
+
+   ansible-test units
+
+More information: :ref:`testing_units`
+
+Run integration tests
+`````````````````````
+
+.. code:: shell
+
+   ansible-test integration -v ping
+
+More information: :ref:`testing_integration`
 
 Any potential issues should be added as comments on the pull request (and it's acceptable to comment if the feature works as well), remembering to include the output of ``ansible --version``
 
