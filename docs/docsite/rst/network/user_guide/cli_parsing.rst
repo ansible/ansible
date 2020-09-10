@@ -4,90 +4,66 @@
 Parsing Semi-structured Text with Ansible
 *****************************************
 
-As the scope of automation increases, it’s not uncommon to encounter a
-device, host or platform that only supports a command-line interface and
-commands issued returns semi-structured text.
-
-With the 1.2.0 release of the ansible.netcommon collection, Ansible now
-has available a single module to both run commands and parse the output.
-
-In addition to the native parsing engine, the cli_parse module works
-with several third party parsing engines.
+The `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ collection version 1.2.0 or later  includes the :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` module to run commands and parse the output. You can use the ``cli_parse`` module on a device, host, or platform that only supports a command-line interface and the commands issued return semi-structured text.
 
 .. contents::
    :local:
 
-Why parse the text?
-===================
-
-Some of the more common use cases for parsing semi-structured text into
-Ansible native data structures include:
-
--  Used with the ``when`` clause to conditionally run other tasks or
-   roles
--  Configuration and operational state compliance checking used with the
-   ``assert`` module
--  Used with the ``template`` module to generate reports about
-   configuration and operational state information
--  Generate host, device or platform commands or configuration when used
-   with templates and ``command`` or ``config`` modules
--  Supplement native facts information when used along side current
-   platform ``facts`` modules
--  Populate the Ansible inventory or a CMDB with new structured data
-
-When not to parse the text
-===========================
-
--  When the device, host or platform has a RESTAPI and returns json
--  Existing Ansible facts modules already return the desired data
--  Ansible network resource modules exist for configuration management of
-   the device and resource
 
 Understanding the CLI parser
 =============================
 
-``cli_parse`` in an Ansible module that can either run a cli command on
-a device and return a parsed result or can simply parse any text
-document.
+The ``cli_parse`` module can either run a CLI command on a device and return a parsed result or can simply parse any text document. The ``cli_parse`` module includes cli_parser plugins to interface with a variety of parsing engines.
 
-``cli_parse`` includes cli_parser plugins to interface with with a
-variety of parsing engines. At the time of release, cli_parsing plugins
-are included for the following parsing engines:
+Why parse the text?
+--------------------
 
--  ``native``: The native parsing engine is built into Ansible and
-   requires no addition python libraries
--  ``xml``: Convert XML to an Ansible native data structure
--  ``textfsm``: A python module which implements a template based state
-   machine for parsing semi-formatted text
--  ``ntc_templates``: Predefined ``textfsm`` templates packages supporting a
-   variety of platforms and commands
--  ``ttp``: A library for semi-structured text parsing using templates,
-   with added capabilities to simplify the process
--  ``pyats``: Use the parsers included with Cisco’s Test Automation &
-   Validation Solution
--  ``json``: Convert json output at the cli to an Ansible native data
-   structure
+Some of the more common use cases for parsing semi-structured text into
+Ansible native data structures when used with:
 
-Because cli_parse uses a plugin based architecture additional parsing
-engines can be used from any Ansible collection.
+-  The ``when`` clause to conditionally run other tasks or roles
+-  The ``assert`` module for checking configuration and operational state compliance
+-  The ``template`` module to generate reports about configuration and operational state information
+-  Templates and ``command`` or ``config`` modules to generate host, device, or platform commands or configuration
+-  The current platform ``facts`` modules to supplement native facts information
+
+You can also use the ``cli_parse`` module to populate the Ansible inventory or a CMDB with new structured data
+
+When not to parse the text
+---------------------------
+
+You should not parse semi-structured text when:
+
+-  The device, host, or platform has a RESTAPI and returns JSON
+-  Existing Ansible facts modules already return the desired data
+-  Ansible network resource modules exist for configuration management of the device and resource
 
 Parsing the CLI
 =========================
+
+The ``cli_parse`` module includes the following cli_parsing plugins:
+
+-  ``native``: The native parsing engine is built into Ansible and requires no addition python libraries
+-  ``xml``: Convert XML to an Ansible native data structure
+-  ``textfsm``: A python module which implements a template based state machine for parsing semi-formatted text
+-  ``ntc_templates``: Predefined ``textfsm`` templates packages supporting a variety of platforms and commands
+-  ``ttp``: A library for semi-structured text parsing using templates, with added capabilities to simplify the process
+-  ``pyats``: Use the parsers included with Cisco’s Test Automation & Validation Solution
+-  ``json``: Convert JSON output at the CLI to an Ansible native data structure
+
+Because ``cli_parse`` uses a plugin based architecture, it can use additional parsing engines from any Ansible collection.
 
 Parsing with the native parsing engine
 --------------------------------------
 
 The native parsing engine is included with the ``cli_parse`` module. It
 uses data captured using regular expressions to populate the parsed data
-structure.
-
-The native parsing engine requires a template be used to parse the
-command output. A native template is stored as a yaml file.
+structure. The native parsing engine requires a template to parse the command output. A native template is stored as a YAML file.
 
 Networking example
 ^^^^^^^^^^^^^^^^^^
 
-Example output of the ``show interface`` command:
+This example uses the output of the ``show interface`` command:
 
 .. code-block:: text
 
@@ -110,7 +86,8 @@ Example output of the ``show interface`` command:
      Last clearing of "show interface" counters never
    <...>
 
-An example template stored as ``templates/nxos_show_interface.yaml``
+
+The following shows an example template stored as ``templates/nxos_show_interface.yaml`` to parse this ``show interface`` output:
 
 .. code-block:: yaml
 
@@ -139,18 +116,16 @@ An example template stored as ``templates/nxos_show_interface.yaml``
          hardware: "{{ hardware }}"
          mac_address: "{{ mac }}"
 
-A native parser template is structured as a list of parsers, each
-containing the following key, value pairs:
+
+This native parser template is structured as a list of parsers, each
+containing the following key-value pairs:
 
 -  ``example``: An example line of the text line to be parsed
--  ``getval``: A regular expression using named capture groups to store
-   the extracted data
--  ``result``: A data tree, populated as a template, from the parsed
-   data
--  ``shared``: (optional) The shared key makes the parsed values
-   available to the rest of the parser entries until matched again.
+-  ``getval``: A regular expression using named capture groups to store the extracted data
+-  ``result``: A data tree, populated as a template, from the parsed data
+-  ``shared``: (optional) The shared key makes the parsed values available to the rest of the parser entries until matched again.
 
-An example task using the native parser and the template above:
+The following example task uses ``cli_parse`` with the native parser and the example template above:
 
 .. code-block:: yaml
 
@@ -161,7 +136,16 @@ An example task using the native parser and the template above:
            name: ansible.netcommon.native
        set_fact: interfaces
 
-would set the following ``interfaces`` fact for the device:
+For this task:
+
+- The ``command`` key tells the module to run the command on the device or host. Alternately, text from a previous command can be provided using the ``text`` key instead.
+- Information specific to the parser engine is provided in the ``parser`` key.
+- To use the ``native`` parser, the full name of the parsing engine, including it’s collection, is provided as ``name`` (``ansible.netcommon.native``)
+- The ``cli_parse`` module, by default, will look for the template in the templates directory as ``{{ short_os }}_{{ command }}.yaml``. The ``short_os`` is derived from either the hosts ``ansible_network_os`` or ``ansible_distribution``.
+- The ``command`` spaces are replace with ``_``.
+- The ``ansible.netcommon.native`` parsing engine is fully supported with a Red Hat Ansible Automation Platform subscription
+
+This task sets the following ``interfaces`` fact for the device:
 
 .. code-block:: yaml
 
@@ -177,20 +161,6 @@ would set the following ``interfaces`` fact for the device:
        mac_address: 5254.005a.f8c6
    <...>
 
-About the task: - Full module name is used for the task, including the
-collection (``ansible.netcommon.cli_parse``) - The ``command`` key tell
-the module to run the command on the device or host, alternatively text
-from a previous command can be provided using the ``text`` key instead -
-Information specific to the parser engine is provided in the ``parser``
-key - To use the ``native`` parser, the full name of the parsing engine,
-including it’s collection, is provided as ``name``
-(``ansible.netcommon.native``) - The ``cli_parse`` module, by default,
-will look for the template in the templates directory as
-``{{ short_os }}_{{ command }}.yaml``. The ``short_os`` is derived from
-either the hosts ``ansible_network_os`` or ``ansible_distribution``. The
-``command`` spaces are replace with ``_``. - The
-``ansible.netcommon.native`` parsing engine is fully supported with a
-Red Hat Ansible Automation Platform subscription
 
 Linux example
 ^^^^^^^^^^^^^
@@ -198,7 +168,7 @@ Linux example
 The native parser can also run commands and parse output from Linux
 hosts.
 
-Example command output of the ``ip addr show`` command
+This example uses the command output of the ``ip addr show`` command:
 
 .. code-block:: text
 
@@ -213,8 +183,8 @@ Example command output of the ``ip addr show`` command
    3: wlp2s0: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
        link/ether x6:c2:44:f7:41:e0 brd ff:ff:ff:ff:ff:ff permaddr d8:f2:ca:99:5c:82
 
-Example native parser template stored as
-``templates/fedora_ip_addr_show.yaml``
+This output is used with the following native parser template stored as
+``templates/fedora_ip_addr_show.yaml``:
 
 .. code-block:: yaml
 
@@ -250,7 +220,7 @@ Example native parser template stored as
            ip_address: "{{ inet }}"
            mask_bits: "{{ bits }}"
 
-With the following task:
+The following task uses this parser to parse the Linux output:
 
 .. code-block:: yaml
 
@@ -261,7 +231,7 @@ With the following task:
          name: ansible.netcommon.native
        set_fact: interfaces
 
-The follow fact would have been set as the ``interfaces`` fact for the
+This task sets the follow fact as the ``interfaces`` fact for the
 host:
 
 .. code-block:: yaml
