@@ -123,7 +123,7 @@ You can also identify specific Packet devices with the 'device_ids' parameter. T
 More Complex Playbooks
 ======================
 
-In this example, we'll create a CoreOS cluster with `user data <https://support.packet.com/kb/articles/user-data>`_.
+In this example, we'll create a CoreOS cluster with `user data <https://packet.com/developers/docs/servers/key-features/user-data/>`_.
 
 
 The CoreOS cluster will use `etcd <https://etcd.io/>`_ for discovery of other servers in the cluster. Before provisioning your servers, you'll need to generate a discovery token for your cluster:
