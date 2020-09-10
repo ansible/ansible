@@ -48,7 +48,7 @@ The ``cli_parse`` module includes the following cli_parsing plugins:
 -  ``textfsm``: A python module which implements a template based state machine for parsing semi-formatted text
 -  ``ntc_templates``: Predefined ``textfsm`` templates packages supporting a variety of platforms and commands
 -  ``ttp``: A library for semi-structured text parsing using templates, with added capabilities to simplify the process
--  ``pyats``: Use the parsers included with Cisco’s Test Automation & Validation Solution
+-  ``pyats``: Use the parsers included with the Cisco Test Automation & Validation Solution
 -  ``json``: Convert JSON output at the CLI to an Ansible native data structure
 
 Because ``cli_parse`` uses a plugin based architecture, it can use additional parsing engines from any Ansible collection.
@@ -140,7 +140,7 @@ For this task:
 
 - The ``command`` key tells the module to run the command on the device or host. Alternately, text from a previous command can be provided using the ``text`` key instead.
 - Information specific to the parser engine is provided in the ``parser`` key.
-- To use the ``native`` parser, the full name of the parsing engine, including it’s collection, is provided as ``name`` (``ansible.netcommon.native``)
+- To use the ``native`` parser, the full name of the parsing engine, including its collection, is provided as ``name`` (``ansible.netcommon.native``)
 - The ``cli_parse`` module, by default, will look for the template in the templates directory as ``{{ short_os }}_{{ command }}.yaml``. The ``short_os`` is derived from either the hosts ``ansible_network_os`` or ``ansible_distribution``.
 - The ``command`` spaces are replace with ``_``.
 - The ``ansible.netcommon.native`` parsing engine is fully supported with a Red Hat Ansible Automation Platform subscription
@@ -258,21 +258,18 @@ host:
      up: true
    <...>
 
-About the task: - Note the use of ``shared`` in the parser template,
-this allows the interface name to be used in subsequent parser entries -
-Facts would have been gathered prior to determine the
-``ansible_distribution`` needed to locate the template. Alternatively,
-the ``parser/template_path`` could have been provided - The use of
-examples and free-spacing mode with the regular expressions can make for
-a more-readable template - The ``ansible.netcommon.native`` parsing
-engine is fully supported with a Red Hat Ansible Automation Platform
-subscription
+For this task:
+
+- Note the use of ``shared`` in the parser template. This allows the interface name to be used in subsequent parser entries.
+- Facts would have been previously gathered to determine the ``ansible_distribution`` needed to locate the template. Alternately, you could provide the ``parser/template_path``.
+- The use of examples and free-spacing mode with the regular expressions can make for a more-readable template.
+- The ``ansible.netcommon.native`` parsing engine is fully supported with a Red Hat Ansible Automation Platform subscription.
 
 Parsing JSON
 -------------
 
-Although Ansible will natively convert serialized json to Ansible native
-data when recognized, the ``cli_parse`` module can be used as well.
+Although Ansible will natively convert serialized JSON to Ansible native
+data when recognized, you can also use the ``cli_parse`` module as well.
 
 .. code-block:: yaml
 
@@ -283,17 +280,16 @@ data when recognized, the ``cli_parse`` module can be used as well.
          name: ansible.netcommon.json
        register: interfaces
 
-About the task: - The ``show interface | json`` command would have been
-issued on the device - The output would be set as the ``interfaces``
-fact for the device - json support is provide primary for playbook
-consistancy - The use of ``ansible.netcommon.json`` is fully supported
-with a Red Hat Ansible Automation Platform subscription
+For this task:
+- The ``show interface | json`` command would have been issued on the device.
+- The output would be set as the ``interfaces`` fact for the device.
+- JSON support is provided primarily for playbook consistency.
+- The use of ``ansible.netcommon.json`` is fully supported with a Red Hat Ansible Automation Platform subscription
 
 Parsing with ntc_templates
 ----------------------------
 
-The ``ntc_templates`` python library includes pre-defined ``textfsm`` templates
-for parsing a variety of network device commands output.
+The ``ntc_templates`` python library includes pre-defined ``textfsm`` templates for parsing a variety of network device commands output.
 
 Example task:
 
@@ -306,8 +302,7 @@ Example task:
          name: ansible.netcommon.ntc_templates
        set_fact: interfaces
 
-The follow fact would have been set as the ``interfaces`` fact for the
-host:
+This task and template sets the following fact as the ``interfaces`` fact for the host:
 
 .. code-block:: yaml
 
@@ -338,15 +333,12 @@ host:
      bia: 5254.005a.f8bd
      delay: 10 usec
 
-About the task: - In this case the device’s ``ansible_network_os`` was
-converted to the ntc_template format ``cisco_nxos``. Alternatively the
-``os`` could have been provided with the ``parser/os`` key. - The
-``cisco_nxos_show_interface.textfsm`` template, included with the
-``ntc_templates`` package, was used to parse the output - Additional
-information about the ``ntc_templates`` python library can be found here:
-https://github.com/networktocode/ntc-templates - Red Hat Ansible
-Automation Platform subscription support is limited to the use of the
-``ntc_templates`` public APIs as documented.
+For this task:
+- The ``ansible_network_os`` of the device was converted to the ntc_template format ``cisco_nxos``. Alternately, the task could provide  the ``os`` with the ``parser/os`` key.
+- The ``cisco_nxos_show_interface.textfsm`` template, included with the
+``ntc_templates`` package, was used to parse the output.
+- See `the ntc_templates README <https://github.com/networktocode/ntc-templates/blob/master/README.md>`_ for additional information about the ``ntc_templates`` python library.
+- Red Hat Ansible Automation Platform subscription support is limited to the use of the ``ntc_templates`` public APIs as documented.
 
 Parsing with pyATS
 ----------------------
@@ -530,7 +522,7 @@ Parsing with ttp
 
 TTP is a Python library for semi-structured text parsing using
 templates. TTP uses a jinja like syntax to limit the need for regular
-expressions. User familiar with jinja templating may find TTP’s template
+expressions. User familiar with jinja templating may find the TTP template
 syntax familiar.
 
 Example template stored as ``templates/nxos_show_interfaces.ttp``
@@ -645,7 +637,7 @@ provided in the task
 Provide command to parser different than the command run
 -----------------------------------------------------------
 
-In the case the command run doesn’t match the command the parser is
+In the case the command run does not match the command the parser is
 expecting, it can be provided directly
 
 .. code-block:: yaml
