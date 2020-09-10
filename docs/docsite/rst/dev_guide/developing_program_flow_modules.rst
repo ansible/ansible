@@ -579,7 +579,7 @@ type
 * bytes
 * bits
 
-The ``raw`` type, performs no type validation or type casing, and maintains the type of the passed value.
+The ``raw`` type, performs no type validation or type casting, and maintains the type of the passed value.
 
 elements
 """"""""
