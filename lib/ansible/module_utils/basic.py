@@ -2127,9 +2127,9 @@ class AnsibleModule(object):
         except TypeError as e:
             self.fail_json(msg=to_native(e))
 
-    def jsonify(self, data):
+    def jsonify(self, data, encoder=None):
         try:
-            return jsonify(data)
+            return jsonify(data, encoder=encoder)
         except UnicodeError as e:
             self.fail_json(msg=to_text(e))
 
@@ -2144,7 +2144,7 @@ class AnsibleModule(object):
         for path in self.cleanup_files:
             self.cleanup(path)
 
-    def _return_formatted(self, kwargs):
+    def _return_formatted(self, kwargs, encoder=None):
 
         self.add_path_info(kwargs)
 
@@ -2180,13 +2180,13 @@ class AnsibleModule(object):
             kwargs['deprecations'] = deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
-        print('\n%s' % self.jsonify(kwargs))
+        print('\n%s' % self.jsonify(kwargs, encoder=encoder))
 
-    def exit_json(self, **kwargs):
+    def exit_json(self, encoder=None, **kwargs):
         ''' return from the module, without error '''
 
         self.do_cleanup_files()
-        self._return_formatted(kwargs)
+        self._return_formatted(kwargs, encoder=encoder)
         sys.exit(0)
 
     def fail_json(self, msg, **kwargs):
