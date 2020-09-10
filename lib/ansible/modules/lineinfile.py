@@ -40,7 +40,7 @@ options:
         settings.
       - When modifying a line the regexp should typically match both the initial state of
         the line as well as its state after replacement by C(line) to ensure idempotence.
-      - Uses Python regular expressions. See U(http://docs.python.org/2/library/re.html).
+      - Uses Python regular expressions. See U(https://docs.python.org/3/library/re.html).
     type: str
     aliases: [ regex ]
     version_added: '1.7'
