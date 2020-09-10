@@ -213,17 +213,26 @@
   with_dict: "{{ a_list }}"
   register: with_dict_passed_a_list
   ignore_errors: True
+  vars:
+    a_list:
+      - 1
+      - 2
 - assert:
     that:
       - with_dict_passed_a_list is failed
+      - '"with_dict expects a dict" in with_dict_passed_a_list.msg'
 - debug:
     msg: "with_list passed a dict: {{item}}"
   with_list: "{{ a_dict }}"
   register: with_list_passed_a_dict
   ignore_errors: True
+  vars:
+    a_dict:
+      key: value
 - assert:
     that:
       - with_list_passed_a_dict is failed
+      - '"with_list expects a list" in with_list_passed_a_dict.msg'
 
 - debug:
     var: "item"
