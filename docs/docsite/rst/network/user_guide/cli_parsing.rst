@@ -159,7 +159,7 @@ Taking a deeper dive into this task:
 
 	``ansible.netcommon.native`` parsing engine is fully supported with a Red Hat Ansible Automation Platform subscription.
 
-Lastly in this task, the ``set_fact`` option sets the following ``interfaces`` fact for the device once the task is executed:
+Lastly in this task, the ``set_fact`` option sets the following ``interfaces`` fact for the device based on the now-structured data returned from ``cli_parse``:
 
 .. code-block:: yaml
 
@@ -179,12 +179,12 @@ Lastly in this task, the ``set_fact`` option sets the following ``interfaces`` f
 Linux example
 ^^^^^^^^^^^^^
 
-The native parser can also run commands and parse output from Linux
+You can also use the native parser to run commands and parse output from Linux
 hosts.
 
-This example uses the command output of the ``ip addr show`` command:
+The output of a sample Linux  command (``ip addr show``) looks as follows:
 
-.. code-block:: text
+.. code-block:: bash
 
    1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
        link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -197,8 +197,7 @@ This example uses the command output of the ``ip addr show`` command:
    3: wlp2s0: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
        link/ether x6:c2:44:f7:41:e0 brd ff:ff:ff:ff:ff:ff permaddr d8:f2:ca:99:5c:82
 
-This output is used with the following native parser template stored as
-``templates/fedora_ip_addr_show.yaml``:
+Create the native template to match this output and store it as ``templates/fedora_ip_addr_show.yaml``:
 
 .. code-block:: yaml
 
@@ -234,7 +233,11 @@ This output is used with the following native parser template stored as
            ip_address: "{{ inet }}"
            mask_bits: "{{ bits }}"
 
-The following task uses this parser to parse the Linux output:
+.. note::
+
+	 The ``shared`` key in the parser template allows the interface name to be used in subsequent parser entries. The use of examples and free-spacing mode with the regular expressions makes the template easier to read.
+
+The following example task uses ``cli_parse`` with the native parser and the example template above to parse the Linux output:
 
 .. code-block:: yaml
 
@@ -245,8 +248,13 @@ The following task uses this parser to parse the Linux output:
          name: ansible.netcommon.native
        set_fact: interfaces
 
-This task sets the follow fact as the ``interfaces`` fact for the
-host:
+This task assumes you previously gathered facts to determine the ``ansible_distribution`` needed to locate the template. Alternately, you could provide the path in the  ``parser/template_path`` option.
+
+.. note::
+
+	The ``ansible.netcommon.native`` parsing engine is fully supported with a Red Hat Ansible Automation Platform subscription.
+
+Lastly in this task, the ``set_fact`` option sets the following ``interfaces`` fact for the host, based on the now-structured data returned from ``cli_parse``:
 
 .. code-block:: yaml
 
@@ -272,12 +280,6 @@ host:
      up: true
    <...>
 
-For this task:
-
-- Note the use of ``shared`` in the parser template. This allows the interface name to be used in subsequent parser entries.
-- Facts would have been previously gathered to determine the ``ansible_distribution`` needed to locate the template. Alternately, you could provide the ``parser/template_path``.
-- The use of examples and free-spacing mode with the regular expressions can make for a more-readable template.
-- The ``ansible.netcommon.native`` parsing engine is fully supported with a Red Hat Ansible Automation Platform subscription.
 
 Parsing JSON
 -------------
