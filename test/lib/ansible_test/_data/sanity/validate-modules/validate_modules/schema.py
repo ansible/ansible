@@ -143,9 +143,9 @@ def options_with_apply_defaults(v):
     return v
 
 
-def check_removal_version(v, version_name, collection_name_name, error_code='invalid-removal-version'):
-    version = v.get(version_name)
-    collection_name = v.get(collection_name_name)
+def check_removal_version(v, version_field, collection_name_field, error_code='invalid-removal-version'):
+    version = v.get(version_field)
+    collection_name = v.get(collection_name_field)
     if not isinstance(version, string_types) or not isinstance(collection_name, string_types):
         # If they are not strings, schema validation will have already complained.
         return v
@@ -155,7 +155,7 @@ def check_removal_version(v, version_name, collection_name_name, error_code='inv
             parsed_version.parse(version)
         except ValueError as exc:
             raise _add_ansible_error_code(
-                Invalid('%s (%r) is not a valid ansible-base version: %s' % (version_name, version, exc)),
+                Invalid('%s (%r) is not a valid ansible-base version: %s' % (version_field, version, exc)),
                 error_code=error_code)
         return v
     try:
@@ -164,12 +164,12 @@ def check_removal_version(v, version_name, collection_name_name, error_code='inv
         if parsed_version.major != 0 and (parsed_version.minor != 0 or parsed_version.patch != 0):
             raise _add_ansible_error_code(
                 Invalid('%s (%r) must be a major release, not a minor or patch release (see specification at '
-                        'https://semver.org/)' % (version_name, version)),
+                        'https://semver.org/)' % (version_field, version)),
                 error_code='removal-version-must-be-major')
     except ValueError as exc:
         raise _add_ansible_error_code(
             Invalid('%s (%r) is not a valid collection version (see specification at https://semver.org/): '
-                    '%s' % (version_name, version, exc)),
+                    '%s' % (version_field, version, exc)),
             error_code=error_code)
     return v
 
@@ -186,8 +186,8 @@ def option_deprecation(v):
                         'removed_from_collection must be specified as well'),
                 error_code='deprecation-collection-missing')
         check_removal_version(v,
-                              version_name='removed_in_version',
-                              collection_name_name='removed_from_collection',
+                              version_field='removed_in_version',
+                              collection_name_field='removed_from_collection',
                               error_code='invalid-removal-version')
         return
     if v.get('removed_from_collection'):
@@ -229,8 +229,8 @@ def argument_spec_schema(for_collection):
                     },
                 ),
                 partial(check_removal_version,
-                        version_name='version',
-                        collection_name_name='collection_name',
+                        version_field='version',
+                        collection_name_field='collection_name',
                         error_code='invalid-removal-version')
             )]),
         }
@@ -464,8 +464,8 @@ def deprecation_schema(for_collection):
         result = All(
             result,
             partial(check_removal_version,
-                    version_name='removed_in',
-                    collection_name_name='removed_from_collection',
+                    version_field='removed_in',
+                    collection_name_field='removed_from_collection',
                     error_code='invalid-removal-version'))
 
     return result
