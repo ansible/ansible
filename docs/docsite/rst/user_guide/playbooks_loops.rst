@@ -55,8 +55,8 @@ Iterating over a simple list
 
 Repeated tasks can be written as standard loops over a simple list of strings. You can define the list directly in the task::
 
-    - name: add several users
-      user:
+    - name: Add several users
+      ansible.builtin.user:
         name: "{{ item }}"
         state: present
         groups: "wheel"
@@ -70,27 +70,27 @@ You can define the list in a variables file, or in the 'vars' section of your pl
 
 Either of these examples would be the equivalent of::
 
-    - name: add user testuser1
-      user:
+    - name: Add user testuser1
+      ansible.builtin.user:
         name: "testuser1"
         state: present
         groups: "wheel"
 
-    - name: add user testuser2
-      user:
+    - name: Add user testuser2
+      ansible.builtin.user:
         name: "testuser2"
         state: present
         groups: "wheel"
 
 You can pass a list directly to a parameter for some plugins. Most of the packaging modules, like :ref:`yum <yum_module>` and :ref:`apt <apt_module>`, have this capability. When available, passing the list to a parameter is better than looping over the task. For example::
 
-   - name: optimal yum
-     yum:
+   - name: Optimal yum
+     ansible.builtin.yum:
        name: "{{  list_of_packages  }}"
        state: present
 
-   - name: non-optimal yum, slower and may cause issues with interdependencies
-     yum:
+   - name: Non-optimal yum, slower and may cause issues with interdependencies
+     ansible.builtin.yum:
        name: "{{  item  }}"
        state: present
      loop: "{{  list_of_packages  }}"
@@ -102,8 +102,8 @@ Iterating over a list of hashes
 
 If you have a list of hashes, you can reference subkeys in a loop. For example::
 
-    - name: add several users
-      user:
+    - name: Add several users
+      ansible.builtin.user:
         name: "{{ item.name }}"
         state: present
         groups: "{{ item.groups }}"
@@ -122,7 +122,7 @@ To loop over a dict, use the  :ref:`dict2items <dict_filter>`:
 .. code-block:: yaml
 
     - name: Using dict2items
-      debug:
+      ansible.builtin.debug:
         msg: "{{ item.key }} - {{ item.value }}"
       loop: "{{ tag_data | dict2items }}"
       vars:
@@ -137,7 +137,8 @@ Registering variables with a loop
 
 You can register the output of a loop as a variable. For example::
 
-   - shell: "echo {{ item }}"
+   - name: Register loop output as a variable
+     ansible.builtin.shell: "echo {{ item }}"
      loop:
        - "one"
        - "two"
@@ -185,14 +186,15 @@ When you use ``register`` with a loop, the data structure placed in the variable
 Subsequent loops over the registered variable to inspect the results may look like::
 
     - name: Fail if return code is not 0
-      fail:
+      ansible.builtin.fail:
         msg: "The command ({{ item.cmd }}) did not have a 0 return code"
       when: item.rc != 0
       loop: "{{ echo.results }}"
 
 During iteration, the result of the current item will be placed in the variable::
 
-    - shell: echo "{{ item }}"
+    - name: Place the result of the current item in the variable
+      ansible.builtin.shell: echo "{{ item }}"
       loop:
         - one
         - two
@@ -209,8 +211,8 @@ Iterating over nested lists
 
 You can use Jinja2 expressions to iterate over complex lists. For example, a loop can combine nested lists::
 
-    - name: give users access to multiple databases
-      mysql_user:
+    - name: Give users access to multiple databases
+      community.mysql.mysql_user:
         name: "{{ item[0] }}"
         priv: "{{ item[1] }}.*:ALL"
         append_privs: yes
@@ -227,7 +229,8 @@ Retrying a task until a condition is met
 
 You can use the ``until`` keyword to retry a task until a certain condition is met.  Here's an example::
 
-    - shell: /usr/bin/foo
+    - name: Retry a task until a certain condition is met
+      ansible.builtin.shell: /usr/bin/foo
       register: result
       until: result.stdout.find("all systems go") != -1
       retries: 5
@@ -246,25 +249,25 @@ Looping over inventory
 
 To loop over your inventory, or just a subset of it, you can use a regular ``loop`` with the ``ansible_play_batch`` or ``groups`` variables::
 
-    # show all the hosts in the inventory
-    - debug:
+    - name: Show all the hosts in the inventory
+      ansible.builtin.debug:
         msg: "{{ item }}"
       loop: "{{ groups['all'] }}"
 
-    # show all the hosts in the current play
-    - debug:
+    - name: Show all the hosts in the current play
+      ansible.builtin.debug:
         msg: "{{ item }}"
       loop: "{{ ansible_play_batch }}"
 
 There is also a specific lookup plugin ``inventory_hostnames`` that can be used like this::
 
-    # show all the hosts in the inventory
-    - debug:
+    - name: Show all the hosts in the inventory
+      ansible.builtin.debug:
         msg: "{{ item }}"
       loop: "{{ query('inventory_hostnames', 'all') }}"
 
-    # show all the hosts matching the pattern, ie all but the group www
-    - debug:
+    - name: Show all the hosts matching the pattern, ie all but the group www
+      ansible.builtin.debug:
         msg: "{{ item }}"
       loop: "{{ query('inventory_hostnames', 'all:!www') }}"
 
@@ -300,7 +303,7 @@ Limiting loop output with ``label``
 
 When looping over complex data structures, the console output of your task can be enormous. To limit the displayed output, use the ``label`` directive with ``loop_control``::
 
-    - name: create servers
+    - name: Create servers
       digital_ocean:
         name: "{{ item.name }}"
         state: present
@@ -326,8 +329,8 @@ Pausing within a loop
 To control the time (in seconds) between the execution of each item in a task loop, use the ``pause`` directive with ``loop_control``::
 
     # main.yml
-    - name: create servers, pause 3s before creating next
-      digital_ocean:
+    - name: Create servers, pause 3s before creating next
+      community.digitalocean.digital_ocean:
         name: "{{ item }}"
         state: present
       loop:
@@ -342,8 +345,8 @@ Tracking progress through a loop with ``index_var``
 
 To keep track of where you are in a loop, use the ``index_var`` directive with ``loop_control``. This directive specifies a variable name to contain the current loop index::
 
-  - name: count our fruit
-    debug:
+  - name: Count our fruit
+    ansible.builtin.debug:
       msg: "{{ item }} with index {{ my_idx }}"
     loop:
       - apple
@@ -371,7 +374,8 @@ You can specify the name of the variable for each loop using ``loop_var`` with `
         loop_var: outer_item
 
     # inner.yml
-    - debug:
+    - name: Print outer and inner items
+      ansible.builtin.debug:
         msg: "outer item={{ outer_item }} inner item={{ item }}"
       loop:
         - a
