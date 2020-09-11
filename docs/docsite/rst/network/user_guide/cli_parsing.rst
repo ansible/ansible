@@ -4,7 +4,7 @@
 Parsing Semi-structured Text with Ansible
 *****************************************
 
-The `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ collection version 1.2.0 or later  includes the :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` module to run commands and parse the output. You can use the ``cli_parse`` module on a device, host, or platform that only supports a command-line interface and the commands issued return semi-structured text.
+The `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ collection version 1.2.0 or later  includes the :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` module that can run commands and parse the output. You can use the ``cli_parse`` module on a device, host, or platform that only supports a command-line interface and the commands issued return semi-structured text.
 
 .. contents::
    :local:
@@ -19,7 +19,7 @@ Why parse the text?
 --------------------
 
 Some of the more common use cases for parsing semi-structured text into
-Ansible native data structures when used with:
+Ansible native data structures include tasks that use:
 
 -  The ``when`` clause to conditionally run other tasks or roles
 -  The ``assert`` module for checking configuration and operational state compliance
@@ -27,29 +27,36 @@ Ansible native data structures when used with:
 -  Templates and ``command`` or ``config`` modules to generate host, device, or platform commands or configuration
 -  The current platform ``facts`` modules to supplement native facts information
 
-You can also use the ``cli_parse`` module to populate the Ansible inventory or a CMDB with new structured data
+You can also use the ``cli_parse`` module to populate the Ansible inventory or a CMDB with new structured data.
 
 When not to parse the text
 ---------------------------
 
 You should not parse semi-structured text when:
 
--  The device, host, or platform has a RESTAPI and returns JSON
--  Existing Ansible facts modules already return the desired data
--  Ansible network resource modules exist for configuration management of the device and resource
+-  The device, host, or platform has a RESTAPI and returns JSON.
+-  Existing Ansible facts modules already return the desired data.
+-  Ansible network resource modules exist for configuration management of the device and resource.
 
 Parsing the CLI
 =========================
 
 The ``cli_parse`` module includes the following cli_parsing plugins:
 
--  ``native``: The native parsing engine is built into Ansible and requires no addition python libraries
--  ``xml``: Convert XML to an Ansible native data structure
--  ``textfsm``: A python module which implements a template based state machine for parsing semi-formatted text
--  ``ntc_templates``: Predefined ``textfsm`` templates packages supporting a variety of platforms and commands
--  ``ttp``: A library for semi-structured text parsing using templates, with added capabilities to simplify the process
--  ``pyats``: Use the parsers included with the Cisco Test Automation & Validation Solution
--  ``json``: Convert JSON output at the CLI to an Ansible native data structure
+``native``
+  The native parsing engine built into Ansible and requires no addition python libraries
+``xml``
+  Convert XML to an Ansible native data structure
+``textfsm``
+  A python module which implements a template based state machine for parsing semi-formatted text
+``ntc_templates``
+  Predefined ``textfsm`` templates packages supporting a variety of platforms and commands
+``ttp``
+  A library for semi-structured text parsing using templates, with added capabilities to simplify the process
+``pyats``
+  Uses the parsers included with the Cisco Test Automation & Validation Solution
+``json``
+  Converts JSON output at the CLI to an Ansible native data structure
 
 Because ``cli_parse`` uses a plugin based architecture, it can use additional parsing engines from any Ansible collection.
 
@@ -58,14 +65,16 @@ Parsing with the native parsing engine
 
 The native parsing engine is included with the ``cli_parse`` module. It
 uses data captured using regular expressions to populate the parsed data
-structure. The native parsing engine requires a template to parse the command output. A native template is stored as a YAML file.
+structure. The native parsing engine requires a YAML template file to parse the command output.
 
 Networking example
 ^^^^^^^^^^^^^^^^^^
 
-This example uses the output of the ``show interface`` command:
+This example uses the output of a network device command and applies a native template to produce an output in Ansible structured data format.
 
-.. code-block:: text
+The ``show interface`` command output from the network device looks as follows:
+
+.. code-block:: console
 
    Ethernet1/1 is up
    admin state is up, Dedicated Interface
@@ -87,7 +96,7 @@ This example uses the output of the ``show interface`` command:
    <...>
 
 
-The following shows an example template stored as ``templates/nxos_show_interface.yaml`` to parse this ``show interface`` output:
+Create the native template to match this output and store it as ``templates/nxos_show_interface.yaml``:
 
 .. code-block:: yaml
 
@@ -120,12 +129,12 @@ The following shows an example template stored as ``templates/nxos_show_interfac
 This native parser template is structured as a list of parsers, each
 containing the following key-value pairs:
 
--  ``example``: An example line of the text line to be parsed
--  ``getval``: A regular expression using named capture groups to store the extracted data
--  ``result``: A data tree, populated as a template, from the parsed data
--  ``shared``: (optional) The shared key makes the parsed values available to the rest of the parser entries until matched again.
+-  ``example`` - An example line of the text line to be parsed
+-  ``getval`` - A regular expression using named capture groups to store the extracted data
+-  ``result`` - A data tree, populated as a template, from the parsed data
+-  ``shared`` - (optional) The shared key makes the parsed values available to the rest of the parser entries until matched again.
 
-The following example task uses ``cli_parse`` with the native parser and the example template above:
+The following example task uses ``cli_parse`` with the native parser and the example template above to parse the ``show interface`` command from a Cisco NXOS device:
 
 .. code-block:: yaml
 
@@ -136,16 +145,21 @@ The following example task uses ``cli_parse`` with the native parser and the exa
            name: ansible.netcommon.native
        set_fact: interfaces
 
-For this task:
+Taking a deeper dive into this task:
 
-- The ``command`` key tells the module to run the command on the device or host. Alternately, text from a previous command can be provided using the ``text`` key instead.
-- Information specific to the parser engine is provided in the ``parser`` key.
-- To use the ``native`` parser, the full name of the parsing engine, including its collection, is provided as ``name`` (``ansible.netcommon.native``)
-- The ``cli_parse`` module, by default, will look for the template in the templates directory as ``{{ short_os }}_{{ command }}.yaml``. The ``short_os`` is derived from either the hosts ``ansible_network_os`` or ``ansible_distribution``.
-- The ``command`` spaces are replace with ``_``.
-- The ``ansible.netcommon.native`` parsing engine is fully supported with a Red Hat Ansible Automation Platform subscription
+- The ``command`` option provides the command you want to run on the device or host. Alternately, you can provide text from a previous command with the ``text`` option instead.
+- The ``parser`` option provides information specific to the parser engine.
+- The ``name`` suboption provides the fully qualified collection name (FQCN) of the parsing engine (``ansible.netcommon.native``).
+- The ``cli_parse`` module, by default, looks for the template in the templates directory as ``{{ short_os }}_{{ command }}.yaml``.
 
-This task sets the following ``interfaces`` fact for the device:
+  - The ``short_os`` in the template filename is derived from either the host ``ansible_network_os`` or ``ansible_distribution``.
+  - Spaces in the network or host command are replace with ``_`` in the ``command`` portion of the template filename. In this example, the ``show interfaces`` network CLI command becomes ``show_interfaces`` in the filename.
+
+.. note::
+
+	``ansible.netcommon.native`` parsing engine is fully supported with a Red Hat Ansible Automation Platform subscription.
+
+Lastly in this task, the ``set_fact`` option sets the following ``interfaces`` fact for the device once the task is executed:
 
 .. code-block:: yaml
 
@@ -399,11 +413,9 @@ About the task:
 
 - Because the ``ansible_network_os`` for the device was``cisco.nxos.nxos``, it was provided to pyATS as ``nxos``. The ``cli_parse`` modules converts the ``ansible_network_os`` automatically. Alternately, you can set the OS with the ``parser/os`` key.
 - Using a combination of the command and OS, the pyATS used the following parser: https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers/show%2520interface
-- The ``cli_parse`` module sets ``cisco.ios.ios`` to ``iosxe`` for
-pyATS. You can be override this with the ``parser/os`` key.
+- The ``cli_parse`` module sets ``cisco.ios.ios`` to ``iosxe`` for pyATS. You can be override this with the ``parser/os`` key.
 - ``cli_parse`` only uses the predefined parsers in pyATS. See the `pyATS documentation <https://developer.cisco.com/docs/pyats/>`_ and the full list of `pyATS included parsers <https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers>`_`
-- Red Hat Ansible Automation Platform subscription support is limited to
-the use of the pyATS public APIs as documented.
+- Red Hat Ansible Automation Platform subscription support is limited to the use of the pyATS public APIs as documented.
 
 Parsing with textfsm
 ---------------------
@@ -551,10 +563,13 @@ host:
 About the task:
 - The default template path ``templates/nxos_show_interface.ttp`` was generated using the ``ansible_network_os`` for the host and ``command`` provided.
 - TTP supports several additional variables that will be passed to the parser. These include:
+
   - ``parser/vars/ttp_init``: Additional parameter passed when the parser is initialized.
   - ``parser/vars/ttp_results``: Additional params used to influence the parser output.
   - ``parser/vars/ttp_vars``: Additional variables made available in the template.
-   - See the `TTP documentation <https://ttp.readthedocs.io>`_ for details.
+
+- See the `TTP documentation <https://ttp.readthedocs.io>`_` for details.
+
 
 Converting XML
 -----------------
@@ -572,8 +587,7 @@ This example task runs the ``show interface`` command and parses the output as X
            name: ansible.netcommon.xml
      set_fact: interfaces
 
-This task sets the ``interfaces`` fact for the
-host based on this returned output:
+This task sets the ``interfaces`` fact for the host based on this returned output:
 
 .. code-block:: yaml
 
@@ -687,7 +701,7 @@ Use the ``text`` option  instead of ``command`` to parse text  collected earlier
          os: nxos
          command: show version
 
-         
+
 .. seealso::
 
   * :ref:`develop_cli_parse_plugins`
