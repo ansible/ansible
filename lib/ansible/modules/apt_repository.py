@@ -80,7 +80,7 @@ options:
         version_added: '2.3'
     install_python_apt:
         description:
-            - Whether to install python apt or not, default is true
+            - Whether to automatically install python apt or not, if it is not already installed.
             - If python-apt Python library is not installed this module will not work.
         type: bool
         default: true
