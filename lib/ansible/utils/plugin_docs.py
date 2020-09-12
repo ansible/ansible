@@ -73,6 +73,8 @@ def _process_versions_and_dates(fragment, is_module, return_docs, callback):
                     process_option_specifiers(option['ini'])
                 if isinstance(option.get('vars'), list):
                     process_option_specifiers(option['vars'])
+                if isinstance(option.get('deprecated'), MutableMapping):
+                    process_deprecation(option['deprecated'])
             if isinstance(option.get('suboptions'), MutableMapping):
                 process_options(option['suboptions'])
 
