@@ -26,6 +26,8 @@ RETURN = """
   _raw:
     description:
       - content of file(s) as bytes
+    type: list
+    elements: raw
 """
 
 from ansible.errors import AnsibleParserError

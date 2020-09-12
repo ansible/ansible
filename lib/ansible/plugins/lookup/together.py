@@ -32,6 +32,8 @@ EXAMPLES = """
 RETURN = """
   _list:
     description: synchronized list
+    type: list
+    elements: list
 """
 from ansible.errors import AnsibleError
 from ansible.module_utils.six.moves import zip_longest

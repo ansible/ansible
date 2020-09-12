@@ -45,6 +45,8 @@ RETURN = """
   _raw:
     description:
       - content of file(s)
+    type: list
+    elements: str
 """
 
 from ansible.errors import AnsibleError, AnsibleParserError

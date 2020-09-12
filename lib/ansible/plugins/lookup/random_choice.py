@@ -30,6 +30,7 @@ RETURN = """
   _raw:
     description:
       - random item
+    type: raw
 """
 import random
 

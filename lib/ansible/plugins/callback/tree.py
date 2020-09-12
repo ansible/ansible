@@ -7,7 +7,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     callback: tree
-    callback_type: notification
+    type: notification
     requirements:
       - invoked in the command line
     short_description: Save host events to files

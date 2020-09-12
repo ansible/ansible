@@ -99,6 +99,8 @@ RETURN = """
   _raw:
     description:
       - path to file found
+    type: list
+    elements: path
 """
 import os
 

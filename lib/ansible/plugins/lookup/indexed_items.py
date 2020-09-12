@@ -31,6 +31,7 @@ RETURN = """
     description:
       - list with each item.0 giving you the position and item.1 the value
     type: list
+    elements: list
 """
 
 from ansible.errors import AnsibleError

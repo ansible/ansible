@@ -37,6 +37,8 @@ RETURN = """
   _list:
     description:
       - lines of stdout from command
+    type: list
+    elements: str
 """
 
 import subprocess

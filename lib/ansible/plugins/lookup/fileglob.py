@@ -41,6 +41,8 @@ RETURN = """
   _list:
     description:
       - list of files
+    type: list
+    elements: path
 """
 
 import os

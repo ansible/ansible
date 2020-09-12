@@ -55,6 +55,8 @@ EXAMPLES = """
 RETURN = """
 _raw:
    description: file(s) content after templating
+   type: list
+   elements: raw
 """
 
 from copy import deepcopy

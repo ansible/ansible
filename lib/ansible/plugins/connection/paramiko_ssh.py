@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     author: Ansible Core Team
-    connection: paramiko
+    connection: paramiko_ssh
     short_description: Run tasks via python ssh (paramiko)
     description:
         - Use the python ssh implementation (Paramiko) to connect to targets

@@ -95,6 +95,8 @@ RETURN = """
 _raw:
   description:
     - a password
+  type: list
+  elements: str
 """
 
 import os

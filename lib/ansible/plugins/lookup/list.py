@@ -27,6 +27,8 @@ EXAMPLES = """
 RETURN = """
   _list:
     description: basically the same as you fed in
+    type: list
+    elements: raw
 """
 
 from ansible.module_utils.common._collections_compat import Sequence

@@ -74,6 +74,7 @@ RETURN = """
     description:
       - A list containing generated sequence of items
     type: list
+    elements: str
 """
 
 from re import compile as re_compile, IGNORECASE

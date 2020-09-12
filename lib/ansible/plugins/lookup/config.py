@@ -53,6 +53,7 @@ RETURN = """
 _raw:
   description:
     - value(s) of the key(s) in the config
+  type: raw
 """
 
 from ansible import constants as C

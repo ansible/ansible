@@ -56,6 +56,8 @@ RETURN = """
 _raw:
   description:
     - value(s) of the key(s) in the ini file
+  type: list
+  elements: str
 """
 import os
 import re

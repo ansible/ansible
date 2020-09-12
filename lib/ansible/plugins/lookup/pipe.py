@@ -40,6 +40,8 @@ RETURN = r"""
   _string:
     description:
       - stdout from command
+    type: list
+    elements: str
 """
 
 import subprocess

@@ -63,6 +63,8 @@ RETURN = """
 _value:
   description:
     - value of the variables requested.
+  type: list
+  elements: raw
 """
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable
