@@ -45,7 +45,6 @@ def to_safe_group_name(name, replacer="_", force=False, silent=False):
             else:
                 if C.TRANSFORM_INVALID_GROUP_CHARS == 'never':
                     display.vvvv('Not replacing %s' % msg)
-                    warn = True
                     warn = 'Invalid characters were found in group names but not replaced, use -vvvv to see details'
 
     if warn:
