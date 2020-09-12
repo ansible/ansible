@@ -96,6 +96,11 @@ OS_CALL_REGEX = re.compile(r'os\.call.*')
 LOOSE_ANSIBLE_VERSION = LooseVersion('.'.join(ansible_version.split('.')[:3]))
 
 
+PLUGINS_WITH_RETURN_VALUES = ('module', )
+PLUGINS_WITH_EXAMPLES = ('module', )
+PLUGINS_WITH_YAML_EXAMPLES = ('module', )
+
+
 def is_potential_secret_option(option_name):
     if not NO_LOG_REGEX.search(option_name):
         return False
@@ -278,14 +283,15 @@ class ModuleValidator(Validator):
     ACCEPTLIST_FUTURE_IMPORTS = frozenset(('absolute_import', 'division', 'print_function'))
 
     def __init__(self, path, analyze_arg_spec=False, collection=None, collection_version=None,
-                 base_branch=None, git_cache=None, reporter=None, routing=None):
+                 base_branch=None, git_cache=None, reporter=None, routing=None, plugin_type='module'):
         super(ModuleValidator, self).__init__(reporter=reporter or Reporter())
 
         self.path = path
         self.basename = os.path.basename(self.path)
         self.name = os.path.splitext(self.basename)[0]
+        self.plugin_type = plugin_type
 
-        self.analyze_arg_spec = analyze_arg_spec
+        self.analyze_arg_spec = analyze_arg_spec and plugin_type == 'module'
 
         self._Version = LooseVersion
         self._StrictVersion = StrictVersion
@@ -889,7 +895,9 @@ class ModuleValidator(Validator):
 
         # We are testing a collection
         if self.routing:
-            routing_deprecation = self.routing.get('plugin_routing', {}).get('modules', {}).get(self.name, {}).get('deprecation', {})
+            routing_deprecation = self.routing.get('plugin_routing', {})
+            routing_deprecation = routing_deprecation.get('modules' if self.plugin_type == 'module' else self.plugin_type, {})
+            routing_deprecation = routing_deprecation.get(self.name, {}).get('deprecation', {})
             if routing_deprecation:
                 # meta/runtime.yml says this is deprecated
                 routing_says_deprecated = True
@@ -910,7 +918,8 @@ class ModuleValidator(Validator):
                     self.name, 'DOCUMENTATION'
                 )
                 if doc:
-                    add_collection_to_versions_and_dates(doc, self.collection_name, is_module=True)
+                    add_collection_to_versions_and_dates(doc, self.collection_name,
+                                                         is_module=self.plugin_type == 'module')
                 for error in errors:
                     self.reporter.error(
                         path=self.object_path,
@@ -927,7 +936,8 @@ class ModuleValidator(Validator):
                     with CaptureStd():
                         try:
                             get_docstring(self.path, fragment_loader, verbose=True,
-                                          collection_name=self.collection_name, is_module=True)
+                                          collection_name=self.collection_name,
+                                          is_module=self.plugin_type == 'module')
                         except AssertionError:
                             fragment = doc['extends_documentation_fragment']
                             self.reporter.error(
@@ -948,7 +958,8 @@ class ModuleValidator(Validator):
                             )
 
                     if not missing_fragment:
-                        add_fragments(doc, self.object_path, fragment_loader=fragment_loader, is_module=True)
+                        add_fragments(doc, self.object_path, fragment_loader=fragment_loader,
+                                      is_module=self.plugin_type == 'module')
 
                     if 'options' in doc and doc['options'] is None:
                         self.reporter.error(
@@ -980,6 +991,7 @@ class ModuleValidator(Validator):
                                 os.readlink(self.object_path).split('.')[0],
                                 for_collection=bool(self.collection),
                                 deprecated_module=deprecated,
+                                plugin_type=self.plugin_type,
                             ),
                             'DOCUMENTATION',
                             'invalid-documentation',
@@ -992,6 +1004,7 @@ class ModuleValidator(Validator):
                                 self.object_name.split('.')[0],
                                 for_collection=bool(self.collection),
                                 deprecated_module=deprecated,
+                                plugin_type=self.plugin_type,
                             ),
                             'DOCUMENTATION',
                             'invalid-documentation',
@@ -1002,12 +1015,13 @@ class ModuleValidator(Validator):
                         self._check_version_added(doc, existing_doc)
 
             if not bool(doc_info['EXAMPLES']['value']):
-                self.reporter.error(
-                    path=self.object_path,
-                    code='missing-examples',
-                    msg='No EXAMPLES provided'
-                )
-            else:
+                if self.plugin_type in PLUGINS_WITH_EXAMPLES:
+                    self.reporter.error(
+                        path=self.object_path,
+                        code='missing-examples',
+                        msg='No EXAMPLES provided'
+                    )
+            elif self.plugin_type in PLUGINS_WITH_YAML_EXAMPLES:
                 _doc, errors, traces = parse_yaml(doc_info['EXAMPLES']['value'],
                                                   doc_info['EXAMPLES']['lineno'],
                                                   self.name, 'EXAMPLES', load_all=True,
@@ -1025,25 +1039,28 @@ class ModuleValidator(Validator):
                     )
 
             if not bool(doc_info['RETURN']['value']):
-                if self._is_new_module():
-                    self.reporter.error(
-                        path=self.object_path,
-                        code='missing-return',
-                        msg='No RETURN provided'
-                    )
-                else:
-                    self.reporter.warning(
-                        path=self.object_path,
-                        code='missing-return-legacy',
-                        msg='No RETURN provided'
-                    )
+                if self.plugin_type in PLUGINS_WITH_RETURN_VALUES:
+                    if self._is_new_module():
+                        self.reporter.error(
+                            path=self.object_path,
+                            code='missing-return',
+                            msg='No RETURN provided'
+                        )
+                    else:
+                        self.reporter.warning(
+                            path=self.object_path,
+                            code='missing-return-legacy',
+                            msg='No RETURN provided'
+                        )
             else:
                 data, errors, traces = parse_yaml(doc_info['RETURN']['value'],
                                                   doc_info['RETURN']['lineno'],
                                                   self.name, 'RETURN')
                 if data:
-                    add_collection_to_versions_and_dates(data, self.collection_name, is_module=True, return_docs=True)
-                self._validate_docs_schema(data, return_schema(for_collection=bool(self.collection)),
+                    add_collection_to_versions_and_dates(data, self.collection_name,
+                                                         is_module=self.plugin_type == 'module', return_docs=True)
+                self._validate_docs_schema(data,
+                                           return_schema(for_collection=bool(self.collection), plugin_type=self.plugin_type),
                                            'RETURN', 'return-syntax-error')
 
                 for error in errors:
@@ -1396,7 +1413,8 @@ class ModuleValidator(Validator):
 
         try:
             if not context:
-                add_fragments(docs, self.object_path, fragment_loader=fragment_loader, is_module=True)
+                add_fragments(docs, self.object_path, fragment_loader=fragment_loader,
+                              is_module=self.plugin_type == 'module')
         except Exception:
             # Cannot merge fragments
             return
@@ -1980,7 +1998,8 @@ class ModuleValidator(Validator):
         with CaptureStd():
             try:
                 existing_doc, dummy_examples, dummy_return, existing_metadata = get_docstring(
-                    self.base_module, fragment_loader, verbose=True, collection_name=self.collection_name, is_module=True)
+                    self.base_module, fragment_loader, verbose=True, collection_name=self.collection_name,
+                    is_module=self.plugin_type == 'module')
                 existing_options = existing_doc.get('options', {}) or {}
             except AssertionError:
                 fragment = doc['extends_documentation_fragment']
@@ -2182,15 +2201,18 @@ class ModuleValidator(Validator):
                         pass
 
         if self._python_module() and not self._just_docs() and not end_of_deprecation_should_be_removed_only:
-            self._validate_ansible_module_call(docs)
+            if self.plugin_type == 'module':
+                self._validate_ansible_module_call(docs)
             self._check_for_sys_exit()
             self._find_rejectlist_imports()
-            self._find_module_utils()
+            if self.plugin_type == 'module':
+                self._find_module_utils()
             self._find_has_import()
             first_callable = self._get_first_callable() or 1000000  # use a bogus "high" line number if no callable exists
             self._ensure_imports_below_docs(doc_info, first_callable)
-            self._check_for_subprocess()
-            self._check_for_os_call()
+            if self.plugin_type == 'module':
+                self._check_for_subprocess()
+                self._check_for_os_call()
 
         if self._powershell_module():
             if self.basename in self.PS_DOC_REJECTLIST:
@@ -2208,7 +2230,8 @@ class ModuleValidator(Validator):
 
         self._check_gpl3_header()
         if not self._just_docs() and not end_of_deprecation_should_be_removed_only:
-            self._check_interpreter(powershell=self._powershell_module())
+            if self.plugin_type == 'module':
+                self._check_interpreter(powershell=self._powershell_module())
             self._check_type_instead_of_isinstance(
                 powershell=self._powershell_module()
             )
@@ -2268,8 +2291,8 @@ def re_compile(value):
 
 def run():
     parser = argparse.ArgumentParser(prog="validate-modules")
-    parser.add_argument('modules', nargs='+',
-                        help='Path to module or module directory')
+    parser.add_argument('plugins', nargs='+',
+                        help='Path to module/plugin or module/plugin directory')
     parser.add_argument('-w', '--warnings', help='Show warnings',
                         action='store_true')
     parser.add_argument('--exclude', help='RegEx exclusion pattern',
@@ -2291,13 +2314,16 @@ def run():
     parser.add_argument('--collection-version',
                         help='The collection\'s version number used to check '
                              'deprecations')
+    parser.add_argument('--plugin-type',
+                        default='module',
+                        help='The plugin type to validate. Defaults to %(default)s')
 
     args = parser.parse_args()
 
-    args.modules = [m.rstrip('/') for m in args.modules]
+    args.plugins = [m.rstrip('/') for m in args.plugins]
 
     reporter = Reporter()
-    git_cache = GitCache(args.base_branch)
+    git_cache = GitCache(args.base_branch, args.plugin_type)
 
     check_dirs = set()
 
@@ -2315,25 +2341,26 @@ def run():
             except Exception as ex:  # pylint: disable=broad-except
                 print('%s:%d:%d: YAML load failed: %s' % (routing_file, 0, 0, re.sub(r'\s+', ' ', str(ex))))
 
-    for module in args.modules:
-        if os.path.isfile(module):
-            path = module
+    for plugin in args.plugins:
+        if os.path.isfile(plugin):
+            path = plugin
             if args.exclude and args.exclude.search(path):
                 continue
             if ModuleValidator.is_on_rejectlist(path):
                 continue
             with ModuleValidator(path, collection=args.collection, collection_version=args.collection_version,
                                  analyze_arg_spec=args.arg_spec, base_branch=args.base_branch,
-                                 git_cache=git_cache, reporter=reporter, routing=routing) as mv1:
+                                 git_cache=git_cache, reporter=reporter, routing=routing,
+                                 plugin_type=args.plugin_type) as mv1:
                 mv1.validate()
                 check_dirs.add(os.path.dirname(path))
 
-        for root, dirs, files in os.walk(module):
-            basedir = root[len(module) + 1:].split('/', 1)[0]
+        for root, dirs, files in os.walk(plugin):
+            basedir = root[len(plugin) + 1:].split('/', 1)[0]
             if basedir in REJECTLIST_DIRS:
                 continue
             for dirname in dirs:
-                if root == module and dirname in REJECTLIST_DIRS:
+                if root == plugin and dirname in REJECTLIST_DIRS:
                     continue
                 path = os.path.join(root, dirname)
                 if args.exclude and args.exclude.search(path):
@@ -2348,10 +2375,11 @@ def run():
                     continue
                 with ModuleValidator(path, collection=args.collection, collection_version=args.collection_version,
                                      analyze_arg_spec=args.arg_spec, base_branch=args.base_branch,
-                                     git_cache=git_cache, reporter=reporter, routing=routing) as mv2:
+                                     git_cache=git_cache, reporter=reporter, routing=routing,
+                                     plugin_type=args.plugin_type) as mv2:
                     mv2.validate()
 
-    if not args.collection:
+    if not args.collection and args.plugin_type == 'module':
         for path in sorted(check_dirs):
             pv = PythonPackageValidator(path, reporter=reporter)
             pv.validate()
@@ -2363,16 +2391,21 @@ def run():
 
 
 class GitCache:
-    def __init__(self, base_branch):
+    def __init__(self, base_branch, plugin_type):
         self.base_branch = base_branch
+        self.plugin_type = plugin_type
+
+        self.rel_path = 'lib/ansible/modules/'
+        if plugin_type != 'module':
+            self.rel_path = 'lib/ansible/plugins/%s/' % plugin_type
 
         if self.base_branch:
-            self.base_tree = self._git(['ls-tree', '-r', '--name-only', self.base_branch, 'lib/ansible/modules/'])
+            self.base_tree = self._git(['ls-tree', '-r', '--name-only', self.base_branch, self.rel_path])
         else:
             self.base_tree = []
 
         try:
-            self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', 'lib/ansible/modules/'])
+            self.head_tree = self._git(['ls-tree', '-r', '--name-only', 'HEAD', self.rel_path])
         except GitError as ex:
             if ex.status == 128:
                 # fallback when there is no .git directory
@@ -2386,7 +2419,10 @@ class GitCache:
             else:
                 raise
 
-        self.base_module_paths = dict((os.path.basename(p), p) for p in self.base_tree if os.path.splitext(p)[1] in ('.py', '.ps1'))
+        allowed_exts = ('.py', '.ps1')
+        if plugin_type != 'module':
+            allowed_exts = ('.py', )
+        self.base_module_paths = dict((os.path.basename(p), p) for p in self.base_tree if os.path.splitext(p)[1] in allowed_exts)
 
         self.base_module_paths.pop('__init__.py', None)
 
@@ -2399,11 +2435,10 @@ class GitCache:
                 if os.path.islink(path):
                     self.head_aliased_modules.add(os.path.basename(os.path.realpath(path)))
 
-    @staticmethod
-    def _get_module_files():
+    def _get_module_files(self):
         module_files = []
 
-        for (dir_path, dir_names, file_names) in os.walk('lib/ansible/modules/'):
+        for (dir_path, dir_names, file_names) in os.walk(self.rel_path):
             for file_name in file_names:
                 module_files.append(os.path.join(dir_path, file_name))
 
