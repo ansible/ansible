@@ -1800,6 +1800,17 @@ releases:
     - lineinfile_exc_fix.yml
     - v2.10.0rc4_summary.yaml
     release_date: '2020-07-30'
+  2.10.1:
+    changes:
+      release_summary: '| Release Date: 2020-09-14
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - v2.10.1_summary.yaml
+    release_date: '2020-09-14'
   2.10.1rc1:
     changes:
       bugfixes:

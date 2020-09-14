@@ -5,52 +5,13 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
-v2.10.1rc3
-==========
+v2.10.1
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2020-09-07
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Minor Changes
--------------
-
-- ansible-test - Add ``macos/10.15`` as a supported value for the ``--remote`` option.
-- ansible-test - Allow custom ``--remote-stage`` options for development and testing.
-- ansible-test - Fix ``ansible-test coverage`` reporting sub-commands (``report``, ``html``, ``xml``) on Python 2.6.
-- ansible-test - Remove the discontinued ``us-east-2`` choice from the ``--remote-aws-region`` option.
-- ansible-test - Request remote resources by provider name for all provider types.
-- ansible-test - Show a warning when the obsolete ``--remote-aws-region`` option is used.
-- ansible-test - Support custom remote endpoints with the ``--remote-endpoint`` option.
-- ansible-test - Update built-in service endpoints for the ``--remote`` option.
-- ansible-test - Use new endpoint for Parallels based instances with the ``--remote`` option.
-- ansible-test - default container now uses default-test-container 2.7.0 and ansible-base-test-container 1.6.0. This brings in Python 3.9.0rc1 for testing.
-
-v2.10.1rc2
-==========
-
-Release Summary
----------------
-
-| Release Date: 2020-09-01
-| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
-
-
-Security Fixes
---------------
-
-- The fix for CVE-2020-1736 has been reverted. Users are encouraged to specify a ``mode`` parameter in their file-based tasks when the files being manipulated contain sensitive data.
-
-v2.10.1rc1
-==========
-
-Release Summary
----------------
-
-| Release Date: 2020-08-31
+| Release Date: 2020-09-14
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -60,7 +21,17 @@ Minor Changes
 - Fixed ansible-doc to not substitute for words followed by parenthesis.  For instance, ``IBM(International Business Machines)`` will no longer be substituted with a link to a non-existent module. https://github.com/ansible/ansible/pull/71070
 - Updated network integration auth timeout to 90 secs.
 - ansible-doc will now format, ``L()``, ``R()``, and ``HORIZONTALLINE`` in plugin docs just as the website docs do.  https://github.com/ansible/ansible/pull/71070
+- ansible-test - Add ``macos/10.15`` as a supported value for the ``--remote`` option.
+- ansible-test - Allow custom ``--remote-stage`` options for development and testing.
+- ansible-test - Fix ``ansible-test coverage`` reporting sub-commands (``report``, ``html``, ``xml``) on Python 2.6.
 - ansible-test - Remove ``pytest < 6.0.0`` constraint for managed installations on Python 3.x now that pytest 6 is supported.
+- ansible-test - Remove the discontinued ``us-east-2`` choice from the ``--remote-aws-region`` option.
+- ansible-test - Request remote resources by provider name for all provider types.
+- ansible-test - Show a warning when the obsolete ``--remote-aws-region`` option is used.
+- ansible-test - Support custom remote endpoints with the ``--remote-endpoint`` option.
+- ansible-test - Update built-in service endpoints for the ``--remote`` option.
+- ansible-test - Use new endpoint for Parallels based instances with the ``--remote`` option.
+- ansible-test - default container now uses default-test-container 2.7.0 and ansible-base-test-container 1.6.0. This brings in Python 3.9.0rc1 for testing.
 - ansible-test - the ACME test container was updated, it now supports external account creation and has a basic OCSP responder (https://github.com/ansible/ansible/pull/71097, https://github.com/ansible/acme-test-container/releases/tag/2.0.0).
 - galaxy - add documentation about galaxy parameters in examples/ansible.cfg (https://github.com/ansible/ansible/issues/68402).
 - iptables - add a note about ipv6-icmp in protocol parameter (https://github.com/ansible/ansible/issues/70905).
@@ -71,6 +42,7 @@ Security Fixes
 --------------
 
 - **security issue** - copy - Redact the value of the no_log 'content' parameter in the result's invocation.module_args in check mode. Previously when used with check mode and with '-vvv', the module would not censor the content if a change would be made to the destination path. (CVE-2020-14332)
+- The fix for CVE-2020-1736 has been reverted. Users are encouraged to specify a ``mode`` parameter in their file-based tasks when the files being manipulated contain sensitive data.
 - dnf - Previously, regardless of the ``disable_gpg_check`` option, packages were not GPG validated. They are now. (CVE-2020-14365)
 
 Bugfixes
