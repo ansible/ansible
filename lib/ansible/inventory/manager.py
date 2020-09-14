@@ -223,13 +223,13 @@ class InventoryManager(object):
                 if ',' not in source:
                     source = unfrackpath(source, follow=False)
                 parse = self.parse_source(source, cache=cache)
+                if parse:
+                    # do post processing between each parsed source in case a later source uses the previous results
+                    self._inventory.reconcile_inventory()
                 if parse and not parsed:
                     parsed = True
 
-        if parsed:
-            # do post processing
-            self._inventory.reconcile_inventory()
-        else:
+        if not parsed:
             if C.INVENTORY_UNPARSED_IS_FAILED:
                 raise AnsibleError("No inventory was parsed, please check your configuration and options.")
             else:
