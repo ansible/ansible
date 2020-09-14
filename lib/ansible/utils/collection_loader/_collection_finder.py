@@ -355,7 +355,9 @@ class _AnsibleCollectionPkgLoaderBase:
 
         with self._new_or_existing_module(fullname, **module_attrs) as module:
             # execute the module's code in its namespace
-            exec(self.get_code(fullname), module.__dict__)
+            code_obj = self.get_code(fullname)
+            if code_obj is not None:  # things like NS packages that can't have code on disk will return None
+                exec(code_obj, module.__dict__)
 
             return module
 
@@ -428,8 +430,11 @@ class _AnsibleCollectionPkgLoaderBase:
             filename = '<string>'
 
         source_code = self.get_source(fullname)
-        if not source_code:
-            source_code = ''
+
+        # for things like synthetic modules that really have no source on disk, don't return a code object at all
+        # vs things like an empty package init (which has an empty string source on disk)
+        if source_code is None:
+            return None
 
         self._compiled_code = compile(source=source_code, filename=filename, mode='exec', flags=0, dont_inherit=True)
 
