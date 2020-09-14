@@ -1,0 +1,4 @@
+plugin: constructed
+strict: True
+compose:
+  composed_var: "[inventory_hostname, host_domain] | join('.')"

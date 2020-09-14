@@ -37,3 +37,6 @@ ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=never ansible-playbook -i ../../inventory 
 
 # test extra vars
 ansible-inventory -i testhost, -i ./extra_vars_constructed.yml --list -e 'from_extras=hey ' "$@"|grep '"example": "hellohey"'
+
+# test post-processing per source
+ansible-inventory -i implicit_grouping.ini -i ./post_processed_group_vars_constructed.yml --list "$@" | grep '"composed_var": "foo.example.com"'
