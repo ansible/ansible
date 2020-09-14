@@ -2,4 +2,4 @@ ansible-base (%VERSION%-%RELEASE%~%DIST%) %DIST%; urgency=low
 
   * %VERSION% release
 
- -- Ansible, Inc. <info@ansible.com>  %DATE%
+ -- Ansible, Inc. <relrod@ansible.com>  %DATE%
