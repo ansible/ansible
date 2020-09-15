@@ -254,7 +254,7 @@ You can provide your own facts, as described in :ref:`developing_modules`.  To r
         - name: Gather site specific fact data
           action: site_facts
 
-        - name: Use custom facts
+        - name: Use a custom fact
           ansible.builtin.command: /usr/bin/thingy
           when: my_custom_fact_just_retrieved_from_the_remote_system == '1234'
 
