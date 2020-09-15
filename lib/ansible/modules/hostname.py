@@ -826,6 +826,12 @@ class OsmcHostname(Hostname):
     strategy_class = SystemdStrategy
 
 
+class PardusHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Pardus'
+    strategy_class = SystemdStrategy
+
+
 class VoidLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Void'
