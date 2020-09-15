@@ -665,11 +665,16 @@ class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
                  mutually_exclusive=None, required_together=None,
                  required_one_of=None, add_file_common_args=False,
-                 supports_check_mode=False, required_if=None, required_by=None):
+                 supports_check_mode=False, required_if=None, required_by=None, json_encoder=None):
 
         '''
         Common code for quickly building an ansible module in Python
         (although you can write modules with anything that can return JSON).
+
+        The ``json_encoder`` argument accepts a callable meant for use with the
+        ``default`` argument to ``json.dumps``. It *must* raise ``TypeError`` if
+        it cannot encode *everthing*.  This method will be called after
+        ``ansible.module_utils.common.text.converters._json_encode_fallback``.
 
         See :ref:`developing_modules_general` for a general introduction
         and :ref:`developing_program_flow_modules` for more detailed explanation.
@@ -681,6 +686,7 @@ class AnsibleModule(object):
         self.check_mode = False
         self.bypass_checks = bypass_checks
         self.no_log = no_log
+        self._json_encoder = json_encoder
 
         self.mutually_exclusive = mutually_exclusive
         self.required_together = required_together
@@ -2127,9 +2133,9 @@ class AnsibleModule(object):
         except TypeError as e:
             self.fail_json(msg=to_native(e))
 
-    def jsonify(self, data, encoder=None):
+    def jsonify(self, data):
         try:
-            return jsonify(data, encoder=encoder)
+            return jsonify(data, encoder=self._json_encoder)
         except UnicodeError as e:
             self.fail_json(msg=to_text(e))
 
@@ -2144,7 +2150,7 @@ class AnsibleModule(object):
         for path in self.cleanup_files:
             self.cleanup(path)
 
-    def _return_formatted(self, kwargs, encoder=None):
+    def _return_formatted(self, kwargs):
 
         self.add_path_info(kwargs)
 
@@ -2180,13 +2186,13 @@ class AnsibleModule(object):
             kwargs['deprecations'] = deprecations
 
         kwargs = remove_values(kwargs, self.no_log_values)
-        print('\n%s' % self.jsonify(kwargs, encoder=encoder))
+        print('\n%s' % self.jsonify(kwargs))
 
-    def exit_json(self, encoder=None, **kwargs):
+    def exit_json(self, **kwargs):
         ''' return from the module, without error '''
 
         self.do_cleanup_files()
-        self._return_formatted(kwargs, encoder=encoder)
+        self._return_formatted(kwargs)
         sys.exit(0)
 
     def fail_json(self, msg, **kwargs):
