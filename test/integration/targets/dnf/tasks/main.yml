@@ -23,6 +23,18 @@
   when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('23', '>=')) or
         (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
 
+- include_tasks: filters_check_mode.yml
+  when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('23', '>=')) or
+        (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
+  tags:
+    - filters
+
+- include_tasks: filters.yml
+  when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('23', '>=')) or
+        (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
+  tags:
+    - filters
+
 - include_tasks: gpg.yml
   when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('23', '>=')) or
         (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
