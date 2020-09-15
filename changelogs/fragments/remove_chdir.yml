@@ -1,0 +1,2 @@
+bugfixes:
+    - removed chdir from action plugins when using local connection, moved into plugin itself to avoid future issues with threads.

@@ -1,0 +1,2 @@
+bugfixes:
+ - pure - fix incorrect user_string setting in module_utils file (https://github.com/ansible/ansible/pull/66914)

@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix multiple issues with how nxos_vlans Resource Module behaves (https://github.com/ansible/ansible/pull/63650)

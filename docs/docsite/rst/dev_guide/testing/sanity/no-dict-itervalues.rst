@@ -1,5 +1,5 @@
-Sanity Tests » no-dict-itervalues
-=================================
+no-dict-itervalues
+==================
 
 The ``dict.itervalues`` method has been removed in Python 3. There are two recommended alternatives:
 

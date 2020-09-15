@@ -1,0 +1,22 @@
+- name: run python_requirements_info module
+  python_requirements_info:
+  register: basic_info
+
+- name: ensure python_requirements_info returns desired info
+  assert:
+    that:
+      - "'python' in basic_info"
+      - "'python_version' in basic_info"
+
+- name: run python_requirements_info module
+  python_requirements_info:
+    dependencies:
+      - notreal<1
+      - pip>1
+  register: dep_info
+
+- name: ensure python_requirements_info returns desired info
+  assert:
+    that:
+      - "'installed' in dep_info.valid.pip"
+      - "'notreal' in dep_info.not_found"

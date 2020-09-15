@@ -219,7 +219,7 @@ $($ErrorRecord.InvocationInfo.PositionMessage)
             $b64_output = [System.Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($output))
             Write-Output -InputObject $b64_output
         } else {
-            Write-Output -InputObject $output
+            $output
         }
     } catch {
         Write-AnsibleError -Message "internal error: failed to run exec_wrapper action $action" -ErrorRecord $_

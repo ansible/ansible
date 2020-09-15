@@ -445,7 +445,7 @@ class ModuleManager(object):
 
         # This deals with cases where you're comparing a passphrase.
         #
-        # Passphrases will always cause an idepotent operation to register
+        # Passphrases will always cause an idempotent operation to register
         # a change. Therefore, by specifying "force", you are instructing
         # the module to **not** ignore the passphrase.
         #
@@ -496,9 +496,13 @@ class ModuleManager(object):
             self.want.tenants
         )
         response = self.client.api.delete(uri)
-        if response.status == 200:
-            return True
-        raise F5ModuleError(response.content)
+        if response.status != 200:
+            result = response.json()
+            errors = self._get_errors_from_response(result)
+            if errors:
+                message = "{0}".format('. '.join(errors))
+                raise F5ModuleError(message)
+            raise F5ModuleError(response.content)
 
 
 class ArgumentSpec(object):

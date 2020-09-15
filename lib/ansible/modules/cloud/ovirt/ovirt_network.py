@@ -58,9 +58,12 @@ options:
     vlan_tag:
         description:
             - "Specify VLAN tag."
+            - "NOTE - To remove the vlan_tag use -1."
+        type: int
     external_provider:
         description:
             - "Name of external network provider."
+            - "At first it tries to import the network when not found it will create network in external provider."
         version_added: 2.8
     vm_network:
         description:
@@ -73,12 +76,30 @@ options:
     clusters:
         description:
             - "List of dictionaries describing how the network is managed in specific cluster."
-            - "C(name) - Cluster name."
-            - "C(assigned) - I(true) if the network should be assigned to cluster. Default is I(true)."
-            - "C(required) - I(true) if the network must remain operational for all hosts associated with this network."
-            - "C(display) - I(true) if the network should marked as display network."
-            - "C(migration) - I(true) if the network should marked as migration network."
-            - "C(gluster) - I(true) if the network should marked as gluster network."
+        suboptions:
+            name:
+                description:
+                    - Cluster name.
+            assigned:
+                description:
+                    - I(true) if the network should be assigned to cluster. Default is I(true).
+                type: bool
+            required:
+                description:
+                    - I(true) if the network must remain operational for all hosts associated with this network.
+                type: bool
+            display:
+                description:
+                    - I(true) if the network should marked as display network.
+                type: bool
+            migration:
+                description:
+                    - I(true) if the network should marked as migration network.
+                type: bool
+            gluster:
+                description:
+                    - I(true) if the network should marked as gluster network.
+                type: bool
     label:
         description:
             - "Name of the label to assign to the network."
@@ -94,7 +115,7 @@ EXAMPLES = '''
 - ovirt_network:
     data_center: mydatacenter
     name: mynetwork
-    vlan_tag: 1
+    vlan_tag: 10
     vm_network: true
 
 # Remove network
@@ -109,10 +130,16 @@ EXAMPLES = '''
     data_center: mydatacenter
 
 # Add network from external provider
-- ovirt_networks:
+- ovirt_network:
     data_center: mydatacenter
     name: mynetwork
     external_provider: ovirt-provider-ovn
+
+# Remove vlan_tag
+- ovirt_network:
+    data_center: mydatacenter
+    name: mynetwork
+    vlan_tag: -1
 '''
 
 RETURN = '''
@@ -151,15 +178,10 @@ from ansible.module_utils.ovirt import (
 
 
 class NetworksModule(BaseModule):
-    def import_external_network(self):
-        ons_service = self._connection.system_service().openstack_network_providers_service()
-        on_service = ons_service.provider_service(get_id_by_name(ons_service, self.param('external_provider')))
-        networks_service = on_service.networks_service()
-        network_service = networks_service.network_service(get_id_by_name(networks_service, self.param('name')))
-        network_service.import_(data_center=otypes.DataCenter(name=self._module.params['data_center']))
-        return {"network": get_dict_of_struct(network_service.get()), "changed": True}
-
     def build_entity(self):
+        if self.param('external_provider'):
+            ons_service = self._connection.system_service().openstack_network_providers_service()
+            on_service = ons_service.provider_service(get_id_by_name(ons_service, self.param('external_provider')))
         return otypes.Network(
             name=self._module.params['name'],
             comment=self._module.params['comment'],
@@ -169,12 +191,14 @@ class NetworksModule(BaseModule):
                 name=self._module.params['data_center'],
             ) if self._module.params['data_center'] else None,
             vlan=otypes.Vlan(
-                self._module.params['vlan_tag'],
-            ) if self._module.params['vlan_tag'] else None,
+                self._module.params['vlan_tag'] if self._module.params['vlan_tag'] != -1 else None,
+            ) if self._module.params['vlan_tag'] is not None else None,
             usages=[
                 otypes.NetworkUsage.VM if self._module.params['vm_network'] else None
             ] if self._module.params['vm_network'] is not None else None,
             mtu=self._module.params['mtu'],
+            external_provider=otypes.OpenStackNetworkProvider(id=on_service.get().id)
+            if self.param('external_provider') else None,
         )
 
     def post_create(self, entity):
@@ -197,12 +221,14 @@ class NetworksModule(BaseModule):
 
     def update_check(self, entity):
         self._update_label_assignments(entity)
+        vlan_tag_changed = equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None))
+        if self._module.params.get('vlan_tag') == -1:
+            vlan_tag_changed = getattr(entity.vlan, 'id', None) is None
         return (
+            vlan_tag_changed and
             equal(self._module.params.get('comment'), entity.comment) and
             equal(self._module.params.get('name'), entity.name) and
-            equal(self._module.params.get('external_provider'), entity.external_provider) and
             equal(self._module.params.get('description'), entity.description) and
-            equal(self._module.params.get('vlan_tag'), getattr(entity.vlan, 'id', None)) and
             equal(self._module.params.get('vm_network'), True if entity.usages else False) and
             equal(self._module.params.get('mtu'), entity.mtu)
         )
@@ -299,10 +325,19 @@ def main():
             'datacenter': module.params['data_center'],
         }
         if state == 'present':
-            if module.params.get('external_provider'):
-                ret = networks_module.import_external_network()
-            else:
-                ret = networks_module.create(search_params=search_params)
+            imported = False
+            if module.params.get('external_provider') and module.params.get('name') not in [net.name for net in networks_service.list()]:
+                # Try to import network
+                ons_service = connection.system_service().openstack_network_providers_service()
+                on_service = ons_service.provider_service(get_id_by_name(ons_service, module.params.get('external_provider')))
+                on_networks_service = on_service.networks_service()
+                if module.params.get('name') in [net.name for net in on_networks_service.list()]:
+                    network_service = on_networks_service.network_service(get_id_by_name(on_networks_service, module.params.get('name')))
+                    network_service.import_(data_center=otypes.DataCenter(name=module.params.get('data_center')))
+                    imported = True
+
+            ret = networks_module.create(search_params=search_params)
+            ret['changed'] = ret['changed'] or imported
             # Update clusters networks:
             if module.params.get('clusters') is not None:
                 for param_cluster in module.params.get('clusters'):

@@ -1,0 +1,2 @@
+bugfixes:
+  - sts_assume_role - fix assertion text in integration test

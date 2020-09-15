@@ -27,7 +27,7 @@ options:
     required: false
   service:
     description:
-      - An AWS supported vpc endpoint service. Use the ec2_vpc_endpoint_facts
+      - An AWS supported vpc endpoint service. Use the M(ec2_vpc_endpoint_info)
         module to describe the supported endpoint services.
       - Required when creating an endpoint.
     required: false

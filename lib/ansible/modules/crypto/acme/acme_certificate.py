@@ -22,9 +22,9 @@ short_description: Create SSL/TLS certificates with the ACME protocol
 description:
    - "Create and renew SSL/TLS certificates with a CA supporting the
       L(ACME protocol,https://tools.ietf.org/html/rfc8555),
-      such as L(Let's Encrypt,https://letsencrypt.org/). The current
-      implementation supports the C(http-01), C(dns-01) and C(tls-alpn-01)
-      challenges."
+      such as L(Let's Encrypt,https://letsencrypt.org/) or
+      L(Buypass,https://www.buypass.com/). The current implementation
+      supports the C(http-01), C(dns-01) and C(tls-alpn-01) challenges."
    - "To use this module, it has to be executed twice. Either as two
       different tasks in the same run or during two runs. Note that the output
       of the first run needs to be recorded and passed to the second run as the
@@ -37,10 +37,10 @@ description:
       It is I(not) the responsibility of this module to perform these steps."
    - "For details on how to fulfill these challenges, you might have to read through
       L(the main ACME specification,https://tools.ietf.org/html/rfc8555#section-8)
-      and the L(TLS-ALPN-01 specification,https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3).
+      and the L(TLS-ALPN-01 specification,https://www.rfc-editor.org/rfc/rfc8737.html#section-3).
       Also, consider the examples provided for this module."
    - "The module includes experimental support for IP identifiers according to
-      the L(current ACME IP draft,https://tools.ietf.org/html/draft-ietf-acme-ip-05)."
+      the L(RFC 8738,https://www.rfc-editor.org/rfc/rfc8738.html)."
 notes:
    - "At least one of C(dest) and C(fullchain_dest) must be specified."
    - "This module includes basic account management functionality.
@@ -54,12 +54,16 @@ seealso:
     description: Documentation for the Let's Encrypt Certification Authority.
                  Provides useful information for example on rate limits.
     link: https://letsencrypt.org/docs/
+  - name: Buypass Go SSL
+    description: Documentation for the Buypass Certification Authority.
+                 Provides useful information for example on rate limits.
+    link: https://www.buypass.com/ssl/products/acme
   - name: Automatic Certificate Management Environment (ACME)
     description: The specification of the ACME protocol (RFC 8555).
     link: https://tools.ietf.org/html/rfc8555
   - name: ACME TLS ALPN Challenge Extension
-    description: The current draft specification of the C(tls-alpn-01) challenge.
-    link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
+    description: The specification of the C(tls-alpn-01) challenge (RFC 8737).
+    link: https://www.rfc-editor.org/rfc/rfc8737.html-05
   - module: acme_challenge_cert_helper
     description: Helps preparing C(tls-alpn-01) challenges.
   - module: openssl_privatekey
@@ -197,6 +201,15 @@ options:
     type: bool
     default: no
     version_added: 2.6
+  retrieve_all_alternates:
+    description:
+      - "When set to C(yes), will retrieve all alternate chains offered by the ACME CA.
+         These will not be written to disk, but will be returned together with the main
+         chain as C(all_chains). See the documentation for the C(all_chains) return
+         value for details."
+    type: bool
+    default: no
+    version_added: "2.9"
 '''
 
 EXAMPLES = r'''
@@ -232,7 +245,15 @@ EXAMPLES = r'''
 # - copy:
 #     dest: /var/www/html/{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource'] }}
 #     content: "{{ sample_com_challenge['challenge_data']['sample.com']['http-01']['resource_value'] }}"
-#     when: sample_com_challenge is changed
+#     when: sample_com_challenge is changed and 'sample.com' in sample_com_challenge['challenge_data']
+#
+# Alternative way:
+#
+# - copy:
+#     dest: /var/www/{{ item.key }}/{{ item.value['http-01']['resource'] }}
+#     content: "{{ item.value['http-01']['resource_value'] }}"
+#   loop: "{{ sample_com_challenge.challenge_data | dictsort }}"
+#   when: sample_com_challenge is changed
 
 - name: Let the challenge be validated and retrieve the cert and intermediate certificate
   acme_certificate:
@@ -266,9 +287,10 @@ EXAMPLES = r'''
 #     type: TXT
 #     ttl: 60
 #     state: present
+#     wait: yes
 #     # Note: route53 requires TXT entries to be enclosed in quotes
 #     value: "{{ sample_com_challenge.challenge_data['sample.com']['dns-01'].resource_value | regex_replace('^(.*)$', '\"\\1\"') }}"
-#     when: sample_com_challenge is changed
+#   when: sample_com_challenge is changed and 'sample.com' in sample_com_challenge.challenge_data
 #
 # Alternative way:
 #
@@ -278,11 +300,12 @@ EXAMPLES = r'''
 #     type: TXT
 #     ttl: 60
 #     state: present
+#     wait: yes
 #     # Note: item.value is a list of TXT entries, and route53
 #     # requires every entry to be enclosed in quotes
 #     value: "{{ item.value | map('regex_replace', '^(.*)$', '\"\\1\"' ) | list }}"
-#     loop: "{{ sample_com_challenge.challenge_data_dns | dictsort }}"
-#     when: sample_com_challenge is changed
+#   loop: "{{ sample_com_challenge.challenge_data_dns | dictsort }}"
+#   when: sample_com_challenge is changed
 
 - name: Let the challenge be validated and retrieve the cert and intermediate certificate
   acme_certificate:
@@ -296,6 +319,7 @@ EXAMPLES = r'''
     acme_directory: https://acme-v01.api.letsencrypt.org/directory
     remaining_days: 60
     data: "{{ sample_com_challenge }}"
+  when: sample_com_challenge is changed
 '''
 
 RETURN = '''
@@ -304,9 +328,12 @@ cert_days:
   returned: success
   type: int
 challenge_data:
-  description: Per identifier / challenge type challenge data.
+  description:
+    - Per identifier / challenge type challenge data.
+    - Since Ansible 2.8.5, only challenges which are not yet valid are returned.
   returned: changed
-  type: complex
+  type: list
+  elements: dict
   contains:
     resource:
       description: The challenge resource that must be created for validation.
@@ -328,7 +355,7 @@ challenge_data:
         - "For C(tls-alpn-01) challenges, note that this return value contains a
            Base64 encoded version of the correct binary blob which has to be put
            into the acmeValidation x509 extension; see
-           U(https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3)
+           U(https://www.rfc-editor.org/rfc/rfc8737.html#section-3)
            for details. To do this, you might need the C(b64decode) Jinja filter
            to extract the binary blob from this return value."
       returned: changed
@@ -341,19 +368,19 @@ challenge_data:
       sample: _acme-challenge.example.com
       version_added: "2.5"
 challenge_data_dns:
-  description: List of TXT values per DNS record, in case challenge is C(dns-01).
+  description:
+    - List of TXT values per DNS record, in case challenge is C(dns-01).
+    - Since Ansible 2.8.5, only challenges which are not yet valid are returned.
   returned: changed
   type: dict
   version_added: "2.5"
 authorizations:
-  description: ACME authorization data.
+  description:
+    - ACME authorization data.
+    - Maps an identifier to ACME authorization objects. See U(https://tools.ietf.org/html/rfc8555#section-7.1.4).
   returned: changed
-  type: complex
-  contains:
-      authorization:
-        description: ACME authorization object. See U(https://tools.ietf.org/html/rfc8555#section-7.1.4)
-        returned: success
-        type: dict
+  type: dict
+  sample: '{"example.com":{...}}'
 order_uri:
   description: ACME order URI.
   returned: changed
@@ -369,6 +396,32 @@ account_uri:
   returned: changed
   type: str
   version_added: "2.5"
+all_chains:
+  description:
+    - When I(retrieve_all_alternates) is set to C(yes), the module will query the ACME server
+      for alternate chains. This return value will contain a list of all chains returned,
+      the first entry being the main chain returned by the server.
+    - See L(Section 7.4.2 of RFC8555,https://tools.ietf.org/html/rfc8555#section-7.4.2) for details.
+  returned: when certificate was retrieved and I(retrieve_all_alternates) is set to C(yes)
+  type: list
+  elements: dict
+  contains:
+    cert:
+      description:
+        - The leaf certificate itself, in PEM format.
+      type: str
+      returned: always
+    chain:
+      description:
+        - The certificate chain, excluding the root, as concatenated PEM certificates.
+      type: str
+      returned: always
+    full_chain:
+      description:
+        - The certificate chain, excluding the root, but including the leaf certificate,
+          as concatenated PEM certificates.
+      type: str
+      returned: always
 '''
 
 from ansible.module_utils.acme import (
@@ -380,6 +433,7 @@ from ansible.module_utils.acme import (
     openssl_get_csr_identifiers,
     cryptography_get_cert_days,
     set_crypto_backend,
+    process_links,
 )
 
 import base64
@@ -389,10 +443,12 @@ import os
 import re
 import textwrap
 import time
+import urllib
 from datetime import datetime
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils._text import to_bytes
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 
 def get_cert_days(module, cert_file):
@@ -488,7 +544,7 @@ class ACMEClient(object):
 
     def _add_or_update_auth(self, identifier_type, identifier, auth):
         '''
-        Add or update the given authroization in the global authorizations list.
+        Add or update the given authorization in the global authorizations list.
         Return True if the auth was updated/added and False if no change was
         necessary.
         '''
@@ -503,9 +559,6 @@ class ACMEClient(object):
         Return the authorization object of the new authorization
         https://tools.ietf.org/html/draft-ietf-acme-acme-02#section-6.4
         '''
-        if self.account.uri is None:
-            return
-
         new_authz = {
             "resource": "new-authz",
             "identifier": {"type": identifier_type, "value": identifier},
@@ -546,28 +599,12 @@ class ACMEClient(object):
                 record = (resource + identifier[1:]) if identifier.startswith('*.') else (resource + '.' + identifier)
                 data[challenge_type] = {'resource': resource, 'resource_value': value, 'record': record}
             elif challenge_type == 'tls-alpn-01':
-                # https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05#section-3
+                # https://www.rfc-editor.org/rfc/rfc8737.html#section-3
                 if identifier_type == 'ip':
-                    if ':' in identifier:
-                        # IPv6 address: use reverse IP6.ARPA mapping (RFC3596)
-                        i = identifier.find('::')
-                        if i >= 0:
-                            nibbles = [nibble for nibble in identifier[:i].split(':') if nibble]
-                            suffix = [nibble for nibble in identifier[i + 1:].split(':') if nibble]
-                            if len(nibbles) + len(suffix) < 8:
-                                nibbles.extend(['0'] * (8 - len(nibbles) - len(suffix)))
-                            nibbles.extend(suffix)
-                        else:
-                            nibbles = identifier.split(':')
-                        resource = []
-                        for nibble in reversed(nibbles):
-                            nibble = '0' * (4 - len(nibble)) + nibble.lower()
-                            for octet in reversed(nibble):
-                                resource.append(octet)
-                        resource = '.'.join(resource) + '.ip6.arpa.'
-                    else:
-                        # IPv4 address: use reverse IN-ADDR.ARPA mapping (RFC1034)
-                        resource = '.'.join(reversed(identifier.split('.'))) + '.in-addr.arpa.'
+                    # IPv4/IPv6 address: use reverse mapping (RFC1034, RFC3596)
+                    resource = compat_ipaddress.ip_address(identifier).reverse_pointer
+                    if not resource.endswith('.'):
+                        resource += '.'
                 else:
                     resource = identifier
                 value = base64.b64encode(hashlib.sha256(to_bytes(keyauthorization)).digest())
@@ -610,6 +647,7 @@ class ACMEClient(object):
                 keyauthorization = self.account.get_keyauthorization(token)
                 challenge_response["resource"] = "challenge"
                 challenge_response["keyAuthorization"] = keyauthorization
+                challenge_response["type"] = self.challenge
             result, info = self.account.send_signed_request(uri, challenge_response)
             if info['status'] not in [200, 202]:
                 raise ModuleFailException("Error validating challenge: CODE: {0} RESULT: {1}".format(info['status'], result))
@@ -649,12 +687,10 @@ class ACMEClient(object):
         if info['status'] not in [200]:
             raise ModuleFailException("Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
 
-        order = info['location']
-
         status = result['status']
         while status not in ['valid', 'invalid']:
             time.sleep(2)
-            result, dummy = self.account.get_request(order)
+            result, dummy = self.account.get_request(self.order_uri)
             status = result['status']
 
         if status != 'valid':
@@ -696,19 +732,23 @@ class ACMEClient(object):
                     chain.append(''.join(current))
                 current = []
 
-        # Process link-up headers if there was no chain in reply
-        if not chain and 'link' in info:
-            link = info['link']
-            parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
-            if parsed_link and parsed_link.group(2) == "up":
-                chain_link = parsed_link.group(1)
-                chain_result, chain_info = self.account.get_request(chain_link, parse_json_result=False)
-                if chain_info['status'] in [200, 201]:
-                    chain.append(self._der_to_pem(chain_result))
+        alternates = []
+
+        def f(link, relation):
+            if relation == 'up':
+                # Process link-up headers if there was no chain in reply
+                if not chain:
+                    chain_result, chain_info = self.account.get_request(link, parse_json_result=False)
+                    if chain_info['status'] in [200, 201]:
+                        chain.append(self._der_to_pem(chain_result))
+            elif relation == 'alternate':
+                alternates.append(link)
+
+        process_links(info, f)
 
         if cert is None or current:
             raise ModuleFailException("Failed to parse certificate chain download from {0}: {1} (headers: {2})".format(url, content, info))
-        return {'cert': cert, 'chain': chain}
+        return {'cert': cert, 'chain': chain, 'alternates': alternates}
 
     def _new_cert_v1(self):
         '''
@@ -724,14 +764,15 @@ class ACMEClient(object):
         result, info = self.account.send_signed_request(self.directory['new-cert'], new_cert)
 
         chain = []
-        if 'link' in info:
-            link = info['link']
-            parsed_link = re.match(r'<(.+)>;rel="(\w+)"', link)
-            if parsed_link and parsed_link.group(2) == "up":
-                chain_link = parsed_link.group(1)
-                chain_result, chain_info = self.account.get_request(chain_link, parse_json_result=False)
+
+        def f(link, relation):
+            if relation == 'up':
+                chain_result, chain_info = self.account.get_request(link, parse_json_result=False)
                 if chain_info['status'] in [200, 201]:
-                    chain = [self._der_to_pem(chain_result)]
+                    del chain[:]
+                    chain.append(self._der_to_pem(chain_result))
+
+        process_links(info, f)
 
         if info['status'] not in [200, 201]:
             raise ModuleFailException("Error new cert: CODE: {0} RESULT: {1}".format(info['status'], result))
@@ -810,8 +851,13 @@ class ACMEClient(object):
         data = {}
         for type_identifier, auth in self.authorizations.items():
             identifier_type, identifier = type_identifier.split(':', 1)
+            auth = self.authorizations[type_identifier]
+            # Skip valid authentications: their challenges are already valid
+            # and do not need to be returned
+            if auth['status'] == 'valid':
+                continue
             # We drop the type from the key to preserve backwards compatibility
-            data[identifier] = self._get_challenge_data(self.authorizations[type_identifier], identifier_type, identifier)
+            data[identifier] = self._get_challenge_data(auth, identifier_type, identifier)
         # Get DNS challenge data
         data_dns = {}
         if self.challenge == 'dns-01':
@@ -885,6 +931,27 @@ class ACMEClient(object):
         else:
             cert_uri = self._finalize_cert()
             cert = self._download_cert(cert_uri)
+            if self.module.params['retrieve_all_alternates']:
+                alternate_chains = []
+                for alternate in cert['alternates']:
+                    try:
+                        alt_cert = self._download_cert(alternate)
+                    except ModuleFailException as e:
+                        self.module.warn('Error while downloading alternative certificate {0}: {1}'.format(alternate, e))
+                        continue
+                    alternate_chains.append(alt_cert)
+                self.all_chains = []
+
+                def _append_all_chains(cert_data):
+                    self.all_chains.append(dict(
+                        cert=cert_data['cert'].encode('utf8'),
+                        chain=("\n".join(cert_data.get('chain', []))).encode('utf8'),
+                        full_chain=(cert_data['cert'] + "\n".join(cert_data.get('chain', []))).encode('utf8'),
+                    ))
+
+                _append_all_chains(cert)
+                for alt_chain in alternate_chains:
+                    _append_all_chains(alt_chain)
 
         if cert['cert'] is not None:
             pem_cert = cert['cert']
@@ -922,7 +989,7 @@ class ACMEClient(object):
                     result, info = self.account.send_signed_request(auth['uri'], authz_deactivate)
                     if 200 <= info['status'] < 300 and result.get('status') == 'deactivated':
                         auth['status'] = 'deactivated'
-                except Exception as e:
+                except Exception as dummy:
                     # Ignore errors on deactivating authzs
                     pass
                 if auth.get('status') != 'deactivated':
@@ -951,6 +1018,7 @@ def main():
             remaining_days=dict(type='int', default=10),
             deactivate_authzs=dict(type='bool', default=False),
             force=dict(type='bool', default=False),
+            retrieve_all_alternates=dict(type='bool', default=False),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'openssl', 'cryptography']),
         ),
         required_one_of=(
@@ -991,6 +1059,7 @@ def main():
             else:
                 client = ACMEClient(module)
                 client.cert_days = cert_days
+                other = dict()
                 if client.is_first_step():
                     # First run: start challenges / start new order
                     client.start_challenges()
@@ -999,6 +1068,8 @@ def main():
                     try:
                         client.finish_challenges()
                         client.get_certificate()
+                        if module.params['retrieve_all_alternates']:
+                            other['all_chains'] = client.all_chains
                     finally:
                         if module.params['deactivate_authzs']:
                             client.deactivate_authzs()
@@ -1015,7 +1086,8 @@ def main():
                     account_uri=client.account.uri,
                     challenge_data=data,
                     challenge_data_dns=data_dns,
-                    cert_days=client.cert_days
+                    cert_days=client.cert_days,
+                    **other
                 )
         else:
             module.exit_json(changed=False, cert_days=cert_days)

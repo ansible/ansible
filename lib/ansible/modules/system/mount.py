@@ -74,13 +74,16 @@ options:
       - C(absent) specifies that the device mount's entry will be removed from
         I(fstab) and will also unmount the device and remove the mount
         point.
+      - C(remounted) specifies that the device will be remounted for when you
+        want to force a refresh on the mount itself (added in 2.9). This will
+        always return changed=true.
     type: str
     required: true
-    choices: [ absent, mounted, present, unmounted ]
+    choices: [ absent, mounted, present, unmounted, remounted ]
   fstab:
     description:
       - File to use instead of C(/etc/fstab).
-      - You should npt use this option unless you really know what you are doing.
+      - You should not use this option unless you really know what you are doing.
       - This might be useful if you need to configure mountpoints in a chroot environment.
       - OpenBSD does not allow specifying alternate fstab files with mount so do not
         use this on OpenBSD with any state that operates on the live filesystem.
@@ -553,7 +556,7 @@ def get_linux_mounts(module, mntinfo_file="/proc/self/mountinfo"):
             if (
                     len(m['root']) > 1 and
                     mnt['root'].startswith("%s/" % m['root'])):
-                # Ommit the parent's root in the child's root
+                # Omit the parent's root in the child's root
                 # == Example:
                 # 140 136 253:2 /rootfs / rw - ext4 /dev/sdb2 rw
                 # 141 140 253:2 /rootfs/tmp/aaa /tmp/bbb rw - ext4 /dev/sdb2 rw
@@ -597,7 +600,7 @@ def main():
             passno=dict(type='str'),
             src=dict(type='path'),
             backup=dict(type='bool', default=False),
-            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted']),
+            state=dict(type='str', required=True, choices=['absent', 'mounted', 'present', 'unmounted', 'remounted']),
         ),
         supports_check_mode=True,
         required_if=(
@@ -730,6 +733,14 @@ def main():
             module.fail_json(msg="Error mounting %s: %s" % (name, msg))
     elif state == 'present':
         name, changed = set_mount(module, args)
+    elif state == 'remounted':
+        if not module.check_mode:
+            res, msg = remount(module, args)
+
+            if res:
+                module.fail_json(msg="Error remounting %s: %s" % (name, msg))
+
+        changed = True
     else:
         module.fail_json(msg='Unexpected position reached')
 

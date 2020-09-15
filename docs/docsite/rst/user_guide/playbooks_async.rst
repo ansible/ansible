@@ -7,11 +7,48 @@ By default tasks in playbooks block, meaning the connections stay open
 until the task is done on each node.  This may not always be desirable, or you may
 be running operations that take longer than the SSH timeout.
 
+Time-limited background operations
+----------------------------------
+
+You can run long-running operations in the background and check their status later.
+For example, to execute ``long_running_operation``
+asynchronously in the background, with a timeout of 3600 seconds (``-B``),
+and without polling (``-P``)::
+
+    $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
+
+If you want to check on the job status later, you can use the
+``async_status`` module, passing it the job ID that was returned when you ran
+the original job in the background::
+
+    $ ansible web1.example.com -m async_status -a "jid=488359678239.2844"
+
+To run for 30 minutes and poll for status every 60 seconds::
+
+    $ ansible all -B 1800 -P 60 -a "/usr/bin/long_running_operation --do-stuff"
+
+Poll mode is smart so all jobs will be started before polling will begin on any machine.
+Be sure to use a high enough ``--forks`` value if you want to get all of your jobs started
+very quickly. After the time limit (in seconds) runs out (``-B``), the process on
+the remote nodes will be terminated.
+
+Typically you'll only be backgrounding long-running
+shell commands or software upgrades.  Backgrounding the copy module does not do a background file transfer. :ref:`Playbooks <working_with_playbooks>` also support polling, and have a simplified syntax for this.
+
 To avoid blocking or timeout issues, you can use asynchronous mode to run all of your tasks at once and then poll until they are done.
+
+The behavior of asynchronous mode depends on the value of `poll`.
+
+Avoid connection timeouts: poll > 0
+-----------------------------------
+
+When ``poll`` is a positive value, the playbook will *still* block on the task until it either completes, fails or times out.
+
+In this case, however, `async` explicitly sets the timeout you wish to apply to this task rather than being limited by the connection method timeout.
 
 To launch a task asynchronously, specify its maximum runtime
 and how frequently you would like to poll for status.  The default
-poll value is 10 seconds if you do not specify a value for `poll`::
+poll value is set by the ``DEFAULT_POLL_INTERVAL`` setting if you do not specify a value for `poll`::
 
     ---
 
@@ -32,11 +69,24 @@ poll value is 10 seconds if you do not specify a value for `poll`::
 
 .. note::
   As of Ansible 2.3, async does not support check mode and will fail the
-  task when run in check mode. See :doc:`playbooks_checkmode` on how to
+  task when run in check mode. See :ref:`check_mode_dry` on how to
   skip a task in check mode.
 
-Alternatively, if you do not need to wait on the task to complete, you may
-run the task asynchronously by specifying a poll value of 0::
+
+Concurrent tasks: poll = 0
+--------------------------
+
+When ``poll`` is 0, Ansible will start the task and immediately move on to the next one without waiting for a result.
+
+From the point of view of sequencing this is asynchronous programming: tasks may now run concurrently.
+
+The playbook run will end without checking back on async tasks.
+
+The async tasks will run until they either complete, fail or timeout according to their `async` value.
+
+If you need a synchronization point with a task, register it to obtain its job ID and use the :ref:`async_status <async_status_module>` module to observe it.
+
+You may run a task asynchronously by specifying a poll value of 0::
 
     ---
 
@@ -126,7 +176,7 @@ of tasks running concurrently, you can do it this way::
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

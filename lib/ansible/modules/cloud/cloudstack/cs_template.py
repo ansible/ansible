@@ -68,7 +68,7 @@ options:
     type: bool
   is_dynamically_scalable:
     description:
-      - Register the template having XS/VMWare tools installed in order to support dynamic scaling of VM CPU/memory.
+      - Register the template having XS/VMware tools installed in order to support dynamic scaling of VM CPU/memory.
       - Only used if I(state) is C(present).
     type: bool
   cross_zones:
@@ -121,26 +121,8 @@ options:
     description:
       - Name the hypervisor to be used for creating the new template.
       - Relevant when using I(state=present).
+      - Possible values are C(KVM), C(VMware), C(BareMetal), C(XenServer), C(LXC), C(HyperV), C(UCS), C(OVM), C(Simulator).
     type: str
-    choices:
-    - KVM
-    - kvm
-    - VMware
-    - vmware
-    - BareMetal
-    - baremetal
-    - XenServer
-    - xenserver
-    - LXC
-    - lxc
-    - HyperV
-    - hyperv
-    - UCS
-    - ucs
-    - OVM
-    - ovm
-    - Simulator
-    - simulator
   requires_hvm:
     description:
       - Whether the template requires HVM or not.
@@ -400,7 +382,6 @@ from ansible.module_utils.cloudstack import (
     AnsibleCloudStack,
     cs_argument_spec,
     cs_required_together,
-    CS_HYPERVISORS
 )
 
 
@@ -415,7 +396,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             'templatetag': 'template_tag',
             'sshkeyenabled': 'sshkey_enabled',
             'passwordenabled': 'password_enabled',
-            'tempaltetype': 'template_type',
+            'templatetype': 'template_type',
             'ostypename': 'os_type',
             'crossZones': 'cross_zones',
             'format': 'format',
@@ -712,7 +693,7 @@ def main():
         checksum=dict(),
         template_filter=dict(default='self', choices=['all', 'featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
         template_find_options=dict(type='list', choices=['display_text', 'checksum', 'cross_zones'], aliases=['template_find_option'], default=[]),
-        hypervisor=dict(choices=CS_HYPERVISORS),
+        hypervisor=dict(),
         requires_hvm=dict(type='bool'),
         password_enabled=dict(type='bool'),
         template_tag=dict(),

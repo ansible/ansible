@@ -1,0 +1,2 @@
+bugfixes:
+- fixed collection-based plugin loading in ansible-connection (eg networking plugins)

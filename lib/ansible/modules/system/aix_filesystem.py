@@ -5,6 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 ANSIBLE_METADATA = {
@@ -195,7 +196,7 @@ def _fs_exists(module, filesystem):
             return False
 
         else:
-            module.fail_json(msg="Failed to run lsfs.", rc=rc, err=err)
+            module.fail_json(msg="Failed to run lsfs. Error message: %s" % err)
 
     else:
 
@@ -215,7 +216,7 @@ def _check_nfs_device(module, nfs_host, device):
     rc, showmount_out, err = module.run_command(
         "%s -a %s" % (showmount_cmd, nfs_host))
     if rc != 0:
-        module.fail_json(msg="Failed to run showmount.", rc=rc, err=err)
+        module.fail_json(msg="Failed to run showmount. Error message: %s" % err)
     else:
         showmount_data = showmount_out.splitlines()
         for line in showmount_data:
@@ -263,17 +264,13 @@ def resize_fs(module, filesystem, size):
 
         if rc == 28:
             changed = False
-
             return changed, chfs_out
-
         elif rc != 0:
             if re.findall('Maximum allocation for logical', err):
                 changed = False
-
                 return changed, err
-
             else:
-                module.fail_json("Failed to run chfs.", rc=rc, err=err)
+                module.fail_json(msg="Failed to run chfs. Error message: %s" % err)
 
         else:
             if re.findall('The filesystem size is already', chfs_out):
@@ -351,7 +348,7 @@ def create_fs(
             rc, mknfsmnt_out, err = module.run_command('%s -f "%s" %s -h "%s" -t "%s" "%s" -w "bg"' % (
                 mknfsmnt_cmd, filesystem, device, nfs_server, permissions, auto_mount))
             if rc != 0:
-                module.fail_json(msg="Failed to run mknfsmnt.", rc=rc, err=err)
+                module.fail_json(msg="Failed to run mknfsmnt. Error message: %s" % err)
             else:
                 changed = True
                 msg = "NFS file system %s created." % filesystem
@@ -367,9 +364,9 @@ def create_fs(
         # Creates a LVM file system.
         crfs_cmd = module.get_bin_path('crfs', True)
         if not module.check_mode:
-            rc, crfs_out, err = module.run_command(
-                "%s -v %s -m %s %s %s %s %s %s -p %s %s -a %s" % (
-                    crfs_cmd, fs_type, filesystem, vg, device, mount_group, auto_mount, account_subsystem, permissions, size, attributes))
+            cmd = "%s -v %s -m %s %s %s %s %s %s -p %s %s -a %s" % (
+                crfs_cmd, fs_type, filesystem, vg, device, mount_group, auto_mount, account_subsystem, permissions, size, attributes)
+            rc, crfs_out, err = module.run_command(cmd)
 
             if rc == 10:
                 module.exit_json(
@@ -377,7 +374,7 @@ def create_fs(
                         "volume group needs to be empty. %s" % err)
 
             elif rc != 0:
-                module.fail_json(msg="Failed to run crfs.", rc=rc, err=err)
+                module.fail_json(msg="Failed to run %s. Error message: %s" % (cmd, err))
 
             else:
                 changed = True
@@ -402,9 +399,10 @@ def remove_fs(module, filesystem, rm_mount_point):
 
     rmfs_cmd = module.get_bin_path('rmfs', True)
     if not module.check_mode:
-        rc, rmfs_out, err = module.run_command("%s -r %s %s" % (rmfs_cmd, rm_mount_point, filesystem))
+        cmd = "%s -r %s %s" % (rmfs_cmd, rm_mount_point, filesystem)
+        rc, rmfs_out, err = module.run_command(cmd)
         if rc != 0:
-            module.fail_json(msg="Failed to run rmfs.", rc=rc, err=err)
+            module.fail_json(msg="Failed to run %s. Error message: %s" % (cmd, err))
         else:
             changed = True
             msg = rmfs_out
@@ -427,7 +425,7 @@ def mount_fs(module, filesystem):
         rc, mount_out, err = module.run_command(
             "%s %s" % (mount_cmd, filesystem))
         if rc != 0:
-            module.fail_json("Failed to run mount.", rc=rc, err=err)
+            module.fail_json(msg="Failed to run mount. Error message: %s" % err)
         else:
             changed = True
             msg = "File system %s mounted." % filesystem
@@ -447,7 +445,7 @@ def unmount_fs(module, filesystem):
     if not module.check_mode:
         rc, unmount_out, err = module.run_command("%s %s" % (unmount_cmd, filesystem))
         if rc != 0:
-            module.fail_json("Failed to run unmount.", rc=rc, err=err)
+            module.fail_json(msg="Failed to run unmount. Error message: %s" % err)
         else:
             changed = True
             msg = "File system %s unmounted." % filesystem
@@ -518,9 +516,7 @@ def main():
             if nfs_server is not None:
                 if device is None:
                     result['msg'] = 'Parameter "device" is required when "nfs_server" is defined.'
-
                     module.fail_json(**result)
-
                 else:
                     # Create a fs from NFS export.
                     if _check_nfs_device(module, nfs_server, device):
@@ -529,9 +525,8 @@ def main():
 
             if device is None:
                 if vg is None:
-
+                    result['msg'] = 'Required parameter "device" and/or "vg" is missing for filesystem creation.'
                     module.fail_json(**result)
-
                 else:
                     # Create a fs from
                     result['changed'], result['msg'] = create_fs(

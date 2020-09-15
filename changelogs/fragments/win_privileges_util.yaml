@@ -1,2 +1,0 @@
-minor_changes:
-- Ansible.ModuleUtils.Privilege - moved C# code to it's own util called ``Ansible.Privilege`` and expanded the tests

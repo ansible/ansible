@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_user - fix the module doesn't correctly commit changes if groups is set (https://github.com/ansible/ansible/issues/64806). 

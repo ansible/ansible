@@ -9,6 +9,15 @@
         region: "{{ aws_region }}"
     no_log: yes
 
+  - name: create certificate
+    iam_cert:
+      name: test_cert
+      state: present
+      cert: "{{ lookup('file', 'cert.pem') }}"
+      key: "{{ lookup('file', 'key.pem') }}"
+      <<: *aws_connection_info
+    register: cert
+
   - name: create VPC
     ec2_vpc_net:
       cidr_block: 10.228.228.0/22
@@ -51,7 +60,7 @@
         public: False
     register: subnets
 
-  - ec2_vpc_subnet_facts:
+  - ec2_vpc_subnet_info:
       filters:
         vpc-id: "{{ vpc.vpc.id }}"
       <<: *aws_connection_info
@@ -202,4 +211,11 @@
       retries: 10
       delay: 5
       until: remove_vpc is success
+      ignore_errors: yes
+
+    - name: destroy certificate
+      iam_cert:
+        name: test_cert
+        state: absent
+        <<: *aws_connection_info
       ignore_errors: yes

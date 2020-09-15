@@ -33,17 +33,20 @@ options:
     - Name of the cluster.
     - Settings are applied to every ESXi host in given cluster.
     - If C(esxi_hostname) is not given, this parameter is required.
+    type: str
   esxi_hostname:
     description:
     - ESXi hostname.
     - Settings are applied to this ESXi host.
     - If C(cluster_name) is not given, this parameter is required.
+    type: str
   options:
     description:
     - A dictionary of advanced system settings.
     - Invalid options will cause module to error.
     - Note that the list of advanced options (with description and values) can be found by running `vim-cmd hostsvc/advopt/options`.
     default: {}
+    type: dict
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -125,7 +128,7 @@ class VmwareConfigManager(PyVmomi):
 
     def set_host_configuration_facts(self):
         changed_list = []
-        changed = False
+        message = ''
         for host in self.hosts:
             option_manager = host.configManager.advancedOption
             host_facts = {}
@@ -161,11 +164,10 @@ class VmwareConfigManager(PyVmomi):
 
                     if option_value != host_facts[option_key]['value']:
                         change_option_list.append(vim.option.OptionValue(key=option_key, value=option_value))
-                        changed = True
                         changed_list.append(option_key)
                 else:  # Don't silently drop unknown options. This prevents typos from falling through the cracks.
                     self.module.fail_json(msg="Unsupported option %s" % option_key)
-            if changed:
+            if change_option_list:
                 if self.module.check_mode:
                     changed_suffix = ' would be changed.'
                 else:
@@ -189,7 +191,7 @@ class VmwareConfigManager(PyVmomi):
             else:
                 message = 'All settings are already configured.'
 
-        self.module.exit_json(changed=changed, msg=message)
+        self.module.exit_json(changed=bool(changed_list), msg=message)
 
 
 def main():

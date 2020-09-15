@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Check action plugin names for network (eos, ios, iosxr, junos, netconf, nxos) modules properly load with collections.

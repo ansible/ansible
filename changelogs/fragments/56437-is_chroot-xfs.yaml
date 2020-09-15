@@ -1,0 +1,2 @@
+bugfixes:
+  - facts - properly detect is_chroot on XFS for non-root users (https://github.com/ansible/ansible/issues/56437)

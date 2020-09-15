@@ -104,7 +104,7 @@ options:
     aliases: [ service_provider ]
   specify_ip_ranges:
     description:
-      - Wheter the network offering supports specifying IP ranges.
+      - Whether the network offering supports specifying IP ranges.
       - Defaulted to C(no) by the API if not specified.
     type: bool
   specify_vlan:
@@ -178,7 +178,7 @@ service_offering_id:
   type: str
   sample: c5f7a5fc-43f8-11e5-a151-feff819cdc9f
 max_connections:
-  description: The maximum number of concurrents connections to be handled by LB.
+  description: The maximum number of concurrent connections to be handled by LB.
   returned: success
   type: int
   sample: 300

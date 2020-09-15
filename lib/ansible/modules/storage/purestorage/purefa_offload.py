@@ -50,7 +50,7 @@ options:
     type: str
   options:
     description:
-    - Additonal mount options for the NFS share
+    - Additional mount options for the NFS share
     - Supported mount options include I(port), I(rsize),
       I(wsize), I(nfsvers), and I(tcp) or I(udp)
     required: false
@@ -133,13 +133,12 @@ def get_target(module, array):
 def create_offload(module, array):
     """Create offload target"""
     changed = False
-    # First check if the offload network inteface is there and enabled
+    # First check if the offload network interface is there and enabled
     try:
         if not array.get_network_interface('@offload.data')['enabled']:
             module.fail_json(msg='Offload Network interface not enabled. Please resolve.')
     except Exception:
         module.fail_json(msg='Offload Network interface not correctly configured. Please resolve.')
-    ra_facts = {}
     if module.params['protocol'] == 'nfs':
         try:
             array.connect_nfs_offload(module.params['name'],
@@ -161,7 +160,7 @@ def create_offload(module, array):
         except Exception:
             module.fail_json(msg='Failed to create S3 offload {0}. '
                                  'Please perform diagnostic checks.'.format(module.params['name']))
-    module.exit_json(changed=changed, ansible_facts=ra_facts)
+    module.exit_json(changed=changed)
 
 
 def update_offload(module, array):

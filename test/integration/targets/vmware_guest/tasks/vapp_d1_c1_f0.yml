@@ -1,41 +1,19 @@
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
+# Test code for the vmware_guest module.
+# Copyright: (c) 2018, goshkis
+# Copyright: (c) 2019, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: kill vcsim
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/killall' }}"
-- name: start vcsim with no folders
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/spawn?datacenter=1&cluster=1&folder=0' }}"
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of Clusters from vcsim
-  uri:
-    url: "{{ 'http://' + vcsim + ':5000/govc_find?filter=CCR' }}"
-  register: clusterlist
-
-- debug: var=vcsim_instance
-- debug: var=clusterlist
-
-- name: Create test VM
+- &vapp_new_vm
+  name: Create test VM with vAPP settings
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
-    name: vApp-Test
-    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
-    cluster: "{{ clusterlist['json'][0]|basename }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: "vm"
+    name: test_vm1
+    datacenter: "{{ dc1 }}"
+    cluster: "{{ ccr1 }}"
     resource_pool: Resources
     guest_id: centos64Guest
     hardware:
@@ -45,20 +23,7 @@
     disk:
     - size_mb: 128
       type: thin
-      datastore: LocalDS_0
-  register: vapp_vm
-
-- debug: var=vapp_vm
-
-- name:  Define vApp properties for the new VM
-  vmware_guest:
-    validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
-    name: vApp-Test
-    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+      datastore: "{{ ds2 }}"
     vapp_properties:
     - id: prop_id1
       category: category
@@ -70,7 +35,6 @@
       label: prop_label2
       type: string
       value: prop_value2
-    state: present
   register: vapp_vm
 
 - debug: var=vapp_vm
@@ -81,15 +45,30 @@
       - "vapp_vm.failed == false"
       - "vapp_vm.changed == true"
 
-- name:  Edit one vApp property and removing another 
+- when: vcsim is not defined
+  block:
+    - <<: *vapp_new_vm
+      name: Try to create same VM with same vAPP settings
+      register: vapp_vm_no_change
+
+    - debug: var=vapp_vm_no_change
+
+    - name: Assert that vApp properties were not changed
+      assert:
+        that:
+          - "vapp_vm_no_change.failed == false"
+          - "not vapp_vm_no_change.changed"
+
+- &vapp_edit_vm
+  name: Edit one vApp property and removing another
   vmware_guest:
     validate_certs: False
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    folder: "/{{ (clusterlist['json'][0]|basename).split('_')[0] }}/vm"
-    name: vApp-Test
-    datacenter: "{{ (clusterlist['json'][0]|basename).split('_')[0] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    folder: "vm"
+    name: test_vm1
+    datacenter: "{{ dc1 }}"
     vapp_properties:
     - id: prop_id1
       operation: remove
@@ -105,3 +84,17 @@
     that:
       - "vapp_vm.failed == false"
       - "vapp_vm.changed == true"
+
+- when: vcsim is not defined
+  block:
+    - <<: *vapp_edit_vm
+      name: Try to edit VM with vApp settings
+      register: vapp_vm_no_change_edit
+
+    - debug: var=vapp_vm_no_change_edit
+
+    - name: assert the VM was changed
+      assert:
+        that:
+          - "vapp_vm_no_change_edit.failed == false"
+          - "vapp_vm_no_change_edit.changed == false"

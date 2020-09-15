@@ -1,0 +1,215 @@
+---
+## Verify that integration_config was specified
+- block:
+  - assert:
+      that:
+        - entrust_api_user is defined
+        - entrust_api_key is defined
+        - entrust_api_ip_address is defined
+        - entrust_cloud_ip_address is defined
+        - entrust_api_client_cert_path is defined or entrust_api_client_cert_contents is defined
+        - entrust_api_client_cert_key_path is defined or entrust_api_client_cert_key_contents
+        - cacerts_bundle_path_local is defined
+
+## SET UP TEST ENVIRONMENT ########################################################################
+- name: copy the files needed for verifying test server certificate to the host
+  copy:
+    src: '{{ cacerts_bundle_path_local }}/'
+    dest: '{{ cacerts_bundle_path }}'
+
+- name: Update the CA certificates for our QA certs (collection may need updating if new QA environments used)
+  command: c_rehash {{ cacerts_bundle_path }}
+
+- name: Update hosts file
+  lineinfile:
+    path: /etc/hosts
+    state: present
+    regexp: 'api.entrust.net$'
+    line: '{{ entrust_api_ip_address }} api.entrust.net'
+
+- name: Update hosts file
+  lineinfile:
+    path: /etc/hosts
+    state: present
+    regexp: 'cloud.entrust.net$'
+    line: '{{ entrust_cloud_ip_address }} cloud.entrust.net'
+
+- name: Clear out the temporary directory for storing the API connection information
+  file:
+    path: '{{ tmpdir_path }}'
+    state: absent
+
+- name: Create a directory for storing the API connection Information
+  file:
+    path: '{{ tmpdir_path }}'
+    state: directory
+
+- name: Copy the files needed for the connection to entrust API to the host
+  copy:
+    src: '{{ entrust_api_client_cert_path }}'
+    dest: '{{ entrust_api_cert }}'
+
+- name: Copy the files needed for the connection to entrust API to the host
+  copy:
+    src: '{{ entrust_api_client_cert_key_path }}'
+    dest: '{{ entrust_api_cert_key }}'
+
+## SETUP CSR TO REQUEST
+- name: Generate a 2048 bit RSA private key
+  openssl_privatekey:
+    path: '{{ privatekey_path }}'
+    passphrase: '{{ privatekey_passphrase }}'
+    cipher: auto
+    type: RSA
+    size: 2048
+
+- name: Generate a certificate signing request using the generated key
+  openssl_csr:
+    path: '{{ csr_path }}'
+    privatekey_path: '{{ privatekey_path }}'
+    privatekey_passphrase: '{{ privatekey_passphrase }}'
+    common_name: '{{ common_name }}'
+    organization_name: '{{ organization_name | default(omit) }}'
+    organizational_unit_name: '{{ organizational_unit_name | default(omit) }}'
+    country_name: '{{ country_name | default(omit) }}'
+    state_or_province_name: '{{ state_or_province_name | default(omit) }}'
+    digest: sha256
+
+- block:
+  - name: Have ECS generate a signed certificate
+    ecs_certificate:
+      backup: True
+      path: '{{ example1_cert_path }}'
+      full_chain_path: '{{ example1_chain_path }}'
+      csr: '{{ csr_path }}'
+      cert_type: '{{ example1_cert_type }}'
+      requester_name: '{{ entrust_requester_name }}'
+      requester_email: '{{ entrust_requester_email }}'
+      requester_phone: '{{ entrust_requester_phone }}'
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
+    register: example1_result
+
+  - assert:
+      that:
+        - example1_result is not failed
+        - example1_result.changed
+        - example1_result.tracking_id > 0
+        - example1_result.serial_number is string
+
+  # Internal CA refuses to issue certificates with the same DN in a short time frame
+  - name: Sleep for 5 seconds so we don't run into duplicate-request errors
+    pause:
+      seconds: 5
+
+  - name: Attempt to have ECS generate a signed certificate, but existing one is valid
+    ecs_certificate:
+      backup: True
+      path: '{{ example1_cert_path }}'
+      full_chain_path: '{{ example1_chain_path }}'
+      csr: '{{ csr_path }}'
+      cert_type: '{{ example1_cert_type }}'
+      requester_name: '{{ entrust_requester_name }}'
+      requester_email: '{{ entrust_requester_email }}'
+      requester_phone: '{{ entrust_requester_phone }}'
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
+    register: example2_result
+
+  - assert:
+      that:
+        - example2_result is not failed
+        - not example2_result.changed
+        - example2_result.backup_file is undefined
+        - example2_result.backup_full_chain_file is undefined
+        - example2_result.serial_number == example1_result.serial_number
+        - example2_result.tracking_id == example1_result.tracking_id
+
+  # Internal CA refuses to issue certificates with the same DN in a short time frame
+  - name: Sleep for 5 seconds so we don't run into duplicate-request errors
+    pause:
+      seconds: 5
+
+  - name: Force a reissue with no CSR, verify that contents changed
+    ecs_certificate:
+      backup: True
+      force: True
+      path: '{{ example1_cert_path }}'
+      full_chain_path: '{{ example1_chain_path }}'
+      cert_type: '{{ example1_cert_type }}'
+      request_type: reissue
+      requester_name: '{{ entrust_requester_name }}'
+      requester_email: '{{ entrust_requester_email }}'
+      requester_phone: '{{ entrust_requester_phone }}'
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
+    register: example3_result
+
+  - assert:
+      that:
+        - example3_result is not failed
+        - example3_result.changed
+        - example3_result.backup_file is string
+        - example3_result.backup_full_chain_file is string
+        - example3_result.tracking_id > 0
+        - example3_result.tracking_id != example1_result.tracking_id
+        - example3_result.serial_number != example1_result.serial_number
+
+  # Internal CA refuses to issue certificates with the same DN in a short time frame
+  - name: Sleep for 5 seconds so we don't run into duplicate-request errors
+    pause:
+      seconds: 5
+
+  - name: Test a request with all of the various optional possible fields populated
+    ecs_certificate:
+      path: '{{ example4_cert_path }}'
+      full_chain_path: '{{ example4_full_chain_path }}'
+      csr: '{{ csr_path }}'
+      subject_alt_name: '{{ example4_subject_alt_name }}'
+      eku: '{{ example4_eku }}'
+      ct_log: True
+      cert_type: '{{ example4_cert_type }}'
+      org: '{{ example4_org }}'
+      ou: '{{ example4_ou }}'
+      tracking_info: '{{ example4_tracking_info }}'
+      additional_emails: '{{ example4_additional_emails }}'
+      custom_fields: '{{ example4_custom_fields }}'
+      cert_expiry: '{{ example4_cert_expiry }}'
+      requester_name: '{{ entrust_requester_name }}'
+      requester_email: '{{ entrust_requester_email }}'
+      requester_phone: '{{ entrust_requester_phone }}'
+      entrust_api_user: '{{ entrust_api_user }}'
+      entrust_api_key: '{{ entrust_api_key }}'
+      entrust_api_client_cert_path: '{{ entrust_api_cert }}'
+      entrust_api_client_cert_key_path: '{{ entrust_api_cert_key }}'
+    register: example4_result
+
+  - assert:
+      that:
+        - example4_result is not failed
+        - example4_result.changed
+        - example4_result.backup_file is undefined
+        - example4_result.backup_full_chain_file is undefined
+        - example4_result.tracking_id > 0
+        - example4_result.serial_number is string
+
+  # For bug 61738, verify that the full chain is valid
+  - name: Verify that the full chain path can be successfully imported
+    command: openssl verify "{{ example4_full_chain_path }}"
+    register: openssl_result
+
+  - assert:
+      that:
+         - "' OK' in openssl_result.stdout_lines[0]"
+
+  always:
+    - name: clean-up temporary folder
+      file:
+        path: '{{ tmpdir_path }}'
+        state: absent

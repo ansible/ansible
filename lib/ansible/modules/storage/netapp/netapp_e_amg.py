@@ -29,7 +29,7 @@ options:
         required: yes
     secondaryArrayId:
         description:
-            - The ID of the secondary array to be used in mirroing process
+            - The ID of the secondary array to be used in mirroring process
         required: yes
     syncIntervalMinutes:
         description:

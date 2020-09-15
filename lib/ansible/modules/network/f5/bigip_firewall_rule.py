@@ -205,6 +205,7 @@ options:
       - This parameter is mutually exclusive with many of the other individual-rule
         specific settings. This includes C(logging), C(action), C(source),
         C(destination), C(irule'), C(protocol) and C(logging).
+      - This parameter is only used when C(parent_policy) is specified, otherwise it is ignored.
     type: str
   icmp_message:
     description:
@@ -306,9 +307,10 @@ EXAMPLES = r'''
       user: admin
   delegate_to: localhost
 
-- name: Add a new rule that is uses an existing rule list
+- name: Add a new policy rule that uses an existing rule list
   bigip_firewall_rule:
     name: foo
+    parent_policy: foo_policy
     rule_list: rule-list1
     provider:
       password: secret
@@ -456,7 +458,7 @@ logging:
   type: bool
   sample: yes
 rule_list:
-  description: An existing rule list to use in the rule.
+  description: An existing rule list to use in the parent policy.
   returned: changed
   type: str
   sample: rule-list-1
@@ -502,6 +504,7 @@ class Parameters(AnsibleF5Parameters):
         'ipProtocol': 'protocol',
         'log': 'logging',
         'icmp': 'icmp_message',
+        'ruleList': 'rule_list'
     }
 
     api_attributes = [
@@ -515,6 +518,7 @@ class Parameters(AnsibleF5Parameters):
         'icmp',
         'action',
         'description',
+        'ruleList',
     ]
 
     returnables = [
@@ -528,6 +532,7 @@ class Parameters(AnsibleF5Parameters):
         'schedule',
         'description',
         'icmp_message',
+        'rule_list',
     ]
 
     updatables = [
@@ -541,6 +546,7 @@ class Parameters(AnsibleF5Parameters):
         'schedule',
         'description',
         'icmp_message',
+        'rule_list',
     ]
 
     protocol_map = {
@@ -720,6 +726,14 @@ class ModuleParameters(Parameters):
                 result.append('{0}:{1}'.format(type, code))
         result = list(set(result))
         return result
+
+    @property
+    def rule_list(self):
+        if self._values['rule_list'] is None:
+            return None
+        if self._values['parent_policy'] is not None:
+            return fq_name(self.partition, self._values['rule_list'])
+        return None
 
 
 class Changes(Parameters):
@@ -998,19 +1012,20 @@ class ModuleManager(object):
             return self.create()
 
     def exists(self):
+        name = self.want.name
         if self.want.parent_policy:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/policy/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_policy),
-                self.want.name
+                name.replace('/', '_')
             )
         else:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/rule-list/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_rule_list),
-                self.want.name
+                name.replace('/', '_')
             )
         resp = self.client.api.get(uri)
         if resp.ok:
@@ -1036,13 +1051,7 @@ class ModuleManager(object):
 
     def create(self):
         self._set_changed_options()
-        if self.want.rule_list is None and self.want.parent_rule_list is None:
-            if self.want.action is None:
-                self.changes.update({'action': 'reject'})
-            if self.want.logging is None:
-                self.changes.update({'logging': False})
-        if self.want.status is None:
-            self.changes.update({'status': 'enabled'})
+        self.set_reasonable_creation_defaults()
         if self.want.status == 'scheduled' and self.want.schedule is None:
             raise F5ModuleError(
                 "A 'schedule' must be specified when 'status' is 'scheduled'."
@@ -1052,9 +1061,18 @@ class ModuleManager(object):
         self.create_on_device()
         return True
 
+    def set_reasonable_creation_defaults(self):
+        if self.want.action is None:
+            self.changes.update({'action': 'reject'})
+        if self.want.logging is None:
+            self.changes.update({'logging': False})
+        if self.want.status is None:
+            self.changes.update({'status': 'enabled'})
+
     def create_on_device(self):
         params = self.changes.api_params()
-        params['name'] = self.want.name
+        name = self.want.name
+        params['name'] = name.replace('/', '_')
         params['partition'] = self.want.partition
         params['placeAfter'] = 'last'
 
@@ -1082,26 +1100,35 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] in [400, 403]:
+        if 'code' in response and response['code'] in [400, 403, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
                 raise F5ModuleError(resp.content)
 
     def update_on_device(self):
-        if self.want.parent_policy:
+        name = self.want.name
+        if self.want.parent_policy and self.want.rule_list:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/policy/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_policy),
-                self.want.name
+                name.replace('/', '_')
+            )
+
+        elif self.want.parent_policy:
+            uri = "https://{0}:{1}/mgmt/tm/security/firewall/policy/{2}/rules/{3}".format(
+                self.client.provider['server'],
+                self.client.provider['server_port'],
+                transform_name(self.want.partition, self.want.parent_policy),
+                name.replace('/', '_')
             )
         else:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/rule-list/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_rule_list),
-                self.want.name
+                name.replace('/', '_')
             )
 
         if self.have.protocol not in ['icmp', 'icmpv6'] and self.changes.protocol not in ['icmp', 'icmpv6']:
@@ -1120,7 +1147,7 @@ class ModuleManager(object):
         except ValueError as ex:
             raise F5ModuleError(str(ex))
 
-        if 'code' in response and response['code'] == 400:
+        if 'code' in response and response['code'] in [400, 403, 404]:
             if 'message' in response:
                 raise F5ModuleError(response['message'])
             else:
@@ -1132,19 +1159,20 @@ class ModuleManager(object):
         return False
 
     def remove_from_device(self):
+        name = self.want.name
         if self.want.parent_policy:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/policy/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_policy),
-                self.want.name
+                name.replace('/', '_')
             )
         else:
             uri = "https://{0}:{1}/mgmt/tm/security/firewall/rule-list/{2}/rules/{3}".format(
                 self.client.provider['server'],
                 self.client.provider['server_port'],
                 transform_name(self.want.partition, self.want.parent_rule_list),
-                self.want.name
+                name.replace('/', '_')
             )
 
         resp = self.client.api.delete(uri)

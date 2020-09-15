@@ -36,11 +36,11 @@ import yaml
 
 import datetime
 from functools import partial
-from random import Random, SystemRandom, shuffle, randint
+from random import Random, SystemRandom, shuffle
 
 from jinja2.filters import environmentfilter, do_groupby as _do_groupby
 
-from ansible.errors import AnsibleError, AnsibleFilterError
+from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleFilterTypeError
 from ansible.module_utils.six import iteritems, string_types, integer_types, reraise
 from ansible.module_utils.six.moves import reduce, shlex_quote
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -48,6 +48,7 @@ from ansible.module_utils.common.collections import is_sequence
 from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.parsing.yaml.dumper import AnsibleDumper
+from ansible.template import recursive_check_defined
 from ansible.utils.display import Display
 from ansible.utils.encrypt import passlib_or_crypt
 from ansible.utils.hashing import md5s, checksum_s
@@ -106,7 +107,7 @@ def strftime(string_format, second=None):
     ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
     if second is not None:
         try:
-            second = int(second)
+            second = float(second)
         except Exception:
             raise AnsibleFilterError('Invalid value for epoch value (%s)' % second)
     return time.strftime(string_format, time.localtime(second))
@@ -279,7 +280,7 @@ def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
 
-def mandatory(a):
+def mandatory(a, msg=None):
     from jinja2.runtime import Undefined
 
     ''' Make a variable mandatory '''
@@ -288,7 +289,12 @@ def mandatory(a):
             name = "'%s' " % to_text(a._undefined_name)
         else:
             name = ''
-        raise AnsibleFilterError("Mandatory variable %s not defined." % name)
+
+        if msg is not None:
+            raise AnsibleFilterError(to_native(msg))
+        else:
+            raise AnsibleFilterError("Mandatory variable %s not defined." % name)
+
     return a
 
 
@@ -300,8 +306,10 @@ def combine(*terms, **kwargs):
     dicts = []
     for t in terms:
         if isinstance(t, MutableMapping):
+            recursive_check_defined(t)
             dicts.append(t)
         elif isinstance(t, list):
+            recursive_check_defined(t)
             dicts.append(combine(*t, **kwargs))
         else:
             raise AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
@@ -482,7 +490,7 @@ def subelements(obj, subelements, skip_missing=False):
     elif isinstance(subelements, string_types):
         subelement_list = subelements.split('.')
     else:
-        raise AnsibleFilterError('subelements must be a list or a string')
+        raise AnsibleFilterTypeError('subelements must be a list or a string')
 
     results = []
 
@@ -497,9 +505,9 @@ def subelements(obj, subelements, skip_missing=False):
                     break
                 raise AnsibleFilterError("could not find %r key in iterated item %r" % (subelement, values))
             except TypeError:
-                raise AnsibleFilterError("the key %s should point to a dictionary, got '%s'" % (subelement, values))
+                raise AnsibleFilterTypeError("the key %s should point to a dictionary, got '%s'" % (subelement, values))
         if not isinstance(values, list):
-            raise AnsibleFilterError("the key %r should point to a list, got %r" % (subelement, values))
+            raise AnsibleFilterTypeError("the key %r should point to a list, got %r" % (subelement, values))
 
         for value in values:
             results.append((element, value))
@@ -512,7 +520,7 @@ def dict_to_list_of_dict_key_value_elements(mydict, key_name='key', value_name='
         with each having a 'key' and 'value' keys that correspond to the keys and values of the original '''
 
     if not isinstance(mydict, Mapping):
-        raise AnsibleFilterError("dict2items requires a dictionary, got %s instead." % type(mydict))
+        raise AnsibleFilterTypeError("dict2items requires a dictionary, got %s instead." % type(mydict))
 
     ret = []
     for key in mydict:
@@ -525,12 +533,12 @@ def list_of_dict_key_value_elements_to_dict(mylist, key_name='key', value_name='
         effectively as the reverse of dict2items '''
 
     if not is_sequence(mylist):
-        raise AnsibleFilterError("items2dict requires a list, got %s instead." % type(mylist))
+        raise AnsibleFilterTypeError("items2dict requires a list, got %s instead." % type(mylist))
 
     return dict((item[key_name], item[value_name]) for item in mylist)
 
 
-def random_mac(value):
+def random_mac(value, seed=None):
     ''' takes string prefix, and return it completed with random bytes
         to get a complete 6 bytes MAC address '''
 
@@ -555,8 +563,12 @@ def random_mac(value):
     if len(err):
         raise AnsibleFilterError('Invalid value (%s) for random_mac: %s' % (value, err))
 
+    if seed is None:
+        r = SystemRandom()
+    else:
+        r = Random(seed)
     # Generate random int between x1000000000 and xFFFFFFFFFF
-    v = randint(68719476736, 1099511627775)
+    v = r.randint(68719476736, 1099511627775)
     # Select first n chars to complement input prefix
     remain = 2 * (6 - len(mac_items))
     rnd = ('%x' % v)[:remain]

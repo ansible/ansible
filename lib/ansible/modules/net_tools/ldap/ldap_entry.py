@@ -32,6 +32,9 @@ notes:
     rule allowing root to modify the server configuration. If you need to use
     a simple bind to access your server, pass the credentials in I(bind_dn)
     and I(bind_pw).
+  - "The I(params) parameter is deprecated in Ansible-2.7 due to circumventing Ansible's parameter
+     handling. The I(params) parameter started disallowing setting the I(bind_pw) parameter in Ansible-2.7
+     as it was insecure to set the parameter that way."
 version_added: '2.3'
 author:
   - Jiri Tyr (@jtyr)
@@ -48,11 +51,6 @@ options:
       - If I(state=present), value or list of values to use when creating
         the entry. It can either be a string or an actual list of
         strings.
-  params:
-    description:
-      - List of options which allows to overwrite any of the task or the
-        I(attributes) options. To remove an option, set the value of the option
-        to C(null).
   state:
     description:
       - The target state of the entry.
@@ -94,11 +92,13 @@ EXAMPLES = """
 #   server_uri: ldap://localhost/
 #   bind_dn: cn=admin,dc=example,dc=com
 #   bind_pw: password
+#
+# In the example below, 'args' is a task keyword, passed at the same level as the module
 - name: Get rid of an old entry
   ldap_entry:
     dn: ou=stuff,dc=example,dc=com
     state: absent
-    params: "{{ ldap_auth }}"
+  args: "{{ ldap_auth }}"
 """
 
 
@@ -107,6 +107,7 @@ RETURN = """
 """
 
 import traceback
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils.six import string_types
@@ -204,6 +205,29 @@ def main():
         module.fail_json(msg=missing_required_lib('python-ldap'),
                          exception=LDAP_IMP_ERR)
 
+    # For Ansible-2.9.x and below, allow the params module parameter with a warning
+    if LooseVersion(module.ansible_version) < LooseVersion('2.10'):
+        if module.params['params']:
+            module.deprecate("The `params` option to ldap_attr will be removed in Ansible 2.10"
+                             " since it circumvents Ansible's option handling", version='2.10')
+
+            # However, the bind_pw parameter contains a password so it **must** go through the normal
+            # argument parsing even though removing it breaks backwards compat.
+            if 'bind_pw' in module.params['params']:
+                module.fail_json(msg="Using `bind_pw` with the `params` option has been disallowed since"
+                                 " it is insecure.  Use the `bind_pw` option directly.  The `params`"
+                                 " option will be removed in Ansible-2.10")
+
+            # Update module parameters with user's parameters if defined
+            module.params.update(module.params['params'])
+            # Remove params itself
+            module.params.pop('params', None)
+    else:
+        # For Ansible 2.10 and above
+        if module.params['params']:
+            module.fail_json(msg="The `params` option to ldap_attr was removed in Ansible-2.10 since"
+                             " it circumvents Ansible's option handling")
+
     state = module.params['state']
 
     # Check if objectClass is present when needed
@@ -216,17 +240,6 @@ def main():
                 isinstance(module.params['objectClass'], string_types) or
                 isinstance(module.params['objectClass'], list))):
         module.fail_json(msg="objectClass must be either a string or a list.")
-
-    # Update module parameters with user's parameters if defined
-    if 'params' in module.params and isinstance(module.params['params'], dict):
-        for key, val in module.params['params'].items():
-            if key in module.argument_spec:
-                module.params[key] = val
-            else:
-                module.params['attributes'][key] = val
-
-        # Remove the params
-        module.params.pop('params', None)
 
     # Instantiate the LdapEntry object
     ldap = LdapEntry(module)

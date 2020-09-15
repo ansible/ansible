@@ -59,7 +59,7 @@ function Get-CAP([string] $name) {
 
     # Fetch CAP user and computer groups in Down-Level Logon format
     $cap.UserGroups = @(
-        Get-ChildItem -Path "$cap_path\UserGroups" | 
+        Get-ChildItem -Path "$cap_path\UserGroups" |
             Select-Object -ExpandProperty Name |
             ForEach-Object { Convert-FromSID -sid (Convert-ToSID -account_name $_) }
     )
@@ -146,7 +146,7 @@ if ($null -ne $order -and $order -lt 1) {
 }
 
 # Ensure RemoteDesktopServices module is loaded
-if ((Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue) -eq $null) {
+if ($null -eq (Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue)) {
     Import-Module -Name RemoteDesktopServices
 }
 

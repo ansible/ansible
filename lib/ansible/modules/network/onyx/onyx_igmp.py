@@ -15,7 +15,7 @@ DOCUMENTATION = """
 module: onyx_igmp
 version_added: "2.7"
 author: "Samer Deeb (@samerd)"
-short_description: Configures IGMP globl parameters
+short_description: Configures IGMP global parameters
 description:
   - This module provides declarative management of IGMP protocol params
     on Mellanox ONYX network devices.

@@ -1,2 +1,0 @@
-bugfixes:
-  - inventory_aws_ec2 - fix no_log indentation so AWS temporary credentials aren't displayed in tests

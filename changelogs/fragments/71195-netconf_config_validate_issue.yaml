@@ -1,0 +1,2 @@
+bugfixes:
+- Fixed Ansible reporting validate not supported by netconf server when enabled in netconf - (https://github.com/ansible-collections/ansible.netcommon/issues/119).

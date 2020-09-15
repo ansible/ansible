@@ -220,6 +220,7 @@
   - assert:
       that:
         - result.changed
+        - result.warning is not defined
         - 'result.ip_permissions[0].ip_ranges | length == 3 or result.ip_permissions[1].ip_ranges | length == 3'
         - 'result.ip_permissions[0].ipv6_ranges | length == 3 or result.ip_permissions[1].ipv6_ranges | length == 3'
 

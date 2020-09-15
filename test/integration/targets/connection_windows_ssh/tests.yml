@@ -1,6 +1,6 @@
 ---
 - name: test out Windows SSH specific tests
-  hosts: windows-ssh
+  hosts: windows
   serial: 1
   gather_facts: no
 

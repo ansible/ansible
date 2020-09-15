@@ -19,7 +19,7 @@
     - win_whoami_result.groups[0].domain_name is defined
     - win_whoami_result.groups[0].sid is defined
     - win_whoami_result.groups[0].type is defined
-    - win_whoami_result.impersonation_level == 'SecurityAnonymous'
+    - win_whoami_result.impersonation_level is defined
     - win_whoami_result.label.account_name == 'High Mandatory Level'
     - win_whoami_result.label.domain_name == 'Mandatory Label'
     - win_whoami_result.label.sid == 'S-1-16-12288'

@@ -10,7 +10,6 @@
   iosxr_config: &addreplace
     src: "{{ role_path }}/fixtures/config_add_interface.txt"
     replace: config
-    backup: yes
   register: result
 
 - assert:
@@ -29,7 +28,6 @@
   iosxr_config: &delreplace
     src: "{{ role_path }}/fixtures/config_del_interface.txt"
     replace: config
-    backup: yes
   register: result
 
 - assert:

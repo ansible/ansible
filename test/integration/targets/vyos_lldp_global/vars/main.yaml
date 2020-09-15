@@ -1,0 +1,56 @@
+---
+merged:
+  before:
+    address: '192.0.2.17'
+    enable: true
+    legacy_protocols:
+        - 'cdp'
+
+  commands:
+    - "set service lldp management-address '192.0.2.11'"
+    - "set service lldp legacy-protocols 'fdp'"
+
+  after:
+    address: '192.0.2.11'
+    enable: true
+    legacy_protocols:
+      - 'cdp'
+      - 'fdp'
+
+populate:
+  address: '192.0.2.17'
+  enable: true
+  legacy_protocols:
+    - 'cdp'
+
+replaced:
+  commands:
+    - "set service lldp legacy-protocols 'edp'"
+    - "set service lldp legacy-protocols 'sonmp'"
+    - "set service lldp management-address '192.0.2.14'"
+
+  after:
+    address: '192.0.2.14'
+    enable: true
+    legacy_protocols:
+      - 'cdp'
+      - 'edp'
+      - 'sonmp'
+
+deleted:
+  commands:
+    - "delete service lldp management-address"
+    - "delete service lldp legacy-protocols"
+
+  after:
+    "enable": true
+
+round_trip:
+  after:
+    address: '192.0.2.14'
+    enable: true
+    legacy_protocols:
+      - 'cdp'
+      - 'edp'
+      - 'fdp'
+      - 'sonmp'

@@ -33,7 +33,7 @@ options:
         If not specified, the default format is used.
   manifest:
     description:
-      - The manifest contains information about the bundles at certaion version of the OS.
+      - The manifest contains information about the bundles at certain version of the OS.
         Specify a Manifest version to verify against that version or leave unspecified to
         verify against the current version.
     aliases: [release, version]

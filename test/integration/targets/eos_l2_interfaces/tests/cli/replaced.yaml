@@ -1,0 +1,41 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      - name: Ethernet1
+        trunk:
+          native_vlan: 20
+          trunk_allowed_vlans:
+            - 5-10
+            - "15"
+
+- eos_facts:
+    gather_network_resources: l2_interfaces
+  become: yes
+
+- name: Replace device configuration of specified L2 interfaces with provided configuration.
+  eos_l2_interfaces:
+    config: "{{ config }}"
+    state: replaced
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.before) == []"
+
+- eos_facts:
+    gather_network_resources: l2_interfaces
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.after) == []"
+
+- set_fact:
+    expected_config: "{{ config }} + [{'name': 'Ethernet2', 'trunk': {'native_vlan': 20}}, {'name': 'Management1'}]"
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(expected_config) == []"

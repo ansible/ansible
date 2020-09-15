@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_proxy_policy
 short_description: Configure proxy policies in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall feature and proxy_policy category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall feature and proxy_policy category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,163 +41,217 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     firewall_proxy_policy:
         description:
             - Configure proxy policies.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             action:
                 description:
                     - Accept or deny traffic matching the policy parameters.
+                type: str
                 choices:
                     - accept
                     - deny
                     - redirect
-            application-list:
+            application_list:
                 description:
                     - Name of an existing Application list. Source application.list.name.
-            av-profile:
+                type: str
+            av_profile:
                 description:
                     - Name of an existing Antivirus profile. Source antivirus.profile.name.
+                type: str
             comments:
                 description:
                     - Optional comments.
+                type: str
             disclaimer:
                 description:
                     - "Web proxy disclaimer setting: by domain, policy, or user."
+                type: str
                 choices:
                     - disable
                     - domain
                     - policy
                     - user
-            dlp-sensor:
+            dlp_sensor:
                 description:
                     - Name of an existing DLP sensor. Source dlp.sensor.name.
+                type: str
             dstaddr:
                 description:
                     - Destination address objects.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Address name. Source firewall.address.name firewall.addrgrp.name firewall.proxy-address.name firewall.proxy-addrgrp.name
                                firewall.vip.name firewall.vipgrp.name firewall.vip46.name firewall.vipgrp46.name system.external-resource.name.
                         required: true
-            dstaddr-negate:
+                        type: str
+            dstaddr_negate:
                 description:
                     - When enabled, destination addresses match against any address EXCEPT the specified destination addresses.
+                type: str
                 choices:
                     - enable
                     - disable
             dstaddr6:
                 description:
                     - IPv6 destination address objects.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Address name. Source firewall.address6.name firewall.addrgrp6.name firewall.vip6.name firewall.vipgrp6.name firewall.vip64.name
                                firewall.vipgrp64.name system.external-resource.name.
                         required: true
+                        type: str
             dstintf:
                 description:
                     - Destination interface names.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Interface name. Source system.interface.name system.zone.name.
                         required: true
-            global-label:
+                        type: str
+            global_label:
                 description:
                     - Global web-based manager visible label.
+                type: str
             groups:
                 description:
                     - Names of group objects.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Group name. Source user.group.name.
                         required: true
-            http-tunnel-auth:
+                        type: str
+            http_tunnel_auth:
                 description:
                     - Enable/disable HTTP tunnel authentication.
+                type: str
                 choices:
                     - enable
                     - disable
-            icap-profile:
+            icap_profile:
                 description:
                     - Name of an existing ICAP profile. Source icap.profile.name.
-            internet-service:
+                type: str
+            internet_service:
                 description:
                     - Enable/disable use of Internet Services for this policy. If enabled, destination address and service are not used.
+                type: str
                 choices:
                     - enable
                     - disable
-            internet-service-custom:
+            internet_service_custom:
                 description:
                     - Custom Internet Service name.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Custom name. Source firewall.internet-service-custom.name.
                         required: true
-            internet-service-id:
+                        type: str
+            internet_service_id:
                 description:
                     - Internet Service ID.
+                type: list
                 suboptions:
                     id:
                         description:
                             - Internet Service ID. Source firewall.internet-service.id.
                         required: true
-            internet-service-negate:
+                        type: int
+            internet_service_negate:
                 description:
                     - When enabled, Internet Services match against any internet service EXCEPT the selected Internet Service.
+                type: str
                 choices:
                     - enable
                     - disable
-            ips-sensor:
+            ips_sensor:
                 description:
                     - Name of an existing IPS sensor. Source ips.sensor.name.
+                type: str
             label:
                 description:
                     - VDOM-specific GUI visible label.
+                type: str
             logtraffic:
                 description:
                     - Enable/disable logging traffic through the policy.
+                type: str
                 choices:
                     - all
                     - utm
                     - disable
-            logtraffic-start:
+            logtraffic_start:
                 description:
                     - Enable/disable policy log traffic start.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -208,29 +259,36 @@ options:
                 description:
                     - Policy ID.
                 required: true
+                type: int
             poolname:
                 description:
                     - Name of IP pool object.
+                type: list
                 suboptions:
                     name:
                         description:
                             - IP pool name. Source firewall.ippool.name.
                         required: true
-            profile-group:
+                        type: str
+            profile_group:
                 description:
                     - Name of profile group. Source firewall.profile-group.name.
-            profile-protocol-options:
+                type: str
+            profile_protocol_options:
                 description:
                     - Name of an existing Protocol options profile. Source firewall.profile-protocol-options.name.
-            profile-type:
+                type: str
+            profile_type:
                 description:
                     - Determine whether the firewall policy allows security profile groups or single profiles only.
+                type: str
                 choices:
                     - single
                     - group
             proxy:
                 description:
                     - Type of explicit proxy.
+                type: str
                 choices:
                     - explicit-web
                     - transparent-web
@@ -238,15 +296,18 @@ options:
                     - ssh
                     - ssh-tunnel
                     - wanopt
-            redirect-url:
+            redirect_url:
                 description:
                     - Redirect URL for further explicit web proxy processing.
-            replacemsg-override-group:
+                type: str
+            replacemsg_override_group:
                 description:
                     - Authentication replacement message override group. Source system.replacemsg-group.name.
-            scan-botnet-connections:
+                type: str
+            scan_botnet_connections:
                 description:
                     - Enable/disable scanning of connections to Botnet servers.
+                type: str
                 choices:
                     - disable
                     - block
@@ -254,116 +315,143 @@ options:
             schedule:
                 description:
                     - Name of schedule object. Source firewall.schedule.onetime.name firewall.schedule.recurring.name firewall.schedule.group.name.
+                type: str
             service:
                 description:
                     - Name of service objects.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Service name. Source firewall.service.custom.name firewall.service.group.name.
                         required: true
-            service-negate:
+                        type: str
+            service_negate:
                 description:
                     - When enabled, services match against any service EXCEPT the specified destination services.
+                type: str
                 choices:
                     - enable
                     - disable
-            session-ttl:
+            session_ttl:
                 description:
-                    - TTL in seconds for sessions accepted by this policy (0 means use the system default session TTL).
-            spamfilter-profile:
+                    - TTL in seconds for sessions accepted by this policy (0 means use the system ).
+                type: int
+            spamfilter_profile:
                 description:
                     - Name of an existing Spam filter profile. Source spamfilter.profile.name.
+                type: str
             srcaddr:
                 description:
-                    - Source address objects (must be set when using Web proxy).
+                    - Source address objects.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Address name. Source firewall.address.name firewall.addrgrp.name firewall.proxy-address.name firewall.proxy-addrgrp.name system
                               .external-resource.name.
                         required: true
-            srcaddr-negate:
+                        type: str
+            srcaddr_negate:
                 description:
                     - When enabled, source addresses match against any address EXCEPT the specified source addresses.
+                type: str
                 choices:
                     - enable
                     - disable
             srcaddr6:
                 description:
                     - IPv6 source address objects.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Address name. Source firewall.address6.name firewall.addrgrp6.name system.external-resource.name.
                         required: true
+                        type: str
             srcintf:
                 description:
                     - Source interface names.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Interface name. Source system.interface.name system.zone.name.
                         required: true
-            ssh-filter-profile:
+                        type: str
+            ssh_filter_profile:
                 description:
                     - Name of an existing SSH filter profile. Source ssh-filter.profile.name.
-            ssl-ssh-profile:
+                type: str
+            ssl_ssh_profile:
                 description:
                     - Name of an existing SSL SSH profile. Source firewall.ssl-ssh-profile.name.
+                type: str
             status:
                 description:
                     - Enable/disable the active status of the policy.
+                type: str
                 choices:
                     - enable
                     - disable
             transparent:
                 description:
                     - Enable to use the IP address of the client to connect to the server.
+                type: str
                 choices:
                     - enable
                     - disable
             users:
                 description:
                     - Names of user objects.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Group name. Source user.local.name.
                         required: true
-            utm-status:
+                        type: str
+            utm_status:
                 description:
                     - Enable the use of UTM profiles/sensors/lists.
+                type: str
                 choices:
                     - enable
                     - disable
             uuid:
                 description:
                     - Universally Unique Identifier (UUID; automatically assigned but can be manually reset).
-            waf-profile:
+                type: str
+            waf_profile:
                 description:
                     - Name of an existing Web application firewall profile. Source waf.profile.name.
+                type: str
             webcache:
                 description:
                     - Enable/disable web caching.
+                type: str
                 choices:
                     - enable
                     - disable
-            webcache-https:
+            webcache_https:
                 description:
                     - Enable/disable web caching for HTTPS (Requires deep-inspection enabled in ssl-ssh-profile).
+                type: str
                 choices:
                     - disable
                     - enable
-            webfilter-profile:
+            webfilter_profile:
                 description:
                     - Name of an existing Web filter profile. Source webfilter.profile.name.
-            webproxy-forward-server:
+                type: str
+            webproxy_forward_server:
                 description:
                     - Name of web proxy forward server. Source web-proxy.forward-server.name web-proxy.forward-server-group.name.
-            webproxy-profile:
+                type: str
+            webproxy_profile:
                 description:
                     - Name of web proxy profile. Source web-proxy.profile.name.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -373,6 +461,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure proxy policies.
     fortios_firewall_proxy_policy:
@@ -381,19 +470,19 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       firewall_proxy_policy:
-        state: "present"
         action: "accept"
-        application-list: "<your_own_value> (source application.list.name)"
-        av-profile: "<your_own_value> (source antivirus.profile.name)"
+        application_list: "<your_own_value> (source application.list.name)"
+        av_profile: "<your_own_value> (source antivirus.profile.name)"
         comments: "<your_own_value>"
         disclaimer: "disable"
-        dlp-sensor: "<your_own_value> (source dlp.sensor.name)"
+        dlp_sensor: "<your_own_value> (source dlp.sensor.name)"
         dstaddr:
          -
             name: "default_name_10 (source firewall.address.name firewall.addrgrp.name firewall.proxy-address.name firewall.proxy-addrgrp.name firewall.vip
               .name firewall.vipgrp.name firewall.vip46.name firewall.vipgrp46.name system.external-resource.name)"
-        dstaddr-negate: "enable"
+        dstaddr_negate: "enable"
         dstaddr6:
          -
             name: "default_name_13 (source firewall.address6.name firewall.addrgrp6.name firewall.vip6.name firewall.vipgrp6.name firewall.vip64.name firewall
@@ -401,68 +490,68 @@ EXAMPLES = '''
         dstintf:
          -
             name: "default_name_15 (source system.interface.name system.zone.name)"
-        global-label: "<your_own_value>"
+        global_label: "<your_own_value>"
         groups:
          -
             name: "default_name_18 (source user.group.name)"
-        http-tunnel-auth: "enable"
-        icap-profile: "<your_own_value> (source icap.profile.name)"
-        internet-service: "enable"
-        internet-service-custom:
+        http_tunnel_auth: "enable"
+        icap_profile: "<your_own_value> (source icap.profile.name)"
+        internet_service: "enable"
+        internet_service_custom:
          -
             name: "default_name_23 (source firewall.internet-service-custom.name)"
-        internet-service-id:
+        internet_service_id:
          -
             id:  "25 (source firewall.internet-service.id)"
-        internet-service-negate: "enable"
-        ips-sensor: "<your_own_value> (source ips.sensor.name)"
+        internet_service_negate: "enable"
+        ips_sensor: "<your_own_value> (source ips.sensor.name)"
         label: "<your_own_value>"
         logtraffic: "all"
-        logtraffic-start: "enable"
+        logtraffic_start: "enable"
         policyid: "31"
         poolname:
          -
             name: "default_name_33 (source firewall.ippool.name)"
-        profile-group: "<your_own_value> (source firewall.profile-group.name)"
-        profile-protocol-options: "<your_own_value> (source firewall.profile-protocol-options.name)"
-        profile-type: "single"
+        profile_group: "<your_own_value> (source firewall.profile-group.name)"
+        profile_protocol_options: "<your_own_value> (source firewall.profile-protocol-options.name)"
+        profile_type: "single"
         proxy: "explicit-web"
-        redirect-url: "<your_own_value>"
-        replacemsg-override-group: "<your_own_value> (source system.replacemsg-group.name)"
-        scan-botnet-connections: "disable"
+        redirect_url: "<your_own_value>"
+        replacemsg_override_group: "<your_own_value> (source system.replacemsg-group.name)"
+        scan_botnet_connections: "disable"
         schedule: "<your_own_value> (source firewall.schedule.onetime.name firewall.schedule.recurring.name firewall.schedule.group.name)"
         service:
          -
             name: "default_name_43 (source firewall.service.custom.name firewall.service.group.name)"
-        service-negate: "enable"
-        session-ttl: "45"
-        spamfilter-profile: "<your_own_value> (source spamfilter.profile.name)"
+        service_negate: "enable"
+        session_ttl: "45"
+        spamfilter_profile: "<your_own_value> (source spamfilter.profile.name)"
         srcaddr:
          -
             name: "default_name_48 (source firewall.address.name firewall.addrgrp.name firewall.proxy-address.name firewall.proxy-addrgrp.name system
               .external-resource.name)"
-        srcaddr-negate: "enable"
+        srcaddr_negate: "enable"
         srcaddr6:
          -
             name: "default_name_51 (source firewall.address6.name firewall.addrgrp6.name system.external-resource.name)"
         srcintf:
          -
             name: "default_name_53 (source system.interface.name system.zone.name)"
-        ssh-filter-profile: "<your_own_value> (source ssh-filter.profile.name)"
-        ssl-ssh-profile: "<your_own_value> (source firewall.ssl-ssh-profile.name)"
+        ssh_filter_profile: "<your_own_value> (source ssh-filter.profile.name)"
+        ssl_ssh_profile: "<your_own_value> (source firewall.ssl-ssh-profile.name)"
         status: "enable"
         transparent: "enable"
         users:
          -
             name: "default_name_59 (source user.local.name)"
-        utm-status: "enable"
+        utm_status: "enable"
         uuid: "<your_own_value>"
-        waf-profile: "<your_own_value> (source waf.profile.name)"
+        waf_profile: "<your_own_value> (source waf.profile.name)"
         webcache: "enable"
-        webcache-https: "disable"
-        webfilter-profile: "<your_own_value> (source webfilter.profile.name)"
-        webproxy-forward-server: "<your_own_value> (source web-proxy.forward-server.name web-proxy.forward-server-group.name)"
-        webproxy-profile: "<your_own_value> (source web-proxy.profile.name)"
+        webcache_https: "disable"
+        webfilter_profile: "<your_own_value> (source webfilter.profile.name)"
+        webproxy_forward_server: "<your_own_value> (source web-proxy.forward-server.name web-proxy.forward-server-group.name)"
+        webproxy_profile: "<your_own_value> (source web-proxy.profile.name)"
 '''
 
 RETURN = '''
@@ -525,14 +614,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -540,28 +631,28 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_proxy_policy_data(json):
-    option_list = ['action', 'application-list', 'av-profile',
-                   'comments', 'disclaimer', 'dlp-sensor',
-                   'dstaddr', 'dstaddr-negate', 'dstaddr6',
-                   'dstintf', 'global-label', 'groups',
-                   'http-tunnel-auth', 'icap-profile', 'internet-service',
-                   'internet-service-custom', 'internet-service-id', 'internet-service-negate',
-                   'ips-sensor', 'label', 'logtraffic',
-                   'logtraffic-start', 'policyid', 'poolname',
-                   'profile-group', 'profile-protocol-options', 'profile-type',
-                   'proxy', 'redirect-url', 'replacemsg-override-group',
-                   'scan-botnet-connections', 'schedule', 'service',
-                   'service-negate', 'session-ttl', 'spamfilter-profile',
-                   'srcaddr', 'srcaddr-negate', 'srcaddr6',
-                   'srcintf', 'ssh-filter-profile', 'ssl-ssh-profile',
+    option_list = ['action', 'application_list', 'av_profile',
+                   'comments', 'disclaimer', 'dlp_sensor',
+                   'dstaddr', 'dstaddr_negate', 'dstaddr6',
+                   'dstintf', 'global_label', 'groups',
+                   'http_tunnel_auth', 'icap_profile', 'internet_service',
+                   'internet_service_custom', 'internet_service_id', 'internet_service_negate',
+                   'ips_sensor', 'label', 'logtraffic',
+                   'logtraffic_start', 'policyid', 'poolname',
+                   'profile_group', 'profile_protocol_options', 'profile_type',
+                   'proxy', 'redirect_url', 'replacemsg_override_group',
+                   'scan_botnet_connections', 'schedule', 'service',
+                   'service_negate', 'session_ttl', 'spamfilter_profile',
+                   'srcaddr', 'srcaddr_negate', 'srcaddr6',
+                   'srcintf', 'ssh_filter_profile', 'ssl_ssh_profile',
                    'status', 'transparent', 'users',
-                   'utm-status', 'uuid', 'waf-profile',
-                   'webcache', 'webcache-https', 'webfilter-profile',
-                   'webproxy-forward-server', 'webproxy-profile']
+                   'utm_status', 'uuid', 'waf_profile',
+                   'webcache', 'webcache_https', 'webfilter_profile',
+                   'webproxy_forward_server', 'webproxy_profile']
     dictionary = {}
 
     for attribute in option_list:
@@ -571,62 +662,87 @@ def filter_firewall_proxy_policy_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_proxy_policy(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_proxy_policy'] and data['firewall_proxy_policy']:
+        state = data['firewall_proxy_policy']['state']
+    else:
+        state = True
     firewall_proxy_policy_data = data['firewall_proxy_policy']
-    filtered_data = filter_firewall_proxy_policy_data(firewall_proxy_policy_data)
-    if firewall_proxy_policy_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_firewall_proxy_policy_data(firewall_proxy_policy_data))
+
+    if state == "present":
         return fos.set('firewall',
                        'proxy-policy',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif firewall_proxy_policy_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('firewall',
                           'proxy-policy',
                           mkey=filtered_data['policyid'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall(data, fos):
-    login(data)
 
-    methodlist = ['firewall_proxy_policy']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_proxy_policy']:
+        resp = firewall_proxy_policy(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "firewall_proxy_policy": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "action": {"required": False, "type": "str",
                            "choices": ["accept", "deny", "redirect"]},
-                "application-list": {"required": False, "type": "str"},
-                "av-profile": {"required": False, "type": "str"},
+                "application_list": {"required": False, "type": "str"},
+                "av_profile": {"required": False, "type": "str"},
                 "comments": {"required": False, "type": "str"},
                 "disclaimer": {"required": False, "type": "str",
                                "choices": ["disable", "domain", "policy",
                                            "user"]},
-                "dlp-sensor": {"required": False, "type": "str"},
+                "dlp_sensor": {"required": False, "type": "str"},
                 "dstaddr": {"required": False, "type": "list",
                             "options": {
                                 "name": {"required": True, "type": "str"}
                             }},
-                "dstaddr-negate": {"required": False, "type": "str",
+                "dstaddr_negate": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
                 "dstaddr6": {"required": False, "type": "list",
                              "options": {
@@ -636,62 +752,62 @@ def main():
                             "options": {
                                 "name": {"required": True, "type": "str"}
                             }},
-                "global-label": {"required": False, "type": "str"},
+                "global_label": {"required": False, "type": "str"},
                 "groups": {"required": False, "type": "list",
                            "options": {
                                "name": {"required": True, "type": "str"}
                            }},
-                "http-tunnel-auth": {"required": False, "type": "str",
+                "http_tunnel_auth": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "icap-profile": {"required": False, "type": "str"},
-                "internet-service": {"required": False, "type": "str",
+                "icap_profile": {"required": False, "type": "str"},
+                "internet_service": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
-                "internet-service-custom": {"required": False, "type": "list",
+                "internet_service_custom": {"required": False, "type": "list",
                                             "options": {
                                                 "name": {"required": True, "type": "str"}
                                             }},
-                "internet-service-id": {"required": False, "type": "list",
+                "internet_service_id": {"required": False, "type": "list",
                                         "options": {
                                             "id": {"required": True, "type": "int"}
                                         }},
-                "internet-service-negate": {"required": False, "type": "str",
+                "internet_service_negate": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                "ips-sensor": {"required": False, "type": "str"},
+                "ips_sensor": {"required": False, "type": "str"},
                 "label": {"required": False, "type": "str"},
                 "logtraffic": {"required": False, "type": "str",
                                "choices": ["all", "utm", "disable"]},
-                "logtraffic-start": {"required": False, "type": "str",
+                "logtraffic_start": {"required": False, "type": "str",
                                      "choices": ["enable", "disable"]},
                 "policyid": {"required": True, "type": "int"},
                 "poolname": {"required": False, "type": "list",
                              "options": {
                                  "name": {"required": True, "type": "str"}
                              }},
-                "profile-group": {"required": False, "type": "str"},
-                "profile-protocol-options": {"required": False, "type": "str"},
-                "profile-type": {"required": False, "type": "str",
+                "profile_group": {"required": False, "type": "str"},
+                "profile_protocol_options": {"required": False, "type": "str"},
+                "profile_type": {"required": False, "type": "str",
                                  "choices": ["single", "group"]},
                 "proxy": {"required": False, "type": "str",
                           "choices": ["explicit-web", "transparent-web", "ftp",
                                       "ssh", "ssh-tunnel", "wanopt"]},
-                "redirect-url": {"required": False, "type": "str"},
-                "replacemsg-override-group": {"required": False, "type": "str"},
-                "scan-botnet-connections": {"required": False, "type": "str",
+                "redirect_url": {"required": False, "type": "str"},
+                "replacemsg_override_group": {"required": False, "type": "str"},
+                "scan_botnet_connections": {"required": False, "type": "str",
                                             "choices": ["disable", "block", "monitor"]},
                 "schedule": {"required": False, "type": "str"},
                 "service": {"required": False, "type": "list",
                             "options": {
                                 "name": {"required": True, "type": "str"}
                             }},
-                "service-negate": {"required": False, "type": "str",
+                "service_negate": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
-                "session-ttl": {"required": False, "type": "int"},
-                "spamfilter-profile": {"required": False, "type": "str"},
+                "session_ttl": {"required": False, "type": "int"},
+                "spamfilter_profile": {"required": False, "type": "str"},
                 "srcaddr": {"required": False, "type": "list",
                             "options": {
                                 "name": {"required": True, "type": "str"}
                             }},
-                "srcaddr-negate": {"required": False, "type": "str",
+                "srcaddr_negate": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
                 "srcaddr6": {"required": False, "type": "list",
                              "options": {
@@ -701,8 +817,8 @@ def main():
                             "options": {
                                 "name": {"required": True, "type": "str"}
                             }},
-                "ssh-filter-profile": {"required": False, "type": "str"},
-                "ssl-ssh-profile": {"required": False, "type": "str"},
+                "ssh_filter_profile": {"required": False, "type": "str"},
+                "ssl_ssh_profile": {"required": False, "type": "str"},
                 "status": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]},
                 "transparent": {"required": False, "type": "str",
@@ -711,17 +827,17 @@ def main():
                           "options": {
                               "name": {"required": True, "type": "str"}
                           }},
-                "utm-status": {"required": False, "type": "str",
+                "utm_status": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]},
                 "uuid": {"required": False, "type": "str"},
-                "waf-profile": {"required": False, "type": "str"},
+                "waf_profile": {"required": False, "type": "str"},
                 "webcache": {"required": False, "type": "str",
                              "choices": ["enable", "disable"]},
-                "webcache-https": {"required": False, "type": "str",
+                "webcache_https": {"required": False, "type": "str",
                                    "choices": ["disable", "enable"]},
-                "webfilter-profile": {"required": False, "type": "str"},
-                "webproxy-forward-server": {"required": False, "type": "str"},
-                "webproxy-profile": {"required": False, "type": "str"}
+                "webfilter_profile": {"required": False, "type": "str"},
+                "webproxy_forward_server": {"required": False, "type": "str"},
+                "webproxy_profile": {"required": False, "type": "str"}
 
             }
         }
@@ -729,15 +845,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

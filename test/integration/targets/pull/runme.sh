@@ -11,11 +11,11 @@ repo_dir="${temp_dir}/repo"
 pull_dir="${temp_dir}/pull"
 temp_log="${temp_dir}/pull.log"
 
-ansible-playbook setup.yml
+ansible-playbook setup.yml -i ../../inventory
 
 cleanup="$(pwd)/cleanup.yml"
 
-trap 'ansible-playbook "${cleanup}"' EXIT
+trap 'ansible-playbook "${cleanup}" -i ../../inventory' EXIT
 
 cp -av "pull-integration-test" "${repo_dir}"
 cd "${repo_dir}"
@@ -30,21 +30,30 @@ cd "${repo_dir}"
 function pass_tests {
 	# test for https://github.com/ansible/ansible/issues/13688
 	if ! grep MAGICKEYWORD "${temp_log}"; then
+	    cat "${temp_log}"
 	    echo "Missing MAGICKEYWORD in output."
 	    exit 1
 	fi
 
 	# test for https://github.com/ansible/ansible/issues/13681
-	if egrep '127\.0\.0\.1.*ok' "${temp_log}"; then
+	if grep -E '127\.0\.0\.1.*ok' "${temp_log}"; then
+	    cat "${temp_log}"
 	    echo "Found host 127.0.0.1 in output. Only localhost should be present."
 	    exit 1
 	fi
 	# make sure one host was run
-	if ! egrep 'localhost.*ok' "${temp_log}"; then
+	if ! grep -E 'localhost.*ok' "${temp_log}"; then
+	    cat "${temp_log}"
 	    echo "Did not find host localhost in output."
 	    exit 1
 	fi
 }
+
+export ANSIBLE_INVENTORY
+export ANSIBLE_HOST_PATTERN_MISMATCH
+
+unset ANSIBLE_INVENTORY
+unset ANSIBLE_HOST_PATTERN_MISMATCH
 
 ANSIBLE_CONFIG='' ansible-pull -d "${pull_dir}" -U "${repo_dir}" "$@" | tee "${temp_log}"
 

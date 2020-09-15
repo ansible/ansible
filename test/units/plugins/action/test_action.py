@@ -116,6 +116,7 @@ class TestActionBase(unittest.TestCase):
         mock_task = MagicMock()
         mock_task.action = "copy"
         mock_task.async_val = 0
+        mock_task.delegate_to = None
 
         # create a mock connection, so we don't actually try and connect to things
         mock_connection = MagicMock()
@@ -158,19 +159,19 @@ class TestActionBase(unittest.TestCase):
                 self.assertEqual(shebang, u"#!/usr/bin/python")
 
                 # test module not found
-                self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
+                self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args, {})
 
         # test powershell module formatting
         with patch.object(builtins, 'open', mock_open(read_data=to_bytes(powershell_module_replacers.strip(), encoding='utf-8'))):
             mock_task.action = 'win_copy'
             mock_task.args = dict(b=2)
             mock_connection.module_implementation_preferences = ('.ps1',)
-            (style, shebang, data, path) = action_base._configure_module('stat', mock_task.args)
+            (style, shebang, data, path) = action_base._configure_module('stat', mock_task.args, {})
             self.assertEqual(style, "new")
             self.assertEqual(shebang, u'#!powershell')
 
             # test module not found
-            self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args)
+            self.assertRaises(AnsibleError, action_base._configure_module, 'badmodule', mock_task.args, {})
 
     def test_action_base__compute_environment_string(self):
         fake_loader = DictDataLoader({
@@ -214,7 +215,7 @@ class TestActionBase(unittest.TestCase):
         self.assertEqual(env_string, "FOO=foo")
 
         # test environment with a variable in it
-        templar.set_available_variables(variables=dict(the_var='bar'))
+        templar.available_variables = dict(the_var='bar')
         mock_task.environment = [dict(FOO='{{the_var}}')]
         env_string = action_base._compute_environment_string()
         self.assertEqual(env_string, "FOO=bar")

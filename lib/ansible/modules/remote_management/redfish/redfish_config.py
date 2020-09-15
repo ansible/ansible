@@ -26,34 +26,41 @@ options:
     required: true
     description:
       - Category to execute on OOB controller
+    type: str
   command:
     required: true
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with OOB controller
+    type: str
     version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
   bios_attribute_name:
     required: false
     description:
       - name of BIOS attribute to update
     default: 'null'
+    type: str
     version_added: "2.8"
   bios_attribute_value:
     required: false
     description:
       - value of BIOS attribute to update
     default: 'null'
+    type: raw
     version_added: "2.8"
   timeout:
     description:
@@ -135,7 +142,7 @@ def main():
             username=dict(required=True),
             password=dict(required=True, no_log=True),
             bios_attribute_name=dict(default='null'),
-            bios_attribute_value=dict(default='null'),
+            bios_attribute_value=dict(default='null', type='raw'),
             timeout=dict(type='int', default=10)
         ),
         supports_check_mode=False
@@ -157,8 +164,7 @@ def main():
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri, timeout)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -173,7 +179,7 @@ def main():
     # Organize by Categories / Commands
     if category == "Systems":
         # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
+        result = rf_utils._find_systems_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 

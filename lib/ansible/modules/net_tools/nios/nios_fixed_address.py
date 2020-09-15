@@ -19,7 +19,7 @@ short_description: Configure Infoblox NIOS DHCP Fixed Address
 description:
   - A fixed address is a specific IP address that a DHCP server
     always assigns when a lease request comes from a particular
-    MAC address of the clien.
+    MAC address of the client.
   - Supports both IPV4 and IPV6 internet protocols
 requirements:
   - infoblox-client

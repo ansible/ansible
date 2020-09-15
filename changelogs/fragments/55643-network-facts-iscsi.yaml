@@ -1,0 +1,2 @@
+minor_changes:
+  - refactor iSCSI network facts for AIX and HP-UX, add unit test, remove external grep call

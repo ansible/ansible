@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix how the neighbour password was being defaulted (https://github.com/ansible/ansible/pull/65909)

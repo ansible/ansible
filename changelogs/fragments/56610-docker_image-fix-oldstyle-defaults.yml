@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_image - if ``nocache`` set to ``yes`` but not ``build.nocache``, the module failed."
+- "docker_image - if ``build`` was not specified, the wrong default for ``build.rm`` is used."

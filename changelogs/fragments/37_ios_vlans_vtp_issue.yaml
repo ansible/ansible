@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - To fix ios_vlans vtp version 2 issue (https://github.com/ansible-collections/cisco.ios/pull/38)

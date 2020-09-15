@@ -48,6 +48,9 @@ class VirtualSysctlDetectionMixin(object):
                 elif out.rstrip() == 'RHEV Hypervisor':
                     virtual_product_facts['virtualization_type'] = 'RHEV'
                     virtual_product_facts['virtualization_role'] = 'guest'
+                elif (key == 'security.jail.jailed') and (out.rstrip() == '1'):
+                    virtual_product_facts['virtualization_type'] = 'jails'
+                    virtual_product_facts['virtualization_role'] = 'guest'
 
         return virtual_product_facts
 

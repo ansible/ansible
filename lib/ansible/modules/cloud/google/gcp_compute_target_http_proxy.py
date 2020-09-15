@@ -48,10 +48,12 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource.
     required: false
+    type: str
   name:
     description:
     - Name of the resource. Provided by the client when the resource is created. The
@@ -61,15 +63,18 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   url_map:
     description:
     - A reference to the UrlMap resource that defines the mapping from URL to the
       BackendService.
     - 'This field represents a link to a UrlMap resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_url_map
-      task and then set this url_map field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_url_map task and then set this url_map field to "{{ name-of-resource
+      }}"'
     required: true
+    type: dict
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/v1/targetHttpProxies)'
@@ -87,7 +92,7 @@ EXAMPLES = '''
     state: present
   register: instancegroup
 
-- name: create a http health check
+- name: create a HTTP health check
   gcp_compute_http_health_check:
     name: httphealthcheck-targethttpproxy
     healthy_threshold: 10
@@ -104,7 +109,7 @@ EXAMPLES = '''
   gcp_compute_backend_service:
     name: backendservice-targethttpproxy
     backends:
-    - group: "{{ instancegroup }}"
+    - group: "{{ instancegroup.selfLink }}"
     health_checks:
     - "{{ healthcheck.selfLink }}"
     enable_cdn: 'true'
@@ -114,7 +119,7 @@ EXAMPLES = '''
     state: present
   register: backendservice
 
-- name: create a url map
+- name: create a URL map
   gcp_compute_url_map:
     name: urlmap-targethttpproxy
     default_service: "{{ backendservice }}"
@@ -124,7 +129,7 @@ EXAMPLES = '''
     state: present
   register: urlmap
 
-- name: create a target http proxy
+- name: create a target HTTP proxy
   gcp_compute_target_http_proxy:
     name: test_object
     url_map: "{{ urlmap }}"
@@ -164,7 +169,7 @@ urlMap:
   description:
   - A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
   returned: success
-  type: str
+  type: dict
 '''
 
 ################################################################################
@@ -188,7 +193,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            url_map=dict(required=True),
+            url_map=dict(required=True, type='dict'),
         )
     )
 

@@ -29,7 +29,7 @@ version_added: 2.6
 import re
 import json
 
-from itertools import chain
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.network.common.utils import to_list
@@ -110,11 +110,27 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False,
-            check_all=False):
-        return self.send_command(command=command, prompt=prompt, answer=answer,
-                                 sendonly=sendonly, check_all=check_all)
+    def get(self, command, prompt=None, answer=None, sendonly=False, newline=True, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            out = self._connection.get_prompt()
+
+            if out is None:
+                raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
+                                                       u' response window: %s' % self._connection._last_recv_window)
+
+            if to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
+                self._connection.queue_message('vvvv', 'In Config mode, sending exit to device')
+                self._connection.send_command('exit')
+            else:
+                self._connection.send_command('enable')

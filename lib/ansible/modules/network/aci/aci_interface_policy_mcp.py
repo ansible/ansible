@@ -176,7 +176,7 @@ def main():
     argument_spec.update(
         mcp=dict(type='str', aliases=['mcp_interface', 'name']),  # Not required for querying all objects
         description=dict(type='str', aliases=['descr']),
-        admin_state=dict(type='raw'),  # Turn into a boolean in v2.9
+        admin_state=dict(type='bool'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
     )
 

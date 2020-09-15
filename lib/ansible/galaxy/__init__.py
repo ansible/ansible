@@ -24,22 +24,30 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import yaml
 
+import ansible.constants as C
 from ansible import context
-from ansible.errors import AnsibleError
-from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_bytes
 
 #      default_readme_template
 #      default_meta_template
+
+
+def get_collections_galaxy_meta_info():
+    meta_path = os.path.join(os.path.dirname(__file__), 'data', 'collections_galaxy_meta.yml')
+    with open(to_bytes(meta_path, errors='surrogate_or_strict'), 'rb') as galaxy_obj:
+        return yaml.safe_load(galaxy_obj)
 
 
 class Galaxy(object):
     ''' Keeps global galaxy info '''
 
     def __init__(self):
+        # TODO: eventually remove this as it contains a mismash of properties that aren't really global
 
         # roles_path needs to be a list and will be by default
-        roles_path = context.CLIARGS.get('roles_path', tuple())
+        roles_path = context.CLIARGS.get('roles_path', C.DEFAULT_ROLES_PATH)
         # cli option handling is responsible for splitting roles_path
         self.roles_paths = roles_path
 
@@ -47,7 +55,10 @@ class Galaxy(object):
 
         # load data path for resource usage
         this_dir, this_filename = os.path.split(__file__)
-        type_path = context.CLIARGS.get('role_type', "default")
+        type_path = context.CLIARGS.get('role_type', 'default')
+        if type_path == 'default':
+            type_path = os.path.join(type_path, context.CLIARGS.get('type'))
+
         self.DATA_PATH = os.path.join(this_dir, 'data', type_path)
 
     @property

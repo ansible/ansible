@@ -1,0 +1,2 @@
+bugfixes:
+  - ce_link_status - fix some bugs, result of interface <get> operation involves a large amount of data,interact with the device through the <get-next>.(https://github.com/ansible/ansible/pull/62417).

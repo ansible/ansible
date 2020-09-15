@@ -18,7 +18,7 @@
       # It's a failure
       - "result.failed == true"
       # Sensible Failure message
-      - "result.msg == 'Bad subset'"
+      - "result.msg == 'Subset must be one of [config, default, hardware, interfaces], got foobar'"
 
 ###############
 # FIXME Future

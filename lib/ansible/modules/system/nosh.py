@@ -125,7 +125,7 @@ preset:
     description: whether the enabled status reflects the one set in the relevant C(*.preset) file
     returned: success
     type: bool
-    sample: False
+    sample: 'False'
 state:
     description: service process run state, C(None) if the service is not loaded and will not be started
     returned: if state option is used
@@ -135,56 +135,143 @@ status:
     description: a dictionary with the key=value pairs returned by `system-control show-json` or C(None) if the service is not loaded
     returned: success
     type: complex
-    contains: {
-            "After": [
-                "/etc/service-bundles/targets/basic",
-                "../sshdgenkeys",
-                "log"
-            ],
-            "Before": [
-                "/etc/service-bundles/targets/shutdown"
-            ],
-            "Conflicts": [],
-            "DaemontoolsEncoreState": "running",
-            "DaemontoolsState": "up",
-            "Enabled": true,
-            "LogService": "../cyclog@sshd",
-            "MainPID": 661,
-            "Paused": false,
-            "ReadyAfterRun": false,
-            "RemainAfterExit": false,
-            "Required-By": [],
-            "RestartExitStatusCode": 0,
-            "RestartExitStatusNumber": 0,
-            "RestartTimestamp": 4611686019935648081,
-            "RestartUTCTimestamp": 1508260140,
-            "RunExitStatusCode": 0,
-            "RunExitStatusNumber": 0,
-            "RunTimestamp": 4611686019935648081,
-            "RunUTCTimestamp": 1508260140,
-            "StartExitStatusCode": 1,
-            "StartExitStatusNumber": 0,
-            "StartTimestamp": 4611686019935648081,
-            "StartUTCTimestamp": 1508260140,
-            "StopExitStatusCode": 0,
-            "StopExitStatusNumber": 0,
-            "StopTimestamp": 4611686019935648081,
-            "StopUTCTimestamp": 1508260140,
-            "Stopped-By": [
-                "/etc/service-bundles/targets/shutdown"
-            ],
-            "Timestamp": 4611686019935648081,
-            "UTCTimestamp": 1508260140,
-            "Want": "nothing",
-            "Wanted-By": [
-                "/etc/service-bundles/targets/server",
-                "/etc/service-bundles/targets/sockets"
-            ],
-            "Wants": [
-                "/etc/service-bundles/targets/basic",
-                "../sshdgenkeys"
-            ]
-        }
+    contains:
+        After:
+            returned: success
+            type: list
+            sample: ["/etc/service-bundles/targets/basic","../sshdgenkeys", "log"]
+        Before:
+            returned: success
+            type: list
+            sample: ["/etc/service-bundles/targets/shutdown"]
+        Conflicts:
+            returned: success
+            type: list
+            sample: '[]'
+        DaemontoolsEncoreState:
+            returned: success
+            type: str
+            sample: "running"
+        DaemontoolsState:
+            returned: success
+            type: str
+            sample: "up"
+        Enabled:
+            returned: success
+            type: bool
+            sample: True
+        LogService:
+            returned: success
+            type: str
+            sample: "../cyclog@sshd"
+        MainPID:
+            returned: success
+            type: int
+            sample: 661
+        Paused:
+            returned: success
+            type: bool
+            sample: 'False'
+        ReadyAfterRun:
+            returned: success
+            type: bool
+            sample: 'False'
+        RemainAfterExit:
+            returned: success
+            type: bool
+            sample: 'False'
+        Required-By:
+            returned: success
+            type: list
+            sample: '[]'
+        RestartExitStatusCode:
+            returned: success
+            type: int
+            sample: '0'
+        RestartExitStatusNumber:
+            returned: success
+            type: int
+            sample: '0'
+        RestartTimestamp:
+            returned: success
+            type: int
+            sample: 4611686019935648081
+        RestartUTCTimestamp:
+            returned: success
+            type: int
+            sample: 1508260140
+        RunExitStatusCode:
+            returned: success
+            type: int
+            sample: '0'
+        RunExitStatusNumber:
+            returned: success
+            type: int
+            sample: '0'
+        RunTimestamp:
+            returned: success
+            type: int
+            sample: 4611686019935648081
+        RunUTCTimestamp:
+            returned: success
+            type: int
+            sample: 1508260140
+        StartExitStatusCode:
+            returned: success
+            type: int
+            sample: 1
+        StartExitStatusNumber:
+            returned: success
+            type: int
+            sample: '0'
+        StartTimestamp:
+            returned: success
+            type: int
+            sample: 4611686019935648081
+        StartUTCTimestamp:
+            returned: success
+            type: int
+            sample: 1508260140
+        StopExitStatusCode:
+            returned: success
+            type: int
+            sample: '0'
+        StopExitStatusNumber:
+            returned: success
+            type: int
+            sample: '0'
+        StopTimestamp:
+            returned: success
+            type: int
+            sample: 4611686019935648081
+        StopUTCTimestamp:
+            returned: success
+            type: int
+            sample: 1508260140
+        Stopped-By:
+            returned: success
+            type: list
+            sample: ["/etc/service-bundles/targets/shutdown"]
+        Timestamp:
+            returned: success
+            type: int
+            sample: 4611686019935648081
+        UTCTimestamp:
+            returned: success
+            type: int
+            sample: 1508260140
+        Want:
+            returned: success
+            type: str
+            sample: "nothing"
+        Wanted-By:
+            returned: success
+            type: list
+            sample: ["/etc/service-bundles/targets/server","/etc/service-bundles/targets/sockets"]
+        Wants:
+            returned: success
+            type: list
+            sample: ["/etc/service-bundles/targets/basic","../sshdgenkeys"]
 user:
     description: whether the user-level service manager is called
     returned: success

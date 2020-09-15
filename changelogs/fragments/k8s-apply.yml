@@ -1,0 +1,5 @@
+---
+minor_changes:
+  - 'Revert apply as the default of kubernetes modules such as k8s.  This
+    restores the 2.8 and previous behaviour as the default.  apply can still be
+    explicitly enabled https://github.com/ansible/ansible/issues/62661'

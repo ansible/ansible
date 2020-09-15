@@ -18,7 +18,7 @@
 
 $params = Parse-Args $args $true;
 
-$x = $params.thisPropertyDoesNotExist
+$params.thisPropertyDoesNotExist
 
 $data = Get-Attr $params "data" "pong";
 

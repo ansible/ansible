@@ -1,0 +1,52 @@
+---
+- debug:
+      msg: "START Merged iosxr_interfaces state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Merge provided configuration with device configuration
+      iosxr_interfaces: &merged
+        config:
+          - name: GigabitEthernet0/0/0/0
+            description: 'Configured and Merged by Ansible-Network'
+            mtu: 110
+            enabled: True
+            duplex: half
+          - name: GigabitEthernet0/0/0/1
+            description: 'Configured and Merged by Ansible-Network'
+            mtu: 2800
+            enabled: False
+            speed: 100
+            duplex: full
+        state: merged
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ merged['before'] | symmetric_difference(result['before']) | length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['after']) | length == 0 }}"
+
+    - name: Merge provided configuration with device configuration (IDEMPOTENT)
+      iosxr_interfaces: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml

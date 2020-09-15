@@ -5,6 +5,7 @@ Intro to Playbooks
    :local:
 
 .. _about_playbooks:
+.. _playbooks_intro:
 
 About Playbooks
 ```````````````
@@ -48,7 +49,7 @@ Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is to map a group of hosts to some well defined roles, represented by
 things ansible calls tasks.  At a basic level, a task is nothing more than a call
-to an ansible module (see :doc:`modules`).
+to an ansible module.
 
 By composing a playbook of multiple 'plays', it is possible to
 orchestrate multi-machine deployments, running certain steps on all
@@ -141,7 +142,7 @@ For each play in a playbook, you get to choose which machines in your infrastruc
 to target and what remote user to complete the steps (called tasks) as.
 
 The ``hosts`` line is a list of one or more groups or host patterns,
-separated by colons, as described in the :doc:`intro_patterns`
+separated by colons, as described in the :ref:`intro_patterns`
 documentation.  The ``remote_user`` is just the name of the user account::
 
     ---
@@ -162,7 +163,7 @@ Remote users can also be defined per task::
           ping:
           remote_user: yourname
 
-Support for running things as another user is also available (see :doc:`become`)::
+Support for running things as another user is also available (see :ref:`become`)::
 
     ---
     - hosts: webservers
@@ -337,7 +338,7 @@ a variable called ``vhost`` in the ``vars`` section, you could do this::
 Those same variables are usable in templates, which we'll get to later.
 
 Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
-make more sense to break up tasks as described in :doc:`playbooks_reuse`.
+make more sense to break up tasks as described in :ref:`playbooks_reuse`.
 
 .. _action_shorthand:
 
@@ -405,6 +406,29 @@ Here's an example handlers section::
             name: apache
             state: restarted
 
+You may want your Ansible handlers to use variables. For example, if the name of a service varies slightly by distribution, you want your output to show the exact name of the restarted service for each target machine. Avoid placing variables in the name of the handler. Since handler names are templated early on, Ansible may not have a value available for a handler name like this::
+
+    handlers:
+    # this handler name may cause your play to fail!
+    - name: restart "{{ web_service_name }}"
+
+If the variable used in the handler name is not available, the entire play fails. Changing that variable mid-play **will not** result in newly created handler.
+
+Instead, place variables in the task parameters of your handler. You can load the values using ``include_vars`` like this:
+
+  .. code-block:: yaml+jinja
+
+    tasks:
+      - name: Set host variables based on distribution
+        include_vars: "{{ ansible_facts.distribution }}.yml"
+
+    handlers:
+      - name: restart web service
+        service:
+          name: "{{ web_service_name | default('httpd') }}"
+          state: restarted
+
+
 As of Ansible 2.2, handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
 
     handlers:
@@ -431,6 +455,7 @@ a shared source like Galaxy).
 .. note::
    * Notify handlers are always run in the same order they are defined, `not` in the order listed in the notify-statement. This is also the case for handlers using `listen`.
    * Handler names and `listen` topics live in a global namespace.
+   * Handler names are templatable and `listen` topics are not.
    * Use unique handler names. If you trigger more than one handler with the same name, the first one(s) get overwritten. Only the last one defined will run.
    * You cannot notify a handler that is defined inside of an include. As of Ansible 2.1, this does work, however the include must be `static`.
 
@@ -489,7 +514,7 @@ For example, if you run ``ansible-lint`` on the :ref:`verify-apache.yml playbook
 
 .. code-block:: bash
 
-    $ ansible-lint veryify-apache.yml
+    $ ansible-lint verify-apache.yml
     [403] Package installs should not use latest
     verify-apache.yml:8
     Task/Handler: ensure apache is at the latest version

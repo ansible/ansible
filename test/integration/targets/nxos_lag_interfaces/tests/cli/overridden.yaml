@@ -1,0 +1,94 @@
+---
+- debug:
+    msg: "Start nxos_lag_interfaces overridden integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+- set_fact: test_int3="{{ nxos_int3 }}"
+
+- name: enable feature lacp
+  nxos_feature:
+    feature: lacp
+
+- name: setup1
+  nxos_config:
+    lines:
+      - "no channel-group 10"
+    parents: "{{ item }}"
+  ignore_errors: yes
+  loop:
+    - "interface {{ test_int1 }}"
+    - "interface {{ test_int2 }}"
+
+- name: setup2
+  nxos_config: &cleanup2
+    lines:
+      - "no channel-group 19"
+    parents: "interface {{ test_int3 }}"
+  ignore_errors: yes
+
+- block:
+  - name: setup3
+    nxos_config:
+      lines:
+        - "channel-group 10"
+      parents: "{{ item }}"
+    ignore_errors: yes
+    loop:
+      - "interface {{ test_int1 }}"
+      - "interface {{ test_int2 }}"
+
+  - name: Gather LAG interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: lag_interfaces
+
+  - name: Overridden
+    nxos_lag_interfaces: &overridden
+      config:
+        - name: port-channel19
+          members:
+            - member: "{{ test_int3 }}"
+      state: overridden
+    register: result
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(result.before)|length == 0"
+        - "result.changed == true"
+
+  - name: Gather LAG interfaces post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - Overridden
+    nxos_lag_interfaces: *overridden
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+  always:
+  - name: teardown1
+    nxos_config:
+      lines:
+        - "no channel-group 10"
+      parents: "{{ item }}"
+    ignore_errors: yes
+    loop:
+      - "interface {{ test_int1 }}"
+      - "interface {{ test_int2 }}"
+
+  - name: teardown2
+    nxos_config: *cleanup2
+    ignore_errors: yes
+
+  - name: disable feature lacp
+    nxos_feature:
+      feature: lacp
+      state: disabled

@@ -47,7 +47,7 @@ options:
     aliases: ['level']
   facility_level:
     description:
-      - Set logging serverity levels for facility based log messages.
+      - Set logging severity levels for facility based log messages.
   aggregate:
     description: List of logging definitions.
   state:
@@ -201,10 +201,10 @@ STATIC_CLI = {'link-enable': 'logging event link-status enable',
 
 DEFAULT_LOGGING_LEVEL = {0: [],
                          1: [],
-                         2: [],
+                         2: ['pktmgr'],
                          3: ['adjmgr', 'arp', 'icmpv6', 'l2rib', 'netstack'],
                          4: [],
-                         5: [],
+                         5: ['mrib'],
                          6: [],
                          7: []}
 

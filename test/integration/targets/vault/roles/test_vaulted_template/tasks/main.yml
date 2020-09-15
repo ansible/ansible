@@ -9,11 +9,11 @@
 - name: Get output template contents
   slurp:
     path: "{{ output_dir }}/vaulted_template.out"
-  register: vaulted_tempalte_out
+  register: vaulted_template_out
 
 - debug:
-    msg: "{{ vaulted_tempalte_out.content|b64decode }}"
+    msg: "{{ vaulted_template_out.content|b64decode }}"
 
 - assert:
     that:
-      - vaulted_tempalte_out.content|b64decode == 'here_i_am\n'
+      - vaulted_template_out.content|b64decode == 'here_i_am\n'

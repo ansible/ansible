@@ -1,0 +1,2 @@
+minor_changes:
+  - ansible-test - Remove ``pytest < 6.0.0`` constraint for managed installations on Python 3.x now that pytest 6 is supported.

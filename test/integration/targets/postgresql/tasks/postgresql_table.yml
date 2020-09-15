@@ -1,0 +1,854 @@
+# Test code for the postgresql_set module
+
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# Create a role for tests:
+- name: postgresql_table - create a role for tests
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: alice
+
+- name: postgresql_table - create test schema
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_schema:
+    database: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+
+#
+# Check table creation
+#
+
+# Create a simple table in check_mode:
+- name: postgresql_table - create table in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    login_db: postgres
+    login_port: 5432
+    login_user: "{{ pg_user }}"
+    name: test1
+    owner: alice
+    columns: id int
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.table == 'test1'
+      - result.queries == ['CREATE TABLE "test1" (id int)', 'ALTER TABLE "test1" OWNER TO "alice"']
+      - result.state == 'absent'
+
+# Check that the table doesn't exist after the previous step, rowcount must be 0
+- name: postgresql_table - check that table doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname ='test1'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+
+# Create a simple table:
+- name: postgresql_table - create table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    login_db: postgres
+    login_port: 5432
+    login_user: "{{ pg_user }}"
+    name: test1
+    owner: alice
+    columns: id int
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.table == 'test1'
+      - result.queries == ['CREATE TABLE "test1" (id int)', 'ALTER TABLE "test1" OWNER TO "alice"']
+      - result.state == 'present'
+      - result.storage_params == []
+      - result.tablespace == ""
+      - result.owner == "alice"
+
+# Check that the table exists after the previous step, rowcount must be 1
+- name: postgresql_table - check that table exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname ='test1'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+# Check that the tableowner is alice
+- name: postgresql_table - check that table owner is alice
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'test1' AND tableowner = 'alice'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+#
+# Check create table like another table
+#
+
+# Create a table LIKE another table without any additional parameters in check_mode:
+- name: postgresql_table - create table like in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    like: test1
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.table == 'test2'
+      - result.queries == ['CREATE TABLE "test2" (LIKE "test1")']
+      - result.state == 'absent'
+
+# Check that the table doesn't exist after the previous step, rowcount must be 0
+- name: postgresql_table - check that table doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname ='test2'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+
+# Create a table LIKE another table without any additional parameters:
+- name: postgresql_table - create table like
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    like: test1
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.table == 'test2'
+      - result.queries == ['CREATE TABLE "test2" (LIKE "test1")']
+      - result.state == 'present'
+      - result.storage_params == []
+      - result.tablespace == ""
+      - result.owner == "{{ pg_user }}"
+
+# Check that the table exists after the previous step, rowcount must be 1
+- name: postgresql_table - check that table exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname ='test2'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+#
+# Check drop table
+#
+
+# Drop a table in check_mode:
+- name: postgresql_table - drop table in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    state: absent
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['DROP TABLE "test2"']
+      - result.state == 'present'
+      - result.storage_params == []
+      - result.tablespace == ""
+      - result.owner == "{{ pg_user }}"
+
+# Check that the table exists after the previous step, rowcount must be 1
+- name: postgresql_table - check that table exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname ='test2'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+# Drop a table:
+- name: postgresql_table - drop table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['DROP TABLE "test2"']
+      - result.state == 'absent'
+
+# Check that the table doesn't exist after the previous step, rowcount must be 0
+- name: postgresql_table - check that table doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname ='test2'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+      - result.rowcount == 0
+
+# Create a table like another table including:
+- name: postgresql_table - create table like with including indexes
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    like: test1
+    including: indexes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['CREATE TABLE "test2" (LIKE "test1" INCLUDING indexes)']
+      - result.state == 'present'
+      - result.storage_params == []
+      - result.tablespace == ""
+      - result.owner == "{{ pg_user }}"
+
+# Check to create table if it exists:
+- name: postgresql_table - try to create existing table again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    like: test1
+    including: indexes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is not changed
+
+# Drop the table to prepare for the next step:
+- name: postgresql_table - drop table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    state: absent
+  register: result
+  ignore_errors: yes
+
+# Try to drop non existing table:
+- name: postgresql_table - try drop dropped table again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test2
+    state: absent
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is not changed
+
+#
+# Change ownership
+#
+
+# Create user to prepare for the next step:
+- name: postgresql_table - create the new user test_user
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_user:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: test_user
+    state: present
+  ignore_errors: yes
+
+# Try to change owner to test_user in check_mode
+- name: postgresql_table - change table ownership to test_user in check_mode
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test1
+    owner: test_user
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+      - result.owner == 'alice'
+      - result.queries == ['ALTER TABLE "test1" OWNER TO "test_user"']
+      - result.state == 'present'
+      - result is changed
+
+# Check that the tableowner was not changed to test_user
+- name: postgresql_table - check that table owner was not changed
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'test1' AND tableowner = 'test_user'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result is not changed
+
+# Try to change owner to test_user
+- name: postgresql_table - change table ownership to test_user
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test1
+    owner: test_user
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result.owner == 'test_user'
+      - result.queries == ['ALTER TABLE "test1" OWNER TO "test_user"']
+      - result.state == 'present'
+      - result is changed
+
+# Check that the tableowner was changed to test_user
+- name: postgresql_table - check that table owner was changed
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'test1' AND tableowner = 'test_user'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+#
+# Additional storage parameters
+#
+
+# Create a table with additional storage parameters:
+- name: postgresql_table - create table with storage_params
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test3
+    columns:
+    - id int
+    - name text
+    storage_params:
+    - fillfactor=10
+    - autovacuum_analyze_threshold=1
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.state == 'present'
+      - result.queries == ['CREATE TABLE "test3" (id int,name text) WITH (fillfactor=10,autovacuum_analyze_threshold=1)']
+      - result.storage_params == [ "fillfactor=10", "autovacuum_analyze_threshold=1" ]
+
+# Check storage parameters
+- name: postgresql_table - check storage parameters
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT reloptions FROM pg_class WHERE relname = 'test3'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.query_result[0].reloptions == ["fillfactor=10", "autovacuum_analyze_threshold=1"]
+#
+# Check truncate table
+#
+
+# Insert a row to test table:
+- name: postgresql_table - insert a row
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "INSERT INTO test3 (id, name) VALUES (1, 'first')"
+
+# Truncate a table in check_mode:
+- name: postgresql_table - truncate table
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test3
+    truncate: yes
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['TRUNCATE TABLE "test3"']
+      - result.state == "present"
+
+# Check the row exists:
+- name: postgresql_table - check that row exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT * FROM test3 WHERE id = '1'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+ 
+# Truncate a table. It always returns changed == true
+# because it always creates a new table with the same schema and drop the old table:
+- name: postgresql_table - truncate table
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test3
+    truncate: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['TRUNCATE TABLE "test3"']
+      - result.state == "present"
+
+# Check the row exists:
+- name: postgresql_table - check that row doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT * FROM test3 WHERE id = '1'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+
+#
+# Check rename table
+#
+
+# Rename a table in check_mode.
+# In check_mode test4 won't be exist after the following playbook,
+# so result.changed == 'absent' for the table with this name
+- name: postgresql_table - rename table in check_mode
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test3
+    rename: test4
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['ALTER TABLE "test3" RENAME TO "test4"']
+      - result.state == "absent"
+
+# Check that the table exists after the previous step, rowcount must be 1
+- name: postgresql_table - check that table exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test3'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+# Rename a table:
+- name: postgresql_table - rename table
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test3
+    rename: test4
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['ALTER TABLE "test3" RENAME TO "test4"']
+      - result.state == "present"
+
+# Check that the table test 3 doesn't exist after the previous step, rowcount must be - 0
+- name: postgresql_table - check that table exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test3'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+
+# Check that the table test 4 exists after the previous step, rowcount must be - 1
+- name: postgresql_table - check that table exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test4'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+#
+# Check create unlogged table
+#
+
+# Create unlogged table in check_mode:
+- name: postgresql_table - create unlogged table in check_mode
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test5
+    unlogged: yes
+  register: result
+  ignore_errors: yes
+  check_mode: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['CREATE UNLOGGED TABLE "test5" ()']
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+
+# Check that the table doesn't exist after the previous step, rowcount must be - 0
+- name: postgresql_table - check that table doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test5'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+
+# Create unlogged table:
+- name: postgresql_table - create unlogged table
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test5
+    unlogged: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['CREATE UNLOGGED TABLE "test5" ()']
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+
+# Check that the table exists after the previous step, rowcount must be - 1
+- name: postgresql_table - check that table exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test5'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+
+# Drop table CASCADE:
+- name: postgresql_table - drop table cascade
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test5
+    state: absent
+    cascade: yes
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['DROP TABLE "test5" CASCADE']
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+
+# Check that the table doesn't exist after the previous step, rowcount must be - 0
+- name: postgresql_table - check that table doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test5'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('9.1', '>=')
+
+#
+# Create, drop, and rename table in a specific schema:
+#
+- name: postgresql_table - create table in a specific schema
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme.test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['CREATE TABLE "acme"."test_schema_table" ()']
+
+- name: postgresql_table - check that table exists after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test_schema_table' and schemaname = 'acme'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+- name: postgresql_table - try to create a table with the same name and schema again
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme.test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result is not changed
+
+- name: postgresql_table - create a table in the default schema for the next test
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: postgresql_table - drop the table from schema acme
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: postgres.acme.test_schema_table
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['DROP TABLE "postgres"."acme"."test_schema_table"']
+
+- name: postgresql_table - check that the table doesn't exist after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test_schema_table' and schemaname = 'acme'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 0
+
+- name: postgresql_table - try to drop the table from schema acme again
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme.test_schema_table
+    state: absent
+  register: result
+
+- assert:
+    that:
+      - result is not changed
+
+- name: postgresql_table - check that the table with the same name in schema public exists
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_stat_all_tables WHERE relname = 'test_schema_table' and schemaname = 'public'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+      - result.rowcount == 1
+
+- name: postgresql_table - rename the table that contents a schema name
+  postgresql_table:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: public.test_schema_table
+    rename: new_test_schema_table
+  register: result
+
+- assert:
+    that:
+      - result is changed
+      - result.queries == ['ALTER TABLE "public"."test_schema_table" RENAME TO "new_test_schema_table"']

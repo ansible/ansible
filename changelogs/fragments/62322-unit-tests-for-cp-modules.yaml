@@ -1,0 +1,10 @@
+---
+bugfixes:
+- "Unit tests for cp_mgmt_assign_global_assignment"
+- "Unit tests for cp_cp_mgmt_discard"
+- "Unit tests for cp_mgmt_install_policy"
+- "Unit tests for cp_mgmt_verfiy_policy"
+- "Unit tests for cp_mgmt_publish"
+- "Unit tests for cp_mgmt_put_file"
+- "Unit tests for cp_mgmt_run_ips_update"
+- "Unit tests for cp_mgmt_run_script(https://github.com/ansible/ansible/pull/62322)"

@@ -1,0 +1,62 @@
+---
+# A Note about ec2 environment variable name preference:
+#  - EC2_URL -> AWS_URL
+#  - EC2_ACCESS_KEY -> AWS_ACCESS_KEY_ID -> AWS_ACCESS_KEY
+#  - EC2_SECRET_KEY -> AWS_SECRET_ACCESS_KEY -> AWX_SECRET_KEY
+#  - EC2_REGION -> AWS_REGION
+#
+
+- block:
+
+    - set_fact:
+        virtualenv: "{{ remote_tmp_dir }}/virtualenv"
+        virtualenv_command: "{{ ansible_python_interpreter }} -m virtualenv"
+
+    - set_fact:
+        virtualenv_interpreter: "{{ virtualenv }}/bin/python"
+
+    - pip:
+        name: virtualenv
+
+    - pip:
+        name:
+          - 'botocore<1.10.16'
+          - boto3
+          - coverage
+        virtualenv: "{{ virtualenv }}"
+        virtualenv_command: "{{ virtualenv_command }}"
+        virtualenv_site_packages: no
+
+    - include_tasks: version_fail.yml
+      vars:
+        ansible_python_interpreter: "{{ virtualenv_interpreter }}"
+
+    - file:
+        path: "{{ virtualenv }}"
+        state: absent
+
+    - pip:
+        name:
+          - 'botocore>=1.10.16'
+          - boto3
+          - coverage
+        virtualenv: "{{ virtualenv }}"
+        virtualenv_command: "{{ virtualenv_command }}"
+        virtualenv_site_packages: no
+
+
+    - include_tasks: env_setup.yml
+    - include_tasks: cpu_options.yml
+    - include_tasks: termination_protection.yml
+    - include_tasks: tags_and_vpc_settings.yml
+    - include_tasks: external_resource_attach.yml
+    - include_tasks: block_devices.yml
+    - include_tasks: default_vpc_tests.yml
+    - include_tasks: iam_instance_role.yml
+    - include_tasks: checkmode_tests.yml
+    - include_tasks: ebs_optimized.yml
+    - include_tasks: instance_no_wait.yml
+
+  always:
+    - include_tasks: env_cleanup.yml
+      when: aws_cleanup

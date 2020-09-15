@@ -31,6 +31,8 @@ description:
 author: QijunPan (@QijunPan)
 notes:
     - Ensure All-Active Gateways or Distributed Gateway for the VXLAN Network can not configure at the same time.
+    - Recommended connection is C(network_cli).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     dfs_id:
         description:
@@ -176,8 +178,9 @@ changed:
 
 import re
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network.cloudengine.ce import get_config, load_config
+from ansible.module_utils.network.cloudengine.ce import load_config
 from ansible.module_utils.network.cloudengine.ce import ce_argument_spec
+from ansible.module_utils.connection import exec_command
 
 
 def is_config_exist(cmp_cfg, test_cfg):
@@ -377,17 +380,33 @@ class VxlanGateway(object):
         if not self.module.check_mode:
             load_config(self.module, commands)
 
+    def get_config(self, flags=None):
+        """Retrieves the current config from the device or cache
+        """
+        flags = [] if flags is None else flags
+
+        cmd = 'display current-configuration '
+        cmd += ' '.join(flags)
+        cmd = cmd.strip()
+
+        rc, out, err = exec_command(self.module, cmd)
+        if rc != 0:
+            self.module.fail_json(msg=err)
+        cfg = str(out).strip()
+
+        return cfg
+
     def get_current_config(self):
         """get current configuration"""
 
         flags = list()
-        exp = " | ignore-case section include dfs-group"
+        exp = r" | ignore-case section include ^#\s+dfs-group"
         if self.vpn_instance:
-            exp += "|^ip vpn-instance %s$" % self.vpn_instance
+            exp += r"|^#\s+ip vpn-instance %s" % self.vpn_instance
         if self.vbdif_name:
-            exp += "|^interface %s$" % self.vbdif_name
+            exp += r"|^#\s+interface %s" % self.vbdif_name
         flags.append(exp)
-        return get_config(self.module, flags)
+        return self.get_config(flags)
 
     def cli_add_command(self, command, undo=False):
         """add command to self.update_cmd and self.commands"""
@@ -579,6 +598,7 @@ class VxlanGateway(object):
         if self.vbdif_bind_vpn:
             cmd = "ip binding vpn-instance %s" % self.vbdif_bind_vpn
             exist = is_config_exist(self.config, cmd)
+
             if self.state == "present" and not exist:
                 if not vbdif_view:
                     self.cli_add_command(vbdif_cmd)

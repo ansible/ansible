@@ -34,6 +34,7 @@ import json
 
 from itertools import chain
 
+from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
 from ansible.module_utils.network.common.utils import to_list
 from ansible.plugins.cliconf import CliconfBase, enable_mode
@@ -92,9 +93,30 @@ class Cliconf(CliconfBase):
             results.append(self.send_command(command, prompt, answer, False, newline))
         return results[1:-1]
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, check_all=False):
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+    def get(self, command, prompt=None, answer=None, sendonly=False, newline=True, check_all=False):
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def get_capabilities(self):
         result = super(Cliconf, self).get_capabilities()
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            out = self._connection.get_prompt()
+
+            if out is None:
+                raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
+                                                       u' response window: %s' % self._connection._last_recv_window)
+
+            prompt = to_text(out, errors='surrogate_then_replace').strip()
+            while prompt.endswith(']'):
+                self._connection.queue_message('vvvv', 'wrong context, sending return to device')
+                if prompt.startswith('[*'):
+                    self._connection.exec_command('clear configuration candidate')
+                self._connection.exec_command('return')
+                out = self._connection.get_prompt()
+                prompt = to_text(out, errors='surrogate_then_replace').strip()

@@ -1,0 +1,11 @@
+---
+- name: Populate Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      interface GigabitEthernet 0/1
+      channel-group 1 mode active
+      interface GigabitEthernet 0/2
+      channel-group 1 mode passive
+  when: ansible_net_version != "15.6(2)T"

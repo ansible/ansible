@@ -1,0 +1,137 @@
+---
+
+- name: Clean up the firewall rules
+  vmware_host_firewall_manager:
+    cluster_name: '{{ ccr1 }}'
+    rules:
+        - name: vvold
+          enabled: False
+        - name: CIMHttpServer
+          enabled: True
+          allowed_hosts:
+            all_ip: True
+        - name: NFC
+          enabled: True
+          allowed_hosts:
+            all_ip: True
+  ignore_errors: yes
+
+- name: Remove the VM prepared by prepare_vmware_tests
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ item.name }}"
+    force: yes
+    state: absent
+  with_items: '{{ virtual_machines + virtual_machines_in_cluster }}'
+
+- name: Remove the test_vm* VMs
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    name: "{{ item }}"
+    force: yes
+    state: absent
+  with_items:
+    - test_vm1
+    - test_vm2
+    - test_vm3
+
+- name: Remove the DVSwitch
+  vmware_dvswitch:
+    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: '{{ dc1 }}'
+    state: absent
+    switch_name: '{{ item }}'
+  loop:
+    - '{{ dvswitch1 }}'
+    - dvswitch_0001
+    - dvswitch_0002
+  ignore_errors: yes
+
+- name: Remove the vSwitches
+  vmware_vswitch:
+    validate_certs: no
+    hostname: '{{ item }}'
+    username: '{{ esxi_user }}'
+    password: '{{ esxi_password }}'
+    switch_name: "{{ switch1 }}"
+    state: absent
+  with_items: "{{ esxi_hosts }}"
+  ignore_errors: yes
+
+- name: Remove ESXi Hosts to vCenter
+  vmware_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ dc1 }}'
+    cluster_name: ccr1
+    esxi_hostname: '{{ item }}'
+    esxi_username: '{{ esxi_user }}'
+    esxi_password: '{{ esxi_password }}'
+    state: absent
+    validate_certs: no
+  with_items: "{{ esxi_hosts }}"
+  ignore_errors: yes
+
+- name: Umount NFS datastores to ESXi (1/2)
+  vmware_host_datastore:
+      hostname: '{{ item }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
+      esxi_hostname: '{{ item }}'  # Won't be necessary with  https://github.com/ansible/ansible/pull/56516
+      datastore_name: '{{ ds1 }}'
+      state: absent
+      validate_certs: no
+  with_items: "{{ esxi_hosts }}"
+
+- name: Umount NFS datastores to ESXi (2/2)
+  vmware_host_datastore:
+      hostname: '{{ item }}'
+      username: '{{ esxi_user }}'
+      password: '{{ esxi_password }}'
+      esxi_hostname: '{{ item }}'  # Won't be necessary with  https://github.com/ansible/ansible/pull/56516
+      datastore_name: '{{ ds2 }}'
+      state: absent
+      validate_certs: no
+  with_items: "{{ esxi_hosts }}"
+
+- name: Delete a datastore cluster to datacenter
+  vmware_datastore_cluster:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: no
+    datacenter_name: "{{ dc1 }}"
+    datastore_cluster_name: '{{ item }}'
+    state: absent
+  with_items:
+    - DSC1
+    - DSC2
+  ignore_errors: yes
+
+- name: Remove the datacenter
+  vmware_datacenter:
+    validate_certs: no
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    datacenter_name: '{{ item }}'
+    state: absent
+  when: vcsim is not defined
+  with_items:
+    - '{{ dc1 }}'
+    - datacenter_0001
+
+- name: kill vcsim
+  uri:
+    url: "http://{{ vcsim }}:5000/killall"
+  when: vcsim is defined

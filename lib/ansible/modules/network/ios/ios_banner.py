@@ -90,7 +90,7 @@ commands:
 """
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.connection import exec_command
-from ansible.module_utils.network.ios.ios import load_config, run_commands
+from ansible.module_utils.network.ios.ios import load_config
 from ansible.module_utils.network.ios.ios import ios_argument_spec, check_args
 import re
 
@@ -123,7 +123,7 @@ def map_config_to_obj(module):
                                     'show running-config | begin banner %s'
                                     % module.params['banner'])
         if out:
-            output = re.search(r'\^C(.*)\^C', out, re.S).group(1).strip()
+            output = re.search(r'\^C(.*?)\^C', out, re.S).group(1).strip()
         else:
             output = None
     obj = {'banner': module.params['banner'], 'state': 'absent'}
@@ -176,7 +176,7 @@ def main():
 
     if commands:
         if not module.check_mode:
-            response = load_config(module, commands)
+            load_config(module, commands)
 
         result['changed'] = True
 

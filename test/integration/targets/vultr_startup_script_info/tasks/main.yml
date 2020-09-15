@@ -1,0 +1,35 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test gather vultr startup script info - empty resources
+  vultr_startup_script_info:
+
+- name: Create the script
+  vultr_startup_script:
+    name: '{{ startup_script_name }}'
+    script_type: '{{ startup_script_type }}'
+    script: '{{ startup_script_content }}'
+
+- name: test gather vultr startup script info in check mode
+  vultr_startup_script_info:
+  check_mode: yes
+  register: result
+
+- name: verify test gather vultr startup script info in check mode
+  assert:
+    that:
+    - result.vultr_startup_script_info|selectattr('name','equalto','{{ startup_script_name }}') | list | count == 1
+
+- name: test gather vultr startup script info
+  vultr_startup_script_info:
+  register: result
+
+- name: verify test gather vultr startup script info
+  assert:
+    that:
+    - result.vultr_startup_script_info|selectattr('name','equalto','{{ startup_script_name }}') | list | count == 1
+
+- name: Delete the script
+  vultr_startup_script:
+    name: '{{ startup_script_name }}'
+    state: absent

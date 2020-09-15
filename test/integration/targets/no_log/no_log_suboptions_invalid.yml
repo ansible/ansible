@@ -1,0 +1,45 @@
+- name: test no log with suboptions
+  hosts: testhost
+  gather_facts: no
+  ignore_errors: yes
+
+  tasks:
+    - name: Task with suboptions and invalid parameter
+      module:
+        secret: SUPREME
+        invalid: param
+        subopt_dict:
+          str_sub_opt1: IDIOM
+          str_sub_opt2: otherstring
+          nested_subopt:
+            n_subopt1: MOCKUP
+
+        subopt_list:
+          - subopt1: EDUCATED
+            subopt2: thridstring
+          - subopt1: FOOTREST
+
+    - name: Task with suboptions as string with invalid parameter
+      module:
+        secret: FOOTREST
+        invalid: param
+        subopt_dict: str_sub_opt1=CRAFTY
+
+    - name: Task with suboptions with dict instead of list
+      module:
+        secret: FELINE
+        subopt_dict:
+          str_sub_opt1: CRYSTAL
+          str_sub_opt2: otherstring
+          nested_subopt:
+            n_subopt1: EXPECTANT
+        subopt_list:
+          foo: bar
+
+    - name: Task with suboptions with incorrect data type
+      module:
+        secret: AGROUND
+        subopt_dict: 9068.21361
+        subopt_list:
+          - subopt1: GOLIATH
+          - subopt1: FREEFALL

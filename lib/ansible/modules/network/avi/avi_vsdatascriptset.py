@@ -69,6 +69,12 @@ options:
         description:
             - Uuid of pools that could be referred by vsdatascriptset objects.
             - It is a reference to an object of type pool.
+    protocol_parser_refs:
+        description:
+            - List of protocol parsers that could be referred by vsdatascriptset objects.
+            - It is a reference to an object of type protocolparser.
+            - Field introduced in 18.2.3.
+        version_added: "2.9"
     string_group_refs:
         description:
             - Uuid of string groups that could be referred by vsdatascriptset objects.
@@ -106,7 +112,7 @@ obj:
 from ansible.module_utils.basic import AnsibleModule
 try:
     from ansible.module_utils.network.avi.avi import (
-        avi_common_argument_spec, HAS_AVI, avi_ansible_api)
+        avi_common_argument_spec, avi_ansible_api, HAS_AVI)
 except ImportError:
     HAS_AVI = False
 
@@ -125,6 +131,7 @@ def main():
         name=dict(type='str', required=True),
         pool_group_refs=dict(type='list',),
         pool_refs=dict(type='list',),
+        protocol_parser_refs=dict(type='list',),
         string_group_refs=dict(type='list',),
         tenant_ref=dict(type='str',),
         url=dict(type='str',),
@@ -135,7 +142,7 @@ def main():
         argument_spec=argument_specs, supports_check_mode=True)
     if not HAS_AVI:
         return module.fail_json(msg=(
-            'Avi python API SDK (avisdk>=17.1) is not installed. '
+            'Avi python API SDK (avisdk>=17.1) or requests is not installed. '
             'For more details visit https://github.com/avinetworks/sdk.'))
     return avi_ansible_api(module, 'vsdatascriptset',
                            set([]))

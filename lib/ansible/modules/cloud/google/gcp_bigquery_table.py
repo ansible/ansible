@@ -47,44 +47,70 @@ options:
     - present
     - absent
     default: present
+    type: str
   table_reference:
     description:
     - Reference describing the ID of this table.
     required: false
+    type: dict
     suboptions:
       dataset_id:
         description:
         - The ID of the dataset containing this table.
         required: false
+        type: str
       project_id:
         description:
         - The ID of the project containing this table.
         required: false
+        type: str
       table_id:
         description:
         - The ID of the the table.
         required: false
+        type: str
+  clustering:
+    description:
+    - One or more fields on which data should be clustered. Only top-level, non-repeated,
+      simple-type fields are supported. When you cluster a table using multiple columns,
+      the order of columns you specify is important. The order of the specified columns
+      determines the sort order of the data.
+    required: false
+    type: list
+    version_added: 2.9
   description:
     description:
     - A user-friendly description of the dataset.
     required: false
+    type: str
   friendly_name:
     description:
     - A descriptive name for this table.
     required: false
+    type: str
   labels:
     description:
     - The labels associated with this dataset. You can use these to organize and group
       your datasets .
     required: false
+    type: dict
   name:
     description:
     - Name of the table.
     required: false
+    type: str
+  num_rows:
+    description:
+    - The number of rows of data in this table, excluding any data in the streaming
+      buffer.
+    required: false
+    type: int
+    version_added: 2.9
   view:
     description:
     - The view definition.
     required: false
+    type: dict
     suboptions:
       use_legacy_sql:
         description:
@@ -95,6 +121,7 @@ options:
         description:
         - Describes user-defined function resources used in the query.
         required: false
+        type: list
         suboptions:
           inline_code:
             description:
@@ -102,73 +129,84 @@ options:
               Providing a inline code resource is equivalent to providing a URI for
               a file containing the same code.
             required: false
+            type: str
           resource_uri:
             description:
             - A code resource to load from a Google Cloud Storage URI (gs://bucket/path).
             required: false
+            type: str
   time_partitioning:
     description:
     - If specified, configures time-based partitioning for this table.
     required: false
+    type: dict
     suboptions:
       expiration_ms:
         description:
         - Number of milliseconds for which to keep the storage for a partition.
         required: false
+        type: int
+      field:
+        description:
+        - If not set, the table is partitioned by pseudo column, referenced via either
+          '_PARTITIONTIME' as TIMESTAMP type, or '_PARTITIONDATE' as DATE type. If
+          field is specified, the table is instead partitioned by this field. The
+          field must be a top-level TIMESTAMP or DATE field. Its mode must be NULLABLE
+          or REQUIRED.
+        required: false
+        type: str
+        version_added: 2.9
       type:
         description:
         - The only type supported is DAY, which will generate one partition per day.
+        - 'Some valid choices include: "DAY"'
         required: false
-        choices:
-        - DAY
+        type: str
   schema:
     description:
     - Describes the schema of this table.
     required: false
+    type: dict
     suboptions:
       fields:
         description:
         - Describes the fields in a table.
         required: false
+        type: list
         suboptions:
           description:
             description:
             - The field description. The maximum length is 1,024 characters.
             required: false
+            type: str
           fields:
             description:
             - Describes the nested schema fields if the type property is set to RECORD.
             required: false
+            type: list
           mode:
             description:
             - The field mode.
+            - 'Some valid choices include: "NULLABLE", "REQUIRED", "REPEATED"'
             required: false
-            choices:
-            - NULLABLE
-            - REQUIRED
-            - REPEATED
+            type: str
           name:
             description:
             - The field name.
             required: false
+            type: str
           type:
             description:
             - The field data type.
+            - 'Some valid choices include: "STRING", "BYTES", "INTEGER", "FLOAT",
+              "TIMESTAMP", "DATE", "TIME", "DATETIME", "RECORD"'
             required: false
-            choices:
-            - STRING
-            - BYTES
-            - INTEGER
-            - FLOAT
-            - TIMESTAMP
-            - DATE
-            - TIME
-            - DATETIME
-            - RECORD
+            type: str
   encryption_configuration:
     description:
     - Custom encryption configuration.
     required: false
+    type: dict
     suboptions:
       kms_key_name:
         description:
@@ -176,17 +214,20 @@ options:
           BigQuery table. The BigQuery Service Account associated with your project
           requires access to this encryption key.
         required: false
+        type: str
   expiration_time:
     description:
     - The time when this table expires, in milliseconds since the epoch. If not present,
       the table will persist indefinitely.
     required: false
+    type: int
   external_data_configuration:
     description:
     - Describes the data format, location, and other properties of a table stored
       outside of BigQuery. By defining these properties, the data source can then
       be queried as if it were a standard BigQuery table.
     required: false
+    type: dict
     suboptions:
       autodetect:
         description:
@@ -197,10 +238,9 @@ options:
       compression:
         description:
         - The compression type of the data source.
+        - 'Some valid choices include: "GZIP", "NONE"'
         required: false
-        choices:
-        - GZIP
-        - NONE
+        type: str
       ignore_unknown_values:
         description:
         - Indicates if BigQuery should allow extra values that are not represented
@@ -213,77 +253,72 @@ options:
           data .
         required: false
         default: '0'
+        type: int
       source_format:
         description:
         - The data format.
+        - 'Some valid choices include: "CSV", "GOOGLE_SHEETS", "NEWLINE_DELIMITED_JSON",
+          "AVRO", "DATASTORE_BACKUP", "BIGTABLE"'
         required: false
-        choices:
-        - CSV
-        - GOOGLE_SHEETS
-        - NEWLINE_DELIMITED_JSON
-        - AVRO
-        - DATASTORE_BACKUP
-        - BIGTABLE
+        type: str
       source_uris:
         description:
-        - 'The fully-qualified URIs that point to your data in Google Cloud. For Google
-          Cloud Storage URIs: Each URI can contain one ''*'' wildcard character and
-          it must come after the ''bucket'' name. Size limits related to load jobs
-          apply to external data sources. For Google Cloud Bigtable URIs: Exactly
-          one URI can be specified and it has be a fully specified and valid HTTPS
-          URL for a Google Cloud Bigtable table. For Google Cloud Datastore backups,
-          exactly one URI can be specified. Also, the ''*'' wildcard character is
-          not allowed.'
+        - The fully-qualified URIs that point to your data in Google Cloud.
+        - 'For Google Cloud Storage URIs: Each URI can contain one ''*'' wildcard
+          character and it must come after the ''bucket'' name. Size limits related
+          to load jobs apply to external data sources. For Google Cloud Bigtable URIs:
+          Exactly one URI can be specified and it has be a fully specified and valid
+          HTTPS URL for a Google Cloud Bigtable table. For Google Cloud Datastore
+          backups, exactly one URI can be specified. Also, the ''*'' wildcard character
+          is not allowed.'
         required: false
+        type: list
       schema:
         description:
         - The schema for the data. Schema is required for CSV and JSON formats.
         required: false
+        type: dict
         suboptions:
           fields:
             description:
             - Describes the fields in a table.
             required: false
+            type: list
             suboptions:
               description:
                 description:
                 - The field description.
                 required: false
+                type: str
               fields:
                 description:
                 - Describes the nested schema fields if the type property is set to
                   RECORD .
                 required: false
+                type: list
               mode:
                 description:
                 - Field mode.
+                - 'Some valid choices include: "NULLABLE", "REQUIRED", "REPEATED"'
                 required: false
-                choices:
-                - NULLABLE
-                - REQUIRED
-                - REPEATED
+                type: str
               name:
                 description:
                 - Field name.
                 required: false
+                type: str
               type:
                 description:
                 - Field data type.
+                - 'Some valid choices include: "STRING", "BYTES", "INTEGER", "FLOAT",
+                  "TIMESTAMP", "DATE", "TIME", "DATETIME", "RECORD"'
                 required: false
-                choices:
-                - STRING
-                - BYTES
-                - INTEGER
-                - FLOAT
-                - TIMESTAMP
-                - DATE
-                - TIME
-                - DATETIME
-                - RECORD
+                type: str
       google_sheets_options:
         description:
         - Additional options if sourceFormat is set to GOOGLE_SHEETS.
         required: false
+        type: dict
         suboptions:
           skip_leading_rows:
             description:
@@ -291,10 +326,12 @@ options:
               when reading the data.
             required: false
             default: '0'
+            type: int
       csv_options:
         description:
         - Additional properties to set if sourceFormat is set to CSV.
         required: false
+        type: dict
         suboptions:
           allow_jagged_rows:
             description:
@@ -311,28 +348,31 @@ options:
           encoding:
             description:
             - The character encoding of the data.
+            - 'Some valid choices include: "UTF-8", "ISO-8859-1"'
             required: false
-            choices:
-            - UTF-8
-            - ISO-8859-1
+            type: str
           field_delimiter:
             description:
             - The separator for fields in a CSV file.
             required: false
+            type: str
           quote:
             description:
             - The value that is used to quote data sections in a CSV file.
             required: false
+            type: str
           skip_leading_rows:
             description:
             - The number of rows at the top of a CSV file that BigQuery will skip
               when reading the data.
             required: false
             default: '0'
+            type: int
       bigtable_options:
         description:
         - Additional options if sourceFormat is set to BIGTABLE.
         required: false
+        type: dict
         suboptions:
           ignore_unspecified_column_families:
             description:
@@ -351,26 +391,28 @@ options:
             - List of column families to expose in the table schema along with their
               types.
             required: false
+            type: list
             suboptions:
               columns:
                 description:
                 - Lists of columns that should be exposed as individual fields as
                   opposed to a list of (column name, value) pairs.
                 required: false
+                type: list
                 suboptions:
                   encoding:
                     description:
                     - The encoding of the values when the type is not STRING.
+                    - 'Some valid choices include: "TEXT", "BINARY"'
                     required: false
-                    choices:
-                    - TEXT
-                    - BINARY
+                    type: str
                   field_name:
                     description:
                     - If the qualifier is not a valid BigQuery field identifier, a
                       valid identifier must be provided as the column field name and
                       is used as field name in queries.
                     required: false
+                    type: str
                   only_read_latest:
                     description:
                     - If this is set, only the latest version of value in this column
@@ -381,27 +423,25 @@ options:
                     description:
                     - Qualifier of the column.
                     required: true
+                    type: str
                   type:
                     description:
                     - The type to convert the value in cells of this column.
+                    - 'Some valid choices include: "BYTES", "STRING", "INTEGER", "FLOAT",
+                      "BOOLEAN"'
                     required: false
-                    choices:
-                    - BYTES
-                    - STRING
-                    - INTEGER
-                    - FLOAT
-                    - BOOLEAN
+                    type: str
               encoding:
                 description:
                 - The encoding of the values when the type is not STRING.
+                - 'Some valid choices include: "TEXT", "BINARY"'
                 required: false
-                choices:
-                - TEXT
-                - BINARY
+                type: str
               family_id:
                 description:
                 - Identifier of the column family.
                 required: false
+                type: str
               only_read_latest:
                 description:
                 - If this is set only the latest version of value are exposed for
@@ -411,17 +451,15 @@ options:
               type:
                 description:
                 - The type to convert the value in cells of this column family.
+                - 'Some valid choices include: "BYTES", "STRING", "INTEGER", "FLOAT",
+                  "BOOLEAN"'
                 required: false
-                choices:
-                - BYTES
-                - STRING
-                - INTEGER
-                - FLOAT
-                - BOOLEAN
+                type: str
   dataset:
     description:
     - Name of the dataset.
     required: false
+    type: str
 extends_documentation_fragment: gcp
 '''
 
@@ -473,6 +511,14 @@ tableReference:
       - The ID of the the table.
       returned: success
       type: str
+clustering:
+  description:
+  - One or more fields on which data should be clustered. Only top-level, non-repeated,
+    simple-type fields are supported. When you cluster a table using multiple columns,
+    the order of columns you specify is important. The order of the specified columns
+    determines the sort order of the data.
+  returned: success
+  type: list
 creationTime:
   description:
   - The time when this dataset was created, in milliseconds since the epoch.
@@ -531,6 +577,12 @@ numRows:
     buffer.
   returned: success
   type: int
+requirePartitionFilter:
+  description:
+  - If set to true, queries over this table require a partition filter that can be
+    used for partition elimination to be specified.
+  returned: success
+  type: bool
 type:
   description:
   - Describes the table type.
@@ -576,6 +628,14 @@ timePartitioning:
       - Number of milliseconds for which to keep the storage for a partition.
       returned: success
       type: int
+    field:
+      description:
+      - If not set, the table is partitioned by pseudo column, referenced via either
+        '_PARTITIONTIME' as TIMESTAMP type, or '_PARTITIONDATE' as DATE type. If field
+        is specified, the table is instead partitioned by this field. The field must
+        be a top-level TIMESTAMP or DATE field. Its mode must be NULLABLE or REQUIRED.
+      returned: success
+      type: str
     type:
       description:
       - The only type supported is DAY, which will generate one partition per day.
@@ -699,13 +759,13 @@ externalDataConfiguration:
       type: str
     sourceUris:
       description:
-      - 'The fully-qualified URIs that point to your data in Google Cloud. For Google
-        Cloud Storage URIs: Each URI can contain one ''*'' wildcard character and
-        it must come after the ''bucket'' name. Size limits related to load jobs apply
-        to external data sources. For Google Cloud Bigtable URIs: Exactly one URI
-        can be specified and it has be a fully specified and valid HTTPS URL for a
-        Google Cloud Bigtable table. For Google Cloud Datastore backups, exactly one
-        URI can be specified. Also, the ''*'' wildcard character is not allowed.'
+      - The fully-qualified URIs that point to your data in Google Cloud.
+      - 'For Google Cloud Storage URIs: Each URI can contain one ''*'' wildcard character
+        and it must come after the ''bucket'' name. Size limits related to load jobs
+        apply to external data sources. For Google Cloud Bigtable URIs: Exactly one
+        URI can be specified and it has be a fully specified and valid HTTPS URL for
+        a Google Cloud Bigtable table. For Google Cloud Datastore backups, exactly
+        one URI can be specified. Also, the ''*'' wildcard character is not allowed.'
       returned: success
       type: list
     schema:
@@ -904,10 +964,12 @@ def main():
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             table_reference=dict(type='dict', options=dict(dataset_id=dict(type='str'), project_id=dict(type='str'), table_id=dict(type='str'))),
+            clustering=dict(type='list', elements='str'),
             description=dict(type='str'),
             friendly_name=dict(type='str'),
             labels=dict(type='dict'),
             name=dict(type='str'),
+            num_rows=dict(type='int'),
             view=dict(
                 type='dict',
                 options=dict(
@@ -917,7 +979,7 @@ def main():
                     ),
                 ),
             ),
-            time_partitioning=dict(type='dict', options=dict(expiration_ms=dict(type='int'), type=dict(type='str', choices=['DAY']))),
+            time_partitioning=dict(type='dict', options=dict(expiration_ms=dict(type='int'), field=dict(type='str'), type=dict(type='str'))),
             schema=dict(
                 type='dict',
                 options=dict(
@@ -927,9 +989,9 @@ def main():
                         options=dict(
                             description=dict(type='str'),
                             fields=dict(type='list', elements='str'),
-                            mode=dict(type='str', choices=['NULLABLE', 'REQUIRED', 'REPEATED']),
+                            mode=dict(type='str'),
                             name=dict(type='str'),
-                            type=dict(type='str', choices=['STRING', 'BYTES', 'INTEGER', 'FLOAT', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']),
+                            type=dict(type='str'),
                         ),
                     )
                 ),
@@ -940,10 +1002,10 @@ def main():
                 type='dict',
                 options=dict(
                     autodetect=dict(type='bool'),
-                    compression=dict(type='str', choices=['GZIP', 'NONE']),
+                    compression=dict(type='str'),
                     ignore_unknown_values=dict(type='bool'),
                     max_bad_records=dict(default=0, type='int'),
-                    source_format=dict(type='str', choices=['CSV', 'GOOGLE_SHEETS', 'NEWLINE_DELIMITED_JSON', 'AVRO', 'DATASTORE_BACKUP', 'BIGTABLE']),
+                    source_format=dict(type='str'),
                     source_uris=dict(type='list', elements='str'),
                     schema=dict(
                         type='dict',
@@ -954,9 +1016,9 @@ def main():
                                 options=dict(
                                     description=dict(type='str'),
                                     fields=dict(type='list', elements='str'),
-                                    mode=dict(type='str', choices=['NULLABLE', 'REQUIRED', 'REPEATED']),
+                                    mode=dict(type='str'),
                                     name=dict(type='str'),
-                                    type=dict(type='str', choices=['STRING', 'BYTES', 'INTEGER', 'FLOAT', 'TIMESTAMP', 'DATE', 'TIME', 'DATETIME', 'RECORD']),
+                                    type=dict(type='str'),
                                 ),
                             )
                         ),
@@ -967,7 +1029,7 @@ def main():
                         options=dict(
                             allow_jagged_rows=dict(type='bool'),
                             allow_quoted_newlines=dict(type='bool'),
-                            encoding=dict(type='str', choices=['UTF-8', 'ISO-8859-1']),
+                            encoding=dict(type='str'),
                             field_delimiter=dict(type='str'),
                             quote=dict(type='str'),
                             skip_leading_rows=dict(default=0, type='int'),
@@ -986,17 +1048,17 @@ def main():
                                         type='list',
                                         elements='dict',
                                         options=dict(
-                                            encoding=dict(type='str', choices=['TEXT', 'BINARY']),
+                                            encoding=dict(type='str'),
                                             field_name=dict(type='str'),
                                             only_read_latest=dict(type='bool'),
                                             qualifier_string=dict(required=True, type='str'),
-                                            type=dict(type='str', choices=['BYTES', 'STRING', 'INTEGER', 'FLOAT', 'BOOLEAN']),
+                                            type=dict(type='str'),
                                         ),
                                     ),
-                                    encoding=dict(type='str', choices=['TEXT', 'BINARY']),
+                                    encoding=dict(type='str'),
                                     family_id=dict(type='str'),
                                     only_read_latest=dict(type='bool'),
-                                    type=dict(type='str', choices=['BYTES', 'STRING', 'INTEGER', 'FLOAT', 'BOOLEAN']),
+                                    type=dict(type='str'),
                                 ),
                             ),
                         ),
@@ -1057,10 +1119,12 @@ def resource_to_request(module):
     request = {
         u'kind': 'bigquery#table',
         u'tableReference': TableTablereference(module.params.get('table_reference', {}), module).to_request(),
+        u'clustering': module.params.get('clustering'),
         u'description': module.params.get('description'),
         u'friendlyName': module.params.get('friendly_name'),
         u'labels': module.params.get('labels'),
         u'name': module.params.get('name'),
+        u'numRows': module.params.get('num_rows'),
         u'view': TableView(module.params.get('view', {}), module).to_request(),
         u'timePartitioning': TableTimepartitioning(module.params.get('time_partitioning', {}), module).to_request(),
         u'schema': TableSchema(module.params.get('schema', {}), module).to_request(),
@@ -1133,6 +1197,7 @@ def is_different(module, response):
 def response_to_hash(module, response):
     return {
         u'tableReference': TableTablereference(response.get(u'tableReference', {}), module).from_response(),
+        u'clustering': response.get(u'clustering'),
         u'creationTime': response.get(u'creationTime'),
         u'description': response.get(u'description'),
         u'friendlyName': response.get(u'friendlyName'),
@@ -1144,6 +1209,7 @@ def response_to_hash(module, response):
         u'numBytes': response.get(u'numBytes'),
         u'numLongTermBytes': response.get(u'numLongTermBytes'),
         u'numRows': response.get(u'numRows'),
+        u'requirePartitionFilter': response.get(u'requirePartitionFilter'),
         u'type': response.get(u'type'),
         u'view': TableView(response.get(u'view', {}), module).from_response(),
         u'timePartitioning': TableTimepartitioning(response.get(u'timePartitioning', {}), module).from_response(),
@@ -1239,10 +1305,14 @@ class TableTimepartitioning(object):
             self.request = {}
 
     def to_request(self):
-        return remove_nones_from_dict({u'expirationMs': self.request.get('expiration_ms'), u'type': self.request.get('type')})
+        return remove_nones_from_dict(
+            {u'expirationMs': self.request.get('expiration_ms'), u'field': self.request.get('field'), u'type': self.request.get('type')}
+        )
 
     def from_response(self):
-        return remove_nones_from_dict({u'expirationMs': self.request.get(u'expirationMs'), u'type': self.request.get(u'type')})
+        return remove_nones_from_dict(
+            {u'expirationMs': self.request.get(u'expirationMs'), u'field': self.request.get(u'field'), u'type': self.request.get(u'type')}
+        )
 
 
 class TableStreamingbuffer(object):

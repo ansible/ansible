@@ -1,0 +1,85 @@
+GigabitEthernet1/1/1 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d600 (bia 609c.9fe7.d600)
+  Configured speed 10Mbit, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  Port name is test name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  Internet address is 192.168.1.1/24, MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0
+
+GigabitEthernet1/1/2 is down, line protocol is down 
+  Port down for 2 day(s) 23 hour(s) 4 minute(s) 18 second(s) 
+  Hardware is GigabitEthernet, address is 609c.9fe7.d601 (bia 609c.9fe7.d601)
+  Configured speed auto, actual unknown, configured duplex fdx, actual unknown
+  Configured mdi mode AUTO, actual unknown
+  Member of L2 VLAN ID 1, port is untagged, port state is BLOCKING
+  BPDU guard is Disabled, ROOT protect is Disabled, Designated protect is Disabled
+  Link Error Dampening is Disabled
+  STP configured to ON, priority is level0, mac-learning is enabled
+  Openflow is Disabled, Openflow Hybrid mode is Disabled,  Flow Control is config enabled, oper enabled, negotiation disabled
+  Mirror disabled, Monitor disabled
+  Mac-notification is disabled
+  Not member of any active trunks
+  Not member of any configured trunks
+  No port name
+  IPG MII 0 bits-time, IPG GMII 0 bits-time
+  MTU 1500 bytes, encapsulation ethernet
+  MMU Mode is Store-and-forward
+  300 second input rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  300 second output rate: 0 bits/sec, 0 packets/sec, 0.00% utilization
+  0 packets input, 0 bytes, 0 no buffer
+  Received 0 broadcasts, 0 multicasts, 0 unicasts
+  0 input errors, 0 CRC, 0 frame, 0 ignored
+  0 runts, 0 giants
+  0 packets output, 0 bytes, 0 underruns
+  Transmitted 0 broadcasts, 0 multicasts, 0 unicasts
+  0 output errors, 0 collisions
+  Relay Agent Information option: Disabled
+  Protected: No
+  MAC Port Security: Disabled
+
+ This port is not being monitored for queue drops 
+Egress queues:
+Queue counters	  Queued packets	Dropped Packets
+         0                   0                   0
+         1                   0                   0
+         2                   0                   0
+         3                   0                   0
+         4                   0                   0
+         5                   0                   0
+         6                   0                   0
+         7                   0                   0

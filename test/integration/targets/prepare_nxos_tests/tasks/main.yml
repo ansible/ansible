@@ -43,7 +43,7 @@
 # Get image version information for this device
 - name: "Gather image version info"
   nxos_command:
-    commands: ['sh version | json']
+    commands: ['show version | json']
   connection: network_cli
   register: nxos_version_output
 
@@ -58,7 +58,7 @@
 #
 - name: "Gather platform info"
   nxos_command:
-    commands: ['sh inventory | json']
+    commands: ['show inventory | json']
   connection: network_cli
   register: nxos_inventory_output
 

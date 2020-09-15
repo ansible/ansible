@@ -3,19 +3,24 @@
 - debug: msg="Using provider={{ connection.transport }}"
   when: ansible_connection == "local"
 
-- name: "Setup: disable feature OSPF for initial cleanup"
+- set_fact: def_met_default="default"
+  # CSCvi74876 Cannot remove default-metric
+  when: imagetag is not search("I7")
+
+- name: "Setup: disable features for initial cleanup"
   nxos_feature:
-    feature: ospf
+    feature: "{{ item }}"
     provider: "{{ connection }}"
     state: disabled
+  loop: ['ospf', 'bfd']
   ignore_errors: yes
 
-- name: "Enable feature OSPF"
+- name: "Enable features"
   nxos_feature:
-    feature: ospf
+    feature: "{{ item }}"
     provider: "{{ connection }}"
     state: enabled
-  ignore_errors: yes
+  loop: ['ospf', 'bfd']
 
 - block:
   - name: Configure ospf vrf
@@ -29,6 +34,7 @@
       timer_throttle_lsa_hold: 1100
       timer_throttle_lsa_max: 3000
       vrf: test
+      bfd: enable
       passive_interface: true
       provider: "{{ connection }}"
       state: present
@@ -56,6 +62,7 @@
       default_metric: 1000
       log_adjacency: log
       vrf: default
+      bfd: disable
       passive_interface: true
       provider: "{{ connection }}"
       state: present
@@ -73,7 +80,7 @@
     nxos_ospf_vrf: &config2
       ospf: 2
       auto_cost: default
-      default_metric: default
+      default_metric: "{{def_met_default|default(omit)}}"
       log_adjacency: default
       timer_throttle_spf_hold: default
       passive_interface: false
@@ -105,6 +112,7 @@
     register: result
 
   - assert: *false
+    when: def_met_default is defined
 
   - name: Unconfigure ospf vrf
     nxos_ospf_vrf: &unconfig
@@ -121,13 +129,15 @@
     register: result
 
   - assert: *false
+    when: def_met_default is defined
 
   always:
-  - name: "Disable feature OSPF"
+  - name: "Disable features"
     nxos_feature:
-      feature: ospf
+      feature: "{{ item }}"
       provider: "{{ connection }}"
       state: disabled
+    loop: ['ospf', 'bfd']
     ignore_errors: yes
 
 - debug: msg="END connection={{ ansible_connection }} nxos_ospf_vrf sanity test"

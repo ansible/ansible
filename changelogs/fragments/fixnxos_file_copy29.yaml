@@ -1,0 +1,2 @@
+bugfixes:
+- Stabilize nxos initiated copy for nxos_file_copy plugin (https://github.com/ansible/ansible/pull/62355).

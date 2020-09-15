@@ -1,0 +1,2 @@
+bugfixes:
+  - "mysql_user - Fix idempotence when long grant lists are used (https://github.com/ansible/ansible/issues/68044)"

@@ -27,12 +27,11 @@ from ansible.module_utils.six import iteritems, string_types
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
 from ansible.template import Templar
-from ansible.utils.collection_loader import get_collection_role_path, is_collection_ref
+from ansible.utils.collection_loader import get_collection_role_path, AnsibleCollectionRef
 from ansible.utils.path import unfrackpath
 from ansible.utils.display import Display
 
@@ -41,7 +40,7 @@ __all__ = ['RoleDefinition']
 display = Display()
 
 
-class RoleDefinition(Base, Become, Conditional, Taggable, CollectionSearch):
+class RoleDefinition(Base, Conditional, Taggable, CollectionSearch):
 
     _role = FieldAttribute(isa='string')
 
@@ -130,8 +129,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable, CollectionSearch):
         if self._variable_manager:
             all_vars = self._variable_manager.get_vars(play=self._play)
             templar = Templar(loader=self._loader, variables=all_vars)
-            if templar._contains_vars(role_name):
-                role_name = templar.template(role_name)
+            role_name = templar.template(role_name)
 
         return role_name
 
@@ -156,7 +154,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable, CollectionSearch):
         role_tuple = None
 
         # try to load as a collection-based role first
-        if self._collection_list or is_collection_ref(role_name):
+        if self._collection_list or AnsibleCollectionRef.is_valid_fqcr(role_name):
             role_tuple = get_collection_role_path(role_name, self._collection_list)
 
         if role_tuple:
@@ -164,9 +162,9 @@ class RoleDefinition(Base, Become, Conditional, Taggable, CollectionSearch):
             self._role_collection = role_tuple[2]
             return role_tuple[0:2]
 
-        # FUTURE: refactor this to be callable from internal so we can properly order ansible.legacy searches with the collections keyword
-        if self._collection_list and 'ansible.legacy' not in self._collection_list:
-            raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(self._collection_list)), obj=self._ds)
+        # We didn't find a collection role, look in defined role paths
+        # FUTURE: refactor this to be callable from internal so we can properly order
+        # ansible.legacy searches with the collections keyword
 
         # we always start the search for roles in the base directory of the playbook
         role_search_paths = [
@@ -200,7 +198,8 @@ class RoleDefinition(Base, Become, Conditional, Taggable, CollectionSearch):
             role_name = os.path.basename(role_name)
             return (role_name, role_path)
 
-        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(role_search_paths)), obj=self._ds)
+        searches = (self._collection_list or []) + role_search_paths
+        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(searches)), obj=self._ds)
 
     def _split_role_params(self, ds):
         '''
@@ -233,3 +232,8 @@ class RoleDefinition(Base, Become, Conditional, Taggable, CollectionSearch):
 
     def get_role_path(self):
         return self._role_path
+
+    def get_name(self, include_role_fqcn=True):
+        if include_role_fqcn:
+            return '.'.join(x for x in (self._role_collection, self.role) if x)
+        return self.role

@@ -1,2 +1,0 @@
-minor_changes:
-  - "docker_swarm_service - Added support for ``groups`` parameter."

@@ -222,6 +222,8 @@ def parse_show_install(data):
             ud['server_error'] = True
         elif data == -32603:
             ud['server_error'] = True
+        elif data == 1:
+            ud['server_error'] = True
         return ud
     else:
         ud['list_data'] = data.split('\n')
@@ -354,12 +356,12 @@ def massage_install_data(data):
 def build_install_cmd_set(issu, image, kick, type, force=True):
     commands = ['terminal dont-ask']
 
-    # Different NX-OS plaforms behave differently for
+    # Different NX-OS platforms behave differently for
     # disruptive and non-disruptive upgrade paths.
     #
     # 1) Combined kickstart/system image:
     #    * Use option 'non-disruptive' for issu.
-    #    * Omit option non-disruptive' for distruptive upgrades.
+    #    * Omit option 'non-disruptive' for disruptive upgrades.
     # 2) Separate kickstart + system images.
     #    * Omit hidden 'force' option for issu.
     #    * Use hidden 'force' option for disruptive upgrades.
@@ -413,7 +415,7 @@ def check_mode_legacy(module, issu, image, kick=None):
         command so we need to use a different method."""
     current = execute_show_command(module, 'show version', 'json')[0]
     # Call parse_show_data on empty string to create the default upgrade
-    # data stucture dictionary
+    # data structure dictionary
     data = parse_show_install('')
     upgrade_msg = 'No upgrade required'
 

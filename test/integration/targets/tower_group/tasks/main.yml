@@ -1,10 +1,9 @@
 - name: create a tempdir for hostvars
-  local_action: shell mktemp -d
+  shell: mktemp -d
   register: tempdir
 
 - name: write a file w/ hostvars
-  local_action:
-    module: lineinfile
+  lineinfile:
     dest: "{{ tempdir.stdout }}/vars"
     line: '{"foo": "bar"}'
     create: true

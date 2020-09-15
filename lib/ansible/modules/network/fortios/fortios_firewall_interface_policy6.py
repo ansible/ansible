@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_interface_policy6
 short_description: Configure IPv6 interface policies in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall feature and interface_policy6 category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall feature and interface_policy6 category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,108 +41,150 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     firewall_interface_policy6:
         description:
             - Configure IPv6 interface policies.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            address-type:
+            address_type:
                 description:
                     - Policy address type (IPv4 or IPv6).
+                type: str
                 choices:
                     - ipv4
                     - ipv6
-            application-list:
+            application_list:
                 description:
                     - Application list name. Source application.list.name.
-            application-list-status:
+                type: str
+            application_list_status:
                 description:
                     - Enable/disable application control.
+                type: str
                 choices:
                     - enable
                     - disable
-            av-profile:
+            av_profile:
                 description:
                     - Antivirus profile. Source antivirus.profile.name.
-            av-profile-status:
+                type: str
+            av_profile_status:
                 description:
                     - Enable/disable antivirus.
+                type: str
                 choices:
                     - enable
                     - disable
             comments:
                 description:
                     - Comments.
-            dlp-sensor:
+                type: str
+            dlp_sensor:
                 description:
                     - DLP sensor name. Source dlp.sensor.name.
-            dlp-sensor-status:
+                type: str
+            dlp_sensor_status:
                 description:
                     - Enable/disable DLP.
+                type: str
                 choices:
                     - enable
                     - disable
             dsri:
                 description:
                     - Enable/disable DSRI.
+                type: str
                 choices:
                     - enable
                     - disable
             dstaddr6:
                 description:
                     - IPv6 address object to limit traffic monitoring to network traffic sent to the specified address or range.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Address name. Source firewall.address6.name firewall.addrgrp6.name.
                         required: true
+                        type: str
             interface:
                 description:
                     - Monitored interface name from available interfaces. Source system.zone.name system.interface.name.
-            ips-sensor:
+                type: str
+            ips_sensor:
                 description:
                     - IPS sensor name. Source ips.sensor.name.
-            ips-sensor-status:
+                type: str
+            ips_sensor_status:
                 description:
                     - Enable/disable IPS.
+                type: str
                 choices:
                     - enable
                     - disable
             label:
                 description:
                     - Label.
+                type: str
             logtraffic:
                 description:
-                    - "Logging type to be used in this policy (Options: all | utm | disable, Default: utm)."
+                    - "Logging type to be used in this policy (Options: all | utm | disable)."
+                type: str
                 choices:
                     - all
                     - utm
@@ -154,9 +193,11 @@ options:
                 description:
                     - Policy ID.
                 required: true
-            scan-botnet-connections:
+                type: int
+            scan_botnet_connections:
                 description:
                     - Enable/disable scanning for connections to Botnet servers.
+                type: str
                 choices:
                     - disable
                     - block
@@ -164,40 +205,49 @@ options:
             service6:
                 description:
                     - Service name.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Address name. Source firewall.service.custom.name firewall.service.group.name.
                         required: true
-            spamfilter-profile:
+                        type: str
+            spamfilter_profile:
                 description:
                     - Antispam profile. Source spamfilter.profile.name.
-            spamfilter-profile-status:
+                type: str
+            spamfilter_profile_status:
                 description:
                     - Enable/disable antispam.
+                type: str
                 choices:
                     - enable
                     - disable
             srcaddr6:
                 description:
                     - IPv6 address object to limit traffic monitoring to network traffic sent from the specified address or range.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Address name. Source firewall.address6.name firewall.addrgrp6.name.
                         required: true
+                        type: str
             status:
                 description:
                     - Enable/disable this policy.
+                type: str
                 choices:
                     - enable
                     - disable
-            webfilter-profile:
+            webfilter_profile:
                 description:
                     - Web filter profile. Source webfilter.profile.name.
-            webfilter-profile-status:
+                type: str
+            webfilter_profile_status:
                 description:
                     - Enable/disable web filtering.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -210,6 +260,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure IPv6 interface policies.
     fortios_firewall_interface_policy6:
@@ -217,38 +268,39 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
+      https: "False"
+      state: "present"
       firewall_interface_policy6:
-        state: "present"
-        address-type: "ipv4"
-        application-list: "<your_own_value> (source application.list.name)"
-        application-list-status: "enable"
-        av-profile: "<your_own_value> (source antivirus.profile.name)"
-        av-profile-status: "enable"
+        address_type: "ipv4"
+        application_list: "<your_own_value> (source application.list.name)"
+        application_list_status: "enable"
+        av_profile: "<your_own_value> (source antivirus.profile.name)"
+        av_profile_status: "enable"
         comments: "<your_own_value>"
-        dlp-sensor: "<your_own_value> (source dlp.sensor.name)"
-        dlp-sensor-status: "enable"
+        dlp_sensor: "<your_own_value> (source dlp.sensor.name)"
+        dlp_sensor_status: "enable"
         dsri: "enable"
         dstaddr6:
          -
             name: "default_name_13 (source firewall.address6.name firewall.addrgrp6.name)"
         interface: "<your_own_value> (source system.zone.name system.interface.name)"
-        ips-sensor: "<your_own_value> (source ips.sensor.name)"
-        ips-sensor-status: "enable"
+        ips_sensor: "<your_own_value> (source ips.sensor.name)"
+        ips_sensor_status: "enable"
         label: "<your_own_value>"
         logtraffic: "all"
         policyid: "19"
-        scan-botnet-connections: "disable"
+        scan_botnet_connections: "disable"
         service6:
          -
             name: "default_name_22 (source firewall.service.custom.name firewall.service.group.name)"
-        spamfilter-profile: "<your_own_value> (source spamfilter.profile.name)"
-        spamfilter-profile-status: "enable"
+        spamfilter_profile: "<your_own_value> (source spamfilter.profile.name)"
+        spamfilter_profile_status: "enable"
         srcaddr6:
          -
             name: "default_name_26 (source firewall.address6.name firewall.addrgrp6.name)"
         status: "enable"
-        webfilter-profile: "<your_own_value> (source webfilter.profile.name)"
-        webfilter-profile-status: "enable"
+        webfilter_profile: "<your_own_value> (source webfilter.profile.name)"
+        webfilter_profile_status: "enable"
 '''
 
 RETURN = '''
@@ -311,14 +363,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -326,18 +380,18 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_interface_policy6_data(json):
-    option_list = ['address-type', 'application-list', 'application-list-status',
-                   'av-profile', 'av-profile-status', 'comments',
-                   'dlp-sensor', 'dlp-sensor-status', 'dsri',
-                   'dstaddr6', 'interface', 'ips-sensor',
-                   'ips-sensor-status', 'label', 'logtraffic',
-                   'policyid', 'scan-botnet-connections', 'service6',
-                   'spamfilter-profile', 'spamfilter-profile-status', 'srcaddr6',
-                   'status', 'webfilter-profile', 'webfilter-profile-status']
+    option_list = ['address_type', 'application_list', 'application_list_status',
+                   'av_profile', 'av_profile_status', 'comments',
+                   'dlp_sensor', 'dlp_sensor_status', 'dsri',
+                   'dstaddr6', 'interface', 'ips_sensor',
+                   'ips_sensor_status', 'label', 'logtraffic',
+                   'policyid', 'scan_botnet_connections', 'service6',
+                   'spamfilter_profile', 'spamfilter_profile_status', 'srcaddr6',
+                   'status', 'webfilter_profile', 'webfilter_profile_status']
     dictionary = {}
 
     for attribute in option_list:
@@ -347,59 +401,84 @@ def filter_firewall_interface_policy6_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_interface_policy6(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_interface_policy6'] and data['firewall_interface_policy6']:
+        state = data['firewall_interface_policy6']['state']
+    else:
+        state = True
     firewall_interface_policy6_data = data['firewall_interface_policy6']
-    filtered_data = filter_firewall_interface_policy6_data(firewall_interface_policy6_data)
-    if firewall_interface_policy6_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_firewall_interface_policy6_data(firewall_interface_policy6_data))
+
+    if state == "present":
         return fos.set('firewall',
                        'interface-policy6',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif firewall_interface_policy6_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('firewall',
                           'interface-policy6',
                           mkey=filtered_data['policyid'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall(data, fos):
-    login(data)
 
-    methodlist = ['firewall_interface_policy6']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_interface_policy6']:
+        resp = firewall_interface_policy6(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "firewall_interface_policy6": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "address-type": {"required": False, "type": "str",
+                "address_type": {"required": False, "type": "str",
                                  "choices": ["ipv4", "ipv6"]},
-                "application-list": {"required": False, "type": "str"},
-                "application-list-status": {"required": False, "type": "str",
+                "application_list": {"required": False, "type": "str"},
+                "application_list_status": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                "av-profile": {"required": False, "type": "str"},
-                "av-profile-status": {"required": False, "type": "str",
+                "av_profile": {"required": False, "type": "str"},
+                "av_profile_status": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
                 "comments": {"required": False, "type": "str"},
-                "dlp-sensor": {"required": False, "type": "str"},
-                "dlp-sensor-status": {"required": False, "type": "str",
+                "dlp_sensor": {"required": False, "type": "str"},
+                "dlp_sensor_status": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
                 "dsri": {"required": False, "type": "str",
                          "choices": ["enable", "disable"]},
@@ -408,21 +487,21 @@ def main():
                                  "name": {"required": True, "type": "str"}
                              }},
                 "interface": {"required": False, "type": "str"},
-                "ips-sensor": {"required": False, "type": "str"},
-                "ips-sensor-status": {"required": False, "type": "str",
+                "ips_sensor": {"required": False, "type": "str"},
+                "ips_sensor_status": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
                 "label": {"required": False, "type": "str"},
                 "logtraffic": {"required": False, "type": "str",
                                "choices": ["all", "utm", "disable"]},
                 "policyid": {"required": True, "type": "int"},
-                "scan-botnet-connections": {"required": False, "type": "str",
+                "scan_botnet_connections": {"required": False, "type": "str",
                                             "choices": ["disable", "block", "monitor"]},
                 "service6": {"required": False, "type": "list",
                              "options": {
                                  "name": {"required": True, "type": "str"}
                              }},
-                "spamfilter-profile": {"required": False, "type": "str"},
-                "spamfilter-profile-status": {"required": False, "type": "str",
+                "spamfilter_profile": {"required": False, "type": "str"},
+                "spamfilter_profile_status": {"required": False, "type": "str",
                                               "choices": ["enable", "disable"]},
                 "srcaddr6": {"required": False, "type": "list",
                              "options": {
@@ -430,8 +509,8 @@ def main():
                              }},
                 "status": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]},
-                "webfilter-profile": {"required": False, "type": "str"},
-                "webfilter-profile-status": {"required": False, "type": "str",
+                "webfilter_profile": {"required": False, "type": "str"},
+                "webfilter_profile_status": {"required": False, "type": "str",
                                              "choices": ["enable", "disable"]}
 
             }
@@ -440,15 +519,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

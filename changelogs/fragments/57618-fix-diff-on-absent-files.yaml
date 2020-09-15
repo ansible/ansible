@@ -1,0 +1,2 @@
+bugfixes:
+  - "Fix --diff to produce output when creating a new file (https://github.com/ansible/ansible/issues/57618)"

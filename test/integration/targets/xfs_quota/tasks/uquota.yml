@@ -1,0 +1,158 @@
+---
+- name: 'Create disk image'
+  command: >
+    dd if=/dev/zero of={{ remote_tmp_dir }}/img-uquota bs=1M count=20
+
+- name: 'Create XFS filesystem'
+  filesystem:
+    dev: '{{ remote_tmp_dir }}/img-uquota'
+    fstype: xfs
+
+- block:
+    - name: 'Mount filesystem'
+      mount:
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        src: '{{ remote_tmp_dir }}/img-uquota'
+        path: '{{ remote_tmp_dir }}/uquota'
+        fstype: xfs
+        opts: uquota
+        state: mounted
+      become: True
+
+    - name: 'Apply default user limits'
+      xfs_quota:
+        bsoft: '{{ uquota_default_bsoft }}'
+        bhard: '{{ uquota_default_bhard }}'
+        isoft: '{{ uquota_default_isoft }}'
+        ihard: '{{ uquota_default_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
+        rtbsoft: '{{ uquota_default_rtbsoft }}'
+        rtbhard: '{{ uquota_default_rtbhard }}'
+        type: user
+      become: True
+      register: test_uquota_default_before
+
+    - name: Assert default user limits results
+      assert:
+        that:
+          - test_uquota_default_before.changed
+          - test_uquota_default_before.bsoft == uquota_default_bsoft|human_to_bytes
+          - test_uquota_default_before.bhard == uquota_default_bhard|human_to_bytes
+          - test_uquota_default_before.isoft == uquota_default_isoft
+          - test_uquota_default_before.ihard == uquota_default_ihard
+          - test_uquota_default_before.rtbsoft == uquota_default_rtbsoft|human_to_bytes
+          - test_uquota_default_before.rtbhard == uquota_default_rtbhard|human_to_bytes
+
+    - name: 'Apply user limits'
+      xfs_quota:
+        bsoft: '{{ uquota_user_bsoft }}'
+        bhard: '{{ uquota_user_bhard }}'
+        isoft: '{{ uquota_user_isoft }}'
+        ihard: '{{ uquota_user_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
+        name: xfsquotauser
+        rtbsoft: '{{ uquota_user_rtbsoft }}'
+        rtbhard: '{{ uquota_user_rtbhard }}'
+        type: user
+      become: True
+      register: test_uquota_user_before
+
+    - name: Assert user limits results
+      assert:
+        that:
+          - test_uquota_user_before.changed
+          - test_uquota_user_before.bsoft == uquota_user_bsoft|human_to_bytes
+          - test_uquota_user_before.bhard == uquota_user_bhard|human_to_bytes
+          - test_uquota_user_before.isoft == uquota_user_isoft
+          - test_uquota_user_before.ihard == uquota_user_ihard
+          - test_uquota_user_before.rtbsoft == uquota_user_rtbsoft|human_to_bytes
+          - test_uquota_user_before.rtbhard == uquota_user_rtbhard|human_to_bytes
+
+    - name: 'Re-apply default user limits'
+      xfs_quota:
+        bsoft: '{{ uquota_default_bsoft }}'
+        bhard: '{{ uquota_default_bhard }}'
+        isoft: '{{ uquota_default_isoft }}'
+        ihard: '{{ uquota_default_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
+        rtbsoft: '{{ uquota_default_rtbsoft }}'
+        rtbhard: '{{ uquota_default_rtbhard }}'
+        type: user
+      become: True
+      register: test_uquota_default_after
+
+    - name: Assert default user limits results after re-apply
+      assert:
+        that:
+          - not test_uquota_default_after.changed
+
+    - name: 'Re-apply user limits'
+      xfs_quota:
+        bsoft: '{{ uquota_user_bsoft }}'
+        bhard: '{{ uquota_user_bhard }}'
+        isoft: '{{ uquota_user_isoft }}'
+        ihard: '{{ uquota_user_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
+        name: xfsquotauser
+        rtbsoft: '{{ uquota_user_rtbsoft }}'
+        rtbhard: '{{ uquota_user_rtbhard }}'
+        type: user
+      become: True
+      register: test_uquota_user_after
+
+    - name: Assert user limits results for xfsquotauser after re-apply
+      assert:
+        that:
+          - not test_uquota_user_after.changed
+
+    - name: 'Reset default user limits'
+      xfs_quota:
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
+        state: absent
+        type: user
+      become: True
+      register: test_reset_uquota_default
+
+    - name: Assert reset of default user limits results
+      assert:
+        that:
+          - test_reset_uquota_default.changed
+          - test_reset_uquota_default.bsoft == 0
+          - test_reset_uquota_default.bhard == 0
+          - test_reset_uquota_default.isoft == 0
+          - test_reset_uquota_default.ihard == 0
+          - test_reset_uquota_default.rtbsoft == 0
+          - test_reset_uquota_default.rtbhard == 0
+
+    - name: 'Reset user limits for xfsquotauser'
+      xfs_quota:
+        mountpoint: '{{ remote_tmp_dir }}/uquota'
+        name: xfsquotauser
+        state: absent
+        type: user
+      become: True
+      register: test_reset_uquota_user
+
+    - name: Assert reset of default user limits results
+      assert:
+        that:
+          - test_reset_uquota_user.changed
+          - test_reset_uquota_user.bsoft == 0
+          - test_reset_uquota_user.bhard == 0
+          - test_reset_uquota_user.isoft == 0
+          - test_reset_uquota_user.ihard == 0
+          - test_reset_uquota_user.rtbsoft == 0
+          - test_reset_uquota_user.rtbhard == 0
+
+  always:
+    - name: 'Unmount filesystem'
+      mount:
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        path: '{{ remote_tmp_dir }}/uquota'
+        state: unmounted
+      become: True
+
+    - name: Remove disk image
+      file:
+        path: '{{ remote_tmp_dir }}/img-uquota'
+        state: absent

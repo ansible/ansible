@@ -18,31 +18,30 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_resourcegroup
 version_added: "2.1"
-short_description: Manage Azure resource groups.
+short_description: Manage Azure resource groups
 description:
     - Create, update and delete a resource group.
 options:
     force_delete_nonempty:
         description:
-            - Remove a resource group and all associated resources. Use with state C(absent) to delete a resource.
-              group that contains resources.
+            - Remove a resource group and all associated resources.
+            - Use with I(state=absent) to delete a resource group that contains resources.
         type: bool
         aliases:
             - force
         default: 'no'
     location:
         description:
-            - Azure location for the resource group. Required when creating a new resource group. Cannot
-              be changed once resource group is created.
+            - Azure location for the resource group. Required when creating a new resource group.
+            - Cannot be changed once resource group is created.
     name:
         description:
             - Name of the resource group.
         required: true
     state:
         description:
-            - Assert the state of the resource group. Use C(present) to create or update and
-              C(absent) to delete. When C(absent) a resource group containing resources will not be removed unless the
-              force option is used.
+            - Assert the state of the resource group. Use C(present) to create or update and C(absent) to delete.
+            - When C(absent) a resource group containing resources will not be removed unless the I(force) option is used.
         default: present
         choices:
             - absent
@@ -52,8 +51,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 
 '''
 
@@ -79,24 +78,50 @@ EXAMPLES = '''
 '''
 RETURN = '''
 contains_resources:
-    description: Whether or not the resource group contains associated resources.
+    description:
+        - Whether or not the resource group contains associated resources.
     returned: always
     type: bool
     sample: True
 state:
-    description: Current state of the resource group.
+    description:
+        - Current state of the resource group.
     returned: always
-    type: dict
-    sample: {
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup",
-        "location": "westus",
-        "name": "Testing",
-        "provisioning_state": "Succeeded",
-        "tags": {
-            "delete": "on-exit",
-            "testing": "no"
-        }
-    }
+    type: complex
+    contains:
+        id:
+            description:
+                - Resource ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup"
+        location:
+            description:
+                - Azure location for the resource group.
+            returned: always
+            type: str
+            sample: westus
+        name:
+            description:
+                - The resource group name.
+            returned: always
+            type: str
+            sample: Testing
+        provisioning_state:
+            description:
+                - Provisioning state of the resource group.
+            returned: always
+            type: str
+            sample: Succeeded
+        tags:
+            description:
+                - The resource group's tags.
+            returned: always
+            type: dict
+            sample: {
+                    "delete": "on-exit",
+                    "testing": "no"
+                    }
 '''
 
 try:

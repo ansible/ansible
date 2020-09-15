@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - To fix ios_user and ios_command test case failure fix (https://github.com/ansible-collections/cisco.ios/pull/82)

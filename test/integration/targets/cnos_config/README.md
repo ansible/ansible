@@ -47,19 +47,6 @@ Variable | Description
 `admin`  |  Enters into administration configuration mode for making config changes to the device.
 
 
-Need to specify these variables in vars/main.yml under variable `cli`
-
-Variable | Description
---- | ---
-`host`  | Has to be "{{ inventory_hostname }}"
-`port`  | Has to be`22`
-`username`  | User Name of switch
-`password`  | Password of switch
-`timeout`  | time out value for CLI
-`authorixe`  | Whether u have to enter enable mode for data collection.
-`auth_pass`| Enable Password if required
-
-
 ## Dependencies
 ---
 <add dependencies information below>

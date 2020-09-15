@@ -1,15 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/python
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import json
 import sys
 
-# FIXME: this is only required due to a bug around "new style module detection"
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.testns.testcoll.plugins.module_utils.leaf import thingtocall
+from ansible_collections.testns.testcoll.plugins.module_utils.leaf import thingtocall as aliasedthing
 
 
 def main():
-    mu_result = thingtocall()
+    mu_result = aliasedthing()
     print(json.dumps(dict(changed=False, source='user', mu_result=mu_result)))
 
     sys.exit()

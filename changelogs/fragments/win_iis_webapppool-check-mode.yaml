@@ -1,0 +1,2 @@
+bugfixes:
+- win_iis_webapppool - Do not try and set attributes in check mode when the pool did not exist

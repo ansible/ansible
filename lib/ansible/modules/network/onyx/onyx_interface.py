@@ -259,7 +259,7 @@ class OnyxInterfaceModule(BaseOnyxModule):
                 self._interface_type = if_type
             elif self._interface_type != if_type:
                 self._module.fail_json(
-                    msg='Cannot aggreagte interfaces from different types')
+                    msg='Cannot aggregate interfaces from different types')
             self._check_supported_attrs(if_obj)
 
     def get_required_config(self):

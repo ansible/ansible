@@ -1,0 +1,2 @@
+bugfixes:
+- win_iis_website - Actually restart the site when ``state=restarted`` - https://github.com/ansible/ansible/issues/63828

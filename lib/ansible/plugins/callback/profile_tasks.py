@@ -173,7 +173,7 @@ class CallbackModule(CallbackBase):
         timestamp(self)
         self.current = None
 
-        results = self.stats.items()
+        results = list(self.stats.items())
 
         # Sort the tasks by the specified sort
         if self.sort_order is not None:
@@ -184,7 +184,7 @@ class CallbackModule(CallbackBase):
             )
 
         # Display the number of tasks specified or the default of 20
-        results = results[:self.task_output_limit]
+        results = list(results)[:self.task_output_limit]
 
         # Print the timings
         for uuid, result in results:

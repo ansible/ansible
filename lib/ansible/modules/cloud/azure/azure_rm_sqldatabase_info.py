@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_sqldatabase_info
 version_added: "2.8"
-short_description: Get Azure SQL Database facts.
+short_description: Get Azure SQL Database facts
 description:
     - Get facts of Azure SQL Database.
 
@@ -44,7 +44,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -69,7 +69,8 @@ EXAMPLES = '''
 
 RETURN = '''
 databases:
-    description: A list of dictionaries containing facts for SQL Database.
+    description:
+        - A list of dictionaries containing facts for SQL Database.
     returned: always
     type: complex
     contains:
@@ -96,15 +97,12 @@ databases:
                 - Resource tags.
             returned: always
             type: dict
-            sample:
-                taga: aaa
-                tagb: bbb
+            sample: { 'taga':'aaa', 'tagb':'bbb' }
         sku:
             description:
                 - The name and tier of the SKU.
             returned: always
             type: complex
-            sample: sku
             contains:
                 name:
                     description:
@@ -114,13 +112,13 @@ databases:
                     sample: BC_Gen4_2
                 tier:
                     description:
-                        - Service tier.
+                        - The SKU tier.
                     returned: always
                     type: str
                     sample: BusinessCritical
                 capacity:
                     description:
-                        - Capacity.
+                        - The SKU capacity.
                     returned: always
                     type: int
                     sample: 2
@@ -161,7 +159,7 @@ except ImportError:
     pass
 
 
-class AzureRMSqlDatabaseFacts(AzureRMModuleBase):
+class AzureRMSqlDatabaseInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -192,9 +190,13 @@ class AzureRMSqlDatabaseFacts(AzureRMModuleBase):
         self.name = None
         self.elastic_pool_name = None
         self.tags = None
-        super(AzureRMSqlDatabaseFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMSqlDatabaseInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_sqldatabase_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_sqldatabase_facts' module has been renamed to 'azure_rm_sqldatabase_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
@@ -279,7 +281,7 @@ class AzureRMSqlDatabaseFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMSqlDatabaseFacts()
+    AzureRMSqlDatabaseInfo()
 
 
 if __name__ == '__main__':

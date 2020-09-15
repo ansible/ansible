@@ -1,0 +1,3 @@
+- hosts: testhost
+  roles:
+    - my_ns.my_col.test

@@ -4,5 +4,5 @@
   connection: local
 
   roles:
-    - { role: online_server_facts, tags: test_online_server_facts }
-    - { role: online_user_facts, tags: test_online_user_facts }
+    - { role: online_server_info, tags: test_online_server_info }
+    - { role: online_user_info, tags: test_online_user_info }

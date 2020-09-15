@@ -26,6 +26,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_bytes, to_text
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 CHANGELOG_DIR = os.path.join(BASE_DIR, 'changelogs')
@@ -179,8 +180,9 @@ def load_plugins(version, force_reload):
         plugins_data['plugins'] = {}
 
         for plugin_type in C.DOCUMENTABLE_PLUGINS:
-            plugins_data['plugins'][plugin_type] = json.loads(subprocess.check_output([os.path.join(BASE_DIR, 'bin', 'ansible-doc'),
-                                                                                       '--json', '-t', plugin_type]))
+            output = subprocess.check_output([os.path.join(BASE_DIR, 'bin', 'ansible-doc'),
+                                              '--json', '--metadata-dump', '-t', plugin_type])
+            plugins_data['plugins'][plugin_type] = json.loads(to_text(output))
 
         # remove empty namespaces from plugins
         for section in plugins_data['plugins'].values():
@@ -209,6 +211,9 @@ def load_fragments(paths=None, exceptions=None):
     fragments = []
 
     for path in paths:
+        bn_path = os.path.basename(path)
+        if bn_path.startswith('.') or not bn_path.endswith(('.yml', '.yaml')):
+            continue
         try:
             fragments.append(ChangelogFragment.load(path))
         except Exception as ex:
@@ -285,8 +290,8 @@ def generate_changelog(changes, plugins, fragments):
     generator = ChangelogGenerator(config, changes, plugins, fragments)
     rst = generator.generate()
 
-    with open(changelog_path, 'w') as changelog_fd:
-        changelog_fd.write(rst)
+    with open(changelog_path, 'wb') as changelog_fd:
+        changelog_fd.write(to_bytes(rst))
 
 
 class ChangelogFragmentLinter(object):

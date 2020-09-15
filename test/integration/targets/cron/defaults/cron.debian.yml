@@ -1,0 +1,4 @@
+---
+cron_pkg: cron
+cron_service: cron
+list_pkg_files: dpkg -L

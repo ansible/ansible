@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Update terminal plugin to check feature privilege only when escalation is needed (https://github.com/ansible-collections/cisco.nxos/pull/61).

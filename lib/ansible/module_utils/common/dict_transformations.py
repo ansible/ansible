@@ -86,7 +86,6 @@ def _camel_to_snake(name, reversible=False):
     def prepend_underscore_and_lower(m):
         return '_' + m.group(0).lower()
 
-    import re
     if reversible:
         upper_pattern = r'[A-Z]'
     else:

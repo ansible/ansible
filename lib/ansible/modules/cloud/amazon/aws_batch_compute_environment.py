@@ -34,7 +34,6 @@ options:
   state:
     description:
       - Describes the desired state.
-    required: true
     default: "present"
     choices: ["present", "absent"]
 
@@ -152,9 +151,11 @@ EXAMPLES = '''
         tag1: value1
         tag2: value2
       service_role: arn:aws:iam::<account>:role/service-role/<role>
+    register: aws_batch_compute_environment_action
 
   - name: show results
-    debug: var=aws_batch_compute_environment_action
+    debug:
+      var: aws_batch_compute_environment_action
 '''
 
 RETURN = '''

@@ -1,0 +1,2 @@
+bugfixes:
+- Change enable to enabled for junos_interfaces and junos_lldp_interfaces module (https://github.com/ansible/ansible/issues/62319)

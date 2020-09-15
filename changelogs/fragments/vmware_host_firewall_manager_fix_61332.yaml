@@ -1,0 +1,4 @@
+bugfixes:
+- vmware_host_firewall_manager - Ensure we can set rule with no ``allowed_hosts`` key (https://github.com/ansible/ansible/issues/61332)
+minor_changes:
+- vmware_host_firewall_manager - ``allowed_hosts`` excpects a dict as parameter, list is deprecated

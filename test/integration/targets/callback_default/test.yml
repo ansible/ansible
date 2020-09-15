@@ -34,6 +34,22 @@
       loop_control:
         label: foo-{{ item }}
 
+    # detect "changed" debug tasks being hidden with display_ok_tasks=false
+    - name: debug loop
+      debug:
+        msg: debug-{{ item }}
+      changed_when: item == 1
+      failed_when: item == 2
+      when: item != 4
+      ignore_errors: yes
+      loop:
+        - 1
+        - 2
+        - 3
+        - 4
+      loop_control:
+        label: debug-{{ item }}
+
     - block:
         - name: EXPECTED FAILURE Failed task to be rescued
           fail:

@@ -14,6 +14,7 @@ DOCUMENTATION = """
     options:
         become_user:
             description: User you 'become' to execute the task
+            default: ''
             ini:
               - section: privilege_escalation
                 key: become_user
@@ -95,7 +96,7 @@ class BecomeModule(BecomeBase):
 
         become_exe = self.get_option('become_exe') or self.name
         flags = self.get_option('become_flags') or ''
-        user = self.get_option('become_user')
+        user = self.get_option('become_user') or ''
         if user:
             user = '-u %s' % (user)
         noexe = not self.get_option('wrap_exe')

@@ -153,10 +153,13 @@ def config_snmp_community(delta, community):
         'no_acl': 'no snmp-server community {0} use-acl {no_acl}'
     }
     commands = []
-    for k, v in delta.items():
+    for k in delta.keys():
         cmd = CMDS.get(k).format(community, **delta)
         if cmd:
-            commands.append(cmd)
+            if 'group' in cmd:
+                commands.insert(0, cmd)
+            else:
+                commands.append(cmd)
             cmd = None
     return commands
 
@@ -220,6 +223,7 @@ def main():
             commands.append(command)
 
     cmds = flatten_list(commands)
+
     if cmds:
         results['changed'] = True
         if not module.check_mode:

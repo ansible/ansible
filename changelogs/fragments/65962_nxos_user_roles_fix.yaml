@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix issue where nxos_user unintentionally creates user with two different roles (https://github.com/ansible/ansible/pull/65962)

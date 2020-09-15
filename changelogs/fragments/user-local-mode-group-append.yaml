@@ -1,0 +1,2 @@
+bugfixes:
+  - user - omit incompatible options when operating in local mode (https://github.com/ansible/ansible/issues/48722)

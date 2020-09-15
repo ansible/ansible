@@ -1,0 +1,2 @@
+bugfixes:
+- Netconf modules are sending a bad rpc call for IOS-XR (https://github.com/ansible/ansible/issues/64634)

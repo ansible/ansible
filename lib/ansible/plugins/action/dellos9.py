@@ -25,8 +25,6 @@ import sys
 import copy
 
 from ansible import constants as C
-from ansible.module_utils._text import to_text
-from ansible.module_utils.connection import Connection
 from ansible.plugins.action.network import ActionModule as ActionNetworkModule
 from ansible.module_utils.network.common.utils import load_provider
 from ansible.module_utils.network.dellos9.dellos9 import dellos9_provider_spec
@@ -40,10 +38,12 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True if self._task.action == 'dellos9_config' else False
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'dellos9_config' else False
         socket_path = None
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
-        if self._play_context.connection == 'network_cli':
+        if persistent_connection == 'network_cli':
             provider = self._task.args.get('provider', {})
             if any(provider.values()):
                 display.warning('provider is unnecessary when using network_cli and will be ignored')
@@ -65,7 +65,7 @@ class ActionModule(ActionNetworkModule):
             pc.become_pass = provider['auth_pass']
 
             display.vvv('using connection plugin %s' % pc.connection, pc.remote_addr)
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
             connection.set_options(direct={'persistent_command_timeout': command_timeout})
 
             socket_path = connection.run()
@@ -76,18 +76,6 @@ class ActionModule(ActionNetworkModule):
                                'https://docs.ansible.com/ansible/network_debug_troubleshooting.html#unable-to-open-shell'}
 
             task_vars['ansible_socket'] = socket_path
-
-        # make sure we are in the right cli context which should be
-        # enable mode and not config module
-        if socket_path is None:
-            socket_path = self._connection.socket_path
-
-        conn = Connection(socket_path)
-        out = conn.get_prompt()
-        while to_text(out, errors='surrogate_then_replace').strip().endswith(')#'):
-            display.vvvv('wrong context, sending exit to device', self._play_context.remote_addr)
-            conn.send_command('exit')
-            out = conn.get_prompt()
 
         result = super(ActionModule, self).run(task_vars=task_vars)
         return result

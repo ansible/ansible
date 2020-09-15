@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_log_setting
 short_description: Configure general log settings in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify log feature and setting category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,141 +41,169 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     log_setting:
         description:
             - Configure general log settings.
         default: null
+        type: dict
         suboptions:
-            brief-traffic-format:
+            brief_traffic_format:
                 description:
                     - Enable/disable brief format traffic logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            custom-log-fields:
+            custom_log_fields:
                 description:
                     - Custom fields to append to all log messages.
+                type: list
                 suboptions:
-                    field-id:
+                    field_id:
                         description:
                             - Custom log field. Source log.custom-field.id.
-                        required: true
-            daemon-log:
+                        type: str
+            daemon_log:
                 description:
                     - Enable/disable daemon logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            expolicy-implicit-log:
+            expolicy_implicit_log:
                 description:
                     - Enable/disable explicit proxy firewall implicit policy logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            fwpolicy-implicit-log:
+            fwpolicy_implicit_log:
                 description:
                     - Enable/disable implicit firewall policy logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            fwpolicy6-implicit-log:
+            fwpolicy6_implicit_log:
                 description:
                     - Enable/disable implicit firewall policy6 logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            local-in-allow:
+            local_in_allow:
                 description:
                     - Enable/disable local-in-allow logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            local-in-deny-broadcast:
+            local_in_deny_broadcast:
                 description:
                     - Enable/disable local-in-deny-broadcast logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            local-in-deny-unicast:
+            local_in_deny_unicast:
                 description:
                     - Enable/disable local-in-deny-unicast logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            local-out:
+            local_out:
                 description:
                     - Enable/disable local-out logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            log-invalid-packet:
+            log_invalid_packet:
                 description:
                     - Enable/disable invalid packet traffic logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            log-policy-comment:
+            log_policy_comment:
                 description:
                     - Enable/disable inserting policy comments into traffic logs.
+                type: str
                 choices:
                     - enable
                     - disable
-            log-policy-name:
+            log_policy_name:
                 description:
                     - Enable/disable inserting policy name into traffic logs.
+                type: str
                 choices:
                     - enable
                     - disable
-            log-user-in-upper:
+            log_user_in_upper:
                 description:
                     - Enable/disable logs with user-in-upper.
+                type: str
                 choices:
                     - enable
                     - disable
-            neighbor-event:
+            neighbor_event:
                 description:
                     - Enable/disable neighbor event logging.
+                type: str
                 choices:
                     - enable
                     - disable
-            resolve-ip:
+            resolve_ip:
                 description:
                     - Enable/disable adding resolved domain names to traffic logs if possible.
+                type: str
                 choices:
                     - enable
                     - disable
-            resolve-port:
+            resolve_port:
                 description:
                     - Enable/disable adding resolved service names to traffic logs.
+                type: str
                 choices:
                     - enable
                     - disable
-            user-anonymize:
+            user_anonymize:
                 description:
                     - Enable/disable anonymizing user names in log messages.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -191,6 +216,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure general log settings.
     fortios_log_setting:
@@ -200,26 +226,26 @@ EXAMPLES = '''
       vdom:  "{{ vdom }}"
       https: "False"
       log_setting:
-        brief-traffic-format: "enable"
-        custom-log-fields:
+        brief_traffic_format: "enable"
+        custom_log_fields:
          -
-            field-id: "<your_own_value> (source log.custom-field.id)"
-        daemon-log: "enable"
-        expolicy-implicit-log: "enable"
-        fwpolicy-implicit-log: "enable"
-        fwpolicy6-implicit-log: "enable"
-        local-in-allow: "enable"
-        local-in-deny-broadcast: "enable"
-        local-in-deny-unicast: "enable"
-        local-out: "enable"
-        log-invalid-packet: "enable"
-        log-policy-comment: "enable"
-        log-policy-name: "enable"
-        log-user-in-upper: "enable"
-        neighbor-event: "enable"
-        resolve-ip: "enable"
-        resolve-port: "enable"
-        user-anonymize: "enable"
+            field_id: "<your_own_value> (source log.custom-field.id)"
+        daemon_log: "enable"
+        expolicy_implicit_log: "enable"
+        fwpolicy_implicit_log: "enable"
+        fwpolicy6_implicit_log: "enable"
+        local_in_allow: "enable"
+        local_in_deny_broadcast: "enable"
+        local_in_deny_unicast: "enable"
+        local_out: "enable"
+        log_invalid_packet: "enable"
+        log_policy_comment: "enable"
+        log_policy_name: "enable"
+        log_user_in_upper: "enable"
+        neighbor_event: "enable"
+        resolve_ip: "enable"
+        resolve_port: "enable"
+        user_anonymize: "enable"
 '''
 
 RETURN = '''
@@ -282,14 +308,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -297,16 +325,16 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_log_setting_data(json):
-    option_list = ['brief-traffic-format', 'custom-log-fields', 'daemon-log',
-                   'expolicy-implicit-log', 'fwpolicy-implicit-log', 'fwpolicy6-implicit-log',
-                   'local-in-allow', 'local-in-deny-broadcast', 'local-in-deny-unicast',
-                   'local-out', 'log-invalid-packet', 'log-policy-comment',
-                   'log-policy-name', 'log-user-in-upper', 'neighbor-event',
-                   'resolve-ip', 'resolve-port', 'user-anonymize']
+    option_list = ['brief_traffic_format', 'custom_log_fields', 'daemon_log',
+                   'expolicy_implicit_log', 'fwpolicy_implicit_log', 'fwpolicy6_implicit_log',
+                   'local_in_allow', 'local_in_deny_broadcast', 'local_in_deny_unicast',
+                   'local_out', 'log_invalid_packet', 'log_policy_comment',
+                   'log_policy_name', 'log_user_in_upper', 'neighbor_event',
+                   'resolve_ip', 'resolve_port', 'user_anonymize']
     dictionary = {}
 
     for attribute in option_list:
@@ -316,17 +344,15 @@ def filter_log_setting_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
@@ -334,71 +360,77 @@ def flatten_multilists_attributes(data):
 def log_setting(data, fos):
     vdom = data['vdom']
     log_setting_data = data['log_setting']
-    flattened_data = flatten_multilists_attributes(log_setting_data)
-    filtered_data = filter_log_setting_data(flattened_data)
+    filtered_data = underscore_to_hyphen(filter_log_setting_data(log_setting_data))
+
     return fos.set('log',
                    'setting',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_log(data, fos):
-    login(data)
 
     if data['log_setting']:
         resp = log_setting(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "log_setting": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "brief-traffic-format": {"required": False, "type": "str",
+                "brief_traffic_format": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "custom-log-fields": {"required": False, "type": "list",
+                "custom_log_fields": {"required": False, "type": "list",
                                       "options": {
-                                          "field-id": {"required": True, "type": "str"}
+                                          "field_id": {"required": False, "type": "str"}
                                       }},
-                "daemon-log": {"required": False, "type": "str",
+                "daemon_log": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]},
-                "expolicy-implicit-log": {"required": False, "type": "str",
+                "expolicy_implicit_log": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "fwpolicy-implicit-log": {"required": False, "type": "str",
+                "fwpolicy_implicit_log": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "fwpolicy6-implicit-log": {"required": False, "type": "str",
+                "fwpolicy6_implicit_log": {"required": False, "type": "str",
                                            "choices": ["enable", "disable"]},
-                "local-in-allow": {"required": False, "type": "str",
+                "local_in_allow": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
-                "local-in-deny-broadcast": {"required": False, "type": "str",
+                "local_in_deny_broadcast": {"required": False, "type": "str",
                                             "choices": ["enable", "disable"]},
-                "local-in-deny-unicast": {"required": False, "type": "str",
+                "local_in_deny_unicast": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
-                "local-out": {"required": False, "type": "str",
+                "local_out": {"required": False, "type": "str",
                               "choices": ["enable", "disable"]},
-                "log-invalid-packet": {"required": False, "type": "str",
+                "log_invalid_packet": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                "log-policy-comment": {"required": False, "type": "str",
+                "log_policy_comment": {"required": False, "type": "str",
                                        "choices": ["enable", "disable"]},
-                "log-policy-name": {"required": False, "type": "str",
+                "log_policy_name": {"required": False, "type": "str",
                                     "choices": ["enable", "disable"]},
-                "log-user-in-upper": {"required": False, "type": "str",
+                "log_user_in_upper": {"required": False, "type": "str",
                                       "choices": ["enable", "disable"]},
-                "neighbor-event": {"required": False, "type": "str",
+                "neighbor_event": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]},
-                "resolve-ip": {"required": False, "type": "str",
+                "resolve_ip": {"required": False, "type": "str",
                                "choices": ["enable", "disable"]},
-                "resolve-port": {"required": False, "type": "str",
+                "resolve_port": {"required": False, "type": "str",
                                  "choices": ["enable", "disable"]},
-                "user-anonymize": {"required": False, "type": "str",
+                "user_anonymize": {"required": False, "type": "str",
                                    "choices": ["enable", "disable"]}
 
             }
@@ -407,15 +439,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_log(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_log(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_log(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

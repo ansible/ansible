@@ -29,13 +29,16 @@ options:
   username:
     description: Username to use for HTTP authentication.
     type: string
-    default: None
     version_added: "2.8"
   password:
     description: Password to use for HTTP authentication.
     type: string
-    default: None
     version_added: "2.8"
+  headers:
+    description: HTTP request headers
+    type: dictionary
+    default: {}
+    version_added: "2.9"
 """
 
 EXAMPLES = """
@@ -48,6 +51,9 @@ EXAMPLES = """
 
 - name: url lookup using authentication
   debug: msg="{{ lookup('url', 'https://some.private.site.com/file.txt', username='bob', password='hunter2') }}"
+
+- name: url lookup using headers
+  debug: msg="{{ lookup('url', 'https://some.private.site.com/api/service', headers={'header1':'value1', 'header2':'value2'} ) }}"
 """
 
 RETURN = """
@@ -78,7 +84,8 @@ class LookupModule(LookupBase):
                 response = open_url(term, validate_certs=self.get_option('validate_certs'),
                                     use_proxy=self.get_option('use_proxy'),
                                     url_username=self.get_option('username'),
-                                    url_password=self.get_option('password'))
+                                    url_password=self.get_option('password'),
+                                    headers=self.get_option('headers'))
             except HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, to_native(e)))
             except URLError as e:

@@ -1,0 +1,2 @@
+bugfixes:
+- "openssl_csr - a warning is issued if an unsupported value for ``version`` is used for the ``cryptography`` backend."

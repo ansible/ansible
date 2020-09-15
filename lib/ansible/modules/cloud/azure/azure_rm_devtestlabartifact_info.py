@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabartifact_info
-version_added: "2.8"
-short_description: Get Azure DevTest Lab Artifact facts.
+version_added: "2.9"
+short_description: Get Azure DevTest Lab Artifact facts
 description:
     - Get facts of Azure DevTest Lab Artifact.
 
@@ -26,23 +26,27 @@ options:
         description:
             - The name of the resource group.
         required: True
+        type: str
     lab_name:
         description:
             - The name of the lab.
         required: True
+        type: str
     artifact_source_name:
         description:
             - The name of the artifact source.
         required: True
+        type: str
     name:
         description:
             - The name of the artifact.
+        type: str
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,7 +61,8 @@ EXAMPLES = '''
 
 RETURN = '''
 artifacts:
-    description: A list of dictionaries containing facts for DevTest Lab Artifact.
+    description:
+        - A list of dictionaries containing facts for DevTest Lab Artifact.
     returned: always
     type: complex
     contains:
@@ -100,7 +105,7 @@ artifacts:
             sample: Installs My Software
         file_path:
             description:
-                - "Artifact's path in the repo."
+                - Artifact's path in the repo.
             returned: always
             type: str
             sample: Artifacts/myArtifact
@@ -141,7 +146,7 @@ except ImportError:
     pass
 
 
-class AzureRMArtifactFacts(AzureRMModuleBase):
+class AzureRMArtifactInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -170,7 +175,7 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
         self.lab_name = None
         self.artifact_source_name = None
         self.name = None
-        super(AzureRMArtifactFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMArtifactInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
         for key in self.module_arg_spec:
@@ -238,7 +243,7 @@ class AzureRMArtifactFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMArtifactFacts()
+    AzureRMArtifactInfo()
 
 
 if __name__ == '__main__':

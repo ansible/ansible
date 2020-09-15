@@ -1,0 +1,6 @@
+cloud/azure
+unsupported
+destructive
+azure_rm_galleryimage
+azure_rm_galleryimageversion
+azure_rm_snapshot

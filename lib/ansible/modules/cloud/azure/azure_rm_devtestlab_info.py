@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlab_info
-version_added: "2.8"
-short_description: Get Azure DevTest Lab facts.
+version_added: "2.9"
+short_description: Get Azure DevTest Lab facts
 description:
     - Get facts of Azure DevTest Lab.
 
@@ -25,18 +25,21 @@ options:
     resource_group:
         description:
             - The name of the resource group.
+        type: str
     name:
         description:
             - The name of the lab.
+        type: str
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        type: list
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 '''
 
 EXAMPLES = '''
@@ -55,7 +58,8 @@ EXAMPLES = '''
 
 RETURN = '''
 labs:
-    description: A list of dictionaries containing facts for Lab.
+    description:
+        - A list of dictionaries containing facts for Lab.
     returned: always
     type: complex
     contains:
@@ -150,7 +154,7 @@ except ImportError:
     pass
 
 
-class AzureRMDevTestLabFacts(AzureRMModuleBase):
+class AzureRMDevTestLabInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -172,9 +176,13 @@ class AzureRMDevTestLabFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMDevTestLabFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDevTestLabInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_devtestlab_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_devtestlab_facts' module has been renamed to 'azure_rm_devtestlab_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
@@ -257,7 +265,7 @@ class AzureRMDevTestLabFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDevTestLabFacts()
+    AzureRMDevTestLabInfo()
 
 
 if __name__ == '__main__':

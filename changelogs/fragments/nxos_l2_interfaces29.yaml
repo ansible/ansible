@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_l2_interfaces fix for integration tests failing to setup layer2 (https://github.com/ansible/ansible/pull/61887).

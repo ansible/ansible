@@ -103,6 +103,15 @@ EXAMPLES = """
     commands:
       - command: show version
         output: json
+
+- name: run commands that require answering a prompt
+  nxos_command:
+    commands:
+      - configure terminal
+      - command: 'no feature npv'
+        prompt: 'Do you want to continue'
+        answer: 'y'
+
 """
 
 RETURN = """
@@ -188,7 +197,8 @@ def main():
     match = module.params['match']
 
     while retries > 0:
-        responses, timestamps = run_commands(module, commands, return_timestamps=True)
+        responses = run_commands(module, commands)
+
         for item in list(conditionals):
             try:
                 if item(responses):
@@ -213,7 +223,6 @@ def main():
     result.update({
         'stdout': responses,
         'stdout_lines': list(to_lines(responses)),
-        'timestamps': timestamps
     })
 
     module.exit_json(**result)

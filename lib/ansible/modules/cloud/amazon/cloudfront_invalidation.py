@@ -30,7 +30,7 @@ extends_documentation_fragment:
 options:
     distribution_id:
       description:
-        - The id of the cloudfront distribution to invalidate paths for. Can be specified insted of the alias.
+        - The id of the cloudfront distribution to invalidate paths for. Can be specified instead of the alias.
       required: false
     alias:
       description:

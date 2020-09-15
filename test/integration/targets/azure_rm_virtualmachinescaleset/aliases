@@ -1,0 +1,7 @@
+cloud/azure
+unsupported
+destructive
+azure_rm_virtualmachinescaleset_facts
+azure_rm_virtualmachinescalesetinstance_facts
+azure_rm_virtualmachinescalesetextension
+azure_rm_virtualmachinescalesetextension_facts

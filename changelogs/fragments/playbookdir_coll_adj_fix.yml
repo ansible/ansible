@@ -1,0 +1,2 @@
+bugfixes:
+    - Add missing directory provided via ``--playbook-dir`` to adjacent collection loading

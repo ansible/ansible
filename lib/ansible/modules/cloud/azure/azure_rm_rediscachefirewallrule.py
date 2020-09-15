@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_rediscachefirewallrule
 version_added: "2.8"
-short_description: Manage Azure Cache for Redis Firewall rules.
+short_description: Manage Azure Cache for Redis Firewall rules
 description:
     - Create, update and delete Azure Cache for Redis Firewall rules.
 
@@ -44,18 +44,18 @@ options:
             - Required when creating Firewall rule.
     state:
       description:
-        - Assert the state of the Firewall rule of Azure Cache for Redis.
-        - Use C(present) to create or update Firewall rule of Azure Cache for Redis and C(absent) to delete it.
+          - Assert the state of the Firewall rule of Azure Cache for Redis.
+          - Use C(present) to create or update Firewall rule of Azure Cache for Redis and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - Yunge Zhu(@yungezz)
 
 '''
 
@@ -78,11 +78,11 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Id of the Azure Cache for Redis.
+    description:
+        - Id of the Azure Cache for Redis.
     returned: always
     type: str
-    sample:
-        "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Cache/redis/myRedis/firewallRules/myRule"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Cache/redis/myRedis/firewallRules/myRule"
 '''
 
 import time
@@ -90,6 +90,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
+    from msrest.polling import LROPoller
     from msrestazure.azure_operation import AzureOperationPoller
     from msrest.serialization import Model
     from azure.mgmt.redis import RedisManagementClient
@@ -258,7 +259,7 @@ class AzureRMRedisCacheFirewallRule(AzureRMModuleBase):
                                                                     rule_name=self.name,
                                                                     start_ip=self.start_ip_address,
                                                                     end_ip=self.end_ip_address)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:

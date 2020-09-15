@@ -1,0 +1,2 @@
+bugfixes:
+- Fix nxos_l3_interfaces module deleting mgmt IP (https://github.com/ansible/ansible/pull/62545).

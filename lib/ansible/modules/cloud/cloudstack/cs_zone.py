@@ -2,21 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # (c) 2016, René Moser <mail@renemoser.net>
-#
-# This file is part of Ansible
-#
-# Ansible is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Ansible is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Ansible. If not, see <http://www.gnu.org/licenses/>.
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
@@ -29,88 +15,110 @@ module: cs_zone
 short_description: Manages zones on Apache CloudStack based clouds.
 description:
     - Create, update and remove zones.
-version_added: "2.1"
-author: "René Moser (@resmo)"
+version_added: '2.1'
+author: René Moser (@resmo)
 options:
   name:
     description:
       - Name of the zone.
+    type: str
     required: true
   id:
     description:
       - uuid of the existing zone.
+    type: str
   state:
     description:
       - State of the zone.
-    default: 'present'
-    choices: [ 'present', 'enabled', 'disabled', 'absent' ]
+    type: str
+    default: present
+    choices: [ present, enabled, disabled, absent ]
   domain:
     description:
       - Domain the zone is related to.
       - Zone is a public zone if not set.
+    type: str
   network_domain:
     description:
       - Network domain for the zone.
+    type: str
   network_type:
     description:
       - Network type of the zone.
-    default: basic
-    choices: [ 'basic', 'advanced' ]
+    type: str
+    default: Basic
+    choices: [ Basic, Advanced ]
   dns1:
     description:
       - First DNS for the zone.
-      - Required if C(state=present)
+      - Required if I(state=present)
+    type: str
   dns2:
     description:
       - Second DNS for the zone.
+    type: str
   internal_dns1:
     description:
       - First internal DNS for the zone.
-      - If not set C(dns1) will be used on C(state=present).
+      - If not set I(dns1) will be used on I(state=present).
+    type: str
   internal_dns2:
     description:
       - Second internal DNS for the zone.
+    type: str
   dns1_ipv6:
     description:
       - First DNS for IPv6 for the zone.
+    type: str
   dns2_ipv6:
     description:
       - Second DNS for IPv6 for the zone.
+    type: str
   guest_cidr_address:
     description:
       - Guest CIDR address for the zone.
+    type: str
   dhcp_provider:
     description:
       - DHCP provider for the Zone.
+    type: str
+  local_storage_enabled:
+    description:
+      - Whether to enable local storage for the zone or not..
+    type: bool
+  securitygroups_enabled:
+    description:
+      - Whether the zone is security group enabled or not.
+    type: bool
 extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Ensure a zone is present
-- local_action:
-    module: cs_zone
+- name: Ensure a zone is present
+  cs_zone:
     name: ch-zrh-ix-01
     dns1: 8.8.8.8
     dns2: 8.8.4.4
     network_type: basic
+  delegate_to: localhost
 
-# Ensure a zone is disabled
-- local_action:
-    module: cs_zone
+- name: Ensure a zone is disabled
+  cs_zone:
     name: ch-zrh-ix-01
     state: disabled
+  delegate_to: localhost
 
-# Ensure a zone is enabled
-- local_action:
-    module: cs_zone
+- name: Ensure a zone is enabled
+  cs_zone:
     name: ch-zrh-ix-01
     state: enabled
+  delegate_to: localhost
 
-# Ensure a zone is absent
-- local_action:
-    module: cs_zone
+- name: Ensure a zone is absent
+  cs_zone:
     name: ch-zrh-ix-01
     state: absent
+  delegate_to: localhost
 '''
 
 RETURN = '''
@@ -340,7 +348,7 @@ def main():
         internal_dns2=dict(),
         dns1_ipv6=dict(),
         dns2_ipv6=dict(),
-        network_type=dict(default='basic', choices=['Basic', 'basic', 'Advanced', 'advanced']),
+        network_type=dict(default='Basic', choices=['Basic', 'Advanced']),
         network_domain=dict(),
         guest_cidr_address=dict(),
         dhcp_provider=dict(),

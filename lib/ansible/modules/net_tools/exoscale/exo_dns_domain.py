@@ -26,24 +26,23 @@ options:
     description:
       - Name of the record.
     required: true
+    type: str
   state:
     description:
       - State of the resource.
-    required: false
-    default: 'present'
-    choices: [ 'present', 'absent' ]
+    default: present
+    choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: exoscale
 '''
 
 EXAMPLES = '''
 - name: Create a domain
-  local_action:
-    module: exo_dns_domain
+  exo_dns_domain:
     name: example.com
 
 - name: Remove a domain
-  local_action:
-    module: exo_dns_domain
+  exo_dns_domain:
     name: example.com
     state: absent
 '''
@@ -186,8 +185,8 @@ class ExoDnsDomain(ExoDns):
 def main():
     argument_spec = exo_dns_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True),
-        state=dict(choices=['present', 'absent'], default='present'),
+        name=dict(type='str', required=True),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
     ))
 
     module = AnsibleModule(

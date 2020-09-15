@@ -46,9 +46,9 @@ EXAMPLES = r'''
     tasks:
       - name: Replace SNMP communities and managers
         win_snmp:
-          communities:
+          community_strings:
             - public
-          managers:
+          permitted_managers:
             - 192.168.1.2
           action: set
 
@@ -56,9 +56,9 @@ EXAMPLES = r'''
     tasks:
       - name: Replace SNMP communities and clear managers
         win_snmp:
-          communities:
+          community_strings:
             - public
-          managers: []
+          permitted_managers: []
           action: set
 '''
 

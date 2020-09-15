@@ -34,7 +34,7 @@ from struct import unpack, pack
 from termios import TIOCGWINSZ
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.six import with_metaclass
 from ansible.utils.color import stringc
@@ -57,19 +57,49 @@ class FilterBlackList(logging.Filter):
         return not any(f.filter(record) for f in self.blacklist)
 
 
+class FilterUserInjector(logging.Filter):
+    """
+    This is a filter which injects the current user as the 'user' attribute on each record. We need to add this filter
+    to all logger handlers so that 3rd party libraries won't print an exception due to user not being defined.
+    """
+
+    try:
+        username = getpass.getuser()
+    except KeyError:
+        # people like to make containers w/o actual valid passwd/shadow and use host uids
+        username = 'uid=%s' % os.getuid()
+
+    def filter(self, record):
+        record.user = FilterUserInjector.username
+        return True
+
+
 logger = None
-# TODO: make this a logging callback instead
+# TODO: make this a callback event instead
 if getattr(C, 'DEFAULT_LOG_PATH'):
     path = C.DEFAULT_LOG_PATH
     if path and (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
-        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
-        mypid = str(os.getpid())
-        user = getpass.getuser()
-        logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+        # NOTE: level is kept at INFO to avoid security disclosures caused by certain libraries when using DEBUG
+        logging.basicConfig(filename=path, level=logging.INFO,  # DO NOT set to logging.DEBUG
+                            format='%(asctime)s p=%(process)d u=%(user)s n=%(name)s | %(message)s')
+
+        logger = logging.getLogger('ansible')
         for handler in logging.root.handlers:
             handler.addFilter(FilterBlackList(getattr(C, 'DEFAULT_LOG_FILTER', [])))
+            handler.addFilter(FilterUserInjector())
     else:
         print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
+
+# map color to log levels
+color_to_log_level = {C.COLOR_ERROR: logging.ERROR,
+                      C.COLOR_WARN: logging.WARNING,
+                      C.COLOR_OK: logging.INFO,
+                      C.COLOR_SKIP: logging.WARNING,
+                      C.COLOR_UNREACHABLE: logging.ERROR,
+                      C.COLOR_DEBUG: logging.DEBUG,
+                      C.COLOR_CHANGED: logging.INFO,
+                      C.COLOR_DEPRECATE: logging.WARNING,
+                      C.COLOR_VERBOSE: logging.INFO}
 
 b_COW_PATHS = (
     b"/usr/bin/cowsay",
@@ -101,7 +131,7 @@ class Display(with_metaclass(Singleton, object)):
                 cmd = subprocess.Popen([self.b_cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
                 self.cows_available = set([to_text(c) for c in out.split()])
-                if C.ANSIBLE_COW_WHITELIST:
+                if C.ANSIBLE_COW_WHITELIST and any(C.ANSIBLE_COW_WHITELIST):
                     self.cows_available = set(C.ANSIBLE_COW_WHITELIST).intersection(self.cows_available)
             except Exception:
                 # could not execute cowsay for some reason
@@ -120,21 +150,27 @@ class Display(with_metaclass(Singleton, object)):
                 if os.path.exists(b_cow_path):
                     self.b_cowsay = b_cow_path
 
-    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+    def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False, newline=True):
         """ Display a message to the user
 
         Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
         """
 
         nocolor = msg
-        if color:
-            msg = stringc(msg, color)
 
         if not log_only:
-            if not msg.endswith(u'\n'):
-                msg2 = msg + u'\n'
+
+            has_newline = msg.endswith(u'\n')
+            if has_newline:
+                msg2 = msg[:-1]
             else:
                 msg2 = msg
+
+            if color:
+                msg2 = stringc(msg2, color)
+
+            if has_newline or newline:
+                msg2 = msg2 + u'\n'
 
             msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
             if sys.version_info >= (3,):
@@ -161,19 +197,24 @@ class Display(with_metaclass(Singleton, object)):
                     raise
 
         if logger and not screen_only:
-            msg2 = nocolor.lstrip(u'\n')
+            # We first convert to a byte string so that we get rid of
+            # color and characters that are invalid in the user's locale
+            msg2 = to_bytes(nocolor.lstrip(u'\n'))
 
-            msg2 = to_bytes(msg2)
             if sys.version_info >= (3,):
                 # Convert back to text string on python3
-                # We first convert to a byte string so that we get rid of
-                # characters that are invalid in the user's locale
                 msg2 = to_text(msg2, self._output_encoding(stderr=stderr))
 
-            if color == C.COLOR_ERROR:
-                logger.error(msg2)
-            else:
-                logger.info(msg2)
+            lvl = logging.INFO
+            if color:
+                # set logger level based on color (not great)
+                try:
+                    lvl = color_to_log_level[color]
+                except KeyError:
+                    # this should not happen, but JIC
+                    raise AnsibleAssertionError('Invalid color supplied to display: %s' % color)
+            # actually log
+            logger.log(lvl, msg2)
 
     def v(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=0)
@@ -209,8 +250,12 @@ class Display(with_metaclass(Singleton, object)):
             else:
                 self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, stderr=to_stderr)
 
-    def deprecated(self, msg, version=None, removed=False):
+    def deprecated(self, msg, version=None, removed=False, date=None, collection_name=None):
         ''' used to print out a deprecation message.'''
+
+        # `date` and `collection_name` are Ansible 2.10 parameters. We accept and ignore them,
+        # to avoid modules/plugins from 2.10 conformant collections to break with new enough
+        # versions of Ansible 2.9.
 
         if not removed and not C.DEPRECATION_WARNINGS:
             return
@@ -234,7 +279,7 @@ class Display(with_metaclass(Singleton, object)):
     def warning(self, msg, formatted=False):
 
         if not formatted:
-            new_msg = "\n[WARNING]: %s" % msg
+            new_msg = "[WARNING]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
             new_msg = "\n".join(wrapped) + "\n"
         else:

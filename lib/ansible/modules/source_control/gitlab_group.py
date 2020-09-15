@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: gitlab_group
-short_description: Creates/updates/deletes Gitlab Groups
+short_description: Creates/updates/deletes GitLab Groups
 description:
-  - When the group does not exist in Gitlab, it will be created.
+  - When the group does not exist in GitLab, it will be created.
   - When the group does exist and state=absent, the group will be deleted.
 version_added: "2.1"
 author:
@@ -25,26 +25,25 @@ author:
   - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
-  - python-gitlab python module
+  - python-gitlab python module <= 1.12.1
 extends_documentation_fragment:
     - auth_basic
 options:
   server_url:
     description:
-      - The URL of the Gitlab server, with protocol (i.e. http or https).
-    required: true
+      - The URL of the GitLab server, with protocol (i.e. http or https).
     type: str
   login_user:
     description:
-      - Gitlab user name.
+      - GitLab user name.
     type: str
   login_password:
     description:
-      - Gitlab password for login_user
+      - GitLab password for login_user
     type: str
   api_token:
     description:
-      - Gitlab token for logging in.
+      - GitLab token for logging in.
     type: str
     aliases:
       - login_token
@@ -86,35 +85,35 @@ options:
 '''
 
 EXAMPLES = '''
-- name: "Delete Gitlab Group"
+- name: "Delete GitLab Group"
   gitlab_group:
-    api_url: https://gitlab.example.com/
+    server_url: https://gitlab.example.com/
     api_token: "{{ access_token }}"
     validate_certs: False
     name: my_first_group
     state: absent
 
-- name: "Create Gitlab Group"
+- name: "Create GitLab Group"
   gitlab_group:
-    api_url: https://gitlab.example.com/
+    server_url: https://gitlab.example.com/
     validate_certs: True
-    api_usersername: dj-wasabi
+    api_username: dj-wasabi
     api_password: "MySecretPassword"
     name: my_first_group
     path: my_first_group
     state: present
 
 # The group will by created at https://gitlab.dj-wasabi.local/super_parent/parent/my_first_group
-- name: "Create Gitlab SubGroup"
+- name: "Create GitLab SubGroup"
   gitlab_group:
-    api_url: https://gitlab.example.com/
+    server_url: https://gitlab.example.com/
     validate_certs: True
-    api_usersername: dj-wasabi
+    api_username: dj-wasabi
     api_password: "MySecretPassword"
     name: my_first_group
     path: my_first_group
     state: present
-    parent_path: "super_parent/parent"
+    parent: "super_parent/parent"
 '''
 
 RETURN = '''
@@ -130,7 +129,7 @@ result:
   type: dict
 
 error:
-  description: the error message returned by the Gitlab API
+  description: the error message returned by the GitLab API
   returned: failed
   type: str
   sample: "400: path is already in use"
@@ -188,7 +187,8 @@ class GitLabGroup(object):
             group = self.createGroup({
                 'name': name,
                 'path': options['path'],
-                'parent_id': parent_id})
+                'parent_id': parent_id,
+                'visibility': options['visibility']})
             changed = True
         else:
             changed, group = self.updateGroup(self.groupObject, {
@@ -269,15 +269,17 @@ class GitLabGroup(object):
 def deprecation_warning(module):
     deprecated_aliases = ['login_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
+    for aliase in deprecated_aliases:
+        if aliase in module.params:
+            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
 
 
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', required=True, removed_in_version=2.10),
-        login_user=dict(type='str', no_log=True, removed_in_version=2.10),
-        login_password=dict(type='str', no_log=True, removed_in_version=2.10),
+        server_url=dict(type='str', removed_in_version="2.10"),
+        login_user=dict(type='str', no_log=True, removed_in_version="2.10"),
+        login_password=dict(type='str', no_log=True, removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["login_token"]),
         name=dict(type='str', required=True),
         path=dict(type='str'),
@@ -303,7 +305,8 @@ def main():
             ['login_user', 'login_password'],
         ],
         required_one_of=[
-            ['api_username', 'api_token', 'login_user', 'login_token']
+            ['api_username', 'api_token', 'login_user', 'login_token'],
+            ['server_url', 'api_url']
         ],
         supports_check_mode=True,
     )
@@ -339,10 +342,10 @@ def main():
                                         private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s. \
+            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
 
     # Define default group_path based on group_name
     if group_path is None:
@@ -354,7 +357,7 @@ def main():
     if parent_identifier:
         parent_group = findGroup(gitlab_instance, parent_identifier)
         if not parent_group:
-            module.fail_json(msg="Failed create Gitlab group: Parent group doesn't exists")
+            module.fail_json(msg="Failed create GitLab group: Parent group doesn't exists")
 
         group_exists = gitlab_group.existsGroup(parent_group.full_path + '/' + group_path)
     else:

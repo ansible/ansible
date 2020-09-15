@@ -1,0 +1,85 @@
+---
+- debug:
+    msg: "Start nxos_lag_interfaces replaced integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+
+- name: enable feature lacp
+  nxos_feature:
+    feature: lacp
+
+- name: setup1
+  nxos_config: &cleanup1
+    lines:
+      - "no channel-group 10"
+    parents: "interface {{ test_int1 }}"
+  ignore_errors: yes
+
+- name: setup2
+  nxos_config: &cleanup2
+    lines:
+      - "no channel-group 11"
+    parents: "interface {{ test_int2 }}"
+  ignore_errors: yes
+
+- block:
+  - name: setup3
+    nxos_config:
+      lines:
+        - "channel-group 10"
+      parents: "{{ item }}"
+    ignore_errors: yes
+    loop:
+      - "interface {{ test_int1 }}"
+      - "interface {{ test_int2 }}"
+
+  - name: Gather LAG interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: lag_interfaces
+
+  - name: Replaced
+    nxos_lag_interfaces: &replaced
+      config:
+        - name: port-channel11
+          members:
+            - member: "{{ test_int2 }}"
+              mode: active
+      state: replaced
+    register: result
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(result.before)|length == 0"
+
+  - name: Gather LAG interfaces post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - Replaced
+    nxos_lag_interfaces: *replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  always:
+  - name: teardown1
+    nxos_config: *cleanup1
+    ignore_errors: yes
+
+  - name: teardown2
+    nxos_config: *cleanup2
+    ignore_errors: yes
+
+  - name: disable feature lacp
+    nxos_feature:
+      feature: lacp
+      state: disabled

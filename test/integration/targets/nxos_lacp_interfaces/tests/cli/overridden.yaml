@@ -1,0 +1,85 @@
+---
+- debug:
+    msg: "Start nxos_lacp_interfaces overridden integration tests connection={{ ansible_connection }}"
+
+- set_fact:
+    mode: delay
+  when: platform is not search('N5K|N6K|N7K') and ((imagetag != 'I2'))
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      no interface port-channel5
+      no interface port-channel10
+      no interface port-channel11
+      no feature lacp
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        feature lacp
+        interface port-channel10
+          lacp min-links 5
+        interface port-channel5
+          lacp max-bundle 10
+
+  - name: setup3 - L2 for mode command
+    cli_config:
+      config: |
+        interface port-channel11
+          switchport
+    when: mode is defined
+
+  - name: Gather lacp_interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: lacp_interfaces
+
+  - name: Overridden
+    nxos_lacp_interfaces: &overridden
+      config:
+        - name: port-channel11
+          links:
+            min: 4
+          mode: "{{ mode | default(omit) }}"
+      state: overridden
+    register: result
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lacp_interfaces|symmetric_difference(result.before)|length == 0"
+        - "result.changed == true"
+        - "'interface port-channel10' in result.commands"
+        - "'no lacp min-links' in result.commands"
+        - "'interface port-channel5' in result.commands"
+        - "'no lacp max-bundle' in result.commands"
+        - "'interface port-channel11' in result.commands"
+
+  - assert:
+      that:
+        - "'lacp mode delay' in result.commands"
+        - "result.commands|length == 7"
+    when: mode is defined
+
+  - name: Gather lacp_interfaces post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lacp_interfaces|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - Overridden
+    nxos_lacp_interfaces: *overridden
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup

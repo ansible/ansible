@@ -272,7 +272,7 @@ def main():
             type=dict(choices=['PUBLIC', 'SERVICENET'], default='PUBLIC'),
             vip_id=dict(),
             wait=dict(type='bool'),
-            wait_timeout=dict(default=300),
+            wait_timeout=dict(type='int', default=300),
         )
     )
 

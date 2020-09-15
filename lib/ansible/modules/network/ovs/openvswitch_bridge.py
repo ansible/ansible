@@ -140,6 +140,12 @@ def map_obj_to_commands(want, have, module):
                                 or want['external_ids'][k] != have['external_ids'][k]):
                             command += " " + k + " " + v
                             commands.append(command)
+
+            if want['vlan'] and want['vlan'] != have['vlan']:
+                templatized_command = ("%(ovs-vsctl)s -t %(timeout)s"
+                                       " set port %(bridge)s tag=%(vlan)s")
+                command = templatized_command % module.params
+                commands.append(command)
         else:
             templatized_command = ("%(ovs-vsctl)s -t %(timeout)s add-br"
                                    " %(bridge)s")
@@ -169,6 +175,7 @@ def map_obj_to_commands(want, have, module):
                     command = templatized_command % module.params
                     command += " " + k + " " + v
                     commands.append(command)
+
     return commands
 
 

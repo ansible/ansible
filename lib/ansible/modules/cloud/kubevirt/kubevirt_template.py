@@ -129,7 +129,7 @@ options:
             Then, that value is substituted wherever the parameter is referenced. References can be defined in any
             field in the objects list field. This is useful for generating random passwords or allowing the user to
             supply a host name or other user-specific value that is required to customize the template."
-            - "More information can be foud at: U(https://docs.openshift.com/container-platform/3.6/dev_guide/templates.html#writing-parameters)"
+            - "More information can be found at: U(https://docs.openshift.com/container-platform/3.6/dev_guide/templates.html#writing-parameters)"
         type: list
     version:
         description:
@@ -210,6 +210,7 @@ from ansible.module_utils.k8s.common import AUTH_ARG_SPEC
 from ansible.module_utils.kubevirt import (
     virtdict,
     KubeVirtRawModule,
+    API_GROUP,
     MAX_SUPPORTED_API_VERSION
 )
 
@@ -334,7 +335,7 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
         if self.params.get('default_network'):
             annotations['defaults.template.cnv.io/network'] = self.params.get('default_network').get('name')
 
-        # Proccess objects:
+        # Process objects:
         self.client = self.get_api_client()
         definition['objects'] = []
         objects = self.params.get('objects') or []
@@ -355,9 +356,9 @@ class KubeVirtVMTemplate(KubeVirtRawModule):
                     vm_definition['spec']['template']['spec']['networks'] = [self.params.get('default_network')]
 
                 # Set kubevirt API version:
-                vm_definition['apiVersion'] = MAX_SUPPORTED_API_VERSION
+                vm_definition['apiVersion'] = '%s/%s' % (API_GROUP, MAX_SUPPORTED_API_VERSION)
 
-                # Contruct k8s vm API object:
+                # Construct k8s vm API object:
                 vm_template = vm_definition['spec']['template']
                 dummy, vm_def = self.construct_vm_template_definition('VirtualMachine', vm_definition, vm_template, obj)
 

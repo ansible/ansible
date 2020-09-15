@@ -1,0 +1,75 @@
+---
+- debug:
+    msg: "Start nxos_l3_interfaces overridden integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+- set_fact: test_int3="{{ nxos_int3 }}"
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      default interface {{ test_int1 }}
+      default interface {{ test_int2 }}
+      default interface {{ test_int3 }}
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        interface {{ test_int1 }}
+          no switchport
+          ip address 192.168.10.2/24 tag 5
+        interface {{ test_int2 }}
+          no switchport
+          ip address 10.1.1.1/24
+        interface {{ test_int3 }}
+          no switchport
+
+  - name: Gather l3_interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: l3_interfaces
+
+  - name: Overridden
+    nxos_l3_interfaces: &overridden
+      config:
+        - name: "{{ test_int3 }}"
+          ipv4:
+            - address: 10.1.1.3/24
+      state: overridden
+    register: result
+
+  - assert:
+      that:
+        - "result.before|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
+        - "result.changed == true"
+        - "'interface {{ test_int1 }}' in result.commands"
+        - "'no ip address' in result.commands"
+        - "'interface {{ test_int2 }}' in result.commands"
+        - "'no ip address' in result.commands"
+        - "'interface {{ test_int3 }}' in result.commands"
+        - "'ip address 10.1.1.3/24' in result.commands"
+        - "result.commands|length == 6"
+
+  - name: Gather l3_interfaces post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "result.after|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
+
+  - name: Idempotence - Overridden
+    nxos_l3_interfaces: *overridden
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup

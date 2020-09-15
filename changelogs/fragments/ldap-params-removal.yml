@@ -1,0 +1,8 @@
+removed_features:
+  - "ldap_attr, ldap_entry - The ``params`` option has been removed in
+    Ansible-2.10 as it circumvents Ansible's option handling.  Setting
+    ``bind_pw`` with the ``params`` option was disallowed in Ansible-2.7, 2.8,
+    and 2.9 as it was insecure.  For information about this policy, see the
+discussion at:
+    https://meetbot.fedoraproject.org/ansible-meeting/2017-09-28/ansible_dev_meeting.2017-09-28-15.00.log.html
+    This fixes CVE-2020-1746"

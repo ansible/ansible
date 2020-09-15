@@ -1,0 +1,6 @@
+---
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - name: Request Docker Machine to remove this machine as a generic VM
+      command: "docker-machine rm vm -f"

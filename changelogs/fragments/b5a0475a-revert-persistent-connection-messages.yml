@@ -1,0 +1,2 @@
+bugfixes:
+  - "Revert 5f6427b1fc7449a5c42212013d3f628665701c3d as it breaks netconf connection"

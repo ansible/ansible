@@ -1,2 +1,0 @@
-minor_changes:
-- win_stat - added the ``follow`` module option to follow ``path`` when getting the file or directory info

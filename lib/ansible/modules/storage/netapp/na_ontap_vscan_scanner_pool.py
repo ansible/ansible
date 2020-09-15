@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2018, NetApp, Inc
+# (c) 2018-2019, NetApp, Inc
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -94,7 +94,7 @@ class NetAppOntapVscanScannerPool(object):
         self.argument_spec.update(dict(
             state=dict(choices=['present', 'absent'], default='present'),
             vserver=dict(required=True, type='str'),
-            hostnames=dict(requried=False, type='list'),
+            hostnames=dict(required=False, type='list'),
             privileged_users=dict(required=False, type='list'),
             scanner_pool=dict(required=True, type='str'),
             scanner_policy=dict(required=False, choices=['primary', 'secondary', 'idle'])
@@ -151,7 +151,7 @@ class NetAppOntapVscanScannerPool(object):
         try:
             self.server.invoke_successfully(apply_policy_obj, True)
         except netapp_utils.zapi.NaApiError as error:
-            self.module.fail_json(msg='Error appling policy %s to pool %s: %s' %
+            self.module.fail_json(msg='Error applying policy %s to pool %s: %s' %
                                       (self.scanner_policy, self.scanner_pool, to_native(error)),
                                   exception=traceback.format_exc())
 
@@ -163,6 +163,7 @@ class NetAppOntapVscanScannerPool(object):
         scanner_pool_obj = netapp_utils.zapi.NaElement('vscan-scanner-pool-get-iter')
         scanner_pool_info = netapp_utils.zapi.NaElement('scan-scanner-pool-info')
         scanner_pool_info.add_new_child('scanner-pool', self.scanner_pool)
+        scanner_pool_info.add_new_child('vserver', self.vserver)
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(scanner_pool_info)
         scanner_pool_obj.add_child_elem(query)
@@ -172,7 +173,7 @@ class NetAppOntapVscanScannerPool(object):
             self.module.fail_json(msg='Error searching for Vscan Scanner Pool %s: %s' %
                                       (self.scanner_pool, to_native(error)),
                                   exception=traceback.format_exc())
-        if result.get_child_by_name('num-records'):
+        if result.get_child_by_name('num-records') and int(result.get_child_content('num-records')) >= 1:
             if result.get_child_by_name('attributes-list').get_child_by_name('vscan-scanner-pool-info').get_child_content(
                     'scanner-pool') == self.scanner_pool:
                 return result.get_child_by_name('attributes-list').get_child_by_name('vscan-scanner-pool-info')
@@ -216,9 +217,10 @@ class NetAppOntapVscanScannerPool(object):
                 changed = True
             # apply Scanner policy
             if scanner_pool_obj:
-                if scanner_pool_obj.get_child_content('scanner-policy') != self.scanner_policy:
-                    self.apply_policy()
-                    changed = True
+                if self.scanner_policy:
+                    if scanner_pool_obj.get_child_content('scanner-policy') != self.scanner_policy:
+                        self.apply_policy()
+                        changed = True
         if self.state == 'absent':
             if scanner_pool_obj:
                 self.delete_scanner_pool()

@@ -1,0 +1,4 @@
+bugfixes:
+- "docker_container - fix idempotency for IP addresses for networks. The old implementation checked the effective
+   IP addresses assigned by the Docker daemon, and not the specified ones. This causes idempotency issues for
+   containers which are not running, since they have no effective IP addresses assigned."

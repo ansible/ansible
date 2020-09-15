@@ -22,17 +22,6 @@ except ImportError:
     CS_IMP_ERR = traceback.format_exc()
     HAS_LIB_CS = False
 
-CS_HYPERVISORS = [
-    'KVM', 'kvm',
-    'VMware', 'vmware',
-    'BareMetal', 'baremetal',
-    'XenServer', 'xenserver',
-    'LXC', 'lxc',
-    'HyperV', 'hyperv',
-    'UCS', 'ucs',
-    'OVM', 'ovm',
-    'Simulator', 'simulator',
-]
 
 if sys.version_info > (3,):
     long = int
@@ -639,22 +628,27 @@ class AnsibleCloudStack:
                 time.sleep(2)
         return job
 
-    def get_result(self, resource):
+    def update_result(self, resource, result=None):
+        if result is None:
+            result = dict()
         if resource:
             returns = self.common_returns.copy()
             returns.update(self.returns)
             for search_key, return_key in returns.items():
                 if search_key in resource:
-                    self.result[return_key] = resource[search_key]
+                    result[return_key] = resource[search_key]
 
             # Bad bad API does not always return int when it should.
             for search_key, return_key in self.returns_to_int.items():
                 if search_key in resource:
-                    self.result[return_key] = int(resource[search_key])
+                    result[return_key] = int(resource[search_key])
 
             if 'tags' in resource:
-                self.result['tags'] = resource['tags']
-        return self.result
+                result['tags'] = resource['tags']
+        return result
+
+    def get_result(self, resource):
+        return self.update_result(resource, self.result)
 
     def get_result_and_facts(self, facts_name, resource):
         result = self.get_result(resource)

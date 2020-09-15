@@ -1,0 +1,5 @@
+bugfixes:
+  - >
+     group - The group module errored of if the gid exists with the
+     same group name. This prevents reruns of the playbook. This fixes
+     a regression introduced by 4898b0a.

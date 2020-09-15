@@ -17,8 +17,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbdatabase_info
-version_added: "2.8"
-short_description: Get Azure MariaDB Database facts.
+version_added: "2.9"
+short_description: Get Azure MariaDB Database facts
 description:
     - Get facts of MariaDB Database.
 
@@ -27,20 +27,23 @@ options:
         description:
             - The name of the resource group that contains the resource. You can obtain this value from the Azure Resource Manager API or the portal.
         required: True
+        type: str
     server_name:
         description:
             - The name of the server.
         required: True
+        type: str
     name:
         description:
             - The name of the database.
+        type: str
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
-    - "Matti Ranta (@techknowlogick)"
+    - Zim Kalinowski (@zikalino)
+    - Matti Ranta (@techknowlogick)
 
 '''
 
@@ -59,13 +62,14 @@ EXAMPLES = '''
 
 RETURN = '''
 databases:
-    description: A list of dictionaries containing facts for MariaDB Databases.
+    description:
+        - A list of dictionaries containing facts for MariaDB Databases.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/testser
@@ -113,7 +117,7 @@ except ImportError:
     pass
 
 
-class AzureRMMariaDbDatabaseFacts(AzureRMModuleBase):
+class AzureRMMariaDbDatabaseInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -136,9 +140,13 @@ class AzureRMMariaDbDatabaseFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMMariaDbDatabaseFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMariaDbDatabaseInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_mariadbdatabase_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_mariadbdatabase_facts' module has been renamed to 'azure_rm_mariadbdatabase_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
@@ -196,7 +204,7 @@ class AzureRMMariaDbDatabaseFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMMariaDbDatabaseFacts()
+    AzureRMMariaDbDatabaseInfo()
 
 
 if __name__ == '__main__':

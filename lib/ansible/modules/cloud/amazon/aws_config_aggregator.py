@@ -44,20 +44,20 @@ options:
         - A list of source regions being aggregated.
       all_aws_regions:
         description:
-        - If true, aggreagate existing AWS Config regions and future regions.
+        - If true, aggregate existing AWS Config regions and future regions.
   organization_source:
     description:
     - The region authorized to collect aggregated data.
     suboptions:
       role_arn:
         description:
-        - ARN of the IAM role used to retreive AWS Organization details associated with the aggregator account.
+        - ARN of the IAM role used to retrieve AWS Organization details associated with the aggregator account.
       aws_regions:
         description:
         - The source regions being aggregated.
       all_aws_regions:
         description:
-        - If true, aggreagate existing AWS Config regions and future regions.
+        - If true, aggregate existing AWS Config regions and future regions.
 extends_documentation_fragment:
   - aws
   - ec2
@@ -114,7 +114,7 @@ def create_resource(client, module, params, result):
         module.fail_json_aws(e, msg="Couldn't create AWS Config configuration aggregator")
 
 
-def update_resource(client, module, resource_type, params, result):
+def update_resource(client, module, params, result):
     current_params = client.describe_configuration_aggregators(
         ConfigurationAggregatorNames=[params['name']]
     )
@@ -137,7 +137,7 @@ def update_resource(client, module, resource_type, params, result):
             module.fail_json_aws(e, msg="Couldn't create AWS Config configuration aggregator")
 
 
-def delete_resource(client, module, resource_type, params, result):
+def delete_resource(client, module, params, result):
     try:
         client.delete_configuration_aggregator(
             ConfigurationAggregatorName=params['ConfigurationAggregatorName']

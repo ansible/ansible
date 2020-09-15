@@ -4,7 +4,7 @@
     nname_1: "{{ name_prefix ~ '-network-1' }}"
 - name: Registering network name
   set_fact:
-    dnetworks: "{{ dnetworks }} + [nname_1]"
+    dnetworks: "{{ dnetworks + [nname_1] }}"
 
 ####################################################################
 ## internal ########################################################
@@ -187,7 +187,8 @@
 - assert:
     that:
     - attachable_1 is failed
-    - "('version is ' ~ docker_py_version ~'. Minimum version required is 2.0.0') in attachable_1.msg"
+    - "('version is ' ~ docker_py_version ~ ' ') in attachable_1.msg"
+    - "'Minimum version required is 2.0.0 ' in attachable_1.msg"
   when: docker_py_version is version('2.0.0', '<')
 
 ####################################################################

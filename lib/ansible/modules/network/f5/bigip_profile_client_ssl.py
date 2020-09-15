@@ -96,6 +96,7 @@ options:
       - no-session-resumption-on-renegotiation
       - no-tlsv1.1
       - no-tlsv1.2
+      - no-tlsv1.3
       - single-dh-use
       - ephemeral-rsa
       - cipher-server-preference
@@ -138,6 +139,7 @@ options:
       - Specifies the fully qualified DNS hostname of the server used in Server Name Indication communications.
         When creating a new profile, the setting is provided by the parent profile.
       - The server name can also be a wildcard string containing the asterisk C(*) character.
+    type: str
     version_added: 2.8
   sni_default:
     description:
@@ -769,14 +771,19 @@ class Difference(object):
     def options(self):
         if self.want.options is None:
             return None
+        # starting with v14 options may return as a space delimited string in curly
+        # braces, eg "{ option1 option2 }", or simply "none" to indicate empty set
+        if self.have.options is None or self.have.options == 'none':
+            self.have.options = []
+        if not isinstance(self.have.options, list):
+            if self.have.options.startswith('{'):
+                self.have.options = self.have.options[2:-2].split(' ')
+            else:
+                self.have.options = [self.have.options]
         if not self.want.options:
-            if self.have.options is None:
-                return None
-            if not self.have.options:
-                return None
-            if self.have.options is not None:
-                return self.want.options
-        if self.have.options is None:
+            # we don't want options.  If we have any, indicate we should remove, else noop
+            return [] if self.have.options else None
+        if not self.have.options:
             return self.want.options
         if set(self.want.options) != set(self.have.options):
             return self.want.options
@@ -1034,6 +1041,7 @@ class ArgumentSpec(object):
                     'no-session-resumption-on-renegotiation',
                     'no-tlsv1.1',
                     'no-tlsv1.2',
+                    'no-tlsv1.3',
                     'single-dh-use',
                     'ephemeral-rsa',
                     'cipher-server-preference',

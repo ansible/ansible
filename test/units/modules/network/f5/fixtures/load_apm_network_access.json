@@ -1,0 +1,98 @@
+{
+  "kind": "tm:apm:resource:network-access:network-accessstate",
+  "name": "test",
+  "partition": "Common",
+  "fullPath": "/Common/test",
+  "generation": 1140,
+  "selfLink": "https://localhost/mgmt/tm/apm/resource/network-access/~Common~test?ver=12.1.4",
+  "addressSpaceDhcpRequestsExcluded": "true",
+  "addressSpaceExcludeDnsName": [
+    "baz.com",
+    "bazfoo.com"
+  ],
+  "addressSpaceIncludeDnsName": [
+    "foo.com",
+    "bar.com"
+  ],
+  "addressSpaceLocDnsServersExcluded": "true",
+  "addressSpaceLocalSubnetsExcluded": "true",
+  "addressSpaceProtect": "false",
+  "applicationLaunchWarning": "true",
+  "autoLaunch": "false",
+  "clientInterfaceSpeed": 100000000,
+  "clientIpFilterEngine": "false",
+  "clientPowerManagement": "ignore",
+  "clientProxy": "false",
+  "clientProxyAddress": "any6",
+  "clientProxyEnforceSubnets": "true",
+  "clientProxyIgnoreAutoConfigError": "false",
+  "clientProxyLocalBypass": "false",
+  "clientProxyPort": 0,
+  "clientProxyUseHttpPac": "false",
+  "clientProxyUseLocalProxy": "false",
+  "clientTrayIcon": "true",
+  "compression": "none",
+  "customizationGroup": "/Common/test_resource_network_access_customization",
+  "customizationGroupReference": {
+    "link": "https://localhost/mgmt/tm/apm/policy/customization-group/~Common~test_resource_network_access_customization?ver=12.1.4"
+  },
+  "dnsEnforceSearchOrder": "true",
+  "dnsPrimary": "any6",
+  "dnsRegisterConnection": "false",
+  "dnsSecondary": "any6",
+  "dnsUseDnsSuffixForRegistration": "false",
+  "dtls": "false",
+  "dtlsPort": 4433,
+  "executeLogoffScripts": "false",
+  "idleTimeoutThreshold": 0,
+  "idleTimeoutWindow": 0,
+  "ipv6DnsPrimary": "any6",
+  "ipv6DnsSecondary": "any6",
+  "ipv6LeasepoolName": "/Common/ipv6lease",
+  "ipv6LeasepoolNameReference": {
+    "link": "https://localhost/mgmt/tm/apm/resource/ipv6-leasepool/~Common~ipv6lease?ver=12.1.4"
+  },
+  "leasepoolName": "/Common/ipv4lease",
+  "leasepoolNameReference": {
+    "link": "https://localhost/mgmt/tm/apm/resource/leasepool/~Common~ipv4lease?ver=12.1.4"
+  },
+  "locationSpecific": "true",
+  "microsoftNetworkClient": "true",
+  "microsoftNetworkServer": "false",
+  "networkTunnel": "enabled",
+  "preserveSourcePortStrict": "none",
+  "provideClientCert": "true",
+  "proxyArp": "false",
+  "snat": "automap",
+  "splitTunneling": "true",
+  "supportedIpVersion": "ipv4-ipv6",
+  "syncWithActiveDirectory": "false",
+  "type": "network-access",
+  "winsPrimary": "any6",
+  "winsSecondary": "any6",
+  "addressSpaceExcludeSubnet": [
+    {
+      "subnet": "192.168.1.0/24"
+    },
+    {
+      "subnet": "192.168.2.1/32"
+    }
+  ],
+  "addressSpaceIncludeSubnet": [
+    {
+      "subnet": "10.10.10.1/32"
+    },
+    {
+      "subnet": "10.11.11.0/24"
+    }
+  ],
+  "ipv6AddressSpaceIncludeSubnet": [
+    {
+      "subnet": "2607:f0d0:1002:51::4/128"
+    }
+  ],
+  "optimizedAppReference": {
+    "link": "https://localhost/mgmt/tm/apm/resource/network-access/~Common~test/optimized-app?ver=12.1.4",
+    "isSubcollection": true
+  }
+}

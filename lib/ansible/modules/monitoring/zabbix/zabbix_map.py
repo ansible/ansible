@@ -7,7 +7,7 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: zabbix_map
 author:
@@ -29,16 +29,16 @@ description:
         C(zbx_image_maintenance) contains name of the image used to display map element in maintenance.
         C(zbx_image_problem) contains name of the image used to display map element with problems.
         C(zbx_url) contains map element URL in C(name:url) format.
-            More than one url could be specified by adding some prefix (e.g., C(zbx_url1), C(zbx_url2))."
+            More than one URL could be specified by adding a postfix (e.g., C(zbx_url1), C(zbx_url2))."
     - "The following extra link attributes are supported:
         C(zbx_draw_style) contains link line draw style. Possible values: C(line), C(bold), C(dotted), C(dashed).
         C(zbx_trigger) contains name of the trigger used as a link indicator in C(host_name:trigger_name) format.
-            More than one trigger could be specified by adding some prefix (e.g., C(zbx_trigger1), C(zbx_trigger2)).
+            More than one trigger could be specified by adding a postfix (e.g., C(zbx_trigger1), C(zbx_trigger2)).
         C(zbx_trigger_color) contains indicator color specified either as CSS3 name or as a hexadecimal code starting with C(#).
         C(zbx_trigger_draw_style) contains indicator draw style. Possible values are the same as for C(zbx_draw_style)."
 requirements:
     - "python >= 2.6"
-    - zabbix-api
+    - "zabbix-api >= 0.5.4"
     - pydotplus
     - webcolors
     - Pillow
@@ -50,11 +50,13 @@ options:
             - Name of the map.
         required: true
         aliases: [ "map_name" ]
+        type: str
     data:
         description:
             - Graph written in DOT language.
         required: false
         aliases: [ "dot_data" ]
+        type: str
     state:
         description:
             - State of the map.
@@ -63,24 +65,28 @@ options:
         required: false
         choices: ['present', 'absent']
         default: "present"
+        type: str
     width:
         description:
             - Width of the map.
         required: false
         default: 800
+        type: int
     height:
         description:
             - Height of the map.
         required: false
         default: 600
+        type: int
     margin:
         description:
             - Size of white space between map's borders and its elements.
         required: false
         default: 40
+        type: int
     expand_problem:
         description:
-            - Whether the the problem trigger will be displayed for elements with a single problem.
+            - Whether the problem trigger will be displayed for elements with a single problem.
         required: false
         type: bool
         default: true
@@ -96,29 +102,31 @@ options:
         required: false
         choices: ['label', 'ip', 'name', 'status', 'nothing', 'custom']
         default: "name"
+        type: str
     default_image:
         description:
             - Name of the Zabbix image used to display the element if this element doesn't have the C(zbx_image) attribute defined.
         required: false
         aliases: [ "image" ]
+        type: str
 
 extends_documentation_fragment:
     - zabbix
 '''
 
-RETURN = ''' # '''
+RETURN = r''' # '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 ###
 ### Example inventory:
 # [web]
 # web[01:03].example.com ansible_host=127.0.0.1
 # [db]
-# db.example.com  ansible_host=127.0.0.1
+# db.example.com ansible_host=127.0.0.1
 # [backup]
-# backup.example.com   ansible_host=127.0.0.1
+# backup.example.com ansible_host=127.0.0.1
 ###
-### Each inventory host presents in Zabbix with same name.
+### Each inventory host is present in Zabbix with a matching name.
 ###
 ### Contents of 'map.j2':
 # digraph G {
@@ -172,34 +180,42 @@ ANSIBLE_METADATA = {
     'status': ['preview']
 }
 
+
+import atexit
 import base64
+import traceback
+
 from io import BytesIO
 from operator import itemgetter
 from distutils.version import StrictVersion
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 try:
     import pydotplus
     HAS_PYDOTPLUS = True
 except ImportError:
+    PYDOT_IMP_ERR = traceback.format_exc()
     HAS_PYDOTPLUS = False
 
 try:
     import webcolors
     HAS_WEBCOLORS = True
 except ImportError:
+    WEBCOLORS_IMP_ERR = traceback.format_exc()
     HAS_WEBCOLORS = False
 
 try:
-    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
 try:
     from PIL import Image
     HAS_PIL = True
 except ImportError:
+    PIL_IMP_ERR = traceback.format_exc()
     HAS_PIL = False
 
 
@@ -750,7 +766,7 @@ def main():
             data=dict(type='str', required=False, aliases=['dot_data']),
             width=dict(type='int', default=800),
             height=dict(type='int', default=600),
-            state=dict(default="present", choices=['present', 'absent']),
+            state=dict(type='str', default="present", choices=['present', 'absent']),
             default_image=dict(type='str', required=False, aliases=['image']),
             margin=dict(type='int', default=40),
             expand_problem=dict(type='bool', default=True),
@@ -761,13 +777,13 @@ def main():
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
     if not HAS_PYDOTPLUS:
-        module.fail_json(msg="Missing required pydotplus module (check docs or install with: pip install pydotplus)")
+        module.fail_json(msg=missing_required_lib('pydotplus', url='https://pypi.org/project/pydotplus/'), exception=PYDOT_IMP_ERR)
     if not HAS_WEBCOLORS:
-        module.fail_json(msg="Missing required webcolors module (check docs or install with: pip install webcolors)")
+        module.fail_json(msg=missing_required_lib('webcolors', url='https://pypi.org/project/webcolors/'), exception=WEBCOLORS_IMP_ERR)
     if not HAS_PIL:
-        module.fail_json(msg="Missing required Pillow module (check docs or install with: pip install Pillow)")
+        module.fail_json(msg=missing_required_lib('Pillow', url='https://pypi.org/project/Pillow/'), exception=PIL_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -784,6 +800,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user, passwd=http_login_password,
                         validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

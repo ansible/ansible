@@ -486,6 +486,10 @@ class Difference(object):
         return cmp_str_with_none(self.want.description, self.have.description)
 
     @property
+    def receive(self):
+        return cmp_str_with_none(self.want.receive, self.have.receive)
+
+    @property
     def receive_disable(self):
         return cmp_str_with_none(self.want.receive_disable, self.have.receive_disable)
 

@@ -1,3 +1,0 @@
----
-minor_changes:
-- junit callback plug-in - introduce a new option to consider a task only as test case if it has this value as prefix.

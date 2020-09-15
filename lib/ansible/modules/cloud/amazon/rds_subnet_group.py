@@ -78,7 +78,7 @@ subnet_group:
         subnet_ids:
             description: Contains a list of Subnet IDs
             returned: I(state=present)
-            type: array
+            type: list
         status:
             description: The status of the DB subnet group
             returned: I(state=present)

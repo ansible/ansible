@@ -21,6 +21,13 @@ description:
     - It uses the pyOpenSSL python library to interact with openssl. This module supports
       the subjectAltName, keyUsage, extendedKeyUsage, basicConstraints and OCSP Must Staple
       extensions.
+    - "Please note that the module regenerates existing CSR if it doesn't match the module's
+      options, or if it seems to be corrupt. If you are concerned that this could overwrite
+      your existing CSR, consider using the I(backup) option."
+    - The module can use the cryptography Python library, or the pyOpenSSL Python
+      library. By default, it tries to detect which one is available. This can be
+      overridden with the I(select_crypto_backend) option. Please note that the
+      PyOpenSSL backend was deprecated in Ansible 2.9 and will be removed in Ansible 2.13."
 requirements:
     - Either cryptography >= 1.3
     - Or pyOpenSSL >= 0.15
@@ -41,8 +48,8 @@ options:
     privatekey_path:
         description:
             - The path to the private key to use when signing the certificate signing request.
+            - Required if I(state) is C(present).
         type: path
-        required: true
     privatekey_passphrase:
         description:
             - The passphrase for the private key.
@@ -51,6 +58,8 @@ options:
     version:
         description:
             - The version of the certificate signing request.
+            - "The only allowed value according to L(RFC 2986,https://tools.ietf.org/html/rfc2986#section-4.1)
+               is 1."
         type: int
         default: 1
     force:
@@ -115,6 +124,7 @@ options:
               set to I(false).
             - More at U(https://tools.ietf.org/html/rfc5280#section-4.2.1.6).
         type: list
+        elements: str
         aliases: [ subjectAltName ]
     subject_alt_name_critical:
         description:
@@ -134,6 +144,7 @@ options:
             - This defines the purpose (e.g. encipherment, signature, certificate signing)
               of the key contained in the certificate.
         type: list
+        elements: str
         aliases: [ keyUsage ]
     key_usage_critical:
         description:
@@ -145,6 +156,7 @@ options:
             - Additional restrictions (e.g. client authentication, server authentication)
               on the allowed purposes for which the public key may be used.
         type: list
+        elements: str
         aliases: [ extKeyUsage, extendedKeyUsage ]
     extended_key_usage_critical:
         description:
@@ -155,6 +167,7 @@ options:
         description:
             - Indicates basic constraints, such as if the certificate is a CA.
         type: list
+        elements: str
         version_added: '2.5'
         aliases: [ basicConstraints ]
     basic_constraints_critical:
@@ -186,10 +199,80 @@ options:
             - The default choice is C(auto), which tries to use C(cryptography) if available, and falls back to C(pyopenssl).
             - If set to C(pyopenssl), will try to use the L(pyOpenSSL,https://pypi.org/project/pyOpenSSL/) library.
             - If set to C(cryptography), will try to use the L(cryptography,https://cryptography.io/) library.
+            - Please note that the C(pyopenssl) backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13.
+              From that point on, only the C(cryptography) backend will be available.
         type: str
         default: auto
         choices: [ auto, cryptography, pyopenssl ]
         version_added: '2.8'
+    backup:
+        description:
+            - Create a backup file including a timestamp so you can get the original
+              CSR back if you overwrote it with a new one by accident.
+        type: bool
+        default: no
+        version_added: "2.8"
+    create_subject_key_identifier:
+        description:
+            - Create the Subject Key Identifier from the public key.
+            - "Please note that commercial CAs can ignore the value, respectively use a value of
+               their own choice instead. Specifying this option is mostly useful for self-signed
+               certificates or for own CAs."
+            - Note that this is only supported if the C(cryptography) backend is used!
+        type: bool
+        default: no
+        version_added: "2.9"
+    subject_key_identifier:
+        description:
+            - The subject key identifier as a hex string, where two bytes are separated by colons.
+            - "Example: C(00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33)"
+            - "Please note that commercial CAs ignore this value, respectively use a value of their
+               own choice. Specifying this option is mostly useful for self-signed certificates
+               or for own CAs."
+            - Note that this option can only be used if I(create_subject_key_identifier) is C(no).
+            - Note that this is only supported if the C(cryptography) backend is used!
+        type: str
+        version_added: "2.9"
+    authority_key_identifier:
+        description:
+            - The authority key identifier as a hex string, where two bytes are separated by colons.
+            - "Example: C(00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33)"
+            - If specified, I(authority_cert_issuer) must also be specified.
+            - "Please note that commercial CAs ignore this value, respectively use a value of their
+               own choice. Specifying this option is mostly useful for self-signed certificates
+               or for own CAs."
+            - Note that this is only supported if the C(cryptography) backend is used!
+            - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
+              I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
+        type: str
+        version_added: "2.9"
+    authority_cert_issuer:
+        description:
+            - Names that will be present in the authority cert issuer field of the certificate signing request.
+            - Values must be prefixed by their options. (i.e., C(email), C(URI), C(DNS), C(RID), C(IP), C(dirName),
+              C(otherName) and the ones specific to your CA)
+            - "Example: C(DNS:ca.example.org)"
+            - If specified, I(authority_key_identifier) must also be specified.
+            - "Please note that commercial CAs ignore this value, respectively use a value of their
+               own choice. Specifying this option is mostly useful for self-signed certificates
+               or for own CAs."
+            - Note that this is only supported if the C(cryptography) backend is used!
+            - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
+              I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
+        type: list
+        elements: str
+        version_added: "2.9"
+    authority_cert_serial_number:
+        description:
+            - The authority cert serial number.
+            - Note that this is only supported if the C(cryptography) backend is used!
+            - "Please note that commercial CAs ignore this value, respectively use a value of their
+               own choice. Specifying this option is mostly useful for self-signed certificates
+               or for own CAs."
+            - The C(AuthorityKeyIdentifier) will only be added if at least one of I(authority_key_identifier),
+              I(authority_cert_issuer) and I(authority_cert_serial_number) is specified.
+        type: int
+        version_added: "2.9"
 extends_documentation_fragment:
 - files
 notes:
@@ -243,7 +326,7 @@ EXAMPLES = r'''
     - www.ansible.com
     - m.ansible.com
 
-- name: Force re-generate an OpenSSL Certificate Signing Request
+- name: Force regenerate an OpenSSL Certificate Signing Request
   openssl_csr:
     path: /etc/ssl/csr/www.ansible.com.csr
     privatekey_path: /etc/ssl/private/ansible.com.pem
@@ -284,26 +367,31 @@ subject:
     description: A list of the subject tuples attached to the CSR
     returned: changed or success
     type: list
+    elements: list
     sample: "[('CN', 'www.ansible.com'), ('O', 'Ansible')]"
 subjectAltName:
     description: The alternative names this CSR is valid for
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'DNS:www.ansible.com', 'DNS:m.ansible.com' ]
 keyUsage:
     description: Purpose for which the public key may be used
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'digitalSignature', 'keyAgreement' ]
 extendedKeyUsage:
     description: Additional restriction on the public key purposes
     returned: changed or success
     type: list
+    elements: str
     sample: [ 'clientAuth' ]
 basicConstraints:
     description: Indicates if the certificate belongs to a CA
     returned: changed or success
     type: list
+    elements: str
     sample: ['CA:TRUE', 'pathLenConstraint:0']
 ocsp_must_staple:
     description: Indicates whether the certificate has the OCSP
@@ -311,9 +399,15 @@ ocsp_must_staple:
     returned: changed or success
     type: bool
     sample: false
+backup_file:
+    description: Name of backup file created.
+    returned: changed and if I(backup) is C(yes)
+    type: str
+    sample: /path/to/www.ansible.com.csr.2019-03-09@11:22~
 '''
 
 import abc
+import binascii
 import os
 import traceback
 from distutils.version import LooseVersion
@@ -321,6 +415,7 @@ from distutils.version import LooseVersion
 from ansible.module_utils import crypto as crypto_utils
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 from ansible.module_utils._text import to_native, to_bytes, to_text
+from ansible.module_utils.compat import ipaddress as compat_ipaddress
 
 MINIMAL_PYOPENSSL_VERSION = '0.15'
 MINIMAL_CRYPTOGRAPHY_VERSION = '1.3'
@@ -353,7 +448,6 @@ try:
     import cryptography.hazmat.backends
     import cryptography.hazmat.primitives.serialization
     import cryptography.hazmat.primitives.hashes
-    import ipaddress
     CRYPTOGRAPHY_VERSION = LooseVersion(cryptography.__version__)
 except ImportError:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
@@ -391,8 +485,19 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         self.basicConstraints_critical = module.params['basic_constraints_critical']
         self.ocspMustStaple = module.params['ocsp_must_staple']
         self.ocspMustStaple_critical = module.params['ocsp_must_staple_critical']
+        self.create_subject_key_identifier = module.params['create_subject_key_identifier']
+        self.subject_key_identifier = module.params['subject_key_identifier']
+        self.authority_key_identifier = module.params['authority_key_identifier']
+        self.authority_cert_issuer = module.params['authority_cert_issuer']
+        self.authority_cert_serial_number = module.params['authority_cert_serial_number']
         self.request = None
         self.privatekey = None
+
+        if self.create_subject_key_identifier and self.subject_key_identifier is not None:
+            module.fail_json(msg='subject_key_identifier cannot be specified if create_subject_key_identifier is true')
+
+        self.backup = module.params['backup']
+        self.backup_file = None
 
         self.subject = [
             ('C', module.params['country_name']),
@@ -414,6 +519,18 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
                     self.subjectAltName = ['DNS:%s' % sub[1]]
                     break
 
+        if self.subject_key_identifier is not None:
+            try:
+                self.subject_key_identifier = binascii.unhexlify(self.subject_key_identifier.replace(':', ''))
+            except Exception as e:
+                raise CertificateSigningRequestError('Cannot parse subject_key_identifier: {0}'.format(e))
+
+        if self.authority_key_identifier is not None:
+            try:
+                self.authority_key_identifier = binascii.unhexlify(self.authority_key_identifier.replace(':', ''))
+            except Exception as e:
+                raise CertificateSigningRequestError('Cannot parse authority_key_identifier: {0}'.format(e))
+
     @abc.abstractmethod
     def _generate_csr(self):
         pass
@@ -422,6 +539,8 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
         '''Generate the certificate signing request.'''
         if not self.check(module, perms_required=False) or self.force:
             result = self._generate_csr()
+            if self.backup:
+                self.backup_file = module.backup_local(self.path)
             crypto_utils.write_file(module, result)
             self.changed = True
 
@@ -448,6 +567,11 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
 
         return self._check_csr()
 
+    def remove(self, module):
+        if self.backup:
+            self.backup_file = module.backup_local(self.path)
+        super(CertificateSigningRequestBase, self).remove(module)
+
     def dump(self):
         '''Serialize the object into a dictionary.'''
 
@@ -462,6 +586,8 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
             'ocspMustStaple': self.ocspMustStaple,
             'changed': self.changed
         }
+        if self.backup_file:
+            result['backup_file'] = self.backup_file
 
         return result
 
@@ -469,6 +595,11 @@ class CertificateSigningRequestBase(crypto_utils.OpenSSLObject):
 class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
 
     def __init__(self, module):
+        if module.params['create_subject_key_identifier']:
+            module.fail_json(msg='You cannot use create_subject_key_identifier with the pyOpenSSL backend!')
+        for o in ('subject_key_identifier', 'authority_key_identifier', 'authority_cert_issuer', 'authority_cert_serial_number'):
+            if module.params[o] is not None:
+                module.fail_json(msg='You cannot use {0} with the pyOpenSSL backend!'.format(o))
         super(CertificateSigningRequestPyOpenSSL, self).__init__(module)
 
     def _generate_csr(self):
@@ -527,6 +658,16 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
         except crypto_utils.OpenSSLBadPassphraseError as exc:
             raise CertificateSigningRequestError(exc)
 
+    def _normalize_san(self, san):
+        # Apparently OpenSSL returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
+        # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
+        if san.startswith('IP Address:'):
+            san = 'IP:' + san[len('IP Address:'):]
+        if san.startswith('IP:'):
+            ip = compat_ipaddress.ip_address(san[3:])
+            san = 'IP:{0}'.format(ip.compressed)
+        return san
+
     def _check_csr(self):
         def _check_subject(csr):
             subject = [(OpenSSL._util.lib.OBJ_txt2nid(to_bytes(sub[0])), to_bytes(sub[1])) for sub in self.subject]
@@ -538,12 +679,11 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
 
         def _check_subjectAltName(extensions):
             altnames_ext = next((ext for ext in extensions if ext.get_short_name() == b'subjectAltName'), '')
-            altnames = [altname.strip() for altname in str(altnames_ext).split(',') if altname.strip()]
-            # apperently openssl returns 'IP address' not 'IP' as specifier when converting the subjectAltName to string
-            # although it won't accept this specifier when generating the CSR. (https://github.com/openssl/openssl/issues/4004)
-            altnames = [name if not name.startswith('IP Address:') else "IP:" + name.split(':', 1)[1] for name in altnames]
+            altnames = [self._normalize_san(altname.strip()) for altname in
+                        to_text(altnames_ext, errors='surrogate_or_strict').split(',') if altname.strip()]
             if self.subjectAltName:
-                if set(altnames) != set(self.subjectAltName) or altnames_ext.get_critical() != self.subjectAltName_critical:
+                if (set(altnames) != set([self._normalize_san(to_text(name)) for name in self.subjectAltName]) or
+                        altnames_ext.get_critical() != self.subjectAltName_critical):
                     return False
             else:
                 if altnames:
@@ -604,7 +744,10 @@ class CertificateSigningRequestPyOpenSSL(CertificateSigningRequestBase):
             except crypto.Error:
                 return False
 
-        csr = crypto_utils.load_certificate_request(self.path)
+        try:
+            csr = crypto_utils.load_certificate_request(self.path, backend='pyopenssl')
+        except Exception as dummy:
+            return False
 
         return _check_subject(csr) and _check_extensions(csr) and _check_signature(csr)
 
@@ -614,12 +757,15 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
     def __init__(self, module):
         super(CertificateSigningRequestCryptography, self).__init__(module)
         self.cryptography_backend = cryptography.hazmat.backends.default_backend()
+        self.module = module
+        if self.version != 1:
+            module.warn('The cryptography backend only supports version 1. (The only valid value according to RFC 2986.)')
 
     def _generate_csr(self):
         csr = cryptography.x509.CertificateSigningRequestBuilder()
         try:
             csr = csr.subject_name(cryptography.x509.Name([
-                cryptography.x509.NameAttribute(crypto_utils.cryptography_get_name_oid(entry[0]), to_text(entry[1])) for entry in self.subject
+                cryptography.x509.NameAttribute(crypto_utils.cryptography_name_to_oid(entry[0]), to_text(entry[1])) for entry in self.subject
             ]))
         except ValueError as e:
             raise CertificateSigningRequestError(e)
@@ -634,7 +780,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             csr = csr.add_extension(cryptography.x509.KeyUsage(**params), critical=self.keyUsage_critical)
 
         if self.extendedKeyUsage:
-            usages = [crypto_utils.cryptography_get_ext_keyusage(usage) for usage in self.extendedKeyUsage]
+            usages = [crypto_utils.cryptography_name_to_oid(usage) for usage in self.extendedKeyUsage]
             csr = csr.add_extension(cryptography.x509.ExtendedKeyUsage(usages), critical=self.extendedKeyUsage_critical)
 
         if self.basicConstraints:
@@ -652,21 +798,44 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
                     critical=self.ocspMustStaple_critical
                 )
 
+        if self.create_subject_key_identifier:
+            csr = csr.add_extension(
+                cryptography.x509.SubjectKeyIdentifier.from_public_key(self.privatekey.public_key()),
+                critical=False
+            )
+        elif self.subject_key_identifier is not None:
+            csr = csr.add_extension(cryptography.x509.SubjectKeyIdentifier(self.subject_key_identifier), critical=False)
+
+        if self.authority_key_identifier is not None or self.authority_cert_issuer is not None or self.authority_cert_serial_number is not None:
+            issuers = None
+            if self.authority_cert_issuer is not None:
+                issuers = [crypto_utils.cryptography_get_name(n) for n in self.authority_cert_issuer]
+            csr = csr.add_extension(
+                cryptography.x509.AuthorityKeyIdentifier(self.authority_key_identifier, issuers, self.authority_cert_serial_number),
+                critical=False
+            )
+
         digest = None
-        if self.digest == 'sha256':
-            digest = cryptography.hazmat.primitives.hashes.SHA256()
-        elif self.digest == 'sha384':
-            digest = cryptography.hazmat.primitives.hashes.SHA384()
-        elif self.digest == 'sha512':
-            digest = cryptography.hazmat.primitives.hashes.SHA512()
-        elif self.digest == 'sha1':
-            digest = cryptography.hazmat.primitives.hashes.SHA1()
-        elif self.digest == 'md5':
-            digest = cryptography.hazmat.primitives.hashes.MD5()
-        # FIXME
-        else:
-            raise CertificateSigningRequestError('Unsupported digest "{0}"'.format(self.digest))
-        self.request = csr.sign(self.privatekey, digest, self.cryptography_backend)
+        if crypto_utils.cryptography_key_needs_digest_for_signing(self.privatekey):
+            if self.digest == 'sha256':
+                digest = cryptography.hazmat.primitives.hashes.SHA256()
+            elif self.digest == 'sha384':
+                digest = cryptography.hazmat.primitives.hashes.SHA384()
+            elif self.digest == 'sha512':
+                digest = cryptography.hazmat.primitives.hashes.SHA512()
+            elif self.digest == 'sha1':
+                digest = cryptography.hazmat.primitives.hashes.SHA1()
+            elif self.digest == 'md5':
+                digest = cryptography.hazmat.primitives.hashes.MD5()
+            # FIXME
+            else:
+                raise CertificateSigningRequestError('Unsupported digest "{0}"'.format(self.digest))
+        try:
+            self.request = csr.sign(self.privatekey, digest, self.cryptography_backend)
+        except TypeError as e:
+            if str(e) == 'Algorithm must be a registered hash algorithm.' and digest is None:
+                self.module.fail_json(msg='Signing with Ed25519 and Ed448 keys requires cryptography 2.8 or newer.')
+            raise
 
         return self.request.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM)
 
@@ -683,13 +852,13 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
 
     def _check_csr(self):
         def _check_subject(csr):
-            subject = [(crypto_utils.cryptography_get_name_oid(entry[0]), entry[1]) for entry in self.subject]
+            subject = [(crypto_utils.cryptography_name_to_oid(entry[0]), entry[1]) for entry in self.subject]
             current_subject = [(sub.oid, sub.value) for sub in csr.subject]
             return set(subject) == set(current_subject)
 
-        def _find_extension(extensions, type):
+        def _find_extension(extensions, exttype):
             return next(
-                (ext for ext in extensions if isinstance(ext.value, type)),
+                (ext for ext in extensions if isinstance(ext.value, exttype)),
                 None
             )
 
@@ -721,7 +890,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
         def _check_extenededKeyUsage(extensions):
             current_usages_ext = _find_extension(extensions, cryptography.x509.ExtendedKeyUsage)
             current_usages = [str(usage) for usage in current_usages_ext.value] if current_usages_ext else []
-            usages = [str(crypto_utils.cryptography_get_ext_keyusage(usage)) for usage in self.extendedKeyUsage] if self.extendedKeyUsage else []
+            usages = [str(crypto_utils.cryptography_name_to_oid(usage)) for usage in self.extendedKeyUsage] if self.extendedKeyUsage else []
             if set(current_usages) != set(usages):
                 return False
             if usages:
@@ -731,8 +900,8 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
 
         def _check_basicConstraints(extensions):
             bc_ext = _find_extension(extensions, cryptography.x509.BasicConstraints)
-            current_ca = bc_ext.ca if bc_ext else False
-            current_path_length = bc_ext.path_length if bc_ext else None
+            current_ca = bc_ext.value.ca if bc_ext else False
+            current_path_length = bc_ext.value.path_length if bc_ext else None
             ca, path_length = crypto_utils.cryptography_get_basic_constraints(self.basicConstraints)
             # Check CA flag
             if ca != current_ca:
@@ -767,11 +936,42 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             else:
                 return tlsfeature_ext is None
 
+        def _check_subject_key_identifier(extensions):
+            ext = _find_extension(extensions, cryptography.x509.SubjectKeyIdentifier)
+            if self.create_subject_key_identifier or self.subject_key_identifier is not None:
+                if not ext or ext.critical:
+                    return False
+                if self.create_subject_key_identifier:
+                    digest = cryptography.x509.SubjectKeyIdentifier.from_public_key(self.privatekey.public_key()).digest
+                    return ext.value.digest == digest
+                else:
+                    return ext.value.digest == self.subject_key_identifier
+            else:
+                return ext is None
+
+        def _check_authority_key_identifier(extensions):
+            ext = _find_extension(extensions, cryptography.x509.AuthorityKeyIdentifier)
+            if self.authority_key_identifier is not None or self.authority_cert_issuer is not None or self.authority_cert_serial_number is not None:
+                if not ext or ext.critical:
+                    return False
+                aci = None
+                csr_aci = None
+                if self.authority_cert_issuer is not None:
+                    aci = [str(crypto_utils.cryptography_get_name(n)) for n in self.authority_cert_issuer]
+                if ext.value.authority_cert_issuer is not None:
+                    csr_aci = [str(n) for n in ext.value.authority_cert_issuer]
+                return (ext.value.key_identifier == self.authority_key_identifier
+                        and csr_aci == aci
+                        and ext.value.authority_cert_serial_number == self.authority_cert_serial_number)
+            else:
+                return ext is None
+
         def _check_extensions(csr):
             extensions = csr.extensions
             return (_check_subjectAltName(extensions) and _check_keyUsage(extensions) and
                     _check_extenededKeyUsage(extensions) and _check_basicConstraints(extensions) and
-                    _check_ocspMustStaple(extensions))
+                    _check_ocspMustStaple(extensions) and _check_subject_key_identifier(extensions) and
+                    _check_authority_key_identifier(extensions))
 
         def _check_signature(csr):
             if not csr.is_signature_valid:
@@ -789,8 +989,7 @@ class CertificateSigningRequestCryptography(CertificateSigningRequestBase):
             return key_a == key_b
 
         try:
-            with open(self.path, 'rb') as f:
-                csr = cryptography.x509.load_pem_x509_csr(f.read(), self.cryptography_backend)
+            csr = crypto_utils.load_certificate_request(self.path, backend='cryptography')
         except Exception as dummy:
             return False
 
@@ -802,7 +1001,7 @@ def main():
         argument_spec=dict(
             state=dict(type='str', default='present', choices=['absent', 'present']),
             digest=dict(type='str', default='sha256'),
-            privatekey_path=dict(type='path', require=True),
+            privatekey_path=dict(type='path'),
             privatekey_passphrase=dict(type='str', no_log=True),
             version=dict(type='int', default=1),
             force=dict(type='bool', default=False),
@@ -826,8 +1025,16 @@ def main():
             basic_constraints_critical=dict(type='bool', default=False, aliases=['basicConstraints_critical']),
             ocsp_must_staple=dict(type='bool', default=False, aliases=['ocspMustStaple']),
             ocsp_must_staple_critical=dict(type='bool', default=False, aliases=['ocspMustStaple_critical']),
+            backup=dict(type='bool', default=False),
+            create_subject_key_identifier=dict(type='bool', default=False),
+            subject_key_identifier=dict(type='str'),
+            authority_key_identifier=dict(type='str'),
+            authority_cert_issuer=dict(type='list', elements='str'),
+            authority_cert_serial_number=dict(type='int'),
             select_crypto_backend=dict(type='str', default='auto', choices=['auto', 'cryptography', 'pyopenssl']),
         ),
+        required_together=[('authority_cert_issuer', 'authority_cert_serial_number')],
+        required_if=[('state', 'present', ['privatekey_path'])],
         add_file_common_args=True,
         supports_check_mode=True,
     )
@@ -850,50 +1057,48 @@ def main():
 
         # Success?
         if backend == 'auto':
-            module.fail_json(msg=('Can detect none of the Python libraries '
-                                  'cryptography (>= {0}) and pyOpenSSL (>= {1})').format(
+            module.fail_json(msg=("Can't detect any of the required Python libraries "
+                                  "cryptography (>= {0}) or PyOpenSSL (>= {1})").format(
                                       MINIMAL_CRYPTOGRAPHY_VERSION,
                                       MINIMAL_PYOPENSSL_VERSION))
-    if backend == 'pyopenssl':
-        if not PYOPENSSL_FOUND:
-            module.fail_json(msg=missing_required_lib('pyOpenSSL'), exception=PYOPENSSL_IMP_ERR)
-        try:
-            getattr(crypto.X509Req, 'get_extensions')
-        except AttributeError:
-            module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
-        csr = CertificateSigningRequestPyOpenSSL(module)
-    elif backend == 'cryptography':
-        if not CRYPTOGRAPHY_FOUND:
-            module.fail_json(msg=missing_required_lib('cryptography'), exception=CRYPTOGRAPHY_IMP_ERR)
-        csr = CertificateSigningRequestCryptography(module)
+    try:
+        if backend == 'pyopenssl':
+            if not PYOPENSSL_FOUND:
+                module.fail_json(msg=missing_required_lib('pyOpenSSL >= {0}'.format(MINIMAL_PYOPENSSL_VERSION)),
+                                 exception=PYOPENSSL_IMP_ERR)
+            try:
+                getattr(crypto.X509Req, 'get_extensions')
+            except AttributeError:
+                module.fail_json(msg='You need to have PyOpenSSL>=0.15 to generate CSRs')
 
-    if module.params['state'] == 'present':
+            module.deprecate('The module is using the PyOpenSSL backend. This backend has been deprecated', version='2.13')
+            csr = CertificateSigningRequestPyOpenSSL(module)
+        elif backend == 'cryptography':
+            if not CRYPTOGRAPHY_FOUND:
+                module.fail_json(msg=missing_required_lib('cryptography >= {0}'.format(MINIMAL_CRYPTOGRAPHY_VERSION)),
+                                 exception=CRYPTOGRAPHY_IMP_ERR)
+            csr = CertificateSigningRequestCryptography(module)
 
-        if module.check_mode:
-            result = csr.dump()
-            result['changed'] = module.params['force'] or not csr.check(module)
-            module.exit_json(**result)
+        if module.params['state'] == 'present':
+            if module.check_mode:
+                result = csr.dump()
+                result['changed'] = module.params['force'] or not csr.check(module)
+                module.exit_json(**result)
 
-        try:
             csr.generate(module)
-        except (CertificateSigningRequestError, crypto_utils.OpenSSLObjectError) as exc:
-            module.fail_json(msg=to_native(exc))
 
-    else:
+        else:
+            if module.check_mode:
+                result = csr.dump()
+                result['changed'] = os.path.exists(module.params['path'])
+                module.exit_json(**result)
 
-        if module.check_mode:
-            result = csr.dump()
-            result['changed'] = os.path.exists(module.params['path'])
-            module.exit_json(**result)
-
-        try:
             csr.remove(module)
-        except (CertificateSigningRequestError, crypto_utils.OpenSSLObjectError) as exc:
-            module.fail_json(msg=to_native(exc))
 
-    result = csr.dump()
-
-    module.exit_json(**result)
+        result = csr.dump()
+        module.exit_json(**result)
+    except crypto_utils.OpenSSLObjectError as exc:
+        module.fail_json(msg=to_native(exc))
 
 
 if __name__ == "__main__":

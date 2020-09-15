@@ -1,0 +1,161 @@
+---
+merged:
+  before:
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
+      name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2
+
+  commands:
+    - "interface loopback999"
+    - "ip address 192.0.2.1 255.255.255.0"
+    - "interface GigabitEthernet0/1"
+    - "ip address dhcp client-id GigabitEthernet 0/0 hostname test.com"
+    - "interface GigabitEthernet0/2"
+    - "ip address 198.51.100.1 255.255.255.0 secondary"
+    - "ip address 198.51.100.2 255.255.255.0"
+    - "ipv6 address 2001:db8:0:3::/64"
+
+  after:
+    - name: loopback888
+    - ipv4:
+        - address: 192.0.2.1 255.255.255.0
+      name: loopback999
+    - ipv4:
+      - address: dhcp
+      name: GigabitEthernet0/0
+    - ipv4:
+      - address: dhcp
+        dhcp_client: 0
+        dhcp_hostname: test.com
+      name: GigabitEthernet0/1
+    - ipv4:
+      - address: 198.51.100.1 255.255.255.0
+        secondary: true
+      - address: 198.51.100.2 255.255.255.0
+      ipv6:
+      - address: 2001:db8:0:3::/64
+      name: GigabitEthernet0/2
+
+
+replaced:
+  before:
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
+      name: GigabitEthernet0/0
+    - ipv4:
+      - address: 203.0.113.27 255.255.255.0
+      name: GigabitEthernet0/1
+    - ipv4:
+      - address: 192.0.2.1 255.255.255.0
+        secondary: true
+      - address: 192.0.2.2 255.255.255.0
+      ipv6:
+      - address: 2001:db8:0:3::/64
+      name: GigabitEthernet0/2
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "ip address 203.0.114.1 255.255.255.0"
+    - "interface GigabitEthernet0/2"
+    - "no ip address"
+    - "no ipv6 address"
+    - "ip address 198.51.100.1 255.255.255.0 secondary"
+    - "ip address 198.51.100.2 255.255.255.0"
+    - "ipv6 address 2001:db8:1:1::/64"
+
+  after:
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
+      name: GigabitEthernet0/0
+    - ipv4:
+      - address: 203.0.114.1 255.255.255.0
+      name: GigabitEthernet0/1
+    - ipv4:
+      - address: 198.51.100.1 255.255.255.0
+        secondary: true
+      - address: 198.51.100.2 255.255.255.0
+      ipv6:
+      - address: 2001:db8:1:1::/64
+      name: GigabitEthernet0/2
+
+overridden:
+  before:
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
+      name: GigabitEthernet0/0
+    - ipv4:
+      - address: 203.0.113.27 255.255.255.0
+      name: GigabitEthernet0/1
+    - ipv4:
+      - address: 192.0.2.1 255.255.255.0
+        secondary: true
+      - address: 192.0.2.2 255.255.255.0
+      ipv6:
+      - address: 2001:db8:0:3::/64
+      name: GigabitEthernet0/2
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no ip address"
+    - "interface GigabitEthernet0/2"
+    - "no ip address"
+    - "no ipv6 address"
+    - "ip address 198.51.100.1 255.255.255.0"
+    - "ip address 198.51.100.2 255.255.255.0 secondary"
+
+  after:
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
+      name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - ipv4:
+      - address: 198.51.100.2 255.255.255.0
+        secondary: true
+      - address: 198.51.100.1 255.255.255.0
+      name: GigabitEthernet0/2
+
+deleted:
+  before:
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
+      name: GigabitEthernet0/0
+    - ipv4:
+      - address: 203.0.113.27 255.255.255.0
+      name: GigabitEthernet0/1
+    - ipv4:
+      - address: 192.0.2.1 255.255.255.0
+        secondary: true
+      - address: 192.0.2.2 255.255.255.0
+      ipv6:
+      - address: 2001:db8:0:3::/64
+      name: GigabitEthernet0/2
+
+  commands:
+    - "interface GigabitEthernet0/1"
+    - "no ip address"
+    - "interface GigabitEthernet0/2"
+    - "no ip address"
+    - "no ipv6 address"
+
+  after:
+    - name: loopback888
+    - name: loopback999
+    - ipv4:
+      - address: dhcp
+      name: GigabitEthernet0/0
+    - name: GigabitEthernet0/1
+    - name: GigabitEthernet0/2

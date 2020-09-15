@@ -1,0 +1,5 @@
+destructive
+needs/root
+needs/ssh
+needs/target/setup_pexpect
+shippable/posix/group3

@@ -1,0 +1,57 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test gather hcloud location infos
+  hcloud_location_info:
+  register: hcloud_location
+
+- name: verify test gather hcloud location infos
+  assert:
+    that:
+      - hcloud_location.hcloud_location_info | list | count == 3
+
+- name: test gather hcloud location infos in check mode
+  hcloud_location_info:
+  check_mode: yes
+  register: hcloud_location
+
+- name: verify test gather hcloud location infos in check mode
+  assert:
+    that:
+      - hcloud_location.hcloud_location_info | list | count == 3
+
+- name: test gather hcloud location infos with correct name
+  hcloud_location_info:
+    name: "{{hcloud_location_name}}"
+  register: hcloud_location
+- name: verify test gather hcloud location with correct name
+  assert:
+    that:
+      - hcloud_location.hcloud_location_info|selectattr('name','equalto','{{ hcloud_location_name }}') | list | count == 1
+
+- name: test gather hcloud location infos with wrong name
+  hcloud_location_info:
+      name: "{{hcloud_location_name}}1"
+  register: hcloud_location
+- name: verify test gather hcloud location with wrong name
+  assert:
+    that:
+      - hcloud_location.hcloud_location_info | list | count == 0
+
+- name: test gather hcloud location infos with correct id
+  hcloud_location_info:
+    id: "{{hcloud_location_id}}"
+  register: hcloud_location
+- name: verify test gather hcloud location with correct id
+  assert:
+    that:
+      - hcloud_location.hcloud_location_info|selectattr('name','equalto','{{ hcloud_location_name }}') | list | count == 1
+
+- name: test gather hcloud location infos with wrong id
+  hcloud_location_info:
+      name: "4711"
+  register: hcloud_location
+- name: verify test gather hcloud location with wrong id
+  assert:
+    that:
+      - hcloud_location.hcloud_location_info | list | count == 0

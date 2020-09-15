@@ -1,0 +1,2 @@
+bugfixes:
+- "ce - Modify the way of parsing NETCONF XML message in ce.py (https://github.com/ansible/ansible/pull/69571  https://github.com/ansible-collections/community.network/pull/39)."

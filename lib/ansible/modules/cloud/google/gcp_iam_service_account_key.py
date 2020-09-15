@@ -47,36 +47,36 @@ options:
     - present
     - absent
     default: present
+    type: str
   private_key_type:
     description:
     - Output format for the service account key.
+    - 'Some valid choices include: "TYPE_UNSPECIFIED", "TYPE_PKCS12_FILE", "TYPE_GOOGLE_CREDENTIALS_FILE"'
     required: false
-    choices:
-    - TYPE_UNSPECIFIED
-    - TYPE_PKCS12_FILE
-    - TYPE_GOOGLE_CREDENTIALS_FILE
+    type: str
   key_algorithm:
     description:
     - Specifies the algorithm for the key.
+    - 'Some valid choices include: "KEY_ALG_UNSPECIFIED", "KEY_ALG_RSA_1024", "KEY_ALG_RSA_2048"'
     required: false
-    choices:
-    - KEY_ALG_UNSPECIFIED
-    - KEY_ALG_RSA_1024
-    - KEY_ALG_RSA_2048
+    type: str
   service_account:
     description:
     - The name of the serviceAccount.
     - 'This field represents a link to a ServiceAccount resource in GCP. It can be
-      specified in two ways. First, you can place in the name of the resource here
-      as a string Alternatively, you can add `register: name-of-resource` to a gcp_iam_service_account
-      task and then set this service_account field to "{{ name-of-resource }}"'
+      specified in two ways. First, you can place a dictionary with key ''name'' and
+      value of your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_iam_service_account task and then set this service_account field to
+      "{{ name-of-resource }}"'
     required: false
+    type: dict
   path:
     description:
     - The full name of the file that will hold the service account private key. The
       management of this file will depend on the value of sync_file parameter.
     - File path must be absolute.
     required: false
+    type: path
 extends_documentation_fragment: gcp
 '''
 
@@ -142,7 +142,7 @@ serviceAccount:
   description:
   - The name of the serviceAccount.
   returned: success
-  type: str
+  type: dict
 path:
   description:
   - The full name of the file that will hold the service account private key. The
@@ -157,6 +157,7 @@ path:
 ################################################################################
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
+from ansible.module_utils._text import to_native
 import json
 import os
 import mimetypes
@@ -174,9 +175,9 @@ def main():
     module = GcpModule(
         argument_spec=dict(
             state=dict(default='present', choices=['present', 'absent'], type='str'),
-            private_key_type=dict(type='str', choices=['TYPE_UNSPECIFIED', 'TYPE_PKCS12_FILE', 'TYPE_GOOGLE_CREDENTIALS_FILE']),
-            key_algorithm=dict(type='str', choices=['KEY_ALG_UNSPECIFIED', 'KEY_ALG_RSA_1024', 'KEY_ALG_RSA_2048']),
-            service_account=dict(),
+            private_key_type=dict(type='str'),
+            key_algorithm=dict(type='str'),
+            service_account=dict(type='dict'),
             path=dict(type='path'),
         )
     )
@@ -209,7 +210,7 @@ def create(module):
     auth = GcpSession(module, 'iam')
     json_content = return_if_object(module, auth.post(self_link(module), resource_to_request(module)))
     with open(module.params['path'], 'w') as f:
-        private_key_contents = base64.b64decode(json_content['privateKeyData'])
+        private_key_contents = to_native(base64.b64decode(json_content['privateKeyData']))
         f.write(private_key_contents)
 
 

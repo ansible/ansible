@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - this fix result in no more traceback on empty config when state is 'merged', 'replaced' or 'overridden'. (https://github.com/ansible/ansible/pull/62518). 

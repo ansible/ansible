@@ -51,9 +51,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#firewall'"
 - name: verify that firewall was created
-  gcp_compute_firewall_facts:
+  gcp_compute_firewall_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -65,7 +64,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a firewall that already exists
   gcp_compute_firewall:
@@ -88,7 +87,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#firewall'"
 #----------------------------------------------------------
 - name: delete a firewall
   gcp_compute_firewall:
@@ -111,9 +109,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that firewall was deleted
-  gcp_compute_firewall_facts:
+  gcp_compute_firewall_info:
       filters:
          - name = {{ resource_name }}
       project: "{{ gcp_project }}"
@@ -125,7 +122,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a firewall that does not exist
   gcp_compute_firewall:
@@ -148,4 +145,3 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False

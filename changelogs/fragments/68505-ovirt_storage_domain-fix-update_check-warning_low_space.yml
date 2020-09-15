@@ -1,0 +1,2 @@
+bugfixes:
+  - "ovirt_storage_domain: fix update_check for warning_low_space"

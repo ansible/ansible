@@ -696,7 +696,7 @@ class ModuleManager(object):
             elif 'default' in self.want.allow_service:
                 self.want.update(dict(allow_service=['default']))
         self._set_changed_options()
-        if self.want.check_mode:
+        if self.module.check_mode:
             return True
         self.create_on_device()
         if self.exists():

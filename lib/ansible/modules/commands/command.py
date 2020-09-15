@@ -25,17 +25,22 @@ description:
        processed through the shell, so variables like C($HOME) and operations
        like C("<"), C(">"), C("|"), C(";") and C("&") will not work.
        Use the M(shell) module if you need these features.
-     - To create C(command) tasks that are easier to read,
-       pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task).
+     - To create C(command) tasks that are easier to read than the ones using space-delimited
+       arguments, pass parameters using the C(args) L(task keyword,../reference_appendices/playbooks_keywords.html#task)
+       or use C(cmd) parameter.
+     - Either a free form command or C(cmd) parameter is required, see the examples.
      - For Windows targets, use the M(win_command) module instead.
 options:
   free_form:
     description:
       - The command module takes a free form command to run.
       - There is no actual parameter named 'free form'.
-      - See the examples on how to use this module.
-    required: yes
+  cmd:
+    type: str
+    description:
+      - The command to run.
   argv:
+    type: list
     description:
       - Passes the command as a list rather than a string.
       - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
@@ -43,13 +48,16 @@ options:
         provided, not both.  One or the other must be provided.
     version_added: "2.6"
   creates:
+    type: path
     description:
       - A filename or (since 2.0) glob pattern. If it already exists, this step B(won't) be run.
   removes:
+    type: path
     description:
       - A filename or (since 2.0) glob pattern. If it already exists, this step B(will) be run.
     version_added: "0.8"
   chdir:
+    type: path
     description:
       - Change into this directory before running the command.
     version_added: "0.6"
@@ -101,13 +109,19 @@ EXAMPLES = r'''
   command: cat /etc/motd
   register: mymotd
 
-- name: Run command if /path/to/database does not exist (without 'args').
+- name: Run command if /path/to/database does not exist (without 'args' keyword).
   command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
 
 # 'args' is a task keyword, passed at the same level as the module
-- name: Run command if /path/to/database does not exist (with 'args').
+- name: Run command if /path/to/database does not exist (with 'args' keyword).
   command: /usr/bin/make_database.sh db_user db_name
   args:
+    creates: /path/to/database
+
+# 'cmd' is module parameter
+- name: Run command if /path/to/database does not exist (with 'cmd' parameter).
+  command:
+    cmd: /usr/bin/make_database.sh db_user db_name
     creates: /path/to/database
 
 - name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist.
@@ -162,7 +176,7 @@ import os
 import shlex
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_native, to_bytes, to_text
 from ansible.module_utils.common.collections import is_iterable
 
 
@@ -255,8 +269,15 @@ def main():
         args = [to_native(arg, errors='surrogate_or_strict', nonstring='simplerepr') for arg in args]
 
     if chdir:
-        chdir = os.path.abspath(chdir)
-        os.chdir(chdir)
+        try:
+            chdir = to_bytes(os.path.abspath(chdir), errors='surrogate_or_strict')
+        except ValueError as e:
+            module.fail_json(msg='Unable to use supplied chdir: %s' % to_text(e))
+
+        try:
+            os.chdir(chdir)
+        except (IOError, OSError) as e:
+            module.fail_json(msg='Unable to change directory before execution: %s' % to_text(e))
 
     if creates:
         # do not run the command if the line contains creates=filename

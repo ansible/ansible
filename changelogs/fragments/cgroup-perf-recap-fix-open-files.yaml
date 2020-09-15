@@ -1,0 +1,2 @@
+bugfixes:
+- cgroup_perf_recap - When not using file_per_task, make sure we don't prematurely close the perf files

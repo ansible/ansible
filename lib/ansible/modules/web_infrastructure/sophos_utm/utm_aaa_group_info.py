@@ -54,55 +54,55 @@ result:
     contains:
         _ref:
             description: The reference name of the object
-            type: string
+            type: str
         _locked:
             description: Whether or not the object is currently locked
-            type: boolean
+            type: bool
         _type:
             description: The type of the object
-            type: string
+            type: str
         name:
             description: The name of the object
-            type: string
+            type: str
         adirectory_groups:
             description: List of Active Directory Groups
-            type: string
+            type: str
         adirectory_groups_sids:
             description: List of Active Directory Groups SIDS
             type: list
         backend_match:
             description: The backend to use
-            type: string
+            type: str
         comment:
             description: The comment string
-            type: string
+            type: str
         dynamic:
             description: Whether the group match is ipsec_dn or directory_group
-            type: string
+            type: str
         edirectory_groups:
             description: List of eDirectory Groups
-            type: string
+            type: str
         ipsec_dn:
             description: ipsec_dn identifier to match
-            type: string
+            type: str
         ldap_attribute:
             description: The LDAP Attribute to match against
-            type: string
+            type: str
         ldap_attribute_value:
             description: The LDAP Attribute Value to match against
-            type: string
+            type: str
         members:
             description: List of member identifiers of the group
             type: list
         network:
             description: The identifier of the network (network/aaa)
-            type: string
+            type: str
         radius_group:
             description: The radius group identifier
-            type: string
+            type: str
         tacacs_group:
             description: The tacacs group identifier
-            type: string
+            type: str
 """
 
 from ansible.module_utils.utm_utils import UTM, UTMModule

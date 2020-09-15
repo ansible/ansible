@@ -1,0 +1,2 @@
+bugfixes:
+  - redfish_info, redfish_config, redfish_command - Fix Redfish response payload decode on Python 3.5 (https://github.com/ansible/ansible/issues/65889)

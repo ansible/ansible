@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_postgresqlconfiguration_info
-version_added: "2.8"
-short_description: Get Azure PostgreSQL Configuration facts.
+version_added: "2.9"
+short_description: Get Azure PostgreSQL Configuration facts
 description:
     - Get facts of Azure PostgreSQL Configuration.
 
@@ -26,19 +26,22 @@ options:
         description:
             - The name of the resource group that contains the resource.
         required: True
+        type: str
     server_name:
         description:
             - The name of the server.
         required: True
+        type: str
     name:
         description:
             - Setting name.
+        type: str
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,13 +60,14 @@ EXAMPLES = '''
 
 RETURN = '''
 settings:
-    description: A list of dictionaries containing MySQL Server settings.
+    description:
+        - A list of dictionaries containing MySQL Server settings.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Setting resource ID
+                - Setting resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/testrg/providers/Microsoft.DBforPostgreSQL/servers/testpostgresqlser
@@ -106,7 +110,7 @@ except ImportError:
     pass
 
 
-class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
+class AzureRMPostgreSQLConfigurationInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -130,9 +134,14 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMPostgreSQLConfigurationFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMPostgreSQLConfigurationInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_postgresqlconfiguration_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_postgresqlconfiguration_facts' module has been renamed to 'azure_rm_postgresqlconfiguration_info'",
+                                  version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(PostgreSQLManagementClient,
@@ -201,7 +210,7 @@ class AzureRMPostgreSQLConfigurationFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMPostgreSQLConfigurationFacts()
+    AzureRMPostgreSQLConfigurationInfo()
 
 
 if __name__ == '__main__':

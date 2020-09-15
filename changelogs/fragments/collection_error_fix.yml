@@ -1,0 +1,2 @@
+minor_changes:
+- Provides additional information about collection namespace name restrictions (https://github.com/ansible/ansible/issues/65151).

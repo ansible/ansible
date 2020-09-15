@@ -63,6 +63,26 @@ options:
       - The LDAP display name for this property is dNSHostName.
       - Required when I(state=present).
     type: str
+  domain_username:
+    description:
+    - The username to use when interacting with AD.
+    - If this is not set then the user Ansible used to log in with will be
+      used instead when using CredSSP or Kerberos with credential delegation.
+    type: str
+    version_added: '2.8'
+  domain_password:
+    description:
+    - The password for I(username).
+    type: str
+    version_added: '2.8'
+  domain_server:
+    description:
+    - Specifies the Active Directory Domain Services instance to connect to.
+    - Can be in the form of an FQDN or NetBIOS name.
+    - If not specified then the value is based on the domain of the computer
+      running PowerShell.
+    type: str
+    version_added: '2.8'
   state:
     description:
       - Specified whether the computer should be C(present) or C(absent) in
@@ -84,7 +104,7 @@ EXAMPLES = r'''
   - name: Add linux computer to Active Directory OU using a windows machine
     win_domain_computer:
       name: one_linux_server.my_org.local
-      sam_account_name: linux_server
+      sam_account_name: linux_server$
       dns_hostname: one_linux_server.my_org.local
       ou: "OU=servers,DC=my_org,DC=local"
       description: Example of linux server

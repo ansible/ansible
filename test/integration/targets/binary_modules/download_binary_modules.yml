@@ -14,8 +14,8 @@
 
     - name: download binary module
       tags: test_binary_modules
-      local_action:
-        module: get_url
+      get_url:
         url: "https://ansible-ci-files.s3.amazonaws.com/test/integration/roles/test_binary_modules/{{ module_filename }}"
         dest: "{{ playbook_dir }}/library/{{ module_filename }}"
         mode: 0755
+      delegate_to: localhost

@@ -33,16 +33,18 @@ class ActionModule(ActionNetworkModule):
     def run(self, tmp=None, task_vars=None):
         del tmp  # tmp no longer has any effect
 
-        self._config_module = True if self._task.action == 'netconf_config' else False
+        module_name = self._task.action.split('.')[-1]
+        self._config_module = True if module_name == 'netconf_config' else False
+        persistent_connection = self._play_context.connection.split('.')[-1]
 
-        if self._play_context.connection not in ['netconf', 'local'] and self._task.action == 'netconf_config':
+        if persistent_connection not in ['netconf', 'local'] and module_name == 'netconf_config':
             return {'failed': True, 'msg': 'Connection type %s is not valid for netconf_config module. '
                                            'Valid connection type is netconf or local (deprecated)' % self._play_context.connection}
-        elif self._play_context.connection not in ['netconf'] and self._task.action != 'netconf_config':
+        elif persistent_connection not in ['netconf'] and module_name != 'netconf_config':
             return {'failed': True, 'msg': 'Connection type %s is not valid for %s module. '
-                                           'Valid connection type is netconf.' % (self._play_context.connection, self._task.action)}
+                                           'Valid connection type is netconf.' % (self._play_context.connection, module_name)}
 
-        if self._play_context.connection == 'local' and self._task.action == 'netconf_config':
+        if self._play_context.connection == 'local' and module_name == 'netconf_config':
             args = self._task.args
             pc = copy.deepcopy(self._play_context)
             pc.connection = 'netconf'
@@ -53,7 +55,7 @@ class ActionModule(ActionNetworkModule):
             pc.private_key_file = args.get('ssh_keyfile') or self._play_context.private_key_file
 
             display.vvv('using connection plugin %s (was local)' % pc.connection, pc.remote_addr)
-            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin)
+            connection = self._shared_loader_obj.connection_loader.get('persistent', pc, sys.stdin, task_uuid=self._task._uuid)
 
             timeout = args.get('timeout')
             command_timeout = int(timeout) if timeout else connection.get_option('persistent_command_timeout')

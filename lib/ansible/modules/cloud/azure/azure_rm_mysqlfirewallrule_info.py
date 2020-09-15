@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_mysqlfirewallrule_info
-version_added: "2.8"
-short_description: Get Azure MySQL Firewall Rule facts.
+version_added: "2.9"
+short_description: Get Azure MySQL Firewall Rule facts
 description:
     - Get facts of Azure MySQL Firewall Rule.
 
@@ -26,19 +26,22 @@ options:
         description:
             - The name of the resource group.
         required: True
+        type: str
     server_name:
         description:
             - The name of the server.
         required: True
+        type: str
     name:
         description:
             - The name of the server firewall rule.
+        type: str
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,13 +60,14 @@ EXAMPLES = '''
 
 RETURN = '''
 rules:
-    description: A list of dictionaries containing facts for MySQL Firewall Rule.
+    description:
+        - A list of dictionaries containing facts for MySQL Firewall Rule.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/TestGroup/providers/Microsoft.DBforMySQL/servers/testserver/fire
@@ -106,7 +110,7 @@ except ImportError:
     pass
 
 
-class AzureRMMySqlFirewallRuleFacts(AzureRMModuleBase):
+class AzureRMMySqlFirewallRuleInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -130,9 +134,13 @@ class AzureRMMySqlFirewallRuleFacts(AzureRMModuleBase):
         self.resource_group = None
         self.server_name = None
         self.name = None
-        super(AzureRMMySqlFirewallRuleFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMySqlFirewallRuleInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_mysqlfirewallrule_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_mysqlfirewallrule_facts' module has been renamed to 'azure_rm_mysqlfirewallrule_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(MySQLManagementClient,
@@ -190,7 +198,7 @@ class AzureRMMySqlFirewallRuleFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMMySqlFirewallRuleFacts()
+    AzureRMMySqlFirewallRuleInfo()
 
 
 if __name__ == '__main__':

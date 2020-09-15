@@ -1,9 +1,9 @@
-[windows-ssh]
-{% for host in vars.groups.winrm %}
+[windows]
+{% for host in vars.groups.windows %}
 {{ host }}  ansible_host={{ hostvars[host]['ansible_host'] }} ansible_user={{ hostvars[host]['ansible_user'] }}{{ ' ansible_ssh_private_key_file=' ~ hostvars[host]['ansible_ssh_private_key_file'] if (hostvars[host]['ansible_ssh_private_key_file']|default()) else '' }}
 {% endfor %}
 
-[windows-ssh:vars]
+[windows:vars]
 ansible_shell_type={{ test_shell_type }}
 ansible_connection=ssh
 ansible_port=22

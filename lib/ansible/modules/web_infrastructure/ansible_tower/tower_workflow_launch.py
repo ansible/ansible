@@ -37,7 +37,7 @@ options:
     timeout:
       description:
         - If waiting for the workflow to complete this will abort after this
-        - ammount of seconds
+          amount of seconds
 
 requirements:
   - "python >= 2.6"
@@ -60,7 +60,7 @@ job_info:
 EXAMPLES = '''
 - name: Launch a workflow
   tower_workflow_launch:
-    name: "Test Workflow"
+    workflow_template: "Test Workflow"
   delegate_to: localhost
   run_once: true
   register: workflow_results

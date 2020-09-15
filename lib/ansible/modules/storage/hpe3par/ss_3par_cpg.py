@@ -169,7 +169,7 @@ def create_cpg(
         if not validate_set_size(raid_type, set_size):
             return (False, False, "Set size %s not part of RAID set %s" % (set_size, raid_type))
         if not client_obj.cpgExists(cpg_name):
-            ld_layout = dict()
+
             disk_patterns = []
             if disk_type:
                 disk_type = getattr(client.HPE3ParClient, disk_type)

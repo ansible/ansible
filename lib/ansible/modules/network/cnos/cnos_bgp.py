@@ -125,7 +125,7 @@ options:
                   backdoor,route-map, Name of the route map ]
     bgpArg8:
         description:
-            - This is an overloaded bgp eigth argument. Usage of this argument
+            - This is an overloaded bgp eight argument. Usage of this argument
              can be found is the User Guide referenced above.
         required: No
         default: Null

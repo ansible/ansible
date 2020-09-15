@@ -11,3 +11,34 @@
 - name: Make sure the default Default organization exists
   tower_organization:
     name: Default
+
+- name: Check that SSL is available
+  tower_organization:
+    name: Default
+  register: result
+
+- name: Check we haven't changed anything
+  assert:
+    that: result is not changed
+
+- name: Check that SSL is available and verify_ssl is enabled (task must fail)
+  tower_organization:
+    name: Default
+  environment:
+    TOWER_CERTIFICATE: /dev/null  # force check failure
+  ignore_errors: true
+  register: check_ssl_is_used
+
+- name: Disable verify_ssl in ~/.tower_cli.cfg
+  copy:
+    dest: ~/.tower_cli.cfg
+    content: |
+      [general]
+      verify_ssl = False
+    force: false  # ensure remote file doesn't exist
+
+- name: Check that verify_ssl is disabled (task must not fail)
+  tower_organization:
+    name: Default
+  environment:
+    TOWER_CERTIFICATE: /dev/null  # should not fail because verify_ssl is disabled

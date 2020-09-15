@@ -94,22 +94,22 @@ secret:
     arn:
       description: The ARN of the secret
       returned: always
-      type: string
+      type: str
       sample: arn:aws:secretsmanager:eu-west-1:xxxxxxxxxx:secret:xxxxxxxxxxx
     last_accessed_date:
       description: The date the secret was last accessed
       returned: always
-      type: string
+      type: str
       sample: '2018-11-20T01:00:00+01:00'
     last_changed_date:
       description: The date the secret was last modified.
       returned: always
-      type: string
+      type: str
       sample: '2018-11-20T12:16:38.433000+01:00'
     name:
       description: The secret name.
       returned: always
-      type: string
+      type: str
       sample: my_secret
     rotation_enabled:
       description: The secret rotation status.
@@ -119,7 +119,7 @@ secret:
     version_ids_to_stages:
       description: Provide the secret version ids and the associated secret stage.
       returned: always
-      type: complex
+      type: dict
       sample: { "dc1ed59b-6d8e-4450-8b41-536dfe4600a9": [ "AWSCURRENT" ] }
 '''
 

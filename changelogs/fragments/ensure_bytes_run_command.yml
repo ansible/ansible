@@ -1,0 +1,2 @@
+bugfixes:
+    - ensure run_command passes bytes to Popen, which is what it expects.

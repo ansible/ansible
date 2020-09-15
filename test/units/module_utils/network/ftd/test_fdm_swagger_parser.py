@@ -45,17 +45,20 @@ base = {
                     },
     'paths': {
         "/object/networks": {
-            "get": {"tags": ["NetworkObject"], "operationId": "getNetworkObjectList",
-                    "responses": {"200": {"description": "", "schema": {"type": "object",
-                                                                        "title": "NetworkObjectList",
-                                                                        "properties": {"items": {
-                                                                            "type": "array",
-                                                                            "items": {
-                                                                                "$ref": "#/definitions/NetworkObjectWrapper"}},
-                                                                            "paging": {
-                                                                                "$ref": "#/definitions/Paging"}},
-                                                                        "required": ["items",
-                                                                                     "paging"]}}},
+            "get": {"tags": ["NetworkObject"],
+                    "operationId": "getNetworkObjectList",
+                    "responses": {
+                        "200": {
+                            "description": "",
+                            "schema": {"type": "object",
+                                       "title": "NetworkObjectList",
+                                       "properties": {
+                                           "items": {
+                                               "type": "array",
+                                               "items": {"$ref": "#/definitions/NetworkObjectWrapper"}},
+                                           "paging": {
+                                               "$ref": "#/definitions/Paging"}},
+                                       "required": ["items", "paging"]}}},
                     "parameters": [
                         {"name": "offset", "in": "query", "required": False, "type": "integer"},
                         {"name": "limit", "in": "query", "required": False, "type": "integer"},
@@ -141,7 +144,8 @@ class TestFdmSwaggerParser(unittest.TestCase):
                         }
                     }
                 },
-                'returnMultipleItems': True
+                'returnMultipleItems': True,
+                "tags": ["NetworkObject"]
             },
             'addNetworkObject': {
                 'method': HTTPMethod.POST,
@@ -149,7 +153,8 @@ class TestFdmSwaggerParser(unittest.TestCase):
                 'modelName': 'NetworkObject',
                 'parameters': {'path': {},
                                'query': {}},
-                'returnMultipleItems': False
+                'returnMultipleItems': False,
+                "tags": ["NetworkObject"]
             },
             'getNetworkObject': {
                 'method': HTTPMethod.GET,
@@ -164,7 +169,8 @@ class TestFdmSwaggerParser(unittest.TestCase):
                     },
                     'query': {}
                 },
-                'returnMultipleItems': False
+                'returnMultipleItems': False,
+                "tags": ["NetworkObject"]
             },
             'editNetworkObject': {
                 'method': HTTPMethod.PUT,
@@ -179,7 +185,8 @@ class TestFdmSwaggerParser(unittest.TestCase):
                     },
                     'query': {}
                 },
-                'returnMultipleItems': False
+                'returnMultipleItems': False,
+                "tags": ["NetworkObject"]
             },
             'deleteNetworkObject': {
                 'method': HTTPMethod.DELETE,
@@ -194,7 +201,8 @@ class TestFdmSwaggerParser(unittest.TestCase):
                     },
                     'query': {}
                 },
-                'returnMultipleItems': False
+                'returnMultipleItems': False,
+                "tags": ["NetworkObject"]
             }
         }
         assert sorted(['NetworkObject', 'NetworkObjectWrapper']) == sorted(self.fdm_data['models'].keys())
@@ -302,7 +310,8 @@ class TestFdmSwaggerParser(unittest.TestCase):
                 'method': HTTPMethod.GET,
                 'url': '/v2/path1',
                 'modelName': 'Model1',
-                'returnMultipleItems': True
+                'returnMultipleItems': True,
+                'tags': []
             },
             'addSomeModel': {
                 'method': HTTPMethod.POST,
@@ -312,13 +321,15 @@ class TestFdmSwaggerParser(unittest.TestCase):
                     'path': {},
                     'query': {}
                 },
-                'returnMultipleItems': False
+                'returnMultipleItems': False,
+                'tags': []
             },
             'getSomeModel': {
                 'method': HTTPMethod.GET,
                 'url': '/v2/path2/{id}',
                 'modelName': 'Model3',
-                'returnMultipleItems': False
+                'returnMultipleItems': False,
+                'tags': []
             },
             'editSomeModel': {
                 'method': HTTPMethod.PUT,
@@ -328,19 +339,22 @@ class TestFdmSwaggerParser(unittest.TestCase):
                     'path': {},
                     'query': {}
                 },
-                'returnMultipleItems': False
+                'returnMultipleItems': False,
+                'tags': []
             },
             'deleteModel3': {
                 'method': HTTPMethod.DELETE,
                 'url': '/v2/path2/{id}',
                 'modelName': 'Model3',
-                'returnMultipleItems': False
+                'returnMultipleItems': False,
+                'tags': []
             },
             'deleteNoneModel': {
                 'method': HTTPMethod.DELETE,
                 'url': '/v2/path3',
                 'modelName': None,
-                'returnMultipleItems': False
+                'returnMultipleItems': False,
+                'tags': []
             }
         }
 
@@ -350,7 +364,7 @@ class TestFdmSwaggerParser(unittest.TestCase):
         assert {
             'Model1': {
                 'getSomeModelList': expected_operations['getSomeModelList'],
-                'editSomeModel': expected_operations['editSomeModel']
+                'editSomeModel': expected_operations['editSomeModel'],
             },
             'Model2': {
                 'addSomeModel': expected_operations['addSomeModel']

@@ -1,0 +1,2 @@
+bugfixes:
+  - nagios module - Fix nagios module to recognize if ``cmdfile`` exists and is fifo pipe.

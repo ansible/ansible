@@ -1,3 +1,0 @@
-minor_changes:
-- include/import - Promote ``include_tasks``, ``import_tasks``, ``include_role``,
-  and ``import_role`` to ``stableinterface``

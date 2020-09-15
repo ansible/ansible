@@ -71,10 +71,18 @@ class Cliconf(CliconfBase):
             if format not in option_values['format']:
                 raise ValueError("'format' value %s is invalid. Valid values of format are %s" % (format, ', '.join(option_values['format'])))
 
+        if not flags:
+            flags = []
+
         if format == 'text':
-            out = self.send_command('show configuration')
+            command = 'show configuration'
         else:
-            out = self.send_command('show configuration commands')
+            command = 'show configuration commands'
+
+        command += ' '.join(to_list(flags))
+        command = command.strip()
+
+        out = self.send_command(command)
         return out
 
     def edit_config(self, candidate=None, commit=True, replace=None, comment=None):
@@ -109,6 +117,8 @@ class Cliconf(CliconfBase):
                 self.discard_changes()
         else:
             self.send_command('exit')
+            if to_text(self._connection.get_prompt(), errors='surrogate_or_strict').strip().endswith('#'):
+                self.discard_changes()
 
         if diff_config:
             resp['diff'] = diff_config
@@ -116,14 +126,13 @@ class Cliconf(CliconfBase):
         resp['request'] = requests
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
-
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def commit(self, comment=None):
         if comment:
@@ -257,3 +266,11 @@ class Cliconf(CliconfBase):
         result['device_operations'] = self.get_device_operations()
         result.update(self.get_option_values())
         return json.dumps(result)
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            self._update_cli_prompt_context(config_context='#', exit_command='exit discard')

@@ -1,0 +1,35 @@
+---
+- name: Reset initial config
+  cli_config:
+    config: |
+      interface Ethernet1
+         description "Interface 1"
+         no shutdown
+         no mtu
+         speed forced 40gfull
+      interface Ethernet2
+         no description
+         no shutdown
+         mtu 3000
+         speed auto
+  become: yes
+
+- eos_facts:
+    gather_network_resources: interfaces
+  become: yes
+
+- set_fact:
+    expected_config:
+      - name: Ethernet1
+        description: Interface 1
+        speed: 40g
+        duplex: full
+        enabled: True
+      - name: Ethernet2
+        enabled: True
+        mtu: "3000"
+        duplex: auto
+
+- assert:
+    that:
+      - "expected_config|difference(ansible_facts.network_resources.interfaces) == []"

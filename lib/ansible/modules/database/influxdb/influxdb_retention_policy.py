@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2016, Kamil Szczygiel <kamil.szczygiel () intel.com>
+# Copyright: (c) 2016, Kamil Szczygiel <kamil.szczygiel () intel.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -11,12 +11,12 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: influxdb_retention_policy
 short_description: Manage InfluxDB retention policies
 description:
-    - Manage InfluxDB retention policies
+    - Manage InfluxDB retention policies.
 version_added: 2.1
 author: "Kamil Szczygiel (@kamsz)"
 requirements:
@@ -28,26 +28,30 @@ options:
         description:
             - Name of the database.
         required: true
+        type: str
     policy_name:
         description:
-            - Name of the retention policy
+            - Name of the retention policy.
         required: true
+        type: str
     duration:
         description:
-            - Determines how long InfluxDB should keep the data
+            - Determines how long InfluxDB should keep the data.
         required: true
+        type: str
     replication:
         description:
-            - Determines how many independent copies of each point are stored in the cluster
+            - Determines how many independent copies of each point are stored in the cluster.
         required: true
+        type: int
     default:
         description:
-            - Sets the retention policy as default retention policy
-        required: true
+            - Sets the retention policy as default retention policy.
+        type: bool
 extends_documentation_fragment: influxdb
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Example influxdb_retention_policy command from Ansible Playbooks
 - name: create 1 hour retention policy
   influxdb_retention_policy:
@@ -86,7 +90,7 @@ EXAMPLES = '''
       validate_certs: no
 '''
 
-RETURN = '''
+RETURN = r'''
 # only defaults
 '''
 

@@ -142,22 +142,49 @@ import re
 from copy import deepcopy
 from functools import partial
 
-from ansible.module_utils.network.nxos.nxos import run_commands, load_config
+from ansible.module_utils.network.nxos.nxos import run_commands, load_config, get_config
 from ansible.module_utils.network.nxos.nxos import nxos_argument_spec
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.six import string_types, iteritems
 from ansible.module_utils.network.common.utils import remove_default_spec, to_list
 
-VALID_ROLES = ['network-admin', 'network-operator', 'vdc-admin', 'vdc-operator',
-               'priv-15', 'priv-14', 'priv-13', 'priv-12', 'priv-11', 'priv-10',
-               'priv-9', 'priv-8', 'priv-7', 'priv-6', 'priv-5', 'priv-4',
-               'priv-3', 'priv-2', 'priv-1', 'priv-0']
+BUILTIN_ROLES = [
+    "network-admin",
+    "network-operator",
+    "vdc-admin",
+    "vdc-operator",
+    "priv-15",
+    "priv-14",
+    "priv-13",
+    "priv-12",
+    "priv-11",
+    "priv-10",
+    "priv-9",
+    "priv-8",
+    "priv-7",
+    "priv-6",
+    "priv-5",
+    "priv-4",
+    "priv-3",
+    "priv-2",
+    "priv-1",
+    "priv-0",
+]
+
+
+def get_custom_roles(module):
+    return re.findall(
+        r"^role name (\S+)",
+        get_config(module, flags=["| include '^role name'"]),
+        re.M,
+    )
 
 
 def validate_roles(value, module):
+    valid_roles = BUILTIN_ROLES + get_custom_roles(module)
     for item in value:
-        if item not in VALID_ROLES:
-            module.fail_json(msg='invalid role specified')
+        if item not in valid_roles:
+            module.fail_json(msg="invalid role specified")
 
 
 def map_obj_to_commands(updates, module):
@@ -177,12 +204,30 @@ def map_obj_to_commands(updates, module):
         def remove(x):
             return commands.append('no username %s %s' % (want['name'], x))
 
+        def configure_roles():
+            if want['roles']:
+                if have:
+                    for item in set(have['roles']).difference(want['roles']):
+                        remove('role %s' % item)
+
+                    for item in set(want['roles']).difference(have['roles']):
+                        add('role %s' % item)
+                else:
+                    for item in want['roles']:
+                        add('role %s' % item)
+
+                return True
+            return False
+
         if want['state'] == 'absent':
             commands.append('no username %s' % want['name'])
             continue
 
+        roles_configured = False
         if want['state'] == 'present' and not have:
-            commands.append('username %s' % want['name'])
+            roles_configured = configure_roles()
+            if not roles_configured:
+                commands.append('username %s' % want['name'])
 
         if needs_update('configured_password'):
             if update_password == 'always' or not have:
@@ -191,16 +236,8 @@ def map_obj_to_commands(updates, module):
         if needs_update('sshkey'):
             add('sshkey %s' % want['sshkey'])
 
-        if want['roles']:
-            if have:
-                for item in set(have['roles']).difference(want['roles']):
-                    remove('role %s' % item)
-
-                for item in set(want['roles']).difference(have['roles']):
-                    add('role %s' % item)
-            else:
-                for item in want['roles']:
-                    add('role %s' % item)
+        if not roles_configured:
+            configure_roles()
 
     return commands
 

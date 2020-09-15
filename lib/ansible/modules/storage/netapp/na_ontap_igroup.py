@@ -58,7 +58,7 @@ options:
     description:
     - List of initiators to be mapped to the igroup.
     - WWPN, WWPN Alias, or iSCSI name of Initiator to add or remove.
-    - For a modify operation, this list replaces the exisiting initiators
+    - For a modify operation, this list replaces the existing initiators
     - This module does not add or remove specific initiator(s) in an igroup
     aliases:
     - initiator
@@ -117,7 +117,7 @@ EXAMPLES = '''
         username: "{{ netapp_username }}"
         password: "{{ netapp_password }}"
 
-    - name: Modify Igroup Initiators (replaces exisiting initiators)
+    - name: Modify Igroup Initiators (replaces existing initiators)
       na_ontap_igroup:
         state: present
         name: ansibleIgroup3
@@ -195,7 +195,8 @@ class NetAppOntapIgroup(object):
         :rtype: dict
         """
         igroup_info = netapp_utils.zapi.NaElement('igroup-get-iter')
-        attributes = dict(query={'initiator-group-info': {'initiator-group-name': name}})
+        attributes = dict(query={'initiator-group-info': {'initiator-group-name': name,
+                                                          'vserver': self.parameters['vserver']}})
         igroup_info.translate_struct(attributes)
         result, current = None, None
 

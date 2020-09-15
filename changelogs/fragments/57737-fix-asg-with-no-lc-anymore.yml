@@ -1,0 +1,2 @@
+bugfixes:
+  - ec2_asg - regression bug, when an existing autoscaling group was updated and but the launch config of existing instances was deleted.

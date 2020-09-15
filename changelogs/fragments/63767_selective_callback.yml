@@ -1,0 +1,2 @@
+bugfixes:
+- selective callback - mark task failed correctly (https://github.com/ansible/ansible/issues/63767).

@@ -20,8 +20,9 @@ DOCUMENTATION = r'''
 module: vmware_cluster
 short_description: Manage VMware vSphere clusters
 description:
-    - This module can be used to add, remove and update VMware vSphere clusters and its configurations.
-    - Module can manage HA, DRS and VSAN related configurations.
+    - Adds or removes VMware vSphere clusters.
+    - Although this module can manage DRS, HA and VSAN related configurations, this functionality is deprecated and will be removed in 2.12.
+    - To manage DRS, HA and VSAN related configurations, use the new modules vmware_cluster_drs, vmware_cluster_ha and vmware_cluster_vsan.
     - All values and VMware object names are case sensitive.
 version_added: '2.0'
 author:
@@ -34,21 +35,45 @@ options:
     cluster_name:
       description:
       - The name of the cluster to be managed.
+      type: str
       required: yes
     datacenter:
       description:
       - The name of the datacenter.
+      type: str
       required: yes
       aliases: [ datacenter_name ]
+    ignore_drs:
+      description:
+      - If set to C(yes), DRS will not be configured; all explicit and default DRS related configurations will be ignored.
+      type: bool
+      default: 'no'
+      version_added: 2.9
+    ignore_ha:
+      description:
+      - If set to C(yes), HA will not be configured; all explicit and default HA related configurations will be ignored.
+      type: bool
+      default: 'no'
+      version_added: 2.9
+    ignore_vsan:
+      description:
+      - If set to C(yes), VSAN will not be configured; all explicit and default VSAN related configurations will be ignored.
+      type: bool
+      default: 'no'
+      version_added: 2.9
     enable_drs:
       description:
       - If set to C(yes), will enable DRS when the cluster is created.
+      - Use C(enable_drs) of M(vmware_cluster_drs) instead.
+      - Deprecated option, will be removed in version 2.12.
       type: bool
       default: 'no'
     drs_enable_vm_behavior_overrides:
       description:
       - Determines whether DRS Behavior overrides for individual virtual machines are enabled.
       - If set to C(True), overrides C(drs_default_vm_behavior).
+      - Use C(drs_enable_vm_behavior_overrides) of M(vmware_cluster_drs) instead.
+      - Deprecated option, will be removed in version 2.12.
       type: bool
       default: True
       version_added: 2.8
@@ -61,18 +86,24 @@ options:
         for the placement with a host. vCenter should not implement the recommendations automatically.
       - If set to C(fullyAutomated), then vCenter should automate both the migration of virtual machines
         and their placement with a host at power on.
+      - Use C(drs_default_vm_behavior) of M(vmware_cluster_drs) instead.
+      - Deprecated option, will be removed in version 2.12.
       default: fullyAutomated
       choices: [ fullyAutomated, manual, partiallyAutomated ]
       version_added: 2.8
     drs_vmotion_rate:
       description:
       - Threshold for generated ClusterRecommendations.
+      - Use C(drs_vmotion_rate) of M(vmware_cluster_drs) instead.
+      - Deprecated option, will be removed in version 2.12.
       default: 3
       choices: [ 1, 2, 3, 4, 5 ]
       version_added: 2.8
     enable_ha:
       description:
       - If set to C(yes) will enable HA when the cluster is created.
+      - Use C(enable_ha) of M(vmware_cluster_ha) instead.
+      - Deprecated option, will be removed in version 2.12.
       type: bool
       default: 'no'
     ha_host_monitoring:
@@ -81,6 +112,8 @@ options:
       - If set to C(enabled), HA restarts virtual machines after a host fails.
       - If set to C(disabled), HA does not restart virtual machines after a host fails.
       - If C(enable_ha) is set to C(no), then this value is ignored.
+      - Use C(ha_host_monitoring) of M(vmware_cluster_ha) instead.
+      - Deprecated option, will be removed in version 2.12.
       choices: [ 'enabled', 'disabled' ]
       default: 'enabled'
       version_added: 2.8
@@ -91,6 +124,8 @@ options:
       - If set to C(vmMonitoringDisabled), virtual machine health monitoring is disabled.
       - If set to C(vmMonitoringOnly), HA response to virtual machine heartbeat failure.
       - If C(enable_ha) is set to C(no), then this value is ignored.
+      - Use C(ha_vm_monitoring) of M(vmware_cluster_ha) instead.
+      - Deprecated option, will be removed in version 2.12.
       choices: ['vmAndAppMonitoring', 'vmMonitoringOnly', 'vmMonitoringDisabled']
       default: 'vmMonitoringDisabled'
       version_added: 2.8
@@ -99,12 +134,16 @@ options:
       - Number of host failures that should be tolerated, still guaranteeing sufficient resources to
         restart virtual machines on available hosts.
       - Accepts integer values only.
+      - Use C(slot_based_admission_control), C(reservation_based_admission_control) or C(failover_host_admission_control) of M(vmware_cluster_ha) instead.
+      - Deprecated option, will be removed in version 2.12.
       default: 2
       version_added: 2.8
     ha_admission_control_enabled:
       description:
       - Determines if strict admission control is enabled.
       - It is recommended to set this parameter to C(True), please refer documentation for more details.
+      - Use C(slot_based_admission_control), C(reservation_based_admission_control) or C(failover_host_admission_control) of M(vmware_cluster_ha) instead.
+      - Deprecated option, will be removed in version 2.12.
       default: True
       type: bool
       version_added: 2.8
@@ -114,6 +153,8 @@ options:
         if no heartbeat has been received.
       - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       - Unit is seconds.
+      - Use C(ha_vm_failure_interval) of M(vmware_cluster_ha) instead.
+      - Deprecated option, will be removed in version 2.12.
       default: 30
       version_added: 2.8
     ha_vm_min_up_time:
@@ -122,6 +163,8 @@ options:
         the virtual machine has been powered on.
       - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       - Unit is seconds.
+      - Use C(ha_vm_min_up_time) of M(vmware_cluster_ha) instead.
+      - Deprecated option, will be removed in version 2.12.
       default: 120
       version_added: 2.8
     ha_vm_max_failures:
@@ -129,6 +172,8 @@ options:
       - Maximum number of failures and automated resets allowed during the time
        that C(ha_vm_max_failure_window) specifies.
       - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
+      - Use C(ha_vm_max_failures) of M(vmware_cluster_ha) instead.
+      - Deprecated option, will be removed in version 2.12.
       default: 3
       version_added: 2.8
     ha_vm_max_failure_window:
@@ -138,6 +183,8 @@ options:
       - This setting is only valid if C(ha_vm_monitoring) is set to, either C(vmAndAppMonitoring) or C(vmMonitoringOnly).
       - Unit is seconds.
       - Default specifies no failure window.
+      - Use C(ha_vm_max_failure_window) of M(vmware_cluster_ha) instead.
+      - Deprecated option, will be removed in version 2.12.
       default: -1
       version_added: 2.8
     ha_restart_priority:
@@ -152,18 +199,24 @@ options:
         when there is insufficient capacity on hosts to meet all virtual machine needs.
       - If set to C(low), then virtual machine with this priority have a lower chance of powering on after a failure,
         when there is insufficient capacity on hosts to meet all virtual machine needs.
+      - Use C(ha_restart_priority) of M(vmware_cluster_ha) instead.
+      - Deprecated option, will be removed in version 2.12.
       default: 'medium'
       version_added: 2.8
       choices: [ 'disabled', 'high', 'low', 'medium' ]
     enable_vsan:
       description:
       - If set to C(yes) will enable vSAN when the cluster is created.
+      - Use C(enable_vsan) of M(vmware_cluster_vsan) instead.
+      - Deprecated option, will be removed in version 2.12.
       type: bool
       default: 'no'
     vsan_auto_claim_storage:
       description:
       - Determines whether the VSAN service is configured to automatically claim local storage
         on VSAN-enabled hosts in the cluster.
+      - Use C(vsan_auto_claim_storage) of M(vmware_cluster_vsan) instead.
+      - Deprecated option, will be removed in version 2.12.
       type: bool
       default: False
       version_added: 2.8
@@ -172,6 +225,10 @@ options:
       - Create C(present) or remove C(absent) a VMware vSphere cluster.
       choices: [ absent, present ]
       default: present
+seealso:
+- module: vmware_cluster_drs
+- module: vmware_cluster_ha
+- module: vmware_cluster_vsan
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -236,6 +293,9 @@ class VMwareCluster(PyVmomi):
         super(VMwareCluster, self).__init__(module)
         self.cluster_name = module.params['cluster_name']
         self.datacenter_name = module.params['datacenter']
+        self.ignore_drs = module.params['ignore_drs']
+        self.ignore_ha = module.params['ignore_ha']
+        self.ignore_vsan = module.params['ignore_vsan']
         self.enable_drs = module.params['enable_drs']
         self.enable_ha = module.params['enable_ha']
         self.enable_vsan = module.params['enable_vsan']
@@ -268,6 +328,10 @@ class VMwareCluster(PyVmomi):
         Returns: Cluster DAS configuration spec
 
         """
+        msg = 'Configuring HA using vmware_cluster module is deprecated and will be removed in version 2.12. ' \
+              'Please use vmware_cluster_ha module for the new functionality.'
+        self.module.deprecate(msg, '2.12')
+
         das_config = vim.cluster.DasConfigInfo()
         das_config.enabled = self.enable_ha
         das_config.admissionControlPolicy = vim.cluster.FailoverLevelAdmissionControlPolicy()
@@ -303,6 +367,10 @@ class VMwareCluster(PyVmomi):
         Returns: Cluster DRS configuration spec
 
         """
+        msg = 'Configuring DRS using vmware_cluster module is deprecated and will be removed in version 2.12. ' \
+              'Please use vmware_cluster_drs module for the new functionality.'
+        self.module.deprecate(msg, '2.12')
+
         drs_config = vim.cluster.DrsConfigInfo()
 
         drs_config.enabled = self.enable_drs
@@ -318,6 +386,10 @@ class VMwareCluster(PyVmomi):
         Returns: Cluster VSAN configuration spec
 
         """
+        msg = 'Configuring VSAN using vmware_cluster module is deprecated and will be removed in version 2.12. ' \
+              'Please use vmware_cluster_vsan module for the new functionality.'
+        self.module.deprecate(msg, '2.12')
+
         vsan_config = vim.vsan.cluster.ConfigInfo()
         vsan_config.enabled = self.enable_vsan
         vsan_config.defaultConfig = vim.vsan.cluster.ConfigInfo.HostDefaultInfo()
@@ -330,9 +402,11 @@ class VMwareCluster(PyVmomi):
         """
         try:
             cluster_config_spec = vim.cluster.ConfigSpecEx()
-            cluster_config_spec.dasConfig = self.configure_ha()
-            cluster_config_spec.drsConfig = self.configure_drs()
-            if self.enable_vsan:
+            if not self.ignore_ha:
+                cluster_config_spec.dasConfig = self.configure_ha()
+            if not self.ignore_drs:
+                cluster_config_spec.drsConfig = self.configure_drs()
+            if self.enable_vsan and not self.ignore_vsan:
                 cluster_config_spec.vsanConfig = self.configure_vsan()
             if not self.module.check_mode:
                 self.datacenter.hostFolder.CreateClusterEx(self.cluster_name, cluster_config_spec)
@@ -364,7 +438,7 @@ class VMwareCluster(PyVmomi):
         """
         Destroy cluster
         """
-        changed, result = False, None
+        changed, result = True, None
 
         try:
             if not self.module.check_mode:
@@ -394,13 +468,13 @@ class VMwareCluster(PyVmomi):
         changed, result = False, None
         cluster_config_spec = vim.cluster.ConfigSpecEx()
         diff = False  # Triggers Reconfigure Task only when there is a change
-        if self.check_ha_config_diff():
+        if self.check_ha_config_diff() and not self.ignore_ha:
             cluster_config_spec.dasConfig = self.configure_ha()
             diff = True
-        if self.check_drs_config_diff():
+        if self.check_drs_config_diff() and not self.ignore_drs:
             cluster_config_spec.drsConfig = self.configure_drs()
             diff = True
-        if self.check_vsan_config_diff():
+        if self.check_vsan_config_diff() and not self.ignore_vsan:
             cluster_config_spec.vsanConfig = self.configure_vsan()
             diff = True
 
@@ -503,6 +577,7 @@ def main():
                    default='present',
                    choices=['absent', 'present']),
         # DRS
+        ignore_drs=dict(type='bool', default=False),
         enable_drs=dict(type='bool', default=False),
         drs_enable_vm_behavior_overrides=dict(type='bool', default=True),
         drs_default_vm_behavior=dict(type='str',
@@ -512,6 +587,7 @@ def main():
                               choices=range(1, 6),
                               default=3),
         # HA
+        ignore_ha=dict(type='bool', default=False),
         enable_ha=dict(type='bool', default=False),
         ha_failover_level=dict(type='int', default=2),
         ha_host_monitoring=dict(type='str',
@@ -531,6 +607,7 @@ def main():
                                  default='medium'),
         ha_admission_control_enabled=dict(type='bool', default=True),
         # VSAN
+        ignore_vsan=dict(type='bool', default=False),
         enable_vsan=dict(type='bool', default=False),
         vsan_auto_claim_storage=dict(type='bool', default=False),
     ))

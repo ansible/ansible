@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "proxmox - fix version detection of proxmox 6 and up (Fixes https://github.com/ansible/ansible/issues/59164)"

@@ -1,0 +1,161 @@
+---
+- name: Generate privatekey
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekey.pem'
+
+- name: Generate privatekey with password
+  openssl_privatekey:
+    path: '{{ output_dir }}/privatekeypw.pem'
+    passphrase: hunter2
+    cipher: auto
+    select_crypto_backend: cryptography
+
+- name: Generate CSR 1
+  openssl_csr:
+    path: '{{ output_dir }}/csr_1.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    subject:
+      commonName: www.example.com
+      C: de
+      L: Somewhere
+      ST: Zurich
+      streetAddress: Welcome Street
+      O: Ansible
+      organizationalUnitName:
+        - Crypto Department
+        - ACME Department
+      serialNumber: "1234"
+      SN: Last Name
+      GN: First Name
+      title: Chief
+      pseudonym: test
+      UID: asdf
+      emailAddress: test@example.com
+      postalAddress: 1234 Somewhere
+      postalCode: "1234"
+    useCommonNameForSAN: no
+    key_usage:
+      - digitalSignature
+      - keyAgreement
+      - Non Repudiation
+      - Key Encipherment
+      - dataEncipherment
+      - Certificate Sign
+      - cRLSign
+      - Encipher Only
+      - decipherOnly
+    key_usage_critical: yes
+    extended_key_usage:
+      - serverAuth  # the same as "TLS Web Server Authentication"
+      - TLS Web Server Authentication
+      - TLS Web Client Authentication
+      - Code Signing
+      - E-mail Protection
+      - timeStamping
+      - OCSPSigning
+      - Any Extended Key Usage
+      - qcStatements
+      - DVCS
+      - IPSec User
+      - biometricInfo
+    subject_alt_name:
+      - "DNS:www.ansible.com"
+      - "IP:1.2.3.4"
+      - "IP:::1"
+      - "email:test@example.org"
+      - "URI:https://example.org/test/index.html"
+    basic_constraints:
+      - "CA:TRUE"
+      - "pathlen:23"
+    basic_constraints_critical: yes
+    ocsp_must_staple: yes
+    subject_key_identifier: '{{ "00:11:22:33" if cryptography_version.stdout is version("1.3", ">=") else omit }}'
+    authority_key_identifier: '{{ "44:55:66:77" if cryptography_version.stdout is version("1.3", ">=") else omit }}'
+    authority_cert_issuer: '{{ value_for_authority_cert_issuer if cryptography_version.stdout is version("1.3", ">=") else omit }}'
+    authority_cert_serial_number: '{{ 12345 if cryptography_version.stdout is version("1.3", ">=") else omit }}'
+  vars:
+    value_for_authority_cert_issuer:
+      - "DNS:ca.example.org"
+      - "IP:1.2.3.4"
+
+- name: Generate CSR 2
+  openssl_csr:
+    path: '{{ output_dir }}/csr_2.csr'
+    privatekey_path: '{{ output_dir }}/privatekeypw.pem'
+    privatekey_passphrase: hunter2
+    useCommonNameForSAN: no
+    basic_constraints:
+      - "CA:TRUE"
+
+- name: Generate CSR 3
+  openssl_csr:
+    path: '{{ output_dir }}/csr_3.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    useCommonNameForSAN: no
+    subject_alt_name:
+      - "DNS:*.ansible.com"
+      - "DNS:*.example.org"
+      - "IP:DEAD:BEEF::1"
+    basic_constraints:
+      - "CA:FALSE"
+    authority_cert_issuer: '{{ value_for_authority_cert_issuer if cryptography_version.stdout is version("1.3", ">=") else omit }}'
+    authority_cert_serial_number: '{{ 12345 if cryptography_version.stdout is version("1.3", ">=") else omit }}'
+  vars:
+    value_for_authority_cert_issuer:
+      - "DNS:ca.example.org"
+      - "IP:1.2.3.4"
+
+- name: Generate CSR 4
+  openssl_csr:
+    path: '{{ output_dir }}/csr_4.csr'
+    privatekey_path: '{{ output_dir }}/privatekey.pem'
+    useCommonNameForSAN: no
+    authority_key_identifier: '{{ "44:55:66:77" if cryptography_version.stdout is version("1.3", ">=") else omit }}'
+
+- name: Prepare result list
+  set_fact:
+    info_results: []
+
+- name: Running tests with pyOpenSSL backend
+  include_tasks: impl.yml
+  vars:
+    select_crypto_backend: pyopenssl
+  when: pyopenssl_version.stdout is version('0.15', '>=')
+
+- name: Prepare result list
+  set_fact:
+    pyopenssl_info_results: "{{ info_results }}"
+    info_results: []
+
+- name: Running tests with cryptography backend
+  include_tasks: impl.yml
+  vars:
+    select_crypto_backend: cryptography
+  when: cryptography_version.stdout is version('1.3', '>=')
+
+- name: Prepare result list
+  set_fact:
+    cryptography_info_results: "{{ info_results }}"
+
+- block:
+  - name: Dump pyOpenSSL results
+    debug:
+      var: pyopenssl_info_results
+  - name: Dump cryptography results
+    debug:
+      var: cryptography_info_results
+  - name: Compare results
+    assert:
+      that:
+      - '  (item.0 | dict2items | rejectattr("key", "in", keys_to_ignore) | list | items2dict)
+        == (item.1 | dict2items | rejectattr("key", "in", keys_to_ignore) | list | items2dict)'
+      quiet: yes
+    loop: "{{ pyopenssl_info_results | zip(cryptography_info_results) | list }}"
+  when: pyopenssl_version.stdout is version('0.15', '>=') and cryptography_version.stdout is version('1.3', '>=')
+  vars:
+    keys_to_ignore:
+      - deprecations
+      - subject_key_identifier
+      - authority_key_identifier
+      - authority_cert_issuer
+      - authority_cert_serial_number

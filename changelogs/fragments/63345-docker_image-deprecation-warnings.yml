@@ -1,0 +1,2 @@
+bugfixes:
+- "docker_image - make sure that deprecated options also emit proper deprecation warnings next to warnings which indicate how to replace them."

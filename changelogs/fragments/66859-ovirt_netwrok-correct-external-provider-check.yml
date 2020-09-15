@@ -1,0 +1,2 @@
+bugfixes:
+- "ovirt_network: add check to control when creating network"

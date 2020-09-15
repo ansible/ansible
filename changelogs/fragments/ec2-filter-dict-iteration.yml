@@ -1,0 +1,2 @@
+bugfixes:
+  - "ec2_group_info, ec2_vol_info, ec2_vol_info - Fixed RuntimeErrors on Python3.8 when iterating filter dictionaries. (https://github.com/ansible/ansible/issues/65024)"

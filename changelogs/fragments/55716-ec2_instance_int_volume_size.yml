@@ -1,0 +1,2 @@
+bugfixes:
+  - ec2_instance - Ensures ``ebs.volume_size`` and ``ebs.iops`` are ``int`` to avoid issues with Jinja2 templating

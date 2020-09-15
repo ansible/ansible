@@ -1,0 +1,52 @@
+# Test code for the vmware_guest_disk_info module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
+
+- name: set state to poweron the first VM
+  vmware_guest_powerstate:
+    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    name: "{{ virtual_machines[0].name }}"
+    folder: '{{ f0 }}'
+    state: powered-on
+
+- name: Gather info about virtual machine disks
+  vmware_guest_disk_info: &get_info
+    validate_certs: no
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    name: "{{ virtual_machines[0].name }}"
+    datacenter: '{{ dc1 }}'
+  register: disk_info
+
+- debug:
+    msg: '{{ disk_info }}'
+
+- name: assert that no changes were made
+  assert:
+    that:
+        - "not disk_info.changed"
+
+- name: Gather info about virtual machine disks in check mode
+  vmware_guest_disk_info:
+    <<: *get_info
+  register: disk_info
+  check_mode: yes
+
+- debug:
+    msg: '{{ disk_info }}'
+
+- name: assert that no changes were made
+  assert:
+    that:
+        - "not disk_info.changed"

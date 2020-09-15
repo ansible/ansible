@@ -34,6 +34,9 @@ notes:
       passed, all existing members (if any), are removed,
       and Eth-Trunk removed.
     - Members must be a list.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     trunk_id:
         description:
@@ -399,7 +402,7 @@ class EthTrunk(object):
         return False
 
     def get_mode_xml_str(self):
-        """trunk mode netconf xml fromat string"""
+        """trunk mode netconf xml format string"""
 
         return MODE_CLI2XML.get(self.mode)
 

@@ -47,28 +47,34 @@ options:
     - present
     - absent
     default: present
+    type: str
   host:
     description:
     - The host name from which the user can connect. For insert operations, host defaults
       to an empty string. For update operations, host is specified as part of the
       request URL. The host name cannot be updated after insertion.
     required: true
+    type: str
   name:
     description:
     - The name of the user in the Cloud SQL instance.
     required: true
+    type: str
   instance:
     description:
     - The name of the Cloud SQL instance. This does not include the project ID.
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_sql_instance
-      task and then set this instance field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_sql_instance task and then set this instance field to "{{ name-of-resource
+      }}"'
     required: true
+    type: dict
   password:
     description:
     - The password for the user.
     required: false
+    type: str
 extends_documentation_fragment: gcp
 '''
 
@@ -118,7 +124,7 @@ instance:
   description:
   - The name of the Cloud SQL instance. This does not include the project ID.
   returned: success
-  type: str
+  type: dict
 password:
   description:
   - The password for the user.
@@ -147,7 +153,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             host=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
-            instance=dict(required=True),
+            instance=dict(required=True, type='dict'),
             password=dict(type='str'),
         )
     )
@@ -209,7 +215,7 @@ def resource_to_request(module):
 
 
 def unwrap_resource_filter(module):
-    return {'host': module.params['host'], 'name': module.params['name']}
+    return {'name': module.params['name'], 'host': module.params['host']}
 
 
 def unwrap_resource(result, module):

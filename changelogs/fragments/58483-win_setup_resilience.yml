@@ -1,0 +1,2 @@
+bugfixes:
+- setup (Windows) - prevent setup module failure if Get-MachineSid fails (https://github.com/ansible/ansible/issues/47813)

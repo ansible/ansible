@@ -2,18 +2,24 @@
 # (c) Thierry Bouvet (@tbouvet)
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
+
 import json
 from time import sleep
-from re import split
 
 try:
-    from docker.errors import APIError
+    from docker.errors import APIError, NotFound
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker.common
     pass
 
 from ansible.module_utils._text import to_native
-from ansible.module_utils.docker.common import AnsibleDockerClient
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    LooseVersion,
+)
 
 
 class AnsibleDockerSwarmClient(AnsibleDockerClient):
@@ -158,10 +164,9 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
             if exc.status_code == 503:
                 self.fail("Cannot inspect node: To inspect node execute module on Swarm Manager")
             if exc.status_code == 404:
-                if skip_missing is False:
-                    self.fail("Error while reading from Swarm manager: %s" % to_native(exc))
-                else:
+                if skip_missing:
                     return None
+            self.fail("Error while reading from Swarm manager: %s" % to_native(exc))
         except Exception as exc:
             self.fail("Error inspecting swarm node: %s" % exc)
 
@@ -241,3 +246,35 @@ class AnsibleDockerSwarmClient(AnsibleDockerClient):
 
     def get_node_name_by_id(self, nodeid):
         return self.get_node_inspect(nodeid)['Description']['Hostname']
+
+    def get_unlock_key(self):
+        if self.docker_py_version < LooseVersion('2.7.0'):
+            return None
+        return super(AnsibleDockerSwarmClient, self).get_unlock_key()
+
+    def get_service_inspect(self, service_id, skip_missing=False):
+        """
+        Returns Swarm service info as in 'docker service inspect' command about single service
+
+        :param service_id: service ID or name
+        :param skip_missing: if True then function will return None instead of failing the task
+        :return:
+            Single service information structure
+        """
+        try:
+            service_info = self.inspect_service(service_id)
+        except NotFound as exc:
+            if skip_missing is False:
+                self.fail("Error while reading from Swarm manager: %s" % to_native(exc))
+            else:
+                return None
+        except APIError as exc:
+            if exc.status_code == 503:
+                self.fail("Cannot inspect service: To inspect service execute module on Swarm Manager")
+            self.fail("Error inspecting swarm service: %s" % exc)
+        except Exception as exc:
+            self.fail("Error inspecting swarm service: %s" % exc)
+
+        json_str = json.dumps(service_info, ensure_ascii=False)
+        service_info = json.loads(json_str)
+        return service_info

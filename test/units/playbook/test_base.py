@@ -26,6 +26,7 @@ from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 from ansible.playbook import base
+from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
 from units.mock.loader import DictDataLoader
 
@@ -367,12 +368,6 @@ class BaseSubClass(base.Base):
     _test_attr_method_missing = FieldAttribute(isa='string', default='some attr with a missing getter',
                                                always_post_validate=True)
 
-    def _preprocess_data_basesubclass(self, ds):
-        return ds
-
-    def preprocess_data(self, ds):
-        return super(BaseSubClass, self).preprocess_data(ds)
-
     def _get_attr_test_attr_method(self):
         return 'foo bar'
 
@@ -626,3 +621,12 @@ class TestBaseSubClass(TestBase):
         ds = {'test_attr_method_missing': a_string}
         bsc = self._base_validate(ds)
         self.assertEquals(bsc.test_attr_method_missing, a_string)
+
+    def test_get_validated_value_string_rewrap_unsafe(self):
+        attribute = FieldAttribute(isa='string')
+        value = AnsibleUnsafeText(u'bar')
+        templar = Templar(None)
+        bsc = self.ClassUnderTest()
+        result = bsc.get_validated_value('foo', attribute, value, templar)
+        self.assertIsInstance(result, AnsibleUnsafeText)
+        self.assertEquals(result, AnsibleUnsafeText(u'bar'))

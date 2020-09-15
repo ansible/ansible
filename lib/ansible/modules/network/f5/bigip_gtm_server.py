@@ -1157,9 +1157,21 @@ class Difference(object):
             )
         want = [OrderedDict(sorted(d.items())) for d in devices]
         have = [OrderedDict(sorted(d.items())) for d in have_devices]
+        if len(have_devices) > 0:
+            if self._false_positive(devices, have_devices):
+                return False
         if want != have:
             return True
         return False
+
+    def _false_positive(self, devices, have_devices):
+        match = 0
+        for w in devices:
+            for h in have_devices:
+                if w.items() == h.items():
+                    match = match + 1
+        if match == len(devices):
+            return True
 
     def _server_type_changed(self):
         if self.want.server_type is None:

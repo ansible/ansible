@@ -28,6 +28,7 @@ import sys
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.module_utils.compat.paramiko import paramiko
 from ansible.module_utils.six import iteritems
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -291,17 +292,6 @@ class PlayContext(Base):
         for become_pass_name in C.MAGIC_VARIABLE_MAPPING.get('become_pass'):
             if become_pass_name in variables:
                 break
-        else:  # This is a for-else
-            if new_info.become_method == 'sudo':
-                for sudo_pass_name in C.MAGIC_VARIABLE_MAPPING.get('sudo_pass'):
-                    if sudo_pass_name in variables:
-                        setattr(new_info, 'become_pass', variables[sudo_pass_name])
-                        break
-            elif new_info.become_method == 'su':
-                for su_pass_name in C.MAGIC_VARIABLE_MAPPING.get('su_pass'):
-                    if su_pass_name in variables:
-                        setattr(new_info, 'become_pass', variables[su_pass_name])
-                        break
 
         # make sure we get port defaults if needed
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
@@ -408,18 +398,12 @@ class PlayContext(Base):
         conn_type = None
         if self._attributes['connection'] == 'smart':
             conn_type = 'ssh'
-            if sys.platform.startswith('darwin') and self.password:
-                # due to a current bug in sshpass on OSX, which can trigger
-                # a kernel panic even for non-privileged users, we revert to
-                # paramiko on that OS when a SSH password is specified
+            # see if SSH can support ControlPersist if not use paramiko
+            if not check_for_controlpersist(self.ssh_executable) and paramiko is not None:
                 conn_type = "paramiko"
-            else:
-                # see if SSH can support ControlPersist if not use paramiko
-                if not check_for_controlpersist(self.ssh_executable):
-                    conn_type = "paramiko"
 
         # if someone did `connection: persistent`, default it to using a persistent paramiko connection to avoid problems
-        elif self._attributes['connection'] == 'persistent':
+        elif self._attributes['connection'] == 'persistent' and paramiko is not None:
             conn_type = 'paramiko'
 
         if conn_type:

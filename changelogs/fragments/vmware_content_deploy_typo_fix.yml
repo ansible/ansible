@@ -1,0 +1,2 @@
+minor_changes:
+    - Fixing typo mistake in testbed with section. Deploy template from content library is supported from 67U3 (https://github.com/ansible/ansible/issues/62957).

@@ -1,0 +1,2 @@
+minor_changes:
+ - "``Display.deprecated()``, ``AnsibleModule.deprecate()`` and ``Ansible.Basic.Deprecate()`` now also accept the deprecation-by-date parameters and collection name parameters from Ansible 2.10, so plugins and modules in collections that conform to Ansible 2.10 will run with newer versions of Ansible 2.9."

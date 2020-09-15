@@ -26,13 +26,13 @@ from ansible.module_utils.six import iteritems, binary_type, text_type
 from ansible.module_utils.common._collections_compat import Container, Mapping, Set, Sequence
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins.loader import add_all_plugin_dirs
+from ansible.utils.collection_loader import AnsibleCollectionLoader
 from ansible.utils.vars import combine_vars
 
 
@@ -69,7 +69,7 @@ def hash_params(params):
                 new_params = set()
                 for k, v in params.items():
                     # Hash each entry individually
-                    new_params.update((k, hash_params(v)))
+                    new_params.add((k, hash_params(v)))
                 new_params = frozenset(new_params)
 
         elif isinstance(params, (Set, Sequence)):
@@ -80,7 +80,7 @@ def hash_params(params):
                 new_params = set()
                 for v in params:
                     # Hash each entry individually
-                    new_params.update(hash_params(v))
+                    new_params.add(hash_params(v))
                 new_params = frozenset(new_params)
         else:
             # This is just a guess.
@@ -92,7 +92,7 @@ def hash_params(params):
     return frozenset((params,))
 
 
-class Role(Base, Become, Conditional, Taggable, CollectionSearch):
+class Role(Base, Conditional, Taggable, CollectionSearch):
 
     _delegate_to = FieldAttribute(isa='string')
     _delegate_facts = FieldAttribute(isa='bool')
@@ -128,7 +128,9 @@ class Role(Base, Become, Conditional, Taggable, CollectionSearch):
     def __repr__(self):
         return self.get_name()
 
-    def get_name(self):
+    def get_name(self, include_role_fqcn=True):
+        if include_role_fqcn:
+            return '.'.join(x for x in (self._role_collection, self._role_name) if x)
         return self._role_name
 
     @staticmethod
@@ -155,21 +157,25 @@ class Role(Base, Become, Conditional, Taggable, CollectionSearch):
             params['from_include'] = from_include
 
             hashed_params = hash_params(params)
-            if role_include.role in play.ROLE_CACHE:
-                for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
+            if role_include.get_name() in play.ROLE_CACHE:
+                for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.get_name()]):
                     if hashed_params == entry:
                         if parent_role:
                             role_obj.add_parent(parent_role)
                         return role_obj
 
+            # TODO: need to fix cycle detection in role load (maybe use an empty dict
+            #  for the in-flight in role cache as a sentinel that we're already trying to load
+            #  that role?)
+            # see https://github.com/ansible/ansible/issues/61527
             r = Role(play=play, from_files=from_files, from_include=from_include)
             r._load_role_data(role_include, parent_role=parent_role)
 
-            if role_include.role not in play.ROLE_CACHE:
-                play.ROLE_CACHE[role_include.role] = dict()
+            if role_include.get_name() not in play.ROLE_CACHE:
+                play.ROLE_CACHE[role_include.get_name()] = dict()
 
             # FIXME: how to handle cache keys for collection-based roles, since they're technically adjustable per task?
-            play.ROLE_CACHE[role_include.role][hashed_params] = r
+            play.ROLE_CACHE[role_include.get_name()][hashed_params] = r
             return r
 
         except RuntimeError:
@@ -225,20 +231,23 @@ class Role(Base, Become, Conditional, Taggable, CollectionSearch):
 
         # configure plugin/collection loading; either prepend the current role's collection or configure legacy plugin loading
         # FIXME: need exception for explicit ansible.legacy?
-        if self._role_collection:
+        if self._role_collection:  # this is a collection-hosted role
             self.collections.insert(0, self._role_collection)
-        else:
+        else:  # this is a legacy role, but set the default collection if there is one
+            default_collection = AnsibleCollectionLoader().default_collection
+            if default_collection:
+                self.collections.insert(0, default_collection)
             # legacy role, ensure all plugin dirs under the role are added to plugin search path
             add_all_plugin_dirs(self._role_path)
 
         # collections can be specified in metadata for legacy or collection-hosted roles
         if self._metadata.collections:
-            self.collections.extend(self._metadata.collections)
+            self.collections.extend((c for c in self._metadata.collections if c not in self.collections))
 
         # if any collections were specified, ensure that core or legacy synthetic collections are always included
         if self.collections:
             # default append collection is core for collection-hosted roles, legacy for others
-            default_append_collection = 'ansible.builtin' if self.collections else 'ansible.legacy'
+            default_append_collection = 'ansible.builtin' if self._role_collection else 'ansible.legacy'
             if 'ansible.builtin' not in self.collections and 'ansible.legacy' not in self.collections:
                 self.collections.append(default_append_collection)
 

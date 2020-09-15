@@ -1,2 +1,0 @@
-bugfixes:
-  - lvol - fixed ValueError when using float size (https://github.com/ansible/ansible/issues/32886, https://github.com/ansible/ansible/issues/29429)

@@ -1,3 +1,0 @@
----
-minor_changes:
-  - "docker_network - ``internal`` is now used to set the ``Internal`` property of the docker network during creation."

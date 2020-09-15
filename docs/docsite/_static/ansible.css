@@ -1,0 +1,58 @@
+/*! minified with http://css-minify.online-domain-tools.com/ - all comments
+ * must have ! to preserve during minifying with that tool *//*! Fix for read the docs theme:
+ * https://rackerlabs.github.io/docs-rackspace/tools/rtd-tables.html
+ *//*! override table width restrictions */@media screen and (min-width:767px){/*! If we ever publish to read the docs, we need to use !important for these
+   * two styles as read the docs itself loads their theme in a way that we
+   * can't otherwise override it.
+   */.wy-table-responsive table td{white-space:normal}.wy-table-responsive{overflow:visible}}/*!
+ * We use the class documentation-table for attribute tables where the first
+ * column is the name of an attribute and the second column is the description.
+ *//*! These tables look like this:
+ *
+ *  Attribute Name     Description
+ *  --------------     -----------
+ *  **NAME**           This is a multi-line description
+ *  str/required       that can span multiple lines
+ *
+ *                     With multiple paragraphs
+ *  --------------     -----------
+ *
+ * **NAME** is given the class .value-name
+ * str is given the class .value-type
+ * / is given the class .value-separator
+ * required is given the class .value-required
+ *//*! The extra .rst-content is so this will override rtd theme */.rst-content table.documentation-table td{vertical-align:top}table.documentation-table td:first-child{white-space:nowrap;vertical-align:top}table.documentation-table td:first-child p:first-child{font-weight:700;display:inline}/*! This is now redundant with above position-based styling *//*!
+table.documentation-table .value-name {
+    font-weight: bold;
+    display: inline;
+}
+*/table.documentation-table .value-type{font-size:x-small;color:purple;display:inline}table.documentation-table .value-separator{font-size:x-small;display:inline}table.documentation-table .value-required{font-size:x-small;color:red;display:inline}.value-added-in{font-size:x-small;font-style:italic;color:green;display:inline}/*! Ansible-specific CSS pulled out of rtd theme for 2.9 */.DocSiteProduct-header{flex:1;-webkit-flex:1;padding:10px 20px 20px;display:flex;display:-webkit-flex;flex-direction:column;-webkit-flex-direction:column;align-items:center;-webkit-align-items:center;justify-content:flex-start;-webkit-justify-content:flex-start;margin-left:20px;margin-right:20px;text-decoration:none;font-weight:400;font-family:'Open Sans',sans-serif}.DocSiteProduct-header:active,.DocSiteProduct-header:focus,.DocSiteProduct-header:visited{color:#fff}.DocSiteProduct-header--core{font-size:25px;background-color:#5bbdbf;border:2px solid #5bbdbf;border-top-left-radius:4px;border-top-right-radius:4px;color:#fff;padding-left:2px;margin-left:2px}.DocSiteProduct-headerAlign{width:100%}.DocSiteProduct-logo{width:60px;height:60px;margin-bottom:-9px}.DocSiteProduct-logoText{margin-top:6px;font-size:25px;text-align:left}.DocSiteProduct-CheckVersionPara{margin-left:2px;padding-bottom:4px;margin-right:2px;margin-bottom:10px}/*! Ansible color scheme */.wy-nav-top,.wy-side-nav-search{background-color:#5bbdbf}.wy-menu-vertical header,.wy-menu-vertical p.caption{color:#5bbdbf}.wy-menu-vertical a{padding:0}.wy-menu-vertical a.reference.internal{padding:.4045em 1.618em}/*! Override sphinx rtd theme max-with of 800px */.wy-nav-content{max-width:100%}/*! Override sphinx_rtd_theme - keeps left-nav from overwriting Documentation title */.wy-nav-side{top:45px}/*! Ansible - changed absolute to relative to remove extraneous side scroll bar */.wy-grid-for-nav{position:relative}/*! Ansible narrow the search box */.wy-side-nav-search input[type=text]{width:90%;padding-left:24px}/*! Ansible - remove so highlight indenting is correct  */.rst-content .highlighted{padding:0}.DocSiteBanner{display:flex;display:-webkit-flex;justify-content:center;-webkit-justify-content:center;flex-wrap:wrap;-webkit-flex-wrap:wrap;margin-bottom:25px}.DocSiteBanner-imgWrapper{max-width:100%}td,th{min-width:100px}table{overflow-x:auto;display:block;max-width:100%}.documentation-table td.elbow-placeholder{border-left:1px solid #000;border-top:0;width:30px;min-width:30px}.documentation-table td,.documentation-table th{padding:4px;border-left:1px solid #000;border-top:1px solid #000}.documentation-table{border-right:1px solid #000;border-bottom:1px solid #000}@media print{*{background:0 0!important;color:#000!important;text-shadow:none!important;filter:none!important;-ms-filter:none!important}#nav,a,a:visited{text-decoration:underline}a[href]:after{content:" (" attr(href) ")"}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}/*! Don't show links for images, or javascript/internal links */pre,blockquote{border:0 solid #999;page-break-inside:avoid}thead{display:table-header-group}/*! h5bp.com/t */tr,img{page-break-inside:avoid}img{max-width:100%!important}@page{margin:.5cm}h2,h3,p{orphans:3;widows:3}h2,h3{page-break-after:avoid}#google_image_div,.DocSiteBanner{display:none!important}}#sideBanner,.DocSite-globalNav{display:none}.DocSite-sideNav{display:block;margin-bottom:40px}.DocSite-nav{display:none}.ansibleNav{background:#000;padding:0 20px;width:auto;border-bottom:1px solid #444;font-size:14px;z-index:1}.ansibleNav ul{list-style:none;padding-left:0;margin-top:0}.ansibleNav ul li{padding:7px 0;border-bottom:1px solid #444}.ansibleNav ul li:last-child{border:none}.ansibleNav ul li a{color:#fff;text-decoration:none;text-transform:uppercase;padding:6px 0}.ansibleNav ul li a:hover{color:#5bbdbf;background:0 0}h4{font-size:105%}h5{font-size:90%}h6{font-size:80%}@media screen and (min-width:768px){.DocSite-globalNav{display:block;position:fixed}#sideBanner{display:block}.DocSite-sideNav{display:none}.DocSite-nav{flex:initial;-webkit-flex:initial;display:flex;display:-webkit-flex;flex-direction:row;-webkit-flex-direction:row;justify-content:flex-start;-webkit-justify-content:flex-start;padding:15px;background-color:#000;text-decoration:none;font-family:'Open Sans',sans-serif}.DocSiteNav-logo{width:28px;height:28px;margin-right:8px;margin-top:-6px;position:fixed;z-index:1}.DocSiteNav-title{color:#fff;font-size:20px;position:fixed;margin-left:40px;margin-top:-4px;z-index:1}.ansibleNav{height:45px;width:100%;font-size:13px;padding:0 60px 0 0}.ansibleNav ul{float:right;display:flex;flex-wrap:nowrap;margin-top:13px}.ansibleNav ul li{padding:0;border-bottom:none}.ansibleNav ul li a{color:#fff;text-decoration:none;text-transform:uppercase;padding:8px 13px}h4{font-size:105%}h5{font-size:90%}h6{font-size:80%}}@media screen and (min-width:768px){#sideBanner,.DocSite-globalNav{display:block}.DocSite-sideNav{display:none}.DocSite-nav{flex:initial;-webkit-flex:initial;display:flex;display:-webkit-flex;flex-direction:row;-webkit-flex-direction:row;justify-content:flex-start;-webkit-justify-content:flex-start;padding:15px;background-color:#000;text-decoration:none;font-family:'Open Sans',sans-serif}.DocSiteNav-logo{width:28px;height:28px;margin-right:8px;margin-top:-6px;position:fixed}.DocSiteNav-title{color:#fff;font-size:20px;position:fixed;margin-left:40px;margin-top:-4px}.ansibleNav{height:45px;font-size:13px;padding:0 60px 0 0}.ansibleNav ul{float:right;display:flex;flex-wrap:nowrap;margin-top:13px}.ansibleNav ul li{padding:0;border-bottom:none}.ansibleNav ul li a{color:#fff;text-decoration:none;text-transform:uppercase;padding:8px 13px}h4{font-size:105%}h5{font-size:90%}h6{font-size:80%}}
+/* ansibleOptionLink is adapted from h1 .headerlink in sphinx_rtd_theme */
+tr:hover .ansibleOptionLink::after {
+  visibility: visible;
+}
+tr .ansibleOptionLink::after {
+  content: "";
+  font-family: FontAwesome;
+}
+tr .ansibleOptionLink {
+  visibility: hidden;
+  display: inline-block;
+  font: normal normal normal 14px/1 FontAwesome;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media screen and (min-width:767px){
+  /* Move anchors a bit up so that they aren't hidden by the header bar */
+  section [id] {
+    padding-top: 45px;
+    margin-top: -45px;
+  }
+  /* Without this, for example most links in the page's TOC aren't usable anymore */
+  section a[id] {
+    padding-top: 0;
+    margin-top: 0;
+  }
+}

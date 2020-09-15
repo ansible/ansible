@@ -1,0 +1,11 @@
+---
+
+- name: load vmware common vars
+  include_vars:
+    file: common.yml
+
+- when: vcsim is not defined
+  include_tasks: init_real_lab.yml
+
+- when: vcsim is defined
+  include_tasks: init_vcsim.yml

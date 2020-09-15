@@ -1,0 +1,2 @@
+bugfixes:
+  - removed_module - remove extra spaces from msg and docstring (https://github.com/ansible/ansible/pull/57209)

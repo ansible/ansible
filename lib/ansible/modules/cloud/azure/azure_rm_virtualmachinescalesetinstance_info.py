@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachinescalesetinstance_info
-version_added: "2.8"
-short_description: Get Azure Virtual Machine Scale Set Instance facts.
+version_added: "2.9"
+short_description: Get Azure Virtual Machine Scale Set Instance facts
 description:
     - Get facts of Azure Virtual Machine Scale Set VMs.
 
@@ -41,69 +41,70 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
 EXAMPLES = '''
   - name: List VM instances in Virtual Machine ScaleSet
-    azure_rm_computevirtualmachinescalesetinstance_facts:
+    azure_rm_virtualmachinescalesetinstance_info:
       resource_group: myResourceGroup
       vmss_name: myVMSS
 '''
 
 RETURN = '''
 instances:
-    description: A list of dictionaries containing facts for Virtual Machine Scale Set VM.
+    description:
+        - A list of dictionaries containing facts for Virtual Machine Scale Set VM.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource Id
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/my
                      VMSS/virtualMachines/2"
         tags:
             description:
-                - Resource tags
+                - Resource tags.
             returned: always
-            type: complex
+            type: dict
             sample: { 'tag1': 'abc' }
         instance_id:
             description:
-                - Virtual Machine instance Id
+                - Virtual Machine instance ID.
             returned: always
             type: str
             sample: 0
         name:
             description:
-                - Virtual Machine name
+                - Virtual Machine name.
             returned: always
             type: str
             sample: myVMSS_2
         latest_model:
             description:
-                - Is latest model applied?
+                - Whether applied latest model.
             returned: always
             type: bool
             sample: True
         provisioning_state:
             description:
-                - Provisioning state of the Virtual Machine
+                - Provisioning state of the Virtual Machine.
             returned: always
             type: str
             sample: Succeeded
         power_state:
             description:
-                - Provisioning state of the Virtual Machine
+                - Provisioning state of the Virtual Machine's power.
             returned: always
             type: str
             sample: running
         vm_id:
             description:
-                - Virtual Machine Id
+                - Virtual Machine ID
             returned: always
             type: str
             sample: 94a141a9-4530-46ac-b151-2c7ff09aa823
@@ -120,7 +121,7 @@ except ImportError:
     pass
 
 
-class AzureRMVirtualMachineScaleSetVMFacts(AzureRMModuleBase):
+class AzureRMVirtualMachineScaleSetVMInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -148,9 +149,15 @@ class AzureRMVirtualMachineScaleSetVMFacts(AzureRMModuleBase):
         self.vmss_name = None
         self.instance_id = None
         self.tags = None
-        super(AzureRMVirtualMachineScaleSetVMFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMVirtualMachineScaleSetVMInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_virtualmachinescalesetinstance_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_virtualmachinescalesetinstance_facts' module has been renamed to" +
+                                  " 'azure_rm_virtualmachinescalesetinstance_info'",
+                                  version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(ComputeManagementClient,
@@ -220,7 +227,7 @@ class AzureRMVirtualMachineScaleSetVMFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMVirtualMachineScaleSetVMFacts()
+    AzureRMVirtualMachineScaleSetVMInfo()
 
 
 if __name__ == '__main__':

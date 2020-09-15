@@ -10,7 +10,7 @@ __metaclass__ = type
 import pytest
 import atexit
 
-from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
+from .FakeAnsibleModule import FailJsonException
 from ansible.module_utils.ansible_release import __version__ as ANSIBLE_VERSION
 
 

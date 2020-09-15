@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_image - validate ``tag`` option value."
+- "docker_* modules - behave better when requests errors are not caught by docker-py."

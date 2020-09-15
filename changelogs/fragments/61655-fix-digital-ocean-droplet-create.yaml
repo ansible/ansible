@@ -1,0 +1,2 @@
+bugfixes:
+  - digital_ocean_droplet - Fix creation of DigitalOcean droplets using digital_ocean_droplet module (https://github.com/ansible/ansible/pull/61655)

@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabarmtemplate_info
-version_added: "2.8"
-short_description: Get Azure DevTest Lab ARM Template facts.
+version_added: "2.9"
+short_description: Get Azure DevTest Lab ARM Template facts
 description:
     - Get facts of Azure DevTest Lab ARM Template.
 
@@ -26,23 +26,27 @@ options:
         description:
             - The name of the resource group.
         required: True
+        type: str
     lab_name:
         description:
             - The name of the lab.
         required: True
+        type: str
     artifact_source_name:
         description:
             - The name of the artifact source.
         required: True
+        type: str
     name:
         description:
             - The name of the ARM template.
+        type: str
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,7 +61,8 @@ EXAMPLES = '''
 
 RETURN = '''
 arm_templates:
-    description: A list of dictionaries containing facts for DevTest Lab ARM Template.
+    description:
+        - A list of dictionaries containing facts for DevTest Lab ARM Template.
     returned: always
     type: complex
     contains:
@@ -116,7 +121,7 @@ except ImportError:
     pass
 
 
-class AzureRMDtlArmTemplateFacts(AzureRMModuleBase):
+class AzureRMDtlArmTemplateInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -145,9 +150,13 @@ class AzureRMDtlArmTemplateFacts(AzureRMModuleBase):
         self.lab_name = None
         self.artifact_source_name = None
         self.name = None
-        super(AzureRMDtlArmTemplateFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlArmTemplateInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_devtestlabarmtemplate_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_devtestlabarmtemplate_facts' module has been renamed to 'azure_rm_devtestlabarmtemplate_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
@@ -210,7 +219,7 @@ class AzureRMDtlArmTemplateFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDtlArmTemplateFacts()
+    AzureRMDtlArmTemplateInfo()
 
 
 if __name__ == '__main__':

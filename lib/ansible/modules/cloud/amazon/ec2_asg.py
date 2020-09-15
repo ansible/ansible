@@ -629,10 +629,13 @@ def get_properties(autoscaling_group):
                 instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
                                                    'lifecycle_state': i['LifecycleState'],
                                                    'launch_config_name': i['LaunchConfigurationName']}
-            else:
+            elif i.get('LaunchTemplate'):
                 instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
                                                    'lifecycle_state': i['LifecycleState'],
                                                    'launch_template': i['LaunchTemplate']}
+            else:
+                instance_facts[i['InstanceId']] = {'health_status': i['HealthStatus'],
+                                                   'lifecycle_state': i['LifecycleState']}
             if i['HealthStatus'] == 'Healthy' and i['LifecycleState'] == 'InService':
                 properties['viable_instances'] += 1
             if i['HealthStatus'] == 'Healthy':
@@ -1379,7 +1382,7 @@ def get_instances_by_launch_config(props, lc_check, initial_instances):
             # Check if migrating from launch_template to launch_config first
             if 'launch_template' in props['instance_facts'][i]:
                 old_instances.append(i)
-            elif props['instance_facts'][i]['launch_config_name'] == props['launch_config_name']:
+            elif props['instance_facts'][i].get('launch_config_name') == props['launch_config_name']:
                 new_instances.append(i)
             else:
                 old_instances.append(i)
@@ -1400,13 +1403,13 @@ def get_instances_by_launch_config(props, lc_check, initial_instances):
 def get_instances_by_launch_template(props, lt_check, initial_instances):
     new_instances = []
     old_instances = []
-    # old instances are those that have the old launch template or version of the same launch templatec
+    # old instances are those that have the old launch template or version of the same launch template
     if lt_check:
         for i in props['instances']:
             # Check if migrating from launch_config_name to launch_template_name first
             if 'launch_config_name' in props['instance_facts'][i]:
                 old_instances.append(i)
-            elif props['instance_facts'][i]['launch_template'] == props['launch_template']:
+            elif props['instance_facts'][i].get('launch_template') == props['launch_template']:
                 new_instances.append(i)
             else:
                 old_instances.append(i)

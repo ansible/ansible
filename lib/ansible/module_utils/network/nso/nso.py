@@ -9,6 +9,7 @@ from ansible.module_utils._text import to_text
 
 import json
 import re
+import socket
 
 try:
     unicode
@@ -87,9 +88,16 @@ class JsonRpc(object):
         resp, resp_json = self._call(payload)
         return resp_json['result']['th']
 
+    def get_trans(self, mode):
+        if mode not in self._trans:
+            th = self.new_trans(mode=mode)
+            self._trans[mode] = th
+        return self._trans[mode]
+
     def delete_trans(self, th):
         payload = {'method': 'delete_trans', 'params': {'th': th}}
         resp, resp_json = self._call(payload)
+        self._maybe_delete_trans(th)
 
     def validate_trans(self, th):
         payload = {'method': 'validate_trans', 'params': {'th': th}}
@@ -109,16 +117,22 @@ class JsonRpc(object):
     def commit(self, th):
         payload = {'method': 'commit', 'params': {'th': th}}
         resp, resp_json = self._write_call(payload)
+        if len(resp_json['result']) == 0:
+            self._maybe_delete_trans(th)
         return resp_json['result']
 
     def get_schema(self, **kwargs):
         payload = {'method': 'get_schema', 'params': kwargs}
-        resp, resp_json = self._read_call(payload)
+        resp, resp_json = self._maybe_write_call(payload)
         return resp_json['result']
 
-    def get_module_prefix_map(self):
-        payload = {'method': 'get_module_prefix_map', 'params': {}}
-        resp, resp_json = self._call(payload)
+    def get_module_prefix_map(self, path=None):
+        if path is None:
+            payload = {'method': 'get_module_prefix_map', 'params': {}}
+            resp, resp_json = self._call(payload)
+        else:
+            payload = {'method': 'get_module_prefix_map', 'params': {'path': path}}
+            resp, resp_json = self._maybe_write_call(payload)
         return resp_json['result']
 
     def get_value(self, path):
@@ -223,15 +237,18 @@ class JsonRpc(object):
             payload['jsonrpc'] = '2.0'
 
         data = json.dumps(payload)
-        resp = open_url(
-            self._url, timeout=self._timeout,
-            method='POST', data=data, headers=self._headers,
-            validate_certs=self._validate_certs)
-        if resp.code != 200:
-            raise NsoException(
-                'NSO returned HTTP code {0}, expected 200'.format(resp.status), {})
+        try:
+            resp = open_url(
+                self._url, timeout=self._timeout,
+                method='POST', data=data, headers=self._headers,
+                validate_certs=self._validate_certs)
+            if resp.code != 200:
+                raise NsoException(
+                    'NSO returned HTTP code {0}, expected 200'.format(resp.status), {})
+        except socket.timeout:
+            raise NsoException('request timed out against NSO at {0}'.format(self._url), {})
 
-        resp_body = to_text(resp.read())
+        resp_body = resp.read()
         resp_json = json.loads(resp_body)
 
         if 'error' in resp_json:
@@ -264,23 +281,29 @@ class JsonRpc(object):
 
     def _read_call(self, payload):
         if 'th' not in payload['params']:
-            payload['params']['th'] = self._get_th(mode='read')
+            payload['params']['th'] = self.get_trans(mode='read')
         return self._call(payload)
 
     def _write_call(self, payload):
         if 'th' not in payload['params']:
-            payload['params']['th'] = self._get_th(mode='read_write')
+            payload['params']['th'] = self.get_trans(mode='read_write')
         return self._call(payload)
 
-    def _get_th(self, mode='read'):
-        if mode not in self._trans:
-            th = self.new_trans(mode=mode)
-            self._trans[mode] = th
-        return self._trans[mode]
+    def _maybe_write_call(self, payload):
+        if 'read_write' in self._trans:
+            return self._write_call(payload)
+        else:
+            return self._read_call(payload)
+
+    def _maybe_delete_trans(self, th):
+        for mode in ('read', 'read_write'):
+            if th == self._trans.get(mode, None):
+                del self._trans[mode]
 
 
 class ValueBuilder(object):
     PATH_RE = re.compile('{[^}]*}')
+    PATH_RE_50 = re.compile('{[^}]*}$')
 
     class Value(object):
         __slots__ = ['path', 'tag_path', 'state', 'value', 'deps']
@@ -307,16 +330,48 @@ class ValueBuilder(object):
             return 'Value<path={0}, state={1}, value={2}>'.format(
                 self.path, self.state, self.value)
 
-    def __init__(self, client, mode='config'):
+    class ValueIterator(object):
+        def __init__(self, client, values, delayed_values):
+            self._client = client
+            self._values = values
+            self._delayed_values = delayed_values
+            self._pos = 0
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            return self.next()
+
+        def next(self):
+            if self._pos >= len(self._values):
+                if len(self._delayed_values) == 0:
+                    raise StopIteration()
+
+                builder = ValueBuilder(self._client, delay=False)
+                for (parent, maybe_qname, value) in self._delayed_values:
+                    builder.build(parent, maybe_qname, value)
+                del self._delayed_values[:]
+                self._values.extend(builder.values)
+
+                return self.next()
+
+            value = self._values[self._pos]
+            self._pos += 1
+            return value
+
+    def __init__(self, client, mode='config', delay=None):
         self._client = client
         self._mode = mode
         self._schema_cache = {}
-        self._module_prefix_map_cache = None
+        self._module_prefix_map_cache = {}
         self._values = []
         self._values_dirty = False
+        self._delay = delay is None and mode == 'config' and is_version(self._client, [(5, 0)])
+        self._delayed_values = []
 
     def build(self, parent, maybe_qname, value, schema=None):
-        qname, name = self.get_prefix_name(maybe_qname)
+        qname, name = self.get_prefix_name(parent, maybe_qname)
         if name is None:
             path = parent
         else:
@@ -325,7 +380,11 @@ class ValueBuilder(object):
         if schema is None:
             schema = self._get_schema(path)
 
-        if self._is_leaf_list(schema) and is_version(self._client, [(4, 5)]):
+        if self._delay and schema.get('is_mount_point', False):
+            # delay conversion of mounted values, required to get
+            # shema information on 5.0 and later.
+            self._delayed_values.append((parent, maybe_qname, value))
+        elif self._is_leaf_list(schema) and is_version(self._client, [(4, 5)]):
             self._build_leaf_list(path, schema, value)
         elif self._is_leaf(schema):
             deps = schema.get('deps', [])
@@ -344,9 +403,9 @@ class ValueBuilder(object):
                 if 'identityref' in value_type:
                     if isinstance(value, list):
                         value = [ll_v for ll_v, t_ll_v
-                                 in [self.get_prefix_name(v) for v in value]]
+                                 in [self.get_prefix_name(parent, v) for v in value]]
                     else:
-                        value, t_value = self.get_prefix_name(value)
+                        value, t_value = self.get_prefix_name(parent, value)
                 self._add_value(path, State.SET, value, deps)
         elif isinstance(value, dict):
             self._build_dict(path, schema, value)
@@ -363,7 +422,7 @@ class ValueBuilder(object):
             self._values = ValueBuilder.sort_values(self._values)
             self._values_dirty = False
 
-        return self._values
+        return ValueBuilder.ValueIterator(self._client, self._values, self._delayed_values)
 
     @staticmethod
     def sort_values(values):
@@ -428,7 +487,7 @@ class ValueBuilder(object):
     def _build_dict(self, path, schema, value):
         keys = schema.get('key', [])
         for dict_key, dict_value in value.items():
-            qname, name = self.get_prefix_name(dict_key)
+            qname, name = self.get_prefix_name(path, dict_key)
             if dict_key in ('__state', ) or name in keys:
                 continue
 
@@ -442,7 +501,7 @@ class ValueBuilder(object):
         if self._mode == 'verify':
             for entry in value:
                 if 'identityref' in entry_type:
-                    entry, t_entry = self.get_prefix_name(entry)
+                    entry, t_entry = self.get_prefix_name(path, entry)
                 entry_path = '{0}{{{1}}}'.format(path, entry)
                 if not self._client.exists(entry_path):
                     self._add_value(entry_path, State.ABSENT, None, deps)
@@ -453,7 +512,7 @@ class ValueBuilder(object):
 
             for entry in value:
                 if 'identityref' in entry_type:
-                    entry, t_entry = self.get_prefix_name(entry)
+                    entry, t_entry = self.get_prefix_name(path, entry)
                 entry_path = '{0}{{{1}}}'.format(path, entry)
                 self._add_value(entry_path, State.PRESENT, None, deps)
 
@@ -487,7 +546,7 @@ class ValueBuilder(object):
 
             value_type = self._get_child_type(path, key)
             if 'identityref' in value_type:
-                value, t_value = self.get_prefix_name(value)
+                value, t_value = self.get_prefix_name(path, value)
             key_parts.append(self._quote_key(value))
         return ' '.join(key_parts)
 
@@ -502,7 +561,7 @@ class ValueBuilder(object):
             q_key.append(c)
         q_key = ''.join(q_key)
         if ' ' in q_key:
-            return '{0}'.format(q_key)
+            return '"{0}"'.format(q_key)
         return q_key
 
     def _find_child(self, path, schema, qname):
@@ -530,13 +589,13 @@ class ValueBuilder(object):
         self._values.append(ValueBuilder.Value(path, state, value, deps))
         self._values_dirty = True
 
-    def get_prefix_name(self, qname):
+    def get_prefix_name(self, path, qname):
         if not isinstance(qname, (str, unicode)):
             return qname, None
         if ':' not in qname:
             return qname, qname
 
-        module_prefix_map = self._get_module_prefix_map()
+        module_prefix_map = self._get_module_prefix_map(path)
         module, name = qname.split(':', 1)
         if module not in module_prefix_map:
             raise ModuleFailException(
@@ -583,16 +642,31 @@ class ValueBuilder(object):
         return None
 
     def _ensure_schema_cached(self, path):
-        path = ValueBuilder.PATH_RE.sub('', path)
+        if not self._delay and is_version(self._client, [(5, 0)]):
+            # newer versions of NSO support multiple different schemas
+            # for different devices, thus the device is required to
+            # look up the schema. Remove the key entry to get schema
+            # logic working ok.
+            path = ValueBuilder.PATH_RE_50.sub('', path)
+        else:
+            path = ValueBuilder.PATH_RE.sub('', path)
+
         if path not in self._schema_cache:
             schema = self._client.get_schema(path=path, levels=1)
             self._schema_cache[path] = schema
         return self._schema_cache[path]
 
-    def _get_module_prefix_map(self):
-        if self._module_prefix_map_cache is None:
-            self._module_prefix_map_cache = self._client.get_module_prefix_map()
-        return self._module_prefix_map_cache
+    def _get_module_prefix_map(self, path):
+        # newer versions of NSO support multiple mappings from module
+        # to prefix depending on which device is used.
+        if path != '' and is_version(self._client, [(5, 0)]):
+            if path not in self._module_prefix_map_cache:
+                self._module_prefix_map_cache[path] = self._client.get_module_prefix_map(path)
+            return self._module_prefix_map_cache[path]
+
+        if '' not in self._module_prefix_map_cache:
+            self._module_prefix_map_cache[''] = self._client.get_module_prefix_map()
+        return self._module_prefix_map_cache['']
 
     def _get_child(self, schema, qname):
         # no child specified, return parent
@@ -661,6 +735,8 @@ def is_version(client, required_versions):
 
 
 def verify_version_str(version_str, required_versions):
+    version_str = re.sub('_.*', '', version_str)
+
     version = [int(p) for p in version_str.split('.')]
     if len(version) < 2:
         raise ModuleFailException(

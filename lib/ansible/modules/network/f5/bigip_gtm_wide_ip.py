@@ -25,8 +25,6 @@ options:
       - Specifies the load balancing method used to select a pool in this wide
         IP. This setting is relevant only when multiple pools are configured
         for a wide IP.
-      - The C(round_robin) value is deprecated and will be removed in Ansible 2.9.
-      - The C(global_availability) value is deprecated and will be removed in Ansible 2.9.
     type: str
     required: True
     aliases: ['lb_method']
@@ -35,8 +33,6 @@ options:
       - ratio
       - topology
       - global-availability
-      - global_availability
-      - round_robin
     version_added: 2.5
   name:
     description:
@@ -123,6 +119,8 @@ options:
         module.
     type: str
     version_added: 2.8
+notes:
+  - Support for TMOS versions below v12.x has been deprecated for this module, and will be removed in Ansible 2.12.
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
@@ -331,26 +329,6 @@ class ModuleParameters(Parameters):
         if self._values['pool_lb_method'] is None:
             return None
         lb_method = str(self._values['pool_lb_method'])
-        if lb_method == 'global_availability':
-            if self._values['__warnings'] is None:
-                self._values['__warnings'] = []
-            self._values['__warnings'].append(
-                dict(
-                    msg='The provided pool_lb_method is deprecated',
-                    version='2.4'
-                )
-            )
-            lb_method = 'global-availability'
-        elif lb_method == 'round_robin':
-            if self._values['__warnings'] is None:
-                self._values['__warnings'] = []
-            self._values['__warnings'].append(
-                dict(
-                    msg='The provided pool_lb_method is deprecated',
-                    version='2.4'
-                )
-            )
-            lb_method = 'round-robin'
         return lb_method
 
     @property
@@ -646,11 +624,28 @@ class BaseManager(object):
 
     def _announce_deprecations(self, result):
         warnings = result.pop('__warnings', [])
+        if self.version_is_less_than_12():
+            self._deprecate_v11(warnings)
         for warning in warnings:
             self.module.deprecate(
                 msg=warning['msg'],
                 version=warning['version']
             )
+
+    def version_is_less_than_12(self):
+        version = tmos_version(self.client)
+        if LooseVersion(version) < LooseVersion('12.0.0'):
+            return True
+        else:
+            return False
+
+    def _deprecate_v11(self, result):
+        result.append(
+            dict(
+                msg='The support for this TMOS version is deprecated.',
+                version='2.12'
+            )
+        )
 
     def present(self):
         if self.exists():
@@ -889,9 +884,6 @@ class ArgumentSpec(object):
     def __init__(self):
         lb_method_choices = [
             'round-robin', 'topology', 'ratio', 'global-availability',
-
-            # TODO(Remove in Ansible 2.9)
-            'round_robin', 'global_availability'
         ]
         self.supports_check_mode = True
         argument_spec = dict(

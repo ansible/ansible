@@ -53,7 +53,7 @@ options:
         default: all
     depth:
         description:
-            - Specifiies recurion depth.
+            - Specifies recursion depth.
 '''
 
 EXAMPLES = '''

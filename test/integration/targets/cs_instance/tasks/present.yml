@@ -85,8 +85,8 @@
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
     - not instance.tags
 
-- name: gather host facts of running instance
-  cs_instance_facts:
+- name: gather host infos of running instance
+  cs_instance_info:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
 
 - name: test running instance not updated in check mode

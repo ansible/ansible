@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from units.compat.mock import patch
 from ansible.modules.network.nxos import nxos_ospf
-from .nxos_module import TestNxosModule, load_fixture, set_module_args
+from .nxos_module import TestNxosModule, set_module_args
 
 
 class TestNxosOspfModule(TestNxosModule):

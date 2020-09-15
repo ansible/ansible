@@ -1,0 +1,2 @@
+bugfixes:
+  - zabbix_host - module will now properly logout from Zabbix server and won't leave open session behind (see https://github.com/ansible/ansible/issues/63774)

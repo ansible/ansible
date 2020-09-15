@@ -1,0 +1,23 @@
+# Test code for the vmware_dvs_portgroup_find module.
+# Copyright: (c) 2019, David Martinez (@dx0xm)
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_dvswitch: true
+
+- name: get list of portgroups
+  vmware_dvs_portgroup_find:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+  register: dvspg_0001
+
+- debug:
+    var: dvspg_0001
+
+- assert:
+    that:
+      - dvspg_0001.dvs_portgroups is defined

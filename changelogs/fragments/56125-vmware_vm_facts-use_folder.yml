@@ -1,0 +1,2 @@
+minor_changes:
+- vmware_vm_facts supports folder as a filter to gather fact for VM (https://github.com/ansible/ansible/issues/56125).

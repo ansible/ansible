@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-galaxy - Fix issue when compared installed dependencies with a collection having no ``MANIFEST.json`` or an empty version string in the json

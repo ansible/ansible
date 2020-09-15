@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix multiple issues with nxos_interfaces states (https://github.com/ansible/ansible/pull/63960/).

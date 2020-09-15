@@ -39,7 +39,7 @@ class TestPlaybookCLI(unittest.TestCase):
         fake_loader = DictDataLoader({'foobar.yml': ""})
         inventory = InventoryManager(loader=fake_loader, sources='testhost,')
 
-        variable_manager.set_host_facts(inventory.get_host('testhost'), {'canary': True})
+        variable_manager.set_host_facts('testhost', {'canary': True})
         self.assertTrue('testhost' in variable_manager._fact_cache)
 
         cli._flush_cache(inventory, variable_manager)

@@ -1,0 +1,2 @@
+bugfixes:
+  - Do not keep empty blocks in PlayIterator after skipping tasks with tags.

@@ -1,0 +1,50 @@
+coverage >= 4.2, < 5.0.0, != 4.3.2 ; python_version <= '3.7' # features in 4.2+ required, avoid known bug in 4.3.2 on python 2.6, coverage 5.0+ incompatible
+coverage >= 4.5.4, < 5.0.0 ; python_version > '3.7' # coverage had a bug in < 4.5.4 that would cause unit tests to hang in Python 3.8, coverage 5.0+ incompatible
+cryptography < 2.2 ; python_version < '2.7' # cryptography 2.2 drops support for python 2.6
+deepdiff < 4.0.0 ; python_version < '3' # deepdiff 4.0.0 and later require python 3
+jinja2 < 2.11 ; python_version < '2.7' # jinja2 2.11 and later require python 2.7 or later
+urllib3 < 1.24 ; python_version < '2.7' # urllib3 1.24 and later require python 2.7 or later
+pywinrm >= 0.3.0 # message encryption support
+sphinx < 1.6 ; python_version < '2.7' # sphinx 1.6 and later require python 2.7 or later
+sphinx < 1.8 ; python_version >= '2.7' # sphinx 1.8 and later are currently incompatible with rstcheck 3.3
+pygments >= 2.4.0 # Pygments 2.4.0 includes bugfixes for YAML and YAML+Jinja lexers
+wheel < 0.30.0 ; python_version < '2.7' # wheel 0.30.0 and later require python 2.7 or later
+yamllint != 1.8.0, < 1.14.0 ; python_version < '2.7' # yamllint 1.8.0 and 1.14.0+ require python 2.7+
+pycrypto >= 2.6 # Need features found in 2.6 and greater
+ncclient >= 0.5.2 # Need features added in 0.5.2 and greater
+idna < 2.6, >= 2.5 # linode requires idna < 2.9, >= 2.5, requests requires idna < 2.6, but cryptography will cause the latest version to be installed instead
+paramiko < 2.4.0 ; python_version < '2.7' # paramiko 2.4.0 drops support for python 2.6
+paramiko < 2.5.0 ; python_version >= '2.7' # paramiko 2.5.0 requires cryptography 2.5.0+
+pytest < 3.3.0 ; python_version < '2.7' # pytest 3.3.0 drops support for python 2.6
+pytest < 5.0.0 ; python_version == '2.7' # pytest 5.0.0 and later will no longer support python 2.7
+pytest-forked < 1.0.2 ; python_version < '2.7' # pytest-forked 1.0.2 and later require python 2.7 or later
+pytest-forked >= 1.0.2 ; python_version >= '2.7' # pytest-forked before 1.0.2 does not work with pytest 4.2.0+ (which requires python 2.7+)
+ntlm-auth >= 1.3.0 # message encryption support using cryptography
+requests < 2.20.0 ; python_version < '2.7' # requests 2.20.0 drops support for python 2.6
+requests-ntlm >= 1.1.0 # message encryption support
+requests-credssp >= 0.1.0 # message encryption support
+voluptuous >= 0.11.0 # Schema recursion via Self
+openshift >= 0.6.2, < 0.9.0 # merge_type support
+virtualenv < 16.0.0 ; python_version < '2.7' # virtualenv 16.0.0 and later require python 2.7 or later
+pathspec < 0.6.0 ; python_version < '2.7' # pathspec 0.6.0 and later require python 2.7 or later
+pyopenssl < 18.0.0 ; python_version < '2.7' # pyOpenSSL 18.0.0 and later require python 2.7 or later
+pyfmg == 0.6.1 # newer versions do not pass current unit tests
+pyyaml < 5.1 ; python_version < '2.7' # pyyaml 5.1 and later require python 2.7 or later
+pycparser < 2.19 ; python_version < '2.7' # pycparser 2.19 and later require python 2.7 or later
+mock >= 2.0.0 # needed for features backported from Python 3.6 unittest.mock (assert_called, assert_called_once...)
+pytest-mock >= 1.4.0 # needed for mock_use_standalone_module pytest option
+xmltodict < 0.12.0 ; python_version < '2.7' # xmltodict 0.12.0 and later require python 2.7 or later
+lxml < 4.3.0 ; python_version < '2.7' # lxml 4.3.0 and later require python 2.7 or later
+pyvmomi < 6.0.0 ; python_version < '2.7' # pyvmomi 6.0.0 and later require python 2.7 or later
+pyone == 1.1.9 # newer versions do not pass current integration tests
+botocore >= 1.10.0 # adds support for the following AWS services: secretsmanager, fms, and acm-pca
+setuptools < 45 ; python_version <= '2.7' # setuptools 45 and later require python 3.5 or later
+
+# freeze pylint and its requirements for consistent test results
+astroid == 2.2.5
+isort == 4.3.15
+lazy-object-proxy == 1.3.1
+mccabe == 0.6.1
+pylint == 2.3.1
+typed-ast == 1.4.0  # 1.4.0 is required to compile on Python 3.8
+wrapt == 1.11.1

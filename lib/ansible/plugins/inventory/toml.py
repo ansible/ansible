@@ -95,12 +95,13 @@ import os
 from functools import partial
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError
-from ansible.module_utils._text import to_bytes, to_native
+from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.common._collections_compat import MutableMapping, MutableSequence
 from ansible.module_utils.six import string_types, text_type
 from ansible.parsing.yaml.objects import AnsibleSequence, AnsibleUnicode
 from ansible.plugins.inventory import BaseFileInventoryPlugin
 from ansible.utils.display import Display
+from ansible.utils.unsafe_proxy import AnsibleUnsafeBytes, AnsibleUnsafeText
 
 try:
     import toml
@@ -124,6 +125,8 @@ if HAS_TOML and hasattr(toml, 'TomlEncoder'):
             self.dump_funcs.update({
                 AnsibleSequence: self.dump_funcs.get(list),
                 AnsibleUnicode: self.dump_funcs.get(str),
+                AnsibleUnsafeBytes: self.dump_funcs.get(str),
+                AnsibleUnsafeText: self.dump_funcs.get(str),
             })
     toml_dumps = partial(toml.dumps, encoder=AnsibleTomlEncoder())
 else:
@@ -211,8 +214,8 @@ class InventoryModule(BaseFileInventoryPlugin):
             raise AnsibleFileNotFound("Unable to retrieve file contents", file_name=file_name)
 
         try:
-            with open(b_file_name, 'r') as f:
-                return toml.load(f)
+            (b_data, private) = self.loader._get_file_contents(file_name)
+            return toml.loads(to_text(b_data, errors='surrogate_or_strict'))
         except toml.TomlDecodeError as e:
             raise AnsibleParserError(
                 'TOML file (%s) is invalid: %s' % (file_name, to_native(e)),

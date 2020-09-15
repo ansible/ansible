@@ -29,28 +29,38 @@ options:
     - Set the state of the virtual machine.
     choices: [ powered-off, powered-on, reboot-guest, restarted, shutdown-guest, suspended, present]
     default: present
+    type: str
   name:
     description:
     - Name of the virtual machine to work with.
     - Virtual machine names in vCenter are not necessarily unique, which may be problematic, see C(name_match).
+    type: str
   name_match:
     description:
     - If multiple virtual machines matching the name, use the first or last found.
     default: first
     choices: [ first, last ]
+    type: str
   uuid:
     description:
     - UUID of the instance to manage if known, this is VMware's unique identifier.
-    - This is required if name is not supplied.
+    - This is required if C(name) or C(moid) is not supplied.
+    type: str
+  moid:
+    description:
+    - Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+    - This is required if C(name) or C(uuid) is not supplied.
+    version_added: '2.9'
+    type: str
   use_instance_uuid:
     description:
-    - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+    - Whether to use the VMware instance UUID rather than the BIOS UUID.
     default: no
     type: bool
     version_added: '2.8'
   folder:
     description:
-    - Destination folder, absolute or relative path to find an existing guest or create the new guest.
+    - Destination folder, absolute or relative path to find an existing guest.
     - The folder should include the datacenter. ESX's datacenter is ha-datacenter
     - 'Examples:'
     - '   folder: /ha-datacenter/vm'
@@ -62,14 +72,34 @@ options:
     - '   folder: /folder1/datacenter1/vm'
     - '   folder: folder1/datacenter1/vm'
     - '   folder: /folder1/datacenter1/vm/folder2'
-    - '   folder: vm/folder2'
-    - '   folder: folder2'
-    default: /vm
+    type: str
   scheduled_at:
     description:
-    - Date and time in string format at which specificed task needs to be performed.
+    - Date and time in string format at which specified task needs to be performed.
     - "The required format for date and time - 'dd/mm/yyyy hh:mm'."
     - Scheduling task requires vCenter server. A standalone ESXi server does not support this option.
+    type: str
+  schedule_task_name:
+    description:
+    - Name of schedule task.
+    - Valid only if C(scheduled_at) is specified.
+    type: str
+    required: False
+    version_added: '2.9'
+  schedule_task_description:
+    description:
+    - Description of schedule task.
+    - Valid only if C(scheduled_at) is specified.
+    type: str
+    required: False
+    version_added: '2.9'
+  schedule_task_enabled:
+    description:
+    - Flag to indicate whether the scheduled task is enabled or disabled.
+    type: bool
+    required: False
+    default: True
+    version_added: '2.9'
   force:
     description:
     - Ignore warnings and complete the actions.
@@ -84,6 +114,7 @@ options:
     - The value sets a timeout in seconds for the module to wait for the state change.
     default: 0
     version_added: '2.6'
+    type: int
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -100,6 +131,18 @@ EXAMPLES = r'''
   delegate_to: localhost
   register: deploy
 
+- name: Set the state of a virtual machine to poweron using MoID
+  vmware_guest_powerstate:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: no
+    folder: "/{{ datacenter_name }}/vm/my_folder"
+    moid: vm-42
+    state: powered-on
+  delegate_to: localhost
+  register: deploy
+
 - name: Set the state of a virtual machine to poweroff at given scheduled time
   vmware_guest_powerstate:
     hostname: "{{ vcenter_hostname }}"
@@ -109,6 +152,9 @@ EXAMPLES = r'''
     name: "{{ guest_name }}"
     state: powered-off
     scheduled_at: "09/01/2018 10:18"
+    schedule_task_name: "task_00001"
+    schedule_task_description: "Sample task to poweroff VM"
+    schedule_task_enabled: True
   delegate_to: localhost
   register: deploy_at_schedule_datetime
 
@@ -131,6 +177,7 @@ try:
 except ImportError:
     pass
 
+from random import randint
 from datetime import datetime
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.vmware import PyVmomi, set_vm_power_state, vmware_argument_spec
@@ -145,19 +192,24 @@ def main():
         name=dict(type='str'),
         name_match=dict(type='str', choices=['first', 'last'], default='first'),
         uuid=dict(type='str'),
+        moid=dict(type='str'),
         use_instance_uuid=dict(type='bool', default=False),
-        folder=dict(type='str', default='/vm'),
+        folder=dict(type='str'),
         force=dict(type='bool', default=False),
         scheduled_at=dict(type='str'),
+        schedule_task_name=dict(),
+        schedule_task_description=dict(),
+        schedule_task_enabled=dict(type='bool', default=True),
         state_change_timeout=dict(type='int', default=0),
     )
 
-    module = AnsibleModule(argument_spec=argument_spec,
-                           supports_check_mode=False,
-                           mutually_exclusive=[
-                               ['name', 'uuid'],
-                           ],
-                           )
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=False,
+        mutually_exclusive=[
+            ['name', 'uuid', 'moid'],
+        ],
+    )
 
     result = dict(changed=False,)
 
@@ -174,6 +226,7 @@ def main():
                 module.fail_json(msg="Scheduling task requires vCenter, hostname %s "
                                      "is an ESXi server." % module.params.get('hostname'))
             powerstate = {
+                'present': vim.VirtualMachine.PowerOn,
                 'powered-off': vim.VirtualMachine.PowerOff,
                 'powered-on': vim.VirtualMachine.PowerOn,
                 'reboot-guest': vim.VirtualMachine.RebootGuest,
@@ -188,16 +241,18 @@ def main():
                 module.fail_json(msg="Failed to convert given date and time string to Python datetime object,"
                                      "please specify string in 'dd/mm/yyyy hh:mm' format: %s" % to_native(e))
             schedule_task_spec = vim.scheduler.ScheduledTaskSpec()
-            schedule_task_desc = 'Schedule task for vm %s for operation %s at %s' % (vm.name,
-                                                                                     module.params.get('state'),
-                                                                                     scheduled_at)
-            schedule_task_spec.name = schedule_task_desc
+            schedule_task_name = module.params['schedule_task_name'] or 'task_%s' % str(randint(10000, 99999))
+            schedule_task_desc = module.params['schedule_task_description']
+            if schedule_task_desc is None:
+                schedule_task_desc = 'Schedule task for vm %s for ' \
+                                     'operation %s at %s' % (vm.name, module.params['state'], scheduled_at)
+            schedule_task_spec.name = schedule_task_name
             schedule_task_spec.description = schedule_task_desc
             schedule_task_spec.scheduler = vim.scheduler.OnceTaskScheduler()
             schedule_task_spec.scheduler.runAt = dt
             schedule_task_spec.action = vim.action.MethodAction()
-            schedule_task_spec.action.name = powerstate[module.params.get('state')]
-            schedule_task_spec.enabled = True
+            schedule_task_spec.action.name = powerstate[module.params['state']]
+            schedule_task_spec.enabled = module.params['schedule_task_enabled']
 
             try:
                 pyv.content.scheduledTaskManager.CreateScheduledTask(vm, schedule_task_spec)
@@ -208,7 +263,7 @@ def main():
                                                                                          vm.name,
                                                                                          to_native(e.msg)))
             except vim.fault.DuplicateName as e:
-                module.exit_json(chanaged=False, details=to_native(e.msg))
+                module.exit_json(changed=False, details=to_native(e.msg))
             except vmodl.fault.InvalidArgument as e:
                 module.fail_json(msg="Failed to create scheduled task %s as specifications "
                                      "given are invalid: %s" % (module.params.get('state'),
@@ -216,7 +271,8 @@ def main():
         else:
             result = set_vm_power_state(pyv.content, vm, module.params['state'], module.params['force'], module.params['state_change_timeout'])
     else:
-        module.fail_json(msg="Unable to set power state for non-existing virtual machine : '%s'" % (module.params.get('uuid') or module.params.get('name')))
+        id = module.params.get('uuid') or module.params.get('moid') or module.params.get('name')
+        module.fail_json(msg="Unable to set power state for non-existing virtual machine : '%s'" % id)
 
     if result.get('failed') is True:
         module.fail_json(**result)

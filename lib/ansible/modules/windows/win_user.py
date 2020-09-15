@@ -78,7 +78,7 @@ options:
     version_added: "1.9"
   groups:
     description:
-      - Adds or removes the user from this comma-separated lis of groups,
+      - Adds or removes the user from this comma-separated list of groups,
         depending on the value of I(groups_action).
       - When I(groups_action) is C(replace) and I(groups) is set to the empty
         string ('groups='), the user is removed from all groups.

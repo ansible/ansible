@@ -1,0 +1,45 @@
+---
+- name: Fail missing params
+  cloudscale_server_group:
+  register: grp
+  ignore_errors: True
+- name: 'VERIFY: Fail name and UUID'
+  assert:
+    that:
+      - grp is failed
+
+- name: Create two server groups with the same name
+  uri:
+    url: 'https://api.cloudscale.ch/v1/server-groups'
+    method: POST
+    headers:
+      Authorization: 'Bearer {{ cloudscale_api_token }}'
+    body:
+      name: '{{ cloudscale_resource_prefix }}-duplicate'
+      type: 'anti-affinity'
+    body_format: json
+    status_code: 201
+  register: duplicate
+  with_sequence: count=2
+
+- name: Try access to duplicate name
+  cloudscale_server_group:
+    name: '{{ cloudscale_resource_prefix }}-duplicate'
+  register: grp
+  ignore_errors: True
+- name: 'VERIFY: Try access to duplicate name'
+  assert:
+    that:
+    - grp is failed
+    - grp.msg.startswith('More than one server group with name exists')
+
+- name: Fail server group creation with UUID
+  cloudscale_server_group:
+    uuid: ea3b39a3-77a8-4d0b-881d-0bb00a1e7f48
+  register: grp
+  ignore_errors: True
+- name: 'VERIFY: Fail server group creation with UUID'
+  assert:
+    that:
+    - grp is failed
+    - grp.msg.startswith('missing required arguments')

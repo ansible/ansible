@@ -25,13 +25,13 @@ author:
   - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
-  - python-gitlab python module
+  - python-gitlab python module <= 1.12.1
 extends_documentation_fragment:
     - auth_basic
 options:
   api_token:
     description:
-      - Gitlab token for logging in.
+      - GitLab token for logging in.
     version_added: "2.8"
     type: str
     aliases:
@@ -109,7 +109,7 @@ result:
   type: dict
 
 error:
-  description: the error message returned by the Gitlab API
+  description: the error message returned by the GitLab API
   returned: failed
   type: str
   sample: "400: key is already in use"
@@ -241,7 +241,9 @@ class GitLabDeployKey(object):
 def deprecation_warning(module):
     deprecated_aliases = ['private_token', 'access_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
+    for aliase in deprecated_aliases:
+        if aliase in module.params:
+            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
 
 
 def main():
@@ -292,10 +294,10 @@ def main():
                                         private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s. \
+            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
 
     gitlab_deploy_key = GitLabDeployKey(module, gitlab_instance)
 

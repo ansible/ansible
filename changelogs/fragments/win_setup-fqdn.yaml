@@ -1,0 +1,2 @@
+bugfixes:
+- setup.ps1 - Fix ``ansible_fqdn`` using the wrong values to build the actual DNS FQDN.

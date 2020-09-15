@@ -38,7 +38,7 @@ options:
   value:
     description:
       - Address value, based on type.
-        If type=fqdn, somthing like www.google.com.
+        If type=fqdn, something like www.google.com.
         If type=ipmask, you can use simple ip (192.168.0.1), ip+mask (192.168.0.1 255.255.255.0) or CIDR (192.168.0.1/32).
   start_ip:
     description:

@@ -29,6 +29,10 @@ description:
     - Manages MLAG interface attributes on HUAWEI CloudEngine switches.
 author:
     - Li Yanfeng (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     eth_trunk_id:
         description:
@@ -754,7 +758,7 @@ class MlagInterface(object):
             self.changed = True
 
     def set_mlag_interface(self):
-        """set mlag interface atrribute info"""
+        """set mlag interface attribute info"""
 
         if self.is_mlag_interface_info_change():
             mlag_port = "Eth-Trunk"
@@ -768,7 +772,7 @@ class MlagInterface(object):
             recv_xml = set_nc_config(self.module, conf_str)
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
-                    msg='Error: set mlag interface atrribute info failed.')
+                    msg='Error: set mlag interface attribute info failed.')
 
             self.updates_cmd.append("interface %s" % mlag_port)
             if self.mlag_priority_id:
@@ -815,7 +819,7 @@ class MlagInterface(object):
             recv_xml = set_nc_config(self.module, conf_str)
             if "<ok/>" not in recv_xml:
                 self.module.fail_json(
-                    msg='Error: set mlag interface atrribute info failed.')
+                    msg='Error: set mlag interface attribute info failed.')
 
             if self.mlag_priority_id:
                 self.updates_cmd.append(

@@ -5,35 +5,31 @@
   cnos_config:
     commands:
       - no vlan 13\n
-    provider: "{{ cli }}"
   ignore_errors: yes
 
 - name: configure device with config
   cnos_config:
     src: roles/cnos_config/templates/basic/config.j2
-    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
-      - "result.changed == false"
+      - "result.changed == true"
       - "result.updates is not defined"
 
 - name: check device with config
   cnos_config:
     src: roles/cnos_config/templates/basic/config.j2
-    provider: "{{ cli }}"
   register: result
 
 - assert:
     that:
-      - "result.changed == false"
+      - "result.changed == true"
       - "result.updates is not defined"
 
 - name: teardown
   cnos_config:
     commands:
       - no vlan 13\n
-    provider: "{{ cli }}"
 
 - debug: msg="END cli/basic.yaml"

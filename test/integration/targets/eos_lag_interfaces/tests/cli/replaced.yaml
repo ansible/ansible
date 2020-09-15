@@ -1,0 +1,44 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      - name: "Port-Channel10"
+        members:
+          - member: Ethernet2
+            mode: "on"
+    other_config:
+      - name: "Port-Channel5"
+        members:
+          - member: Ethernet1
+            mode: "on"
+
+- eos_facts:
+    gather_network_resources: lag_interfaces
+  become: yes
+
+- name: Replace device configuration of specified LAGs with provided configuration.
+  eos_lag_interfaces:
+    config: "{{ config }}"
+    state: replaced
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(result.before)|length == 0"
+
+- eos_facts:
+    gather_network_resources: lag_interfaces
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(result.after)|length == 0"
+
+- set_fact:
+    expected_config: "{{ config }} + {{ other_config }}"
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(expected_config)|length == 0"

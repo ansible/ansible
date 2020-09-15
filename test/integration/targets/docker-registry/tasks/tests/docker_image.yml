@@ -1,0 +1,152 @@
+---
+- name: Registering image name
+  set_fact:
+    iname: "{{ name_prefix ~ '-options' }}"
+
+- name: Determining pushed image names
+  set_fact:
+    hello_world_image_base: "{{ registry_address }}/test/hello-world"
+    test_image_base: "{{ registry_address }}/test/{{ iname }}"
+
+- name: Registering image name
+  set_fact:
+    inames: "{{ inames + [iname, test_image_base ~ ':latest', hello_world_image_base ~ ':latest'] }}"
+
+####################################################################
+## interact with test registry #####################################
+####################################################################
+
+- name: Make sure image is not there
+  docker_image:
+    name: "{{ hello_world_image_base }}:latest"
+    state: absent
+    force_absent: yes
+
+- name: Make sure we have hello-world:latest
+  docker_image:
+    name: hello-world:latest
+    source: pull
+
+- name: Push image to test registry
+  docker_image:
+    name: "hello-world:latest"
+    repository: "{{ hello_world_image_base }}"
+    push: yes
+    source: local
+  register: push_1
+
+- name: Push image to test registry (idempotent)
+  docker_image:
+    name: "hello-world:latest"
+    repository: "{{ hello_world_image_base }}"
+    push: yes
+    source: local
+  register: push_2
+
+- name: Push image to test registry (force, still idempotent)
+  docker_image:
+    name: "hello-world:latest"
+    repository: "{{ hello_world_image_base }}"
+    push: yes
+    source: local
+    force_tag: yes
+  register: push_3
+
+- assert:
+    that:
+    - push_1 is changed
+    - push_2 is not changed
+    - push_3 is not changed
+
+- name: Get facts of local image
+  docker_image_info:
+    name: "{{ hello_world_image_base }}:latest"
+  register: facts_1
+
+- name: Make sure image is not there
+  docker_image:
+    name: "{{ hello_world_image_base }}:latest"
+    state: absent
+    force_absent: yes
+
+- name: Get facts of local image (absent)
+  docker_image_info:
+    name: "{{ hello_world_image_base }}:latest"
+  register: facts_2
+
+- name: Pull image from test registry
+  docker_image:
+    name: "{{ hello_world_image_base }}:latest"
+    state: present
+    source: pull
+  register: pull_1
+
+- name: Pull image from test registry (idempotency)
+  docker_image:
+    name: "{{ hello_world_image_base }}:latest"
+    state: present
+    source: pull
+  register: pull_2
+
+- name: Get facts of local image (present)
+  docker_image_info:
+    name: "{{ hello_world_image_base }}:latest"
+  register: facts_3
+
+- assert:
+    that:
+    - pull_1 is changed
+    - pull_2 is not changed
+    - facts_1.images | length == 1
+    - facts_2.images | length == 0
+    - facts_3.images | length == 1
+
+####################################################################
+## repository ######################################################
+####################################################################
+
+- name: Make sure image is not there
+  docker_image:
+    name: "{{ test_image_base }}:latest"
+    state: absent
+    force_absent: yes
+
+- name: repository
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      pull: no
+    repository: "{{ test_image_base }}"
+    source: build
+  register: repository_1
+
+- name: repository (idempotent)
+  docker_image:
+    name: "{{ iname }}"
+    build:
+      path: "{{ role_path }}/files"
+      pull: no
+    repository: "{{ test_image_base }}"
+    source: build
+  register: repository_2
+
+- assert:
+    that:
+    - repository_1 is changed
+    - repository_2 is not changed
+
+- name: Get facts of image
+  docker_image_info:
+    name: "{{ test_image_base }}:latest"
+  register: facts_1
+
+- name: cleanup
+  docker_image:
+    name: "{{ test_image_base }}:latest"
+    state: absent
+    force_absent: yes
+
+- assert:
+    that:
+    - facts_1.images | length == 1

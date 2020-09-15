@@ -1,0 +1,71 @@
+- name: Create a first server
+  scaleway_compute:
+    name: '{{ first_server_name }}'
+    state: present
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+- name: Create a second server
+  scaleway_compute:
+    name: '{{ second_server_name }}'
+    state: present
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+- name: Get server informations of the first page
+  scaleway_server_info:
+    region: par1
+    query_parameters:
+      per_page: 1
+      page: 1
+  register: first_page
+
+- debug: var=first_page
+
+- assert:
+    that:
+      - first_page is success
+
+- name: Get server informations of the second page
+  scaleway_server_info:
+    region: par1
+    query_parameters:
+      per_page: 1
+      page: 2
+  register: second_page
+
+- debug: var=second_page
+
+- assert:
+    that:
+      - second_page is success
+
+- assert:
+    that:
+      - first_page.scaleway_server_info[0].id != second_page.scaleway_server_info[0].id
+
+- name: Delete first server
+  scaleway_compute:
+    name: '{{ first_server_name }}'
+    state: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true
+
+- name: Delete second server
+  scaleway_compute:
+    name: '{{ second_server_name }}'
+    state: absent
+    image: '{{ scaleway_image_id }}'
+    organization: '{{ scaleway_organization }}'
+    region: '{{ scaleway_region }}'
+    commercial_type: '{{ scaleway_commerial_type }}'
+    wait: true

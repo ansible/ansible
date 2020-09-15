@@ -1,0 +1,34 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      system:
+        priority: 20
+
+- eos_facts:
+    gather_network_resources: lacp
+  become: yes
+
+- name: Replaces device lacp configuration with provided configuration
+  eos_lacp:
+    config: "{{ config }}"
+    state: replaced
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lacp == result.before"
+
+- eos_facts:
+    gather_network_resources: lacp
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lacp == result.after"
+
+- assert:
+    that:
+      - "config == ansible_facts.network_resources.lacp"

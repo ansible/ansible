@@ -1,0 +1,141 @@
+# test code for the pip module
+# (c) 2014, Michael DeHaan <michael.dehaan@gmail.com>
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: create a file that we can use to fetch
+  copy: content="test" dest={{ remote_tmp_dir }}/orig
+
+- name: fetch the test file
+  fetch: src={{ remote_tmp_dir }}/orig dest={{ output_dir }}/fetched
+  register: fetched
+
+- debug: var=fetched
+
+- name: Assert that we fetched correctly
+  assert:
+    that:
+      - 'fetched["changed"] == True'
+      - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'fetched["remote_checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'lookup("file", output_dir + "/fetched/" + inventory_hostname + remote_tmp_dir + "/orig") == "test"'
+
+# TODO: check the become and non-become forms of fetch because in one form we'll do
+# the get method of the connection plugin and in the become case we'll use the
+# fetch module.
+
+- name: fetch a second time to show idempotence
+  fetch: src={{ remote_tmp_dir }}/orig dest={{ output_dir }}/fetched
+  register: fetched
+
+- name: Assert that the file was not fetched the second time
+  assert:
+    that:
+      - 'fetched["changed"] == False'
+      - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+
+- name: attempt to fetch a non-existent file - do not fail on missing
+  fetch: src={{ remote_tmp_dir }}/doesnotexist dest={{ output_dir }}/fetched fail_on_missing=False
+  register: fetch_missing_nofail
+
+- name: check fetch missing no fail result
+  assert:
+    that:
+      - "fetch_missing_nofail.msg"
+      - "fetch_missing_nofail is not changed"
+
+- name: attempt to fetch a non-existent file - fail on missing
+  fetch: src={{ remote_tmp_dir }}/doesnotexist dest={{ output_dir }}/fetched fail_on_missing=yes
+  register: fetch_missing
+  ignore_errors: true
+
+- name: check fetch missing with failure
+  assert:
+    that:
+      - "fetch_missing is failed"
+      - "fetch_missing.msg"
+      - "fetch_missing is not changed"
+
+- name: attempt to fetch a non-existent file - fail on missing implicit
+  fetch: src={{ remote_tmp_dir }}/doesnotexist dest={{ output_dir }}/fetched
+  register: fetch_missing_implicit
+  ignore_errors: true
+
+- name: check fetch missing with failure with implicit fail
+  assert:
+    that:
+      - "fetch_missing_implicit is failed"
+      - "fetch_missing_implicit.msg"
+      - "fetch_missing_implicit is not changed"
+
+- name: attempt to fetch a directory - should not fail but return a message
+  fetch: src={{ remote_tmp_dir }} dest={{ output_dir }}/somedir fail_on_missing=False
+  register: fetch_dir
+
+- name: check fetch directory result
+  assert:
+    that:
+      - "fetch_dir is not changed"
+      - "fetch_dir.msg"
+
+- name: attempt to fetch a directory - should fail
+  fetch: src={{ remote_tmp_dir }} dest={{ output_dir }}/somedir fail_on_missing=True
+  register: failed_fetch_dir
+  ignore_errors: true
+
+- name: check fetch directory result
+  assert:
+    that:
+      - "failed_fetch_dir is failed"
+      - "fetch_dir.msg"
+
+- name: create symlink to a file that we can fetch
+  file:
+    path: "{{ remote_tmp_dir }}/link"
+    src: "{{ remote_tmp_dir }}/orig"
+    state: "link"
+
+- name: fetch the file via a symlink
+  fetch: src={{ remote_tmp_dir }}/link dest={{ output_dir }}/fetched-link
+  register: fetched
+
+- debug: var=fetched
+
+- name: Assert that we fetched correctly
+  assert:
+    that:
+      - 'fetched["changed"] == True'
+      - 'fetched["checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'fetched["remote_checksum"] == "a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"'
+      - 'lookup("file", output_dir + "/fetched-link/" + inventory_hostname + remote_tmp_dir + "/link") == "test"'
+
+# TODO: check the become and non-become forms of fetch because in one form we'll do
+# the get method of the connection plugin and in the become case we'll use the
+# fetch module.
+
+- name: dest is an existing directory name without trailing slash and flat=yes, should fail
+  fetch:
+    src: "{{ remote_tmp_dir }}/orig"
+    dest: "{{ output_dir }}"
+    flat: yes
+  register: failed_fetch_dest_dir
+  ignore_errors: true
+
+- name: check that it indeed failed
+  assert:
+    that:
+      - "failed_fetch_dest_dir is failed"
+      - "failed_fetch_dest_dir.msg"

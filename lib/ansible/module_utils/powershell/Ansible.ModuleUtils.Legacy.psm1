@@ -48,7 +48,7 @@ Function Exit-Json($obj)
     }
 
     if (-not $obj.ContainsKey('changed')) {
-        Set-Attr $obj "changed" $false
+        Set-Attr -obj $obj -name "changed" -value $false
     }
 
     Write-Output $obj | ConvertTo-Json -Compress -Depth 99
@@ -79,11 +79,11 @@ Function Fail-Json($obj, $message = $null)
     }
 
     # Still using Set-Attr for PSObject compatibility
-    Set-Attr $obj "msg" $message
-    Set-Attr $obj "failed" $true
+    Set-Attr -obj $obj -name "msg" -value $message
+    Set-Attr -obj $obj -name "failed" -value $true
 
     if (-not $obj.ContainsKey('changed')) {
-        Set-Attr $obj "changed" $false
+        Set-Attr -obj $obj -name "changed" -value $false
     }
 
     Write-Output $obj | ConvertTo-Json -Compress -Depth 99
@@ -360,7 +360,7 @@ Function Get-PendingRebootStatus
     Check if reboot is required, if so notify CA.
     Function returns true if computer has a pending reboot
 #>
-    $featureData = Invoke-WmiMethod -EA Ignore -Name GetServerFeature -Namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
+    $featureData = Invoke-CimMethod -EA Ignore -Name GetServerFeature -Namespace root\microsoft\windows\servermanager -Class MSFT_ServerManagerTasks
     $regData = Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" "PendingFileRenameOperations" -EA Ignore
     $CBSRebootStatus = Get-ChildItem "HKLM:\\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing"  -ErrorAction SilentlyContinue| Where-Object {$_.PSChildName -eq "RebootPending"}
     if(($featureData -and $featureData.RequiresReboot) -or $regData -or $CBSRebootStatus)
@@ -375,4 +375,3 @@ Function Get-PendingRebootStatus
 
 # this line must stay at the bottom to ensure all defined module parts are exported
 Export-ModuleMember -Alias * -Function * -Cmdlet *
-

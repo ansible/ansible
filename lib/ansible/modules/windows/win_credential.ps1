@@ -378,8 +378,10 @@ namespace Ansible.CredentialManager
                     using (SafeMemoryBuffer attributes = new SafeMemoryBuffer(attributeBytes.Length))
                     {
                         if (attributeBytes.Length != 0)
+                        {
                             Marshal.Copy(attributeBytes, 0, attributes.DangerousGetHandle(), attributeBytes.Length);
-                        credential.Attributes = attributes.DangerousGetHandle();
+                            credential.Attributes = attributes.DangerousGetHandle();
+                        }
 
                         NativeHelpers.CredentialCreateFlags createFlags = 0;
                         if (preserveExisting)
@@ -513,19 +515,19 @@ Function ConvertTo-CredentialAttribute {
 }
 
 Function Get-DiffInfo {
-    param($Credential)
+    param($AnsibleCredential)
 
     $diff = @{
-        alias = $Credential.TargetAlias
+        alias = $AnsibleCredential.TargetAlias
         attributes = [System.Collections.ArrayList]@()
-        comment = $Credential.Comment
-        name = $Credential.TargetName
-        persistence = $Credential.Persist.ToString()
-        type = $Credential.Type.ToString()
-        username = $Credential.UserName
+        comment = $AnsibleCredential.Comment
+        name = $AnsibleCredential.TargetName
+        persistence = $AnsibleCredential.Persist.ToString()
+        type = $AnsibleCredential.Type.ToString()
+        username = $AnsibleCredential.UserName
     }
 
-    foreach ($attribute in $Credential.Attributes) {
+    foreach ($attribute in $AnsibleCredential.Attributes) {
         $attribute_info = @{
             name = $attribute.Keyword
             data = $null
@@ -555,7 +557,7 @@ if ($null -ne $secret) {
     if ($secret_format -eq "base64") {
         $secret = [System.Convert]::FromBase64String($secret)
     } else {
-        $secret = [System.Text.Encoding]::UTF8.GetBytes($secret)
+        $secret = [System.Text.Encoding]::Unicode.GetBytes($secret)
     }
 }
 
@@ -573,7 +575,7 @@ $type = switch ($type) {
 
 $existing_credential = [Ansible.CredentialManager.Credential]::GetCredential($name, $type)
 if ($null -ne $existing_credential) {
-    $module.Diff.before = Get-DiffInfo -Credential $existing_credential
+    $module.Diff.before = Get-DiffInfo -AnsibleCredential $existing_credential
 }
 
 if ($state -eq "absent") {
@@ -588,10 +590,10 @@ if ($state -eq "absent") {
         $new_credential = New-Object -TypeName Ansible.CredentialManager.Credential
         $new_credential.Type = $type
         $new_credential.TargetName = $name
-        $new_credential.Comment = $comment
+        $new_credential.Comment = if ($comment) { $comment } else { [NullString]::Value }
         $new_credential.Secret = $secret
         $new_credential.Persist = $persistence
-        $new_credential.TargetAlias = $alias
+        $new_credential.TargetAlias = if ($alias) { $alias } else { [NullString]::Value }
         $new_credential.UserName = $username
 
         if ($null -ne $attributes) {
@@ -654,7 +656,7 @@ if ($state -eq "absent") {
                     if (($new_keyword -cne $existing_keyword) -or ($new_value -ne $existing_value)) {
                         $attribute_changed = $true
                         break
-                    } 
+                    }
                 }
             }
 
@@ -705,9 +707,8 @@ if ($state -eq "absent") {
     } else {
         # Get a new copy of the credential and use that to set the after diff
         $new_credential = [Ansible.CredentialManager.Credential]::GetCredential($name, $type)
-        $module.Diff.after = Get-DiffInfo -Credential $new_credential
+        $module.Diff.after = Get-DiffInfo -AnsibleCredential $new_credential
     }
 }
 
 $module.ExitJson()
-

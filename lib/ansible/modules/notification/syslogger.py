@@ -130,7 +130,6 @@ def run_module():
 
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
     )
 
     result = dict(
@@ -140,10 +139,6 @@ def run_module():
         log_pid=module.params['log_pid'],
         msg=module.params['msg']
     )
-
-    # basically, do nothing.
-    if module.check_mode:
-        return result
 
     # do the logging
     try:

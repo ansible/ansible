@@ -1,0 +1,3 @@
+---
+bugfixes:
+- tower inventory plugin - fix TypeError when giving inventory_id as integer (https://github.com/ansible/ansible/issues/61333)

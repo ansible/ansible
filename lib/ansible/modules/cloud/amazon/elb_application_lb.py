@@ -35,12 +35,16 @@ options:
     type: bool
   access_logs_s3_bucket:
     description:
-      - The name of the S3 bucket for the access logs. This attribute is required if access logs in Amazon S3 are enabled. The bucket must exist in the same
+      - The name of the S3 bucket for the access logs.
+      - Required if access logs in Amazon S3 are enabled.
+      - The bucket must exist in the same
         region as the load balancer and have a bucket policy that grants Elastic Load Balancing permission to write to the bucket.
     required: false
   access_logs_s3_prefix:
     description:
-      - The prefix for the location in the S3 bucket. If you don't specify a prefix, the access logs are stored in the root of the bucket.
+      - The prefix for the log location in the S3 bucket.
+      - If you don't specify a prefix, the access logs are stored in the root of the bucket.
+      - Cannot begin or end with a slash.
     required: false
   deletion_protection:
     description:
@@ -153,7 +157,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. Only 'forward' is accepted at this time
+          - Type: forward # Required.
             TargetGroupName: # Required. The name of the target group
     state: present
 
@@ -161,7 +165,7 @@ EXAMPLES = '''
 - elb_application_lb:
     access_logs_enabled: yes
     access_logs_s3_bucket: mybucket
-    access_logs_s3_prefix: "/logs"
+    access_logs_s3_prefix: "logs"
     name: myelb
     security_groups:
       - sg-12345678
@@ -177,7 +181,7 @@ EXAMPLES = '''
         Certificates: # The ARN of the certificate (only one certficate ARN should be provided)
           - CertificateArn: arn:aws:iam::12345678987:server-certificate/test.domain.com
         DefaultActions:
-          - Type: forward # Required. Only 'forward' is accepted at this time
+          - Type: forward # Required.
             TargetGroupName: # Required. The name of the target group
     state: present
 
@@ -208,6 +212,40 @@ EXAMPLES = '''
             Actions:
               - TargetGroupName: test-target-group
                 Type: forward
+          - Conditions:
+              - Field: path-pattern
+                Values:
+                  - "/redirect-path/*"
+            Priority: '2'
+            Actions:
+              - Type: redirect
+                RedirectConfig:
+                  Host: "#{host}"
+                  Path: "/example/redir" # or /#{path}
+                  Port: "#{port}"
+                  Protocol: "#{protocol}"
+                  Query: "#{query}"
+                  StatusCode: "HTTP_302" # or HTTP_301
+          - Conditions:
+              - Field: path-pattern
+                Values:
+                  - "/fixed-response-path/"
+            Priority: '3'
+            Actions:
+              - Type: fixed-response
+                FixedResponseConfig:
+                  ContentType: "text/plain"
+                  MessageBody: "This is the page you're looking for"
+                  StatusCode: "200"
+          - Conditions:
+              - Field: host-header
+                Values:
+                  - "hostname.domain.com"
+                  - "alternate.domain.com"
+            Priority: '4'
+            Actions:
+              - TargetGroupName: test-target-group
+                Type: forward
     state: present
 
 # Remove an ELB
@@ -232,7 +270,7 @@ access_logs_s3_prefix:
     description: The prefix for the location in the S3 bucket.
     returned: when state is present
     type: str
-    sample: /my/logs
+    sample: my/logs
 availability_zones:
     description: The Availability Zones for the load balancer.
     returned: when state is present

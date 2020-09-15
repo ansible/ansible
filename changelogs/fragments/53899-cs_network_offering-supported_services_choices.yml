@@ -1,2 +1,0 @@
-bugfixes:
-  - cs_network_offering - Add a choice list for supported_services parameter in arg_spec.

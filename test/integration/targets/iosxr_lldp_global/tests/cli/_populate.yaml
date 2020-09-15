@@ -1,0 +1,13 @@
+---
+- name: Setup
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      lldp reinit 2
+      lldp holdtime 100
+      lldp timer 3000
+      lldp subinterfaces enable
+      lldp tlv-select system-description disable
+      lldp tlv-select management-address disable
+      

@@ -16,7 +16,7 @@
         items: '{{ configmaps }}'
 
   - name: Get ConfigMaps
-    k8s_facts:
+    k8s_info:
       api_version: v1
       kind: ConfigMap
       namespace: testing1
@@ -39,7 +39,7 @@
         items: '{{ configmaps }}'
 
   - name: Get ConfigMaps
-    k8s_facts:
+    k8s_info:
       api_version: v1
       kind: ConfigMap
       namespace: testing1
@@ -82,7 +82,7 @@
         items: '{{ resources }}'
 
   - name: Get the created resources
-    k8s_facts:
+    k8s_info:
       api_version: '{{ item.apiVersion }}'
       kind: '{{ item.kind }}'
       namespace: testing1
@@ -105,7 +105,7 @@
         items: '{{ resources }}'
 
   - name: Get the resources
-    k8s_facts:
+    k8s_info:
       api_version: '{{ item.apiVersion }}'
       kind: '{{ item.kind }}'
       namespace: testing1

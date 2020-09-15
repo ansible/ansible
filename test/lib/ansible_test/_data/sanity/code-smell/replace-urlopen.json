@@ -1,0 +1,7 @@
+{
+    "extensions": [
+        ".py"
+    ],
+    "ignore_self": true,
+    "output": "path-line-column-message"
+}

@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "Fix delete to pass the right parameters(https://github.com/ansible/ansible/pull/62525)"

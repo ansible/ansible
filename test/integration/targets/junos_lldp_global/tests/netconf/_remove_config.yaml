@@ -1,0 +1,11 @@
+---
+- debug:
+    msg: "Start junos_lldp_global deleted remove interface config ansible_connection={{ ansible_connection }}"
+
+- name: "Setup - remove lldp global config"
+  junos_config:
+    lines:
+      - delete protocols lldp
+
+- debug:
+    msg: "End junos_lldp_global deleted remove interface config ansible_connection={{ ansible_connection }}"

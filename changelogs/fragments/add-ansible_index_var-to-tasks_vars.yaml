@@ -1,0 +1,2 @@
+minor_changes:
+  - Make ``ansible_index_var`` accessible as a magic variable.

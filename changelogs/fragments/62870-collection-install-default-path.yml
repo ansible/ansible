@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-galaxy - Default collection install path to first path in COLLECTIONS_PATHS (https://github.com/ansible/ansible/pull/62870)

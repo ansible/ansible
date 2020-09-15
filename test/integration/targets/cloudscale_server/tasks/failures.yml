@@ -1,0 +1,53 @@
+---
+- name: Fail missing params
+  cloudscale_server:
+  register: srv
+  ignore_errors: True
+- name: 'VERIFY: Fail name and UUID'
+  assert:
+    that:
+      - srv is failed
+
+- name: Fail unexisting server group
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-group'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    password: '{{ cloudscale_test_password }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-unexist-group'
+  ignore_errors: True
+  register: srv
+- name: 'VERIFY: Fail unexisting server group'
+  assert:
+    that:
+      - srv is failed
+      - srv.msg.startswith('Server group name or UUID not found')
+
+- name: Create two server groups with the same name
+  uri:
+    url: https://api.cloudscale.ch/v1/server-groups
+    method: POST
+    headers:
+      Authorization: 'Bearer {{ cloudscale_api_token }}'
+    body:
+      name: '{{ cloudscale_resource_prefix }}-duplicate'
+      type: anti-affinity
+    body_format: json
+    status_code: 201
+  register: duplicate
+  with_sequence: count=2
+
+- name: Try to use server groups with identical name
+  cloudscale_server:
+    name: '{{ cloudscale_resource_prefix }}-test-group'
+    flavor: '{{ cloudscale_test_flavor }}'
+    image: '{{ cloudscale_test_image }}'
+    password: '{{ cloudscale_test_password }}'
+    server_groups: '{{ cloudscale_resource_prefix }}-duplicate'
+  ignore_errors: True
+  register: srv
+- name: 'VERIFY: Fail unexisting server group'
+  assert:
+    that:
+      - srv is failed
+      - srv.msg.startswith('More than one server group with name exists')

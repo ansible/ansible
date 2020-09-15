@@ -1,0 +1,2 @@
+minor_changes:
+  - docker connection plugin - run Powershell modules on Windows containers.

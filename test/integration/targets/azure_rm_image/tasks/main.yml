@@ -56,7 +56,7 @@
   register: vm
 
 - name: Create new empty managed disk
-  azure_rm_managed_disk:
+  azure_rm_manageddisk:
       resource_group: "{{ resource_group }}"
       name: "{{ empty_disk_name }}"
       storage_account_type: "Standard_LRS"
@@ -150,7 +150,7 @@
       - not output.changed
 
 - name: Delete empty disk
-  azure_rm_managed_disk:
+  azure_rm_manageddisk:
       resource_group: "{{ resource_group }}"
       name: "{{ empty_disk_name }}"
       state: absent

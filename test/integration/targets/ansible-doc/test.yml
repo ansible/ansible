@@ -1,0 +1,116 @@
+- hosts: localhost
+  gather_facts: no
+  environment:
+    ANSIBLE_LIBRARY: "{{ playbook_dir }}/library"
+  tasks:
+    - name: non-existent module
+      command: ansible-doc test_does_not_exist
+      register: result
+    - assert:
+        that:
+          - '"[WARNING]: module test_does_not_exist not found in:" in result.stderr'
+
+    - name: documented module
+      command: ansible-doc test_docs
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"TEST_DOCS " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: documented module without metadata
+      command: ansible-doc test_docs_no_metadata
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"TEST_DOCS_NO_METADATA " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: documented module with no status in metadata
+      command: ansible-doc test_docs_no_status
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"TEST_DOCS_NO_STATUS " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: documented module with non-iterable status in metadata
+      command: ansible-doc test_docs_non_iterable_status
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"TEST_DOCS_NON_ITERABLE_STATUS " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: documented module with removed status
+      command: ansible-doc test_docs_removed_status
+      register: result
+    - assert:
+        that:
+          - '"WARNING" not in result.stderr'
+          - '"TEST_DOCS_REMOVED_STATUS " in result.stdout'
+          - '"AUTHOR: Ansible Core Team" in result.stdout'
+
+    - name: empty module
+      command: ansible-doc test_empty
+      register: result
+    - assert:
+        that:
+          - 'result.stdout == ""'
+          - 'result.stderr == ""'
+
+    - name: module with no documentation
+      command: ansible-doc test_no_docs
+      register: result
+    - assert:
+        that:
+          - 'result.stdout == ""'
+          - 'result.stderr == ""'
+
+    - name: module with no documentation and no metadata
+      command: ansible-doc test_no_docs_no_metadata
+      register: result
+    - assert:
+        that:
+          - 'result.stdout == ""'
+          - 'result.stderr == ""'
+
+    - name: module with no documentation and no status in metadata
+      command: ansible-doc test_no_docs_no_status
+      ignore_errors: yes
+      register: result
+    - assert:
+        that:
+          - 'result is failed'
+          - '"ERROR! module test_no_docs_no_status missing documentation (or could not parse documentation): test_no_docs_no_status did not contain a DOCUMENTATION attribute" in result.stderr'
+
+    - name: module with no documentation and non-iterable status in metadata
+      command: ansible-doc test_no_docs_non_iterable_status
+      ignore_errors: yes
+      register: result
+    - assert:
+        that:
+          - 'result is failed'
+          - '"ERROR! module test_no_docs_non_iterable_status missing documentation (or could not parse documentation): test_no_docs_non_iterable_status did not contain a DOCUMENTATION attribute" in result.stderr'
+
+    - name: module with no documentation and removed status
+      command: ansible-doc test_no_docs_removed_status
+      register: result
+    - assert:
+        that:
+          - '"[WARNING]: module test_no_docs_removed_status has been removed" in result.stderr'
+
+    - name: deprecated module with both removed date and version (date should get precedence)
+      command: ansible-doc test_docs_removed_precedence
+      register: result
+
+    - assert:
+        that:
+          - '"DEPRECATED" in result.stdout'
+          - '"Reason: Updated module released with more functionality" in result.stdout'
+          - '"Will be removed in a release after 2022-06-01" in result.stdout'
+          - '"Alternatives: new_module" in result.stdout'

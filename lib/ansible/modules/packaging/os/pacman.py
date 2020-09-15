@@ -171,9 +171,18 @@ def get_version(pacman_output):
     """Take pacman -Qi or pacman -Si output and get the Version"""
     lines = pacman_output.split('\n')
     for line in lines:
-        if 'Version' in line:
+        if line.startswith('Version '):
             return line.split(':')[1].strip()
     return None
+
+
+def get_name(module, pacman_output):
+    """Take pacman -Qi or pacman -Si output and get the package name"""
+    lines = pacman_output.split('\n')
+    for line in lines:
+        if line.startswith('Name '):
+            return line.split(':')[1].strip()
+    module.fail_json(msg="get_name: fail to retrieve package name from pacman output")
 
 
 def query_package(module, pacman_path, name, state="present"):
@@ -186,6 +195,12 @@ def query_package(module, pacman_path, name, state="present"):
         if lrc != 0:
             # package is not installed locally
             return False, False, False
+        else:
+            # a non-zero exit code doesn't always mean the package is installed
+            # for example, if the package name queried is "provided" by another package
+            installed_name = get_name(module, lstdout)
+            if installed_name != name:
+                return False, False, False
 
         # get the version installed locally (if any)
         lversion = get_version(lstdout)
@@ -230,7 +245,10 @@ def upgrade(module, pacman_path):
     }
 
     if rc == 0:
-        regex = re.compile(r'([\w-]+) ((?:\S+)-(?:\S+)) -> ((?:\S+)-(?:\S+))')
+        # Match lines of `pacman -Qu` output of the form:
+        #   (package name) (before version-release) -> (after version-release)
+        # e.g., "ansible 2.7.1-1 -> 2.7.2-1"
+        regex = re.compile(r'([\w+\-.@]+) (\S+-\S+) -> (\S+-\S+)')
         for p in data:
             m = regex.search(p)
             packages.append(m.group(1))
@@ -320,14 +338,17 @@ def install_packages(module, pacman_path, state, packages, package_files):
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_repos), stderr))
 
-        data = stdout.split('\n')[3].split(' ')[2:]
-        data = [i for i in data if i != '']
-        for i, pkg in enumerate(data):
-            data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
-            if module._diff:
-                diff['after'] += "%s\n" % pkg
+        # As we pass `--needed` to pacman returns a single line of ` there is nothing to do` if no change is performed.
+        # The check for > 3 is here because we pick the 4th line in normal operation.
+        if len(stdout.split('\n')) > 3:
+            data = stdout.split('\n')[3].split(' ')[2:]
+            data = [i for i in data if i != '']
+            for i, pkg in enumerate(data):
+                data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+                if module._diff:
+                    diff['after'] += "%s\n" % pkg
 
-        install_c += len(to_install_repos)
+            install_c += len(to_install_repos)
 
     if to_install_files:
         cmd = "%s --upgrade --noconfirm --noprogressbar --needed %s %s" % (pacman_path, module.params["extra_args"], " ".join(to_install_files))
@@ -336,14 +357,17 @@ def install_packages(module, pacman_path, state, packages, package_files):
         if rc != 0:
             module.fail_json(msg="failed to install %s: %s" % (" ".join(to_install_files), stderr))
 
-        data = stdout.split('\n')[3].split(' ')[2:]
-        data = [i for i in data if i != '']
-        for i, pkg in enumerate(data):
-            data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
-            if module._diff:
-                diff['after'] += "%s\n" % pkg
+        # As we pass `--needed` to pacman returns a single line of ` there is nothing to do` if no change is performed.
+        # The check for > 3 is here because we pick the 4th line in normal operation.
+        if len(stdout.split('\n')) > 3:
+            data = stdout.split('\n')[3].split(' ')[2:]
+            data = [i for i in data if i != '']
+            for i, pkg in enumerate(data):
+                data[i] = re.sub('-[0-9].*$', '', data[i].split('/')[-1])
+                if module._diff:
+                    diff['after'] += "%s\n" % pkg
 
-        install_c += len(to_install_files)
+            install_c += len(to_install_files)
 
     if state == 'latest' and len(package_err) > 0:
         message = "But could not ensure 'latest' state for %s package(s) as remote version could not be fetched." % (package_err)
@@ -425,6 +449,7 @@ def main():
     )
 
     pacman_path = module.get_bin_path('pacman', True)
+    module.run_command_environ_update = dict(LC_ALL='C')
 
     p = module.params
 

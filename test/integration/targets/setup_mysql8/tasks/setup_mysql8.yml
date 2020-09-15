@@ -1,0 +1,66 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Install MySQL repo
+  yum:
+    name: '{{ repo_link }}'
+  notify: cleanup mysql8
+
+# These packages come from AppStream in RHEL 8, so they need to be done in a separate task
+- name: Install MySQL support packages
+  yum:
+    name: "{{ mysql_support_packages }}"
+  notify: cleanup mysql8
+
+- name: Install MySQL community server
+  yum:
+    name: '{{ mysql_server_packages }}'
+    disablerepo: '{{ mysql_disablerepo | default(omit) }}'
+  notify: cleanup mysql8
+
+- name: Copy my.cnf
+  copy:
+    src: my.cnf
+    dest: '{{ my_cnf }}'
+
+- name: Start MySQL
+  service:
+    name: mysqld
+    state: started
+
+### Debug #######################
+#- name: Debug
+#  shell: cat /var/log/mysqld.log
+#################################
+
+- name: Check connection to the server
+  shell: 'echo "SHOW DATABASES;" | mysql'
+
+- name: Check connection to the server
+  shell: "echo \"SHOW VARIABLES LIKE '%version%';\" | mysql"
+
+- name: Detect socket path
+  shell: 'echo "show variables like ''socket''\G" | mysql | grep ''Value: '' | sed ''s/[ ]\+Value: //'''
+  register: _socket_path
+
+- name: Set socket path
+  set_fact:
+    mysql_socket: '{{ _socket_path["stdout"] }}'
+
+- name: Set root pass
+  set_fact:
+    root_pass: "dlsafjlkjdsaK1#"
+
+- name: Set root password
+  shell: 'echo "flush privileges; ALTER USER ''root''@''localhost'' IDENTIFIED WITH mysql_native_password BY ''{{ root_pass }}'';" | mysql'
+
+- name: Change configuration
+  lineinfile:
+    path: '{{ my_cnf }}'
+    line: skip-grant-tables
+    state: absent
+
+- name: Restart MySQL
+  service:
+    name: mysqld
+    state: restarted

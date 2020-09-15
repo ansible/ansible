@@ -16,7 +16,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_cdnendpoint_info
 
-version_added: "2.8"
+version_added: "2.9"
 
 short_description: Get Azure CDN endpoint facts
 
@@ -43,8 +43,8 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Hai Cao (@caohai)"
-    - "Yunge zhu (@yungezz)"
+    - Hai Cao (@caohai)
+    - Yunge zhu (@yungezz)
 '''
 
 EXAMPLES = '''
@@ -155,7 +155,7 @@ cdnendpoints:
             sample: xxxxxxxx.blob.core.windows.net
         origin_path:
             description:
-                - A directory path on the origin that CDN can use to retreive content from.
+                - A directory path on the origin that CDN can use to retrieve content from.
             type: str
             sample: /pic/
         tags:
@@ -180,7 +180,7 @@ import re
 AZURE_OBJECT_CLASS = 'endpoints'
 
 
-class AzureRMCdnEndpointFacts(AzureRMModuleBase):
+class AzureRMCdnEndpointInfo(AzureRMModuleBase):
     """Utility class to get Azure Azure CDN endpoint facts"""
 
     def __init__(self):
@@ -208,13 +208,17 @@ class AzureRMCdnEndpointFacts(AzureRMModuleBase):
         self.profile_name = None
         self.tags = None
 
-        super(AzureRMCdnEndpointFacts, self).__init__(
+        super(AzureRMCdnEndpointInfo, self).__init__(
             derived_arg_spec=self.module_args,
             supports_tags=False,
             facts_module=True
         )
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_cdnendpoint_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_cdnendpoint_facts' module has been renamed to 'azure_rm_cdnendpoint_info'", version='2.13')
 
         for key in self.module_args:
             setattr(self, key, kwargs[key])
@@ -304,7 +308,7 @@ class AzureRMCdnEndpointFacts(AzureRMModuleBase):
 def main():
     """Main module execution code path"""
 
-    AzureRMCdnEndpointFacts()
+    AzureRMCdnEndpointInfo()
 
 
 if __name__ == '__main__':

@@ -75,7 +75,7 @@ class BecomeModule(BecomeBase):
 
     name = 'sesu'
 
-    _prompt = 'Please enter your password:'
+    prompt = 'Please enter your password:'
     fail = missing = ('Sorry, try again with sesu.',)
 
     def build_become_command(self, cmd, shell):

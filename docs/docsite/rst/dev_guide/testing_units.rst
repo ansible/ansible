@@ -43,6 +43,11 @@ Or against a specific Python version by doing:
 
    ansible-test units --tox --python 2.7 apt
 
+If you are running unit tests against things other than modules, such as module utilities, specify the whole file path:
+
+.. code:: shell
+
+   ansible-test units --tox test/units/module_utils/basic/test_imports.py
 
 For advanced usage see the online help::
 
@@ -71,10 +76,10 @@ install all the required dependencies needed for unit tests. For example:
    When using ``ansible-test`` with ``--tox`` requires tox >= 2.5.0
 
 
-The full list of requirements can be found at `test/runner/requirements
-<https://github.com/ansible/ansible/tree/devel/test/runner/requirements>`_. Requirements
+The full list of requirements can be found at `test/lib/ansible_test/_data/requirements
+<https://github.com/ansible/ansible/tree/devel/test/lib/ansible_test/_data/requirements>`_. Requirements
 files are named after their respective commands. See also the `constraints
-<https://github.com/ansible/ansible/blob/devel/test/runner/requirements/constraints.txt>`_
+<https://github.com/ansible/ansible/blob/devel/test/lib/ansible_test/_data/requirements/constraints.txt>`_
 applicable to all commands.
 
 
@@ -156,7 +161,7 @@ files that aren't themselves tests.
 Fixtures files
 ``````````````
 
-To mock out fetching results from devices, or provide other complex datastructures that
+To mock out fetching results from devices, or provide other complex data structures that
 come from external libraries, you can use ``fixtures`` to read in pre-generated data.
 
 Text files live in ``test/units/modules/network/PLATFORM/fixtures/``
@@ -173,7 +178,7 @@ If you are simulating APIs you may find that python placebo is useful.  See
 
 Code Coverage For New or Updated Unit Tests
 ```````````````````````````````````````````
-New code will be missing from the codecov.io coverage reports (see :doc:`testing`), so
+New code will be missing from the codecov.io coverage reports (see :ref:`developing_testing`), so
 local reporting is needed.  Most ``ansible-test`` commands allow you to collect code
 coverage; this is particularly useful when to indicate where to extend testing.
 
@@ -201,7 +206,7 @@ reports.
 
    :ref:`testing_units_modules`
        Special considerations for unit testing modules
-   :doc:`testing_running_locally`
+   :ref:`testing_running_locally`
        Running tests locally including gathering and reporting coverage data
    `Python 3 documentation - 26.4. unittest — Unit testing framework <https://docs.python.org/3/library/unittest.html>`_
        The documentation of the unittest framework in python 3

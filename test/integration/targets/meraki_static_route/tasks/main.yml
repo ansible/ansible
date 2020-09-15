@@ -1,0 +1,170 @@
+# Test code for the Meraki modules
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Create appliance network
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      timezone: America/Chicago
+      type: appliance
+    delegate_to: localhost
+    register: net
+
+  - set_fact:
+      net_id: '{{net.data.id}}'
+
+  - name: Initialize static route id list
+    set_fact:
+      route_ids: []
+
+  - name: Create static_route
+    meraki_static_route:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      name: Test Route
+      subnet: 192.0.1.0/24
+      gateway_ip: 192.168.128.1
+    delegate_to: localhost
+    register: create_route
+
+  - set_fact:
+      route_ids: "{{ route_ids + [create_route.data.id] }}"
+
+  - name: Create second static_route
+    meraki_static_route:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      name: Test Route 2
+      subnet: 192.0.2.0/24
+      gateway_ip: 192.168.128.1
+    delegate_to: localhost
+    register: second_create
+
+  - set_fact:
+      route_ids: "{{ route_ids + [second_create.data.id] }}"
+
+  - assert:
+      that:
+        - create_route.changed == True
+        - create_route.data.id is defined
+
+  - name: Update static route
+    meraki_static_route:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      route_id: '{{create_route.data.id}}'
+      subnet: 192.0.3.0/24
+      enabled: yes
+    delegate_to: localhost
+    register: update
+
+  - assert:
+      that:
+        - update.data.subnet == "192.0.3.0/24"
+
+  - name: Query static routes
+    meraki_static_route:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+    delegate_to: localhost
+    register: query_all
+
+  - debug:
+      var: query_all
+
+  - assert:
+      that:
+        - query_all.data | length >= 2
+
+  - name: Update static route with idempotency
+    meraki_static_route:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      route_id: '{{create_route.data.id}}'
+      name: Test Route
+      gateway_ip: 192.168.128.1
+      subnet: 192.0.3.0/24
+      enabled: yes
+    delegate_to: localhost
+    register: update_idempotent
+
+  - assert:
+      that:
+        - update_idempotent.changed == False
+        - update_idempotent.data is defined
+
+  - name: Update static route with fixed IP assignment and reservation
+    meraki_static_route:
+      auth_key: '{{auth_key}}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      route_id: '{{create_route.data.id}}'
+      fixed_ip_assignments:
+        - mac: aa:bb:cc:dd:ee:ff
+          ip: 192.0.3.11
+          name: WebServer
+      reserved_ip_ranges:
+        - start: 192.168.3.2
+          end: 192.168.3.10
+          comment: Printers
+    delegate_to: localhost
+    register: fixed_ip
+
+  - debug:
+      var: fixed_ip
+
+  - assert:
+      that:
+        - fixed_ip.data.fixedIpAssignments | length == 1
+        - fixed_ip.data.reservedIpRanges | length == 1
+
+
+  - name: Query single static route
+    meraki_static_route:
+      auth_key: '{{auth_key}}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      route_id: '{{create_route.data.id}}'
+    delegate_to: localhost
+    register: query_one
+
+  - assert:
+      that:
+        - query_one.data.name == "Test Route"
+
+  - name: Delete static routes
+    meraki_static_route:
+      auth_key: '{{auth_key}}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetwork
+      route_id: '{{item}}'
+    delegate_to: localhost
+    loop: '{{route_ids}}'
+    register: delete_all
+
+  always:
+    - name: Delete appliance network
+      meraki_network:
+        auth_key: '{{ auth_key }}'
+        state: absent
+        org_name: '{{test_org_name}}'
+        net_name: IntTestNetwork
+      delegate_to: localhost

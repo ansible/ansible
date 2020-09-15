@@ -8,11 +8,11 @@
     image: ubuntu-18.04
     state: started
     location: "fsn1"
-  register: main_server
+  register: vol_server
 - name: verify setup server
   assert:
     that:
-      - main_server is changed
+      - vol_server is changed
 
 - name: test missing size parameter on create Volume
   hcloud_volume:
@@ -86,7 +86,17 @@
     that:
       - volume is changed
       - volume.hcloud_volume.server == "{{hcloud_server_name}}"
-      - main_server is changed
+
+- name: test attach volume idempotence
+  hcloud_volume:
+    name: "{{hcloud_volume_name}}"
+    server: "{{hcloud_server_name}}"
+  register: volume
+- name: verify attach volume idempotence
+  assert:
+    that:
+      - volume is not changed
+      - volume.hcloud_volume.server == "{{hcloud_server_name}}"
 
 - name: test detach volume with checkmode
   hcloud_volume:
@@ -109,7 +119,6 @@
       - volume is changed
       - volume.hcloud_volume.location == "fsn1"
       - volume.hcloud_volume.server != "{{hcloud_server_name}}"
-      - main_server is changed
 
 - name: test update volume label
   hcloud_volume:

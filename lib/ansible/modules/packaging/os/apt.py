@@ -137,8 +137,9 @@ requirements:
 author: "Matthew Williams (@mgwilliams)"
 notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) required C(aptitude) up to 2.3, since 2.4 C(apt-get) is used as a fall-back.
-   - apt starts newly installed services by default, this is what the underlying tooling does,
-     to avoid this you can set the ``RUNLEVEL`` environment variable to 1.
+   - In most cases, packages installed with apt will start newly installed services by default. Most distributions have mechanisms to avoid this.
+     For example when installing Postgresql-9.5 in Debian 9, creating an excutable shell script (/usr/sbin/policy-rc.d) that throws
+     a return code of 101 will stop Postgresql 9.5 starting up after install. Remove the file or remove its execute permission afterwards.
    - The apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier
      (If you typo C(foo) as C(fo) apt-get would install packages that have "fo" in their name with a warning and a prompt for the user.
      Since we don't have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
@@ -146,17 +147,15 @@ notes:
 '''
 
 EXAMPLES = '''
+- name: Install apache httpd  (state=present is optional)
+  apt:
+    name: apache2
+    state: present
+
 - name: Update repositories cache and install "foo" package
   apt:
     name: foo
     update_cache: yes
-
-- name: Install apache httpd but avoid starting it immediately (state=present is optional)
-  apt:
-    name: apache2
-    state: present
-  environment:
-    RUNLEVEL: 1
 
 - name: Remove "foo" package
   apt:
@@ -169,9 +168,7 @@ EXAMPLES = '''
 
 - name: Install a list of packages
   apt:
-    name: "{{ packages }}"
-  vars:
-    packages:
+    pkg:
     - foo
     - foo-tools
 
@@ -751,6 +748,7 @@ def install_deb(m, debs, cache, force, install_recommends, allow_unauthenticated
     if deps_to_install:
         (success, retvals) = install(m=m, pkgspec=deps_to_install, cache=cache,
                                      install_recommends=install_recommends,
+                                     allow_unauthenticated=allow_unauthenticated,
                                      dpkg_options=expand_dpkg_options(dpkg_options))
         if not success:
             m.fail_json(**retvals)
@@ -1003,7 +1001,7 @@ def get_cache(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'installed', 'latest', 'present', 'removed', 'present', 'fixed']),
+            state=dict(type='str', default='present', choices=['absent', 'build-dep', 'fixed', 'latest', 'present']),
             update_cache=dict(type='bool', aliases=['update-cache']),
             cache_valid_time=dict(type='int', default=0),
             purge=dict(type='bool', default=False),
@@ -1033,8 +1031,14 @@ def main():
             module.fail_json(msg="%s must be installed to use check mode. "
                                  "If run normally this module can auto-install it." % PYTHON_APT)
         try:
-            module.warn("Updating cache and auto-installing missing dependency: %s" % PYTHON_APT)
-            module.run_command(['apt-get', 'update'], check_rc=True)
+            # We skip cache update in auto install the dependency if the
+            # user explicitly declared it with update_cache=no.
+            if module.params.get('update_cache') is False:
+                module.warn("Auto-installing missing dependency without updating cache: %s" % PYTHON_APT)
+            else:
+                module.warn("Updating cache and auto-installing missing dependency: %s" % PYTHON_APT)
+                module.run_command(['apt-get', 'update'], check_rc=True)
+
             module.run_command(['apt-get', 'install', '--no-install-recommends', PYTHON_APT, '-y', '-q'], check_rc=True)
             global apt, apt_pkg
             import apt
@@ -1057,7 +1061,6 @@ def main():
     use_apt_get = p['force_apt_get']
 
     if not use_apt_get and not APTITUDE_CMD:
-        module.warn("Could not find aptitude. Using apt-get instead")
         use_apt_get = True
 
     updated_cache = False
@@ -1067,14 +1070,6 @@ def main():
     dpkg_options = expand_dpkg_options(p['dpkg_options'])
     autoremove = p['autoremove']
     autoclean = p['autoclean']
-
-    # Deal with deprecated aliases
-    if p['state'] == 'installed':
-        module.deprecate("State 'installed' is deprecated. Using state 'present' instead.", version="2.9")
-        p['state'] = 'present'
-    if p['state'] == 'removed':
-        module.deprecate("State 'removed' is deprecated. Using state 'absent' instead.", version="2.9")
-        p['state'] = 'absent'
 
     # Get the cache object
     cache = get_cache(module)
@@ -1137,7 +1132,7 @@ def main():
                         force=force_yes, dpkg_options=p['dpkg_options'])
 
         unfiltered_packages = p['package'] or ()
-        packages = [package for package in unfiltered_packages if package != '*']
+        packages = [package.strip() for package in unfiltered_packages if package != '*']
         all_installed = '*' in unfiltered_packages
         latest = p['state'] == 'latest'
 

@@ -1,2 +1,0 @@
-minor_changes:
-  - cs_network_offering - new for_vpc parameter which allows the creation of network offers for VPC.

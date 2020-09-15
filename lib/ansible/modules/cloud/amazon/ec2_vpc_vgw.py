@@ -488,7 +488,7 @@ def ensure_vgw_absent(client, module):
     else:
         # Check that a name and type argument has been supplied if no vgw-id
         if not module.params.get('name') or not module.params.get('type'):
-            module.fail_json(msg='A name and type is required when no vgw-id and a status of \'absent\' is suppled')
+            module.fail_json(msg='A name and type is required when no vgw-id and a status of \'absent\' is supplied')
 
         existing_vgw = find_vgw(client, module)
         if existing_vgw != [] and existing_vgw[0]['State'] != 'deleted':

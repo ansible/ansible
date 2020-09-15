@@ -1,0 +1,36 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      - name: "Port-Channel10"
+        members:
+          - member: Ethernet2
+            mode: "on"
+
+- eos_facts:
+    gather_network_resources: lag_interfaces
+  become: yes
+
+- name: Override device configuration of all LAGs on device with provided configuration.
+  eos_lag_interfaces:
+    config: "{{ config }}"
+    state: overridden
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(result.before)|length == 0"
+
+- eos_facts:
+    gather_network_resources: lag_interfaces
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(result.after)|length == 0"
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(config)|length == 0"

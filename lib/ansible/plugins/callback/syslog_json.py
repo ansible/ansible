@@ -14,7 +14,7 @@ DOCUMENTATION = '''
     version_added: "1.9"
     description:
       - This plugin logs ansible-playbook and ansible runs to a syslog server in JSON format
-      - Before 2.4 only environment variables were available for configuration
+      - Before 2.9 only environment variables were available for configuration
     options:
       server:
         description: syslog server that will receive the event
@@ -67,12 +67,20 @@ class CallbackModule(CallbackBase):
 
         super(CallbackModule, self).__init__()
 
+    def set_options(self, task_keys=None, var_options=None, direct=None):
+
+        super(CallbackModule, self).set_options(task_keys=task_keys, var_options=var_options, direct=direct)
+
+        syslog_host = self.get_option("server")
+        syslog_port = int(self.get_option("port"))
+        syslog_facility = self.get_option("facility")
+
         self.logger = logging.getLogger('ansible logger')
         self.logger.setLevel(logging.DEBUG)
 
         self.handler = logging.handlers.SysLogHandler(
-            address=(os.getenv('SYSLOG_SERVER', 'localhost'), int(os.getenv('SYSLOG_PORT', 514))),
-            facility=os.getenv('SYSLOG_FACILITY', logging.handlers.SysLogHandler.LOG_USER)
+            address=(syslog_host, syslog_port),
+            facility=syslog_facility
         )
         self.logger.addHandler(self.handler)
         self.hostname = socket.gethostname()

@@ -1,0 +1,6 @@
+---
+bugfixes:
+- >
+  netbox_ip_address - Fixed issue where it would create duplicate IP addresses when trying to serialize the IP address object
+  which doesn't have the ``.serialize()`` method. This should also prevent future duplicate objects being created if they don't
+  have the ``.serialize()`` method as well.

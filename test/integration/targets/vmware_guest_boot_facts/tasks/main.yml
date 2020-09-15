@@ -2,75 +2,50 @@
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
+- when: vcsim is not defined
+  block:
+  - import_role:
+      name: prepare_vmware_tests
+    vars:
+      setup_attach_host: true
+      setup_datastore: true
+      setup_virtualmachines: true
 
-- name: kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-- name: start vcsim with no folders
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?datacenter=1&cluster=1&folder=0
-  register: vcsim_instance
+  - name: Gather facts about VM boot order
+    vmware_guest_boot_facts:
+      validate_certs: no
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      name: "{{ virtual_machines[0].name }}"
+    register: vm1_facts
+  - debug: var=vm1_facts
+  - name: assert that values are set
+    assert:
+      that:
+          - vm1_facts.vm_boot_facts.current_boot_delay is defined
+          - vm1_facts.vm_boot_facts.current_boot_firmware is defined
+          - vm1_facts.vm_boot_facts.current_boot_order is defined
+          - vm1_facts.vm_boot_facts.current_boot_retry_delay is defined
+          - vm1_facts.vm_boot_facts.current_boot_retry_enabled is defined
+          - vm1_facts.vm_boot_facts.current_enter_bios_setup is defined
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- name: get a list of VMS from vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/govc_find?filter=VM
-  register: vmlist
-
-- debug: var=vcsim_instance
-- debug: var=vmlist
-
-- name: Gather facts about VM boot order
-  vmware_guest_boot_facts:
-    validate_certs: no
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ item|basename }}"
-  with_items: "{{ vmlist['json'] }}"
-  register: boot_d1_c1_f0
-
-- debug: var=boot_d1_c1_f0
-
-- name: assert that changes were made
-  assert:
-    that:
-        - boot_d1_c1_f0.results.vm_boot_facts.current_boot_delay is defined
-        - boot_d1_c1_f0.results.vm_boot_facts.current_boot_firmware is defined
-        - boot_d1_c1_f0.results.vm_boot_facts.current_boot_order is defined
-        - boot_d1_c1_f0.results.vm_boot_facts.current_boot_retry_delay is defined
-        - boot_d1_c1_f0.results.vm_boot_facts.current_boot_retry_enabled is defined
-        - boot_d1_c1_f0.results.vm_boot_facts.current_enter_bios_setup is defined
-
-- name: Gather facts about VM boot order in check mode
-  vmware_guest_boot_facts:
-    validate_certs: no
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    name: "{{ item|basename }}"
-  with_items: "{{ vmlist['json'] }}"
-  check_mode: yes
-  register: boot_d1_c1_f0
-
-- debug: var=boot_d1_c1_f0
-
-- name: assert that changes were made
-  assert:
-    that:
-        - boot_d1_c1_f0.results.vm_boot_facts.current_boot_delay is defined
-        - boot_d1_c1_f0.results.vm_boot_facts.current_boot_firmware is defined
-        - boot_d1_c1_f0.results.vm_boot_facts.current_boot_order is defined
-        - boot_d1_c1_f0.results.vm_boot_facts.current_boot_retry_delay is defined
-        - boot_d1_c1_f0.results.vm_boot_facts.current_boot_retry_enabled is defined
-        - boot_d1_c1_f0.results.vm_boot_facts.current_enter_bios_setup is defined
+  - name: Gather facts about VM boot order in check mode
+    vmware_guest_boot_facts:
+      validate_certs: no
+      hostname: '{{ vcenter_hostname }}'
+      username: '{{ vcenter_username }}'
+      password: '{{ vcenter_password }}'
+      name: "{{ virtual_machines[0].name }}"
+    check_mode: yes
+    register: vm1_facts
+  - debug: var=vm1_facts
+  - name: assert that values are set
+    assert:
+      that:
+          - vm1_facts.vm_boot_facts.current_boot_delay is defined
+          - vm1_facts.vm_boot_facts.current_boot_firmware is defined
+          - vm1_facts.vm_boot_facts.current_boot_order is defined
+          - vm1_facts.vm_boot_facts.current_boot_retry_delay is defined
+          - vm1_facts.vm_boot_facts.current_boot_retry_enabled is defined
+          - vm1_facts.vm_boot_facts.current_enter_bios_setup is defined

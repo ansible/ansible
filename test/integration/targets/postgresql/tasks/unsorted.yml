@@ -1,0 +1,789 @@
+#
+# Create and destroy db
+#
+- name: Create DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: assert that module reports the db was created
+  assert:
+    that:
+       - result is changed
+       - "result.db == db_name"
+
+- name: Check that database created
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+
+- name: Run create on an already created db
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: assert that module reports the db was unchanged
+  assert:
+    that:
+       - result is not changed
+
+- name: Destroy DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: absent
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: assert that module reports the db was changed
+  assert:
+    that:
+       - result is changed
+
+- name: Check that database was destroyed
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+
+- name: Destroy DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    state: absent
+    name: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: assert that removing an already removed db makes no change
+  assert:
+    that:
+       - result is not changed
+
+
+# This corner case works to add but not to drop.  This is sufficiently crazy
+# that I'm not going to attempt to fix it unless someone lets me know that they
+# need the functionality
+#
+#    - postgresql_db:
+#        state: 'present'
+#        name: '"silly.""name"'
+#    - shell: echo "select datname from pg_database where datname = 'silly.""name';" | psql
+#      register: result
+#
+#    - assert:
+#        that: "result.stdout_lines[-1] == '(1 row)'"
+#    - postgresql_db:
+#        state: absent
+#        name: '"silly.""name"'
+#    - shell: echo "select datname from pg_database where datname = 'silly.""name';" | psql
+#      register: result
+#
+#    - assert:
+#        that: "result.stdout_lines[-1] == '(0 rows)'"
+
+#
+# Test conn_limit, encoding, collate, ctype, template options
+#
+- name: Create a DB with conn_limit, encoding, collate, ctype, and template options
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: '{{ db_name }}'
+    state: 'present'
+    conn_limit: '100'
+    encoding: 'LATIN1'
+    lc_collate: 'pt_BR{{ locale_latin_suffix }}'
+    lc_ctype: 'es_ES{{ locale_latin_suffix }}'
+    template: 'template0'
+    login_user: "{{ pg_user }}"
+
+- name: Check that the DB has all of our options
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datname, datconnlimit, pg_encoding_to_char(encoding), datcollate, datctype from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+      - "'LATIN1' in result.stdout_lines[-2]"
+      - "'pt_BR' in result.stdout_lines[-2]"
+      - "'es_ES' in result.stdout_lines[-2]"
+      - "'UTF8' not in result.stdout_lines[-2]"
+      - "'en_US' not in result.stdout_lines[-2]"
+      - "'100' in result.stdout_lines[-2]"
+
+- name: Check that running db creation with options a second time does nothing
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: '{{ db_name }}'
+    state: 'present'
+    conn_limit: '100'
+    encoding: 'LATIN1'
+    lc_collate: 'pt_BR{{ locale_latin_suffix }}'
+    lc_ctype: 'es_ES{{ locale_latin_suffix }}'
+    template: 'template0'
+    login_user: "{{ pg_user }}"
+  register: result
+
+- assert:
+    that:
+      - result is not changed
+
+
+- name: Check that attempting to change encoding returns an error
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: '{{ db_name }}'
+    state: 'present'
+    encoding: 'UTF8'
+    lc_collate: 'pt_BR{{ locale_utf8_suffix }}'
+    lc_ctype: 'es_ES{{ locale_utf8_suffix }}'
+    template: 'template0'
+    login_user: "{{ pg_user }}"
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+      - result is failed
+
+- name: Check that changing the conn_limit actually works
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: '{{ db_name }}'
+    state: 'present'
+    conn_limit: '200'
+    encoding: 'LATIN1'
+    lc_collate: 'pt_BR{{ locale_latin_suffix }}'
+    lc_ctype: 'es_ES{{ locale_latin_suffix }}'
+    template: 'template0'
+    login_user: "{{ pg_user }}"
+  register: result
+
+- assert:
+    that:
+      - result is changed
+
+- name: Check that conn_limit has actually been set / updated to 200
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "SELECT datconnlimit AS conn_limit FROM pg_database WHERE datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+      - "'200' == '{{ result.stdout_lines[-2] | trim }}'"
+
+- name: Cleanup test DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: '{{ db_name }}'
+    state: 'absent'
+    login_user: "{{ pg_user }}"
+
+- shell: echo "select datname, pg_encoding_to_char(encoding), datcollate, datctype from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  become_user: "{{ pg_user }}"
+  become: yes
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+
+#
+# Create and destroy user, test 'password' and 'encrypted' parameters
+#
+# unencrypted values are not supported on newer versions
+# do not run the encrypted: no tests if on 10+
+- set_fact:
+    encryption_values:
+    - 'yes'
+
+- set_fact:
+    encryption_values: '{{ encryption_values + ["no"]}}'
+  when: postgres_version_resp.stdout is version('10', '<=')
+
+- include_tasks: test_password.yml
+  vars:
+    encrypted: '{{ loop_item }}'
+    db_password1: 'secretù' # use UTF-8
+  loop: '{{ encryption_values }}'
+  loop_control:
+    loop_var: loop_item
+
+# BYPASSRLS role attribute was introduced in PostgreSQL 9.5, so
+# we want to test attribute management differently depending
+# on the version.
+- set_fact:
+    bypassrls_supported: "{{ postgres_version_resp.stdout is version('9.5.0', '>=') }}"
+
+# test 'no_password_change' and 'role_attr_flags' parameters
+- include_tasks: test_no_password_change.yml
+  vars:
+    no_password_changes: '{{ loop_item }}'
+  loop:
+    - 'yes'
+    - 'no'
+  loop_control:
+    loop_var: loop_item
+
+### TODO: fail_on_user
+
+#
+# Test db ownership
+#
+- name: Create an unprivileged user to own a DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    encrypted: 'yes'
+    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
+    login_user: "{{ pg_user }}"
+    db: postgres
+
+- name: Create db with user ownership
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: "{{ db_name }}"
+    state: "present"
+    owner: "{{ db_user1 }}"
+    login_user: "{{ pg_user }}"
+
+- name: Check that the user owns the newly created DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select pg_catalog.pg_get_userbyid(datdba) from pg_catalog.pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user1 }}' == '{{ result.stdout_lines[-2] | trim }}'"
+
+- name: Change the owner on an existing db
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: "{{ db_name }}"
+    state: "present"
+    owner: "{{ pg_user }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: assert that ansible says it changed the db
+  assert:
+    that:
+      - result is changed
+
+- name: Check that the user owns the newly created DB
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select pg_catalog.pg_get_userbyid(datdba) from pg_catalog.pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+      - "'{{ pg_user }}' == '{{ result.stdout_lines[-2] | trim }}'"
+
+- name: Cleanup db
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: "{{ db_name }}"
+    state: "absent"
+    login_user: "{{ pg_user }}"
+
+- name: Check that database was destroyed
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+
+- name: Cleanup test user
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    state: 'absent'
+    login_user: "{{ pg_user }}"
+    db: postgres
+
+- name: Check that they were removed
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+
+#
+# Test settings privileges
+#
+- name: Create db
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: "{{ db_name }}"
+    state: "present"
+    login_user: "{{ pg_user }}"
+
+- name: Create some tables on the db
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "create table test_table1 (field text);" | psql {{ db_name }}
+
+- become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "create table test_table2 (field text);" | psql {{ db_name }}
+
+- vars:
+    db_password: 'secretù' # use UTF-8
+  block:
+    - name: Create a user with some permissions on the db
+      become_user: "{{ pg_user }}"
+      become: yes
+      postgresql_user:
+        name: "{{ db_user1 }}"
+        encrypted: 'yes'
+        password: "md5{{ (db_password ~ db_user1) | hash('md5')}}"
+        db: "{{ db_name }}"
+        priv: 'test_table1:INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/test_table2:INSERT/CREATE,CONNECT,TEMP'
+        login_user: "{{ pg_user }}"
+
+    - include_tasks: pg_authid_not_readable.yml
+
+- name: Check that the user has the requested permissions (table1)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
+  register: result_table1
+
+- name: Check that the user has the requested permissions (table2)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
+  register: result_table2
+
+- name: Check that the user has the requested permissions (database)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
+  register: result_database
+
+- assert:
+    that:
+      - "result_table1.stdout_lines[-1] == '(7 rows)'"
+      - "'INSERT' in result_table1.stdout"
+      - "'SELECT' in result_table1.stdout"
+      - "'UPDATE' in result_table1.stdout"
+      - "'DELETE' in result_table1.stdout"
+      - "'TRUNCATE' in result_table1.stdout"
+      - "'REFERENCES' in result_table1.stdout"
+      - "'TRIGGER' in result_table1.stdout"
+      - "result_table2.stdout_lines[-1] == '(1 row)'"
+      - "'INSERT' == '{{ result_table2.stdout_lines[-2] | trim }}'"
+      - "result_database.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user1 }}=CTc/{{ pg_user }}' in result_database.stdout_lines[-2]"
+
+- name: Add another permission for the user
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    encrypted: 'yes'
+    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
+    db: "{{ db_name }}"
+    priv: 'test_table2:select'
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Check that ansible reports it changed the user
+  assert:
+    that:
+      - result is changed
+
+- name: Check that the user has the requested permissions (table2)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
+  register: result_table2
+
+- assert:
+    that:
+      - "result_table2.stdout_lines[-1] == '(2 rows)'"
+      - "'INSERT' in result_table2.stdout"
+      - "'SELECT' in result_table2.stdout"
+
+
+#
+# Test priv setting via postgresql_privs module
+# (Depends on state from previous _user privs tests)
+#
+
+- name: Revoke a privilege
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    type: "table"
+    state: "absent"
+    roles: "{{ db_user1 }}"
+    privs: "INSERT"
+    objs: "test_table2"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Check that ansible reports it changed the user
+  assert:
+    that:
+      - result is changed
+
+- name: Check that the user has the requested permissions (table2)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
+  register: result_table2
+
+- assert:
+    that:
+      - "result_table2.stdout_lines[-1] == '(1 row)'"
+      - "'SELECT' == '{{ result_table2.stdout_lines[-2] | trim }}'"
+
+- name: Revoke many privileges on multiple tables
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    state: "absent"
+    roles: "{{ db_user1 }}"
+    privs: "INSERT,select,UPDATE,TRUNCATE,REFERENCES,TRIGGER,delete"
+    objs: "test_table2,test_table1"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Check that ansible reports it changed the user
+  assert:
+    that:
+      - result is changed
+
+- name: Check that permissions were revoked (table1)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
+  register: result_table1
+
+- name: Check that permissions were revoked (table2)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
+  register: result_table2
+
+- assert:
+    that:
+      - "result_table1.stdout_lines[-1] == '(0 rows)'"
+      - "result_table2.stdout_lines[-1] == '(0 rows)'"
+
+- name: Revoke database privileges
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    type: "database"
+    state: "absent"
+    roles: "{{ db_user1 }}"
+    privs: "Create,connect,TEMP"
+    objs: "{{ db_name }}"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Check that the user has the requested permissions (database)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
+  register: result_database
+
+- assert:
+    that:
+      - "result_database.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user1 }}' not in result_database.stdout"
+
+- name: Grant database privileges
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    type: "database"
+    state: "present"
+    roles: "{{ db_user1 }}"
+    privs: "CREATE,connect"
+    objs: "{{ db_name }}"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+  register: result
+
+- name: Check that ansible reports it changed the user
+  assert:
+    that:
+      - result is changed
+
+- name: Check that the user has the requested permissions (database)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
+  register: result_database
+
+- assert:
+    that:
+      - "result_database.stdout_lines[-1] == '(1 row)'"
+      - "'{{ db_user1 }}=Cc' in result_database.stdout"
+
+- name: Grant a single privilege on a table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    state: "present"
+    roles: "{{ db_user1 }}"
+    privs: "INSERT"
+    objs: "test_table1"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Check that permissions were added (table1)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
+  register: result_table1
+
+- assert:
+    that:
+      - "result_table1.stdout_lines[-1] == '(1 row)'"
+      - "'{{ result_table1.stdout_lines[-2] | trim }}' == 'INSERT'"
+
+- name: Grant many privileges on multiple tables
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_privs:
+    state: "present"
+    roles: "{{ db_user1 }}"
+    privs: 'INSERT,SELECT,UPDATE,DELETE,TRUNCATE,REFERENCES,trigger'
+    objs: "test_table2,test_table1"
+    db: "{{ db_name }}"
+    login_user: "{{ pg_user }}"
+
+- name: Check that permissions were added (table1)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table1';" | psql {{ db_name }}
+  register: result_table1
+
+- name: Check that permissions were added (table2)
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select privilege_type from information_schema.role_table_grants where grantee='{{ db_user1 }}' and table_name='test_table2';" | psql {{ db_name }}
+  register: result_table2
+
+- assert:
+    that:
+      - "result_table1.stdout_lines[-1] == '(7 rows)'"
+      - "'INSERT' in result_table1.stdout"
+      - "'SELECT' in result_table1.stdout"
+      - "'UPDATE' in result_table1.stdout"
+      - "'DELETE' in result_table1.stdout"
+      - "'TRUNCATE' in result_table1.stdout"
+      - "'REFERENCES' in result_table1.stdout"
+      - "'TRIGGER' in result_table1.stdout"
+      - "result_table2.stdout_lines[-1] == '(7 rows)'"
+      - "'INSERT' in result_table2.stdout"
+      - "'SELECT' in result_table2.stdout"
+      - "'UPDATE' in result_table2.stdout"
+      - "'DELETE' in result_table2.stdout"
+      - "'TRUNCATE' in result_table2.stdout"
+      - "'REFERENCES' in result_table2.stdout"
+      - "'TRIGGER' in result_table2.stdout"
+
+#
+# Cleanup
+#
+- name: Cleanup db
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    name: "{{ db_name }}"
+    state: "absent"
+    login_user: "{{ pg_user }}"
+
+- name: Check that database was destroyed
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+
+- name: Cleanup test user
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    state: 'absent'
+    login_user: "{{ pg_user }}"
+    db: postgres
+
+- name: Check that they were removed
+  become_user: "{{ pg_user }}"
+  become: yes
+  shell: echo "select * from pg_user where usename='{{ db_user1 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+
+#
+# Test login_user functionality
+#
+- name: Create a user to test login module parameters
+  become: yes
+  become_user: "{{ pg_user }}"
+  postgresql_user:
+    name: "{{ db_user1 }}"
+    state: "present"
+    encrypted: 'yes'
+    password: "password"
+    role_attr_flags: "CREATEDB,LOGIN,CREATEROLE"
+    login_user: "{{ pg_user }}"
+    db: postgres
+
+- name: Create db
+  postgresql_db:
+    name: "{{ db_name }}"
+    state: "present"
+    login_user: "{{ db_user1 }}"
+    login_password: "password"
+    login_host: "localhost"
+
+- name: Check that database created
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+
+- name: Create a user
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: "present"
+    encrypted: 'yes'
+    password: "md55c8ccfd9d6711fc69a7eae647fc54f51"
+    db: "{{ db_name }}"
+    login_user: "{{ db_user1 }}"
+    login_password: "password"
+    login_host: "localhost"
+
+- name: Check that it was created
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "select * from pg_user where usename='{{ db_user2 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(1 row)'"
+
+- name: Grant database privileges
+  postgresql_privs:
+    type: "database"
+    state: "present"
+    roles: "{{ db_user2 }}"
+    privs: "CREATE,connect"
+    objs: "{{ db_name }}"
+    db: "{{ db_name }}"
+    login: "{{ db_user1 }}"
+    password: "password"
+    host: "localhost"
+
+- name: Check that the user has the requested permissions (database)
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "select datacl from pg_database where datname='{{ db_name }}';" | psql {{ db_name }}
+  register: result_database
+
+- assert:
+    that:
+      - "result_database.stdout_lines[-1] == '(1 row)'"
+      - "db_user2 ~ '=Cc' in result_database.stdout"
+
+- name: Remove user
+  postgresql_user:
+    name: "{{ db_user2 }}"
+    state: 'absent'
+    priv: "ALL"
+    db: "{{ db_name }}"
+    login_user: "{{ db_user1 }}"
+    login_password: "password"
+    login_host: "localhost"
+
+- name: Check that they were removed
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "select * from pg_user where usename='{{ db_user2 }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"
+
+- name: Destroy DB
+  postgresql_db:
+    state: absent
+    name: "{{ db_name }}"
+    login_user: "{{ db_user1 }}"
+    login_password: "password"
+    login_host: "localhost"
+
+- name: Check that database was destroyed
+  become: yes
+  become_user: "{{ pg_user }}"
+  shell: echo "select datname from pg_database where datname = '{{ db_name }}';" | psql -d postgres
+  register: result
+
+- assert:
+    that:
+      - "result.stdout_lines[-1] == '(0 rows)'"

@@ -38,30 +38,36 @@ options:
     - Alias C(switch) is added in version 2.4.
     required: yes
     aliases: [ switch_name ]
+    type: str
   nics:
     description:
     - A list of vmnic names or vmnic name to attach to vSwitch.
     - Alias C(nics) is added in version 2.4.
     aliases: [ nic_name ]
     default: []
+    type: list
   number_of_ports:
     description:
     - Number of port to configure on vSwitch.
     default: 128
+    type: int
   mtu:
     description:
     - MTU to configure on vSwitch.
     default: 1500
+    type: int
   state:
     description:
     - Add or remove the switch.
     default: present
     choices: [ absent, present ]
+    type: str
   esxi_hostname:
     description:
     - Manage the vSwitch using this ESXi host system.
     version_added: "2.5"
     aliases: [ 'host' ]
+    type: str
 extends_documentation_fragment:
 - vmware.documentation
 '''
@@ -77,7 +83,7 @@ EXAMPLES = '''
     mtu: 9000
   delegate_to: localhost
 
-- name: Add a VMWare vSwitch without any physical NIC attached
+- name: Add a VMware vSwitch without any physical NIC attached
   vmware_vswitch:
     hostname: '{{ esxi_hostname }}'
     username: '{{ esxi_username }}'
@@ -86,7 +92,7 @@ EXAMPLES = '''
     mtu: 9000
   delegate_to: localhost
 
-- name: Add a VMWare vSwitch with multiple NICs
+- name: Add a VMware vSwitch with multiple NICs
   vmware_vswitch:
     hostname: '{{ esxi_hostname }}'
     username: '{{ esxi_username }}'

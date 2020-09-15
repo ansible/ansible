@@ -1,0 +1,5 @@
+---
+bugfixes:
+- >
+  os_subnet - it is valid to specify an explicit ``subnetpool_id`` rather than
+  ``use_default_subnetpool`` or ``cidr``

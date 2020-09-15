@@ -39,7 +39,7 @@ notes:
     - "   Resource > Assign Virtual Machine to Resource Pool"
     - "Module may require additional privileges as well, which may be required for gathering facts - e.g. ESXi configurations."
     - Tested on vSphere 5.5, 6.0, 6.5 and 6.7
-    - Use SCSI disks instead of IDE when you want to expand online disks by specifing a SCSI controller
+    - Use SCSI disks instead of IDE when you want to expand online disks by specifying a SCSI controller
     - "For additional information please visit Ansible VMware community wiki - U(https://github.com/ansible/community/wiki/VMware)."
 options:
   state:
@@ -84,7 +84,7 @@ options:
     - Please note that a supplied UUID will be ignored on virtual machine creation, as VMware creates the UUID internally.
   use_instance_uuid:
     description:
-    - Whether to use the VMWare instance UUID rather than the BIOS UUID.
+    - Whether to use the VMware instance UUID rather than the BIOS UUID.
     default: no
     type: bool
     version_added: '2.8'
@@ -134,9 +134,10 @@ options:
     - ' - C(memory_mb) (integer): Amount of memory in MB.'
     - ' - C(nested_virt) (bool): Enable nested virtualization. version_added: 2.5'
     - ' - C(num_cpus) (integer): Number of CPUs.'
-    - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket. Value should be multiple of C(num_cpus).'
+    - ' - C(num_cpu_cores_per_socket) (integer): Number of Cores Per Socket.'
+    - " C(num_cpus) must be a multiple of C(num_cpu_cores_per_socket).
+        For example to create a VM with 2 sockets of 4 cores, specify C(num_cpus): 8 and C(num_cpu_cores_per_socket): 4"
     - ' - C(scsi) (string): Valid values are C(buslogic), C(lsilogic), C(lsilogicsas) and C(paravirtual) (default).'
-    - ' - C(memory_reservation) (integer): Amount of memory in MB to set resource limits for memory. version_added: 2.5'
     - " - C(memory_reservation_lock) (boolean): If set true, memory resource reservation for the virtual machine
           will always be equal to the virtual machine's memory size. version_added: 2.5"
     - ' - C(max_connections) (integer): Maximum number of active remote display connections for the virtual machines.
@@ -144,7 +145,7 @@ options:
     - ' - C(mem_limit) (integer): The memory utilization of a virtual machine will not exceed this limit. Unit is MB.
           version_added: 2.5'
     - ' - C(mem_reservation) (integer): The amount of memory resource that is guaranteed available to the virtual
-          machine. Unit is MB. version_added: 2.5'
+          machine. Unit is MB. C(memory_reservation) is alias to this. version_added: 2.5'
     - ' - C(cpu_limit) (integer): The CPU utilization of a virtual machine will not exceed this limit. Unit is MHz.
           version_added: 2.5'
     - ' - C(cpu_reservation) (integer): The amount of CPU resource that is guaranteed available to the virtual machine.
@@ -164,12 +165,12 @@ options:
     - This parameter is case sensitive.
     - 'Examples:'
     - "  virtual machine with RHEL7 64 bit, will be 'rhel7_64Guest'"
-    - "  virtual machine with CensOS 64 bit, will be 'centos64Guest'"
+    - "  virtual machine with CentOS 64 bit, will be 'centos64Guest'"
     - "  virtual machine with Ubuntu 64 bit, will be 'ubuntu64Guest'"
-    - This field is required when creating a virtual machine.
+    - This field is required when creating a virtual machine, not required when creating from the template.
     - >
          Valid values are referenced here:
-         U(http://pubs.vmware.com/vsphere-6-5/topic/com.vmware.wssdk.apiref.doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
+         U(https://code.vmware.com/apis/358/doc/vim.vm.GuestOsDescriptor.GuestOsIdentifier.html)
     version_added: '2.3'
   disk:
     description:
@@ -185,7 +186,7 @@ options:
     - '     Default: C(None) thick disk, no eagerzero.'
     - ' - C(datastore) (string): The name of datastore which will be used for the disk. If C(autoselect_datastore) is set to True,
           then will select the less used datastore whose name contains this "disk.datastore" string.'
-    - ' - C(filename) (string): Existing disk image to be used. Filename must be already exists on the datastore.'
+    - ' - C(filename) (string): Existing disk image to be used. Filename must already exist on the datastore.'
     - '   Specify filename string in C([datastore_name] path/to/file.vmdk) format. Added in version 2.8.'
     - ' - C(autoselect_datastore) (bool): select the less used datastore. "disk.datastore" and "disk.autoselect_datastore"
           will not be used if C(datastore) is specified outside this C(disk) configuration.'
@@ -197,9 +198,21 @@ options:
   cdrom:
     description:
     - A CD-ROM configuration for the virtual machine.
+    - Or a list of CD-ROMs configuration for the virtual machine. Added in version 2.9.
+    - 'Parameters C(controller_type), C(controller_number), C(unit_number), C(state) are added for a list of CD-ROMs
+      configuration support.'
     - 'Valid attributes are:'
-    - ' - C(type) (string): The type of CD-ROM, valid options are C(none), C(client) or C(iso). With C(none) the CD-ROM will be disconnected but present.'
-    - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso). Required if type is set C(iso).'
+    - ' - C(type) (string): The type of CD-ROM, valid options are C(none), C(client) or C(iso). With C(none) the CD-ROM
+          will be disconnected but present.'
+    - ' - C(iso_path) (string): The datastore path to the ISO file to use, in the form of C([datastore1] path/to/file.iso).
+          Required if type is set C(iso).'
+    - ' - C(controller_type) (string): Default value is C(ide). Only C(ide) controller type for CD-ROM is supported for
+          now, will add SATA controller type in the future.'
+    - ' - C(controller_number) (int): For C(ide) controller, valid value is 0 or 1.'
+    - ' - C(unit_number) (int): For CD-ROM device attach to C(ide) controller, valid value is 0 or 1.
+          C(controller_number) and C(unit_number) are mandatory attributes.'
+    - ' - C(state) (string): Valid value is C(present) or C(absent). Default is C(present). If set to C(absent), then
+          the specified CD-ROM will be removed. For C(ide) controller, hot-add or hot-remove CD-ROM is not supported.'
     version_added: '2.5'
   resource_pool:
     description:
@@ -282,7 +295,7 @@ options:
     description:
     - A list of networks (in the order of the NICs).
     - Removing NICs is not allowed, while reconfiguring the virtual machine.
-    - All parameters and VMware object names are case sensetive.
+    - All parameters and VMware object names are case sensitive.
     - 'One of the below parameters is required per entry:'
     - ' - C(name) (string): Name of the portgroup or distributed virtual portgroup for this interface.
           When specifying distributed virtual portgroup make sure given C(esxi_hostname) or C(cluster) is associated with it.'
@@ -319,6 +332,11 @@ options:
     - ' - C(domain) (string): DNS domain name to use.'
     - ' - C(hostname) (string): Computer hostname (default: shorted C(name) parameter). Allowed characters are alphanumeric (uppercase and lowercase)
           and minus, rest of the characters are dropped as per RFC 952.'
+    - 'Parameters related to Linux customization:'
+    - ' - C(timezone) (string): Timezone (See List of supported time zones for different vSphere versions in Linux/Unix
+          systems (2145518) U(https://kb.vmware.com/s/article/2145518)). version_added: 2.9'
+    - ' - C(hwclockUTC) (bool): Specifies whether the hardware clock is in UTC or local time.
+          True when the hardware clock is in UTC, False when the hardware clock is in local time. version_added: 2.9'
     - 'Parameters related to Windows customization:'
     - ' - C(autologon) (bool): Auto logon after virtual machine customization (default: False).'
     - ' - C(autologoncount) (int): Number of autologon after reboot (default: 1).'
@@ -415,7 +433,6 @@ EXAMPLES = r'''
       num_cpus: 6
       num_cpu_cores_per_socket: 3
       scsi: paravirtual
-      memory_reservation: 512
       memory_reservation_lock: True
       mem_limit: 8096
       mem_reservation: 4096
@@ -584,6 +601,7 @@ except ImportError:
 
 from random import randint
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.common.network import is_mac
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs,
                                          compile_folder_path_for_object, serialize_spec,
@@ -592,8 +610,15 @@ from ansible.module_utils.vmware import (find_obj, gather_vm_facts, get_all_objs
                                          wait_for_task, TaskError)
 
 
+def list_or_dict(value):
+    if isinstance(value, list) or isinstance(value, dict):
+        return value
+    else:
+        raise ValueError("'%s' is not valid, valid type is 'list' or 'dict'." % value)
+
+
 class PyVmomiDeviceHelper(object):
-    """ This class is a helper to create easily VMWare Objects for PyVmomiHelper """
+    """ This class is a helper to create easily VMware Objects for PyVmomiHelper """
 
     def __init__(self, module):
         self.module = module
@@ -624,7 +649,7 @@ class PyVmomiDeviceHelper(object):
         return isinstance(device, tuple(self.scsi_device_type.values()))
 
     @staticmethod
-    def create_ide_controller():
+    def create_ide_controller(bus_number=0):
         ide_ctl = vim.vm.device.VirtualDeviceSpec()
         ide_ctl.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         ide_ctl.device = vim.vm.device.VirtualIDEController()
@@ -632,17 +657,18 @@ class PyVmomiDeviceHelper(object):
         # While creating a new IDE controller, temporary key value
         # should be unique negative integers
         ide_ctl.device.key = -randint(200, 299)
-        ide_ctl.device.busNumber = 0
+        ide_ctl.device.busNumber = bus_number
 
         return ide_ctl
 
     @staticmethod
-    def create_cdrom(ide_ctl, cdrom_type, iso_path=None):
+    def create_cdrom(ide_device, cdrom_type, iso_path=None, unit_number=0):
         cdrom_spec = vim.vm.device.VirtualDeviceSpec()
         cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.add
         cdrom_spec.device = vim.vm.device.VirtualCdrom()
-        cdrom_spec.device.controllerKey = ide_ctl.device.key
-        cdrom_spec.device.key = -1
+        cdrom_spec.device.controllerKey = ide_device.key
+        cdrom_spec.device.key = -randint(3000, 3999)
+        cdrom_spec.device.unitNumber = unit_number
         cdrom_spec.device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
         cdrom_spec.device.connectable.allowGuestControl = True
         cdrom_spec.device.connectable.startConnected = (cdrom_type != "none")
@@ -671,6 +697,26 @@ class PyVmomiDeviceHelper(object):
                     cdrom_device.connectable.allowGuestControl and
                     cdrom_device.connectable.startConnected and
                     (vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOn or cdrom_device.connectable.connected))
+
+    @staticmethod
+    def update_cdrom_config(vm_obj, cdrom_spec, cdrom_device, iso_path=None):
+        # Updating an existing CD-ROM
+        if cdrom_spec["type"] in ["client", "none"]:
+            cdrom_device.backing = vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo()
+        elif cdrom_spec["type"] == "iso" and iso_path is not None:
+            cdrom_device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=iso_path)
+        cdrom_device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
+        cdrom_device.connectable.allowGuestControl = True
+        cdrom_device.connectable.startConnected = (cdrom_spec["type"] != "none")
+        if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+            cdrom_device.connectable.connected = (cdrom_spec["type"] != "none")
+
+    def remove_cdrom(self, cdrom_device):
+        cdrom_spec = vim.vm.device.VirtualDeviceSpec()
+        cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.remove
+        cdrom_spec.device = cdrom_device
+
+        return cdrom_spec
 
     def create_scsi_disk(self, scsi_ctl, disk_index=None):
         diskspec = vim.vm.device.VirtualDeviceSpec()
@@ -724,7 +770,7 @@ class PyVmomiDeviceHelper(object):
         nic.device.connectable.startConnected = bool(device_infos.get('start_connected', True))
         nic.device.connectable.allowGuestControl = bool(device_infos.get('allow_guest_control', True))
         nic.device.connectable.connected = True
-        if 'mac' in device_infos and self.is_valid_mac_addr(device_infos['mac']):
+        if 'mac' in device_infos and is_mac(device_infos['mac']):
             nic.device.addressType = 'manual'
             nic.device.macAddress = device_infos['mac']
         else:
@@ -732,23 +778,11 @@ class PyVmomiDeviceHelper(object):
 
         return nic
 
-    @staticmethod
-    def is_valid_mac_addr(mac_addr):
-        """
-        Function to validate MAC address for given string
-        Args:
-            mac_addr: string to validate as MAC address
-
-        Returns: (Boolean) True if string is valid MAC address, otherwise False
-        """
-        mac_addr_regex = re.compile('[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$')
-        return bool(mac_addr_regex.match(mac_addr))
-
     def integer_value(self, input_value, name):
         """
         Function to return int value for given input, else return error
         Args:
-            input_value: Input value to retrive int value from
+            input_value: Input value to retrieve int value from
             name:  Name of the Input value (used to build error message)
         Returns: (int) if integer value can be obtained, otherwise will send a error message.
         """
@@ -791,12 +825,10 @@ class PyVmomiCache(object):
             if hasattr(objects, 'items'):
                 # resource pools come back as a dictionary
                 # make a copy
-                tmpobjs = objects.copy()
-                for k, v in objects.items():
+                for k, v in tuple(objects.items()):
                     parent_dc = self.get_parent_datacenter(k)
                     if parent_dc.name != self.dc_name:
-                        tmpobjs.pop(k, None)
-                objects = tmpobjs
+                        del objects[k]
             else:
                 # everything else should be a list
                 objects = [x for x in objects if self.get_parent_datacenter(x).name == self.dc_name]
@@ -844,6 +876,7 @@ class PyVmomiHelper(PyVmomi):
         super(PyVmomiHelper, self).__init__(module)
         self.device_helper = PyVmomiDeviceHelper(self.module)
         self.configspec = None
+        self.relospec = None
         self.change_detected = False  # a change was detected and needs to be applied through reconfiguration
         self.change_applied = False   # a change was applied meaning at least one task succeeded
         self.customspec = None
@@ -867,7 +900,7 @@ class PyVmomiHelper(PyVmomi):
 
     def configure_guestid(self, vm_obj, vm_creation=False):
         # guest_id is not required when using templates
-        if self.params['template'] and not self.params['guest_id']:
+        if self.params['template']:
             return
 
         # guest_id is only mandatory on VM creation
@@ -900,12 +933,14 @@ class PyVmomiHelper(PyVmomi):
                 if vm_obj is None or memory_allocation.limit != vm_obj.config.memoryAllocation.limit:
                     rai_change_detected = True
 
-            if 'mem_reservation' in self.params['hardware']:
-                mem_reservation = None
+            if 'mem_reservation' in self.params['hardware'] or 'memory_reservation' in self.params['hardware']:
+                mem_reservation = self.params['hardware'].get('mem_reservation')
+                if mem_reservation is None:
+                    mem_reservation = self.params['hardware'].get('memory_reservation')
                 try:
-                    mem_reservation = int(self.params['hardware'].get('mem_reservation'))
+                    mem_reservation = int(mem_reservation)
                 except ValueError:
-                    self.module.fail_json(msg="hardware.mem_reservation should be an integer value.")
+                    self.module.fail_json(msg="hardware.mem_reservation or hardware.memory_reservation should be an integer value.")
 
                 memory_allocation.reservation = mem_reservation
                 if vm_obj is None or \
@@ -1019,20 +1054,6 @@ class PyVmomiHelper(PyVmomi):
                 if vm_obj is None or self.configspec.cpuHotRemoveEnabled != vm_obj.config.cpuHotRemoveEnabled:
                     self.change_detected = True
 
-            if 'memory_reservation' in self.params['hardware']:
-                memory_reservation_mb = 0
-                try:
-                    memory_reservation_mb = int(self.params['hardware']['memory_reservation'])
-                except ValueError as e:
-                    self.module.fail_json(msg="Failed to set memory_reservation value."
-                                              "Valid value for memory_reservation value in MB (integer): %s" % e)
-
-                mem_alloc = vim.ResourceAllocationInfo()
-                mem_alloc.reservation = memory_reservation_mb
-                self.configspec.memoryAllocation = mem_alloc
-                if vm_obj is None or self.configspec.memoryAllocation.reservation != vm_obj.config.memoryAllocation.reservation:
-                    self.change_detected = True
-
             if 'memory_reservation_lock' in self.params['hardware']:
                 self.configspec.memoryReservationLockedToMax = bool(self.params['hardware']['memory_reservation_lock'])
                 if vm_obj is None or self.configspec.memoryReservationLockedToMax != vm_obj.config.memoryReservationLockedToMax:
@@ -1049,55 +1070,160 @@ class PyVmomiHelper(PyVmomi):
                 self.configspec.firmware = boot_firmware
                 self.change_detected = True
 
+    def sanitize_cdrom_params(self):
+        # cdroms {'ide': [{num: 0, cdrom: []}, {}], 'sata': [{num: 0, cdrom: []}, {}, ...]}
+        cdroms = {'ide': [], 'sata': []}
+        expected_cdrom_spec = self.params.get('cdrom')
+        if expected_cdrom_spec:
+            for cdrom_spec in expected_cdrom_spec:
+                cdrom_spec['controller_type'] = cdrom_spec.get('controller_type', 'ide').lower()
+                if cdrom_spec['controller_type'] not in ['ide', 'sata']:
+                    self.module.fail_json(msg="Invalid cdrom.controller_type: %s, valid value is 'ide' or 'sata'."
+                                              % cdrom_spec['controller_type'])
+
+                cdrom_spec['state'] = cdrom_spec.get('state', 'present').lower()
+                if cdrom_spec['state'] not in ['present', 'absent']:
+                    self.module.fail_json(msg="Invalid cdrom.state: %s, valid value is 'present', 'absent'."
+                                              % cdrom_spec['state'])
+
+                if cdrom_spec['state'] == 'present':
+                    if 'type' in cdrom_spec and cdrom_spec.get('type') not in ['none', 'client', 'iso']:
+                        self.module.fail_json(msg="Invalid cdrom.type: %s, valid value is 'none', 'client' or 'iso'."
+                                                  % cdrom_spec.get('type'))
+                    if cdrom_spec.get('type') == 'iso' and not cdrom_spec.get('iso_path'):
+                        self.module.fail_json(msg="cdrom.iso_path is mandatory when cdrom.type is set to iso.")
+
+                if cdrom_spec['controller_type'] == 'ide' and \
+                        (cdrom_spec.get('controller_number') not in [0, 1] or cdrom_spec.get('unit_number') not in [0, 1]):
+                    self.module.fail_json(msg="Invalid cdrom.controller_number: %s or cdrom.unit_number: %s, valid"
+                                              " values are 0 or 1 for IDE controller." % (cdrom_spec.get('controller_number'), cdrom_spec.get('unit_number')))
+
+                if cdrom_spec['controller_type'] == 'sata' and \
+                        (cdrom_spec.get('controller_number') not in range(0, 4) or cdrom_spec.get('unit_number') not in range(0, 30)):
+                    self.module.fail_json(msg="Invalid cdrom.controller_number: %s or cdrom.unit_number: %s,"
+                                              " valid controller_number value is 0-3, valid unit_number is 0-29"
+                                              " for SATA controller." % (cdrom_spec.get('controller_number'), cdrom_spec.get('unit_number')))
+
+                ctl_exist = False
+                for exist_spec in cdroms.get(cdrom_spec['controller_type']):
+                    if exist_spec['num'] == cdrom_spec['controller_number']:
+                        ctl_exist = True
+                        exist_spec['cdrom'].append(cdrom_spec)
+                        break
+                if not ctl_exist:
+                    cdroms.get(cdrom_spec['controller_type']).append({'num': cdrom_spec['controller_number'], 'cdrom': [cdrom_spec]})
+
+        return cdroms
+
     def configure_cdrom(self, vm_obj):
         # Configure the VM CD-ROM
-        if "cdrom" in self.params and self.params["cdrom"]:
-            if "type" not in self.params["cdrom"] or self.params["cdrom"]["type"] not in ["none", "client", "iso"]:
-                self.module.fail_json(msg="cdrom.type is mandatory")
-            if self.params["cdrom"]["type"] == "iso" and ("iso_path" not in self.params["cdrom"] or not self.params["cdrom"]["iso_path"]):
-                self.module.fail_json(msg="cdrom.iso_path is mandatory in case cdrom.type is iso")
-
+        if self.params.get('cdrom'):
             if vm_obj and vm_obj.config.template:
                 # Changing CD-ROM settings on a template is not supported
                 return
 
-            cdrom_spec = None
-            cdrom_device = self.get_vm_cdrom_device(vm=vm_obj)
-            iso_path = self.params["cdrom"]["iso_path"] if "iso_path" in self.params["cdrom"] else None
-            if cdrom_device is None:
-                # Creating new CD-ROM
-                ide_device = self.get_vm_ide_device(vm=vm_obj)
-                if ide_device is None:
-                    # Creating new IDE device
-                    ide_device = self.device_helper.create_ide_controller()
-                    self.change_detected = True
-                    self.configspec.deviceChange.append(ide_device)
-                elif len(ide_device.device) > 3:
-                    self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 4 IDE devices of which none are a cdrom")
+            if isinstance(self.params.get('cdrom'), dict):
+                self.configure_cdrom_dict(vm_obj)
+            elif isinstance(self.params.get('cdrom'), list):
+                self.configure_cdrom_list(vm_obj)
 
-                cdrom_spec = self.device_helper.create_cdrom(ide_ctl=ide_device, cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path)
-                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
-                    cdrom_spec.device.connectable.connected = (self.params["cdrom"]["type"] != "none")
+    def configure_cdrom_dict(self, vm_obj):
+        if self.params["cdrom"].get('type') not in ['none', 'client', 'iso']:
+            self.module.fail_json(msg="cdrom.type is mandatory. Options are 'none', 'client', and 'iso'.")
+        if self.params["cdrom"]['type'] == 'iso' and not self.params["cdrom"].get('iso_path'):
+            self.module.fail_json(msg="cdrom.iso_path is mandatory when cdrom.type is set to iso.")
 
-            elif not self.device_helper.is_equal_cdrom(vm_obj=vm_obj, cdrom_device=cdrom_device, cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path):
-                # Updating an existing CD-ROM
-                if self.params["cdrom"]["type"] in ["client", "none"]:
-                    cdrom_device.backing = vim.vm.device.VirtualCdrom.RemotePassthroughBackingInfo()
-                elif self.params["cdrom"]["type"] == "iso":
-                    cdrom_device.backing = vim.vm.device.VirtualCdrom.IsoBackingInfo(fileName=iso_path)
-                cdrom_device.connectable = vim.vm.device.VirtualDevice.ConnectInfo()
-                cdrom_device.connectable.allowGuestControl = True
-                cdrom_device.connectable.startConnected = (self.params["cdrom"]["type"] != "none")
-                if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
-                    cdrom_device.connectable.connected = (self.params["cdrom"]["type"] != "none")
-
-                cdrom_spec = vim.vm.device.VirtualDeviceSpec()
-                cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
-                cdrom_spec.device = cdrom_device
-
-            if cdrom_spec:
+        cdrom_spec = None
+        cdrom_devices = self.get_vm_cdrom_devices(vm=vm_obj)
+        iso_path = self.params["cdrom"].get("iso_path")
+        if len(cdrom_devices) == 0:
+            # Creating new CD-ROM
+            ide_devices = self.get_vm_ide_devices(vm=vm_obj)
+            if len(ide_devices) == 0:
+                # Creating new IDE device
+                ide_ctl = self.device_helper.create_ide_controller()
+                ide_device = ide_ctl.device
                 self.change_detected = True
-                self.configspec.deviceChange.append(cdrom_spec)
+                self.configspec.deviceChange.append(ide_ctl)
+            else:
+                ide_device = ide_devices[0]
+                if len(ide_device.device) > 3:
+                    self.module.fail_json(msg="hardware.cdrom specified for a VM or template which already has 4"
+                                              " IDE devices of which none are a cdrom")
+
+            cdrom_spec = self.device_helper.create_cdrom(ide_device=ide_device, cdrom_type=self.params["cdrom"]["type"],
+                                                         iso_path=iso_path)
+            if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                cdrom_spec.device.connectable.connected = (self.params["cdrom"]["type"] != "none")
+
+        elif not self.device_helper.is_equal_cdrom(vm_obj=vm_obj, cdrom_device=cdrom_devices[0],
+                                                   cdrom_type=self.params["cdrom"]["type"], iso_path=iso_path):
+            self.device_helper.update_cdrom_config(vm_obj, self.params["cdrom"], cdrom_devices[0], iso_path=iso_path)
+            cdrom_spec = vim.vm.device.VirtualDeviceSpec()
+            cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+            cdrom_spec.device = cdrom_devices[0]
+
+        if cdrom_spec:
+            self.change_detected = True
+            self.configspec.deviceChange.append(cdrom_spec)
+
+    def configure_cdrom_list(self, vm_obj):
+        configured_cdroms = self.sanitize_cdrom_params()
+        cdrom_devices = self.get_vm_cdrom_devices(vm=vm_obj)
+        # configure IDE CD-ROMs
+        if configured_cdroms['ide']:
+            ide_devices = self.get_vm_ide_devices(vm=vm_obj)
+            for expected_cdrom_spec in configured_cdroms['ide']:
+                ide_device = None
+                for device in ide_devices:
+                    if device.busNumber == expected_cdrom_spec['num']:
+                        ide_device = device
+                        break
+                # if not find the matched ide controller or no existing ide controller
+                if not ide_device:
+                    ide_ctl = self.device_helper.create_ide_controller(bus_number=expected_cdrom_spec['num'])
+                    ide_device = ide_ctl.device
+                    self.change_detected = True
+                    self.configspec.deviceChange.append(ide_ctl)
+
+                for cdrom in expected_cdrom_spec['cdrom']:
+                    cdrom_device = None
+                    iso_path = cdrom.get('iso_path')
+                    unit_number = cdrom.get('unit_number')
+                    for target_cdrom in cdrom_devices:
+                        if target_cdrom.controllerKey == ide_device.key and target_cdrom.unitNumber == unit_number:
+                            cdrom_device = target_cdrom
+                            break
+                    # create new CD-ROM
+                    if not cdrom_device and cdrom.get('state') != 'absent':
+                        if vm_obj and vm_obj.runtime.powerState == vim.VirtualMachinePowerState.poweredOn:
+                            self.module.fail_json(msg='CD-ROM attach to IDE controller not support hot-add.')
+                        if len(ide_device.device) == 2:
+                            self.module.fail_json(msg='Maximum number of CD-ROMs attached to IDE controller is 2.')
+                        cdrom_spec = self.device_helper.create_cdrom(ide_device=ide_device, cdrom_type=cdrom['type'],
+                                                                     iso_path=iso_path, unit_number=unit_number)
+                        self.change_detected = True
+                        self.configspec.deviceChange.append(cdrom_spec)
+                    # re-configure CD-ROM
+                    elif cdrom_device and cdrom.get('state') != 'absent' and \
+                            not self.device_helper.is_equal_cdrom(vm_obj=vm_obj, cdrom_device=cdrom_device,
+                                                                  cdrom_type=cdrom['type'], iso_path=iso_path):
+                        self.device_helper.update_cdrom_config(vm_obj, cdrom, cdrom_device, iso_path=iso_path)
+                        cdrom_spec = vim.vm.device.VirtualDeviceSpec()
+                        cdrom_spec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+                        cdrom_spec.device = cdrom_device
+                        self.change_detected = True
+                        self.configspec.deviceChange.append(cdrom_spec)
+                    # delete CD-ROM
+                    elif cdrom_device and cdrom.get('state') == 'absent':
+                        if vm_obj and vm_obj.runtime.powerState != vim.VirtualMachinePowerState.poweredOff:
+                            self.module.fail_json(msg='CD-ROM attach to IDE controller not support hot-remove.')
+                        cdrom_spec = self.device_helper.remove_cdrom(cdrom_device)
+                        self.change_detected = True
+                        self.configspec.deviceChange.append(cdrom_spec)
+        # configure SATA CD-ROMs is not supported yet
+        if configured_cdroms['sata']:
+            pass
 
     def configure_hardware_params(self, vm_obj):
         """
@@ -1109,7 +1235,7 @@ class PyVmomiHelper(PyVmomi):
             if 'max_connections' in self.params['hardware']:
                 # maxMksConnections == max_connections
                 self.configspec.maxMksConnections = int(self.params['hardware']['max_connections'])
-                if vm_obj is None or self.configspec.maxMksConnections != vm_obj.config.hardware.maxMksConnections:
+                if vm_obj is None or self.configspec.maxMksConnections != vm_obj.config.maxMksConnections:
                     self.change_detected = True
 
             if 'nested_virt' in self.params['hardware']:
@@ -1185,19 +1311,19 @@ class PyVmomiHelper(PyVmomi):
                         self.change_detected = True
 
     def get_device_by_type(self, vm=None, type=None):
+        device_list = []
         if vm is None or type is None:
-            return None
-
+            return device_list
         for device in vm.config.hardware.device:
             if isinstance(device, type):
-                return device
+                device_list.append(device)
 
-        return None
+        return device_list
 
-    def get_vm_cdrom_device(self, vm=None):
+    def get_vm_cdrom_devices(self, vm=None):
         return self.get_device_by_type(vm=vm, type=vim.vm.device.VirtualCdrom)
 
-    def get_vm_ide_device(self, vm=None):
+    def get_vm_ide_devices(self, vm=None):
         return self.get_device_by_type(vm=vm, type=vim.vm.device.VirtualIDEController)
 
     def get_vm_network_interfaces(self, vm=None):
@@ -1281,7 +1407,7 @@ class PyVmomiHelper(PyVmomi):
                                           " type from ['%s']." % (network['device_type'],
                                                                   "', '".join(validate_device_types)))
 
-            if 'mac' in network and not PyVmomiDeviceHelper.is_valid_mac_addr(network['mac']):
+            if 'mac' in network and not is_mac(network['mac']):
                 self.module.fail_json(msg="Device MAC address '%s' is invalid."
                                           " Please provide correct MAC address." % network['mac'])
 
@@ -1341,7 +1467,7 @@ class PyVmomiHelper(PyVmomi):
                                               "The failing new MAC address is %s" % nic.device.macAddress)
 
             else:
-                # Default device type is vmxnet3, VMWare best practice
+                # Default device type is vmxnet3, VMware best practice
                 device_type = network_devices[key].get('device_type', 'vmxnet3')
                 nic = self.device_helper.create_nic(device_type,
                                                     'Network Adapter %s' % (key + 1),
@@ -1364,6 +1490,13 @@ class PyVmomiHelper(PyVmomi):
                 else:
                     pg_obj = self.cache.find_obj(self.content, [vim.dvs.DistributedVirtualPortgroup], network_name)
 
+                # TODO: (akasurde) There is no way to find association between resource pool and distributed virtual portgroup
+                # For now, check if we are able to find distributed virtual switch
+                if not pg_obj.config.distributedVirtualSwitch:
+                    self.module.fail_json(msg="Failed to find distributed virtual switch which is associated with"
+                                              " distributed virtual portgroup '%s'. Make sure hostsystem is associated with"
+                                              " the given distributed virtual portgroup. Also, check if user has correct"
+                                              " permission to access distributed virtual switch in the given portgroup." % pg_obj.name)
                 if (nic.device.backing and
                     (not hasattr(nic.device.backing, 'port') or
                      (nic.device.backing.port.portgroupKey != pg_obj.key or
@@ -1380,12 +1513,6 @@ class PyVmomiHelper(PyVmomi):
                     self.module.fail_json(msg="It seems that host system '%s' is not associated with distributed"
                                               " virtual portgroup '%s'. Please make sure host system is associated"
                                               " with given distributed virtual portgroup" % (host_system, pg_obj.name))
-                # TODO: (akasurde) There is no way to find association between resource pool and distributed virtual portgroup
-                # For now, check if we are able to find distributed virtual switch
-                if not pg_obj.config.distributedVirtualSwitch:
-                    self.module.fail_json(msg="Failed to find distributed virtual switch which is associated with"
-                                              " distributed virtual portgroup '%s'. Make sure hostsystem is associated with"
-                                              " the given distributed virtual portgroup." % pg_obj.name)
                 dvs_port_connection.switchUuid = pg_obj.config.distributedVirtualSwitch.uuid
                 nic.device.backing = vim.vm.device.VirtualEthernetCard.DistributedVirtualPortBackingInfo()
                 nic.device.backing.port = dvs_port_connection
@@ -1397,6 +1524,7 @@ class PyVmomiHelper(PyVmomi):
                 nic.device.backing.opaqueNetworkType = 'nsx.LogicalSwitch'
                 nic.device.backing.opaqueNetworkId = network_id
                 nic.device.deviceInfo.summary = 'nsx.LogicalSwitch: %s' % network_id
+                nic_change_detected = True
             else:
                 # vSwitch
                 if not isinstance(nic.device.backing, vim.vm.device.VirtualEthernetCard.NetworkBackingInfo):
@@ -1413,7 +1541,13 @@ class PyVmomiHelper(PyVmomi):
                     nic_change_detected = True
 
             if nic_change_detected:
-                self.configspec.deviceChange.append(nic)
+                # Change to fix the issue found while configuring opaque network
+                # VMs cloned from a template with opaque network will get disconnected
+                # Replacing deprecated config parameter with relocation Spec
+                if isinstance(self.cache.get_network(network_name), vim.OpaqueNetwork):
+                    self.relospec.deviceChange.append(nic)
+                else:
+                    self.configspec.deviceChange.append(nic)
                 self.change_detected = True
 
     def configure_vapp_properties(self, vm_obj):
@@ -1426,51 +1560,84 @@ class PyVmomiHelper(PyVmomi):
 
         new_vmconfig_spec = vim.vApp.VmConfigSpec()
 
-        # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
-        orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
+        if vm_obj:
+            # VM exists
+            # This is primarily for vcsim/integration tests, unset vAppConfig was not seen on my deployments
+            orig_spec = vm_obj.config.vAppConfig if vm_obj.config.vAppConfig else new_vmconfig_spec
 
-        vapp_properties_current = dict((x.id, x) for x in orig_spec.property)
-        vapp_properties_to_change = dict((x['id'], x) for x in self.params['vapp_properties'])
+            vapp_properties_current = dict((x.id, x) for x in orig_spec.property)
+            vapp_properties_to_change = dict((x['id'], x) for x in self.params['vapp_properties'])
 
-        # each property must have a unique key
-        # init key counter with max value + 1
-        all_keys = [x.key for x in orig_spec.property]
-        new_property_index = max(all_keys) + 1 if all_keys else 0
+            # each property must have a unique key
+            # init key counter with max value + 1
+            all_keys = [x.key for x in orig_spec.property]
+            new_property_index = max(all_keys) + 1 if all_keys else 0
 
-        for property_id, property_spec in vapp_properties_to_change.items():
-            is_property_changed = False
-            new_vapp_property_spec = vim.vApp.PropertySpec()
+            for property_id, property_spec in vapp_properties_to_change.items():
+                is_property_changed = False
+                new_vapp_property_spec = vim.vApp.PropertySpec()
 
-            if property_id in vapp_properties_current:
-                if property_spec.get('operation') == 'remove':
-                    new_vapp_property_spec.operation = 'remove'
-                    new_vapp_property_spec.removeKey = vapp_properties_current[property_id].key
-                    is_property_changed = True
+                if property_id in vapp_properties_current:
+                    if property_spec.get('operation') == 'remove':
+                        new_vapp_property_spec.operation = 'remove'
+                        new_vapp_property_spec.removeKey = vapp_properties_current[property_id].key
+                        is_property_changed = True
+                    else:
+                        # this is 'edit' branch
+                        new_vapp_property_spec.operation = 'edit'
+                        new_vapp_property_spec.info = vapp_properties_current[property_id]
+                        try:
+                            for property_name, property_value in property_spec.items():
+
+                                if property_name == 'operation':
+                                    # operation is not an info object property
+                                    # if set to anything other than 'remove' we don't fail
+                                    continue
+
+                                # Updating attributes only if needed
+                                if getattr(new_vapp_property_spec.info, property_name) != property_value:
+                                    setattr(new_vapp_property_spec.info, property_name, property_value)
+                                    is_property_changed = True
+
+                        except Exception as e:
+                            msg = "Failed to set vApp property field='%s' and value='%s'. Error: %s" % (property_name, property_value, to_text(e))
+                            self.module.fail_json(msg=msg)
                 else:
-                    # this is 'edit' branch
-                    new_vapp_property_spec.operation = 'edit'
-                    new_vapp_property_spec.info = vapp_properties_current[property_id]
-                    try:
-                        for property_name, property_value in property_spec.items():
+                    if property_spec.get('operation') == 'remove':
+                        # attempt to delete non-existent property
+                        continue
 
-                            if property_name == 'operation':
-                                # operation is not an info object property
-                                # if set to anything other than 'remove' we don't fail
-                                continue
+                    # this is add new property branch
+                    new_vapp_property_spec.operation = 'add'
 
-                            # Updating attributes only if needed
-                            if getattr(new_vapp_property_spec.info, property_name) != property_value:
-                                setattr(new_vapp_property_spec.info, property_name, property_value)
-                                is_property_changed = True
+                    property_info = vim.vApp.PropertyInfo()
+                    property_info.classId = property_spec.get('classId')
+                    property_info.instanceId = property_spec.get('instanceId')
+                    property_info.id = property_spec.get('id')
+                    property_info.category = property_spec.get('category')
+                    property_info.label = property_spec.get('label')
+                    property_info.type = property_spec.get('type', 'string')
+                    property_info.userConfigurable = property_spec.get('userConfigurable', True)
+                    property_info.defaultValue = property_spec.get('defaultValue')
+                    property_info.value = property_spec.get('value', '')
+                    property_info.description = property_spec.get('description')
 
-                    except Exception as e:
-                        self.module.fail_json(msg="Failed to set vApp property field='%s' and value='%s'. Error: %s"
-                                              % (property_name, property_value, to_text(e)))
-            else:
-                if property_spec.get('operation') == 'remove':
-                    # attemp to delete non-existent property
-                    continue
+                    new_vapp_property_spec.info = property_info
+                    new_vapp_property_spec.info.key = new_property_index
+                    new_property_index += 1
+                    is_property_changed = True
 
+                if is_property_changed:
+                    new_vmconfig_spec.property.append(new_vapp_property_spec)
+        else:
+            # New VM
+            all_keys = [x.key for x in new_vmconfig_spec.property]
+            new_property_index = max(all_keys) + 1 if all_keys else 0
+            vapp_properties_to_change = dict((x['id'], x) for x in self.params['vapp_properties'])
+            is_property_changed = False
+
+            for property_id, property_spec in vapp_properties_to_change.items():
+                new_vapp_property_spec = vim.vApp.PropertySpec()
                 # this is add new property branch
                 new_vapp_property_spec.operation = 'add'
 
@@ -1490,8 +1657,10 @@ class PyVmomiHelper(PyVmomi):
                 new_vapp_property_spec.info.key = new_property_index
                 new_property_index += 1
                 is_property_changed = True
-            if is_property_changed:
-                new_vmconfig_spec.property.append(new_vapp_property_spec)
+
+                if is_property_changed:
+                    new_vmconfig_spec.property.append(new_vapp_property_spec)
+
         if new_vmconfig_spec.property:
             self.configspec.vAppConfig = new_vmconfig_spec
             self.change_detected = True
@@ -1507,7 +1676,7 @@ class PyVmomiHelper(PyVmomi):
         facts = self.gather_facts(vm_obj)
         for kv in self.params['customvalues']:
             if 'key' not in kv or 'value' not in kv:
-                self.module.exit_json(msg="customvalues items required both 'key' and 'value fields.")
+                self.module.exit_json(msg="customvalues items required both 'key' and 'value' fields.")
 
             # If kv is not kv fetched from facts, change it
             if kv['key'] not in facts['customvalues'] or facts['customvalues'][kv['key']] != kv['value']:
@@ -1518,8 +1687,8 @@ class PyVmomiHelper(PyVmomi):
                 vm_custom_spec.extraConfig.append(option)
                 changed = True
 
-        if changed:
-            self.change_detected = True
+            if changed:
+                self.change_detected = True
 
     def customize_vm(self, vm_obj):
 
@@ -1596,7 +1765,8 @@ class PyVmomiHelper(PyVmomi):
             # Setting hostName, orgName and fullName is mandatory, so we set some default when missing
             ident.userData.computerName = vim.vm.customization.FixedName()
             # computer name will be truncated to 15 characters if using VM name
-            default_name = self.params['name'].translate(None, string.punctuation)
+            default_name = self.params['name'].replace(' ', '')
+            default_name = ''.join([c for c in default_name if c not in string.punctuation])
             ident.userData.computerName.name = str(self.params['customization'].get('hostname', default_name[0:15]))
             ident.userData.fullName = str(self.params['customization'].get('fullname', 'Administrator'))
             ident.userData.orgName = str(self.params['customization'].get('orgname', 'ACME'))
@@ -1657,6 +1827,13 @@ class PyVmomiHelper(PyVmomi):
             # Remove all characters except alphanumeric and minus which is allowed by RFC 952
             valid_hostname = re.sub(r"[^a-zA-Z0-9\-]", "", hostname)
             ident.hostName.name = valid_hostname
+
+            # List of supported time zones for different vSphere versions in Linux/Unix systems
+            # https://kb.vmware.com/s/article/2145518
+            if 'timezone' in self.params['customization']:
+                ident.timeZone = str(self.params['customization']['timezone'])
+            if 'hwclockUTC' in self.params['customization']:
+                ident.hwClockUTC = self.params['customization']['hwclockUTC']
 
         self.customspec = vim.vm.customization.Specification()
         self.customspec.nicSettingMap = adaptermaps
@@ -1820,7 +1997,9 @@ class PyVmomiHelper(PyVmomi):
                 continue
             elif vm_obj is None or self.params['template']:
                 # We are creating new VM or from Template
-                diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
+                # Only create virtual device if not backed by vmdk in original template
+                if diskspec.device.backing.fileName == '':
+                    diskspec.fileOperation = vim.vm.device.VirtualDeviceSpec.FileOperation.create
 
             # which datastore?
             if expected_disk_spec.get('datastore'):
@@ -1830,7 +2009,7 @@ class PyVmomiHelper(PyVmomi):
                 pass
 
             kb = self.get_configured_disk_size(expected_disk_spec)
-            # VMWare doesn't allow to reduce disk sizes
+            # VMware doesn't allow to reduce disk sizes
             if kb < diskspec.device.capacityInKB:
                 self.module.fail_json(
                     msg="Given disk size is smaller than found (%d < %d). Reducing disks is not allowed." %
@@ -1859,6 +2038,9 @@ class PyVmomiHelper(PyVmomi):
 
         datastore_freespace = 0
         for ds in datastores:
+            if not self.is_datastore_valid(datastore_obj=ds):
+                continue
+
             if ds.summary.freeSpace > datastore_freespace:
                 datastore = ds
                 datastore_freespace = ds.summary.freeSpace
@@ -1898,6 +2080,9 @@ class PyVmomiHelper(PyVmomi):
         for ds in datastore_cluster_obj.childEntity:
             if isinstance(ds, vim.Datastore) and ds.summary.freeSpace > datastore_freespace:
                 # If datastore field is provided, filter destination datastores
+                if not self.is_datastore_valid(datastore_obj=ds):
+                    continue
+
                 datastore = ds
                 datastore_freespace = ds.summary.freeSpace
         if datastore:
@@ -1918,6 +2103,9 @@ class PyVmomiHelper(PyVmomi):
 
                 datastore_freespace = 0
                 for ds in datastores:
+                    if not self.is_datastore_valid(datastore_obj=ds):
+                        continue
+
                     if (ds.summary.freeSpace > datastore_freespace) or (ds.summary.freeSpace == datastore_freespace and not datastore):
                         # If datastore field is provided, filter destination datastores
                         if 'datastore' in self.params['disk'][0] and \
@@ -2143,10 +2331,14 @@ class PyVmomiHelper(PyVmomi):
 
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
+        # create the relocation spec
+        self.relospec = vim.vm.RelocateSpec()
+        self.relospec.deviceChange = []
         self.configure_guestid(vm_obj=vm_obj, vm_creation=True)
         self.configure_cpu_and_memory(vm_obj=vm_obj, vm_creation=True)
         self.configure_hardware_params(vm_obj=vm_obj)
         self.configure_resource_alloc_info(vm_obj=vm_obj)
+        self.configure_vapp_properties(vm_obj=vm_obj)
         self.configure_disks(vm_obj=vm_obj)
         self.configure_network(vm_obj=vm_obj)
         self.configure_cdrom(vm_obj=vm_obj)
@@ -2167,18 +2359,15 @@ class PyVmomiHelper(PyVmomi):
         clone_method = None
         try:
             if self.params['template']:
-                # create the relocation spec
-                relospec = vim.vm.RelocateSpec()
-
                 # Only select specific host when ESXi hostname is provided
                 if self.params['esxi_hostname']:
-                    relospec.host = self.select_host()
-                relospec.datastore = datastore
+                    self.relospec.host = self.select_host()
+                self.relospec.datastore = datastore
 
                 # Convert disk present in template if is set
                 if self.params['convert']:
                     for device in vm_obj.config.hardware.device:
-                        if hasattr(device.backing, 'fileName'):
+                        if isinstance(device, vim.vm.device.VirtualDisk):
                             disk_locator = vim.vm.RelocateSpec.DiskLocator()
                             disk_locator.diskBackingInfo = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
                             if self.params['convert'] in ['thin']:
@@ -2189,22 +2378,21 @@ class PyVmomiHelper(PyVmomi):
                                 disk_locator.diskBackingInfo.diskMode = "persistent"
                             disk_locator.diskId = device.key
                             disk_locator.datastore = datastore
-                            relospec.disk.append(disk_locator)
+                            self.relospec.disk.append(disk_locator)
 
                 # https://www.vmware.com/support/developer/vc-sdk/visdk41pubs/ApiReference/vim.vm.RelocateSpec.html
                 # > pool: For a clone operation from a template to a virtual machine, this argument is required.
-                relospec.pool = resource_pool
-
+                self.relospec.pool = resource_pool
                 linked_clone = self.params.get('linked_clone')
                 snapshot_src = self.params.get('snapshot_src', None)
                 if linked_clone:
                     if snapshot_src is not None:
-                        relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
+                        self.relospec.diskMoveType = vim.vm.RelocateSpec.DiskMoveOptions.createNewChildDiskBacking
                     else:
                         self.module.fail_json(msg="Parameter 'linked_src' and 'snapshot_src' are"
                                                   " required together for linked clone operation.")
 
-                clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=relospec)
+                clonespec = vim.vm.CloneSpec(template=self.params['is_template'], location=self.relospec)
                 if self.customspec:
                     clonespec.customization = self.customspec
 
@@ -2314,7 +2502,9 @@ class PyVmomiHelper(PyVmomi):
     def reconfigure_vm(self):
         self.configspec = vim.vm.ConfigSpec()
         self.configspec.deviceChange = []
-
+        # create the relocation spec
+        self.relospec = vim.vm.RelocateSpec()
+        self.relospec.deviceChange = []
         self.configure_guestid(vm_obj=self.current_vm_obj)
         self.configure_cpu_and_memory(vm_obj=self.current_vm_obj)
         self.configure_hardware_params(vm_obj=self.current_vm_obj)
@@ -2329,17 +2519,16 @@ class PyVmomiHelper(PyVmomi):
             self.configspec.annotation = str(self.params['annotation'])
             self.change_detected = True
 
-        relospec = vim.vm.RelocateSpec()
         if self.params['resource_pool']:
-            relospec.pool = self.get_resource_pool()
+            self.relospec.pool = self.get_resource_pool()
 
-            if relospec.pool != self.current_vm_obj.resourcePool:
-                task = self.current_vm_obj.RelocateVM_Task(spec=relospec)
+            if self.relospec.pool != self.current_vm_obj.resourcePool:
+                task = self.current_vm_obj.RelocateVM_Task(spec=self.relospec)
                 self.wait_for_task(task)
                 if task.info.state == 'error':
                     return {'changed': self.change_applied, 'failed': True, 'msg': task.info.error.msg, 'op': 'relocate'}
 
-        # Only send VMWare task if we see a modification
+        # Only send VMware task if we see a modification
         if self.change_detected:
             task = None
             try:
@@ -2397,7 +2586,7 @@ class PyVmomiHelper(PyVmomi):
                 self.module.fail_json(msg="Failed to convert template to virtual machine"
                                           " due to generic error : %s" % to_native(generic_exc))
 
-            # Automatically update VMWare UUID when converting template to VM.
+            # Automatically update VMware UUID when converting template to VM.
             # This avoids an interactive prompt during VM startup.
             uuid_action = [x for x in self.current_vm_obj.config.extraConfig if x.key == "uuid.action"]
             if not uuid_action:
@@ -2533,7 +2722,7 @@ def main():
         folder=dict(type='str'),
         guest_id=dict(type='str'),
         disk=dict(type='list', default=[]),
-        cdrom=dict(type='dict', default={}),
+        cdrom=dict(type=list_or_dict, default=[]),
         hardware=dict(type='dict', default={}),
         force=dict(type='bool', default=False),
         datacenter=dict(type='str', default='ha-datacenter'),

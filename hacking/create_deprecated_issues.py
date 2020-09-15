@@ -56,13 +56,12 @@ args = parser.parse_args()
 body_tmpl = args.template.read()
 args.template.close()
 
-text = args.problems.read()
-args.problems.close()
+text = args.problems[0].read()
+args.problems[0].close()
 
 
 for line in text.splitlines():
-    path, line, column, msg = line.split(':')
-    msg = msg.strip()
+    path = line.split(':')[0]
     if path.endswith('__init__.py'):
         component = os.path.basename(os.path.dirname(path))
     else:
@@ -73,7 +72,7 @@ for line in text.splitlines():
         (component, ansible_major_version)
     )
     deprecated[component].append(
-        dict(title=title, msg=msg, path=path, line=line, column=column)
+        dict(title=title, path=path, line=line)
     )
 
 
@@ -84,15 +83,15 @@ repo = g.repository('ansible', 'ansible')
 # so that we can later add the issue to a project column
 # You will need the project and column IDs for this to work
 # and then update the below lines
-# project = repo.project(1749241)
-# column = project.column(3314029)
+# project = repo.project(2141803)
+# project_column = project.column(4348504)
 
 for component, items in deprecated.items():
     title = items[0]['title']
-    msg = '\n'.join(i['msg'] for i in items)
-    path = '\n'.join(i['path'] for i in items)
-    body = body_tmpl % dict(component=component, msg=msg, path=path,
-                            line=line, column=column,
+    path = '\n'.join(set((i['path']) for i in items))
+    line = '\n'.join(i['line'] for i in items)
+    body = body_tmpl % dict(component=component, path=path,
+                            line=line,
                             version=ansible_major_version)
 
     issue = repo.create_issue(title, body=body, labels=['deprecated'])
@@ -102,5 +101,5 @@ for component, items in deprecated.items():
     # Uncomment the next 2 lines if you want to add issues to a project
     # Needs to be done in combination with the above code for selecting
     # the project/column
-    # column.create_card_with_issue(issue)
+    # project_column.create_card_with_issue(issue)
     # time.sleep(0.5)

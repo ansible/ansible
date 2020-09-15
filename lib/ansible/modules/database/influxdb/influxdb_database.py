@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2016, Kamil Szczygiel <kamil.szczygiel () intel.com>
+# Copyright: (c) 2016, Kamil Szczygiel <kamil.szczygiel () intel.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -12,7 +12,7 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'supported_by': 'community'}
 
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: influxdb_database
 short_description: Manage InfluxDB databases
@@ -29,15 +29,17 @@ options:
         description:
             - Name of the database.
         required: true
+        type: str
     state:
         description:
             - Determines if the database should be created or destroyed.
-        choices: [ present, absent ]
+        choices: [ absent, present ]
         default: present
+        type: str
 extends_documentation_fragment: influxdb
 '''
 
-EXAMPLES = '''
+EXAMPLES = r'''
 # Example influxdb_database command from Ansible Playbooks
 - name: Create database
   influxdb_database:
@@ -60,7 +62,7 @@ EXAMPLES = '''
       validate_certs: yes
 '''
 
-RETURN = '''
+RETURN = r'''
 # only defaults
 '''
 

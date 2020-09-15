@@ -36,7 +36,7 @@ options:
       - The ID of the Direct Connect link aggregation group.
   num_connections:
     description:
-      - The number of connections with which to intialize the link aggregation group.
+      - The number of connections with which to initialize the link aggregation group.
   min_links:
     description:
       - The minimum number of physical connections that must be operational for the LAG itself to be operational.
@@ -353,7 +353,7 @@ def ensure_absent(client, lag_id, lag_name, force_delete, delete_with_disassocia
 
     latest_status = lag_status(client, lag_id)
 
-    # determinine the associated connections and virtual interfaces to disassociate
+    # determine the associated connections and virtual interfaces to disassociate
     virtual_interfaces, connections = get_connections_and_virtual_interfaces(client, lag_id)
 
     # If min_links is not 0, there are associated connections, or if there are virtual interfaces, ask for force_delete

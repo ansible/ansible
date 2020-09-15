@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "ovirt: Fix fetching of nested attributes"

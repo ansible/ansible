@@ -123,7 +123,7 @@ You can also identify specific Packet devices with the 'device_ids' parameter. T
 More Complex Playbooks
 ======================
 
-In this example, we'll create a CoreOS cluster with `user data <https://support.packet.net/en/support/solutions/articles/22000058261-the-basics-of-cloud-config-and-user-data>`_.
+In this example, we'll create a CoreOS cluster with `user data <https://support.packet.com/kb/articles/user-data>`_.
 
 
 The CoreOS cluster will use `etcd <https://coreos.com/etcd/>`_ for discovery of other servers in the cluster. Before provisioning your servers, you'll need to generate a discovery token for your cluster:
@@ -183,7 +183,7 @@ The following playbook will create an SSH key, 3 Packet servers, and then wait u
 
 As with most Ansible modules, the default states of the Packet modules are idempotent, meaning the resources in your project will remain the same after re-runs of a playbook. Thus, we can keep the ``packet_sshkey`` module call in our playbook. If the public key is already in your Packet account, the call will have no effect.
 
-The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoresOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
+The second module call provisions 3 Packet Type 0 (specified using the 'plan' parameter) servers in the project identified via the 'project_id' parameter. The servers are all provisioned with CoreOS beta (the 'operating_system' parameter) and are customized with cloud-config user data passed to the 'user_data' parameter.
 
 The ``packet_device`` module has a ``wait_for_public_IPv`` that is used to specify the version of the IP address to wait for (valid values are ``4`` or ``6`` for IPv4 or IPv6). If specified, Ansible will wait until the GET API call for a device contains an Internet-routeable IP address of the specified version. When referring to an IP address of a created device in subsequent module calls, it's wise to use the ``wait_for_public_IPv`` parameter, or ``state: active`` in the packet_device module call.
 
@@ -216,9 +216,9 @@ You can either copy the inventory and ini config out from the cloned git repo, o
 
 .. code-block:: bash
 
-    $ wget https://github.com/ansible/ansible/raw/devel/contrib/inventory/packet_net.py
+    $ wget https://github.com/ansible/ansible/raw/stable-2.9/contrib/inventory/packet_net.py
     $ chmod +x packet_net.py
-    $ wget https://github.com/ansible/ansible/raw/devel/contrib/inventory/packet_net.ini
+    $ wget https://github.com/ansible/ansible/raw/stable-2.9/contrib/inventory/packet_net.ini
 
 In order to understand what the inventory script gives to Ansible you can run:
 

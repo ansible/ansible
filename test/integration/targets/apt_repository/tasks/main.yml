@@ -18,3 +18,8 @@
 
 - include: 'apt.yml'
   when: ansible_distribution in ('Ubuntu')
+
+- include: mode.yaml
+  when: ansible_distribution in ('Ubuntu')
+  tags:
+    - test_apt_repository_mode

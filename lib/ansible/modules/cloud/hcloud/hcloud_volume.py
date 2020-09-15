@@ -41,7 +41,7 @@ options:
         type: str
     size:
         description:
-            - The size of the Block Volume.
+            - The size of the Block Volume in GB.
             - Required if volume does not yet exists.
         type: int
     automount:
@@ -122,17 +122,17 @@ hcloud_volume:
             sample: 12345
         name:
             description: Name of the volume
-            type: string
+            type: str
             returned: Always
             sample: my-volume
         size:
-            description: Size in MB of the volume
+            description: Size in GB of the volume
             type: int
             returned: Always
             sample: 1337
         location:
             description: Location name where the volume is located at
-            type: string
+            type: str
             returned: Always
             sample: "fsn1"
         labels:
@@ -144,7 +144,7 @@ hcloud_volume:
                 mylabel: 123
         server:
             description: Server name where the volume is attached to
-            type: string
+            type: str
             returned: Always
             sample: "my-server"
 """
@@ -232,7 +232,7 @@ class AnsibleHcloudVolume(Hcloud):
         server_name = self.module.params.get("server")
         if server_name:
             server = self.client.servers.get_by_name(server_name)
-            if self.hcloud_volume.server != server:
+            if self.hcloud_volume.server is None or self.hcloud_volume.server.name != server.name:
                 if not self.module.check_mode:
                     automount = self.module.params.get("automount", False)
                     self.hcloud_volume.attach(server, automount=automount).wait_until_finished()

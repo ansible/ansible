@@ -1,0 +1,1 @@
+vmware_guest_snapshot_info.py

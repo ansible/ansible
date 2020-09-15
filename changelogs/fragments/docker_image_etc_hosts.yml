@@ -1,0 +1,2 @@
+minor_changes:
+  - docker_image - added ``extra_hosts`` argument (https://github.com/ansible/ansible/issues/59233)

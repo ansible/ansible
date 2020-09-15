@@ -17,8 +17,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_mariadbserver_info
-version_added: "2.8"
-short_description: Get Azure MariaDB Server facts.
+version_added: "2.9"
+short_description: Get Azure MariaDB Server facts
 description:
     - Get facts of MariaDB Server.
 
@@ -27,19 +27,22 @@ options:
         description:
             - The name of the resource group that contains the resource. You can obtain this value from the Azure Resource Manager API or the portal.
         required: True
+        type: str
     name:
         description:
             - The name of the server.
+        type: str
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        type: list
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
-    - "Matti Ranta (@techknowlogick)"
+    - Zim Kalinowski (@zikalino)
+    - Matti Ranta (@techknowlogick)
 
 '''
 
@@ -56,13 +59,14 @@ EXAMPLES = '''
 
 RETURN = '''
 servers:
-    description: A list of dictionaries containing facts for MariaDB servers.
+    description:
+        - A list of dictionaries containing facts for MariaDB servers.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource ID
+                - Resource ID.
             returned: always
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMariaDB/servers/myabdud1223
@@ -92,13 +96,13 @@ servers:
             contains:
                 name:
                     description:
-                        - The name of the SKU
+                        - The name of the SKU.
                     returned: always
                     type: str
                     sample: GP_Gen4_2
                 tier:
                     description:
-                        - The tier of the particular SKU
+                        - The tier of the particular SKU.
                     returned: always
                     type: str
                     sample: GeneralPurpose
@@ -122,7 +126,7 @@ servers:
             sample: False
         admin_username:
             description:
-                - "The administrator's login name of a server."
+                - The administrator's login name of a server.
             returned: always
             type: str
             sample: serveradmin
@@ -145,7 +149,8 @@ servers:
             type: str
             sample: myabdud1223.mys.database.azure.com
         tags:
-            description: Tags assigned to the resource. Dictionary of string:string pairs.
+            description:
+                - Tags assigned to the resource. Dictionary of string:string pairs.
             type: dict
             sample: { tag1: abc }
 '''
@@ -161,7 +166,7 @@ except ImportError:
     pass
 
 
-class AzureRMMariaDbServerFacts(AzureRMModuleBase):
+class AzureRMMariaDbServerInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -183,9 +188,13 @@ class AzureRMMariaDbServerFacts(AzureRMModuleBase):
         self.resource_group = None
         self.name = None
         self.tags = None
-        super(AzureRMMariaDbServerFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMMariaDbServerInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_mariadbserver_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_mariadbserver_facts' module has been renamed to 'azure_rm_mariadbserver_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
@@ -248,7 +257,7 @@ class AzureRMMariaDbServerFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMMariaDbServerFacts()
+    AzureRMMariaDbServerInfo()
 
 
 if __name__ == '__main__':

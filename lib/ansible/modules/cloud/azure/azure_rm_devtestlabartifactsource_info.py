@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabartifactsource_info
-version_added: "2.8"
-short_description: Get Azure DevTest Lab Artifact Source facts.
+version_added: "2.9"
+short_description: Get Azure DevTest Lab Artifact Source facts
 description:
     - Get facts of Azure DevTest Lab Artifact Source.
 
@@ -26,22 +26,26 @@ options:
         description:
             - The name of the resource group.
         required: True
+        type: str
     lab_name:
         description:
             - The name of DevTest Lab.
         required: True
+        type: str
     name:
         description:
             - The name of DevTest Lab Artifact Source.
+        type: str
     tags:
         description:
             - Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+        type: list
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -55,7 +59,8 @@ EXAMPLES = '''
 
 RETURN = '''
 artifactsources:
-    description: A list of dictionaries containing facts for DevTest Lab Artifact Source.
+    description:
+        - A list of dictionaries containing facts for DevTest Lab Artifact Source.
     returned: always
     type: complex
     contains:
@@ -86,13 +91,13 @@ artifactsources:
             sample: myArtifactSource
         display_name:
             description:
-                - "The artifact source's display name."
+                - The artifact source's display name.
             returned: always
             type: str
             sample: Public Artifact Repo
         source_type:
             description:
-                - "The artifact source's type."
+                - The artifact source's type.
             returned: always
             type: str
             sample: github
@@ -145,7 +150,7 @@ except ImportError:
     pass
 
 
-class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
+class AzureRMDtlArtifactSourceInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -173,9 +178,14 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
         self.lab_name = None
         self.name = None
         self.tags = None
-        super(AzureRMDtlArtifactSourceFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDtlArtifactSourceInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_devtestlabartifactsource_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_devtestlabartifactsource_facts' module has been renamed to 'azure_rm_devtestlabartifactsource_info'",
+                                  version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
@@ -241,7 +251,7 @@ class AzureRMDtlArtifactSourceFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDtlArtifactSourceFacts()
+    AzureRMDtlArtifactSourceInfo()
 
 
 if __name__ == '__main__':

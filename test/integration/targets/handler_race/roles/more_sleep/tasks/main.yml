@@ -1,0 +1,8 @@
+---
+# tasks file for more_sleep
+- name: Random more sleep
+  set_fact:
+    more_sleep_time: "{{ 5 | random }}"
+
+- name: Moar sleep
+  shell: sleep "{{ more_sleep_time }}"

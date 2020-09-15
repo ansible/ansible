@@ -7,6 +7,14 @@
   assert:
     that:
       - "'DNS:example.com' in cert_1_text.stdout"
+- name: Check that certificate 1 retrieval got all chains
+  assert:
+    that:
+      - "'all_chains' in cert_1_obtain_results"
+      - "'chain' in cert_1_obtain_results.all_chains[0]"
+      - "'full_chain' in cert_1_obtain_results.all_chains[0]"
+      - "lookup('file', output_dir ~ '/cert-1-chain.pem', rstrip=False) == cert_1_obtain_results.all_chains[0].chain"
+      - "lookup('file', output_dir ~ '/cert-1-fullchain.pem', rstrip=False) == cert_1_obtain_results.all_chains[0].full_chain"
 
 - name: Check that certificate 2 is valid
   assert:
@@ -17,6 +25,10 @@
     that:
       - "'DNS:*.example.com' in cert_2_text.stdout"
       - "'DNS:example.com' in cert_2_text.stdout"
+- name: Check that certificate 2 retrieval did not get all chains
+  assert:
+    that:
+      - "'all_chains' not in cert_2_obtain_results"
 
 - name: Check that certificate 3 is valid
   assert:
@@ -71,3 +83,37 @@
   assert:
     that:
       - "'DNS:example.org' in cert_6_text.stdout"
+
+- name: Validate that orders were not retrieved
+  assert:
+    that:
+      - "'account' in account_orders_not"
+      - "'orders' not in account_orders_not"
+
+- name: Validate that orders were retrieved as list of URLs (1/2)
+  assert:
+    that:
+      - "'account' in account_orders_urls"
+      - "'orders' in account_orders_urls"
+      - "account_orders_urls.orders[0] is string"
+
+- name: Validate that orders were retrieved as list of URLs (2/2)
+  assert:
+    that:
+      - "'account' in account_orders_urls2"
+      - "'orders' in account_orders_urls2"
+      - "account_orders_urls2.orders[0] is string"
+
+- name: Validate that orders were retrieved as list of objects (1/2)
+  assert:
+    that:
+      - "'account' in account_orders_full"
+      - "'orders' in account_orders_full"
+      - "account_orders_full.orders[0].status is string"
+
+- name: Validate that orders were retrieved as list of objects (2/2)
+  assert:
+    that:
+      - "'account' in account_orders_full2"
+      - "'orders' in account_orders_full2"
+      - "account_orders_full2.orders[0].status is string"

@@ -1,2 +1,0 @@
-bugfixes:
-  - Retry deleting the autoscaling group if there are scaling activities in progress.

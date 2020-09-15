@@ -1,0 +1,2 @@
+minor_changes:
+  - Added missing platform guide for FRR (https://github.com/ansible/ansible/pull/69773).

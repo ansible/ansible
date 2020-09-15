@@ -1,0 +1,2 @@
+bugfixes:
+    - docker_machine - fallback to ip subcommand output if IPAddress is missing (https://github.com/ansible-collections/community.general/issues/412).

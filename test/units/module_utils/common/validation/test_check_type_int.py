@@ -31,4 +31,4 @@ def test_check_type_int_fail():
     for case in test_cases:
         with pytest.raises(TypeError) as e:
             check_type_int(case)
-    assert 'cannot be converted to an int' in to_native(e)
+        assert 'cannot be converted to an int' in to_native(e.value)

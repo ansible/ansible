@@ -67,7 +67,7 @@ options:
     default: present
   allow_expand:
     description:
-      - Permit expansion of the target VLAN's network if the module parameters specify a larger network than the VLAN currently posesses?
+      - Permit expansion of the target VLAN's network if the module parameters specify a larger network than the VLAN currently possesses.
       - If C(False), the module will fail under these conditions.
       - This is intended to prevent accidental expansion of a VLAN's network (since this operation is not reversible).
     type: bool

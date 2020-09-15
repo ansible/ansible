@@ -1,35 +1,45 @@
 ---
 - debug: msg="START connection={{ ansible_connection }} nxos_file_copy sanity test"
 
+# This test uses a file that is committed to the Ansible core repository.
+# The file name and relative path is test/integration/targets/network-integration.cfg
+- set_fact: test_source_file="network-integration.cfg"
+- set_fact: test_destination_file="test_destination_file"
+
 - name: "Setup - Remove existing file"
   nxos_command: &remove_file
     commands:
       - terminal dont-ask
-      - delete network-integration.cfg
-      - delete bootflash:/dir1/dir2/dir3/network-integration_copy.cfg
+      - "delete {{ test_source_file }}"
+      - "delete {{ test_destination_file }}"
+      - "delete bootflash:/dir1/dir2/dir3/*"
       - rmdir dir1/dir2/dir3
       - rmdir dir1/dir2
       - rmdir dir1
   ignore_errors: yes
 
 - name: "Setup - Turn on feature scp-server"
-  nxos_feature: 
+  nxos_feature:
     feature: scp-server
     state: enabled
 
 - block:
-  - name: "Copy network-integration.cfg to bootflash"
+  - name: "Copy {{ test_source_file }} file from Ansible controller to bootflash"
     nxos_file_copy: &copy_file_same_name
-      local_file: "./network-integration.cfg"
+      local_file: "./{{ test_source_file }}"
       file_system: "bootflash:"
       connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
-  - assert: &true
+  - assert:
       that:
         - "result.changed == true"
+        - "'bootflash:' in result.file_system"
+        - "'./{{ test_source_file }}' in result.local_file"
+        - "'network-integration.cfg' in result.remote_file"
+        - "'Sent: File copied to remote device.' in result.transfer_status"
 
-  - name: "Check Idempotence - Copy network-integration.cfg to bootflash"
+  - name: "Idempotence - Copy {{ test_source_file }} file from Ansible controller to bootflash"
     nxos_file_copy: *copy_file_same_name
     register: result
 
@@ -41,47 +51,77 @@
     nxos_command: *remove_file
     register: result
 
-  - name: "Copy inventory.networking.template to bootflash as another name"
+  - name: "Copy {{ test_source_file }} file from Ansible controller to bootflash renamed as {{ test_destination_file }}"
     nxos_file_copy: &copy_file_different_name
-      local_file: "./inventory.networking.template"
-      remote_file: "network-integration.cfg"
+      local_file: "./{{ test_source_file }}"
+      remote_file: "{{ test_destination_file }}"
       file_system: "bootflash:"
       connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
-  - assert: *true
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'bootflash:' in result.file_system"
+        - "'./{{ test_source_file }}' in result.local_file"
+        - "'{{ test_destination_file }}' in result.remote_file"
+        - "'Sent: File copied to remote device.' in result.transfer_status"
 
-  - name: "Check Idempotence - Copy inventory.networking.template to bootflash as another name"
+  - name: "Idempotence - Copy {{ test_source_file }} file from Ansible controller to bootflash renamed as {{ test_destination_file }}"
     nxos_file_copy: *copy_file_different_name
+    register: result
+
+  - name: "Verify file_pull true options have no impact when file_true is false"
+    nxos_file_copy:
+      file_pull: False
+      file_pull_timeout: 1200
+      file_pull_compact: True
+      file_pull_kstack: True
+      local_file_directory: "dir1/dir2/dir3"
+      remote_scp_server: "{{ inventory_hostname_short }}"
+      remote_scp_server_user: "{{ ansible_ssh_user }}"
+      remote_scp_server_password: "{{ ansible_ssh_pass }}"
+      # Parameters above are only used when file_pull is True
+      local_file: "./{{ test_source_file }}"
+      remote_file: "{{ test_destination_file }}"
+      file_system: "bootflash:"
+      connect_ssh_port: "{{ ansible_ssh_port }}"
     register: result
 
   - assert: *false
 
-  - block:
-    - name: "Copy file using file_pull"
-      nxos_file_copy: &copy_pull
-        file_pull: True
-        file_pull_timeout: 1200
-        remote_file: "/network-integration.cfg"
-        local_file: "network-integration_copy.cfg"
-        local_file_directory: "dir1/dir2/dir3"
-        remote_scp_server: "{{ inventory_hostname_short }}"
-        remote_scp_server_user: "{{ ansible_ssh_user }}"
-        remote_scp_server_password: "{{ ansible_ssh_pass }}"
-      register: result
+  # This step validates the ability to initiate the copy from the nxos device
+  # to pull a file from a remote file server to the nxos bootflash device.
+  #
+  # In this case we are using the nxos device as the remote file server so we
+  # copy a file from bootflash: to bootflash:dir1/dir2/dir3
+  - name: "Initiate copy from nxos device to copy {{ test_destination_file }} to bootflash:dir1/dir2/dir3/{{ test_destination_file }}_copy"
+    nxos_file_copy: &copy_pull
+      file_pull: True
+      file_pull_timeout: 30
+      remote_file: "/{{ test_destination_file }}"
+      local_file: "{{ test_destination_file }}_copy"
+      local_file_directory: "dir1/dir2/dir3"
+      remote_scp_server: "{{ inventory_hostname_short }}"
+      remote_scp_server_user: "{{ ansible_ssh_user }}"
+      remote_scp_server_password: "{{ ansible_ssh_pass }}"
+    register: result
 
-    - assert: *true
+  - assert: &overwrite
+      that:
+        - "result.changed == true"
+        - "'copy scp:' in result.copy_cmd"
+        - "'bootflash:' in result.file_system"
+        - "'bootflash:dir1/dir2/dir3/{{ test_destination_file }}_copy' in result.local_file"
+        - "'/{{ test_destination_file }}' in result.remote_file"
+        - "'Received: File copied/pulled to nxos device from remote scp server.' in result.transfer_status"
+        - "'{{ inventory_hostname_short }}' in result.remote_scp_server"
 
-    - name: "Overwrite the file"
-      nxos_file_copy: *copy_pull
-      register: result
+  - name: "Overwrite the file"
+    nxos_file_copy: *copy_pull
+    register: result
 
-    - assert: *true
-  ignore_errors: yes
-
-  rescue:
-
-  - debug: msg="TRANSPORT:CLI nxos_file_copy failure detected"
+  - assert: *overwrite
 
   always:
 

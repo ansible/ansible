@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabvirtualmachine
 version_added: "2.8"
-short_description: Manage Azure DevTest Lab Virtual Machine instance.
+short_description: Manage Azure DevTest Lab Virtual Machine instance
 description:
     - Create, update and delete instance of Azure DevTest Lab Virtual Machine.
 
@@ -45,9 +45,10 @@ options:
             - linux
     vm_size:
         description:
-            - A valid Azure VM size value. For example, 'Standard_D4'. The list of choices varies depending on the
-              subscription and location. Check your subscription for available choices. Required when creating a VM.
-            - "Available values can be found here: U(https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general)"
+            - A valid Azure VM size value. For example, C(Standard_D4).
+            - The list of choices varies depending on the subscription and location. Check your subscription for available choices.
+            - Available values can be found on this website, link U(https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general).
+            - Required when I(state=present).
     user_name:
         description:
             - The user name of the virtual machine.
@@ -59,7 +60,7 @@ options:
             - The SSH key of the virtual machine administrator.
     lab_subnet:
         description:
-            - An existing subnet within lab's virtual network
+            - An existing subnet within lab's virtual network.
             - It can be the subnet's resource id.
             - It can be a dict which contains C(virtual_network_name) and C(name).
     disallow_public_ip_address:
@@ -72,10 +73,10 @@ options:
         suboptions:
             source_name:
                 description:
-                    - "The artifact's source name."
+                    - The artifact's source name.
             source_path:
                 description:
-                    - "The artifact's path in the source repository."
+                    - The artifact's path in the source repository.
             parameters:
                 description:
                     - The parameters of the artifact.
@@ -120,19 +121,19 @@ options:
             - premium
     state:
       description:
-        - Assert the state of the Virtual Machine.
-        - Use 'present' to create or update an Virtual Machine and 'absent' to delete it.
+          - Assert the state of the Virtual Machine.
+          - Use C(present) to create or update an Virtual Machine and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 

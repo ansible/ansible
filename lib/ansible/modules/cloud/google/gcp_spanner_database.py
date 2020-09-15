@@ -47,11 +47,13 @@ options:
     - present
     - absent
     default: present
+    type: str
   name:
     description:
     - A unique identifier for the database, which cannot be changed after the instance
       is created. Values are of the form [a-z][-a-z0-9]*[a-z0-9].
     required: true
+    type: str
   extra_statements:
     description:
     - 'An optional list of DDL statements to run inside the newly created database.
@@ -59,14 +61,17 @@ options:
       with the creation of the database: if there is an error in any statement, the
       database is not created.'
     required: false
+    type: list
   instance:
     description:
     - The instance to create the database on.
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place in the name of the resource here as a string
-      Alternatively, you can add `register: name-of-resource` to a gcp_spanner_instance
-      task and then set this instance field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''name'' and value of
+      your resource''s name Alternatively, you can add `register: name-of-resource`
+      to a gcp_spanner_instance task and then set this instance field to "{{ name-of-resource
+      }}"'
     required: true
+    type: dict
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/spanner/docs/reference/rest/v1/projects.instances.databases)'
@@ -117,7 +122,7 @@ instance:
   description:
   - The instance to create the database on.
   returned: success
-  type: str
+  type: dict
 '''
 
 ################################################################################
@@ -126,6 +131,7 @@ instance:
 
 from ansible.module_utils.gcp_utils import navigate_hash, GcpSession, GcpModule, GcpRequest, replace_resource_dict
 import json
+import time
 
 ################################################################################
 # Main
@@ -140,7 +146,7 @@ def main():
             state=dict(default='present', choices=['present', 'absent'], type='str'),
             name=dict(required=True, type='str'),
             extra_statements=dict(type='list', elements='str'),
-            instance=dict(required=True),
+            instance=dict(required=True, type='dict'),
         )
     )
 
@@ -151,6 +157,9 @@ def main():
 
     fetch = fetch_resource(module, self_link(module))
     changed = False
+
+    if 'instance' in module.params and 'name' in module.params['instance']:
+        module.params['instance']['name'] = module.params['instance']['name'].split('/')[-1]
 
     if fetch:
         if state == 'present':
@@ -176,11 +185,11 @@ def main():
 
 def create(module, link):
     auth = GcpSession(module, 'spanner')
-    return return_if_object(module, auth.post(link, resource_to_request(module)))
+    return wait_for_operation(module, auth.post(link, resource_to_request(module)))
 
 
 def update(module, link):
-    module.fail_json(msg="Database cannot be edited")
+    module.fail_json(msg="Spanner objects can't be updated to ensure data safety")
 
 
 def delete(module, link):
@@ -189,11 +198,7 @@ def delete(module, link):
 
 
 def resource_to_request(module):
-    request = {
-        u'instance': replace_resource_dict(module.params.get(u'instance', {}), 'name'),
-        u'name': module.params.get('name'),
-        u'extraStatements': module.params.get('extra_statements'),
-    }
+    request = {u'name': module.params.get('name'), u'extraStatements': module.params.get('extra_statements')}
     request = encode_request(request, module)
     return_vals = {}
     for k, v in request.items():
@@ -264,6 +269,42 @@ def is_different(module, response):
 # This is for doing comparisons with Ansible's current parameters.
 def response_to_hash(module, response):
     return {u'name': module.params.get('name'), u'extraStatements': module.params.get('extra_statements')}
+
+
+def async_op_url(module, extra_data=None):
+    if extra_data is None:
+        extra_data = {}
+    url = "https://spanner.googleapis.com/v1/{op_id}"
+    combined = extra_data.copy()
+    combined.update(module.params)
+    return url.format(**combined)
+
+
+def wait_for_operation(module, response):
+    op_result = return_if_object(module, response)
+    if op_result is None:
+        return {}
+    status = navigate_hash(op_result, ['done'])
+    wait_done = wait_for_completion(status, op_result, module)
+    raise_if_errors(wait_done, ['error'], module)
+    return navigate_hash(wait_done, ['response'])
+
+
+def wait_for_completion(status, op_result, module):
+    op_id = navigate_hash(op_result, ['name'])
+    op_uri = async_op_url(module, {'op_id': op_id})
+    while not status:
+        raise_if_errors(op_result, ['error'], module)
+        time.sleep(1.0)
+        op_result = fetch_resource(module, op_uri, False)
+        status = navigate_hash(op_result, ['done'])
+    return op_result
+
+
+def raise_if_errors(response, err_path, module):
+    errors = navigate_hash(response, err_path)
+    if errors is not None:
+        module.fail_json(msg=errors)
 
 
 def decode_response(response, module):

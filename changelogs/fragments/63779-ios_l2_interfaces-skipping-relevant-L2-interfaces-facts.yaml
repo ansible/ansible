@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "Fix ios_l2_interfaces skipping relevant L2 interfaces facts(https://github.com/ansible/ansible/pull/63779)"

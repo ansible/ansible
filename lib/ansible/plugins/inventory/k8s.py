@@ -95,14 +95,14 @@ EXAMPLES = '''
 # Authenticate with token, and return all pods and services for all namespaces
 plugin: k8s
 connections:
-    host: https://192.168.64.4:8443
+  - host: https://192.168.64.4:8443
     token: xxxxxxxxxxxxxxxx
     validate_certs: false
 
 # Use default config (~/.kube/config) file and active context, and return objects for a specific namespace
 plugin: k8s
 connections:
-    namespaces:
+  - namespaces:
     - testing
 
 # Use a custom config file, and a specific context.

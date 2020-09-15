@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Support check mode in NXOS BGP modules (https://github.com/ansible/ansible/pull/57360).

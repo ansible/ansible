@@ -209,7 +209,7 @@ def to_request(module, requests):
     transform = ComplexList(dict(
         path=dict(key=True),
         method=dict(),
-        data=dict(),
+        data=dict(type='dict'),
     ), module)
     return transform(to_list(requests))
 

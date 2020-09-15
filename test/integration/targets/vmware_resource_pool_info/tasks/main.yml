@@ -1,0 +1,20 @@
+# Test code for the vmware_resource_pool_info module.
+# Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+- name: Gather info about resource pool
+  vmware_resource_pool_info:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+  register: resource_result_0001
+
+- name: ensure a resource pool is present
+  assert:
+    that:
+        - "{{ resource_result_0001.changed == false }}"
+        - "{{ resource_result_0001.resource_pool_info is defined }}"

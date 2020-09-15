@@ -1,0 +1,91 @@
+---
+- debug:
+    msg: "START junos_interfaces deleted integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- set_fact:
+    expected_deleted_output:
+      - name: fxp0
+        enabled: true
+
+- block:
+    - name: Configure initial state for interface
+      junos_interfaces: &initial
+        config:
+          - name: ge-0/0/1
+            description: "Configured by Ansible - Interface 1"
+            mtu: 1024
+            speed: 100m
+            enabled: False
+            duplex: full-duplex
+            hold_time:
+              up: 2000
+              down: 2200
+          - name: ge-0/0/2
+            description: "Configured by Ansible - Interface 2"
+            mtu: 2048
+            speed: 10m
+            hold_time:
+              up: 3000
+              down: 3200
+          - name: gr-0/0/0
+            description: "Configured by Ansible - Interface 3"
+            hold_time:
+              up: 2400
+              down: 2600
+        state: merged
+      register: result
+
+    - name: Delete the provided interface configuration from running configuration
+      junos_interfaces: &deleted
+        config:
+        - name: ge-0/0/1
+        - name: ge-0/0/2
+        - name: gr-0/0/0
+        state: deleted
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_deleted_output | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Delete the provided interface configuration from running configuration (IDEMPOTENT)
+      junos_interfaces: *deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+    - name: Configure initial state for interface
+      junos_interfaces: *initial
+      register: result
+
+    - name: Delete the all interface configuration from running configuration
+      junos_interfaces:
+        state: deleted
+      register: result
+
+    - name: Assert the configuration is reflected on host
+      assert:
+        that:
+          - "{{ expected_deleted_output | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Delete the all interface configuration from running configuration (IDEMPOTENT)
+      junos_interfaces:
+        state: deleted
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml
+
+- debug:
+    msg: "END junos_interfaces deleted integration tests on connection={{ ansible_connection }}"

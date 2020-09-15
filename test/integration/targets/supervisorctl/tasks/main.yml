@@ -1,6 +1,4 @@
 - block:
-  # output_dir is hardcoded in test/runner/lib/executor.py and created there
-  # expand remote path
   - command: 'echo {{ output_dir }}'
     register: echo
   - set_fact:

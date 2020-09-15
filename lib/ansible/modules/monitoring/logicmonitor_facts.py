@@ -369,7 +369,7 @@ class LogicMonitor(object):
 class Host(LogicMonitor):
 
     def __init__(self, params, module=None):
-        """Initializor for the LogicMonitor host object"""
+        """Initializer for the LogicMonitor host object"""
         self.change = False
         self.params = params
         self.collector = None
@@ -469,7 +469,7 @@ class Host(LogicMonitor):
 class Hostgroup(LogicMonitor):
 
     def __init__(self, params, module=None):
-        """Initializor for the LogicMonitor host object"""
+        """Initializer for the LogicMonitor host object"""
         self.change = False
         self.params = params
 
@@ -549,7 +549,7 @@ def main():
             user=dict(required=True, default=None),
             password=dict(required=True, default=None, no_log=True),
 
-            collector=dict(require=False, default=None),
+            collector=dict(required=False, default=None),
             hostname=dict(required=False, default=None),
             displayname=dict(required=False, default=None),
             fullpath=dict(required=False, default=None)

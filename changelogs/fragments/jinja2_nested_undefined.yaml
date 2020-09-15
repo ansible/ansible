@@ -1,2 +1,0 @@
-minor_changes:
-  - jinja2 - accesses to attributes on an undefined value now return further undefined values rather than throwing an exception

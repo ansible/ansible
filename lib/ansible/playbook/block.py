@@ -22,7 +22,6 @@ __metaclass__ = type
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_tasks
@@ -31,7 +30,7 @@ from ansible.playbook.taggable import Taggable
 from ansible.utils.sentinel import Sentinel
 
 
-class Block(Base, Become, Conditional, CollectionSearch, Taggable):
+class Block(Base, Conditional, CollectionSearch, Taggable):
 
     # main block fields containing the task lists
     _block = FieldAttribute(isa='list', default=list, inherit=False)
@@ -372,7 +371,9 @@ class Block(Base, Become, Conditional, CollectionSearch, Taggable):
             tmp_list = []
             for task in target:
                 if isinstance(task, Block):
-                    tmp_list.append(evaluate_block(task))
+                    filtered_block = evaluate_block(task)
+                    if filtered_block.has_tasks():
+                        tmp_list.append(filtered_block)
                 elif (task.action == 'meta' or
                         (task.action == 'include' and task.evaluate_tags([], self._play.skip_tags, all_vars=all_vars)) or
                         task.evaluate_tags(self._play.only_tags, self._play.skip_tags, all_vars=all_vars)):

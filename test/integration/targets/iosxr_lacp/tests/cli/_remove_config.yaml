@@ -1,0 +1,8 @@
+---
+- name: Remove Config
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      no lacp system priority
+      no lacp system mac

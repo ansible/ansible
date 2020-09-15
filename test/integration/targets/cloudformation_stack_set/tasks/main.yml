@@ -18,11 +18,11 @@
 
 - block:
     - name: Get current account ID
-      aws_caller_facts:
+      aws_caller_info:
         <<: *aws_connection_info
       register: whoami
     - name: Get current account ID
-      aws_caller_facts:
+      aws_caller_info:
         <<: *aws_secondary_connection_info
       register: target_acct
 

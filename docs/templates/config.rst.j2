@@ -8,9 +8,9 @@
 {{name}}
 {{ '=' * name_len }}
 
-Ansible supports a few ways of providing configuration variables, mainly through environment variables, command line switches and an ini file named ``ansible.cfg``.
+Ansible supports several sources for configuring its behavior, including an ini file named ``ansible.cfg``, environment variables, command-line options, playbook keywords, and variables. See :ref:`general_precedence_rules` for details on the relative precedence of each source.
 
-Starting at Ansible 2.4 the ``ansible-config`` utility allows users to see all the configuration settings available, their defaults, how to set them and
+The ``ansible-config`` utility allows users to see all the configuration settings available, their defaults, how to set them and
 where their current value comes from. See :ref:`ansible-config` for more information.
 
 .. _ansible_configuration_settings_locations:

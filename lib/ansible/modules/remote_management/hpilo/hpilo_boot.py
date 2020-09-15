@@ -52,7 +52,7 @@ options:
     - The state of the boot media.
     - "no_boot: Do not boot from the device"
     - "boot_once: Boot from the device once and then notthereafter"
-    - "boot_always: Boot from the device each time the serveris rebooted"
+    - "boot_always: Boot from the device each time the server is rebooted"
     - "connect: Connect the virtual media device and set to boot_always"
     - "disconnect: Disconnects the virtual media device and set to no_boot"
     - "poweroff: Power off the server"
@@ -71,7 +71,7 @@ options:
     choices: [ "SSLv3", "SSLv23", "TLSv1", "TLSv1_1", "TLSv1_2" ]
     version_added: '2.4'
 requirements:
-- hpilo
+- python-hpilo
 notes:
 - To use a USB key image you need to specify floppy as boot media.
 - This module ought to be run from a system that can access the HP iLO

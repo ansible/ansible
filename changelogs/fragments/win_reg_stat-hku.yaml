@@ -1,0 +1,2 @@
+bugfixes:
+- win_reg_stat - fix issue when trying to check keys in ``HKU:\`` - https://github.com/ansible/ansible/issues/59337

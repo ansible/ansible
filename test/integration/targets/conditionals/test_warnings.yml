@@ -1,0 +1,14 @@
+- hosts: testhost
+  gather_facts: false
+  vars:
+    str_boolean_var: 'false'
+  tasks:
+  - name: Run tasks with warnings for conditionals that will change in behavior depending on CONDITIONAL_BARE_VARS
+    block:
+    - debug:
+      when: str_boolean_var
+    - debug:
+      when: double_interpolated
+      vars:
+        double_interpolated: other
+        other: false

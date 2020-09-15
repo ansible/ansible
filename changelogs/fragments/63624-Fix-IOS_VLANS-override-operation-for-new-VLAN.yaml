@@ -1,0 +1,3 @@
+---
+bugfixes:
+- "Fix IOS_VLANS override operation for new VLANs(https://github.com/ansible/ansible/pull/63624)"

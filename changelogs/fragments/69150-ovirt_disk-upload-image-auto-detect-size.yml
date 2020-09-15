@@ -1,0 +1,2 @@
+bugfixes:
+  - "ovirt_disk: upload image auto detect size"

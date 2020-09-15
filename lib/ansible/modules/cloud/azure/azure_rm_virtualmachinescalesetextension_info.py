@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_virtualmachinescalesetextension_info
-version_added: "2.8"
-short_description: Get Azure Virtual Machine Scale Set Extension facts.
+version_added: "2.9"
+short_description: Get Azure Virtual Machine Scale Set Extension facts
 description:
     - Get facts of Azure Virtual Machine Scale Set Extension.
 
@@ -38,7 +38,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -57,62 +57,63 @@ EXAMPLES = '''
 
 RETURN = '''
 extensions:
-    description: A list of dictionaries containing facts for Virtual Machine Extension.
+    description:
+        - A list of dictionaries containing facts for Virtual Machine Extension.
     returned: always
     type: complex
     contains:
         id:
             description:
-                - Resource Id
+                - Resource ID.
             returned: always
             type: str
             sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachineScaleSets/
                      myvmss/extensions/myextension"
         resource_group:
             description:
-                - Resource group name
+                - Resource group name.
             returned: always
             type: str
             sample: myrg
         vmss_name:
             description:
-                - Virtual machine name
+                - Virtual machine scale set name.
             returned: always
             type: str
             sample: myvmss
         name:
             description:
-                - Virtual machine name
+                - Virtual machine extension name.
             returned: always
             type: str
             sample: myextension
         publisher:
             description:
-                - Extension publisher
+                - Extension publisher.
             returned: always
             type: str
             sample: Microsoft.Azure.Extensions
         type:
             description:
-                - Extension type
+                - Extension type.
             returned: always
             type: str
             sample: CustomScript
         settings:
             description:
-                - Extension specific settings dictionary
+                - Extension specific settings dictionary.
             returned: always
-            type: complex
-            sample: "{'commandToExecute': 'hostname'}"
+            type: dict
+            sample: { 'commandToExecute':'hostname' }
         auto_upgrade_minor_version:
             description:
-                - Autoupgrade minor version flag
+                - Autoupgrade minor version flag.
             returned: always
             type: bool
             sample: true
         provisioning_state:
             description:
-                - Provisioning state of the extension
+                - Provisioning state of the extension.
             returned: always
             type: str
             sample: Succeeded
@@ -128,7 +129,7 @@ except ImportError:
     pass
 
 
-class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
+class AzureRMVirtualMachineScaleSetExtensionInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -151,9 +152,15 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
         self.resource_group = None
         self.vmss_name = None
         self.name = None
-        super(AzureRMVirtualMachineScaleSetExtensionFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMVirtualMachineScaleSetExtensionInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_virtualmachinescalesetextension_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_virtualmachinescalesetextension_facts' module has been renamed to" +
+                                  " 'azure_rm_virtualmachinescalesetextension_info'",
+                                  version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
 
@@ -214,7 +221,7 @@ class AzureRMVirtualMachineScaleSetExtensionFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMVirtualMachineScaleSetExtensionFacts()
+    AzureRMVirtualMachineScaleSetExtensionInfo()
 
 
 if __name__ == '__main__':

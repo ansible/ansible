@@ -1,2 +1,0 @@
-bugfixes:
-- file - Allow state=touch on file the user does not own https://github.com/ansible/ansible/issues/50943

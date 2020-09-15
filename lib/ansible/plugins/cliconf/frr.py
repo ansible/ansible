@@ -38,7 +38,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
 from ansible.module_utils.network.common.utils import to_list
-from ansible.module_utils.basic import get_timestamp
 from ansible.plugins.cliconf import CliconfBase, enable_mode
 
 
@@ -179,13 +178,13 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def run_commands(self, commands=None, check_rc=True):
         if commands is None:

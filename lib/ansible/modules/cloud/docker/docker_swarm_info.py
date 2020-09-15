@@ -29,7 +29,7 @@ description:
 version_added: "2.8"
 
 author:
-    - Piotr Wojciechowski (@wojciechowskipiotr)
+    - Piotr Wojciechowski (@WojciechowskiPiotr)
 
 options:
   nodes:
@@ -68,11 +68,16 @@ options:
       - See L(the docker documentation,https://docs.docker.com/engine/reference/commandline/service_ps/#filtering)
         for more information on possible filters.
     type: dict
+  unlock_key:
+    description:
+      - Whether to retrieve the swarm unlock key.
+    type: bool
+    default: no
   verbose_output:
     description:
-      - When set to C(yes) and I(nodes), I(services) or I(tasks) is set to C(yes)
-        then output will contain verbose information about objects matching the full output of API method.
-        For details see the documentation of your version of Docker API at U(https://docs.docker.com/engine/api/).
+      - When set to C(yes) and I(nodes), I(services) or I(tasks) is set to C(yes), then the module output will
+        contain verbose information about objects matching the full output of API method.
+      - For details see the documentation of your version of Docker API at U(https://docs.docker.com/engine/api/).
       - The verbose output in this module contains only subset of information returned by I(_info) module
         for each type of the objects.
     type: bool
@@ -121,6 +126,15 @@ EXAMPLES = '''
 
 - debug:
     var: result.swarm_facts
+
+- name: Get the swarm unlock key
+  docker_swarm_info:
+    unlock_key: yes
+  register: result
+
+- debug:
+    var: result.swarm_unlock_key
+
 '''
 
 RETURN = '''
@@ -143,13 +157,17 @@ docker_swarm_manager:
       - Only if this one is C(true), the module will not fail.
     returned: both on success and on error
     type: bool
-
 swarm_facts:
     description:
       - Facts representing the basic state of the docker Swarm cluster.
       - Contains tokens to connect to the Swarm
     returned: always
     type: dict
+swarm_unlock_key:
+    description:
+      - Contains the key needed to unlock the swarm.
+    returned: When I(unlock_key) is C(true).
+    type: str
 nodes:
     description:
       - List of dict objects containing the basic information about each volume.
@@ -157,6 +175,7 @@ nodes:
         See description for I(verbose_output).
     returned: When I(nodes) is C(yes)
     type: list
+    elements: dict
 services:
     description:
       - List of dict objects containing the basic information about each volume.
@@ -164,6 +183,7 @@ services:
         See description for I(verbose_output).
     returned: When I(services) is C(yes)
     type: list
+    elements: dict
 tasks:
     description:
       - List of dict objects containing the basic information about each volume.
@@ -171,11 +191,14 @@ tasks:
         See description for I(verbose_output).
     returned: When I(tasks) is C(yes)
     type: list
+    elements: dict
 
 '''
 
+import traceback
+
 try:
-    from docker.errors import APIError, NotFound
+    from docker.errors import DockerException, APIError
 except ImportError:
     # missing Docker SDK for Python handled in ansible.module_utils.docker_common
     pass
@@ -183,7 +206,11 @@ except ImportError:
 from ansible.module_utils._text import to_native
 
 from ansible.module_utils.docker.swarm import AnsibleDockerSwarmClient
-from ansible.module_utils.docker.common import DockerBaseClass, clean_dict_booleans_for_docker_api
+from ansible.module_utils.docker.common import (
+    DockerBaseClass,
+    clean_dict_booleans_for_docker_api,
+    RequestException,
+)
 
 
 class DockerSwarmManager(DockerBaseClass):
@@ -208,6 +235,8 @@ class DockerSwarmManager(DockerBaseClass):
                 filter_name = docker_object + "_filters"
                 filters = clean_dict_booleans_for_docker_api(client.module.params.get(filter_name))
                 self.results[returned_name] = self.get_docker_items_list(docker_object, filters)
+        if self.client.module.params['unlock_key']:
+            self.results['swarm_unlock_key'] = self.get_docker_swarm_unlock_key()
 
     def get_docker_swarm_facts(self):
         try:
@@ -305,6 +334,10 @@ class DockerSwarmManager(DockerBaseClass):
 
         return object_essentials
 
+    def get_docker_swarm_unlock_key(self):
+        unlock_key = self.client.get_unlock_key() or {}
+        return unlock_key.get('UnlockKey') or None
+
 
 def main():
     argument_spec = dict(
@@ -314,7 +347,11 @@ def main():
         tasks_filters=dict(type='dict'),
         services=dict(type='bool', default=False),
         services_filters=dict(type='dict'),
+        unlock_key=dict(type='bool', default=False),
         verbose_output=dict(type='bool', default=False),
+    )
+    option_minimal_versions = dict(
+        unlock_key=dict(docker_py_version='2.7.0', docker_api_version='1.25'),
     )
 
     client = AnsibleDockerSwarmClient(
@@ -322,6 +359,7 @@ def main():
         supports_check_mode=True,
         min_docker_version='1.10.0',
         min_docker_api_version='1.24',
+        option_minimal_versions=option_minimal_versions,
         fail_results=dict(
             can_talk_to_docker=False,
             docker_swarm_active=False,
@@ -332,13 +370,18 @@ def main():
     client.fail_results['docker_swarm_active'] = client.check_if_swarm_node()
     client.fail_results['docker_swarm_manager'] = client.check_if_swarm_manager()
 
-    results = dict(
-        changed=False,
-    )
+    try:
+        results = dict(
+            changed=False,
+        )
 
-    DockerSwarmManager(client, results)
-    results.update(client.fail_results)
-    client.module.exit_json(**results)
+        DockerSwarmManager(client, results)
+        results.update(client.fail_results)
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

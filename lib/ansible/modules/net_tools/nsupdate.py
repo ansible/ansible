@@ -24,7 +24,6 @@ module: nsupdate
 short_description: Manage DNS records.
 description:
     - Create, update and remove DNS records using DDNS updates
-    - DDNS works well with both bind and Microsoft DNS (see https://technet.microsoft.com/en-us/library/cc961412.aspx)
 version_added: "2.3"
 requirements:
   - dnspython
@@ -111,6 +110,25 @@ EXAMPLES = '''
     zone: "example.org"
     record: "puppet"
     type: "CNAME"
+    state: absent
+
+- name: Add 1.1.168.192.in-addr.arpa. PTR for ansible.example.org
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    record: "1.1.168.192.in-addr.arpa."
+    type: "PTR"
+    value: "ansible.example.org."
+    state: present
+
+- name: Remove 1.1.168.192.in-addr.arpa. PTR
+  nsupdate:
+    key_name: "nsupdate"
+    key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+    server: "10.1.1.1"
+    record: "1.1.168.192.in-addr.arpa."
+    type: "PTR"
     state: absent
 '''
 

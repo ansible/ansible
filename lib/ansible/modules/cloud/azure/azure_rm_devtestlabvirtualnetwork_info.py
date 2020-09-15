@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_devtestlabvirtualnetwork_info
-version_added: "2.8"
-short_description: Get Azure DevTest Lab Virtual Network facts.
+version_added: "2.9"
+short_description: Get Azure DevTest Lab Virtual Network facts
 description:
     - Get facts of Azure DevTest Lab Virtual Network.
 
@@ -26,19 +26,22 @@ options:
         description:
             - The name of the resource group.
         required: True
+        type: str
     lab_name:
         description:
             - The name of DevTest Lab.
         required: True
+        type: str
     name:
         description:
             - The name of DevTest Lab Virtual Network.
+        type: str
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -58,7 +61,8 @@ EXAMPLES = '''
 
 RETURN = '''
 virtualnetworks:
-    description: A list of dictionaries containing facts for DevTest Lab Virtual Network.
+    description:
+        - A list of dictionaries containing facts for DevTest Lab Virtual Network.
     returned: always
     type: complex
     contains:
@@ -119,7 +123,7 @@ except ImportError:
     pass
 
 
-class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
+class AzureRMDevTestLabVirtualNetworkInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -143,9 +147,14 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
         self.resource_group = None
         self.lab_name = None
         self.name = None
-        super(AzureRMDevTestLabVirtualNetworkFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMDevTestLabVirtualNetworkInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+        is_old_facts = self.module._name == 'azure_rm_devtestlabvirtualnetwork_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_devtestlabvirtualnetwork_facts' module has been renamed to 'azure_rm_devtestlabvirtualnetwork_info'",
+                                  version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(DevTestLabsClient,
@@ -205,7 +214,7 @@ class AzureRMDevTestLabVirtualNetworkFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMDevTestLabVirtualNetworkFacts()
+    AzureRMDevTestLabVirtualNetworkInfo()
 
 
 if __name__ == '__main__':

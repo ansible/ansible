@@ -34,14 +34,13 @@ author:
   - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
-  - python-gitlab python module
+  - python-gitlab <= 1.12.1
 extends_documentation_fragment:
     - auth_basic
 options:
   url:
     description:
-      - The URL of the Gitlab server, with protocol (i.e. http or https).
-    required: true
+      - The URL of the GitLab server, with protocol (i.e. http or https).
     type: str
   api_token:
     description:
@@ -141,7 +140,7 @@ result:
   type: dict
 
 error:
-  description: the error message returned by the Gitlab API
+  description: the error message returned by the GitLab API
   returned: failed
   type: str
   sample: "400: path is already in use"
@@ -259,7 +258,7 @@ class GitLabRunner(object):
     @param description Description of the runner
     '''
     def findRunner(self, description):
-        runners = self._gitlab.runners.all()
+        runners = self._gitlab.runners.all(as_list=False)
         for runner in runners:
             if (runner['description'] == description):
                 return self._gitlab.runners.get(runner['id'])
@@ -286,15 +285,17 @@ class GitLabRunner(object):
 
 
 def deprecation_warning(module):
-    deprecated_aliases = ['login_token']
+    deprecated_aliases = ['private_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
+    for aliase in deprecated_aliases:
+        if aliase in module.params:
+            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
 
 
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        url=dict(type='str', required=True, removed_in_version=2.10),
+        url=dict(type='str', removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["private_token"]),
         description=dict(type='str', required=True, aliases=["name"]),
         active=dict(type='bool', default=True),
@@ -319,14 +320,16 @@ def main():
             ['login_user', 'login_password'],
         ],
         required_one_of=[
-            ['api_username', 'api_token']
+            ['api_username', 'api_token'],
+            ['api_url', 'url']
         ],
         supports_check_mode=True,
     )
 
     deprecation_warning(module)
 
-    url = re.sub('/api.*', '', module.params['url'])
+    if module.params['url'] is not None:
+        url = re.sub('/api.*', '', module.params['url'])
 
     api_url = module.params['api_url']
     validate_certs = module.params['validate_certs']
@@ -354,10 +357,10 @@ def main():
                                         private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s. \
+            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2" % to_native(e))
 
     gitlab_runner = GitLabRunner(module, gitlab_instance)
     runner_exists = gitlab_runner.existsRunner(runner_description)

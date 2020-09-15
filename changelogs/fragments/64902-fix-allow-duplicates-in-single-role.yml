@@ -1,0 +1,4 @@
+---
+bugfixes:
+  - "roles - Ensure that ``allow_duplicates: true`` enables to run single
+    role multiple times (https://github.com/ansible/ansible/issues/64902)"

@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_privs.py - fix reports as changed behavior of module when using ``type=default_privs`` (https://github.com/ansible/ansible/issues/64371).

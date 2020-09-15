@@ -54,7 +54,7 @@ function Get-RAP([string] $name) {
 
     # Fetch RAP user groups in Down-Level Logon format
     $rap.UserGroups = @(
-        Get-ChildItem -Path "$rap_path\UserGroups" | 
+        Get-ChildItem -Path "$rap_path\UserGroups" |
             Select-Object -ExpandProperty Name |
             ForEach-Object { Convert-FromSID -sid (Convert-ToSID -account_name $_) }
     )
@@ -138,7 +138,7 @@ if ($null -ne $allowed_ports) {
 }
 
 # Ensure RemoteDesktopServices module is loaded
-if ((Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue) -eq $null) {
+if ($null -eq (Get-Module -Name RemoteDesktopServices -ErrorAction SilentlyContinue)) {
     Import-Module -Name RemoteDesktopServices
 }
 

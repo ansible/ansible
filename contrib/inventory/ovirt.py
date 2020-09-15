@@ -68,8 +68,8 @@ USER_AGENT_VERSION = "v1"
 import sys
 import os
 import argparse
-import ConfigParser
 from collections import defaultdict
+from ansible.module_utils.six.moves import configparser as ConfigParser
 
 import json
 

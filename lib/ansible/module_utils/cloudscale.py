@@ -47,6 +47,12 @@ class AnsibleCloudscaleBase(object):
                                        '"%s".' % api_call, fetch_url_info=info)
 
     def _post_or_patch(self, api_call, method, data):
+        # This helps with tags when we have the full API resource href to update.
+        if API_URL not in api_call:
+            api_endpoint = API_URL + api_call
+        else:
+            api_endpoint = api_call
+
         headers = self._auth_header.copy()
         if data is not None:
             # Sanitize data dictionary
@@ -60,7 +66,7 @@ class AnsibleCloudscaleBase(object):
             headers['Content-type'] = 'application/json'
 
         resp, info = fetch_url(self._module,
-                               API_URL + api_call,
+                               api_endpoint,
                                headers=headers,
                                method=method,
                                data=data,
@@ -92,6 +98,31 @@ class AnsibleCloudscaleBase(object):
         else:
             self._module.fail_json(msg='Failure while calling the cloudscale.ch API with DELETE for '
                                        '"%s".' % api_call, fetch_url_info=info)
+
+    def _param_updated(self, key, resource):
+        param = self._module.params.get(key)
+        if param is None:
+            return False
+
+        if resource and key in resource:
+            if param != resource[key]:
+                self._result['changed'] = True
+
+                patch_data = {
+                    key: param
+                }
+
+                self._result['diff']['before'].update({key: resource[key]})
+                self._result['diff']['after'].update(patch_data)
+
+                if not self._module.check_mode:
+                    href = resource.get('href')
+                    if not href:
+                        self._module.fail_json(msg='Unable to update %s, no href found.' % key)
+
+                    self._patch(href, patch_data)
+                    return True
+        return False
 
     def get_result(self, resource):
         if resource:

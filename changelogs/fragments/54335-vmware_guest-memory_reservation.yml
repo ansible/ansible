@@ -1,0 +1,2 @@
+minor_changes:
+  - Remove duplicate implementation of memory reservation parameter in vmware_guest (https://github.com/ansible/ansible/issues/54335).

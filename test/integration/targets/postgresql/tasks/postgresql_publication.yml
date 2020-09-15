@@ -1,0 +1,411 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# The file for testing postgresql_copy module.
+
+- vars:
+    test_table1: acme1
+    test_table2: acme2
+    test_table3: acme3
+    test_pub: acme_publ
+    test_role: alice
+    test_schema: acme_schema
+    test_db: acme_db
+    task_parameters: &task_parameters
+      become_user: '{{ pg_user }}'
+      become: yes
+      register: result
+    pg_parameters: &pg_parameters
+      login_user: '{{ pg_user }}'
+      login_db: '{{ test_db }}'
+
+  block:
+  #################################################
+  # Test preparation, create database test objects:
+  - name: postgresql_publication - create test db
+    <<: *task_parameters
+    postgresql_db:
+      login_user: '{{ pg_user }}'
+      maintenance_db: postgres
+      name: '{{ test_db }}'
+
+  - name: postgresql_publication - create test schema
+    <<: *task_parameters
+    postgresql_schema: 
+      <<: *pg_parameters
+      name: '{{ test_schema }}'
+
+  - name: postgresql_publication - create test role
+    <<: *task_parameters
+    postgresql_user:
+      <<: *pg_parameters
+      name: '{{ test_role }}'
+      role_attr_flags: SUPERUSER
+
+  - name: postgresql_publication - create test tables
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ item }}'
+      columns:
+      - id int
+    loop:
+    - '{{ test_table1 }}'
+    - '{{ test_schema }}.{{ test_table2 }}'
+    - '{{ test_table3 }}'
+
+
+  ################
+  # Do main tests:
+
+  # Test
+  - name: postgresql_publication - create publication, check_mode
+    <<: *task_parameters
+    postgresql_publication: 
+      <<: *pg_parameters
+      name: '{{ test_pub }}'
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.exists == false
+      - result.queries == ["CREATE PUBLICATION \"{{ test_pub }}\" FOR ALL TABLES"]
+
+  # Check
+  - name: postgresql_publication - check that nothing has been changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication WHERE pubname = '{{ test_pub }}'
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  # Test
+  - name: postgresql_publication - create publication
+    <<: *task_parameters
+    postgresql_publication: 
+      <<: *pg_parameters
+      name: '{{ test_pub }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.exists == true
+      - result.queries == ["CREATE PUBLICATION \"{{ test_pub }}\" FOR ALL TABLES"]
+      - result.owner == '{{ pg_user }}'
+      - result.alltables == true
+      - result.tables == []
+      - result.parameters.publish != {}
+
+  # Check
+  - name: postgresql_publication - check that nothing has been changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT * FROM pg_publication WHERE pubname = '{{ test_pub }}'
+        AND pubowner = '10' AND puballtables = 't'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # Test
+  - name: postgresql_publication - drop publication, check_mode
+    <<: *task_parameters
+    postgresql_publication: 
+      <<: *pg_parameters
+      name: '{{ test_pub }}'
+      state: absent
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.exists == true
+      - result.queries == ["DROP PUBLICATION \"{{ test_pub }}\""]
+      - result.owner == '{{ pg_user }}'
+      - result.alltables == true
+      - result.tables == []
+      - result.parameters.publish != {}
+
+  # Check
+  - name: postgresql_publication - check that nothing has been changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication WHERE pubname = '{{ test_pub }}'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # Test
+  - name: postgresql_publication - drop publication
+    <<: *task_parameters
+    postgresql_publication: 
+      <<: *pg_parameters
+      name: '{{ test_pub }}'
+      state: absent
+      cascade: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.exists == false
+      - result.queries == ["DROP PUBLICATION \"{{ test_pub }}\" CASCADE"]
+
+  # Check
+  - name: postgresql_publication - check that publication does not exist
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication WHERE pubname = '{{ test_pub }}'
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  # Test
+  - name: postgresql_publication - create publication with tables, owner, params
+    <<: *task_parameters
+    postgresql_publication: 
+      <<: *pg_parameters
+      name: '{{ test_pub }}'
+      owner: '{{ test_role }}'
+      tables:
+      - '{{ test_table1 }}'
+      - '{{ test_schema }}.{{ test_table2 }}'
+      parameters:
+        publish: 'insert'
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["CREATE PUBLICATION \"{{ test_pub }}\" FOR TABLE \"public\".\"{{ test_table1 }}\", \"{{ test_schema }}\".\"{{ test_table2 }}\" WITH (publish = 'insert')", "ALTER PUBLICATION \"{{ test_pub }}\" OWNER TO \"{{ test_role }}\""]
+      - result.owner == '{{ test_role }}'
+      - result.tables == ["\"public\".\"{{ test_table1 }}\"", "\"{{ test_schema }}\".\"{{ test_table2 }}\""]
+      - result.parameters.publish.insert == true
+      - result.parameters.publish.delete == false
+
+  # Check 1
+  - name: postgresql_publication - check that test publication exists
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT * FROM pg_publication WHERE pubname = '{{ test_pub }}' 
+        AND pubowner != '10' AND puballtables = 'f' AND pubinsert = 't' AND pubdelete = 'f'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # Check 2
+  - name: postgresql_publication - check that test_table1 from schema public is in publication
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication_tables WHERE pubname = '{{ test_pub }}' AND schemaname = 'public'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # Check 3
+  - name: postgresql_publication - check that test_table2 from test schema is in publication
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication_tables WHERE pubname = '{{ test_pub }}' AND schemaname = '{{ test_schema }}'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # Test
+  - name: postgresql_publication - add table to publication, change owner, check_mode
+    <<: *task_parameters
+    postgresql_publication: 
+      <<: *pg_parameters
+      name: '{{ test_pub }}'
+      owner: '{{ pg_user }}'
+      tables:
+      - '{{ test_table1 }}'
+      - '{{ test_schema }}.{{ test_table2 }}'
+      - '{{ test_table3 }}'
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["ALTER PUBLICATION \"{{ test_pub }}\" ADD TABLE \"public\".\"{{ test_table3 }}\"", "ALTER PUBLICATION \"{{ test_pub }}\" OWNER TO \"{{ pg_user }}\""]
+      - result.tables == ["\"public\".\"{{ test_table1 }}\"", "\"{{ test_schema }}\".\"{{ test_table2 }}\""]
+
+  # Check
+  - name: postgresql_publication - check that nothing changes after the previous step
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT * FROM pg_publication WHERE pubname = '{{ test_pub }}' 
+        AND pubowner != '10' AND puballtables = 'f' AND pubinsert = 't' AND pubupdate = 't'
+
+  - assert:
+      that:
+      - result.rowcount == 0
+
+  # Check
+  - name: postgresql_publication - check that 2 tables are in publication
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication_tables WHERE pubname = '{{ test_pub }}'
+
+  - assert:
+      that:
+      - result.rowcount == 2
+
+  # Test
+  - name: postgresql_publication - add table to publication, change owner
+    <<: *task_parameters
+    postgresql_publication: 
+      <<: *pg_parameters
+      name: '{{ test_pub }}'
+      owner: '{{ pg_user }}'
+      tables:
+      - '{{ test_table1 }}'
+      - '{{ test_schema }}.{{ test_table2 }}'
+      - '{{ test_table3 }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["ALTER PUBLICATION \"{{ test_pub }}\" ADD TABLE \"public\".\"{{ test_table3 }}\"", "ALTER PUBLICATION \"{{ test_pub }}\" OWNER TO \"{{ pg_user }}\""]
+      - result.tables == ["\"public\".\"{{ test_table1 }}\"", "\"{{ test_schema }}\".\"{{ test_table2 }}\"", "\"public\".\"{{ test_table3 }}\""]
+
+  # Check 1
+  - name: postgresql_publication - check owner has been changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: >
+        SELECT * FROM pg_publication WHERE pubname = '{{ test_pub }}' AND pubowner = '10'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # Check 2
+  - name: postgresql_publication - check that 3 tables are in publication
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication_tables WHERE pubname = '{{ test_pub }}'
+
+  - assert:
+      that:
+      - result.rowcount == 3
+
+  # Test
+  - name: postgresql_publication - remove table from publication, check_mode
+    <<: *task_parameters
+    postgresql_publication: 
+      <<: *pg_parameters
+      name: '{{ test_pub }}'
+      tables:
+      - '{{ test_table1 }}'
+      - '{{ test_schema }}.{{ test_table2 }}'
+      parameters:
+        publish: 'insert'
+    check_mode: yes
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["ALTER PUBLICATION \"{{ test_pub }}\" DROP TABLE \"public\".\"{{ test_table3 }}\""]
+      - result.tables == ["\"public\".\"{{ test_table1 }}\"", "\"{{ test_schema }}\".\"{{ test_table2 }}\"", "\"public\".\"{{ test_table3 }}\""]
+
+  # Check 1
+  - name: postgresql_publication - check that 3 tables are in publication
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication_tables WHERE pubname = '{{ test_pub }}'
+
+  - assert:
+      that:
+      - result.rowcount == 3
+
+  # Check 2
+  - name: postgresql_publication - check no parameters have been changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication WHERE pubname = '{{ test_pub }}' AND pubinsert = 't'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # Test
+  - name: postgresql_publication - remove table from publication
+    <<: *task_parameters
+    postgresql_publication: 
+      <<: *pg_parameters
+      name: '{{ test_pub }}'
+      tables:
+      - '{{ test_table1 }}'
+      - '{{ test_schema }}.{{ test_table2 }}'
+      parameters:
+        publish: 'delete'
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["ALTER PUBLICATION \"{{ test_pub }}\" DROP TABLE \"public\".\"{{ test_table3 }}\"", "ALTER PUBLICATION \"{{ test_pub }}\" SET (publish = 'delete')"]
+      - result.tables == ["\"public\".\"{{ test_table1 }}\"", "\"{{ test_schema }}\".\"{{ test_table2 }}\""]
+
+  # Check 1
+  - name: postgresql_publication - check that 2 tables are in publication
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication_tables WHERE pubname = '{{ test_pub }}'
+
+  - assert:
+      that:
+      - result.rowcount == 2
+
+  # Check 2
+  - name: postgresql_publication - check parameter has been changed
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: SELECT * FROM pg_publication WHERE pubname = '{{ test_pub }}' AND pubinsert = 'f'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  always:
+  ###########
+  # Clean up:
+
+  - name: postgresql_publication - remove test db
+    <<: *task_parameters
+    postgresql_db:
+      login_user: '{{ pg_user }}'
+      maintenance_db: postgres
+      name: '{{ test_db }}'
+      state: absent
+
+  - name: postgresql_publication - remove test role
+    <<: *task_parameters
+    postgresql_user:
+      login_user: '{{ pg_user }}'
+      login_db: postgres
+      name: '{{ test_role }}'
+      state: absent

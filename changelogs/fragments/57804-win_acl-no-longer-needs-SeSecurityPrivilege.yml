@@ -1,0 +1,2 @@
+bugfixes:
+  - win_acl - Fixed error when setting rights on directory for which inheritance from parent directory has been disabled.

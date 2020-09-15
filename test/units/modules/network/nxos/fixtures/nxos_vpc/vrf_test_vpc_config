@@ -1,0 +1,2 @@
+vpc domain 100
+  peer-keepalive destination 192.168.1.1 source 10.1.1.1 vrf my_vrf

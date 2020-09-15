@@ -366,6 +366,52 @@
     that:
     - not remove_cred_again is changed
 
+# https://github.com/ansible/ansible/issues/67278
+- name: create credential with wildcard
+  win_credential:
+    name: '*.{{ test_hostname }}'
+    type: domain_password
+    username: DOMAIN\username
+    secret: password
+    state: present
+    persistence: enterprise
+  register: wildcard_cred
+  vars: *become_vars
+
+- name: get result of create credential with wildcard
+  test_cred_facts:
+    name: '*.{{ test_hostname }}'
+    type: domain_password
+  register: wildcard_cred_actual
+  vars: *become_vars
+
+- name: assert create credential with wildcard
+  assert:
+    that:
+    - wildcard_cred is changed
+    - wildcard_cred_actual.name == '*.' ~ test_hostname
+
+- name: remove credential with wildcard
+  win_credential:
+    name: '*.{{ test_hostname }}'
+    type: domain_password
+    state: absent
+  register: wildcard_remove
+  vars: *become_vars
+
+- name: get result of remove credential with wildcard
+  test_cred_facts:
+    name: '*.{{ test_hostname }}'
+    type: domain_password
+  register: wildcard_remove_actual
+  vars: *become_vars
+
+- name: assert remove credential with wildcard
+  assert:
+    that:
+    - wildcard_remove is changed
+    - not wildcard_remove_actual.exists
+
 - name: create generic password (check mode)
   win_credential:
     name: '{{ test_hostname }}'
@@ -409,6 +455,10 @@
   register: generic_password_actual
   vars: *become_vars
 
+- name: set encoded password result
+  set_fact:
+    encoded_pass: '{{ "genericpass" | string | b64encode(encoding="utf-16-le") }}'
+
 - name: assert create generic password
   assert:
     that:
@@ -419,7 +469,7 @@
     - generic_password_actual.comment == None
     - generic_password_actual.name == test_hostname
     - generic_password_actual.persistence == "Enterprise"
-    - generic_password_actual.secret == "genericpass"|b64encode
+    - generic_password_actual.secret == encoded_pass
     - generic_password_actual.type == "Generic"
     - generic_password_actual.username == "genericuser"
 

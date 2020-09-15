@@ -7,42 +7,6 @@ class ModuleDocFragment(object):
     # Standard F5 documentation fragment
     DOCUMENTATION = r'''
 options:
-  password:
-    description:
-      - The password for the user account used to connect to the BIG-IP.
-      - You may omit this option by setting the environment variable C(F5_PASSWORD).
-    type: str
-    required: true
-    aliases: [ pass, pwd ]
-  server:
-    description:
-      - The BIG-IP host.
-      - You may omit this option by setting the environment variable C(F5_SERVER).
-    type: str
-    required: true
-  server_port:
-    description:
-      - The BIG-IP server port.
-      - You may omit this option by setting the environment variable C(F5_SERVER_PORT).
-    type: int
-    default: 443
-    version_added: '2.2'
-  user:
-    description:
-      - The username to connect to the BIG-IP with. This user must have
-        administrative privileges on the device.
-      - You may omit this option by setting the environment variable C(F5_USER).
-    type: str
-    required: true
-  validate_certs:
-    description:
-      - If C(no), SSL certificates are not validated. Use this only
-        on personally controlled sites using self-signed certificates.
-      - You may omit this option by setting the environment variable
-        C(F5_VALIDATE_CERTS).
-    type: bool
-    default: yes
-    version_added: '2.0'
   provider:
     description:
       - A dict object containing connection details.
@@ -88,7 +52,6 @@ options:
             for either connecting or sending commands.  If the timeout is
             exceeded before the operation is completed, the module will error.
         type: int
-        default: 10
       ssh_keyfile:
         description:
           - Specifies the SSH keyfile to use to authenticate the connection to
@@ -102,6 +65,11 @@ options:
         type: str
         choices: [ cli, rest ]
         default: rest
+      auth_provider:
+        description:
+          - Configures the auth provider for to obtain authentication tokens from the remote device.
+          - This option is really used when working with BIG-IQ devices.
+        type: str
 notes:
   - For more information on using Ansible to manage F5 Networks devices see U(https://www.ansible.com/integrations/networks/f5).
   - Requires BIG-IP software version >= 12.

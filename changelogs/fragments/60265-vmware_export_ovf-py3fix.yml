@@ -1,0 +1,2 @@
+bugfixes:
+- Fix Python3 compatibility for vmware_export_ovf module.

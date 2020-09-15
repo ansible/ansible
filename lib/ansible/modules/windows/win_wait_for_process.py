@@ -22,7 +22,7 @@ description:
 options:
   process_name_exact:
     description:
-    - The name of the process(es) for which to wait.
+    - The name of the process(es) for which to wait.  The name of the process(es) should not include the file extension suffix.
     type: list
   process_name_pattern:
     description:
@@ -65,7 +65,7 @@ options:
     description:
     - When checking for a running process C(present) will block execution
       until the process exists, or until the timeout has been reached.
-      C(absent) will block execution untile the processs no longer exists,
+      C(absent) will block execution until the process no longer exists,
       or until the timeout has been reached.
     - When waiting for C(present), the module will return changed only if
       the process was not present on the initial check but became present on

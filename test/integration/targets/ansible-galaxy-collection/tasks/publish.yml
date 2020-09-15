@@ -1,0 +1,46 @@
+---
+- name: fail to publish with no token - {{ test_name }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: fail_no_token
+  failed_when: '"HTTP Code: 401" not in fail_no_token.stderr'
+
+- name: fail to publish with invalid token - {{ test_name }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --api-key fail
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: fail_invalid_token
+  failed_when: '"HTTP Code: 401" not in fail_invalid_token.stderr'
+
+- name: publish collection - {{ test_name }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --api-key {{ fallaxy_token }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: publish_collection
+
+- name: get result of publish collection - {{ test_name }}
+  uri:
+    url: '{{ test_server }}v2/collections/ansible_test/my_collection/versions/1.0.0/'
+    return_content: yes
+  register: publish_collection_actual
+
+- name: assert publish collection - {{ test_name }}
+  assert:
+    that:
+    - '"Collection has been successfully published and imported to the Galaxy server" in publish_collection.stdout'
+    - publish_collection_actual.json.metadata.name == 'my_collection'
+    - publish_collection_actual.json.metadata.namespace == 'ansible_test'
+    - publish_collection_actual.json.metadata.version == '1.0.0'
+
+- name: fail to publish existing collection version - {{ test_name }}
+  command: ansible-galaxy collection publish ansible_test-my_collection-1.0.0.tar.gz -s {{ test_server }} --api-key {{ fallaxy_token }}
+  args:
+    chdir: '{{ galaxy_dir }}'
+  register: fail_publish_existing
+  failed_when: '"Artifact already exists" not in fail_publish_existing.stderr'
+
+- name: reset published collections - {{ test_name }}
+  uri:
+    url: '{{ test_server }}custom/reset/'
+    method: POST

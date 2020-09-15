@@ -38,6 +38,14 @@ options:
     - Host facts about the specified ESXi server will be returned.
     - By specifying this option, you can select which ESXi hostsystem is returned if connecting to a vCenter.
     version_added: 2.8
+    type: str
+  show_tag:
+    description:
+    - Tags related to Host are shown if set to C(True).
+    default: False
+    type: bool
+    required: False
+    version_added: 2.9
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -57,6 +65,16 @@ EXAMPLES = r'''
     password: "{{ vcenter_pass }}"
     esxi_hostname: "{{ esxi_hostname }}"
   register: host_facts
+  delegate_to: localhost
+
+- name: Gather vmware host facts from vCenter with tag information
+  vmware_host_facts:
+    hostname: "{{ vcenter_server }}"
+    username: "{{ vcenter_user }}"
+    password: "{{ vcenter_pass }}"
+    esxi_hostname: "{{ esxi_hostname }}"
+    show_tag: True
+  register: host_facts_tag
   delegate_to: localhost
 
 - name: Get VSAN Cluster UUID from host facts
@@ -92,6 +110,7 @@ ansible_facts:
         "ansible_distribution_build": "4887370",
         "ansible_distribution_version": "6.5.0",
         "ansible_hostname": "10.76.33.100",
+        "ansible_in_maintenance_mode": true,
         "ansible_interfaces": [
             "vmk0"
         ],
@@ -105,6 +124,7 @@ ansible_facts:
         "ansible_product_name": "KVM",
         "ansible_product_serial": "NA",
         "ansible_system_vendor": "Red Hat",
+        "ansible_uptime": 1791680,
         "ansible_vmk0": {
             "device": "vmk0",
             "ipv4": {
@@ -117,6 +137,15 @@ ansible_facts:
         "vsan_cluster_uuid": null,
         "vsan_node_uuid": null,
         "vsan_health": "unknown",
+        "tags": [
+            {
+                "category_id": "urn:vmomi:InventoryServiceCategory:8eb81431-b20d-49f5-af7b-126853aa1189:GLOBAL",
+                "category_name": "host_category_0001",
+                "description": "",
+                "id": "urn:vmomi:InventoryServiceTag:e9398232-46fd-461a-bf84-06128e182a4a:GLOBAL",
+                "name": "host_tag_0001"
+            }
+        ],
     }
 '''
 
@@ -128,6 +157,8 @@ try:
     from pyVmomi import vim
 except ImportError:
     pass
+
+from ansible.module_utils.vmware_rest_client import VmwareRestClient
 
 
 class VMwareHostFactManager(PyVmomi):
@@ -156,6 +187,13 @@ class VMwareHostFactManager(PyVmomi):
         ansible_facts.update(self.get_system_facts())
         ansible_facts.update(self.get_vsan_facts())
         ansible_facts.update(self.get_cluster_facts())
+        if self.params.get('show_tag'):
+            vmware_client = VmwareRestClient(self.module)
+            tag_info = {
+                'tags': vmware_client.get_tags_for_hostsystem(hostsystem_mid=self.host._moId)
+            }
+            ansible_facts.update(tag_info)
+
         self.module.exit_json(changed=False, ansible_facts=ansible_facts)
 
     def get_cluster_facts(self):
@@ -242,6 +280,8 @@ class VMwareHostFactManager(PyVmomi):
             'ansible_product_serial': sn,
             'ansible_bios_date': self.host.hardware.biosInfo.releaseDate,
             'ansible_bios_version': self.host.hardware.biosInfo.biosVersion,
+            'ansible_uptime': self.host.summary.quickStats.uptime,
+            'ansible_in_maintenance_mode': self.host.runtime.inMaintenanceMode,
         }
         return facts
 
@@ -250,6 +290,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(
         esxi_hostname=dict(type='str', required=False),
+        show_tag=dict(type='bool', default=False),
     )
     module = AnsibleModule(argument_spec=argument_spec,
                            supports_check_mode=True)

@@ -45,7 +45,8 @@
       - volume.volume.Name in result.volumes
       - "'volumes_space_reclaimed' in result"
       # builder_cache
-      - "'builder_cache_space_reclaimed' in result"
+      - "'builder_cache_space_reclaimed' in result or docker_py_version is version('3.3.0', '<')"
+      - "'builder_cache_space_reclaimed' not in result or docker_py_version is version('3.3.0', '>=')"
 
   # Test with filters
   - docker_prune:

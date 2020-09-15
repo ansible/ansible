@@ -1,0 +1,7 @@
+cryptography
+jinja2
+mock
+pytest
+pytest-mock
+pytest-xdist
+pyyaml

@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.inventory.group import Group
+from ansible.module_utils.common._collections_compat import Mapping, MutableMapping
 from ansible.utils.vars import combine_vars, get_unique_id
 
 __all__ = ['Host']
@@ -112,7 +113,7 @@ class Host:
                     self.groups.append(group)
 
     def add_group(self, group):
-
+        added = False
         # populate ancestors first
         for oldg in group.get_ancestors():
             if oldg not in self.groups:
@@ -121,11 +122,14 @@ class Host:
         # actually add group
         if group not in self.groups:
             self.groups.append(group)
+            added = True
+        return added
 
     def remove_group(self, group):
-
+        removed = False
         if group in self.groups:
             self.groups.remove(group)
+            removed = True
 
             # remove exclusive ancestors, xcept all!
             for oldg in group.get_ancestors():
@@ -135,9 +139,13 @@ class Host:
                             break
                     else:
                         self.remove_group(oldg)
+        return removed
 
     def set_variable(self, key, value):
-        self.vars[key] = value
+        if key in self.vars and isinstance(self.vars[key], MutableMapping) and isinstance(value, Mapping):
+            self.vars[key] = combine_vars(self.vars[key], value)
+        else:
+            self.vars[key] = value
 
     def get_groups(self):
         return self.groups

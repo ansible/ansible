@@ -7,7 +7,6 @@
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
@@ -72,7 +71,7 @@ options:
       - Enable booting from specified disk. C((ide|sata|scsi|virtio)\d+)
   clone:
     description:
-      - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for intiating the clone.
+      - Name of VM to be cloned. If C(vmid) is setted, C(clone) can take arbitrary value but required for initiating the clone.
   cores:
     description:
       - Specify number of cores per socket.
@@ -302,7 +301,7 @@ options:
   state:
     description:
       - Indicates desired state of the instance.
-      - If C(current), the current state of the VM will be fecthed. You can access it with C(results.status)
+      - If C(current), the current state of the VM will be fetched. You can access it with C(results.status)
     choices: ['present', 'started', 'absent', 'stopped', 'restarted','current']
     default: present
   storage:
@@ -580,6 +579,7 @@ import os
 import re
 import time
 import traceback
+from distutils.version import LooseVersion
 
 try:
     from proxmoxer import ProxmoxAPI
@@ -604,7 +604,7 @@ def get_nextvmid(module, proxmox):
 
 
 def get_vmid(proxmox, name):
-    return [vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm['name'] == name]
+    return [vm['vmid'] for vm in proxmox.cluster.resources.get(type='vm') if vm.get('name') == name]
 
 
 def get_vm(proxmox, vmid):
@@ -783,6 +783,11 @@ def stop_vm(module, proxmox, vm, vmid, timeout, force):
     return False
 
 
+def proxmox_version(proxmox):
+    apireturn = proxmox.version.get()
+    return LooseVersion(apireturn['version'])
+
+
 def main():
     module = AnsibleModule(
         argument_spec=dict(
@@ -898,7 +903,7 @@ def main():
         proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
         global VZ_TYPE
         global PVE_MAJOR_VERSION
-        PVE_MAJOR_VERSION = 3 if float(proxmox.version.get()['version']) < 4.0 else 4
+        PVE_MAJOR_VERSION = 3 if proxmox_version(proxmox) < LooseVersion('4.0') else 4
     except Exception as e:
         module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 

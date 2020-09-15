@@ -1,0 +1,2 @@
+bugfixes:
+- azure_rm_resourcegroup_facts - adds the ansible_facts as a sub map to fix the KeyError (https://github.com/ansible/ansible/issues/66727).

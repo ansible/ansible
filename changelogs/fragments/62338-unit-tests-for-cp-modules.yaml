@@ -1,0 +1,5 @@
+---
+bugfixes:
+- "Unit tests for cp_mgmt_network"
+- "Unit tests for cp_mgmt_address_range"
+- "Unit tests for cp_mgmt_address_range_facts(https://github.com/ansible/ansible/pull/62338)"

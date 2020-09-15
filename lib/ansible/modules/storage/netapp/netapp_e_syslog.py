@@ -121,7 +121,7 @@ class Syslog(object):
             port=dict(type="int", default=514, required=False),
             protocol=dict(choices=["tcp", "tls", "udp"], default="udp", required=False),
             components=dict(type="list", required=False, default=["auditLog"]),
-            test=dict(type="bool", default=False, require=False),
+            test=dict(type="bool", default=False, required=False),
             log_path=dict(type="str", required=False),
         ))
 

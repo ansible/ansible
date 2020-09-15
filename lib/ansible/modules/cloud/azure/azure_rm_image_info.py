@@ -14,9 +14,9 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_image_info
 
-version_added: "2.8"
+version_added: "2.9"
 
-short_description: Get facts about azure custom images.
+short_description: Get facts about azure custom images
 
 description:
     - List azure custom images. The images can be listed where scope of listing can be based on subscription, resource group, name or tags.
@@ -36,7 +36,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Madhura Naniwadekar (@Madhura-CSI)"
+    - Madhura Naniwadekar (@Madhura-CSI)
 '''
 
 
@@ -60,7 +60,8 @@ EXAMPLES = '''
 
 RETURN = '''
 images:
-    description: List of image dicts.
+    description:
+        - List of image dicts.
     returned: always
     type: complex
     contains:
@@ -98,7 +99,7 @@ images:
             type: str
         os_state:
             description:
-                - Specifies image operating system state. Possible values are 'Generalized' or 'Specialized'.
+                - Specifies image operating system state. Possible values are C(Generalized) or C(Specialized).
             returned: always
             type: str
             sample: Generalized
@@ -121,7 +122,7 @@ images:
             sample: Succeeded
         source:
             description:
-                - Resource id of source VM from which the image is created
+                - Resource id of source VM from which the image is created.
             type: str
             sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/xx
         tags:
@@ -178,7 +179,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 AZURE_ENUM_MODULES = ['azure.mgmt.compute.models']
 
 
-class AzureRMImageFacts(AzureRMModuleBase):
+class AzureRMImageInfo(AzureRMModuleBase):
 
     def __init__(self, **kwargs):
 
@@ -197,13 +198,17 @@ class AzureRMImageFacts(AzureRMModuleBase):
         self.format = None
         self.tags = None
 
-        super(AzureRMImageFacts, self).__init__(
+        super(AzureRMImageInfo, self).__init__(
             derived_arg_spec=self.module_arg_spec,
             supports_tags=False,
             facts_module=True
         )
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_image_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_image_facts' module has been renamed to 'azure_rm_image_info'", version='2.13')
 
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
@@ -295,7 +300,7 @@ class AzureRMImageFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMImageFacts()
+    AzureRMImageInfo()
 
 
 if __name__ == '__main__':

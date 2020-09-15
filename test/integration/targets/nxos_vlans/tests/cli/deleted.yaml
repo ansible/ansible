@@ -1,0 +1,48 @@
+---
+- debug:
+    msg: "Start nxos_vlans deleted integration tests connection={{ ansible_connection }}"
+
+- name: setup
+  cli_config:
+    config: |
+      no vlan 2-100
+      vlan 5
+      vlan 6
+
+- block:
+  - name: Gather vlans facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: vlans
+
+  - name: deleted
+    nxos_vlans: &deleted
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.before|length == (ansible_facts.network_resources.vlans|length - 1)"
+        - "result.after|length == 0"
+        - "result.changed == true"
+        - "'no vlan 5' in result.commands"
+        - "'no vlan 6' in result.commands"
+        - "result.commands|length == 2"
+
+  - name: Idempotence - deleted
+    nxos_vlans: *deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config:
+      config: |
+        no vlan 5
+        no vlan 6

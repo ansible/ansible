@@ -1,0 +1,122 @@
+---
+# tasks file for test_ec2_vol_info
+- name: Set up AWS connection info
+  set_fact:
+    aws_connection_info: &aws_connection_info
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      security_token: "{{ security_token }}"
+      region: "{{ aws_region }}"
+  no_log: true
+
+- block:
+    - ec2_ami_info:
+        <<: *aws_connection_info
+        filters:
+          architecture: x86_64
+          virtualization-type: hvm
+          root-device-type: ebs
+          name: "amzn-ami-hvm*"
+      register: amis
+
+    - name: Create test instance
+      ec2_instance:
+          name: "{{ resource_prefix }}_ansible_ec2_vol_info_test"
+          instance_type: t2.nano
+          image_id: "{{ (amis.images | sort(attribute='creation_date') | last).image_id }}"
+          wait: yes
+          tags:
+            Environment: test
+          <<: *aws_connection_info
+      register: instance
+
+    - name: Ensure there's only one matching instance
+      assert:
+        that:
+            - "instance.instance_ids|length == 1"
+            - "instance.instances|length == 1"
+
+    - name: Create test volume
+      ec2_vol:
+        instance: "{{ instance.instance_ids[0] }}"
+        volume_size: 4
+        name: "{{ resource_prefix }}_ansible_ec2_vol_info_test.db"
+        device_name: /dev/xvdf
+        iops: 100
+        tags:
+            Tag Name with Space-and-dash: Tag Value with Space-and-dash
+        <<: *aws_connection_info
+        delete_on_termination: yes
+      register: volume
+
+    - name: Gather volume info without any filters
+      ec2_vol_info:
+          <<: *aws_connection_info
+      register: volume_facts_wo_filters
+      check_mode: no
+
+    - name: Check if facts are returned without filters
+      assert:
+        that:
+          - "volume_facts_wo_filters.volumes is defined"
+
+    - name: Gather volume info
+      ec2_vol_info:
+          <<: *aws_connection_info
+          filters:
+            "tag:Name": "{{ resource_prefix }}_ansible_ec2_vol_info_test.db"
+      register: volume_facts
+      check_mode: no
+
+    - name: Format check
+      assert:
+        that:
+            - "volume_facts.volumes|length == 1"
+            - "v.attachment_set.attach_time is defined"
+            - "v.attachment_set.device      is defined and v.attachment_set.device      == volume.device"
+            - "v.attachment_set.instance_id is defined and v.attachment_set.instance_id == instance.instance_ids[0]"
+            - "v.attachment_set.status      is defined and v.attachment_set.status      == 'attached'"
+            - "v.create_time                is defined"
+            - "v.encrypted                  is defined and v.encrypted                  == false"
+            - "v.id                         is defined and v.id                         == volume.volume_id"
+            - "v.iops                       is defined and v.iops                       == 100"
+            - "v.region                     is defined and v.region                     == aws_region"
+            - "v.size                       is defined and v.size                       == 4"
+            - "v.snapshot_id                is defined and v.snapshot_id                == ''"
+            - "v.status                     is defined and v.status                     == 'in-use'"
+            - "v.tags.Name                  is defined and v.tags.Name                  == resource_prefix + '_ansible_ec2_vol_info_test.db'"
+            - "v.tags['Tag Name with Space-and-dash']                                   == 'Tag Value with Space-and-dash'"
+            - "v.type                       is defined and v.type                       == 'io1'"
+            - "v.zone                       is defined and v.zone                       == instance.instances[0].placement.availability_zone"
+      vars:
+          v: "{{ volume_facts.volumes[0] }}"
+
+    - name: New format check
+      assert:
+        that:
+            - "v.attachment_set.delete_on_termination is defined"
+      vars:
+          v: "{{ volume_facts.volumes[0] }}"
+      when: ansible_version.full is version('2.7', '>=')
+
+  always:
+    - name: Remove the instance
+      ec2_instance:
+          state: absent
+          filters:
+              "tag:Name": "{{ resource_prefix }}_ansible_ec2_vol_info_test"
+          <<: *aws_connection_info
+      register: result
+      until: result is not failed
+      ignore_errors: yes
+      retries: 10
+
+    - name: Remove the volume
+      ec2_vol:
+        id: "{{ volume.volume_id }}"
+        state: absent
+        <<: *aws_connection_info
+      register: result
+      until: result is not failed
+      ignore_errors: yes
+      retries: 10

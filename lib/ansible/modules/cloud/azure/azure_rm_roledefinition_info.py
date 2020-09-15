@@ -16,23 +16,25 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_roledefinition_info
-version_added: "2.8"
-short_description: Get Azure Role Definition facts.
+version_added: "2.9"
+short_description: Get Azure Role Definition facts
 description:
     - Get facts of Azure Role Definition.
 
 options:
     scope:
         description:
-            - The scope of role defintion.
+            - The scope of role definition.
         required: True
     id:
         description:
             - Role definition id.
     role_name:
-        description: Role name.
+        description:
+            - Role name.
     type:
-        description: Type of role.
+        description:
+            - Type of role.
         choices:
             - system
             - custom
@@ -41,7 +43,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - Yunge Zhu(@yungezz)
 
 '''
 
@@ -58,60 +60,64 @@ EXAMPLES = '''
 
 RETURN = '''
 roledefinitions:
-    description: A list of Role Definition facts.
+    description:
+        - A list of Role Definition facts.
     returned: always
     type: complex
     contains:
-      id:
-        description: Role Definition id.
-        returned: always
-        type: str
-        sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-      role_name:
-        description: Role name.
-        returned: always
-        type: str
-        sample: myCustomRoleDefinition
-      name:
-        description: System assigned role name.
-        returned: always
-        type: str
-        sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-      assignable_scopes:
-        description:
-            - List of assignable scope of this definition.
-        returned: always
-        type: list
-        sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup"
-      permissions:
-        description:
-            - List of Role Definition peremissions.
-        returned: always
-        contains:
-            actions:
-                description:
-                    - List of allowed actions.
-                returned: always
-                type: list
-                sample: Microsoft.Compute/virtualMachines/read
-            not_actions:
-                description:
-                    - List of denied actions.
-                returned: always
-                type: list
-                sample: Microsoft.Compute/virtualMachines/write
-            data_actions:
-                description:
-                    - List of allowed data actions.
-                returned: always
-                type: list
-                sample: Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read
-            not_data_actions:
-                description:
-                    - List of denied actions.
-                returned: always
-                type: list
-                sample: Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write
+        id:
+            description:
+                - Role Definition ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        role_name:
+            description:
+                - Role name.
+            returned: always
+            type: str
+            sample: myCustomRoleDefinition
+        name:
+            description:
+                - System assigned role name.
+            returned: always
+            type: str
+            sample: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        assignable_scopes:
+            description:
+                - List of assignable scopes of this definition.
+            returned: always
+            type: list
+            sample: [ "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup" ]
+        permissions:
+            description:
+                - List of Role Definition permissions.
+            returned: always
+            contains:
+                actions:
+                    description:
+                        - List of allowed actions.
+                    returned: always
+                    type: list
+                    sample: [ 'Microsoft.Compute/virtualMachines/read' ]
+                not_actions:
+                    description:
+                        - List of denied actions.
+                    returned: always
+                    type: list
+                    sample: [ 'Microsoft.Compute/virtualMachines/write' ]
+                data_actions:
+                    description:
+                        - List of allowed data actions.
+                    returned: always
+                    type: list
+                    sample: [ 'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read' ]
+                not_data_actions:
+                    description:
+                        - List of denied data actions.
+                    returned: always
+                    type: list
+                    sample: [ 'Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write' ]
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -146,7 +152,7 @@ def roledefinition_to_dict(role):
     return result
 
 
-class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
+class AzureRMRoleDefinitionInfo(AzureRMModuleBase):
     def __init__(self):
         self.module_arg_spec = dict(
             scope=dict(
@@ -171,11 +177,14 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
 
         self._client = None
 
-        super(AzureRMRoleDefinitionFacts, self).__init__(derived_arg_spec=self.module_arg_spec,
-                                                         supports_tags=False)
+        super(AzureRMRoleDefinitionInfo, self).__init__(derived_arg_spec=self.module_arg_spec,
+                                                        supports_tags=False)
 
     def exec_module(self, **kwargs):
         """Main module execution method"""
+        is_old_facts = self.module._name == 'azure_rm_roledefinition_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_roledefinition_facts' module has been renamed to 'azure_rm_roledefinition_info'", version='2.13')
 
         for key in list(self.module_arg_spec.keys()):
             if hasattr(self, key):
@@ -234,7 +243,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
         except CloudError as ex:
             self.log("Didn't find role definition in scope {0}".format(self.scope))
 
-        return []
+        return response
 
     def get_by_id(self):
         '''
@@ -252,9 +261,9 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
                 response = roledefinition_to_dict(response)
                 if self.type:
                     if response.role_type == self.type:
-                        return response
+                        return [response]
                 else:
-                    return response
+                    return [response]
 
         except CloudError as ex:
             self.log("Didn't find role definition by id {0}".format(self.id))
@@ -269,7 +278,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
         '''
         self.log("Get Role Definition by name {0}".format(self.role_name))
 
-        response = None
+        response = []
 
         try:
             response = self.list()
@@ -282,7 +291,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
 
                 if len(roles) == 1:
                     self.log("Role Definition : {0} found".format(self.role_name))
-                    return roles[0]
+                    return roles
                 if len(roles) > 1:
                     self.fail("Found multiple Role Definitions with name: {0}".format(self.role_name))
 
@@ -294,7 +303,7 @@ class AzureRMRoleDefinitionFacts(AzureRMModuleBase):
 
 def main():
     """Main execution"""
-    AzureRMRoleDefinitionFacts()
+    AzureRMRoleDefinitionInfo()
 
 
 if __name__ == '__main__':

@@ -1,0 +1,4 @@
+cloud/azure
+unsupported
+disabled  # See: https://github.com/ansible/ansible/issues/61852
+destructive

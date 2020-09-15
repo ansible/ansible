@@ -1,0 +1,4 @@
+mysql_support_packages:
+  - python3-PyMySQL
+
+mysql_disablerepo: rhel-8-for-x86_64-appstream-rpms

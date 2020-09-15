@@ -1,0 +1,191 @@
+- block:
+    - python_requirements_info:
+        dependencies:
+          - openshift
+          - kubernetes
+
+    - set_fact:
+        apply_namespace: apply
+
+    - name: ensure namespace exists
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ apply_namespace }}"
+
+    - name: add a configmap
+      k8s:
+        name: "apply-configmap"
+        namespace: "{{ apply_namespace }}"
+        definition:
+          kind: ConfigMap
+          apiVersion: v1
+          data:
+            one: "1"
+            two: "2"
+            three: "3"
+        apply: yes
+      register: k8s_configmap
+
+    - name: check configmap was created
+      assert:
+        that:
+          - k8s_configmap is changed
+          - k8s_configmap.result.metadata.annotations|default(False)
+
+    - name: add same configmap again
+      k8s:
+        definition:
+          kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: "apply-configmap"
+            namespace: "{{ apply_namespace }}"
+          data:
+            one: "1"
+            two: "2"
+            three: "3"
+        apply: yes
+      register: k8s_configmap_2
+
+    - name: check nothing changed
+      assert:
+        that:
+          - k8s_configmap_2 is not changed
+
+    - name: add same configmap again with check mode on
+      k8s:
+        definition:
+          kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: "apply-configmap"
+            namespace: "{{ apply_namespace }}"
+          data:
+            one: "1"
+            two: "2"
+            three: "3"
+        apply: yes
+      check_mode: yes
+      register: k8s_configmap_check
+
+    - name: check nothing changed
+      assert:
+        that:
+          - k8s_configmap_check is not changed
+
+    - name: add same configmap again but using name and namespace args
+      k8s:
+        name: "apply-configmap"
+        namespace: "{{ apply_namespace }}"
+        definition:
+          kind: ConfigMap
+          apiVersion: v1
+          data:
+            one: "1"
+            two: "2"
+            three: "3"
+        apply: yes
+      register: k8s_configmap_2a
+
+    - name: check nothing changed
+      assert:
+        that:
+          - k8s_configmap_2a is not changed
+
+    - name: update configmap
+      k8s:
+        definition:
+          kind: ConfigMap
+          apiVersion: v1
+          metadata:
+            name: "apply-configmap"
+            namespace: "{{ apply_namespace }}"
+          data:
+            one: "1"
+            three: "3"
+            four: "4"
+        apply: yes
+      register: k8s_configmap_3
+
+    - name: ensure that configmap has been correctly updated
+      assert:
+        that:
+          - k8s_configmap_3 is changed
+          - "'four' in k8s_configmap_3.result.data"
+          - "'two' not in k8s_configmap_3.result.data"
+
+    - name: add a service
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: apply-svc
+            namespace: "{{ apply_namespace }}"
+          spec:
+            selector:
+              app: whatever
+            ports:
+              - name: http
+                port: 8080
+                targetPort: 8080
+        apply: yes
+      register: k8s_service
+
+    - name: add exactly same service
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: apply-svc
+            namespace: "{{ apply_namespace }}"
+          spec:
+            selector:
+              app: whatever
+            ports:
+              - name: http
+                port: 8080
+                targetPort: 8080
+        apply: yes
+      register: k8s_service_2
+
+    - name: check nothing changed
+      assert:
+        that:
+          - k8s_service_2 is not changed
+
+    - name: change service ports
+      k8s:
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: apply-svc
+            namespace: "{{ apply_namespace }}"
+          spec:
+            selector:
+              app: whatever
+            ports:
+              - name: http
+                port: 8081
+                targetPort: 8081
+        apply: yes
+      register: k8s_service_3
+
+    - name: check ports are correct
+      assert:
+        that:
+          - k8s_service_3 is changed
+          - k8s_service_3.result.spec.ports | length == 1
+          - k8s_service_3.result.spec.ports[0].port == 8081
+
+  always:
+    - name: remove namespace
+      k8s:
+        kind: Namespace
+        name: "{{ apply_namespace }}"
+        state: absent

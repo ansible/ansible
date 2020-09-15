@@ -1,0 +1,140 @@
+# Test code for the vmware_cluster module.
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+# Setup: Create test cluster
+- name: Create test cluster
+  vmware_cluster:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_ha
+    state: present
+
+# Testcase 0001: Enable HA
+- name: Enable HA
+  vmware_cluster_ha:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_ha
+    enable_ha: yes
+  register: cluster_ha_result_0001
+
+- name: Ensure HA is enabled
+  assert:
+    that:
+        - "{{ cluster_ha_result_0001.changed == true }}"
+
+# Testcase 0002: Enable Slot based Admission Control
+- name: Enable Slot based Admission Control
+  vmware_cluster_ha:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_ha
+    enable_ha: yes
+    slot_based_admission_control:
+      failover_level: 1
+  register: cluster_ha_result_0002
+
+- name: Ensure Admission Cotrol is enabled
+  assert:
+    that:
+        - "{{ cluster_ha_result_0002.changed == true }}"
+
+# Testcase 0003: Enable Cluster resource Percentage based Admission Control
+- name: Enable Cluster resource Percentage based Admission Control
+  vmware_cluster_ha:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_ha
+    enable_ha: yes
+    reservation_based_admission_control:
+      auto_compute_percentages: false
+      failover_level: 1
+      cpu_failover_resources_percent: 33
+      memory_failover_resources_percent: 33
+  register: cluster_ha_result_0003
+
+- name: Ensure Admission Cotrol is enabled
+  assert:
+    that:
+        - "{{ cluster_ha_result_0003.changed == true }}"
+
+# Testcase 0004: Set Isolation Response to powerOff
+- name: Set Isolation Response to powerOff
+  vmware_cluster_ha:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_ha
+    enable_ha: yes
+    host_isolation_response: 'powerOff'
+  register: cluster_ha_result_0004
+
+- name: Ensure Isolation Response is enabled
+  assert:
+    that:
+        - "{{ cluster_ha_result_0004.changed == true }}"
+
+# Testcase 0005: Set Isolation Response to shutdown
+- name: Set Isolation Response to shutdown
+  vmware_cluster_ha:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_ha
+    enable_ha: yes
+    host_isolation_response: 'shutdown'
+  register: cluster_ha_result_0005
+
+- name: Ensure Isolation Response is enabled
+  assert:
+    that:
+        - "{{ cluster_ha_result_0005.changed == true }}"
+
+# Testcase 0006: Disable HA
+- name: Disable HA
+  vmware_cluster_ha:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_ha
+    enable_ha: no
+  register: cluster_ha_result_0006
+
+- name: Ensure HA is disabled
+  assert:
+    that:
+        - "{{ cluster_ha_result_0006.changed == true }}"
+
+# Delete test cluster
+- name: Delete test cluster
+  vmware_cluster:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_ha
+    state: absent
+  when: vcsim is not defined

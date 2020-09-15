@@ -172,7 +172,7 @@ import zipfile
 from traceback import format_exc
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
-from ansible.module_utils._text import to_native
+from ansible.module_utils._text import to_bytes, to_native
 from ansible.module_utils.six import PY3
 
 
@@ -211,12 +211,14 @@ def main():
     check_mode = module.check_mode
     paths = params['path']
     dest = params['dest']
+    b_dest = None if not dest else to_bytes(dest, errors='surrogate_or_strict')
     exclude_paths = params['exclude_path']
     remove = params['remove']
 
-    expanded_paths = []
-    expanded_exclude_paths = []
-    format = params['format']
+    b_expanded_paths = []
+    b_expanded_exclude_paths = []
+    fmt = params['format']
+    b_fmt = to_bytes(fmt, errors='surrogate_or_strict')
     force_archive = params['force_archive']
     globby = False
     changed = False
@@ -224,111 +226,128 @@ def main():
 
     # Simple or archive file compression (inapplicable with 'zip' since it's always an archive)
     archive = False
-    successes = []
+    b_successes = []
 
     # Fail early
-    if not HAS_LZMA and format == 'xz':
+    if not HAS_LZMA and fmt == 'xz':
         module.fail_json(msg=missing_required_lib("lzma or backports.lzma", reason="when using xz format"),
                          exception=LZMA_IMP_ERR)
         module.fail_json(msg="lzma or backports.lzma is required when using xz format.")
 
     for path in paths:
-        path = os.path.expanduser(os.path.expandvars(path))
+        b_path = os.path.expanduser(
+            os.path.expandvars(
+                to_bytes(path, errors='surrogate_or_strict')
+            )
+        )
 
         # Expand any glob characters. If found, add the expanded glob to the
         # list of expanded_paths, which might be empty.
-        if ('*' in path or '?' in path):
-            expanded_paths = expanded_paths + glob.glob(path)
+        if (b'*' in b_path or b'?' in b_path):
+            b_expanded_paths.extend(glob.glob(b_path))
             globby = True
 
         # If there are no glob characters the path is added to the expanded paths
         # whether the path exists or not
         else:
-            expanded_paths.append(path)
+            b_expanded_paths.append(b_path)
 
     # Only attempt to expand the exclude paths if it exists
     if exclude_paths:
         for exclude_path in exclude_paths:
-            exclude_path = os.path.expanduser(os.path.expandvars(exclude_path))
+            b_exclude_path = os.path.expanduser(
+                os.path.expandvars(
+                    to_bytes(exclude_path, errors='surrogate_or_strict')
+                )
+            )
 
             # Expand any glob characters. If found, add the expanded glob to the
             # list of expanded_paths, which might be empty.
-            if ('*' in exclude_path or '?' in exclude_path):
-                expanded_exclude_paths = expanded_exclude_paths + glob.glob(exclude_path)
+            if (b'*' in b_exclude_path or b'?' in b_exclude_path):
+                b_expanded_exclude_paths.extend(glob.glob(b_exclude_path))
 
                 # If there are no glob character the exclude path is added to the expanded
                 # exclude paths whether the path exists or not.
             else:
-                expanded_exclude_paths.append(exclude_path)
+                b_expanded_exclude_paths.append(b_exclude_path)
 
-    if not expanded_paths:
-        return module.fail_json(path=', '.join(paths), expanded_paths=', '.join(expanded_paths), msg='Error, no source paths were found')
+    if not b_expanded_paths:
+        return module.fail_json(
+            path=', '.join(paths),
+            expanded_paths=to_native(b', '.join(b_expanded_paths), errors='surrogate_or_strict'),
+            msg='Error, no source paths were found'
+        )
 
     # Only try to determine if we are working with an archive or not if we haven't set archive to true
     if not force_archive:
         # If we actually matched multiple files or TRIED to, then
         # treat this as a multi-file archive
-        archive = globby or os.path.isdir(expanded_paths[0]) or len(expanded_paths) > 1
+        archive = globby or os.path.isdir(b_expanded_paths[0]) or len(b_expanded_paths) > 1
     else:
         archive = True
 
     # Default created file name (for single-file archives) to
     # <file>.<format>
-    if not dest and not archive:
-        dest = '%s.%s' % (expanded_paths[0], format)
+    if not b_dest and not archive:
+        b_dest = b'%s.%s' % (b_expanded_paths[0], b_fmt)
 
     # Force archives to specify 'dest'
-    if archive and not dest:
+    if archive and not b_dest:
         module.fail_json(dest=dest, path=', '.join(paths), msg='Error, must specify "dest" when archiving multiple files or trees')
 
-    archive_paths = []
-    missing = []
-    arcroot = ''
+    b_sep = to_bytes(os.sep, errors='surrogate_or_strict')
 
-    for path in expanded_paths:
+    b_archive_paths = []
+    b_missing = []
+    b_arcroot = b''
+
+    for b_path in b_expanded_paths:
         # Use the longest common directory name among all the files
         # as the archive root path
-        if arcroot == '':
-            arcroot = os.path.dirname(path) + os.sep
+        if b_arcroot == b'':
+            b_arcroot = os.path.dirname(b_path) + b_sep
         else:
-            for i in range(len(arcroot)):
-                if path[i] != arcroot[i]:
+            for i in range(len(b_arcroot)):
+                if b_path[i] != b_arcroot[i]:
                     break
 
-            if i < len(arcroot):
-                arcroot = os.path.dirname(arcroot[0:i + 1])
+            if i < len(b_arcroot):
+                b_arcroot = os.path.dirname(b_arcroot[0:i + 1])
 
-            arcroot += os.sep
+            b_arcroot += b_sep
 
         # Don't allow archives to be created anywhere within paths to be removed
-        if remove and os.path.isdir(path):
-            path_dir = path
-            if path[-1] != '/':
-                path_dir += '/'
+        if remove and os.path.isdir(b_path):
+            b_path_dir = b_path
+            if not b_path.endswith(b'/'):
+                b_path_dir += b'/'
 
-            if dest.startswith(path_dir):
-                module.fail_json(path=', '.join(paths), msg='Error, created archive can not be contained in source paths when remove=True')
+            if b_dest.startswith(b_path_dir):
+                module.fail_json(
+                    path=', '.join(paths),
+                    msg='Error, created archive can not be contained in source paths when remove=True'
+                )
 
-        if os.path.lexists(path) and path not in expanded_exclude_paths:
-            archive_paths.append(path)
+        if os.path.lexists(b_path) and b_path not in b_expanded_exclude_paths:
+            b_archive_paths.append(b_path)
         else:
-            missing.append(path)
+            b_missing.append(b_path)
 
     # No source files were found but the named archive exists: are we 'compress' or 'archive' now?
-    if len(missing) == len(expanded_paths) and dest and os.path.exists(dest):
+    if len(b_missing) == len(b_expanded_paths) and b_dest and os.path.exists(b_dest):
         # Just check the filename to know if it's an archive or simple compressed file
-        if re.search(r'(\.tar|\.tar\.gz|\.tgz|\.tbz2|\.tar\.bz2|\.tar\.xz|\.zip)$', os.path.basename(dest), re.IGNORECASE):
+        if re.search(br'(\.tar|\.tar\.gz|\.tgz|\.tbz2|\.tar\.bz2|\.tar\.xz|\.zip)$', os.path.basename(b_dest), re.IGNORECASE):
             state = 'archive'
         else:
             state = 'compress'
 
     # Multiple files, or globbiness
     elif archive:
-        if not archive_paths:
+        if not b_archive_paths:
             # No source files were found, but the archive is there.
-            if os.path.lexists(dest):
+            if os.path.lexists(b_dest):
                 state = 'archive'
-        elif missing:
+        elif b_missing:
             # SOME source files were found, but not all of them
             state = 'incomplete'
 
@@ -336,8 +355,8 @@ def main():
         size = 0
         errors = []
 
-        if os.path.lexists(dest):
-            size = os.path.getsize(dest)
+        if os.path.lexists(b_dest):
+            size = os.path.getsize(b_dest)
 
         if state != 'archive':
             if check_mode:
@@ -346,76 +365,87 @@ def main():
             else:
                 try:
                     # Slightly more difficult (and less efficient!) compression using zipfile module
-                    if format == 'zip':
-                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, True)
+                    if fmt == 'zip':
+                        arcfile = zipfile.ZipFile(
+                            to_native(b_dest, errors='surrogate_or_strict', encoding='ascii'),
+                            'w',
+                            zipfile.ZIP_DEFLATED,
+                            True
+                        )
 
                     # Easier compression using tarfile module
-                    elif format == 'gz' or format == 'bz2':
-                        arcfile = tarfile.open(dest, 'w|' + format)
+                    elif fmt == 'gz' or fmt == 'bz2':
+                        arcfile = tarfile.open(to_native(b_dest, errors='surrogate_or_strict', encoding='ascii'), 'w|' + fmt)
 
                     # python3 tarfile module allows xz format but for python2 we have to create the tarfile
                     # in memory and then compress it with lzma.
-                    elif format == 'xz':
+                    elif fmt == 'xz':
                         arcfileIO = io.BytesIO()
                         arcfile = tarfile.open(fileobj=arcfileIO, mode='w')
 
                     # Or plain tar archiving
-                    elif format == 'tar':
-                        arcfile = tarfile.open(dest, 'w')
+                    elif fmt == 'tar':
+                        arcfile = tarfile.open(to_native(b_dest, errors='surrogate_or_strict', encoding='ascii'), 'w')
 
-                    match_root = re.compile('^%s' % re.escape(arcroot))
-                    for path in archive_paths:
-                        if os.path.isdir(path):
+                    b_match_root = re.compile(br'^%s' % re.escape(b_arcroot))
+                    for b_path in b_archive_paths:
+                        if os.path.isdir(b_path):
                             # Recurse into directories
-                            for dirpath, dirnames, filenames in os.walk(path, topdown=True):
-                                if not dirpath.endswith(os.sep):
-                                    dirpath += os.sep
+                            for b_dirpath, b_dirnames, b_filenames in os.walk(b_path, topdown=True):
+                                if not b_dirpath.endswith(b_sep):
+                                    b_dirpath += b_sep
 
-                                for dirname in dirnames:
-                                    fullpath = dirpath + dirname
-                                    arcname = match_root.sub('', fullpath)
+                                for b_dirname in b_dirnames:
+                                    b_fullpath = b_dirpath + b_dirname
+                                    n_fullpath = to_native(b_fullpath, errors='surrogate_or_strict', encoding='ascii')
+                                    n_arcname = to_native(b_match_root.sub(b'', b_fullpath), errors='surrogate_or_strict')
 
                                     try:
-                                        if format == 'zip':
-                                            arcfile.write(fullpath, arcname)
+                                        if fmt == 'zip':
+                                            arcfile.write(n_fullpath, n_arcname)
                                         else:
-                                            arcfile.add(fullpath, arcname, recursive=False)
+                                            arcfile.add(n_fullpath, n_arcname, recursive=False)
 
                                     except Exception as e:
-                                        errors.append('%s: %s' % (fullpath, to_native(e)))
+                                        errors.append('%s: %s' % (n_fullpath, to_native(e)))
 
-                                for filename in filenames:
-                                    fullpath = dirpath + filename
-                                    arcname = match_root.sub('', fullpath)
+                                for b_filename in b_filenames:
+                                    b_fullpath = b_dirpath + b_filename
+                                    n_fullpath = to_native(b_fullpath, errors='surrogate_or_strict', encoding='ascii')
+                                    n_arcname = to_native(b_match_root.sub(b'', b_fullpath), errors='surrogate_or_strict')
 
-                                    if not filecmp.cmp(fullpath, dest):
-                                        try:
-                                            if format == 'zip':
-                                                arcfile.write(fullpath, arcname)
-                                            else:
-                                                arcfile.add(fullpath, arcname, recursive=False)
+                                    try:
+                                        if fmt == 'zip':
+                                            arcfile.write(n_fullpath, n_arcname)
+                                        else:
+                                            arcfile.add(n_fullpath, n_arcname, recursive=False)
 
-                                            successes.append(fullpath)
-                                        except Exception as e:
-                                            errors.append('Adding %s: %s' % (path, to_native(e)))
+                                        b_successes.append(b_fullpath)
+                                    except Exception as e:
+                                        errors.append('Adding %s: %s' % (to_native(b_path), to_native(e)))
                         else:
-                            if format == 'zip':
-                                arcfile.write(path, match_root.sub('', path))
+                            path = to_native(b_path, errors='surrogate_or_strict', encoding='ascii')
+                            arcname = to_native(b_match_root.sub(b'', b_path), errors='surrogate_or_strict')
+                            if fmt == 'zip':
+                                arcfile.write(path, arcname)
                             else:
-                                arcfile.add(path, match_root.sub('', path), recursive=False)
+                                arcfile.add(path, arcname, recursive=False)
 
-                            successes.append(path)
+                            b_successes.append(b_path)
 
                 except Exception as e:
-                    module.fail_json(msg='Error when writing %s archive at %s: %s' % (format == 'zip' and 'zip' or ('tar.' + format), dest, to_native(e)),
-                                     exception=format_exc())
+                    expanded_fmt = 'zip' if fmt == 'zip' else ('tar.' + fmt)
+                    module.fail_json(
+                        msg='Error when writing %s archive at %s: %s' % (expanded_fmt, dest, to_native(e)),
+                        exception=format_exc()
+                    )
 
                 if arcfile:
                     arcfile.close()
                     state = 'archive'
 
-                if format == 'xz':
-                    with lzma.open(dest, 'wb') as f:
+                if fmt == 'xz':
+                    with lzma.open(b_dest, 'wb') as f:
                         f.write(arcfileIO.getvalue())
                     arcfileIO.close()
 
@@ -423,76 +453,89 @@ def main():
                     module.fail_json(msg='Errors when writing archive at %s: %s' % (dest, '; '.join(errors)))
 
         if state in ['archive', 'incomplete'] and remove:
-            for path in successes:
+            for b_path in b_successes:
                 try:
-                    if os.path.isdir(path):
-                        shutil.rmtree(path)
+                    if os.path.isdir(b_path):
+                        shutil.rmtree(b_path)
                     elif not check_mode:
-                        os.remove(path)
+                        os.remove(b_path)
                 except OSError as e:
-                    errors.append(path)
+                    errors.append(to_native(b_path))
 
             if errors:
                 module.fail_json(dest=dest, msg='Error deleting some source files: ', files=errors)
 
         # Rudimentary check: If size changed then file changed. Not perfect, but easy.
-        if not check_mode and os.path.getsize(dest) != size:
+        if not check_mode and os.path.getsize(b_dest) != size:
             changed = True
 
-        if successes and state != 'incomplete':
+        if b_successes and state != 'incomplete':
             state = 'archive'
 
     # Simple, single-file compression
     else:
-        path = expanded_paths[0]
+        b_path = b_expanded_paths[0]
 
         # No source or compressed file
-        if not (os.path.exists(path) or os.path.lexists(dest)):
+        if not (os.path.exists(b_path) or os.path.lexists(b_dest)):
             state = 'absent'
 
         # if it already exists and the source file isn't there, consider this done
-        elif not os.path.lexists(path) and os.path.lexists(dest):
+        elif not os.path.lexists(b_path) and os.path.lexists(b_dest):
             state = 'compress'
 
         else:
             if module.check_mode:
-                if not os.path.exists(dest):
+                if not os.path.exists(b_dest):
                     changed = True
             else:
                 size = 0
                 f_in = f_out = arcfile = None
 
-                if os.path.lexists(dest):
-                    size = os.path.getsize(dest)
+                if os.path.lexists(b_dest):
+                    size = os.path.getsize(b_dest)
 
                 try:
-                    if format == 'zip':
-                        arcfile = zipfile.ZipFile(dest, 'w', zipfile.ZIP_DEFLATED, True)
-                        arcfile.write(path, path[len(arcroot):])
+                    if fmt == 'zip':
+                        arcfile = zipfile.ZipFile(
+                            to_native(b_dest, errors='surrogate_or_strict', encoding='ascii'),
+                            'w',
+                            zipfile.ZIP_DEFLATED,
+                            True
+                        )
+                        arcfile.write(
+                            to_native(b_path, errors='surrogate_or_strict', encoding='ascii'),
+                            to_native(b_path[len(b_arcroot):], errors='surrogate_or_strict')
+                        )
                         arcfile.close()
                         state = 'archive'  # because all zip files are archives
-                    elif format == 'tar':
-                        arcfile = tarfile.open(dest, 'w')
-                        arcfile.add(path)
+                    elif fmt == 'tar':
+                        arcfile = tarfile.open(to_native(b_dest, errors='surrogate_or_strict', encoding='ascii'), 'w')
+                        arcfile.add(to_native(b_path, errors='surrogate_or_strict', encoding='ascii'))
                         arcfile.close()
                     else:
-                        f_in = open(path, 'rb')
+                        f_in = open(b_path, 'rb')
 
-                        if format == 'gz':
-                            f_out = gzip.open(dest, 'wb')
-                        elif format == 'bz2':
-                            f_out = bz2.BZ2File(dest, 'wb')
-                        elif format == 'xz':
-                            f_out = lzma.LZMAFile(dest, 'wb')
+                        n_dest = to_native(b_dest, errors='surrogate_or_strict', encoding='ascii')
+                        if fmt == 'gz':
+                            f_out = gzip.open(n_dest, 'wb')
+                        elif fmt == 'bz2':
+                            f_out = bz2.BZ2File(n_dest, 'wb')
+                        elif fmt == 'xz':
+                            f_out = lzma.LZMAFile(n_dest, 'wb')
                         else:
                             raise OSError("Invalid format")
 
                         shutil.copyfileobj(f_in, f_out)
 
-                    successes.append(path)
+                    b_successes.append(b_path)
 
                 except OSError as e:
-                    module.fail_json(path=path, dest=dest, msg='Unable to write to compressed file: %s' % to_native(e), exception=format_exc())
+                    module.fail_json(
+                        path=to_native(b_path),
+                        dest=dest,
+                        msg='Unable to write to compressed file: %s' % to_native(e), exception=format_exc()
+                    )
 
                 if arcfile:
                     arcfile.close()
@@ -502,32 +545,37 @@ def main():
                     f_out.close()
 
                 # Rudimentary check: If size changed then file changed. Not perfect, but easy.
-                if os.path.getsize(dest) != size:
+                if os.path.getsize(b_dest) != size:
                     changed = True
 
             state = 'compress'
 
         if remove and not check_mode:
             try:
-                os.remove(path)
+                os.remove(b_path)
 
             except OSError as e:
-                module.fail_json(path=path, msg='Unable to remove source file: %s' % to_native(e), exception=format_exc())
+                module.fail_json(
+                    path=to_native(b_path),
+                    msg='Unable to remove source file: %s' % to_native(e), exception=format_exc()
+                )
 
-    params['path'] = dest
+    params['path'] = b_dest
     file_args = module.load_file_common_arguments(params)
 
     if not check_mode:
         changed = module.set_fs_attributes_if_different(file_args, changed)
 
-    module.exit_json(archived=successes,
-                     dest=dest,
-                     changed=changed,
-                     state=state,
-                     arcroot=arcroot,
-                     missing=missing,
-                     expanded_paths=expanded_paths,
-                     expanded_exclude_paths=expanded_exclude_paths)
+    module.exit_json(
+        archived=[to_native(p, errors='surrogate_or_strict') for p in b_successes],
+        dest=dest,
+        changed=changed,
+        state=state,
+        arcroot=to_native(b_arcroot, errors='surrogate_or_strict'),
+        missing=[to_native(p, errors='surrogate_or_strict') for p in b_missing],
+        expanded_paths=[to_native(p, errors='surrogate_or_strict') for p in b_expanded_paths],
+        expanded_exclude_paths=[to_native(p, errors='surrogate_or_strict') for p in b_expanded_exclude_paths],
+    )
 
 
 if __name__ == '__main__':

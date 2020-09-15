@@ -149,7 +149,7 @@ class ManageIQAlertProfiles(object):
         except Exception as e:
             self.module.fail_json(msg="Deleting profile failed: {error}".format(error=e))
 
-        msg = "Successfuly deleted profile {name}".format(name=profile['name'])
+        msg = "Successfully deleted profile {name}".format(name=profile['name'])
         return dict(changed=True, msg=msg)
 
     def get_alert_href(self, alert):

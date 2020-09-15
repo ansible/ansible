@@ -111,6 +111,35 @@
         state: absent
         <<: *aws_connection_info
 # ============================================================
+# Test for https://github.com/ansible/ansible/issues/51531
+# because aws region is explicitly used rather than just to
+# obtain a connection, make sure this still works when
+# region comes from an environment rather than a parameter.
+- name: test register identity without explicit region
+  block:
+    - name: register email identity without explicit region
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: present
+        <<: *aws_connection_info
+        region: "{{ omit }}"
+      register: result
+      environment:
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+    - name: assert changed is True
+      assert:
+        that:
+          - result.changed == True
+    - import_tasks: assert_defaults.yaml
+      vars:
+        identity: "{{ email_identity }}"
+  always:
+    - name: cleanup email identity
+      aws_ses_identity:
+        identity: "{{ email_identity }}"
+        state: absent
+        <<: *aws_connection_info
+# ============================================================
 - name: test register email identity check mode
   block:
     - name: register email identity check mode

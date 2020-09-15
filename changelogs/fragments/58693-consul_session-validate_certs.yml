@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "consul_session - don't ignore ``validate_certs`` parameter"

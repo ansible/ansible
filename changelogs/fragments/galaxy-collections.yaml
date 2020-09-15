@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-galaxy - Set ``User-Agent`` to Ansible version when interacting with Galaxy or Automation Hub

@@ -64,7 +64,7 @@ class CallbackModule(CallbackBase):
             color = C.COLOR_OK
             state = 'SUCCESS'
 
-        if result._task.action in C.MODULE_NO_JSON:
+        if result._task.action in C.MODULE_NO_JSON and 'ansible_job_id' not in result._result:
             self._display.display(self._command_generic_msg(result._host.get_name(), result._result, state), color=color)
         else:
             self._display.display("%s | %s => %s" % (result._host.get_name(), state, self._dump_results(result._result, indent=0).replace('\n', '')),

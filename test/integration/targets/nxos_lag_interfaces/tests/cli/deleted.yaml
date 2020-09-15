@@ -1,0 +1,78 @@
+---
+- debug:
+    msg: "Start nxos_lag_interfaces deleted integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+
+- name: enable feature lacp
+  nxos_feature:
+    feature: lacp
+
+- name: Setup1
+  nxos_config:
+    lines:
+      - "no channel-group 10"
+    parents: "{{ item }}"
+  ignore_errors: yes
+  loop:
+    - "interface {{ test_int1 }}"
+    - "interface {{ test_int2 }}"
+
+- block:
+  - name: Setup2
+    nxos_config:
+      lines:
+        - "channel-group 10"
+      parents: "{{ item }}"
+    loop:
+      - "interface {{ test_int1 }}"
+      - "interface {{ test_int2 }}"
+
+  - name: Gather LAG interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: lag_interfaces
+
+  - name: deleted
+    nxos_lag_interfaces: &deleted
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.lag_interfaces|symmetric_difference(result.before)|length == 0"
+
+  - name: Gather LAG interfaces post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "result.after|length == 0"
+        - "result.changed == true"
+
+  - name: Idempotence - deleted
+    nxos_lag_interfaces: *deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+
+  always:
+  - name: Teardown
+    nxos_config:
+      lines:
+        - "no channel-group 10"
+      parents: "{{ item }}"
+    ignore_errors: yes
+    loop:
+      - "interface {{ test_int1 }}"
+      - "interface {{ test_int2 }}"
+
+  - name: disable feature lacp
+    nxos_feature:
+      feature: lacp
+      state: disabled

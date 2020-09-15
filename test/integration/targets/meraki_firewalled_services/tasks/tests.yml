@@ -1,0 +1,196 @@
+# Test code for the Meraki modules
+# Copyright: (c) 2019, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Create network
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance
+      type: appliance
+    register: create
+
+  - set_fact:
+      net_id: create.data.id
+
+  - name: Set icmp service to blocked with check mode
+    meraki_firewalled_services:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance
+      service: ICMP
+      access: blocked
+    register: icmp_blocked_check
+    check_mode: yes
+
+  - debug:
+      var: icmp_blocked_check
+
+  - assert:
+      that:
+        - icmp_blocked_check.data is defined
+        - icmp_blocked_check is changed
+
+  - name: Set icmp service to blocked
+    meraki_firewalled_services:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance
+      service: ICMP
+      access: blocked
+    register: icmp_blocked
+
+  - debug:
+      var: icmp_blocked
+
+  - assert:
+      that:
+        - icmp_blocked.data is defined
+        - icmp_blocked is changed
+
+  - name: Set icmp service to blocked with idempotency
+    meraki_firewalled_services:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance
+      service: ICMP
+      access: blocked
+    register: icmp_blocked_idempotent
+
+  - debug:
+      var: icmp_blocked_idempotent
+
+  - assert:
+      that:
+        - icmp_blocked_idempotent.data is defined
+        - icmp_blocked_idempotent is not changed
+
+  - name: Set icmp service to restricted with check mode
+    meraki_firewalled_services:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance
+      service: web
+      access: restricted
+      allowed_ips:
+        - 192.0.1.1
+        - 192.0.1.2
+    check_mode: yes
+    register: web_restricted_check
+
+  - debug:
+      var: web_restricted_check
+
+  - assert:
+      that:
+        - web_restricted_check.data is defined
+        - web_restricted_check is changed
+
+  - name: Set icmp service to restricted
+    meraki_firewalled_services:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance
+      service: web
+      access: restricted
+      allowed_ips:
+        - 192.0.1.1
+        - 192.0.1.2
+    register: web_restricted
+
+  - debug:
+      var: web_restricted
+
+  - assert:
+      that:
+        - web_restricted.data is defined
+        - web_restricted is changed
+
+  - name: Set icmp service to restricted with idempotency
+    meraki_firewalled_services:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance
+      service: web
+      access: restricted
+      allowed_ips:
+        - 192.0.1.1
+        - 192.0.1.2
+    register: web_restricted_idempotent
+
+  - debug:
+      var: web_restricted_idempotent
+
+  - assert:
+      that:
+        - web_restricted_idempotent.data is defined
+        - web_restricted_idempotent is not changed
+
+  - name: Test error for access restricted and allowed_ips
+    meraki_firewalled_services:
+      auth_key: '{{ auth_key }}'
+      state: present
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance
+      service: web
+      access: unrestricted
+      allowed_ips:
+        - 192.0.1.1
+        - 192.0.1.2
+    register: access_error
+    ignore_errors: yes
+
+  - assert:
+      that:
+        - 'access_error.msg == "allowed_ips is only allowed when access is restricted."'
+
+  - name: Query appliance services
+    meraki_firewalled_services:
+      auth_key: '{{ auth_key }}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance
+    register: query_appliance
+
+  - debug:
+      var: query_appliance
+
+  - assert:
+      that:
+        - query_appliance.data is defined
+
+  - name: Query services
+    meraki_firewalled_services:
+      auth_key: '{{ auth_key }}'
+      state: query
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance
+      service: ICMP
+    register: query_service
+
+  - debug:
+      var: query_service
+
+  - assert:
+      that:
+        - query_service.data is defined
+
+#############################################################################
+# Tear down starts here
+#############################################################################
+  always:
+  - name: Delete all networks
+    meraki_network:
+      auth_key: '{{ auth_key }}'
+      state: absent
+      org_name: '{{test_org_name}}'
+      net_name: IntTestNetworkAppliance

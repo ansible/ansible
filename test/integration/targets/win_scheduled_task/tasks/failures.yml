@@ -16,14 +16,6 @@
   register: fail_username_and_group
   failed_when: fail_username_and_group.msg != 'username and group can not be set at the same time'
 
-- name: fail logon type password but no password set
-  win_scheduled_task:
-    name: '{{test_scheduled_task_name}}'
-    state: present
-    logon_type: password
-  register: fail_lt_password_not_set
-  failed_when: fail_lt_password_not_set.msg != 'password must be set when logon_type=password'
-
 - name: fail logon type s4u but no password set
   win_scheduled_task:
     name: '{{test_scheduled_task_name}}'

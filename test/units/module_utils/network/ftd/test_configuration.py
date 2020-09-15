@@ -80,12 +80,11 @@ class TestBaseConfigurationResource(object):
         # we need evaluate it.
         assert [objects[1]] == list(resource.get_objects_by_filter(
             'test',
-            {ParamName.FILTERS: {'type': 1, 'foo': {'bar': 'buz'}}}))
+            {ParamName.FILTERS: {'name': 'obj2', 'type': 1, 'foo': {'bar': 'buz'}}}))
 
         send_request_mock.assert_has_calls(
             [
-                mock.call('/object/', 'get', {}, {},
-                          {QueryParams.FILTER: "foo:{'bar': 'buz'};type:1", 'limit': 10, 'offset': 0})
+                mock.call('/object/', 'get', {}, {}, {QueryParams.FILTER: 'name:obj2', 'limit': 10, 'offset': 0})
             ]
         )
 
@@ -111,8 +110,7 @@ class TestBaseConfigurationResource(object):
             {ParamName.FILTERS: {'type': 'foo'}}))
         send_request_mock.assert_has_calls(
             [
-                mock.call('/object/', 'get', {}, {},
-                          {QueryParams.FILTER: "type:foo", 'limit': 10, 'offset': 0})
+                mock.call('/object/', 'get', {}, {}, {'limit': 10, 'offset': 0})
             ]
         )
 
@@ -136,10 +134,8 @@ class TestBaseConfigurationResource(object):
         assert [{'name': 'obj1', 'type': 'foo'}, {'name': 'obj3', 'type': 'foo'}] == resp
         send_request_mock.assert_has_calls(
             [
-                mock.call('/object/', 'get', {}, {},
-                          {QueryParams.FILTER: "type:foo", 'limit': 2, 'offset': 0}),
-                mock.call('/object/', 'get', {}, {},
-                          {QueryParams.FILTER: "type:foo", 'limit': 2, 'offset': 2})
+                mock.call('/object/', 'get', {}, {}, {'limit': 2, 'offset': 0}),
+                mock.call('/object/', 'get', {}, {}, {'limit': 2, 'offset': 2})
             ]
         )
 
@@ -542,29 +538,14 @@ class TestOperationCheckerClass(unittest.TestCase):
             operation_name, params, operation_spec
         )
 
-    @patch.object(OperationChecker, "is_add_operation")
-    @patch.object(OperationChecker, "is_edit_operation")
-    @patch.object(OperationChecker, "is_get_list_operation")
-    def test_is_upsert_operation_supported_operation(self, is_add_mock, is_edit_mock, is_get_list_mock):
-        operations_spec = {
-            'add': 1,
-            'edit': 1,
-            'getList': 1
-        }
-        is_add_mock.side_effect = [1, 0, 0]
-        is_edit_mock.side_effect = [1, 0, 0]
-        is_get_list_mock.side_effect = [1, 0, 0]
+    def test_is_upsert_operation_supported_operation(self):
+        get_list_op_spec = {OperationField.METHOD: HTTPMethod.GET, OperationField.RETURN_MULTIPLE_ITEMS: True}
+        add_op_spec = {OperationField.METHOD: HTTPMethod.POST}
+        edit_op_spec = {OperationField.METHOD: HTTPMethod.PUT}
 
-        assert self._checker.is_upsert_operation_supported(operations_spec)
-
-        is_add_mock.side_effect = [1, 0, 0]
-        is_edit_mock.side_effect = [0, 1, 0]
-        is_get_list_mock.side_effect = [0, 0, 0]
-
-        assert not self._checker.is_upsert_operation_supported(operations_spec)
-
-        is_add_mock.side_effect = [1, 0, 0]
-        is_edit_mock.side_effect = [0, 0, 0]
-        is_get_list_mock.side_effect = [1, 0, 0]
-
-        assert not self._checker.is_upsert_operation_supported(operations_spec)
+        assert self._checker.is_upsert_operation_supported({'getList': get_list_op_spec, 'edit': edit_op_spec})
+        assert self._checker.is_upsert_operation_supported(
+            {'add': add_op_spec, 'getList': get_list_op_spec, 'edit': edit_op_spec})
+        assert not self._checker.is_upsert_operation_supported({'getList': get_list_op_spec})
+        assert not self._checker.is_upsert_operation_supported({'edit': edit_op_spec})
+        assert not self._checker.is_upsert_operation_supported({'getList': get_list_op_spec, 'add': add_op_spec})

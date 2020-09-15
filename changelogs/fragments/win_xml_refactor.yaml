@@ -1,0 +1,5 @@
+minor_changes:
+  - win_xml - Behaviour change, module now processes all nodes specified by xpath, not just first encountered.
+  - win_xml - Behaviour change, fragment no longer required when processing element type nodes and state=absent.
+  - win_xml - Some output messages worded differently now the module uses a generic method to save changes.
+  - win_xml - Added 'count' module parameter which will return number of nodes matched by xpath if set to yes/true

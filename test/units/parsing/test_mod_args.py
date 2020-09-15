@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 import pytest
+import re
 
 from ansible.errors import AnsibleParserError
 from ansible.parsing.mod_args import ModuleArgsParser
@@ -124,5 +125,13 @@ class TestModArgsDwim:
             m.parse()
 
         assert err.value.args[0].startswith("conflicting action statements: ")
-        conflicts = set(err.value.args[0][len("conflicting action statements: "):].split(', '))
-        assert conflicts == set(('ping', 'shell'))
+        actions = set(re.search(r'(\w+), (\w+)', err.value.args[0]).groups())
+        assert actions == set(['ping', 'shell'])
+
+    def test_bogus_action(self):
+        args_dict = {'bogusaction': {}}
+        m = ModuleArgsParser(args_dict)
+        with pytest.raises(AnsibleParserError) as err:
+            m.parse()
+
+        assert err.value.args[0].startswith("couldn't resolve module/action 'bogusaction'")

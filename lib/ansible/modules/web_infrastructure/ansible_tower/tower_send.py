@@ -69,7 +69,7 @@ output:
     description: The import messages
     returned: success, fail
     type: list
-    sample: [ 'Message 1', 'Messag 2' ]
+    sample: [ 'Message 1', 'Message 2' ]
 '''
 
 import os

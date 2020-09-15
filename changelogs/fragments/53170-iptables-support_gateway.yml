@@ -1,2 +1,0 @@
-minor_changes:
-- Added support for gateway parameter in iptables module (https://github.com/ansible/ansible/issues/53170).

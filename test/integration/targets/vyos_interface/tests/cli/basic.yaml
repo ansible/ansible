@@ -23,7 +23,7 @@
     that:
       - 'result.changed == true'
       - '"set interfaces ethernet eth1" in result.commands'
-      - '"set interfaces ethernet eth1 description test-interface" in result.commands'
+      - '"set interfaces ethernet eth1 description ''test-interface''" in result.commands'
 
 - name: Configure interface params
   vyos_interface:
@@ -39,7 +39,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set interfaces ethernet eth1 description test-interface-1" in result.commands'
+      - '"set interfaces ethernet eth1 description ''test-interface-1''" in result.commands'
       - '"set interfaces ethernet eth1 speed 100" in result.commands'
       - '"set interfaces ethernet eth1 duplex half" in result.commands'
       - '"set interfaces ethernet eth1 mtu 256" in result.commands'
@@ -75,7 +75,7 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set interfaces ethernet eth1 description test-interface-2" in result.commands'
+      - '"set interfaces ethernet eth1 description ''test-interface-2''" in result.commands'
       - '"set interfaces ethernet eth1 speed 1000" in result.commands'
       - '"set interfaces ethernet eth1 duplex full" in result.commands'
       - '"set interfaces ethernet eth1 mtu 512" in result.commands'
@@ -141,11 +141,11 @@
 - assert:
     that:
       - 'result.changed == true'
-      - '"set interfaces ethernet eth1 description test-interface-1" in result.commands'
+      - '"set interfaces ethernet eth1 description ''test-interface-1''" in result.commands'
       - '"set interfaces ethernet eth1 speed 100" in result.commands'
       - '"set interfaces ethernet eth1 duplex half" in result.commands'
       - '"set interfaces ethernet eth1 mtu 512" in result.commands'
-      - '"set interfaces ethernet eth2 description test-interface-2" in result.commands'
+      - '"set interfaces ethernet eth2 description ''test-interface-2''" in result.commands'
       - '"set interfaces ethernet eth2 speed 1000" in result.commands'
       - '"set interfaces ethernet eth2 duplex full" in result.commands'
       - '"set interfaces ethernet eth2 mtu 256" in result.commands'

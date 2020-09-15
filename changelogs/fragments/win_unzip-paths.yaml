@@ -1,0 +1,2 @@
+bugfixes:
+- win_unzip - Fix support for paths with square brackets not being detected properly

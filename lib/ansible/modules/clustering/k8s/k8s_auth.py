@@ -96,7 +96,7 @@ EXAMPLES = '''
     # Previous task provides the token/api_key, while all other parameters
     # are taken from module_defaults
     - name: Get a list of all pods from any namespace
-      k8s_facts:
+      k8s_info:
         api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
         kind: Pod
       register: pod_list

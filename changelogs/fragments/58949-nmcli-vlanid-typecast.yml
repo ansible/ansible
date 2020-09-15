@@ -1,0 +1,2 @@
+minor_changes:
+- Typecast vlan id to string in nmcli module (https://github.com/ansible/ansible/issues/58949).

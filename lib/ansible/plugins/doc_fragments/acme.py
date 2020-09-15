@@ -3,6 +3,9 @@
 # Copyright: (c) 2016 Michael Gruener <michael.gruener@chaosmoon.net>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import absolute_import, division, print_function
+__metaclass__ = type
+
 
 class ModuleDocFragment(object):
 
@@ -18,7 +21,8 @@ notes:
      C(account_key_content))."
   - "Although the defaults are chosen so that the module can be used with
      the L(Let's Encrypt,https://letsencrypt.org/) CA, the module can in
-     principle be used with any CA providing an ACME endpoint."
+     principle be used with any CA providing an ACME endpoint, such as
+     L(Buypass Go SSL,https://www.buypass.com/ssl/products/acme)."
 requirements:
   - python >= 2.6
   - either openssl or L(cryptography,https://cryptography.io/) >= 1.5
@@ -27,7 +31,7 @@ options:
     description:
       - "Path to a file containing the ACME account RSA or Elliptic Curve
          key."
-      - "RSA keys can be created with C(openssl rsa ...). Elliptic curve keys can
+      - "RSA keys can be created with C(openssl genrsa ...). Elliptic curve keys can
          be created with C(openssl ecparam -genkey ...). Any other tool creating
          private keys in PEM format can be used as well."
       - "Mutually exclusive with C(account_key_content)."
@@ -60,8 +64,8 @@ options:
   acme_version:
     description:
       - "The ACME version of the endpoint."
-      - "Must be 1 for the classic Let's Encrypt ACME endpoint, or 2 for the
-         new standardized ACME v2 endpoint."
+      - "Must be 1 for the classic Let's Encrypt and Buypass ACME endpoints,
+         or 2 for standardized ACME v2 endpoints."
     type: int
     default: 1
     choices: [ 1, 2 ]
@@ -74,12 +78,16 @@ options:
          server (for the ACME v1 protocol). This will create technically correct,
          but untrusted certificates."
       - "For Let's Encrypt, all staging endpoints can be found here:
-         U(https://letsencrypt.org/docs/staging-environment/)"
+         U(https://letsencrypt.org/docs/staging-environment/). For Buypass, all
+         endpoints can be found here:
+         U(https://community.buypass.com/t/63d4ay/buypass-go-ssl-endpoints)"
       - "For Let's Encrypt, the production directory URL for ACME v1 is
          U(https://acme-v01.api.letsencrypt.org/directory), and the production
          directory URL for ACME v2 is U(https://acme-v02.api.letsencrypt.org/directory)."
+      - "For Buypass, the production directory URL for ACME v2 and v1 is
+         U(https://api.buypass.com/acme/directory)."
       - "I(Warning): So far, the module has only been tested against Let's Encrypt
-         (staging and production) and against the
+         (staging and production), Buypass (staging and production), and
          L(Pebble testing server,https://github.com/letsencrypt/Pebble)."
     type: str
     default: https://acme-staging.api.letsencrypt.org/directory

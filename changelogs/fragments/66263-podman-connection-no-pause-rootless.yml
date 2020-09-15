@@ -1,0 +1,2 @@
+bugfixes:
+  - podman connection plugin - fix to handle the new default copy pause rootless containers from upstream (https://github.com/ansible/ansible/issues/66263)

@@ -8,7 +8,7 @@
     <uservisible>true</uservisible>
     <display_order>1024</display_order>
     <packagelist>
-      <packagereq type="mandatory">foo</packagereq>
+      <packagereq type="mandatory">dinginessentail</packagereq>
     </packagelist>
   </group>
 
@@ -20,7 +20,7 @@
     <uservisible>false</uservisible>
     <display_order>1024</display_order>
     <packagelist>
-      <packagereq type="mandatory">bar</packagereq>
+      <packagereq type="mandatory">landsidescalping</packagereq>
     </packagelist>
   </group>
 

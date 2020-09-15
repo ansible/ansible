@@ -1,5 +1,7 @@
-Sanity Tests » no-tests-as-filters
-==================================
+:orphan:
+
+no-tests-as-filters
+===================
 
 Using Ansible provided Jinja2 tests as filters will be removed in Ansible 2.9.
 

@@ -1,0 +1,2 @@
+bugfixes:
+- "meraki_static_route - Module would make unnecessary API calls to Meraki when ``net_id`` is specified in task."

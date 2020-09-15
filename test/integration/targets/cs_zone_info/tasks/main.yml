@@ -1,0 +1,73 @@
+---
+- name: setup zone is present
+  cs_zone:
+    name: "{{ cs_resource_prefix }}-zone"
+    dns1: 8.8.8.8
+    dns2: 8.8.4.4
+    network_type: Basic
+  register: zone
+- name: verify setup zone is present
+  assert:
+    that:
+      - zone is successful
+
+- name: get info from zone in check mode
+  cs_zone_info:
+    name: "{{ cs_resource_prefix }}-zone"
+  register: zone
+  check_mode: yes
+- name: verify  get info from zone in check mode
+  assert:
+    that:
+      - zone is successful
+      - zone is not changed
+      - zone.zones[0].dns1 == "8.8.8.8"
+      - zone.zones[0].dns2 == "8.8.4.4"
+      - zone.zones[0].internal_dns1 == "8.8.8.8"
+      - zone.zones[0].internal_dns2 == "8.8.4.4"
+      - zone.zones[0].local_storage_enabled == false
+      - zone.zones[0].network_type == "Basic"
+      - zone.zones[0].zone_token != ""
+      - zone.zones[0].securitygroups_enabled == true
+      - zone.zones[0].dhcp_provider == "VirtualRouter"
+      - zone.zones[0].local_storage_enabled == false
+
+- name: get info from zone
+  cs_zone_info:
+    name: "{{ cs_resource_prefix }}-zone"
+  register: zone
+- name: verify get info from zone
+  assert:
+    that:
+      - zone is successful
+      - zone is not changed
+      - zone.zones[0].dns1 == "8.8.8.8"
+      - zone.zones[0].dns2 == "8.8.4.4"
+      - zone.zones[0].internal_dns1 == "8.8.8.8"
+      - zone.zones[0].internal_dns2 == "8.8.4.4"
+      - zone.zones[0].local_storage_enabled == false
+      - zone.zones[0].network_type == "Basic"
+      - zone.zones[0].zone_token != ""
+      - zone.zones[0].securitygroups_enabled == true
+      - zone.zones[0].dhcp_provider == "VirtualRouter"
+      - zone.zones[0].local_storage_enabled == false
+
+- name: get info from all zones
+  cs_zone_info:
+  register: zones
+- name: verify get info from all zones
+  assert:
+    that:
+      - zones is successful
+      - zones is not changed
+      - zones.zones | length > 0
+      - '"dns1" in zone.zones[0]'
+      - '"dns2" in zone.zones[0]'
+      - '"internal_dns1" in zone.zones[0]'
+      - '"internal_dns2" in zone.zones[0]'
+      - '"local_storage_enabled" in zone.zones[0]'
+      - '"network_type" in zone.zones[0]'
+      - '"zone_token" in zone.zones[0]'
+      - '"securitygroups_enabled" in zone.zones[0]'
+      - '"dhcp_provider" in zone.zones[0]'
+      - '"local_storage_enabled" in zone.zones[0]'

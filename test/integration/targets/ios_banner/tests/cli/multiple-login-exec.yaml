@@ -1,0 +1,55 @@
+---
+
+- name: Setup - set login and exec
+  ios_banner:
+    banner: "{{ item }}"
+    text: |
+      this is my login banner
+      that as a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+  loop:
+    - login
+    - exec
+
+
+- name: Set login
+  ios_banner:
+    banner: "login"
+    text: |
+      this is my login banner
+      that as a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"
+
+- name: Set exec
+  ios_banner:
+    banner: "exec"
+    text: |
+      this is my login banner
+      that as a multiline
+      string
+    state: present
+    provider: "{{ cli }}"
+
+  register: result
+
+- debug:
+    msg: "{{ result }}"
+
+- assert:
+    that:
+      - "result.changed == false"
+      - "result.commands | length == 0"

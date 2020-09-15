@@ -1,3 +1,0 @@
-minor_changes:
-- facts - Alias ``ansible_model`` to ``ansible_product_name`` to more closely match other OSes
-  (https://github.com/ansible/ansible/issues/52233)

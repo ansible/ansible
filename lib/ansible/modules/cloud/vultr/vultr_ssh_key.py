@@ -24,29 +24,29 @@ options:
     description:
       - Name of the ssh key.
     required: true
+    type: str
   ssh_key:
     description:
       - SSH public key.
       - Required if C(state=present).
-    required: false
+    type: str
   state:
     description:
       - State of the ssh key.
     default: present
     choices: [ present, absent ]
+    type: str
 extends_documentation_fragment: vultr
 '''
 
 EXAMPLES = '''
 - name: ensure an SSH key is present
-  local_action:
-    module: vultr_ssh_key
+  vultr_ssh_key:
     name: my ssh key
     ssh_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
 - name: ensure an SSH key is absent
-  local_action:
-    module: vultr_ssh_key
+  vultr_ssh_key:
     name: my ssh key
     state: absent
 '''
@@ -73,6 +73,12 @@ vultr_api:
       returned: success
       type: int
       sample: 5
+    api_retry_max_delay:
+      description: Exponential backoff delay in seconds between retries up to this max delay value.
+      returned: success
+      type: int
+      sample: 12
+      version_added: '2.9'
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
@@ -205,9 +211,9 @@ class AnsibleVultrSshKey(Vultr):
 def main():
     argument_spec = vultr_argument_spec()
     argument_spec.update(dict(
-        name=dict(required=True),
-        ssh_key=dict(),
-        state=dict(choices=['present', 'absent'], default='present'),
+        name=dict(type='str', required=True),
+        ssh_key=dict(type='str',),
+        state=dict(type='str', choices=['present', 'absent'], default='present'),
     ))
 
     module = AnsibleModule(

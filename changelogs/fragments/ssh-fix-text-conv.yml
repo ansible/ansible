@@ -1,0 +1,2 @@
+bugfixes:
+- ssh connection plugin - Ensure that debug messages are properly encoded as text

@@ -257,10 +257,12 @@ class AnsibleFileNotFound(AnsibleRuntimeError):
         self.file_name = file_name
         self.paths = paths
 
+        if message:
+            message += "\n"
         if self.file_name:
-            if message:
-                message += "\n"
             message += "Could not find or access '%s'" % to_text(self.file_name)
+        else:
+            message += "Could not find file"
 
         if self.paths and isinstance(self.paths, Sequence):
             searched = to_text('\n\t'.join(self.paths))
@@ -309,4 +311,9 @@ class AnsibleActionFail(AnsibleAction):
 
 class _AnsibleActionDone(AnsibleAction):
     ''' an action runtime early exit'''
+    pass
+
+
+class AnsibleFilterTypeError(AnsibleTemplateError, TypeError):
+    ''' a Jinja filter templating failure due to bad type'''
     pass

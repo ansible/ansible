@@ -21,14 +21,9 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.8'
 options:
-  tenant_id:
-    description:
-    - The ID of the tenant.
-    type: str
   tenant:
     description:
     - The name of the tenant.
-    - Alternative to the name, you can use C(tenant_id).
     type: str
     required: yes
     aliases: [ name ]
@@ -68,7 +63,6 @@ EXAMPLES = r'''
     username: admin
     password: SomeSecretPassword
     tenant: north_europe
-    tenant_id: 101
     display_name: North European Datacenter
     description: This tenant manages the NEDC environment.
     state: present
@@ -116,7 +110,6 @@ def main():
         description=dict(type='str'),
         display_name=dict(type='str'),
         tenant=dict(type='str', aliases=['name']),
-        tenant_id=dict(type='str'),
         users=dict(type='list'),
         sites=dict(type='list'),
         state=dict(type='str', default='present', choices=['absent', 'present', 'query']),
@@ -134,7 +127,6 @@ def main():
     description = module.params['description']
     display_name = module.params['display_name']
     tenant = module.params['tenant']
-    tenant_id = module.params['tenant_id']
     state = module.params['state']
 
     mso = MSOModule(module)
@@ -143,26 +135,18 @@ def main():
     sites = mso.lookup_sites(module.params['sites'])
     users = mso.lookup_users(module.params['users'])
 
+    tenant_id = None
     path = 'tenants'
 
     # Query for existing object(s)
-    if tenant_id is None and tenant is None:
-        mso.existing = mso.query_objs(path)
-    elif tenant_id is None:
+    if tenant:
         mso.existing = mso.get_obj(path, name=tenant)
         if mso.existing:
             tenant_id = mso.existing['id']
-    elif tenant is None:
-        mso.existing = mso.get_obj(path, id=tenant_id)
+            # If we found an existing object, continue with it
+            path = 'tenants/{id}'.format(id=tenant_id)
     else:
-        mso.existing = mso.get_obj(path, id=tenant_id)
-        existing_by_name = mso.get_obj(path, name=tenant)
-        if existing_by_name and tenant_id != existing_by_name['id']:
-            mso.fail_json(msg="Provided tenant '{0}' with id '{1}' does not match existing id '{2}'.".format(tenant, tenant_id, existing_by_name['id']))
-
-    # If we found an existing object, continue with it
-    if tenant_id:
-        path = 'tenants/{id}'.format(id=tenant_id)
+        mso.existing = mso.query_objs(path)
 
     if state == 'query':
         pass

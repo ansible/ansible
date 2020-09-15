@@ -144,10 +144,10 @@ class ActionModule(ActionBase):
                 temp_vars = task_vars.copy()
                 temp_vars.update(generate_ansible_template_vars(source, dest))
 
-                old_vars = self._templar._available_variables
-                self._templar.set_available_variables(temp_vars)
+                old_vars = self._templar.available_variables
+                self._templar.available_variables = temp_vars
                 resultant = self._templar.do_template(template_data, preserve_trailing_newlines=True, escape_backslashes=False)
-                self._templar.set_available_variables(old_vars)
+                self._templar.available_variables = old_vars
             except AnsibleAction:
                 raise
             except Exception as e:

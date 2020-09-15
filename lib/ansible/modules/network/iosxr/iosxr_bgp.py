@@ -18,13 +18,14 @@ DOCUMENTATION = """
 ---
 module: iosxr_bgp
 version_added: "2.8"
-author: "Nilashish Chakraborty (@nilashishc)"
+author: "Nilashish Chakraborty (@NilashishC)"
 short_description: Configure global BGP protocol settings on Cisco IOS-XR
 description:
   - This module provides configuration management of global BGP parameters
     on devices running Cisco IOS-XR
 notes:
   - Tested against Cisco IOS XR Software Version 6.1.3
+  - This module works with connection C(network_cli). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 options:
   config:
     description:

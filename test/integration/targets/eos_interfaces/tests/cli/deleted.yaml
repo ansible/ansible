@@ -1,0 +1,43 @@
+---
+- include_tasks: reset_config.yml
+
+- set_fact:
+    config:
+      - name: Ethernet1
+
+- eos_facts:
+    gather_network_resources: interfaces
+  become: yes
+
+- name: Returns interfaces to default parameters
+  eos_interfaces:
+    config: "{{ config }}"
+    state: deleted
+  register: result
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.interfaces|symmetric_difference(result.before)|length == 0"
+
+- eos_facts:
+    gather_network_resources: interfaces
+  become: yes
+
+- assert:
+    that:
+      - "ansible_facts.network_resources.interfaces|symmetric_difference(result.after)|length == 0"
+
+- set_fact:
+    expected_config:
+      - name: Ethernet1
+        duplex: auto
+        enabled: True
+      - name: Ethernet2
+        duplex: auto
+        enabled: True
+        mtu: "3000"
+
+- assert:
+    that:
+      - "expected_config|difference(ansible_facts.network_resources.interfaces)|length == 0"

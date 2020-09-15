@@ -194,7 +194,7 @@ class NetAppONTAPJob(object):
     def add_job_details(self, na_element_object, values):
         """
         Add children node for create or modify NaElement object
-        :param na_element_object: modif or create NaElement object
+        :param na_element_object: modify or create NaElement object
         :param values: dictionary of cron values to be added
         :return: None
         """

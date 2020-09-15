@@ -1,0 +1,2 @@
+bugfixes:
+- Make netconf plugin configurable to set ncclient device handler name in netconf plugin (https://github.com/ansible/ansible/pull/65718)

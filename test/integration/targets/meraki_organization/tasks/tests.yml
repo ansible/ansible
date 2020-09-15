@@ -1,0 +1,96 @@
+# Test code for the Meraki Organization module
+# Copyright: (c) 2018, Kevin Breit (@kbreit)
+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- block:
+  - name: Test an API key is provided
+    fail:
+      msg: Please define an API key
+    when: auth_key is not defined
+    
+  - name: Create a new organization named IntTestOrg
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      org_name: IntTestOrg
+      state: present
+      output_level: debug
+    register: new_org
+
+  - debug:
+      msg: '{{new_org}}'
+
+  - name: Clone IntTestOrg
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      clone: IntTestOrg
+      org_name: IntTestOrgCloned
+      state: present
+    register: cloned_org
+
+  - debug:
+      msg: '{{cloned_org}}'
+
+  - name: Rename IntTestOrg
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      org_name: IntTestOrgRenamed
+      org_id: '{{ new_org.data.id }}'
+      state: present
+    register: modify_org
+
+  - debug:
+      msg: '{{ modify_org }}'
+
+  - set_fact:
+      renamed_org_id: '{{modify_org.data.id}}'
+
+  - name: Rename IntTestOrg idempotent
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      org_name: IntTestOrgRenamed
+      org_id: '{{ new_org.data.id }}'
+      state: present
+    register: modify_org_idempotent
+
+  - name: Present assertions
+    assert:
+      that:
+        - '"https" in new_org.url'
+        - new_org.changed == True
+        - new_org.data.id is defined
+        - cloned_org.changed == True
+        - cloned_org.data.id is defined
+        - modify_org.changed == True
+        - 'modify_org.data.name == "IntTestOrgRenamed"'
+        - modify_org_idempotent.changed == False
+        - modify_org_idempotent.data is defined
+
+  - name: List all organizations
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      state: query
+    register: query_all
+
+  - name: Query information about a single organization named IntTestOrg
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      org_name: IntTestOrgRenamed
+      state: query
+    register: query_org
+
+  - name: Query information about IntTestOrg by organization ID
+    meraki_organization:
+      auth_key: '{{ auth_key }}'
+      org_id: '{{ query_org.data.id }}'
+      state: query
+    register: query_org_id
+
+  - name: Query assertions
+    assert:
+      that:
+        - query_org.data.id is defined
+        - query_all.changed == False
+        - query_all.data | length >= 1
+        - 'query_org.data.name == "IntTestOrgRenamed"'
+        - 'query_org_id.data.id == query_org.data.id'

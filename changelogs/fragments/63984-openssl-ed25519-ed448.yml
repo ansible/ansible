@@ -1,0 +1,4 @@
+bugfixes:
+- "openssl_certificate and openssl_csr - fix Ed25519 and Ed448 private key support for ``cryptography`` backend.
+   This probably needs at least cryptography 2.8, since older versions have problems with signing certificates
+   or CSRs with such keys. (https://github.com/ansible/ansible/issues/59039, PR https://github.com/ansible/ansible/pull/63984)"

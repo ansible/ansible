@@ -1,2 +1,0 @@
-minor_changes:
-- "docker_container - published_ports now supports port ranges, IPv6 addresses, and no longer accepts hostnames, which were never used correctly anyway."

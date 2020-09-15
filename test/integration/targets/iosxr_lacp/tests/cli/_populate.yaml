@@ -1,0 +1,9 @@
+---
+- name: Setup
+  cli_config:
+    config: "{{ lines }}"
+  vars:
+    lines: |
+      lacp system priority 12
+      lacp system mac 00c1.4c00.bd16
+      

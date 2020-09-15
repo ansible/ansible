@@ -1,0 +1,63 @@
+# Test code for the vmware_cluster module.
+# Copyright: (c) 2017, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- import_role:
+    name: prepare_vmware_tests
+
+# Setup: Create test cluster
+- name: Create test cluster
+  vmware_cluster:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_drs
+    state: present
+
+# Testcase 0001: Enable DRS
+- name: Enable DRS
+  vmware_cluster_drs:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_drs
+    enable_drs: yes
+  register: cluster_drs_result_0001
+
+- name: Ensure DRS is enabled
+  assert:
+    that:
+        - "{{ cluster_drs_result_0001.changed == true }}"
+
+# Testcase 0002: Disable DRS
+- name: Disable DRS
+  vmware_cluster_drs:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_drs
+    enable_drs: no
+  register: cluster_drs_result_0002
+
+- name: Ensure DRS is disabled
+  assert:
+    that:
+        - "{{ cluster_drs_result_0002.changed == true }}"
+
+# Delete test cluster
+- name: Delete test cluster
+  vmware_cluster:
+    validate_certs: False
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: "{{ dc1 }}"
+    cluster_name: test_cluster_drs
+    state: absent
+  when: vcsim is not defined

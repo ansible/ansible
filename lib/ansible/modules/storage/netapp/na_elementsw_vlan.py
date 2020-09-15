@@ -92,7 +92,7 @@ EXAMPLES = """
 
 - name: Delete Lun
   na_elementsw_vlan:
-    state: present
+    state: absent
     vlan_tag: 1
     hostname: "{{ netapp_hostname }}"
     username: "{{ netapp_username }}"
@@ -112,7 +112,7 @@ from ansible.module_utils.netapp_elementsw_module import NaElementSWModule
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     import solidfire.common
-except Exception:
+except ImportError:
     HAS_SF_SDK = False
 
 
@@ -150,10 +150,10 @@ class ElementSWVlan(object):
         self.na_helper = NetAppModule()
         self.parameters = self.na_helper.set_parameters(self.module.params)
 
-        self.elementsw_helper = NaElementSWModule(self.sfe)
+        self.elementsw_helper = NaElementSWModule(self.elem)
 
         # add telemetry attributes
-        if self.parameters['attributes'] is not None:
+        if self.parameters.get('attributes') is not None:
             self.parameters['attributes'].update(self.elementsw_helper.set_element_attributes(source='na_elementsw_vlan'))
         else:
             self.parameters['attributes'] = self.elementsw_helper.set_element_attributes(source='na_elementsw_vlan')
@@ -184,7 +184,7 @@ class ElementSWVlan(object):
             self.elem.add_virtual_network(virtual_network_tag=self.parameters['vlan_tag'], **create_params)
         except solidfire.common.ApiServerError as err:
             self.module.fail_json(msg="Error creating VLAN %s"
-                                  % self.parameters['vlan_name'],
+                                  % self.parameters['vlan_tag'],
                                   exception=to_native(err))
 
     def delete_network(self):

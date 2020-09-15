@@ -26,6 +26,13 @@ options:
       - The ENV variable C(VULTR_API_RETRIES) is used as default, when defined.
       - Fallback value is 5 retries if not specified.
     type: int
+  api_retry_max_delay:
+    description:
+      - Retry backoff delay in seconds is exponential up to this max. value, in seconds.
+      - The ENV variable C(VULTR_API_RETRY_MAX_DELAY) is used as default, when defined.
+      - Fallback value is 12 seconds.
+    type: int
+    version_added: '2.9'
   api_account:
     description:
       - Name of the ini section in the C(vultr.ini) file.

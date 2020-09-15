@@ -61,7 +61,7 @@ options:
 
 EXAMPLES = '''
 # Create a DNS record on a UCS
-- udm_dns_zone:
+- udm_dns_record:
     name: www
     zone: example.com
     type: host_record
@@ -123,6 +123,7 @@ def main():
     data = module.params['data']
     state = module.params['state']
     changed = False
+    diff = None
 
     obj = list(ldap_search(
         '(&(objectClass=dNSZone)(zoneName={0})(relativeDomainName={1}))'.format(zone, name),

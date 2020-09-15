@@ -22,10 +22,10 @@ __metaclass__ = type
 from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
+from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
-from ansible.playbook.become import Become
 from ansible.playbook.block import Block
 from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
@@ -40,7 +40,7 @@ display = Display()
 __all__ = ['Play']
 
 
-class Play(Base, Taggable, Become, CollectionSearch):
+class Play(Base, Taggable, CollectionSearch):
 
     """
     A play is a language feature that represents a list of roles and/or
@@ -57,7 +57,7 @@ class Play(Base, Taggable, Become, CollectionSearch):
 
     # Facts
     _gather_facts = FieldAttribute(isa='bool', default=None, always_post_validate=True)
-    _gather_subset = FieldAttribute(isa='list', default=None, listof=string_types, always_post_validate=True)
+    _gather_subset = FieldAttribute(isa='list', default=(lambda: C.DEFAULT_GATHER_SUBSET), listof=string_types, always_post_validate=True)
     _gather_timeout = FieldAttribute(isa='int', default=C.DEFAULT_GATHER_TIMEOUT, always_post_validate=True)
     _fact_path = FieldAttribute(isa='string', default=C.DEFAULT_FACT_PATH)
 
@@ -104,6 +104,8 @@ class Play(Base, Taggable, Become, CollectionSearch):
     @staticmethod
     def load(data, variable_manager=None, loader=None, vars=None):
         if ('name' not in data or data['name'] is None) and 'hosts' in data:
+            if data['hosts'] is None or all(host is None for host in data['hosts']):
+                raise AnsibleParserError("Hosts list cannot be empty - please check your playbook")
             if isinstance(data['hosts'], list):
                 data['name'] = ','.join(data['hosts'])
             else:
@@ -144,7 +146,7 @@ class Play(Base, Taggable, Become, CollectionSearch):
         try:
             return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
         except AssertionError as e:
-            raise AnsibleParserError("A malformed block was encountered while loading tasks", obj=self._ds, orig_exc=e)
+            raise AnsibleParserError("A malformed block was encountered while loading tasks: %s" % to_native(e), obj=self._ds, orig_exc=e)
 
     def _load_pre_tasks(self, attr, ds):
         '''
@@ -190,7 +192,8 @@ class Play(Base, Taggable, Become, CollectionSearch):
             ds = []
 
         try:
-            role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+            role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager,
+                                               loader=self._loader, collection_search_list=self.collections)
         except AssertionError as e:
             raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds, orig_exc=e)
 
@@ -198,11 +201,9 @@ class Play(Base, Taggable, Become, CollectionSearch):
         for ri in role_includes:
             roles.append(Role.load(ri, play=self))
 
-        return self._extend_value(
-            self.roles,
-            roles,
-            prepend=True
-        )
+        self.roles[:0] = roles
+
+        return self.roles
 
     def _load_vars_prompt(self, attr, ds):
         new_ds = preprocess_vars(ds)

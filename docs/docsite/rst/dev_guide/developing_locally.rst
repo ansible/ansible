@@ -5,7 +5,7 @@
 Adding modules and plugins locally
 **********************************
 
-.. contents:: Topics
+.. contents::
    :local:
 
 The easiest, quickest, and most popular way to extend Ansible is to copy or write a module or a plugin for local use. You can store local modules and plugins on your Ansible control node for use within your team or organization. You can also share a local plugin or module by embedding it in a role and publishing it on Ansible Galaxy. If you've been using roles off Galaxy, you may have been using local modules and plugins without even realizing it. If you're using a local module or plugin that already exists, this page is all you need.
@@ -26,8 +26,8 @@ Modules and plugins: what's the difference?
 ===========================================
 If you're looking to add local functionality to Ansible, you may be wondering whether you need a module or a plugin. Here's a quick overview of the differences:
 
-* Modules are reusable, standalone scripts that can be used by the Ansible API, the :command:`ansible` command, or the :command:`ansible-playbook` command. Modules provide a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting.
-* Plugins are shared code that can be used by any module. They provide abilities like caching information or copying files that are useful for many modules.
+* Modules are reusable, standalone scripts that can be used by the Ansible API, the :command:`ansible` command, or the :command:`ansible-playbook` command. Modules provide a defined interface, accepting arguments and returning information to Ansible by printing a JSON string to stdout before exiting. Modules execute on the target system (usually that means on a remote system) in separate processes.
+* :ref:`Plugins <plugins_lookup>` augment Ansible's core functionality and execute on the control node within the ``/usr/bin/ansible`` process. Plugins offer options and extensions for the core features of Ansible - transforming data, logging output, connecting to inventory, and more.
 
 .. _local_modules:
 
@@ -72,13 +72,13 @@ Ansible loads plugins automatically too, loading each type of plugin separately 
     * test_plugins*
     * vars_plugins
 
-You can create or add a local plugin in any of these locations:
+To load your local plugins automatically, create or add them in any of these locations:
 
 * any directory added to the relevant ``ANSIBLE_plugin_type_PLUGINS`` environment variable (these variables, such as ``$ANSIBLE_INVENTORY_PLUGINS`` and ``$ANSIBLE_VARS_PLUGINS`` take colon-separated lists like ``$PATH``)
 * the directory named for the correct ``plugin_type`` within ``~/.ansible/plugins/`` - for example, ``~/.ansible/plugins/callback``
 * the directory named for the correct ``plugin_type`` within ``/usr/share/ansible/plugins/`` - for example, ``/usr/share/ansible/plugins/action``
 
-Once your plugin file is in one of these locations, Ansible will load it and you can use it in a any local module, task, playbook, or role.
+Once your plugin file is in one of these locations, Ansible will load it and you can use it in a any local module, task, playbook, or role. Alternatively, you can edit your ``ansible.cfg`` file to add directories that contain local plugins - see :ref:`ansible_configuration_settings` for details.
 
 To confirm that ``plugins/plugin_type/my_custom_plugin`` is available:
 

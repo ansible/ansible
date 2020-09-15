@@ -1,5 +1,5 @@
-Sanity Tests » no-assert
-========================
+no-assert
+=========
 
 Do not use ``assert`` in production Ansible python code. When running Python
 with optimizations, Python will remove ``assert`` statements, potentially

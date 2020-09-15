@@ -8,12 +8,12 @@ Including and Importing
 Includes vs. Imports
 ````````````````````
 
-As noted in :doc:`playbooks_reuse`, include and import statements are very similar, however the Ansible executor engine treats them very differently.
+As noted in :ref:`playbooks_reuse`, include and import statements are very similar, however the Ansible executor engine treats them very differently.
 
 - All ``import*`` statements are pre-processed at the time playbooks are parsed.
 - All ``include*`` statements are processed as they are encountered during the execution of the playbook.
 
-Please refer to  :doc:`playbooks_reuse` for documentation concerning the trade-offs one may encounter when using each type.
+Please refer to  :ref:`playbooks_reuse` for documentation concerning the trade-offs one may encounter when using each type.
 
 Also be aware that this behaviour changed in 2.4. Prior to Ansible 2.4, only ``include`` was available and it behaved differently depending on context.
 
@@ -89,14 +89,14 @@ And in your main playbook file::
    - import_tasks: more_handlers.yml
 
 .. note::
-    Be sure to refer to the limitations/trade-offs for handlers noted in :doc:`playbooks_reuse`.
+    Be sure to refer to the limitations/trade-offs for handlers noted in :ref:`playbooks_reuse`.
 
 You can mix in includes along with your regular non-included tasks and handlers.
 
 Including and Importing Roles
 `````````````````````````````
 
-Please refer to :doc:`playbooks_reuse_roles` for details on including and importing roles.
+Please refer to :ref:`playbooks_reuse_roles` for details on including and importing roles.
 
 .. seealso::
 
@@ -120,4 +120,3 @@ Please refer to :doc:`playbooks_reuse_roles` for details on including and import
        Complete playbook files from the GitHub project source
    `Mailing List <https://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
-

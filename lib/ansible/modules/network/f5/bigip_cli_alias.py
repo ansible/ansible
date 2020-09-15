@@ -23,11 +23,13 @@ options:
   name:
     description:
       - Specifies the name of the alias.
+    type: str
     required: True
   scope:
     description:
       - The scope of the alias; whether it is shared on the system, or usable only
         for the user who created it.
+    type: str
     default: shared
     choices:
       - private
@@ -35,18 +37,22 @@ options:
   command:
     description:
       - The command to alias.
+    type: str
   description:
     description:
       - Description of the alias.
+    type: str
   partition:
     description:
       - Device partition to manage resources on.
       - This parameter is disregarded when the C(scope) is C(private).
+    type: str
     default: Common
   state:
     description:
       - When C(present), ensures that the resource exists.
       - When C(absent), ensures the resource is removed.
+    type: str
     default: present
     choices:
       - present
@@ -54,6 +60,7 @@ options:
 extends_documentation_fragment: f5
 author:
   - Tim Rupp (@caphrim007)
+  - Wojciech Wypior (@wojtek0806)
 '''
 
 EXAMPLES = r'''

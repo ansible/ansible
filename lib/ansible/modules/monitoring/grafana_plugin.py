@@ -16,11 +16,12 @@ DOCUMENTATION = '''
 ---
 module: grafana_plugin
 author:
-  - Thierry Sallé (@tsalle)
+  - Thierry Sallé (@seuf)
 version_added: "2.5"
 short_description: Manage Grafana plugins via grafana-cli
 description:
   - Install and remove Grafana plugins.
+  - See U(https://grafana.com/docs/plugins/installation/) for upstream documentation.
 options:
   name:
     description:
@@ -29,28 +30,31 @@ options:
   version:
     description:
       - Version of the plugin to install.
-      - Default to latest.
+      - Defaults to C(latest).
   grafana_plugins_dir:
     description:
-      - Directory where Grafana plugin will be installed.
+      - Directory where the Grafana plugin will be installed.
+      - If omitted, defaults to C(/var/lib/grafana/plugins).
   grafana_repo:
     description:
-      - Grafana repository. If not set, gafana-cli will use the default value C(https://grafana.net/api/plugins).
+      - URL to the Grafana plugin repository.
+      - "If omitted, grafana-cli will use the default value: U(https://grafana.com/api/plugins)."
   grafana_plugin_url:
     description:
-      - Custom Grafana plugin URL.
+      - Full URL to the plugin zip file instead of downloading the file from U(https://grafana.com/api/plugins).
       - Requires grafana 4.6.x or later.
   state:
     description:
-      - Status of the Grafana plugin.
-      - If latest is set, the version parameter will be ignored.
-    choices: [ absent, present ]
+      - Whether the plugin should be installed.
+    choices:
+      - present
+      - absent
     default: present
 '''
 
 EXAMPLES = '''
 ---
-- name: Install - update Grafana piechart panel plugin
+- name: Install/update Grafana piechart panel plugin
   grafana_plugin:
     name: grafana-piechart-panel
     version: latest
@@ -60,9 +64,9 @@ EXAMPLES = '''
 RETURN = '''
 ---
 version:
-  description: version of the installed / removed plugin.
+  description: version of the installed/removed/updated plugin.
   type: str
-  returned: allways
+  returned: always
 '''
 
 import base64
@@ -136,6 +140,23 @@ def get_grafana_plugin_version(module, params):
     return None
 
 
+def get_grafana_plugin_version_latest(module, params):
+    '''
+    Fetch the latest version available from grafana-cli.
+    Return the newest version number or None not found.
+
+    :param module: ansible module object. used to run system commands.
+    :param params: ansible module params.
+    '''
+    grafana_cli = grafana_cli_bin(params)
+    rc, stdout, stderr = module.run_command('{0} list-versions {1}'.format(grafana_cli,
+                                                                           params['name']))
+    stdout_lines = stdout.split("\n")
+    if stdout_lines[0]:
+        return stdout_lines[0].rstrip()
+    return None
+
+
 def grafana_plugin(module, params):
     '''
     Install update or remove grafana plugin
@@ -155,6 +176,11 @@ def grafana_plugin(module, params):
                             'version': grafana_plugin_version}
                 else:
                     if params['version'] == 'latest' or params['version'] is None:
+                        latest_version = get_grafana_plugin_version_latest(module, params)
+                        if latest_version == grafana_plugin_version:
+                            return {'msg': 'Grafana plugin already installed',
+                                    'changed': False,
+                                    'version': grafana_plugin_version}
                         cmd = '{0} update {1}'.format(grafana_cli, params['name'])
                     else:
                         cmd = '{0} install {1} {2}'.format(grafana_cli, params['name'], params['version'])

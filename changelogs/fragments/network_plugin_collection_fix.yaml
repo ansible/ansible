@@ -1,0 +1,2 @@
+bugfixes:
+- Can't use plugin options vars in playbook when using collections  (https://github.com/ansible/ansible/issues/63975)

@@ -1,0 +1,57 @@
+- name: create our tar.gz unarchive destination for keep-newer
+  file:
+    path: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
+    state: directory
+
+- name: Create a newer file that we would replace
+  copy:
+    dest: "{{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt"
+    content: boo
+    mode: preserve
+
+- name: unarchive a tar.gz file but avoid overwriting newer files (keep_newer=true)
+  unarchive:
+    src: "{{remote_tmp_dir}}/test-unarchive.tar.gz"
+    dest: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
+    remote_src: yes
+    keep_newer: true
+  register: unarchive02f
+
+- name: Make sure the file still contains 'boo'
+  shell: cat {{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt
+  register: unarchive02f_cat
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
+    state: absent
+
+- name: create our tar.gz unarchive destination for keep-newer (take 2)
+  file:
+    path: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
+    state: directory
+
+- name: unarchive a tar.gz file and overwrite newer files (keep_newer=false)
+  unarchive:
+    src: "{{remote_tmp_dir}}/test-unarchive.tar.gz"
+    dest: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
+    remote_src: yes
+    keep_newer: false
+  register: unarchive02g
+
+- name: Make sure the file still contains 'boo'
+  shell: cat {{remote_tmp_dir}}/test-unarchive-tar-gz/foo-unarchive.txt
+  register: unarchive02g_cat
+
+- name: remove our tar.gz unarchive destination
+  file:
+    path: "{{remote_tmp_dir}}/test-unarchive-tar-gz"
+    state: absent
+
+- name: verify results
+  assert:
+    that:
+    - unarchive02f is changed
+    - unarchive02f_cat.stdout == 'boo'
+    - unarchive02g is changed
+    - unarchive02g_cat.stdout != 'boo'

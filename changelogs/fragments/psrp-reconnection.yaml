@@ -1,0 +1,2 @@
+minor_changes:
+- psrp - Added the ``ansible_psrp_reconnection_backoff`` variable to control the reconnection backoff setting - https://github.com/ansible/ansible/issues/58714

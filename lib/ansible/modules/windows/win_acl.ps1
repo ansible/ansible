@@ -90,8 +90,9 @@ $state = Get-AnsibleParam -obj $params -name "state" -type "str" -default "prese
 $inherit = Get-AnsibleParam -obj $params -name "inherit" -type "str"
 $propagation = Get-AnsibleParam -obj $params -name "propagation" -type "str" -default "None" -validateset "InheritOnly","None","NoPropagateInherit"
 
-# We mount the HKCR, HKU, and HKCC registry hives so PS can access them
-$path_qualifier = Split-Path -Path $path -Qualifier
+# We mount the HKCR, HKU, and HKCC registry hives so PS can access them.
+# Network paths have no qualifiers so we use -EA SilentlyContinue to ignore that
+$path_qualifier = Split-Path -Path $path -Qualifier -ErrorAction SilentlyContinue
 if ($path_qualifier -eq "HKCR:" -and (-not (Test-Path -LiteralPath HKCR:\))) {
     New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT > $null
 }
@@ -120,8 +121,10 @@ ElseIf ($null -eq $inherit) {
 }
 
 # Bug in Set-Acl, Get-Acl where -LiteralPath only works for the Registry provider if the location is in that root
-# qualifier.
-Push-Location -LiteralPath $path_qualifier
+# qualifier. We also don't have a qualifier for a network path so only change if not null
+if ($null -ne $path_qualifier) {
+    Push-Location -LiteralPath $path_qualifier
+}
 
 Try {
     SetPrivilegeTokens
@@ -155,27 +158,15 @@ Try {
     # Check if the ACE exists already in the objects ACL list
     $match = $false
 
-    # Workaround to handle special use case 'APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES' and
-    # 'APPLICATION PACKAGE AUTHORITY\ALL RESTRICTED APPLICATION PACKAGES'- can't translate fully qualified name (win32 API bug/oddity)
-    # 'ALL APPLICATION PACKAGES' exists only on Win2k12 and Win2k16 and 'ALL RESTRICTED APPLICATION PACKAGES' exists only in Win2k16
-    $specialIdRefs = "ALL APPLICATION PACKAGES","ALL RESTRICTED APPLICATION PACKAGES"
-    ForEach($rule in $objACL.Access){
-        $idRefShortValue = ($rule.IdentityReference.Value).split('\')[-1]
-
-        if ( $idRefShortValue -in $specialIdRefs ) {
-            $ruleIdentity = (New-Object Security.Principal.NTAccount $idRefShortValue).Translate([Security.Principal.SecurityIdentifier])
-        }
-        else {
-            $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
-        }
+    ForEach($rule in $objACL.GetAccessRules($true, $true, [System.Security.Principal.SecurityIdentifier])){
 
         If ($path_item.PSProvider.Name -eq "Registry") {
-            If (($rule.RegistryRights -eq $objACE.RegistryRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
+            If (($rule.RegistryRights -eq $objACE.RegistryRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($rule.IdentityReference -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
                 $match = $true
                 Break
             }
         } else {
-            If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
+            If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($rule.IdentityReference -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) {
                 $match = $true
                 Break
             }
@@ -185,7 +176,11 @@ Try {
     If ($state -eq "present" -And $match -eq $false) {
         Try {
             $objACL.AddAccessRule($objACE)
-            Set-ACL -LiteralPath $path -AclObject $objACL
+            If ($path_item.PSProvider.Name -eq "Registry") {
+                Set-ACL -LiteralPath $path -AclObject $objACL
+            } else {
+                (Get-Item -LiteralPath $path).SetAccessControl($objACL)
+            }
             $result.changed = $true
         }
         Catch {
@@ -195,7 +190,11 @@ Try {
     ElseIf ($state -eq "absent" -And $match -eq $true) {
         Try {
             $objACL.RemoveAccessRule($objACE)
-            Set-ACL -LiteralPath $path -AclObject $objACL
+            If ($path_item.PSProvider.Name -eq "Registry") {
+                Set-ACL -LiteralPath $path -AclObject $objACL
+            } else {
+                (Get-Item -LiteralPath $path).SetAccessControl($objACL)
+            }
             $result.changed = $true
         }
         Catch {
@@ -218,7 +217,9 @@ Catch {
 }
 Finally {
     # Make sure we revert the location stack to the original path just for cleanups sake
-    Pop-Location
+    if ($null -ne $path_qualifier) {
+        Pop-Location
+    }
 }
 
 Exit-Json -obj $result

@@ -39,6 +39,10 @@ notes:
     wanted to provide a string value, the correct syntax would be
     C(value="'myvalue'") - with single quotes as part of the Ansible parameter
     value.
+  - When using loops in combination with a value like
+    :code:`"[('xkb', 'us'), ('xkb', 'se')]"`, you need to be aware of possible
+    type conversions. Applying a filter :code:`"{{ item.value | string }}"`
+    to the parameter variable can avoid potential conversion problems.
   - The easiest way to figure out exact syntax/value you need to provide for a
     key is by making the configuration change in application affected by the
     key, and then having a look at value set via commands C(dconf dump

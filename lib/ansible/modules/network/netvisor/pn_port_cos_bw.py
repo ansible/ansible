@@ -54,7 +54,7 @@ options:
     choices: ['priority', 'no-priority']
   pn_min_bw_guarantee:
     description:
-      - Minimum b/w in precentage.
+      - Minimum b/w in percentage.
     required: False
     type: str
 """

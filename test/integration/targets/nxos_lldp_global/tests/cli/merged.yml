@@ -1,0 +1,55 @@
+---
+  - debug:
+      msg: "Start nxos_lldp_global merged integration tests connection={{ansible_connection}}"
+
+  - name: Enable lldp
+    nxos_feature:
+      feature: lldp
+
+  - block:
+    - name: Merged
+      nxos_lldp_global: &merged
+        config:
+          reinit: 5
+          timer: 40
+          port_id: 1
+          tlv_select:
+            power_management: false
+        state: merged
+      register: result
+
+    - assert:
+        that:
+          - "result.before|length == 0"
+          - "result.changed == true"
+          - "'lldp reinit 5' in result.commands"
+          - "'lldp timer 40' in result.commands"
+          - "'lldp portid-subtype 1' in result.commands"
+          - "'no lldp tlv-select power-management' in result.commands"
+          - "result.commands | length == 4"
+           
+    - name: Gather lldp_global facts
+      nxos_facts:
+        gather_subset:
+          - '!all'
+          - '!min'
+        gather_network_resources: lldp_global
+
+    - assert:
+        that:
+          - "ansible_facts.network_resources.lldp_global == result.after"
+ 
+    - name: Idempotence - Merged
+      nxos_lldp_global: *merged
+      register: result
+
+    - assert:
+        that:
+          - "result.changed == false"
+          - "result.commands | length == 0"
+
+    always:
+    - name: teardown
+      nxos_feature: 
+        feature: lldp
+        state: disabled

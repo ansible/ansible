@@ -28,7 +28,6 @@ description:
     - Running in check mode will perform the authentication without updating the config file.
 options:
   registry_url:
-    required: False
     description:
       - The registry URL.
     type: str
@@ -38,16 +37,15 @@ options:
       - url
   username:
     description:
-      - The username for the registry account
+      - The username for the registry account.
+      - Required when I(state) is C(present).
     type: str
-    required: yes
   password:
     description:
-      - The plaintext password for the registry account
+      - The plaintext password for the registry account.
+      - Required when I(state) is C(present).
     type: str
-    required: yes
   email:
-    required: False
     description:
       - "The email address for the registry account."
     type: str
@@ -129,9 +127,22 @@ import base64
 import json
 import os
 import re
+import traceback
+
+try:
+    from docker.errors import DockerException
+except ImportError:
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
+    pass
 
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.docker.common import AnsibleDockerClient, DEFAULT_DOCKER_REGISTRY, DockerBaseClass, EMAIL_REGEX
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    DEFAULT_DOCKER_REGISTRY,
+    DockerBaseClass,
+    EMAIL_REGEX,
+    RequestException,
+)
 
 
 class LoginManager(DockerBaseClass):
@@ -211,6 +222,15 @@ class LoginManager(DockerBaseClass):
         (rc, out, err) = self.client.module.run_command(cmd)
         if rc != 0:
             self.fail("Could not log out: %s" % err)
+        if 'Not logged in to ' in out:
+            self.results['changed'] = False
+        elif 'Removing login credentials for ' in out:
+            self.results['changed'] = True
+        else:
+            self.client.module.warn('Unable to determine whether logout was successful.')
+
+        # Adding output to actions, so that user can inspect what was actually returned
+        self.results['actions'].append(to_text(out))
 
     def config_file_exists(self, path):
         if os.path.exists(path):
@@ -237,7 +257,13 @@ class LoginManager(DockerBaseClass):
 
     def write_config(self, path, config):
         try:
-            json.dump(config, open(path, "w"), indent=5, sort_keys=True)
+            # Write config; make sure it has permissions 0x600
+            content = json.dumps(config, indent=5, sort_keys=True).encode('utf-8')
+            f = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            try:
+                os.write(f, content)
+            finally:
+                os.close(f)
         except Exception as exc:
             self.fail("Error: failed to write config to %s - %s" % (path, str(exc)))
 
@@ -255,7 +281,8 @@ class LoginManager(DockerBaseClass):
 
         try:
             # read the existing config
-            config = json.load(open(path, "r"))
+            with open(path, "r") as file:
+                config = json.load(file)
         except ValueError:
             self.log("Error reading config from %s" % (path))
             config = dict()
@@ -311,16 +338,21 @@ def main():
         min_docker_api_version='1.20',
     )
 
-    results = dict(
-        changed=False,
-        actions=[],
-        login_result={}
-    )
+    try:
+        results = dict(
+            changed=False,
+            actions=[],
+            login_result={}
+        )
 
-    LoginManager(client, results)
-    if 'actions' in results:
-        del results['actions']
-    client.module.exit_json(**results)
+        LoginManager(client, results)
+        if 'actions' in results:
+            del results['actions']
+        client.module.exit_json(**results)
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

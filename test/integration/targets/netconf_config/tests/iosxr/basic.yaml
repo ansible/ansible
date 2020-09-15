@@ -1,0 +1,34 @@
+---
+- debug: msg="START netconf_config iosxr/basic.yaml on connection={{ ansible_connection }}"
+
+- name: save config test
+  netconf_config:
+    backup: yes
+  register: result
+  connection: netconf
+
+- assert:
+    that:
+      - "'backup_path' in result"
+
+- name: test confirm commit
+  netconf_config:
+    target: "candidate"
+    error_option: "rollback-on-error"
+    commit: yes
+    confirm: 10
+    default_operation: "merge"
+    content: |
+      <nc:config xmlns="urn:ietf:params:xml:ns:netconf:base:1.0" xmlns:nc="urn:ietf:params:xml:ns:netconf:base:1.0">
+      <cdp xmlns="http://cisco.com/ns/yang/Cisco-IOS-XR-cdp-cfg">
+      <enable>true</enable>
+      </cdp>
+      </nc:config>
+  register: result
+  ignore_errors: True
+
+- assert:
+    that:
+      - "'failed' not in result"
+
+- debug: msg="END netconf_config iosxr/basic.yaml on connection={{ ansible_connection }}"

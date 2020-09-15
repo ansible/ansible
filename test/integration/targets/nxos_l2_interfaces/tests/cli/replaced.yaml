@@ -1,0 +1,78 @@
+---
+- debug:
+    msg: "Start nxos_l2_interfaces replaced integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      default interface {{ test_int1 }}
+      default interface {{ test_int2 }}
+  ignore_errors: yes
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        interface {{ test_int1 }}
+          switchport
+          switchport access vlan 5
+        interface {{ test_int2 }}
+          switchport
+          switchport trunk native vlan 15
+          switchport trunk allowed vlan 25-27
+
+  - name: Gather l2_interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: l2_interfaces
+
+  - name: Replaced
+    nxos_l2_interfaces: &replaced
+      config:
+        - name: "{{ test_int1 }}"
+          access:
+            vlan: 8
+          trunk:
+            allowed_vlans: "10-12"
+
+        - name: '{{ test_int2 }}'
+          trunk:
+            allowed_vlans: 25-27
+      state: replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'interface {{ test_int1 }}' in result.commands"
+        - "'switchport access vlan 8' in result.commands"
+        - "'switchport trunk allowed vlan 10,11,12' in result.commands"
+        - "'interface {{ test_int2 }}' in result.commands"
+        - "'no switchport trunk native vlan' in result.commands"
+        - result.commands|length == 5
+
+  - name: Gather l2_interfaces post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.l2_interfaces|symmetric_difference(result.after)|length == 0"
+
+  - name: Idempotence - Replaced
+    nxos_l2_interfaces: *replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup
+    ignore_errors: yes

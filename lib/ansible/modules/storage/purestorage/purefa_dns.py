@@ -30,7 +30,7 @@ options:
     choices: [ absent, present ]
   domain:
     description:
-    - Domain suffix to be appended when perofrming DNS lookups.
+    - Domain suffix to be appended when performing DNS lookups.
     type: str
   nameservers:
     description:
@@ -42,7 +42,7 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = r'''
-- name: Delete exisitng DNS settings
+- name: Delete existing DNS settings
   purefa_dns:
     state: absent
     fa_url: 10.10.10.2
@@ -85,7 +85,7 @@ def delete_dns(module, array):
             array.set_dns(domain='', nameservers=[])
             changed = True
         except Exception:
-            module.fail_json(msg='Delete DNS settigs failed')
+            module.fail_json(msg='Delete DNS settings failed')
     module.exit_json(changed=changed)
 
 

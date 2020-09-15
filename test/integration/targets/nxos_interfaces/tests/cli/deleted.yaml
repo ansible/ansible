@@ -1,0 +1,64 @@
+---
+- debug:
+    msg: "Start nxos_interfaces deleted integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+- set_fact: test_int2="{{ nxos_int2 }}"
+- set_fact: test_shutdown
+  when: platform is not search('N3[5KL]|N[56]K|titanium')
+
+- name: "setup0: clean up (interfaces) attributes on all interfaces"
+  nxos_interfaces:
+    state: deleted
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      default interface {{ test_int1 }}
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        interface {{ test_int1 }}
+          description Test-interface1
+          no shutdown
+
+  - name: Gather interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: interfaces
+
+  - name: deleted
+    nxos_interfaces: &deleted
+      state: deleted
+    register: result
+
+  - assert:
+      that:
+        - "ansible_facts.network_resources.interfaces|symmetric_difference(result.before)|length == 0"
+        - "result.changed == true"
+        - "'interface {{ test_int1 }}' in result.commands"
+        - "'no description' in result.commands"
+
+  - assert:
+      that:
+        - "result.after|length == 0"
+        - "'shutdown' in result.commands"
+    when: test_shutdown is defined
+
+  - name: Idempotence - deleted
+    nxos_interfaces: *deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+    when: test_shutdown is defined
+
+  always:
+  - name: teardown
+    cli_config: *cleanup

@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_system_admin
 short_description: Configure admin users in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify system feature and admin category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,201 +41,235 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     system_admin:
         description:
             - Configure admin users.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             accprofile:
                 description:
                     - Access profile for this administrator. Access profiles control administrator access to FortiGate features. Source system.accprofile.name.
-            accprofile-override:
+                type: str
+            accprofile_override:
                 description:
                     - Enable to use the name of an access profile provided by the remote authentication server to control the FortiGate features that this
                        administrator can access.
+                type: str
                 choices:
                     - enable
                     - disable
-            allow-remove-admin-session:
+            allow_remove_admin_session:
                 description:
                     - Enable/disable allow admin session to be removed by privileged admin users.
+                type: str
                 choices:
                     - enable
                     - disable
             comments:
                 description:
                     - Comment.
-            email-to:
+                type: str
+            email_to:
                 description:
                     - This administrator's email address.
-            force-password-change:
+                type: str
+            force_password_change:
                 description:
                     - Enable/disable force password change on next login.
+                type: str
                 choices:
                     - enable
                     - disable
             fortitoken:
                 description:
                     - This administrator's FortiToken serial number.
-            guest-auth:
+                type: str
+            guest_auth:
                 description:
                     - Enable/disable guest authentication.
+                type: str
                 choices:
                     - disable
                     - enable
-            guest-lang:
+            guest_lang:
                 description:
                     - Guest management portal language. Source system.custom-language.name.
-            guest-usergroups:
+                type: str
+            guest_usergroups:
                 description:
                     - Select guest user groups.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Select guest user groups.
                         required: true
-            gui-dashboard:
+                        type: str
+            gui_dashboard:
                 description:
                     - GUI dashboards.
+                type: list
                 suboptions:
                     columns:
                         description:
                             - Number of columns.
+                        type: int
                     id:
                         description:
                             - Dashboard ID.
                         required: true
-                    layout-type:
+                        type: int
+                    layout_type:
                         description:
                             - Layout type.
+                        type: str
                         choices:
                             - responsive
                             - fixed
                     name:
                         description:
                             - Dashboard name.
+                        type: str
                     scope:
                         description:
                             - Dashboard scope.
+                        type: str
                         choices:
                             - global
                             - vdom
                     widget:
                         description:
                             - Dashboard widgets.
+                        type: list
                         suboptions:
-                            fabric-device:
+                            fabric_device:
                                 description:
                                     - Fabric device to monitor.
-                            filters:
+                                type: str
+                            fortiview_filters:
                                 description:
                                     - FortiView filters.
+                                type: list
                                 suboptions:
                                     id:
                                         description:
                                             - FortiView Filter ID.
                                         required: true
+                                        type: int
                                     key:
                                         description:
                                             - Filter key.
+                                        type: str
                                     value:
                                         description:
                                             - Filter value.
+                                        type: str
+                            fortiview_sort_by:
+                                description:
+                                    - FortiView sort by.
+                                type: str
+                            fortiview_timeframe:
+                                description:
+                                    - FortiView timeframe.
+                                type: str
+                            fortiview_type:
+                                description:
+                                    - FortiView type.
+                                type: str
+                            fortiview_visualization:
+                                description:
+                                    - FortiView visualization.
+                                type: str
                             height:
                                 description:
                                     - Height.
+                                type: int
                             id:
                                 description:
                                     - Widget ID.
                                 required: true
+                                type: int
                             industry:
                                 description:
                                     - Security Audit Rating industry.
+                                type: str
                                 choices:
                                     - default
                                     - custom
                             interface:
                                 description:
                                     - Interface to monitor. Source system.interface.name.
+                                type: str
                             region:
                                 description:
                                     - Security Audit Rating region.
+                                type: str
                                 choices:
                                     - default
                                     - custom
-                            report-by:
-                                description:
-                                    - Field to aggregate the data by.
-                                choices:
-                                    - source
-                                    - destination
-                                    - country
-                                    - intfpair
-                                    - srcintf
-                                    - dstintf
-                                    - policy
-                                    - wificlient
-                                    - shaper
-                                    - endpoint-vulnerability
-                                    - endpoint-device
-                                    - application
-                                    - cloud-app
-                                    - cloud-user
-                                    - web-domain
-                                    - web-category
-                                    - web-search-phrase
-                                    - threat
-                                    - system
-                                    - unauth
-                                    - admin
-                                    - vpn
-                            sort-by:
-                                description:
-                                    - Field to sort the data by.
-                            timeframe:
-                                description:
-                                    - Timeframe period of reported data.
-                                choices:
-                                    - realtime
-                                    - 5min
-                                    - hour
-                                    - day
-                                    - week
                             title:
                                 description:
                                     - Widget title.
+                                type: str
                             type:
                                 description:
                                     - Widget type.
+                                type: str
                                 choices:
                                     - sysinfo
                                     - licinfo
@@ -262,200 +293,242 @@ options:
                                     - fortiview
                                     - botnet-activity
                                     - fortimail
-                            visualization:
-                                description:
-                                    - Visualization to use.
-                                choices:
-                                    - table
-                                    - bubble
-                                    - country
-                                    - chord
                             width:
                                 description:
                                     - Width.
-                            x-pos:
+                                type: int
+                            x_pos:
                                 description:
                                     - X position.
-                            y-pos:
+                                type: int
+                            y_pos:
                                 description:
                                     - Y position.
-            gui-global-menu-favorites:
+                                type: int
+            gui_global_menu_favorites:
                 description:
                     - Favorite GUI menu IDs for the global VDOM.
+                type: list
                 suboptions:
                     id:
                         description:
                             - Select menu ID.
                         required: true
-            gui-vdom-menu-favorites:
+                        type: str
+            gui_vdom_menu_favorites:
                 description:
                     - Favorite GUI menu IDs for VDOMs.
+                type: list
                 suboptions:
                     id:
                         description:
                             - Select menu ID.
                         required: true
+                        type: str
             hidden:
                 description:
                     - Admin user hidden attribute.
+                type: int
             history0:
                 description:
                     - history0
+                type: str
             history1:
                 description:
                     - history1
-            ip6-trusthost1:
+                type: str
+            ip6_trusthost1:
                 description:
                     - Any IPv6 address from which the administrator can connect to the FortiGate unit. Default allows access from any IPv6 address.
-            ip6-trusthost10:
+                type: str
+            ip6_trusthost10:
                 description:
                     - Any IPv6 address from which the administrator can connect to the FortiGate unit. Default allows access from any IPv6 address.
-            ip6-trusthost2:
+                type: str
+            ip6_trusthost2:
                 description:
                     - Any IPv6 address from which the administrator can connect to the FortiGate unit. Default allows access from any IPv6 address.
-            ip6-trusthost3:
+                type: str
+            ip6_trusthost3:
                 description:
                     - Any IPv6 address from which the administrator can connect to the FortiGate unit. Default allows access from any IPv6 address.
-            ip6-trusthost4:
+                type: str
+            ip6_trusthost4:
                 description:
                     - Any IPv6 address from which the administrator can connect to the FortiGate unit. Default allows access from any IPv6 address.
-            ip6-trusthost5:
+                type: str
+            ip6_trusthost5:
                 description:
                     - Any IPv6 address from which the administrator can connect to the FortiGate unit. Default allows access from any IPv6 address.
-            ip6-trusthost6:
+                type: str
+            ip6_trusthost6:
                 description:
                     - Any IPv6 address from which the administrator can connect to the FortiGate unit. Default allows access from any IPv6 address.
-            ip6-trusthost7:
+                type: str
+            ip6_trusthost7:
                 description:
                     - Any IPv6 address from which the administrator can connect to the FortiGate unit. Default allows access from any IPv6 address.
-            ip6-trusthost8:
+                type: str
+            ip6_trusthost8:
                 description:
                     - Any IPv6 address from which the administrator can connect to the FortiGate unit. Default allows access from any IPv6 address.
-            ip6-trusthost9:
+                type: str
+            ip6_trusthost9:
                 description:
                     - Any IPv6 address from which the administrator can connect to the FortiGate unit. Default allows access from any IPv6 address.
-            login-time:
+                type: str
+            login_time:
                 description:
                     - Record user login time.
+                type: list
                 suboptions:
-                    last-failed-login:
+                    last_failed_login:
                         description:
                             - Last failed login time.
-                    last-login:
+                        type: str
+                    last_login:
                         description:
                             - Last successful login time.
-                    usr-name:
+                        type: str
+                    usr_name:
                         description:
                             - User name.
-                        required: true
+                        type: str
             name:
                 description:
                     - User name.
                 required: true
+                type: str
             password:
                 description:
                     - Admin user password.
-            password-expire:
+                type: str
+            password_expire:
                 description:
                     - Password expire time.
-            peer-auth:
+                type: str
+            peer_auth:
                 description:
                     - Set to enable peer certificate authentication (for HTTPS admin access).
+                type: str
                 choices:
                     - enable
                     - disable
-            peer-group:
+            peer_group:
                 description:
                     - Name of peer group defined under config user group which has PKI members. Used for peer certificate authentication (for HTTPS admin
                        access).
-            radius-vdom-override:
+                type: str
+            radius_vdom_override:
                 description:
                     - Enable to use the names of VDOMs provided by the remote authentication server to control the VDOMs that this administrator can access.
+                type: str
                 choices:
                     - enable
                     - disable
-            remote-auth:
+            remote_auth:
                 description:
                     - Enable/disable authentication using a remote RADIUS, LDAP, or TACACS+ server.
+                type: str
                 choices:
                     - enable
                     - disable
-            remote-group:
+            remote_group:
                 description:
                     - User group name used for remote auth.
+                type: str
             schedule:
                 description:
                     - Firewall schedule used to restrict when the administrator can log in. No schedule means no restrictions.
-            sms-custom-server:
+                type: str
+            sms_custom_server:
                 description:
                     - Custom SMS server to send SMS messages to. Source system.sms-server.name.
-            sms-phone:
+                type: str
+            sms_phone:
                 description:
                     - Phone number on which the administrator receives SMS messages.
-            sms-server:
+                type: str
+            sms_server:
                 description:
                     - Send SMS messages using the FortiGuard SMS server or a custom server.
+                type: str
                 choices:
                     - fortiguard
                     - custom
-            ssh-certificate:
+            ssh_certificate:
                 description:
                     - Select the certificate to be used by the FortiGate for authentication with an SSH client. Source certificate.local.name.
-            ssh-public-key1:
+                type: str
+            ssh_public_key1:
                 description:
                     - Public key of an SSH client. The client is authenticated without being asked for credentials. Create the public-private key pair in the
                        SSH client application.
-            ssh-public-key2:
+                type: str
+            ssh_public_key2:
                 description:
                     - Public key of an SSH client. The client is authenticated without being asked for credentials. Create the public-private key pair in the
                        SSH client application.
-            ssh-public-key3:
+                type: str
+            ssh_public_key3:
                 description:
                     - Public key of an SSH client. The client is authenticated without being asked for credentials. Create the public-private key pair in the
                        SSH client application.
+                type: str
             trusthost1:
                 description:
                     - Any IPv4 address or subnet address and netmask from which the administrator can connect to the FortiGate unit. Default allows access
                        from any IPv4 address.
+                type: str
             trusthost10:
                 description:
                     - Any IPv4 address or subnet address and netmask from which the administrator can connect to the FortiGate unit. Default allows access
                        from any IPv4 address.
+                type: str
             trusthost2:
                 description:
                     - Any IPv4 address or subnet address and netmask from which the administrator can connect to the FortiGate unit. Default allows access
                        from any IPv4 address.
+                type: str
             trusthost3:
                 description:
                     - Any IPv4 address or subnet address and netmask from which the administrator can connect to the FortiGate unit. Default allows access
                        from any IPv4 address.
+                type: str
             trusthost4:
                 description:
                     - Any IPv4 address or subnet address and netmask from which the administrator can connect to the FortiGate unit. Default allows access
                        from any IPv4 address.
+                type: str
             trusthost5:
                 description:
                     - Any IPv4 address or subnet address and netmask from which the administrator can connect to the FortiGate unit. Default allows access
                        from any IPv4 address.
+                type: str
             trusthost6:
                 description:
                     - Any IPv4 address or subnet address and netmask from which the administrator can connect to the FortiGate unit. Default allows access
                        from any IPv4 address.
+                type: str
             trusthost7:
                 description:
                     - Any IPv4 address or subnet address and netmask from which the administrator can connect to the FortiGate unit. Default allows access
                        from any IPv4 address.
+                type: str
             trusthost8:
                 description:
                     - Any IPv4 address or subnet address and netmask from which the administrator can connect to the FortiGate unit. Default allows access
                        from any IPv4 address.
+                type: str
             trusthost9:
                 description:
                     - Any IPv4 address or subnet address and netmask from which the administrator can connect to the FortiGate unit. Default allows access
                        from any IPv4 address.
-            two-factor:
+                type: str
+            two_factor:
                 description:
                     - Enable/disable two-factor authentication.
+                type: str
                 choices:
                     - disable
                     - fortitoken
@@ -464,14 +537,17 @@ options:
             vdom:
                 description:
                     - Virtual domain(s) that the administrator can access.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Virtual domain name. Source system.vdom.name.
                         required: true
+                        type: str
             wildcard:
                 description:
                     - Enable/disable wildcard RADIUS authentication.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -484,6 +560,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure admin users.
     fortios_system_admin:
@@ -492,89 +569,89 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       system_admin:
-        state: "present"
         accprofile: "<your_own_value> (source system.accprofile.name)"
-        accprofile-override: "enable"
-        allow-remove-admin-session: "enable"
+        accprofile_override: "enable"
+        allow_remove_admin_session: "enable"
         comments: "<your_own_value>"
-        email-to: "<your_own_value>"
-        force-password-change: "enable"
+        email_to: "<your_own_value>"
+        force_password_change: "enable"
         fortitoken: "<your_own_value>"
-        guest-auth: "disable"
-        guest-lang: "<your_own_value> (source system.custom-language.name)"
-        guest-usergroups:
+        guest_auth: "disable"
+        guest_lang: "<your_own_value> (source system.custom-language.name)"
+        guest_usergroups:
          -
             name: "default_name_13"
-        gui-dashboard:
+        gui_dashboard:
          -
             columns: "15"
             id:  "16"
-            layout-type: "responsive"
+            layout_type: "responsive"
             name: "default_name_18"
             scope: "global"
             widget:
              -
-                fabric-device: "<your_own_value>"
-                filters:
+                fabric_device: "<your_own_value>"
+                fortiview_filters:
                  -
                     id:  "23"
                     key: "<your_own_value>"
                     value: "<your_own_value>"
-                height: "26"
-                id:  "27"
+                fortiview_sort_by: "<your_own_value>"
+                fortiview_timeframe: "<your_own_value>"
+                fortiview_type: "<your_own_value>"
+                fortiview_visualization: "<your_own_value>"
+                height: "30"
+                id:  "31"
                 industry: "default"
                 interface: "<your_own_value> (source system.interface.name)"
                 region: "default"
-                report-by: "source"
-                sort-by: "<your_own_value>"
-                timeframe: "realtime"
                 title: "<your_own_value>"
                 type: "sysinfo"
-                visualization: "table"
                 width: "37"
-                x-pos: "38"
-                y-pos: "39"
-        gui-global-menu-favorites:
+                x_pos: "38"
+                y_pos: "39"
+        gui_global_menu_favorites:
          -
             id:  "41"
-        gui-vdom-menu-favorites:
+        gui_vdom_menu_favorites:
          -
             id:  "43"
         hidden: "44"
         history0: "<your_own_value>"
         history1: "<your_own_value>"
-        ip6-trusthost1: "<your_own_value>"
-        ip6-trusthost10: "<your_own_value>"
-        ip6-trusthost2: "<your_own_value>"
-        ip6-trusthost3: "<your_own_value>"
-        ip6-trusthost4: "<your_own_value>"
-        ip6-trusthost5: "<your_own_value>"
-        ip6-trusthost6: "<your_own_value>"
-        ip6-trusthost7: "<your_own_value>"
-        ip6-trusthost8: "<your_own_value>"
-        ip6-trusthost9: "<your_own_value>"
-        login-time:
+        ip6_trusthost1: "<your_own_value>"
+        ip6_trusthost10: "<your_own_value>"
+        ip6_trusthost2: "<your_own_value>"
+        ip6_trusthost3: "<your_own_value>"
+        ip6_trusthost4: "<your_own_value>"
+        ip6_trusthost5: "<your_own_value>"
+        ip6_trusthost6: "<your_own_value>"
+        ip6_trusthost7: "<your_own_value>"
+        ip6_trusthost8: "<your_own_value>"
+        ip6_trusthost9: "<your_own_value>"
+        login_time:
          -
-            last-failed-login: "<your_own_value>"
-            last-login: "<your_own_value>"
-            usr-name: "<your_own_value>"
+            last_failed_login: "<your_own_value>"
+            last_login: "<your_own_value>"
+            usr_name: "<your_own_value>"
         name: "default_name_61"
         password: "<your_own_value>"
-        password-expire: "<your_own_value>"
-        peer-auth: "enable"
-        peer-group: "<your_own_value>"
-        radius-vdom-override: "enable"
-        remote-auth: "enable"
-        remote-group: "<your_own_value>"
+        password_expire: "<your_own_value>"
+        peer_auth: "enable"
+        peer_group: "<your_own_value>"
+        radius_vdom_override: "enable"
+        remote_auth: "enable"
+        remote_group: "<your_own_value>"
         schedule: "<your_own_value>"
-        sms-custom-server: "<your_own_value> (source system.sms-server.name)"
-        sms-phone: "<your_own_value>"
-        sms-server: "fortiguard"
-        ssh-certificate: "<your_own_value> (source certificate.local.name)"
-        ssh-public-key1: "<your_own_value>"
-        ssh-public-key2: "<your_own_value>"
-        ssh-public-key3: "<your_own_value>"
+        sms_custom_server: "<your_own_value> (source system.sms-server.name)"
+        sms_phone: "<your_own_value>"
+        sms_server: "fortiguard"
+        ssh_certificate: "<your_own_value> (source certificate.local.name)"
+        ssh_public_key1: "<your_own_value>"
+        ssh_public_key2: "<your_own_value>"
+        ssh_public_key3: "<your_own_value>"
         trusthost1: "<your_own_value>"
         trusthost10: "<your_own_value>"
         trusthost2: "<your_own_value>"
@@ -585,7 +662,7 @@ EXAMPLES = '''
         trusthost7: "<your_own_value>"
         trusthost8: "<your_own_value>"
         trusthost9: "<your_own_value>"
-        two-factor: "disable"
+        two_factor: "disable"
         vdom:
          -
             name: "default_name_89 (source system.vdom.name)"
@@ -652,14 +729,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -667,28 +746,28 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_system_admin_data(json):
-    option_list = ['accprofile', 'accprofile-override', 'allow-remove-admin-session',
-                   'comments', 'email-to', 'force-password-change',
-                   'fortitoken', 'guest-auth', 'guest-lang',
-                   'guest-usergroups', 'gui-dashboard', 'gui-global-menu-favorites',
-                   'gui-vdom-menu-favorites', 'hidden', 'history0',
-                   'history1', 'ip6-trusthost1', 'ip6-trusthost10',
-                   'ip6-trusthost2', 'ip6-trusthost3', 'ip6-trusthost4',
-                   'ip6-trusthost5', 'ip6-trusthost6', 'ip6-trusthost7',
-                   'ip6-trusthost8', 'ip6-trusthost9', 'login-time',
-                   'name', 'password', 'password-expire',
-                   'peer-auth', 'peer-group', 'radius-vdom-override',
-                   'remote-auth', 'remote-group', 'schedule',
-                   'sms-custom-server', 'sms-phone', 'sms-server',
-                   'ssh-certificate', 'ssh-public-key1', 'ssh-public-key2',
-                   'ssh-public-key3', 'trusthost1', 'trusthost10',
+    option_list = ['accprofile', 'accprofile_override', 'allow_remove_admin_session',
+                   'comments', 'email_to', 'force_password_change',
+                   'fortitoken', 'guest_auth', 'guest_lang',
+                   'guest_usergroups', 'gui_dashboard', 'gui_global_menu_favorites',
+                   'gui_vdom_menu_favorites', 'hidden', 'history0',
+                   'history1', 'ip6_trusthost1', 'ip6_trusthost10',
+                   'ip6_trusthost2', 'ip6_trusthost3', 'ip6_trusthost4',
+                   'ip6_trusthost5', 'ip6_trusthost6', 'ip6_trusthost7',
+                   'ip6_trusthost8', 'ip6_trusthost9', 'login_time',
+                   'name', 'password', 'password_expire',
+                   'peer_auth', 'peer_group', 'radius_vdom_override',
+                   'remote_auth', 'remote_group', 'schedule',
+                   'sms_custom_server', 'sms_phone', 'sms_server',
+                   'ssh_certificate', 'ssh_public_key1', 'ssh_public_key2',
+                   'ssh_public_key3', 'trusthost1', 'trusthost10',
                    'trusthost2', 'trusthost3', 'trusthost4',
                    'trusthost5', 'trusthost6', 'trusthost7',
-                   'trusthost8', 'trusthost9', 'two-factor',
+                   'trusthost8', 'trusthost9', 'two_factor',
                    'vdom', 'wildcard']
     dictionary = {}
 
@@ -699,96 +778,112 @@ def filter_system_admin_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
 
 def system_admin(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['system_admin'] and data['system_admin']:
+        state = data['system_admin']['state']
+    else:
+        state = True
     system_admin_data = data['system_admin']
-    flattened_data = flatten_multilists_attributes(system_admin_data)
-    filtered_data = filter_system_admin_data(flattened_data)
-    if system_admin_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_system_admin_data(system_admin_data))
+
+    if state == "present":
         return fos.set('system',
                        'admin',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif system_admin_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('system',
                           'admin',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_system(data, fos):
-    login(data)
 
     if data['system_admin']:
         resp = system_admin(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "system_admin": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "accprofile": {"required": False, "type": "str"},
-                "accprofile-override": {"required": False, "type": "str",
+                "accprofile_override": {"required": False, "type": "str",
                                         "choices": ["enable", "disable"]},
-                "allow-remove-admin-session": {"required": False, "type": "str",
+                "allow_remove_admin_session": {"required": False, "type": "str",
                                                "choices": ["enable", "disable"]},
                 "comments": {"required": False, "type": "str"},
-                "email-to": {"required": False, "type": "str"},
-                "force-password-change": {"required": False, "type": "str",
+                "email_to": {"required": False, "type": "str"},
+                "force_password_change": {"required": False, "type": "str",
                                           "choices": ["enable", "disable"]},
                 "fortitoken": {"required": False, "type": "str"},
-                "guest-auth": {"required": False, "type": "str",
+                "guest_auth": {"required": False, "type": "str",
                                "choices": ["disable", "enable"]},
-                "guest-lang": {"required": False, "type": "str"},
-                "guest-usergroups": {"required": False, "type": "list",
+                "guest_lang": {"required": False, "type": "str"},
+                "guest_usergroups": {"required": False, "type": "list",
                                      "options": {
                                          "name": {"required": True, "type": "str"}
                                      }},
-                "gui-dashboard": {"required": False, "type": "list",
+                "gui_dashboard": {"required": False, "type": "list",
                                   "options": {
                                       "columns": {"required": False, "type": "int"},
                                       "id": {"required": True, "type": "int"},
-                                      "layout-type": {"required": False, "type": "str",
+                                      "layout_type": {"required": False, "type": "str",
                                                       "choices": ["responsive", "fixed"]},
                                       "name": {"required": False, "type": "str"},
                                       "scope": {"required": False, "type": "str",
                                                 "choices": ["global", "vdom"]},
                                       "widget": {"required": False, "type": "list",
                                                  "options": {
-                                                     "fabric-device": {"required": False, "type": "str"},
-                                                     "filters": {"required": False, "type": "list",
-                                                                 "options": {
-                                                                     "id": {"required": True, "type": "int"},
-                                                                     "key": {"required": False, "type": "str"},
-                                                                     "value": {"required": False, "type": "str"}
-                                                                 }},
+                                                     "fabric_device": {"required": False, "type": "str"},
+                                                     "fortiview_filters": {"required": False, "type": "list",
+                                                                           "options": {
+                                                                               "id": {"required": True, "type": "int"},
+                                                                               "key": {"required": False, "type": "str"},
+                                                                               "value": {"required": False, "type": "str"}
+                                                                           }},
+                                                     "fortiview_sort_by": {"required": False, "type": "str"},
+                                                     "fortiview_timeframe": {"required": False, "type": "str"},
+                                                     "fortiview_type": {"required": False, "type": "str"},
+                                                     "fortiview_visualization": {"required": False, "type": "str"},
                                                      "height": {"required": False, "type": "int"},
                                                      "id": {"required": True, "type": "int"},
                                                      "industry": {"required": False, "type": "str",
@@ -796,19 +891,6 @@ def main():
                                                      "interface": {"required": False, "type": "str"},
                                                      "region": {"required": False, "type": "str",
                                                                 "choices": ["default", "custom"]},
-                                                     "report-by": {"required": False, "type": "str",
-                                                                   "choices": ["source", "destination", "country",
-                                                                               "intfpair", "srcintf", "dstintf",
-                                                                               "policy", "wificlient", "shaper",
-                                                                               "endpoint-vulnerability", "endpoint-device", "application",
-                                                                               "cloud-app", "cloud-user", "web-domain",
-                                                                               "web-category", "web-search-phrase", "threat",
-                                                                               "system", "unauth", "admin",
-                                                                               "vpn"]},
-                                                     "sort-by": {"required": False, "type": "str"},
-                                                     "timeframe": {"required": False, "type": "str",
-                                                                   "choices": ["realtime", "5min", "hour",
-                                                                               "day", "week"]},
                                                      "title": {"required": False, "type": "str"},
                                                      "type": {"required": False, "type": "str",
                                                               "choices": ["sysinfo", "licinfo", "vminfo",
@@ -819,61 +901,58 @@ def main():
                                                                           "security-fabric-ranking", "ha-status", "vulnerability-summary",
                                                                           "host-scan-summary", "fortiview", "botnet-activity",
                                                                           "fortimail"]},
-                                                     "visualization": {"required": False, "type": "str",
-                                                                       "choices": ["table", "bubble", "country",
-                                                                                   "chord"]},
                                                      "width": {"required": False, "type": "int"},
-                                                     "x-pos": {"required": False, "type": "int"},
-                                                     "y-pos": {"required": False, "type": "int"}
+                                                     "x_pos": {"required": False, "type": "int"},
+                                                     "y_pos": {"required": False, "type": "int"}
                                                  }}
                                   }},
-                "gui-global-menu-favorites": {"required": False, "type": "list",
+                "gui_global_menu_favorites": {"required": False, "type": "list",
                                               "options": {
                                                   "id": {"required": True, "type": "str"}
                                               }},
-                "gui-vdom-menu-favorites": {"required": False, "type": "list",
+                "gui_vdom_menu_favorites": {"required": False, "type": "list",
                                             "options": {
                                                 "id": {"required": True, "type": "str"}
                                             }},
                 "hidden": {"required": False, "type": "int"},
                 "history0": {"required": False, "type": "str"},
                 "history1": {"required": False, "type": "str"},
-                "ip6-trusthost1": {"required": False, "type": "str"},
-                "ip6-trusthost10": {"required": False, "type": "str"},
-                "ip6-trusthost2": {"required": False, "type": "str"},
-                "ip6-trusthost3": {"required": False, "type": "str"},
-                "ip6-trusthost4": {"required": False, "type": "str"},
-                "ip6-trusthost5": {"required": False, "type": "str"},
-                "ip6-trusthost6": {"required": False, "type": "str"},
-                "ip6-trusthost7": {"required": False, "type": "str"},
-                "ip6-trusthost8": {"required": False, "type": "str"},
-                "ip6-trusthost9": {"required": False, "type": "str"},
-                "login-time": {"required": False, "type": "list",
+                "ip6_trusthost1": {"required": False, "type": "str"},
+                "ip6_trusthost10": {"required": False, "type": "str"},
+                "ip6_trusthost2": {"required": False, "type": "str"},
+                "ip6_trusthost3": {"required": False, "type": "str"},
+                "ip6_trusthost4": {"required": False, "type": "str"},
+                "ip6_trusthost5": {"required": False, "type": "str"},
+                "ip6_trusthost6": {"required": False, "type": "str"},
+                "ip6_trusthost7": {"required": False, "type": "str"},
+                "ip6_trusthost8": {"required": False, "type": "str"},
+                "ip6_trusthost9": {"required": False, "type": "str"},
+                "login_time": {"required": False, "type": "list",
                                "options": {
-                                   "last-failed-login": {"required": False, "type": "str"},
-                                   "last-login": {"required": False, "type": "str"},
-                                   "usr-name": {"required": True, "type": "str"}
+                                   "last_failed_login": {"required": False, "type": "str"},
+                                   "last_login": {"required": False, "type": "str"},
+                                   "usr_name": {"required": False, "type": "str"}
                                }},
                 "name": {"required": True, "type": "str"},
                 "password": {"required": False, "type": "str"},
-                "password-expire": {"required": False, "type": "str"},
-                "peer-auth": {"required": False, "type": "str",
+                "password_expire": {"required": False, "type": "str"},
+                "peer_auth": {"required": False, "type": "str",
                               "choices": ["enable", "disable"]},
-                "peer-group": {"required": False, "type": "str"},
-                "radius-vdom-override": {"required": False, "type": "str",
+                "peer_group": {"required": False, "type": "str"},
+                "radius_vdom_override": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "remote-auth": {"required": False, "type": "str",
+                "remote_auth": {"required": False, "type": "str",
                                 "choices": ["enable", "disable"]},
-                "remote-group": {"required": False, "type": "str"},
+                "remote_group": {"required": False, "type": "str"},
                 "schedule": {"required": False, "type": "str"},
-                "sms-custom-server": {"required": False, "type": "str"},
-                "sms-phone": {"required": False, "type": "str"},
-                "sms-server": {"required": False, "type": "str",
+                "sms_custom_server": {"required": False, "type": "str"},
+                "sms_phone": {"required": False, "type": "str"},
+                "sms_server": {"required": False, "type": "str",
                                "choices": ["fortiguard", "custom"]},
-                "ssh-certificate": {"required": False, "type": "str"},
-                "ssh-public-key1": {"required": False, "type": "str"},
-                "ssh-public-key2": {"required": False, "type": "str"},
-                "ssh-public-key3": {"required": False, "type": "str"},
+                "ssh_certificate": {"required": False, "type": "str"},
+                "ssh_public_key1": {"required": False, "type": "str"},
+                "ssh_public_key2": {"required": False, "type": "str"},
+                "ssh_public_key3": {"required": False, "type": "str"},
                 "trusthost1": {"required": False, "type": "str"},
                 "trusthost10": {"required": False, "type": "str"},
                 "trusthost2": {"required": False, "type": "str"},
@@ -884,7 +963,7 @@ def main():
                 "trusthost7": {"required": False, "type": "str"},
                 "trusthost8": {"required": False, "type": "str"},
                 "trusthost9": {"required": False, "type": "str"},
-                "two-factor": {"required": False, "type": "str",
+                "two_factor": {"required": False, "type": "str",
                                "choices": ["disable", "fortitoken", "email",
                                            "sms"]},
                 "vdom": {"required": False, "type": "list",
@@ -900,15 +979,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_system(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_system(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_system(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

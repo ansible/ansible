@@ -56,7 +56,9 @@ options:
       - C(--username) parameter passed to svn.
   password:
     description:
-      - C(--password) parameter passed to svn.
+      - C(--password) parameter passed to svn when svn is less than version 1.10.0. This is not secure and
+        the password will be leaked to argv.
+      - C(--password-from-stdin) parameter when svn is greater or equal to version 1.10.0.
   executable:
     description:
       - Path to svn executable to use. If not supplied,
@@ -98,6 +100,7 @@ EXAMPLES = '''
   subversion:
     repo: svn+ssh://an.example.org/path/to/repo
     dest: /src/export
+    export: yes
 
 - name: Get information about the repository whether or not it has already been cloned locally
 - subversion:
@@ -109,6 +112,8 @@ EXAMPLES = '''
 
 import os
 import re
+
+from distutils.version import LooseVersion
 
 from ansible.module_utils.basic import AnsibleModule
 
@@ -123,6 +128,10 @@ class Subversion(object):
         self.password = password
         self.svn_path = svn_path
 
+    def has_option_password_from_stdin(self):
+        rc, version, err = self.module.run_command([self.svn_path, '--version', '--quiet'], check_rc=True)
+        return LooseVersion(version) >= LooseVersion('1.10.0')
+
     def _exec(self, args, check_rc=True):
         '''Execute a subversion command, and return output. If check_rc is False, returns the return code instead of the output.'''
         bits = [
@@ -131,12 +140,19 @@ class Subversion(object):
             '--trust-server-cert',
             '--no-auth-cache',
         ]
+        stdin_data = None
         if self.username:
             bits.extend(["--username", self.username])
         if self.password:
-            bits.extend(["--password", self.password])
+            if self.has_option_password_from_stdin():
+                bits.append("--password-from-stdin")
+                stdin_data = self.password
+            else:
+                self.module.warn("The authentication provided will be used on the svn command line and is not secure. "
+                                 "To securely pass credentials, upgrade svn to version 1.10.0 or greater.")
+                bits.extend(["--password", self.password])
         bits.extend(args)
-        rc, out, err = self.module.run_command(bits, check_rc)
+        rc, out, err = self.module.run_command(bits, check_rc, data=stdin_data)
 
         if check_rc:
             return out.splitlines()

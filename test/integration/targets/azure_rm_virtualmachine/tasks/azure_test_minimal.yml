@@ -1,0 +1,118 @@
+- include_tasks: setup.yml
+
+# # Tests possible when CI user acccount setup with required authority
+# - name: Create virtual machine with image and plan which requires acceptance of terms
+#   azure_rm_virtualmachine:
+#     resource_group: "{{ resource_group }}"
+#     name: testvm009
+#     vm_size: Standard_A0
+#     storage_account: "{{ storage_account }}"
+#     storage_container: testvm001
+#     storage_blob: testvm003.vhd
+#     admin_username: adminuser
+#     admin_password: Password123!
+#     short_hostname: testvm
+#     os_type: Linux
+#     availability_set: "{{ availability_set }}"
+#     image: "{{ image_paid }}"
+#     plan_paid: "{{ plan_paid }}"
+#   register: create_image_plan_result
+
+# - assert:
+#     that:
+#       - create_image_plan_result is changed
+#       - create_image_plan_result.ansible_facts.azure_vm.properties.storageProfile.imageReference.publisher == image_paid.publisher
+
+# - name: Should be idempotent with image and plan which requires acceptance of terms
+#   azure_rm_virtualmachine:
+#     resource_group: "{{ resource_group }}"
+#     name: testvm009
+#     vm_size: Standard_A0
+#     storage_account: "{{ storage_account }}"
+#     storage_container: testvm001
+#     storage_blob: testvm003.vhd
+#     admin_username: adminuser
+#     admin_password: Password123!
+#     short_hostname: testvm
+#     os_type: Linux
+#     availability_set: "{{ availability_set }}"
+#     image: "{{ image_paid }}"
+#     plan_paid: "{{ plan_paid }}"
+#   register: create_image_plan_again_result
+
+# - assert:
+#     that: create_image_plan_again is not changed
+
+- name: Create minimal VM with defaults
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    admin_username: "testuser"
+    admin_password: "Pass123$$$abx!"
+    vm_size: Standard_B1ms
+    virtual_network: "{{ network_name }}"
+    image:
+      offer: UbuntuServer
+      publisher: Canonical
+      sku: 16.04-LTS
+      version: latest
+  register: vm_output
+
+- name: Delete VM
+  azure_rm_virtualmachine:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}"
+    remove_on_absent: all_autocreated
+    state: absent
+
+- name: Query auto created NIC
+  azure_rm_networkinterface_info:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}01"
+  register: nic_result
+
+- name: Query auto created security group
+  azure_rm_securitygroup_info:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}01"
+  register: nsg_result
+
+- name: Query auto created public IP
+  azure_rm_publicipaddress_info:
+    resource_group: "{{ resource_group }}"
+    name: "{{ vm_name }}01"
+  register: pip_result
+
+- name: Assert that autocreated resources were deleted
+  assert:
+    that:
+      # what about the default storage group?
+      - nic_result.networkinterfaces | length == 0
+      - nsg_result.securitygroups | length == 0
+      - pip_result.publicipaddresses | length == 0
+
+- name: Destroy subnet
+  azure_rm_subnet:
+    resource_group: "{{ resource_group }}"
+    virtual_network: "{{ network_name }}"
+    name: "{{ subnet_name }}"
+    state: absent
+
+- name: Destroy virtual network
+  azure_rm_virtualnetwork:
+    resource_group: "{{ resource_group }}"
+    name: "{{ network_name }}"
+    state: absent
+
+- name: Destroy availability set
+  azure_rm_availabilityset:
+    resource_group: "{{ resource_group }}"
+    name: "{{ availability_set }}"
+    state: absent
+
+- name: Destroy storage account
+  azure_rm_storageaccount:
+    resource_group: "{{ resource_group }}"
+    name: "{{ storage_account }}"
+    force_delete_nonempty: yes
+    state: absent

@@ -1,0 +1,15 @@
+---
+- debug:
+    msg: "Start junos_nterfaces deleted remove interface config ansible_connection={{ ansible_connection }}"
+
+- name: "Setup - remove interface config"
+  junos_config:
+    lines:
+      - delete interfaces ge-0/0/1
+      - delete interfaces ge-0/0/2
+      - delete interfaces ge-0/0/3
+      - delete interfaces gr-0/0/0
+      - delete interfaces lo0
+
+- debug:
+    msg: "End junos_nterfaces deleted remove interface config ansible_connection={{ ansible_connection }}"

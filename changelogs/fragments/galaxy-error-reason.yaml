@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-galaxy - Return the HTTP code reason if no error msg was returned by the server - https://github.com/ansible/ansible/issues/64850

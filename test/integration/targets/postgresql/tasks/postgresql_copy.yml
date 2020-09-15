@@ -1,0 +1,255 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+# The file for testing postgresql_copy module.
+
+- vars:
+    test_table: acme
+    data_file_txt: /tmp/data.txt
+    data_file_csv: /tmp/data.csv
+    task_parameters: &task_parameters
+      become_user: '{{ pg_user }}'
+      become: yes
+      register: result
+    pg_parameters: &pg_parameters
+      login_user: '{{ pg_user }}'
+      login_db: postgres
+
+  block:
+  # Test preparation:
+  - name: postgresql_copy - create test table
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ test_table }}'
+      columns:
+      - id int
+      - name text
+
+  # Insert the data:
+  - name: postgresql_copy - insert rows into test table
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "INSERT INTO {{ test_table }} (id, name) VALUES (1, 'first')"
+
+  - name: postgresql_copy - ensure that test data files don't exist
+    <<: *task_parameters
+    file:
+      path: '{{ item }}'
+      state: absent
+    with_items:
+      - '{{ data_file_csv }}'
+      - '{{ data_file_txt }}'
+
+  # ##############
+  # Do main tests:
+
+  # check_mode - if it's OK, must always return changed=True:
+  - name: postgresql_copy - check_mode, copy test table content to data_file_txt
+    check_mode: yes
+    <<: *task_parameters
+    postgresql_copy:
+      <<: *pg_parameters
+      copy_to: '{{ data_file_txt }}'
+      src: '{{ test_table }}'
+
+  - assert:
+      that:
+      - result is changed
+
+  # check that nothing changed after the previous step:
+  - name: postgresql_copy - check that data_file_txt doesn't exist
+    <<: *task_parameters
+    ignore_errors: yes
+    shell: head -n 1 '{{ data_file_txt }}'
+
+  - assert:
+      that:
+      - result.failed == true
+      - result.rc == 1
+
+  # check_mode - if it's OK, must always return changed=True:
+  - name: postgresql_copy - check_mode, copy test table content from data_file_txt
+    check_mode: yes
+    <<: *task_parameters
+    postgresql_copy:
+      <<: *pg_parameters
+      copy_from: '{{ data_file_txt }}'
+      dst: '{{ test_table }}'
+
+  - assert:
+      that:
+      - result is changed
+
+  # check that nothing changed after the previous step:
+  - name: postgresql_copy - check that test table continue to have one row
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: 'SELECT * FROM {{ test_table }}'
+
+  - assert:
+      that:
+      - result.rowcount == 1
+
+  # check_mode - test must fail because test table doesn't exist:
+  - name: postgresql_copy - check_mode, copy non existent table to data_file_txt
+    check_mode: yes
+    ignore_errors: yes
+    <<: *task_parameters
+    postgresql_copy:
+      <<: *pg_parameters
+      copy_to: '{{ data_file_txt }}'
+      src: non_existent_table
+
+  - assert:
+      that:
+      - result.failed == true
+      - result.queries is not defined
+
+  - name: postgresql_copy - copy test table data to data_file_txt
+    <<: *task_parameters
+    postgresql_copy:
+      <<: *pg_parameters
+      copy_to: '{{ data_file_txt }}'
+      src: '{{ test_table }}'
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["COPY \"{{ test_table }}\" TO '{{ data_file_txt }}'"]
+      - result.src == '{{ test_table }}'
+      - result.dst == '{{ data_file_txt }}'
+
+  # check the prev test
+  - name: postgresql_copy - check data_file_txt exists and not empty
+    <<: *task_parameters
+    shell: 'head -n 1 {{ data_file_txt }}'
+
+  - assert:
+      that:
+      - result.stdout == '1\tfirst'
+
+  # test different options and columns
+  - name: postgresql_copy - copy test table data to data_file_csv with options and columns
+    <<: *task_parameters
+    postgresql_copy:
+      <<: *pg_parameters
+      copy_to: '{{ data_file_csv }}'
+      src: '{{ test_table }}'
+      columns:
+      - id
+      - name
+      options:
+        format: csv
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["COPY \"{{ test_table }}\" (id,name) TO '{{ data_file_csv }}' (format csv)"]
+      - result.src == '{{ test_table }}'
+      - result.dst == '{{ data_file_csv }}'
+
+  # check the prev test
+  - name: postgresql_copy - check data_file_csv exists and not empty
+    <<: *task_parameters
+    shell: 'head -n 1 {{ data_file_csv }}'
+
+  - assert:
+      that:
+      - result.stdout == '1,first'
+
+  - name: postgresql_copy - copy from data_file_csv to test table
+    <<: *task_parameters
+    postgresql_copy:
+      <<: *pg_parameters
+      copy_from: '{{ data_file_csv }}'
+      dst: '{{ test_table }}'
+      columns:
+      - id
+      - name
+      options:
+        format: csv
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["COPY \"{{ test_table }}\" (id,name) FROM '{{ data_file_csv }}' (format csv)"]
+      - result.dst == '{{ test_table }}'
+      - result.src == '{{ data_file_csv }}'
+
+  - name: postgresql_copy - check that there are two rows in test table after the prev step
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT * FROM {{ test_table }}  WHERE id = '1' AND name = 'first'"
+
+  - assert:
+      that:
+      - result.rowcount == 2
+
+  - name: postgresql_copy - test program option, copy to program
+    <<: *task_parameters
+    postgresql_copy:
+      <<: *pg_parameters
+      src: '{{ test_table }}'
+      copy_to: '/bin/true'
+      program: yes
+      columns: id, name
+      options:
+        delimiter: '|'
+    when: ansible_distribution != 'FreeBSD'
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["COPY \"{{ test_table }}\" (id, name) TO PROGRAM '/bin/true' (delimiter '|')"]
+      - result.src == '{{ test_table }}'
+      - result.dst == '/bin/true'
+    when: ansible_distribution != 'FreeBSD'
+
+  - name: postgresql_copy - test program option, copy from program
+    <<: *task_parameters
+    postgresql_copy:
+      <<: *pg_parameters
+      dst: '{{ test_table }}'
+      copy_from: 'echo 1,first'
+      program: yes
+      columns: id, name
+      options:
+        delimiter: ','
+
+  - assert:
+      that:
+      - result is changed
+      - result.queries == ["COPY \"{{ test_table }}\" (id, name) FROM PROGRAM 'echo 1,first' (delimiter ',')"]
+      - result.dst == '{{ test_table }}'
+      - result.src == 'echo 1,first'
+    when: ansible_distribution != 'FreeBSD'
+
+  - name: postgresql_copy - check that there are three rows in test table after the prev step
+    <<: *task_parameters
+    postgresql_query:
+      <<: *pg_parameters
+      query: "SELECT * FROM {{ test_table }} WHERE id = '1' AND name = 'first'"
+
+  - assert:
+      that:
+      - result.rowcount == 3
+
+  # clean up
+  - name: postgresql_copy - remove test table
+    <<: *task_parameters
+    postgresql_table:
+      <<: *pg_parameters
+      name: '{{ test_table }}'
+      state: absent
+
+  - name: postgresql_copy - remove test data files
+    <<: *task_parameters
+    file:
+      path: '{{ item }}'
+      state: absent
+    with_items:
+      - '{{ data_file_csv }}'
+      - '{{ data_file_txt }}'

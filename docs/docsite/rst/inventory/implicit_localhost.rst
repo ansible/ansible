@@ -28,6 +28,7 @@ You can override the built-in implicit version by creating a ``localhost`` host 
 
 .. note::
   - This host is not targetable via any group, however it will use vars from ``host_vars`` and from the 'all' group.
+  - Implicit localhost does not appear in the ``hostvars`` magic variable unless demanded, such as by ``"{{ hostvars['localhost'] }}"``.
   - The ``inventory_file`` and ``inventory_dir`` magic variables are not available for the implicit localhost as they are dependent on **each inventory host**.
   - This implicit host also gets triggered by using ``127.0.0.1`` or ``::1`` as they are the IPv4 and IPv6 representations of 'localhost'.
   - Even though there are many ways to create it, there will only ever be ONE implicit localhost, using the name first used to create it.

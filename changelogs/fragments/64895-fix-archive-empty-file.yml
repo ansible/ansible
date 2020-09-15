@@ -1,0 +1,2 @@
+bugfixes:
+  - archive - fix issue with empty file exclusion from archive

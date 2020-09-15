@@ -53,6 +53,7 @@ options:
   inbound_virtual:
     description:
       - Settings to configure the virtual which will receive the inbound connection.
+    type: dict
     suboptions:
       address:
         description:

@@ -49,7 +49,7 @@ A great documentation GitHub issue or PR includes:
 
 - a specific title
 - a detailed description of the problem (even for a PR - it's hard to evaluate a suggested change unless we know what problem it's meant to solve)
-- links to other information (related issues/PRs, external documentation, pages on docs.ansible.com, etc.)
+- links to other information (related issues/PRs, external documentation, pages on docs.ansible.com, and so on.)
 
 Before you open a complex documentation PR
 ==========================================
@@ -60,17 +60,20 @@ If you make multiple changes to the documentation, or add more than a line to it
 #. Test your changes for rST errors.
 #. Build the page, and preferably the entire documentation site, locally.
 
-To work with documentation on your local machine, you need the following packages installed:
+To work with documentation on your local machine, you need to have python-3.5 or greater and the
+following packages installed:
 
-- libyaml
-- PyYAML
-- six
-- tornado
-- pyparsing
 - gcc
 - jinja2
+- libyaml
+- Pygments >= 2.4.0
+- pyparsing
+- PyYAML
 - rstcheck
+- six
 - sphinx
+- sphinx-notfound-page
+- straight.plugin
 
 .. note::
 

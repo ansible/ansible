@@ -1,2 +1,0 @@
-bugfixes:
-  - cs_iso - Add the 'is_public' param into argument_spec to allow the registering of public iso.

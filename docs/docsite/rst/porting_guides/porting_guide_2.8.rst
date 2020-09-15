@@ -8,11 +8,12 @@ This section discusses the behavioral changes between Ansible 2.7 and Ansible 2.
 
 It is intended to assist in updating your playbooks, plugins and other parts of your Ansible infrastructure so they will work with this version of Ansible.
 
-We suggest you read this page along with `Ansible Changelog for 2.8 <https://github.com/ansible/ansible/blob/devel/changelogs/CHANGELOG-v2.8.rst>`_ to understand what updates you may need to make.
+We suggest you read this page along with `Ansible Changelog for 2.8 <https://github.com/ansible/ansible/blob/stable-2.8/changelogs/CHANGELOG-v2.8.rst>`_ to understand what updates you may need to make.
 
 This document is part of a collection on porting. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
 
-.. contents:: Topics
+.. contents::
+   :local:
 
 Playbook
 ========
@@ -35,7 +36,7 @@ Beginning in version 2.8, a task cannot notify ``import_tasks`` or a static ``in
 The goal of a static import is to act as a pre-processor, where the import is replaced by the tasks defined within the imported file. When
 using an import, a task can notify any of the named tasks within the imported file, but not the name of the import itself.
 
-To achieve the results of notifying a single name but running mulitple handlers, utilize ``include_tasks``, or ``listen`` :ref:`handlers`.
+To achieve the results of notifying a single name but running multiple handlers, utilize ``include_tasks``, or ``listen`` :ref:`handlers`.
 
 Jinja Undefined values
 ----------------------
@@ -58,27 +59,177 @@ In Ansible 2.7 and older::
 Module option conversion to string
 ----------------------------------
 
-Beginning in version 2.8, Ansible will warn if a module expects a string, but a non-string value is passed and automatically converted to a string. This highlights potential problems where, for example, a ``yes`` or ``true`` (parsed as truish boolean value) would be converted to the string ``'True'``, or where a version number ``1.10`` (parsed as float value) would be converted to ``'1.0'``. Such conversions can result in unexpected behavior depending on context.
+Beginning in version 2.8, Ansible will warn if a module expects a string, but a non-string value is passed and automatically converted to a string. This highlights potential problems where, for example, a ``yes`` or ``true`` (parsed as truish boolean value) would be converted to the string ``'True'``, or where a version number ``1.10`` (parsed as float value) would be converted to ``'1.1'``. Such conversions can result in unexpected behavior depending on context.
 
 This behavior can be changed to be an error or to be ignored by setting the ``ANSIBLE_STRING_CONVERSION_ACTION`` environment variable, or by setting the ``string_conversion_action`` configuration in the ``defaults`` section of ``ansible.cfg``.
-
 
 Command line facts
 ------------------
 
 ``cmdline`` facts returned in system will be deprecated in favor of ``proc_cmdline``. This change handles special case where Kernel command line parameter contains multiple values with the same key.
 
+Bare variables in conditionals
+------------------------------
+
+In Ansible 2.7 and earlier, top-level variables sometimes treated boolean strings as if they were boolean values. This led to inconsistent behavior in conditional tests built on top-level variables defined as strings. Ansible 2.8 began changing this behavior. For example, if you set two conditions like this:
+
+.. code-block:: yaml
+
+   tasks:
+     - include_tasks: teardown.yml
+       when: teardown
+
+     - include_tasks: provision.yml
+       when: not teardown
+
+based on a variable you define **as a string** (with quotation marks around it):
+
+* In Ansible 2.7 and earlier, the two conditions above evaluated as ``True`` and ``False`` respectively if ``teardown: 'true'``
+* In Ansible 2.7 and earlier, both conditions evaluated as ``False`` if ``teardown: 'false'``
+* In Ansible 2.8 and later, you have the option of disabling conditional bare variables, so ``when: teardown`` always evaluates as ``True`` and ``when: not teardown`` always evaluates as ``False`` when ``teardown`` is a non-empty string (including ``'true'`` or ``'false'``)
+
+Ultimately, ``when: 'string'`` will always evaluate as ``True`` and ``when: not 'string'`` will always evaluate as ``False``, as long as ``'string'`` is not empty, even if the value of ``'string'`` itself looks like a boolean. For users with playbooks that depend on the old behavior, we added a config setting that preserves it. You can use the ``ANSIBLE_CONDITIONAL_BARE_VARS`` environment variable or ``conditional_bare_variables`` in the ``defaults`` section of ``ansible.cfg`` to select the behavior you want on your control node. The default setting is ``true``, which preserves the old behavior. Set the config value or environment variable to ``false`` to start using the new option.
+
+.. note::
+
+   In 2.10 the default setting for ``conditional_bare_variables`` will change to ``false``. In 2.12 the old behavior will be deprecated.
+
+Updating your playbooks
+^^^^^^^^^^^^^^^^^^^^^^^
+
+To prepare your playbooks for the new behavior, you must update your conditional statements so they accept only boolean values. For variables, you can use the ``bool`` filter to evaluate the string ``'false'`` as ``False``:
+
+.. code-block:: yaml
+
+    vars:
+      teardown: 'false'
+
+    tasks:
+      - include_tasks: teardown.yml
+        when: teardown | bool
+
+      - include_tasks: provision.yml
+        when: not teardown | bool
+
+Alternatively, you can re-define your variables as boolean values (without quotation marks) instead of strings:
+
+.. code-block:: yaml
+
+            vars:
+              teardown: false
+
+            tasks:
+              - include_tasks: teardown.yml
+                when: teardown
+
+              - include_tasks: provision.yml
+                when: not teardown
+
+For dictionaries and lists, use the ``length`` filter to evaluate the presence of a dictionary or list as ``True``:
+
+.. code-block:: yaml+jinja
+
+      - debug:
+        when: my_list | length > 0
+
+      - debug:
+        when: my_dictionary | length > 0
+
+Do not use the ``bool`` filter with lists or dictionaries. If you use ``bool`` with a list or dict, Ansible will always evaluate it as ``False``.
+
+Double-interpolation
+^^^^^^^^^^^^^^^^^^^^
+
+The ``conditional_bare_variables`` setting also affects variables set based on other variables. The old behavior unexpectedly double-interpolated those variables. For example:
+
+.. code-block:: yaml
+
+    vars:
+      double_interpolated: 'bare_variable'
+      bare_variable: false
+
+    tasks:
+      - debug:
+        when: double_interpolated
+
+* In Ansible 2.7 and earlier, ``when: double_interpolated`` evaluated to the value of ``bare_variable``, in this case, ``False``. If the variable ``bare_variable`` is undefined, the conditional fails.
+* In Ansible 2.8 and later, with bare variables disabled, Ansible evaluates ``double_interpolated`` as the string ``'bare_variable'``, which is ``True``.
+
+To double-interpolate variable values, use curly braces:
+
+.. code-block:: yaml+jinja
+
+    vars:
+      double_interpolated: "{{ other_variable }}"
+      other_variable: false
+
+Nested variables
+^^^^^^^^^^^^^^^^
+
+The ``conditional_bare_variables`` setting does not affect nested variables. Any string value assigned to a subkey is already respected and not treated as a boolean. If ``complex_variable['subkey']`` is a non-empty string, then ``when: complex_variable['subkey']`` is always ``True`` and ``when: not complex_variable['subkey']`` is always ``False``. If you want a string subkey like ``complex_variable['subkey']`` to be evaluated as a boolean, you must use the ``bool`` filter.
+
+Gathering Facts
+---------------
+
+In Ansible 2.8 the implicit "Gathering Facts" task in a play was changed to
+obey play tags. Previous to 2.8, the "Gathering Facts" task would ignore play
+tags and tags supplied from the command line and always run in a task.
+
+The behavior change affects the following example play.
+
+.. code-block:: yaml
+
+    - name: Configure Webservers
+      hosts: webserver
+      tags:
+        - webserver
+      tasks:
+        - name: Install nginx
+          package:
+            name: nginx
+          tags:
+            - nginx
+
+In Ansible 2.8, if you supply ``--tags nginx``, the implicit
+"Gathering Facts" task will be skipped, as the task now inherits
+the tag of ``webserver`` instead of ``always``.
+
+If no play level tags are set, the "Gathering Facts" task will
+be given a tag of ``always`` and will effectively match prior
+behavior.
+
+You can achieve similar results to the pre-2.8 behavior, by
+using an explicit ``gather_facts`` task in your ``tasks`` list.
+
+.. code-block:: yaml
+
+    - name: Configure Webservers
+      hosts: webserver
+      gather_facts: false
+      tags:
+        - webserver
+      tasks:
+        - name: Gathering Facts
+          gather_facts:
+          tags:
+            - always
+
+        - name: Install nginx
+          package:
+            name: nginx
+          tags:
+            - nginx
 
 Python Interpreter Discovery
 ============================
 
-In Ansible 2.7 and earlier, Ansible defaulted to ``usr/bin/python`` as the
+In Ansible 2.7 and earlier, Ansible defaulted to :command:`/usr/bin/python` as the
 setting for ``ansible_python_interpreter``. If you ran Ansible against a system
 that installed Python with a different name or a different path, your playbooks
 would fail with ``/usr/bin/python: bad interpreter: No such file or directory``
 unless you either set ``ansible_python_interpreter`` to the correct value for
 that system or added a Python interpreter and any necessary dependencies at
-``usr/bin/python``.
+:command:`usr/bin/python`.
 
 Starting in Ansible 2.8, Ansible searches for the correct path and executable
 name for Python on each target system, first in a lookup table of default
@@ -100,40 +251,43 @@ If you prefer to use the Python interpreter discovery behavior, use
 one of the four new values for ``ansible_python_interpreter`` introduced in
 Ansible 2.8:
 
-+---------------------------+-----------------------------------------------+
-| New value                 | Behavior                                      |
-+===========================+===============================================+
-| | auto                    | | If a Python interpreter is discovered,      |
-| | (future default)        | | Ansible uses the discovered Python, even if |
-| |                         | | ``/usr/bin/python`` is also present. Warns  |
-| |                         | | when using the fallback list.               |
-+---------------------------+-----------------------------------------------+
-| | **auto_legacy**         | | If a Python interpreter is discovered, and  |
-| | (Ansible 2.8 default)   | | ``/usr/bin/python`` is absent, Ansible      |
-| |                         | | uses the discovered Python. Warns when      |
-| |                         | | using the fallback list.                    |
-| |                         | |                                             |
-| |                         | | If a Python interpreter is discovered, and  |
-| |                         | | ``/usr/bin/python`` is present, Ansible     |
-| |                         | | uses ``/usr/bin/python`` and prints a       |
-| |                         | | deprecation warning about future default    |
-| |                         | | behavior. Warns when using the fallback     |
-| |                         | | list.                                       |
-+---------------------------+-----------------------------------------------+
-| | auto_legacy_silent      | | Behaves like ``auto_legacy`` but suppresses |
-| |                         | | the deprecation and fallback-list warnings. |
-+---------------------------+-----------------------------------------------+
-| | auto_silent             | | Behaves like ``auto`` but suppresses the    |
-| |                         | | fallback-list warning.                      |
-+---------------------------+-----------------------------------------------+
++---------------------------+---------------------------------------------+
+| New value                 | Behavior                                    |
++===========================+=============================================+
+| auto |br|                 | If a Python interpreter is discovered,      |
+| (future default)          | Ansible uses the discovered Python, even if |
+|                           | :command:`/usr/bin/python` is also present. |
+|                           | Warns when using the fallback list.         |
++---------------------------+---------------------------------------------+
+| **auto_legacy** |br|      | If a Python interpreter is discovered, and  |
+| (Ansible 2.8 default)     | :command:`/usr/bin/python` is absent,       |
+|                           | Ansible uses the discovered Python. Warns   |
+|                           | when using the fallback list.               |
+|                           |                                             |
+|                           | If a Python interpreter is discovered, and  |
+|                           | :command:`/usr/bin/python` is present,      |
+|                           | Ansible uses :command:`/usr/bin/python` and |
+|                           | prints a deprecation warning about future   |
+|                           | default behavior. Warns when using the      |
+|                           | fallback list.                              |
++---------------------------+---------------------------------------------+
+| auto_legacy_silent        | Behaves like ``auto_legacy`` but suppresses |
+|                           | the deprecation and fallback-list warnings. |
++---------------------------+---------------------------------------------+
+| auto_silent               | Behaves like ``auto`` but suppresses the    |
+|                           | fallback-list warning.                      |
++---------------------------+---------------------------------------------+
 
-Starting with Ansible 2.12, Ansible will use the discovered Python interpreter
-by default, whether or not ``/usr/bin/python`` is also present. Until then,
-the default ``auto_legacy`` setting provides compatibility with
-previous versions of Ansible that always defaulted to ``/usr/bin/python``.
+
+In Ansible 2.12, Ansible will switch the default from :literal:`auto_legacy` to :literal:`auto`.
+The difference in behaviour is that :literal:`auto_legacy` uses :command:`/usr/bin/python` if
+present and falls back to the discovered Python when it is not present.  :literal:`auto` will always
+use the discovered Python, regardless of whether :command:`/usr/bin/python` exists.  The
+:literal:`auto_legacy` setting provides compatibility with previous versions of Ansible that always
+defaulted to :command:`/usr/bin/python`.
 
 If you installed Python and dependencies (``boto``, etc.) to
-``/usr/bin/python`` as a workaround on distros with a different default Python
+:command:`/usr/bin/python` as a workaround on distros with a different default Python
 interpreter (for example, Ubuntu 16.04+, RHEL8, Fedora 23+), you have two
 options:
 
@@ -153,7 +307,7 @@ Command Line
 Become Prompting
 ----------------
 
-Beginning in version 2.8, by default Ansible will use the word ``BECOME`` to prompt you for a password for elevated privileges (``sudo`` privileges on unix systems or ``enable`` mode on network devices):
+Beginning in version 2.8, by default Ansible will use the word ``BECOME`` to prompt you for a password for elevated privileges (``sudo`` privileges on Unix systems or ``enable`` mode on network devices):
 
 By default in Ansible 2.8::
 
@@ -170,6 +324,11 @@ By default in Ansible 2.7, or with ``AGNOSTIC_BECOME_PROMPT=False`` in Ansible 2
 Deprecated
 ==========
 
+* The ``params`` module option in ``ldap_attr`` and ``ldap_entry`` are deprecated on a short cycle
+  (to be removed in Ansible-2.10) due to circumventing Ansible's normal option handling.  In
+  particular, if the ``bind_pw`` option is set with ``params``, the value of the option could end up
+  being placed in a logfile or displayed on stdout.
+
 * Setting the async directory using ``ANSIBLE_ASYNC_DIR`` as an task/play environment key is deprecated and will be
   removed in Ansible 2.12. You can achieve the same result by setting ``ansible_async_dir`` as a variable like::
 
@@ -177,7 +336,7 @@ Deprecated
         command: sleep 5
         async: 10
         vars:
-          ansible_aync_dir: /tmp/.ansible_async
+          ansible_async_dir: /tmp/.ansible_async
 
 * Plugin writers who need a ``FactCache`` object should be aware of two deprecations:
 
@@ -190,7 +349,7 @@ Deprecated
   2. The ``FactCache.update()`` method has been converted to follow the dict API.  It now takes a
      dictionary as its sole argument and updates itself with the dictionary's items.  The previous
      API where ``update()`` took a key and a value will now issue a deprecation warning and will be
-     removed in 2.12.  If you need the old behaviour switch to ``FactCache.first_order_merge()``
+     removed in 2.12.  If you need the old behavior switch to ``FactCache.first_order_merge()``
      instead.
 
 * Supporting file-backed caching via self.cache is deprecated and will
@@ -212,10 +371,15 @@ Modules
 Major changes in popular modules are detailed here
 
 The exec wrapper that runs PowerShell modules has been changed to set ``$ErrorActionPreference = "Stop"`` globally.
-This may mean that custom modules can fail if they implicitly relied on this behaviour. To get the old behaviour back,
-add ``$ErrorActionPreference = "Continue"`` to the top of the module. This change was made to restore the old behaviour
-of the EAP that was accidentally removed in a previous release and ensure that modules are more resiliant to errors
+This may mean that custom modules can fail if they implicitly relied on this behavior. To get the old behavior back,
+add ``$ErrorActionPreference = "Continue"`` to the top of the module. This change was made to restore the old behavior
+of the EAP that was accidentally removed in a previous release and ensure that modules are more resilient to errors
 that may occur in execution.
+
+* Version 2.8.14 of Ansible changed the default mode of file-based tasks to ``0o600 & ~umask`` when the user did not specify a ``mode`` parameter on file-based tasks. This was in response to a CVE report which we have reconsidered. As a result, the ``mode`` change has been reverted in 2.8.15, and ``mode`` will now default to ``0o666 & ~umask`` as in previous versions of Ansible.
+* If you changed any tasks to specify less restrictive permissions while using 2.8.14, those changes will be unnecessary (but will do no harm) in 2.8.15.
+* To avoid the issue raised in CVE-2020-1736, specify a ``mode`` parameter in all file-based tasks that accept it.
+
 
 Modules removed
 ---------------
@@ -233,17 +397,29 @@ Deprecation notices
 
 The following modules will be removed in Ansible 2.12. Please update your playbooks accordingly.
 
-* ``foreman`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
-* ``katello`` use <https://github.com/theforeman/foreman-ansible-modules> instead.
+* ``foreman`` use `foreman-ansible-modules <https://github.com/theforeman/foreman-ansible-modules>`_ instead.
+* ``katello`` use `foreman-ansible-modules <https://github.com/theforeman/foreman-ansible-modules>`_ instead.
 * ``github_hooks`` use :ref:`github_webhook <github_webhook_module>` and :ref:`github_webhook_facts <github_webhook_facts_module>` instead.
-* ``digital_ocean`` use :ref `digital_ocean_droplet <digital_ocean_droplet_module>` instead.
-* ``gce`` use :ref `gce_compute_instance <gce_compute_instance_module>` instead.
-* ``panos`` use `Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
+* ``digital_ocean`` use :ref:`digital_ocean_droplet <digital_ocean_droplet_module>` instead.
+* ``gce`` use :ref:`gcp_compute_instance <gcp_compute_instance_module>` instead.
+* ``gcspanner`` use :ref:`gcp_spanner_instance <gcp_spanner_instance_module>` and :ref:`gcp_spanner_database <gcp_spanner_database_module>` instead.
+* ``gcdns_record`` use :ref:`gcp_dns_resource_record_set <gcp_dns_resource_record_set_module>` instead.
+* ``gcdns_zone`` use :ref:`gcp_dns_managed_zone <gcp_dns_managed_zone_module>` instead.
+* ``gcp_forwarding_rule`` use :ref:`gcp_compute_global_forwarding_rule <gcp_compute_global_forwarding_rule_module>` or :ref:`gcp_compute_forwarding_rule <gcp_compute_forwarding_rule_module>` instead.
+* ``gcp_healthcheck`` use :ref:`gcp_compute_health_check <gcp_compute_health_check_module>`, :ref:`gcp_compute_http_health_check <gcp_compute_http_health_check_module>`, or :ref:`gcp_compute_https_health_check <gcp_compute_https_health_check_module>` instead.
+* ``gcp_backend_service`` use :ref:`gcp_compute_backend_service <gcp_compute_backend_service_module>` instead.
+* ``gcp_target_proxy`` use :ref:`gcp_compute_target_http_proxy <gcp_compute_target_http_proxy_module>` instead.
+* ``gcp_url_map`` use :ref:`gcp_compute_url_map <gcp_compute_url_map_module>` instead.
+* ``panos`` use the `Palo Alto Networks Ansible Galaxy role <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_ instead.
 
 
 Noteworthy module changes
 -------------------------
 
+* **Security Issue** Setting ``bind_pw`` with the ``params`` option for the ``ldap_entry`` and
+  ``ldap_attr`` modules has been disallowed.  If ``bind_pw`` was set with ``params``, the value
+  could have ended up in a logfile or displayed on stdout.  Set ``bind_pw`` directly, with the
+  modules' options instead.
 * The ``foreman`` and ``katello`` modules have been deprecated in favor of a set of modules that are broken out per entity with better idempotency in mind.
 * The ``foreman`` and ``katello`` modules replacement is officially part of the Foreman Community and supported there.
 * The ``tower_credential`` module originally required the ``ssh_key_data`` to be the path to a ssh_key_file.
@@ -252,16 +428,16 @@ Noteworthy module changes
 * The ``win_scheduled_task`` module deprecated support for specifying a trigger repetition as a list and this format
   will be removed in Ansible 2.12. Instead specify the repetition as a dictionary value.
 
-* The ``win_feature`` module has removed the deprecated ``restart_needed`` return value, use the standardised
+* The ``win_feature`` module has removed the deprecated ``restart_needed`` return value, use the standardized
   ``reboot_required`` value instead.
 
 * The ``win_package`` module has removed the deprecated ``restart_required`` and ``exit_code`` return value, use the
-  standardised ``reboot_required`` and ``rc`` value instead.
+  standardized ``reboot_required`` and ``rc`` value instead.
 
 * The ``win_get_url`` module has removed the deprecated ``win_get_url`` return dictionary, contained values are
   returned directly.
 
-* The ``win_get_url`` module has removed the deprecated ``skip_certificate_validation`` option, use the standardised
+* The ``win_get_url`` module has removed the deprecated ``skip_certificate_validation`` option, use the standardized
   ``validate_certs`` option instead.
 
 * The ``vmware_local_role_facts`` module now returns a list of dicts instead of a dict of dicts for role information.
@@ -304,6 +480,9 @@ Noteworthy module changes
 * ``vmware_vm_facts`` used to return dict of dict with virtual machine's facts. Ansible 2.8 and onwards will return list of dict with virtual machine's facts.
   Please see module ``vmware_vm_facts`` documentation for example.
 
+* ``vmware_guest_snapshot`` module used to return ``results``. Since Ansible 2.8 and onwards ``results`` is a reserved keyword, it is replaced by ``snapshot_results``.
+  Please see module ``vmware_guest_snapshots`` documentation for example.
+
 * The ``panos`` modules have been deprecated in favor of using the Palo Alto Networks `Ansible Galaxy role
   <https://galaxy.ansible.com/PaloAltoNetworks/paloaltonetworks>`_.  Contributions to the role can be made
   `here <https://github.com/PaloAltoNetworks/ansible-pan>`_.
@@ -312,15 +491,33 @@ Noteworthy module changes
 
 * The ``win_psexec`` has deprecated the undocumented ``extra_opts`` module option. This will be removed in Ansible 2.10.
 
+* The ``win_nssm`` module has deprecated the following options in favor of using the ``win_service`` module to configure the service after installing it with ``win_nssm``:
+  * ``dependencies``, use ``dependencies`` of ``win_service`` instead
+  * ``start_mode``, use ``start_mode`` of ``win_service`` instead
+  * ``user``, use ``username`` of ``win_service`` instead
+  * ``password``, use ``password`` of ``win_service`` instead
+  These options will be removed in Ansible 2.12.
+
+* The ``win_nssm`` module has also deprecated the ``start``, ``stop``, and ``restart`` values of the ``status`` option.
+  You should use the ``win_service`` module to control the running state of the service. This will be removed in Ansible 2.12.
+
+* The ``status`` module option for ``win_nssm`` has changed its default value to ``present``. Before, the default was ``start``.
+  Consequently, the service is no longer started by default after creation with ``win_nssm``, and you should use
+  the ``win_service`` module to start it if needed.
+
+* The ``app_parameters`` module option for ``win_nssm`` has been deprecated; use ``argument`` instead. This will be removed in Ansible 2.12.
+
+* The ``app_parameters_free_form`` module option for ``win_nssm`` has been aliased to the new ``arguments`` option.
+
 * The ``win_dsc`` module will now validate the input options for a DSC resource. In previous versions invalid options
   would be ignored but are now not.
 
-* The ``win_domain_membership`` module will no longer automatically join a host in a domain that already has an account
-  with the same name. Set ``allow_existing_computer_account=yes`` to override this check and go back to the original
-  behaviour.
+* The ``openssl_pkcs12`` module will now regenerate the pkcs12 file if there are differences between the file on disk and the parameters passed to the module.
 
 Plugins
 =======
+
+* Ansible no longer defaults to the ``paramiko`` connection plugin when using macOS as the control node. Ansible will now use the ``ssh`` connection plugin by default on a macOS control node.  Since ``ssh`` supports connection persistence between tasks and playbook runs, it performs better than ``paramiko``. If you are using password authentication, you will need to install ``sshpass`` when using the ``ssh`` connection plugin. Or you can explicitly set the connection type to ``paramiko`` to maintain the pre-2.8 behavior on macOS.
 
 * Connection plugins have been standardized to allow use of ``ansible_<conn-type>_user``
   and ``ansible_<conn-type>_password`` variables.  Variables such as
@@ -388,5 +585,5 @@ Networking
   ``save`` and ``force`` parameters, use the ``save_when`` parameter to replicate their
   functionality.
 
-* The ``nxos_vrf_af`` module has removed the ``safi`` paramter. This parameter was deprecated
+* The ``nxos_vrf_af`` module has removed the ``safi`` parameter. This parameter was deprecated
   in Ansible 2.4 and has had no impact on the module since then.

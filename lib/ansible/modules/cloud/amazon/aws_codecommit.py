@@ -71,7 +71,7 @@ repository_metadata:
     creation_date:
       description: "The date and time the repository was created, in timestamp format."
       returned: when state is present
-      type: datetime
+      type: str
       sample: "2018-10-16T13:21:41.261000+09:00"
     last_modified_date:
       description: "The date and time the repository was last modified, in timestamp format."
@@ -102,7 +102,7 @@ response_metadata:
     http_headers:
       description: "http headers of http response"
       returned: always
-      type: complex
+      type: dict
     http_status_code:
       description: "http status code of http response"
       returned: always

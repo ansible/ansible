@@ -1,0 +1,104 @@
+{
+  "mock_single_obj": {
+    "_last_modified": "",
+    "cloud_ref": "https://192.0.2.132/api/cloud/cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+    "dhcp_enabled": true,
+    "exclude_discovered_subnets": false,
+    "name": "PG-123",
+    "synced_from_se": true,
+    "tenant_ref": "https://192.0.2.132/api/tenant/admin",
+    "url": "https://192.0.2.132/api/network/dvportgroup-2084-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+    "uuid": "dvportgroup-2084-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+    "vcenter_dvs": true,
+    "vimgrnw_ref": "https://192.0.2.132/api/vimgrnwruntime/dvportgroup-2084-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+    "vrf_context_ref": "https://192.0.2.132/api/vrfcontext/vrfcontext-31f1b55f-319c-44eb-862f-69d79ffdf295"
+  },
+  "mock_multiple_obj": {
+    "results": [
+      {
+        "_last_modified": "",
+        "cloud_ref": "https://192.0.2.132/api/cloud/cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "dhcp_enabled": true,
+        "exclude_discovered_subnets": false,
+        "name": "J-PG-0682",
+        "synced_from_se": true,
+        "tenant_ref": "https://192.0.2.132/api/tenant/admin",
+        "url": "https://192.0.2.132/api/network/dvportgroup-2084-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "uuid": "dvportgroup-2084-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vcenter_dvs": true,
+        "vimgrnw_ref": "https://192.0.2.132/api/vimgrnwruntime/dvportgroup-2084-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vrf_context_ref": "https://192.0.2.132/api/vrfcontext/vrfcontext-31f1b55f-319c-44eb-862f-69d79ffdf295"
+      },
+      {
+        "_last_modified": "",
+        "cloud_ref": "https://192.0.2.132/api/cloud/cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "dhcp_enabled": true,
+        "exclude_discovered_subnets": false,
+        "name": "J-PG-0231",
+        "synced_from_se": true,
+        "tenant_ref": "https://192.0.2.132/api/tenant/admin",
+        "url": "https://192.0.2.132/api/network/dvportgroup-1627-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "uuid": "dvportgroup-1627-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vcenter_dvs": true,
+        "vimgrnw_ref": "https://192.0.2.132/api/vimgrnwruntime/dvportgroup-1627-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vrf_context_ref": "https://192.0.2.132/api/vrfcontext/vrfcontext-31f1b55f-319c-44eb-862f-69d79ffdf295"
+      },
+      {
+        "_last_modified": "",
+        "cloud_ref": "https://192.0.2.132/api/cloud/cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "dhcp_enabled": true,
+        "exclude_discovered_subnets": false,
+        "name": "J-PG-0535",
+        "synced_from_se": true,
+        "tenant_ref": "https://192.0.2.132/api/tenant/admin",
+        "url": "https://192.0.2.132/api/network/dvportgroup-1934-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "uuid": "dvportgroup-1934-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vcenter_dvs": true,
+        "vimgrnw_ref": "https://192.0.2.132/api/vimgrnwruntime/dvportgroup-1934-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vrf_context_ref": "https://192.0.2.132/api/vrfcontext/vrfcontext-31f1b55f-319c-44eb-862f-69d79ffdf295"
+      },
+      {
+        "_last_modified": "",
+        "cloud_ref": "https://192.0.2.132/api/cloud/cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "dhcp_enabled": true,
+        "exclude_discovered_subnets": false,
+        "name": "J-PG-0094",
+        "synced_from_se": true,
+        "tenant_ref": "https://192.0.2.132/api/tenant/admin",
+        "url": "https://192.0.2.132/api/network/dvportgroup-1458-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "uuid": "dvportgroup-1458-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vcenter_dvs": true,
+        "vimgrnw_ref": "https://192.0.2.132/api/vimgrnwruntime/dvportgroup-1458-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vrf_context_ref": "https://192.0.2.132/api/vrfcontext/vrfcontext-31f1b55f-319c-44eb-862f-69d79ffdf295"
+      },
+      {
+        "_last_modified": "",
+        "cloud_ref": "https://192.0.2.132/api/cloud/cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "dhcp_enabled": true,
+        "exclude_discovered_subnets": false,
+        "name": "J-PG-0437",
+        "synced_from_se": true,
+        "tenant_ref": "https://192.0.2.132/api/tenant/admin",
+        "url": "https://192.0.2.132/api/network/dvportgroup-1836-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "uuid": "dvportgroup-1836-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vcenter_dvs": true,
+        "vimgrnw_ref": "https://192.0.2.132/api/vimgrnwruntime/dvportgroup-1836-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vrf_context_ref": "https://192.0.2.132/api/vrfcontext/vrfcontext-31f1b55f-319c-44eb-862f-69d79ffdf295"
+      },
+      {
+        "_last_modified": "",
+        "cloud_ref": "https://192.0.2.132/api/cloud/cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "dhcp_enabled": true,
+        "exclude_discovered_subnets": false,
+        "name": "J-PG-0673",
+        "synced_from_se": true,
+        "tenant_ref": "https://192.0.2.132/api/tenant/admin",
+        "url": "https://192.0.2.132/api/network/dvportgroup-2075-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "uuid": "dvportgroup-2075-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vcenter_dvs": true,
+        "vimgrnw_ref": "https://192.0.2.132/api/vimgrnwruntime/dvportgroup-2075-cloud-4d063be1-99c2-44cf-8b28-977bd970524c",
+        "vrf_context_ref": "https://192.0.2.132/api/vrfcontext/vrfcontext-31f1b55f-319c-44eb-862f-69d79ffdf295"
+      }
+    ]
+  }
+}

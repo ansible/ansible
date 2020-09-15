@@ -1,0 +1,18 @@
+- name: Create a file
+  tempfile:
+    state: file
+    suffix: temp
+  register: tempfile
+
+- import_tasks: aws_s3_create.yml
+
+- import_tasks: aws_s3_put.yml
+- import_tasks: aws_s3_get.yml
+
+- import_tasks: aws_s3_getstr.yml
+- import_tasks: aws_s3_geturl.yml
+- import_tasks: aws_s3_list.yml
+
+- import_tasks: aws_s3_delobj.yml
+
+- import_tasks: aws_s3_delete.yml

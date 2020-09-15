@@ -1,0 +1,2 @@
+bugfixes:
+- "When cloning vm from the template it assigned Blank template to it and when rerun playbook it failed."

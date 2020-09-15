@@ -1,0 +1,2 @@
+bugfixes:
+  - "win_pagefile - not using testPath"

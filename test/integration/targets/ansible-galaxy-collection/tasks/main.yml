@@ -1,0 +1,172 @@
+---
+- name: set some facts for tests
+  set_fact:
+    galaxy_dir: "{{ remote_tmp_dir }}/galaxy"
+
+- name: create scratch dir used for testing
+  file:
+    path: '{{ galaxy_dir }}/scratch'
+    state: directory
+
+- name: run ansible-galaxy collection init tests
+  import_tasks: init.yml
+
+- name: run ansible-galaxy collection build tests
+  import_tasks: build.yml
+
+- name: create test ansible.cfg that contains the Galaxy server list
+  template:
+    src: ansible.cfg.j2
+    dest: '{{ galaxy_dir }}/ansible.cfg'
+
+- name: run ansible-galaxy collection publish tests for {{ test_name }}
+  include_tasks: publish.yml
+  vars:
+    test_name: '{{ item.name }}'
+    test_server: '{{ item.server }}'
+  with_items:
+  - name: galaxy
+    server: '{{ fallaxy_galaxy_server }}'
+  - name: automation_hub
+    server: '{{ fallaxy_ah_server }}'
+
+# We use a module for this so we can speed up the test time.
+- name: setup test collections for install test
+  setup_collections:
+    server: '{{ fallaxy_galaxy_server }}'
+    token: '{{ fallaxy_token }}'
+    collections:
+    # Scenario to test out pre-release being ignored unless explicitly set and version pagination.
+    - namespace: namespace1
+      name: name1
+      version: 0.0.1
+    - namespace: namespace1
+      name: name1
+      version: 0.0.2
+    - namespace: namespace1
+      name: name1
+      version: 0.0.3
+    - namespace: namespace1
+      name: name1
+      version: 0.0.4
+    - namespace: namespace1
+      name: name1
+      version: 0.0.5
+    - namespace: namespace1
+      name: name1
+      version: 0.0.6
+    - namespace: namespace1
+      name: name1
+      version: 0.0.7
+    - namespace: namespace1
+      name: name1
+      version: 0.0.8
+    - namespace: namespace1
+      name: name1
+      version: 0.0.9
+    - namespace: namespace1
+      name: name1
+      version: 0.0.10
+    - namespace: namespace1
+      name: name1
+      version: 0.1.0
+    - namespace: namespace1
+      name: name1
+      version: 1.0.0
+    - namespace: namespace1
+      name: name1
+      version: 1.0.9
+    - namespace: namespace1
+      name: name1
+      version: 1.1.0-beta.1
+
+    # Pad out number of namespaces for pagination testing
+    - namespace: namespace2
+      name: name
+    - namespace: namespace3
+      name: name
+    - namespace: namespace4
+      name: name
+    - namespace: namespace5
+      name: name
+    - namespace: namespace6
+      name: name
+    - namespace: namespace7
+      name: name
+    - namespace: namespace8
+      name: name
+    - namespace: namespace9
+      name: name
+
+    # Complex dependency resolution
+    - namespace: parent_dep
+      name: parent_collection
+      dependencies:
+        child_dep.child_collection: '>=0.5.0,<1.0.0'
+    - namespace: child_dep
+      name: child_collection
+      version: 0.4.0
+    - namespace: child_dep
+      name: child_collection
+      version: 0.5.0
+    - namespace: child_dep
+      name: child_collection
+      version: 0.9.9
+      dependencies:
+        child_dep.child_dep2: '!=1.2.3'
+    - namespace: child_dep
+      name: child_collection
+    - namespace: child_dep
+      name: child_dep2
+      version: 1.2.2
+    - namespace: child_dep
+      name: child_dep2
+      version: 1.2.3
+
+    # Dep resolution failure
+    - namespace: fail_namespace
+      name: fail_collection
+      version: 2.1.2
+      dependencies:
+        fail_dep.name: '0.0.5'
+        fail_dep2.name: '<0.0.5'
+    - namespace: fail_dep
+      name: name
+      version: '0.0.5'
+      dependencies:
+        fail_dep2.name: '>0.0.5'
+    - namespace: fail_dep2
+      name: name
+
+    # Symlink tests
+    - namespace: symlink
+      name: symlink
+      use_symlink: yes
+
+- name: run ansible-galaxy collection install tests for {{ test_name }}
+  include_tasks: install.yml
+  vars:
+    test_name: '{{ item.name }}'
+    test_server: '{{ item.server }}'
+  with_items:
+  - name: galaxy
+    server: '{{ fallaxy_galaxy_server }}'
+  - name: automation_hub
+    server: '{{ fallaxy_ah_server }}'
+
+# fake.fake does not exist but we check the output to ensure it checked all 3
+# servers defined in the config. We hardcode to -vvv as that's what level the
+# message is shown
+- name: test install fallback on server list
+  command: ansible-galaxy collection install fake.fake -vvv
+  ignore_errors: yes
+  environment:
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  register: missing_fallback
+
+- name: assert test install fallback on server list
+  assert:
+    that:
+    - missing_fallback.rc == 1
+    - '"Collection ''fake.fake'' is not available from server galaxy" in missing_fallback.stdout'
+    - '"Collection ''fake.fake'' is not available from server automation_hub" in missing_fallback.stdout'

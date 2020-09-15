@@ -1,0 +1,2 @@
+minor_changes:
+  - k8s - add `wait_sleep` parameter (number of seconds to sleep between checks).

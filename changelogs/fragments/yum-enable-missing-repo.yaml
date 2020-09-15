@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - "yum - gracefully handle failure case of enabling a non existent repo, as the yum cli does (Fixes https://github.com/ansible/ansible/issues/52582)"

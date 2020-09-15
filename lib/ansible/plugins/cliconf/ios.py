@@ -34,11 +34,8 @@ import re
 import time
 import json
 
-from itertools import chain
-
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils._text import to_text
-from ansible.module_utils.basic import get_timestamp
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.network.common.config import NetworkConfig, dumps
@@ -164,22 +161,35 @@ class Cliconf(CliconfBase):
         return resp
 
     def edit_macro(self, candidate=None, commit=True, replace=None, comment=None):
+        """
+        ios_config:
+          lines: "{{ macro_lines }}"
+          parents: "macro name {{ macro_name }}"
+          after: '@'
+          match: line
+          replace: block
+        """
         resp = {}
         operations = self.get_device_operations()
-        self.check_edit_config_capabiltiy(operations, candidate, commit, replace, comment)
+        self.check_edit_config_capability(operations, candidate, commit, replace, comment)
 
         results = []
         requests = []
         if commit:
             commands = ''
+            self.send_command('config terminal')
+            time.sleep(0.1)
+            # first item: macro command
+            commands += (candidate.pop(0) + '\n')
+            multiline_delimiter = candidate.pop(-1)
             for line in candidate:
-                if line != 'None':
-                    commands += (' ' + line + '\n')
-                self.send_command('config terminal', sendonly=True)
-                obj = {'command': commands, 'sendonly': True}
-                results.append(self.send_command(**obj))
-                requests.append(commands)
+                commands += (' ' + line + '\n')
+            commands += (multiline_delimiter + '\n')
+            obj = {'command': commands, 'sendonly': True}
+            results.append(self.send_command(**obj))
+            requests.append(commands)
 
+            time.sleep(0.1)
             self.send_command('end', sendonly=True)
             time.sleep(0.1)
             results.append(self.send_command('\n'))
@@ -189,13 +199,13 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command=None, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if not command:
             raise ValueError('must provide value of command to execute')
         if output:
             raise ValueError("'output' value %s is not supported for get" % output)
 
-        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def get_device_info(self):
         device_info = {}
@@ -208,9 +218,13 @@ class Cliconf(CliconfBase):
         if match:
             device_info['network_os_version'] = match.group(1).strip(',')
 
-        match = re.search(r'^Cisco (.+) \(revision', data, re.M)
-        if match:
-            device_info['network_os_model'] = match.group(1)
+        model_search_strs = [r'^[Cc]isco (.+) \(revision', r'^[Cc]isco (\S+).+bytes of .*memory']
+        for item in model_search_strs:
+            match = re.search(item, data, re.M)
+            if match:
+                version = match.group(1).split(' ')
+                device_info['network_os_model'] = version[0]
+                break
 
         match = re.search(r'^(.+) uptime', data, re.M)
         if match:
@@ -287,12 +301,11 @@ class Cliconf(CliconfBase):
 
         return resp
 
-    def run_commands(self, commands=None, check_rc=True, return_timestamps=False):
+    def run_commands(self, commands=None, check_rc=True):
         if commands is None:
             raise ValueError("'commands' value is required")
 
         responses = list()
-        timestamps = list()
         for cmd in to_list(commands):
             if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
@@ -303,19 +316,14 @@ class Cliconf(CliconfBase):
 
             try:
                 out = self.send_command(**cmd)
-                timestamp = get_timestamp()
             except AnsibleConnectionFailure as e:
                 if check_rc:
                     raise
                 out = getattr(e, 'err', to_text(e))
 
             responses.append(out)
-            timestamps.append(timestamp)
 
-        if return_timestamps:
-            return responses, timestamps
-        else:
-            return responses
+        return responses
 
     def get_defaults_flag(self):
         """
@@ -335,6 +343,22 @@ class Cliconf(CliconfBase):
             return 'all'
         else:
             return 'full'
+
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli mode
+        :return: None
+        """
+        if self._connection.connected:
+            out = self._connection.get_prompt()
+
+            if out is None:
+                raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
+                                                       u' response window: %s' % self._connection._last_recv_window)
+
+            if re.search(r'config.*\)#', to_text(out, errors='surrogate_then_replace').strip()):
+                self._connection.queue_message('vvvv', 'wrong context, sending end to device')
+                self._connection.send_command('end')
 
     def _extract_banners(self, config):
         banners = {}

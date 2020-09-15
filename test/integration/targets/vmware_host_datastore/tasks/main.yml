@@ -1,0 +1,84 @@
+- when: vcsim is not defined
+  block:
+    - import_role:
+        name: prepare_vmware_tests
+      vars:
+        setup_attach_host: true
+
+    - name: Mount NFS (ds1) datastores without esxi_hostname
+      vmware_host_datastore:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datastore_name: '{{ ds1 }}'
+        datastore_type: '{{ infra.datastores[ds1].type }}'
+        nfs_server: '{{ infra.datastores[ds1].server }}'
+        nfs_path: '{{ infra.datastores[ds1].path }}'
+        nfs_ro: '{{ infra.datastores[ds1].ro }}'
+        state: present
+        validate_certs: no
+      ignore_errors: true
+      register: mount_vmware_host_datastore
+    - debug: var=mount_vmware_host_datastore
+    - assert:
+        that:
+          - mount_vmware_host_datastore is failed
+          - mount_vmware_host_datastore.msg == "esxi_hostname is mandatory with a vcenter"
+
+    - name: Mount NFS (ds1) datastores with non existing host in esxi_hostname
+      vmware_host_datastore:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: 'nohost'
+        datastore_name: '{{ ds1 }}'
+        datastore_type: '{{ infra.datastores[ds1].type }}'
+        nfs_server: '{{ infra.datastores[ds1].server }}'
+        nfs_path: '{{ infra.datastores[ds1].path }}'
+        nfs_ro: '{{ infra.datastores[ds1].ro }}'
+        state: present
+        validate_certs: no
+      ignore_errors: true
+      register: mount_vmware_host_datastore
+    - debug: var=mount_vmware_host_datastore
+    - assert:
+        that:
+          - mount_vmware_host_datastore is failed
+          - mount_vmware_host_datastore.msg == "Failed to find ESXi hostname nohost"
+
+    - name: Mount NFS (ds1) datastores on esxi1 using esxi_hostname
+      vmware_host_datastore:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: '{{ esxi1 }}'
+        datastore_name: '{{ ds1 }}'
+        datastore_type: '{{ infra.datastores[ds1].type }}'
+        nfs_server: '{{ infra.datastores[ds1].server }}'
+        nfs_path: '{{ infra.datastores[ds1].path }}'
+        nfs_ro: '{{ infra.datastores[ds1].ro }}'
+        state: present
+        validate_certs: no
+      register: mount_vmware_host_datastore
+    - debug: var=mount_vmware_host_datastore
+    - assert:
+        that:
+          - mount_vmware_host_datastore is changed
+
+    - name: Mount NFS (ds1) datastores to ESXi directly
+      vmware_host_datastore:
+        hostname: '{{ esxi1 }}'
+        username: '{{ esxi_user }}'
+        password: '{{ esxi_password }}'
+        datastore_name: '{{ ds1 }}'
+        datastore_type: '{{ infra.datastores[ds1].type }}'
+        nfs_server: '{{ infra.datastores[ds1].server }}'
+        nfs_path: '{{ infra.datastores[ds1].path }}'
+        nfs_ro: '{{ infra.datastores[ds2].ro }}'
+        state: present
+        validate_certs: no
+      register: mount_vmware_host_datastore
+    - debug: var=mount_vmware_host_datastore
+    - assert:
+        that:
+          - not (mount_vmware_host_datastore is changed)

@@ -59,10 +59,6 @@ options:
         the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
-  others:
-    description:
-      - All arguments accepted by the M(file) module also work here.
-    type: str
   state:
     description:
       - If set to C(absent) the option or section will be removed if present instead of created.

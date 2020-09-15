@@ -44,6 +44,7 @@ options:
   ip_version:
     description:
       - Specifies whether the DNS specifies IP addresses using IPv4 or IPv6.
+    type: int
     choices:
       - 4
       - 6

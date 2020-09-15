@@ -44,7 +44,9 @@ options:
     description:
       - Configures the device platform network operating system.  This value is
         used to load a device specific netconf plugin.  If this option is not
-        configured, then the default netconf plugin will be used.
+        configured (or set to C(auto)), then Ansible will attempt to guess the
+        correct network_os to use.
+        If it can not guess a network_os correctly it will use C(default).
     vars:
       - name: ansible_network_os
   remote_user:
@@ -88,20 +90,6 @@ options:
         awaiting a response after issuing a call to a RPC.  If the RPC
         does not return in timeout seconds, an error is generated.
     default: 120
-  host_key_auto_add:
-    type: boolean
-    description:
-      - By default, Ansible will prompt the user before adding SSH keys to the
-        known hosts file. By enabling this option, unknown host keys will
-        automatically be added to the known hosts file.
-      - Be sure to fully understand the security implications of enabling this
-        option on production systems as it could create a security vulnerability.
-    default: False
-    ini:
-      - section: paramiko_connection
-        key: host_key_auto_add
-    env:
-      - name: ANSIBLE_HOST_KEY_AUTO_ADD
   look_for_keys:
     default: True
     description:
@@ -198,9 +186,10 @@ import json
 
 from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.module_utils._text import to_bytes, to_native, to_text
+from ansible.module_utils.basic import missing_required_lib
 from ansible.module_utils.parsing.convert_bool import BOOLEANS_TRUE, BOOLEANS_FALSE
 from ansible.plugins.loader import netconf_loader
-from ansible.plugins.connection import NetworkConnectionBase
+from ansible.plugins.connection import NetworkConnectionBase, ensure_connect
 
 try:
     from ncclient import manager
@@ -215,14 +204,6 @@ except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompat
 
 logging.getLogger('ncclient').setLevel(logging.INFO)
 
-NETWORK_OS_DEVICE_PARAM_MAP = {
-    "nxos": "nexus",
-    "ios": "default",
-    "dellos10": "default",
-    "sros": "alu",
-    "ce": "huawei"
-}
-
 
 class Connection(NetworkConnectionBase):
     """NetConf connections"""
@@ -233,20 +214,24 @@ class Connection(NetworkConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
-        self._network_os = self._network_os or 'default'
+        # If network_os is not specified then set the network os to auto
+        # This will be used to trigger the the use of guess_network_os when connecting.
+        self._network_os = self._network_os or 'auto'
 
-        netconf = netconf_loader.get(self._network_os, self)
-        if netconf:
-            self._sub_plugin = {'type': 'netconf', 'name': self._network_os, 'obj': netconf}
-            self.queue_message('log', 'loaded netconf plugin for network_os %s' % self._network_os)
+        self.netconf = netconf_loader.get(self._network_os, self)
+        if self.netconf:
+            self._sub_plugin = {'type': 'netconf', 'name': self.netconf._load_name, 'obj': self.netconf}
+            self.queue_message('vvvv', 'loaded netconf plugin %s from path %s for network_os %s' %
+                               (self.netconf._load_name, self.netconf._original_path, self._network_os))
         else:
-            netconf = netconf_loader.get("default", self)
-            self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': netconf}
+            self.netconf = netconf_loader.get("default", self)
+            self._sub_plugin = {'type': 'netconf', 'name': 'default', 'obj': self.netconf}
             self.queue_message('display', 'unable to load netconf plugin for network_os %s, falling back to default plugin' % self._network_os)
-        self.queue_message('log', 'network_os is set to %s' % self._network_os)
 
+        self.queue_message('log', 'network_os is set to %s' % self._network_os)
         self._manager = None
         self.key_filename = None
+        self._ssh_config = None
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
         """Sends the request to the node and returns the reply
@@ -271,12 +256,14 @@ class Connection(NetworkConnectionBase):
         else:
             return super(Connection, self).exec_command(cmd, in_data, sudoable)
 
+    @property
+    @ensure_connect
+    def manager(self):
+        return self._manager
+
     def _connect(self):
         if not HAS_NCCLIENT:
-            raise AnsibleError(
-                'The required "ncclient" python library is required to use the netconf connection type: %s.\n'
-                'Please run pip install ncclient' % to_native(NCCLIENT_IMP_ERR)
-            )
+            raise AnsibleError("%s: %s" % (missing_required_lib("ncclient"), to_native(NCCLIENT_IMP_ERR)))
 
         self.queue_message('log', 'ssh connection done, starting ncclient')
 
@@ -289,25 +276,38 @@ class Connection(NetworkConnectionBase):
         if self.key_filename:
             self.key_filename = str(os.path.expanduser(self.key_filename))
 
-        if self._network_os == 'default':
+        self._ssh_config = self.get_option('netconf_ssh_config')
+        if self._ssh_config in BOOLEANS_TRUE:
+            self._ssh_config = True
+        elif self._ssh_config in BOOLEANS_FALSE:
+            self._ssh_config = None
+
+        # Try to guess the network_os if the network_os is set to auto
+        if self._network_os == 'auto':
             for cls in netconf_loader.all(class_only=True):
                 network_os = cls.guess_network_os(self)
                 if network_os:
-                    self.queue_message('log', 'discovered network_os %s' % network_os)
+                    self.queue_message('vvv', 'discovered network_os %s' % network_os)
                     self._network_os = network_os
 
-        device_params = {'name': NETWORK_OS_DEVICE_PARAM_MAP.get(self._network_os) or self._network_os}
+        # If we have tried to detect the network_os but were unable to i.e. network_os is still 'auto'
+        # then use default as the network_os
 
-        ssh_config = self.get_option('netconf_ssh_config')
-        if ssh_config in BOOLEANS_TRUE:
-            ssh_config = True
-        elif ssh_config in BOOLEANS_FALSE:
-            ssh_config = None
+        if self._network_os == 'auto':
+            # Network os not discovered. Set it to default
+            self.queue_message('vvv', 'Unable to discover network_os. Falling back to default.')
+            self._network_os = 'default'
+        try:
+            ncclient_device_handler = self.netconf.get_option('ncclient_device_handler')
+        except KeyError:
+            ncclient_device_handler = 'default'
+        self.queue_message('vvv', 'identified ncclient device handler: %s.' % ncclient_device_handler)
+        device_params = {'name': ncclient_device_handler}
 
         try:
             port = self._play_context.port or 830
-            self.queue_message('vvv', "ESTABLISH NETCONF SSH CONNECTION FOR USER: %s on PORT %s TO %s" %
-                               (self._play_context.remote_user, port, self._play_context.remote_addr))
+            self.queue_message('vvv', "ESTABLISH NETCONF SSH CONNECTION FOR USER: %s on PORT %s TO %s WITH SSH_CONFIG = %s" %
+                               (self._play_context.remote_user, port, self._play_context.remote_addr, self._ssh_config))
             self._manager = manager.connect(
                 host=self._play_context.remote_addr,
                 port=port,
@@ -319,8 +319,10 @@ class Connection(NetworkConnectionBase):
                 device_params=device_params,
                 allow_agent=self._play_context.allow_agent,
                 timeout=self.get_option('persistent_connect_timeout'),
-                ssh_config=ssh_config
+                ssh_config=self._ssh_config
             )
+
+            self._manager._timeout = self.get_option('persistent_command_timeout')
         except SSHUnknownHostError as exc:
             raise AnsibleConnectionFailure(to_native(exc))
         except ImportError as exc:

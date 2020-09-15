@@ -39,12 +39,14 @@ options:
 EXAMPLES = r"""
 - name: return skydive metdata if present based on Name
   set_fact:
-    skydive_meta: "{{ lookup('skydive', filter={'query': \"G.V().Has('Name', 'sumit-VirtualBox')\"}) }}"
+    skydive_meta: >-
+        {{ lookup('skydive', filter={'query': "G.V().Has('Name', 'sumit-VirtualBox')"}) }}
 
 - name: return all the skydive metdata having parameter Name
   set_fact:
-    skydive: "{{ lookup('skydive', filter={'query': \"G.V().Has('Name')\"},
-                            provider={'endpoint': 'localhost:8082', 'username': 'admin', 'password': 'password'}) }}"
+    skydive: >-
+        {{ lookup('skydive', filter={'query': "G.V().Has('Name')"},
+                      provider={'endpoint': 'localhost:8082', 'username': 'admin', 'password': 'password'}) }}
 """
 
 RETURN = """

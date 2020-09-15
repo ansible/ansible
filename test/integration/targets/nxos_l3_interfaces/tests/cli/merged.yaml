@@ -1,0 +1,62 @@
+---
+- debug:
+    msg: "Start nxos_l3_interfaces merged integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      default interface {{ test_int1 }}
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        interface {{ test_int1 }}
+          no switchport
+
+  - name: Merged
+    nxos_l3_interfaces: &merged
+      config:
+        - name: "{{ test_int1 }}"
+          ipv4:
+            - address: 192.168.10.2/24
+      state:  merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == true"
+        - "result.before|length == 0"
+        - "'interface {{ test_int1 }}' in result.commands"
+        - "'ip address 192.168.10.2/24' in result.commands"
+        - "result.commands|length == 2"
+
+  - name: Gather l3_interfaces facts
+    nxos_facts:
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: l3_interfaces
+
+  # The nxos_l3_interfaces module should never attempt to modify the mgmt interface ip.
+  # The module will still collect facts about the interface however so in this case
+  # the facts will contain all l3 enabled interfaces including mgmt) but the after state in
+  # result will only contain the modification
+  - assert:
+      that:
+        - "result.after|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
+
+  - name: Idempotence - Merged
+    nxos_l3_interfaces: *merged
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup

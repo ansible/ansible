@@ -162,6 +162,11 @@ options:
     type: list
     aliases:
       - storage_tag
+  is_customized:
+    description:
+      - Whether the offering is customizable or not.
+    type: bool
+    version_added: '2.8'
 extends_documentation_fragment: cloudstack
 '''
 
@@ -199,6 +204,16 @@ EXAMPLES = '''
     memory: 1024
     storage_type: shared
     is_volatile: yes
+    host_tags: eco
+    storage_tags: eco
+  delegate_to: localhost
+
+- name: Create or update a custom compute service offering
+  cs_service_offering:
+    name: custom
+    display_text: custom compute offer
+    is_customized: yes
+    storage_type: shared
     host_tags: eco
     storage_tags: eco
   delegate_to: localhost
@@ -362,6 +377,12 @@ network_rate:
   returned: success
   type: int
   sample: 1000
+is_customized:
+  description: Whether the offering is customizable or not
+  returned: success
+  type: bool
+  sample: false
+  version_added: '2.8'
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -470,7 +491,8 @@ class AnsibleCloudStackServiceOffering(AnsibleCloudStack):
             'storagetype': self.module.params.get('storage_type'),
             'systemvmtype': system_vm_type,
             'tags': self.module.params.get('storage_tags'),
-            'limitcpuuse': self.module.params.get('limit_cpu_usage')
+            'limitcpuuse': self.module.params.get('limit_cpu_usage'),
+            'customized': self.module.params.get('is_customized')
         }
         if not self.module.check_mode:
             res = self.query_api('createServiceOffering', **args)
@@ -536,6 +558,7 @@ def main():
         system_vm_type=dict(choices=['domainrouter', 'consoleproxy', 'secondarystoragevm']),
         storage_tags=dict(type='list', aliases=['storage_tag']),
         state=dict(choices=['present', 'absent'], default='present'),
+        is_customized=dict(type='bool'),
     ))
 
     module = AnsibleModule(

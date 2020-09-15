@@ -1,0 +1,58 @@
+# Copyright: (c) 2019, Hetzner Cloud GmbH <info@hetzner-cloud.de>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: test gather hcloud floating ip infos
+  hcloud_floating_ip_info:
+  register: hcloud_floating_ips
+- name: verify test gather hcloud floating ip infos in check mode
+  assert:
+    that:
+      - hcloud_floating_ips.hcloud_floating_ip_info| list | count == 1
+
+- name: test gather hcloud floating ip infos in check mode
+  hcloud_floating_ip_info:
+  check_mode: yes
+  register: hcloud_floating_ips
+
+- name: verify test gather hcloud floating ip infos in check mode
+  assert:
+    that:
+      - hcloud_floating_ips.hcloud_floating_ip_info| list | count == 1
+
+
+- name: test gather hcloud floating ip infos with correct label selector
+  hcloud_floating_ip_info:
+    label_selector: "key=value"
+  register: hcloud_floating_ips
+- name: verify test gather hcloud floating ip with correct label selector
+  assert:
+    that:
+      - hcloud_floating_ips.hcloud_floating_ip_info|selectattr('description','equalto','{{ hcloud_test_floating_ip_name }}') | list | count == 1
+
+- name: test gather hcloud floating ip infos with wrong label selector
+  hcloud_floating_ip_info:
+    label_selector: "key!=value"
+  register: hcloud_floating_ips
+- name: verify test gather hcloud floating ip with wrong label selector
+  assert:
+    that:
+      - hcloud_floating_ips.hcloud_floating_ip_info | list | count == 0
+
+- name: test gather hcloud floating ip infos with correct id
+  hcloud_floating_ip_info:
+    id: "{{hcloud_test_floating_ip_id}}"
+  register: hcloud_floating_ips
+- name: verify test gather hcloud floating ip with correct id
+  assert:
+    that:
+      - hcloud_floating_ips.hcloud_floating_ip_info|selectattr('description','equalto','{{ hcloud_test_floating_ip_name }}') | list | count == 1
+
+- name: test gather hcloud floating ip infos with wrong id
+  hcloud_floating_ip_info:
+      id: "{{hcloud_test_floating_ip_id}}1"
+  register: result
+  ignore_errors: yes
+- name: verify test gather hcloud floating ip with wrong id
+  assert:
+    that:
+      - result is failed

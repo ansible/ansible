@@ -26,9 +26,6 @@ description:
   together to produce a destination file.
 - Files are assembled in string sorting order.
 - Puppet calls this idea I(fragments).
-- This module is also supported for Windows targets.
-notes:
-- This module is also supported for Windows targets.
 version_added: '0.5'
 options:
   src:

@@ -1,0 +1,2 @@
+bugfixes:
+  - collection loader - fix file/module/class confusion issues on case-insensitive filesystems

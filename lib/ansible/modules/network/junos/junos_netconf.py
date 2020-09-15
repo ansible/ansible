@@ -81,7 +81,6 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import ConnectionError
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.junos.junos import junos_argument_spec, get_connection
-from ansible.module_utils.network.junos.junos import commit_configuration, discard_changes
 from ansible.module_utils.network.common.utils import to_list
 from ansible.module_utils.six import iteritems
 
@@ -149,18 +148,11 @@ def map_params_to_obj(module):
 def load_config(module, config, commit=False):
     conn = get_connection(module)
     try:
-        resp = conn.edit_config(to_list(config) + ['top'])
+        resp = conn.edit_config(to_list(config) + ['top'], commit)
     except ConnectionError as exc:
         module.fail_json(msg=to_text(exc, errors='surrogate_then_replace'))
 
     diff = resp.get('diff', '')
-    if diff:
-        if commit:
-            commit_configuration(module)
-
-        else:
-            discard_changes(module)
-
     return to_text(diff, errors='surrogate_then_replace').strip()
 
 

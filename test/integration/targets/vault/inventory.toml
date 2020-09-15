@@ -1,0 +1,5 @@
+[vauled_group.hosts]
+vaulted_host_toml={ ansible_host="localhost", ansible_connection="local" }
+
+[vauled_group.vars]
+hello="world"

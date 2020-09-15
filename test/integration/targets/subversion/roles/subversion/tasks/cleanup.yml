@@ -1,0 +1,8 @@
+---
+- name: stop apache after tests
+  shell: "kill -9 $(cat '{{ subversion_server_dir }}/apache.pid')"
+
+- name: remove tmp subversion server dir
+  file:
+    path: '{{ subversion_server_dir }}'
+    state: absent

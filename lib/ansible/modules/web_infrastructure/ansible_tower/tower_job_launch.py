@@ -58,6 +58,7 @@ extends_documentation_fragment: tower
 '''
 
 EXAMPLES = '''
+# Launch a job template
 - name: Launch a job
   tower_job_launch:
     job_template: "My Job Template"
@@ -65,7 +66,19 @@ EXAMPLES = '''
 
 - name: Wait for job max 120s
   tower_job_wait:
-    job_id: job.id
+    job_id: "{{ job.id }}"
+    timeout: 120
+
+# Launch job template with inventory and credential for prompt on launch
+- name: Launch a job with inventory and credential
+  tower_job_launch:
+    job_template: "My Job Template"
+    inventory: "My Inventory"
+    credential: "My Credential"
+  register: job
+- name: Wait for job max 120s
+  tower_job_wait:
+    job_id: "{{ job.id }}"
     timeout: 120
 '''
 
@@ -96,10 +109,10 @@ except ImportError:
 
 def main():
     argument_spec = dict(
-        job_template=dict(required=True),
+        job_template=dict(required=True, type='str'),
         job_type=dict(choices=['run', 'check', 'scan']),
-        inventory=dict(),
-        credential=dict(),
+        inventory=dict(type='str', default=None),
+        credential=dict(type='str', default=None),
         limit=dict(),
         tags=dict(type='list'),
         extra_vars=dict(type='list'),
@@ -126,8 +139,9 @@ def main():
             for field in lookup_fields:
                 try:
                     name = params.pop(field)
-                    result = tower_cli.get_resource(field).get(name=name)
-                    params[field] = result['id']
+                    if name:
+                        result = tower_cli.get_resource(field).get(name=name)
+                        params[field] = result['id']
                 except exc.NotFound as excinfo:
                     module.fail_json(msg='Unable to launch job, {0}/{1} was not found: {2}'.format(field, name, excinfo), changed=False)
 

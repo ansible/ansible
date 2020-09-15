@@ -136,7 +136,7 @@ EXAMPLES = '''
       - Ethernet2/3
       - Ethernet2/5
 
-- name: Check interfaces assigend to VRF
+- name: Check interfaces assigned to VRF
   nxos_vrf:
     name: test1
     associated_interfaces:
@@ -237,11 +237,13 @@ def map_obj_to_commands(updates, module):
         admin_state = w['admin_state']
         vni = w['vni']
         interfaces = w.get('interfaces') or []
-        state = w['state']
+        if purge:
+            state = "absent"
+        else:
+            state = w['state']
         del w['state']
 
         obj_in_have = search_obj_in_list(name, have)
-
         if state == 'absent' and obj_in_have:
             commands.append('no vrf context {0}'.format(name))
 
@@ -344,12 +346,14 @@ def map_obj_to_commands(updates, module):
 
 
 def validate_vrf(name, module):
-    if name == 'default':
-        module.fail_json(msg='cannot use default as name of a VRF')
-    elif len(name) > 32:
-        module.fail_json(msg='VRF name exceeded max length of 32', name=name)
-    else:
-        return name
+    if name:
+        name = name.strip()
+        if name == 'default':
+            module.fail_json(msg='cannot use default as name of a VRF')
+        elif len(name) > 32:
+            module.fail_json(msg='VRF name exceeded max length of 32', name=name)
+        else:
+            return name
 
 
 def map_params_to_obj(module):

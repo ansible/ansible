@@ -1,3 +1,0 @@
----
-bugfixes:
-  - influxdb_user - Fixed unhandled exception when using invalid login credentials (https://github.com/ansible/ansible/issues/50131)

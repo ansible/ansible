@@ -73,7 +73,7 @@ options:
     type: bool
   image:
     description:
-      - An image to use for the instance. The ec2_ami_facts module may be used to retrieve images.
+      - An image to use for the instance. The M(ec2_ami_info) module may be used to retrieve images.
         One of I(image) or I(image_id) are required when instance is not already present.
       - Complex object containing I(image.id), I(image.ramdisk), and I(image.kernel).
       - I(image.id) is the AMI ID.
@@ -477,18 +477,18 @@ instances:
                 groups:
                     description: One or more security groups.
                     returned: always
-                    type: complex
+                    type: list of complex
                     contains:
-                        - group_id:
-                              description: The ID of the security group.
-                              returned: always
-                              type: str
-                              sample: sg-abcdef12
-                          group_name:
-                              description: The name of the security group.
-                              returned: always
-                              type: str
-                              sample: mygroup
+                        group_id:
+                            description: The ID of the security group.
+                            returned: always
+                            type: str
+                            sample: sg-abcdef12
+                        group_name:
+                            description: The name of the security group.
+                            returned: always
+                            type: str
+                            sample: mygroup
                 ipv6_addresses:
                     description: One or more IPv6 addresses associated with the network interface.
                     returned: always
@@ -522,38 +522,38 @@ instances:
                 private_ip_addresses:
                     description: The private IPv4 addresses associated with the network interface.
                     returned: always
-                    type: complex
+                    type: list of complex
                     contains:
-                        - association:
-                              description: The association information for an Elastic IP address (IPv4) associated with the network interface.
-                              returned: always
-                              type: complex
-                              contains:
-                                  ip_owner_id:
-                                      description: The ID of the owner of the Elastic IP address.
-                                      returned: always
-                                      type: str
-                                      sample: amazon
-                                  public_dns_name:
-                                      description: The public DNS name.
-                                      returned: always
-                                      type: str
-                                      sample: ""
-                                  public_ip:
-                                      description: The public IP address or Elastic IP address bound to the network interface.
-                                      returned: always
-                                      type: str
-                                      sample: 1.2.3.4
-                          primary:
-                              description: Indicates whether this IPv4 address is the primary private IP address of the network interface.
-                              returned: always
-                              type: bool
-                              sample: true
-                          private_ip_address:
-                              description: The private IPv4 address of the network interface.
-                              returned: always
-                              type: str
-                              sample: 10.0.0.1
+                        association:
+                            description: The association information for an Elastic IP address (IPv4) associated with the network interface.
+                            returned: always
+                            type: complex
+                            contains:
+                                ip_owner_id:
+                                    description: The ID of the owner of the Elastic IP address.
+                                    returned: always
+                                    type: str
+                                    sample: amazon
+                                public_dns_name:
+                                    description: The public DNS name.
+                                    returned: always
+                                    type: str
+                                    sample: ""
+                                public_ip:
+                                    description: The public IP address or Elastic IP address bound to the network interface.
+                                    returned: always
+                                    type: str
+                                    sample: 1.2.3.4
+                        primary:
+                            description: Indicates whether this IPv4 address is the primary private IP address of the network interface.
+                            returned: always
+                            type: bool
+                            sample: true
+                        private_ip_address:
+                            description: The private IPv4 address of the network interface.
+                            returned: always
+                            type: str
+                            sample: 10.0.0.1
                 source_dest_check:
                     description: Indicates whether source/destination checking is enabled.
                     returned: always
@@ -607,18 +607,18 @@ instances:
         product_codes:
             description: One or more product codes.
             returned: always
-            type: complex
+            type: list of complex
             contains:
-                - product_code_id:
-                      description: The product code.
-                      returned: always
-                      type: str
-                      sample: aw0evgkw8ef3n2498gndfgasdfsd5cce
-                  product_code_type:
-                      description: The type of product code.
-                      returned: always
-                      type: str
-                      sample: marketplace
+                product_code_id:
+                    description: The product code.
+                    returned: always
+                    type: str
+                    sample: aw0evgkw8ef3n2498gndfgasdfsd5cce
+                product_code_type:
+                    description: The type of product code.
+                    returned: always
+                    type: str
+                    sample: marketplace
         public_dns_name:
             description: The public DNS name assigned to the instance.
             returned: always
@@ -642,18 +642,18 @@ instances:
         security_groups:
             description: One or more security groups for the instance.
             returned: always
-            type: complex
+            type: list of complex
             contains:
-                - group_id:
-                      description: The ID of the security group.
-                      returned: always
-                      type: str
-                      sample: sg-0123456
-                - group_name:
-                      description: The name of the security group.
-                      returned: always
-                      type: str
-                      sample: my-security-group
+                group_id:
+                    description: The ID of the security group.
+                    returned: always
+                    type: str
+                    sample: sg-0123456
+                group_name:
+                    description: The name of the security group.
+                    returned: always
+                    type: str
+                    sample: my-security-group
         network.source_dest_check:
             description: Indicates whether source/destination checking is enabled.
             returned: always
@@ -818,6 +818,11 @@ def manage_tags(match, new_tags, purge_tags, ec2):
 
 def build_volume_spec(params):
     volumes = params.get('volumes') or []
+    for volume in volumes:
+        if 'ebs' in volume:
+            for int_value in ['volume_size', 'iops']:
+                if int_value in volume['ebs']:
+                    volume['ebs'][int_value] = int(volume['ebs'][int_value])
     return [ec2_utils.snake_dict_to_camel_dict(v, capitalize_first=True) for v in volumes]
 
 
@@ -1126,9 +1131,6 @@ def build_top_level_options(params):
         spec.setdefault('Placement', {'GroupName': str(params.get('placement_group'))})
     if params.get('ebs_optimized') is not None:
         spec['EbsOptimized'] = params.get('ebs_optimized')
-    elif (params.get('network') or {}).get('ebs_optimized') is not None:
-        # Backward compatibility for workaround described in https://github.com/ansible/ansible/issues/48159
-        spec['EbsOptimized'] = params['network'].get('ebs_optimized')
     if params.get('instance_initiated_shutdown_behavior'):
         spec['InstanceInitiatedShutdownBehavior'] = params.get('instance_initiated_shutdown_behavior')
     if params.get('termination_protection') is not None:
@@ -1241,7 +1243,7 @@ def diff_instance_and_params(instance, params, ec2=None, skip=None):
 
     for mapping in param_mappings:
         if params.get(mapping.param_key) is not None and mapping.instance_key not in skip:
-            value = ec2.describe_instance_attribute(Attribute=mapping.attribute_name, InstanceId=id_)
+            value = AWSRetry.jittered_backoff()(ec2.describe_instance_attribute)(Attribute=mapping.attribute_name, InstanceId=id_)
             if params.get(mapping.param_key) is not None and value[mapping.instance_key]['Value'] != params.get(mapping.param_key):
                 arguments = dict(
                     InstanceId=instance['InstanceId'],
@@ -1292,7 +1294,7 @@ def find_instances(ec2, ids=None, filters=None):
     elif filters is None:
         module.fail_json(msg="No filters provided when they were required")
     elif filters is not None:
-        for key in filters.keys():
+        for key in list(filters.keys()):
             if not key.startswith("tag:"):
                 filters[key.replace("_", "-")] = filters.pop(key)
         return list(paginator.paginate(
@@ -1494,7 +1496,7 @@ def handle_existing(existing_matches, changed, ec2, state):
         )
     changes = diff_instance_and_params(existing_matches[0], module.params)
     for c in changes:
-        ec2.modify_instance_attribute(**c)
+        AWSRetry.jittered_backoff()(ec2.modify_instance_attribute)(**c)
     changed |= bool(changes)
     changed |= add_or_update_instance_profile(existing_matches[0], module.params.get('instance_role'))
     changed |= change_network_attachments(existing_matches[0], module.params, ec2)
@@ -1625,9 +1627,6 @@ def main():
     )
 
     if module.params.get('network'):
-        if 'ebs_optimized' in module.params['network']:
-            module.deprecate("network.ebs_optimized is deprecated."
-                             "Use the top level ebs_optimized parameter instead", 2.9)
         if module.params.get('network').get('interfaces'):
             if module.params.get('security_group'):
                 module.fail_json(msg="Parameter network.interfaces can't be used with security_group")
@@ -1686,7 +1685,11 @@ def main():
         for match in existing_matches:
             warn_if_public_ip_assignment_changed(match)
             warn_if_cpu_options_changed(match)
-            changed |= manage_tags(match, (module.params.get('tags') or {}), module.params.get('purge_tags', False), ec2)
+            tags = module.params.get('tags') or {}
+            name = module.params.get('name')
+            if name:
+                tags['Name'] = name
+            changed |= manage_tags(match, tags, module.params.get('purge_tags', False), ec2)
 
     if state in ('present', 'running', 'started'):
         ensure_present(existing_matches=existing_matches, changed=changed, ec2=ec2, state=state)

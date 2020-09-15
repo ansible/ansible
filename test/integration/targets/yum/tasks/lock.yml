@@ -1,0 +1,28 @@
+- block:
+  - name: Make sure testing package is not installed
+    yum:
+      name: sos
+      state: absent
+
+  - name: Create bogus lock file
+    copy:
+      content: bogus content for this lock file
+      dest: /var/run/yum.pid
+
+  - name: Install a package, lock file should be deleted by the module
+    yum:
+      name: sos
+      state: present
+    register: yum_result
+
+  - assert:
+      that:
+        - yum_result is success
+
+  always:
+    - name: Clean up
+      yum:
+        name: sos
+        state: absent
+
+  when: ansible_pkg_mgr == 'yum'

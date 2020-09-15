@@ -27,53 +27,75 @@ options:
     required: true
     description:
       - Category to execute on OOB controller
+    type: str
   command:
     required: true
     description:
       - List of commands to execute on OOB controller
+    type: list
   baseuri:
     required: true
     description:
       - Base URI of OOB controller
+    type: str
   username:
     required: true
     description:
       - User for authentication with OOB controller
+    type: str
     version_added: "2.8"
   password:
     required: true
     description:
       - Password for authentication with OOB controller
+    type: str
   id:
     required: false
     description:
       - ID of user to add/delete/modify
+    type: str
     version_added: "2.8"
   new_username:
     required: false
     description:
       - name of user to add/delete/modify
+    type: str
     version_added: "2.8"
   new_password:
     required: false
     description:
       - password of user to add/delete/modify
+    type: str
     version_added: "2.8"
   roleid:
     required: false
     description:
       - role of user to add/delete/modify
+    type: str
     version_added: "2.8"
   bootdevice:
     required: false
     description:
       - bootdevice when setting boot configuration
+    type: str
   timeout:
     description:
       - Timeout in seconds for URL requests to OOB controller
     default: 10
     type: int
     version_added: '2.8'
+  uefi_target:
+    required: false
+    description:
+      - UEFI target when bootdevice is "UefiTarget"
+    type: str
+    version_added: "2.9"
+  boot_next:
+    required: false
+    description:
+      - BootNext target when bootdevice is "UefiBootNext"
+    type: str
+    version_added: "2.9"
 
 author: "Jose Delarosa (@jose-delarosa)"
 '''
@@ -92,6 +114,26 @@ EXAMPLES = '''
       category: Systems
       command: SetOneTimeBoot
       bootdevice: "{{ bootdevice }}"
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Set one-time boot device to UefiTarget of "/0x31/0x33/0x01/0x01"
+    redfish_command:
+      category: Systems
+      command: SetOneTimeBoot
+      bootdevice: "UefiTarget"
+      uefi_target: "/0x31/0x33/0x01/0x01"
+      baseuri: "{{ baseuri }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+
+  - name: Set one-time boot device to BootNext target of "Boot0001"
+    redfish_command:
+      category: Systems
+      command: SetOneTimeBoot
+      bootdevice: "UefiBootNext"
+      boot_next: "Boot0001"
       baseuri: "{{ baseuri }}"
       username: "{{ username }}"
       password: "{{ password }}"
@@ -160,7 +202,7 @@ from ansible.module_utils._text import to_native
 
 # More will be added as module features are expanded
 CATEGORY_COMMANDS_ALL = {
-    "Systems": ["PowerOn", "PowerForceOff", "PowerGracefulRestart",
+    "Systems": ["PowerOn", "PowerForceOff", "PowerForceRestart", "PowerGracefulRestart",
                 "PowerGracefulShutdown", "PowerReboot", "SetOneTimeBoot"],
     "Chassis": ["IndicatorLedOn", "IndicatorLedOff", "IndicatorLedBlink"],
     "Accounts": ["AddUser", "EnableUser", "DeleteUser", "DisableUser",
@@ -183,7 +225,9 @@ def main():
             new_password=dict(no_log=True),
             roleid=dict(),
             bootdevice=dict(),
-            timeout=dict(type='int', default=10)
+            timeout=dict(type='int', default=10),
+            uefi_target=dict(),
+            boot_next=dict()
         ),
         supports_check_mode=False
     )
@@ -206,8 +250,7 @@ def main():
 
     # Build root URI
     root_uri = "https://" + module.params['baseuri']
-    rf_uri = "/redfish/v1/"
-    rf_utils = RedfishUtils(creds, root_uri, timeout)
+    rf_utils = RedfishUtils(creds, root_uri, timeout, module)
 
     # Check that Category is valid
     if category not in CATEGORY_COMMANDS_ALL:
@@ -231,7 +274,7 @@ def main():
         }
 
         # execute only if we find an Account service resource
-        result = rf_utils._find_accountservice_resource(rf_uri)
+        result = rf_utils._find_accountservice_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -240,7 +283,7 @@ def main():
 
     elif category == "Systems":
         # execute only if we find a System resource
-        result = rf_utils._find_systems_resource(rf_uri)
+        result = rf_utils._find_systems_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -248,10 +291,13 @@ def main():
             if "Power" in command:
                 result = rf_utils.manage_system_power(command)
             elif command == "SetOneTimeBoot":
-                result = rf_utils.set_one_time_boot_device(module.params['bootdevice'])
+                result = rf_utils.set_one_time_boot_device(
+                    module.params['bootdevice'],
+                    module.params['uefi_target'],
+                    module.params['boot_next'])
 
     elif category == "Chassis":
-        result = rf_utils._find_chassis_resource(rf_uri)
+        result = rf_utils._find_chassis_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -273,7 +319,7 @@ def main():
         }
 
         # execute only if we find a Manager service resource
-        result = rf_utils._find_managers_resource(rf_uri)
+        result = rf_utils._find_managers_resource()
         if result['ret'] is False:
             module.fail_json(msg=to_native(result['msg']))
 
@@ -283,7 +329,8 @@ def main():
     # Return data back or fail with proper message
     if result['ret'] is True:
         del result['ret']
-        module.exit_json(changed=True, msg='Action was successful')
+        changed = result.get('changed', True)
+        module.exit_json(changed=changed, msg='Action was successful')
     else:
         module.fail_json(msg=to_native(result['msg']))
 

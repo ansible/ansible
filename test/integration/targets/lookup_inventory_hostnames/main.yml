@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - set_fact:
+      hosts_a: "{{ lookup('inventory_hostnames', 'group01', wantlist=true) }}"
+
+  - set_fact:
+      hosts_b: "{{ groups['group01'] }}"
+
+  - assert:
+      that:
+        - hosts_a == hosts_b

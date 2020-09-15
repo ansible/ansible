@@ -1,2 +1,0 @@
-minor_changes:
-- win_security_policy - warn users to use win_user_right instead when editing ``Privilege Rights``

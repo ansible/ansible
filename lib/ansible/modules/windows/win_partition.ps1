@@ -219,10 +219,10 @@ if ($ansible_partition) {
     }
     else {
 
-        if ($null -ne $gpt_type -and $gpt_styles.$gpt_type -ne $partition.GptType) {
+        if ($null -ne $gpt_type -and $gpt_styles.$gpt_type -ne $ansible_partition.GptType) {
             $module.FailJson("gpt_type is not a valid parameter for existing partitions")
         }
-        if ($null -ne $mbr_type -and $mbr_styles.$mbr_type -ne $partition.MbrType) {
+        if ($null -ne $mbr_type -and $mbr_styles.$mbr_type -ne $ansible_partition.MbrType) {
             $module.FailJson("mbr_type is not a valid parameter for existing partitions")
         }
 

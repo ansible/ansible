@@ -1,0 +1,2 @@
+bugfixes:
+- "nxos_vlans -  Allow nxos_l2_interfaces to append the allowed vlans list"

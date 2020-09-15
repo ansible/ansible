@@ -1,2 +1,0 @@
-bugfixes:
-- "openssl_certificate - fix ``state=absent``."

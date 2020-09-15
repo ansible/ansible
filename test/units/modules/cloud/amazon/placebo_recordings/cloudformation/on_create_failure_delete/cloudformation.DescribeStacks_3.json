@@ -1,0 +1,52 @@
+{
+    "status_code": 200,
+    "data": {
+        "Stacks": [
+            {
+                "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/ansible-test-on-create-failure-delete/c74a4fc0-3a0e-11e9-9a48-067794494828",
+                "StackName": "ansible-test-on-create-failure-delete",
+                "CreationTime": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 37,
+                    "second": 55,
+                    "microsecond": 909000
+                },
+                "DeletionTime": {
+                    "__class__": "datetime",
+                    "year": 2019,
+                    "month": 2,
+                    "day": 26,
+                    "hour": 21,
+                    "minute": 38,
+                    "second": 2,
+                    "microsecond": 76000
+                },
+                "RollbackConfiguration": {},
+                "StackStatus": "DELETE_IN_PROGRESS",
+                "StackStatusReason": "The following resource(s) failed to create: [ECRRepo]. . Delete requested by user.",
+                "DisableRollback": false,
+                "NotificationARNs": [],
+                "Tags": [],
+                "EnableTerminationProtection": false,
+                "DriftInformation": {
+                    "StackDriftStatus": "NOT_CHECKED"
+                }
+            }
+        ],
+        "ResponseMetadata": {
+            "RequestId": "ce24289a-3a0e-11e9-b25f-d1217e6893bf",
+            "HTTPStatusCode": 200,
+            "HTTPHeaders": {
+                "x-amzn-requestid": "ce24289a-3a0e-11e9-b25f-d1217e6893bf",
+                "content-type": "text/xml",
+                "content-length": "1171",
+                "date": "Tue, 26 Feb 2019 21:38:06 GMT"
+            },
+            "RetryAttempts": 0
+        }
+    }
+}

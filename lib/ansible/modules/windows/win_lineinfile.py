@@ -31,11 +31,12 @@ options:
         so you can get the original file back if you somehow clobbered it incorrectly.
     type: bool
     default: no
-  regexp:
+  regex:
     description:
       - The regular expression to look for in every line of the file. For C(state=present), the pattern to replace if found; only the last line found
         will be replaced. For C(state=absent), the pattern of the line to remove. Uses .NET compatible regular expressions;
         see U(https://msdn.microsoft.com/en-us/library/hs600312%28v=vs.110%29.aspx).
+    aliases: [ "regexp" ]
   state:
     description:
       - Whether the line should be there or not.
@@ -117,28 +118,28 @@ EXAMPLES = r'''
 
 - win_lineinfile:
     path: C:\Temp\example.conf
-    regexp: '^name='
+    regex: '^name='
     line: 'name=JohnDoe'
 
 - win_lineinfile:
     path: C:\Temp\example.conf
-    regexp: '^name='
+    regex: '^name='
     state: absent
 
 - win_lineinfile:
     path: C:\Temp\example.conf
-    regexp: '^127\.0\.0\.1'
+    regex: '^127\.0\.0\.1'
     line: '127.0.0.1 localhost'
 
 - win_lineinfile:
     path: C:\Temp\httpd.conf
-    regexp: '^Listen '
+    regex: '^Listen '
     insertafter: '^#Listen '
     line: Listen 8080
 
 - win_lineinfile:
     path: C:\Temp\services
-    regexp: '^# port for http'
+    regex: '^# port for http'
     insertbefore: '^www.*80/tcp'
     line: '# port for http by default'
 
@@ -159,7 +160,7 @@ EXAMPLES = r'''
   win_lineinfile:
     path: C:\Temp\example.conf
     backrefs: yes
-    regexp: '(^name=)'
+    regex: '(^name=)'
     line: '$1JohnDoe'
 '''
 

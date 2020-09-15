@@ -151,7 +151,7 @@ class Infinity(object):
             params=None,
             payload_data=None):
         """
-        Perform the HTTPS request by using anible get/delete method
+        Perform the HTTPS request by using ansible get/delete method
         """
         stat_codes = [200] if stat_codes is None else stat_codes
         request_url = str(self.base_url) + str(resource_url)

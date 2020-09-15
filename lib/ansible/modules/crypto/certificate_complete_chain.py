@@ -49,6 +49,7 @@ options:
                certificates in PEM format."
             - "Symbolic links will be followed."
         type: list
+        elements: path
         required: yes
     intermediate_certificates:
         description:
@@ -61,6 +62,7 @@ options:
                certificates in PEM format."
             - "Symbolic links will be followed."
         type: list
+        elements: path
         default: []
 '''
 
@@ -112,12 +114,14 @@ chain:
         - "Returned as a list of PEM certificates."
     returned: success
     type: list
+    elements: str
 complete_chain:
     description:
         - "The completed chain, including leaf, all intermediates, and root."
         - "Returned as a list of PEM certificates."
     returned: success
     type: list
+    elements: str
 '''
 
 import os
@@ -141,7 +145,7 @@ try:
     from distutils.version import LooseVersion
     HAS_CRYPTOGRAPHY = (LooseVersion(cryptography.__version__) >= LooseVersion('1.5'))
     _cryptography_backend = cryptography.hazmat.backends.default_backend()
-except ImportError as e:
+except ImportError as dummy:
     CRYPTOGRAPHY_IMP_ERR = traceback.format_exc()
     HAS_CRYPTOGRAPHY = False
 
@@ -185,7 +189,7 @@ def is_parent(module, cert, potential_parent):
             module.warn('Unknown public key type "{0}"'.format(public_key))
             return False
         return True
-    except cryptography.exceptions.InvalidSignature as e:
+    except cryptography.exceptions.InvalidSignature as dummy:
         return False
     except Exception as e:
         module.fail_json(msg='Unknown error on signature validation: {0}'.format(e))
@@ -256,12 +260,13 @@ class CertificateSet(object):
         '''
         Load lists of PEM certificates from a file or a directory.
         '''
-        if os.path.isdir(path):
-            for dir, dummy, files in os.walk(path, followlinks=True):
+        b_path = to_bytes(path, errors='surrogate_or_strict')
+        if os.path.isdir(b_path):
+            for directory, dummy, files in os.walk(b_path, followlinks=True):
                 for file in files:
-                    self._load_file(os.path.join(dir, file))
+                    self._load_file(os.path.join(directory, file))
         else:
-            self._load_file(path)
+            self._load_file(b_path)
 
     def find_parent(self, cert):
         '''
@@ -309,12 +314,12 @@ def main():
     # Load intermediate certificates
     intermediates = CertificateSet(module)
     for path in module.params['intermediate_certificates']:
-        intermediates.load(os.path.expanduser(os.path.expandvars(path)))
+        intermediates.load(path)
 
     # Load root certificates
     roots = CertificateSet(module)
     for path in module.params['root_certificates']:
-        roots.load(os.path.expanduser(os.path.expandvars(path)))
+        roots.load(path)
 
     # Try to complete chain
     current = chain[-1]

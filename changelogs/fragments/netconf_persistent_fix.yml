@@ -1,0 +1,2 @@
+bugfixes:
+- netconf_rpc module does not work with nxos (https://github.com/ansible/ansible/issues/63255).

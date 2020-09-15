@@ -37,8 +37,8 @@ options:
             - "ID of the Virtual Machine to manage. Either C(vm_id) or C(vm_name) is required if C(state) is I(attached) or I(detached)."
     state:
         description:
-            - "Should the Virtual Machine disk be present/absent/attached/detached."
-        choices: ['present', 'absent', 'attached', 'detached']
+            - "Should the Virtual Machine disk be present/absent/attached/detached/exported."
+        choices: ['present', 'absent', 'attached', 'detached', 'exported']
         default: 'present'
     download_image_path:
         description:
@@ -51,6 +51,7 @@ options:
     upload_image_path:
         description:
             - "Path to disk image, which should be uploaded."
+            - "Note if C(size) is not specified the size of the disk will be determined by the size of the specified image."
             - "Note that currently we support only compatibility version 0.10 of the qcow disk."
             - "Note that you must have an valid oVirt/RHV engine CA in your system trust store
                or you must provide it in C(ca_file) parameter."
@@ -58,6 +59,7 @@ options:
                if you want to upload the disk even if the disk with C(id) or C(name) exists,
                then please use C(force) I(true). If you will use C(force) I(false), which
                is default, then the disk image won't be uploaded."
+            - "Note that to upload iso the C(format) should be 'raw'"
         version_added: "2.3"
     size:
         description:
@@ -69,16 +71,17 @@ options:
             - "Driver of the storage interface."
             - "It's required parameter when creating the new disk."
         choices: ['virtio', 'ide', 'virtio_scsi']
-        default: 'virtio'
     format:
         description:
             - Specify format of the disk.
             - Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
+        default: 'cow'
         choices: ['raw', 'cow']
     content_type:
         description:
-            - Specify if the disk is a data disk or ISO image
-        choices: ['data', 'iso']
+            - Specify if the disk is a data disk or ISO image or a one of a the Hosted Engine disk types
+            - The Hosted Engine disk content types are available with Engine 4.3+ and Ansible 2.8
+        choices: ['data', 'iso', 'hosted_engine', 'hosted_engine_sanlock', 'hosted_engine_metadata', 'hosted_engine_configuration']
         default: 'data'
         version_added: "2.8"
     sparse:
@@ -91,7 +94,7 @@ options:
             - Note that this option isn't idempotent as it's not currently possible to change sparseness of the disk via API.
     storage_domain:
         description:
-            - "Storage domain name where disk should be created. By default storage is chosen by oVirt/RHV engine."
+            - "Storage domain name where disk should be created."
     storage_domains:
         description:
             - "Storage domain names where disk should be copied."
@@ -119,6 +122,7 @@ options:
         description:
             - "I(True) if the disk should be bootable. By default when disk is created it isn't bootable."
         type: bool
+        default: 'no'
     shareable:
         description:
             - "I(True) if the disk should be shareable. By default when disk is created it isn't shareable."
@@ -126,13 +130,28 @@ options:
     logical_unit:
         description:
             - "Dictionary which describes LUN to be directly attached to VM:"
-            - "C(address) - Address of the storage server. Used by iSCSI."
-            - "C(port) - Port of the storage server. Used by iSCSI."
-            - "C(target) - iSCSI target."
-            - "C(lun_id) - LUN id."
-            - "C(username) - CHAP Username to be used to access storage server. Used by iSCSI."
-            - "C(password) - CHAP Password of the user to be used to access storage server. Used by iSCSI."
-            - "C(storage_type) - Storage type either I(fcp) or I(iscsi)."
+        suboptions:
+            address:
+                description:
+                    - Address of the storage server. Used by iSCSI.
+            port:
+                description:
+                    - Port of the storage server. Used by iSCSI.
+            target:
+                description:
+                    - iSCSI target.
+            lun_id:
+                description:
+                    - LUN id.
+            username:
+                description:
+                    - CHAP Username to be used to access storage server. Used by iSCSI.
+            password:
+                description:
+                    - CHAP Password of the user to be used to access storage server. Used by iSCSI.
+            storage_type:
+                description:
+                    - Storage type either I(fcp) or I(iscsi).
     sparsify:
         description:
             - "I(True) if the disk should be sparsified."
@@ -174,6 +193,7 @@ options:
     activate:
         description:
             - I(True) if the disk should be activated.
+            - When creating disk of virtual machine it is set to I(True).
         version_added: "2.8"
         type: bool
 extends_documentation_fragment: ovirt
@@ -237,22 +257,23 @@ EXAMPLES = '''
 
 # Export disk as image to Glance domain
 # Since Ansible 2.4
-- ovirt_disks:
+- ovirt_disk:
     id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
     image_provider: myglance
     state: exported
 
 # Defining a specific quota while creating a disk image:
 # Since Ansible 2.5
-- ovirt_quotas_facts:
+- ovirt_quotas_info:
     data_center: Default
     name: myquota
+  register: quota
 - ovirt_disk:
     name: mydisk
     size: 10GiB
     storage_domain: data
     description: somedescriptionhere
-    quota_id: "{{ ovirt_quotas[0]['id'] }}"
+    quota_id: "{{ quota.ovirt_quotas[0]['id'] }}"
 
 # Upload an ISO image
 # Since Ansible 2.8
@@ -265,6 +286,15 @@ EXAMPLES = '''
      bootable: true
      format: raw
      content_type: iso
+
+# Add fiber chanel disk
+- name: Create disk
+  ovirt_disk:
+    name: fcp_disk
+    host: my_host
+    logical_unit:
+        id: 3600a09803830447a4f244c4657597777
+        storage_type: fcp
 '''
 
 
@@ -315,6 +345,25 @@ from ansible.module_utils.ovirt import (
 )
 
 
+def create_transfer_connection(module, transfer, context, connect_timeout=10, read_timeout=60):
+    url = urlparse(transfer.transfer_url)
+    connection = HTTPSConnection(
+        url.netloc, context=context, timeout=connect_timeout)
+    try:
+        connection.connect()
+    except OSError as e:
+        # Typically ConnectionRefusedError or socket.gaierror.
+        module.warn("Cannot connect to %s, trying %s: %s" % (transfer.transfer_url, transfer.proxy_url, e))
+
+        url = urlparse(transfer.proxy_url)
+        connection = HTTPSConnection(
+            url.netloc, context=context, timeout=connect_timeout)
+        connection.connect()
+
+    connection.sock.settimeout(read_timeout)
+    return connection, url
+
+
 def _search_by_lun(disks_service, lun_id):
     """
     Find disk by LUN ID.
@@ -346,7 +395,6 @@ def transfer(connection, module, direction, transfer_func):
             time.sleep(module.params['poll_interval'])
             transfer = transfer_service.get()
 
-        proxy_url = urlparse(transfer.proxy_url)
         context = ssl.create_default_context()
         auth = module.params['auth']
         if auth.get('insecure'):
@@ -355,17 +403,11 @@ def transfer(connection, module, direction, transfer_func):
         elif auth.get('ca_file'):
             context.load_verify_locations(cafile=auth.get('ca_file'))
 
-        proxy_connection = HTTPSConnection(
-            proxy_url.hostname,
-            proxy_url.port,
-            context=context,
-        )
-
+        transfer_connection, transfer_url = create_transfer_connection(module, transfer, context)
         transfer_func(
             transfer_service,
-            proxy_connection,
-            proxy_url,
-            transfer.signed_ticket
+            transfer_connection,
+            transfer_url,
         )
         return True
     finally:
@@ -385,7 +427,7 @@ def transfer(connection, module, direction, transfer_func):
             raise Exception(
                 "Error occurred while uploading image. The transfer is in %s" % transfer.phase
             )
-        if module.params.get('logical_unit'):
+        if not module.params.get('logical_unit'):
             disks_service = connection.system_service().disks_service()
             wait(
                 service=disks_service.service(module.params['id']),
@@ -396,17 +438,10 @@ def transfer(connection, module, direction, transfer_func):
 
 
 def download_disk_image(connection, module):
-    def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
+    def _transfer(transfer_service, transfer_connection, transfer_url):
         BUF_SIZE = 128 * 1024
-        transfer_headers = {
-            'Authorization': transfer_ticket,
-        }
-        proxy_connection.request(
-            'GET',
-            proxy_url.path,
-            headers=transfer_headers,
-        )
-        r = proxy_connection.getresponse()
+        transfer_connection.request('GET', transfer_url.path)
+        r = transfer_connection.getresponse()
         path = module.params["download_image_path"]
         image_size = int(r.getheader('Content-Length'))
         with open(path, "wb") as mydisk:
@@ -428,14 +463,14 @@ def download_disk_image(connection, module):
 
 
 def upload_disk_image(connection, module):
-    def _transfer(transfer_service, proxy_connection, proxy_url, transfer_ticket):
+    def _transfer(transfer_service, transfer_connection, transfer_url):
         BUF_SIZE = 128 * 1024
         path = module.params['upload_image_path']
 
         image_size = os.path.getsize(path)
-        proxy_connection.putrequest("PUT", proxy_url.path)
-        proxy_connection.putheader('Content-Length', "%d" % (image_size,))
-        proxy_connection.endheaders()
+        transfer_connection.putrequest("PUT", transfer_url.path)
+        transfer_connection.putheader('Content-Length', "%d" % (image_size,))
+        transfer_connection.endheaders()
         with open(path, "rb") as disk:
             pos = 0
             while pos < image_size:
@@ -444,7 +479,7 @@ def upload_disk_image(connection, module):
                 if not chunk:
                     transfer_service.pause()
                     raise RuntimeError("Unexpected end of file at pos=%d" % pos)
-                proxy_connection.send(chunk)
+                transfer_connection.send(chunk)
                 pos += len(chunk)
 
     return transfer(
@@ -458,7 +493,11 @@ def upload_disk_image(connection, module):
 class DisksModule(BaseModule):
 
     def build_entity(self):
+        hosts_service = self._connection.system_service().hosts_service()
         logical_unit = self._module.params.get('logical_unit')
+        size = convert_to_bytes(self._module.params.get('size'))
+        if not size and self._module.params.get('upload_image_path'):
+            size = os.path.getsize(self._module.params.get('upload_image_path'))
         disk = otypes.Disk(
             id=self._module.params.get('id'),
             name=self._module.params.get('name'),
@@ -477,9 +516,7 @@ class DisksModule(BaseModule):
             openstack_volume_type=otypes.OpenStackVolumeType(
                 name=self.param('openstack_volume_type')
             ) if self.param('openstack_volume_type') else None,
-            provisioned_size=convert_to_bytes(
-                self._module.params.get('size')
-            ),
+            provisioned_size=size,
             storage_domains=[
                 otypes.StorageDomain(
                     name=self._module.params.get('storage_domain'),
@@ -489,6 +526,9 @@ class DisksModule(BaseModule):
             shareable=self._module.params.get('shareable'),
             wipe_after_delete=self.param('wipe_after_delete'),
             lun_storage=otypes.HostStorage(
+                host=otypes.Host(
+                    id=get_id_by_name(hosts_service, self._module.params.get('host'))
+                ) if self.param('host') else None,
                 type=otypes.StorageType(
                     logical_unit.get('storage_type', 'iscsi')
                 ),
@@ -505,9 +545,7 @@ class DisksModule(BaseModule):
             ) if logical_unit else None,
         )
         if hasattr(disk, 'initial_size') and self._module.params['upload_image_path']:
-            disk.initial_size = convert_to_bytes(
-                self._module.params.get('size')
-            )
+            disk.initial_size = size
 
         return disk
 
@@ -596,6 +634,23 @@ def searchable_attributes(module):
     return dict((k, v) for k, v in attributes.items() if v is not None)
 
 
+def get_vm_service(connection, module):
+    if module.params.get('vm_id') is not None or module.params.get('vm_name') is not None and module.params['state'] != 'absent':
+        vms_service = connection.system_service().vms_service()
+
+        # If `vm_id` isn't specified, find VM by name:
+        vm_id = module.params['vm_id']
+        if vm_id is None:
+            vm_id = get_id_by_name(vms_service, module.params['vm_name'])
+
+        if vm_id is None:
+            module.fail_json(
+                msg="VM don't exists, please create it first."
+            )
+
+        return vms_service.vm_service(vm_id)
+
+
 def main():
     argument_spec = ovirt_full_argument_spec(
         state=dict(
@@ -614,7 +669,10 @@ def main():
         profile=dict(default=None),
         quota_id=dict(default=None),
         format=dict(default='cow', choices=['raw', 'cow']),
-        content_type=dict(default='data', choices=['data', 'iso']),
+        content_type=dict(
+            default='data',
+            choices=['data', 'iso', 'hosted_engine', 'hosted_engine_sanlock', 'hosted_engine_metadata', 'hosted_engine_configuration']
+        ),
         sparse=dict(default=None, type='bool'),
         bootable=dict(default=None, type='bool'),
         shareable=dict(default=None, type='bool'),
@@ -659,26 +717,40 @@ def main():
             service=disks_service,
         )
 
+        force_create = False
+        vm_service = get_vm_service(connection, module)
         if lun:
             disk = _search_by_lun(disks_service, lun.get('id'))
+        else:
+            disk = disks_module.search_entity(search_params=searchable_attributes(module))
+            if vm_service and disk:
+                # If the VM don't exist in VMs disks, but still it's found it means it was found
+                # for template with same name as VM, so we should force create the VM disk.
+                force_create = disk.id not in [a.disk.id for a in vm_service.disk_attachments_service().list() if a.disk]
 
         ret = None
         # First take care of creating the VM, if needed:
         if state in ('present', 'detached', 'attached'):
+            # Always activate disk when its being created
+            if vm_service is not None and disk is None:
+                module.params['activate'] = module.params['activate'] is None or module.params['activate']
             ret = disks_module.create(
-                entity=disk,
-                search_params=searchable_attributes(module),
+                entity=disk if not force_create else None,
                 result_state=otypes.DiskStatus.OK if lun is None else None,
                 fail_condition=lambda d: d.status == otypes.DiskStatus.ILLEGAL if lun is None else False,
+                force_create=force_create,
+                _wait=True if module.params['upload_image_path'] else module.params['wait'],
             )
             is_new_disk = ret['changed']
             ret['changed'] = ret['changed'] or disks_module.update_storage_domains(ret['id'])
             # We need to pass ID to the module, so in case we want detach/attach disk
             # we have this ID specified to attach/detach method:
-            module.params['id'] = ret['id'] if disk is None else disk.id
+            module.params['id'] = ret['id']
 
             # Upload disk image in case it's new disk or force parameter is passed:
             if module.params['upload_image_path'] and (is_new_disk or module.params['force']):
+                if module.params['format'] == 'cow' and module.params['content_type'] == 'iso':
+                    module.warn("To upload an ISO image 'format' parameter needs to be set to 'raw'.")
                 uploaded = upload_disk_image(connection, module)
                 ret['changed'] = ret['changed'] or uploaded
             # Download disk image in case it's file don't exist or force parameter is passed:
@@ -717,20 +789,8 @@ def main():
             ret = disks_module.remove()
 
         # If VM was passed attach/detach disks to/from the VM:
-        if module.params.get('vm_id') is not None or module.params.get('vm_name') is not None and state != 'absent':
-            vms_service = connection.system_service().vms_service()
-
-            # If `vm_id` isn't specified, find VM by name:
-            vm_id = module.params['vm_id']
-            if vm_id is None:
-                vm_id = getattr(search_by_name(vms_service, module.params['vm_name']), 'id', None)
-
-            if vm_id is None:
-                module.fail_json(
-                    msg="VM don't exists, please create it first."
-                )
-
-            disk_attachments_service = vms_service.vm_service(vm_id).disk_attachments_service()
+        if vm_service:
+            disk_attachments_service = vm_service.disk_attachments_service()
             disk_attachments_module = DiskAttachmentsModule(
                 connection=connection,
                 module=module,

@@ -150,7 +150,7 @@ EXAMPLES = '''
     state: present
 
 # add a user 'oplog_reader' with read only access to the 'local' database on the replica_set 'belcher'. This is useful for oplog access (MONGO_OPLOG_URL).
-# please notice the credentials must be added to the 'admin' database because the 'local' database is not syncronized and can't receive user credentials
+# please notice the credentials must be added to the 'admin' database because the 'local' database is not synchronized and can't receive user credentials
 # To login with such user, the connection string should be MONGO_OPLOG_URL="mongodb://oplog_reader:oplog_reader_password@server1,server2/local?authSource=admin"
 # This syntax requires mongodb 2.6+ and pymongo 2.5+
 - mongodb_user:

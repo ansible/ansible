@@ -96,7 +96,7 @@ class IPAClient(object):
                 if status_code not in [200, 201, 204]:
                     self._fail('login', info['msg'])
 
-                self.headers = {'Cookie': resp.info().get('Set-Cookie')}
+                self.headers = {'Cookie': info.get('set-cookie')}
             except Exception as e:
                 self._fail('login', to_native(e))
         if not self.headers:
@@ -156,7 +156,7 @@ class IPAClient(object):
                 charset = response_charset
             else:
                 charset = 'latin-1'
-        resp = json.loads(to_text(resp.read(), encoding=charset), encoding=charset)
+        resp = json.loads(to_text(resp.read(), encoding=charset))
         err = resp.get('error')
         if err is not None:
             self._fail('response %s' % method, err)

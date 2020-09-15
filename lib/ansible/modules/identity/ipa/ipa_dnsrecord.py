@@ -57,6 +57,7 @@ options:
     - Set the TTL for the record.
     - Applies only when adding a new or changing the value of record_value.
     version_added: "2.7"
+    required: false
   state:
     description: State to ensure
     required: false
@@ -249,6 +250,10 @@ def ensure(module, client):
         record_ttl=to_native(record_ttl, nonstring='passthru'),
     )
 
+    # ttl is not required to change records
+    if module_dnsrecord['record_ttl'] is None:
+        module_dnsrecord.pop('record_ttl')
+
     changed = False
     if state == 'present':
         if not ipa_dnsrecord:
@@ -285,7 +290,7 @@ def main():
         record_type=dict(type='str', default='A', choices=record_types),
         record_value=dict(type='str', required=True),
         state=dict(type='str', default='present', choices=['present', 'absent']),
-        record_ttl=dict(type='int'),
+        record_ttl=dict(type='int', required=False),
     )
 
     module = AnsibleModule(

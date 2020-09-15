@@ -1,0 +1,2 @@
+bugfixes:
+  - 'user - do not warn when using ``local: yes`` if user already exists (https://github.com/ansible/ansible/issues/58063)'

@@ -1,0 +1,2 @@
+bugfixes:
+  - machinectl become plugin - correct bugs which induced errors on plugin usage

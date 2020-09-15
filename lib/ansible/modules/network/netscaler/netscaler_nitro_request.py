@@ -241,7 +241,7 @@ EXAMPLES = '''
 
 RETURN = '''
 nitro_errorcode:
-    description: A numeric value containing the return code of the NITRO operation. When 0 the operation is succesful. Any non zero value indicates an error.
+    description: A numeric value containing the return code of the NITRO operation. When 0 the operation is successful. Any non zero value indicates an error.
     returned: always
     type: int
     sample: 0
@@ -285,7 +285,7 @@ nitro_object:
             state: "ENABLED"
 
 nitro_auth_token:
-    description: The token returned by the C(mas_login) operation when succesful.
+    description: The token returned by the C(mas_login) operation when successful.
     returned: when applicable
     type: str
     sample: "##E8D7D74DDBD907EE579E8BB8FF4529655F22227C1C82A34BFC93C9539D66"

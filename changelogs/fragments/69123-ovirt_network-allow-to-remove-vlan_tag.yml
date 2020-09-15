@@ -1,0 +1,2 @@
+bugfixes:
+  - "ovirt_network: allow to remove vlan_tag"

@@ -1,0 +1,2 @@
+bugfixes:
+- "fixed issues when using net_get & net_put before the persistent connection has been started"

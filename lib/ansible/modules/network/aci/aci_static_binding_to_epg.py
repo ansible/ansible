@@ -56,7 +56,7 @@ options:
     aliases: [ primary_vlan, primary_vlan_id ]
   deploy_immediacy:
     description:
-    - The Deployement Immediacy of Static EPG on PC, VPC or Interface.
+    - The Deployment Immediacy of Static EPG on PC, VPC or Interface.
     - The APIC defaults to C(lazy) when unset during creation.
     type: str
     choices: [ immediate, lazy ]
@@ -72,7 +72,7 @@ options:
     aliases: [ interface_mode_name, mode ]
   interface_type:
     description:
-    - The type of interface for the static EPG deployement.
+    - The type of interface for the static EPG deployment.
     type: str
     choices: [ fex, port_channel, switch_port, vpc ]
     default: switch_port

@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_file_copy call get_capabilities to initiate device connection (https://github.com/ansible/ansible/pull/62103).

@@ -149,6 +149,7 @@ from ansible.errors import (
     AnsibleError,
     AnsibleFileNotFound,
 )
+from ansible.module_utils.compat.paramiko import PARAMIKO_IMPORT_ERR, paramiko
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import input
 from ansible.plugins.connection import ConnectionBase
@@ -167,17 +168,6 @@ Are you sure you want to continue connecting (yes/no)?
 
 # SSH Options Regex
 SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
-
-# prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
-HAVE_PARAMIKO = False
-PARAMIKO_IMP_ERR = None
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    try:
-        import paramiko
-        HAVE_PARAMIKO = True
-    except (ImportError, AttributeError) as err:  # paramiko and gssapi are incompatible and raise AttributeError not ImportError
-        PARAMIKO_IMP_ERR = err
 
 
 class MyAddPolicy(object):
@@ -307,8 +297,8 @@ class Connection(ConnectionBase):
     def _connect_uncached(self):
         ''' activates the connection object '''
 
-        if not HAVE_PARAMIKO:
-            raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMP_ERR))
+        if paramiko is None:
+            raise AnsibleError("paramiko is not installed: %s" % to_native(PARAMIKO_IMPORT_ERR))
 
         port = self._play_context.port or 22
         display.vvv("ESTABLISH PARAMIKO SSH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr),
@@ -364,7 +354,7 @@ class Connection(ConnectionBase):
         except paramiko.ssh_exception.BadHostKeyException as e:
             raise AnsibleConnectionFailure('host key mismatch for %s' % e.hostname)
         except paramiko.ssh_exception.AuthenticationException as e:
-            msg = 'Invalid/incorrect username/password. {0}'.format(to_text(e))
+            msg = 'Failed to authenticate: {0}'.format(to_text(e))
             raise AnsibleAuthenticationFailure(msg)
         except Exception as e:
             msg = to_text(e)
@@ -425,7 +415,9 @@ class Connection(ConnectionBase):
                     display.debug("chunk is: %s" % chunk)
                     if not chunk:
                         if b'unknown user' in become_output:
-                            raise AnsibleError('user %s does not exist' % self._play_context.become_user)
+                            n_become_user = to_native(self.become.get_option('become_user',
+                                                                             playcontext=self._play_context))
+                            raise AnsibleError('user %s does not exist' % n_become_user)
                         else:
                             break
                             # raise AnsibleError('ssh connection closed waiting for password prompt')
@@ -442,8 +434,9 @@ class Connection(ConnectionBase):
                             break
 
                 if passprompt:
-                    if self._play_context.become and self._play_context.become_pass:
-                        chan.sendall(to_bytes(self._play_context.become_pass) + b'\n')
+                    if self.become:
+                        become_pass = self.become.get_option('become_pass', playcontext=self._play_context)
+                        chan.sendall(to_bytes(become_pass, errors='surrogate_or_strict') + b'\n')
                     else:
                         raise AnsibleError("A password is required but none was supplied")
                 else:

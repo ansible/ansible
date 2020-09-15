@@ -264,7 +264,6 @@ def sshkey_fingerprint(sshkey):
 
 def map_obj_to_commands(updates, module):
     commands = list()
-    state = module.params['state']
     update_password = module.params['update_password']
     password_type = module.params['password_type']
 

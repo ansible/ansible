@@ -17,7 +17,6 @@ if sys.version_info < (2, 7):
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigiq_application_fasthttp import ApiParameters
     from library.modules.bigiq_application_fasthttp import ModuleParameters
     from library.modules.bigiq_application_fasthttp import ModuleManager
     from library.modules.bigiq_application_fasthttp import ArgumentSpec
@@ -30,7 +29,6 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    from ansible.modules.network.f5.bigiq_application_fasthttp import ApiParameters
     from ansible.modules.network.f5.bigiq_application_fasthttp import ModuleParameters
     from ansible.modules.network.f5.bigiq_application_fasthttp import ModuleManager
     from ansible.modules.network.f5.bigiq_application_fasthttp import ArgumentSpec

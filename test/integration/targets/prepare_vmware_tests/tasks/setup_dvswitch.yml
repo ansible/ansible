@@ -1,0 +1,27 @@
+---
+- name: Create the DVSwitch
+  vmware_dvswitch:
+    validate_certs: no
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter_name: '{{ dc1 }}'
+    switch_name: '{{ dvswitch1 }}'
+    switch_version: 6.0.0
+    mtu: 9000
+    uplink_quantity: 2
+    discovery_proto: lldp
+    discovery_operation: both
+    state: present
+- name: Attach the hosts to the DVSwitch
+  vmware_dvs_host:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    esxi_hostname: "{{ item }}"
+    switch_name: '{{ dvswitch1 }}'
+    vmnics:
+      - vmnic1
+    state: present
+  with_items: "{{ esxi_hosts }}"
+  when: setup_attach_host is defined

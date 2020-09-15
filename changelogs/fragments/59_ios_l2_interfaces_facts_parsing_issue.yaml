@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - To fix ios_l2_interfaces facts parsing issue (https://github.com/ansible-collections/cisco.ios/pull/59)

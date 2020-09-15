@@ -1,0 +1,2 @@
+bugfixes:
+  - postgresql_idx - remove ``__exec_sql`` method and use ``module_utils.postgres.exec_sql`` instead (https://github.com/ansible/ansible/pull/57684)

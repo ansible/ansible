@@ -1,0 +1,2 @@
+bugfixes:
+  - nmcli - fixed regression caused by commit b7724fd, github issue #36615 (https://github.com/ansible/ansible/issues/36615)

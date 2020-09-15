@@ -1,0 +1,202 @@
+---
+- name: 'Create disk image'
+  command: >
+    dd if=/dev/zero of={{ remote_tmp_dir }}/img-pquota bs=1M count=20
+
+- name: 'Create XFS filesystem'
+  filesystem:
+    dev: '{{ remote_tmp_dir }}/img-pquota'
+    fstype: xfs
+
+- name: Create xfs related files
+  file:
+    path:  '/etc/{{ item }}'
+    state: touch
+  become: True
+  loop:
+    - 'projid'
+    - 'projects'
+
+- name: 'Add test xfs quota project id'
+  lineinfile:
+    path: /etc/projid
+    line: 'xft_quotaval:99999'
+    state: present
+  become: True
+
+- name: 'Add test xfs quota project path'
+  lineinfile:
+    path: /etc/projects
+    line: '99999:{{ remote_tmp_dir }}/pquota/test'
+    state: present
+  become: True
+
+- block:
+    - name: 'Mount filesystem'
+      mount:
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        src: '{{ remote_tmp_dir }}/img-pquota'
+        path: '{{ remote_tmp_dir }}/pquota'
+        fstype: xfs
+        opts: pquota
+        state: mounted
+      become: True
+
+    - name: 'Create test directory'
+      file:
+        path: '{{ remote_tmp_dir }}/pquota/test'
+        state: directory
+      become: True
+
+
+    - name: 'Apply default project limits'
+      xfs_quota:
+        bsoft: '{{ pquota_default_bsoft }}'
+        bhard: '{{ pquota_default_bhard }}'
+        isoft: '{{ pquota_default_isoft }}'
+        ihard: '{{ pquota_default_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
+        rtbsoft: '{{ pquota_default_rtbsoft }}'
+        rtbhard: '{{ pquota_default_rtbhard }}'
+        type: project 
+      become: True
+      register: test_pquota_default_before
+
+    - name: Assert default project limits results
+      assert:
+        that:
+          - test_pquota_default_before.changed
+          - test_pquota_default_before.bsoft == pquota_default_bsoft|human_to_bytes
+          - test_pquota_default_before.bhard == pquota_default_bhard|human_to_bytes
+          - test_pquota_default_before.isoft == pquota_default_isoft
+          - test_pquota_default_before.ihard == pquota_default_ihard
+          - test_pquota_default_before.rtbsoft == pquota_default_rtbsoft|human_to_bytes
+          - test_pquota_default_before.rtbhard == pquota_default_rtbhard|human_to_bytes
+
+    - name: 'Apply project limits'
+      xfs_quota:
+        bsoft: '{{ pquota_project_bsoft }}'
+        bhard: '{{ pquota_project_bhard }}'
+        isoft: '{{ pquota_project_isoft }}'
+        ihard: '{{ pquota_project_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
+        name: xft_quotaval
+        rtbsoft: '{{ pquota_project_rtbsoft }}'
+        rtbhard: '{{ pquota_project_rtbhard }}'
+        type: project 
+      become: True
+      register: test_pquota_project_before
+
+    - name: Assert project limits results for xft_quotaval
+      assert:
+        that:
+          - test_pquota_project_before.changed
+          - test_pquota_project_before.bsoft == pquota_project_bsoft|human_to_bytes
+          - test_pquota_project_before.bhard == pquota_project_bhard|human_to_bytes
+          - test_pquota_project_before.isoft == pquota_project_isoft
+          - test_pquota_project_before.ihard == pquota_project_ihard
+          - test_pquota_project_before.rtbsoft == pquota_project_rtbsoft|human_to_bytes
+          - test_pquota_project_before.rtbhard == pquota_project_rtbhard|human_to_bytes
+
+    - name: 'Re-apply default project limits'
+      xfs_quota:
+        bsoft: '{{ pquota_default_bsoft }}'
+        bhard: '{{ pquota_default_bhard }}'
+        isoft: '{{ pquota_default_isoft }}'
+        ihard: '{{ pquota_default_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
+        rtbsoft: '{{ pquota_default_rtbsoft }}'
+        rtbhard: '{{ pquota_default_rtbhard }}'
+        type: project
+      become: True
+      register: test_pquota_default_after
+
+    - name: Assert default project limits results after re-apply
+      assert:
+        that:
+          - not test_pquota_default_after.changed
+
+    - name: 'Re-apply project limits'
+      xfs_quota:
+        bsoft: '{{ pquota_project_bsoft }}'
+        bhard: '{{ pquota_project_bhard }}'
+        isoft: '{{ pquota_project_isoft }}'
+        ihard: '{{ pquota_project_ihard }}'
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
+        name: xft_quotaval
+        rtbsoft: '{{ pquota_project_rtbsoft }}'
+        rtbhard: '{{ pquota_project_rtbhard }}'
+        type: project
+      become: True
+      register: test_pquota_project_after
+
+    - name: Assert project limits results for xft_quotaval after re-apply
+      assert:
+        that:
+          - not test_pquota_project_after.changed
+
+    - name: 'Reset default project limits'
+      xfs_quota:
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
+        state: absent
+        type: project
+      become: True
+      register: test_reset_pquota_default
+
+    - name: Assert reset of default projecy limits results
+      assert:
+        that:
+          - test_reset_pquota_default.changed
+          - test_reset_pquota_default.bsoft == 0
+          - test_reset_pquota_default.bhard == 0
+          - test_reset_pquota_default.isoft == 0
+          - test_reset_pquota_default.ihard == 0
+          - test_reset_pquota_default.rtbsoft == 0
+          - test_reset_pquota_default.rtbhard == 0
+
+    - name: 'Reset project limits for xft_quotaval'
+      xfs_quota:
+        mountpoint: '{{ remote_tmp_dir }}/pquota'
+        name: xft_quotaval
+        state: absent
+        type: project
+      become: True
+      register: test_reset_pquota_project
+
+    - name: Assert reset of project limits results for xft_quotaval
+      assert:
+        that:
+          - test_reset_pquota_project.changed
+          - test_reset_pquota_project.bsoft == 0
+          - test_reset_pquota_project.bhard == 0
+          - test_reset_pquota_project.isoft == 0
+          - test_reset_pquota_project.ihard == 0
+          - test_reset_pquota_project.rtbsoft == 0
+          - test_reset_pquota_project.rtbhard == 0
+
+  always:
+    - name: 'Unmount filesystem'
+      mount:
+        fstab: '{{ remote_tmp_dir }}/fstab'
+        path: '{{ remote_tmp_dir }}/pquota'
+        state: unmounted
+      become: True
+
+    - name: Remove disk image
+      file:
+        path: '{{ remote_tmp_dir }}/img-pquota'
+        state: absent
+
+    - name: Remove xfs quota project id
+      lineinfile:
+        path: /etc/projid
+        regexp: '^xft_quotaval:99999$'
+        state: absent
+      become: True
+
+    - name: Remove xfs quota project path
+      lineinfile:
+        path: /etc/projects
+        regexp: '^99999:.*$'
+        state: absent
+      become: True

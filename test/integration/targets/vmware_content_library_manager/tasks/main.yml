@@ -1,0 +1,91 @@
+# Test code for the vmware_content_library CRUD Operations.
+# Copyright: (c) 2019, Pavan Bidkar <pbidkar@vmware.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+
+- when: vcsim is not defined
+  block:
+    - &content_lib_delete
+      name: Delete content library if exists
+      vmware_content_library_manager:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        library_name: Sample_Library
+        state: absent
+  
+    - &content_lib_create
+      name: Create content library
+      vmware_content_library_manager:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: False
+        library_name: Sample_Library
+        library_description: Sample Description
+        datastore_name: '{{ ds1 }}'
+        state: present
+      register: content_lib_create_result
+
+    - name: Check content library is created
+      assert:
+        that:
+          - content_lib_create_result.changed
+
+    - <<: *content_lib_create
+      name: Create content library again
+
+    - name: Check if no changes are made
+      assert:
+        that:
+          - not content_lib_create_result.changed
+
+    # Testcase Update Content Library
+    - &update_content_lib
+      name: Update a content library
+      vmware_content_library_manager:
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_username }}'
+        password: '{{ vcenter_password }}'
+        validate_certs: no
+        library_name: Sample_Library
+        library_description: Update Sample Description
+        state: present
+      register: content_lib_update_result
+
+    - name: Check content library is updated
+      assert:
+        that:
+          - content_lib_update_result.changed
+
+    - <<: *update_content_lib
+      name: Update a content library again
+
+    - name: Check content library is not updated
+      assert:
+        that:
+          - not content_lib_update_result.changed
+
+    # Testcase Delete the content library
+    - <<: *content_lib_delete
+      name: Delete content library
+      register: content_lib_delete_result
+
+    - name: Check content library is deleted
+      assert:
+        that:
+          - content_lib_delete_result.changed
+          
+    - <<: *content_lib_delete
+      name: Delete content library again
+      register: content_lib_delete_result
+
+    - name: Check if no changes are made
+      assert:
+        that:
+          - not content_lib_delete_result.changed

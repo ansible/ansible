@@ -62,15 +62,34 @@ class MockONTAPConnection(object):
     def invoke_successfully(self, xml, enable_tunneling):  # pylint: disable=unused-argument
         ''' mock invoke_successfully returning xml data '''
         self.xml_in = xml
-        if self.type == 'subnet':
+        if xml.get_child_by_name('query') is not None and \
+           xml.get_child_by_name('query').get_child_by_name('vserver-info') is not None:
+            # assume this a a cserver request
+            xml = self.build_cserver_info()
+        elif self.type == 'subnet':
             if xml.get_child_by_name('query'):
-                nameObj = xml.get_child_by_name('query').get_child_by_name('net-subnet-info').get_child_by_name('subnet-name')
-                xml_name = nameObj.get_content()
+                name_obj = xml.get_child_by_name('query').get_child_by_name('net-subnet-info').get_child_by_name('subnet-name')
+                xml_name = name_obj.get_content()
                 if xml_name == self.params.get('name'):
                     xml = self.build_subnet_info(self.params)
         elif self.type == 'subnet_fail':
             raise netapp_utils.zapi.NaApiError(code='TEST', message="This exception is from the unit test")
         self.xml_out = xml
+        return xml
+
+    @staticmethod
+    def build_cserver_info():
+        ''' build xml data for vserver-info '''
+        xml = netapp_utils.zapi.NaElement('xml')
+        attributes = {
+            'num-records': 1,
+            'attributes-list': {
+                'vserver-info': {
+                    'vserver-name': 'cserver',
+                }
+            }
+        }
+        xml.translate_struct(attributes)
         return xml
 
     @staticmethod
@@ -143,7 +162,8 @@ class TestMyModule(unittest.TestCase):
         my_obj.server = MockONTAPConnection(kind='subnet', data=data)
         assert my_obj.get_subnet() is not None
 
-    def test_fail_broadcast_domain_modify(self):
+    @patch('ansible.module_utils.netapp.ems_log_event')
+    def test_fail_broadcast_domain_modify(self, mock_ems_log):
         ''' test that boradcast_domain is not alterable '''
         data = self.set_default_args()
         data.update({'broadcast_domain': 'Test'})
@@ -154,8 +174,9 @@ class TestMyModule(unittest.TestCase):
             my_obj.apply()
         assert 'cannot modify broadcast_domain parameter' in exc.value.args[0]['msg']
 
+    @patch('ansible.module_utils.netapp.ems_log_event')
     @patch('ansible.modules.storage.netapp.na_ontap_net_subnet.NetAppOntapSubnet.create_subnet')
-    def test_successful_create(self, create_subnet):
+    def test_successful_create(self, create_subnet, mock_ems_log):
         ''' creating subnet and testing idempotency '''
         print("Create:")
         data = self.set_default_args()
@@ -177,8 +198,9 @@ class TestMyModule(unittest.TestCase):
             my_obj.apply()
         assert not exc.value.args[0]['changed']
 
+    @patch('ansible.module_utils.netapp.ems_log_event')
     @patch('ansible.modules.storage.netapp.na_ontap_net_subnet.NetAppOntapSubnet.rename_subnet')
-    def test_successful_rename(self, rename_subnet):
+    def test_successful_rename(self, rename_subnet, mock_ems_log):
         ''' renaming subnet '''
         data = self.set_default_args()
         data.update({'from_name': data['name'], 'name': 'new_test_subnet'})
@@ -189,8 +211,9 @@ class TestMyModule(unittest.TestCase):
             my_obj.apply()
         assert exc.value.args[0]['changed']
 
+    @patch('ansible.module_utils.netapp.ems_log_event')
     @patch('ansible.modules.storage.netapp.na_ontap_net_subnet.NetAppOntapSubnet.delete_subnet')
-    def test_successful_delete(self, delete_subnet):
+    def test_successful_delete(self, delete_subnet, mock_ems_log):
         ''' deleting subnet and testing idempotency '''
         data = self.set_default_args()
         data['state'] = 'absent'
@@ -209,7 +232,8 @@ class TestMyModule(unittest.TestCase):
             my_obj.apply()
         assert not exc.value.args[0]['changed']
 
-    def test_successful_modify(self):
+    @patch('ansible.module_utils.netapp.ems_log_event')
+    def test_successful_modify(self, mock_ems_log):
         ''' modifying subnet and testing idempotency '''
         data = self.set_default_args()
         data.update({'ip_ranges': ['10.0.0.10-10.0.0.25', '10.0.0.30']})
@@ -220,7 +244,8 @@ class TestMyModule(unittest.TestCase):
             my_obj.apply()
         assert exc.value.args[0]['changed']
 
-    def test_if_all_methods_catch_exception(self):
+    @patch('ansible.module_utils.netapp.ems_log_event')
+    def test_if_all_methods_catch_exception(self, mock_ems_log):
         data = self.set_default_args()
         set_module_args(data)
         my_obj = my_module()

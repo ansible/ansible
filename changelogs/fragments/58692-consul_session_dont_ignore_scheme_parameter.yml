@@ -1,0 +1,2 @@
+bugfixes:
+  - "consul_session: don't ignore ``scheme`` parameter"

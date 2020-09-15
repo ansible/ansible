@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Removed unused FactArgs imports from eos / ios / iosxr / junos / vyos facts modules

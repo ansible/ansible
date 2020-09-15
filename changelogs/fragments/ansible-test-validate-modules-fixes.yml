@@ -1,0 +1,8 @@
+bugfixes:
+    - ansible-test validate-modules sanity test now properly handles collections imports using the Ansible collection loader.
+    - ansible-test validate-modules sanity test now properly handles relative imports.
+    - ansible-test validate-modules sanity test now properly invokes Ansible modules as scripts.
+    - ansible-test validate-modules sanity test now properly handles sys.exit in modules.
+    - ansible-test validate-modules sanity test now checks for AnsibleModule initialization instead of module_utils imports, which did not work in many cases.
+    - ansible-test validate-modules sanity test code ``multiple-c#-utils-per-requires`` is now ``multiple-csharp-utils-per-requires`` (fixes ignore bug).
+    - ansible-test validate-modules sanity test code ``missing-module-utils-import-c#-requirements`` is now ``missing-module-utils-import-csharp-requirements`` (fixes ignore bug).

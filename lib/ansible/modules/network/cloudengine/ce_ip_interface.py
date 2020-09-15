@@ -34,6 +34,9 @@ notes:
     - C(mask) must be inserted in decimal format (i.e. 24) for
       both IPv6 and IPv4.
     - A single interface can have multiple IPv6 configured.
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     interface:
         description:

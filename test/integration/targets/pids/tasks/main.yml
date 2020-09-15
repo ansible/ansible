@@ -3,7 +3,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 - name: "Installing the psutil module"
   pip:
-    name: psutil
+    name: psutil==5.6.7
 
 - name: "Checking the empty result" 
   pids: 

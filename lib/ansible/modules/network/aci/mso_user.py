@@ -21,14 +21,9 @@ author:
 - Dag Wieers (@dagwieers)
 version_added: '2.8'
 options:
-  user_id:
-    description:
-    - The ID of the user.
-    type: str
   user:
     description:
     - The name of the user.
-    - Alternative to the name, you can use C(user_id).
     type: str
     required: yes
     aliases: [ name ]
@@ -146,7 +141,6 @@ from ansible.module_utils.network.aci.mso import MSOModule, mso_argument_spec, i
 def main():
     argument_spec = mso_argument_spec()
     argument_spec.update(
-        user_id=dict(type='str'),
         user=dict(type='str', aliases=['name']),
         user_password=dict(type='str', no_log=True),
         first_name=dict(type='str'),
@@ -169,7 +163,6 @@ def main():
         ],
     )
 
-    user_id = module.params['user_id']
     user_name = module.params['user']
     user_password = module.params['user_password']
     first_name = module.params['first_name']
@@ -184,26 +177,18 @@ def main():
     roles = mso.lookup_roles(module.params['roles'])
     domain = mso.lookup_domain(module.params['domain'])
 
+    user_id = None
     path = 'users'
 
     # Query for existing object(s)
-    if user_id is None and user_name is None:
-        mso.existing = mso.query_objs(path)
-    elif user_id is None:
+    if user_name:
         mso.existing = mso.get_obj(path, username=user_name)
         if mso.existing:
             user_id = mso.existing['id']
-    elif user_name is None:
-        mso.existing = mso.get_obj(path, id=user_id)
+            # If we found an existing object, continue with it
+            path = 'users/{id}'.format(id=user_id)
     else:
-        mso.existing = mso.get_obj(path, id=user_id)
-        existing_by_name = mso.get_obj(path, username=user_name)
-        if existing_by_name and user_id != existing_by_name['id']:
-            mso.fail_json(msg="Provided user '{0}' with id '{1}' does not match existing id '{2}'.".format(user_name, user_id, existing_by_name['id']))
-
-    # If we found an existing object, continue with it
-    if user_id:
-        path = 'users/{id}'.format(id=user_id)
+        mso.existing = mso.query_objs(path)
 
     if state == 'query':
         pass

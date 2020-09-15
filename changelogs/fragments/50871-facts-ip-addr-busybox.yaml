@@ -1,2 +1,0 @@
-bugfixes:
-  - Detect IP addresses on a system with busybox properly (https://github.com/ansible/ansible/issues/50871)

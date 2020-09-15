@@ -1,0 +1,6 @@
+bugfixes:
+  - Fix https://github.com/ansible/galaxy-dev/issues/96
+    Add support for automation-hub authentication to ansible-galaxy
+minor_changes:
+  - Add 'auth_url' field to galaxy server config stanzas in ansible.cfg
+    The url should point to the token_endpoint of a Keycloak server.

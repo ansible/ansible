@@ -1,0 +1,56 @@
+---
+- debug:
+      msg: "START iosxr_lag_interfaces replaced integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Replace device configurations of listed interfaces with provided configurations
+      iosxr_lag_interfaces: &replaced
+        config:
+          - name: Bundle-Ether10
+            mode: passive
+            members:
+              - member: GigabitEthernet0/0/0/0
+                mode: passive
+            load_balancing_hash: dst-ip
+
+          - name: Bundle-Ether12
+            mode: active
+        state: replaced
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ replaced['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Replace device configurations of listed interfaces with provided configurarions (IDEMPOTENT)
+      iosxr_lag_interfaces: *replaced
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+         - "result.commands|length == 0"
+
+    - name: Assert that before dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  
+  always:
+    - include_tasks: _remove_config.yaml

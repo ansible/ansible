@@ -1,0 +1,137 @@
+---
+merged:
+  before:
+    - name: GigabitEthernet0/0/0/0
+
+    - name: GigabitEthernet0/0/0/1
+  
+  commands:
+    - "interface Bundle-Ether10"
+    - "lacp churn logging actor"
+    - "lacp switchover suppress-flaps 500"
+    - "lacp collector-max-delay 100"
+    - "interface Bundle-Ether11"
+    - "lacp system mac 00c2.4c00.bd15"
+    - "interface GigabitEthernet0/0/0/1"
+    - "lacp period 100"
+    
+  after:
+    - name: Bundle-Ether10
+      churn_logging: actor
+      switchover_suppress_flaps: 500
+      collector_max_delay: 100
+    
+    - name: Bundle-Ether11
+      system:
+        mac: 00c2.4c00.bd15
+
+    - name: GigabitEthernet0/0/0/0
+
+    - name: GigabitEthernet0/0/0/1
+      period: 100    
+
+populate:
+  - name: Bundle-Ether10
+    churn_logging: actor
+    switchover_suppress_flaps: 500
+    collector_max_delay: 100
+
+  - name: Bundle-Ether11
+    system:
+      mac: 00c2.4c00.bd15
+
+  - name: GigabitEthernet0/0/0/0
+    period: 100
+
+  - name: GigabitEthernet0/0/0/1
+    period: 200
+  
+replaced:
+  commands:
+    - "interface Bundle-Ether10"
+    - "no lacp switchover suppress-flaps 500"
+    - "no lacp collector-max-delay 100"
+    - "lacp churn logging partner"
+    - "interface GigabitEthernet0/0/0/1"
+    - "lacp period 300"
+  
+  after:
+    - name: Bundle-Ether10
+      churn_logging: partner
+
+    - name: Bundle-Ether11
+      system:
+        mac: 00c2.4c00.bd15
+
+    - name: GigabitEthernet0/0/0/0
+      period: 100
+
+    - name: GigabitEthernet0/0/0/1
+      period: 300
+
+overridden:
+  commands:
+    - "interface Bundle-Ether10"
+    - "no lacp switchover suppress-flaps 500"
+    - "no lacp collector-max-delay 100"
+    - "no lacp churn logging actor"
+    - "interface Bundle-Ether11"
+    - "no lacp system mac 00c2.4c00.bd15"
+    - "interface GigabitEthernet0/0/0/0"
+    - "no lacp period 100"
+    - "interface Bundle-Ether12"
+    - "lacp churn logging both"
+    - "lacp collector-max-delay 100"
+    - "lacp switchover suppress-flaps 500"
+    - "interface GigabitEthernet0/0/0/1"
+    - "lacp period 300"
+
+  after:
+    - name: Bundle-Ether10
+
+    - name: Bundle-Ether11
+
+    - name: Bundle-Ether12
+      churn_logging: both
+      collector_max_delay: 100
+      switchover_suppress_flaps: 500
+
+    - name: GigabitEthernet0/0/0/0
+
+    - name: GigabitEthernet0/0/0/1
+      period: 300
+
+deleted:
+  commands:
+    - "interface Bundle-Ether10"
+    - "no lacp switchover suppress-flaps 500"
+    - "no lacp collector-max-delay 100"
+    - "no lacp churn logging actor"
+    - "interface Bundle-Ether11"
+    - "no lacp system mac 00c2.4c00.bd15"
+    - "interface GigabitEthernet0/0/0/0"
+    - "no lacp period 100"
+    - "interface GigabitEthernet0/0/0/1"
+    - "no lacp period 200"
+
+  after:
+    - name: Bundle-Ether10
+
+    - name: Bundle-Ether11
+
+    - name: GigabitEthernet0/0/0/0
+
+    - name: GigabitEthernet0/0/0/1
+
+round_trip:
+  after:
+    - name: Bundle-Ether10
+      churn_logging: partner
+
+    - name: Bundle-Ether11
+      period: 200
+
+    - name: GigabitEthernet0/0/0/0
+      period: 300
+
+    - name: GigabitEthernet0/0/0/1

@@ -132,3 +132,12 @@ class TestOnyxProtocolModule(TestOnyxModule):
     def test_ospf_disable(self):
         set_module_args(dict(ospf='disabled'))
         self.execute_module(changed=False)
+
+    def test_nve_enable(self):
+        set_module_args(dict(nve='enabled'))
+        commands = ['protocol nve']
+        self.execute_module(changed=True, commands=commands)
+
+    def test_nve_disabled(self):
+        set_module_args(dict(nve='disabled'))
+        self.execute_module(changed=False)

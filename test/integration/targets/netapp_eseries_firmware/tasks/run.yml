@@ -1,0 +1,348 @@
+# Test code for the netapp_e_firmware module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# TODO: MUST BE DOWNGRADE BEFORE EXECUTING INTEGRATION TO RCB_11.40.3R2_280x_5c7d81b3.dlp and N280X-842834-D02.dlp
+#   loadControllerFirmware_MT swartzn@10.113.1.250 /home/swartzn/Downloads/RCB_11.40.3R2_280x_5c7d81b3.dlp /home/swartzn/Downloads/N280X-842834-D02.dlp
+
+# This integration test will validate upgrade functionality for firmware-only, firmware-and-nvsram, and check mode.
+
+- name: NetApp Test ASUP module
+  fail:
+    msg: "Please define netapp_e_embedded_api_host, netapp_e_embedded_api_username, netapp_e_embedded_api_password, netapp_e_embedded_ssid,
+    netapp_e_proxy_api_host, netapp_e_proxy_api_username, netapp_e_proxy_api_password, and netapp_e_proxy_ssid."
+  when: "netapp_e_embedded_api_host is undefined or netapp_e_embedded_api_username is undefined or netapp_e_embedded_api_password is undefined or
+    netapp_e_embedded_ssid is undefined or netapp_e_proxy_api_host is undefined or netapp_e_proxy_api_username is undefined or
+    netapp_e_proxy_api_password is undefined or netapp_e_proxy_ssid is undefined"
+
+- set_fact:
+    path: "/home/swartzn/Downloads/"
+    upgrades:
+      - firmware: "RCB_11.40.3R2_280x_5c7d81b3.dlp"
+        nvsram: "N280X-842834-D02.dlp"
+        expected_firmware_version: "08.42.30.05"
+        expected_nvsram_version: "N280X-842834-D02"
+      - firmware: "RCB_11.40.5_280x_5ceef00e.dlp"
+        nvsram: "N280X-842834-D02.dlp"
+        expected_firmware_version: "08.42.50.00"
+        expected_nvsram_version: "N280X-842834-D02"
+      - firmware: "RCB_11.50.2_280x_5ce8501f.dlp"
+        nvsram: "N280X-852834-D02.dlp"
+        expected_firmware_version: "08.52.00.00"
+        expected_nvsram_version: "N280X-852834-D02"
+
+- name: Perform firmware upgrade using the Web Services REST API (checkmode-no change, firmware only)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_embedded_ssid }}"
+    api_url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_embedded_api_username }}"
+    api_password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[0]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[0]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+  check_mode: true
+  register: netapp_e_firmware
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
+    user: "{{ netapp_e_embedded_api_username }}"
+    password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+  register: current_firmware
+- name: Retrieve current nvsram version
+  uri:
+    url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/nvsramVersion"
+    user: "{{ netapp_e_embedded_api_username }}"
+    password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+  register: current_nvsram
+- name: Verify change status
+  assert:
+    that: "{{ netapp_e_firmware.changed == False }}"
+    msg: "Failed to return unchanged."
+- name: Verify current firmware version
+  assert:
+    that: "{{ current_firmware['json'][0] == upgrades[0]['expected_firmware_version'] }}"
+    msg: "Unexpected firmware version."
+- name: Verify current nvsram version
+  assert:
+    that: "{{ current_nvsram['json'][0] == upgrades[0]['expected_nvsram_version'] }}"
+    msg: "Unexpected nvsram version."
+
+- name: Perform firmware upgrade using the Web Services REST API (no change, firmware only)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_embedded_ssid }}"
+    api_url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_embedded_api_username }}"
+    api_password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[0]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[0]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+  register: netapp_e_firmware
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
+    user: "{{ netapp_e_embedded_api_username }}"
+    password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+  register: current_firmware
+- name: Retrieve current nvsram version
+  uri:
+    url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/nvsramVersion"
+    user: "{{ netapp_e_embedded_api_username }}"
+    password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+  register: current_nvsram
+- name: Verify change status
+  assert:
+    that: "{{ netapp_e_firmware.changed == False }}"
+    msg: "Failed to return changed."
+- name: Verify current firmware version
+  assert:
+    that: "{{ current_firmware['json'][0] == upgrades[0]['expected_firmware_version'] }}"
+    msg: "Unexpected firmware version."
+- name: Verify current nvsram version
+  assert:
+    that: "{{ current_nvsram['json'][0] == upgrades[0]['expected_nvsram_version'] }}"
+    msg: "Unexpected nvsram version."
+
+- name: Perform firmware upgrade using the Web Services REST API (checkmode-change, firmware)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_embedded_ssid }}"
+    api_url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_embedded_api_username }}"
+    api_password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[1]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[1]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+  register: netapp_e_firmware
+  check_mode: true
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
+    user: "{{ netapp_e_embedded_api_username }}"
+    password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+  register: current_firmware
+- name: Retrieve current nvsram version
+  uri:
+    url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/nvsramVersion"
+    user: "{{ netapp_e_embedded_api_username }}"
+    password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+  register: current_nvsram
+- name: Verify change status
+  assert:
+    that: "{{ netapp_e_firmware.changed == True }}"
+    msg: "Failed to return changed."
+- name: Verify current firmware version
+  assert:
+    that: "{{ current_firmware['json'][0] == upgrades[0]['expected_firmware_version'] }}"
+    msg: "Unexpected firmware version."
+- name: Verify current nvsram version
+  assert:
+    that: "{{ current_nvsram['json'][0] == upgrades[0]['expected_nvsram_version'] }}"
+    msg: "Unexpected nvsram version."
+
+- name: Perform firmware upgrade using the Web Services REST API (change, firmware)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_embedded_ssid }}"
+    api_url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_embedded_api_username }}"
+    api_password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[1]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[1]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+  register: netapp_e_firmware
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
+    user: "{{ netapp_e_embedded_api_username }}"
+    password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+  register: current_firmware
+- name: Retrieve current nvsram version
+  uri:
+    url: "https://{{ netapp_e_embedded_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_embedded_ssid }}/graph/xpath-filter?query=/sa/saData/nvsramVersion"
+    user: "{{ netapp_e_embedded_api_username }}"
+    password: "{{ netapp_e_embedded_api_password }}"
+    validate_certs: no
+  register: current_nvsram
+- name: Verify change status
+  assert:
+    that: "{{ netapp_e_firmware.changed == True }}"
+    msg: "Failed to return changed."
+- name: Verify current firmware version
+  assert:
+    that: "{{ current_firmware['json'][0] == upgrades[1]['expected_firmware_version'] }}"
+    msg: "Unexpected firmware version. {{ current_firmware['json'][0] }} != {{ upgrades[1]['expected_firmware_version'] }}"
+- name: Verify current nvsram version
+  assert:
+    that: "{{ current_nvsram['json'][0] == upgrades[1]['expected_nvsram_version'] }}"
+    msg: "Unexpected nvsram version. {{ current_nvsram['json'][0] }} != {{ upgrades[1]['expected_nvsram_version'] }}"
+
+- name: Perform firmware upgrade using the Web Services REST API (changed, firmware)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_proxy_ssid }}"
+    api_url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_proxy_api_username }}"
+    api_password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[0]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[0]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+  register: netapp_e_firmware
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
+    user: "{{ netapp_e_proxy_api_username }}"
+    password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+  register: current_firmware
+- name: Retrieve current nvsram version
+  uri:
+    url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/nvsramVersion"
+    user: "{{ netapp_e_proxy_api_username }}"
+    password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+  register: current_nvsram
+- name: Verify change status
+  assert:
+    that: "{{ netapp_e_firmware.changed == True }}"
+    msg: "Failed to return changed."
+- name: Verify current firmware version
+  assert:
+    that: "{{ current_firmware['json'][0] == upgrades[0]['expected_firmware_version'] }}"
+    msg: "Failed to change the firmware version."
+- name: Verify current nvsram version
+  assert:
+    that: "{{ current_nvsram['json'][0] == upgrades[0]['expected_nvsram_version'] }}"
+    msg: "Failed to change the nvsram version."
+
+- name: Perform firmware upgrade using the Web Services REST API (checkmode-unchanged, firmware)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_proxy_ssid }}"
+    api_url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_proxy_api_username }}"
+    api_password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[0]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[0]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+  check_mode: true
+  register: netapp_e_firmware
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
+    user: "{{ netapp_e_proxy_api_username }}"
+    password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+  register: current_firmware
+- name: Retrieve current nvsram version
+  uri:
+    url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/nvsramVersion"
+    user: "{{ netapp_e_proxy_api_username }}"
+    password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+  register: current_nvsram
+- name: Verify change status
+  assert:
+    that: "{{ netapp_e_firmware.changed == False }}"
+    msg: "Failed to return unchanged."
+- name: Verify current firmware version
+  assert:
+    that: "{{ current_firmware['json'][0] == upgrades[0]['expected_firmware_version'] }}"
+    msg: "Failed to change the firmware version."
+- name: Verify current nvsram version
+  assert:
+    that: "{{ current_nvsram['json'][0] == upgrades[0]['expected_nvsram_version'] }}"
+    msg: "Failed to change the nvsram version."
+
+- name: Perform firmware upgrade using the Web Services REST API (checkmode-change, firmware and nvsram)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_proxy_ssid }}"
+    api_url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_proxy_api_username }}"
+    api_password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[2]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[2]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+  check_mode: true
+  register: netapp_e_firmware
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
+    user: "{{ netapp_e_proxy_api_username }}"
+    password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+  register: current_firmware
+- name: Retrieve current nvsram version
+  uri:
+    url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/nvsramVersion"
+    user: "{{ netapp_e_proxy_api_username }}"
+    password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+  register: current_nvsram
+- name: Verify change status
+  assert:
+    that: "{{ netapp_e_firmware.changed == True }}"
+    msg: "Failed to return changed."
+- name: Verify current firmware version
+  assert:
+    that: "{{ current_firmware['json'][0] == upgrades[0]['expected_firmware_version'] }}"
+    msg: "Failed to change the firmware version."
+- name: Verify current nvsram version
+  assert:
+    that: "{{ current_nvsram['json'][0] == upgrades[0]['expected_nvsram_version'] }}"
+    msg: "Failed to change the nvsram version."
+
+- name: Perform firmware upgrade using the Web Services REST API (changed, firmware and nvsram)
+  netapp_e_firmware:
+    ssid: "{{ netapp_e_proxy_ssid }}"
+    api_url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2"
+    api_username: "{{ netapp_e_proxy_api_username }}"
+    api_password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+    nvsram: "{{ path }}{{ upgrades[2]['nvsram'] }}"
+    firmware: "{{ path }}{{ upgrades[2]['firmware'] }}"
+    wait_for_completion: true
+    ignore_health_check: true
+  register: netapp_e_firmware
+- name: Retrieve current firmware version
+  uri:
+    url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/fwVersion"
+    user: "{{ netapp_e_proxy_api_username }}"
+    password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+  register: current_firmware
+- name: Retrieve current nvsram version
+  uri:
+    url: "https://{{ netapp_e_proxy_api_host }}:8443/devmgr/v2/storage-systems/{{ netapp_e_proxy_ssid }}/graph/xpath-filter?query=/sa/saData/nvsramVersion"
+    user: "{{ netapp_e_proxy_api_username }}"
+    password: "{{ netapp_e_proxy_api_password }}"
+    validate_certs: no
+  register: current_nvsram
+- name: Verify change status
+  assert:
+    that: "{{ netapp_e_firmware.changed == True }}"
+    msg: "Failed to return changed."
+- name: Verify current firmware version
+  assert:
+    that: "{{ current_firmware['json'][0] == upgrades[2]['expected_firmware_version'] }}"
+    msg: "Failed to change the firmware version."
+- name: Verify current nvsram version
+  assert:
+    that: "{{ current_nvsram['json'][0] == upgrades[2]['expected_nvsram_version'] }}"
+    msg: "Failed to change the nvsram version."

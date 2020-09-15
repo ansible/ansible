@@ -26,6 +26,7 @@
     ptrdname: ptr.ansible.com
     ipv4: 192.168.10.1
     comment: this is a test comment
+    view: default
     state: present
     provider: "{{ nios_provider }}"
   register: ipv4_ptr_update1
@@ -36,6 +37,7 @@
     ptrdname: ptr.ansible.com
     ipv4: 192.168.10.1
     comment: this is a test comment
+    view: default
     state: present
     provider: "{{ nios_provider }}"
   register: ipv4_ptr_update2
@@ -45,6 +47,7 @@
     name: ptr.ansible.com
     ptrdname: ptr.ansible.com
     ipv4: 192.168.10.1
+    view: default
     state: absent
     provider: "{{ nios_provider }}"
   register: ipv4_ptr_delete1
@@ -54,6 +57,7 @@
     ptrdname: ptr.ansible.com
     name: ptr.ansible.com
     ipv4: 192.168.10.1
+    view: default
     state: absent
     provider: "{{ nios_provider }}"
   register: ipv4_ptr_delete2
@@ -63,6 +67,7 @@
     ptrdname: ptr6.ansible.com
     name: ptr6.ansible.com
     ipv6: "2002:8ac3:802d:1242:20d:60ff:fe38:6d16"
+    view: default
     state: present
     provider: "{{ nios_provider }}"
   register: ipv6_ptr_create1

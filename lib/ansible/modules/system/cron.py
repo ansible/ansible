@@ -185,9 +185,9 @@ EXAMPLES = r'''
 - name: Creates a cron file under /etc/cron.d
   cron:
     name: yum autoupdate
-    weekday: 2
-    minute: 0
-    hour: 12
+    weekday: "2"
+    minute: "0"
+    hour: "12"
     user: root
     job: "YUMINTERACTIVE=0 /usr/sbin/yum-autoupdate"
     cron_file: ansible_yum-autoupdate
@@ -207,16 +207,14 @@ EXAMPLES = r'''
 
 import os
 import platform
-import pipes
 import pwd
 import re
 import sys
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule, get_platform
-
-
-CRONCMD = "/usr/bin/crontab"
+from ansible.module_utils.common.text.converters import to_bytes, to_native
+from ansible.module_utils.six.moves import shlex_quote
 
 
 class CronTabError(Exception):
@@ -237,13 +235,16 @@ class CronTab(object):
         self.root = (os.getuid() == 0)
         self.lines = None
         self.ansible = "#Ansible: "
-        self.existing = ''
+        self.n_existing = ''
+        self.cron_cmd = self.module.get_bin_path('crontab', required=True)
 
         if cron_file:
             if os.path.isabs(cron_file):
                 self.cron_file = cron_file
+                self.b_cron_file = to_bytes(cron_file, errors='surrogate_or_strict')
             else:
                 self.cron_file = os.path.join('/etc/cron.d', cron_file)
+                self.b_cron_file = os.path.join(b'/etc/cron.d', to_bytes(cron_file, errors='surrogate_or_strict'))
         else:
             self.cron_file = None
 
@@ -255,9 +256,9 @@ class CronTab(object):
         if self.cron_file:
             # read the cronfile
             try:
-                f = open(self.cron_file, 'r')
-                self.existing = f.read()
-                self.lines = self.existing.splitlines()
+                f = open(self.b_cron_file, 'rb')
+                self.n_existing = to_native(f.read(), errors='surrogate_or_strict')
+                self.lines = self.n_existing.splitlines()
                 f.close()
             except IOError:
                 # cron file does not exist
@@ -271,7 +272,7 @@ class CronTab(object):
             if rc != 0 and rc != 1:  # 1 can mean that there are no jobs.
                 raise CronTabError("Unable to read crontab")
 
-            self.existing = out
+            self.n_existing = out
 
             lines = out.splitlines()
             count = 0
@@ -282,7 +283,7 @@ class CronTab(object):
                     self.lines.append(l)
                 else:
                     pattern = re.escape(l) + '[\r\n]?'
-                    self.existing = re.sub(pattern, '', self.existing, 1)
+                    self.n_existing = re.sub(pattern, '', self.n_existing, 1)
                 count += 1
 
     def is_empty(self):
@@ -296,15 +297,15 @@ class CronTab(object):
         Write the crontab to the system. Saves all information.
         """
         if backup_file:
-            fileh = open(backup_file, 'w')
+            fileh = open(backup_file, 'wb')
         elif self.cron_file:
-            fileh = open(self.cron_file, 'w')
+            fileh = open(self.b_cron_file, 'wb')
         else:
             filed, path = tempfile.mkstemp(prefix='crontab')
             os.chmod(path, int('0644', 8))
-            fileh = os.fdopen(filed, 'w')
+            fileh = os.fdopen(filed, 'wb')
 
-        fileh.write(self.render())
+        fileh.write(to_bytes(self.render()))
         fileh.close()
 
         # return if making a backup
@@ -514,14 +515,14 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() == 'SunOS':
-                return "su %s -c '%s -l'" % (pipes.quote(self.user), pipes.quote(CRONCMD))
+                return "su %s -c '%s -l'" % (shlex_quote(self.user), shlex_quote(self.cron_cmd))
             elif platform.system() == 'AIX':
-                return "%s -l %s" % (pipes.quote(CRONCMD), pipes.quote(self.user))
+                return "%s -l %s" % (shlex_quote(self.cron_cmd), shlex_quote(self.user))
             elif platform.system() == 'HP-UX':
-                return "%s %s %s" % (CRONCMD, '-l', pipes.quote(self.user))
+                return "%s %s %s" % (self.cron_cmd, '-l', shlex_quote(self.user))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, '-l')
+                user = '-u %s' % shlex_quote(self.user)
+        return "%s %s %s" % (self.cron_cmd, user, '-l')
 
     def _write_execute(self, path):
         """
@@ -530,10 +531,11 @@ class CronTab(object):
         user = ''
         if self.user:
             if platform.system() in ['SunOS', 'HP-UX', 'AIX']:
-                return "chown %s %s ; su '%s' -c '%s %s'" % (pipes.quote(self.user), pipes.quote(path), pipes.quote(self.user), CRONCMD, pipes.quote(path))
+                return "chown %s %s ; su '%s' -c '%s %s'" % (
+                    shlex_quote(self.user), shlex_quote(path), shlex_quote(self.user), self.cron_cmd, shlex_quote(path))
             elif pwd.getpwuid(os.getuid())[0] != self.user:
-                user = '-u %s' % pipes.quote(self.user)
-        return "%s %s %s" % (CRONCMD, user, pipes.quote(path))
+                user = '-u %s' % shlex_quote(self.user)
+        return "%s %s %s" % (self.cron_cmd, user, shlex_quote(path))
 
 
 def main():
@@ -582,12 +584,6 @@ def main():
             ['reboot', 'special_time'],
             ['insertafter', 'insertbefore'],
         ],
-        required_by=dict(
-            cron_file=('user',),
-        ),
-        required_if=(
-            ('state', 'present', ('job',)),
-        ),
     )
 
     name = module.params['name']
@@ -638,7 +634,7 @@ def main():
 
     if module._diff:
         diff = dict()
-        diff['before'] = crontab.existing
+        diff['before'] = crontab.n_existing
         if crontab.cron_file:
             diff['before_header'] = crontab.cron_file
         else:
@@ -656,6 +652,13 @@ def main():
     # cannot support special_time on solaris
     if (special_time or reboot) and get_platform() == 'SunOS':
         module.fail_json(msg="Solaris does not support special_time=... or @reboot")
+
+    if cron_file and do_install:
+        if not user:
+            module.fail_json(msg="To use cron_file=... parameter you must specify user=... as well")
+
+    if job is None and do_install:
+        module.fail_json(msg="You must specify 'job' to install a new cron job or variable")
 
     if (insertafter or insertbefore) and not env and do_install:
         module.fail_json(msg="Insertafter and insertbefore parameters are valid only with env=yes")
@@ -724,8 +727,8 @@ def main():
                 changed = True
 
     # no changes to env/job, but existing crontab needs a terminating newline
-    if not changed and crontab.existing != '':
-        if not (crontab.existing.endswith('\r') or crontab.existing.endswith('\n')):
+    if not changed and crontab.n_existing != '':
+        if not (crontab.n_existing.endswith('\r') or crontab.n_existing.endswith('\n')):
             changed = True
 
     res_args = dict(

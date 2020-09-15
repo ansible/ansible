@@ -198,7 +198,7 @@ options:
       dir_path:
         description:
           - This option provides the path ending with directory name in which the backup
-            configuration file will be stored. If the directory does not exit it will be first
+            configuration file will be stored. If the directory does not exist it will be
             created and the filename is either the value of C(filename) or default filename
             as described in C(filename) options description. If the path value is not given
             in that case a I(backup) directory will be created in the current working directory

@@ -17,9 +17,10 @@ if sys.version_info < (2, 7):
 from ansible.module_utils.basic import AnsibleModule
 
 try:
-    from library.modules.bigip_provision import Parameters
+    from library.modules.bigip_provision import ModuleParameters
     from library.modules.bigip_provision import ModuleManager
     from library.modules.bigip_provision import ArgumentSpec
+    from library.modules.bigip_provision import ApiParameters
 
     # In Ansible 2.8, Ansible changed import paths.
     from test.units.compat import unittest
@@ -28,9 +29,10 @@ try:
 
     from test.units.modules.utils import set_module_args
 except ImportError:
-    from ansible.modules.network.f5.bigip_provision import Parameters
+    from ansible.modules.network.f5.bigip_provision import ModuleParameters
     from ansible.modules.network.f5.bigip_provision import ModuleManager
     from ansible.modules.network.f5.bigip_provision import ArgumentSpec
+    from ansible.modules.network.f5.bigip_provision import ApiParameters
 
     # Ansible 2.8 imports
     from units.compat import unittest
@@ -66,9 +68,176 @@ class TestParameters(unittest.TestCase):
     def test_module_parameters(self):
         args = dict(
             module='gtm',
+            level='nominal',
         )
-        p = Parameters(params=args)
+        p = ModuleParameters(params=args)
         assert p.module == 'gtm'
+        assert p.level == 'nominal'
+
+    def test_api_parameters(self):
+        args = load_fixture('load_sys_provision_default.json')
+        p = ApiParameters(params=args)
+        assert p.level == 'dedicated'
+        assert p.memory == 'medium'
+        assert p.module == 'urldb'
+
+    def test_module_parameters_level_minimum(self):
+        args = dict(
+            level='minimum',
+        )
+        p = ModuleParameters(params=args)
+        assert p.level == 'minimum'
+
+    def test_module_parameters_level_nominal(self):
+        args = dict(
+            level='nominal',
+        )
+        p = ModuleParameters(params=args)
+        assert p.level == 'nominal'
+
+    def test_module_parameters_level_dedicated(self):
+        args = dict(
+            level='dedicated',
+        )
+        p = ModuleParameters(params=args)
+        assert p.level == 'dedicated'
+
+    def test_module_parameters_memory_small(self):
+        args = dict(
+            module='mgmt',
+            memory='small',
+        )
+        p = ModuleParameters(params=args)
+        assert p.memory == 0
+
+    def test_module_parameters_memory_medium(self):
+        args = dict(
+            module='mgmt',
+            memory='medium',
+        )
+        p = ModuleParameters(params=args)
+        assert p.memory == 200
+
+    def test_module_parameters_memory_large(self):
+        args = dict(
+            module='mgmt',
+            memory='large',
+        )
+        p = ModuleParameters(params=args)
+        assert p.memory == 500
+
+    def test_module_parameters_memory_700(self):
+        args = dict(
+            module='mgmt',
+            memory=700,
+        )
+        p = ModuleParameters(params=args)
+        assert p.memory == 700
+
+    def test_module_parameters_mod_afm(self):
+        args = dict(
+            module='afm',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'afm'
+
+    def test_module_parameters_mod_am(self):
+        args = dict(
+            module='am',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'am'
+
+    def test_module_parameters_mod_sam(self):
+        args = dict(
+            module='sam',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'sam'
+
+    def test_module_parameters_mod_asm(self):
+        args = dict(
+            module='asm',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'asm'
+
+    def test_module_parameters_mod_avr(self):
+        args = dict(
+            module='avr',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'avr'
+
+    def test_module_parameters_mod_fps(self):
+        args = dict(
+            module='fps',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'fps'
+
+    def test_module_parameters_mod_gtm(self):
+        args = dict(
+            module='gtm',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'gtm'
+
+    def test_module_parameters_mod_lc(self):
+        args = dict(
+            module='lc',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'lc'
+
+    def test_module_parameters_mod_pem(self):
+        args = dict(
+            module='pem',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'pem'
+
+    def test_module_parameters_mod_swg(self):
+        args = dict(
+            module='swg',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'swg'
+
+    def test_module_parameters_mod_ilx(self):
+        args = dict(
+            module='ilx',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'ilx'
+
+    def test_module_parameters_mod_apm(self):
+        args = dict(
+            module='apm',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'apm'
+
+    def test_module_parameters_mod_mgmt(self):
+        args = dict(
+            module='mgmt',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'mgmt'
+
+    def test_module_parameters_mod_sslo(self):
+        args = dict(
+            module='sslo',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'sslo'
+
+    def test_module_parameters_mod_urldb(self):
+        args = dict(
+            module='urldb',
+        )
+        p = ModuleParameters(params=args)
+        assert p.module == 'urldb'
 
 
 class TestManager(unittest.TestCase):
@@ -94,7 +263,7 @@ class TestManager(unittest.TestCase):
 
         # Configure the parameters that would be returned by querying the
         # remote device
-        current = Parameters(
+        current = ModuleParameters(
             dict(
                 module='gtm',
                 level='none'
@@ -126,7 +295,7 @@ class TestManager(unittest.TestCase):
         modules = [
             'afm', 'am', 'sam', 'asm', 'avr', 'fps',
             'gtm', 'lc', 'ltm', 'pem', 'swg', 'ilx',
-            'apm',
+            'apm', 'mgmt', 'sslo', 'urldb',
         ]
 
         for module in modules:

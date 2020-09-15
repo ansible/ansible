@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - vyos - Make sure that empty configs don't throw a traceback for Resource Modules (https://github.com/ansible/ansible/pull/62520)

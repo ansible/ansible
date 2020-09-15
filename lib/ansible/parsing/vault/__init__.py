@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import errno
+import fcntl
 import os
 import random
 import shlex
@@ -27,6 +29,7 @@ import subprocess
 import sys
 import tempfile
 import warnings
+
 from binascii import hexlify
 from binascii import unhexlify
 from binascii import Error as BinasciiError
@@ -82,7 +85,7 @@ display = Display()
 
 
 b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
+CIPHER_WHITELIST = frozenset((u'AES256',))
 CIPHER_WRITE_WHITELIST = frozenset((u'AES256',))
 # See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
 # (used in VaultFile header) to a cipher class
@@ -288,6 +291,7 @@ def verify_secret_is_not_empty(secret, msg=None):
 
 class VaultSecret:
     '''Opaque/abstract objects for a single vault secret. ie, a password or a key.'''
+
     def __init__(self, _bytes=None):
         # FIXME: ? that seems wrong... Unset etc?
         self._bytes = _bytes
@@ -377,7 +381,7 @@ def get_file_vault_secret(filename=None, vault_id=None, encoding=None, loader=No
 
     if loader.is_executable(this_path):
         if script_is_client(filename):
-            display.vvvv('The vault password file %s is a client script.' % filename)
+            display.vvvv(u'The vault password file %s is a client script.' % to_text(filename))
             # TODO: pass vault_id_name to script via cli
             return ClientScriptVaultSecret(filename=this_path, vault_id=vault_id,
                                            encoding=encoding, loader=loader)
@@ -490,7 +494,7 @@ class ClientScriptVaultSecret(ScriptVaultSecret):
                                                       encoding=encoding,
                                                       loader=loader)
         self._vault_id = vault_id
-        display.vvvv('Executing vault password client script: %s --vault-id %s' % (filename, vault_id))
+        display.vvvv(u'Executing vault password client script: %s --vault-id %s' % (to_text(filename), to_text(vault_id)))
 
     def _run(self, command):
         try:
@@ -553,7 +557,7 @@ def match_best_secret(secrets, target_vault_ids):
 
 def match_encrypt_vault_id_secret(secrets, encrypt_vault_id=None):
     # See if the --encrypt-vault-id matches a vault-id
-    display.vvvv('encrypt_vault_id=%s' % encrypt_vault_id)
+    display.vvvv(u'encrypt_vault_id=%s' % to_text(encrypt_vault_id))
 
     if encrypt_vault_id is None:
         raise AnsibleError('match_encrypt_vault_id_secret requires a non None encrypt_vault_id')
@@ -574,7 +578,7 @@ def match_encrypt_vault_id_secret(secrets, encrypt_vault_id=None):
 def match_encrypt_secret(secrets, encrypt_vault_id=None):
     '''Find the best/first/only secret in secrets to use for encrypting'''
 
-    display.vvvv('encrypt_vault_id=%s' % encrypt_vault_id)
+    display.vvvv(u'encrypt_vault_id=%s' % to_text(encrypt_vault_id))
     # See if the --encrypt-vault-id matches a vault-id
     if encrypt_vault_id:
         return match_encrypt_vault_id_secret(secrets,
@@ -629,9 +633,9 @@ class VaultLib:
 
         # encrypt data
         if vault_id:
-            display.vvvvv('Encrypting with vault_id "%s" and vault secret %s' % (vault_id, secret))
+            display.vvvvv(u'Encrypting with vault_id "%s" and vault secret %s' % (to_text(vault_id), to_text(secret)))
         else:
-            display.vvvvv('Encrypting without a vault_id using vault secret %s' % secret)
+            display.vvvvv(u'Encrypting without a vault_id using vault secret %s' % to_text(secret))
 
         b_ciphertext = this_cipher.encrypt(b_plaintext, secret)
 
@@ -707,13 +711,13 @@ class VaultLib:
         vault_secret_used = None
 
         if vault_id:
-            display.vvvvv('Found a vault_id (%s) in the vaulttext' % (vault_id))
+            display.vvvvv(u'Found a vault_id (%s) in the vaulttext' % to_text(vault_id))
             vault_id_matchers.append(vault_id)
             _matches = match_secrets(self.secrets, vault_id_matchers)
             if _matches:
-                display.vvvvv('We have a secret associated with vault id (%s), will try to use to decrypt %s' % (vault_id, to_text(filename)))
+                display.vvvvv(u'We have a secret associated with vault id (%s), will try to use to decrypt %s' % (to_text(vault_id), to_text(filename)))
             else:
-                display.vvvvv('Found a vault_id (%s) in the vault text, but we do not have a associated secret (--vault-id)' % (vault_id))
+                display.vvvvv(u'Found a vault_id (%s) in the vault text, but we do not have a associated secret (--vault-id)' % to_text(vault_id))
 
         # Not adding the other secrets to vault_secret_ids enforces a match between the vault_id from the vault_text and
         # the known vault secrets.
@@ -725,11 +729,11 @@ class VaultLib:
 
         # for vault_secret_id in vault_secret_ids:
         for vault_secret_id, vault_secret in matched_secrets:
-            display.vvvvv('Trying to use vault secret=(%s) id=%s to decrypt %s' % (vault_secret, vault_secret_id, to_text(filename)))
+            display.vvvvv(u'Trying to use vault secret=(%s) id=%s to decrypt %s' % (to_text(vault_secret), to_text(vault_secret_id), to_text(filename)))
 
             try:
                 # secret = self.secrets[vault_secret_id]
-                display.vvvv('Trying secret %s for vault_id=%s' % (vault_secret, vault_secret_id))
+                display.vvvv(u'Trying secret %s for vault_id=%s' % (to_text(vault_secret), to_text(vault_secret_id)))
                 b_plaintext = this_cipher.decrypt(b_vaulttext, vault_secret)
                 if b_plaintext is not None:
                     vault_id_used = vault_secret_id
@@ -737,18 +741,20 @@ class VaultLib:
                     file_slug = ''
                     if filename:
                         file_slug = ' of "%s"' % filename
-                    display.vvvvv(u'Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), vault_secret, vault_secret_id))
+                    display.vvvvv(
+                        u'Decrypt%s successful with secret=%s and vault_id=%s' % (to_text(file_slug), to_text(vault_secret), to_text(vault_secret_id))
+                    )
                     break
             except AnsibleVaultFormatError as exc:
-                msg = "There was a vault format error"
+                msg = u"There was a vault format error"
                 if filename:
-                    msg += ' in %s' % (to_text(filename))
-                msg += ': %s' % exc
+                    msg += u' in %s' % (to_text(filename))
+                msg += u': %s' % exc
                 display.warning(msg)
                 raise
             except AnsibleError as e:
-                display.vvvv('Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
-                             (vault_secret_id, to_text(filename), e))
+                display.vvvv(u'Tried to use the vault secret (%s) to decrypt (%s) but it failed. Error: %s' %
+                             (to_text(vault_secret_id), to_text(filename), e))
                 continue
         else:
             msg = "Decryption failed (no vault secrets were found that could decrypt)"
@@ -842,42 +848,48 @@ class VaultEditor:
 
         os.remove(tmp_path)
 
-    def _edit_file_helper(self, filename, secret,
-                          existing_data=None, force_save=False, vault_id=None):
+    def _edit_file_helper(self, filename, secret, existing_data=None, force_save=False, vault_id=None):
 
         # Create a tempfile
         root, ext = os.path.splitext(os.path.realpath(filename))
-        fd, tmp_path = tempfile.mkstemp(suffix=ext)
-        os.close(fd)
+        fd, tmp_path = tempfile.mkstemp(suffix=ext, dir=C.DEFAULT_LOCAL_TMP)
 
         cmd = self._editor_shell_command(tmp_path)
         try:
             if existing_data:
-                self.write_data(existing_data, tmp_path, shred=False)
+                self.write_data(existing_data, fd, shred=False)
+        except Exception:
+            # if an error happens, destroy the decrypted file
+            self._shred_file(tmp_path)
+            raise
+        finally:
+            os.close(fd)
 
+        try:
             # drop the user into an editor on the tmp file
             subprocess.call(cmd)
         except Exception as e:
-            # whatever happens, destroy the decrypted file
+            # if an error happens, destroy the decrypted file
             self._shred_file(tmp_path)
             raise AnsibleError('Unable to execute the command "%s": %s' % (' '.join(cmd), to_native(e)))
 
         b_tmpdata = self.read_data(tmp_path)
 
         # Do nothing if the content has not changed
-        if existing_data == b_tmpdata and not force_save:
-            self._shred_file(tmp_path)
-            return
+        if force_save or existing_data != b_tmpdata:
 
-        # encrypt new data and write out to tmp
-        # An existing vaultfile will always be UTF-8,
-        # so decode to unicode here
-        b_ciphertext = self.vault.encrypt(b_tmpdata, secret, vault_id=vault_id)
-        self.write_data(b_ciphertext, tmp_path)
+            # encrypt new data and write out to tmp
+            # An existing vaultfile will always be UTF-8,
+            # so decode to unicode here
+            b_ciphertext = self.vault.encrypt(b_tmpdata, secret, vault_id=vault_id)
+            self.write_data(b_ciphertext, tmp_path)
 
-        # shuffle tmp file into place
-        self.shuffle_files(tmp_path, filename)
-        display.vvvvv('Saved edited file "%s" encrypted using %s and  vault id "%s"' % (filename, secret, vault_id))
+            # shuffle tmp file into place
+            self.shuffle_files(tmp_path, filename)
+            display.vvvvv(u'Saved edited file "%s" encrypted using %s and  vault id "%s"' % (to_text(filename), to_text(secret), to_text(vault_id)))
+
+        # always shred temp, jic
+        self._shred_file(tmp_path)
 
     def _real_path(self, filename):
         # '-' is special to VaultEditor, dont expand it.
@@ -923,7 +935,7 @@ class VaultEditor:
 
         dirname = os.path.dirname(filename)
         if dirname and not os.path.exists(dirname):
-            display.warning("%s does not exist, creating..." % dirname)
+            display.warning(u"%s does not exist, creating..." % to_text(dirname))
             makedirs_safe(dirname)
 
         # FIXME: If we can raise an error here, we can probably just make it
@@ -953,21 +965,17 @@ class VaultEditor:
 
         # Figure out the vault id from the file, to select the right secret to re-encrypt it
         # (duplicates parts of decrypt, but alas...)
-        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext,
-                                                                       filename=filename)
+        dummy, dummy, cipher_name, vault_id = parse_vaulttext_envelope(b_vaulttext, filename=filename)
 
         # vault id here may not be the vault id actually used for decrypting
         # as when the edited file has no vault-id but is decrypted by non-default id in secrets
         # (vault_id=default, while a different vault-id decrypted)
 
+        # we want to get rid of files encrypted with the AES cipher
+        force_save = (cipher_name not in CIPHER_WRITE_WHITELIST)
+
         # Keep the same vault-id (and version) as in the header
-        if cipher_name not in CIPHER_WRITE_WHITELIST:
-            # we want to get rid of files encrypted with the AES cipher
-            self._edit_file_helper(filename, vault_secret_used, existing_data=plaintext,
-                                   force_save=True, vault_id=vault_id)
-        else:
-            self._edit_file_helper(filename, vault_secret_used, existing_data=plaintext,
-                                   force_save=False, vault_id=vault_id)
+        self._edit_file_helper(filename, vault_secret_used, existing_data=plaintext, force_save=force_save, vault_id=vault_id)
 
     def plaintext(self, filename):
 
@@ -990,8 +998,8 @@ class VaultEditor:
         b_vaulttext = self.read_data(filename)
         vaulttext = to_text(b_vaulttext)
 
-        display.vvvvv('Rekeying file "%s" to with new vault-id "%s" and vault secret %s' %
-                      (filename, new_vault_id, new_vault_secret))
+        display.vvvvv(u'Rekeying file "%s" to with new vault-id "%s" and vault secret %s' %
+                      (to_text(filename), to_text(new_vault_id), to_text(new_vault_secret)))
         try:
             plaintext, vault_id_used, _dummy = self.vault.decrypt_and_get_vault_id(vaulttext)
         except AnsibleError as e:
@@ -1018,8 +1026,8 @@ class VaultEditor:
         os.chmod(filename, prev.st_mode)
         os.chown(filename, prev.st_uid, prev.st_gid)
 
-        display.vvvvv('Rekeyed file "%s" (decrypted with vault id "%s") was encrypted with new vault-id "%s" and vault secret %s' %
-                      (filename, vault_id_used, new_vault_id, new_vault_secret))
+        display.vvvvv(u'Rekeyed file "%s" (decrypted with vault id "%s") was encrypted with new vault-id "%s" and vault secret %s' %
+                      (to_text(filename), to_text(vault_id_used), to_text(new_vault_id), to_text(new_vault_secret)))
 
     def read_data(self, filename):
 
@@ -1037,8 +1045,8 @@ class VaultEditor:
 
         return data
 
-    # TODO: add docstrings for arg types since this code is picky about that
-    def write_data(self, data, filename, shred=True):
+    def write_data(self, data, thefile, shred=True, mode=0o600):
+        # TODO: add docstrings for arg types since this code is picky about that
         """Write the data bytes to given path
 
         This is used to write a byte string to a file or stdout. It is used for
@@ -1055,28 +1063,64 @@ class VaultEditor:
         should be a byte string and not a text type.
 
         :arg data: the byte string (bytes) data
-        :arg filename: filename to save 'data' to.
+        :arg thefile: file descriptor or filename to save 'data' to.
         :arg shred: if shred==True, make sure that the original data is first shredded so that is cannot be recovered.
         :returns: None
         """
         # FIXME: do we need this now? data_bytes should always be a utf-8 byte string
         b_file_data = to_bytes(data, errors='strict')
 
-        # get a ref to either sys.stdout.buffer for py3 or plain old sys.stdout for py2
-        # We need sys.stdout.buffer on py3 so we can write bytes to it since the plaintext
-        # of the vaulted object could be anything/binary/etc
-        output = getattr(sys.stdout, 'buffer', sys.stdout)
+        # check if we have a file descriptor instead of a path
+        is_fd = False
+        try:
+            is_fd = (isinstance(thefile, int) and fcntl.fcntl(thefile, fcntl.F_GETFD) != -1)
+        except Exception:
+            pass
 
-        if filename == '-':
+        if is_fd:
+            # if passed descriptor, use that to ensure secure access, otherwise it is a string.
+            # assumes the fd is securely opened by caller (mkstemp)
+            os.ftruncate(thefile, 0)
+            os.write(thefile, b_file_data)
+        elif thefile == '-':
+            # get a ref to either sys.stdout.buffer for py3 or plain old sys.stdout for py2
+            # We need sys.stdout.buffer on py3 so we can write bytes to it since the plaintext
+            # of the vaulted object could be anything/binary/etc
+            output = getattr(sys.stdout, 'buffer', sys.stdout)
             output.write(b_file_data)
         else:
-            if os.path.isfile(filename):
+            # file names are insecure and prone to race conditions, so remove and create securely
+            if os.path.isfile(thefile):
                 if shred:
-                    self._shred_file(filename)
+                    self._shred_file(thefile)
                 else:
-                    os.remove(filename)
-            with open(filename, "wb") as fh:
-                fh.write(b_file_data)
+                    os.remove(thefile)
+
+            # when setting new umask, we get previous as return
+            current_umask = os.umask(0o077)
+            try:
+                try:
+                    # create file with secure permissions
+                    fd = os.open(thefile, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC, mode)
+                except OSError as ose:
+                    # Want to catch FileExistsError, which doesn't exist in Python 2, so catch OSError
+                    # and compare the error number to get equivalent behavior in Python 2/3
+                    if ose.errno == errno.EEXIST:
+                        raise AnsibleError('Vault file got recreated while we were operating on it: %s' % to_native(ose))
+
+                    raise AnsibleError('Problem creating temporary vault file: %s' % to_native(ose))
+
+                try:
+                    # now write to the file and ensure ours is only data in it
+                    os.ftruncate(fd, 0)
+                    os.write(fd, b_file_data)
+                except OSError as e:
+                    raise AnsibleError('Unable to write to temporary vault file: %s' % to_native(e))
+                finally:
+                    # Make sure the file descriptor is always closed and reset umask
+                    os.close(fd)
+            finally:
+                os.umask(current_umask)
 
     def shuffle_files(self, src, dest):
         prev = None

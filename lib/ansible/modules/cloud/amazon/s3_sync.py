@@ -31,7 +31,6 @@ options:
   mode:
     description:
     - sync direction.
-    required: true
     default: 'push'
     choices: [ push ]
   file_change_strategy:
@@ -86,7 +85,7 @@ options:
     description:
     - This is a string.
     - Cache-Control header set on uploaded objects.
-    - Directives are separated by commmas.
+    - Directives are separated by commas.
     required: false
     version_added: "2.4"
   delete:
@@ -131,7 +130,7 @@ EXAMPLES = '''
 
 RETURN = '''
 filelist_initial:
-  description: file listing (dicts) from inital globbing
+  description: file listing (dicts) from initial globbing
   returned: always
   type: list
   sample: [{
@@ -436,7 +435,7 @@ def filter_list(s3, bucket, s3filelist, strategy):
                 entry['whytime'] = '{0} / {1}'.format(local_modified_epoch, remote_modified_epoch)
                 entry['whysize'] = '{0} / {1}'.format(local_size, remote_size)
 
-                if local_modified_epoch <= remote_modified_epoch or local_size == remote_size:
+                if local_modified_epoch <= remote_modified_epoch and local_size == remote_size:
                     entry['skip_flag'] = True
             else:
                 entry['why'] = "no s3_head"

@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_container - passing ``test: [NONE]`` now actually disables the image's healthcheck, as documented."
+- "docker_swarm_service - passing ``test: [NONE]`` now actually disables the image's healthcheck, as documented."

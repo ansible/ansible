@@ -42,6 +42,12 @@ options:
         hypervisor instance and any licensed BIG-IP modules onto the guest's virtual
         disk. When creating a new guest, this parameter is required.
     type: str
+  initial_hotfix:
+    description:
+      - Specifies the hotfix ISO image file which will be applied on top of the base
+        image.
+    type: str
+    version_added: 2.9
   mgmt_network:
     description:
       - Specifies the method by which the management address is used in the vCMP guest.
@@ -250,6 +256,7 @@ class Parameters(AnsibleF5Parameters):
         'managementNetwork': 'mgmt_network',
         'managementIp': 'mgmt_address',
         'initialImage': 'initial_image',
+        'initialHotfix': 'initial_hotfix',
         'virtualDisk': 'virtual_disk',
         'coresPerSlot': 'cores_per_slot',
         'slots': 'number_of_slots',
@@ -262,6 +269,7 @@ class Parameters(AnsibleF5Parameters):
         'managementNetwork',
         'managementIp',
         'initialImage',
+        'initialHotfix',
         'managementGw',
         'state',
         'coresPerSlot',
@@ -275,6 +283,7 @@ class Parameters(AnsibleF5Parameters):
         'mgmt_network',
         'mgmt_address',
         'initial_image',
+        'initial_hotfix',
         'mgmt_route',
         'name',
         'cores_per_slot',
@@ -288,6 +297,7 @@ class Parameters(AnsibleF5Parameters):
         'mgmt_network',
         'mgmt_address',
         'initial_image',
+        'initial_hotfix',
         'mgmt_route',
         'state',
         'cores_per_slot',
@@ -312,7 +322,7 @@ class ModuleParameters(Parameters):
             return self._values['mgmt_route']
         else:
             raise F5ModuleError(
-                "The specified 'mgmt_route' is not a valid IP address"
+                "The specified 'mgmt_route' is not a valid IP address."
             )
 
     @property
@@ -324,7 +334,7 @@ class ModuleParameters(Parameters):
             return str(addr.with_prefixlen)
         except ValueError:
             raise F5ModuleError(
-                "The specified 'mgmt_address' is not a valid IP address"
+                "The specified 'mgmt_address' is not a valid IP address."
             )
 
     @property
@@ -367,7 +377,17 @@ class ModuleParameters(Parameters):
         if self.initial_image_exists(self._values['initial_image']):
             return self._values['initial_image']
         raise F5ModuleError(
-            "The specified 'initial_image' does not exist on the remote device"
+            "The specified 'initial_image' does not exist on the remote device."
+        )
+
+    @property
+    def initial_hotfix(self):
+        if self._values['initial_hotfix'] is None:
+            return None
+        if self.initial_hotfix_exists(self._values['initial_hotfix']):
+            return self._values['initial_hotfix']
+        raise F5ModuleError(
+            "The specified 'initial_hotfix' does not exist on the remote device."
         )
 
     def initial_image_exists(self, image):
@@ -384,6 +404,23 @@ class ModuleParameters(Parameters):
             return False
         for resource in response['items']:
             if resource['name'].startswith(image):
+                return True
+        return False
+
+    def initial_hotfix_exists(self, hotfix):
+        uri = "https://{0}:{1}/mgmt/tm/sys/software/hotfix/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError:
+            return False
+        if resp.status == 404 or 'code' in response and response['code'] == 404:
+            return False
+        for resource in response['items']:
+            if resource['name'].startswith(hotfix):
                 return True
         return False
 
@@ -670,7 +707,27 @@ class ModuleManager(object):
             return self.remove_virtual_disk_from_device()
         return False
 
-    def get_virtual_disk_on_device(self):
+    def get_virtual_disks_on_device(self):
+        uri = "https://{0}:{1}/mgmt/tm/vcmp/virtual-disk/".format(
+            self.client.provider['server'],
+            self.client.provider['server_port'],
+        )
+        resp = self.client.api.get(uri)
+        try:
+            response = resp.json()
+        except ValueError as ex:
+            raise F5ModuleError(str(ex))
+
+        if 'code' in response and response['code'] == 400:
+            if 'message' in response:
+                raise F5ModuleError(response['message'])
+            else:
+                raise F5ModuleError(resp.content)
+
+        if 'items' in response:
+            return response
+
+    def virtual_disk_exists(self):
         """Checks if a virtual disk exists for a guest
 
         The virtual disk names can differ based on the device vCMP is installed on.
@@ -689,47 +746,32 @@ class ModuleManager(object):
         Returns:
             dict
         """
-
-        uri = "https://{0}:{1}/mgmt/tm/vcmp/virtual-disk/".format(
-            self.client.provider['server'],
-            self.client.provider['server_port'],
-        )
-        resp = self.client.api.get(uri)
-        try:
-            response = resp.json()
-        except ValueError as ex:
-            raise F5ModuleError(str(ex))
-
-        if 'code' in response and response['code'] == 400:
-            if 'message' in response:
-                raise F5ModuleError(response['message'])
-            else:
-                raise F5ModuleError(resp.content)
-
+        response = self.get_virtual_disks_on_device()
+        check = '{0}'.format(self.have.virtual_disk)
         for resource in response['items']:
-            check = '{0}'.format(self.have.virtual_disk)
             if resource['name'].startswith(check):
-                return resource
+                return True
             else:
                 return False
 
-    def virtual_disk_exists(self):
-        response = self.get_virtual_disk_on_device()
-        if response:
-            return True
-        return False
-
     def remove_virtual_disk_from_device(self):
-        response = self.get_virtual_disk_on_device()
-        uri = "https://{0}:{1}/mgmt/tm/vcmp/virtual-disk/{2}".format(
-            self.client.provider['server'],
-            self.client.provider['server_port'],
-            response['name']
-        )
-        response = self.client.api.delete(uri)
-        if response.status == 200:
-            return True
-        raise F5ModuleError(response.content)
+        check = '{0}'.format(self.have.virtual_disk)
+        response = self.get_virtual_disks_on_device()
+        for resource in response['items']:
+            if resource['name'].startswith(check):
+                uri = "https://{0}:{1}/mgmt/tm/vcmp/virtual-disk/{2}".format(
+                    self.client.provider['server'],
+                    self.client.provider['server_port'],
+                    resource['name'].replace('/', '~')
+                )
+                response = self.client.api.delete(uri)
+
+                if response.status == 200:
+                    continue
+                else:
+                    raise F5ModuleError(response.content)
+
+        return True
 
     def is_configured(self):
         """Checks to see if guest is disabled
@@ -928,6 +970,7 @@ class ArgumentSpec(object):
             mgmt_address=dict(),
             mgmt_route=dict(),
             initial_image=dict(),
+            initial_hotfix=dict(),
             state=dict(
                 default='present',
                 choices=['configured', 'disabled', 'provisioned', 'absent', 'present']

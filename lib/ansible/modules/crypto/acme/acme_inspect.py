@@ -44,8 +44,8 @@ seealso:
     description: The specification of the ACME protocol (RFC 8555).
     link: https://tools.ietf.org/html/rfc8555
   - name: ACME TLS ALPN Challenge Extension
-    description: The current draft specification of the C(tls-alpn-01) challenge.
-    link: https://tools.ietf.org/html/draft-ietf-acme-tls-alpn-05
+    description: The specification of the C(tls-alpn-01) challenge (RFC 8737).
+    link: https://www.rfc-editor.org/rfc/rfc8737.html
 extends_documentation_fragment:
   - acme
 options:

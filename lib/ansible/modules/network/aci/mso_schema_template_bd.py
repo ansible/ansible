@@ -42,8 +42,14 @@ options:
     type: str
   vrf:
     description:
-    - The VRF associated to this BD.
+    - The VRF associated to this BD. This is required only when creating a new BD.
     type: dict
+    suboptions:
+      name:
+        description:
+        - The name of the VRF to associate with.
+        required: true
+        type: str
   subnets:
     description:
     - The subnets associated to this BD.
@@ -111,6 +117,8 @@ EXAMPLES = r'''
     schema: Schema 1
     template: Template 1
     bd: BD 1
+    vrf:
+      name: VRF1
     state: present
   delegate_to: localhost
 
@@ -248,7 +256,7 @@ def main():
         payload = dict(
             name=bd,
             displayName=display_name,
-            intersiteBumTraffic=intersite_bum_traffic,
+            intersiteBumTrafficAllow=intersite_bum_traffic,
             optimizeWanBandwidth=optimize_wan_bandwidth,
             l2UnknownUnicast=layer2_unknown_unicast,
             l2Stretch=layer2_stretch,

@@ -76,9 +76,10 @@ options:
         description:
             - One or more (powershell or regex) patterns to compare filenames with.
             - The type of pattern matching is controlled by C(use_regex) option.
-            - The patterns retrict the list of files or folders to be returned based on the filenames.
+            - The patterns restrict the list of files or folders to be returned based on the filenames.
             - For a file to be matched it only has to match with one pattern in a list provided.
         type: list
+        aliases: [ "regex", "regexp" ]
     recurse:
         description:
             - Will recursively descend into the directory looking for files or folders.
@@ -239,6 +240,11 @@ files:
             returned: success, path exists, path is a file
             type: str
             sample: ".ps1"
+        filename:
+            description: The name of the file.
+            returned: success, path exists
+            type: str
+            sample: temp
         isarchive:
             description: If the path is ready for archiving or not.
             returned: success, path exists
@@ -281,7 +287,7 @@ files:
             sample: 1477984205.15
         lnk_source:
             description: The target of the symbolic link, will return null if not a link or the link is broken.
-            return: success, path exists, path is a symbolic link
+            returned: success, path exists, path is a symbolic link
             type: str
             sample: C:\temp
         owner:

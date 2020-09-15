@@ -33,11 +33,10 @@ import socket
 import struct
 import traceback
 import uuid
-from datetime import date, datetime
 
 from functools import partial
 from ansible.module_utils._text import to_bytes, to_text
-from ansible.module_utils.common._collections_compat import Mapping
+from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.six.moves import cPickle
 
@@ -137,7 +136,7 @@ class Connection(object):
 
         if not os.path.exists(self.socket_path):
             raise ConnectionError('socket_path does not exist or cannot be found.'
-                                  '\nSee the socket_path issue catergory in Network Debug and Troubleshooting Guide')
+                                  '\nSee the socket_path issue category in Network Debug and Troubleshooting Guide')
 
         try:
             data = json.dumps(req, cls=AnsibleJSONEncoder)
@@ -150,7 +149,7 @@ class Connection(object):
         try:
             out = self.send(data)
         except socket.error as e:
-            raise ConnectionError('unable to connect to socket. See the socket_path issue catergory in Network Debug and Troubleshooting Guide',
+            raise ConnectionError('unable to connect to socket. See the socket_path issue category in Network Debug and Troubleshooting Guide',
                                   err=to_text(e, errors='surrogate_then_replace'), exception=traceback.format_exc())
 
         try:
@@ -202,29 +201,3 @@ class Connection(object):
         sf.close()
 
         return to_text(response, errors='surrogate_or_strict')
-
-
-# NOTE: This is a modified copy of the class in parsing.ajson to get around not
-#       being able to import that directly, nor some of the type classes
-class AnsibleJSONEncoder(json.JSONEncoder):
-    '''
-    Simple encoder class to deal with JSON encoding of Ansible internal types
-    '''
-
-    def default(self, o):
-        if type(o).__name__ == 'AnsibleVaultEncryptedUnicode':
-            # vault object
-            value = {'__ansible_vault': to_text(o._ciphertext, errors='surrogate_or_strict', nonstring='strict')}
-        elif type(o).__name__ == 'AnsibleUnsafe':
-            # unsafe object
-            value = {'__ansible_unsafe': to_text(o, errors='surrogate_or_strict', nonstring='strict')}
-        elif isinstance(o, Mapping):
-            # hostvars and other objects
-            value = dict(o)
-        elif isinstance(o, (date, datetime)):
-            # date object
-            value = o.isoformat()
-        else:
-            # use default encoder
-            value = super(AnsibleJSONEncoder, self).default(o)
-        return value

@@ -126,6 +126,7 @@ class NetAppONTAPCifsAcl(object):
         cifs_acl_info = netapp_utils.zapi.NaElement('cifs-share-access-control')
         cifs_acl_info.add_new_child('share', self.share_name)
         cifs_acl_info.add_new_child('user-or-group', self.user_or_group)
+        cifs_acl_info.add_new_child('vserver', self.vserver)
         query = netapp_utils.zapi.NaElement('query')
         query.add_child_elem(cifs_acl_info)
         cifs_acl_iter.add_child_elem(query)

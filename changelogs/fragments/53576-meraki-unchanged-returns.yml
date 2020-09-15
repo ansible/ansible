@@ -1,0 +1,2 @@
+minor_changes:
+  - "meraki_* - Meraki modules now return data when no changes are made."

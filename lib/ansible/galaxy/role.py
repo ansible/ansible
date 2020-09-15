@@ -33,10 +33,10 @@ from shutil import rmtree
 
 from ansible import context
 from ansible.errors import AnsibleError
+from ansible.galaxy.user_agent import user_agent
 from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
-from ansible.galaxy.api import GalaxyAPI
 from ansible.utils.display import Display
 
 display = Display()
@@ -49,7 +49,7 @@ class GalaxyRole(object):
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
     ROLE_DIRS = ('defaults', 'files', 'handlers', 'meta', 'tasks', 'templates', 'vars', 'tests')
 
-    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
+    def __init__(self, galaxy, api, name, src=None, version=None, scm=None, path=None):
 
         self._metadata = None
         self._install_info = None
@@ -58,6 +58,7 @@ class GalaxyRole(object):
         display.debug('Validate TLS certificates: %s' % self._validate_certs)
 
         self.galaxy = galaxy
+        self.api = api
 
         self.name = name
         self.version = version
@@ -65,8 +66,18 @@ class GalaxyRole(object):
         self.scm = scm
 
         if path is not None:
-            if self.name not in path:
+            if not path.endswith(os.path.join(os.path.sep, self.name)):
                 path = os.path.join(path, self.name)
+            else:
+                # Look for a meta/main.ya?ml inside the potential role dir in case
+                #  the role name is the same as parent directory of the role.
+                #
+                # Example:
+                #   ./roles/testing/testing/meta/main.yml
+                for meta_main in self.META_MAIN:
+                    if os.path.exists(os.path.join(path, name, meta_main)):
+                        path = os.path.join(path, self.name)
+                        break
             self.path = path
         else:
             # use the first path by default
@@ -179,7 +190,7 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = open_url(archive_url, validate_certs=self._validate_certs)
+                url_file = open_url(archive_url, validate_certs=self._validate_certs, http_agent=user_agent())
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
@@ -204,17 +215,16 @@ class GalaxyRole(object):
                 role_data = self.src
                 tmp_file = self.fetch(role_data)
             else:
-                api = GalaxyAPI(self.galaxy)
-                role_data = api.lookup_role_by_name(self.src)
+                role_data = self.api.lookup_role_by_name(self.src)
                 if not role_data:
-                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, api.api_server))
+                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, self.api.api_server))
 
                 if role_data.get('role_type') == 'APP':
                     # Container Role
                     display.warning("%s is a Container App role, and should only be installed using Ansible "
                                     "Container" % self.name)
 
-                role_versions = api.fetch_role_related('versions', role_data['id'])
+                role_versions = self.api.fetch_role_related('versions', role_data['id'])
                 if not self.version:
                     # convert the version names to LooseVersion objects
                     # and sort them to get the latest version. If there
@@ -230,13 +240,13 @@ class GalaxyRole(object):
                                 'Please contact the role author to resolve versioning conflicts, or specify an explicit role version to '
                                 'install.' % ', '.join([v.vstring for v in loose_versions])
                             )
-                        self.version = str(loose_versions[-1])
+                        self.version = to_text(loose_versions[-1])
                     elif role_data.get('github_branch', None):
                         self.version = role_data['github_branch']
                     else:
                         self.version = 'master'
                 elif self.version != 'master':
-                    if role_versions and str(self.version) not in [a.get('name', None) for a in role_versions]:
+                    if role_versions and to_text(self.version) not in [a.get('name', None) for a in role_versions]:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version,
                                                                                                                                          self.name,
                                                                                                                                          role_versions))
@@ -256,12 +266,9 @@ class GalaxyRole(object):
             display.debug("installing from %s" % tmp_file)
 
             if not tarfile.is_tarfile(tmp_file):
-                raise AnsibleError("the file downloaded was not a tar.gz")
+                raise AnsibleError("the downloaded file does not appear to be a valid tar archive.")
             else:
-                if tmp_file.endswith('.gz'):
-                    role_tar_file = tarfile.open(tmp_file, "r:gz")
-                else:
-                    role_tar_file = tarfile.open(tmp_file, "r")
+                role_tar_file = tarfile.open(tmp_file, "r")
                 # verify the role's meta file
                 meta_file = None
                 members = role_tar_file.getmembers()
@@ -314,13 +321,15 @@ class GalaxyRole(object):
                             # bits that might be in the file for security purposes
                             # and drop any containing directory, as mentioned above
                             if member.isreg() or member.issym():
-                                parts = member.name.replace(archive_parent_dir, "", 1).split(os.sep)
-                                final_parts = []
-                                for part in parts:
-                                    if part != '..' and '~' not in part and '$' not in part:
-                                        final_parts.append(part)
-                                member.name = os.path.join(*final_parts)
-                                role_tar_file.extract(member, self.path)
+                                n_member_name = to_native(member.name)
+                                n_archive_parent_dir = to_native(archive_parent_dir)
+                                n_parts = n_member_name.replace(n_archive_parent_dir, "", 1).split(os.sep)
+                                n_final_parts = []
+                                for n_part in n_parts:
+                                    if n_part != '..' and '~' not in n_part and '$' not in n_part:
+                                        n_final_parts.append(n_part)
+                                member.name = os.path.join(*n_final_parts)
+                                role_tar_file.extract(member, to_native(self.path))
 
                         # write out the install info file for later use
                         self._write_galaxy_install_info()

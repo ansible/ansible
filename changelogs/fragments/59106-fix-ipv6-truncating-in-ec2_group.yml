@@ -1,0 +1,4 @@
+bugfixes:
+  - ec2_group - Don't truncate the host bits off of IPv6 CIDRs.
+    CIDRs will be passed thru to EC2 as-is provided they are valid IPv6
+    representations.  (https://github.com/ansible/ansible/issues/53297)

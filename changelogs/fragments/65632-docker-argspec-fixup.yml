@@ -1,0 +1,3 @@
+bugfixes:
+- "docker_image - fix validation of build options."
+- "docker_login - fix error handling when ``username`` or ``password`` is not specified when ``state`` is ``present``."

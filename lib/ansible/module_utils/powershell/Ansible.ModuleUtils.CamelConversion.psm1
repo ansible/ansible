@@ -10,7 +10,7 @@ Function Convert-StringToSnakeCase($string) {
 
         # handle when there was nothing before the plural pattern
         if ($replacement_string.StartsWith("_") -and -not $string.StartsWith("_")) {
-            $replacement_string = $replacement_string.Substring(1)            
+            $replacement_string = $replacement_string.Substring(1)
         }
         $string = $replacement_string
     }
@@ -50,7 +50,7 @@ Function Convert-DictToSnakeCase($dict) {
 
         $value = $dict_entry.Value
         if ($value -is [Hashtable]) {
-            $snake_dict.$snake_key = Convert-DictToSnakeCase -dict $value          
+            $snake_dict.$snake_key = Convert-DictToSnakeCase -dict $value
         } elseif ($value -is [Array] -or $value -is [System.Collections.ArrayList]) {
             $snake_dict.$snake_key = Convert-ListToSnakeCase -list $value
         } else {

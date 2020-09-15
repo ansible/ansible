@@ -1,0 +1,2 @@
+bugfixes:
+- ansible-galaxy - Expand the ``User-Agent`` to include more information and add it to more calls to Galaxy endpoints.

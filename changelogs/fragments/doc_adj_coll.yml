@@ -1,0 +1,2 @@
+minor_changes:
+    - Enable ansible-doc to work with 'adjacent' collections via --playbook-dir option.

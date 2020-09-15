@@ -16,8 +16,8 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: azure_rm_cosmosdbaccount_info
-version_added: "2.8"
-short_description: Get Azure Cosmos DB Account facts.
+version_added: "2.9"
+short_description: Get Azure Cosmos DB Account facts
 description:
     - Get facts of Azure Cosmos DB Account.
 
@@ -47,7 +47,7 @@ extends_documentation_fragment:
     - azure
 
 author:
-    - "Zim Kalinowski (@zikalino)"
+    - Zim Kalinowski (@zikalino)
 
 '''
 
@@ -58,7 +58,7 @@ EXAMPLES = '''
       name: testaccount
 
   - name: List instances of Database Account
-    azure_rm_cosmosdbaccousnt_facts:
+    azure_rm_cosmosdbaccousnt_info:
       resource_group: myResourceGroup
 '''
 
@@ -125,7 +125,7 @@ accounts:
                     sample: 100
         failover_policies:
             description:
-                - Read locations
+                - The list of new failover policies for the failover priority change.
             returned: always
             type: complex
             contains:
@@ -149,7 +149,7 @@ accounts:
                     sample: testaccount-eastus
         read_locations:
             description:
-                - Read locations
+                - Read locations.
             returned: always
             type: complex
             contains:
@@ -185,7 +185,7 @@ accounts:
                     sample: Succeeded
         write_locations:
             description:
-                - Write locations
+                - Write locations.
             returned: always
             type: complex
             contains:
@@ -245,7 +245,7 @@ accounts:
             sample: true
         enable_cassandra:
             description:
-                - Enable Cassandra
+                - Enable Cassandra.
             returned: always
             type: bool
             sample: true
@@ -339,10 +339,10 @@ accounts:
                              q3dpJxJga76h9BZkK2BJJrDzSO6DDn6yKads017OZBZ1YZWyq1cW4iuvA=="
         tags:
             description:
-                - Tags
+                - Tags assigned to the resource. Dictionary of "string":"string" pairs.
             returned: always
-            type: complex
-            sample: {}
+            type: dict
+            sample: { "tag1":"abc" }
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
@@ -357,7 +357,7 @@ except ImportError:
     pass
 
 
-class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
+class AzureRMCosmosDBAccountInfo(AzureRMModuleBase):
     def __init__(self):
         # define user inputs into argument
         self.module_arg_spec = dict(
@@ -389,9 +389,14 @@ class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
         self.retrieve_keys = None
         self.retrieve_connection_strings = None
 
-        super(AzureRMCosmosDBAccountFacts, self).__init__(self.module_arg_spec, supports_tags=False)
+        super(AzureRMCosmosDBAccountInfo, self).__init__(self.module_arg_spec, supports_tags=False)
 
     def exec_module(self, **kwargs):
+
+        is_old_facts = self.module._name == 'azure_rm_cosmosdbaccount_facts'
+        if is_old_facts:
+            self.module.deprecate("The 'azure_rm_cosmosdbaccount_facts' module has been renamed to 'azure_rm_cosmosdbaccount_info'", version='2.13')
+
         for key in self.module_arg_spec:
             setattr(self, key, kwargs[key])
         self.mgmt_client = self.get_mgmt_svc_client(CosmosDB,
@@ -508,7 +513,7 @@ class AzureRMCosmosDBAccountFacts(AzureRMModuleBase):
 
 
 def main():
-    AzureRMCosmosDBAccountFacts()
+    AzureRMCosmosDBAccountInfo()
 
 
 if __name__ == '__main__':

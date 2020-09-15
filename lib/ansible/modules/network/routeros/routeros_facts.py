@@ -246,6 +246,7 @@ class Interfaces(FactsBase):
     ]
 
     DETAIL_RE = re.compile(r'([\w\d\-]+)=\"?(\w{3}/\d{2}/\d{4}\s\d{2}:\d{2}:\d{2}|[\w\d\-\.:/]+)')
+    WRAPPED_LINE_RE = re.compile(r'^\s+(?!\d)')
 
     def populate(self):
         super(Interfaces, self).populate()
@@ -289,6 +290,8 @@ class Interfaces(FactsBase):
 
     def populate_ipv6_interfaces(self, data):
         for key, value in iteritems(data):
+            if key is None:
+                break
             if 'ipv6' not in self.facts['interfaces'][key]:
                 self.facts['interfaces'][key]['ipv6'] = list()
             addr, subnet = value['address'].split("/")
@@ -307,8 +310,8 @@ class Interfaces(FactsBase):
         for line in data.split('\n'):
             if len(line) == 0 or line[:5] == 'Flags':
                 continue
-            elif re.match(r'\s\d', line[:2]):
-                preprocessed.append(line[2:])
+            elif not re.match(self.WRAPPED_LINE_RE, line):
+                preprocessed.append(line)
             else:
                 preprocessed[-1] += line
         return preprocessed

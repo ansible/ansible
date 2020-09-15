@@ -1,0 +1,93 @@
+---
+- debug: msg="START connection={{ ansible_connection }} nxos_telemetry deleted sanity test"
+
+- set_fact: source_interface="Loopback55"
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
+
+- set_fact: before_keys_length=6
+- set_fact: before_keys_length=7
+  when: imagetag and (major_version is version_compare('9.1', 'ge'))
+
+- name: Setup
+  nxos_feature: &setup_teardown
+    feature: telemetry
+    state: disabled
+  ignore_errors: yes
+
+- name: Setup - Configure Telemetry
+  nxos_telemetry:
+    state: 'merged'
+    config:
+      certificate:
+        key: /bootflash/server.key
+        hostname: localhost
+      compression: gzip
+      source_interface: "{{source_interface|default(omit)}}"
+      vrf: management
+      destination_groups:
+        - id: 2
+          destination:
+            ip: 192.168.0.1
+            port: 50001
+            protocol: grpc
+            encoding: gpb
+        - { id: 2, destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: GPB}}
+        - { id: 10, destination: {ip: 192.168.0.1, port: 50001, protocol: Grpc, encoding: gPB}}
+        - { id: 10, destination: {ip: 192.168.0.2, port: 60001, protocol: gRPC, encoding: gpb}}
+      sensor_groups:
+        - { id: 8, data_source: NX-API, path: {name: '"show bgp l2vpn evpn summary"', depth: 0, query_condition: foo, filter_condition: foo}}
+        - { id: 2, data_source: NX-API, path: {name: '"show ip bgp neighbors"', depth: unbounded, query_condition: foo, filter_condition: foo}}
+        - { id: 55, data_source: DME, path: {name: 'sys/bgp/inst/dom-default/peer-[10.10.10.11]/ent-[10.10.10.11]', depth: 0, query_condition: foo, filter_condition: foo}}
+        - { id: 55, data_source: DME, path: {name: sys/ospf, depth: 0, query_condition: foo, filter_condition: 'or(eq(ethpmPhysIf.operSt,"down"),eq(ethpmPhysIf.operSt,"up"))'}}
+      subscriptions:
+        - { id: 44, destination_group: 10, sensor_group: {id: 8, sample_interval: 2000}}
+        - { id: 44, destination_group: 2, sensor_group: {id: 2, sample_interval: 2000}}
+        - { id: 55, destination_group: 10, sensor_group: {id: 55, sample_interval: 2000}}
+
+- block:
+  - name: Gather Telemetry Facts Before Changes
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources:
+        - telemetry
+
+  - name: Telemetry - deleted
+    nxos_telemetry: &deleted
+      state: 'deleted'
+    register: result
+
+  # result.before|dict2items|length checks the number of dictionary keys.
+  - assert:
+      that:
+        - "result.changed == true"
+        - "'no telemetry' in result.commands"
+        - "result.before|dict2items|length == {{ before_keys_length }}"
+
+  - assert:
+      that:
+        - "(ansible_facts.network_resources.telemetry|dict2items)|symmetric_difference(result.before|dict2items)|length == 0"
+
+  - name: Gather Telemetry Facts After Changes
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "(ansible_facts.network_resources.telemetry|dict2items)|symmetric_difference(result.after|dict2items)|length == 0"
+
+  - name: Telemetry - deleted - idempotence
+    nxos_telemetry: *deleted
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: Teardown
+    nxos_feature: *setup_teardown
+    ignore_errors: yes
+
+  - debug: msg="END connection={{ ansible_connection }} nxos_telemetry deleted sanity test"

@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix regression when including a role with a custom filter (https://github.com/ansible/ansible/issues/57351)

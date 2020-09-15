@@ -1,0 +1,2 @@
+bugfixes:
+  - uri - always return a value for status even during failure (https://github.com/ansible/ansible/issues/55897)

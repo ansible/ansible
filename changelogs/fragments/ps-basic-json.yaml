@@ -1,0 +1,2 @@
+bugfixes:
+- Ansible.Basic - Fix issue when deserilizing a JSON string that is not a dictionary - https://github.com/ansible/ansible/pull/55691

@@ -1,0 +1,62 @@
+---
+- debug:
+    msg: "Start nxos_vlans replaced integration tests connection={{ ansible_connection }}"
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      no vlan 2-100
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        vlan 5
+          name test-vlan5
+        vlan 6
+          name test-vlan6
+          exit
+
+  - name: Gather vlans facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: vlans
+
+  - name: Replaced
+    nxos_vlans: &replaced
+      config:
+        - vlan_id: 6
+          state: suspend
+      state: replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.before|length == (ansible_facts.network_resources.vlans|length - 1)"
+        - "result.changed == true"
+        - "'vlan 6' in result.commands"
+        - "'no name' in result.commands"
+        - "'state suspend' in result.commands"
+        - "result.commands|length == 3"
+
+  - name: Gather vlans post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "result.after|length == (ansible_facts.network_resources.vlans|length - 1)"
+
+  - name: Idempotence - Replaced
+    nxos_vlans: *replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup

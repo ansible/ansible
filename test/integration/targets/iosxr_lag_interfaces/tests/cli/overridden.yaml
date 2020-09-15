@@ -1,0 +1,59 @@
+---
+- debug:
+      msg: "START iosxr_lag_interfaces overridden integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Overridde all LAG interface configuration with provided configuration
+      iosxr_lag_interfaces: &overridden
+        config:
+          - name: Bundle-Ether11
+            mode: active
+            members:
+              - member: GigabitEthernet0/0/0/0
+                mode: active
+
+              - member: GigabitEthernet0/0/0/1
+                mode: active
+            load_balancing_hash: src-ip
+            links:
+              max_active: 10
+              min_active: 5
+        state: overridden
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ overridden['commands'] | symmetric_difference(result['commands']) |length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ merged['after'] | symmetric_difference(result['before']) |length == 0 }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] | symmetric_difference(result['after']) |length == 0 }}"
+
+    - name: Overridde all interface LAG interface configuration with provided configuration (IDEMPOTENT)
+      iosxr_lag_interfaces: *overridden
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+         - "result.commands|length == 0"
+
+    - name: Assert that before dict is correctly generated
+      assert:
+        that:
+          - "{{ overridden['after'] | symmetric_difference(result['before']) |length == 0 }}"
+  
+  always:
+    - include_tasks: _remove_config.yaml

@@ -152,7 +152,7 @@ stat:
             description: The name of the file (without path).
             returned: success, path exists, path is a file
             type: str
-            sammple: foo.ini
+            sample: foo.ini
         hlnk_targets:
             description: List of other files pointing to the same file (hard links), excludes the current file.
             returned: success, path exists

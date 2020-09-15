@@ -1,13 +1,14 @@
 # (c) 2018 Red Hat Inc.
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import json
 
 from ansible.module_utils.six.moves.urllib.error import HTTPError
 from units.compat import mock
 from units.compat import unittest
-from units.compat.builtins import BUILTINS
-from units.compat.mock import mock_open, patch
 
 from ansible.errors import AnsibleConnectionFailure
 from ansible.module_utils.connection import ConnectionError

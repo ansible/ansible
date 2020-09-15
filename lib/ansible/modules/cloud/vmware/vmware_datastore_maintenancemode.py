@@ -34,15 +34,18 @@ options:
       description:
       - Name of datastore to manage.
       - If C(datastore_cluster) or C(cluster_name) are not set, this parameter is required.
+      type: str
     datastore_cluster:
       description:
       - Name of the datastore cluster from all child datastores to be managed.
       - If C(datastore) or C(cluster_name) are not set, this parameter is required.
+      type: str
     cluster_name:
       description:
       - Name of the cluster where datastore is connected to.
       - If multiple datastores are connected to the given cluster, then all datastores will be managed by C(state).
       - If C(datastore) or C(datastore_cluster) are not set, this parameter is required.
+      type: str
     state:
       description:
       - If set to C(present), then enter datastore into maintenance mode.
@@ -52,6 +55,7 @@ options:
       choices: [ present, absent ]
       default: present
       required: False
+      type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -120,7 +124,10 @@ class VmwareDatastoreMaintenanceMgr(PyVmomi):
         datastore_cluster = self.params.get('datastore_cluster')
         self.datastore_objs = []
         if datastore_name:
-            self.datastore_objs = [self.find_datastore_by_name(datastore_name=datastore_name)]
+            ds = self.find_datastore_by_name(datastore_name=datastore_name)
+            if not ds:
+                self.module.fail_json(msg='Failed to find datastore "%(datastore)s".' % self.params)
+            self.datastore_objs = [ds]
         elif cluster_name:
             cluster = find_cluster_by_name(self.content, cluster_name)
             if not cluster:

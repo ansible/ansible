@@ -1,0 +1,14 @@
+# ONLINE_TOKEN='XXX' ansible-playbook ./test/legacy/online.yml --tags test_online_server_info
+
+- name: Get server information and register it in a variable
+  online_server_info:
+  register: servers_info
+
+- name: Display server variable
+  debug:
+    var: servers_info
+
+- name: Ensure retrieval of servers info is success
+  assert:
+    that:
+      - servers_info is success

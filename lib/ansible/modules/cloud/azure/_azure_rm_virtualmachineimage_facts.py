@@ -1,0 +1,1 @@
+azure_rm_virtualmachineimage_info.py

@@ -89,7 +89,7 @@ EXAMPLES = '''
     state: present
     vpc_id: vpc-123456
     cidr: 10.0.1.16/28
-    resource_tags:
+    tags:
       Name: Database Subnet
   register: database_subnet
 

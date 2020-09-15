@@ -1,0 +1,2 @@
+bugfixes:
+  - win_packages - fixed issue where Test-Path failed to find files with special characters (https://github.com/ansible/ansible/issues/62521)

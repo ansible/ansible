@@ -2,93 +2,74 @@
 # Copyright: (c) 2018, Karsten Kaj Jakobsen <kj@patientsky.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 5000
-    state: started
+- import_role:
+    name: prepare_vmware_tests
+  vars:
+    setup_attach_host: true
+    setup_datastore: true
+    setup_virtualmachines: true
 
-- name: Kill vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/killall
-
-- name: Start vcsim
-  uri:
-    url: http://{{ vcsim }}:5000/spawn?cluster=2
-  register: vcsim_instance
-
-- name: Wait for Flask controller to come up online
-  wait_for:
-    host: "{{ vcsim }}"
-    port: 443
-    state: started
-
-- debug: var=vcsim_instance
-
-- name: "Create DRS VM group"
+- name: Create DRS VM group
   vmware_drs_group:
-    # Login creds
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
     validate_certs: False
     # Options
-    cluster_name: DC0_C0
-    datacenter_name: DC0
+    cluster_name: '{{ ccr1 }}'
+    datacenter_name: '{{ dc1 }}'
     group_name: TEST_VM_01
-    vms:
-      - DC0_C0_RP0_VM0
-      - DC0_C0_RP0_VM1
+    vms: "{{ virtual_machines_in_cluster | map(attribute='name') | list }}"
     state: present
   register: drs_vm_group_01_results
 
-- debug: var=drs_vm_group_01_results
+- debug:
+    var: drs_vm_group_01_results
 
 - assert:
     that:
       - "drs_vm_group_01_results.changed"
 
-- name: "Create DRS Host group"
-  vmware_drs_group:
-    # Login creds
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    validate_certs: False
-    # Options
-    cluster_name: DC0_C0
-    datacenter_name: DC0
-    group_name: TEST_HOST_01
-    hosts:
-      - DC0_C0_H0
-      - DC0_C0_H1
-      - DC0_C0_H2
-    state: present
-  register: drs_host_group_01_results
+- when: vcsim is defined or esxi_hosts | length >= 3
+  block:
+  - name: Create DRS Host group
+    vmware_drs_group:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      cluster_name: '{{ ccr1 }}'
+      datacenter_name: '{{ dc1 }}'
+      group_name: TEST_HOST_01
+      hosts: "{{ esxi_hosts[0:3] }}"
+      state: present
+    register: drs_host_group_01_results
 
-- debug: var=drs_host_group_01_results
+  - debug:
+      var: drs_host_group_01_results
 
-- assert:
-    that:
-      - "drs_host_group_01_results.changed"
+  - assert:
+      that:
+        - "drs_host_group_01_results.changed"
 
-- name: "Delete DRS Host group"
-  vmware_drs_group:
-    # Login creds
-    hostname: "{{ vcsim }}"
-    username: "{{ vcsim_instance['json']['username'] }}"
-    password: "{{ vcsim_instance['json']['password'] }}"
-    validate_certs: False
-    # Options
-    cluster_name: DC0_C0
-    datacenter_name: DC0
-    group_name: TEST_HOST_01
-    hosts: []
-    state: absent
-  register: drs_host_group_01_delete_results
+  - name: Delete DRS Host group
+    vmware_drs_group:
+      # Login creds
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: False
+      # Options
+      cluster_name: DC0_C0
+      datacenter_name: DC0
+      group_name: TEST_HOST_01
+      hosts: []
+      state: absent
+    register: drs_host_group_01_delete_results
 
-- debug: var=drs_host_group_01_delete_results
+  - debug:
+      var: drs_host_group_01_delete_results
 
-- assert:
-    that:
-      - "drs_host_group_01_delete_results.changed"
+  - assert:
+      that:
+        - "drs_host_group_01_delete_results.changed"

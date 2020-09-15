@@ -24,9 +24,13 @@ description:
   - This module will configure both exec and motd banners on remote device
     running Cisco IOS XR. It allows playbooks to add or remove
     banner text from the running configuration.
+requirements:
+    - ncclient >= 0.5.3 when using netconf
+    - lxml >= 4.1.1 when using netconf
 extends_documentation_fragment: iosxr
 notes:
-  - Tested against IOS XRv 6.1.2
+  - Tested against IOS XRv 6.1.3.
+  - This module works with connection C(network_cli) and C(netconf). See L(the IOS-XR Platform Options,../network/user_guide/platform_iosxr.html).
 options:
   banner:
     description:
@@ -234,8 +238,9 @@ def main():
 
     config_object = None
     if is_cliconf(module):
-        module.deprecate(msg="cli support for 'iosxr_banner' is deprecated. Use transport netconf instead",
-                         version="2.9")
+        # Commenting the below cliconf deprecation support call for Ansible 2.9 as it'll be continued to be supported
+        # module.deprecate("cli support for 'iosxr_interface' is deprecated. Use transport netconf instead",
+        #                  version='2.9')
         config_object = CliConfiguration(module)
     elif is_netconf(module):
         config_object = NCConfiguration(module)

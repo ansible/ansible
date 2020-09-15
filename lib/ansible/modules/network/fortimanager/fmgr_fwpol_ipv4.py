@@ -59,6 +59,15 @@ options:
     required: false
     default: "default"
 
+  fail_on_missing_dependency:
+    description:
+      - Normal behavior is to "skip" tasks that fail dependency checks, so other tasks can run.
+      - If set to "enabled" if a failed dependency check happeens, Ansible will exit as with failure instead of skip.
+    required: false
+    default: "disable"
+    choices: ["enable", "disable"]
+    version_added: "2.9"
+
   wsso:
     description:
       - Enable/disable WiFi Single Sign On (WSSO).
@@ -1024,7 +1033,8 @@ def main():
         adom=dict(type="str", default="root"),
         mode=dict(choices=["add", "set", "delete", "update"], type="str", default="add"),
         package_name=dict(type="str", required=False, default="default"),
-
+        fail_on_missing_dependency=dict(type="str", required=False, default="disable", choices=["enable",
+                                                                                                "disable"]),
         wsso=dict(required=False, type="str", choices=["disable", "enable"]),
         webfilter_profile=dict(required=False, type="str"),
         webcache_https=dict(required=False, type="str", choices=["disable", "enable"]),
@@ -1335,8 +1345,12 @@ def main():
 
     try:
         results = fmgr_firewall_policy_modify(fmgr, paramgram)
-        fmgr.govern_response(module=module, results=results, good_codes=[0, -9998],
-                             ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
+        if module.params["fail_on_missing_dependency"] == "disable":
+            fmgr.govern_response(module=module, results=results, good_codes=[0, -9998],
+                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
+        if module.params["fail_on_missing_dependency"] == "enable" and results[0] == -10131:
+            fmgr.govern_response(module=module, results=results, good_codes=[0, ], failed=True, skipped=False,
+                                 ansible_facts=fmgr.construct_ansible_facts(results, module.params, paramgram))
     except Exception as err:
         raise FMGBaseException(err)
 

@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_ssl_server
 short_description: Configure SSL servers in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall feature and ssl_server category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall feature and ssl_server category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,113 +41,153 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip adress.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     firewall_ssl_server:
         description:
             - Configure SSL servers.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            add-header-x-forwarded-proto:
+            add_header_x_forwarded_proto:
                 description:
                     - Enable/disable adding an X-Forwarded-Proto header to forwarded requests.
+                type: str
                 choices:
                     - enable
                     - disable
             ip:
                 description:
                     - IPv4 address of the SSL server.
-            mapped-port:
+                type: str
+            mapped_port:
                 description:
-                    - Mapped server service port (1 - 65535, default = 80).
+                    - Mapped server service port (1 - 65535).
+                type: int
             name:
                 description:
                     - Server name.
                 required: true
+                type: str
             port:
                 description:
-                    - Server service port (1 - 65535, default = 443).
-            ssl-algorithm:
+                    - Server service port (1 - 65535).
+                type: int
+            ssl_algorithm:
                 description:
                     - Relative strength of encryption algorithms accepted in negotiation.
+                type: str
                 choices:
                     - high
                     - medium
                     - low
-            ssl-cert:
+            ssl_cert:
                 description:
-                    - Name of certificate for SSL connections to this server (default = "Fortinet_CA_SSL"). Source vpn.certificate.local.name.
-            ssl-client-renegotiation:
+                    - Name of certificate for SSL connections to this server. Source vpn.certificate.local.name.
+                type: str
+            ssl_client_renegotiation:
                 description:
                     - Allow or block client renegotiation by server.
+                type: str
                 choices:
                     - allow
                     - deny
                     - secure
-            ssl-dh-bits:
+            ssl_dh_bits:
                 description:
-                    - Bit-size of Diffie-Hellman (DH) prime used in DHE-RSA negotiation (default = 2048).
+                    - Bit-size of Diffie-Hellman (DH) prime used in DHE-RSA negotiation.
+                type: str
                 choices:
                     - 768
                     - 1024
                     - 1536
                     - 2048
-            ssl-max-version:
+            ssl_max_version:
                 description:
                     - Highest SSL/TLS version to negotiate.
+                type: str
                 choices:
                     - tls-1.0
                     - tls-1.1
                     - tls-1.2
-            ssl-min-version:
+            ssl_min_version:
                 description:
                     - Lowest SSL/TLS version to negotiate.
+                type: str
                 choices:
                     - tls-1.0
                     - tls-1.1
                     - tls-1.2
-            ssl-mode:
+            ssl_mode:
                 description:
                     - SSL/TLS mode for encryption and decryption of traffic.
+                type: str
                 choices:
                     - half
                     - full
-            ssl-send-empty-frags:
+            ssl_send_empty_frags:
                 description:
                     - Enable/disable sending empty fragments to avoid attack on CBC IV.
+                type: str
                 choices:
                     - enable
                     - disable
-            url-rewrite:
+            url_rewrite:
                 description:
                     - Enable/disable rewriting the URL.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -163,6 +200,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure SSL servers.
     fortios_firewall_ssl_server:
@@ -171,22 +209,22 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       firewall_ssl_server:
-        state: "present"
-        add-header-x-forwarded-proto: "enable"
+        add_header_x_forwarded_proto: "enable"
         ip: "<your_own_value>"
-        mapped-port: "5"
+        mapped_port: "5"
         name: "default_name_6"
         port: "7"
-        ssl-algorithm: "high"
-        ssl-cert: "<your_own_value> (source vpn.certificate.local.name)"
-        ssl-client-renegotiation: "allow"
-        ssl-dh-bits: "768"
-        ssl-max-version: "tls-1.0"
-        ssl-min-version: "tls-1.0"
-        ssl-mode: "half"
-        ssl-send-empty-frags: "enable"
-        url-rewrite: "enable"
+        ssl_algorithm: "high"
+        ssl_cert: "<your_own_value> (source vpn.certificate.local.name)"
+        ssl_client_renegotiation: "allow"
+        ssl_dh_bits: "768"
+        ssl_max_version: "tls-1.0"
+        ssl_min_version: "tls-1.0"
+        ssl_mode: "half"
+        ssl_send_empty_frags: "enable"
+        url_rewrite: "enable"
 '''
 
 RETURN = '''
@@ -249,14 +287,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -264,15 +304,15 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_ssl_server_data(json):
-    option_list = ['add-header-x-forwarded-proto', 'ip', 'mapped-port',
-                   'name', 'port', 'ssl-algorithm',
-                   'ssl-cert', 'ssl-client-renegotiation', 'ssl-dh-bits',
-                   'ssl-max-version', 'ssl-min-version', 'ssl-mode',
-                   'ssl-send-empty-frags', 'url-rewrite']
+    option_list = ['add_header_x_forwarded_proto', 'ip', 'mapped_port',
+                   'name', 'port', 'ssl_algorithm',
+                   'ssl_cert', 'ssl_client_renegotiation', 'ssl_dh_bits',
+                   'ssl_max_version', 'ssl_min_version', 'ssl_mode',
+                   'ssl_send_empty_frags', 'url_rewrite']
     dictionary = {}
 
     for attribute in option_list:
@@ -282,71 +322,96 @@ def filter_firewall_ssl_server_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_ssl_server(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_ssl_server'] and data['firewall_ssl_server']:
+        state = data['firewall_ssl_server']['state']
+    else:
+        state = True
     firewall_ssl_server_data = data['firewall_ssl_server']
-    filtered_data = filter_firewall_ssl_server_data(firewall_ssl_server_data)
-    if firewall_ssl_server_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_firewall_ssl_server_data(firewall_ssl_server_data))
+
+    if state == "present":
         return fos.set('firewall',
                        'ssl-server',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif firewall_ssl_server_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('firewall',
                           'ssl-server',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall(data, fos):
-    login(data)
 
-    methodlist = ['firewall_ssl_server']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_ssl_server']:
+        resp = firewall_ssl_server(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "firewall_ssl_server": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "add-header-x-forwarded-proto": {"required": False, "type": "str",
+                "add_header_x_forwarded_proto": {"required": False, "type": "str",
                                                  "choices": ["enable", "disable"]},
                 "ip": {"required": False, "type": "str"},
-                "mapped-port": {"required": False, "type": "int"},
+                "mapped_port": {"required": False, "type": "int"},
                 "name": {"required": True, "type": "str"},
                 "port": {"required": False, "type": "int"},
-                "ssl-algorithm": {"required": False, "type": "str",
+                "ssl_algorithm": {"required": False, "type": "str",
                                   "choices": ["high", "medium", "low"]},
-                "ssl-cert": {"required": False, "type": "str"},
-                "ssl-client-renegotiation": {"required": False, "type": "str",
+                "ssl_cert": {"required": False, "type": "str"},
+                "ssl_client_renegotiation": {"required": False, "type": "str",
                                              "choices": ["allow", "deny", "secure"]},
-                "ssl-dh-bits": {"required": False, "type": "str",
+                "ssl_dh_bits": {"required": False, "type": "str",
                                 "choices": ["768", "1024", "1536",
                                             "2048"]},
-                "ssl-max-version": {"required": False, "type": "str",
+                "ssl_max_version": {"required": False, "type": "str",
                                     "choices": ["tls-1.0", "tls-1.1", "tls-1.2"]},
-                "ssl-min-version": {"required": False, "type": "str",
+                "ssl_min_version": {"required": False, "type": "str",
                                     "choices": ["tls-1.0", "tls-1.1", "tls-1.2"]},
-                "ssl-mode": {"required": False, "type": "str",
+                "ssl_mode": {"required": False, "type": "str",
                              "choices": ["half", "full"]},
-                "ssl-send-empty-frags": {"required": False, "type": "str",
+                "ssl_send_empty_frags": {"required": False, "type": "str",
                                          "choices": ["enable", "disable"]},
-                "url-rewrite": {"required": False, "type": "str",
+                "url_rewrite": {"required": False, "type": "str",
                                 "choices": ["enable", "disable"]}
 
             }
@@ -355,15 +420,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

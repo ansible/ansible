@@ -1,0 +1,2 @@
+bugfixes:
+- nxos_lacp_interfaces fix integration test dependencies (https://github.com/ansible/ansible/pull/61947).

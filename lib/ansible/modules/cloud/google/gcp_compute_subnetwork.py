@@ -63,11 +63,13 @@ options:
     - present
     - absent
     default: present
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource. This field can be set only at resource creation time.
     required: false
+    type: str
   ip_cidr_range:
     description:
     - The range of internal addresses that are owned by this subnetwork.
@@ -75,6 +77,7 @@ options:
       or 192.168.0.0/16. Ranges must be unique and non-overlapping within a network.
       Only IPv4 is supported.
     required: true
+    type: str
   name:
     description:
     - The name of the resource, provided by the client when initially creating the
@@ -84,15 +87,18 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   network:
     description:
     - The network this subnet belongs to.
     - Only networks that are in the distributed mode can have subnetworks.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
     required: true
+    type: dict
   enable_flow_logs:
     description:
     - Whether to enable flow logging for this subnetwork.
@@ -105,6 +111,7 @@ options:
       in this subnetwork. The primary IP of such VM must belong to the primary ipCidrRange
       of the subnetwork. The alias IPs may belong to either primary or secondary ranges.
     required: false
+    type: list
     version_added: 2.8
     suboptions:
       range_name:
@@ -113,6 +120,7 @@ options:
           an alias IP range to a VM instance. The name must be 1-63 characters long,
           and comply with RFC1035. The name must be unique within the subnetwork.
         required: true
+        type: str
       ip_cidr_range:
         description:
         - The range of IP addresses belonging to this subnetwork secondary range.
@@ -120,6 +128,7 @@ options:
         - Ranges must be unique and non-overlapping with all primary and secondary
           IP ranges within a network. Only IPv4 is supported.
         required: true
+        type: str
   private_ip_google_access:
     description:
     - When enabled, VMs in this subnetwork without external IP addresses can access
@@ -130,6 +139,7 @@ options:
     description:
     - URL of the GCP region for this subnetwork.
     required: true
+    type: str
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/beta/subnetworks)'
@@ -206,7 +216,7 @@ network:
   - The network this subnet belongs to.
   - Only networks that are in the distributed mode can have subnetworks.
   returned: success
-  type: str
+  type: dict
 enableFlowLogs:
   description:
   - Whether to enable flow logging for this subnetwork.
@@ -276,7 +286,7 @@ def main():
             description=dict(type='str'),
             ip_cidr_range=dict(required=True, type='str'),
             name=dict(required=True, type='str'),
-            network=dict(required=True),
+            network=dict(required=True, type='dict'),
             enable_flow_logs=dict(type='bool'),
             secondary_ip_ranges=dict(
                 type='list', elements='dict', options=dict(range_name=dict(required=True, type='str'), ip_cidr_range=dict(required=True, type='str'))

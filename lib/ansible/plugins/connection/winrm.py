@@ -25,6 +25,7 @@ DOCUMENTATION = """
         vars:
             - name: ansible_host
             - name: ansible_winrm_host
+        type: str
       remote_user:
         keywords:
           - name: user
@@ -34,6 +35,16 @@ DOCUMENTATION = """
         vars:
             - name: ansible_user
             - name: ansible_winrm_user
+        type: str
+      remote_password:
+        description: Authentication password for the C(remote_user). Can be supplied as CLI option.
+        vars:
+            - name: ansible_password
+            - name: ansible_winrm_pass
+            - name: ansible_winrm_password
+        type: str
+        aliases:
+        - password  # Needed for --ask-pass to come through on delegation
       port:
         description:
             - port for winrm to connect on remote target
@@ -53,11 +64,13 @@ DOCUMENTATION = """
         choices: [http, https]
         vars:
           - name: ansible_winrm_scheme
+        type: str
       path:
         description: URI path to connect to
         default: '/wsman'
         vars:
           - name: ansible_winrm_path
+        type: str
       transport:
         description:
            - List of winrm transports to attempt to to use (ssl, plaintext, kerberos, etc)
@@ -71,6 +84,7 @@ DOCUMENTATION = """
         default: kinit
         vars:
           - name: ansible_winrm_kinit_cmd
+        type: str
       kerberos_mode:
         description:
             - kerberos usage mode.
@@ -83,6 +97,7 @@ DOCUMENTATION = """
         choices: [managed, manual]
         vars:
           - name: ansible_winrm_kinit_mode
+        type: str
       connection_timeout:
         description:
             - Sets the operation and read timeout settings for the WinRM
@@ -94,6 +109,7 @@ DOCUMENTATION = """
               pywinrm.
         vars:
           - name: ansible_winrm_connection_timeout
+        type: int
 """
 
 import base64
@@ -123,7 +139,6 @@ from ansible.module_utils.six import binary_type, PY3
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins.shell.powershell import _parse_clixml
 from ansible.utils.hashing import secure_hash
-from ansible.utils.path import makedirs_safe
 from ansible.utils.display import Display
 
 # getargspec is deprecated in favour of getfullargspec in Python 3 but
@@ -206,7 +221,7 @@ class Connection(ConnectionBase):
         # starting the WinRM connection
         self._winrm_host = self.get_option('remote_addr')
         self._winrm_user = self.get_option('remote_user')
-        self._winrm_pass = self._play_context.password
+        self._winrm_pass = self.get_option('remote_password')
 
         self._winrm_port = self.get_option('port')
 
@@ -482,8 +497,8 @@ class Connection(ConnectionBase):
                 except ValueError:
                     # stdout does not contain a return response, stdin input was a fatal error
                     stderr = to_bytes(response.std_err, encoding='utf-8')
-                    if self.is_clixml(stderr):
-                        stderr = self.parse_clixml_stream(stderr)
+                    if stderr.startswith(b"#< CLIXML"):
+                        stderr = _parse_clixml(stderr)
 
                     raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s'
                                        % (to_native(response.std_out), to_native(stderr)))
@@ -608,9 +623,16 @@ class Connection(ConnectionBase):
         if result.status_code != 0:
             raise AnsibleError(to_native(result.std_err))
 
-        put_output = json.loads(result.std_out)
-        remote_sha1 = put_output.get("sha1")
+        try:
+            put_output = json.loads(result.std_out)
+        except ValueError:
+            # stdout does not contain a valid response
+            stderr = to_bytes(result.std_err, encoding='utf-8')
+            if stderr.startswith(b"#< CLIXML"):
+                stderr = _parse_clixml(stderr)
+            raise AnsibleError('winrm put_file failed; \nstdout: %s\nstderr %s' % (to_native(result.std_out), to_native(stderr)))
 
+        remote_sha1 = put_output.get("sha1")
         if not remote_sha1:
             raise AnsibleError("Remote sha1 was not returned")
 
@@ -623,16 +645,16 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
         in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
+        # consistent with other connection plugins, we assume the caller has created the target dir
         display.vvv('FETCH "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
         buffer_size = 2**19  # 0.5MB chunks
-        makedirs_safe(os.path.dirname(out_path))
         out_file = None
         try:
             offset = 0
             while True:
                 try:
                     script = '''
-                        $path = "%(path)s"
+                        $path = '%(path)s'
                         If (Test-Path -Path $path -PathType Leaf)
                         {
                             $buffer_size = %(buffer_size)d
@@ -668,7 +690,6 @@ class Connection(ConnectionBase):
                     else:
                         data = base64.b64decode(result.std_out.strip())
                     if data is None:
-                        makedirs_safe(out_path)
                         break
                     else:
                         if not out_file:

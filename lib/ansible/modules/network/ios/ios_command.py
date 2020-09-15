@@ -111,6 +111,7 @@ tasks:
       wait_for:
         - result[0] contains IOS
         - result[1] contains Loopback0
+
   - name: run commands that require answering a prompt
     ios_command:
       commands:
@@ -198,7 +199,7 @@ def main():
     match = module.params['match']
 
     while retries > 0:
-        responses, timestamps = run_commands(module, commands, return_timestamps=True)
+        responses = run_commands(module, commands)
 
         for item in list(conditionals):
             if item(responses):
@@ -221,7 +222,6 @@ def main():
     result.update({
         'stdout': responses,
         'stdout_lines': list(to_lines(responses)),
-        'timestamps': timestamps
     })
 
     module.exit_json(**result)

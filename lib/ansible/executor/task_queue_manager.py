@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import multiprocessing
 import os
 import tempfile
 
@@ -36,11 +35,12 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins.loader import callback_loader, strategy_loader, module_loader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
-from ansible.utils.collection_loader import is_collection_ref
+from ansible.utils.collection_loader import AnsibleCollectionRef
 from ansible.utils.helpers import pct_to_int
 from ansible.vars.hostvars import HostVars
 from ansible.vars.reserved import warn_if_reserved
 from ansible.utils.display import Display
+from ansible.utils.multiprocessing import context as multiprocessing_context
 
 
 __all__ = ['TaskQueueManager']
@@ -97,7 +97,7 @@ class TaskQueueManager:
         self._unreachable_hosts = dict()
 
         try:
-            self._final_q = multiprocessing.Queue()
+            self._final_q = multiprocessing_context.Queue()
         except OSError as e:
             raise AnsibleError("Unable to use multiprocessing, this is normally caused by lack of access to /dev/shm: %s" % to_native(e))
 
@@ -132,12 +132,7 @@ class TaskQueueManager:
                 raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
             else:
                 self._stdout_callback = callback_loader.get(self._stdout_callback)
-                try:
-                    self._stdout_callback.set_options()
-                except AttributeError:
-                    display.deprecated("%s stdout callback, does not support setting 'options', it will work for now, "
-                                       " but this will be required in the future and should be updated,"
-                                       " see the 2.4 porting guide for details." % self._stdout_callback._load_name, version="2.9")
+                self._stdout_callback.set_options()
                 stdout_callback_loaded = True
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
@@ -160,17 +155,17 @@ class TaskQueueManager:
                 continue
 
             callback_obj = callback_plugin()
-            try:
-                callback_obj.set_options()
-            except AttributeError:
-                display.deprecated("%s callback, does not support setting 'options', it will work for now, "
-                                   " but this will be required in the future and should be updated, "
-                                   " see the 2.4 porting guide for details." % callback_obj._load_name, version="2.9")
+            callback_obj.set_options()
             self._callback_plugins.append(callback_obj)
 
-        for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if is_collection_ref(c)):
+        for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)):
+            # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
             callback_obj = callback_loader.get(callback_plugin_name)
-            self._callback_plugins.append(callback_obj)
+            if callback_obj:
+                callback_obj.set_options()
+                self._callback_plugins.append(callback_obj)
+            else:
+                display.warning("Skipping '%s', unable to load or use as a callback" % callback_plugin_name)
 
         self._callbacks_loaded = True
 
@@ -295,10 +290,9 @@ class TaskQueueManager:
         # <WorkerProcess(WorkerProcess-2, stopped[SIGTERM])>
 
         defunct = False
-        for (idx, x) in enumerate(self._workers):
-            if hasattr(x, 'exitcode'):
-                if x.exitcode in [-9, -11, -15]:
-                    defunct = True
+        for x in self._workers:
+            if getattr(x, 'exitcode', None):
+                defunct = True
         return defunct
 
     def send_callback(self, method_name, *args, **kwargs):

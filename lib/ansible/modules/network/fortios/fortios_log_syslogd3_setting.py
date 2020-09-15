@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_log_syslogd3_setting
 short_description: Global settings for remote syslog server in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify log_syslogd3 feature and setting category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,54 +41,70 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
     log_syslogd3_setting:
         description:
             - Global settings for remote syslog server.
         default: null
+        type: dict
         suboptions:
             certificate:
                 description:
                     - Certificate used to communicate with Syslog server. Source certificate.local.name.
-            custom-field-name:
+                type: str
+            custom_field_name:
                 description:
                     - Custom field name for CEF format logging.
+                type: list
                 suboptions:
                     custom:
                         description:
                             - Field custom name.
+                        type: str
                     id:
                         description:
                             - Entry ID.
                         required: true
+                        type: int
                     name:
                         description:
                             - Field name.
-            enc-algorithm:
+                        type: str
+            enc_algorithm:
                 description:
                     - Enable/disable reliable syslogging with TLS encryption.
+                type: str
                 choices:
                     - high-medium
                     - high
@@ -100,6 +113,7 @@ options:
             facility:
                 description:
                     - Remote syslog facility.
+                type: str
                 choices:
                     - kernel
                     - user
@@ -128,6 +142,7 @@ options:
             format:
                 description:
                     - Log format.
+                type: str
                 choices:
                     - default
                     - csv
@@ -135,6 +150,7 @@ options:
             mode:
                 description:
                     - Remote syslog logging over UDP/Reliable TCP.
+                type: str
                 choices:
                     - udp
                     - legacy-reliable
@@ -142,15 +158,29 @@ options:
             port:
                 description:
                     - Server listen port.
+                type: int
             server:
                 description:
                     - Address of remote syslog server.
-            source-ip:
+                type: str
+            source_ip:
                 description:
                     - Source IP address of syslog.
+                type: str
+            ssl_min_proto_version:
+                description:
+                    - Minimum supported protocol version for SSL/TLS connections .
+                type: str
+                choices:
+                    - default
+                    - SSLv3
+                    - TLSv1
+                    - TLSv1-1
+                    - TLSv1-2
             status:
                 description:
                     - Enable/disable remote syslog logging.
+                type: str
                 choices:
                     - enable
                     - disable
@@ -163,6 +193,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Global settings for remote syslog server.
     fortios_log_syslogd3_setting:
@@ -173,18 +204,19 @@ EXAMPLES = '''
       https: "False"
       log_syslogd3_setting:
         certificate: "<your_own_value> (source certificate.local.name)"
-        custom-field-name:
+        custom_field_name:
          -
             custom: "<your_own_value>"
             id:  "6"
             name: "default_name_7"
-        enc-algorithm: "high-medium"
+        enc_algorithm: "high-medium"
         facility: "kernel"
         format: "default"
         mode: "udp"
         port: "12"
         server: "192.168.100.40"
-        source-ip: "84.230.14.43"
+        source_ip: "84.230.14.43"
+        ssl_min_proto_version: "default"
         status: "enable"
 '''
 
@@ -248,14 +280,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -263,14 +297,14 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_log_syslogd3_setting_data(json):
-    option_list = ['certificate', 'custom-field-name', 'enc-algorithm',
+    option_list = ['certificate', 'custom_field_name', 'enc_algorithm',
                    'facility', 'format', 'mode',
-                   'port', 'server', 'source-ip',
-                   'status']
+                   'port', 'server', 'source_ip',
+                   'ssl_min_proto_version', 'status']
     dictionary = {}
 
     for attribute in option_list:
@@ -280,17 +314,15 @@ def filter_log_syslogd3_setting_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
@@ -298,42 +330,48 @@ def flatten_multilists_attributes(data):
 def log_syslogd3_setting(data, fos):
     vdom = data['vdom']
     log_syslogd3_setting_data = data['log_syslogd3_setting']
-    flattened_data = flatten_multilists_attributes(log_syslogd3_setting_data)
-    filtered_data = filter_log_syslogd3_setting_data(flattened_data)
+    filtered_data = underscore_to_hyphen(filter_log_syslogd3_setting_data(log_syslogd3_setting_data))
+
     return fos.set('log.syslogd3',
                    'setting',
                    data=filtered_data,
                    vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_log_syslogd3(data, fos):
-    login(data)
 
     if data['log_syslogd3_setting']:
         resp = log_syslogd3_setting(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
         "log_syslogd3_setting": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
                 "certificate": {"required": False, "type": "str"},
-                "custom-field-name": {"required": False, "type": "list",
+                "custom_field_name": {"required": False, "type": "list",
                                       "options": {
                                           "custom": {"required": False, "type": "str"},
                                           "id": {"required": True, "type": "int"},
                                           "name": {"required": False, "type": "str"}
                                       }},
-                "enc-algorithm": {"required": False, "type": "str",
+                "enc_algorithm": {"required": False, "type": "str",
                                   "choices": ["high-medium", "high", "low",
                                               "disable"]},
                 "facility": {"required": False, "type": "str",
@@ -351,7 +389,10 @@ def main():
                          "choices": ["udp", "legacy-reliable", "reliable"]},
                 "port": {"required": False, "type": "int"},
                 "server": {"required": False, "type": "str"},
-                "source-ip": {"required": False, "type": "str"},
+                "source_ip": {"required": False, "type": "str"},
+                "ssl_min_proto_version": {"required": False, "type": "str",
+                                          "choices": ["default", "SSLv3", "TLSv1",
+                                                      "TLSv1-1", "TLSv1-2"]},
                 "status": {"required": False, "type": "str",
                            "choices": ["enable", "disable"]}
 
@@ -361,15 +402,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_log_syslogd3(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_log_syslogd3(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_log_syslogd3(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

@@ -22,12 +22,12 @@ author:
  - Netservers Ltd. (@netservers)
  - Patryk Cichy (@PatTheSilent)
 options:
-  physical_network:
+  name:
     description:
       - Name of the physical network.
     required: true
     aliases:
-      - name
+      - physical_network
     type: str
   zone:
     description:
@@ -231,7 +231,7 @@ class AnsibleCloudStackPhysicalNetwork(AnsibleCloudStack):
 
     def _get_common_args(self):
         args = {
-            'name': self.module.params.get('physical_network'),
+            'name': self.module.params.get('name'),
             'isolationmethods': self.module.params.get('isolation_method'),
             'broadcastdomainrange': self.module.params.get('broadcast_domain_range'),
             'networkspeed': self.module.params.get('network_speed'),
@@ -245,7 +245,7 @@ class AnsibleCloudStackPhysicalNetwork(AnsibleCloudStack):
         return args
 
     def get_physical_network(self, key=None):
-        physical_network = self.module.params.get('physical_network')
+        physical_network = self.module.params.get('name')
         if self.physical_network:
             return self._get_by_key(key, self.physical_network)
 
@@ -423,7 +423,7 @@ class AnsibleCloudStackPhysicalNetwork(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        physical_network=dict(required=True, aliases=['name']),
+        name=dict(required=True, aliases=['physical_network']),
         zone=dict(),
         domain=dict(),
         vlan=dict(),
@@ -460,7 +460,7 @@ def main():
         for nsp_name in nsps_enabled:
             if nsp_name.lower() in ['virtualrouter', 'vpcvirtualrouter']:
                 acs_network.set_vrouter_element_state(enabled=True, nsp_name=nsp_name)
-            elif nsp_name == 'internallbvm':
+            elif nsp_name.lower() == 'internallbvm':
                 acs_network.set_loadbalancer_element_state(enabled=True, nsp_name=nsp_name)
 
             acs_network.update_nsp(name=nsp_name, state='Enabled')

@@ -1,2 +1,5 @@
 dependencies:
-  - prepare_nxos_tests
+  # prepare_nxos_tests is not needed for this test and simply adds overhead.
+  # This can be uncommented in the future if needed.
+  #
+  # - prepare_nxos_tests

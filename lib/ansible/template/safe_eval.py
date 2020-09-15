@@ -22,7 +22,9 @@ import ast
 import sys
 
 from ansible import constants as C
-from ansible.module_utils.six import string_types
+from ansible.module_utils._text import to_native
+from ansible.module_utils.common.text.converters import container_to_text
+from ansible.module_utils.six import string_types, PY2
 from ansible.module_utils.six.moves import builtins
 from ansible.plugins.loader import filter_loader, test_loader
 
@@ -42,10 +44,15 @@ def safe_eval(expr, locals=None, include_exceptions=False):
 
     # define certain JSON types
     # eg. JSON booleans are unknown to python eval()
-    JSON_TYPES = {
+    OUR_GLOBALS = {
+        '__builtins__': {},  # avoid global builtins as per eval docs
         'false': False,
         'null': None,
         'true': True,
+        # also add back some builtins we do need
+        'True': True,
+        'False': False,
+        'None': None
     }
 
     # this is the whitelist of AST nodes we are going to
@@ -134,11 +141,15 @@ def safe_eval(expr, locals=None, include_exceptions=False):
     try:
         parsed_tree = ast.parse(expr, mode='eval')
         cnv.visit(parsed_tree)
-        compiled = compile(parsed_tree, expr, 'eval')
+        compiled = compile(parsed_tree, to_native(expr), 'eval')
         # Note: passing our own globals and locals here constrains what
         # callables (and other identifiers) are recognized.  this is in
         # addition to the filtering of builtins done in CleansingNodeVisitor
-        result = eval(compiled, JSON_TYPES, dict(locals))
+        result = eval(compiled, OUR_GLOBALS, dict(locals))
+        if PY2:
+            # On Python 2 u"{'key': 'value'}" is evaluated to {'key': 'value'},
+            # ensure it is converted to {u'key': u'value'}.
+            result = container_to_text(result)
 
         if include_exceptions:
             return (result, None)

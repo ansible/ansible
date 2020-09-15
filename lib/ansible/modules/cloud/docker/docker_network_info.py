@@ -70,7 +70,7 @@ exists:
 network:
     description:
       - Facts representing the current state of the network. Matches the docker inspection output.
-      - Will be C(None) if network does not exist.
+      - Will be C(none) if network does not exist.
     returned: always
     type: dict
     sample: '{
@@ -103,7 +103,18 @@ network:
     }'
 '''
 
-from ansible.module_utils.docker.common import AnsibleDockerClient
+import traceback
+
+try:
+    from docker.errors import DockerException
+except ImportError:
+    # missing Docker SDK for Python handled in ansible.module_utils.docker.common
+    pass
+
+from ansible.module_utils.docker.common import (
+    AnsibleDockerClient,
+    RequestException,
+)
 
 
 def main():
@@ -117,13 +128,18 @@ def main():
         min_docker_api_version='1.21',
     )
 
-    network = client.get_network(client.module.params['name'])
+    try:
+        network = client.get_network(client.module.params['name'])
 
-    client.module.exit_json(
-        changed=False,
-        exists=(True if network else False),
-        network=network,
-    )
+        client.module.exit_json(
+            changed=False,
+            exists=(True if network else False),
+            network=network,
+        )
+    except DockerException as e:
+        client.fail('An unexpected docker error occurred: {0}'.format(e), exception=traceback.format_exc())
+    except RequestException as e:
+        client.fail('An unexpected requests error occurred when docker-py tried to talk to the docker daemon: {0}'.format(e), exception=traceback.format_exc())
 
 
 if __name__ == '__main__':

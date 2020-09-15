@@ -63,7 +63,7 @@ EXAMPLES = """
        username: "{{ src_username }}"
        password: "{{ src_password }}"
        state: absent
-       ddest_mvip: "{{ dest_hostname }}"
+       dest_mvip: "{{ dest_hostname }}"
        dest_username: "{{ dest_username }}"
        dest_password: "{{ dest_password }}"
 
@@ -82,7 +82,7 @@ from ansible.module_utils.netapp_module import NetAppModule
 HAS_SF_SDK = netapp_utils.has_sf_sdk()
 try:
     import solidfire.common
-except Exception:
+except ImportError:
     HAS_SF_SDK = False
 
 

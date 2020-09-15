@@ -91,6 +91,11 @@ options:
   aggregate:
     description:
       - List of GTM pool member definitions to be created, modified or removed.
+      - When using C(aggregates) if one of the aggregate definitions is invalid, the aggregate run will fail,
+        indicating the error it last encountered.
+      - The module will C(NOT) rollback any changes it has made prior to encountering the error.
+      - The module also will not indicate what changes were made prior to failure, therefore it is strongly advised
+        to run the module in check mode to make basic validation, prior to module execution.
     type: list
     aliases:
       - members
@@ -606,9 +611,8 @@ class ModuleManager(object):
         self.want = None
         self.have = None
         self.changes = None
-        self.replace_all_with = False
+        self.replace_all_with = None
         self.purge_links = list()
-        self.on_device = None
 
     def _set_changed_options(self):
         changed = {}
@@ -711,7 +715,7 @@ class ModuleManager(object):
 
         if diff:
             to_purge = [item['selfLink'] for item in on_device if self._transform_api_names(item) in diff]
-            self.purge_links = to_purge
+            self.purge_links.extend(to_purge)
 
     def execute(self, params=None):
         self.want = ModuleParameters(params=params)

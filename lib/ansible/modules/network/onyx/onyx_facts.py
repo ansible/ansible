@@ -59,7 +59,7 @@ ansible_net_gather_subset:
   type: list
 # version
 ansible_net_version:
-  description: A hash of all curently running system image information
+  description: A hash of all currently running system image information
   returned: when version is configured or when no gather_subset is provided
   type: dict
 # modules
@@ -117,7 +117,7 @@ class OnyxFactsModule(BaseOnyxModule):
         return runable_subsets
 
     def init_module(self):
-        """ module intialization
+        """ module initialization
         """
         argument_spec = dict(
             gather_subset=dict(default=['version'], type='list')

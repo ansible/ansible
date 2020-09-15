@@ -1,0 +1,2 @@
+bugfixes:
+  - fixes the eos_vlans repalced state behavior to configure the 'name' parameter(https://github.com/ansible/ansible/pull/67318)

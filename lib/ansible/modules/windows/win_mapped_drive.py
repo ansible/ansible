@@ -18,6 +18,7 @@ version_added: '2.4'
 short_description: Map network drives for users
 description:
 - Allows you to modify mapped network drives for individual users.
+- Also support WebDAV endpoints in the UNC form.
 options:
   letter:
     description:
@@ -35,6 +36,12 @@ options:
   path:
     description:
     - The UNC path to map the drive to.
+    - If pointing to a WebDAV location this must still be in a UNC path in the
+      format C(\\hostname\path) and not a URL, see examples for more details.
+    - To specify a C(https) WebDAV path, add C(@SSL) after the hostname. To
+      specify a custom WebDAV port add C(@<port num>) after the C(@SSL) or
+      hostname portion of the UNC path, e.g. C(\\server@SSL@1234) or
+      C(\\server@1234).
     - This is required if C(state=present).
     - If C(state=absent) and I(path) is not set, the module will delete the
       mapped drive regardless of the target.
@@ -69,6 +76,10 @@ notes:
 - If become or CredSSP is not available, the I(username) and I(password)
   options can be used for the initial authentication but these are not
   persisted.
+- WebDAV paths must have the WebDAV client feature installed for this module to
+  map those paths. This is installed by default on desktop Windows editions but
+  Windows Server hosts need to install the C(WebDAV-Redirector) feature using
+  M(win_feature).
 seealso:
 - module: win_credential
 author:
@@ -121,6 +132,23 @@ EXAMPLES = r'''
     state: present
     username: '{{ ansible_user }}'
     password: '{{ ansible_password }}'
+
+# This should only be required for Windows Server OS'
+- name: Ensure WebDAV client feature is installed
+  win_feature:
+    name: WebDAV-Redirector
+    state: present
+  register: webdav_feature
+
+- name: Reboot after installing WebDAV client feature
+  win_reboot:
+  when: webdav_feature.reboot_required
+
+- name: Map the HTTPS WebDAV location
+  win_mapped_drive:
+    letter: W
+    path: \\live.sysinternals.com@SSL\tools  # https://live.sysinternals.com/tools
+    state: present
 '''
 
 RETURN = r'''

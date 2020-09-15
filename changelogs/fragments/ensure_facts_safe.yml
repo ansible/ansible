@@ -1,0 +1,2 @@
+bugfixes:
+    - ensure module results and facts are marked untrusted as templates for safer use within the same task

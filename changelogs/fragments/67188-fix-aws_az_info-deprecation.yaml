@@ -1,0 +1,2 @@
+deprecated_features:
+- 'aws_az_info (aws_az_facts) - Fixed deprecation warning so that it triggers when run as aws_az_facts.  Bumped removal version to 2.14'

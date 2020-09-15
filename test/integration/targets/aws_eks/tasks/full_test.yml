@@ -1,0 +1,245 @@
+---
+# tasks file for aws_eks modules
+
+- block:
+    # If us-west-1 does become supported, change this test to use an unsupported region
+    # or if all regions are supported, delete this test
+    - name: attempt to use eks in unsupported region
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        state: absent
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: us-west-1
+      register: aws_eks_unsupported_region
+      ignore_errors: yes
+
+    - name: check that aws_eks_cluster did nothing
+      assert:
+        that:
+          - aws_eks_unsupported_region is failed
+          - '"msg" in aws_eks_unsupported_region'
+
+    - name: set up aws connection info
+      set_fact:
+        aws_connection_info: &aws_connection_info
+          aws_access_key: "{{ aws_access_key }}"
+          aws_secret_key: "{{ aws_secret_key }}"
+          security_token: "{{ security_token }}"
+          region: "{{ aws_region }}"
+      no_log: yes
+
+    - name: delete an as yet non-existent EKS cluster
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: aws_eks_delete_non_existent
+
+    - name: check that aws_eks_cluster did nothing
+      assert:
+        that:
+          - aws_eks_delete_non_existent is not changed
+
+    - name: ensure IAM instance role exists
+      iam_role:
+        name: aws_eks_cluster_role
+        assume_role_policy_document: "{{ lookup('file','eks-trust-policy.json') }}"
+        state: present
+        create_instance_profile: no
+        managed_policies:
+          - AmazonEKSServicePolicy
+          - AmazonEKSClusterPolicy
+        <<: *aws_connection_info
+      register: iam_role
+
+    - name: create a VPC to work in
+      ec2_vpc_net:
+        cidr_block: 10.0.0.0/16
+        state: present
+        name: '{{ resource_prefix }}_aws_eks'
+        resource_tags:
+          Name: '{{ resource_prefix }}_aws_eks'
+        <<: *aws_connection_info
+      register: setup_vpc
+
+    - name: create subnets
+      ec2_vpc_subnet:
+        az: '{{ aws_region }}{{ item.zone }}'
+        tags:
+          Name: '{{ resource_prefix }}_aws_eks-subnet-{{ item.zone }}'
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        cidr: "{{ item.cidr }}"
+        state: present
+        <<: *aws_connection_info
+      register: setup_subnets
+      with_items:
+        - "{{ eks_subnets }}"
+
+    - name: create security groups to use for EKS
+      ec2_group:
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+        state: present
+        rules: "{{ item.rules }}"
+        rules_egress: "{{ item.rules_egress|default(omit) }}"
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      with_items: "{{ eks_security_groups }}"
+      register: setup_security_groups
+
+    - name: create EKS cluster
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        security_groups: "{{ eks_security_groups | json_query('[].name') }}"
+        subnets: "{{ setup_subnets.results | json_query('[].subnet.id') }}"
+        role_arn: "{{ iam_role.arn }}"
+        <<: *aws_connection_info
+      register: eks_create
+
+    - name: check that EKS cluster was created
+      assert:
+        that:
+          - eks_create is changed
+          - eks_create.name == eks_cluster_name
+
+    - name: create EKS cluster with same details but wait for it to become active
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        security_groups: "{{ eks_security_groups | json_query('[].name') }}"
+        subnets: "{{ setup_subnets.results | json_query('[].subnet.id') }}"
+        role_arn: "{{ iam_role.arn }}"
+        wait: yes
+        <<: *aws_connection_info
+      register: eks_create
+
+    - name: Check that EKS cluster is active and has CA and endpoint data
+      assert:
+        that:
+          - eks_create is not changed
+          - eks_create.name == eks_cluster_name
+          - eks_create.status == "ACTIVE"
+          - eks_create.certificate_authority.data is defined
+          - eks_create.certificate_authority.data != ""
+          - eks_create.endpoint is defined
+          - eks_create.endpoint != ""
+
+    - name: create EKS cluster with same details but using SG ids
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        security_groups: "{{ setup_security_groups.results | json_query('[].group_id') }}"
+        subnets: "{{ setup_subnets.results | json_query('[].subnet.id') }}"
+        role_arn: "{{ iam_role.arn }}"
+        <<: *aws_connection_info
+      register: eks_create
+
+    - name: check that EKS cluster did not change
+      assert:
+        that:
+          - eks_create is not changed
+          - eks_create.name == eks_cluster_name
+
+    - name: remove EKS cluster, waiting until complete
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        state: absent
+        wait: yes
+        <<: *aws_connection_info
+      register: eks_delete
+
+    - name: check that EKS cluster was removed
+      assert:
+        that:
+          - eks_delete is changed
+
+    - name: create EKS cluster with same details but wait for it to become active
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        security_groups: "{{ eks_security_groups | json_query('[].name') }}"
+        subnets: "{{ setup_subnets.results | json_query('[].subnet.id') }}"
+        role_arn: "{{ iam_role.arn }}"
+        wait: yes
+        <<: *aws_connection_info
+      register: eks_create
+
+    - name: check that EKS cluster was created
+      assert:
+        that:
+          - eks_create is changed
+          - eks_create.name == eks_cluster_name
+
+    - name: remove EKS cluster, without waiting this time
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        state: absent
+        <<: *aws_connection_info
+      register: eks_delete
+
+    - name: check that EKS cluster remove has started
+      assert:
+        that:
+          - eks_delete is changed
+
+  always:
+    - name: Announce teardown start
+      debug:
+        msg: "***** TESTING COMPLETE. COMMENCE TEARDOWN *****"
+
+    - name: remove EKS cluster
+      aws_eks_cluster:
+        name: "{{ eks_cluster_name }}"
+        state: absent
+        wait: yes
+        <<: *aws_connection_info
+      register: eks_delete
+      ignore_errors: yes
+
+    - debug:
+        msg: "{{ eks_security_groups|reverse|list }}"
+
+    - name: create list of all additional EKS security groups
+      set_fact:
+        additional_eks_sg:
+          - name: "{{ eks_cluster_name }}-workers-sg"
+
+    - name: set all security group rule lists to empty to remove circular dependency
+      ec2_group:
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+        state: present
+        rules: []
+        rules_egress: []
+        purge_rules: yes
+        purge_rules_egress: yes
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      with_items: "{{ eks_security_groups }}"
+      ignore_errors: yes
+
+    - name: remove security groups
+      ec2_group:
+        name: '{{ item.name }}'
+        state: absent
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        <<: *aws_connection_info
+      with_items: "{{ eks_security_groups|reverse|list + additional_eks_sg }}"
+      ignore_errors: yes
+
+    - name: remove setup subnet
+      ec2_vpc_subnet:
+        az: '{{ aws_region }}{{ item.zone }}'
+        vpc_id: '{{ setup_vpc.vpc.id }}'
+        cidr: "{{ item.cidr}}"
+        state: absent
+        <<: *aws_connection_info
+      with_items: "{{ eks_subnets }}"
+      ignore_errors: yes
+
+    - name: remove setup VPC
+      ec2_vpc_net:
+        cidr_block: 10.0.0.0/16
+        state: absent
+        name: '{{ resource_prefix }}_aws_eks'
+        <<: *aws_connection_info
+      ignore_errors: yes

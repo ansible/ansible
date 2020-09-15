@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_roleassignment
 version_added: "2.8"
-short_description: Manage Azure Role Assignment.
+short_description: Manage Azure Role Assignment
 description:
     - Create and delete instance of Azure Role Assignment.
 
@@ -37,23 +37,23 @@ options:
     scope:
         description:
             - The scope of the role assignment to create.
-            - For example, use /subscriptions/{subscription-id}/ for subscription,
-            - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name} for resource group,
+            - For example, use /subscriptions/{subscription-id}/ for subscription.
+            - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name} for resource group.
             - /subscriptions/{subscription-id}/resourceGroups/{resource-group-name}/providers/{resource-provider}/{resource-type}/{resource-name} for resource.
     state:
-      description:
-        - Assert the state of the role assignment.
-        - Use 'present' to create or update a role assignment and 'absent' to delete it.
-      default: present
-      choices:
-        - absent
-        - present
+        description:
+            - Assert the state of the role assignment.
+            - Use C(present) to create or update a role assignment and C(absent) to delete it.
+        default: present
+        choices:
+            - absent
+            - present
 
 extends_documentation_fragment:
     - azure
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - Yunge Zhu(@yungezz)
 
 '''
 
@@ -69,16 +69,17 @@ EXAMPLES = '''
       azure_rm_roleassignment:
         name: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
         scope: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        state: absent
 
 '''
 
 RETURN = '''
 id:
-    description: Id of current role assignment.
+    description:
+        - Id of current role assignment.
     returned: always
     type: str
-    sample:
-      "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleAssignments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleAssignments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 '''
 
 import uuid
@@ -199,7 +200,7 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
                 if self.check_mode:
                     return self.results
 
-                self.delete_roleassignment()
+                self.delete_roleassignment(old_response['id'])
 
                 self.log('role assignment deleted')
 
@@ -234,7 +235,7 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
             self.fail("Error creating role assignment: {0}".format(str(exc)))
         return roleassignment_to_dict(response)
 
-    def delete_roleassignment(self):
+    def delete_roleassignment(self, assignment_id):
         '''
         Deletes specified role assignment.
 
@@ -243,8 +244,7 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
         self.log("Deleting the role assignment {0}".format(self.name))
         scope = self.build_scope()
         try:
-            response = self._client.role_assignments.delete(name=self.name,
-                                                            scope=self.scope)
+            response = self._client.role_assignments.delete_by_id(role_id=assignment_id)
         except CloudError as e:
             self.log('Error attempting to delete the role assignment.')
             self.fail("Error deleting the role assignment: {0}".format(str(e)))
@@ -262,9 +262,11 @@ class AzureRMRoleAssignment(AzureRMModuleBase):
         response = None
 
         try:
-            response = self._client.role_assignments.get(scope=self.scope, role_assignment_name=self.name)
-
-            return roleassignment_to_dict(response)
+            response = list(self._client.role_assignments.list())
+            if response:
+                for assignment in response:
+                    if assignment.name == self.name and assignment.scope == self.scope:
+                        return roleassignment_to_dict(assignment)
 
         except CloudError as ex:
             self.log("Didn't find role assignment {0} in scope {1}".format(self.name, self.scope))

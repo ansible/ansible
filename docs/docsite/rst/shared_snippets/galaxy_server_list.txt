@@ -1,0 +1,76 @@
+
+
+By default, ``ansible-galaxy`` uses https://galaxy.ansible.com as the Galaxy server (as listed in the :file:`ansible.cfg` file under :ref:`galaxy_server`).
+
+You can configure this to use other servers (such as Red Hat Automation Hub or a custom Galaxy server) as follows:
+
+* Set the server list in the :ref:`galaxy_server_list` configuration option in :ref:`ansible_configuration_settings_locations`.
+* Use the ``--server`` command line argument to limit to an individual server.
+
+To configure a Galaxy server list in ``ansible.cfg``:
+
+#. Add the ``server_list``  option under the ``[galaxy]`` section to one or more server names.
+#. Create a new section for each server name.
+#. Set the ``url`` option for each server name.
+
+For Automation Hub, you additionally need to:
+
+#. Set the ``auth_url`` option for each server name.
+#. Set the API token for each server name. Go to https://cloud.redhat.com/ansible/automation-hub/token/ and click ::guilabel:`Get API token` from the version dropdown to copy your API token.
+
+The following example shows how to configure multiple servers:
+
+.. code-block:: ini
+
+    [galaxy]
+    server_list = automation_hub, my_org_hub, release_galaxy, test_galaxy
+
+    [galaxy_server.automation_hub]
+    url=https://cloud.redhat.com/api/automation-hub/
+    auth_url=https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token
+
+    token=my_ah_token
+
+    [galaxy_server.my_org_hub]
+    url=https://automation.my_org/
+    username=my_user
+    password=my_pass
+
+    [galaxy_server.release_galaxy]
+    url=https://galaxy.ansible.com/
+    token=my_token
+
+    [galaxy_server.test_galaxy]
+    url=https://galaxy-dev.ansible.com/
+    token=my_test_token
+
+.. note::
+    You can use the ``--server`` command line argument to select an explicit Galaxy server in the ``server_list`` and
+    the value of this argument should match the name of the server. To use a server not in the server list, set the value to the URL to access that server (all servers in the server list will be ignored). Also the ``--api-key`` argument is not applied to any of the predefined servers. It is only applied
+    if no server list is defined or a URL was specified by ``--server``.
+
+**Galaxy server list configuration options**
+
+The :ref:`galaxy_server_list` option is a list of server identifiers in a prioritized order. When searching for a
+collection, the install process will search in that order, e.g. ``automation_hub`` first, then ``my_org_hub``, ``release_galaxy``, and
+finally ``test_galaxy`` until the collection is found. The actual Galaxy instance is then defined under the section
+``[galaxy_server.{{ id }}]`` where ``{{ id }}`` is the server identifier defined in the list. This section can then
+define the following keys:
+
+* ``url``: The URL of the galaxy instance to connect to, this is required.
+* ``token``: A token key to use for authentication against the Galaxy instance, this is mutually exclusive with ``username``
+* ``username``: The username to use for basic authentication against the Galaxy instance, this is mutually exclusive with ``token``
+* ``password``: The password to use for basic authentication
+* ``auth_url``: The URL of a Keycloak server 'token_endpoint' if using SSO auth (Automation Hub for ex). This is mutually exclusive with ``username``. ``auth_url`` requires ``token``.
+
+As well as being defined in the ``ansible.cfg`` file, these server options can be defined as an environment variable.
+The environment variable is in the form ``ANSIBLE_GALAXY_SERVER_{{ id }}_{{ key }}`` where ``{{ id }}`` is the upper
+case form of the server identifier and ``{{ key }}`` is the key to define. For example I can define ``token`` for
+``release_galaxy`` by setting ``ANSIBLE_GALAXY_SERVER_RELEASE_GALAXY_TOKEN=secret_token``.
+
+For operations where only one Galaxy server is used, i.e. ``publish``, ``info``, ``login`` then the first entry in the
+``server_list`` is used unless an explicit server was passed in as a command line argument.
+
+.. note::
+    Once a collection is found, any of its requirements are only searched within the same Galaxy instance as the parent
+    collection. The install process will not search for a collection requirement in a different Galaxy instance.

@@ -9,8 +9,7 @@ __metaclass__ = type
 
 import pytest
 
-from .FakeAnsibleModule import FakeAnsibleModule, ExitJsonException, FailJsonException
-
+from ansible.module_utils.common.network import is_mac
 
 testcase_is_valid_mac_addr = [
     ('A4-23-8D-F8-C9-E5', True),
@@ -138,7 +137,7 @@ testcase_is_valid_ip6_prefix = [
 @pytest.mark.parametrize('mac_addr, result', testcase_is_valid_mac_addr)
 def test_is_valid_mac_addr(xenserver, mac_addr, result):
     """Tests against examples of valid and invalid mac addresses."""
-    assert xenserver.is_valid_mac_addr(mac_addr) is result
+    assert is_mac(mac_addr) is result
 
 
 @pytest.mark.parametrize('ip_addr, result', testcase_is_valid_ip_addr)

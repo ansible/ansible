@@ -1,0 +1,21 @@
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: intentionally fail module execution
+      ping:
+        data: crash
+      ignore_errors: yes
+      register: ping
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: verify exceptions were properly captured
+      assert:
+        that:
+          - hostvars.testhost_local.ping is failed
+          - "'boom' in hostvars.testhost_local.ping.exception"
+          - "'boom' in hostvars.testhost_local.ping.module_stderr"
+          - hostvars.testhost_ssh.ping is failed
+          - "'boom' in hostvars.testhost_ssh.ping.exception"
+          - "'boom' in hostvars.testhost_ssh.ping.module_stdout"

@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix nxos_facts with VDC having no interfaces (https://github.com/ansible-collections/cisco.nxos/pull/68).

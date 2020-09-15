@@ -174,7 +174,7 @@ import time
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network.eos.eos import run_commands, load_config
 from ansible.module_utils.six import iteritems
-from ansible.module_utils.network.eos.eos import eos_argument_spec, check_args
+from ansible.module_utils.network.eos.eos import eos_argument_spec
 
 
 def check_transport(module):
@@ -264,7 +264,7 @@ def map_obj_to_commands(updates, module, warnings):
         else:
             add('protocol unix-socket')
 
-    if needs_update('state') and not needs_update('vrf'):
+    if needs_update('state'):
         if want['state'] == 'stopped':
             add('shutdown')
         elif want['state'] == 'started':
@@ -299,7 +299,7 @@ def map_config_to_obj(module):
         'local_http': out[0]['localHttpServer']['configured'],
         'local_http_port': out[0]['localHttpServer']['port'],
         'socket': out[0]['unixSocketServer']['configured'],
-        'vrf': out[0]['vrf'],
+        'vrf': out[0]['vrf'] or "default",
         'state': parse_state(out)
     }
 

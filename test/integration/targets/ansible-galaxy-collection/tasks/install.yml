@@ -1,0 +1,242 @@
+---
+- name: create test collection install directory - {{ test_name }}
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections'
+    state: directory
+
+- name: install simple collection with implicit path - {{ test_name }}
+  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}'
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+  register: install_normal
+
+- name: get installed files of install simple collection with implicit path - {{ test_name }}
+  find:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1'
+    file_type: file
+  register: install_normal_files
+
+- name: get the manifest of install simple collection with implicit path - {{ test_name }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1/MANIFEST.json'
+  register: install_normal_manifest
+
+- name: assert install simple collection with implicit path - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''namespace1.name1:1.0.9'' to" in install_normal.stdout'
+    - install_normal_files.files | length == 3
+    - install_normal_files.files[0].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
+    - install_normal_files.files[1].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
+    - install_normal_files.files[2].path | basename in ['MANIFEST.json', 'FILES.json', 'README.md']
+    - (install_normal_manifest.content | b64decode | from_json).collection_info.version == '1.0.9'
+
+- name: install existing without --force - {{ test_name }}
+  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}'
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+  register: install_existing_no_force
+
+- name: assert install existing without --force - {{ test_name }}
+  assert:
+    that:
+    - '"Skipping ''namespace1.name1'' as it is already installed" in install_existing_no_force.stdout'
+
+- name: install existing with --force - {{ test_name }}
+  command: ansible-galaxy collection install namespace1.name1 -s '{{ test_server }}' --force
+  environment:
+    ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+  register: install_existing_force
+
+- name: assert install existing with --force - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''namespace1.name1:1.0.9'' to" in install_existing_force.stdout'
+
+- name: remove test installed collection - {{ test_name }}
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1'
+    state: absent
+
+- name: install pre-release as explicit version to custom dir - {{ test_name }}
+  command: ansible-galaxy collection install 'namespace1.name1:1.1.0-beta.1' -s '{{ test_server }}' -p '{{ galaxy_dir }}/ansible_collections'
+  register: install_prerelease
+
+- name: get result of install pre-release as explicit version to custom dir - {{ test_name }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace1/name1/MANIFEST.json'
+  register: install_prerelease_actual
+
+- name: assert install pre-release as explicit version to custom dir - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''namespace1.name1:1.1.0-beta.1'' to" in install_prerelease.stdout'
+    - (install_prerelease_actual.content | b64decode | from_json).collection_info.version == '1.1.0-beta.1'
+
+- name: install multiple collections with dependencies - {{ test_name }}
+  command: ansible-galaxy collection install parent_dep.parent_collection namespace2.name -s {{ test_name }}
+  args:
+    chdir: '{{ galaxy_dir }}/ansible_collections'
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  register: install_multiple_with_dep
+
+- name: get result of install multiple collections with dependencies - {{ test_name }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/{{ collection.namespace }}/{{ collection.name }}/MANIFEST.json'
+  register: install_multiple_with_dep_actual
+  loop_control:
+    loop_var: collection
+  loop:
+  - namespace: namespace2
+    name: name
+  - namespace: parent_dep
+    name: parent_collection
+  - namespace: child_dep
+    name: child_collection
+  - namespace: child_dep
+    name: child_dep2
+
+- name: assert install multiple collections with dependencies - {{ test_name }}
+  assert:
+    that:
+    - (install_multiple_with_dep_actual.results[0].content | b64decode | from_json).collection_info.version == '1.0.0'
+    - (install_multiple_with_dep_actual.results[1].content | b64decode | from_json).collection_info.version == '1.0.0'
+    - (install_multiple_with_dep_actual.results[2].content | b64decode | from_json).collection_info.version == '0.9.9'
+    - (install_multiple_with_dep_actual.results[3].content | b64decode | from_json).collection_info.version == '1.2.2'
+
+- name: expect failure with dep resolution failure
+  command:  ansible-galaxy collection install fail_namespace.fail_collection -s {{ test_server }}
+  register: fail_dep_mismatch
+  failed_when: '"Cannot meet dependency requirement ''fail_dep2.name:<0.0.5'' for collection fail_namespace.fail_collection" not in fail_dep_mismatch.stderr'
+
+- name: download a collection for an offline install - {{ test_name }}
+  get_url:
+    url: '{{ test_server }}custom/collections/namespace3-name-1.0.0.tar.gz'
+    dest: '{{ galaxy_dir }}/namespace3.tar.gz'
+
+- name: install a collection from a tarball - {{ test_name }}
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/namespace3.tar.gz'
+  register: install_tarball
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+
+- name: get result of install collection from a tarball - {{ test_name }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace3/name/MANIFEST.json'
+  register: install_tarball_actual
+
+- name: assert install a collection from a tarball - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''namespace3.name:1.0.0'' to" in install_tarball.stdout'
+    - (install_tarball_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
+
+- name: setup bad tarball - {{ test_name }}
+  script: build_bad_tar.py {{ galaxy_dir | quote }}
+
+- name: fail to install a collection from a bad tarball - {{ test_name }}
+  command: ansible-galaxy collection install '{{ galaxy_dir }}/suspicious-test-1.0.0.tar.gz'
+  register: fail_bad_tar
+  failed_when: fail_bad_tar.rc != 1 and "Cannot extract tar entry '../../outside.sh' as it will be placed outside the collection directory" not in fail_bad_tar.stderr
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+
+- name: get result of failed collection install - {{ test_name }}
+  stat:
+    path: '{{ galaxy_dir }}/ansible_collections\suspicious'
+  register: fail_bad_tar_actual
+
+- name: assert result of failed collection install - {{ test_name }}
+  assert:
+    that:
+    - not fail_bad_tar_actual.stat.exists
+
+- name: install a collection from a URI - {{ test_name }}
+  command: ansible-galaxy collection install '{{ test_server }}custom/collections/namespace4-name-1.0.0.tar.gz'
+  register: install_uri
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+
+- name: get result of install collection from a URI - {{ test_name }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace4/name/MANIFEST.json'
+  register: install_uri_actual
+
+- name: assert install a collection from a URI - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''namespace4.name:1.0.0'' to" in install_uri.stdout'
+    - (install_uri_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
+
+- name: fail to install a collection with an undefined URL - {{ test_name }}
+  command: ansible-galaxy collection install namespace5.name
+  register: fail_undefined_server
+  failed_when: '"No setting was provided for required configuration plugin_type: galaxy_server plugin: undefined" not in fail_undefined_server.stderr'
+  environment:
+    ANSIBLE_GALAXY_SERVER_LIST: undefined
+
+- name: install a collection with an empty server list - {{ test_name }}
+  command: ansible-galaxy collection install namespace5.name -s '{{ test_server }}'
+  register: install_empty_server_list
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+    ANSIBLE_GALAXY_SERVER_LIST: ''
+
+- name: get result of a collection with an empty server list - {{ test_name }}
+  slurp:
+    path: '{{ galaxy_dir }}/ansible_collections/namespace5/name/MANIFEST.json'
+  register: install_empty_server_list_actual
+
+- name: assert install a collection with an empty server list - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''namespace5.name:1.0.0'' to" in install_empty_server_list.stdout'
+    - (install_empty_server_list_actual.content | b64decode | from_json).collection_info.version == '1.0.0'
+
+- name: remove test collection install directory - {{ test_name }}
+  file:
+    path: '{{ galaxy_dir }}/ansible_collections'
+    state: absent
+
+- name: install collection with symlink - {{ test_name }}
+  command: ansible-galaxy collection install symlink.symlink -s '{{ test_server }}'
+  environment:
+    ANSIBLE_COLLECTIONS_PATHS: '{{ galaxy_dir }}/ansible_collections'
+  register: install_symlink
+
+- find:
+    paths: '{{ galaxy_dir }}/ansible_collections/symlink/symlink'
+    recurse: yes
+    file_type: any
+
+- name: get result of install collection with symlink - {{ test_name }}
+  stat:
+    path: '{{ galaxy_dir }}/ansible_collections/symlink/symlink/{{ path }}'
+  register: install_symlink_actual
+  loop_control:
+    loop_var: path
+  loop:
+  - REÅDMÈ.md-link
+  - docs/REÅDMÈ.md
+  - plugins/REÅDMÈ.md
+  - REÅDMÈ.md-outside-link
+  - docs-link
+  - docs-link/REÅDMÈ.md
+
+- name: assert install collection with symlink - {{ test_name }}
+  assert:
+    that:
+    - '"Installing ''symlink.symlink:1.0.0'' to" in install_symlink.stdout'
+    - install_symlink_actual.results[0].stat.islnk
+    - install_symlink_actual.results[0].stat.lnk_target == 'REÅDMÈ.md'
+    - install_symlink_actual.results[1].stat.islnk
+    - install_symlink_actual.results[1].stat.lnk_target == '../REÅDMÈ.md'
+    - install_symlink_actual.results[2].stat.islnk
+    - install_symlink_actual.results[2].stat.lnk_target == '../REÅDMÈ.md'
+    - install_symlink_actual.results[3].stat.isreg
+    - install_symlink_actual.results[4].stat.islnk
+    - install_symlink_actual.results[4].stat.lnk_target == 'docs'
+    - install_symlink_actual.results[5].stat.islnk
+    - install_symlink_actual.results[5].stat.lnk_target == '../REÅDMÈ.md'

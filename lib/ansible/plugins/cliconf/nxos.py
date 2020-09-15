@@ -34,7 +34,6 @@ import json
 import re
 
 from ansible.errors import AnsibleConnectionFailure
-from ansible.module_utils.basic import get_timestamp
 from ansible.module_utils._text import to_bytes, to_text
 from ansible.module_utils.common._collections_compat import Mapping
 from ansible.module_utils.connection import ConnectionError
@@ -47,6 +46,7 @@ class Cliconf(CliconfBase):
 
     def __init__(self, *args, **kwargs):
         self._module_context = {}
+        self._device_info = {}
         super(Cliconf, self).__init__(*args, **kwargs)
 
     def read_module_context(self, module_key):
@@ -61,52 +61,55 @@ class Cliconf(CliconfBase):
         return None
 
     def get_device_info(self):
-        device_info = {}
+        if not self._device_info:
+            device_info = {}
 
-        device_info['network_os'] = 'nxos'
-        reply = self.get('show version')
-        platform_reply = self.get('show inventory')
+            device_info['network_os'] = 'nxos'
+            reply = self.get('show version')
+            platform_reply = self.get('show inventory')
 
-        match_sys_ver = re.search(r'\s+system:\s+version\s*(\S+)', reply, re.M)
-        if match_sys_ver:
-            device_info['network_os_version'] = match_sys_ver.group(1)
-        else:
-            match_kick_ver = re.search(r'\s+kickstart:\s+version\s*(\S+)', reply, re.M)
-            if match_kick_ver:
-                device_info['network_os_version'] = match_kick_ver.group(1)
-
-        if 'network_os_version' not in device_info:
-            match_sys_ver = re.search(r'\s+NXOS:\s+version\s*(\S+)', reply, re.M)
+            match_sys_ver = re.search(r'\s+system:\s+version\s*(\S+)', reply, re.M)
             if match_sys_ver:
                 device_info['network_os_version'] = match_sys_ver.group(1)
+            else:
+                match_kick_ver = re.search(r'\s+kickstart:\s+version\s*(\S+)', reply, re.M)
+                if match_kick_ver:
+                    device_info['network_os_version'] = match_kick_ver.group(1)
 
-        match_chassis_id = re.search(r'Hardware\n\s+cisco(.+)$', reply, re.M)
-        if match_chassis_id:
-            device_info['network_os_model'] = match_chassis_id.group(1).strip()
+            if 'network_os_version' not in device_info:
+                match_sys_ver = re.search(r'\s+NXOS:\s+version\s*(\S+)', reply, re.M)
+                if match_sys_ver:
+                    device_info['network_os_version'] = match_sys_ver.group(1)
 
-        match_host_name = re.search(r'\s+Device name:\s*(\S+)', reply, re.M)
-        if match_host_name:
-            device_info['network_os_hostname'] = match_host_name.group(1)
+            match_chassis_id = re.search(r'Hardware\n\s+cisco(.+)$', reply, re.M)
+            if match_chassis_id:
+                device_info['network_os_model'] = match_chassis_id.group(1).strip()
 
-        match_isan_file_name = re.search(r'\s+system image file is:\s*(\S+)', reply, re.M)
-        if match_isan_file_name:
-            device_info['network_os_image'] = match_isan_file_name.group(1)
-        else:
-            match_kick_file_name = re.search(r'\s+kickstart image file is:\s*(\S+)', reply, re.M)
-            if match_kick_file_name:
-                device_info['network_os_image'] = match_kick_file_name.group(1)
+            match_host_name = re.search(r'\s+Device name:\s*(\S+)', reply, re.M)
+            if match_host_name:
+                device_info['network_os_hostname'] = match_host_name.group(1)
 
-        if 'network_os_image' not in device_info:
-            match_isan_file_name = re.search(r'\s+NXOS image file is:\s*(\S+)', reply, re.M)
+            match_isan_file_name = re.search(r'\s+system image file is:\s*(\S+)', reply, re.M)
             if match_isan_file_name:
                 device_info['network_os_image'] = match_isan_file_name.group(1)
+            else:
+                match_kick_file_name = re.search(r'\s+kickstart image file is:\s*(\S+)', reply, re.M)
+                if match_kick_file_name:
+                    device_info['network_os_image'] = match_kick_file_name.group(1)
 
-        match_os_platform = re.search(r'NAME: "Chassis",\s*DESCR:.*\n'
-                                      r'PID:\s*(\S+)', platform_reply, re.M)
-        if match_os_platform:
-            device_info['network_os_platform'] = match_os_platform.group(1)
+            if 'network_os_image' not in device_info:
+                match_isan_file_name = re.search(r'\s+NXOS image file is:\s*(\S+)', reply, re.M)
+                if match_isan_file_name:
+                    device_info['network_os_image'] = match_isan_file_name.group(1)
 
-        return device_info
+            match_os_platform = re.search(r'NAME: "Chassis",\s*DESCR:.*\n'
+                                          r'PID:\s*(\S+)', platform_reply, re.M)
+            if match_os_platform:
+                device_info['network_os_platform'] = match_os_platform.group(1)
+
+            self._device_info = device_info
+
+        return self._device_info
 
     def get_diff(self, candidate=None, running=None, diff_match='line', diff_ignore_lines=None, path=None, diff_replace='line'):
         diff = {}
@@ -189,17 +192,16 @@ class Cliconf(CliconfBase):
         resp['response'] = results
         return resp
 
-    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, check_all=False):
+    def get(self, command, prompt=None, answer=None, sendonly=False, output=None, newline=True, check_all=False):
         if output:
             command = self._get_command_with_output(command, output)
-        return self.send_command(command, prompt=prompt, answer=answer, sendonly=sendonly, check_all=check_all)
+        return self.send_command(command=command, prompt=prompt, answer=answer, sendonly=sendonly, newline=newline, check_all=check_all)
 
     def run_commands(self, commands=None, check_rc=True):
         if commands is None:
             raise ValueError("'commands' value is required")
 
         responses = list()
-        timestamps = list()
         for cmd in to_list(commands):
             if not isinstance(cmd, Mapping):
                 cmd = {'command': cmd}
@@ -209,7 +211,6 @@ class Cliconf(CliconfBase):
                 cmd['command'] = self._get_command_with_output(cmd['command'], output)
 
             try:
-                timestamp = get_timestamp()
                 out = self.send_command(**cmd)
             except AnsibleConnectionFailure as e:
                 if check_rc is True:
@@ -228,8 +229,7 @@ class Cliconf(CliconfBase):
                     pass
 
                 responses.append(out)
-                timestamps.append(timestamp)
-        return responses, timestamps
+        return responses
 
     def get_device_operations(self):
         return {
@@ -262,13 +262,37 @@ class Cliconf(CliconfBase):
 
         return json.dumps(result)
 
+    def set_cli_prompt_context(self):
+        """
+        Make sure we are in the operational cli context
+        :return: None
+        """
+        if self._connection.connected:
+            out = self._connection.get_prompt()
+            if out is None:
+                raise AnsibleConnectionFailure(message=u'cli prompt is not identified from the last received'
+                                                       u' response window: %s' % self._connection._last_recv_window)
+            # Match prompts ending in )# except those with (maint-mode)#
+            config_prompt = re.compile(r'^.*\((?!maint-mode).*\)#$')
+
+            while config_prompt.match(to_text(out, errors='surrogate_then_replace').strip()):
+                self._connection.queue_message('vvvv', 'wrong context, sending exit to device')
+                self._connection.send_command('exit')
+                out = self._connection.get_prompt()
+
     def _get_command_with_output(self, command, output):
         options_values = self.get_option_values()
         if output not in options_values['output']:
             raise ValueError("'output' value %s is invalid. Valid values are %s" % (output, ','.join(options_values['output'])))
 
         if output == 'json' and not command.endswith('| json'):
-            cmd = '%s | json' % command
+            device_info = self.get_device_info()
+            model = device_info.get("network_os_model", "")
+            platform = device_info.get("network_os_platform", "")
+            if platform.startswith("DS-") and "MDS" in model:
+                cmd = "%s | json native" % command
+            else:
+                cmd = "%s | json" % command
         elif output == 'text' and command.endswith('| json'):
             cmd = command.rsplit('|', 1)[0]
         else:

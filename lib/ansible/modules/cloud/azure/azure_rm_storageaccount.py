@@ -18,7 +18,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_storageaccount
 version_added: "2.1"
-short_description: Manage Azure storage accounts.
+short_description: Manage Azure storage accounts
 description:
     - Create, update or delete a storage account.
 options:
@@ -33,20 +33,19 @@ options:
             - Name of the storage account to update or create.
     state:
         description:
-            - Assert the state of the storage account. Use C(present) to create or update a storage account and
-              C(absent) to delete an account.
+            - State of the storage account. Use C(present) to create or update a storage account and use C(absent) to delete an account.
         default: present
         choices:
             - absent
             - present
     location:
         description:
-            - Valid azure location. Defaults to location of the resource group.
+            - Valid Azure location. Defaults to location of the resource group.
     account_type:
         description:
-            - "Type of storage account. Required when creating a storage account. NOTE: Standard_ZRS and Premium_LRS
-              accounts cannot be changed to other account types, and other account types cannot be changed to
-              Standard_ZRS or Premium_LRS."
+            - Type of storage account. Required when creating a storage account.
+            - C(Standard_ZRS) and C(Premium_LRS) accounts cannot be changed to other account types.
+            - Other account types cannot be changed to C(Standard_ZRS) or C(Premium_LRS).
         choices:
             - Premium_LRS
             - Standard_GRS
@@ -59,15 +58,16 @@ options:
             - type
     custom_domain:
         description:
-            - User domain assigned to the storage account. Must be a dictionary with 'name' and 'use_sub_domain'
-              keys where 'name' is the CNAME source. Only one custom domain is supported per storage account at this
-              time. To clear the existing custom domain, use an empty string for the custom domain name property.
+            - User domain assigned to the storage account.
+            - Must be a dictionary with I(name) and I(use_sub_domain) keys where I(name) is the CNAME source.
+            - Only one custom domain is supported per storage account at this time.
+            - To clear the existing custom domain, use an empty string for the custom domain name property.
             - Can be added to an existing storage account. Will be ignored during storage account creation.
         aliases:
             - custom_dns_domain_suffix
     kind:
         description:
-            - The 'kind' of storage.
+            - The kind of storage.
         default: 'Storage'
         choices:
             - Storage
@@ -76,20 +76,20 @@ options:
         version_added: "2.2"
     access_tier:
         description:
-            - The access tier for this storage account. Required for a storage account of kind 'BlobStorage'.
+            - The access tier for this storage account. Required when I(kind=BlobStorage).
         choices:
             - Hot
             - Cool
         version_added: "2.4"
     force_delete_nonempty:
         description:
-            - Attempt deletion if resource already exists and cannot be updated
+            - Attempt deletion if resource already exists and cannot be updated.
         type: bool
         aliases:
             - force
     https_only:
         description:
-            -  Allows https traffic only to storage service if sets to true.
+            -  Allows https traffic only to storage service when set to C(true).
         type: bool
         version_added: "2.8"
     blob_cors:
@@ -97,7 +97,7 @@ options:
             - Specifies CORS rules for the Blob service.
             - You can include up to five CorsRule elements in the request.
             - If no blob_cors elements are included in the argument list, nothing about CORS will be changed.
-            - "If you want to delete all CORS rules and disable CORS for the Blob service, explicitly set blob_cors: []."
+            - If you want to delete all CORS rules and disable CORS for the Blob service, explicitly set I(blob_cors=[]).
         type: list
         version_added: "2.8"
         suboptions:
@@ -132,8 +132,8 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Chris Houseknecht (@chouseknecht)"
-    - "Matt Davis (@nitzmahone)"
+    - Chris Houseknecht (@chouseknecht)
+    - Matt Davis (@nitzmahone)
 '''
 
 EXAMPLES = '''
@@ -175,34 +175,122 @@ EXAMPLES = '''
 
 RETURN = '''
 state:
-    description: Current state of the storage account.
+    description:
+        - Current state of the storage account.
     returned: always
-    type: dict
-    sample: {
-        "account_type": "Standard_RAGRS",
-        "custom_domain": null,
-        "id": "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/clh0003",
-        "location": "eastus2",
-        "name": "clh0003",
-        "primary_endpoints": {
-            "blob": "https://clh0003.blob.core.windows.net/",
-            "queue": "https://clh0003.queue.core.windows.net/",
-            "table": "https://clh0003.table.core.windows.net/"
-        },
-        "primary_location": "eastus2",
-        "provisioning_state": "Succeeded",
-        "resource_group": "Testing",
-        "secondary_endpoints": {
-            "blob": "https://clh0003-secondary.blob.core.windows.net/",
-            "queue": "https://clh0003-secondary.queue.core.windows.net/",
-            "table": "https://clh0003-secondary.table.core.windows.net/"
-        },
-        "secondary_location": "centralus",
-        "status_of_primary": "Available",
-        "status_of_secondary": "Available",
-        "tags": null,
-        "type": "Microsoft.Storage/storageAccounts"
-    }
+    type: complex
+    contains:
+        account_type:
+            description:
+                - Type of storage account.
+            returned: always
+            type: str
+            sample: Standard_RAGRS
+        custom_domain:
+            description:
+                - User domain assigned to the storage account.
+            returned: always
+            type: complex
+            contains:
+                name:
+                    description:
+                        - CNAME source.
+                    returned: always
+                    type: str
+                    sample: testaccount
+                use_sub_domain:
+                    description:
+                        - Whether to use sub domain.
+                    returned: always
+                    type: bool
+                    sample: true
+        id:
+            description:
+                - Resource ID.
+            returned: always
+            type: str
+            sample: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Storage/storageAccounts/clh0003"
+        location:
+            description:
+                - Valid Azure location. Defaults to location of the resource group.
+            returned: always
+            type: str
+            sample: eastus2
+        name:
+            description:
+                - Name of the storage account to update or create.
+            returned: always
+            type: str
+            sample: clh0003
+        primary_endpoints:
+            description:
+                - The URLs to retrieve the public I(blob), I(queue), or I(table) object from the primary location.
+            returned: always
+            type: dict
+            sample: {
+                    "blob": "https://clh0003.blob.core.windows.net/",
+                    "queue": "https://clh0003.queue.core.windows.net/",
+                    "table": "https://clh0003.table.core.windows.net/"
+                    }
+        primary_location:
+            description:
+                - The location of the primary data center for the storage account.
+            returned: always
+            type: str
+            sample: eastus2
+        provisioning_state:
+            description:
+                - The status of the storage account.
+                - Possible values include C(Creating), C(ResolvingDNS), C(Succeeded).
+            returned: always
+            type: str
+            sample: Succeeded
+        resource_group:
+            description:
+                - The resource group's name.
+            returned: always
+            type: str
+            sample: Testing
+        secondary_endpoints:
+            description:
+                - The URLs to retrieve the public I(blob), I(queue), or I(table) object from the secondary location.
+            returned: always
+            type: dict
+            sample: {
+                    "blob": "https://clh0003-secondary.blob.core.windows.net/",
+                    "queue": "https://clh0003-secondary.queue.core.windows.net/",
+                    "table": "https://clh0003-secondary.table.core.windows.net/"
+                    }
+        secondary_location:
+            description:
+                - The location of the geo-replicated secondary for the storage account.
+            returned: always
+            type: str
+            sample: centralus
+        status_of_primary:
+            description:
+                - The status of the primary location of the storage account; either C(available) or C(unavailable).
+            returned: always
+            type: str
+            sample: available
+        status_of_secondary:
+            description:
+                - The status of the secondary location of the storage account; either C(available) or C(unavailable).
+            returned: always
+            type: str
+            sample: available
+        tags:
+            description:
+                - Resource tags.
+            returned: always
+            type: dict
+            sample: { 'tags1': 'value1' }
+        type:
+            description:
+                - The storage account type.
+            returned: always
+            type: str
+            sample: "Microsoft.Storage/storageAccounts"
 '''
 
 try:

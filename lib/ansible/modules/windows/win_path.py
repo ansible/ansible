@@ -48,7 +48,7 @@ options:
     choices: [ machine, user ]
     default: machine
 notes:
-   - This module is for modifying indidvidual elements of path-like
+   - This module is for modifying individual elements of path-like
      environment variables. For general-purpose management of other
      environment vars, use the M(win_environment) module.
    - This module does not broadcast change events.

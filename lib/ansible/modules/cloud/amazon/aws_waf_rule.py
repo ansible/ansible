@@ -47,8 +47,14 @@ options:
     purge_conditions:
         description:
           - Whether or not to remove conditions that are not passed when updating `conditions`.
-        default: False
+        default: false
         type: bool
+    waf_regional:
+        description: Whether to use waf_regional module. Defaults to false
+        default: false
+        required: no
+        type: bool
+        version_added: "2.9"
 '''
 
 EXAMPLES = '''
@@ -127,8 +133,8 @@ except ImportError:
 from ansible.module_utils.aws.core import AnsibleAWSModule
 from ansible.module_utils.ec2 import boto3_conn, get_aws_connection_info, ec2_argument_spec
 from ansible.module_utils.ec2 import camel_dict_to_snake_dict
-from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, MATCH_LOOKUP
-from ansible.module_utils.aws.waf import get_web_acl_with_backoff, list_web_acls_with_backoff
+from ansible.module_utils.aws.waf import run_func_with_change_token_backoff, list_rules_with_backoff, list_regional_rules_with_backoff, MATCH_LOOKUP
+from ansible.module_utils.aws.waf import get_web_acl_with_backoff, list_web_acls_with_backoff, list_regional_web_acls_with_backoff
 
 
 def get_rule_by_name(client, module, name):
@@ -145,8 +151,21 @@ def get_rule(client, module, rule_id):
 
 
 def list_rules(client, module):
+    if client.__class__.__name__ == 'WAF':
+        try:
+            return list_rules_with_backoff(client)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg='Could not list WAF rules')
+    elif client.__class__.__name__ == 'WAFRegional':
+        try:
+            return list_regional_rules_with_backoff(client)
+        except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
+            module.fail_json_aws(e, msg='Could not list WAF Regional rules')
+
+
+def list_regional_rules(client, module):
     try:
-        return list_rules_with_backoff(client)
+        return list_regional_rules_with_backoff(client)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg='Could not list WAF rules')
 
@@ -260,7 +279,10 @@ def ensure_rule_present(client, module):
 def find_rule_in_web_acls(client, module, rule_id):
     web_acls_in_use = []
     try:
-        all_web_acls = list_web_acls_with_backoff(client)
+        if client.__class__.__name__ == 'WAF':
+            all_web_acls = list_web_acls_with_backoff(client)
+        elif client.__class__.__name__ == 'WAFRegional':
+            all_web_acls = list_regional_web_acls_with_backoff(client)
     except (botocore.exceptions.ClientError, botocore.exceptions.BotoCoreError) as e:
         module.fail_json_aws(e, msg='Could not list Web ACLs')
     for web_acl in all_web_acls:
@@ -297,15 +319,16 @@ def main():
             metric_name=dict(),
             state=dict(default='present', choices=['present', 'absent']),
             conditions=dict(type='list'),
-            purge_conditions=dict(type='bool', default=False)
+            purge_conditions=dict(type='bool', default=False),
+            waf_regional=dict(type='bool', default=False),
         ),
     )
     module = AnsibleAWSModule(argument_spec=argument_spec)
     state = module.params.get('state')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-    client = boto3_conn(module, conn_type='client', resource='waf', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-
+    resource = 'waf' if not module.params['waf_regional'] else 'waf-regional'
+    client = boto3_conn(module, conn_type='client', resource=resource, region=region, endpoint=ec2_url, **aws_connect_kwargs)
     if state == 'present':
         (changed, results) = ensure_rule_present(client, module)
     else:

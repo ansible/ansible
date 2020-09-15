@@ -1,0 +1,2 @@
+bugfixes:
+- "fix the bug where IOS vlans module throws traceback. (ref: https://github.com/ansible/ansible/pull/64633)"

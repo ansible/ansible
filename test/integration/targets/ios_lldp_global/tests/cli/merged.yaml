@@ -1,0 +1,43 @@
+---
+- debug:
+      msg: "START Merged ios_lldp_global state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- block:
+    - name: Merge provided configuration Global LLDP
+      ios_lldp_global: &merged
+        config:
+          holdtime: 10
+          enabled: True
+          reinit: 3
+          timer: 20
+        state: merged
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ merged['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ merged['before'] == result['before'] }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ merged['before'] == result['before'] }}"
+
+    - name: Merge provided configuration Global LLDP (IDEMPOTENT)
+      ios_lldp_global: *merged
+      register: result
+
+    - name: Assert that the previous task was idempotent
+      assert:
+        that:
+          - "result['changed'] == false"
+
+  always:
+    - include_tasks: _remove_config.yaml

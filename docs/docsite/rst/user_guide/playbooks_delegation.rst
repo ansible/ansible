@@ -13,9 +13,9 @@ Additional features allow for tuning the orders in which things complete, and as
 
 This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <https://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
 
-You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.
+You should also consult the :ref:`module documentation<modules_by_category>` section. Modules like :ref:`ec2_elb<ec2_elb_module>`, :ref:`nagios<nagios_module>`, :ref:`bigip_pool<bigip_pool_module>`, and other :ref:`network_modules` dovetail neatly with the concepts mentioned here.
 
-You'll also want to read up on :doc:`playbooks_reuse_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules.
+You'll also want to read up on :ref:`playbooks_reuse_roles`, as the 'pre_task' and 'post_task' concepts are the places where you would typically call these modules.
 
 Be aware that certain tasks are impossible to delegate, i.e. `include`, `add_host`, `debug`, etc as they always execute on the controller.
 
@@ -27,16 +27,17 @@ Rolling Update Batch Size
 
 By default, Ansible will try to manage all of the machines referenced in a play in parallel.  For a rolling update use case, you can define how many hosts Ansible should manage at a single time by using the ``serial`` keyword::
 
-
+    ---
     - name: test play
       hosts: webservers
       serial: 2
       gather_facts: False
+
       tasks:
-      - name: task one
-        command: hostname
-      - name: task two
-        command: hostname
+        - name: task one
+          command: hostname
+        - name: task two
+          command: hostname
 
 In the above example, if we had 4 hosts in the group 'webservers', 2
 would complete the play completely before moving on to the next 2 hosts::
@@ -72,6 +73,7 @@ would complete the play completely before moving on to the next 2 hosts::
 The ``serial`` keyword can also be specified as a percentage, which will be applied to the total number of hosts in a
 play, in order to determine the number of hosts per pass::
 
+    ---
     - name: test play
       hosts: webservers
       serial: "30%"
@@ -80,33 +82,36 @@ If the number of hosts does not divide equally into the number of passes, the fi
 
 As of Ansible 2.2, the batch sizes can be specified as a list, as follows::
 
+    ---
     - name: test play
       hosts: webservers
       serial:
-      - 1
-      - 5
-      - 10
+        - 1
+        - 5
+        - 10
 
 In the above example, the first batch would contain a single host, the next would contain 5 hosts, and (if there are any hosts left),
 every following batch would contain 10 hosts until all available hosts are used.
 
 It is also possible to list multiple batch sizes as percentages::
 
+    ---
     - name: test play
       hosts: webservers
       serial:
-      - "10%"
-      - "20%"
-      - "100%"
+        - "10%"
+        - "20%"
+        - "100%"
 
 You can also mix and match the values::
 
+    ---
     - name: test play
       hosts: webservers
       serial:
-      - 1
-      - 5
-      - "20%"
+        - 1
+        - 5
+        - "20%"
 
 .. note::
      No matter how small the percentage, the number of hosts per pass will always be 1 or greater.
@@ -122,6 +127,7 @@ In some situations, such as with the rolling updates described above, it may be 
 certain threshold of failures have been reached. To achieve this, you can set a maximum failure
 percentage on a play as follows::
 
+    ---
     - hosts: webservers
       max_fail_percentage: 30
       serial: 10
@@ -130,7 +136,7 @@ In the above example, if more than 3 of the 10 servers in the group were to fail
 
 .. note::
 
-     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort 
+     The percentage set must be exceeded, not equaled. For example, if serial were set to 4 and you wanted the task to abort
      when 2 of the systems failed, the percentage should be set at 49 rather than 50.
 
 .. _delegation:
@@ -147,51 +153,47 @@ Be aware that it does not make sense to delegate all tasks, debug, add_host, inc
 Using this with the 'serial' keyword to control the number of hosts executing at one time is also a good idea::
 
     ---
-
     - hosts: webservers
       serial: 5
 
       tasks:
+        - name: take out of load balancer pool
+          command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
+          delegate_to: 127.0.0.1
 
-      - name: take out of load balancer pool
-        command: /usr/bin/take_out_of_pool {{ inventory_hostname }}
-        delegate_to: 127.0.0.1
+        - name: actual steps would go here
+          yum:
+            name: acme-web-stack
+            state: latest
 
-      - name: actual steps would go here
-        yum: 
-          name: acme-web-stack
-          state: latest
-
-      - name: add back to load balancer pool
-        command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
-        delegate_to: 127.0.0.1
+        - name: add back to load balancer pool
+          command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
+          delegate_to: 127.0.0.1
 
 
 These commands will run on 127.0.0.1, which is the machine running Ansible. There is also a shorthand syntax that you can use on a per-task basis: 'local_action'. Here is the same playbook as above, but using the shorthand syntax for delegating to 127.0.0.1::
 
     ---
-
     # ...
 
       tasks:
-
-      - name: take out of load balancer pool
-        local_action: command /usr/bin/take_out_of_pool {{ inventory_hostname }}
+        - name: take out of load balancer pool
+          local_action: command /usr/bin/take_out_of_pool {{ inventory_hostname }}
 
     # ...
 
-      - name: add back to load balancer pool
-        local_action: command /usr/bin/add_back_to_pool {{ inventory_hostname }}
+        - name: add back to load balancer pool
+          local_action: command /usr/bin/add_back_to_pool {{ inventory_hostname }}
 
 A common pattern is to use a local action to call 'rsync' to recursively copy files to the managed servers.
 Here is an example::
 
     ---
     # ...
-      tasks:
 
-      - name: recursively copy files from management server to target
-        local_action: command rsync -a /path/to/files {{ inventory_hostname }}:/path/to/target/
+      tasks:
+        - name: recursively copy files from management server to target
+          local_action: command rsync -a /path/to/files {{ inventory_hostname }}:/path/to/target/
 
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
@@ -200,15 +202,15 @@ In case you have to specify more arguments you can use the following syntax::
 
     ---
     # ...
-      tasks:
 
-      - name: Send summary mail
-        local_action:
-          module: mail
-          subject: "Summary Mail"
-          to: "{{ mail_recipient }}"
-          body: "{{ mail_body }}"
-        run_once: True
+      tasks:
+        - name: Send summary mail
+          local_action:
+            module: mail
+            subject: "Summary Mail"
+            to: "{{ mail_recipient }}"
+            body: "{{ mail_body }}"
+          run_once: True
 
 The `ansible_host` variable (`ansible_ssh_host` in 1.x or specific to ssh/paramiko plugins) reflects the host a task is delegated to.
 
@@ -220,8 +222,9 @@ Delegated facts
 By default, any fact gathered by a delegated task are assigned to the `inventory_hostname` (the current host) instead of the host which actually produced the facts (the delegated to host).
 The directive `delegate_facts` may be set to `True` to assign the task's gathered facts to the delegated host instead of the current one.::
 
-
+    ---
     - hosts: app_servers
+
       tasks:
         - name: gather facts from db servers
           setup:
@@ -273,10 +276,13 @@ As always with delegation, the action will be executed on the delegated host, bu
 .. note::
      When used together with "serial", tasks marked as "run_once" will be run on one host in *each* serial batch.
      If it's crucial that the task is run only once regardless of "serial" mode, use
-     :code:`when: inventory_hostname == ansible_play_hosts[0]` construct.
+     :code:`when: inventory_hostname == ansible_play_hosts_all[0]` construct.
 
 .. note::
     Any conditional (i.e `when:`) will use the variables of the 'first host' to decide if the task runs or not, no other hosts will be tested.
+
+.. note::
+    If you want to avoid the default behaviour of setting the fact for all hosts, set `delegate_facts: True` for the specific task or block.
 
 .. _local_playbooks:
 
@@ -294,12 +300,13 @@ To run an entire playbook locally, just set the "hosts:" line to "hosts: 127.0.0
 Alternatively, a local connection can be used in a single playbook play, even if other plays in the playbook
 use the default remote connection type::
 
+    ---
     - hosts: 127.0.0.1
       connection: local
 
 .. note::
-    If you set the connection to local and there is no ansible_python_interpreter set, modules will run under /usr/bin/python and not  
-    under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in           
+    If you set the connection to local and there is no ansible_python_interpreter set, modules will run under /usr/bin/python and not
+    under {{ ansible_playbook_python }}. Be sure to set ansible_python_interpreter: "{{ ansible_playbook_python }}" in
     host_vars/localhost.yml, for example. You can avoid this issue by using ``local_action`` or ``delegate_to: localhost`` instead.
 
 
@@ -309,7 +316,7 @@ use the default remote connection type::
 Interrupt execution on any error
 ````````````````````````````````
 
-With the ''any_errors_fatal'' option, any failure on any host in a multi-host play will be treated as fatal and Ansible will exit immediately without waiting for the other hosts.
+With the ''any_errors_fatal'' option, any failure on any host in a multi-host play will be treated as fatal and Ansible will exit as soon as all hosts in the current batch have finished the fatal task. Subsequent tasks and plays will not be executed. You can recover from what would be a fatal error by adding a rescue section to the block.
 
 Sometimes ''serial'' execution is unsuitable; the number of hosts is unpredictable (because of dynamic inventory) and speed is crucial (simultaneous execution is required), but all tasks must be 100% successful to continue playbook execution.
 
@@ -327,28 +334,31 @@ For datacenter "A", the playbook can be written this way::
     ---
     - hosts: load_balancers_dc_a
       any_errors_fatal: True
+
       tasks:
-      - name: 'shutting down datacenter [ A ]'
-        command: /usr/bin/disable-dc
-    
+        - name: 'shutting down datacenter [ A ]'
+          command: /usr/bin/disable-dc
+
     - hosts: frontends_dc_a
+
       tasks:
-      - name: 'stopping service'
-        command: /usr/bin/stop-software
-      - name: 'updating software'
-        command: /usr/bin/upgrade-software
-    
+        - name: 'stopping service'
+          command: /usr/bin/stop-software
+        - name: 'updating software'
+          command: /usr/bin/upgrade-software
+
     - hosts: load_balancers_dc_a
+
       tasks:
-      - name: 'Starting datacenter [ A ]'
-        command: /usr/bin/enable-dc
+        - name: 'Starting datacenter [ A ]'
+          command: /usr/bin/enable-dc
 
 
 In this example Ansible will start the software upgrade on the front ends only if all of the load balancers are successfully disabled.
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
    `Ansible Examples on GitHub <https://github.com/ansible/ansible-examples>`_
        Many examples of full-stack deployments
@@ -356,5 +366,3 @@ In this example Ansible will start the software upgrade on the front ends only i
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

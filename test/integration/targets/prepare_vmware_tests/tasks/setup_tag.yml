@@ -1,0 +1,27 @@
+- name: Get Category facts
+  vmware_category_info:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: False
+  register: cat_info
+
+- name: Get Category id for {{ cluster_category }}
+  set_fact:
+    cluster_category_id: "{{ item.category_id }}"
+  with_items:
+    - "{{ cat_info.tag_category_info | json_query(query) }}"
+  vars:
+    query: "[?category_name=='{{ cluster_category }}']"
+
+- name: Create a tag for cluster
+  vmware_tag:
+    hostname: '{{ vcenter_hostname }}'
+    username: '{{ vcenter_username }}'
+    password: '{{ vcenter_password }}'
+    validate_certs: False
+    category_id: '{{ cluster_category_id }}'
+    tag_name: '{{ cluster_tag }}'
+    tag_description: '{{ cluster_tag }} Description'
+    state: present
+  when: cluster_category_id is defined

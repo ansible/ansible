@@ -42,10 +42,11 @@ from ansible.module_utils.six.moves import queue as Queue
 from ansible.module_utils.six import iteritems, itervalues, string_types
 from ansible.module_utils._text import to_text
 from ansible.module_utils.connection import Connection, ConnectionError
+from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task_include import TaskInclude
-from ansible.plugins.loader import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
+from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.vars import combine_vars
@@ -55,26 +56,23 @@ display = Display()
 
 __all__ = ['StrategyBase']
 
+# This list can be an exact match, or start of string bound
+# does not accept regex
+ALWAYS_DELEGATE_FACT_PREFIXES = frozenset((
+    'discovered_interpreter_',
+))
+
 
 class StrategySentinel:
     pass
 
 
-# TODO: this should probably be in the plugins/__init__.py, with
-#       a smarter mechanism to set all of the attributes based on
-#       the loaders created there
-class SharedPluginLoaderObj:
+def SharedPluginLoaderObj():
+    '''This only exists for backwards compat, do not use.
     '''
-    A simple object to make pass the various plugin loaders to
-    the forked processes over the queue easier
-    '''
-    def __init__(self):
-        self.action_loader = action_loader
-        self.connection_loader = connection_loader
-        self.filter_loader = filter_loader
-        self.test_loader = test_loader
-        self.lookup_loader = lookup_loader
-        self.module_loader = module_loader
+    display.deprecated('SharedPluginLoaderObj is deprecated, please directly use ansible.plugins.loader',
+                       version='2.11')
+    return plugin_loader
 
 
 _sentinel = StrategySentinel()
@@ -88,7 +86,13 @@ def results_thread_main(strategy):
                 break
             else:
                 strategy._results_lock.acquire()
-                strategy._results.append(result)
+                # only handlers have the listen attr, so this must be a handler
+                # we split up the results into two queues here to make sure
+                # handler and regular result processing don't cross wires
+                if 'listen' in result._task_fields:
+                    strategy._handler_results.append(result)
+                else:
+                    strategy._results.append(result)
                 strategy._results_lock.release()
         except (IOError, EOFError):
             break
@@ -99,7 +103,7 @@ def results_thread_main(strategy):
 def debug_closure(func):
     """Closure to wrap ``StrategyBase._process_pending_results`` and invoke the task debugger"""
     @functools.wraps(func)
-    def inner(self, iterator, one_pass=False, max_passes=None):
+    def inner(self, iterator, one_pass=False, max_passes=None, do_handlers=False):
         status_to_stats_map = (
             ('is_failed', 'failures'),
             ('is_unreachable', 'dark'),
@@ -110,7 +114,7 @@ def debug_closure(func):
         # We don't know the host yet, copy the previous states, for lookup after we process new results
         prev_host_states = iterator._host_states.copy()
 
-        results = func(self, iterator, one_pass=one_pass, max_passes=max_passes)
+        results = func(self, iterator, one_pass=one_pass, max_passes=max_passes, do_handlers=do_handlers)
         _processed_results = []
 
         for result in results:
@@ -164,16 +168,20 @@ class StrategyBase:
     code useful to all strategies like running handlers, cleanup actions, etc.
     '''
 
+    # by default, strategies should support throttling but we allow individual
+    # strategies to disable this and either forego supporting it or managing
+    # the throttling internally (as `free` does)
+    ALLOW_BASE_THROTTLING = True
+
     def __init__(self, tqm):
         self._tqm = tqm
         self._inventory = tqm.get_inventory()
-        self._workers = tqm.get_workers()
+        self._workers = tqm._workers
         self._variable_manager = tqm.get_variable_manager()
         self._loader = tqm.get_loader()
         self._final_q = tqm._final_q
         self._step = context.CLIARGS.get('step', False)
         self._diff = context.CLIARGS.get('diff', False)
-        self.flush_cache = context.CLIARGS.get('flush_cache', False)
 
         # the task cache is a dictionary of tuples of (host.name, task._uuid)
         # used to find the original task object of in-flight tasks and to store
@@ -185,6 +193,7 @@ class StrategyBase:
 
         # internal counters
         self._pending_results = 0
+        self._pending_handler_results = 0
         self._cur_worker = 0
 
         # this dictionary is used to keep track of hosts that have
@@ -196,6 +205,7 @@ class StrategyBase:
         self._flushed_hosts = dict()
 
         self._results = deque()
+        self._handler_results = deque()
         self._results_lock = threading.Condition(threading.Lock())
 
         # create the result processing thread for reading results in the background
@@ -207,7 +217,28 @@ class StrategyBase:
         # play completion
         self._active_connections = dict()
 
+        # Caches for get_host calls, to avoid calling excessively
+        # These values should be set at the top of the ``run`` method of each
+        # strategy plugin. Use ``_set_hosts_cache`` to set these values
+        self._hosts_cache = []
+        self._hosts_cache_all = []
+
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
+
+    def _set_hosts_cache(self, play, refresh=True):
+        """Responsible for setting _hosts_cache and _hosts_cache_all
+
+        See comment in ``__init__`` for the purpose of these caches
+        """
+        if not refresh and all((self._hosts_cache, self._hosts_cache_all)):
+            return
+
+        if Templar(None).is_template(play.hosts):
+            _pattern = 'all'
+        else:
+            _pattern = play.hosts or 'all'
+        self._hosts_cache_all = [h.name for h in self._inventory.get_hosts(pattern=_pattern, ignore_restrictions=True)]
+        self._hosts_cache = [h.name for h in self._inventory.get_hosts(play.hosts, order=play.order)]
 
     def cleanup(self):
         # close active persistent connections
@@ -227,8 +258,12 @@ class StrategyBase:
         # This should be safe, as everything should be ITERATING_COMPLETE by
         # this point, though the strategy may not advance the hosts itself.
 
-        inv_hosts = self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order)
-        [iterator.get_next_task_for_host(host) for host in inv_hosts if host.name not in self._tqm._unreachable_hosts]
+        for host in self._hosts_cache:
+            if host not in self._tqm._unreachable_hosts:
+                try:
+                    iterator.get_next_task_for_host(self._inventory.hosts[host])
+                except KeyError:
+                    iterator.get_next_task_for_host(self._inventory.get_host(host))
 
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
@@ -258,19 +293,21 @@ class StrategyBase:
             return self._tqm.RUN_OK
 
     def get_hosts_remaining(self, play):
-        return [host for host in self._inventory.get_hosts(play.hosts)
-                if host.name not in self._tqm._failed_hosts and host.name not in self._tqm._unreachable_hosts]
+        self._set_hosts_cache(play, refresh=False)
+        ignore = set(self._tqm._failed_hosts).union(self._tqm._unreachable_hosts)
+        return [host for host in self._hosts_cache if host not in ignore]
 
     def get_failed_hosts(self, play):
-        return [host for host in self._inventory.get_hosts(play.hosts) if host.name in self._tqm._failed_hosts]
+        self._set_hosts_cache(play, refresh=False)
+        return [host for host in self._hosts_cache if host in self._tqm._failed_hosts]
 
     def add_tqm_variables(self, vars, play):
         '''
         Base class method to add extra variables/information to the list of task
         vars sent through the executor engine regarding the task queue manager state.
         '''
-        vars['ansible_current_hosts'] = [h.name for h in self.get_hosts_remaining(play)]
-        vars['ansible_failed_hosts'] = [h.name for h in self.get_failed_hosts(play)]
+        vars['ansible_current_hosts'] = self.get_hosts_remaining(play)
+        vars['ansible_failed_hosts'] = self.get_failed_hosts(play)
 
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
@@ -292,16 +329,36 @@ class StrategyBase:
             display.debug('Creating lock for %s' % task.action)
             action_write_locks.action_write_locks[task.action] = Lock()
 
+        # create a templar and template things we need later for the queuing process
+        templar = Templar(loader=self._loader, variables=task_vars)
+
+        try:
+            throttle = int(templar.template(task.throttle))
+        except Exception as e:
+            raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
+
         # and then queue the new task
         try:
-
-            # create a dummy object with plugin loaders set as an easier
-            # way to share them with the forked processes
-            shared_loader_obj = SharedPluginLoaderObj()
+            # Determine the "rewind point" of the worker list. This means we start
+            # iterating over the list of workers until the end of the list is found.
+            # Normally, that is simply the length of the workers list (as determined
+            # by the forks or serial setting), however a task/block/play may "throttle"
+            # that limit down.
+            rewind_point = len(self._workers)
+            if throttle > 0 and self.ALLOW_BASE_THROTTLING:
+                if task.run_once:
+                    display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
+                else:
+                    if throttle <= rewind_point:
+                        display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
+                        rewind_point = throttle
 
             queued = False
             starting_worker = self._cur_worker
             while True:
+                if self._cur_worker >= rewind_point:
+                    self._cur_worker = 0
+
                 worker_prc = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     self._queued_task_cache[(host.name, task._uuid)] = {
@@ -311,21 +368,27 @@ class StrategyBase:
                         'play_context': play_context
                     }
 
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
+                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
                     self._workers[self._cur_worker] = worker_prc
                     self._tqm.send_callback('v2_runner_on_start', host, task)
                     worker_prc.start()
                     display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
                     queued = True
+
                 self._cur_worker += 1
-                if self._cur_worker >= len(self._workers):
+
+                if self._cur_worker >= rewind_point:
                     self._cur_worker = 0
+
                 if queued:
                     break
                 elif self._cur_worker == starting_worker:
                     time.sleep(0.0001)
 
-            self._pending_results += 1
+            if isinstance(task, Handler):
+                self._pending_handler_results += 1
+            else:
+                self._pending_results += 1
         except (EOFError, IOError, AssertionError) as e:
             # most likely an abort
             display.debug("got an error while queuing: %s" % e)
@@ -334,30 +397,52 @@ class StrategyBase:
 
     def get_task_hosts(self, iterator, task_host, task):
         if task.run_once:
-            host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+            host_list = [host for host in self._hosts_cache if host not in self._tqm._unreachable_hosts]
         else:
-            host_list = [task_host]
+            host_list = [task_host.name]
         return host_list
 
     def get_delegated_hosts(self, result, task):
         host_name = result.get('_ansible_delegated_vars', {}).get('ansible_delegated_host', None)
-        if host_name is not None:
-            actual_host = self._inventory.get_host(host_name)
-            if actual_host is None:
-                actual_host = Host(name=host_name)
-        else:
-            actual_host = Host(name=task.delegate_to)
+        return [host_name or task.delegate_to]
 
-        return [actual_host]
+    def _set_always_delegated_facts(self, result, task):
+        """Sets host facts for ``delegate_to`` hosts for facts that should
+        always be delegated
+
+        This operation mutates ``result`` to remove the always delegated facts
+
+        See ``ALWAYS_DELEGATE_FACT_PREFIXES``
+        """
+        if task.delegate_to is None:
+            return
+
+        facts = result['ansible_facts']
+        always_keys = set()
+        _add = always_keys.add
+        for fact_key in facts:
+            for always_key in ALWAYS_DELEGATE_FACT_PREFIXES:
+                if fact_key.startswith(always_key):
+                    _add(fact_key)
+        if always_keys:
+            _pop = facts.pop
+            always_facts = {
+                'ansible_facts': dict((k, _pop(k)) for k in list(facts) if k in always_keys)
+            }
+            host_list = self.get_delegated_hosts(result, task)
+            _set_host_facts = self._variable_manager.set_host_facts
+            for target_host in host_list:
+                _set_host_facts(target_host, always_facts)
 
     @debug_closure
-    def _process_pending_results(self, iterator, one_pass=False, max_passes=None):
+    def _process_pending_results(self, iterator, one_pass=False, max_passes=None, do_handlers=False):
         '''
         Reads results off the final queue and takes appropriate action
         based on the result (executing callbacks, updating state, etc.).
         '''
 
         ret_results = []
+        handler_templar = Templar(self._loader)
 
         def get_original_host(host_name):
             # FIXME: this should not need x2 _inventory
@@ -373,9 +458,12 @@ class StrategyBase:
                 for handler_task in handler_block.block:
                     if handler_task.name:
                         if not handler_task.cached_name:
-                            handler_vars = self._variable_manager.get_vars(play=iterator._play, task=handler_task)
-                            templar = Templar(loader=self._loader, variables=handler_vars)
-                            handler_task.name = templar.template(handler_task.name)
+                            if handler_templar.is_template(handler_task.name):
+                                handler_templar.available_variables = self._variable_manager.get_vars(play=iterator._play,
+                                                                                                      task=handler_task,
+                                                                                                      _hosts=self._hosts_cache,
+                                                                                                      _hosts_all=self._hosts_cache_all)
+                                handler_task.name = handler_templar.template(handler_task.name)
                             handler_task.cached_name = True
 
                         try:
@@ -383,11 +471,14 @@ class StrategyBase:
                             # include the role name (if the handler is from a role). If that
                             # is not found, we resort to the simple name field, which doesn't
                             # have anything extra added to it.
-                            if handler_task.name == handler_name:
+                            candidates = (
+                                handler_task.name,
+                                handler_task.get_name(include_role_fqcn=False),
+                                handler_task.get_name(include_role_fqcn=True),
+                            )
+
+                            if handler_name in candidates:
                                 return handler_task
-                            else:
-                                if handler_task.get_name() == handler_name:
-                                    return handler_task
                         except (UndefinedError, AnsibleUndefinedVariable):
                             # We skip this handler due to the fact that it may be using
                             # a variable in the name that was conditionally included via
@@ -400,7 +491,10 @@ class StrategyBase:
         while True:
             try:
                 self._results_lock.acquire()
-                task_result = self._results.popleft()
+                if do_handlers:
+                    task_result = self._handler_results.popleft()
+                else:
+                    task_result = self._results.popleft()
             except IndexError:
                 break
             finally:
@@ -433,16 +527,6 @@ class StrategyBase:
                     self._tqm.send_callback('v2_runner_item_on_ok', task_result)
                 continue
 
-            if original_task.register:
-                host_list = self.get_task_hosts(iterator, original_host, original_task)
-
-                clean_copy = strip_internal_keys(module_response_deepcopy(task_result._result))
-                if 'invocation' in clean_copy:
-                    del clean_copy['invocation']
-
-                for target_host in host_list:
-                    self._variable_manager.set_nonpersistent_facts(target_host, {original_task.register: clean_copy})
-
             # all host status messages contain 2 entries: (msg, task_result)
             role_ran = False
             if task_result.is_failed():
@@ -468,10 +552,15 @@ class StrategyBase:
                     if iterator.is_failed(original_host) and state and state.run_state == iterator.ITERATING_COMPLETE:
                         self._tqm._failed_hosts[original_host.name] = True
 
-                    if state and iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE:
+                    # Use of get_active_state() here helps detect proper state if, say, we are in a rescue
+                    # block from an included file (include_tasks). In a non-included rescue case, a rescue
+                    # that starts with a new 'block' will have an active state of ITERATING_TASKS, so we also
+                    # check the current state block tree to see if any blocks are rescuing.
+                    if state and (iterator.get_active_state(state).run_state == iterator.ITERATING_RESCUE or
+                                  iterator.is_any_block_rescuing(state)):
                         self._tqm._stats.increment('rescued', original_host.name)
                         self._variable_manager.set_nonpersistent_facts(
-                            original_host,
+                            original_host.name,
                             dict(
                                 ansible_failed_task=original_task.serialize(),
                                 ansible_failed_result=task_result._result,
@@ -530,6 +619,12 @@ class StrategyBase:
                                 for listening_handler_block in iterator._play.handlers:
                                     for listening_handler in listening_handler_block.block:
                                         listeners = getattr(listening_handler, 'listen', []) or []
+                                        if not listeners:
+                                            continue
+
+                                        listeners = listening_handler.get_validated_value(
+                                            'listen', listening_handler._valid_attrs['listen'], listeners, handler_templar
+                                        )
                                         if handler_name not in listeners:
                                             continue
                                         else:
@@ -557,11 +652,13 @@ class StrategyBase:
                         self._add_group(original_host, result_item)
 
                     if 'ansible_facts' in result_item:
-
                         # if delegated fact and we are delegating facts, we need to change target host for them
                         if original_task.delegate_to is not None and original_task.delegate_facts:
                             host_list = self.get_delegated_hosts(result_item, original_task)
                         else:
+                            # Set facts that should always be on the delegated hosts
+                            self._set_always_delegated_facts(result_item, original_task)
+
                             host_list = self.get_task_hosts(iterator, original_host, original_task)
 
                         if original_task.action == 'include_vars':
@@ -611,7 +708,22 @@ class StrategyBase:
                 # finally, send the ok for this task
                 self._tqm.send_callback('v2_runner_on_ok', task_result)
 
-            self._pending_results -= 1
+            if do_handlers:
+                self._pending_handler_results -= 1
+            else:
+                self._pending_results -= 1
+
+            # register final results
+            if original_task.register:
+                host_list = self.get_task_hosts(iterator, original_host, original_task)
+
+                clean_copy = strip_internal_keys(module_response_deepcopy(task_result._result))
+                if 'invocation' in clean_copy:
+                    del clean_copy['invocation']
+
+                for target_host in host_list:
+                    self._variable_manager.set_nonpersistent_facts(target_host, {original_task.register: clean_copy})
+
             if original_host.name in self._blocked_hosts:
                 del self._blocked_hosts[original_host.name]
 
@@ -620,7 +732,7 @@ class StrategyBase:
             if original_task._role is not None and role_ran:  # TODO:  and original_task.action != 'include_role':?
                 # lookup the role in the ROLE_CACHE to make sure we're dealing
                 # with the correct object and mark it as executed
-                for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role._role_name]):
+                for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[original_task._role.get_name()]):
                     if role_obj._uuid == original_task._role._uuid:
                         role_obj._had_task_run[original_host.name] = True
 
@@ -643,19 +755,19 @@ class StrategyBase:
         handler_results = 0
 
         display.debug("waiting for handler results...")
-        while (self._pending_results > 0 and
+        while (self._pending_handler_results > 0 and
                handler_results < len(notified_hosts) and
                not self._tqm._terminated):
 
             if self._tqm.has_dead_workers():
                 raise AnsibleError("A worker was found in a dead state")
 
-            results = self._process_pending_results(iterator)
+            results = self._process_pending_results(iterator, do_handlers=True)
             ret_results.extend(results)
             handler_results += len([
                 r._host for r in results if r._host in notified_hosts and
                 r.task_name == handler.name])
-            if self._pending_results > 0:
+            if self._pending_handler_results > 0:
                 time.sleep(C.DEFAULT_INTERNAL_POLL_INTERVAL)
 
         display.debug("no more pending handlers, returning what we have")
@@ -696,6 +808,7 @@ class StrategyBase:
             # Check if host in inventory, add if not
             if host_name not in self._inventory.hosts:
                 self._inventory.add_host(host_name, 'all')
+                self._hosts_cache_all.append(host_name)
             new_host = self._inventory.hosts.get(host_name)
 
             # Set/update the vars for this host
@@ -704,7 +817,7 @@ class StrategyBase:
             new_groups = host_info.get('groups', [])
             for group_name in new_groups:
                 if group_name not in self._inventory.groups:
-                    self._inventory.add_group(group_name)
+                    group_name = self._inventory.add_group(group_name)
                 new_group = self._inventory.groups[group_name]
                 new_group.add_host(self._inventory.hosts[host_name])
 
@@ -731,28 +844,32 @@ class StrategyBase:
         group_name = result_item.get('add_group')
         parent_group_names = result_item.get('parent_groups', [])
 
-        for name in [group_name] + parent_group_names:
+        if group_name not in self._inventory.groups:
+            group_name = self._inventory.add_group(group_name)
+
+        for name in parent_group_names:
             if name not in self._inventory.groups:
                 # create the new group and add it to inventory
                 self._inventory.add_group(name)
                 changed = True
+
         group = self._inventory.groups[group_name]
         for parent_group_name in parent_group_names:
             parent_group = self._inventory.groups[parent_group_name]
-            parent_group.add_child_group(group)
+            new = parent_group.add_child_group(group)
+            if new and not changed:
+                changed = True
 
-        if real_host.name not in group.get_hosts():
-            group.add_host(real_host)
-            changed = True
+        if real_host not in group.get_hosts():
+            changed = group.add_host(real_host)
 
-        if group_name not in host.get_groups():
-            real_host.add_group(group)
-            changed = True
+        if group not in real_host.get_groups():
+            changed = real_host.add_group(group)
 
         if changed:
             self._inventory.reconcile_inventory()
 
-        return changed
+        result_item['changed'] = changed
 
     def _copy_included_file(self, included_file):
         '''
@@ -762,7 +879,7 @@ class StrategyBase:
         ti_copy._parent = included_file._task._parent
 
         temp_vars = ti_copy.vars.copy()
-        temp_vars.update(included_file._args)
+        temp_vars.update(included_file._vars)
 
         ti_copy.vars = temp_vars
 
@@ -814,7 +931,7 @@ class StrategyBase:
 
         except AnsibleError as e:
             if isinstance(e, AnsibleFileNotFound):
-                reason = "Could not find or access '%s' on the Ansible Controller." % to_text(included_file._filename)
+                reason = "Could not find or access '%s' on the Ansible Controller." % to_text(e.file_name)
             else:
                 reason = to_text(e)
 
@@ -871,7 +988,7 @@ class StrategyBase:
 
         bypass_host_loop = False
         try:
-            action = action_loader.get(handler.action, class_only=True)
+            action = plugin_loader.action_loader.get(handler.action, class_only=True)
             if getattr(action, 'BYPASS_HOST_LOOP', False):
                 bypass_host_loop = True
         except KeyError:
@@ -882,26 +999,28 @@ class StrategyBase:
         host_results = []
         for host in notified_hosts:
             if not iterator.is_failed(host) or iterator._play.force_handlers:
-                task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler)
+                task_vars = self._variable_manager.get_vars(play=iterator._play, host=host, task=handler,
+                                                            _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
                 self.add_tqm_variables(task_vars, play=iterator._play)
+                templar = Templar(loader=self._loader, variables=task_vars)
+                if not handler.cached_name:
+                    handler.name = templar.template(handler.name)
+                    handler.cached_name = True
+
                 self._queue_task(host, handler, task_vars, play_context)
 
-                templar = Templar(loader=self._loader, variables=task_vars)
                 if templar.template(handler.run_once) or bypass_host_loop:
                     break
 
         # collect the results from the handler run
         host_results = self._wait_on_handler_results(iterator, handler, notified_hosts)
 
-        try:
-            included_files = IncludedFile.process_include_results(
-                host_results,
-                iterator=iterator,
-                loader=self._loader,
-                variable_manager=self._variable_manager
-            )
-        except AnsibleError:
-            return False
+        included_files = IncludedFile.process_include_results(
+            host_results,
+            iterator=iterator,
+            loader=self._loader,
+            variable_manager=self._variable_manager
+        )
 
         result = True
         if len(included_files) > 0:
@@ -981,12 +1100,14 @@ class StrategyBase:
         meta_action = task.args.get('_raw_params')
 
         def _evaluate_conditional(h):
-            all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task)
+            all_vars = self._variable_manager.get_vars(play=iterator._play, host=h, task=task,
+                                                       _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
             templar = Templar(loader=self._loader, variables=all_vars)
             return task.evaluate_conditional(templar, all_vars)
 
         skipped = False
         msg = ''
+        # The top-level conditions should only compare meta_action
         if meta_action == 'noop':
             # FIXME: issue a callback for the noop here?
             if task.when:
@@ -999,10 +1120,11 @@ class StrategyBase:
             self.run_handlers(iterator, play_context)
             self._flushed_hosts[target_host] = False
             msg = "ran handlers"
-        elif meta_action == 'refresh_inventory' or self.flush_cache:
+        elif meta_action == 'refresh_inventory':
             if task.when:
                 self._cond_not_supported_warn(meta_action)
             self._inventory.refresh_inventory()
+            self._set_hosts_cache(iterator._play)
             msg = "inventory successfully refreshed"
         elif meta_action == 'clear_facts':
             if _evaluate_conditional(target_host):
@@ -1030,12 +1152,14 @@ class StrategyBase:
         elif meta_action == 'end_host':
             if _evaluate_conditional(target_host):
                 iterator._host_states[target_host.name].run_state = iterator.ITERATING_COMPLETE
+                iterator._play._removed_hosts.append(target_host.name)
                 msg = "ending play for %s" % target_host.name
             else:
                 skipped = True
                 msg = "end_host conditional evaluated to false, continuing execution for %s" % target_host.name
         elif meta_action == 'reset_connection':
-            all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task)
+            all_vars = self._variable_manager.get_vars(play=iterator._play, host=target_host, task=task,
+                                                       _hosts=self._hosts_cache, _hosts_all=self._hosts_cache_all)
             templar = Templar(loader=self._loader, variables=all_vars)
 
             # apply the given task's information to the connection info,
@@ -1063,7 +1187,7 @@ class StrategyBase:
                 connection = Connection(self._active_connections[target_host])
                 del self._active_connections[target_host]
             else:
-                connection = connection_loader.get(play_context.connection, play_context, os.devnull)
+                connection = plugin_loader.connection_loader.get(play_context.connection, play_context, os.devnull)
                 play_context.set_attributes_from_plugin(connection)
 
             if connection:
@@ -1092,9 +1216,12 @@ class StrategyBase:
         ''' returns list of available hosts for this iterator by filtering out unreachables '''
 
         hosts_left = []
-        for host in self._inventory.get_hosts(iterator._play.hosts, order=iterator._play.order):
-            if host.name not in self._tqm._unreachable_hosts:
-                hosts_left.append(host)
+        for host in self._hosts_cache:
+            if host not in self._tqm._unreachable_hosts:
+                try:
+                    hosts_left.append(self._inventory.hosts[host])
+                except KeyError:
+                    hosts_left.append(self._inventory.get_host(host))
         return hosts_left
 
     def update_active_connections(self, results):

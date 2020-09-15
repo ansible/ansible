@@ -10,13 +10,13 @@ import stat
 
 from ansible import context
 from ansible.cli import CLI
-from ansible.cli.arguments import optparse_helpers as opt_help
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.cli.arguments import option_helpers as opt_help
+from ansible.errors import AnsibleError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.module_utils._text import to_bytes
 from ansible.playbook.block import Block
 from ansible.utils.display import Display
-from ansible.utils.collection_loader import set_collection_playbook_paths
+from ansible.utils.collection_loader import AnsibleCollectionLoader, get_collection_name_from_path, set_collection_playbook_paths
 from ansible.plugins.loader import add_all_plugin_dirs
 
 
@@ -46,25 +46,23 @@ class PlaybookCLI(CLI):
         opt_help.add_module_options(self.parser)
 
         # ansible playbook specific opts
-        self.parser.add_option('--list-tasks', dest='listtasks', action='store_true',
-                               help="list all tasks that would be executed")
-        self.parser.add_option('--list-tags', dest='listtags', action='store_true',
-                               help="list all available tags")
-        self.parser.add_option('--step', dest='step', action='store_true',
-                               help="one-step-at-a-time: confirm each task before running")
-        self.parser.add_option('--start-at-task', dest='start_at_task',
-                               help="start the playbook at the task matching this name")
+        self.parser.add_argument('--list-tasks', dest='listtasks', action='store_true',
+                                 help="list all tasks that would be executed")
+        self.parser.add_argument('--list-tags', dest='listtags', action='store_true',
+                                 help="list all available tags")
+        self.parser.add_argument('--step', dest='step', action='store_true',
+                                 help="one-step-at-a-time: confirm each task before running")
+        self.parser.add_argument('--start-at-task', dest='start_at_task',
+                                 help="start the playbook at the task matching this name")
+        self.parser.add_argument('args', help='Playbook(s)', metavar='playbook', nargs='+')
 
-    def post_process_args(self, options, args):
-        options, args = super(PlaybookCLI, self).post_process_args(options, args)
-
-        if len(args) == 0:
-            raise AnsibleOptionsError("You must specify a playbook file to run")
+    def post_process_args(self, options):
+        options = super(PlaybookCLI, self).post_process_args(options)
 
         display.verbosity = options.verbosity
-        self.validate_conflicts(options, runas_opts=True, vault_opts=True, fork_opts=True)
+        self.validate_conflicts(options, runas_opts=True, fork_opts=True)
 
-        return options, args
+        return options
 
     def run(self):
 
@@ -93,6 +91,12 @@ class PlaybookCLI(CLI):
             b_playbook_dirs.append(b_playbook_dir)
 
         set_collection_playbook_paths(b_playbook_dirs)
+
+        playbook_collection = get_collection_name_from_path(b_playbook_dirs[0])
+
+        if playbook_collection:
+            display.warning("running playbook inside collection {0}".format(playbook_collection))
+            AnsibleCollectionLoader().set_default_collection(playbook_collection)
 
         # don't deal with privilege escalation or passwords when we don't need to
         if not (context.CLIARGS['listhosts'] or context.CLIARGS['listtasks'] or

@@ -25,7 +25,7 @@ from ansible.plugins.action.normal import ActionModule as _ActionModule
 class ActionModule(_ActionModule):
 
     def run(self, tmp=None, task_vars=None):
-        if self._play_context.connection != 'network_cli':
+        if self._play_context.connection.split('.')[-1] != 'network_cli':
             return {'failed': True, 'msg': 'Connection type %s is not valid for this module' % self._play_context.connection}
 
         return super(ActionModule, self).run(task_vars=task_vars)

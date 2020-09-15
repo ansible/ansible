@@ -35,14 +35,6 @@
     when:
       - force_apt_get
 
-  - name: check that warning is given when aptitude not found and force_apt_get not set
-    assert:
-      that:
-        - "'Could not find aptitude. Using apt-get instead' in upgrade_result.warnings[0]"
-    when:
-      - not aptitude_present
-      - not force_apt_get
-
   - name: check that old version upgraded correctly
     assert:
       that:

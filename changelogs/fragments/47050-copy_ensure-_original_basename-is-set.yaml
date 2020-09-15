@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - copy - Fixed copy module not working in case that remote_src is enabled and dest ends in a / (https://github.com/ansible/ansible/pull/47238)

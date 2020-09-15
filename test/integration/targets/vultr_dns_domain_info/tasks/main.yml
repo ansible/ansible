@@ -1,0 +1,32 @@
+# Copyright (c) 2018, Yanis Guenane <yanis+ansible@guenane.org>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+---
+- name: Create the record
+  vultr_dns_domain:
+    name: '{{ dns_domain_name }}'
+    server_ip: '{{ dns_domain_server_ip }}'
+
+- name: test gather vultr dns domain info in check mode
+  vultr_dns_domain_info:
+  check_mode: yes
+  register: result
+
+- name: verify test gather vultr dns domain info in check mode
+  assert:
+    that:
+    - result.vultr_dns_domain_info|selectattr('domain','equalto','{{ dns_domain_name }}') | list | count == 1
+
+- name: test gather vultr dns domain info
+  vultr_dns_domain_info:
+  register: result
+
+- name: verify test gather vultr dns domain info
+  assert:
+    that:
+    - result.vultr_dns_domain_info|selectattr('domain','equalto','{{ dns_domain_name }}') | list | count == 1
+
+- name: Delete the record
+  vultr_dns_domain:
+    name: '{{ dns_domain_name }}'
+    server_ip: '{{ dns_domain_server_ip }}'
+    state: absent

@@ -12,7 +12,7 @@ $ErrorActionPreference = "Stop"
 $osversion = [Environment]::OSVersion
 $lowest_version = 10
 if ($osversion.Version.Major -lt $lowest_version ) {
-   Fail-Json -obj $result -message "Sorry, this version of windows, $osversion, does not support Toast notifications.  Toast notifications are available from version $lowest_version" 
+   Fail-Json -obj $result -message "Sorry, this version of windows, $osversion, does not support Toast notifications.  Toast notifications are available from version $lowest_version"
 }
 
 $stopwatch = [system.diagnostics.stopwatch]::startNew()
@@ -43,27 +43,27 @@ $result = @{
 # If no logged in users, there is no notifications service,
 # and no-one to read the message, so exit but do not fail
 # if there are no logged in users to notify.
- 
+
 if ((Get-Process -Name explorer -ErrorAction SilentlyContinue).Count -gt 0){
 
   [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null
   $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText01)
-  
+
   #Convert to .NET type for XML manipulation
   $toastXml = [xml] $template.GetXml()
   $toastXml.GetElementsByTagName("text").AppendChild($toastXml.CreateTextNode($title)) > $null
   # TODO add subtitle
-  
+
   #Convert back to WinRT type
   $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
   $xml.LoadXml($toastXml.OuterXml)
-  
+
   $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
   $toast.Tag = $tag
   $toast.Group = $group
   $toast.ExpirationTime = $expire_at
   $toast.SuppressPopup = -not $popup
-  
+
   try {
      $notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($msg)
      if (-not $check_mode) {
@@ -78,7 +78,7 @@ if ((Get-Process -Name explorer -ErrorAction SilentlyContinue).Count -gt 0){
   }
 } else {
    $result.toast_sent = $false
-   $result.no_toast_sent_reason = 'No logged in users to notifiy'
+   $result.no_toast_sent_reason = 'No logged in users to notify'
 }
 
 $endsend_at = Get-Date | Out-String
@@ -86,5 +86,5 @@ $stopwatch.Stop()
 
 $result.time_taken = $stopwatch.Elapsed.TotalSeconds
 $result.sent_localtime = $endsend_at.Trim()
-  
+
 Exit-Json -obj $result

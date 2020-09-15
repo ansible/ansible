@@ -1,0 +1,4 @@
+minor_changes:
+- vmware_cluster - Refactor into several modules (vmware_cluster, vmware_cluster_drs, vmware_cluster_ha and vmware_cluster_vsan)
+deprecated_features:
+- vmware_cluster - Deprecate DRS, HA and VSAN configuration in favour of new modules vmware_cluster_drs, vmware_cluster_ha and vmware_cluster_vsan.

@@ -27,7 +27,8 @@ author:
 - Joseph Andreatta (@vmwjoseph)
 notes:
     - Tested on ESXi 6.5, vSphere 6.7
-    - Be sure that the ESXi user used for login, has the appropriate rights to administer permissions
+    - The ESXi login user must have the appropriate rights to administer permissions.
+    - Permissions for a distributed switch must be defined and managed on either the datacenter or a folder containing the switch.
 requirements:
     - "python >= 2.7"
     - PyVmomi
@@ -36,17 +37,21 @@ options:
     description:
     - The role to be assigned permission.
     required: True
+    type: str
   principal:
     description:
     - The user to be assigned permission.
     - Required if C(group) is not specified.
+    type: str
   group:
     description:
     - The group to be assigned permission.
     - Required if C(principal) is not specified.
+    type: str
   object_name:
     description:
     - The object name to assigned permission.
+    type: str
     required: True
   object_type:
     description:
@@ -55,6 +60,7 @@ options:
     choices: ['Folder', 'VirtualMachine', 'Datacenter', 'ResourcePool',
               'Datastore', 'Network', 'HostSystem', 'ComputeResource',
               'ClusterComputeResource', 'DistributedVirtualSwitch']
+    type: str
   recursive:
     description:
     - Should the permissions be recursively applied.
@@ -67,6 +73,7 @@ options:
     - When C(state=absent), the permission is removed if it exists.
     choices: ['present', 'absent']
     default: present
+    type: str
 extends_documentation_fragment: vmware.documentation
 '''
 
@@ -220,6 +227,12 @@ class VMwareObjectRolePermission(PyVmomi):
                 msg="Specified object %s of type %s was not found."
                 % (self.params['object_name'], self.params['object_type'])
             )
+        if self.params['object_type'] == 'DistributedVirtualSwitch':
+            msg = "You are applying permissions to a Distributed vSwitch. " \
+                  "This will probably fail, since Distributed vSwitches inherits permissions " \
+                  "from the datacenter or a folder level. " \
+                  "Define permissions on the datacenter or the folder containing the switch."
+            self.module.warn(msg)
 
 
 def main():

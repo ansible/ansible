@@ -1,0 +1,2 @@
+bugfixes:
+- vmware_vcenter_statistics - Fix some corner cases like increasing some interval and decreasing another at the same time.

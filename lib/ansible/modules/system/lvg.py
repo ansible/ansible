@@ -35,10 +35,12 @@ options:
     type: list
   pesize:
     description:
-    - The size of the physical extent. pesize must be a power of 2, or multiple of 128KiB.
+    - "The size of the physical extent. I(pesize) must be a power of 2 of at least 1 sector
+       (where the sector size is the largest sector size of the PVs currently used in the VG),
+       or at least 128KiB."
     - Since Ansible 2.6, pesize can be optionally suffixed by a UNIT (k/K/m/M/g/G), default unit is megabyte.
     type: str
-    default: 4
+    default: "4"
   pv_options:
     description:
     - Additional options to pass to C(pvcreate) when creating the volume group.
@@ -143,7 +145,7 @@ def main():
         argument_spec=dict(
             vg=dict(type='str', required=True),
             pvs=dict(type='list'),
-            pesize=dict(type='str', default=4),
+            pesize=dict(type='str', default='4'),
             pv_options=dict(type='str', default=''),
             vg_options=dict(type='str', default=''),
             state=dict(type='str', default='present', choices=['absent', 'present']),

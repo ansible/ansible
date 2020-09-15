@@ -28,6 +28,10 @@ short_description: Manages configuration of an OSPF interface instanceon HUAWEI 
 description:
     - Manages configuration of an OSPF interface instanceon HUAWEI CloudEngine switches.
 author: QijunPan (@QijunPan)
+notes:
+    - This module requires the netconf system service be enabled on the remote device being managed.
+    - Recommended connection is C(netconf).
+    - This module also works with C(local) connections for legacy playbooks.
 options:
     interface:
         description:
@@ -424,7 +428,7 @@ class InterfaceOSPF(object):
 
         # get process base info
         root = ElementTree.fromstring(xml_str)
-        ospfsite = root.find("data/ospfv2/ospfv2comm/ospfSites/ospfSite")
+        ospfsite = root.find("ospfv2/ospfv2comm/ospfSites/ospfSite")
         if not ospfsite:
             self.module.fail_json(msg="Error: ospf process does not exist.")
 
@@ -435,7 +439,7 @@ class InterfaceOSPF(object):
         # get areas info
         ospf_info["areaId"] = ""
         areas = root.find(
-            "data/ospfv2/ospfv2comm/ospfSites/ospfSite/areas/area")
+            "ospfv2/ospfv2comm/ospfSites/ospfSite/areas/area")
         if areas:
             for area in areas:
                 if area.tag == "areaId":
@@ -445,7 +449,7 @@ class InterfaceOSPF(object):
         # get interface info
         ospf_info["interface"] = dict()
         intf = root.find(
-            "data/ospfv2/ospfv2comm/ospfSites/ospfSite/areas/area/interfaces/interface")
+            "ospfv2/ospfv2comm/ospfSites/ospfSite/areas/area/interfaces/interface")
         if intf:
             for attr in intf:
                 if attr.tag in ["ifName", "networkType",
@@ -474,7 +478,7 @@ class InterfaceOSPF(object):
 
         # interface view
         self.updates_cmd.append("interface %s" % self.interface)
-        self.updates_cmd.append("ospf enable process %s area %s" % (
+        self.updates_cmd.append("ospf enable %s area %s" % (
             self.process_id, self.get_area_ip()))
         if self.cost:
             xml_intf += CE_NC_XML_SET_COST % self.cost

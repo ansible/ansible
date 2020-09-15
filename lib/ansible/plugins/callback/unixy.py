@@ -21,15 +21,14 @@ DOCUMENTATION = '''
 '''
 
 from os.path import basename
-
 from ansible import constants as C
 from ansible import context
 from ansible.module_utils._text import to_text
-from ansible.plugins.callback import CallbackBase
 from ansible.utils.color import colorize, hostcolor
+from ansible.plugins.callback.default import CallbackModule as CallbackModule_default
 
 
-class CallbackModule(CallbackBase):
+class CallbackModule(CallbackModule_default):
 
     '''
     Design goals:
@@ -63,7 +62,7 @@ class CallbackModule(CallbackBase):
 
     def _preprocess_result(self, result):
         self.delegated_vars = result._result.get('_ansible_delegated_vars', None)
-        self._handle_exception(result._result)
+        self._handle_exception(result._result, use_stderr=self.display_failed_stderr)
         self._handle_warnings(result._result)
 
     def _process_result_output(self, result, msg):
@@ -109,20 +108,26 @@ class CallbackModule(CallbackBase):
         self._display.display(msg)
 
     def v2_runner_on_skipped(self, result, ignore_errors=False):
-        self._preprocess_result(result)
-        display_color = C.COLOR_SKIP
-        msg = "skipped"
+        if self.display_skipped_hosts:
+            self._preprocess_result(result)
+            display_color = C.COLOR_SKIP
+            msg = "skipped"
 
-        task_result = self._process_result_output(result, msg)
-        self._display.display("  " + task_result, display_color)
+            task_result = self._process_result_output(result, msg)
+            self._display.display("  " + task_result, display_color)
+        else:
+            return
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         self._preprocess_result(result)
         display_color = C.COLOR_ERROR
         msg = "failed"
+        item_value = self._get_item_label(result._result)
+        if item_value:
+            msg += " | item: %s" % (item_value,)
 
         task_result = self._process_result_output(result, msg)
-        self._display.display("  " + task_result, display_color)
+        self._display.display("  " + task_result, display_color, stderr=self.display_failed_stderr)
 
     def v2_runner_on_ok(self, result, msg="ok", display_color=C.COLOR_OK):
         self._preprocess_result(result)
@@ -130,10 +135,15 @@ class CallbackModule(CallbackBase):
         result_was_changed = ('changed' in result._result and result._result['changed'])
         if result_was_changed:
             msg = "done"
+            item_value = self._get_item_label(result._result)
+            if item_value:
+                msg += " | item: %s" % (item_value,)
             display_color = C.COLOR_CHANGED
-
-        task_result = self._process_result_output(result, msg)
-        self._display.display("  " + task_result, display_color)
+            task_result = self._process_result_output(result, msg)
+            self._display.display("  " + task_result, display_color)
+        elif self.display_ok_hosts:
+            task_result = self._process_result_output(result, msg)
+            self._display.display("  " + task_result, display_color)
 
     def v2_runner_item_on_skipped(self, result):
         self.v2_runner_on_skipped(result)
@@ -145,11 +155,13 @@ class CallbackModule(CallbackBase):
         self.v2_runner_on_ok(result)
 
     def v2_runner_on_unreachable(self, result):
+        self._preprocess_result(result)
+
         msg = "unreachable"
         display_color = C.COLOR_UNREACHABLE
         task_result = self._process_result_output(result, msg)
 
-        self._display.display("  " + task_result, display_color)
+        self._display.display("  " + task_result, display_color, stderr=self.display_failed_stderr)
 
     def v2_on_file_diff(self, result):
         if result._task.loop and 'results' in result._result:
@@ -192,6 +204,20 @@ class CallbackModule(CallbackBase):
                 colorize(u'ignored', t['ignored'], None)),
                 log_only=True
             )
+        if stats.custom and self.show_custom_stats:
+            self._display.banner("CUSTOM STATS: ")
+            # per host
+            # TODO: come up with 'pretty format'
+            for k in sorted(stats.custom.keys()):
+                if k == '_run':
+                    continue
+                self._display.display('\t%s: %s' % (k, self._dump_results(stats.custom[k], indent=1).replace('\n', '')))
+
+            # print per run custom stats
+            if '_run' in stats.custom:
+                self._display.display("", screen_only=True)
+                self._display.display('\tRUN: %s' % self._dump_results(stats.custom['_run'], indent=1).replace('\n', ''))
+            self._display.display("", screen_only=True)
 
     def v2_playbook_on_no_hosts_matched(self):
         self._display.display("  No hosts found!", color=C.COLOR_DEBUG)
@@ -216,6 +242,6 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_retry(self, result):
         msg = "  Retrying... (%d of %d)" % (result._result['attempts'], result._result['retries'])
-        if (self._display.verbosity > 2 or '_ansible_verbose_always' in result._result) and '_ansible_verbose_override' not in result._result:
+        if self._run_is_verbose(result):
             msg += "Result was: %s" % self._dump_results(result._result)
         self._display.display(msg, color=C.COLOR_DEBUG)

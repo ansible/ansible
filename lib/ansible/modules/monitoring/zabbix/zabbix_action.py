@@ -30,7 +30,7 @@ author:
     - Ruben Harutyunov (@K-DOT)
 
 requirements:
-    - zabbix-api
+    - "zabbix-api >= 0.5.4"
 
 options:
     name:
@@ -40,7 +40,8 @@ options:
     event_source:
         description:
             - Type of events that the action will handle.
-        required: true
+            - Required when C(state=present).
+        required: false
         choices: ['trigger', 'discovery', 'auto_registration', 'internal']
     state:
         description:
@@ -63,7 +64,8 @@ options:
     esc_period:
         description:
             - Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro.
-        default: '60'
+            - Required when C(state=present).
+        required: false
     conditions:
         type: list
         description:
@@ -121,12 +123,13 @@ options:
                     - When I(type) is set to C(trigger_severity), the choices
                       are (case-insensitive) C(not classified), C(information), C(warning), C(average), C(high), C(disaster)
                       irrespective of user-visible names being changed in Zabbix. Defaults to C(not classified) if omitted.
-                    - Besides the above options, this is usualy either the name
+                    - Besides the above options, this is usually either the name
                       of the object or a string to compare with.
             operator:
                 description:
                     - Condition operator.
                     - When I(type) is set to C(time_period), the choices are C(in), C(not in).
+                    - C(matches), C(does not match), C(Yes) and C(No) condition operators work only with >= Zabbix 4.0
                 choices:
                     - '='
                     - '<>'
@@ -136,6 +139,10 @@ options:
                     - '>='
                     - '<='
                     - 'not in'
+                    - 'matches'
+                    - 'does not match'
+                    - 'Yes'
+                    - 'No'
             formulaid:
                 description:
                     - Arbitrary unique ID that is used to reference the condition from a custom expression.
@@ -159,6 +166,8 @@ options:
             - The IDs used in the expression must exactly match the ones
               defined in the filter conditions. No condition can remain unused or omitted.
             - Required for custom expression filters.
+            - Use sequential IDs that start at "A". If non-sequential IDs are used, Zabbix re-indexes them.
+              This makes each module run notice the difference in IDs and update the action.
     default_message:
         description:
             - Problem message default text.
@@ -227,9 +236,11 @@ options:
             message:
                 description:
                     - Operation message text.
+                    - Will check the 'default message' and use the text from I(default_message) if this and I(default_subject) are not specified
             subject:
                 description:
                     - Operation message subject.
+                    - Will check the 'default message' and use the text from I(default_subject) if this and I(default_subject) are not specified
             media_type:
                 description:
                     - Media type that will be used to send the message.
@@ -350,6 +361,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
+    esc_period: 60
     conditions:
       - type: 'trigger_severity'
         operator: '>='
@@ -372,6 +384,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
+    esc_period: 60
     conditions:
       - type: 'trigger_name'
         operator: 'like'
@@ -389,6 +402,8 @@ EXAMPLES = '''
           - 'Admin'
       - type: remote_command
         command: 'systemctl restart zabbix-agent'
+        command_type: custom_script
+        execute_on: server
         run_on_hosts:
           - 0
 
@@ -402,6 +417,7 @@ EXAMPLES = '''
     event_source: 'trigger'
     state: present
     status: enabled
+    esc_period: 60
     conditions:
       - type: 'trigger_severity'
         operator: '>='
@@ -435,13 +451,18 @@ msg:
     sample: 'Action Deleted: Register webservers, ID: 0001'
 '''
 
+
+import atexit
+import traceback
+
 try:
     from zabbix_api import ZabbixAPI
     HAS_ZABBIX_API = True
 except ImportError:
+    ZBX_IMP_ERR = traceback.format_exc()
     HAS_ZABBIX_API = False
 
-from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.basic import AnsibleModule, missing_required_lib
 
 
 class Zapi(object):
@@ -770,7 +791,7 @@ class Action(object):
         self._zapi_wrapper = zapi_wrapper
 
     def _construct_parameters(self, **kwargs):
-        """Contruct parameters.
+        """Construct parameters.
 
         Args:
             **kwargs: Arbitrary keyword parameters.
@@ -801,10 +822,11 @@ class Action(object):
                 'enabled',
                 'disabled'], kwargs['status'])
         }
-        if float(self._zapi.api_version().rsplit('.', 1)[0]) >= 4.0:
-            _params['pause_suppressed'] = '1' if kwargs['pause_in_maintenance'] else '0'
-        else:
-            _params['maintenance_mode'] = '1' if kwargs['pause_in_maintenance'] else '0'
+        if kwargs['event_source'] == 'trigger':
+            if float(self._zapi.api_version().rsplit('.', 1)[0]) >= 4.0:
+                _params['pause_suppressed'] = '1' if kwargs['pause_in_maintenance'] else '0'
+            else:
+                _params['maintenance_mode'] = '1' if kwargs['pause_in_maintenance'] else '0'
 
         return _params
 
@@ -921,7 +943,7 @@ class Operations(object):
         """
         try:
             return {
-                'default_msg': '0' if 'message' in operation or 'subject' in operation else '1',
+                'default_msg': '0' if operation.get('message') is not None or operation.get('subject')is not None else '1',
                 'mediatypeid': self._zapi_wrapper.get_mediatype_by_mediatype_name(
                     operation.get('media_type')
                 ) if operation.get('media_type') is not None else '0',
@@ -1177,8 +1199,6 @@ class RecoveryOperations(Operations):
         Returns:
             list: constructed recovery operations data
         """
-        if operations is None:
-            return None
         constructed_data = []
         for op in operations:
             operation_type = self._construct_operationtype(op)
@@ -1244,8 +1264,6 @@ class AcknowledgeOperations(Operations):
         Returns:
             list: constructed acknowledge operations data
         """
-        if operations is None:
-            return None
         constructed_data = []
         for op in operations:
             operation_type = self._construct_operationtype(op)
@@ -1387,7 +1405,11 @@ class Filter(object):
                 "in",
                 ">=",
                 "<=",
-                "not in"], _condition['operator']
+                "not in",
+                "matches",
+                "does not match",
+                "Yes",
+                "No"], _condition['operator']
             )
         except Exception as e:
             self._module.fail_json(msg="Unsupported value '%s' for operator." % _condition['operator'])
@@ -1594,7 +1616,7 @@ def compare_dictionaries(d1, d2, diff_dict):
     Used in recursion with compare_lists() function.
     Args:
         d1: first dictionary to compare
-        d2: second ditionary to compare
+        d2: second dictionary to compare
         diff_dict: dictionary to store the difference
 
     Returns:
@@ -1653,22 +1675,23 @@ def main():
             http_login_user=dict(type='str', required=False, default=None),
             http_login_password=dict(type='str', required=False, default=None, no_log=True),
             validate_certs=dict(type='bool', required=False, default=True),
-            esc_period=dict(type='int', required=False, default=60),
+            esc_period=dict(type='int', required=False),
             timeout=dict(type='int', default=10),
             name=dict(type='str', required=True),
-            event_source=dict(type='str', required=True, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
+            event_source=dict(type='str', required=False, choices=['trigger', 'discovery', 'auto_registration', 'internal']),
             state=dict(type='str', required=False, default='present', choices=['present', 'absent']),
             status=dict(type='str', required=False, default='enabled', choices=['enabled', 'disabled']),
             pause_in_maintenance=dict(type='bool', required=False, default=True),
-            default_message=dict(type='str', required=False, default=None),
-            default_subject=dict(type='str', required=False, default=None),
-            recovery_default_message=dict(type='str', required=False, default=None),
-            recovery_default_subject=dict(type='str', required=False, default=None),
-            acknowledge_default_message=dict(type='str', required=False, default=None),
-            acknowledge_default_subject=dict(type='str', required=False, default=None),
+            default_message=dict(type='str', required=False, default=''),
+            default_subject=dict(type='str', required=False, default=''),
+            recovery_default_message=dict(type='str', required=False, default=''),
+            recovery_default_subject=dict(type='str', required=False, default=''),
+            acknowledge_default_message=dict(type='str', required=False, default=''),
+            acknowledge_default_subject=dict(type='str', required=False, default=''),
             conditions=dict(
                 type='list',
                 required=False,
+                default=[],
                 elements='dict',
                 options=dict(
                     formulaid=dict(type='str', required=False),
@@ -1683,6 +1706,7 @@ def main():
             operations=dict(
                 type='list',
                 required=False,
+                default=[],
                 elements='dict',
                 options=dict(
                     type=dict(
@@ -1957,11 +1981,17 @@ def main():
                 ]
             )
         ),
+        required_if=[
+            ['state', 'present', [
+                'esc_period',
+                'event_source'
+            ]]
+        ],
         supports_check_mode=True
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg="Missing required zabbix-api module (check docs or install with: pip install zabbix-api)")
+        module.fail_json(msg=missing_required_lib('zabbix-api', url='https://pypi.org/project/zabbix-api/'), exception=ZBX_IMP_ERR)
 
     server_url = module.params['server_url']
     login_user = module.params['login_user']
@@ -1993,6 +2023,7 @@ def main():
         zbx = ZabbixAPI(server_url, timeout=timeout, user=http_login_user,
                         passwd=http_login_password, validate_certs=validate_certs)
         zbx.login(login_user, login_password)
+        atexit.register(zbx.logout)
     except Exception as e:
         module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 

@@ -1,0 +1,2 @@
+bugfixes:
+  - yum - fix yum list crashing if repoquery (used internally) prints errors in stdout (https://github.com/ansible/ansible/issues/56800)

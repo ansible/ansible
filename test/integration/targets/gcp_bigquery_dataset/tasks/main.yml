@@ -37,9 +37,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'bigquery#dataset'"
 - name: verify that dataset was created
-  gcp_bigquery_dataset_facts:
+  gcp_bigquery_dataset_info:
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -49,7 +48,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length >= 1
+      - results['resources'] | map(attribute='datasetReference') | map(attribute='datasetId') | select("match", ".*my_example_dataset.*") | list | length == 1
 # ----------------------------------------------------------------------------
 - name: create a dataset that already exists
   gcp_bigquery_dataset:
@@ -65,7 +64,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'bigquery#dataset'"
 #----------------------------------------------------------
 - name: delete a dataset
   gcp_bigquery_dataset:
@@ -81,9 +79,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that dataset was deleted
-  gcp_bigquery_dataset_facts:
+  gcp_bigquery_dataset_info:
       project: "{{ gcp_project }}"
       auth_kind: "{{ gcp_cred_kind }}"
       service_account_file: "{{ gcp_cred_file }}"
@@ -93,7 +90,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | map(attribute='datasetReference') | map(attribute='datasetId') | select("match", ".*my_example_dataset.*") | list | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a dataset that does not exist
   gcp_bigquery_dataset:
@@ -109,4 +106,3 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False

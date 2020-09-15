@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_firewall_internet_service_custom
 short_description: Configure custom Internet Services in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure firewall feature and internet_service_custom category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify firewall feature and internet_service_custom category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,112 +41,158 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     firewall_internet_service_custom:
         description:
             - Configure custom Internet Services.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
             comment:
                 description:
                     - Comment.
-            disable-entry:
+                type: str
+            disable_entry:
                 description:
                     - Disable entries in the Internet Service database.
+                type: list
                 suboptions:
                     id:
                         description:
                             - Disable entry ID.
                         required: true
-                    ip-range:
+                        type: int
+                    ip_range:
                         description:
                             - IP ranges in the disable entry.
+                        type: list
                         suboptions:
-                            end-ip:
+                            end_ip:
                                 description:
                                     - End IP address.
+                                type: str
                             id:
                                 description:
                                     - Disable entry range ID.
                                 required: true
-                            start-ip:
+                                type: int
+                            start_ip:
                                 description:
                                     - Start IP address.
+                                type: str
                     port:
                         description:
                             - Integer value for the TCP/IP port (0 - 65535).
+                        type: int
                     protocol:
                         description:
                             - Integer value for the protocol type as defined by IANA (0 - 255).
+                        type: int
             entry:
                 description:
                     - Entries added to the Internet Service database and custom database.
+                type: list
                 suboptions:
                     dst:
                         description:
                             - Destination address or address group name.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Select the destination address or address group object from available options. Source firewall.address.name firewall
                                       .addrgrp.name.
                                 required: true
+                                type: str
                     id:
                         description:
                             - Entry ID(1-255).
                         required: true
-                    port-range:
+                        type: int
+                    port_range:
                         description:
                             - Port ranges in the custom entry.
+                        type: list
                         suboptions:
-                            end-port:
+                            end_port:
                                 description:
                                     - Integer value for ending TCP/UDP/SCTP destination port in range (1 to 65535).
+                                type: int
                             id:
                                 description:
                                     - Custom entry port range ID.
                                 required: true
-                            start-port:
+                                type: int
+                            start_port:
                                 description:
                                     - Integer value for starting TCP/UDP/SCTP destination port in range (1 to 65535).
+                                type: int
                     protocol:
                         description:
                             - Integer value for the protocol type as defined by IANA (0 - 255).
-            master-service-id:
+                        type: int
+            master_service_id:
                 description:
                     - Internet Service ID in the Internet Service database. Source firewall.internet-service.id.
+                type: int
             name:
                 description:
                     - Internet Service name.
                 required: true
+                type: str
 '''
 
 EXAMPLES = '''
@@ -159,6 +202,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure custom Internet Services.
     fortios_firewall_internet_service_custom:
@@ -166,17 +210,18 @@ EXAMPLES = '''
       username: "{{ username }}"
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
+      https: "False"
+      state: "present"
       firewall_internet_service_custom:
-        state: "present"
         comment: "Comment."
-        disable-entry:
+        disable_entry:
          -
             id:  "5"
-            ip-range:
+            ip_range:
              -
-                end-ip: "<your_own_value>"
+                end_ip: "<your_own_value>"
                 id:  "8"
-                start-ip: "<your_own_value>"
+                start_ip: "<your_own_value>"
             port: "10"
             protocol: "11"
         entry:
@@ -185,13 +230,13 @@ EXAMPLES = '''
              -
                 name: "default_name_14 (source firewall.address.name firewall.addrgrp.name)"
             id:  "15"
-            port-range:
+            port_range:
              -
-                end-port: "17"
+                end_port: "17"
                 id:  "18"
-                start-port: "19"
+                start_port: "19"
             protocol: "20"
-        master-service-id: "21 (source firewall.internet-service.id)"
+        master_service_id: "21 (source firewall.internet-service.id)"
         name: "default_name_22"
 '''
 
@@ -255,14 +300,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -270,12 +317,12 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_firewall_internet_service_custom_data(json):
-    option_list = ['comment', 'disable-entry', 'entry',
-                   'master-service-id', 'name']
+    option_list = ['comment', 'disable_entry', 'entry',
+                   'master_service_id', 'name']
     dictionary = {}
 
     for attribute in option_list:
@@ -285,57 +332,82 @@ def filter_firewall_internet_service_custom_data(json):
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def firewall_internet_service_custom(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['firewall_internet_service_custom'] and data['firewall_internet_service_custom']:
+        state = data['firewall_internet_service_custom']['state']
+    else:
+        state = True
     firewall_internet_service_custom_data = data['firewall_internet_service_custom']
-    filtered_data = filter_firewall_internet_service_custom_data(firewall_internet_service_custom_data)
-    if firewall_internet_service_custom_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_firewall_internet_service_custom_data(firewall_internet_service_custom_data))
+
+    if state == "present":
         return fos.set('firewall',
                        'internet-service-custom',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif firewall_internet_service_custom_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('firewall',
                           'internet-service-custom',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_firewall(data, fos):
-    login(data)
 
-    methodlist = ['firewall_internet_service_custom']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['firewall_internet_service_custom']:
+        resp = firewall_internet_service_custom(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "firewall_internet_service_custom": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
                 "comment": {"required": False, "type": "str"},
-                "disable-entry": {"required": False, "type": "list",
+                "disable_entry": {"required": False, "type": "list",
                                   "options": {
                                       "id": {"required": True, "type": "int"},
-                                      "ip-range": {"required": False, "type": "list",
+                                      "ip_range": {"required": False, "type": "list",
                                                    "options": {
-                                                       "end-ip": {"required": False, "type": "str"},
+                                                       "end_ip": {"required": False, "type": "str"},
                                                        "id": {"required": True, "type": "int"},
-                                                       "start-ip": {"required": False, "type": "str"}
+                                                       "start_ip": {"required": False, "type": "str"}
                                                    }},
                                       "port": {"required": False, "type": "int"},
                                       "protocol": {"required": False, "type": "int"}
@@ -347,15 +419,15 @@ def main():
                                           "name": {"required": True, "type": "str"}
                                       }},
                               "id": {"required": True, "type": "int"},
-                              "port-range": {"required": False, "type": "list",
+                              "port_range": {"required": False, "type": "list",
                                              "options": {
-                                                 "end-port": {"required": False, "type": "int"},
+                                                 "end_port": {"required": False, "type": "int"},
                                                  "id": {"required": True, "type": "int"},
-                                                 "start-port": {"required": False, "type": "int"}
+                                                 "start_port": {"required": False, "type": "int"}
                                              }},
                               "protocol": {"required": False, "type": "int"}
                           }},
-                "master-service-id": {"required": False, "type": "int"},
+                "master_service_id": {"required": False, "type": "int"},
                 "name": {"required": True, "type": "str"}
 
             }
@@ -364,15 +436,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_firewall(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_firewall(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_firewall(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

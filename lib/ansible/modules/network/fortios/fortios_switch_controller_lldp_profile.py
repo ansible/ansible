@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -29,10 +26,10 @@ DOCUMENTATION = '''
 module: fortios_switch_controller_lldp_profile
 short_description: Configure FortiSwitch LLDP profiles in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by allowing the
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
       user to set and modify switch_controller feature and lldp_profile category.
       Examples include all parameters and values need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,109 +41,153 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
         default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     switch_controller_lldp_profile:
         description:
             - Configure FortiSwitch LLDP profiles.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            802.1-tlvs:
+            802.1_tlvs:
                 description:
                     - Transmitted IEEE 802.1 TLVs.
+                type: str
                 choices:
                     - port-vlan-id
-            802.3-tlvs:
+            802.3_tlvs:
                 description:
                     - Transmitted IEEE 802.3 TLVs.
+                type: str
                 choices:
                     - max-frame-size
-            auto-isl:
+            auto_isl:
                 description:
                     - Enable/disable auto inter-switch LAG.
+                type: str
                 choices:
                     - disable
                     - enable
-            auto-isl-hello-timer:
+            auto_isl_hello_timer:
                 description:
-                    - Auto inter-switch LAG hello timer duration (1 - 30 sec, default = 3).
-            auto-isl-port-group:
+                    - Auto inter-switch LAG hello timer duration (1 - 30 sec).
+                type: int
+            auto_isl_port_group:
                 description:
                     - Auto inter-switch LAG port group ID (0 - 9).
-            auto-isl-receive-timeout:
+                type: int
+            auto_isl_receive_timeout:
                 description:
-                    - Auto inter-switch LAG timeout if no response is received (3 - 90 sec, default = 9).
-            custom-tlvs:
+                    - Auto inter-switch LAG timeout if no response is received (3 - 90 sec).
+                type: int
+            custom_tlvs:
                 description:
                     - Configuration method to edit custom TLV entries.
+                type: list
                 suboptions:
-                    information-string:
+                    information_string:
                         description:
                             - Organizationally defined information string (0 - 507 hexadecimal bytes).
+                        type: str
                     name:
                         description:
                             - TLV name (not sent).
                         required: true
+                        type: str
                     oui:
                         description:
                             - Organizationally unique identifier (OUI), a 3-byte hexadecimal number, for this TLV.
+                        type: str
                     subtype:
                         description:
                             - Organizationally defined subtype (0 - 255).
-            med-network-policy:
+                        type: int
+            med_network_policy:
                 description:
                     - Configuration method to edit Media Endpoint Discovery (MED) network policy type-length-value (TLV) categories.
+                type: list
                 suboptions:
                     dscp:
                         description:
                             - Advertised Differentiated Services Code Point (DSCP) value, a packet header value indicating the level of service requested for
                                traffic, such as high priority or best effort delivery.
+                        type: int
                     name:
                         description:
                             - Policy type name.
                         required: true
+                        type: str
                     priority:
                         description:
                             - Advertised Layer 2 priority (0 - 7; from lowest to highest priority).
+                        type: int
                     status:
                         description:
                             - Enable or disable this TLV.
+                        type: str
                         choices:
                             - disable
                             - enable
                     vlan:
                         description:
                             - ID of VLAN to advertise, if configured on port (0 - 4094, 0 = priority tag).
-            med-tlvs:
+                        type: int
+            med_tlvs:
                 description:
                     - "Transmitted LLDP-MED TLVs (type-length-value descriptions): inventory management TLV and/or network policy TLV."
+                type: str
                 choices:
                     - inventory-management
                     - network-policy
@@ -154,6 +195,7 @@ options:
                 description:
                     - Profile name.
                 required: true
+                type: str
 '''
 
 EXAMPLES = '''
@@ -163,6 +205,7 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure FortiSwitch LLDP profiles.
     fortios_switch_controller_lldp_profile:
@@ -171,28 +214,28 @@ EXAMPLES = '''
       password: "{{ password }}"
       vdom:  "{{ vdom }}"
       https: "False"
+      state: "present"
       switch_controller_lldp_profile:
-        state: "present"
-        802.1-tlvs: "port-vlan-id"
-        802.3-tlvs: "max-frame-size"
-        auto-isl: "disable"
-        auto-isl-hello-timer: "6"
-        auto-isl-port-group: "7"
-        auto-isl-receive-timeout: "8"
-        custom-tlvs:
+        802.1_tlvs: "port-vlan-id"
+        802.3_tlvs: "max-frame-size"
+        auto_isl: "disable"
+        auto_isl_hello_timer: "6"
+        auto_isl_port_group: "7"
+        auto_isl_receive_timeout: "8"
+        custom_tlvs:
          -
-            information-string: "<your_own_value>"
+            information_string: "<your_own_value>"
             name: "default_name_11"
             oui: "<your_own_value>"
             subtype: "13"
-        med-network-policy:
+        med_network_policy:
          -
             dscp: "15"
             name: "default_name_16"
             priority: "17"
             status: "disable"
             vlan: "19"
-        med-tlvs: "inventory-management"
+        med_tlvs: "inventory-management"
         name: "default_name_21"
 '''
 
@@ -256,14 +299,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -271,13 +316,13 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_switch_controller_lldp_profile_data(json):
-    option_list = ['802.1-tlvs', '802.3-tlvs', 'auto-isl',
-                   'auto-isl-hello-timer', 'auto-isl-port-group', 'auto-isl-receive-timeout',
-                   'custom-tlvs', 'med-network-policy', 'med-tlvs',
+    option_list = ['802.1_tlvs', '802.3_tlvs', 'auto_isl',
+                   'auto_isl_hello_timer', 'auto_isl_port_group', 'auto_isl_receive_timeout',
+                   'custom_tlvs', 'med_network_policy', 'med_tlvs',
                    'name']
     dictionary = {}
 
@@ -288,78 +333,90 @@ def filter_switch_controller_lldp_profile_data(json):
     return dictionary
 
 
-def flatten_multilists_attributes(data):
-    multilist_attrs = []
-
-    for attr in multilist_attrs:
-        try:
-            path = "data['" + "']['".join(elem for elem in attr) + "']"
-            current_val = eval(path)
-            flattened_val = ' '.join(elem for elem in current_val)
-            exec(path + '= flattened_val')
-        except BaseException:
-            pass
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
 
     return data
 
 
 def switch_controller_lldp_profile(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['switch_controller_lldp_profile'] and data['switch_controller_lldp_profile']:
+        state = data['switch_controller_lldp_profile']['state']
+    else:
+        state = True
     switch_controller_lldp_profile_data = data['switch_controller_lldp_profile']
-    flattened_data = flatten_multilists_attributes(switch_controller_lldp_profile_data)
-    filtered_data = filter_switch_controller_lldp_profile_data(flattened_data)
-    if switch_controller_lldp_profile_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_switch_controller_lldp_profile_data(switch_controller_lldp_profile_data))
+
+    if state == "present":
         return fos.set('switch-controller',
                        'lldp-profile',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif switch_controller_lldp_profile_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('switch-controller',
                           'lldp-profile',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_switch_controller(data, fos):
-    login(data)
 
     if data['switch_controller_lldp_profile']:
         resp = switch_controller_lldp_profile(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
         "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "switch_controller_lldp_profile": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "802.1-tlvs": {"required": False, "type": "str",
+                "802.1_tlvs": {"required": False, "type": "str",
                                "choices": ["port-vlan-id"]},
-                "802.3-tlvs": {"required": False, "type": "str",
+                "802.3_tlvs": {"required": False, "type": "str",
                                "choices": ["max-frame-size"]},
-                "auto-isl": {"required": False, "type": "str",
+                "auto_isl": {"required": False, "type": "str",
                              "choices": ["disable", "enable"]},
-                "auto-isl-hello-timer": {"required": False, "type": "int"},
-                "auto-isl-port-group": {"required": False, "type": "int"},
-                "auto-isl-receive-timeout": {"required": False, "type": "int"},
-                "custom-tlvs": {"required": False, "type": "list",
+                "auto_isl_hello_timer": {"required": False, "type": "int"},
+                "auto_isl_port_group": {"required": False, "type": "int"},
+                "auto_isl_receive_timeout": {"required": False, "type": "int"},
+                "custom_tlvs": {"required": False, "type": "list",
                                 "options": {
-                                    "information-string": {"required": False, "type": "str"},
+                                    "information_string": {"required": False, "type": "str"},
                                     "name": {"required": True, "type": "str"},
                                     "oui": {"required": False, "type": "str"},
                                     "subtype": {"required": False, "type": "int"}
                                 }},
-                "med-network-policy": {"required": False, "type": "list",
+                "med_network_policy": {"required": False, "type": "list",
                                        "options": {
                                            "dscp": {"required": False, "type": "int"},
                                            "name": {"required": True, "type": "str"},
@@ -368,7 +425,7 @@ def main():
                                                       "choices": ["disable", "enable"]},
                                            "vlan": {"required": False, "type": "int"}
                                        }},
-                "med-tlvs": {"required": False, "type": "str",
+                "med_tlvs": {"required": False, "type": "str",
                              "choices": ["inventory-management", "network-policy"]},
                 "name": {"required": True, "type": "str"}
 
@@ -378,15 +435,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_switch_controller(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_switch_controller(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_switch_controller(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

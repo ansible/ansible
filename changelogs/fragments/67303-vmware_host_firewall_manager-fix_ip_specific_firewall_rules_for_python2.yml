@@ -1,0 +1,2 @@
+bugfixes:
+- vmware_host_firewall_manager - Fixed creating IP specific firewall rules with Python 2 (https://github.com/ansible/ansible/issues/67303)

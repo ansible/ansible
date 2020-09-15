@@ -202,7 +202,7 @@ class ElementSWSnapShotSchedule(object):
     def __init__(self):
         """
         Parse arguments, setup state variables,
-        check paramenters and ensure SDK is installed
+        check parameters and ensure SDK is installed
         """
         self.argument_spec = netapp_utils.ontap_sf_host_argument_spec()
         self.argument_spec.update(dict(

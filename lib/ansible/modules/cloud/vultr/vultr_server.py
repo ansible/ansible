@@ -26,29 +26,36 @@ options:
       - Name of the server.
     required: true
     aliases: [ label ]
+    type: str
   hostname:
     description:
-      - Hostname to assign to this server.
+      - The hostname to assign to this server.
+    type: str
   os:
     description:
-      - The operating system.
+      - The operating system name or ID.
       - Required if the server does not yet exist and is not restoring from a snapshot.
+    type: str
   snapshot:
     version_added: "2.8"
     description:
-      - Name of snapshot to restore server from.
+      - Name or ID of the snapshot to restore the server from.
+    type: str
   firewall_group:
     description:
-      - The firewall group to assign this server to.
+      - The firewall group description or ID to assign this server to.
+    type: str
   plan:
     description:
-      - Plan to use for the server.
+      - Plan name or ID to use for the server.
       - Required if the server does not yet exist.
+    type: str
   force:
     description:
       - Force stop/start the server if required to apply changes
       - Otherwise a running server will not be changed.
     type: bool
+    default: no
   notify_activate:
     description:
       - Whether to send an activation email when the server is ready or not.
@@ -69,37 +76,44 @@ options:
   tag:
     description:
       - Tag for the server.
+    type: str
   user_data:
     description:
       - User data to be passed to the server.
+    type: str
   startup_script:
     description:
-      - Name of the startup script to execute on boot.
+      - Name or ID of the startup script to execute on boot.
       - Only considered while creating the server.
+    type: str
   ssh_keys:
     description:
-      - List of SSH keys passed to the server on creation.
+      - List of SSH key names or IDs passed to the server on creation.
     aliases: [ ssh_key ]
+    type: list
   reserved_ip_v4:
     description:
       - IP address of the floating IP to use as the main IP of this server.
       - Only considered on creation.
+    type: str
   region:
     description:
-      - Region the server is deployed into.
+      - Region name or ID the server is deployed into.
       - Required if the server does not yet exist.
+    type: str
   state:
     description:
       - State of the server.
     default: present
     choices: [ present, absent, restarted, reinstalled, started, stopped ]
+    type: str
 extends_documentation_fragment: vultr
 '''
 
 EXAMPLES = '''
 - name: create server
-  local_action:
-    module: vultr_server
+  delegate_to: localhost
+  vultr_server:
     name: "{{ vultr_server_name }}"
     os: CentOS 7 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
@@ -110,39 +124,40 @@ EXAMPLES = '''
     state: present
 
 - name: ensure a server is present and started
-  local_action:
-    module: vultr_server
+  delegate_to: localhost
+  vultr_server:
     name: "{{ vultr_server_name }}"
     os: CentOS 7 x64
     plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
+    firewall_group: my_group
     ssh_key: my_key
     region: Amsterdam
     state: started
 
-- name: ensure a server is present and stopped
-  local_action:
-    module: vultr_server
+- name: ensure a server is present and stopped provisioned using IDs
+  delegate_to: localhost
+  vultr_server:
     name: "{{ vultr_server_name }}"
-    os: CentOS 7 x64
-    plan: 1024 MB RAM,25 GB SSD,1.00 TB BW
-    region: Amsterdam
+    os: "167"
+    plan: "201"
+    region: "7"
     state: stopped
 
 - name: ensure an existing server is stopped
-  local_action:
-    module: vultr_server
+  delegate_to: localhost
+  vultr_server:
     name: "{{ vultr_server_name }}"
     state: stopped
 
 - name: ensure an existing server is started
-  local_action:
-    module: vultr_server
+  delegate_to: localhost
+  vultr_server:
     name: "{{ vultr_server_name }}"
     state: started
 
 - name: ensure a server is absent
-  local_action:
-    module: vultr_server
+  delegate_to: localhost
+  vultr_server:
     name: "{{ vultr_server_name }}"
     state: absent
 '''
@@ -169,6 +184,12 @@ vultr_api:
       returned: success
       type: int
       sample: 5
+    api_retry_max_delay:
+      description: Exponential backoff delay in seconds between retries up to this max delay value.
+      returned: success
+      type: int
+      sample: 12
+      version_added: '2.9'
     api_endpoint:
       description: Endpoint used for the API requests
       returned: success
@@ -265,7 +286,7 @@ vultr_server:
       type: str
       sample: "CentOS 6 x64"
     firewall_group:
-      description: Firewall group the server is assinged to
+      description: Firewall group the server is assigned to
       returned: success and available
       type: str
       sample: "CentOS 6 x64"
@@ -392,7 +413,8 @@ class AnsibleVultrServer(Vultr):
             key='name',
             value=os_name,
             resource='os',
-            use_cache=True
+            use_cache=True,
+            id_key='OSID',
         )
 
     def get_snapshot(self):
@@ -400,7 +422,7 @@ class AnsibleVultrServer(Vultr):
             key='description',
             value=self.module.params.get('snapshot'),
             resource='snapshot',
-            use_cache=True
+            id_key='SNAPSHOTID',
         )
 
     def get_ssh_keys(self):
@@ -414,7 +436,8 @@ class AnsibleVultrServer(Vultr):
                 key='name',
                 value=ssh_key_name,
                 resource='sshkey',
-                use_cache=True
+                use_cache=True,
+                id_key='SSHKEYID',
             )
             if ssh_key:
                 ssh_keys.append(ssh_key)
@@ -425,7 +448,8 @@ class AnsibleVultrServer(Vultr):
             key='name',
             value=self.module.params.get('region'),
             resource='regions',
-            use_cache=True
+            use_cache=True,
+            id_key='DCID',
         )
 
     def get_plan(self):
@@ -433,7 +457,8 @@ class AnsibleVultrServer(Vultr):
             key='name',
             value=self.module.params.get('plan'),
             resource='plans',
-            use_cache=True
+            use_cache=True,
+            id_key='VPSPLANID',
         )
 
     def get_firewall_group(self):
@@ -441,7 +466,8 @@ class AnsibleVultrServer(Vultr):
             key='description',
             value=self.module.params.get('firewall_group'),
             resource='firewall',
-            query_by='group_list'
+            query_by='group_list',
+            id_key='FIREWALLGROUPID'
         )
 
     def get_user_data(self):
@@ -865,22 +891,22 @@ def main():
     argument_spec = vultr_argument_spec()
     argument_spec.update(dict(
         name=dict(required=True, aliases=['label']),
-        hostname=dict(),
-        os=dict(),
-        snapshot=dict(),
-        plan=dict(),
+        hostname=dict(type='str'),
+        os=dict(type='str'),
+        snapshot=dict(type='str'),
+        plan=dict(type='str'),
         force=dict(type='bool', default=False),
         notify_activate=dict(type='bool', default=False),
         private_network_enabled=dict(type='bool'),
         auto_backup_enabled=dict(type='bool'),
         ipv6_enabled=dict(type='bool'),
-        tag=dict(),
-        reserved_ip_v4=dict(),
-        firewall_group=dict(),
-        startup_script=dict(),
-        user_data=dict(),
+        tag=dict(type='str'),
+        reserved_ip_v4=dict(type='str'),
+        firewall_group=dict(type='str'),
+        startup_script=dict(type='str'),
+        user_data=dict(type='str'),
         ssh_keys=dict(type='list', aliases=['ssh_key']),
-        region=dict(),
+        region=dict(type='str'),
         state=dict(choices=['present', 'absent', 'restarted', 'reinstalled', 'started', 'stopped'], default='present'),
     ))
 

@@ -1,0 +1,3 @@
+bugfixes:
+- Vault - Allow single vault encrypted values to be used directly as module
+  parameters. (https://github.com/ansible/ansible/issues/68275)

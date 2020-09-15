@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import pytest
+import re
 
 from ansible import context
 from ansible.cli.adhoc import AdHocCLI, display
@@ -13,27 +14,21 @@ from ansible.errors import AnsibleOptionsError
 
 def test_parse():
     """ Test adhoc parse"""
-    adhoc_cli = AdHocCLI([])
-    with pytest.raises(AnsibleOptionsError) as exec_info:
+    with pytest.raises(ValueError, match='A non-empty list for args is required'):
+        adhoc_cli = AdHocCLI([])
+
+    adhoc_cli = AdHocCLI(['ansibletest'])
+    with pytest.raises(SystemExit):
         adhoc_cli.parse()
-    assert "Missing target hosts" == str(exec_info.value)
 
 
 def test_with_command():
     """ Test simple adhoc command"""
     module_name = 'command'
-    adhoc_cli = AdHocCLI(args=['-m', module_name, '-vv'])
+    adhoc_cli = AdHocCLI(args=['ansible', '-m', module_name, '-vv', 'localhost'])
     adhoc_cli.parse()
     assert context.CLIARGS['module_name'] == module_name
     assert display.verbosity == 2
-
-
-def test_with_extra_parameters():
-    """ Test extra parameters"""
-    adhoc_cli = AdHocCLI(args=['-m', 'command', 'extra_parameters'])
-    with pytest.raises(AnsibleOptionsError) as exec_info:
-        adhoc_cli.parse()
-    assert "Extraneous options or arguments" == str(exec_info.value)
 
 
 def test_simple_command():
@@ -89,3 +84,30 @@ def test_run_import_playbook():
         adhoc_cli.run()
     assert context.CLIARGS['module_name'] == import_playbook
     assert "'%s' is not a valid action for ad-hoc commands" % import_playbook == str(exec_info.value)
+
+
+def test_run_no_extra_vars():
+    adhoc_cli = AdHocCLI(args=['/bin/ansible', 'localhost', '-e'])
+    with pytest.raises(SystemExit) as exec_info:
+        adhoc_cli.parse()
+    assert exec_info.value.code == 2
+
+
+def test_ansible_version(capsys, mocker):
+    adhoc_cli = AdHocCLI(args=['/bin/ansible', '--version'])
+    with pytest.raises(SystemExit):
+        adhoc_cli.run()
+    version = capsys.readouterr()
+    try:
+        version_lines = version.out.splitlines()
+    except AttributeError:
+        # Python 2.6 does return a named tuple, so get the first item
+        version_lines = version[0].splitlines()
+
+    assert len(version_lines) == 6, 'Incorrect number of lines in "ansible --version" output'
+    assert re.match('ansible [0-9.a-z]+$', version_lines[0]), 'Incorrect ansible version line in "ansible --version" output'
+    assert re.match('  config file = .*$', version_lines[1]), 'Incorrect config file line in "ansible --version" output'
+    assert re.match('  configured module search path = .*$', version_lines[2]), 'Incorrect module search path in "ansible --version" output'
+    assert re.match('  ansible python module location = .*$', version_lines[3]), 'Incorrect python module location in "ansible --version" output'
+    assert re.match('  executable location = .*$', version_lines[4]), 'Incorrect executable locaction in "ansible --version" output'
+    assert re.match('  python version = .*$', version_lines[5]), 'Incorrect python version in "ansible --version" output'

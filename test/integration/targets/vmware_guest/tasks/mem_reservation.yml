@@ -1,0 +1,125 @@
+# Test code for the vmware_guest module.
+# Copyright: (c) 2019, Abhijeet Kasurde <akasurde@redhat.com>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- when: vcsim is not defined
+  block:
+    - &add_mem_reserve
+      name: Create new VMs with mem_reservation as 0
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        name: test_vm1
+        guest_id: centos64Guest
+        datacenter: "{{ dc1 }}"
+        hardware:
+          num_cpus: 4
+          memory_mb: 512
+          mem_reservation: 0
+        disk:
+          - size: 1gb
+            type: thin
+            autoselect_datastore: True
+        state: present
+        folder: "{{ virtual_machines[0].folder }}"
+      register: mem_reserve_result_0001
+
+    - debug: var=mem_reserve_result_0001
+
+    - name: Assert that changes were made
+      assert:
+        that:
+          - mem_reserve_result_0001 is changed
+
+    - <<: *add_mem_reserve
+      name: Again create new VMs with mem_reservation as 0
+      register: mem_reserve_result_0002
+
+    - debug: var=mem_reserve_result_0002
+
+    - name: Assert that changes were not made
+      assert:
+        that:
+          - not (mem_reserve_result_0002 is changed)
+
+    - &add_memory_reserve
+      name: Create new VM with memory_reservation as 0
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        name: test_vm2
+        guest_id: centos64Guest
+        datacenter: "{{ dc1 }}"
+        hardware:
+          num_cpus: 4
+          memory_mb: 512
+          memory_reservation: 0
+        disk:
+          - size: 1gb
+            type: thin
+            autoselect_datastore: True
+        state: present
+        folder: "{{ virtual_machines[0].folder }}"
+      register: memory_reserve_result_0003
+
+    - debug: var=memory_reserve_result_0003
+
+    - name: Assert that changes were made
+      assert:
+        that:
+          - memory_reserve_result_0003 is changed
+
+    - <<: *add_memory_reserve
+      name: Again create new VMs with memory_reservation as 0
+      register: memory_reserve_result_0004
+
+    - debug: var=memory_reserve_result_0004
+
+    - name: Assert that changes were not made
+      assert:
+        that:
+          - not (memory_reserve_result_0004 is changed)
+
+    - &no_memory_reserve
+      name: Create new VMs without memory_reservation or mem_reservation
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        name: test_vm3
+        guest_id: centos64Guest
+        datacenter: "{{ dc1 }}"
+        hardware:
+          num_cpus: 4
+          memory_mb: 512
+          memory_reservation: 0
+        disk:
+          - size: 1gb
+            type: thin
+            autoselect_datastore: True
+        state: present
+        folder: "{{ virtual_machines[0].folder }}"
+      register: no_memory_reserve_result_0005
+
+    - debug: var=no_memory_reserve_result_0005
+
+    - name: Assert that changes were made
+      assert:
+        that:
+          - no_memory_reserve_result_0005 is changed
+
+    - <<: *no_memory_reserve
+      name: Again create new VMs without memory_reservation or mem_reservation
+      register: no_memory_reserve_result_0006
+
+    - debug: var=no_memory_reserve_result_0006
+
+    - name: Assert that changes were not made
+      assert:
+        that:
+          - not (no_memory_reserve_result_0006 is changed)

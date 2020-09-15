@@ -1,0 +1,2 @@
+bugfixes:
+- "win_hostname - Fix non netbios compliant name handling (https://github.com/ansible/ansible/issues/55283)"

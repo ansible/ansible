@@ -1,0 +1,17 @@
+---
+- name: List all server groups
+  uri:
+    url: 'https://api.cloudscale.ch/v1/server-groups'
+    headers:
+      Authorization: 'Bearer {{ cloudscale_api_token }}'
+    status_code: 200
+  register: server_group_list
+
+- name: Remove all server groups created by this test run
+  cloudscale_server_group:
+    uuid: '{{ item.uuid }}'
+    state: absent
+  when: cloudscale_resource_prefix in item.name
+  with_items: '{{ server_group_list.json }}'
+  loop_control:
+    label: '{{ item.name }} ({{ item.uuid }})'

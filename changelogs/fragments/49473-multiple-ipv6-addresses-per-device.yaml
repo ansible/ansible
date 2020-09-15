@@ -1,2 +1,0 @@
-bugfixes:
-    - Correctly detect multiple ipv6 addresses per device in facts (https://github.com/ansible/ansible/issues/49473)

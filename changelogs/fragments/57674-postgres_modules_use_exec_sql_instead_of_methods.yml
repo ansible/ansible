@@ -1,0 +1,2 @@
+bugfixes:
+  - postgresql modules - use ``module_utils.postgres.exec_sql`` function instead of ``__exec_sql`` method (https://github.com/ansible/ansible/pull/57674)

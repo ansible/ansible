@@ -52,6 +52,8 @@
     metadata:
       startup-script-url: gs:://graphite-playground/bootstrap.sh
       cost-center: '12345'
+    labels:
+      environment: production
     network_interfaces:
     - network: "{{ network }}"
       access_configs:
@@ -75,6 +77,8 @@
     metadata:
       startup-script-url: gs:://graphite-playground/bootstrap.sh
       cost-center: '12345'
+    labels:
+      environment: production
     network_interfaces:
     - network: "{{ network }}"
       access_configs:
@@ -91,9 +95,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#instance'"
 - name: verify that instance was created
-  gcp_compute_instance_facts:
+  gcp_compute_instance_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a
@@ -106,7 +109,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a instance that already exists
   gcp_compute_instance:
@@ -119,6 +122,8 @@
     metadata:
       startup-script-url: gs:://graphite-playground/bootstrap.sh
       cost-center: '12345'
+    labels:
+      environment: production
     network_interfaces:
     - network: "{{ network }}"
       access_configs:
@@ -135,7 +140,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#instance'"
 #----------------------------------------------------------
 - name: delete a instance
   gcp_compute_instance:
@@ -148,6 +152,8 @@
     metadata:
       startup-script-url: gs:://graphite-playground/bootstrap.sh
       cost-center: '12345'
+    labels:
+      environment: production
     network_interfaces:
     - network: "{{ network }}"
       access_configs:
@@ -164,9 +170,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that instance was deleted
-  gcp_compute_instance_facts:
+  gcp_compute_instance_info:
       filters:
          - name = {{ resource_name }}
       zone: us-central1-a
@@ -179,7 +184,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a instance that does not exist
   gcp_compute_instance:
@@ -192,6 +197,8 @@
     metadata:
       startup-script-url: gs:://graphite-playground/bootstrap.sh
       cost-center: '12345'
+    labels:
+      environment: production
     network_interfaces:
     - network: "{{ network }}"
       access_configs:
@@ -208,7 +215,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

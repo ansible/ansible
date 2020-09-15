@@ -1,0 +1,4 @@
+bugfixes:
+- win_psmodule - Fix TLS 1.2 compatibility with PSGallery.
+- win_psrepository - Fix TLS 1.2 compatibility with PSGallery.
+- win_psrepository - Fix ``Ignore`` error when trying to retrieve the list of registered repositories

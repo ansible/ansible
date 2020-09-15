@@ -1,0 +1,31 @@
+vmware_guest_test_playbooks:
+  - boot_firmware_d1_c1_f0.yml
+  - boot_firmware_d1_c1_f0.yml
+  - cdrom_d1_c1_f0.yml
+  - check_mode.yml
+  - clone_customize_guest_test.yml
+  - clone_d1_c1_f0.yml
+  - clone_resize_disks.yml
+  - clone_with_convert.yml
+  - create_d1_c1_f0.yml
+  - create_guest_invalid_d1_c1_f0.yml
+  - create_nw_d1_c1_f0.yml
+  - create_rp_d1_c1_f0.yml
+  - delete_vm.yml
+  - disk_mode_d1_c1_f0.yml
+  - disk_size_d1_c1_f0.yml
+  - disk_type_d1_c1_f0.yml
+  - linked_clone_d1_c1_f0.yml
+  - mac_address_d1_c1_f0.yml
+  - max_connections.yml
+  - mem_reservation.yml
+  - network_negative_test.yml
+  - network_with_device.yml
+# Currently, VCSIM doesn't support DVPG (as portkeys are not available) so commenting this test
+#  - network_with_dvpg.yml
+#  - network_with_portgroup.yml
+  - non_existent_vm_ops.yml
+  - poweroff_d1_c1_f0.yml
+  - poweroff_d1_c1_f1.yml
+#  - template_d1_c1_f0.yml
+  - vapp_d1_c1_f0.yml

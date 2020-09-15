@@ -334,3 +334,58 @@
     - 1
   loop_control:
     loop_var: alvin
+
+# https://github.com/ansible/ansible/issues/58820
+- name: Test using templated loop_var inside include_tasks
+  include_tasks: templated_loop_var_tasks.yml
+  loop:
+    - value
+  loop_control:
+    loop_var: "{{ loop_var_name }}"
+  vars:
+    loop_var_name: templated_loop_var_name
+
+# https://github.com/ansible/ansible/issues/59414
+- name: Test preserving original connection related vars
+  debug:
+    var: ansible_remote_tmp
+  vars:
+    ansible_remote_tmp: /tmp/test1
+  with_items:
+  - 1
+  - 2
+  register: loop_out
+
+- assert:
+    that:
+      - loop_out['results'][1]['ansible_remote_tmp'] == '/tmp/test1'
+
+# https://github.com/ansible/ansible/issues/64169
+- include_vars: 64169.yml
+
+- set_fact: "{{ item.key }}={{ hostvars[inventory_hostname][item.value] }}"
+  with_dict:
+    foo: __foo
+
+- debug:
+    var: foo
+
+- assert:
+    that:
+      - foo[0] != 'foo1.0'
+      - foo[0] == unsafe_value
+  vars:
+    unsafe_value: !unsafe 'foo{{ version_64169 }}'
+
+- set_fact: "{{ item.key }}={{ hostvars[inventory_hostname][item.value] }}"
+  loop: "{{ dicty_dict|dict2items }}"
+  vars:
+    dicty_dict:
+      foo: __foo
+
+- debug:
+    var: foo
+
+- assert:
+    that:
+      - foo[0] == 'foo1.0'

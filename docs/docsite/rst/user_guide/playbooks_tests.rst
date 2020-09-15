@@ -59,8 +59,7 @@ To match strings against a substring or a regular expression, use the "match", "
             msg: "matched pattern 4"
           when: url is regex("example.com/\w+/foo")
 
-'match' requires zero or more characters at the beginning of the string, while 'search' only requires matching a subset of the string.
-
+'match' requires zero or more characters at the beginning of the string, while 'search' only requires matching a subset of the string. By default, 'regex' works like `search`, but `regex` can be configured to perform other tests as well.
 
 .. _testing_versions:
 
@@ -120,7 +119,7 @@ Test if a list contains a value
 .. versionadded:: 2.8
 
 Ansible includes a ``contains`` test which operates similarly, but in reverse of the Jinja2 provided ``in`` test.
-This is designed with the ability to allow use of ``contains`` with filters such as ``map`` and ``selectattr``::
+The ``contains`` test is designed to work with the ``select``, ``reject``, ``selectattr``, and ``rejectattr`` filters::
 
     vars:
       lacp_groups:
@@ -199,7 +198,7 @@ The following tests can provide information about a path on the controller::
     - debug:
         msg: "path is {{ (mypath is abs)|ternary('absolute','relative')}}"
 
-    - debug: 
+    - debug:
         msg: "path is the same file as path2"
       when: mypath is same_file(path2)
 
@@ -250,21 +249,19 @@ The following tasks are illustrative of the tests meant to check the status of t
 
 .. seealso::
 
-   :doc:`playbooks`
+   :ref:`playbooks_intro`
        An introduction to playbooks
-   :doc:`playbooks_conditionals`
+   :ref:`playbooks_conditionals`
        Conditional statements in playbooks
-   :doc:`playbooks_variables`
+   :ref:`playbooks_variables`
        All about variables
-   :doc:`playbooks_loops`
+   :ref:`playbooks_loops`
        Looping in playbooks
-   :doc:`playbooks_reuse_roles`
+   :ref:`playbooks_reuse_roles`
        Playbook organization by roles
-   :doc:`playbooks_best_practices`
+   :ref:`playbooks_best_practices`
        Best practices in playbooks
    `User Mailing List <https://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

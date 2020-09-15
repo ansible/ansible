@@ -22,7 +22,7 @@
     - account_creation.headers.status == 201
     - "'location' in account_creation.headers"
     - account_creation.output_json.status == 'valid'
-    - not account_creation.output_json.contact
+    - not (account_creation.output_json.contact | default([]))
     - account_creation.output_text | from_json == account_creation.output_json
 
 - name: Check account get output

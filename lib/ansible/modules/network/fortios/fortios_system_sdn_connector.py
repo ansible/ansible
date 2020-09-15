@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from __future__ import (absolute_import, division, print_function)
-# Copyright 2018 Fortinet, Inc.
+# Copyright 2019 Fortinet, Inc.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,6 @@ from __future__ import (absolute_import, division, print_function)
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# the lib use python logging can get it if the following is set in your
-# Ansible config.
 
 __metaclass__ = type
 
@@ -27,12 +24,12 @@ ANSIBLE_METADATA = {'status': ['preview'],
 DOCUMENTATION = '''
 ---
 module: fortios_system_sdn_connector
-short_description: Configure connection to SDN Connector.
+short_description: Configure connection to SDN Connector in Fortinet's FortiOS and FortiGate.
 description:
-    - This module is able to configure a FortiGate or FortiOS by
-      allowing the user to configure system feature and sdn_connector category.
-      Examples includes all options and need to be adjusted to datasources before usage.
-      Tested with FOS v6.0.2
+    - This module is able to configure a FortiGate or FortiOS (FOS) device by allowing the
+      user to set and modify system feature and sdn_connector category.
+      Examples include all parameters and values need to be adjusted to datasources before usage.
+      Tested with FOS v6.0.5
 version_added: "2.8"
 author:
     - Miguel Angel Munoz (@mamunozgonzalez)
@@ -44,106 +41,155 @@ requirements:
     - fortiosapi>=0.9.8
 options:
     host:
-       description:
-            - FortiOS or FortiGate ip address.
-       required: true
+        description:
+            - FortiOS or FortiGate IP address.
+        type: str
+        required: false
     username:
         description:
             - FortiOS or FortiGate username.
-        required: true
+        type: str
+        required: false
     password:
         description:
             - FortiOS or FortiGate password.
+        type: str
         default: ""
     vdom:
         description:
             - Virtual domain, among those defined previously. A vdom is a
               virtual instance of the FortiGate that can be configured and
               used as a different unit.
+        type: str
         default: root
     https:
         description:
-            - Indicates if the requests towards FortiGate must use HTTPS
-              protocol
+            - Indicates if the requests towards FortiGate must use HTTPS protocol.
         type: bool
-        default: false
+        default: true
+    ssl_verify:
+        description:
+            - Ensures FortiGate certificate must be verified by a proper CA.
+        type: bool
+        default: true
+        version_added: 2.9
+    state:
+        description:
+            - Indicates whether to create or remove the object.
+              This attribute was present already in previous version in a deeper level.
+              It has been moved out to this outer level.
+        type: str
+        required: false
+        choices:
+            - present
+            - absent
+        version_added: 2.9
     system_sdn_connector:
         description:
             - Configure connection to SDN Connector.
         default: null
+        type: dict
         suboptions:
             state:
                 description:
-                    - Indicates whether to create or remove the object
+                    - B(Deprecated)
+                    - Starting with Ansible 2.9 we recommend using the top-level 'state' parameter.
+                    - HORIZONTALLINE
+                    - Indicates whether to create or remove the object.
+                type: str
+                required: false
                 choices:
                     - present
                     - absent
-            access-key:
+            access_key:
                 description:
                     - AWS access key ID.
-            azure-region:
+                type: str
+            azure_region:
                 description:
                     - Azure server region.
+                type: str
                 choices:
                     - global
                     - china
                     - germany
                     - usgov
-            client-id:
+                    - local
+            client_id:
                 description:
                     - Azure client ID (application ID).
-            client-secret:
+                type: str
+            client_secret:
                 description:
                     - Azure client secret (application key).
-            compartment-id:
+                type: str
+            compartment_id:
                 description:
                     - Compartment ID.
-            external-ip:
+                type: str
+            external_ip:
                 description:
                     - Configure GCP external IP.
+                type: list
                 suboptions:
                     name:
                         description:
                             - External IP name.
                         required: true
-            gcp-project:
+                        type: str
+            gcp_project:
                 description:
                     - GCP project name.
-            key-passwd:
+                type: str
+            key_passwd:
                 description:
                     - Private key password.
+                type: str
+            login_endpoint:
+                description:
+                    - Azure Stack login enpoint.
+                type: str
             name:
                 description:
                     - SDN connector name.
                 required: true
+                type: str
             nic:
                 description:
                     - Configure Azure network interface.
+                type: list
                 suboptions:
                     ip:
                         description:
                             - Configure IP configuration.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - IP configuration name.
                                 required: true
-                            public-ip:
+                                type: str
+                            public_ip:
                                 description:
                                     - Public IP name.
+                                type: str
                     name:
                         description:
                             - Network interface name.
                         required: true
-            oci-cert:
+                        type: str
+            oci_cert:
                 description:
                     - OCI certificate. Source certificate.local.name.
-            oci-fingerprint:
+                type: str
+            oci_fingerprint:
                 description:
                     - OCI pubkey fingerprint.
-            oci-region:
+                type: str
+            oci_region:
                 description:
                     - OCI server region.
+                type: str
                 choices:
                     - phoenix
                     - ashburn
@@ -152,95 +198,124 @@ options:
             password:
                 description:
                     - Password of the remote SDN connector as login credentials.
-            private-key:
+                type: str
+            private_key:
                 description:
                     - Private key of GCP service account.
+                type: str
             region:
                 description:
                     - AWS region name.
-            resource-group:
+                type: str
+            resource_group:
                 description:
                     - Azure resource group.
+                type: str
+            resource_url:
+                description:
+                    - Azure Stack resource URL.
+                type: str
             route:
                 description:
                     - Configure GCP route.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Route name.
                         required: true
-            route-table:
+                        type: str
+            route_table:
                 description:
                     - Configure Azure route table.
+                type: list
                 suboptions:
                     name:
                         description:
                             - Route table name.
                         required: true
+                        type: str
                     route:
                         description:
                             - Configure Azure route.
+                        type: list
                         suboptions:
                             name:
                                 description:
                                     - Route name.
                                 required: true
-                            next-hop:
+                                type: str
+                            next_hop:
                                 description:
                                     - Next hop address.
-            secret-key:
+                                type: str
+            secret_key:
                 description:
                     - AWS secret access key.
+                type: str
             server:
                 description:
                     - Server address of the remote SDN connector.
-            server-port:
+                type: str
+            server_port:
                 description:
                     - Port number of the remote SDN connector.
-            service-account:
+                type: int
+            service_account:
                 description:
                     - GCP service account email.
+                type: str
             status:
                 description:
                     - Enable/disable connection to the remote SDN connector.
+                type: str
                 choices:
                     - disable
                     - enable
-            subscription-id:
+            subscription_id:
                 description:
                     - Azure subscription ID.
-            tenant-id:
+                type: str
+            tenant_id:
                 description:
                     - Tenant ID (directory ID).
+                type: str
             type:
                 description:
                     - Type of SDN connector.
+                type: str
                 choices:
                     - aci
                     - aws
                     - azure
+                    - gcp
                     - nsx
                     - nuage
                     - oci
-                    - gcp
-            update-interval:
+                    - openstack
+            update_interval:
                 description:
-                    - Dynamic object update interval (0 - 3600 sec, 0 means disabled, default = 60).
-            use-metadata-iam:
+                    - Dynamic object update interval (0 - 3600 sec, 0 means disabled).
+                type: int
+            use_metadata_iam:
                 description:
                     - Enable/disable using IAM role from metadata to call API.
+                type: str
                 choices:
                     - disable
                     - enable
-            user-id:
+            user_id:
                 description:
                     - User ID.
+                type: str
             username:
                 description:
                     - Username of the remote SDN connector as login credentials.
-            vpc-id:
+                type: str
+            vpc_id:
                 description:
                     - AWS VPC ID.
+                type: str
 '''
 
 EXAMPLES = '''
@@ -250,63 +325,67 @@ EXAMPLES = '''
    username: "admin"
    password: ""
    vdom: "root"
+   ssl_verify: "False"
   tasks:
   - name: Configure connection to SDN Connector.
     fortios_system_sdn_connector:
-      host:  "{{  host }}"
+      host:  "{{ host }}"
       username: "{{ username }}"
       password: "{{ password }}"
-      vdom:  "{{  vdom }}"
+      vdom:  "{{ vdom }}"
+      https: "False"
+      state: "present"
       system_sdn_connector:
-        state: "present"
-        access-key: "<your_own_value>"
-        azure-region: "global"
-        client-id: "<your_own_value>"
-        client-secret: "<your_own_value>"
-        compartment-id: "<your_own_value>"
-        external-ip:
+        access_key: "<your_own_value>"
+        azure_region: "global"
+        client_id: "<your_own_value>"
+        client_secret: "<your_own_value>"
+        compartment_id: "<your_own_value>"
+        external_ip:
          -
             name: "default_name_9"
-        gcp-project: "<your_own_value>"
-        key-passwd: "<your_own_value>"
-        name: "default_name_12"
+        gcp_project: "<your_own_value>"
+        key_passwd: "<your_own_value>"
+        login_endpoint: "<your_own_value>"
+        name: "default_name_13"
         nic:
          -
             ip:
              -
-                name: "default_name_15"
-                public-ip: "<your_own_value>"
-            name: "default_name_17"
-        oci-cert: "<your_own_value> (source certificate.local.name)"
-        oci-fingerprint: "<your_own_value>"
-        oci-region: "phoenix"
+                name: "default_name_16"
+                public_ip: "<your_own_value>"
+            name: "default_name_18"
+        oci_cert: "<your_own_value> (source certificate.local.name)"
+        oci_fingerprint: "<your_own_value>"
+        oci_region: "phoenix"
         password: "<your_own_value>"
-        private-key: "<your_own_value>"
+        private_key: "<your_own_value>"
         region: "<your_own_value>"
-        resource-group: "<your_own_value>"
+        resource_group: "<your_own_value>"
+        resource_url: "<your_own_value>"
         route:
          -
-            name: "default_name_26"
-        route-table:
-         -
             name: "default_name_28"
+        route_table:
+         -
+            name: "default_name_30"
             route:
              -
-                name: "default_name_30"
-                next-hop: "<your_own_value>"
-        secret-key: "<your_own_value>"
+                name: "default_name_32"
+                next_hop: "<your_own_value>"
+        secret_key: "<your_own_value>"
         server: "192.168.100.40"
-        server-port: "34"
-        service-account: "<your_own_value>"
+        server_port: "36"
+        service_account: "<your_own_value>"
         status: "disable"
-        subscription-id: "<your_own_value>"
-        tenant-id: "<your_own_value>"
+        subscription_id: "<your_own_value>"
+        tenant_id: "<your_own_value>"
         type: "aci"
-        update-interval: "40"
-        use-metadata-iam: "disable"
-        user-id: "<your_own_value>"
+        update_interval: "42"
+        use_metadata_iam: "disable"
+        user_id: "<your_own_value>"
         username: "<your_own_value>"
-        vpc-id: "<your_own_value>"
+        vpc_id: "<your_own_value>"
 '''
 
 RETURN = '''
@@ -329,7 +408,7 @@ mkey:
   description: Master key (id) used in the last call to FortiGate
   returned: success
   type: str
-  sample: "key1"
+  sample: "id"
 name:
   description: Name of the table used to fulfill the request
   returned: always
@@ -369,14 +448,16 @@ version:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.connection import Connection
+from ansible.module_utils.network.fortios.fortios import FortiOSHandler
+from ansible.module_utils.network.fortimanager.common import FAIL_SOCKET_MSG
 
-fos = None
 
-
-def login(data):
+def login(data, fos):
     host = data['host']
     username = data['username']
     password = data['password']
+    ssl_verify = data['ssl_verify']
 
     fos.debug('on')
     if 'https' in data and not data['https']:
@@ -384,135 +465,163 @@ def login(data):
     else:
         fos.https('on')
 
-    fos.login(host, username, password)
+    fos.login(host, username, password, verify=ssl_verify)
 
 
 def filter_system_sdn_connector_data(json):
-    option_list = ['access-key', 'azure-region', 'client-id',
-                   'client-secret', 'compartment-id', 'external-ip',
-                   'gcp-project', 'key-passwd', 'name',
-                   'nic', 'oci-cert', 'oci-fingerprint',
-                   'oci-region', 'password', 'private-key',
-                   'region', 'resource-group', 'route',
-                   'route-table', 'secret-key', 'server',
-                   'server-port', 'service-account', 'status',
-                   'subscription-id', 'tenant-id', 'type',
-                   'update-interval', 'use-metadata-iam', 'user-id',
-                   'username', 'vpc-id']
+    option_list = ['access_key', 'azure_region', 'client_id',
+                   'client_secret', 'compartment_id', 'external_ip',
+                   'gcp_project', 'key_passwd', 'login_endpoint',
+                   'name', 'nic', 'oci_cert',
+                   'oci_fingerprint', 'oci_region', 'password',
+                   'private_key', 'region', 'resource_group',
+                   'resource_url', 'route', 'route_table',
+                   'secret_key', 'server', 'server_port',
+                   'service_account', 'status', 'subscription_id',
+                   'tenant_id', 'type', 'update_interval',
+                   'use_metadata_iam', 'user_id', 'username',
+                   'vpc_id']
     dictionary = {}
 
     for attribute in option_list:
-        if attribute in json:
+        if attribute in json and json[attribute] is not None:
             dictionary[attribute] = json[attribute]
 
     return dictionary
 
 
+def underscore_to_hyphen(data):
+    if isinstance(data, list):
+        for elem in data:
+            elem = underscore_to_hyphen(elem)
+    elif isinstance(data, dict):
+        new_data = {}
+        for k, v in data.items():
+            new_data[k.replace('_', '-')] = underscore_to_hyphen(v)
+        data = new_data
+
+    return data
+
+
 def system_sdn_connector(data, fos):
     vdom = data['vdom']
+    if 'state' in data and data['state']:
+        state = data['state']
+    elif 'state' in data['system_sdn_connector'] and data['system_sdn_connector']:
+        state = data['system_sdn_connector']['state']
+    else:
+        state = True
     system_sdn_connector_data = data['system_sdn_connector']
-    filtered_data = filter_system_sdn_connector_data(system_sdn_connector_data)
-    if system_sdn_connector_data['state'] == "present":
+    filtered_data = underscore_to_hyphen(filter_system_sdn_connector_data(system_sdn_connector_data))
+
+    if state == "present":
         return fos.set('system',
                        'sdn-connector',
                        data=filtered_data,
                        vdom=vdom)
 
-    elif system_sdn_connector_data['state'] == "absent":
+    elif state == "absent":
         return fos.delete('system',
                           'sdn-connector',
                           mkey=filtered_data['name'],
                           vdom=vdom)
 
 
+def is_successful_status(status):
+    return status['status'] == "success" or \
+        status['http_method'] == "DELETE" and status['http_status'] == 404
+
+
 def fortios_system(data, fos):
-    login(data)
 
-    methodlist = ['system_sdn_connector']
-    for method in methodlist:
-        if data[method]:
-            resp = eval(method)(data, fos)
-            break
+    if data['system_sdn_connector']:
+        resp = system_sdn_connector(data, fos)
 
-    fos.logout()
-    return not resp['status'] == "success", resp['status'] == "success", resp
+    return not is_successful_status(resp), \
+        resp['status'] == "success", \
+        resp
 
 
 def main():
     fields = {
-        "host": {"required": True, "type": "str"},
-        "username": {"required": True, "type": "str"},
-        "password": {"required": False, "type": "str", "no_log": True},
+        "host": {"required": False, "type": "str"},
+        "username": {"required": False, "type": "str"},
+        "password": {"required": False, "type": "str", "default": "", "no_log": True},
         "vdom": {"required": False, "type": "str", "default": "root"},
-        "https": {"required": False, "type": "bool", "default": "False"},
+        "https": {"required": False, "type": "bool", "default": True},
+        "ssl_verify": {"required": False, "type": "bool", "default": True},
+        "state": {"required": False, "type": "str",
+                  "choices": ["present", "absent"]},
         "system_sdn_connector": {
-            "required": False, "type": "dict",
+            "required": False, "type": "dict", "default": None,
             "options": {
-                "state": {"required": True, "type": "str",
+                "state": {"required": False, "type": "str",
                           "choices": ["present", "absent"]},
-                "access-key": {"required": False, "type": "str"},
-                "azure-region": {"required": False, "type": "str",
+                "access_key": {"required": False, "type": "str"},
+                "azure_region": {"required": False, "type": "str",
                                  "choices": ["global", "china", "germany",
-                                             "usgov"]},
-                "client-id": {"required": False, "type": "str"},
-                "client-secret": {"required": False, "type": "str"},
-                "compartment-id": {"required": False, "type": "str"},
-                "external-ip": {"required": False, "type": "list",
+                                             "usgov", "local"]},
+                "client_id": {"required": False, "type": "str"},
+                "client_secret": {"required": False, "type": "str"},
+                "compartment_id": {"required": False, "type": "str"},
+                "external_ip": {"required": False, "type": "list",
                                 "options": {
                                     "name": {"required": True, "type": "str"}
                                 }},
-                "gcp-project": {"required": False, "type": "str"},
-                "key-passwd": {"required": False, "type": "str"},
+                "gcp_project": {"required": False, "type": "str"},
+                "key_passwd": {"required": False, "type": "str"},
+                "login_endpoint": {"required": False, "type": "str"},
                 "name": {"required": True, "type": "str"},
                 "nic": {"required": False, "type": "list",
                         "options": {
                             "ip": {"required": False, "type": "list",
                                    "options": {
                                        "name": {"required": True, "type": "str"},
-                                       "public-ip": {"required": False, "type": "str"}
+                                       "public_ip": {"required": False, "type": "str"}
                                    }},
                             "name": {"required": True, "type": "str"}
                         }},
-                "oci-cert": {"required": False, "type": "str"},
-                "oci-fingerprint": {"required": False, "type": "str"},
-                "oci-region": {"required": False, "type": "str",
+                "oci_cert": {"required": False, "type": "str"},
+                "oci_fingerprint": {"required": False, "type": "str"},
+                "oci_region": {"required": False, "type": "str",
                                "choices": ["phoenix", "ashburn", "frankfurt",
                                            "london"]},
                 "password": {"required": False, "type": "str"},
-                "private-key": {"required": False, "type": "str"},
+                "private_key": {"required": False, "type": "str"},
                 "region": {"required": False, "type": "str"},
-                "resource-group": {"required": False, "type": "str"},
+                "resource_group": {"required": False, "type": "str"},
+                "resource_url": {"required": False, "type": "str"},
                 "route": {"required": False, "type": "list",
                           "options": {
                               "name": {"required": True, "type": "str"}
                           }},
-                "route-table": {"required": False, "type": "list",
+                "route_table": {"required": False, "type": "list",
                                 "options": {
                                     "name": {"required": True, "type": "str"},
                                     "route": {"required": False, "type": "list",
                                               "options": {
                                                   "name": {"required": True, "type": "str"},
-                                                  "next-hop": {"required": False, "type": "str"}
+                                                  "next_hop": {"required": False, "type": "str"}
                                               }}
                                 }},
-                "secret-key": {"required": False, "type": "str"},
+                "secret_key": {"required": False, "type": "str"},
                 "server": {"required": False, "type": "str"},
-                "server-port": {"required": False, "type": "int"},
-                "service-account": {"required": False, "type": "str"},
+                "server_port": {"required": False, "type": "int"},
+                "service_account": {"required": False, "type": "str"},
                 "status": {"required": False, "type": "str",
                            "choices": ["disable", "enable"]},
-                "subscription-id": {"required": False, "type": "str"},
-                "tenant-id": {"required": False, "type": "str"},
+                "subscription_id": {"required": False, "type": "str"},
+                "tenant_id": {"required": False, "type": "str"},
                 "type": {"required": False, "type": "str",
                          "choices": ["aci", "aws", "azure",
-                                     "nsx", "nuage", "oci",
-                                     "gcp"]},
-                "update-interval": {"required": False, "type": "int"},
-                "use-metadata-iam": {"required": False, "type": "str",
+                                     "gcp", "nsx", "nuage",
+                                     "oci", "openstack"]},
+                "update_interval": {"required": False, "type": "int"},
+                "use_metadata_iam": {"required": False, "type": "str",
                                      "choices": ["disable", "enable"]},
-                "user-id": {"required": False, "type": "str"},
+                "user_id": {"required": False, "type": "str"},
                 "username": {"required": False, "type": "str"},
-                "vpc-id": {"required": False, "type": "str"}
+                "vpc_id": {"required": False, "type": "str"}
 
             }
         }
@@ -520,15 +629,31 @@ def main():
 
     module = AnsibleModule(argument_spec=fields,
                            supports_check_mode=False)
-    try:
-        from fortiosapi import FortiOSAPI
-    except ImportError:
-        module.fail_json(msg="fortiosapi module is required")
 
-    global fos
-    fos = FortiOSAPI()
+    # legacy_mode refers to using fortiosapi instead of HTTPAPI
+    legacy_mode = 'host' in module.params and module.params['host'] is not None and \
+                  'username' in module.params and module.params['username'] is not None and \
+                  'password' in module.params and module.params['password'] is not None
 
-    is_error, has_changed, result = fortios_system(module.params, fos)
+    if not legacy_mode:
+        if module._socket_path:
+            connection = Connection(module._socket_path)
+            fos = FortiOSHandler(connection)
+
+            is_error, has_changed, result = fortios_system(module.params, fos)
+        else:
+            module.fail_json(**FAIL_SOCKET_MSG)
+    else:
+        try:
+            from fortiosapi import FortiOSAPI
+        except ImportError:
+            module.fail_json(msg="fortiosapi module is required")
+
+        fos = FortiOSAPI()
+
+        login(module.params, fos)
+        is_error, has_changed, result = fortios_system(module.params, fos)
+        fos.logout()
 
     if not is_error:
         module.exit_json(changed=has_changed, meta=result)

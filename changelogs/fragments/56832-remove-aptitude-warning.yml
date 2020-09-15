@@ -1,0 +1,2 @@
+bugfixes:
+  - Remove the unnecessary warning about aptitude not being installed (https://github.com/ansible/ansible/issues/56832).

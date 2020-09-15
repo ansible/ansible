@@ -78,7 +78,7 @@ options:
               storage-system.
             - For example, all users in group A will be assigned all 4 available roles, which will allow access
               to all the management functionality of the system (super-user). Those in group B only have the
-              storage.monitor role, which will allow only read-only acess.
+              storage.monitor role, which will allow only read-only access.
             - This is specified as a mapping of regular expressions to a list of roles. See the examples.
             - The roles that will be assigned to to the group/groups matching the provided regex.
             - storage.admin allows users full read/write access to storage objects and operations.
@@ -252,7 +252,7 @@ class Ldap(object):
         return domain
 
     def is_embedded(self):
-        """Determine whether or not we're using the embedded or proxy implemenation of Web Services"""
+        """Determine whether or not we're using the embedded or proxy implementation of Web Services"""
         if self.embedded is None:
             url = self.url
             try:

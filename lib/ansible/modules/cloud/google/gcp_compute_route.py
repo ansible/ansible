@@ -62,16 +62,19 @@ options:
     - present
     - absent
     default: present
+    type: str
   dest_range:
     description:
     - The destination range of outgoing packets that this route applies to.
     - Only IPv4 is supported.
     required: true
+    type: str
   description:
     description:
     - An optional description of this resource. Provide this property when you create
       the resource.
     required: false
+    type: str
     version_added: 2.7
   name:
     description:
@@ -82,14 +85,17 @@ options:
       characters must be a dash, lowercase letter, or digit, except the last character,
       which cannot be a dash.
     required: true
+    type: str
   network:
     description:
     - The network that this route applies to.
     - 'This field represents a link to a Network resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_network
-      task and then set this network field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_network task and then set this network field to "{{ name-of-resource
+      }}"'
     required: true
+    type: dict
   priority:
     description:
     - The priority of this route. Priority is used to break ties in cases where there
@@ -98,10 +104,12 @@ options:
       priority value wins.
     - Default value is 1000. Valid range is 0 through 65535.
     required: false
+    type: int
   tags:
     description:
     - A list of instance tags to which this route applies.
     required: false
+    type: list
   next_hop_gateway:
     description:
     - URL to a gateway that should handle matching packets.
@@ -110,6 +118,7 @@ options:
       * projects/project/global/gateways/default-internet-gateway * global/gateways/default-internet-gateway
       .'
     required: false
+    type: str
   next_hop_instance:
     description:
     - URL to an instance that should handle matching packets.
@@ -117,22 +126,27 @@ options:
       instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
       .'
     - 'This field represents a link to a Instance resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_instance
-      task and then set this next_hop_instance field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_instance task and then set this next_hop_instance field to
+      "{{ name-of-resource }}"'
     required: false
+    type: dict
   next_hop_ip:
     description:
     - Network IP address of an instance that should handle matching packets.
     required: false
+    type: str
   next_hop_vpn_tunnel:
     description:
     - URL to a VpnTunnel that should handle matching packets.
     - 'This field represents a link to a VpnTunnel resource in GCP. It can be specified
-      in two ways. First, you can place in the selfLink of the resource here as a
-      string Alternatively, you can add `register: name-of-resource` to a gcp_compute_vpn_tunnel
-      task and then set this next_hop_vpn_tunnel field to "{{ name-of-resource }}"'
+      in two ways. First, you can place a dictionary with key ''selfLink'' and value
+      of your resource''s selfLink Alternatively, you can add `register: name-of-resource`
+      to a gcp_compute_vpn_tunnel task and then set this next_hop_vpn_tunnel field
+      to "{{ name-of-resource }}"'
     required: false
+    type: dict
 extends_documentation_fragment: gcp
 notes:
 - 'API Reference: U(https://cloud.google.com/compute/docs/reference/rest/v1/routes)'
@@ -191,7 +205,7 @@ network:
   description:
   - The network that this route applies to.
   returned: success
-  type: str
+  type: dict
 priority:
   description:
   - The priority of this route. Priority is used to break ties in cases where there
@@ -222,7 +236,7 @@ nextHopInstance:
     instances/instance * projects/project/zones/zone/instances/instance * zones/zone/instances/instance
     .'
   returned: success
-  type: str
+  type: dict
 nextHopIp:
   description:
   - Network IP address of an instance that should handle matching packets.
@@ -232,7 +246,7 @@ nextHopVpnTunnel:
   description:
   - URL to a VpnTunnel that should handle matching packets.
   returned: success
-  type: str
+  type: dict
 nextHopNetwork:
   description:
   - URL to a Network that should handle matching packets.
@@ -262,13 +276,13 @@ def main():
             dest_range=dict(required=True, type='str'),
             description=dict(type='str'),
             name=dict(required=True, type='str'),
-            network=dict(required=True),
+            network=dict(required=True, type='dict'),
             priority=dict(type='int'),
             tags=dict(type='list', elements='str'),
             next_hop_gateway=dict(type='str'),
-            next_hop_instance=dict(),
+            next_hop_instance=dict(type='dict'),
             next_hop_ip=dict(type='str'),
-            next_hop_vpn_tunnel=dict(),
+            next_hop_vpn_tunnel=dict(type='dict'),
         )
     )
 
@@ -309,7 +323,8 @@ def create(module, link, kind):
 
 
 def update(module, link, kind):
-    module.fail_json(msg="Route cannot be edited")
+    delete(module, self_link(module), kind)
+    create(module, collection(module), kind)
 
 
 def delete(module, link, kind):

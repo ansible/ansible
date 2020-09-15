@@ -1,0 +1,2 @@
+bugfixes:
+  - aws_kms - Update key policy when key already exists

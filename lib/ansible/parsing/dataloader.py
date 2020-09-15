@@ -51,8 +51,16 @@ class DataLoader:
     '''
 
     def __init__(self):
+
         self._basedir = '.'
+
+        # NOTE: not effective with forks as the main copy does not get updated.
+        # avoids rereading files
         self._FILE_CACHE = dict()
+
+        # NOTE: not thread safe, also issues with forks not returning data to main proc
+        #       so they need to be cleaned independantly. See WorkerProcess for example.
+        # used to keep track of temp files for cleaning
         self._tempfiles = set()
 
         # initialize the vault stuff with an empty password
@@ -67,11 +75,11 @@ class DataLoader:
     def set_vault_secrets(self, vault_secrets):
         self._vault.secrets = vault_secrets
 
-    def load(self, data, file_name='<string>', show_content=True):
+    def load(self, data, file_name='<string>', show_content=True, json_only=False):
         '''Backwards compat for now'''
-        return from_yaml(data, file_name, show_content, self._vault.secrets)
+        return from_yaml(data, file_name, show_content, self._vault.secrets, json_only=json_only)
 
-    def load_from_file(self, file_name, cache=True, unsafe=False):
+    def load_from_file(self, file_name, cache=True, unsafe=False, json_only=False):
         ''' Loads data from a file, which can contain either JSON or YAML.  '''
 
         file_name = self.path_dwim(file_name)
@@ -86,7 +94,7 @@ class DataLoader:
             (b_file_data, show_content) = self._get_file_contents(file_name)
 
             file_data = to_text(b_file_data, errors='surrogate_or_strict')
-            parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content)
+            parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content, json_only=json_only)
 
             # cache the file contents for next time
             self._FILE_CACHE[file_name] = parsed_data
@@ -273,8 +281,8 @@ class DataLoader:
         :returns: An absolute path to the filename ``source`` if found
         :raises: An AnsibleFileNotFound Exception if the file is found to exist in the search paths
         '''
-        b_dirname = to_bytes(dirname)
-        b_source = to_bytes(source)
+        b_dirname = to_bytes(dirname, errors='surrogate_or_strict')
+        b_source = to_bytes(source, errors='surrogate_or_strict')
 
         result = None
         search = []
@@ -305,8 +313,8 @@ class DataLoader:
             # always append basedir as last resort
             # don't add dirname if user already is using it in source
             if b_source.split(b'/')[0] != dirname:
-                search.append(os.path.join(to_bytes(self.get_basedir()), b_dirname, b_source))
-            search.append(os.path.join(to_bytes(self.get_basedir()), b_source))
+                search.append(os.path.join(to_bytes(self.get_basedir(), errors='surrogate_or_strict'), b_dirname, b_source))
+            search.append(os.path.join(to_bytes(self.get_basedir(), errors='surrogate_or_strict'), b_source))
 
             display.debug(u'search_path:\n\t%s' % to_text(b'\n\t'.join(search)))
             for b_candidate in search:
@@ -316,13 +324,13 @@ class DataLoader:
                     break
 
         if result is None:
-            raise AnsibleFileNotFound(file_name=source, paths=[to_text(p) for p in search])
+            raise AnsibleFileNotFound(file_name=source, paths=[to_native(p) for p in search])
 
         return result
 
     def _create_content_tempfile(self, content):
         ''' Create a tempfile containing defined content '''
-        fd, content_tempfile = tempfile.mkstemp()
+        fd, content_tempfile = tempfile.mkstemp(dir=C.DEFAULT_LOCAL_TMP)
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
         try:
@@ -385,11 +393,15 @@ class DataLoader:
             self._tempfiles.remove(file_path)
 
     def cleanup_all_tmp_files(self):
+        """
+        Removes all temporary files that DataLoader has created
+        NOTE: not thread safe, forks also need special handling see __init__ for details.
+        """
         for f in self._tempfiles:
             try:
                 self.cleanup_tmp_file(f)
             except Exception as e:
-                display.warning("Unable to cleanup temp files: %s" % to_native(e))
+                display.warning("Unable to cleanup temp files: %s" % to_text(e))
 
     def find_vars_files(self, path, name, extensions=None, allow_dir=True):
         """

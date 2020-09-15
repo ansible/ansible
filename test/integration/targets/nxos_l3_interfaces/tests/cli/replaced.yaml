@@ -1,0 +1,64 @@
+---
+- debug:
+    msg: "Start nxos_l3_interfaces replaced integration tests connection={{ ansible_connection }}"
+
+- set_fact: test_int1="{{ nxos_int1 }}"
+
+- name: setup1
+  cli_config: &cleanup
+    config: |
+      default interface {{ test_int1 }}
+
+- block:
+  - name: setup2
+    cli_config:
+      config: |
+        interface {{ test_int1 }}
+          no switchport
+          ip address 192.168.10.2/24
+
+  - name: Gather l3_interfaces facts
+    nxos_facts: &facts
+      gather_subset:
+        - '!all'
+        - '!min'
+      gather_network_resources: l3_interfaces
+
+  - name: Replaced
+    nxos_l3_interfaces: &replaced
+      config:
+        - name: "{{ test_int1 }}"
+          ipv6:
+            - address: "fd5d:12c9:2201:1::1/64"
+              tag: 6
+      state: replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.before|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
+        - "result.changed == true"
+        - "'interface {{ test_int1 }}' in result.commands"
+        - "'no ip address' in result.commands"
+        - "'ipv6 address fd5d:12c9:2201:1::1/64 tag 6' in result.commands"
+        - "result.commands|length == 3"
+
+  - name: Gather l3_interfaces post facts
+    nxos_facts: *facts
+
+  - assert:
+      that:
+        - "result.after|length == (ansible_facts.network_resources.l3_interfaces|length - 1)"
+
+  - name: Idempotence - Replaced
+    nxos_l3_interfaces: *replaced
+    register: result
+
+  - assert:
+      that:
+        - "result.changed == false"
+        - "result.commands|length == 0"
+
+  always:
+  - name: teardown
+    cli_config: *cleanup

@@ -187,7 +187,7 @@ EXAMPLES = '''
 
 - include: katello.yml
   vars:
-      name: Promote Contentview Environment with longer timout
+      name: Promote Contentview Environment with longer timeout
       task_timeout: 10800
       entity: content_view
       action: promote
@@ -199,10 +199,10 @@ EXAMPLES = '''
 
 # Best Practices
 
-# In Foreman, things can be done in paralell.
+# In Foreman, things can be done in parallel.
 # When a conflicting action is already running,
 # the task will fail instantly instead of waiting for the already running action to complete.
-# So you sould use a "until success" loop to catch this.
+# So you should use a "until success" loop to catch this.
 
 - name: Promote Contentview Environment with increased Timeout
   katello:

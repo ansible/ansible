@@ -48,9 +48,8 @@
   assert:
     that:
       - result.changed == true
-      - "result.kind == 'compute#subnetwork'"
 - name: verify that subnetwork was created
-  gcp_compute_subnetwork_facts:
+  gcp_compute_subnetwork_info:
       filters:
          - name = ansiblenet
       region: us-west1
@@ -63,7 +62,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 1
+      - results['resources'] | length == 1
 # ----------------------------------------------------------------------------
 - name: create a subnetwork that already exists
   gcp_compute_subnetwork:
@@ -80,7 +79,6 @@
   assert:
     that:
       - result.changed == false
-      - "result.kind == 'compute#subnetwork'"
 #----------------------------------------------------------
 - name: delete a subnetwork
   gcp_compute_subnetwork:
@@ -97,9 +95,8 @@
   assert:
     that:
       - result.changed == true
-      - result.has_key('kind') == False
 - name: verify that subnetwork was deleted
-  gcp_compute_subnetwork_facts:
+  gcp_compute_subnetwork_info:
       filters:
          - name = ansiblenet
       region: us-west1
@@ -112,7 +109,7 @@
 - name: verify that command succeeded
   assert:
     that:
-      - results['items'] | length == 0
+      - results['resources'] | length == 0
 # ----------------------------------------------------------------------------
 - name: delete a subnetwork that does not exist
   gcp_compute_subnetwork:
@@ -129,7 +126,6 @@
   assert:
     that:
       - result.changed == false
-      - result.has_key('kind') == False
 #---------------------------------------------------------
 # Post-test teardown
 # If errors happen, don't crash the playbook!

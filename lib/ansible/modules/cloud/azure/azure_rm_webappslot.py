@@ -17,7 +17,7 @@ DOCUMENTATION = '''
 ---
 module: azure_rm_webappslot
 version_added: "2.8"
-short_description: Manage Azure Web App slot.
+short_description: Manage Azure Web App slot
 description:
     - Create, update and delete Azure Web App slot.
 
@@ -52,9 +52,9 @@ options:
             action:
                 description:
                     - Swap types.
-                    - preview is to apply target slot settings on source slot first.
-                    - swap is to complete swapping.
-                    - reset is to reset the swap.
+                    - C(preview) is to apply target slot settings on source slot first.
+                    - C(swap) is to complete swapping.
+                    - C(reset) is to reset the swap.
                 choices:
                     - preview
                     - swap
@@ -65,7 +65,7 @@ options:
                     - Name of target slot to swap. If set to None, then swap with production slot.
             preserve_vnet:
                 description:
-                    - True to preserve virtual network to the slot during swap. Otherwise False.
+                    - C(True) to preserve virtual network to the slot during swap. Otherwise C(False).
                 type: bool
                 default: True
     frameworks:
@@ -77,8 +77,10 @@ options:
                 description:
                     - Name of the framework.
                     - Supported framework list for Windows web app and Linux web app is different.
-                    - For Windows web app, supported names(June 2018) java, net_framework, php, python, node. Multiple framework can be set at same time.
-                    - For Linux web app, supported names(June 2018) java, ruby, php, dotnetcore, node. Only one framework can be set.
+                    - Windows web apps support C(java), C(net_framework), C(php), C(python), and C(node) from June 2018.
+                    - Windows web apps support multiple framework at same time.
+                    - Linux web apps support C(java), C(ruby), C(php), C(dotnetcore), and C(node) from June 2018.
+                    - Linux web apps support only one framework.
                     - Java framework is mutually exclusive with others.
                 choices:
                     - java
@@ -91,39 +93,44 @@ options:
             version:
                 description:
                     - Version of the framework. For Linux web app supported value, see U(https://aka.ms/linux-stacks) for more info.
-                    - net_framework supported value sample, 'v4.0' for .NET 4.6 and 'v3.0' for .NET 3.5.
-                    - php supported value sample, 5.5, 5.6, 7.0.
-                    - python supported value sample, e.g., 5.5, 5.6, 7.0.
-                    - node supported value sample, 6.6, 6.9.
-                    - dotnetcore supported value sample, 1.0, 1,1, 1.2.
-                    - ruby supported value sample, 2.3.
-                    - java supported value sample, 1.8, 1.9 for windows web app. 8 for linux web app.
+                    - C(net_framework) supported value sample, C(v4.0) for .NET 4.6 and C(v3.0) for .NET 3.5.
+                    - C(php) supported value sample, C(5.5), C(5.6), C(7.0).
+                    - C(python) supported value sample, C(5.5), C(5.6), C(7.0).
+                    - C(node) supported value sample, C(6.6), C(6.9).
+                    - C(dotnetcore) supported value sample, C(1.0), C(1.1), C(1.2).
+                    - C(ruby) supported value sample, 2.3.
+                    - C(java) supported value sample, C(1.9) for Windows web app. C(1.8) for Linux web app.
             settings:
                 description:
                     - List of settings of the framework.
                 suboptions:
                     java_container:
-                        description: Name of Java container. This is supported by specific framework C(java) only. e.g. Tomcat, Jetty.
+                        description:
+                            - Name of Java container. This is supported by specific framework C(java) onlys, for example C(Tomcat), C(Jetty).
                     java_container_version:
                         description:
                             - Version of Java container. This is supported by specific framework C(java) only.
-                            - For Tomcat, e.g. 8.0, 8.5, 9.0. For Jetty, e.g. 9.1, 9.3.
+                            - For C(Tomcat), for example C(8.0), C(8.5), C(9.0). For C(Jetty), for example C(9.1), C(9.3).
     container_settings:
-        description: Web app slot container settings.
+        description:
+            - Web app slot container settings.
         suboptions:
             name:
-                description: Name of container. eg. "imagename:tag"
+                description:
+                    - Name of container, for example C(imagename:tag).
             registry_server_url:
-                description: Container registry server url. eg. mydockerregistry.io
+                description:
+                    - Container registry server URL, for example C(mydockerregistry.io).
             registry_server_user:
-                description: The container registry server user name.
+                description:
+                    - The container registry server user name.
             registry_server_password:
                 description:
                     - The container registry server password.
     startup_file:
         description:
             - The slot startup file.
-            - This only applies for linux web app slot.
+            - This only applies for Linux web app slot.
     app_settings:
         description:
             - Configure web app slot application settings. Suboptions are in key value pair format.
@@ -133,11 +140,11 @@ options:
         type: bool
     deployment_source:
         description:
-            - Deployment source for git
+            - Deployment source for git.
         suboptions:
             url:
                 description:
-                    - Repository url of deployment source.
+                    - Repository URL of deployment source.
             branch:
                 description:
                     - The branch name of the repository.
@@ -152,25 +159,25 @@ options:
         default: started
     state:
       description:
-        - Assert the state of the Web App deployment slot.
-        - Use C(present) to create or update a  slot and C(absent) to delete it.
+          - State of the Web App deployment slot.
+          - Use C(present) to create or update a  slot and C(absent) to delete it.
       default: present
       choices:
-        - absent
-        - present
+          - absent
+          - present
 
 extends_documentation_fragment:
     - azure
     - azure_tags
 
 author:
-    - "Yunge Zhu(@yungezz)"
+    - Yunge Zhu(@yungezz)
 
 '''
 
 EXAMPLES = '''
   - name: Create a webapp slot
-    azure_rm_webapp_slot:
+    azure_rm_webappslot:
       resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
@@ -179,7 +186,7 @@ EXAMPLES = '''
         testkey: testvalue
 
   - name: swap the slot with production slot
-    azure_rm_webapp_slot:
+    azure_rm_webappslot:
       resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
@@ -187,14 +194,14 @@ EXAMPLES = '''
         action: swap
 
   - name: stop the slot
-    azure_rm_webapp_slot:
+    azure_rm_webappslot:
       resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
       app_state: stopped
 
   - name: udpate a webapp slot app settings
-    azure_rm_webapp_slot:
+    azure_rm_webappslot:
       resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
@@ -202,7 +209,7 @@ EXAMPLES = '''
         testkey: testvalue2
 
   - name: udpate a webapp slot frameworks
-    azure_rm_webapp_slot:
+    azure_rm_webappslot:
       resource_group: myResourceGroup
       webapp_name: myJavaWebApp
       name: stage
@@ -213,7 +220,8 @@ EXAMPLES = '''
 
 RETURN = '''
 id:
-    description: Id of current slot.
+    description:
+        - ID of current slot.
     returned: always
     type: str
     sample: /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Web/sites/testapp/slots/stage1
@@ -224,7 +232,7 @@ from ansible.module_utils.azure_rm_common import AzureRMModuleBase
 
 try:
     from msrestazure.azure_exceptions import CloudError
-    from msrestazure.azure_operation import AzureOperationPoller
+    from msrest.polling import LROPoller
     from msrest.serialization import Model
     from azure.mgmt.web.models import (
         site_config, app_service_plan, Site,
@@ -563,7 +571,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 if self.app_settings:
                     app_settings = []
                     for key in self.app_settings.keys():
-                        app_settings.append(NameValuePair(key, self.app_settings[key]))
+                        app_settings.append(NameValuePair(name=key, value=self.app_settings[key]))
 
                     self.site_config['app_settings'] = app_settings
 
@@ -595,7 +603,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 if self.purge_app_settings:
                     to_be_updated = True
                     self.to_do = Actions.UpdateAppSettings
-                    self.app_settings_strDic.properties = dict()
+                    self.app_settings_strDic = dict()
 
                 # check if app settings changed
                 if self.purge_app_settings or self.is_app_settings_changed():
@@ -604,7 +612,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
 
                     if self.app_settings:
                         for key in self.app_settings.keys():
-                            self.app_settings_strDic.properties[key] = self.app_settings[key]
+                            self.app_settings_strDic[key] = self.app_settings[key]
 
         elif self.state == 'absent':
             if old_response:
@@ -682,14 +690,14 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
     # comparing existing app setting with input, determine whether it's changed
     def is_app_settings_changed(self):
         if self.app_settings:
-            if len(self.app_settings_strDic.properties) != len(self.app_settings):
+            if len(self.app_settings_strDic) != len(self.app_settings):
                 return True
 
-            if self.app_settings_strDic.properties != self.app_settings:
+            if self.app_settings_strDic != self.app_settings:
                 return True
         return False
 
-    # comparing deployment source with input, determine wheather it's changed
+    # comparing deployment source with input, determine whether it's changed
     def is_deployment_source_changed(self, existing_webapp):
         if self.deployment_source:
             if self.deployment_source.get('url') \
@@ -716,7 +724,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                                                                       slot=self.name,
                                                                       name=self.webapp_name,
                                                                       site_envelope=self.site)
-            if isinstance(response, AzureOperationPoller):
+            if isinstance(response, LROPoller):
                 response = self.get_poller_result(response)
 
         except CloudError as exc:
@@ -757,13 +765,17 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
             response = self.web_client.web_apps.get(resource_group_name=self.resource_group,
                                                     name=self.webapp_name)
 
-            self.log("Response : {0}".format(response))
-            self.log("Web App instance : {0} found".format(response.name))
-            return webapp_to_dict(response)
+            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
+            if response is not None:
+                self.log("Response : {0}".format(response))
+                self.log("Web App instance : {0} found".format(response.name))
+                return webapp_to_dict(response)
 
         except CloudError as ex:
-            self.log("Didn't find web app {0} in resource group {1}".format(
-                self.webapp_name, self.resource_group))
+            pass
+
+        self.log("Didn't find web app {0} in resource group {1}".format(
+            self.webapp_name, self.resource_group))
 
         return False
 
@@ -783,12 +795,16 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                                                          name=self.webapp_name,
                                                          slot=self.name)
 
-            self.log("Response : {0}".format(response))
-            self.log("Web App slot: {0} found".format(response.name))
-            return slot_to_dict(response)
+            # Newer SDK versions (0.40.0+) seem to return None if it doesn't exist instead of raising CloudError
+            if response is not None:
+                self.log("Response : {0}".format(response))
+                self.log("Web App slot: {0} found".format(response.name))
+                return slot_to_dict(response)
 
         except CloudError as ex:
-            self.log("Does not find web app slot {0} in resource group {1}".format(self.name, self.resource_group))
+            pass
+
+        self.log("Does not find web app slot {0} in resource group {1}".format(self.name, self.resource_group))
 
         return False
 
@@ -805,7 +821,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 resource_group_name=self.resource_group, name=self.webapp_name)
             self.log("Response : {0}".format(response))
 
-            return response
+            return response.properties
         except CloudError as ex:
             self.fail("Failed to list application settings for web app {0} in resource group {1}: {2}".format(
                 self.name, self.resource_group, str(ex)))
@@ -823,7 +839,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 resource_group_name=self.resource_group, name=self.webapp_name, slot=slot_name)
             self.log("Response : {0}".format(response))
 
-            return response
+            return response.properties
         except CloudError as ex:
             self.fail("Failed to list application settings for web app slot {0} in resource group {1}: {2}".format(
                 self.name, self.resource_group, str(ex)))
@@ -844,7 +860,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                                                                                  name=self.webapp_name,
                                                                                  slot=slot_name,
                                                                                  kind=None,
-                                                                                 app_settings=app_settings)
+                                                                                 properties=app_settings)
             self.log("Response : {0}".format(response))
 
             return response.as_dict()
@@ -1028,7 +1044,7 @@ class AzureRMWebAppSlots(AzureRMModuleBase):
                 app_setting_clone_from = self.list_app_settings_slot(src_slot)
 
             if self.app_settings:
-                app_setting_clone_from.properties.update(self.app_settings)
+                app_setting_clone_from.update(self.app_settings)
 
             self.update_app_settings_slot(app_settings=app_setting_clone_from)
 

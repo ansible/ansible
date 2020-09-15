@@ -1,0 +1,2 @@
+minor_changes:
+    - Allow debugger to take a templated value (https://github.com/ansible/ansible/pull/53587)

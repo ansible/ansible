@@ -1,2 +1,0 @@
-bugfixes:
-- aci_aaa_user - Fix setting user description (https://github.com/ansible/ansible/issues/51406)

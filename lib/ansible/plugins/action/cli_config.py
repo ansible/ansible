@@ -28,7 +28,7 @@ class ActionModule(ActionNetworkModule):
         del tmp  # tmp no longer has any effect
 
         self._config_module = True
-        if self._play_context.connection != 'network_cli':
+        if self._play_context.connection.split('.')[-1] != 'network_cli':
             return {'failed': True, 'msg': 'Connection type %s is not valid for cli_config module' % self._play_context.connection}
 
         return super(ActionModule, self).run(task_vars=task_vars)

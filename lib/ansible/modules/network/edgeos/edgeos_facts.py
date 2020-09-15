@@ -17,7 +17,7 @@ DOCUMENTATION = """
 module: edgeos_facts
 version_added: "2.5"
 author:
-    - Nathaniel Case (@qalthos)
+    - Nathaniel Case (@Qalthos)
     - Sam Doran (@samdoran)
 short_description: Collect facts from remote devices running EdgeOS
 description:

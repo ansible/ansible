@@ -1,0 +1,184 @@
+---
+  - name: set up aws connection info
+    set_fact:
+      aws_connection_info: &aws_connection_info
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        security_token: "{{ security_token }}"
+        region: "{{ aws_region }}"
+    no_log: yes
+
+  # ============================================================
+
+  - name: create a group with a rule (CHECK MODE + DIFF)
+    ec2_group:
+      name: '{{ ec2_group_name }}'
+      description: '{{ ec2_group_description }}'
+      state: present
+      rules:
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+      rules_egress:
+      - proto: all
+        cidr_ip: 0.0.0.0/0
+      <<: *aws_connection_info
+    register: check_mode_result
+    check_mode: true
+    diff: true
+
+  - assert:
+      that:
+        - check_mode_result.changed
+
+  - name: create a group with a rule (DIFF)
+    ec2_group:
+      name: '{{ ec2_group_name }}'
+      description: '{{ ec2_group_description }}'
+      state: present
+      rules:
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+      rules_egress:
+      - proto: all
+        cidr_ip: 0.0.0.0/0
+      <<: *aws_connection_info
+    register: result
+    diff: true
+
+  - assert:
+      that:
+        - result.changed
+        - result.diff.0.after.ip_permissions == check_mode_result.diff.0.after.ip_permissions
+        - result.diff.0.after.ip_permissions_egress == check_mode_result.diff.0.after.ip_permissions_egress
+
+  - name: add rules to make sorting occur (CHECK MODE + DIFF)
+    ec2_group:
+      name: '{{ ec2_group_name }}'
+      description: '{{ ec2_group_description }}'
+      state: present
+      rules:
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 20.0.0.0/8
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 10.0.0.0/8
+      rules_egress:
+      - proto: all
+        cidr_ip: 0.0.0.0/0
+      <<: *aws_connection_info
+    register: check_mode_result
+    check_mode: true
+    diff: true
+
+  - assert:
+      that:
+        - check_mode_result.changed
+
+  - name: add rules in a different order to test sorting consistency (DIFF)
+    ec2_group:
+      name: '{{ ec2_group_name }}'
+      description: '{{ ec2_group_description }}'
+      state: present
+      rules:
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 20.0.0.0/8
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+      - proto: tcp
+        from_port: 22
+        to_port: 22
+        cidr_ip: 10.0.0.0/8
+      rules_egress:
+      - proto: all
+        cidr_ip: 0.0.0.0/0
+      <<: *aws_connection_info
+    register: result
+    diff: true
+
+  - assert:
+      that:
+        - result.changed
+        - result.diff.0.after.ip_permissions == check_mode_result.diff.0.after.ip_permissions
+        - result.diff.0.after.ip_permissions_egress == check_mode_result.diff.0.after.ip_permissions_egress
+
+  - name: purge rules (CHECK MODE + DIFF)
+    ec2_group:
+      name: '{{ ec2_group_name }}'
+      description: '{{ ec2_group_description }}'
+      state: present
+      rules:
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+      rules_egress: []
+      <<: *aws_connection_info
+    register: check_mode_result
+    check_mode: true
+    diff: true
+
+  - assert:
+      that:
+        - check_mode_result.changed
+
+  - name: purge rules (DIFF)
+    ec2_group:
+      name: '{{ ec2_group_name }}'
+      description: '{{ ec2_group_description }}'
+      state: present
+      rules:
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        cidr_ip: 0.0.0.0/0
+      rules_egress: []
+      <<: *aws_connection_info
+    register: result
+    diff: true
+
+  - assert:
+      that:
+        - result.changed
+        - result.diff.0.after.ip_permissions == check_mode_result.diff.0.after.ip_permissions
+        - result.diff.0.after.ip_permissions_egress == check_mode_result.diff.0.after.ip_permissions_egress
+
+  - name: delete the security group (CHECK MODE + DIFF)
+    ec2_group:
+      name: '{{ ec2_group_name }}'
+      state: absent
+      <<: *aws_connection_info
+    register: check_mode_result
+    diff: true
+    check_mode: true
+
+  - assert:
+      that:
+        - check_mode_result.changed
+
+  - name: delete the security group (DIFF)
+    ec2_group:
+      name: '{{ ec2_group_name }}'
+      state: absent
+      <<: *aws_connection_info
+    register: result
+    diff: true
+
+  - assert:
+      that:
+        - result.changed
+        - not result.diff.0.after and not check_mode_result.diff.0.after

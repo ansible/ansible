@@ -1,0 +1,44 @@
+---
+- debug:
+      msg: "START Replaced ios_lacp state for integration tests on connection={{ ansible_connection }}"
+
+- include_tasks: _remove_config.yaml
+
+- include_tasks: _populate_config.yaml
+
+- block:
+    - name: Replaces system LACP configuration provided LACP configuration
+      ios_lacp: &replaced
+        config:
+          system:
+            priority: 20
+        state: replaced
+      register: result
+
+    - name: Assert that correct set of commands were generated
+      assert:
+        that:
+          - "{{ replaced['commands'] | symmetric_difference(result['commands']) | length == 0 }}"
+
+    - name: Assert that before dicts are correctly generated
+      assert:
+        that:
+          - "{{ replaced['before'] == result['before'] }}"
+
+    - name: Assert that after dict is correctly generated
+      assert:
+        that:
+          - "{{ replaced['before'] == result['before'] }}"
+
+    - name: Replaces system LACP configuration provided LACP configuration (IDEMPOTENT)
+      ios_lacp: *replaced
+      register: result
+
+    - name: Assert that task was idempotent
+      assert:
+       that:
+         - "result['changed'] == false"
+  when: ansible_net_version != "15.6(2)T"
+
+  always:
+    - include_tasks: _remove_config.yaml

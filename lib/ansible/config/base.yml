@@ -217,6 +217,7 @@ CACHE_PLUGIN_TIMEOUT:
   yaml: {key: facts.cache.timeout}
 COLLECTIONS_PATHS:
   name: ordered list of root paths for loading installed Ansible collections content
+  description: Colon separated paths in which Ansible will search for collections content.
   default: ~/.ansible/collections:/usr/share/ansible/collections
   type: pathspec
   env:
@@ -341,6 +342,31 @@ CONDITIONAL_BARE_VARS:
   ini:
   - {key: conditional_bare_variables, section: defaults}
   version_added: "2.8"
+COVERAGE_REMOTE_OUTPUT:
+  name: Sets the output directory and filename prefix to generate coverage run info.
+  description:
+    - Sets the output directory on the remote host to generate coverage reports to.
+    - Currently only used for remote coverage on PowerShell modules.
+    - This is for internal use only.
+  env:
+  - {name: _ANSIBLE_COVERAGE_REMOTE_OUTPUT}
+  vars:
+  - {name: _ansible_coverage_remote_output}
+  type: str
+  version_added: '2.9'
+COVERAGE_REMOTE_WHITELIST:
+  name: Sets the list of paths to run coverage for.
+  description:
+  - A list of paths for files on the Ansible controller to run coverage for when executing on the remote host.
+  - Only files that match the path glob will have its coverage collected.
+  - Multiple path globs can be specified and are separated by ``:``.
+  - Currently only used for remote coverage on PowerShell modules.
+  - This is for internal use only.
+  default: '*'
+  env:
+  - {name: _ANSIBLE_COVERAGE_REMOTE_WHITELIST}
+  type: str
+  version_added: '2.9'
 ACTION_WARNINGS:
   name: Toggle action warnings
   default: True
@@ -418,32 +444,6 @@ DEFAULT_ASK_PASS:
   - {key: ask_pass, section: defaults}
   type: boolean
   yaml: {key: defaults.ask_pass}
-DEFAULT_ASK_SUDO_PASS:
-  name: Ask for the sudo password
-  default: False
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.9"
-    alternatives: become
-  description:
-    - This controls whether an Ansible playbook should prompt for a sudo password.
-  env: [{name: ANSIBLE_ASK_SUDO_PASS}]
-  ini:
-  - {key: ask_sudo_pass, section: defaults}
-  type: boolean
-DEFAULT_ASK_SU_PASS:
-  name: Ask for the su password
-  default: False
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_ask_pass.
-    version: "2.9"
-    alternatives: become
-  description:
-    - This controls whether an Ansible playbook should prompt for a su password.
-  env: [{name: ANSIBLE_ASK_SU_PASS}]
-  ini:
-  - {key: ask_su_pass, section: defaults}
-  type: boolean
 DEFAULT_ASK_VAULT_PASS:
   name: Ask for the vault password(s)
   default: False
@@ -851,19 +851,6 @@ DEFAULT_MODULE_COMPRESSION:
   - {key: module_compression, section: defaults}
 # vars:
 #   - name: ansible_module_compression
-DEFAULT_MODULE_LANG:
-  name: Target language environment
-  default: "{{ CONTROLLER_LANG }}"
-  description:
-    - "Language locale setting to use for modules when they execute on the target."
-    - "If empty it tries to set itself to the LANG environment variable on the controller."
-    - "This is only used if DEFAULT_MODULE_SET_LOCALE is set to true"
-  env: [{name: ANSIBLE_MODULE_LANG}]
-  ini:
-  - {key: module_lang, section: defaults}
-  deprecated:
-    why: Modules are coded to set their own locale if needed for screenscraping
-    version: "2.9"
 DEFAULT_MODULE_NAME:
   name: Default adhoc module
   default: command
@@ -879,18 +866,6 @@ DEFAULT_MODULE_PATH:
   ini:
   - {key: library, section: defaults}
   type: pathspec
-DEFAULT_MODULE_SET_LOCALE:
-  name: Target locale
-  default: False
-  description:
-    - Controls if we set locale for modules when executing on the target.
-  env: [{name: ANSIBLE_MODULE_SET_LOCALE}]
-  ini:
-  - {key: module_set_locale, section: defaults}
-  type: boolean
-  deprecated:
-    why: Modules are coded to set their own locale if needed for screenscraping
-    version: "2.9"
 DEFAULT_MODULE_UTILS_PATH:
   name: Module Utils Path
   description: Colon separated paths in which Ansible will search for Module utils files, which are shared by modules.
@@ -1006,12 +981,14 @@ DEFAULT_SCP_IF_SSH:
   - {key: scp_if_ssh, section: ssh_connection}
 DEFAULT_SELINUX_SPECIAL_FS:
   name: Problematic file systems
-  default: fuse, nfs, vboxsf, ramfs, 9p
+  default: fuse, nfs, vboxsf, ramfs, 9p, vfat
   description:
     - "Some filesystems do not support safe operations and/or return inconsistent errors,
        this setting makes Ansible 'tolerate' those in the list w/o causing fatal errors."
     - Data corruption may occur and writes are not always verified when a filesystem is in the list.
-  env: []
+  env:
+  - name: ANSIBLE_SELINUX_SPECIAL_FS
+    version_added: "2.9"
   ini:
   - {key: special_context_filesystems, section: selinux}
   type: list
@@ -1108,39 +1085,6 @@ DEFAULT_SU:
   - {key: su, section: defaults}
   type: boolean
   yaml: {key: defaults.su}
-DEFAULT_SU_EXE:
-  name: su executable
-  default: su
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_exe.
-    version: "2.9"
-    alternatives: become
-  description: 'specify an "su" executable, otherwise it relies on PATH.'
-  env: [{name: ANSIBLE_SU_EXE}]
-  ini:
-  - {key: su_exe, section: defaults}
-DEFAULT_SU_FLAGS:
-  name: su flags
-  default: ''
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_flags.
-    version: "2.9"
-    alternatives: become
-  description: 'Flags to pass to su'
-  env: [{name: ANSIBLE_SU_FLAGS}]
-  ini:
-  - {key: su_flags, section: defaults}
-DEFAULT_SU_USER:
-  name: su user
-  default:
-  description: 'User you become when using "su", leaving it blank will use the default configured on the target (normally root)'
-  env: [{name: ANSIBLE_SU_USER}]
-  ini:
-  - {key: su_user, section: defaults}
-  deprecated:
-    why: In favor of Ansible Become, which is a generic framework. See become_user.
-    version: "2.9"
-    alternatives: become
 DEFAULT_SYSLOG_FACILITY:
   name: syslog facility
   default: LOG_USER
@@ -1337,6 +1281,18 @@ DOCSITE_ROOT_URL:
   ini:
   - {key: docsite_root_url, section: defaults}
   version_added: "2.8"
+DUPLICATE_YAML_DICT_KEY:
+  name: Controls ansible behaviour when finding duplicate keys in YAML.
+  default: warn
+  description:
+    - By default Ansible will issue a warning when a duplicate dict key is encountered in YAML.
+    - These warnings can be silenced by adjusting this setting to False.
+  env: [{name: ANSIBLE_DUPLICATE_YAML_DICT_KEY}]
+  ini:
+  - {key: duplicate_dict_key, section: defaults}
+  type: string
+  choices: ['warn', 'error', 'ignore']
+  version_added: "2.9"
 ERROR_ON_MISSING_HANDLER:
   name: Missing handler error
   default: True
@@ -1348,13 +1304,30 @@ ERROR_ON_MISSING_HANDLER:
 CONNECTION_FACTS_MODULES:
   name: Map of connections to fact modules
   default:
+    asa: asa_facts
+    cisco.asa.asa: cisco.asa.asa_facts
     eos: eos_facts
+    arista.eos.eos: arista.eos.eos_facts
     frr: frr_facts
+    frr.frr.frr: frr.frr.frr_facts
     ios: ios_facts
+    cisco.ios.ios: cisco.ios.ios_facts
     iosxr: iosxr_facts
+    cisco.iosxr.iosxr: cisco.iosxr.iosxr_facts
     junos: junos_facts
+    junipernetworks.junos.junos: junipernetworks.junos.junos_facts
     nxos: nxos_facts
+    cisco.nxos.nxos: cisco.nxos.nxos_facts
     vyos: vyos_facts
+    vyos.vyos.vyos: vyos.vyos.vyos_facts
+    exos: exos_facts
+    extreme.exos.exos: extreme.exos.exos_facts
+    slxos: slxos_facts
+    extreme.slxos.slxos: extreme.slxos.slxos_facts
+    voss: voss_facts
+    extreme.voss.voss: extreme.voss.voss_facts
+    ironware: ironware_facts
+    community.network.ironware: community.network.ironware_facts
   description: "Which modules to run during a play's fact gathering stage based on connection"
   env: [{name: ANSIBLE_CONNECTION_FACTS_MODULES}]
   ini:
@@ -1382,9 +1355,9 @@ GALAXY_IGNORE_CERTS:
   - {key: ignore_certs, section: galaxy}
   type: boolean
 GALAXY_ROLE_SKELETON:
-  name: Galaxy skeleton direcotry
+  name: Galaxy role or collection skeleton directory
   default:
-  description: Role skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``, same as ``--role-skeleton``.
+  description: Role or collection skeleton directory to use as a template for the ``init`` action in ``ansible-galaxy``, same as ``--role-skeleton``.
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON}]
   ini:
   - {key: role_skeleton, section: galaxy}
@@ -1392,7 +1365,7 @@ GALAXY_ROLE_SKELETON:
 GALAXY_ROLE_SKELETON_IGNORE:
   name: Galaxy skeleton ignore
   default: ["^.git$", "^.*/.git_keep$"]
-  description: patterns of files to ignore inside a galaxy role skeleton directory
+  description: patterns of files to ignore inside a Galaxy role or collection skeleton directory
   env: [{name: ANSIBLE_GALAXY_ROLE_SKELETON_IGNORE}]
   ini:
   - {key: role_skeleton_ignore, section: galaxy}
@@ -1413,6 +1386,18 @@ GALAXY_SERVER:
   ini:
   - {key: server, section: galaxy}
   yaml: {key: galaxy.server}
+GALAXY_SERVER_LIST:
+  description:
+  - A list of Galaxy servers to use when installing a collection.
+  - The value corresponds to the config ini header ``[galaxy_server.{{item}}]`` which defines the server details.
+  - 'See :ref:`galaxy_server_config` for more details on how to define a Galaxy server.'
+  - The order of servers in this list is used to as the order in which a collection is resolved.
+  - Setting this config option will ignore the :ref:`galaxy_server` config option.
+  env: [{name: ANSIBLE_GALAXY_SERVER_LIST}]
+  ini:
+  - {key: server_list, section: galaxy}
+  type: list
+  version_added: "2.9"
 GALAXY_TOKEN:
   default: null
   description: "GitHub personal access token"
@@ -1420,6 +1405,14 @@ GALAXY_TOKEN:
   ini:
   - {key: token, section: galaxy}
   yaml: {key: galaxy.token}
+GALAXY_TOKEN_PATH:
+  default: ~/.ansible/galaxy_token
+  description: "Local path to galaxy access token file"
+  env: [{name: ANSIBLE_GALAXY_TOKEN_PATH}]
+  ini:
+  - {key: token_path, section: galaxy}
+  type: path
+  version_added: "2.9"
 HOST_KEY_CHECKING:
   name: Check host keys
   default: True
@@ -1492,13 +1485,14 @@ TRANSFORM_INVALID_GROUP_CHARS:
   description:
     - Make ansible transform invalid characters in group names supplied by inventory sources.
     - If 'never' it will allow for the group name but warn about the issue.
+    - When 'ignore', it does the same as 'never', without issuing a warning.
     - When 'always' it will replace any invalid charachters with '_' (underscore) and warn the user
-    - When 'silently', it does the same as 'always' sans the warnings.
+    - When 'silently', it does the same as 'always', without issuing a warning.
   env: [{name: ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS}]
   ini:
   - {key: force_valid_group_names, section: defaults}
   type: string
-  choices: ['always', 'never', 'silently']
+  choices: ['always', 'never', 'ignore', 'silently']
   version_added: '2.8'
 INVALID_TASK_ATTRIBUTE_FAILED:
   name: Controls whether invalid attributes for a task result in errors instead of warnings
@@ -1678,7 +1672,7 @@ PERSISTENT_CONNECT_TIMEOUT:
 PERSISTENT_CONNECT_RETRY_TIMEOUT:
   name: Persistence connection retry timeout
   default: 15
-  description: This controls the retry timeout for presistent connection to connect to the local domain socket.
+  description: This controls the retry timeout for persistent connection to connect to the local domain socket.
   env: [{name: ANSIBLE_PERSISTENT_CONNECT_RETRY_TIMEOUT}]
   ini:
   - {key: connect_retry_timeout, section: persistent_connection}
@@ -1686,11 +1680,19 @@ PERSISTENT_CONNECT_RETRY_TIMEOUT:
 PERSISTENT_COMMAND_TIMEOUT:
   name: Persistence command timeout
   default: 30
-  description: This controls the amount of time to wait for response from remote device before timing out presistent connection.
+  description: This controls the amount of time to wait for response from remote device before timing out persistent connection.
   env: [{name: ANSIBLE_PERSISTENT_COMMAND_TIMEOUT}]
   ini:
   - {key: command_timeout, section: persistent_connection}
   type: int
+PLAYBOOK_DIR:
+  name: playbook dir override for non-playbook CLIs (ala --playbook-dir)
+  version_added: "2.9"
+  description:
+    - A number of non-playbook CLIs have a ``--playbook-dir`` argument; this sets the default value for it.
+  env: [{name: ANSIBLE_PLAYBOOK_DIR}]
+  ini: [{key: playbook_dir, section: defaults}]
+  type: path
 PLAYBOOK_VARS_ROOT:
   name: playbook vars files root
   default: top

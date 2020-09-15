@@ -1,0 +1,71 @@
+# this won't run in Ansible's integration tests until we get a domain set up
+# these are here if someone wants to run the module tests locally on their own
+# domain.
+# Requirements:
+#   LDAP Base path set in defaults/main.yml like DC=ansible,DC=local
+#   Custom OU path set in defaults/main.yml like OU=ou1,DC=ansible,DC=local
+---
+- name: run win_domain_users test
+  hosts: win_domain_computer_testing_host
+  vars:
+    test_win_domain_computer_ldap_base: "{{ test_ad_ou }}"
+    test_win_domain_computer_ou_path: "{{ test_ad_group_ou }}"
+    test_win_domain_computer_name: "test_computer.{{ test_domain_name }}"
+  tasks:
+
+    - name: ensure the computer is deleted before the test
+      win_domain_computer:
+        name: '{{ test_win_domain_computer_name }}'
+        state: absent
+
+    # --------------------------------------------------------------------------
+
+    - name: Test computer with long name and distinct sam_account_name
+      vars:
+        test_win_domain_computer_long_name: '{{ test_win_domain_computer_name }}_with_long_name'
+        test_win_domain_computer_sam_account_name: '{{ test_win_domain_computer_name }}$'
+      block:
+
+        # ----------------------------------------------------------------------
+        - name: create computer with long name and distinct sam_account_name
+          win_domain_computer:
+            name: '{{ test_win_domain_computer_long_name }}'
+            sam_account_name: '{{ test_win_domain_computer_sam_account_name }}'
+            enabled: yes
+            state: present
+          register: create_distinct_sam_account_name
+          check_mode: yes
+
+        - name: get actual computer with long name and distinct sam_account_name
+          win_command: powershell.exe "Import-Module ActiveDirectory; Get-ADComputer -Identity '{{ test_win_domain_computer_sam_account_name }}'"
+          register: create_distinct_sam_account_name_check
+          ignore_errors: True
+
+        - name: assert create computer with long name and distinct sam_account_name
+          assert:
+            that:
+            - create_distinct_sam_account_name is changed
+            - create_distinct_sam_account_name_check.rc == 1
+
+        - name: (Idempotence) create computer with long name and distinct sam_account_name
+          win_domain_computer:
+            name: '{{ test_win_domain_computer_long_name }}'
+            sam_account_name: '{{ test_win_domain_computer_sam_account_name }}'
+            enabled: yes
+            state: present
+          register: create_distinct_sam_account_name_idempotence
+          check_mode: yes
+
+        - name: (Idempotence) assert create computer with long name and distinct sam_account_name
+          assert:
+            that:
+            - create_distinct_sam_account_name_idempotence is not changed
+
+        - name: ensure the test group is deleted after the test
+          win_domain_computer:
+            name: '{{ test_win_domain_computer_long_name }}'
+            sam_account_name: '{{ test_win_domain_computer_sam_account_name }}'
+            state: absent
+            ignore_protection: True
+
+        # ----------------------------------------------------------------------

@@ -1,0 +1,3 @@
+---
+bugfixes:
+  - Fix nxos_facts rendering of keys (https://github.com/ansible/ansible/pull/65167) 

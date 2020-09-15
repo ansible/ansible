@@ -1,0 +1,1039 @@
+# Copyright: (c) 2019, Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+####################
+# Prepare for tests:
+
+# Create test roles:
+- name: postgresql_owner - create test roles
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_user:
+    login_user: "{{ pg_user }}"
+    db: postgres
+    name: "{{ item }}"
+  ignore_errors: yes
+  with_items:
+  - alice
+  - bob
+
+# Create test database:
+- name: postgresql_owner - create test database
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    login_user: "{{ pg_user }}"
+    db: acme
+
+# Create test table:
+- name: postgresql_owner - create test table
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: acme
+    query: "CREATE TABLE my_table (id int)"
+
+- name: postgresql_owner - set owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: my_table
+    obj_type: table
+
+# Create test sequence:
+- name: postgresql_owner - create test sequence
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: acme
+    query: "CREATE SEQUENCE test_seq"
+
+# Create test function:
+- name: postgresql_owner - create test function
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: acme
+    query: "CREATE FUNCTION increment(integer) RETURNS integer AS 'select $1 + 1;' LANGUAGE SQL IMMUTABLE RETURNS NULL ON NULL INPUT;"
+
+# Create test schema:
+- name: postgresql_owner - create test schema
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: acme
+    query: "CREATE SCHEMA test_schema"
+
+# Create test view:
+- name: postgresql_owner - create test view
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: acme
+    query: "CREATE VIEW test_view AS SELECT * FROM my_table"
+
+# Create test materialized view (available from PG ver 9.4):
+- name: postgresql_owner - create test materialized view
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    login_user: "{{ pg_user }}"
+    db: acme
+    query: "CREATE MATERIALIZED VIEW test_mat_view AS SELECT * FROM my_table"
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# Create test tablespace
+- name: postgresql_owner - create a new tablespace called acme and set bob as an its owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_tablespace:
+    db: acme
+    login_user: "{{ pg_user }}"
+    name: acme
+    owner: alice
+    location: /ssd
+
+################
+# Do main tests:
+
+#
+# check reassign_owned_by param
+#
+# try to reassign ownership to non existent user:
+- name: postgresql_owner - reassign_owned_by to non existent user
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: non_existent
+    reassign_owned_by: bob
+  register: result
+  ignore_errors: yes
+
+- assert:
+    that:
+    - result.failed == true
+
+# try to reassign ownership from existent user with fail_on_role:
+- name: postgresql_owner - reassign_owned_by, check fail_on_role
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: alice
+    reassign_owned_by: non_existent
+    fail_on_role: no
+  register: result
+
+- assert:
+    that:
+    - result.failed == false
+
+# check_mode:
+- name: postgresql_owner - reassign_owned_by in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: alice
+    reassign_owned_by: bob
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['REASSIGN OWNED BY "bob" TO "alice"']
+
+# Check, rowcount must be 0
+- name: postgresql_owner - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = 'alice'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+    - result.rowcount == 0
+
+# True mode:
+- name: postgresql_owner - reassign_owned_by
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: alice
+    reassign_owned_by: bob
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['REASSIGN OWNED BY "bob" TO "alice"']
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that ownership has been changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = 'alice'"
+  ignore_errors: yes
+  register: result
+ 
+- assert:
+    that:
+    - result.rowcount == 1
+
+#
+# Check obj_type for each type
+#
+
+# #############################
+# check_mode obj_type: database
+- name: postgresql_owner - set db owner in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: acme
+    obj_type: database
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER DATABASE "acme" OWNER TO "bob"']
+
+# Check, rowcount must be 0
+- name: postgresql_owner - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_database AS d JOIN pg_roles AS r ON d.datdba = r.oid WHERE d.datname = 'acme' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# true mode obj_type: database
+- name: postgresql_owner - set db owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: acme
+    obj_type: database
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER DATABASE "acme" OWNER TO "bob"']
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that db owner has been changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_database AS d JOIN pg_roles AS r ON d.datdba = r.oid WHERE d.datname = 'acme' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# true mode obj_type: database, try to set again
+- name: postgresql_owner - set db owner again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: acme
+    obj_type: database
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that db owner is bob
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_database AS d JOIN pg_roles AS r ON d.datdba = r.oid WHERE d.datname = 'acme' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# ##########################
+# check_mode obj_type: table
+- name: postgresql_owner - set table owner in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: my_table
+    obj_type: table
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER TABLE "my_table" OWNER TO "bob"']
+
+# Check, rowcount must be 0
+- name: postgresql_owner - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# true mode obj_type: table
+- name: postgresql_owner - set db owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: my_table
+    obj_type: table
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER TABLE "my_table" OWNER TO "bob"']
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that table owner has been changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# true mode obj_type: table again
+- name: postgresql_owner - set db owner again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: my_table
+    obj_type: table
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that table owner is bob
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tables WHERE tablename = 'my_table' AND tableowner = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# #############################
+# check_mode obj_type: sequence
+- name: postgresql_owner - set sequence owner in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_seq
+    obj_type: sequence
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER SEQUENCE "test_seq" OWNER TO "bob"']
+
+# Check, rowcount must be 0
+- name: postgresql_owner - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_class AS c JOIN pg_roles AS r ON c.relowner = r.oid WHERE c.relkind = 'S' AND c.relname = 'test_seq' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# true mode obj_type: sequence
+- name: postgresql_owner - set db owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_seq
+    obj_type: sequence
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER SEQUENCE "test_seq" OWNER TO "bob"']
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that table owner has been changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_class AS c JOIN pg_roles AS r ON c.relowner = r.oid WHERE c.relkind = 'S' AND c.relname = 'test_seq' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# true mode obj_type: table again
+- name: postgresql_owner - set db owner again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_seq
+    obj_type: sequence
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that sequence owner is bob
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_class AS c JOIN pg_roles AS r ON c.relowner = r.oid WHERE c.relkind = 'S' AND c.relname = 'test_seq' AND r.rolname = 'bob'"
+
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# #############################
+# check_mode obj_type: function
+- name: postgresql_owner - set function owner in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: increment
+    obj_type: function
+  check_mode: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER FUNCTION increment OWNER TO "bob"']
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Check, rowcount must be 0
+- name: postgresql_owner - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_proc AS f JOIN pg_roles AS r ON f.proowner = r.oid WHERE f.proname = 'increment' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# true mode obj_type: function
+- name: postgresql_owner - set func owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: increment
+    obj_type: function
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER FUNCTION increment OWNER TO "bob"']
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that func owner has been changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_proc AS f JOIN pg_roles AS r ON f.proowner = r.oid WHERE f.proname = 'increment' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# true mode obj_type: function again
+- name: postgresql_owner - set func owner again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: increment
+    obj_type: function
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that function owner is bob
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_proc AS f JOIN pg_roles AS r ON f.proowner = r.oid WHERE f.proname = 'increment' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('10', '>=')
+
+# ###########################
+# check_mode obj_type: schema
+- name: postgresql_owner - set schema owner in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_schema
+    obj_type: schema
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER SCHEMA "test_schema" OWNER TO "bob"']
+
+# Check, rowcount must be 0
+- name: postgresql_owner - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'test_schema' AND schema_owner = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# true mode obj_type: schema
+- name: postgresql_owner - set schema owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_schema
+    obj_type: schema
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER SCHEMA "test_schema" OWNER TO "bob"']
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that schema owner has been changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'test_schema' AND schema_owner = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# true mode obj_type: schema again
+- name: postgresql_owner - set schema owner again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_seq
+    obj_type: sequence
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that schema owner is bob
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'test_schema' AND schema_owner = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# ###########################
+# check_mode obj_type: view
+- name: postgresql_owner - set view owner in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_view
+    obj_type: view
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER VIEW "test_view" OWNER TO "bob"']
+
+# Check, rowcount must be 0
+- name: postgresql_owner - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_views WHERE viewname = 'test_view' AND viewowner = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# true mode obj_type: view
+- name: postgresql_owner - set view owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_view
+    obj_type: view
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER VIEW "test_view" OWNER TO "bob"']
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that view owner has been changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_views WHERE viewname = 'test_view' AND viewowner = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# true mode obj_type: view again
+- name: postgresql_owner - set view owner again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_view
+    obj_type: view
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that view owner is bob
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_views WHERE viewname = 'test_view' AND viewowner = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# ###########################
+# check_mode obj_type: matview
+- name: postgresql_owner - set matview owner in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_mat_view
+    obj_type: matview
+  check_mode: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER MATERIALIZED VIEW "test_mat_view" OWNER TO "bob"']
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# Check, rowcount must be 0
+- name: postgresql_owner - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_matviews WHERE matviewname = 'test_view' AND matviewowner = 'bob'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- assert:
+    that:
+    - result.rowcount == 0
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# true mode obj_type: matview
+- name: postgresql_owner - set matview owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_mat_view
+    obj_type: matview
+  register: result
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER MATERIALIZED VIEW "test_mat_view" OWNER TO "bob"']
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that matview owner has been changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_matviews WHERE matviewname = 'test_mat_view' AND matviewowner = 'bob'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# true mode obj_type: matview again
+- name: postgresql_owner - set matview owner again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: test_mat_view
+    obj_type: matview
+  register: result
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that matview owner is bob
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_matviews WHERE matviewname = 'test_mat_view' AND matviewowner = 'bob'"
+  ignore_errors: yes
+  register: result
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+- assert:
+    that:
+    - result.rowcount == 1
+  when: postgres_version_resp.stdout is version('9.4', '>=')
+
+# ###########################
+# check_mode obj_type: tablespace
+- name: postgresql_owner - set tablespace owner in check_mode
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: acme
+    obj_type: tablespace
+  check_mode: yes
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER TABLESPACE "acme" OWNER TO "bob"']
+
+# Check, rowcount must be 0
+- name: postgresql_owner - check that nothing changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tablespace AS t JOIN pg_roles AS r ON t.spcowner = r.oid WHERE t.spcname = 'acme' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 0
+
+# true mode obj_type: tablespace
+- name: postgresql_owner - set tablespace owner
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: acme
+    obj_type: tablespace
+  register: result
+
+- assert:
+    that:
+    - result is changed
+    - result.queries == ['ALTER TABLESPACE "acme" OWNER TO "bob"']
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that tablespace owner has been changed after the previous step
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tablespace AS t JOIN pg_roles AS r ON t.spcowner = r.oid WHERE t.spcname = 'acme' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+# true mode obj_type: tablespace again
+- name: postgresql_owner - set tablespace owner again
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_owner:
+    login_user: "{{ pg_user }}"
+    db: acme
+    new_owner: bob
+    obj_name: acme
+    obj_type: tablespace
+  register: result
+
+- assert:
+    that:
+    - result is not changed
+    - result.queries == []
+
+# Check, rowcount must be 1
+- name: postgresql_owner - check that tablespace owner is bob
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_query:
+    db: acme
+    login_user: "{{ pg_user }}"
+    query: "SELECT 1 FROM pg_tablespace AS t JOIN pg_roles AS r ON t.spcowner = r.oid WHERE t.spcname = 'acme' AND r.rolname = 'bob'"
+  ignore_errors: yes
+  register: result
+
+- assert:
+    that:
+    - result.rowcount == 1
+
+#
+# Crean up
+#
+
+# Drop test database:
+- name: postgresql_owner - create test database
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_db:
+    login_user: "{{ pg_user }}"
+    db: acme
+    state: absent
+
+# Drop test tablespace:
+- name: postgresql_owner - drop test tablespace
+  become_user: "{{ pg_user }}"
+  become: yes
+  postgresql_tablespace:
+    db: postgres
+    login_user: "{{ pg_user }}"
+    name: acme
+    state: absent

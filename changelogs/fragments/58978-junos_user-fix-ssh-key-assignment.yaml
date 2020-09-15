@@ -1,0 +1,2 @@
+bugfixes:
+  - junos_user - fixed issue with adding multiple values for a Junos account with aggregate mode

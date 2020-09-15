@@ -229,6 +229,7 @@ EXAMPLES = '''
 
 - name: "Delete group by its id"
   ec2_group:
+    region: eu-west-1
     group_id: sg-33b4ee5b
     state: absent
 '''
@@ -304,6 +305,7 @@ from ansible.module_utils.aws.waiters import get_waiter
 from ansible.module_utils.ec2 import AWSRetry, camel_dict_to_snake_dict, compare_aws_tags
 from ansible.module_utils.ec2 import ansible_dict_to_boto3_filter_list, boto3_tag_list_to_ansible_dict, ansible_dict_to_boto3_tag_list
 from ansible.module_utils.common.network import to_ipv6_subnet, to_subnet
+from ansible.module_utils.compat.ipaddress import ip_network, IPv6Network
 from ansible.module_utils._text import to_text
 from ansible.module_utils.six import string_types
 
@@ -383,6 +385,16 @@ def to_permission(rule):
 
 
 def rule_from_group_permission(perm):
+    """
+    Returns a rule dict from an existing security group.
+
+    When using a security group as a target all 3 fields (OwnerId, GroupId, and
+    GroupName) need to exist in the target. This ensures consistency of the
+    values that will be compared to desired_ingress or desired_egress
+    in wait_for_rule_propagation().
+    GroupId is preferred as it is more specific except when targeting 'amazon-'
+    prefixed security groups (such as EC2 Classic ELBs).
+    """
     def ports_from_permission(p):
         if 'FromPort' not in p and 'ToPort' not in p:
             return (None, None)
@@ -407,21 +419,29 @@ def rule_from_group_permission(perm):
             )
     if 'UserIdGroupPairs' in perm and perm['UserIdGroupPairs']:
         for pair in perm['UserIdGroupPairs']:
-            target = pair['GroupId']
+            target = (
+                pair.get('UserId', current_account_id),
+                pair.get('GroupId', None),
+                None,
+            )
             if pair.get('UserId', '').startswith('amazon-'):
                 # amazon-elb and amazon-prefix rules don't need
                 # group-id specified, so remove it when querying
                 # from permission
                 target = (
-                    target[0],
+                    pair.get('UserId', None),
                     None,
-                    target[2],
+                    pair.get('GroupName', None),
                 )
-            elif 'VpcPeeringConnectionId' in pair or pair['UserId'] != current_account_id:
+            elif 'VpcPeeringConnectionId' not in pair and pair['UserId'] != current_account_id:
+                # EC2-Classic cross-account
+                pass
+            elif 'VpcPeeringConnectionId' in pair:
+                # EC2-VPC cross-account VPC peering
                 target = (
                     pair.get('UserId', None),
                     pair.get('GroupId', None),
-                    pair.get('GroupName', None),
+                    None,
                 )
 
             yield Rule(
@@ -433,7 +453,7 @@ def rule_from_group_permission(perm):
             )
 
 
-@AWSRetry.backoff(tries=5, delay=5, backoff=2.0)
+@AWSRetry.backoff(tries=5, delay=5, backoff=2.0, catch_extra_error_codes=['InvalidGroup.NotFound'])
 def get_security_groups_with_backoff(connection, **kwargs):
     return connection.describe_security_groups(**kwargs)
 
@@ -488,8 +508,14 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     AWS accepts an ip range or a security group as target of a rule. This
     function validate the rule specification and return either a non-None
     group_id or a non-None ip range.
+
+    When using a security group as a target all 3 fields (OwnerId, GroupId, and
+    GroupName) need to exist in the target. This ensures consistency of the
+    values that will be compared to current_rules (from current_ingress and
+    current_egress) in wait_for_rule_propagation().
     """
     FOREIGN_SECURITY_GROUP_REGEX = r'^([^/]+)/?(sg-\S+)?/(\S+)'
+    owner_id = current_account_id
     group_id = None
     group_name = None
     target_group_created = False
@@ -497,16 +523,22 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
     validate_rule(module, rule)
     if rule.get('group_id') and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
         # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
+        # Matches on groups like amazon-elb/sg-5a9c116a/amazon-elb-sg, amazon-elb/amazon-elb-sg,
+        # and peer-VPC groups like 0987654321/sg-1234567890/example
         owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
         group_instance = dict(UserId=owner_id, GroupId=group_id, GroupName=group_name)
         groups[group_id] = group_instance
         groups[group_name] = group_instance
-        # group_id/group_name are mutually exclusive - give group_id more precedence as it is more specific
         if group_id and group_name:
-            group_name = None
+            if group_name.startswith('amazon-'):
+                # amazon-elb and amazon-prefix rules don't need group_id specified,
+                group_id = None
+            else:
+                # group_id/group_name are mutually exclusive - give group_id more precedence as it is more specific
+                group_name = None
         return 'group', (owner_id, group_id, group_name), False
     elif 'group_id' in rule:
-        return 'group', rule['group_id'], False
+        return 'group', (owner_id, rule['group_id'], None), False
     elif 'group_name' in rule:
         group_name = rule['group_name']
         if group_name == name:
@@ -565,7 +597,7 @@ def get_target_from_rule(module, client, rule, name, group, groups, vpc_id):
                 groups[group_id] = auto_group
                 groups[group_name] = auto_group
             target_group_created = True
-        return 'group', group_id, target_group_created
+        return 'group', (owner_id, group_id, None), target_group_created
     elif 'cidr_ip' in rule:
         return 'ipv4', validate_ip(module, rule['cidr_ip']), False
     elif 'cidr_ipv6' in rule:
@@ -722,14 +754,26 @@ def validate_ip(module, cidr_ip):
     split_addr = cidr_ip.split('/')
     if len(split_addr) == 2:
         # this_ip is a IPv4 or IPv6 CIDR that may or may not have host bits set
-        # Get the network bits.
+        # Get the network bits if IPv4, and validate if IPv6.
         try:
             ip = to_subnet(split_addr[0], split_addr[1])
+            if ip != cidr_ip:
+                module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                            "check the network mask and make sure that only network bits are set: {1}.".format(
+                                cidr_ip, ip))
         except ValueError:
-            ip = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
-        if ip != cidr_ip:
-            module.warn("One of your CIDR addresses ({0}) has host bits set. To get rid of this warning, "
-                        "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip))
+            # to_subnet throws a ValueError on IPv6 networks, so we should be working with v6 if we get here
+            try:
+                isinstance(ip_network(to_text(cidr_ip)), IPv6Network)
+                ip = cidr_ip
+            except ValueError:
+                # If a host bit is set on something other than a /128, IPv6Network will throw a ValueError
+                # The ipv6_cidr in this case probably looks like "2001:DB8:A0B:12F0::1/64" and we just want the network bits
+                ip6 = to_ipv6_subnet(split_addr[0]) + "/" + split_addr[1]
+                if ip6 != cidr_ip:
+                    module.warn("One of your IPv6 CIDR addresses ({0}) has host bits set. To get rid of this warning, "
+                                "check the network mask and make sure that only network bits are set: {1}.".format(cidr_ip, ip6))
+                return ip6
         return ip
     return cidr_ip
 
@@ -937,12 +981,12 @@ def get_diff_final_resource(client, module, security_group):
                     'vpc_id': rule_sg.get('vpc_id', module.params['vpc_id']),
                     'vpc_peering_connection_id': rule_sg.get('vpc_peering_connection_id')
                 }]
-                for k, v in format_rule['user_id_group_pairs'][0].items():
+                for k, v in list(format_rule['user_id_group_pairs'][0].items()):
                     if v is None:
                         format_rule['user_id_group_pairs'][0].pop(k)
             final_rules.append(format_rule)
             # Order final rules consistently
-            final_rules.sort(key=lambda x: x.get('cidr_ip', x.get('ip_ranges', x.get('ipv6_ranges', x.get('prefix_list_ids', x.get('user_id_group_pairs'))))))
+            final_rules.sort(key=get_ip_permissions_sort_key)
         return final_rules
     security_group_ingress = security_group.get('ip_permissions', [])
     specified_ingress = module.params['rules']
@@ -980,6 +1024,34 @@ def flatten_nested_targets(module, rules):
             if target_list_type is not None:
                 rule[target_list_type] = list(_flatten(rule[target_list_type]))
     return rules
+
+
+def get_rule_sort_key(dicts):
+    if dicts.get('cidr_ip'):
+        return dicts.get('cidr_ip')
+    elif dicts.get('cidr_ipv6'):
+        return dicts.get('cidr_ipv6')
+    elif dicts.get('prefix_list_id'):
+        return dicts.get('prefix_list_id')
+    elif dicts.get('group_id'):
+        return dicts.get('group_id')
+    return None
+
+
+def get_ip_permissions_sort_key(rule):
+    if rule.get('ip_ranges'):
+        rule.get('ip_ranges').sort(key=get_rule_sort_key)
+        return rule.get('ip_ranges')[0]['cidr_ip']
+    elif rule.get('ipv6_ranges'):
+        rule.get('ipv6_ranges').sort(key=get_rule_sort_key)
+        return rule.get('ipv6_ranges')[0]['cidr_ipv6']
+    elif rule.get('prefix_list_ids'):
+        rule.get('prefix_list_ids').sort(key=get_rule_sort_key)
+        return rule.get('prefix_list_ids')[0]['prefix_list_id']
+    elif rule.get('user_id_group_pairs'):
+        rule.get('user_id_group_pairs').sort(key=get_rule_sort_key)
+        return rule.get('user_id_group_pairs')[0]['group_id']
+    return None
 
 
 def main():
@@ -1181,6 +1253,8 @@ def main():
     if module._diff:
         if module.params['state'] == 'present':
             after = get_diff_final_resource(client, module, security_group)
+            if before.get('ip_permissions'):
+                before['ip_permissions'].sort(key=get_ip_permissions_sort_key)
 
         security_group['diff'] = [{'before': before, 'after': after}]
 

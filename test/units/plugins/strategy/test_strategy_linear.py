@@ -58,17 +58,18 @@ class TestStrategyLinear(unittest.TestCase):
 
         p = Playbook.load('test_play.yml', loader=fake_loader, variable_manager=mock_var_manager)
 
+        inventory = MagicMock()
+        inventory.hosts = {}
         hosts = []
         for i in range(0, 2):
             host = MagicMock()
             host.name = host.get_name.return_value = 'host%02d' % i
             hosts.append(host)
-
-        mock_var_manager._fact_cache['host00'] = dict()
-
-        inventory = MagicMock()
+            inventory.hosts[host.name] = host
         inventory.get_hosts.return_value = hosts
         inventory.filter_hosts.return_value = hosts
+
+        mock_var_manager._fact_cache['host00'] = dict()
 
         play_context = PlayContext(play=p._entries[0])
 
@@ -89,6 +90,8 @@ class TestStrategyLinear(unittest.TestCase):
         )
         tqm._initialize_processes(3)
         strategy = StrategyModule(tqm)
+        strategy._hosts_cache = [h.name for h in hosts]
+        strategy._hosts_cache_all = [h.name for h in hosts]
 
         # implicit meta: flush_handlers
         hosts_left = strategy.get_hosts_left(itr)

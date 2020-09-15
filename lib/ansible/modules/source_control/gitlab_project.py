@@ -15,9 +15,9 @@ ANSIBLE_METADATA = {'metadata_version': '1.1',
 DOCUMENTATION = '''
 ---
 module: gitlab_project
-short_description: Creates/updates/deletes Gitlab Projects
+short_description: Creates/updates/deletes GitLab Projects
 description:
-  - When the project does not exist in Gitlab, it will be created.
+  - When the project does not exist in GitLab, it will be created.
   - When the project does exists and state=absent, the project will be deleted.
   - When changes are made to the project, the project will be updated.
 version_added: "2.1"
@@ -26,26 +26,25 @@ author:
   - Guillaume Martinez (@Lunik)
 requirements:
   - python >= 2.7
-  - python-gitlab python module
+  - python-gitlab python module <= 1.12.1
 extends_documentation_fragment:
     - auth_basic
 options:
   server_url:
     description:
-      - The URL of the Gitlab server, with protocol (i.e. http or https).
-    required: true
+      - The URL of the GitLab server, with protocol (i.e. http or https).
     type: str
   login_user:
     description:
-      - Gitlab user name.
+      - GitLab user name.
     type: str
   login_password:
     description:
-      - Gitlab password for login_user
+      - GitLab password for login_user
     type: str
   api_token:
     description:
-      - Gitlab token for logging in.
+      - GitLab token for logging in.
     type: str
     aliases:
       - login_token
@@ -104,7 +103,7 @@ options:
   import_url:
     description:
       - Git repository which will be imported into gitlab.
-      - Gitlab server needs read access to this git repository.
+      - GitLab server needs read access to this git repository.
     required: false
     type: str
   state:
@@ -117,7 +116,7 @@ options:
 '''
 
 EXAMPLES = '''
-- name: Delete Gitlab Project
+- name: Delete GitLab Project
   gitlab_project:
     api_url: https://gitlab.example.com/
     api_token: "{{ access_token }}"
@@ -126,7 +125,7 @@ EXAMPLES = '''
     state: absent
   delegate_to: localhost
 
-- name: Create Gitlab Project in group Ansible
+- name: Create GitLab Project in group Ansible
   gitlab_project:
     api_url: https://gitlab.example.com/
     validate_certs: True
@@ -155,7 +154,7 @@ result:
   type: dict
 
 error:
-  description: the error message returned by the Gitlab API
+  description: the error message returned by the GitLab API
   returned: failed
   type: str
   sample: "400: path is already in use"
@@ -289,15 +288,17 @@ class GitLabProject(object):
 def deprecation_warning(module):
     deprecated_aliases = ['login_token']
 
-    module.deprecate("Aliases \'{aliases}\' are deprecated".format(aliases='\', \''.join(deprecated_aliases)), 2.10)
+    for aliase in deprecated_aliases:
+        if aliase in module.params:
+            module.deprecate("Alias \'{aliase}\' is deprecated".format(aliase=aliase), "2.10")
 
 
 def main():
     argument_spec = basic_auth_argument_spec()
     argument_spec.update(dict(
-        server_url=dict(type='str', required=True, removed_in_version=2.10),
-        login_user=dict(type='str', no_log=True, removed_in_version=2.10),
-        login_password=dict(type='str', no_log=True, removed_in_version=2.10),
+        server_url=dict(type='str', removed_in_version="2.10"),
+        login_user=dict(type='str', no_log=True, removed_in_version="2.10"),
+        login_password=dict(type='str', no_log=True, removed_in_version="2.10"),
         api_token=dict(type='str', no_log=True, aliases=["login_token"]),
         group=dict(type='str'),
         name=dict(type='str', required=True),
@@ -328,7 +329,8 @@ def main():
             ['login_user', 'login_password'],
         ],
         required_one_of=[
-            ['api_username', 'api_token', 'login_user', 'login_token']
+            ['api_username', 'api_token', 'login_user', 'login_token'],
+            ['server_url', 'api_url']
         ],
         supports_check_mode=True,
     )
@@ -369,10 +371,10 @@ def main():
                                         private_token=gitlab_token, api_version=4)
         gitlab_instance.auth()
     except (gitlab.exceptions.GitlabAuthenticationError, gitlab.exceptions.GitlabGetError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s" % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s" % to_native(e))
     except (gitlab.exceptions.GitlabHttpError) as e:
-        module.fail_json(msg="Failed to connect to Gitlab server: %s. \
-            Gitlab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
+        module.fail_json(msg="Failed to connect to GitLab server: %s. \
+            GitLab remove Session API now that private tokens are removed from user API endpoints since version 10.2." % to_native(e))
 
     # Set project_path to project_name if it is empty.
     if project_path is None:
