@@ -933,6 +933,10 @@ class TaskExecutor:
 
         task_keys = self._task.dump_attrs()
 
+        # The task_keys 'timeout' attr is the task's timeout, not the connection timeout.
+        # The connection timeout is threaded through the play_context for now.
+        task_keys['timeout'] = self._play_context.timeout
+
         if self._play_context.password:
             # The connection password is threaded through the play_context for
             # now. This is something we ultimately want to avoid, but the first

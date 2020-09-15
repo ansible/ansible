@@ -292,6 +292,8 @@ Ansible version 2.1 introduced the ``smart`` connection plugin. The ``smart`` co
 
 To create a new connection plugin (for example, to support SNMP, Message bus, or other transports), copy the format of one of the existing connection plugins and drop it into ``connection`` directory on your :ref:`local plugin path <local_plugins>`.
 
+Connection plugins can support common options (such as the ``--timeout`` flag) by defining an entry in the documentation for the attribute name (in this case ``timeout``). If the common option has a non-null default, the plugin should define the same default since a different default would be ignored.
+
 For example connection plugins, see the source code for the `connection plugins included with Ansible Core <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_.
 
 .. _developing_filter_plugins:
