@@ -654,12 +654,16 @@ class DnfModule(YumDnf):
                 results=[],
                 rc=1
             )
+
+        filters = []
         if self.bugfix:
             key = {'advisory_type__eq': 'bugfix'}
-            base._update_security_filters = [base.sack.query().filter(**key)]
+            filters.append(base.sack.query().filter(**key))
         if self.security:
             key = {'advisory_type__eq': 'security'}
-            base._update_security_filters = [base.sack.query().filter(**key)]
+            filters.append(base.sack.query().filter(**key))
+        if filters:
+            base._update_security_filters = filters
 
         return base
 
