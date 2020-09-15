@@ -50,11 +50,8 @@ Beyond the basics
 You can override the default remote user name in several ways, including:
 
 * passing the ``-u`` parameter at the command line
-
 * setting user information in your inventory file
-
 * setting user information in your configuration file
-
 * setting environment variables
 
 See :ref:`general_precedence_rules` for details on the (sometimes unintuitive) precedence of each method of passing user information. You can read more about connections in :ref:`connections`.
