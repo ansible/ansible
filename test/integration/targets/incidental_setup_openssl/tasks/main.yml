@@ -24,7 +24,15 @@
 - name: Install pyOpenSSL (Darwin)
   become: True
   pip:
-    name: pyOpenSSL
+    name:
+      - pyOpenSSL==19.1.0
+      # dependencies for pyOpenSSL
+      - cffi==1.14.2
+      - cryptography==3.1
+      - enum34==1.1.10
+      - ipaddress==1.0.23
+      - pycparser==2.20
+      - six==1.15.0
   when: ansible_os_family == 'Darwin'
 
 - name: register pyOpenSSL version
