@@ -19,6 +19,7 @@ To get started, please select one of the following topics.
    vmware_scenarios/vmware_inventory
    vmware_scenarios/vmware_inventory_vm_attributes
    vmware_scenarios/vmware_inventory_hostnames
+   vmware_scenarios/vmware_inventory_filters
    vmware_scenarios/vmware_scenarios
    vmware_scenarios/vmware_troubleshooting
    vmware_scenarios/vmware_external_doc_links
