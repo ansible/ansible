@@ -153,15 +153,15 @@ Ansible always registers something in a registered variable for every host, even
         register: result
         ignore_errors: true
 
-      - name: Run only if the taks that register the "result" variable fails
+      - name: Run only if the tak that register the "result" variable fails
         ansible.builtin.command: /bin/something
         when: result is failed
 
-      - name: Run only if the taks that register the "result" variable succeeds
+      - name: Run only if the tak that register the "result" variable succeeds
         ansible.builtin.command: /bin/something_else
         when: result is succeeded
 
-      - name: Run only if the taks that register the "result" variable is skipped
+      - name: Run only if the tak that register the "result" variable is skipped
         ansible.builtin.command: /bin/still/something_else
         when: result is skipped
 
