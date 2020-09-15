@@ -491,7 +491,7 @@ class Distribution(object):
                                 'EulerOS', 'openEuler'],
                      'Debian': ['Debian', 'Ubuntu', 'Raspbian', 'Neon', 'KDE neon',
                                 'Linux Mint', 'SteamOS', 'Devuan', 'Kali', 'Cumulus Linux',
-                                'Pop!_OS', 'Parrot'],
+                                'Pop!_OS', 'Parrot', 'Pardus GNU/Linux'],
                      'Suse': ['SuSE', 'SLES', 'SLED', 'openSUSE', 'openSUSE Tumbleweed',
                               'SLES_SAP', 'SUSE_LINUX', 'openSUSE Leap'],
                      'Archlinux': ['Archlinux', 'Antergos', 'Manjaro'],
