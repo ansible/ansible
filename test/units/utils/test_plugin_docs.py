@@ -331,4 +331,3 @@ def test_add(is_module, return_docs, fragment, expected_fragment):
     fragment_copy = copy.deepcopy(fragment)
     add_collection_to_versions_and_dates(fragment_copy, 'foo.bar', is_module, return_docs)
     assert fragment_copy == expected_fragment
-
