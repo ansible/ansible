@@ -9,7 +9,7 @@ Network connection plugins
 Each network connection plugin has a set of its own plugins which provide a specification of the
 connection for a particular set of devices. The specific plugin used is selected at runtime based
 on the value of the ``ansible_network_os`` variable assigned to the host. This variable should be
-set to the same value as the name of the plugin to be loaed. Thus, ``ansible_network_os=nxos``
+set to the same value as the name of the plugin to be loaded. Thus, ``ansible_network_os=nxos``
 will try to load a plugin in a file named ``nxos.py``, so it is important to name the plugin in a
 way that will be sensible to users.
 
