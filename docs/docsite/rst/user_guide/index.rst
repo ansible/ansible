@@ -29,7 +29,7 @@ Writing tasks, plays, and playbooks
   * Running tasks only when certain conditions apply with :ref:`conditionals <playbooks_conditionals>` and evaluating conditions with :ref:`tests <playbooks_tests>`
   * Grouping a set of tasks together with :ref:`blocks <playbooks_blocks>`
   * Running tasks only when something has changed with :ref:`handlers <handlers>`
-  * Changing the way Ansible :ref:`handles failures <playbooks_error_handling>`)
+  * Changing the way Ansible :ref:`handles failures <playbooks_error_handling>`
   * Setting remote :ref:`environment values <playbooks_environment>`
 
 * I want to leverage the power of re-usable Ansible artifacts. How do I create re-usable :ref:`files <playbooks_reuse>` and :ref:`roles <playbooks_reuse_roles>`?
