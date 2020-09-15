@@ -1,0 +1,2 @@
+bugfixes:
+  - Pass the connection's timeout to connection plugins instead of the task's timeout.
