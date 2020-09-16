@@ -9,6 +9,10 @@ matrix:
     - env: T=none
   include:
     - env: T=macos/10.15/1
+    - env: T=macos/10.15/2
+    - env: T=macos/10.15/3
+    - env: T=macos/10.15/4
+    - env: T=macos/10.15/5
 
 branches:
   except:
