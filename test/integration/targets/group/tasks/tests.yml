@@ -138,11 +138,19 @@
         state: present
       register: create_group_gid_non_unique
 
+    - name: validate gid required with non_unique
+      group:
+        name: foo
+        non_unique: true
+      register: missing_gid
+      ignore_errors: true
+
     - name: assert create group with a non unique gid
       assert:
-          that:
+        that:
           - create_group_gid_non_unique is changed
           - create_group_gid_non_unique.gid | int == gid.stdout_lines[0] | int
+          - missing_gid is failed
   when: ansible_facts.distribution not in ['MacOSX', 'Alpine']
 
 ##

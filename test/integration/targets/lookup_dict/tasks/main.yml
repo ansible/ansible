@@ -27,7 +27,9 @@
 
 - name: Convert a non-dict (failure expected)
   set_fact:
-    bad_fact: "{{ lookup('dict', 1) }}"
+    bad_fact: "{{ bbbbad }}"
+  vars:
+    bbbbad: "{{ lookup('dict', 1) }}"
   register: result
   ignore_errors: yes
 
