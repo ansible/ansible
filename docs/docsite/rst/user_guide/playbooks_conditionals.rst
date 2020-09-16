@@ -153,15 +153,15 @@ Ansible always registers something in a registered variable for every host, even
         register: result
         ignore_errors: true
 
-      - name: Run only if the tak that registered the "result" variable fails
+      - name: Run only if the task that registered the "result" variable fails
         ansible.builtin.command: /bin/something
         when: result is failed
 
-      - name: Run only if the tak that registered the "result" variable succeeds
+      - name: Run only if the task that registered the "result" variable succeeds
         ansible.builtin.command: /bin/something_else
         when: result is succeeded
 
-      - name: Run only if the tak that registered the "result" variable is skipped
+      - name: Run only if the task that registered the "result" variable is skipped
         ansible.builtin.command: /bin/still/something_else
         when: result is skipped
 
@@ -401,7 +401,7 @@ Then import those variables files based on the facts you gather on the hosts in 
           name: '{{ apache }}'
           state: started
 
-Ansible gathers facts on the hosts in the webservers group, then interpolates the variable "ansible_facts['os_family']" into a list of filenames. If you have hosts with Red Hat operating systems (CentOS, for example), Ansible looks for C(vars/RedHat.yml). If that file does not exist, Ansible attempts to load C(vars/os_defaults.yml). For Debian hosts, Ansible first looks for C(vars/Debian.yml), before falling back on C(vars/os_defaults.yml). If no files in the list are found, Ansible raises an error.
+Ansible gathers facts on the hosts in the webservers group, then interpolates the variable "ansible_facts['os_family']" into a list of filenames. If you have hosts with Red Hat operating systems (CentOS, for example), Ansible looks for 'vars/RedHat.yml'. If that file does not exist, Ansible attempts to load 'vars/os_defaults.yml'. For Debian hosts, Ansible first looks for 'vars/Debian.yml', before falling back on 'vars/os_defaults.yml'. If no files in the list are found, Ansible raises an error.
 
 Selecting files and templates based on facts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
