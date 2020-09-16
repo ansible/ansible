@@ -221,6 +221,14 @@ class CollectionRequirement:
 
         self.versions = new_versions
 
+    def remove(self):
+        if self.b_path is None:
+            display.display("Skipping '%s' as it is not installed" % to_text(self))
+        elif os.path.isdir(self.b_path):
+            display.vvvv("Removing '%s' from '%s'" % (to_text(self), to_text(self.b_path, errors='surrogate_or_strict')))
+            shutil.rmtree(self.b_path)
+            display.display('%s (%s) was removed successfully' % (to_text(self), self.latest_version))
+
     def download(self, b_path):
         download_url = self._metadata.download_url
         artifact_hash = self._metadata.artifact_sha256
@@ -586,6 +594,84 @@ def build_collection(collection_path, output_path, force):
     return collection_output
 
 
+def _find_path_by_name(search_path, namespace, name, fallback_metadata=False, parent=None):
+    local_collection = None
+    non_artifact = False
+    b_search_path = to_bytes(os.path.join(search_path, namespace, name), errors='surrogate_or_strict')
+    if os.path.isdir(b_search_path):
+        try:
+            local_collection = CollectionRequirement.from_path(b_search_path, False, fallback_metadata=fallback_metadata, parent=parent)
+        except AnsibleError:
+            if not os.path.isfile(os.path.join(to_text(b_search_path, errors='surrogate_or_strict'), 'MANIFEST.json')):
+                non_artifact = True
+    return local_collection, non_artifact
+
+
+def _collection_matches_requirement(collection, requirement, parent=None):
+    try:
+        collection.add_requirement(parent, requirement)
+    except AnsibleError:
+        return False
+    else:
+        return True
+
+
+def find_matching_collections(namespace, name, requirement, search_paths, first_found=False, fallback_metadata=False, parent=None, require_match=False):
+    found = non_artifact_found = False
+    for search_path in search_paths:
+        display.vvvv("Looking for '%s.%s:%s' in the collection search path %s" % (namespace, name, requirement, to_text(search_path, errors='surrogate_or_strict')))
+
+        local_collection, non_artifact = _find_path_by_name(search_path, namespace, name, fallback_metadata, parent)
+        non_artifact_found |= non_artifact
+        if not local_collection:
+            continue
+        if _collection_matches_requirement(local_collection, requirement, parent):
+            found = True
+            display.vvvv("Found collection '%s.%s:%s'" % (namespace, name, requirement))
+            yield local_collection
+            if first_found:
+                break
+
+    if require_match and not found:
+        if not fallback_metadata and non_artifact_found:
+            raise AnsibleError(
+                message="Collection %s does not appear to have a MANIFEST.json. " % collection_name +
+                "A MANIFEST.json is expected if the collection has been built and installed via ansible-galaxy.")
+        else:
+            raise AnsibleError(message='Collection %s is not installed in any of the collection paths.' % collection_name)
+    elif not found:
+        display.display('%s.%s:%s is not installed' % (namespace, name, requirement))
+
+
+def remove_collections(collections, search_paths, ignore_errors, no_deps, parent=None):
+    with _display_progress():
+        for collection in collections:
+            b_collection = to_bytes(collection[0], errors='surrogate_or_strict')
+            if os.path.isfile(b_collection) or urlparse(collection[0]).scheme.lower() in ['http', 'https'] or len(collection[0].split('.')) != 2:
+                raise AnsibleError(message="'%s' is not a valid collection name. The format namespace.name is expected." % collection[0])
+
+            collection_name = collection[0]
+            namespace, name = collection_name.split('.')
+            collection_version = collection[1]
+
+            # do we want to remove all or first found? should it be a toggle?
+            try:
+                found_collections = find_matching_collections(namespace, name, collection_version, search_paths, fallback_metadata=True, parent=parent)
+                for local_collection in found_collections:
+                    local_collection.remove()
+
+                    # if an error is encountered above but --ignore_errors is set should dependencies be removed anyway instead?
+                    if not no_deps:
+                        deps = [[identifier, requirement] for identifier, requirement in local_collection.dependencies.items()]
+                        remove_collections(deps, search_paths, ignore_errors, no_deps, parent=local_collection)
+            except AnsibleError as err:
+                if ignore_errors:
+                    display.warning("Failed to remove collection %s but skipping due to --ignore-errors being set. "
+                                    "Error: %s" % (collection[0], to_text(err)))
+                else:
+                    raise
+
+
 def download_collections(collections, output_path, apis, validate_certs, no_deps, allow_pre_release):
     """Download Ansible collections as their tarball from a Galaxy server to the path specified and creates a requirements
     file of the downloaded requirements to be used for an install.
@@ -617,7 +703,7 @@ def download_collections(collections, output_path, apis, validate_certs, no_deps
                 if requirement.api is None and requirement.b_path and os.path.isfile(requirement.b_path):
                     shutil.copy(requirement.b_path, to_bytes(dest_path, errors='surrogate_or_strict'))
                 elif requirement.api is None and requirement.b_path:
-                    temp_path = to_text(b_temp_path, errors='surrogate_or_string')
+                    temp_path = to_text(b_temp_path, errors='surrogate_or_strict')
                     temp_download_path = build_collection(requirement.b_path, temp_path, True)
                     shutil.move(to_bytes(temp_download_path, errors='surrogate_or_strict'),
                                 to_bytes(dest_path, errors='surrogate_or_strict'))
@@ -749,19 +835,9 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
                     namespace, name = collection_name.split('.')
                     collection_version = collection[1]
 
-                    # Verify local collection exists before downloading it from a galaxy server
-                    for search_path in search_paths:
-                        b_search_path = to_bytes(os.path.join(search_path, namespace, name), errors='surrogate_or_strict')
-                        if os.path.isdir(b_search_path):
-                            if not os.path.isfile(os.path.join(to_text(b_search_path, errors='surrogate_or_strict'), 'MANIFEST.json')):
-                                raise AnsibleError(
-                                    message="Collection %s does not appear to have a MANIFEST.json. " % collection_name +
-                                            "A MANIFEST.json is expected if the collection has been built and installed via ansible-galaxy."
-                                )
-                            local_collection = CollectionRequirement.from_path(b_search_path, False)
-                            break
-                    if local_collection is None:
-                        raise AnsibleError(message='Collection %s is not installed in any of the collection paths.' % collection_name)
+                    local_collection = list(
+                        find_matching_collections(namespace, name, requirement, search_paths, first_found=True, parent=None, require_match=True)
+                    )[0]
 
                     # Download collection on a galaxy server for comparison
                     try:
