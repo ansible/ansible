@@ -84,7 +84,7 @@ The `ansible_host` variable reflects the host a task is delegated to.
 Delegating facts
 ----------------
 
-Delegating Ansible tasks is like delegating tasks in the real world - your groceries belong to you, even if someone else delivers them to your home. Similarly, any facts gathered by a delegated task are assigned by default to the `inventory_hostname` (the current host), not to the host which produced the facts (the delegated to host). To assign gathered facts to the delegated host instead of the current host, set ``delegate_facts`` to C(true)::
+Delegating Ansible tasks is like delegating tasks in the real world - your groceries belong to you, even if someone else delivers them to your home. Similarly, any facts gathered by a delegated task are assigned by default to the `inventory_hostname` (the current host), not to the host which produced the facts (the delegated to host). To assign gathered facts to the delegated host instead of the current host, set ``delegate_facts`` to ``true``::
 
     ---
     - hosts: app_servers
