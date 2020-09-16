@@ -254,7 +254,6 @@ test/support/integration/plugins/module_utils/network/common/utils.py metaclass-
 test/support/integration/plugins/module_utils/postgres.py future-import-boilerplate
 test/support/integration/plugins/module_utils/postgres.py metaclass-boilerplate
 test/support/integration/plugins/modules/lvg.py pylint:blacklisted-name
-test/support/integration/plugins/modules/synchronize.py pylint:blacklisted-name
 test/support/integration/plugins/modules/timezone.py pylint:blacklisted-name
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/doc_fragments/netconf.py future-import-boilerplate
 test/support/network-integration/collections/ansible_collections/ansible/netcommon/plugins/doc_fragments/netconf.py metaclass-boilerplate
