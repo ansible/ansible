@@ -14,49 +14,54 @@ Handler example
 This playbook, ``verify-apache.yml``, contains a single play with a handler::
 
     ---
-    - name: verify apache installation
+    - name: Verify apache installation
       hosts: webservers
       vars:
         http_port: 80
         max_clients: 200
       remote_user: root
       tasks:
-      - name: ensure apache is at the latest version
-        yum:
+      - name: Ensure apache is at the latest version
+        ansible.builtin.yum:
           name: httpd
           state: latest
-      - name: write the apache config file
-        template:
+
+      - name: Write the apache config file
+        ansible.builtin.template:
           src: /srv/httpd.j2
           dest: /etc/httpd.conf
         notify:
-        - restart apache
-      - name: ensure apache is running
-        service:
+        - Restart apache
+
+      - name: Ensure apache is running
+        ansible.builtin.service:
           name: httpd
           state: started
+
       handlers:
-        - name: restart apache
-          service:
+        - name: Restart apache
+          ansible.builtin.service:
             name: httpd
             state: restarted
 
 In this example playbook, the second task notifies the handler. A single task can notify more than one handler::
 
-    - name: template configuration file
-      template:
+    - name: Template configuration file
+      ansible.builtin.template:
         src: template.j2
         dest: /etc/foo.conf
       notify:
-        - restart memcached
-        - restart apache
+        - Restart memcached
+        - Restart apache
+
       handlers:
-        - name: restart memcached
-          service:
+        - name: Restart memcached
+          ansible.builtin.service:
             name: memcached
             state: restarted
-        - name: restart apache
-          service:
+
+        - name: Restart apache
+          ansible.builtin.service:
             name: apache
             state: restarted
 
@@ -68,9 +73,14 @@ By default, handlers run after all the tasks in a particular play have been comp
 If you need handlers to run before the end of the play, add a task to flush them using the :ref:`meta module <meta_module>`, which executes Ansible actions::
 
     tasks:
-      - shell: some tasks go here
-      - meta: flush_handlers
-      - shell: some other tasks
+      - name: Some tasks go here
+        ansible.builtin.shell: ...
+
+      - name: Flush handlers
+        meta: flush_handlers
+
+      - name: Some other tasks
+        ansible.builtin.shell: ...
 
 The ``meta: flush_handlers`` task triggers any handlers that have been notified at that point in the play.
 
@@ -80,8 +90,8 @@ Using variables with handlers
 You may want your Ansible handlers to use variables. For example, if the name of a service varies slightly by distribution, you want your output to show the exact name of the restarted service for each target machine. Avoid placing variables in the name of the handler. Since handler names are templated early on, Ansible may not have a value available for a handler name like this::
 
     handlers:
-    # this handler name may cause your play to fail!
-    - name: restart "{{ web_service_name }}"
+    # This handler name may cause your play to fail!
+    - name: Restart "{{ web_service_name }}"
 
 If the variable used in the handler name is not available, the entire play fails. Changing that variable mid-play **will not** result in newly created handler.
 
@@ -94,28 +104,29 @@ Instead, place variables in the task parameters of your handler. You can load th
         include_vars: "{{ ansible_facts.distribution }}.yml"
 
     handlers:
-      - name: restart web service
-        service:
+      - name: Restart web service
+        ansible.builtin.service:
           name: "{{ web_service_name | default('httpd') }}"
           state: restarted
 
 Handlers can also "listen" to generic topics, and tasks can notify those topics as follows::
 
     handlers:
-      - name: restart memcached
-        service:
+      - name: Restart memcached
+        ansible.builtin.service:
           name: memcached
           state: restarted
         listen: "restart web services"
-      - name: restart apache
-        service:
+
+      - name: Restart apache
+        ansible.builtin.service:
           name: apache
           state: restarted
         listen: "restart web services"
 
     tasks:
-      - name: restart everything
-        command: echo "this task will restart the web services"
+      - name: Restart everything
+        ansible.builtin.command: echo "this task will restart the web services"
         notify: "restart web services"
 
 This use makes it much easier to trigger multiple handlers. It also decouples handlers from their names,
@@ -132,6 +143,6 @@ a shared source like Galaxy).
 
 When using handlers within roles, note that:
 
-* handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified.
-* handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers.
+* handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed at the end of section where they were notified.
+* handlers notified within ``roles`` section are automatically flushed at the end of ``tasks`` section, but before any ``tasks`` handlers.
 * handlers are play scoped and as such can be used outside of the role they are defined in.
