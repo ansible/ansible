@@ -1,3 +1,0 @@
-- name: 'Create a test credentials (token)'
-  command: '{{ vault_cmd }} token create -policy test-policy -field token'
-  register: user_token_cmd
