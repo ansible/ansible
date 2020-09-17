@@ -230,6 +230,13 @@ Suggestions to resolve:
 
 #. Verify that you have write access to the socket path described in the error message.
 
+The Socket Path error can be thrown if: 
+ansible_connection: network_cli
+and
+the control system has not previously logged on to the Cisco router.
+
+There is no entry for this router in the ~/.ssh/known_hosts file on the control system.  On a connection attempt, the SSH process waits for a "yes" answer to "Are you sure you want to continue connecting (yes/no/[fingerprint])?".  To work around this issue, manually logon to the router, answer "yes" to the prompt, and complete the logon process.  This will add an entry to the known_hosts file, and playbooks will succeed with ansible_connection: network_cli.
+
 #. Follow the steps detailed in :ref:`enable network logging <enable_network_logging>`.
 
 If the identified error message from the log file is:
