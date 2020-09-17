@@ -285,7 +285,9 @@ Parsing JSON
 -------------
 
 Although Ansible will natively convert serialized JSON to Ansible native
-data when recognized, you can also use the ``cli_parse`` module as well.
+data when recognized, you can also use the ``cli_parse`` module for this conversion.
+
+Example task:
 
 .. code-block:: yaml
 
@@ -296,11 +298,15 @@ data when recognized, you can also use the ``cli_parse`` module as well.
          name: ansible.netcommon.json
        register: interfaces
 
-For this task:
-- The ``show interface | json`` command would have been issued on the device.
-- The output would be set as the ``interfaces`` fact for the device.
+Taking a deeper dive into this task:
+
+- The ``show interface | json`` command is issued on the device.
+- The output is set as the ``interfaces`` fact for the device.
 - JSON support is provided primarily for playbook consistency.
-- The use of ``ansible.netcommon.json`` is fully supported with a Red Hat Ansible Automation Platform subscription
+
+.. note::
+
+	The use of ``ansible.netcommon.json`` is fully supported with a Red Hat Ansible Automation Platform subscription
 
 Parsing with ntc_templates
 ----------------------------
@@ -318,7 +324,18 @@ Example task:
          name: ansible.netcommon.ntc_templates
        set_fact: interfaces
 
-This task and template sets the following fact as the ``interfaces`` fact for the host:
+Taking a deeper dive into this task:
+
+- The ``ansible_network_os`` of the device is converted to the ntc_template format ``cisco_nxos``. Alternately, you can provide the ``os`` with the ``parser/os`` option instead.
+- The ``cisco_nxos_show_interface.textfsm`` template, included with the ``ntc_templates`` package, parses the output.
+- See `the ntc_templates README <https://github.com/networktocode/ntc-templates/blob/master/README.md>`_ for additional information about the ``ntc_templates`` python library.
+
+.. note::
+
+	Red Hat Ansible Automation Platform subscription support is limited to the use of the ``ntc_templates`` public APIs as documented.
+
+
+This task and and the predefined template sets the following fact as the ``interfaces`` fact for the host:
 
 .. code-block:: yaml
 
@@ -349,19 +366,13 @@ This task and template sets the following fact as the ``interfaces`` fact for th
      bia: 5254.005a.f8bd
      delay: 10 usec
 
-For this task:
-- The ``ansible_network_os`` of the device was converted to the ntc_template format ``cisco_nxos``. Alternately, the task could provide  the ``os`` with the ``parser/os`` key.
-- The ``cisco_nxos_show_interface.textfsm`` template, included with the
-``ntc_templates`` package, was used to parse the output.
-- See `the ntc_templates README <https://github.com/networktocode/ntc-templates/blob/master/README.md>`_ for additional information about the ``ntc_templates`` python library.
-- Red Hat Ansible Automation Platform subscription support is limited to the use of the ``ntc_templates`` public APIs as documented.
 
 Parsing with pyATS
 ----------------------
 
 ``pyATS`` is part of the Cisco Test Automation & Validation Solution. It
 includes many predefined parsers for a number of network platforms and
-commands. You can use the  predefined parsers that are part of the ``pyATS`` package with the ``cli_parse`` module.
+commands. You can use the predefined parsers that are part of the ``pyATS`` package with the ``cli_parse`` module.
 
 Example task:
 
@@ -374,7 +385,20 @@ Example task:
          name: ansible.netcommon.pyats
        set_fact: interfaces
 
-This task sets the follow fact as the ``interfaces`` fact for the
+
+Taking a deeper dive into this task:
+
+- The ``cli_parse`` modules converts the ``ansible_network_os`` automatically (in this example, ``ansible_network_os`` set to ``cisco.nxos.nxos``, converts to ``nxos`` for pyATS.  Alternately, you can set the OS with the ``parser/os`` option instead.
+- Using a combination of the command and OS, the pyATS selects the following parser: https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers/show%2520interface.
+- The ``cli_parse`` module sets ``cisco.ios.ios`` to ``iosxe`` for pyATS. You can override this with the ``parser/os`` option.
+- ``cli_parse`` only uses the predefined parsers in pyATS. See the `pyATS documentation <https://developer.cisco.com/docs/pyats/>`_ and the full list of `pyATS included parsers <https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers>`_.
+
+.. note::
+
+	Red Hat Ansible Automation Platform subscription support is limited to the use of the pyATS public APIs as documented.
+
+
+This task sets the following fact as the ``interfaces`` fact for the
 host:
 
 .. code-block:: yaml
@@ -411,13 +435,6 @@ host:
      link_state: up
      <...>
 
-About the task:
-
-- Because the ``ansible_network_os`` for the device was``cisco.nxos.nxos``, it was provided to pyATS as ``nxos``. The ``cli_parse`` modules converts the ``ansible_network_os`` automatically. Alternately, you can set the OS with the ``parser/os`` key.
-- Using a combination of the command and OS, the pyATS used the following parser: https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers/show%2520interface
-- The ``cli_parse`` module sets ``cisco.ios.ios`` to ``iosxe`` for pyATS. You can be override this with the ``parser/os`` key.
-- ``cli_parse`` only uses the predefined parsers in pyATS. See the `pyATS documentation <https://developer.cisco.com/docs/pyats/>`_ and the full list of `pyATS included parsers <https://pubhub.devnetcloud.com/media/genie-feature-browser/docs/#/parsers>`_`
-- Red Hat Ansible Automation Platform subscription support is limited to the use of the pyATS public APIs as documented.
 
 Parsing with textfsm
 ---------------------
@@ -425,7 +442,7 @@ Parsing with textfsm
 ``textfsm`` is a Python module which implements a template-based state
 machine for parsing semi-formatted text.
 
-The following shows an example of the ``textfsm`` template stored as
+The following sample``textfsm`` template is stored as
 ``templates/nxos_show_interface.textfsm``
 
 .. code-block:: text
@@ -481,8 +498,18 @@ The following task uses the example template for ``textfsm`` with the ``cli_pars
          name: ansible.netcommon.textfsm
        set_fact: interfaces
 
-This task sets the following fact as the ``interfaces`` fact for the
-host:
+Taking a deeper dive into this task:
+
+- The ``ansible_network_os`` for the device (``cisco.nxos.nxos``) is converted to ``nxos``. Alternately you can provide the OS in the ``parser/os`` option instead.
+- The textfsm template name defaulted to ``templates/nxos_show_interface.textfsm`` using a combination of the OS and command run. Alternately you can override the generated template path with the ``parser/template_path`` option.
+- See the `textfsm README <https://github.com/google/textfsm>`_ for details.
+- ``textfsm`` was previously made available as a filter plugin. Ansible users should transition to the ``cli_parse`` module.
+
+.. note::
+
+	Red Hat Ansible Automation Platform subscription support is limited to the use of the ``textfsm`` public APIs as documented.
+
+This task sets the following fact as the ``interfaces`` fact for the host:
 
 .. code-block:: yaml
 
@@ -511,23 +538,13 @@ host:
      BANDWIDTH: 1000000 Kbit
      BIA: X254.005a.f8bd
 
-About the task:
-- Because the ``ansible_network_os`` for the device was ``cisco.nxos.nxos`` it was converted to ``nxos``. Alternately you can provide the OS in the
-``parser/os`` key.
-- The textfsm template name defaulted to ``templates/nxos_show_interface.textfsm`` using a combination of the OS and command run. Alternately you can override the generated template path with the
-``parser/template_path`` key.
-- See the `textfsm README <https://github.com/google/textfsm>`_ for details.
-- ``textfsm`` was previously made available as a filter plugin. Ansible users should transition to the ``cli_parse`` module.
-- Red Hat Ansible Automation Platform subscription support
-is limited to the use of the ``textfsm`` public APIs as documented.
 
 Parsing with TTP
 -----------------
 
 TTP is a Python library for semi-structured text parsing using
 templates. TTP uses a jinja-like syntax to limit the need for regular
-expressions. Users familiar with jinja templating may find the TTP template
-syntax familiar.
+expressions. Users familiar with jinja templating may find the TTP template syntax familiar.
 
 The following is an example TTP template stored as ``templates/nxos_show_interfaces.ttp``:
 
@@ -547,6 +564,18 @@ The following task uses this template to parse the ``show interface`` command ou
          name: ansible.netcommon.ttp
        set_fact: interfaces
 
+Taking a deeper dive in this task:
+
+- The default template path ``templates/nxos_show_interface.ttp`` was generated using the ``ansible_network_os`` for the host and ``command`` provided.
+- TTP supports several additional variables that will be passed to the parser. These include:
+
+  - ``parser/vars/ttp_init`` -  Additional parameter passed when the parser is initialized.
+  - ``parser/vars/ttp_results`` -  Additional parameters used to influence the parser output.
+  - ``parser/vars/ttp_vars`` -  Additional variables made available in the template.
+
+- See the `TTP documentation <https://ttp.readthedocs.io>`_ for details.
+
+
 The task sets the follow fact as the ``interfaces`` fact for the
 host:
 
@@ -561,16 +590,6 @@ host:
    - admin_state: up,
      interface: Ethernet1/2
      state: up
-
-About the task:
-- The default template path ``templates/nxos_show_interface.ttp`` was generated using the ``ansible_network_os`` for the host and ``command`` provided.
-- TTP supports several additional variables that will be passed to the parser. These include:
-
-  - ``parser/vars/ttp_init``: Additional parameter passed when the parser is initialized.
-  - ``parser/vars/ttp_results``: Additional params used to influence the parser output.
-  - ``parser/vars/ttp_vars``: Additional variables made available in the template.
-
-- See the `TTP documentation <https://ttp.readthedocs.io>`_` for details.
 
 
 Converting XML
@@ -588,6 +607,10 @@ This example task runs the ``show interface`` command and parses the output as X
          parser:
            name: ansible.netcommon.xml
      set_fact: interfaces
+
+.. note::
+
+	Red Hat Ansible Automation Platform subscription support is limited to the use of the xmltodict public APIs as documented.
 
 This task sets the ``interfaces`` fact for the host based on this returned output:
 
@@ -610,16 +633,11 @@ This task sets the ``interfaces`` fact for the host based on this returned outpu
                      eth_bia_addr: x254.005a.f8b5
                      eth_bw: '1000000'
 
-About the task:
-
--  Red Hat Ansible Automation Platform subscription support is limited
-   to the use of the xmltodict public APIs as documented.
 
 Advanced use cases
 ===================
 
-The ``cli_parse`` module supports several features to support more
-complex uses cases.
+The ``cli_parse`` module supports several features to support more complex uses cases.
 
 Provide a full template path
 -----------------------------
@@ -634,6 +652,7 @@ Use the ``template_path`` option to override the default template path in the ta
        parser:
          name: ansible.netcommon.native
          template_path: /home/user/templates/filename.yaml
+
 
 Provide command to parser different than the command run
 -----------------------------------------------------------
@@ -652,8 +671,7 @@ Use the ``command`` suboption for the ``parser`` to configure the command the pa
 Provide a custom OS value
 --------------------------------
 
-Use the ``os`` suboption to the parser to directly set the OS instead of
-Rather than using ``ansible_network_os`` or ``ansible_distribution`` to generate the template path or with the specified parser engine:
+Use the ``os`` suboption to the parser to directly set the OS instead of using ``ansible_network_os`` or ``ansible_distribution`` to generate the template path or with the specified parser engine:
 
 .. code-block:: yaml
 
@@ -671,10 +689,11 @@ Rather than using ``ansible_network_os`` or ``ansible_distribution`` to generate
          name: ansible.netcommon.native
          os: linux
 
+
 Parse existing text
 --------------------
 
-Use the ``text`` option  instead of ``command`` to parse text  collected earlier in the playbook.
+Use the ``text`` option  instead of ``command`` to parse text collected earlier in the playbook.
 
 .. code-block:: yaml
 
