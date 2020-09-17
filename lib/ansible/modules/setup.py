@@ -54,12 +54,16 @@ options:
         description:
             - Path used for local ansible facts (C(*.fact)) - files in this dir
               will be run (if executable) and their results be added to C(ansible_local) facts.
-              If a file is not executable it is read instead. Check notes for Windows options. (from 2.1 on)
+              If a file is not executable it is read instead.
               File/results format can be JSON or INI-format. The default C(fact_path) can be
               specified in C(ansible.cfg) for when setup is automatically called as part of
               C(gather_facts).
               NOTE - For windows clients, the results will be added to a variable named after the
               local file (without extension suffix), rather than C(ansible_local).
+            - Since Ansible 2.1, Windows hosts can use C(fact_path). Make sure that this path
+              exists on the target host. Files in this path MUST be PowerShell scripts C(.ps1)
+              which outputs an object. This object will be formatted by Ansible as json so the
+              script should be outputting a raw hashtable, array, or other primitive object.
         required: false
         default: /etc/ansible/facts.d
 description:
@@ -80,11 +84,6 @@ notes:
     - The filter option filters only the first level subkey below ansible_facts.
     - If the target host is Windows, you will not currently have the ability to use
       C(filter) as this is provided by a simpler implementation of the module.
-    - If the target host is Windows you can now use C(fact_path). Make sure that this path
-      exists on the target host. Files in this path MUST be PowerShell scripts (``*.ps1``) and
-      their output must be formattable in JSON (Ansible will take care of this). Test the
-      output of your scripts.
-      This option was added in Ansible 2.1.
     - This module is also supported for Windows targets.
     - This module should be run with elevated privileges on BSD systems to gather facts like ansible_product_version.
 author:
