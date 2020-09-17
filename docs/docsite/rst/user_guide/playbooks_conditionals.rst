@@ -26,7 +26,10 @@ The simplest conditional statement applies to a single task. Create the task, th
 
     tasks:
       - name: Configure SELinux to start mysql on any port
-        seboolean: name=mysql_connect_any state=true persistent=yes
+        ansible.posix.seboolean:
+          name: mysql_connect_any
+          state: true
+          persistent: yes
         when: ansible_selinux.status == "enabled"
         # all variables can be used directly in conditionals without double curly braces
 
@@ -41,15 +44,17 @@ Often you want to execute or skip a task based on facts. Facts are attributes of
 
 See :ref:`commonly_used_facts` for a list of facts that frequently appear in conditional statements. Not all facts exist for all hosts. For example, the 'lsb_major_release' fact used in an example below only exists when the lsb_release package is installed on the target host. To see what facts are available on your systems, add a debug task to your playbook::
 
-    - debug: var=ansible_facts
+    - name: Show facts available on the system
+      ansible.builtin.debug:
+        var: ansible_facts
 
 Here is a sample conditional based on a fact:
 
 .. code-block:: yaml
 
     tasks:
-      - name: shut down Debian flavored systems
-        command: /sbin/shutdown -t now
+      - name: Shut down Debian flavored systems
+        ansible.builtin.command: /sbin/shutdown -t now
         when: ansible_facts['os_family'] == "Debian"
 
 If you have multiple conditions, you can group them with parentheses:
@@ -57,16 +62,16 @@ If you have multiple conditions, you can group them with parentheses:
 .. code-block:: yaml
 
     tasks:
-      - name: shut down CentOS 6 and Debian 7 systems
-        command: /sbin/shutdown -t now
+      - name: Shut down CentOS 6 and Debian 7 systems
+        ansible.builtin.command: /sbin/shutdown -t now
         when: (ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "6") or
               (ansible_facts['distribution'] == "Debian" and ansible_facts['distribution_major_version'] == "7")
 
 You can use `logical operators <https://jinja.palletsprojects.com/en/master/templates/#logic>`_ to combine conditions. When you have multiple conditions that all need to be true (that is, a logical ``and``), you can specify them as a list::
 
     tasks:
-      - name: shut down CentOS 6 systems
-        command: /sbin/shutdown -t now
+      - name: Shut down CentOS 6 systems
+        ansible.builtin.command: /sbin/shutdown -t now
         when:
           - ansible_facts['distribution'] == "CentOS"
           - ansible_facts['distribution_major_version'] == "6"
@@ -74,7 +79,7 @@ You can use `logical operators <https://jinja.palletsprojects.com/en/master/temp
 If a fact or variable is a string, and you need to run a mathematical comparison on it, use a filter to ensure that Ansible reads the value as an integer::
 
     tasks:
-      - shell: echo "only on Red Hat 6, derivatives, and later"
+      - ansible.builtin.shell: echo "only on Red Hat 6, derivatives, and later"
         when: ansible_facts['os_family'] == "RedHat" and ansible_facts['lsb']['major_release'] | int >= 6
 
 .. _conditionals_registered_vars:
@@ -89,29 +94,31 @@ Often in a playbook you want to execute or skip a task based on the outcome of a
 
 You create the name of the registered variable using the ``register`` keyword. A registered variable always contains the status of the task that created it as well as any output that task generated. You can use registered variables in templates and action lines as well as in conditional ``when`` statements. You can access the string contents of the registered variable using ``variable.stdout``. For example::
 
-    - name: test play
+    - name: Test play
       hosts: all
 
       tasks:
 
-          - shell: cat /etc/motd
+          - name: Register a variable
+            ansible.builtin.shell: cat /etc/motd
             register: motd_contents
 
-          - shell: echo "motd contains the word hi"
+          - name: Use the variable in conditional statement
+            ansible.builtin.shell: echo "motd contains the word hi"
             when: motd_contents.stdout.find('hi') != -1
 
 You can use registered results in the loop of a task if the variable is a list. If the variable is not a list, you can convert it into a list, with either ``stdout_lines`` or with ``variable.stdout.split()``. You can also split the lines by other fields::
 
-    - name: registered variable usage as a loop list
+    - name: Registered variable usage as a loop list
       hosts: all
       tasks:
 
-        - name: retrieve the list of home directories
-          command: ls /home
+        - name: Retrieve the list of home directories
+          ansible.builtin.command: ls /home
           register: home_dirs
 
-        - name: add home dirs to the backup spooler
-          file:
+        - name: Add home dirs to the backup spooler
+          ansible.builtin.file:
             path: /mnt/bkspool/{{ item }}
             src: /home/{{ item }}
             state: link
@@ -127,12 +134,12 @@ The string content of a registered variable can be empty. If you want to run ano
 
       tasks:
 
-          - name: list contents of directory
-            command: ls mydir
+          - name: List contents of directory
+            ansible.builtin.command: ls mydir
             register: contents
 
-          - name: check contents for emptiness
-            debug:
+          - name: Check contents for emptiness
+            ansible.builtin.debug:
               msg: "Directory is empty"
             when: contents.stdout == ""
 
@@ -141,17 +148,21 @@ Ansible always registers something in a registered variable for every host, even
 .. code-block:: yaml
 
     tasks:
-      - command: /bin/false
+      - name: Register a variable, ignore errors and continue
+        ansible.builtin.command: /bin/false
         register: result
-        ignore_errors: True
+        ignore_errors: true
 
-      - command: /bin/something
+      - name: Run only if the task that registered the "result" variable fails
+        ansible.builtin.command: /bin/something
         when: result is failed
 
-      - command: /bin/something_else
+      - name: Run only if the task that registered the "result" variable succeeds
+        ansible.builtin.command: /bin/something_else
         when: result is succeeded
 
-      - command: /bin/still/something_else
+      - name: Run only if the task that registered the "result" variable is skipped
+        ansible.builtin.command: /bin/still/something_else
         when: result is skipped
 
 .. note:: Older versions of Ansible used ``success`` and ``fail``, but ``succeeded`` and ``failed`` use the correct tense. All of these options are now valid.
@@ -173,10 +184,12 @@ With the variables above, Ansible would run one of these tasks and skip the othe
 .. code-block:: yaml
 
     tasks:
-        - shell: echo "This certainly is epic!"
+        - name: Run the command if "epic" or "monumental" is true
+          ansible.builtin.shell: echo "This certainly is epic!"
           when: epic or monumental | bool
 
-        - shell: echo "This certainly isn't epic!"
+        - name: Run the command if "epic" is false
+          ansible.builtin.shell: echo "This certainly isn't epic!"
           when: not epic
 
 If a required variable has not been set, you can skip or fail using Jinja2's `defined` test. For example:
@@ -184,10 +197,12 @@ If a required variable has not been set, you can skip or fail using Jinja2's `de
 .. code-block:: yaml
 
     tasks:
-        - shell: echo "I've got '{{ foo }}' and am not afraid to use it!"
+        - name: Run the command if "foo" is defined
+          ansible.builtin.shell: echo "I've got '{{ foo }}' and am not afraid to use it!"
           when: foo is defined
 
-        - fail: msg="Bailing out. this play requires 'bar'"
+        - name: Fail if "bar" is undefined
+          ansible.builtin.fail: msg="Bailing out. This play requires 'bar'"
           when: bar is undefined
 
 This is especially useful in combination with the conditional import of vars files (see below).
@@ -203,7 +218,8 @@ If you combine a ``when`` statement with a :ref:`loop <playbooks_loops>`, Ansibl
 .. code-block:: yaml
 
     tasks:
-        - command: echo {{ item }}
+        - name: Run with items greater than 5
+          ansible.builtin.command: echo {{ item }}
           loop: [ 0, 2, 4, 6, 8, 10 ]
           when: item > 5
 
@@ -211,7 +227,8 @@ If you need to skip the whole task when the loop variable is undefined, use the 
 
 .. code-block:: yaml
 
-        - command: echo {{ item }}
+        - name: Skip the whole task when a loop variable is undefined
+          ansible.builtin.command: echo {{ item }}
           loop: "{{ mylist|default([]) }}"
           when: item > 5
 
@@ -219,7 +236,8 @@ You can do the same thing when looping over a dict:
 
 .. code-block:: yaml
 
-        - command: echo {{ item.key }}
+        - name: The same as above using a dict
+          ansible.builtin.command: echo {{ item.key }}
           loop: "{{ query('dict', mydict|default({})) }}"
           when: item.value > 5
 
@@ -233,9 +251,11 @@ You can provide your own facts, as described in :ref:`developing_modules`.  To r
 .. code-block:: yaml
 
     tasks:
-        - name: gather site specific fact data
+        - name: Gather site specific fact data
           action: site_facts
-        - command: /usr/bin/thingy
+
+        - name: Use a custom fact
+          ansible.builtin.command: /usr/bin/thingy
           when: my_custom_fact_just_retrieved_from_the_remote_system == '1234'
 
 .. _when_with_reuse:
@@ -258,19 +278,24 @@ When you add a conditional to an import statement, Ansible applies the condition
       when: x is not defined
 
     # other_tasks.yml
-    - set_fact:
+    - name: Set a variable
+      ansible.builtin.set_fact:
         x: foo
-    - debug:
+
+    - name: Print a variable
+      ansible.builtin.debug:
         var: x
 
 Ansible expands this at execution time to the equivalent of::
 
-    - set_fact:
+    - name: Set a variable if not defined
+      ansible.builtin.set_fact:
         x: foo
       when: x is not defined
       # this task sets a value for x
 
-    - debug:
+    - name: Do the task if "x" is not defined
+      ansible.builin.debug:
         var: x
       when: x is not defined
       # Ansible skips this task, because x is now defined
@@ -293,22 +318,29 @@ When you use a conditional on an ``include_*`` statement, the condition is appli
       when: x is not defined
 
     # other_tasks.yml
-    - set_fact:
+    - name: Set a variable
+      ansible.builtin.set_fact:
         x: foo
-    - debug:
+
+    - name: Print a variable
+      ansible.builtin.debug:
         var: x
 
 Ansible expands this at execution time to the equivalent of::
 
+    # main.yml
     - include_tasks: other_tasks.yml
       when: x is not defined
       # if condition is met, Ansible includes other_tasks.yml
 
-    - set_fact:
+    # other_tasks.yml
+    - name: Set a variable
+      ansible.builtin.set_fact:
         x: foo
       # no condition applied to this task, Ansible sets the value of x to foo
 
-    - debug:
+    - name: Print a variable
+      ansible.builtin.debug:
         var: x
       # no condition applied to this task, Ansible prints the debug statement
 
@@ -337,10 +369,11 @@ When you incorporate a role in your playbook statically with the ``roles`` keywo
 Selecting variables, files, or templates based on facts
 -------------------------------------------------------
 
-Sometimes the facts about a host determine the values you want to use for certain variables or even the file or template you want to select for that host. For example, the names of packages are different on CentOS and on Debian. The configuration files for common services are also different on different OS flavors and versions. To load different variables file, templates, or other files based on a fact about the hosts you are managing:
+Sometimes the facts about a host determine the values you want to use for certain variables or even the file or template you want to select for that host. For example, the names of packages are different on CentOS and on Debian. The configuration files for common services are also different on different OS flavors and versions. To load different variables file, templates, or other files based on a fact about the hosts:
 
-  # Name your vars files, templates, or files to match the Ansible fact that differentiates them
-  # Select the correct vars file, template, or file for each host with a variable based on that Ansible fact
+  1) name your vars files, templates, or files to match the Ansible fact that differentiates them
+
+  2) select the correct vars file, template, or file for each host with a variable based on that Ansible fact
 
 Ansible separates variables from tasks, keeping your playbooks from turning into arbitrary code with nested conditionals. This approach results in more streamlined and auditable configuration rules because there are fewer decision points to track.
 
@@ -363,10 +396,12 @@ Then import those variables files based on the facts you gather on the hosts in 
         - "vars/common.yml"
         - [ "vars/{{ ansible_facts['os_family'] }}.yml", "vars/os_defaults.yml" ]
       tasks:
-      - name: make sure apache is started
-        service: name={{ apache }} state=started
+      - name: Make sure apache is started
+        ansible.builtin.service:
+          name: '{{ apache }}'
+          state: started
 
-Ansible gathers facts on the hosts in the webservers group, then interpolates the variable "ansible_facts['os_family']" into a list of filenames. If you have hosts with Red Hat operating systems ('CentOS', for example), Ansible looks for 'vars/RedHat.yml'. If that file does not exist, Ansible attempts to load 'vars/os_defaults.yml'. For Debian hosts, Ansible first looks for 'vars/Debian.yml', before falling back on 'vars/os_defaults.yml'. If no files in the list are found, Ansible raises an error.
+Ansible gathers facts on the hosts in the webservers group, then interpolates the variable "ansible_facts['os_family']" into a list of filenames. If you have hosts with Red Hat operating systems (CentOS, for example), Ansible looks for 'vars/RedHat.yml'. If that file does not exist, Ansible attempts to load 'vars/os_defaults.yml'. For Debian hosts, Ansible first looks for 'vars/Debian.yml', before falling back on 'vars/os_defaults.yml'. If no files in the list are found, Ansible raises an error.
 
 Selecting files and templates based on facts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -375,14 +410,14 @@ You can use the same approach when different OS flavors or versions require diff
 
 For example, you can template out a configuration file that is very different between, say, CentOS and Debian::
 
-    - name: template a file
-      template:
-          src: "{{ item }}"
-          dest: /etc/myapp/foo.conf
+    - name: Template a file
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: /etc/myapp/foo.conf
       loop: "{{ query('first_found', { 'files': myfiles, 'paths': mypaths}) }}"
       vars:
         myfiles:
-          - "{{ansible_facts['distribution']}}.conf"
+          - "{{ ansible_facts['distribution'] }}.conf"
           -  default.conf
         mypaths: ['search_location_one/somedir/', '/opt/other_location/somedir/']
 
