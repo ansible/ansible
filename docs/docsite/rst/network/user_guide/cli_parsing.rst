@@ -18,8 +18,7 @@ The ``cli_parse`` module can either run a CLI command on a device and return a p
 Why parse the text?
 --------------------
 
-Some of the more common use cases for parsing semi-structured text into
-Ansible native data structures include tasks that use:
+Parsing non-structured data such as network configurations into structured data allows programmatic use of the data from that device. You can pull information from a network device and update a CMDB in one playbook. Use cases include automated troubleshooting, creating dynamic documentation, updating IPAM (IP address management) tools and so on. You may prefer to do this with Ansible natively to take advantage of native Ansible constructs such as:
 
 -  The ``when`` clause to conditionally run other tasks or roles
 -  The ``assert`` module for checking configuration and operational state compliance
@@ -27,7 +26,8 @@ Ansible native data structures include tasks that use:
 -  Templates and ``command`` or ``config`` modules to generate host, device, or platform commands or configuration
 -  The current platform ``facts`` modules to supplement native facts information
 
-You can also use the ``cli_parse`` module to populate the Ansible inventory or a CMDB with new structured data.
+By parsing semi-structured text into Ansible native data structures, you can take full advantage of Ansible's network modules and plugins.
+
 
 When not to parse the text
 ---------------------------
