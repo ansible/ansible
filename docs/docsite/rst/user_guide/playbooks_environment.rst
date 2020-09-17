@@ -23,7 +23,7 @@ You can set the environment directly at the task level::
       tasks:
 
         - name: Install cobbler
-          package:
+          ansible.builtin.package:
             name: cobbler
             state: present
           environment:
@@ -42,7 +42,7 @@ You can re-use environment settings by defining them as variables in your play a
       tasks:
 
         - name: Install cobbler
-          package:
+          ansible.builtin.package:
             name: cobbler
             state: present
           environment: "{{ proxy_env }}"
@@ -94,19 +94,19 @@ Some language-specific version managers (such as rbenv and nvm) require you to s
         PATH: /var/local/nvm/versions/node/v4.2.1/bin:{{ ansible_env.PATH }}
 
       tasks:
-      - name: check for package.json
-        stat:
+      - name: Check for package.json
+        ansible.builtin.stat:
           path: '{{ node_app_dir }}/package.json'
         register: packagejson
 
-      - name: npm prune
-        command: npm prune
+      - name: Run npm prune
+        ansible.builtin.command: npm prune
         args:
           chdir: '{{ node_app_dir }}'
         when: packagejson.stat.exists
 
-      - name: npm install
-        npm:
+      - name: Run npm install
+        community.general.npm:
           path: '{{ node_app_dir }}'
         when: packagejson.stat.exists
 
@@ -119,8 +119,8 @@ Some language-specific version managers (such as rbenv and nvm) require you to s
 You can also specify the environment at the task level::
 
     ---
-    - name: install ruby 2.3.1
-      command: rbenv install {{ rbenv_ruby_version }}
+    - name: Install ruby 2.3.1
+      ansible.builtin.command: rbenv install {{ rbenv_ruby_version }}
       args:
         creates: '{{ rbenv_root }}/versions/{{ rbenv_ruby_version }}/bin/ruby'
       vars:
