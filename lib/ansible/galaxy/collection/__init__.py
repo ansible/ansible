@@ -326,13 +326,12 @@ class CollectionRequirement:
         self.versions = set([self.latest_version])
         self._get_metadata()
 
-    def verify(self, remote_collection, path, b_temp_tar_path):
+    def verify(self, remote_collection, b_temp_tar_path):
         if not self.skip:
             display.display("'%s' has not been installed, nothing to verify" % (to_text(self)))
             return
 
-        collection_path = os.path.join(path, self.namespace, self.name)
-        b_collection_path = to_bytes(collection_path, errors='surrogate_or_strict')
+        collection_path = to_text(self.b_path, errors='surrogate_or_strict')
 
         display.vvv("Verifying '%s:%s'." % (to_text(self), self.latest_version))
         display.vvv("Installed collection found at '%s'" % collection_path)
@@ -348,7 +347,7 @@ class CollectionRequirement:
 
         # Verify the manifest hash matches before verifying the file manifest
         expected_hash = _get_tar_file_hash(b_temp_tar_path, 'MANIFEST.json')
-        self._verify_file_hash(b_collection_path, 'MANIFEST.json', expected_hash, modified_content)
+        self._verify_file_hash('MANIFEST.json', expected_hash, modified_content)
         manifest = _get_json_from_tar_file(b_temp_tar_path, 'MANIFEST.json')
 
         # Use the manifest to verify the file manifest checksum
@@ -357,14 +356,14 @@ class CollectionRequirement:
         expected_hash = file_manifest_data['chksum_%s' % file_manifest_data['chksum_type']]
 
         # Verify the file manifest before using it to verify individual files
-        self._verify_file_hash(b_collection_path, file_manifest_filename, expected_hash, modified_content)
+        self._verify_file_hash(file_manifest_filename, expected_hash, modified_content)
         file_manifest = _get_json_from_tar_file(b_temp_tar_path, file_manifest_filename)
 
         # Use the file manifest to verify individual file checksums
         for manifest_data in file_manifest['files']:
             if manifest_data['ftype'] == 'file':
                 expected_hash = manifest_data['chksum_%s' % manifest_data['chksum_type']]
-                self._verify_file_hash(b_collection_path, manifest_data['name'], expected_hash, modified_content)
+                self._verify_file_hash(manifest_data['name'], expected_hash, modified_content)
 
         if modified_content:
             display.display("Collection %s contains modified content in the following files:" % to_text(self))
@@ -376,8 +375,8 @@ class CollectionRequirement:
         else:
             display.vvv("Successfully verified that checksums for '%s:%s' match the remote collection" % (to_text(self), self.latest_version))
 
-    def _verify_file_hash(self, b_path, filename, expected_hash, error_queue):
-        b_file_path = to_bytes(os.path.join(to_text(b_path), filename), errors='surrogate_or_strict')
+    def _verify_file_hash(self, filename, expected_hash, error_queue):
+        b_file_path = to_bytes(os.path.join(to_text(self.b_path), filename), errors='surrogate_or_strict')
 
         if not os.path.isfile(b_file_path):
             actual_hash = None
@@ -594,19 +593,6 @@ def build_collection(collection_path, output_path, force):
     return collection_output
 
 
-def _load_collection_from_path_by_name(search_path, namespace, name, fallback_metadata=False, parent=None):
-    local_collection = None
-    non_artifact = False
-    b_search_path = to_bytes(os.path.join(search_path, namespace, name), errors='surrogate_or_strict')
-    if os.path.isdir(b_search_path):
-        try:
-            local_collection = CollectionRequirement.from_path(b_search_path, False, fallback_metadata=fallback_metadata, parent=parent)
-        except AnsibleError:
-            if not os.path.isfile(os.path.join(to_text(b_search_path, errors='surrogate_or_strict'), 'MANIFEST.json')):
-                non_artifact = True
-    return local_collection, non_artifact
-
-
 def _collection_matches_requirement(collection, requirement, parent=None):
     try:
         collection.add_requirement(parent, requirement)
@@ -623,10 +609,18 @@ def find_matching_collections(namespace, name, requirement, search_paths, first_
             "Looking for '%s.%s:%s' in the collection search path %s" % (namespace, name, requirement, to_text(search_path, errors='surrogate_or_strict'))
         )
 
-        local_collection, non_artifact = _load_collection_from_path_by_name(search_path, namespace, name, fallback_metadata, parent)
-        non_artifact_found |= non_artifact
+        b_collection_path = to_bytes(os.path.join(search_path, namespace, name), errors='surrogate_or_strict')
 
-        if not local_collection or not _collection_matches_requirement(local_collection, requirement, parent):
+        if not os.path.isdir(b_collection_path):
+            continue
+
+        if not os.path.isfile(os.path.join(b_collection_path, b'MANIFEST.json')) and not fallback_metadata:
+            non_artifact_found = True
+            continue
+
+        local_collection = CollectionRequirement.from_path(b_collection_path, False, fallback_metadata=fallback_metadata, parent=parent)
+
+        if not _collection_matches_requirement(local_collection, requirement, parent):
             continue
 
         found = True
