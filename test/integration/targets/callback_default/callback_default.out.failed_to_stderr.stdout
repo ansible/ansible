@@ -64,6 +64,14 @@ changed: [testhost]
 TASK [Second free task] ********************************************************
 changed: [testhost]
 
+TASK [Include some tasks] ******************************************************
+included: .../test/integration/targets/callback_default/include_me.yml for testhost => (item=1)
+
+TASK [debug] *******************************************************************
+ok: [testhost] => {
+    "item": 1
+}
+
 PLAY RECAP *********************************************************************
-testhost                   : ok=14   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
+testhost                   : ok=16   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
 
