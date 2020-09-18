@@ -251,16 +251,17 @@ class GalaxyCLI(CLI):
             remove_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', help='The collection(s) name or '
                                        'path/url to a tar.gz collection artifact. This is mutually exclusive with --requirements-file.')
             remove_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
-                                       help='Ignore errors during verification and continue with the next specified collection.')
+                                       help='Ignore errors during removal and continue with the next specified collection, '
+                                       'skipping the dependencies of the failed collection.')
             remove_parser.add_argument('-r', '--requirements-file', dest='requirements',
-                                       help='A file containing a list of collections to be verified.')
+                                       help='A file containing a list of collections to be removed.')
             remove_parser.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
                                        help="Don't remove {0}s listed as dependencies.".format(galaxy_type))
-            remove_parser.set_defaults(func=self.execute_remove_collection)
         else:
             remove_parser.add_argument('args', help='Role(s)', metavar='role', nargs='+')
-            remove_parser.set_defaults(func=self.execute_remove_role)
 
+        remove_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
+        remove_parser.set_defaults(func=self.execute_remove)
 
     def add_delete_options(self, parser, parents=None):
         delete_parser = parser.add_parser('delete', parents=parents,
@@ -1203,6 +1204,12 @@ class GalaxyCLI(CLI):
                 self.exit_without_ignore()
 
         return 0
+
+    def execute_remove(self):
+        if context.CLIARGS['type'] == 'role':
+            self.execute_remove_role()
+        elif context.CLIARGS['type'] == 'collection':
+            self.execute_remove_collection()
 
     def execute_remove_role(self):
         """

@@ -594,7 +594,7 @@ def build_collection(collection_path, output_path, force):
     return collection_output
 
 
-def _find_path_by_name(search_path, namespace, name, fallback_metadata=False, parent=None):
+def _load_collection_from_path_by_name(search_path, namespace, name, fallback_metadata=False, parent=None):
     local_collection = None
     non_artifact = False
     b_search_path = to_bytes(os.path.join(search_path, namespace, name), errors='surrogate_or_strict')
@@ -619,26 +619,29 @@ def _collection_matches_requirement(collection, requirement, parent=None):
 def find_matching_collections(namespace, name, requirement, search_paths, first_found=False, fallback_metadata=False, parent=None, require_match=False):
     found = non_artifact_found = False
     for search_path in search_paths:
-        display.vvvv("Looking for '%s.%s:%s' in the collection search path %s" % (namespace, name, requirement, to_text(search_path, errors='surrogate_or_strict')))
+        display.vvvv(
+            "Looking for '%s.%s:%s' in the collection search path %s" % (namespace, name, requirement, to_text(search_path, errors='surrogate_or_strict'))
+        )
 
-        local_collection, non_artifact = _find_path_by_name(search_path, namespace, name, fallback_metadata, parent)
+        local_collection, non_artifact = _load_collection_from_path_by_name(search_path, namespace, name, fallback_metadata, parent)
         non_artifact_found |= non_artifact
-        if not local_collection:
+
+        if not local_collection or not _collection_matches_requirement(local_collection, requirement, parent):
             continue
-        if _collection_matches_requirement(local_collection, requirement, parent):
-            found = True
-            display.vvvv("Found collection '%s.%s:%s'" % (namespace, name, requirement))
-            yield local_collection
-            if first_found:
-                break
+
+        found = True
+        display.vvvv("Found collection '%s.%s:%s'" % (namespace, name, requirement))
+        yield local_collection
+        if first_found:
+            break
 
     if require_match and not found:
         if not fallback_metadata and non_artifact_found:
             raise AnsibleError(
-                message="Collection %s does not appear to have a MANIFEST.json. " % collection_name +
+                message="Collection %s.%s does not appear to have a MANIFEST.json. " % (namespace, name) +
                 "A MANIFEST.json is expected if the collection has been built and installed via ansible-galaxy.")
         else:
-            raise AnsibleError(message='Collection %s is not installed in any of the collection paths.' % collection_name)
+            raise AnsibleError(message='Collection %s.%s is not installed in any of the collection paths.' % (namespace, name))
     elif not found:
         display.display('%s.%s:%s is not installed' % (namespace, name, requirement))
 
@@ -836,7 +839,7 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
                     collection_version = collection[1]
 
                     local_collection = list(
-                        find_matching_collections(namespace, name, requirement, search_paths, first_found=True, parent=None, require_match=True)
+                        find_matching_collections(namespace, name, collection_version, search_paths, first_found=True, parent=None, require_match=True)
                     )[0]
 
                     # Download collection on a galaxy server for comparison
@@ -853,7 +856,7 @@ def verify_collections(collections, search_paths, apis, validate_certs, ignore_e
                     remote_collection.api._add_auth_token(headers, download_url, required=False)
                     b_temp_tar_path = _download_file(download_url, b_temp_path, None, validate_certs, headers=headers)
 
-                    local_collection.verify(remote_collection, search_path, b_temp_tar_path)
+                    local_collection.verify(remote_collection, local_collection.b_path, b_temp_tar_path)
 
                 except AnsibleError as err:
                     if ignore_errors:
