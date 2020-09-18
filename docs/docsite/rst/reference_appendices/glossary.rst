@@ -23,6 +23,15 @@ when a term comes up on the mailing list.
         writing a :term:`playbook <playbooks>` and playbooks can also glue
         lots of other operations together.
 
+    Ansible (the package)
+        A replacement software package (Python, deb, rpm, etc) which contains a select group of collections. It contains the collections to ensure that Ansible 2.9 playbooks do not require any separate collections to be be installed. See the :file:`ansible-<version>.build` file in the release-specific directory at  `ansible-build-data <https://github.com/ansible-community/ansible-build-data>`_ for a list of collections included in Ansible, as well as the included ``ansible-base`` version.
+
+    ansible-base
+        New for 2.10. The installable package (RPM/Python/Deb package) from the codebase that is now contained in https://github.com/ansible/ansible. It contains a minimal amount of modules and plugins and allows you to install other collections.
+
+    Ansible Galaxy
+        An `online hub <galaxy.ansible.com>`_ for finding and sharing Ansible community content. Also, the command-line utility that lets users install individual Ansible Collections, for example`` ansible-galaxy install community.crypto``.
+
     Async
         Refers to a task that is configured to run in the background rather
         than waiting for completion.  If you have a long process that would
@@ -48,6 +57,18 @@ when a term comes up on the mailing list.
         command failures or cascade effects (which is true of similar modes in
         other systems).  Use this to get an idea of what might happen, but do
         not substitute it for a good staging environment.
+
+    Collection
+        A packaging format for bundling and distributing Ansible content() plugins, roles, modules, and so on). Collections release independent of other collections or ``ansible-base`` so features can be available sooner to users. Collectoins may come packaged with Ansible (version 2.10 or later) or installed with ``ansible-galaxy collection install <namespace.collection>``.
+
+    Collection name
+        In the second part of a Fully Qualified Collection Name, the collection name further divides the functional characteristics of the collection content and denotes ownership. For example, the ``cisco`` namespace might contain ``cisco.ios``, cisco.aci, and cisco.nxos, containing content for managing network devices maintained by Cisco.
+
+    community.general (collection)
+        A special collection managed by the Ansible Community Team containing all the modules and plugins which shipped in Ansible 2.9 that do ont have their own dedicated Collection. See `community.general <https://galaxy.ansible.com/community/general>`_` on Galaxy.
+
+    community.network (collection)
+        Similar to ``community.general``, focusing on network content. `community.network <https://galaxy.ansible.com/community/network>`_` on Galaxy.
 
     Connection Plugin
         By default, Ansible talks to remote machines through pluggable
@@ -120,6 +141,9 @@ when a term comes up on the mailing list.
         a configuration file.  The default is a very conservative five (5)
         forks, though if you have a lot of RAM, you can easily set this to
         a value like 50 for increased parallelism.
+
+    Fully Qualified Collection Name (FQCN)
+        The full definition of a module, plugin, or role hosted within a collection, in the form <namespace.collection.content_name>. Allows a Playbook to refer to a specific module or plugin from a specific source in an unambiguous manner, for example, ``community.grafana.grafana_dashboard``. The FQCN is required when you want to specify the exact source of a module and multiple modules with the same name are available. In cases in which users have multiple collections installed with similar content, the FQCN will always be the explicit and authoritative indicator of which collection to use for content.
 
     Gather Facts (Boolean)
         :term:`Facts` are mentioned above.  Sometimes when running a multi-play
@@ -293,6 +317,9 @@ when a term comes up on the mailing list.
         balancers and monitoring servers may need to be contacted.  Ansible
         models entire IT topologies and workflows rather than looking at
         configuration from a "one system at a time" perspective.
+
+    Namespace
+        The first part of a Fully Qualified Collection Name, the namespace usually reflects a functional content category. Example: in ``cisco.ios.ios_config``, “cisco” is the namespace. Namespaces are reserved and distributed by Red Hat at Red Hat’s discretion. Many, but not all, namespaces will correspond with vendor names.
 
     Notify
         The act of a :term:`task <tasks>` registering a change event and
