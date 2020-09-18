@@ -266,6 +266,12 @@
     select_crypto_backend: '{{ select_crypto_backend }}'
   register: privatekey_mode_2
 
+# stat time granularity on macOS is only one second
+- name: Pause
+  pause:
+    seconds: 1
+  when: ansible_facts.distribution == 'MacOSX'
+
 - name: Generate privatekey_mode (mode 0400, force)
   openssl_privatekey:
     path: '{{ output_dir }}/privatekey_mode.pem'
