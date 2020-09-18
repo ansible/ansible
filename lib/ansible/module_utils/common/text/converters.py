@@ -268,6 +268,7 @@ def _json_encode_fallback(encoder=None):
         elif encoder:
             return encoder(obj)
         raise TypeError("Cannot json serialize %s" % to_native(obj))
+    return inner
 
 
 def jsonify(data, encoder=None, **kwargs):
