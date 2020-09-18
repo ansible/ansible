@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from jinja2.utils import missing
 
-from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleLookupError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.module_utils.six import iteritems
 from ansible.module_utils._text import to_native
 from ansible.module_utils.common._collections_compat import Mapping
@@ -104,8 +104,8 @@ class AnsibleJ2Vars(Mapping):
             value = None
             try:
                 value = self._templar.template(variable)
-            except (AnsibleFilterError, AnsibleLookupError, AnsibleUndefinedVariable) as e:
-                raise type(e)("%s: %s" % (to_native(variable), e.message))
+            except AnsibleUndefinedVariable as e:
+                raise AnsibleUndefinedVariable("%s: %s" % (to_native(variable), e.message))
             except Exception as e:
                 msg = getattr(e, 'message', None) or to_native(e)
                 raise AnsibleError("An unhandled exception occurred while templating '%s'. "
