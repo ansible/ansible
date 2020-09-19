@@ -99,7 +99,10 @@ class Playbook:
                 if pb is not None:
                     self._entries.extend(pb._entries)
                 else:
-                    which = entry.get('import_playbook', entry.get('include', entry.get('ansible.builtin.import_playbook', entry.get('ansible.builtin.include', entry))))
+                    which = entry.get('import_playbook',
+                                      entry.get('include',
+                                                entry.get('ansible.builtin.import_playbook',
+                                                          entry.get('ansible.builtin.include', entry))))
                     display.display("skipping playbook '%s' due to conditional test failure" % which, color=C.COLOR_SKIP)
             else:
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader, vars=vars)
