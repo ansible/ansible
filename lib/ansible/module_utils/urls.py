@@ -1301,6 +1301,12 @@ class Request:
             else:
                 request.add_header(header, headers[header])
 
+        if parsed.scheme == 'ftp' and url_username is not None and '@' not in request.host:
+            request.host = url_username + ':' + url_password + '@' + request.host
+            request.timeout = timeout
+
+            return urllib_request.FTPHandler().ftp_open(request)
+
         return urllib_request.urlopen(request, None, timeout)
 
     def get(self, url, **kwargs):
