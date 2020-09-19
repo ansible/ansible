@@ -231,7 +231,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         # the command/shell/script modules used to support the `cmd` arg,
         # which corresponds to what we now call _raw_params, so move that
         # value over to _raw_params (assuming it is empty)
-        if action in ('command', 'shell', 'script'):
+        if action in ('command', 'shell', 'script', 'ansible.builtin.command',
+                      'ansible.builtin.shell', 'ansible.builtin.script'):
             if 'cmd' in args:
                 if args.get('_raw_params', '') != '':
                     raise AnsibleError("The 'cmd' argument cannot be used when other raw parameters are specified."
@@ -327,7 +328,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     env[k] = templar.template(v, convert_bare=False)
                 except AnsibleUndefinedVariable as e:
                     error = to_native(e)
-                    if self.action in ('setup', 'gather_facts') and 'ansible_facts.env' in error or 'ansible_env' in error:
+                    if self.action in ('setup', 'gather_facts', 'ansible.builtin.setup',
+                                       'ansible.builtin.gather_facts') and 'ansible_facts.env' in error or 'ansible_env' in error:
                         # ignore as fact gathering is required for 'env' facts
                         return
                     raise

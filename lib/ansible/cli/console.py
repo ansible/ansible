@@ -185,7 +185,8 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         result = None
         try:
-            check_raw = module in ('command', 'shell', 'script', 'raw')
+            check_raw = module in ('command', 'shell', 'script', 'raw', 'ansible.builtin.command',
+                                   'ansible.builtin.shell', 'ansible.builtin.script', 'ansible.builtin.raw')
             task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.task_timeout)
             play_ds = dict(
                 name="Ansible Shell",

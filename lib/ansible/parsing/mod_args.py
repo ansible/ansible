@@ -32,7 +32,7 @@ from ansible.utils.sentinel import Sentinel
 # For filtering out modules correctly below
 FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
 
-RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
+RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(C._add_builtin_fqcn((
     'include',
     'include_vars',
     'include_tasks',
@@ -43,16 +43,16 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union((
     'group_by',
     'set_fact',
     'meta',
-))
+)))
 
-BUILTIN_TASKS = frozenset((
+BUILTIN_TASKS = frozenset(C._add_builtin_fqcn((
     'meta',
     'include',
     'include_tasks',
     'include_role',
     'import_tasks',
     'import_role'
-))
+)))
 
 
 class ModuleArgsParser:
