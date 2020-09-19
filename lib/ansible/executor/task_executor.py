@@ -477,7 +477,7 @@ class TaskExecutor:
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
-        if self._task.action in ('include', 'include_tasks'):
+        if self._task.action in ('include', 'include_tasks', 'ansible.builtin.include', 'ansible.builtin.include_tasks'):
             include_args = self._task.args.copy()
             include_file = include_args.pop('_raw_params', None)
             if not include_file:
@@ -487,7 +487,7 @@ class TaskExecutor:
             return dict(include=include_file, include_args=include_args)
 
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
-        elif self._task.action == 'include_role':
+        elif self._task.action in ('include_role', 'ansible.builtin.include_role'):
             include_args = self._task.args.copy()
             return dict(include_args=include_args)
 

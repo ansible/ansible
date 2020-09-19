@@ -153,7 +153,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
-        if self.get_name() == 'meta':
+        if self.get_name() in ('meta', 'ansible.builtin.meta'):
             return "TASK: meta (%s)" % self.args['_raw_params']
         else:
             return "TASK: %s" % self.get_name()
@@ -264,7 +264,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                 # pre-2.0 syntax allowed variables for include statements at the top level of the task,
                 # so we move those into the 'vars' dictionary here, and show a deprecation message
                 # as we will remove this at some point in the future.
-                if action in ('include',) and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
+                if action in ('include', 'ansible.builtin.include') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
                                        " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
                                        " for currently supported syntax regarding included files and variables",
@@ -396,7 +396,8 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         all_vars = dict()
         if self._parent:
             all_vars.update(self._parent.get_include_params())
-        if self.action in ('include', 'include_tasks', 'include_role'):
+        if self.action in ('include', 'include_tasks', 'include_role', 'ansible.builtin.include',
+                           'ansible.builtin.include_tasks', 'ansible.builtin.include_role'):
             all_vars.update(self.vars)
         return all_vars
 

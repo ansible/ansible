@@ -67,7 +67,8 @@ class IncludedFile:
             original_host = res._host
             original_task = res._task
 
-            if original_task.action in ('include', 'include_tasks', 'include_role'):
+            if original_task.action in ('include', 'include_tasks', 'include_role', 'ansible.builtin.include',
+                                        'ansible.builtin.include_tasks', 'ansible.builtin.include_role'):
                 if original_task.loop:
                     if 'results' not in res._result:
                         continue
@@ -111,7 +112,7 @@ class IncludedFile:
 
                     templar = Templar(loader=loader, variables=task_vars)
 
-                    if original_task.action in ('include', 'include_tasks'):
+                    if original_task.action in ('include', 'include_tasks', 'ansible.builtin.include', 'ansible.builtin.include_tasks'):
                         include_file = None
                         if original_task:
                             if original_task.static:

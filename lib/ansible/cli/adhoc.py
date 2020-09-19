@@ -71,7 +71,8 @@ class AdHocCLI(CLI):
                   'timeout': context.CLIARGS['task_timeout']}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
-        if context.CLIARGS['module_name'] not in ('include_role', 'include_tasks') and any(frozenset((async_val, poll))):
+        include_actions = ('include_role', 'include_tasks', 'ansible.builtin.include_role', 'ansible.builtin.include_tasks')
+        if context.CLIARGS['module_name'] not in include_actions and any(frozenset((async_val, poll))):
             mytask['async_val'] = async_val
             mytask['poll'] = poll
 
@@ -120,7 +121,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError(err)
 
         # Avoid modules that don't work with ad-hoc
-        if context.CLIARGS['module_name'] in ('import_playbook',):
+        if context.CLIARGS['module_name'] in ('import_playbook', 'ansible.builtin.import_playbook'):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands"
                                       % context.CLIARGS['module_name'])
 

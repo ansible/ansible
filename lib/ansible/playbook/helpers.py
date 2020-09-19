@@ -128,7 +128,8 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # But if it wasn't, we can add the yaml object now to get more detail
                 raise AnsibleParserError(to_native(e), obj=task_ds, orig_exc=e)
 
-            if action in ('include', 'import_tasks', 'include_tasks'):
+            if action in ('include', 'import_tasks', 'include_tasks', 'ansible.builtin.include',
+                          'ansible.builtin.import_tasks', 'ansible.builtin.include_tasks'):
 
                 if use_handlers:
                     include_class = HandlerTaskInclude
@@ -150,9 +151,9 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 # check to see if this include is dynamic or static:
                 # 1. the user has set the 'static' option to false or true
                 # 2. one of the appropriate config options was set
-                if action == 'include_tasks':
+                if action in ('include_tasks', 'ansible.builtin.include_tasks'):
                     is_static = False
-                elif action == 'import_tasks':
+                elif action in ('import_tasks', 'ansible.builtin.import_tasks'):
                     is_static = True
                 elif t.static is not None:
                     display.deprecated("The use of 'static' has been deprecated. "
@@ -166,7 +167,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 if is_static:
                     if t.loop is not None:
-                        if action == 'import_tasks':
+                        if action in ('import_tasks', 'ansible.builtin.import_tasks'):
                             raise AnsibleParserError("You cannot use loops on 'import_tasks' statements. You should use 'include_tasks' instead.", obj=task_ds)
                         else:
                             raise AnsibleParserError("You cannot use 'static' on an include with a loop", obj=task_ds)
@@ -248,7 +249,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         # nested includes, and we want the include order printed correctly
                         display.vv("statically imported: %s" % include_file)
                     except AnsibleFileNotFound:
-                        if action != 'include' or t.static or \
+                        if action not in ('include', 'ansible.builtin.include') or t.static or \
                            C.DEFAULT_TASK_INCLUDES_STATIC or \
                            C.DEFAULT_HANDLER_INCLUDES_STATIC and use_handlers:
                             raise
@@ -286,7 +287,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                         tags = tags.split(',')
 
                     if len(tags) > 0:
-                        if action in ('include_tasks', 'import_tasks'):
+                        if action in ('include_tasks', 'import_tasks', 'ansible.builtin.include_tasks', 'ansible.builtin.import_tasks'):
                             raise AnsibleParserError('You cannot specify "tags" inline to the task, it is a task keyword')
                         if len(ti_copy.tags) > 0:
                             raise AnsibleParserError(
@@ -316,7 +317,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                     t.is_static = False
                     task_list.append(t)
 
-            elif action in ('include_role', 'import_role'):
+            elif action in ('include_role', 'import_role', 'ansible.builtin.include_role', 'ansible.builtin.import_role'):
                 ir = IncludeRole.load(
                     task_ds,
                     block=block,
@@ -329,7 +330,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
                 #   1. the user has set the 'static' option to false or true
                 #   2. one of the appropriate config options was set
                 is_static = False
-                if action == 'import_role':
+                if action in ('import_role', 'ansible.builtin.import_role'):
                     is_static = True
 
                 elif ir.static is not None:
@@ -340,7 +341,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
 
                 if is_static:
                     if ir.loop is not None:
-                        if action == 'import_role':
+                        if action in ('import_role', 'ansible.builtin.import_role'):
                             raise AnsibleParserError("You cannot use loops on 'import_role' statements. You should use 'include_role' instead.", obj=task_ds)
                         else:
                             raise AnsibleParserError("You cannot use 'static' on an include_role with a loop", obj=task_ds)

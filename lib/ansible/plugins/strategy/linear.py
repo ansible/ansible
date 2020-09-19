@@ -271,7 +271,7 @@ class StrategyModule(StrategyBase):
                         # corresponding action plugin
                         action = None
 
-                    if task.action == 'meta':
+                    if task.action in ('meta', 'ansible.builtin.meta'):
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
@@ -409,7 +409,7 @@ class StrategyModule(StrategyBase):
                 for res in results:
                     # execute_meta() does not set 'failed' in the TaskResult
                     # so we skip checking it with the meta tasks and look just at the iterator
-                    if (res.is_failed() or res._task.action == 'meta') and iterator.is_failed(res._host):
+                    if (res.is_failed() or res._task.action in ('meta', 'ansible.builtin.meta')) and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)
