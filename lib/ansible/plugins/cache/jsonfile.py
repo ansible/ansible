@@ -14,7 +14,7 @@ DOCUMENTATION = '''
     version_added: "1.9"
     author: Ansible Core (@ansible-core)
     options:
-      _uri:
+      _connection:
         required: True
         description:
           - Path in which the cache plugin will save the JSON files
