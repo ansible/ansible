@@ -24,6 +24,10 @@
       when: ansible_distribution not in ["MacOSX", "Alpine"]
       register: git_install
 
+    - name: ensure wheel is installed
+      pip:
+        name: wheel
+
     - include_tasks: pip.yml
   always:
     - name: platform specific cleanup
