@@ -319,7 +319,7 @@ when a term comes up on the mailing list.
         configuration from a "one system at a time" perspective.
 
     Namespace
-        The first part of a Fully Qualified Collection Name, the namespace usually reflects a functional content category. Example: in ``cisco.ios.ios_config``, ``cisco`` is the namespace. Namespaces are reserved and distributed by Red Hat at Red Hat’s discretion. Many, but not all, namespaces will correspond with vendor names.
+        The first part of a fully qualified collection name, the namespace usually reflects a functional content category. Example: in ``cisco.ios.ios_config``, ``cisco`` is the namespace. Namespaces are reserved and distributed by Red Hat at Red Hat's discretion. Many, but not all, namespaces will correspond with vendor names.
 
     Notify
         The act of a :term:`task <tasks>` registering a change event and
