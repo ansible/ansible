@@ -28,6 +28,7 @@ from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.display import Display
+from ansible.utils.path import unfrackpath
 
 display = Display()
 
@@ -53,10 +54,9 @@ class Playbook:
 
     def _load_playbook_data(self, file_name, variable_manager, vars=None):
 
-        if os.path.isabs(file_name):
-            self._basedir = os.path.dirname(file_name)
-        else:
-            self._basedir = os.path.normpath(os.path.join(self._basedir, os.path.dirname(file_name)))
+        self._basedir = unfrackpath(
+            os.path.dirname(file_name),
+            basedir=self._basedir)
 
         # set the loaders basedir
         cur_basedir = self._loader.get_basedir()
