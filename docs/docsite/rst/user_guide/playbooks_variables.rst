@@ -193,7 +193,7 @@ Where to set variables
 
 You can define variables in a variety of places, such as in inventory, in playbooks, in reusable files, in roles, and at the command line. Ansible loads every possible variable it finds, then chooses the variable to apply based on :ref:`variable precedence rules <ansible_variable_precedence>`.
 
-.. _variables_in_inventory:
+.. _define_variables_in_inventory:
 
 Defining variables in inventory
 -------------------------------
@@ -363,7 +363,7 @@ Tips on where to set variables
 
 You should choose where to define a variable based on the kind of control you might want over values.
 
-Set variables in inventory that deal with geography or behavior. Since groups are frequently the entity that maps roles onto hosts, you can often set variables on the group instead of defining them on a role. Remember:  Child groups override parent groups, and host variables override group variables. See :ref:`variables_in_inventory` for details on setting host and group variables.
+Set variables in inventory that deal with geography or behavior. Since groups are frequently the entity that maps roles onto hosts, you can often set variables on the group instead of defining them on a role. Remember:  Child groups override parent groups, and host variables override group variables. See :ref:`define_variables_in_inventory` for details on setting host and group variables.
 
 Set common defaults in a ``group_vars/all`` file. See :ref:`splitting_out_vars` for details on how to organize host and group variables in your inventory. Group variables are generally placed alongside your inventory file, but they can also be returned by dynamic inventory (see :ref:`intro_dynamic_inventory`) or defined in :ref:`ansible_tower` from the UI or API::
 
