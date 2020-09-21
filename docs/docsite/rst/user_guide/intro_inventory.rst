@@ -169,7 +169,7 @@ In YAML:
       webservers:
         hosts:
           www[01:50].example.com:
-          
+
 You can specify a stride (increments between sequence numbers) when defining a numeric range of hosts:
 
 In INI:
@@ -200,7 +200,7 @@ For numeric patterns, leading zeros can be included or removed, as desired. Rang
 Adding variables to inventory
 =============================
 
-You can store variable values that relate to a specific host or group in inventory. To start with, you may add variables directly to the hosts and groups in your main inventory file. As you add more and more managed nodes to your Ansible inventory, however, you will likely want to store variables in separate host and group variable files.
+You can store variable values that relate to a specific host or group in inventory. To start with, you may add variables directly to the hosts and groups in your main inventory file. As you add more and more managed nodes to your Ansible inventory, however, you will likely want to store variables in separate host and group variable files. See :ref:`define_variables_in_inventory` for details.
 
 .. _host_variables:
 
