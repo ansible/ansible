@@ -56,7 +56,9 @@ You can still use the bare :ref:`roles <roles_keyword>` keyword at the play leve
 Includes: dynamic re-use
 ------------------------
 
-Including roles, tasks, or variables adds them to a playbook dynamically. Ansible processes included files and roles as they come up in a playbook, so included tasks can be affected by the results of earlier tasks within the top-level playbook. Included roles and tasks are similar to handlers - they may or may not run, depending on the results of other tasks in the top-level playbook. The primary advantage of using ``include_*`` statements is looping. When a loop is used with an include, the included tasks or role will be executed once for each item in the loop.
+Including roles, tasks, or variables adds them to a playbook dynamically. Ansible processes included files and roles as they come up in a playbook, so included tasks can be affected by the results of earlier tasks within the top-level playbook. Included roles and tasks are similar to handlers - they may or may not run, depending on the results of other tasks in the top-level playbook.
+
+The primary advantage of using ``include_*`` statements is looping. When a loop is used with an include, the included tasks or role will be executed once for each item in the loop.
 
 You can pass variables into includes. See :ref:`ansible_variable_precedence` for more details on variable inheritance and precedence.
 
@@ -73,9 +75,11 @@ You can pass variables to imports. You must pass variables if you want to run an
     - import_tasks: wordpress.yml
       vars:
         wp_user: timmy
+
     - import_tasks: wordpress.yml
       vars:
         wp_user: alice
+
     - import_tasks: wordpress.yml
       vars:
         wp_user: bob
@@ -129,13 +133,13 @@ You can also use includes and imports in the :ref:`handlers` section of a playbo
 .. code-block:: yaml
 
    # restarts.yml
-   - name: restart apache
-     service:
+   - name: Restart apache
+     ansible.builtin.service:
        name: apache
        state: restarted
 
-   - name: restart mysql
-     service:
+   - name: Restart mysql
+     ansible.builtin.service:
        name: mysql
        state: restarted
 
@@ -144,36 +148,36 @@ You can trigger handlers from either an import or an include, but the procedure 
 Triggering included (dynamic) handlers
 --------------------------------------
 
-Includes are executed at run-time, so the name of the include exists during play execution, but the included tasks do not exist until the include itself is triggered. To use the ``restart apache`` task with dynamic re-use, refer to the name of the include itself. This approach triggers all tasks in the included file as handlers. For example, with the task file shown above:
+Includes are executed at run-time, so the name of the include exists during play execution, but the included tasks do not exist until the include itself is triggered. To use the ``Restart apache`` task with dynamic re-use, refer to the name of the include itself. This approach triggers all tasks in the included file as handlers. For example, with the task file shown above:
 
 .. code-block:: yaml
 
    - trigger an included (dynamic) handler
      hosts: localhost
      handlers:
-       - name: restart services
+       - name: Restart services
          include_tasks: restarts.yml
      tasks:
        - command: "true"
-         notify: restart services
+         notify: Restart services
 
 Triggering imported (static) handlers
 -------------------------------------
 
-Imports are processed before the play begins, so the name of the import no longer exists during play execution, but the names of the individual imported tasks do exist. To use the ``restart apache`` task with static re-use, refer to the name of each task or tasks within the imported file. For example, with the task file shown above:
+Imports are processed before the play begins, so the name of the import no longer exists during play execution, but the names of the individual imported tasks do exist. To use the ``Restart apache`` task with static re-use, refer to the name of each task or tasks within the imported file. For example, with the task file shown above:
 
 .. code-block:: yaml
 
    - trigger an imported (static) handler
      hosts: localhost
      handlers:
-     - name: restart services
+     - name: Restart services
        import_tasks: restarts.yml
      tasks:
        - command: "true"
-         notify: restart apache
+         notify: Restart apache
        - command: "true"
-         notify: restart mysql
+         notify: Restart mysql
 
 .. seealso::
 
