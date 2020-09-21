@@ -49,11 +49,11 @@
   when: ansible_os_family == 'FreeBSD'
 
 - name: MacOS - Retrieve test cacert
-  get_url:
-    url: "http://ansible.http.tests/cacert.pem"
-    dest: "/usr/local/etc/openssl/certs/ansible.pem"
   when: ansible_os_family == 'Darwin'
-
-- name: MacOS - Update ca certificates
-  command: /usr/local/opt/openssl/bin/c_rehash
-  when: ansible_os_family == 'Darwin'
+  block:
+    - file:
+        path: /etc/ansible
+        state: directory
+    - get_url:
+        url: "http://ansible.http.tests/cacert.pem"
+        dest: "/etc/ansible/ansible.pem"
