@@ -1,5 +1,5 @@
 # Setting the hostname in our test containers doesn't work currently
-- when: ansible_facts.virtualization_type != 'docker'
+- when: ansible_facts.virtualization_type not in ('docker', 'container')
   block:
     - name: Include distribution specific variables
       include_vars: "{{ lookup('first_found', params) }}"
