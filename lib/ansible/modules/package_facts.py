@@ -43,11 +43,11 @@ author:
 '''
 
 EXAMPLES = '''
-- name: Gather the rpm package facts
+- name: Gather the package facts
   package_facts:
     manager: auto
 
-- name: Print the rpm package facts
+- name: Print the package facts
   debug:
     var: ansible_facts.packages
 
