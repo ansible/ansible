@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 import sys
+import time
 import traceback
 
 from jinja2.exceptions import TemplateNotFound
@@ -35,16 +36,142 @@ except Exception:
     # need to take charge of calling it.
     pass
 
-from ansible.errors import AnsibleConnectionFailure
+from ansible.errors import AnsibleConnectionFailure, AnsibleError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.module_utils._text import to_text
+from ansible.plugins import loader as plugin_loader
+from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
 __all__ = ['WorkerProcess']
 
+
 display = Display()
+
+
+class WorkerShortCircuit(StopIteration):
+    def __init__(self, task_result):
+        self.task_result = task_result
+
+
+def skip_worker(host, task):
+    # FIXME skip_worker_when(host, task)
+    # FIXME skip_worker_include_tasks(host, task)
+    # FIXME skip_worker_include_role(host, task)
+    pass
+
+
+def skip_worker_include_role(host, task):
+    # FIXME this check is still left in TaskExecutor._execute to account for loops
+    if task.action == 'include_role':
+        raise WorkerShortCircuit(
+            TaskResult(
+                host=host.name,
+                task=task._uuid,
+                return_data={
+                    'include_args': task.args.copy(),
+                }
+            )
+        )
+
+
+class MaybeWorker:
+    '''This class encapsulates a task worker creation, possibly skipping
+    creating the worker entirely and sending a skipped TaskResult directly
+    to the results queue. It is somewhat an inter step (as a part of POC
+    for moving some of the logic pre-fork) between having only one process
+    model (forking) and having process/worker model abstraction, and ability
+    to short-circuit worker creation in addition.
+    '''
+
+    def __init__(self, tqm):
+        self._tqm = tqm
+        self._workers = tqm._workers
+        self._variable_manager = tqm.get_variable_manager()
+        self._loader = tqm.get_loader()
+        self._final_q = tqm._final_q
+        self._cur_worker = 0
+
+    def queue_task(self, host, task, task_vars, play_context):
+        try:
+            if not task.loop and not task.loop_with:
+                # FIXME remove code from TaskExecutor._execute() that is being moved into skip_worker
+                #       but keep/move it into TaskExecutor._run_loop() to account for loops
+                skip_worker(host, task)
+            else:
+                # FIXME move TaskExecutor._get_loop_items here? need to pass item to TE if non-empty
+                # FIXME if the cond is trivial and independent on loop vars, can we short-circuit?
+                # FIXME process loop here pre-fork if the task is include?
+                #       1. process when per item
+                #       2. process loop vars per item
+                #       3. create a result per item
+                #       4. send result per time
+                #       5. send ALL results
+                pass
+        except WorkerShortCircuit as short_circuit:
+            display.debug("skipping creating a worker for %s/%s" % (host, task))
+            display.debug("sending task result for task %s" % task._uuid)
+            self._tqm.send_callback('v2_runner_on_start', host, task)
+            self._final_q.send_task_result(
+                host.name,
+                task._uuid,
+                short_circuit.task_result,
+                task_fields=task.dump_attrs(),
+            )
+            display.debug("done sending task result for task %s" % task._uuid)
+        else:
+            # FIXME the worker creation below should be abstracted further to account for additional processing models
+
+            # FIXME play_context validation
+            # FIXME task validation/templating
+
+            # create a templar and template things we need later for the queuing process
+            templar = Templar(loader=self._loader, variables=task_vars)
+
+            try:
+                throttle = int(templar.template(task.throttle))
+            except Exception as e:
+                raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
+
+            # Determine the "rewind point" of the worker list. This means we start
+            # iterating over the list of workers until the end of the list is found.
+            # Normally, that is simply the length of the workers list (as determined
+            # by the forks or serial setting), however a task/block/play may "throttle"
+            # that limit down.
+            rewind_point = len(self._workers)
+            # FIXME re-enable throttling, need to pass ALLOW_BASE_THROTTLING from the strategy
+            #if throttle > 0 and self.ALLOW_BASE_THROTTLING:
+            #    if task.run_once:
+            #        display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
+            #    else:
+            #        if throttle <= rewind_point:
+            #            display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
+            #            rewind_point = throttle
+
+            queued = False
+            starting_worker = self._cur_worker
+            while not queued:
+                if self._cur_worker >= rewind_point:
+                    self._cur_worker = 0
+
+                worker_prc = self._workers[self._cur_worker]
+                if worker_prc is None or not worker_prc.is_alive():
+                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
+                    self._workers[self._cur_worker] = worker_prc
+                    self._tqm.send_callback('v2_runner_on_start', host, task)
+                    worker_prc.start()
+                    display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
+                    queued = True
+
+                self._cur_worker += 1
+
+                if self._cur_worker >= rewind_point:
+                    self._cur_worker = 0
+
+                if self._cur_worker == starting_worker:
+                    time.sleep(0.0001)
 
 
 class WorkerProcess(multiprocessing_context.Process):
