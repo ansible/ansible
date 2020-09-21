@@ -1,0 +1,6 @@
+- name: uninstall gnu-tar
+  command: brew uninstall gnu-tar
+  become: yes
+  become_user: "{{ brew_stat.stat.pw_name }}"
+  environment:
+    HOMEBREW_NO_AUTO_UPDATE: True
