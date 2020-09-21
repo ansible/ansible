@@ -35,7 +35,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
-from ansible.executor.process.worker import WorkerProcess
+from ansible.executor.process.worker import MaybeWorker
 from ansible.executor.task_result import TaskResult
 from ansible.executor.task_queue_manager import CallbackSend
 from ansible.module_utils.six.moves import queue as Queue
@@ -188,7 +188,6 @@ class StrategyBase:
     def __init__(self, tqm):
         self._tqm = tqm
         self._inventory = tqm.get_inventory()
-        self._workers = tqm._workers
         self._variable_manager = tqm.get_variable_manager()
         self._loader = tqm.get_loader()
         self._final_q = tqm._final_q
@@ -206,7 +205,6 @@ class StrategyBase:
         # internal counters
         self._pending_results = 0
         self._pending_handler_results = 0
-        self._cur_worker = 0
 
         # this dictionary is used to keep track of hosts that have
         # outstanding tasks still in queue
@@ -236,6 +234,7 @@ class StrategyBase:
         self._hosts_cache_all = []
 
         self.debugger_active = C.ENABLE_TASK_DEBUGGER
+        self._worker = MaybeWorker(tqm)
 
     def _set_hosts_cache(self, play, refresh=True):
         """Responsible for setting _hosts_cache and _hosts_cache_all
@@ -341,61 +340,15 @@ class StrategyBase:
             display.debug('Creating lock for %s' % task.action)
             action_write_locks.action_write_locks[task.action] = Lock()
 
-        # create a templar and template things we need later for the queuing process
-        templar = Templar(loader=self._loader, variables=task_vars)
-
-        try:
-            throttle = int(templar.template(task.throttle))
-        except Exception as e:
-            raise AnsibleError("Failed to convert the throttle value to an integer.", obj=task._ds, orig_exc=e)
-
         # and then queue the new task
         try:
-            # Determine the "rewind point" of the worker list. This means we start
-            # iterating over the list of workers until the end of the list is found.
-            # Normally, that is simply the length of the workers list (as determined
-            # by the forks or serial setting), however a task/block/play may "throttle"
-            # that limit down.
-            rewind_point = len(self._workers)
-            if throttle > 0 and self.ALLOW_BASE_THROTTLING:
-                if task.run_once:
-                    display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
-                else:
-                    if throttle <= rewind_point:
-                        display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
-                        rewind_point = throttle
-
-            queued = False
-            starting_worker = self._cur_worker
-            while True:
-                if self._cur_worker >= rewind_point:
-                    self._cur_worker = 0
-
-                worker_prc = self._workers[self._cur_worker]
-                if worker_prc is None or not worker_prc.is_alive():
-                    self._queued_task_cache[(host.name, task._uuid)] = {
-                        'host': host,
-                        'task': task,
-                        'task_vars': task_vars,
-                        'play_context': play_context
-                    }
-
-                    worker_prc = WorkerProcess(self._final_q, task_vars, host, task, play_context, self._loader, self._variable_manager, plugin_loader)
-                    self._workers[self._cur_worker] = worker_prc
-                    self._tqm.send_callback('v2_runner_on_start', host, task)
-                    worker_prc.start()
-                    display.debug("worker is %d (out of %d available)" % (self._cur_worker + 1, len(self._workers)))
-                    queued = True
-
-                self._cur_worker += 1
-
-                if self._cur_worker >= rewind_point:
-                    self._cur_worker = 0
-
-                if queued:
-                    break
-                elif self._cur_worker == starting_worker:
-                    time.sleep(0.0001)
+            self._queued_task_cache[(host.name, task._uuid)] = {
+                'host': host,
+                'task': task,
+                'task_vars': task_vars,
+                'play_context': play_context
+            }
+            self._worker.queue_task(host, task, task_vars, play_context)
 
             if isinstance(task, Handler):
                 self._pending_handler_results += 1

@@ -88,7 +88,7 @@ class StrategyModule(StrategyBase):
         result = self._tqm.RUN_OK
 
         # start with all workers being counted as being free
-        workers_free = len(self._workers)
+        workers_free = len(self._tqm._workers)
 
         self._set_hosts_cache(iterator._play)
 
@@ -146,7 +146,7 @@ class StrategyModule(StrategyBase):
 
                         if throttle > 0:
                             same_tasks = 0
-                            for worker in self._workers:
+                            for worker in self._tqm._workers:
                                 if worker and worker.is_alive() and worker._task._uuid == task._uuid:
                                     same_tasks += 1
 
