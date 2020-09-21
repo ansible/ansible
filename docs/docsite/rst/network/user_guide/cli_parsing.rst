@@ -1,10 +1,10 @@
 .. _cli_parsing:
 
 *****************************************
-Parsing Semi-structured Text with Ansible
+Parsing semi-structured text with Ansible
 *****************************************
 
-The `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ collection version 1.2.0 or later  includes the :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` module that can run commands and parse the output. You can use the ``cli_parse`` module on a device, host, or platform that only supports a command-line interface and the commands issued return semi-structured text.
+The `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ collection version 1.2.0 or later  includes the :ref:`cli_parse <ansible_collections.ansible.netcommon.cli_parse_module>` module that can run commands and parse the output. You can use the ``cli_parse`` module on a device, host, or platform that only supports a command-line interface. The commands you issue using this module return semi-structured text.
 
 .. contents::
    :local:
@@ -13,7 +13,7 @@ The `ansible.netcommon <https://galaxy.ansible.com/ansible/netcommon>`_ collecti
 Understanding the CLI parser
 =============================
 
-The ``cli_parse`` module can either run a CLI command on a device and return a parsed result or can simply parse any text document. The ``cli_parse`` module includes cli_parser plugins to interface with a variety of parsing engines.
+The ``cli_parse`` module can run a CLI command on a device and return a parsed result. The module can also parse any text document without running any commands. The ``cli_parse`` module includes cli_parser plugins to interface with a variety of parsing engines.
 
 Why parse the text?
 --------------------
@@ -21,7 +21,7 @@ Why parse the text?
 Parsing non-structured data such as network configurations into structured data allows programmatic use of the data from that device. You can pull information from a network device and update a CMDB in one playbook. Use cases include automated troubleshooting, creating dynamic documentation, updating IPAM (IP address management) tools and so on. You may prefer to do this with Ansible natively to take advantage of native Ansible constructs such as:
 
 -  The ``when`` clause to conditionally run other tasks or roles
--  The ``assert`` module for checking configuration and operational state compliance
+-  The ``assert`` module to check configuration and operational state compliance
 -  The ``template`` module to generate reports about configuration and operational state information
 -  Templates and ``command`` or ``config`` modules to generate host, device, or platform commands or configuration
 -  The current platform ``facts`` modules to supplement native facts information

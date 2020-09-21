@@ -3,7 +3,7 @@
 .. _developing_plugins_network:
 
 **************************
-Developing Network Plugins
+Developing network plugins
 **************************
 
 You can extend the existing network modules with custom plugins in your collection.
@@ -221,7 +221,7 @@ The following sample shows the start of a custom cli_parser plugin:
          return {...}
 
        def parse(self, *_args, **kwargs):
-           """ Std entry point for a cli_parse parse execution
+           """ Standard entry point for a cli_parse parse execution
 
            :return: Errors or parsed text as structured data
            :rtype: dict
@@ -238,7 +238,7 @@ The following sample shows the start of a custom cli_parser plugin:
            try:
                parsed = myparser(text, template_contents)
            except Exception as exc:
-               msg = "Custome parser returned an error while parsing. Error: {err}"
+               msg = "Custom parser returned an error while parsing. Error: {err}"
                return {"errors": [msg.format(err=to_native(exc))]}
            return {"parsed": parsed}
 
