@@ -140,17 +140,8 @@ def main():
     if rc == 0:
         for line in out.splitlines():
             record = line.split(split)
-            if record[0] in results[dbtree]:
-                current = results[dbtree][record[0]]
-                for r in record[1:]:
-                    if r not in current:
-                        current.append(r)
-            else:
-                results[dbtree][record[0]] = record[1:]
-
-        for k, v in results[dbtree].items():
-            results[dbtree][k] = list(v)
-
+            current = results[dbtree].setdefault(record[0], [])
+            current.extend(record[1:])
         module.exit_json(ansible_facts=results)
 
     elif rc == 1:
