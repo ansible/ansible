@@ -64,6 +64,7 @@ def test_get_file_attributes(am, stdin, mocker, data):
     for key, value in data[1].items():
         assert key in result and result[key] == value
 
+
 @pytest.mark.parametrize('stdin, data', product(({},), NO_VERSION_DATA), indirect=['stdin'])
 def test_get_file_attributes_no_version(am, stdin, mocker, data):
     # Test #18731
