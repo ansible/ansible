@@ -2,6 +2,7 @@ shippable/posix/incidental
 skip/aix
 skip/power/centos
 skip/osx
+skip/macos
 skip/freebsd
 destructive
 skip/docker  # The tests sometimes make docker daemon unstable; hence,
