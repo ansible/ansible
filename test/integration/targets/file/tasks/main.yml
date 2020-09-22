@@ -124,10 +124,7 @@
   ignore_errors: yes
 
 - name: get attributes from file
-  # Use of `-v` is important, as that is what the module does (through `set_attributes_if_different` and then `get_file_attributes` in basic.py).
-  # On some systems, such as in containers, attributes work, but file versions may not.
-  # It should be possible to update `set_attributes_if_different` in the future to not use `-v` since the file version is unrelated to the attributes.
-  command: lsattr -vd "{{ attributes_file }}"
+  command: lsattr -d "{{ attributes_file }}"
   register: attribute_A_set
   ignore_errors: yes
 
@@ -136,8 +133,7 @@
   ignore_errors: yes
 
 - name: get attributes from file
-  # See the note above on use of the `-v` option.
-  command: lsattr -vd "{{ attributes_file }}"
+  command: lsattr -d "{{ attributes_file }}"
   register: attribute_A_unset
   ignore_errors: yes
 
@@ -146,9 +142,9 @@
     attributes_supported: yes
   when:
     - attribute_A_set is success
-    - "'A' in attribute_A_set.stdout_lines[0].split()[1]"
+    - "'A' in attribute_A_set.stdout_lines[0].split()[0]"
     - attribute_A_unset is success
-    - "'A' not in attribute_A_unset.stdout_lines[0].split()[1]"
+    - "'A' not in attribute_A_unset.stdout_lines[0].split()[0]"
 
 - name: explicitly set file attribute "A"
   file: path={{output_dir}}/baz.txt attributes=A
