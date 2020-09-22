@@ -41,7 +41,7 @@
           normalized_discovered_interpreter: '{{ discovered_sys_executable.stdout_lines[0] }}'
 
   - set_fact:
-      normalized_discovered_interpreter: '{{ normalized_discovered_interpreter }}'
+      normalized_discovered_interpreter: '{{ auto_out.ansible_facts.discovered_interpreter_python }}'
     when: distro != 'macosx'
 
   - assert:
