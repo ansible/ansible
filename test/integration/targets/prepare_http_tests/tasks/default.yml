@@ -51,9 +51,11 @@
 - name: MacOS - Retrieve test cacert
   when: ansible_os_family == 'Darwin'
   block:
-    - file:
-        path: /etc/ansible
-        state: directory
-    - get_url:
+    - uri:
         url: "http://ansible.http.tests/cacert.pem"
-        dest: "/etc/ansible/ansible.pem"
+        return_content: true
+      register: cacert_pem
+
+    - blockinfile:
+        path: /Library/Frameworks/Python.framework/Versions/3.8/etc/openssl/cert.pem
+        block: "{{ cacert_pem.content }}"
