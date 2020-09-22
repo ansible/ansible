@@ -1213,7 +1213,7 @@ class AnsibleModule(object):
         if self.check_file_absent_if_check_mode(b_path):
             return True
 
-        existing = self.get_file_attributes(b_path)
+        existing = self.get_file_attributes(b_path, include_version=False)
 
         attr_mod = '='
         if attributes.startswith(('-', '+')):
@@ -1244,17 +1244,21 @@ class AnsibleModule(object):
                                        details=to_native(e), exception=traceback.format_exc())
         return changed
 
-    def get_file_attributes(self, path):
+    def get_file_attributes(self, path, include_version=True):
         output = {}
         attrcmd = self.get_bin_path('lsattr', False)
         if attrcmd:
-            attrcmd = [attrcmd, '-vd', path]
+            flags = '-vd' if include_version else '-d'
+            attrcmd = [attrcmd, flags, path]
             try:
                 rc, out, err = self.run_command(attrcmd)
                 if rc == 0:
                     res = out.split()
-                    output['attr_flags'] = res[1].replace('-', '').strip()
-                    output['version'] = res[0].strip()
+                    attr_flags_idx = 0
+                    if include_version:
+                        attr_flags_idx = 1
+                        output['version'] = res[0].strip()
+                    output['attr_flags'] = res[attr_flags_idx].replace('-', '').strip()
                     output['attributes'] = format_attributes(output['attr_flags'])
             except Exception:
                 pass
@@ -2322,7 +2326,7 @@ class AnsibleModule(object):
                 raise
 
         # Set the attributes
-        current_attribs = self.get_file_attributes(src)
+        current_attribs = self.get_file_attributes(src, include_version=False)
         current_attribs = current_attribs.get('attr_flags', '')
         self.set_attributes_if_different(dest, current_attribs, True)
 
