@@ -3,9 +3,16 @@
 .. _developing_plugins_network:
 
 **************************
-Network connection plugins
+Developing network plugins
 **************************
 
+You can extend the existing network modules with custom plugins in your collection.
+
+.. contents::
+  :local:
+
+Network connection plugins
+==========================
 Each network connection plugin has a set of its own plugins which provide a specification of the
 connection for a particular set of devices. The specific plugin used is selected at runtime based
 on the value of the ``ansible_network_os`` variable assigned to the host. This variable should be
@@ -182,3 +189,77 @@ After adding the ``cliconf`` and ``terminal`` plugins in the expected locations,
 
 * Use the :ref:`cli_command <cli_command_module>` to run an arbitrary command on the network device.
 * Use the :ref:`cli_config <cli_config_module>` to  implement configuration changes on the remote hosts without platform-specific modules.
+
+
+.. _develop_cli_parse_plugins:
+
+Developing cli_parser plugins in a collection
+===============================================
+
+You can use ``cli_parse`` as an entry point for a cli_parser plugin in
+your own collection.
+
+The following sample shows the start of a custom cli_parser plugin:
+
+.. code-block:: python
+
+   from ansible_collections.ansible.netcommon.plugins.module_utils.cli_parser.cli_parserbase import (
+       CliParserBase,
+   )
+
+   class CliParser(CliParserBase):
+       """ Sample cli_parser plugin
+       """
+
+       # Use the follow extention when loading a template
+       DEFAULT_TEMPLATE_EXTENSION = "txt"
+       # Provide the contents of the template to the parse function
+       PROVIDE_TEMPLATE_CONTENTS = True
+
+       def myparser(text, template_contents):
+         # parse the text using the template contents
+         return {...}
+
+       def parse(self, *_args, **kwargs):
+           """ Standard entry point for a cli_parse parse execution
+
+           :return: Errors or parsed text as structured data
+           :rtype: dict
+
+           :example:
+
+           The parse function of a parser should return a dict:
+           {"errors": [a list of errors]}
+           or
+           {"parsed": obj}
+           """
+           template_contents = kwargs["template_contents"]
+           text = self._task_args.get("text")
+           try:
+               parsed = myparser(text, template_contents)
+           except Exception as exc:
+               msg = "Custom parser returned an error while parsing. Error: {err}"
+               return {"errors": [msg.format(err=to_native(exc))]}
+           return {"parsed": parsed}
+
+The following task uses this custom cli_parser plugin:
+
+.. code-block:: yaml
+
+   - name: Use a custom cli_parser
+     ansible.netcommon.cli_parse:
+       command: ls -l
+       parser:
+         name: my_organiztion.my_collection.custom_parser
+
+To develop a custom plugin:
+- Each cli_parser plugin requires a ``CliParser`` class.
+- Each cli_parser plugin requires a ``parse`` function.
+- Always return a dictionary with ``errors`` or ``parsed``.
+- Place the custom cli_parser in plugins/cli_parsers directory of the collection.
+- See the `current cli_parsers <https://github.com/ansible-collections/ansible.netcommon/tree/main/plugins/cli_parsers>`_ for examples to follow.
+
+
+.. seealso::
+
+  * :ref:`cli_parsing`
