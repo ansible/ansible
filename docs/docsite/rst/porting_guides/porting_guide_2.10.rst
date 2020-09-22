@@ -9,7 +9,7 @@ Ansible 2.10 Porting Guide
 
 .. warning::
 
-         In preparation for the release of 2.10, many plugins and modules have migrated to Collections on  `Ansible Galaxy <https://galaxy.ansible.com>`_. For the current development status of Collections and FAQ see `Ansible Collections Community Guide <https://github.com/ansible-collections/overview/blob/main/README.rst>`_. We expect the 2.10 Porting Guide to change frequently up to the 2.10 release. Follow the conversations about collections on our various :ref:`communication` channels for the latest information on the status of the ``devel`` branch.
+         In Ansible 2.10, many plugins and modules have migrated to Collections on `Ansible Galaxy <https://galaxy.ansible.com>`_. Your playbooks should continue to work without any changes. We recommend you start using the fully-qualified collection name (FQCN) in your playbooks as the explicit and authoritative indicator of which collection to use as some collections may contain duplicate module names.
 
 This section discusses the behavioral changes between Ansible 2.9 and Ansible 2.10.
 
@@ -17,8 +17,9 @@ It is intended to assist in updating your playbooks, plugins and other parts of 
 
 We suggest you read this page along with the `Ansible Changelog for 2.10 <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/CHANGELOG-v2.10.rst>`_ to understand what updates you may need to make.
 
-Since 2.10, ansible consists of two parts:
-* ansible-base, which are the ansible command line tools with a very small selection of plugins and modules, and
+Since 2.10, Ansible consists of two parts:
+
+* ansible-base, which includes the command line tools with a small selection of plugins and modules, and
 * a `set of collections <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_.
 
 The :ref:`porting_2.10_guide_base` is included in this porting guide. The complete list of porting guides can be found at :ref:`porting guides <porting_guides>`.
@@ -61,6 +62,8 @@ Modules
 * If you changed any tasks to specify less restrictive permissions while using 2.10.0, those changes will be unnecessary (but will do no harm) in 2.10.1.
 * To avoid the issue raised in CVE-2020-1736, specify a ``mode`` parameter in all file-based tasks that accept it.
 
+* ``dnf`` and ``yum`` - As of version 2.10.1, the ``dnf`` module (and ``yum`` action when it uses ``dnf``) now correctly validates GPG signatures of packages (CVE-2020-14365). If you see an error such as ``Failed to validate GPG signature for [package name]``, please ensure that you have imported the correct GPG key for the DNF repository and/or package you are using. One way to do this is with the ``rpm_key`` module. Although we discourage it, in some cases it may be necessary to disable the GPG check. This can be done by explicitly adding ``disable_gpg_check: yes`` in your ``dnf`` or ``yum`` task.
+
 
 Noteworthy module changes
 -------------------------
@@ -93,15 +96,51 @@ Porting custom scripts
 
 No notable changes
 
-Porting Guide for v2.10.0b1
-===========================
+Porting Guide for v2.10.0
+=========================
+
+Known Issues
+------------
+
+- Due to a limitation in pip, you cannot ``pip install --upgrade`` from ansible-2.9 or earlier to ansible-2.10 or higher. Instead, you must explicitly use ``pip uninstall ansible`` before pip installing the new version. If you attempt to upgrade Ansible with pip without first uninstalling, the installer warns you to uninstall first.
+- The individual collections that make up the ansible-2.10.0 package can be viewed independently. However, they are not currently listed by ansible-galaxy. To view these collections with ansible-galaxy, explicitly specify where ansible has installed the collections -- ``COLLECTION_INSTALL=$(python -c 'import ansible, os.path ; print("%s/../ansible_collections" % os.path.dirname(ansible.__file__))') ansible-galaxy collection list -p "$COLLECTION_INSTALL"``.
+- These fortios modules are not automatically redirected from their 2.9.x names to the new 2.10.x names within collections. You must modify your playbooks to use fully qualified collection names for them. You can use the documentation (https://docs.ansible.com/ansible/2.10/collections/fortinet/fortios/) for the ``fortinet.fortios`` collection to determine what the fully qualified collection names are.
+
+  * fortios_address
+  * fortios_config
+  * fortios_firewall_DoS_policy
+  * fortios_firewall_DoS_policy6
+  * fortios_ipv4_policy
+  * fortios_switch_controller_802_1X_settings
+  * fortios_switch_controller_security_policy_802_1X
+  * fortios_system_firmware_upgrade
+  * fortios_system_nd_proxy
+  * fortios_webfilter
+
+community.grafana
+~~~~~~~~~~~~~~~~~
+
+- grafana_datasource doesn't set password correctly (#113)
 
 Breaking Changes
 ----------------
 
+- cisco.nxos.nxos_igmp_interface - no longer supports the deprecated ``oif_prefix`` and ``oif_source`` options. These have been superceeded by ``oif_ps``.
+- community.grafana.grafana_dashboard - the parameter ``message`` is renamed to ``commit_message`` since ``message`` is used by Ansible Core engine internally.
+- purestorage.flashblade.purefb_fs - no longer supports the deprecated ``nfs`` option. This has been superceeded by ``nfsv3``.
+
+amazon.aws
+~~~~~~~~~~
+
+- aws_s3 - can now delete versioned buckets even when they are not empty - set mode to delete to delete a versioned bucket and everything in it.
+
 ansible.windows
 ~~~~~~~~~~~~~~~
 
+- setup - Make sure ``ansible_date_time.epoch`` is seconds since EPOCH in UTC to mirror the POSIX facts. The ``ansible_date_time.epoch_local`` contains seconds since EPOCH in the local timezone for backwards compatibility
+- setup - Will now add the IPv6 scope on link local addresses for ``ansible_ip_addresses``
+- setup - ``ansible_processor`` will now return the index before the other values to match the POSIX fact behaviour
+- win_find - No longer filters by size on directories, this feature had a lot of bugs, slowed down the module, and not a supported scenario with the ``find`` module.
 - win_find - module has been refactored to better match the behaviour of the ``find`` module. Here is what has changed:
     * When the directory specified by ``paths`` does not exist or is a file, it will no longer fail and will just warn the user
     * Junction points are no longer reported as ``islnk``, use ``isjunction`` to properly report these files. This behaviour matches the win_stat module
@@ -132,6 +171,37 @@ cisco.meraki
 - meraki_switchport - `tags` is now a list and not a string
 - meraki_webhook - Querying test status now uses state of query.
 
+community.general
+~~~~~~~~~~~~~~~~~
+
+- The environment variable for the auth context for the oc.py connection plugin has been corrected (K8S_CONTEXT).  It was using an initial lowercase k by mistake. (https://github.com/ansible-collections/community.general/pull/377).
+- bigpanda - the parameter ``message`` was renamed to ``deployment_message`` since ``message`` is used by Ansible Core engine internally.
+- cisco_spark - the module option ``message`` was renamed to ``msg``, as ``message`` is used internally in Ansible Core engine (https://github.com/ansible/ansible/issues/39295)
+- datadog - the parameter ``message`` was renamed to ``notification_message`` since ``message`` is used by Ansible Core engine internally.
+- docker_container - no longer passes information on non-anonymous volumes or binds as ``Volumes`` to the Docker daemon. This increases compatibility with the ``docker`` CLI program. Note that if you specify ``volumes: strict`` in ``comparisons``, this could cause existing containers created with docker_container from Ansible 2.9 or earlier to restart.
+- docker_container - support for port ranges was adjusted to be more compatible to the ``docker`` command line utility: a one-port container range combined with a multiple-port host range will no longer result in only the first host port be used, but the whole range being passed to Docker so that a free port in that range will be used.
+- hashi_vault lookup - now returns the latest version when using the KV v2 secrets engine. Previously, it returned all versions of the secret which required additional steps to extract and filter the desired version.
+- log_plays callback - add missing information to the logs generated by the callback plugin. This changes the log message format (https://github.com/ansible-collections/community.general/pull/442).
+- pkgng - passing ``name: *`` with ``state: absent`` will no longer remove every installed package from the system. It is now a noop. (https://github.com/ansible-collections/community.general/pull/569).
+- pkgng - passing ``name: *`` with ``state: latest`` or ``state: present`` will no longer install every package from the configured package repositories. Instead, ``name: *, state: latest`` will upgrade all already-installed packages, and ``name: *, state: present`` is a noop. (https://github.com/ansible-collections/community.general/pull/569).
+
+community.network
+~~~~~~~~~~~~~~~~~
+
+- routeros_facts - allow multiple addresses and neighbors per interface. This makes ``ansible_net_neighbors`` a list instead of a dict (https://github.com/ansible-collections/community.network/pull/6).
+
+community.vmware
+~~~~~~~~~~~~~~~~
+
+- vmware_datastore_maintenancemode - now returns ``datastore_status`` instead of Ansible internal key ``results``.
+- vmware_guest_custom_attributes - does not require VM name which was a required parameter for releases prior to Ansible 2.10.
+- vmware_guest_find - the ``datacenter`` option has been removed.
+- vmware_host_kernel_manager - now returns ``host_kernel_status`` instead of Ansible internal key ``results``.
+- vmware_host_ntp - now returns ``host_ntp_status`` instead of Ansible internal key ``results``.
+- vmware_host_service_manager - now returns ``host_service_status`` instead of Ansible internal key ``results``.
+- vmware_tag - now returns ``tag_status`` instead of Ansible internal key ``results``.
+- vmware_vmkernel - the options ``ip_address`` and ``subnet_mask`` have been removed; use the suboptions ``ip_address`` and ``subnet_mask`` of the ``network`` option instead.
+
 community.windows
 ~~~~~~~~~~~~~~~~~
 
@@ -142,8 +212,88 @@ community.zabbix
 
 - zabbix_javagateway - options ``javagateway_pidfile``, ``javagateway_listenip``, ``javagateway_listenport`` and ``javagateway_startpollers`` renamed to ``zabbix_javagateway_xyz`` (see `UPGRADE.md <https://github.com/ansible-collections/community.zabbix/blob/main/docs/UPGRADE.md>`_).
 
+netbox.netbox
+~~~~~~~~~~~~~
+
+- Change ``ip-addresses`` key in netbox inventory plugin to ``ip_addresses`` (https://github.com/netbox-community/ansible_modules/issues/139)
+- Changed ``group`` to ``tenant_group`` in ``netbox_tenant.py`` (https://github.com/netbox-community/ansible_modules/issues/9)
+- Changed ``role`` to ``prefix_role`` in ``netbox_prefix.py`` (https://github.com/netbox-community/ansible_modules/issues/9)
+- Module failures when required fields arent provided (https://github.com/netbox-community/ansible_modules/issues/24)
+- Renamed ``netbox_interface`` to ``netbox_device_interface`` (https://github.com/netbox-community/ansible_modules/issues/9)
+- This version has a few breaking changes due to new namespace and collection name. I felt it necessary to change the name of the lookup plugin and inventory plugin just not to have a non descriptive namespace call to use them. Below is an example:
+  ``netbox.netbox.netbox`` would be used for both inventory plugin and lookup plugin, but in different contexts so no collision will arise, but confusion will.
+  I renamed the lookup plugin to ``nb_lookup`` so it will be used with the FQCN ``netbox.netbox.nb_lookup``.
+  The inventory plugin will now be called within an inventory file by ``netbox.netbox.nb_inventory``
+- To pass in integers via Ansible Jinja filters for a key in ``data`` that
+  requires querying an endpoint is now done by making it a dictionary with
+  an ``id`` key. The previous behavior was to just pass in an integer and
+  it was converted when normalizing the data, but some people may have names
+  that are all integers and those were being converted erroneously so we made
+  the decision to change the method to convert to an integer for the NetBox
+  API.
+
+  ::
+
+    tasks:
+      - name: Create device within NetBox with only required information
+        netbox_device:
+          netbox_url: http://netbox-demo.org:32768
+          netbox_token: 0123456789abcdef0123456789abcdef01234567
+          data:
+            name: Test66
+            device_type:
+              id: "{{ some_jinja_variable }}"
+            device_role: Core Switch
+            site: Test Site
+            status: Staged
+          state: present
+- ``pynetbox`` changed to using ``requests.Session()`` to manage the HTTP session
+  which broke passing in ``ssl_verify`` when building the NetBox API client.
+  This PR makes ``pynetbox 5.0.4+`` the new required version of `pynetbox` for
+  the Ansible modules and lookup plugin. (https://github.com/netbox-community/ansible_modules/pull/269)
+
+theforeman.foreman
+~~~~~~~~~~~~~~~~~~
+
+- All modules were renamed to drop the ``foreman_`` and ``katello_`` prefixes.
+  Additionally to the prefix removal, the following modules were further ranamed:
+
+  * katello_upload to content_upload
+  * katello_sync to repository_sync
+  * katello_manifest to subscription_manifest
+  * foreman_search_facts to resource_info
+  * foreman_ptable to partition_table
+  * foreman_model to hardware_model
+  * foreman_environment to puppet_environment
+
 Major Changes
 -------------
+
+Ansible-base
+~~~~~~~~~~~~
+
+- Both ansible-doc and ansible-console's help command will error for modules and plugins whose return documentation cannot be parsed as YAML. All modules and plugins passing ``ansible-test sanity --test yamllint`` will not be affected by this.
+- Collections may declare a list of supported/tested Ansible versions for the collection. A warning is issued if a collection does not support the Ansible version that loads it (can also be configured as silent or a fatal error). Collections that do not declare supported Ansible versions do not issue a warning/error.
+- Plugin routing allows collections to declare deprecation, redirection targets, and removals for all plugin types.
+- Plugins that import module_utils and other ansible namespaces that have moved to collections should continue to work unmodified.
+- Routing data built into Ansible 2.10 ensures that 2.9 content should work unmodified on 2.10. Formerly included modules and plugins that were moved to collections are still accessible by their original unqualified names, so long as their destination collections are installed.
+- When deprecations are done in code, they to specify a ``collection_name`` so that deprecation warnings can mention which collection - or ansible-base - is deprecating a feature. This affects all ``Display.deprecated()`` or ``AnsibleModule.deprecate()`` or ``Ansible.Basic.Deprecate()`` calls, and ``removed_in_version``/``removed_at_date`` or ``deprecated_aliases`` in module argument specs.
+- ansible-test now uses a different ``default`` test container for Ansible Collections
+
+amazon.aws
+~~~~~~~~~~
+
+- ec2 module_utils - The ``AWSRetry`` decorator no longer catches ``NotFound`` exceptions by default.  ``NotFound`` exceptions need to be explicitly added using ``catch_extra_error_codes``.  Some AWS modules may see an increase in transient failures due to AWS''s eventual consistency model.
+
+ansible.netcommon
+~~~~~~~~~~~~~~~~~
+
+- Add libssh connection plugin and refactor network_cli (https://github.com/ansible-collections/ansible.netcommon/pull/30)
+
+ansible.posix
+~~~~~~~~~~~~~
+
+- Bootstrap Collection (https://github.com/ansible-collections/ansible.posix/pull/1).
 
 cisco.meraki
 ~~~~~~~~~~~~
@@ -154,81 +304,47 @@ cisco.meraki
 - meraki_ms_l3_interface - New module
 - meraki_ms_ospf - Configure OSPF.
 
+community.general
+~~~~~~~~~~~~~~~~~
+
+- docker_container - the ``network_mode`` option will be set by default to the name of the first network in ``networks`` if at least one network is given and ``networks_cli_compatible`` is ``true`` (will be default from community.general 2.0.0 on). Set to an explicit value to avoid deprecation warnings if you specify networks and set ``networks_cli_compatible`` to ``true``. The current default (not specifying it) is equivalent to the value ``default``.
+- docker_container - the module has a new option, ``container_default_behavior``, whose default value will change from ``compatibility`` to ``no_defaults``. Set to an explicit value to avoid deprecation warnings.
+- gitlab_user - no longer requires ``name``, ``email`` and ``password`` arguments when ``state=absent``.
+
 community.grafana
 ~~~~~~~~~~~~~~~~~
 
 - Add changelog management for ansible 2.10 (#112)
 - grafana_datasource ; adding additional_json_data param
 
+community.kubernetes
+~~~~~~~~~~~~~~~~~~~~
+
+- Add changelog and fragments and document changelog process (https://github.com/ansible-collections/community.kubernetes/pull/131).
+- helm - New module for managing Helm charts (https://github.com/ansible-collections/community.kubernetes/pull/61).
+- helm_info - New module for retrieving Helm chart information (https://github.com/ansible-collections/community.kubernetes/pull/61).
+- helm_plugin - new module to manage Helm plugins (https://github.com/ansible-collections/community.kubernetes/pull/154).
+- helm_plugin_info - new modules to gather information about Helm plugins (https://github.com/ansible-collections/community.kubernetes/pull/154).
+- helm_repository - New module for managing Helm repositories (https://github.com/ansible-collections/community.kubernetes/pull/61).
+- k8s - Inventory source migrated from Ansible 2.9 to Kubernetes collection.
+- k8s - Lookup plugin migrated from Ansible 2.9 to Kubernetes collection.
+- k8s - Module migrated from Ansible 2.9 to Kubernetes collection.
+- k8s_auth - Module migrated from Ansible 2.9 to Kubernetes collection.
+- k8s_config_resource_name - Filter plugin migrated from Ansible 2.9 to Kubernetes collection.
+- k8s_exec - New module for executing commands on pods via Kubernetes API (https://github.com/ansible-collections/community.kubernetes/pull/14).
+- k8s_exec - Return rc for the command executed (https://github.com/ansible-collections/community.kubernetes/pull/158).
+- k8s_info - Module migrated from Ansible 2.9 to Kubernetes collection.
+- k8s_log - New module for retrieving pod logs (https://github.com/ansible-collections/community.kubernetes/pull/16).
+- k8s_scale - Module migrated from Ansible 2.9 to Kubernetes collection.
+- k8s_service - Module migrated from Ansible 2.9 to Kubernetes collection.
+- kubectl - Connection plugin migrated from Ansible 2.9 to Kubernetes collection.
+- openshift - Inventory source migrated from Ansible 2.9 to Kubernetes collection.
+
 community.libvirt
 ~~~~~~~~~~~~~~~~~
 
 - added generic libvirt inventory plugin
 - removed libvirt_lxc inventory script
-
-Removed Collections
--------------------
-
-- skydive.skydive (previously included version: 0.0.1-dev7)
-
-Removed Features
-----------------
-
-ansible.windows
-~~~~~~~~~~~~~~~
-
-- win_stat - removed the deprecated ``get_md55`` option and ``md5`` return value.
-
-community.windows
-~~~~~~~~~~~~~~~~~
-
-- win_psexec - removed the deprecated ``extra_opts`` option.
-
-Deprecated Features
--------------------
-
-amazon.aws
-~~~~~~~~~~
-
-- All AWS Modules - ``aws_access_key``, ``aws_secret_key`` and ``security_token`` will be made mutually exclusive with ``profile`` after 2022-06-01.
-
-ansible.windows
-~~~~~~~~~~~~~~~
-
-- win_domain_controller - the ``log_path`` option has been deprecated and will be removed in a later release. This was undocumented and only related to debugging information for module development.
-- win_package - the ``ensure`` alias for the ``state`` option has been deprecated and will be removed in a later release. Please use ``state`` instead of ``ensure``.
-- win_package - the ``productid`` alias for the ``product_id`` option has been deprecated and will be removed in a later release. Please use ``product_id`` instead of ``productid``.
-- win_package - the ``username`` and ``password`` options has been deprecated and will be removed in a later release. The same functionality can be done by using ``become: yes`` and ``become_flags: logon_type=new_credentials logon_flags=netcredentials_only`` on the task.
-
-community.vmware
-~~~~~~~~~~~~~~~~
-
-- vmware_guest - deprecate specifying CDROM configuration as a dict, instead use a list.
-
-openstack.cloud
-~~~~~~~~~~~~~~~
-
-- foo - The bar option has been deprecated. Use the username option instead.
-- send_request - The quic option has been deprecated. Use the protocol option instead.
-
-Porting Guide for v2.10.0a9
-===========================
-
-Breaking Changes
-----------------
-
-amazon.aws
-~~~~~~~~~~
-
-- aws_s3 - can now delete versioned buckets even when they are not empty - set mode to delete to delete a versioned bucket and everything in it.
-
-Major Changes
--------------
-
-amazon.aws
-~~~~~~~~~~
-
-- ec2 module_utils - The ``AWSRetry`` decorator no longer catches ``NotFound`` exceptions by default.  ``NotFound`` exceptions need to be explicitly added using ``catch_extra_error_codes``.  Some AWS modules may see an increase in transient failures due to AWS''s eventual consistency model.
 
 gluster.gluster
 ~~~~~~~~~~~~~~~
@@ -282,12 +398,77 @@ purestorage.flashblade
 - purefb_target - manage remote S3-capable targets for a FlashBlade
 - purefb_user - manage local ``pureuser`` account password on a FlashBlade
 
+Removed Features
+----------------
+
+Ansible-base
+~~~~~~~~~~~~
+
+- core - remove support for ``check_invalid_arguments`` in ``AnsibleModule``, ``AzureModule`` and ``UTMModule``.
+
+ansible.netcommon
+~~~~~~~~~~~~~~~~~
+
+- module_utils.network.common.utils.ComplexDict has been removed
+
+ansible.windows
+~~~~~~~~~~~~~~~
+
+- win_stat - removed the deprecated ``get_md55`` option and ``md5`` return value.
+
+community.crypto
+~~~~~~~~~~~~~~~~
+
+- The ``letsencrypt`` module has been removed. Use ``acme_certificate`` instead.
+
+community.general
+~~~~~~~~~~~~~~~~~
+
+- conjur_variable lookup - has been moved to the ``cyberark.conjur`` collection. A redirection is active, which will be removed in version 2.0.0 (https://github.com/ansible-collections/community.general/pull/570).
+- core - remove support for ``check_invalid_arguments`` in ``UTMModule``.
+- digital_ocean_* - all DigitalOcean modules have been moved to the ``community.digitalocean`` collection. A redirection is active, which will be removed in version 2.0.0 (https://github.com/ansible-collections/community.general/pull/622).
+- infini_* - all infinidat modules have been moved to the ``infinidat.infinibox`` collection. A redirection is active, which will be removed in version 2.0.0 (https://github.com/ansible-collections/community.general/pull/607).
+- logicmonitor - the module has been removed in 1.0.0 since it is unmaintained and the API used by the module has been turned off in 2017 (https://github.com/ansible-collections/community.general/issues/539, https://github.com/ansible-collections/community.general/pull/541).
+- logicmonitor_facts - the module has been removed in 1.0.0 since it is unmaintained and the API used by the module has been turned off in 2017 (https://github.com/ansible-collections/community.general/issues/539, https://github.com/ansible-collections/community.general/pull/541).
+- mysql_* - all MySQL modules have been moved to the ``community.mysql`` collection. A redirection is active, which will be removed in version 2.0.0 (https://github.com/ansible-collections/community.general/pull/633).
+- pacman - Removed deprecated ``recurse`` option, use ``extra_args=--recursive`` instead
+- proxysql_* - all ProxySQL modules have been moved to the ``community.proxysql`` collection. A redirection is active, which will be removed in version 2.0.0 (https://github.com/ansible-collections/community.general/pull/624).
+
+community.network
+~~~~~~~~~~~~~~~~~
+
+- onyx - all onyx modules and plugins have been moved to the mellanox.onyx collection. Redirects have been added that will be removed in community.network 2.0.0 (https://github.com/ansible-collections/community.network/pull/83).
+
+community.vmware
+~~~~~~~~~~~~~~~~
+
+- vmware_guest_find - Removed deprecated ``datacenter`` option
+- vmware_portgroup - removed 'inbound_policy', and 'rolling_order' deprecated options.
+- vmware_vmkernel - Removed deprecated ``ip_address`` option; use sub-option ip_address in the network option instead
+- vmware_vmkernel - Removed deprecated ``subnet_mask`` option; use sub-option subnet_mask in the network option instead
+
+community.windows
+~~~~~~~~~~~~~~~~~
+
+- win_disk_image - removed the deprecated return value ``mount_path`` in favour of ``mount_paths``.
+- win_psexec - removed the deprecated ``extra_opts`` option.
+
 Deprecated Features
 -------------------
+
+- The vyos.vyos.vyos_static_route module has been deprecated and will be removed in a later release; use vyos.vyos.vyos_static_routes instead.
+
+Ansible-base
+~~~~~~~~~~~~
+
+- Using the DefaultCallback without the correspodning doc_fragment or copying the documentation.
+- hash_behaviour - Deprecate ``hash_behaviour`` for future removal.
+- script inventory plugin - The 'cache' option is deprecated and will be removed in 2.12. Its use has been removed from the plugin since it has never had any effect.
 
 amazon.aws
 ~~~~~~~~~~
 
+- All AWS Modules - ``aws_access_key``, ``aws_secret_key`` and ``security_token`` will be made mutually exclusive with ``profile`` after 2022-06-01.
 - cloudformation - The ``template_format`` option had no effect since Ansible 2.3 and will be removed after 2022-06-01
 - cloudformation - the ``template_format`` option has been deprecated and will be removed in a later release. It has been ignored by the module since Ansible 2.3.
 - data_pipeline - The ``version`` option had no effect and will be removed in after 2022-06-01
@@ -303,306 +484,42 @@ amazon.aws
 - ec2_tag - deprecate the ``list`` option in favor of ec2_tag_info
 - ec2_tag - support for ``list`` as a state has been deprecated and will be removed in a later release.  The ``ec2_tag_info`` can be used to fetch the tags on an EC2 resource.
 
-community.aws
-~~~~~~~~~~~~~
-
-- data_pipeline - the ``version`` option has been deprecated and will be removed in a later release. It has always been ignored by the module.
-- ec2_eip - the ``wait_timeout`` option has been deprecated and will be removed in a later release. It has had no effect since Ansible 2.3.
-- ec2_lc - the ``associate_public_ip_address`` option has been deprecated and will be removed after a later release. It has always been ignored by the module.
-- elb_network_lb - in a later release, the default behaviour for the ``state`` option will change from ``absent`` to ``present``.  To maintain the existing behavior explicitly set state to ``absent``.
-- iam_managed_policy - the ``fail_on_delete`` option has been deprecated and will be removed after a later release.  It has always been ignored by the module.
-- iam_policy - in a later release, the default value for the ``skip_duplicates`` option will change from ``true`` to ``false``.  To maintain the existing behavior explicitly set it to ``true``.
-- iam_policy - the ``policy_document`` option has been deprecated and will be removed after a later release. To maintain the existing behavior use the ``policy_json`` option and read the file with the ``lookup`` plugin.
-- iam_role - in a later release, the ``purge_policies`` option (also know as ``purge_policy``) default value will change from ``true`` to ``false``
-- s3_lifecycle - the ``requester_pays`` option has been deprecated and will be removed after a later release. It has always been ignored by the module.
-- s3_sync - the ``retries`` option has been deprecated and will be removed after 2022-06-01. It has always been ignored by the module.
-
-Porting Guide for v2.10.0a8
-===========================
-
-Breaking Changes
-----------------
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- log_plays callback - add missing information to the logs generated by the callback plugin. This changes the log message format (https://github.com/ansible-collections/community.general/pull/442).
-- pkgng - passing ``name: *`` with ``state: absent`` will no longer remove every installed package from the system. It is now a noop. (https://github.com/ansible-collections/community.general/pull/569).
-- pkgng - passing ``name: *`` with ``state: latest`` or ``state: present`` will no longer install every package from the configured package repositories. Instead, ``name: *, state: latest`` will upgrade all already-installed packages, and ``name: *, state: present`` is a noop. (https://github.com/ansible-collections/community.general/pull/569).
-
-community.vmware
-~~~~~~~~~~~~~~~~
-
-- vmware_datastore_maintenancemode - now returns ``datastore_status`` instead of Ansible internal key ``results``.
-- vmware_guest_custom_attributes - does not require VM name which was a required parameter for releases prior to Ansible 2.10.
-- vmware_guest_find - the ``datacenter`` option has been removed.
-- vmware_host_kernel_manager - now returns ``host_kernel_status`` instead of Ansible internal key ``results``.
-- vmware_host_ntp - now returns ``host_ntp_status`` instead of Ansible internal key ``results``.
-- vmware_host_service_manager - now returns ``host_service_status`` instead of Ansible internal key ``results``.
-- vmware_tag - now returns ``tag_status`` instead of Ansible internal key ``results``.
-- vmware_vmkernel - the options ``ip_address`` and ``subnet_mask`` have been removed; use the suboptions ``ip_address`` and ``subnet_mask`` of the ``network`` option instead.
-
-Removed Features
-----------------
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- conjur_variable lookup - has been moved to the ``cyberark.conjur`` collection. A redirection is active, which will be removed in version 2.0.0 (https://github.com/ansible-collections/community.general/pull/570).
-- digital_ocean_* - all DigitalOcean modules have been moved to the ``community.digitalocean`` collection. A redirection is active, which will be removed in version 2.0.0 (https://github.com/ansible-collections/community.general/pull/622).
-- infini_* - all infinidat modules have been moved to the ``infinidat.infinibox`` collection. A redirection is active, which will be removed in version 2.0.0 (https://github.com/ansible-collections/community.general/pull/607).
-- logicmonitor - the module has been removed in 1.0.0 since it is unmaintained and the API used by the module has been turned off in 2017 (https://github.com/ansible-collections/community.general/issues/539, https://github.com/ansible-collections/community.general/pull/541).
-- logicmonitor_facts - the module has been removed in 1.0.0 since it is unmaintained and the API used by the module has been turned off in 2017 (https://github.com/ansible-collections/community.general/issues/539, https://github.com/ansible-collections/community.general/pull/541).
-- mysql_* - all MySQL modules have been moved to the ``community.mysql`` collection. A redirection is active, which will be removed in version 2.0.0 (https://github.com/ansible-collections/community.general/pull/633).
-- proxysql_* - all ProxySQL modules have been moved to the ``community.proxysql`` collection. A redirection is active, which will be removed in version 2.0.0 (https://github.com/ansible-collections/community.general/pull/624).
-
-community.network
-~~~~~~~~~~~~~~~~~
-
-- onyx - all onyx modules and plugins have been moved to the mellanox.onyx collection. Redirects have been added that will be removed in community.network 2.0.0 (https://github.com/ansible-collections/community.network/pull/83).
-
-community.vmware
-~~~~~~~~~~~~~~~~
-
-- vmware_portgroup - removed 'inbound_policy', and 'rolling_order' deprecated options.
-
-Deprecated Features
--------------------
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- The ldap_attr module has been deprecated and will be removed in a later release; use ldap_attrs instead.
-- xbps - the ``force`` option never had any effect. It is now deprecated, and will be removed in 3.0.0 (https://github.com/ansible-collections/community.general/pull/568).
-
-community.vmware
-~~~~~~~~~~~~~~~~
-
-- The vmware_dns_config module has been deprecated and will be removed in a later release; use vmware_host_dns instead.
-- vca - vca_fw, vca_nat, vca_app are deprecated since these modules rely on deprecated part of Pyvcloud library.
-- vmware_tag_info - in a later release, the module will not return ``tag_facts`` since it does not return multiple tags with the same name and different category id. To maintain the existing behavior use ``tag_info`` which is a list of tag metadata.
-
-Porting Guide for v2.10.0a7
-===========================
-
-Major Changes
--------------
-
-ansible.netcommon
-~~~~~~~~~~~~~~~~~
-
-- Add libssh connection plugin and refactor network_cli (https://github.com/ansible-collections/ansible.netcommon/pull/30)
-
-community.kubernetes
-~~~~~~~~~~~~~~~~~~~~
-
-- helm_plugin - new module to manage Helm plugins (https://github.com/ansible-collections/community.kubernetes/pull/154).
-- helm_plugin_info - new modules to gather information about Helm plugins (https://github.com/ansible-collections/community.kubernetes/pull/154).
-- k8s_exec - Return rc for the command executed (https://github.com/ansible-collections/community.kubernetes/pull/158).
-
-Removed Features
-----------------
-
-ansible.netcommon
-~~~~~~~~~~~~~~~~~
-
-- module_utils.network.common.utils.ComplexDict has been removed
-
-Porting Guide for v2.10.0a5
-===========================
-
-Removed Collections
--------------------
-
-- dellemc_networking.os10 (previously included version: 1.0.2)
-
-Porting Guide for v2.10.0a4
-===========================
-
-Breaking Changes
-----------------
-
-ansible.windows
-~~~~~~~~~~~~~~~
-
-- setup - Make sure ``ansible_date_time.epoch`` is seconds since EPOCH in UTC to mirror the POSIX facts. The ``ansible_date_time.epoch_local`` contains seconds since EPOCH in the local timezone for backwards compatibility
-- setup - Will now add the IPv6 scope on link local addresses for ``ansible_ip_addresses``
-- setup - ``ansible_processor`` will now return the index before the other values to match the POSIX fact behaviour
-- win_find - No longer filters by size on directories, this feature had a lot of bugs, slowed down the module, and not a supported scenario with the ``find`` module.
-
-Removed Features
-----------------
-
-community.windows
-~~~~~~~~~~~~~~~~~
-
-- win_disk_image - removed the deprecated return value ``mount_path`` in favour of ``mount_paths``.
-
-Deprecated Features
--------------------
-
 ansible.windows
 ~~~~~~~~~~~~~~~
 
 - win_domain_computer - Deprecated the undocumented ``log_path`` option. This option will be removed in a major release after ``2022-07-01``.
+- win_domain_controller - the ``log_path`` option has been deprecated and will be removed in a later release. This was undocumented and only related to debugging information for module development.
+- win_package - the ``ensure`` alias for the ``state`` option has been deprecated and will be removed in a later release. Please use ``state`` instead of ``ensure``.
+- win_package - the ``productid`` alias for the ``product_id`` option has been deprecated and will be removed in a later release. Please use ``product_id`` instead of ``productid``.
+- win_package - the ``username`` and ``password`` options has been deprecated and will be removed in a later release. The same functionality can be done by using ``become: yes`` and ``become_flags: logon_type=new_credentials logon_flags=netcredentials_only`` on the task.
 - win_regedit - Deprecated using forward slashes as a path separator, use backslashes to avoid ambiguity between a forward slash in the key name or a forward slash as a path separator. This feature will be removed in a major release after ``2021-07-01``.
-
-Porting Guide for v2.10.0a3
-===========================
-
-Breaking Changes
-----------------
-
-netbox.netbox
-~~~~~~~~~~~~~
-
-- To pass in integers via Ansible Jinja filters for a key in ``data`` that
-  requires querying an endpoint is now done by making it a dictionary with
-  an ``id`` key. The previous behavior was to just pass in an integer and
-  it was converted when normalizing the data, but some people may have names
-  that are all integers and those were being converted erroneously so we made
-  the decision to change the method to convert to an integer for the NetBox
-  API.
-
-  ::
-
-    tasks:
-      - name: Create device within NetBox with only required information
-        netbox_device:
-          netbox_url: http://netbox-demo.org:32768
-          netbox_token: 0123456789abcdef0123456789abcdef01234567
-          data:
-            name: Test66
-            device_type:
-              id: "{{ some_jinja_variable }}"
-            device_role: Core Switch
-            site: Test Site
-            status: Staged
-          state: present
-- ``pynetbox`` changed to using ``requests.Session()`` to manage the HTTP session
-  which broke passing in ``ssl_verify`` when building the NetBox API client.
-  This PR makes ``pynetbox 5.0.4+`` the new required version of `pynetbox` for
-  the Ansible modules and lookup plugin. (https://github.com/netbox-community/ansible_modules/pull/269)
-
-Porting Guide for v2.10.0a2
-===========================
-
-Breaking Changes
-----------------
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- The environment variable for the auth context for the oc.py connection plugin has been corrected (K8S_CONTEXT).  It was using an initial lowercase k by mistake. (https://github.com/ansible-collections/community.general/pull/377).
-- bigpanda - the parameter ``message`` was renamed to ``deployment_message`` since ``message`` is used by Ansible Core engine internally.
-- cisco_spark - the module option ``message`` was renamed to ``msg``, as ``message`` is used internally in Ansible Core engine (https://github.com/ansible/ansible/issues/39295)
-- datadog - the parameter ``message`` was renamed to ``notification_message`` since ``message`` is used by Ansible Core engine internally.
-- docker_container - no longer passes information on non-anonymous volumes or binds as ``Volumes`` to the Docker daemon. This increases compatibility with the ``docker`` CLI program. Note that if you specify ``volumes: strict`` in ``comparisons``, this could cause existing containers created with docker_container from Ansible 2.9 or earlier to restart.
-- docker_container - support for port ranges was adjusted to be more compatible to the ``docker`` command line utility: a one-port container range combined with a multiple-port host range will no longer result in only the first host port be used, but the whole range being passed to Docker so that a free port in that range will be used.
-- hashi_vault lookup - now returns the latest version when using the KV v2 secrets engine. Previously, it returned all versions of the secret which required additional steps to extract and filter the desired version.
-
-community.network
-~~~~~~~~~~~~~~~~~
-
-- routeros_facts - allow multiple addresses and neighbors per interface. This makes ``ansible_net_neighbors`` a list instead of a dict (https://github.com/ansible-collections/community.network/pull/6).
-
-theforeman.foreman
-~~~~~~~~~~~~~~~~~~
-
-- All modules were renamed to drop the ``foreman_`` and ``katello_`` prefixes.
-  Additionally to the prefix removal, the following modules were further ranamed:
-
-  * katello_upload to content_upload
-  * katello_sync to repository_sync
-  * katello_manifest to subscription_manifest
-  * foreman_search_facts to resource_info
-  * foreman_ptable to partition_table
-  * foreman_model to hardware_model
-  * foreman_environment to puppet_environment
-
-Major Changes
--------------
-
-Ansible-base
-~~~~~~~~~~~~
-
-- Both ansible-doc and ansible-console's help command will error for modules and plugins whose return documentation cannot be parsed as YAML. All modules and plugins passing ``ansible-test sanity --test yamllint`` will not be affected by this.
-- Collections may declare a list of supported/tested Ansible versions for the collection. A warning is issued if a collection does not support the Ansible version that loads it (can also be configured as silent or a fatal error). Collections that do not declare supported Ansible versions do not issue a warning/error.
-- Plugin routing allows collections to declare deprecation, redirection targets, and removals for all plugin types.
-- Plugins that import module_utils and other ansible namespaces that have moved to collections should continue to work unmodified.
-- Routing data built into Ansible 2.10 ensures that 2.9 content should work unmodified on 2.10. Formerly included modules and plugins that were moved to collections are still accessible by their original unqualified names, so long as their destination collections are installed.
-- When deprecations are done in code, they to specify a ``collection_name`` so that deprecation warnings can mention which collection - or ansible-base - is deprecating a feature. This affects all ``Display.deprecated()`` or ``AnsibleModule.deprecate()`` or ``Ansible.Basic.Deprecate()`` calls, and ``removed_in_version``/``removed_at_date`` or ``deprecated_aliases`` in module argument specs.
-- ansible-test now uses a different ``default`` test container for Ansible Collections
-
-ansible.posix
-~~~~~~~~~~~~~
-
-- Bootstrap Collection (https://github.com/ansible-collections/ansible.posix/pull/1).
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- docker_container - the ``network_mode`` option will be set by default to the name of the first network in ``networks`` if at least one network is given and ``networks_cli_compatible`` is ``true`` (will be default from community.general 2.0.0 on). Set to an explicit value to avoid deprecation warnings if you specify networks and set ``networks_cli_compatible`` to ``true``. The current default (not specifying it) is equivalent to the value ``default``.
-- docker_container - the module has a new option, ``container_default_behavior``, whose default value will change from ``compatibility`` to ``no_defaults``. Set to an explicit value to avoid deprecation warnings.
-- gitlab_user - no longer requires ``name``, ``email`` and ``password`` arguments when ``state=absent``.
-
-community.kubernetes
-~~~~~~~~~~~~~~~~~~~~
-
-- Add changelog and fragments and document changelog process (https://github.com/ansible-collections/community.kubernetes/pull/131).
-
-Removed Features
-----------------
-
-Ansible-base
-~~~~~~~~~~~~
-
-- core - remove support for ``check_invalid_arguments`` in ``AnsibleModule``, ``AzureModule`` and ``UTMModule``.
-
-community.crypto
-~~~~~~~~~~~~~~~~
-
-- The ``letsencrypt`` module has been removed. Use ``acme_certificate`` instead.
-
-community.general
-~~~~~~~~~~~~~~~~~
-
-- core - remove support for ``check_invalid_arguments`` in ``UTMModule``.
-- pacman - Removed deprecated ``recurse`` option, use ``extra_args=--recursive`` instead
-
-community.vmware
-~~~~~~~~~~~~~~~~
-
-- vmware_guest_find - Removed deprecated ``datacenter`` option
-- vmware_vmkernel - Removed deprecated ``ip_address`` option; use sub-option ip_address in the network option instead
-- vmware_vmkernel - Removed deprecated ``subnet_mask`` option; use sub-option subnet_mask in the network option instead
-
-Deprecated Features
--------------------
-
-Ansible-base
-~~~~~~~~~~~~
-
-- Using the DefaultCallback without the correspodning doc_fragment or copying the documentation.
-- hash_behaviour - Deprecate ``hash_behaviour`` for future removal.
-- script inventory plugin - The 'cache' option is deprecated and will be removed in 2.12. Its use has been removed from the plugin since it has never had any effect.
 
 community.aws
 ~~~~~~~~~~~~~
 
 - cloudformation - The ``template_format`` option had no effect since Ansible 2.3 and will be removed after 2022-06-01
 - data_pipeline - The ``version`` option had no effect and will be removed after 2022-06-01
+- data_pipeline - the ``version`` option has been deprecated and will be removed in a later release. It has always been ignored by the module.
 - ec2_eip - The ``wait_timeout`` option had no effect and will be removed after 2022-06-01
+- ec2_eip - the ``wait_timeout`` option has been deprecated and will be removed in a later release. It has had no effect since Ansible 2.3.
 - ec2_key - The ``wait_timeout`` option had no effect and will be removed after 2022-06-01
 - ec2_key - The ``wait`` option had no effect and will be removed after 2022-06-01
 - ec2_lc - The ``associate_public_ip_address`` option had no effect and will be removed after 2022-06-01
+- ec2_lc - the ``associate_public_ip_address`` option has been deprecated and will be removed after a later release. It has always been ignored by the module.
 - elb_network_lb - The current default value of the ``state`` option has been deprecated and will change from absent to present after 2022-06-01
+- elb_network_lb - in a later release, the default behaviour for the ``state`` option will change from ``absent`` to ``present``.  To maintain the existing behavior explicitly set state to ``absent``.
 - iam_managed_policy - The ``fail_on_delete`` option had no effect and will be removed after 2022-06-01
+- iam_managed_policy - the ``fail_on_delete`` option has been deprecated and will be removed after a later release.  It has always been ignored by the module.
 - iam_policy - The ``policy_document`` will be removed after 2022-06-01.  To maintain the existing behavior use the ``policy_json`` option and read the file with the ``lookup`` plugin.
 - iam_policy - The default value of ``skip_duplicates`` will change after 2022-06-01 from ``true`` to ``false``.
+- iam_policy - in a later release, the default value for the ``skip_duplicates`` option will change from ``true`` to ``false``.  To maintain the existing behavior explicitly set it to ``true``.
+- iam_policy - the ``policy_document`` option has been deprecated and will be removed after a later release. To maintain the existing behavior use the ``policy_json`` option and read the file with the ``lookup`` plugin.
 - iam_role - The default value of the purge_policies has been deprecated and will change from true to false after 2022-06-01
+- iam_role - in a later release, the ``purge_policies`` option (also know as ``purge_policy``) default value will change from ``true`` to ``false``
 - s3_lifecycle - The ``requester_pays`` option had no effect and will be removed after 2022-06-01
+- s3_lifecycle - the ``requester_pays`` option has been deprecated and will be removed after a later release. It has always been ignored by the module.
 - s3_sync - The ``retries`` option had no effect and will be removed after 2022-06-01
+- s3_sync - the ``retries`` option has been deprecated and will be removed after 2022-06-01. It has always been ignored by the module.
 
 community.crypto
 ~~~~~~~~~~~~~~~~
@@ -612,6 +529,7 @@ community.crypto
 community.general
 ~~~~~~~~~~~~~~~~~
 
+- The ldap_attr module has been deprecated and will be removed in a later release; use ldap_attrs instead.
 - airbrake_deployment - Add deprecation notice for ``token`` parameter and v2 api deploys. This feature will be removed in community.general 3.0.0.
 - clc_aa_policy - The ``wait`` option had no effect and will be removed in community.general 3.0.0.
 - clc_aa_policy - the ``wait`` parameter will be removed. It has always been ignored by the module.
@@ -626,63 +544,24 @@ community.general
 - redfish_config - the ``bios_attribute_name`` and ``bios_attribute_value`` options will be removed. To maintain the existing behavior use the ``bios_attributes`` option instead.
 - redfish_config and redfish_command - the behavior to select the first System, Manager, or Chassis resource to modify when multiple are present will be removed. Use the new ``resource_id`` option to specify target resource to modify.
 - redfish_config, redfish_command - Behavior to modify the first System, Mananger, or Chassis resource when multiple are present is deprecated. Use the new ``resource_id`` option to specify target resource to modify.
+- xbps - the ``force`` option never had any effect. It is now deprecated, and will be removed in 3.0.0 (https://github.com/ansible-collections/community.general/pull/568).
 
 community.vmware
 ~~~~~~~~~~~~~~~~
 
+- The vmware_dns_config module has been deprecated and will be removed in a later release; use vmware_host_dns instead.
+- vca - vca_fw, vca_nat, vca_app are deprecated since these modules rely on deprecated part of Pyvcloud library.
 - vmware_dns_config - Deprecate in favour of new module vmware_host_dns.
-
-Porting Guide for v2.10.0a1
-===========================
-
-Breaking Changes
-----------------
-
-- cisco.nxos.nxos_igmp_interface - no longer supports the deprecated ``oif_prefix`` and ``oif_source`` options. These have been superceeded by ``oif_ps``.
-- community.grafana.grafana_dashboard - the parameter ``message`` is renamed to ``commit_message`` since ``message`` is used by Ansible Core engine internally.
-- purestorage.flashblade.purefb_fs - no longer supports the deprecated ``nfs`` option. This has been superceeded by ``nfsv3``.
-
-netbox.netbox
-~~~~~~~~~~~~~
-
-- Change ``ip-addresses`` key in netbox inventory plugin to ``ip_addresses`` (https://github.com/netbox-community/ansible_modules/issues/139)
-- Changed ``group`` to ``tenant_group`` in ``netbox_tenant.py`` (https://github.com/netbox-community/ansible_modules/issues/9)
-- Changed ``role`` to ``prefix_role`` in ``netbox_prefix.py`` (https://github.com/netbox-community/ansible_modules/issues/9)
-- Module failures when required fields arent provided (https://github.com/netbox-community/ansible_modules/issues/24)
-- Renamed ``netbox_interface`` to ``netbox_device_interface`` (https://github.com/netbox-community/ansible_modules/issues/9)
-- This version has a few breaking changes due to new namespace and collection name. I felt it necessary to change the name of the lookup plugin and inventory plugin just not to have a non descriptive namespace call to use them. Below is an example:
-  ``netbox.netbox.netbox`` would be used for both inventory plugin and lookup plugin, but in different contexts so no collision will arise, but confusion will.
-  I renamed the lookup plugin to ``nb_lookup`` so it will be used with the FQCN ``netbox.netbox.nb_lookup``.
-  The inventory plugin will now be called within an inventory file by ``netbox.netbox.nb_inventory``
-
-Major Changes
--------------
-
-community.kubernetes
-~~~~~~~~~~~~~~~~~~~~
-
-- helm - New module for managing Helm charts (https://github.com/ansible-collections/community.kubernetes/pull/61).
-- helm_info - New module for retrieving Helm chart information (https://github.com/ansible-collections/community.kubernetes/pull/61).
-- helm_repository - New module for managing Helm repositories (https://github.com/ansible-collections/community.kubernetes/pull/61).
-- k8s - Inventory source migrated from Ansible 2.9 to Kubernetes collection.
-- k8s - Lookup plugin migrated from Ansible 2.9 to Kubernetes collection.
-- k8s - Module migrated from Ansible 2.9 to Kubernetes collection.
-- k8s_auth - Module migrated from Ansible 2.9 to Kubernetes collection.
-- k8s_config_resource_name - Filter plugin migrated from Ansible 2.9 to Kubernetes collection.
-- k8s_exec - New module for executing commands on pods via Kubernetes API (https://github.com/ansible-collections/community.kubernetes/pull/14).
-- k8s_info - Module migrated from Ansible 2.9 to Kubernetes collection.
-- k8s_log - New module for retrieving pod logs (https://github.com/ansible-collections/community.kubernetes/pull/16).
-- k8s_scale - Module migrated from Ansible 2.9 to Kubernetes collection.
-- k8s_service - Module migrated from Ansible 2.9 to Kubernetes collection.
-- kubectl - Connection plugin migrated from Ansible 2.9 to Kubernetes collection.
-- openshift - Inventory source migrated from Ansible 2.9 to Kubernetes collection.
-
-Deprecated Features
--------------------
-
-- The vyos.vyos.vyos_static_route module has been deprecated and will be removed in a later release; use vyos.vyos.vyos_static_routes instead.
+- vmware_guest - deprecate specifying CDROM configuration as a dict, instead use a list.
+- vmware_tag_info - in a later release, the module will not return ``tag_facts`` since it does not return multiple tags with the same name and different category id. To maintain the existing behavior use ``tag_info`` which is a list of tag metadata.
 
 community.zabbix
 ~~~~~~~~~~~~~~~~
 
 - zabbix_proxy (module) - deprecates ``interface`` sub-options ``type`` and ``main`` when proxy type is set to passive via ``status=passive``. Make sure these suboptions are removed from your playbook as they were never supported by Zabbix in the first place.
+
+openstack.cloud
+~~~~~~~~~~~~~~~
+
+- foo - The bar option has been deprecated. Use the username option instead.
+- send_request - The quic option has been deprecated. Use the protocol option instead.
