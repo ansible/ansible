@@ -179,7 +179,8 @@ To include a role:
           ansible.builtin.debug:
             msg: "this task runs before the example role"
 
-        - include_role:
+        - name: Include the example role
+          include_role:
             name: example
 
         - name: Print a message
@@ -193,7 +194,8 @@ You can pass other keywords, including variables and tags, when including roles:
     ---
     - hosts: webservers
       tasks:
-        - include_role:
+        - name: Include the foo_app_instance role
+          include_role:
             name: foo_app_instance
           vars:
             dir: '/opt/a'
@@ -210,7 +212,8 @@ You can conditionally include a role:
     ---
     - hosts: webservers
       tasks:
-        - include_role:
+        - name: Include the some_role role
+          include_role:
             name: some_role
           when: "ansible_facts['os_family'] == 'RedHat'"
 
@@ -228,7 +231,8 @@ You can reuse roles statically anywhere in the ``tasks`` section of a play using
           ansible.builtin.debug:
             msg: "before we run our role"
 
-        - import_role:
+        - name: Import the example role
+          import_role:
             name: example
 
         - name: Print a message
@@ -242,7 +246,8 @@ You can pass other keywords, including variables and tags, when importing roles:
     ---
     - hosts: webservers
       tasks:
-        - import_role:
+        - name: Import the foo_app_instance role
+          import_role:
             name: foo_app_instance
           vars:
             dir: '/opt/a'
