@@ -2,6 +2,7 @@ destructive
 shippable/posix/incidental
 skip/aix
 skip/osx
+skip/macos
 skip/freebsd
 skip/rhel
 needs/root
