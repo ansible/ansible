@@ -22,3 +22,6 @@ ansible-playbook filter_plugins.yml -v "$@"
 
 # https://github.com/ansible/ansible/issues/68699
 ansible-playbook unused_vars_include.yml -v "$@"
+
+# https://github.com/ansible/ansible/issues/55152
+ansible-playbook undefined_var_info.yml -v "$@"
