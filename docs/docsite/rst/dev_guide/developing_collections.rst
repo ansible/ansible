@@ -537,7 +537,7 @@ First, look at `Ansible Collection Checklist <https://github.com/ansible-collect
 To migrate content from one collection to another, if the collections are parts of `Ansible distribution <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_:
 
 #. Copy content from the source (old) collection to the target collection.
-#. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the source collection. If the target collection has been released with the new content as a new minor version for the same major version that is currently included in Ansible, this ensures that users can resolve the deprecation warning without having to install something manually that potentially breaks backwards compatibility.
+#. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the source collection. The deprecation must be released after the copied content has been released in the target collection.
 #. When the next major release comes:
 
   * remove the module/plugin from the source collection
