@@ -1,0 +1,33 @@
+- argspec:
+    state: absent
+  register: argspec_simple_good
+
+- argspec:
+    state: present
+  register: argspec_required_if_fail
+  ignore_errors: true
+
+- argspec:
+    state: present
+    path: foo
+  register: argspec_required_if_good1
+
+- argspec:
+    state: present
+    content: foo
+  register: argspec_required_if_good2
+
+- argspec:
+    state: present
+    content: foo
+    path: foo
+  register: argspec_mutually_exclusive_fail
+  ignore_errors: true
+
+- assert:
+    that:
+      - argspec_simple_good is successful
+      - argspec_required_if_fail is failed
+      - argspec_required_if_good1 is successful
+      - argspec_required_if_good2 is successful
+      - argspec_mutually_exclusive_fail is failed

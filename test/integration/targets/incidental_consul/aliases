@@ -1,4 +1,0 @@
-shippable/posix/incidental
-destructive
-skip/aix
-skip/power/centos
