@@ -29,7 +29,7 @@ options:
               C(restarted) will always bounce the service. C(reloaded) will always reload.
               C(conditionally-restarted) will only restart the service if it is running (equivalent to C(systemd try-restart)).
         type: str
-        choices: [ reloaded, restarted, started, stopped, conditionally-restarted ]        
+        choices: [ reloaded, restarted, started, stopped, conditionally-restarted ]
     enabled:
         description:
             - Whether the service should start on boot. B(At least one of state and enabled are required.)
