@@ -37,6 +37,7 @@ options:
       - The command to run.
   argv:
     type: list
+    elements: str
     description:
       - Passes the command as a list rather than a string.
       - Use C(argv) to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
@@ -67,6 +68,7 @@ options:
   stdin:
     description:
       - Set the stdin of the command directly to the specified value.
+    type: str
     version_added: "2.4"
   stdin_add_newline:
     type: bool
@@ -255,7 +257,7 @@ def main():
         argument_spec=dict(
             _raw_params=dict(),
             _uses_shell=dict(type='bool', default=False),
-            argv=dict(type='list'),
+            argv=dict(type='list', elements='str'),
             chdir=dict(type='path'),
             executable=dict(),
             creates=dict(type='path'),

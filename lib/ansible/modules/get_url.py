@@ -78,6 +78,7 @@ options:
         This option is deprecated and will be removed in version 2.14. Use
         option C(checksum) instead.
     default: ''
+    type: str
     version_added: "1.3"
   checksum:
     description:

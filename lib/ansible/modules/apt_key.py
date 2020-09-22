@@ -35,26 +35,33 @@ options:
             - Including this allows check mode to correctly report the changed state.
             - If specifying a subkey's id be aware that apt-key does not understand how to remove keys via a subkey id.  Specify the primary key's id instead.
             - This parameter is required when C(state) is set to C(absent).
+        type: str
     data:
         description:
             - The keyfile contents to add to the keyring.
+        type: str
     file:
         description:
             - The path to a keyfile on the remote server to add to the keyring.
+        type: path
     keyring:
         description:
             - The full path to specific keyring file in /etc/apt/trusted.gpg.d/
+        type: path
         version_added: "1.3"
     url:
         description:
             - The URL to retrieve key from.
+        type: str
     keyserver:
         description:
             - The keyserver to retrieve key from.
+        type: str
         version_added: "1.6"
     state:
         description:
             - Ensures that the key is present (added) or absent (revoked).
+        type: str
         choices: [ absent, present ]
         default: present
     validate_certs:
@@ -267,7 +274,7 @@ def main():
             url=dict(type='str'),
             data=dict(type='str'),
             file=dict(type='path'),
-            key=dict(type='str'),
+            key=dict(type='str', removed_in_version='2.14', removed_from_collection='ansible.builtin'),
             keyring=dict(type='path'),
             validate_certs=dict(type='bool', default=True),
             keyserver=dict(type='str'),

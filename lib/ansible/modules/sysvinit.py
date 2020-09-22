@@ -22,12 +22,14 @@ options:
         required: true
         description:
             - Name of the service.
+        type: str
         aliases: ['service']
     state:
         choices: [ 'started', 'stopped', 'restarted', 'reloaded' ]
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
               Not all init scripts support C(restarted) nor C(reloaded) natively, so these will both trigger a stop and start as needed.
+        type: str
     enabled:
         type: bool
         description:
@@ -37,18 +39,23 @@ options:
         description:
             - If the service is being C(restarted) or C(reloaded) then sleep this many seconds between the stop and start command.
               This helps to workaround badly behaving services.
+        type: int
     pattern:
         description:
             - A substring to look for as would be found in the output of the I(ps) command as a stand-in for a status result.
             - If the string is found, the service will be assumed to be running.
             - "This option is mainly for use with init scripts that don't support the 'status' option."
+        type: str
     runlevels:
         description:
             - The runlevels this script should be enabled/disabled from.
             - Use this to override the defaults set by the package or init script itself.
+        type: list
+        elements: str
     arguments:
         description:
             - Additional arguments provided on the command line that some init scripts accept.
+        type: str
         aliases: [ 'args' ]
     daemonize:
         type: bool
@@ -124,7 +131,7 @@ def main():
             sleep=dict(type='int', default=1),
             pattern=dict(type='str'),
             arguments=dict(type='str', aliases=['args']),
-            runlevels=dict(type='list'),
+            runlevels=dict(type='list', elements='str'),
             daemonize=dict(type='bool', default=False),
         ),
         supports_check_mode=True,

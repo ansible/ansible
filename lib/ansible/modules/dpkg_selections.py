@@ -20,13 +20,15 @@ author:
 options:
     name:
         description:
-            - Name of the package
+            - Name of the package.
         required: true
+        type: str
     selection:
         description:
             - The selection state to set the package to.
         choices: [ 'install', 'hold', 'deinstall', 'purge' ]
         required: true
+        type: str
 notes:
     - This module won't cause any packages to be installed/removed/purged, use the C(apt) module for that.
 '''
@@ -44,7 +46,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True),
-            selection=dict(choices=['install', 'hold', 'deinstall', 'purge'])
+            selection=dict(choices=['install', 'hold', 'deinstall', 'purge'], required=True)
         ),
         supports_check_mode=True,
     )

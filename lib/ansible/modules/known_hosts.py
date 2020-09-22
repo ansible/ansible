@@ -24,8 +24,8 @@ options:
       - The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
       - Must match with <hostname> or <ip> present in key attribute.
       - For custom SSH port, C(name) needs to specify port as well. See example section.
-    required: true
     type: str
+    required: true
   key:
     description:
       - The SSH public host key, as a string.

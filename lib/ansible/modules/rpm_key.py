@@ -24,10 +24,12 @@ options:
       description:
         - Key that will be modified. Can be a url, a file on the managed node, or a keyid if the key
           already exists in the database.
+      type: str
       required: true
     state:
       description:
         - If the key will be imported or removed from the rpm db.
+      type: str
       default: present
       choices: [ absent, present ]
     validate_certs:
