@@ -534,7 +534,7 @@ Migrating Ansible content to a different collection
 
 First, look at `Ansible Collection Checklist <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_.
 
-To migrate content from one collection to another, if the collections are parts of Ansible distribution:
+To migrate content from one collection to another, if the collections are parts of `Ansible distribution <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_:
 
 #. Copy content from the source (old) collection to the target collection.
 #. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the source collection. If the target collection has been released with the new content as a new minor version for the same major version that is currently included in Ansible, this ensures that users can resolve the deprecation warning without having to install something manually that potentially breaks backwards compatibility.
@@ -544,6 +544,7 @@ To migrate content from one collection to another, if the collections are parts 
   * add ``redirect`` to the corresponding entry in ``meta/runtime.yml``
   * remove ``removal_version`` from there
 
+Collections that are currently in Ansible distribution are listed in ``ANSIBLE_VERSION/ansible.in`` file of 
 
 According to the above, you need to create at least three PRs as follows:
 
