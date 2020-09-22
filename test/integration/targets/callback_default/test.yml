@@ -86,3 +86,9 @@
 
     - name: Second free task
       command: echo foo
+
+    # Ensure include_tasks task names get shown (#71277)
+    - name: Include some tasks
+      include_tasks: include_me.yml
+      loop:
+        - 1
