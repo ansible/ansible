@@ -54,6 +54,22 @@
   register: pass_checksum
   with_sequence: start=0 end=4 format=pass%d
 
+- name: fetch pass_json_file
+  uri:
+    return_content: yes
+    url: 'file:///{{ files_dir}}/{{ item }}.json'
+  register: fetch_pass_json_file
+  with_sequence: start=0 end=4 format=pass%d
+
+- name: check fetch_pass_json_file
+  assert:
+    that:
+      - '"json" in item.1'
+      - item.0.stat.checksum == item.1.content | checksum
+  with_together:
+    - "{{pass_checksum.results}}"
+    - "{{fetch_pass_json_file.results}}"
+
 - name: fetch pass_json
   uri: return_content=yes url=http://localhost:{{ http_port }}/{{ item }}.json
   register: fetch_pass_json

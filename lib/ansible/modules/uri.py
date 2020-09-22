@@ -677,7 +677,9 @@ def main():
     resp, content, dest = uri(module, url, dest, body, body_format, method,
                               dict_headers, socket_timeout)
     resp['elapsed'] = (datetime.datetime.utcnow() - start).seconds
-    resp['status'] = int(resp['status'])
+    # Note for file:// URL's a valid response is None, which we
+    # convert to 200 here.
+    resp['status'] = int(resp['status']) if resp['status'] is not None else 200
     resp['changed'] = False
 
     # Write the file out if requested
