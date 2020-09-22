@@ -146,9 +146,9 @@ html_context = {
     'github_version': 'devel/docs/docsite/rst/',
     'github_module_version': 'devel/lib/ansible/modules/',
     'current_version': version,
-    'latest_version': '2.9',
+    'latest_version': '2.10',
     # list specifically out of order to make latest work
-    'available_versions': ('latest', '2.9_ja', '2.8', '2.7', 'devel'),
+    'available_versions': ('latest', '2.9', '2.9_ja', '2.8', 'devel'),
     'css_files': ('_static/ansible.css',  # overrides to the standard theme
                   ),
 }
