@@ -1,6 +1,7 @@
 destructive
 shippable/posix/group1
 skip/osx
+skip/macos
 skip/freebsd
 skip/rhel
 hidden
