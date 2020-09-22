@@ -28,6 +28,7 @@ options:
       - By default, this module will select the backend based on the C(ansible_pkg_mgr) fact.
     default: "auto"
     choices: [ auto, yum, yum4, dnf ]
+    type: str
     version_added: "2.7"
   name:
     description:
@@ -43,12 +44,15 @@ options:
   exclude:
     description:
       - Package name(s) to exclude when state=present, or latest
+    type: list
+    elements: str
     version_added: "2.0"
   list:
     description:
       - "Package name to run the equivalent of yum list --show-duplicates <package> against. In addition to listing packages,
         use can also list the following: C(installed), C(updates), C(available) and C(repos)."
       - This parameter is mutually exclusive with C(name).
+    type: str
   state:
     description:
       - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
@@ -57,6 +61,7 @@ options:
       - C(absent) and C(removed) will remove the specified package.
       - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
         enabled for this module, then C(absent) is inferred.
+    type: str
     choices: [ absent, installed, latest, present, removed ]
   enablerepo:
     description:
@@ -65,6 +70,8 @@ options:
         When specifying multiple repos, separate them with a C(",").
       - As of Ansible 2.7, this can alternatively be a list instead of C(",")
         separated string
+    type: list
+    elements: str
     version_added: "0.9"
   disablerepo:
     description:
@@ -73,10 +80,13 @@ options:
         When specifying multiple repos, separate them with a C(",").
       - As of Ansible 2.7, this can alternatively be a list instead of C(",")
         separated string
+    type: list
+    elements: str
     version_added: "0.9"
   conf_file:
     description:
       - The remote yum configuration file to use for the transaction.
+    type: str
     version_added: "0.6"
   disable_gpg_check:
     description:
@@ -121,6 +131,7 @@ options:
       - Specifies an alternative installroot, relative to which all packages
         will be installed.
     default: "/"
+    type: str
     version_added: "2.3"
   security:
     description:
@@ -132,6 +143,7 @@ options:
     description:
       - If set to C(yes), and C(state=latest) then only installs updates that have been marked bugfix related.
     default: "no"
+    type: bool
     version_added: "2.6"
   allow_downgrade:
     description:
@@ -150,16 +162,21 @@ options:
     description:
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
+    type: list
+    elements: str
     version_added: "2.5"
   disable_plugin:
     description:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
+    type: list
+    elements: str
     version_added: "2.5"
   releasever:
     description:
       - Specifies an alternative release from which all packages will be
         installed.
+    type: str
     version_added: "2.7"
   autoremove:
     description:
@@ -176,6 +193,7 @@ options:
       - If set to C(all), disables all excludes.
       - If set to C(main), disable excludes defined in [main] in yum.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
+    type: str
     version_added: "2.7"
   download_only:
     description:

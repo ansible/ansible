@@ -34,6 +34,7 @@ options:
   list:
     description:
       - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
+    type: str
 
   state:
     description:
@@ -41,22 +42,28 @@ options:
       - Default is C(None), however in effect the default action is C(present) unless the C(autoremove) option is
         enabled for this module, then C(absent) is inferred.
     choices: ['absent', 'present', 'installed', 'removed', 'latest']
+    type: str
 
   enablerepo:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
+    type: list
+    elements: str
 
   disablerepo:
     description:
       - I(Repoid) of repositories to disable for the install/update operation.
         These repos will not persist beyond the transaction.
         When specifying multiple repos, separate them with a ",".
+    type: list
+    elements: str
 
   conf_file:
     description:
       - The remote dnf configuration file to use for the transaction.
+    type: str
 
   disable_gpg_check:
     description:
@@ -73,12 +80,14 @@ options:
         will be installed.
     version_added: "2.3"
     default: "/"
+    type: str
 
   releasever:
     description:
       - Specifies an alternative release from which all packages will be
         installed.
     version_added: "2.6"
+    type: str
 
   autoremove:
     description:
@@ -93,6 +102,8 @@ options:
       - Package name(s) to exclude when state=present, or latest. This can be a
         list or a comma separated string.
     version_added: "2.7"
+    type: list
+    elements: str
   skip_broken:
     description:
       - Skip packages with broken dependencies(devsolve) and are causing problems.
@@ -131,11 +142,15 @@ options:
       - I(Plugin) name to enable for the install/update operation.
         The enabled plugin will not persist beyond the transaction.
     version_added: "2.7"
+    type: list
+    elements: str
   disable_plugin:
     description:
       - I(Plugin) name to disable for the install/update operation.
         The disabled plugins will not persist beyond the transaction.
     version_added: "2.7"
+    type: list
+    elements: str
   disable_excludes:
     description:
       - Disable the excludes defined in DNF config files.
@@ -143,6 +158,7 @@ options:
       - If set to C(main), disable excludes defined in [main] in dnf.conf.
       - If set to C(repoid), disable excludes defined for given repo id.
     version_added: "2.7"
+    type: str
   validate_certs:
     description:
       - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(no), the SSL certificates will not be validated.

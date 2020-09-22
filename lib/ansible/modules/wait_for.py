@@ -56,6 +56,7 @@ options:
     description:
       - The list of TCP connection states which are counted as active connections.
     type: list
+    elements: str
     default: [ ESTABLISHED, FIN_WAIT1, FIN_WAIT2, SYN_RECV, SYN_SENT, TIME_WAIT ]
     version_added: "2.3"
   state:
@@ -83,6 +84,7 @@ options:
     description:
       - List of hosts or IPs to ignore when looking for active TCP connections for C(drained) state.
     type: list
+    elements: str
     version_added: "1.8"
   sleep:
     description:
@@ -462,11 +464,11 @@ def main():
             connect_timeout=dict(type='int', default=5),
             delay=dict(type='int', default=0),
             port=dict(type='int'),
-            active_connection_states=dict(type='list', default=['ESTABLISHED', 'FIN_WAIT1', 'FIN_WAIT2', 'SYN_RECV', 'SYN_SENT', 'TIME_WAIT']),
+            active_connection_states=dict(type='list', elements='str', default=['ESTABLISHED', 'FIN_WAIT1', 'FIN_WAIT2', 'SYN_RECV', 'SYN_SENT', 'TIME_WAIT']),
             path=dict(type='path'),
             search_regex=dict(type='str'),
             state=dict(type='str', default='started', choices=['absent', 'drained', 'present', 'started', 'stopped']),
-            exclude_hosts=dict(type='list'),
+            exclude_hosts=dict(type='list', elements='str'),
             sleep=dict(type='int', default=1),
             msg=dict(type='str'),
         ),

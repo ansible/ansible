@@ -25,12 +25,14 @@ options:
     name:
         description:
             - Name of the host
+        type: str
         required: true
     use:
         description:
             - Which strategy to use to update the hostname.
             - If not set we try to autodetect, but this can be problematic, particularly with containers as they can present misleading information.
         choices: ['generic', 'debian', 'sles', 'redhat', 'alpine', 'systemd', 'openrc', 'openbsd', 'solaris', 'freebsd']
+        type: str
         version_added: '2.9'
 '''
 

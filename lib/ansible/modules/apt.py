@@ -30,11 +30,13 @@ options:
     description:
       - Indicates the desired package state. C(latest) ensures that the latest version is installed. C(build-dep) ensures the package build dependencies
         are installed. C(fixed) attempt to correct a system with broken dependencies in place.
+    type: str
     default: present
     choices: [ absent, build-dep, latest, present, fixed ]
   update_cache:
     description:
       - Run the equivalent of C(apt-get update) before the operation. Can be run as part of the package installation or as a separate step.
+    aliases: [ update-cache ]
     type: bool
     default: 'no'
   update_cache_retries:
@@ -53,6 +55,7 @@ options:
     description:
       - Update the apt cache if its older than the I(cache_valid_time). This option is set in seconds.
       - As of Ansible 2.4, if explicitly set, this sets I(update_cache=yes).
+    type: int
     default: 0
   purge:
     description:
@@ -62,11 +65,13 @@ options:
   default_release:
     description:
       - Corresponds to the C(-t) option for I(apt) and sets pin priorities
+    aliases: [ default-release ]
+    type: str
   install_recommends:
     description:
       - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install
         recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
-    aliases: ['install-recommends']
+    aliases: [ install-recommends ]
     type: bool
   force:
     description:
@@ -82,6 +87,7 @@ options:
     description:
       - Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
       - 'C(allow_unauthenticated) is only supported with state: I(install)/I(present)'
+    aliases: [ allow-unauthenticated ]
     type: bool
     default: 'no'
     version_added: "2.1"
@@ -95,16 +101,19 @@ options:
     version_added: "1.1"
     choices: [ dist, full, 'no', safe, 'yes' ]
     default: 'no'
+    type: str
   dpkg_options:
     description:
       - Add dpkg options to apt command. Defaults to '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
       - Options should be supplied as comma separated list
     default: force-confdef,force-confold
+    type: str
   deb:
      description:
        - Path to a .deb package on the remote machine.
        - If :// in the path, ansible will attempt to download deb before installing. (Version added 2.1)
        - Requires the C(xz-utils) package to extract the control file of the deb package to install.
+     type: path
      required: false
      version_added: "1.6"
   autoremove:
@@ -1050,7 +1059,7 @@ def main():
             default_release=dict(type='str', aliases=['default-release']),
             install_recommends=dict(type='bool', aliases=['install-recommends']),
             force=dict(type='bool', default=False),
-            upgrade=dict(type='str', choices=['dist', 'full', 'no', 'safe', 'yes']),
+            upgrade=dict(type='str', choices=['dist', 'full', 'no', 'safe', 'yes'], default='no'),
             dpkg_options=dict(type='str', default=DPKG_OPTIONS),
             autoremove=dict(type='bool', default=False),
             autoclean=dict(type='bool', default=False),

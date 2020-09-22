@@ -24,6 +24,7 @@ options:
     choices: ['auto', 'rpm', 'apt', 'portage', 'pkg', 'pacman', 'apk']
     required: False
     type: list
+    elements: str
   strategy:
     description:
       - This option controls how the module queries the package managers on the system.
@@ -31,6 +32,7 @@ options:
         C(all) will return information for all supported and available package managers on the system.
     choices: ['first', 'all']
     default: 'first'
+    type: str
     version_added: "2.8"
 version_added: "2.5"
 requirements:
@@ -408,7 +410,7 @@ def main():
 
     # start work
     global module
-    module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'default': ['auto']},
+    module = AnsibleModule(argument_spec=dict(manager={'type': 'list', 'elements': 'str', 'default': ['auto']},
                                               strategy={'choices': ['first', 'all'], 'default': 'first'}),
                            supports_check_mode=True)
     packages = {}
