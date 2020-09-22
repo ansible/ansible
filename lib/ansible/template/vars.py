@@ -104,8 +104,8 @@ class AnsibleJ2Vars(Mapping):
             value = None
             try:
                 value = self._templar.template(variable)
-            except AnsibleUndefinedVariable:
-                raise
+            except AnsibleUndefinedVariable as e:
+                raise AnsibleUndefinedVariable("%s: %s" % (to_native(variable), e.message))
             except Exception as e:
                 msg = getattr(e, 'message', None) or to_native(e)
                 raise AnsibleError("An unhandled exception occurred while templating '%s'. "
