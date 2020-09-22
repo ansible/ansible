@@ -23,6 +23,7 @@ options:
     description:
       - The command module takes command to run.
     required: true
+    type: str
   creates:
     type: path
     description:

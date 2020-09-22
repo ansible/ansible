@@ -24,22 +24,26 @@ options:
     repo:
         description:
             - A source string for the repository.
+        type: str
         required: true
     state:
         description:
             - A source string state.
+        type: str
         choices: [ absent, present ]
         default: "present"
     mode:
         description:
-            - The octal mode for newly created files in sources.list.d
-        default: '0644'
+            - The octal mode for newly created files in sources.list.d.
+            - Default is what system uses (probably 0644).
+        type: raw
         version_added: "1.6"
     update_cache:
         description:
             - Run the equivalent of C(apt-get update) when a change occurs.  Cache updates are run after making changes.
         type: bool
         default: "yes"
+        aliases: [ update-cache ]
     update_cache_retries:
         description:
         - Amount of retries if the cache update fails. Also see I(update_cache_retry_max_delay).
@@ -64,11 +68,13 @@ options:
             - Sets the name of the source list file in sources.list.d.
               Defaults to a file name based on the repository source url.
               The .list extension will be automatically added.
+        type: str
         version_added: '2.1'
     codename:
         description:
             - Override the distribution codename to use for PPA repositories.
               Should usually only be set when working with a PPA on a non-Ubuntu target (e.g. Debian or Mint)
+        type: str
         version_added: '2.3'
 author:
 - Alexander Saltanov (@sashka)

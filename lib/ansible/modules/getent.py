@@ -21,20 +21,24 @@ options:
         description:
             - The name of a getent database supported by the target system (passwd, group,
               hosts, etc).
+        type: str
         required: True
     key:
         description:
             - Key from which to return values from the specified database, otherwise the
               full contents are returned.
+        type: str
         default: ''
     service:
         description:
             - Override all databases with the specified service
             - The underlying system must support the service flag which is not always available.
+        type: str
         version_added: "2.9"
     split:
         description:
             - "Character used to split the database values into lists/arrays such as ':' or '\t', otherwise  it will try to pick one depending on the database."
+        type: str
     fail_key:
         description:
             - If a supplied key is missing this will make the task fail if C(yes).

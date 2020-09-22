@@ -21,11 +21,13 @@ options:
         description:
             - Name of the service. This parameter takes the name of exactly one service to work with.
             - When using in a chroot environment you always need to specify the full name i.e. (crond.service).
+        type: str
         aliases: [ service, unit ]
     state:
         description:
             - C(started)/C(stopped) are idempotent actions that will not run commands unless necessary.
               C(restarted) will always bounce the service. C(reloaded) will always reload.
+        type: str
         choices: [ reloaded, restarted, started, stopped ]
     enabled:
         description:
@@ -61,6 +63,7 @@ options:
             - "For systemd to work with 'user', the executing user must have its own instance of dbus started (systemd requirement).
               The user dbus process is normally started during normal login, but not during the run of Ansible tasks.
               Otherwise you will probably get a 'Failed to connect to bus: no such file or directory' error."
+        type: str
         choices: [ system, user, global ]
         default: system
         version_added: "2.7"

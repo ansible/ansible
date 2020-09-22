@@ -28,12 +28,15 @@ options:
               use C(!all,!min), and specify the particular fact subsets.
               Use the filter parameter if you do not want to display some collected
               facts."
+        type: list
+        elements: str
         required: false
         default: "all"
     gather_timeout:
         version_added: "2.2"
         description:
             - Set the default timeout in seconds for individual fact gathering.
+        type: int
         required: false
         default: 10
     filter:
@@ -64,6 +67,7 @@ options:
               exists on the target host. Files in this path MUST be PowerShell scripts C(.ps1)
               which outputs an object. This object will be formatted by Ansible as json so the
               script should be outputting a raw hashtable, array, or other primitive object.
+        type: path
         required: false
         default: /etc/ansible/facts.d
 description:
@@ -152,7 +156,7 @@ from ansible.module_utils.facts import default_collectors
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            gather_subset=dict(default=["all"], required=False, type='list'),
+            gather_subset=dict(default=["all"], required=False, type='list', elements='str'),
             gather_timeout=dict(default=10, required=False, type='int'),
             filter=dict(default=[], required=False, type='list', elements='str'),
             fact_path=dict(default='/etc/ansible/facts.d', required=False, type='path'),
