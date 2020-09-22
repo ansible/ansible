@@ -544,8 +544,6 @@ To migrate content from one collection to another, if the collections are parts 
   * add ``redirect`` to the corresponding entry in ``meta/runtime.yml``
   * remove ``removal_version`` from there
 
-Collections that are currently in Ansible distribution are listed in ``ANSIBLE_VERSION/ansible.in`` file of 
-
 According to the above, you need to create at least three PRs as follows:
 
 #. Create a PR against the target collection to copy the content.
