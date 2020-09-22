@@ -559,7 +559,7 @@ Create a PR in the new collection to:
 #. Copy ALL the related files from the old collection.
 #. If it is an action plugin, include the corresponding module with documentation.
 #. If it is a module, check if it has a corresponding action plugin that should move with it.
-#. Check ``meta/ `` for relevant updates to ``action_groups.yml`` and ``runtime.yml`` if they exist.
+#. Check ``meta/`` for relevant updates to ``runtime.yml`` if it exists.
 #. Carefully check the moved ``tests/integration`` and ``tests/units`` and update for FQCN.
 #. Review ``tests/sanity/ignore-\*.txt`` entries in the old collection.
 #. Update ``meta/runtime.yml`` in the old collection.
