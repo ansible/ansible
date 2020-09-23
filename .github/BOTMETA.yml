@@ -7757,11 +7757,11 @@ files:
   lib/ansible/module_utils/remote_management/__init__.py:
     migrated_to: community.general
   lib/ansible/module_utils/remote_management/dellemc/__init__.py:
-    migrated_to: community.general
+    migrated_to: dellemc.openmanage
   lib/ansible/module_utils/remote_management/dellemc/dellemc_idrac.py:
-    migrated_to: community.general
+    migrated_to: dellemc.openmanage
   lib/ansible/module_utils/remote_management/dellemc/ome.py:
-    migrated_to: community.general
+    migrated_to: dellemc.openmanage
   lib/ansible/module_utils/remote_management/lxca/__init__.py:
     migrated_to: community.general
   lib/ansible/module_utils/remote_management/lxca/common.py:
@@ -9945,11 +9945,11 @@ files:
   lib/ansible/modules/remote_management/cobbler/cobbler_system.py:
     migrated_to: community.general
   lib/ansible/modules/remote_management/dellemc/idrac_firmware.py:
-    migrated_to: community.general
+    migrated_to: dellemc.openmanage
   lib/ansible/modules/remote_management/dellemc/idrac_server_config_profile.py:
-    migrated_to: community.general
+    migrated_to: dellemc.openmanage
   lib/ansible/modules/remote_management/dellemc/ome_device_info.py:
-    migrated_to: community.general
+    migrated_to: dellemc.openmanage
   lib/ansible/modules/remote_management/foreman/_foreman.py:
     migrated_to: community.general
   lib/ansible/modules/remote_management/foreman/_katello.py:
@@ -10549,9 +10549,9 @@ files:
   test/units/module_utils/remote_management/__init__.py:
     migrated_to: community.general
   test/units/module_utils/remote_management/dellemc/test_ome.py:
-    migrated_to: community.general
+    migrated_to: dellemc.openmanage
   test/units/module_utils/remote_management/dellemc/__init__.py:
-    migrated_to: community.general
+    migrated_to: dellemc.openmanage
   test/units/module_utils/test_utm_utils.py:
     migrated_to: community.general
   test/units/module_utils/xenserver/conftest.py:
@@ -12185,9 +12185,9 @@ files:
   test/units/modules/packaging/os/test_rhsm_release.py:
     migrated_to: community.general
   test/units/modules/remote_management/dellemc/test_ome_device_info.py:
-    migrated_to: community.general
+    migrated_to: dellemc.openmanage
   test/units/modules/remote_management/dellemc/__init__.py:
-    migrated_to: community.general
+    migrated_to: dellemc.openmanage
   test/units/modules/remote_management/lxca/test_lxca_cmms.py:
     migrated_to: community.general
   test/units/modules/remote_management/lxca/test_lxca_nodes.py:
