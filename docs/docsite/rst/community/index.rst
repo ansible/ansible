@@ -39,7 +39,8 @@ Going deeper
 * I am waiting for a particular feature. How do I see what is :ref:`planned for future Ansible Releases <roadmaps>`?
 * I have a specific Ansible interest or expertise (for example, VMware, Linode, and so on). How do I get involved in a :ref:`working group <working_group_list>`?
 * I would like to participate in conversations about features and fixes. How do I review GitHub issues and pull requests?
-* I found a typo or another problem on docs.ansible.com. How can I :ref:`improve the documentation <community_documentation_contributions>`?
+* I found a typo or another problem on docs.ansible.com. How can I :ref:`improve the documentation <community_documentation_contributions>?
+* Is there a mailing list I can sign up to inform of updates about Ansible?
 
 
 Working with the Ansible repo
