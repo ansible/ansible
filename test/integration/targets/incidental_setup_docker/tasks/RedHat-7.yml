@@ -17,10 +17,14 @@
   args:
     warn: no
 
-- name: Add repository
-  command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-  args:
-    warn: no
+# They broke their .repo file, so we set it up ourselves
+- name: Set-up repository
+  yum_repository:
+    name: docker-ce
+    description: docker-ce
+    baseurl: https://download.docker.com/linux/centos/{{ ansible_facts.distribution_major_version }}/$basearch/stable
+    gpgcheck: true
+    gpgkey: https://download.docker.com/linux/centos/gpg
 
 - name: Update cache
   command: yum -y makecache fast
