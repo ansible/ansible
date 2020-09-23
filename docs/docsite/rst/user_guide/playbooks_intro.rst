@@ -35,7 +35,7 @@ A playbook runs in order from top to bottom. Within each play, tasks also run in
 
 .. note::
 
-	In Ansible 2.10 and later, we recommend you use the fully-qualified collection name in your playbooks to ensure the correct module is selected, as some modules may have the same name in different collections. See :ref:`collections_using_playbook`.
+	In Ansible 2.10 and later, we recommend you use the fully-qualified collection name in your playbooks to ensure the correct module is selected, because multiple collections can contain modules with the same name (for example, ``user``). See :ref:`collections_using_playbook`.
 
 In this example, the first play targets the web servers; the second play targets the database servers::
 
