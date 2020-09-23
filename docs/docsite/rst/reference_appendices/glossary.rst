@@ -24,13 +24,13 @@ when a term comes up on the mailing list.
         lots of other operations together.
 
     Ansible (the package)
-        A replacement software package (Python, deb, rpm, etc) which contains a select group of collections. It contains the collections to ensure that Ansible 2.9 playbooks do not require any separate collections to be be installed. See the :file:`ansible-<version>.build` file in the release-specific directory at  `ansible-build-data <https://github.com/ansible-community/ansible-build-data>`_ for a list of collections included in Ansible, as well as the included ``ansible-base`` version.
+        A software package (Python, deb, rpm, and so on) that contains ansible-base and a select group of collections. Playbooks that worked with Ansible 2.9 should still work with the Ansible 2.10 package. See the :file:`ansible-<version>.build` file in the release-specific directory at  `ansible-build-data <https://github.com/ansible-community/ansible-build-data>`_ for a list of collections included in Ansible, as well as the included ``ansible-base`` version.
 
     ansible-base
-        New for 2.10. The installable package (RPM/Python/Deb package) from the codebase that is now contained in https://github.com/ansible/ansible. It contains a minimal amount of modules and plugins and allows you to install other collections.
+        New for 2.10. The installable package (RPM/Python/Deb package) generated from the `ansible/ansible repository <https://github.com/ansible/ansible>`_. Contains the command-line tools and the code for basic features and functions, such as copying module code to managed nodes. The ``ansible-base`` package includes a few modules and plugins and allows you to add others by installing collections.
 
     Ansible Galaxy
-        An `online hub <galaxy.ansible.com>`_ for finding and sharing Ansible community content. Also, the command-line utility that lets users install individual Ansible Collections, for example`` ansible-galaxy install community.crypto``.
+        An `online resource <galaxy.ansible.com>`_ for finding and sharing Ansible community content. Also, the command-line utility that lets users install individual Ansible Collections, for example`` ansible-galaxy install community.crypto``.
 
     Async
         Refers to a task that is configured to run in the background rather
@@ -59,10 +59,10 @@ when a term comes up on the mailing list.
         not substitute it for a good staging environment.
 
     Collection
-        A packaging format for bundling and distributing Ansible content() plugins, roles, modules, and so on). Collections release independent of other collections or ``ansible-base`` so features can be available sooner to users. Collectoins may come packaged with Ansible (version 2.10 or later) or installed with ``ansible-galaxy collection install <namespace.collection>``.
+        A packaging format for bundling and distributing Ansible content, including plugins, roles, modules, and more. Collections release independent of other collections or ``ansible-base`` so features can be available sooner to users. Some collections are packaged with Ansible (version 2.10 or later). You can install other collections (or other versions of collections) with ``ansible-galaxy collection install <namespace.collection>``.
 
     Collection name
-        In the second part of a Fully Qualified Collection Name, the collection name further divides the functional characteristics of the collection content and denotes ownership. For example, the ``cisco`` namespace might contain ``cisco.ios``, cisco.aci, and cisco.nxos, containing content for managing network devices maintained by Cisco.
+        The second part of a Fully Qualified Collection Name. The collection name divides the collection namespace and usually reflects the function of the collection content. For example, the ``cisco`` namespace might contain ``cisco.ios``, ``cisco.aci``, and ``cisco.nxos``, with content for managing the different network devices maintained by Cisco.
 
     community.general (collection)
         A special collection managed by the Ansible Community Team containing all the modules and plugins which shipped in Ansible 2.9 that do ont have their own dedicated Collection. See `community.general <https://galaxy.ansible.com/community/general>`_` on Galaxy.
@@ -143,7 +143,7 @@ when a term comes up on the mailing list.
         a value like 50 for increased parallelism.
 
     Fully Qualified Collection Name (FQCN)
-        The full definition of a module, plugin, or role hosted within a collection, in the form <namespace.collection.content_name>. Allows a Playbook to refer to a specific module or plugin from a specific source in an unambiguous manner, for example, ``community.grafana.grafana_dashboard``. The FQCN is required when you want to specify the exact source of a module and multiple modules with the same name are available. In cases in which users have multiple collections installed with similar content, the FQCN will always be the explicit and authoritative indicator of which collection to use for content.
+        The full definition of a module, plugin, or role hosted within a collection, in the form <namespace.collection.content_name>. Allows a Playbook to refer to a specific module or plugin from a specific source in an unambiguous manner, for example, ``community.grafana.grafana_dashboard``. The FQCN is required when you want to specify the exact source of a plugin. For example, if multiple collections contain a module plugin called ``user``, the FQCN specifies which one to use for a given task. When you have multiple collections installed, the FQCN is always the explicit and authoritative indicator of which collection to search for the correct plugin for each task.
 
     Gather Facts (Boolean)
         :term:`Facts` are mentioned above.  Sometimes when running a multi-play
@@ -319,7 +319,7 @@ when a term comes up on the mailing list.
         configuration from a "one system at a time" perspective.
 
     Namespace
-        The first part of a fully qualified collection name, the namespace usually reflects a functional content category. Example: in ``cisco.ios.ios_config``, ``cisco`` is the namespace. Namespaces are reserved and distributed by Red Hat at Red Hat's discretion. Many, but not all, namespaces will correspond with vendor names.
+        The first part of a fully qualified collection name, the namespace usually reflects a functional content category. Example: in ``cisco.ios.ios_config``, ``cisco`` is the namespace. Namespaces are reserved and distributed by Red Hat at Red Hat's discretion. Many, but not all, namespaces will correspond with vendor names. See `Galaxy namespaces <https://galaxy.ansible.com/docs/contributing/namespaces.html#galaxy-namespaces>`_ on the Galaxy docsite for namespace requirements.
 
     Notify
         The act of a :term:`task <tasks>` registering a change event and
