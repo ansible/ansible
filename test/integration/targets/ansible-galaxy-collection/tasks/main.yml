@@ -128,3 +128,91 @@
     apply:
       environment:
         ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+
+- name: setup collections for ansible-galaxy collection upgrade tests for {{ test_name }}
+  environment:
+    ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
+  block:
+    - command: ansible-galaxy collection init {{ item }} {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch'
+      loop:
+        - namespace1.collection1
+        - namespace1.collection2
+
+    - name: add the dependency to the other collection
+      lineinfile:
+        path: '{{ galaxy_dir }}/scratch/namespace1/collection1/galaxy.yml'
+        regexp: '^dependencies'
+        line: 'dependencies: {"namespace1.collection2": ">=1.0.0,<2.0.0"}'
+
+    - command: ansible-galaxy collection build {{ item }} {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch'
+      loop:
+        - 'namespace1/collection1'
+        - 'namespace1/collection2'
+
+    - command: ansible-galaxy collection publish {{ item }} -s pulp_v3 {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch'
+      loop:
+        - namespace1-collection1-1.0.0.tar.gz
+        - namespace1-collection2-1.0.0.tar.gz
+
+    - name: update the version to build + publish again to give the dep an upgrade
+      lineinfile:
+        path: '{{ galaxy_dir }}/scratch/namespace1/collection2/galaxy.yml'
+        regexp: '^version'
+        line: 'version: 1.1.0'
+
+    - command: ansible-galaxy collection build namespace1/collection2 {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch'
+
+    - command: ansible-galaxy collection publish {{ item }} -s pulp_v3 {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch'
+      loop:
+        - namespace1-collection2-1.1.0.tar.gz
+
+    - name: update the version to build + publish again
+      lineinfile:
+        path: "{{ item }}"
+        regexp: '^version'
+        line: 'version: 2.0.0'
+      loop:
+        - '{{ galaxy_dir }}/scratch/namespace1/collection1/galaxy.yml'
+        - '{{ galaxy_dir }}/scratch/namespace1/collection2/galaxy.yml'
+
+    - name: update the dep version constraint
+      lineinfile:
+        path: '{{ galaxy_dir }}/scratch/namespace1/collection1/galaxy.yml'
+        regexp: '^dependencies'
+        line: 'dependencies: {"namespace1.collection2": ">=1.0.0,<=3.0.0"}'
+
+    - command: ansible-galaxy collection build {{ item }} {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch'
+      loop:
+        - 'namespace1/collection1'
+        - 'namespace1/collection2'
+
+    - command: ansible-galaxy collection publish {{ item }} -s pulp_v3 {{ galaxy_verbosity }}
+      args:
+        chdir: '{{ galaxy_dir }}/scratch'
+      loop:
+        - namespace1-collection1-2.0.0.tar.gz
+        - namespace1-collection2-2.0.0.tar.gz
+
+    - name: create test collection install directory - {{ test_name }}
+      file:
+        path: '{{ galaxy_dir }}/ansible_collections'
+        state: directory
+
+    - include_tasks: upgrade.yml
+      args:
+        apply:
+          environment:
+            ANSIBLE_COLLECTIONS_PATH: '{{ galaxy_dir }}/ansible_collections'
+            ANSIBLE_CONFIG: '{{ galaxy_dir }}/ansible.cfg'
