@@ -74,6 +74,7 @@ If you prefer to read the entire guide, here's a list of the pages in order.
    platforms/openstack_guidelines
    platforms/ovirt_dev_guide
    platforms/vmware_guidelines
+   platforms/vmware_rest_guidelines
    developing_modules_in_groups
    testing
    module_lifecycle
