@@ -43,8 +43,8 @@ TASK [copy] ********************************************************************
 changed: [testhost]
 
 TASK [replace] *****************************************************************
---- before: /root/ansible/test/results/.tmp/output_dir/test_diff.txt
-+++ after: /root/ansible/test/results/.tmp/output_dir/test_diff.txt
+--- before: .../test_diff.txt
++++ after: .../test_diff.txt
 @@ -1 +1 @@
 -foo
 \ No newline at end of file
