@@ -217,6 +217,18 @@ The following table shows:
       <td>✓</td>
       <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
+    <tr>
+      <td><a href="https://galaxy.ansible.com/vmware/vmware_rest">vmware.vmware_rest</a></td>
+      <td></td>
+      <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/dev_guide/platforms/vmware_rest_guidelines.html">VMWare REST guide</a></td>
+    </tr>
+
   </table>
 
 
