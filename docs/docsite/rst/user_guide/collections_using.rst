@@ -274,7 +274,7 @@ Simplifying module names with the ``collections`` keyword
 The ``collections`` keyword lets you define a list of collections that your role or playbook should search for unqualified module and action names. So you can use the ``collections`` keyword, then simply refer to modules and action plugins by their short-form names throughout that role or playbook.
 
 .. warning::
-   If your playbook uses both the ``collections`` keyword and one or more roles, the roles do not inherit the collections set by the playbook. See below for details.
+   If your playbook uses both the ``collections`` keyword and one or more roles, the roles do not inherit the collections set by the playbook. This is one of the reasons we recommend you always use FQCN. See below for roles details.
 
 Using ``collections`` in roles
 ------------------------------
