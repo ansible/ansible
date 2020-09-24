@@ -102,7 +102,7 @@ And technically, though there is no major good reason to do it, this also works:
 
 .. code-block:: bash
 
-    ansible webserver -m shell -a "echo {{ a }}"
+    ansible webserver -m ansible.builtin.shell -a "echo {{ a }}"
 
 So, in other words, you can use those variables in arguments/actions as well.
 
@@ -154,7 +154,7 @@ Once you confirm the dynamic inventory script is working as expected, you can te
 
 .. code-block:: bash
 
-    ansible -i openstack_inventory.py all -m ping
+    ansible -i openstack_inventory.py all -m ansible.builtin.ping
 
 Implicit use of OpenStack inventory script
 ------------------------------------------
