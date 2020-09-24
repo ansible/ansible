@@ -534,17 +534,41 @@ Migrating Ansible content to a different collection
 
 First, look at `Ansible Collection Checklist <https://github.com/ansible-collections/overview/blob/main/collection_requirements.rst>`_.
 
-To migrate content from one collection to another, you need to create three PRs as follows:
+To migrate content from one collection to another, if the collections are parts of `Ansible distribution <https://github.com/ansible-community/ansible-build-data/blob/main/2.10/ansible.in>`_:
 
-#. Create a PR against the old collection to remove the content.
-#. Create a PR against the new collection to add the files removed in step 1.
-#. Update the ``ansible/ansible:devel`` branch entries for all files moved.
+#. Copy content from the source (old) collection to the target collection.
+#. Deprecate the module/plugin with ``removal_version`` scheduled for the next major version in ``meta/runtime.yml`` of the source collection. The deprecation must be released after the copied content has been included in a release of the target collection.
+#. When the next major release comes:
+
+  * remove the module/plugin from the source collection
+  * add ``redirect`` to the corresponding entry in ``meta/runtime.yml``
+  * remove ``removal_version`` from there
+
+According to the above, you need to create at least three PRs as follows:
+
+#. Create a PR against the target collection to copy the content.
+#. Deprecate the module/plugin in the source collection.
+#. Later create a PR against the source collection to remove the content according to the schedule.
+
+
+Adding the content to the new collection
+----------------------------------------
+
+Create a PR in the new collection to:
+
+#. Copy ALL the related files from the old collection.
+#. If it is an action plugin, include the corresponding module with documentation.
+#. If it is a module, check if it has a corresponding action plugin that should move with it.
+#. Check ``meta/`` for relevant updates to ``runtime.yml`` if it exists.
+#. Carefully check the moved ``tests/integration`` and ``tests/units`` and update for FQCN.
+#. Review ``tests/sanity/ignore-*.txt`` entries in the old collection.
+#. Update ``meta/runtime.yml`` in the old collection.
 
 
 Removing the content from the old collection
-----------------------------------------------
+--------------------------------------------
 
-Create a PR against the old collection repo to remove the modules, module_utils, plugins, and docs_fragments related to this migration:
+Create a PR against the source collection repository to remove the modules, module_utils, plugins, and docs_fragments related to this migration:
 
 #. If you are removing an action plugin, remove the corresponding module that contains the documentation.
 #. If you are removing a module, remove any corresponding action plugin that should stay with it.
@@ -554,11 +578,6 @@ Create a PR against the old collection repo to remove the modules, module_utils,
 #. if you are removing from content from ``community.general`` or ``community.network``, remove entries from ``.github/BOTMETA.yml``.
 #. Carefully review ``meta/runtime.yml`` for any entries you may need to remove or update, in particular deprecated entries.
 #. Update ``meta/runtime.yml`` to contain redirects for EVERY PLUGIN, pointing to the new collection name.
-#. If possible, do not yet add deprecation warnings to the new ``meta/runtime.yml`` entries, but only for a later major release. So the order should be:
-    1. Remove content, add redirects in 3.0.0;
-    2. Deprecate redirects in 4.0.0;
-    3. Set removal version to 5.0.0 or later.
-
 
 .. warning::
 
@@ -568,33 +587,14 @@ Create a PR against the old collection repo to remove the modules, module_utils,
 	#. Once 1.0.0 of the collection from which the content has been removed has been released, such PRs can only be merged for a new **major** version (in other words, 2.0.0, 3.0.0, and so on).
 
 
-Adding the content to the new collection
------------------------------------------
-
-Create a PR in the new collection to:
-
-#. Add ALL the files removed in first PR (from the old collection).
-#. If it is an action plugin, include the corresponding module with documentation.
-#. If it is a module, check if it has a corresponding action plugin that should move with it.
-#. Check ``meta/ `` for relevant updates to ``action_groups.yml`` and ``runtime.yml`` if they exist.
-#. Carefully check the moved ``tests/integration`` and ``tests/units`` and update for FQCN.
-#. Review ``tests/sanity/ignore-\*.txt`` entries.
-#. Update ``meta/runtime.yml``.
-
-Updating ``ansible/ansible:devel`` branch entries for all files moved
-----------------------------------------------------------------------
-
-Create a third PR on ``ansible/ansible`` repository to:
-
-#. Update ``lib/ansible/config/ansible_builtin_runtime.yml`` (the redirect entry).
-#. Update ``.github/BOTMETA.yml`` (the migrated_to entry)
-
 BOTMETA.yml
 -----------
 
-The `BOTMETA.yml <https://github.com/ansible/ansible/blob/devel/.github/BOTMETA.yml>`_ in the ansible/ansible GitHub repository is the source of truth for:
+The ``BOTMETA.yml``, for example in `community.general collection repository <https://github.com/ansible-collections/community.general/blob/main/.github/BOTMETA.yml>`_, is the source of truth for:
 
 * ansibullbot
+
+If the old and/or new collection has ``ansibullbot``, its ``BOTMETA.yml`` must be updated correspondingly.
 
 Ansibulbot will know how to redirect existing issues and PRs to the new repo.
 The build process for docs.ansible.com will know where to find the module docs.
