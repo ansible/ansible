@@ -31,6 +31,7 @@ options:
 notes:
 - Spaces in group names are converted to dashes '-'.
 - This module is also supported for Windows targets.
+- Though this module does not change the remote host, we do provide 'changed' status as it can be useful for those trying to track inventory changes.
 seealso:
 - module: ansible.builtin.add_host
 author:

@@ -37,6 +37,7 @@ notes:
 - Since Ansible 2.4, the C(inventory_dir) variable is now set to C(None) instead of the 'global inventory source',
   because you can now have multiple sources.  An example was added that shows how to partially restore the previous behaviour.
 - Windows targets are supported by this module.
+- Though this module does not change the remote host, we do provide 'changed' status as it can be useful for those trying to track inventory changes.
 seealso:
 - module: ansible.builtin.group_by
 author:
