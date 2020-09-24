@@ -23,11 +23,11 @@ For those modules that implement `backup=no|yes` when manipulating files, a path
     .. code-block:: console
 
       "backup_file": "./foo.txt.32729.2020-07-30@06:24:19~"
-    
+
 
 changed
 ```````
-A boolean indicating if the task had to make changes.
+A boolean indicating if the task had to make changes to the target or delegated host.
 
     .. code-block:: console
 
