@@ -133,24 +133,30 @@ We use:
       """"""""""""""""""""""""""""
 
 
-Syntax Highlighting - Pygments
+Syntax highlighting - Pygments
 ------------------------------
 
 The Ansible documentation supports a range of `Pygments lexers <http://pygments.org/>`_
-for `syntax highlighting <https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#code-examples>`_ to make our code examples look good.
+for `syntax highlighting <https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#code-examples>`_ to make our code examples look good. Each code-block must be correctly indented and surrounded by blank lines.
 
-The following values are supported:
+The Ansible documentation allows the following values:
 
 * none (no highlighting)
-* default (similar to python3 but with a fallback to none without warning highlighting fails)
-* guess (let Pygments guess the lexer based on contents, only works with certain well-recognizable languages)
-* python
+* ansible-output (a custom lexer for Ansible output)
 * bash
-* jinja
-* yaml+jinja
 * console
+* csharp
+* ini
+* json
+* powershell
+* python
+* rst
+* sh
+* shell
 * shell-session
-* Any other lexer alias that `Pygments supports <http://pygments.org/docs/lexers>`_
+* text
+* yaml
+* yaml+jinja
 
 For example, you can highlight Python code using following syntax:
 
@@ -158,7 +164,7 @@ For example, you can highlight Python code using following syntax:
 
       .. code-block:: python
 
-         def my_beautiful_code():
+         def my_beautiful_python_code():
             pass
 
 Internal navigation
