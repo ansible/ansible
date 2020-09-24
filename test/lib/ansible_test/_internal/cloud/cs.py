@@ -48,8 +48,7 @@ class CsCloudProvider(CloudProvider):
         """
         super(CsCloudProvider, self).__init__(args)
 
-        # The simulator must be pinned to a specific version to guarantee CI passes with the version used.
-        self.image = 'quay.io/ansible/cloudstack-test-container:1.2.0'
+        self.image = os.environ.get('ANSIBLE_CLOUDSTACK_CONTAINER', 'quay.io/ansible/cloudstack-test-container:1.4.0')
         self.container_name = ''
         self.endpoint = ''
         self.host = ''
