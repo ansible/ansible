@@ -33,34 +33,38 @@ A playbook runs in order from top to bottom. Within each play, tasks also run in
 * the managed nodes to target, using a :ref:`pattern <intro_patterns>`
 * at least one task to execute
 
+.. note::
+
+	In Ansible 2.10 and later, we recommend you use the fully-qualified collection name in your playbooks to ensure the correct module is selected, because multiple collections can contain modules with the same name (for example, ``user``). See :ref:`collections_using_playbook`.
+
 In this example, the first play targets the web servers; the second play targets the database servers::
 
     ---
-    - name: update web servers
+    - name: Update web servers
       hosts: webservers
       remote_user: root
 
       tasks:
-      - name: ensure apache is at the latest version
-        yum:
+      - name: Ensure apache is at the latest version
+        ansible.builtin.yum:
           name: httpd
           state: latest
-      - name: write the apache config file
-        template:
+      - name: Write the apache config file
+        ansible.builtin.template:
           src: /srv/httpd.j2
           dest: /etc/httpd.conf
 
-    - name: update db servers
+    - name: Update db servers
       hosts: databases
       remote_user: root
 
       tasks:
-      - name: ensure postgresql is at the latest version
-        yum:
+      - name: Ensure postgresql is at the latest version
+        ansible.builtin.yum:
           name: postgresql
           state: latest
-      - name: ensure that postgresql is started
-        service:
+      - name: Ensure that postgresql is started
+        ansible.builtin.service:
           name: postgresql
           state: started
 
