@@ -911,24 +911,37 @@ You can select or combine items from sets or lists.
 
 To get a unique set from a list::
 
+    # list1: [1, 2, 5, 1, 3, 4, 10]
     {{ list1 | unique }}
+    # => [1, 2, 5, 3, 4, 10]
 
 To get a union of two lists::
 
+    # list1: [1, 2, 5, 1, 3, 4, 10]
+    # list2: [1, 2, 3, 4, 5, 11, 99]
     {{ list1 | union(list2) }}
+    # => [1, 2, 5, 1, 3, 4, 10, 11, 99]
 
 To get the intersection of 2 lists (unique list of all items in both)::
 
+    # list1: [1, 2, 5, 3, 4, 10]
+    # list2: [1, 2, 3, 4, 5, 11, 99]
     {{ list1 | intersect(list2) }}
+    # => [1, 2, 5, 3, 4]
 
 To get the difference of 2 lists (items in 1 that don't exist in 2)::
 
+    # list1: [1, 2, 5, 1, 3, 4, 10]
+    # list2: [1, 2, 3, 4, 5, 11, 99]
     {{ list1 | difference(list2) }}
+    # => [10]
 
 To get the symmetric difference of 2 lists (items exclusive to each list)::
 
+    # list1: [1, 2, 5, 1, 3, 4, 10]
+    # list2: [1, 2, 3, 4, 5, 11, 99]
     {{ list1 | symmetric_difference(list2) }}
-
+    # => [10, 11, 99]
 
 .. _math_stuff:
 
