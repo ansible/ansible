@@ -907,6 +907,8 @@ class TestIptables(ModuleTestCase):
             'INPUT',
             '-j',
             'ACCEPT',
+            '-m',
+            'conntrack',
             '--ctstate',
             'NEW',
             '-m',
@@ -914,4 +916,4 @@ class TestIptables(ModuleTestCase):
             '--comment',
             'this is a comment'
         ])
-        self.assertEqual(run_command.call_args[0][0][12], 'this is a comment')
+        self.assertEqual(run_command.call_args[0][0][14], 'this is a comment')
