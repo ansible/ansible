@@ -133,6 +133,40 @@ We use:
       """"""""""""""""""""""""""""
 
 
+Syntax highlighting - Pygments
+------------------------------
+
+The Ansible documentation supports a range of `Pygments lexers <http://pygments.org/>`_
+for `syntax highlighting <https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#code-examples>`_ to make our code examples look good. Each code-block must be correctly indented and surrounded by blank lines.
+
+The Ansible documentation allows the following values:
+
+* none (no highlighting)
+* ansible-output (a custom lexer for Ansible output)
+* bash
+* console
+* csharp
+* ini
+* json
+* powershell
+* python
+* rst
+* sh
+* shell
+* shell-session
+* text
+* yaml
+* yaml+jinja
+
+For example, you can highlight Python code using following syntax:
+
+.. code-block:: rst
+
+      .. code-block:: python
+
+         def my_beautiful_python_code():
+            pass
+
 Internal navigation
 -------------------
 
