@@ -58,7 +58,7 @@ class FacterFactCollector(BaseFactCollector):
         # if fact_path is set, return facter with --external-dir
         fact_path = module.params.get('fact_path', None)
         if (fact_path is not None) and os.path.exists(fact_path):
-            cmd_opts.append( "--external-dir=%s" % fact_path)
+            cmd_opts.append("--external-dir=%s" % fact_path)
 
         return cmd_opts
 
