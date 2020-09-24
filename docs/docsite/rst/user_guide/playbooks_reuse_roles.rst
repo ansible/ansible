@@ -4,7 +4,7 @@
 Roles
 *****
 
-Roles let you automatically load related vars_files, tasks, handlers, and other Ansible artifacts based on a known file structure. Once you group your content in roles, you can easily reuse them and share them with other users.
+Roles let you automatically load related vars, files, tasks, handlers, and other Ansible artifacts based on a known file structure. Once you group your content in roles, you can easily reuse them and share them with other users.
 
 .. contents::
    :local:
