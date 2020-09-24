@@ -214,6 +214,21 @@ class LoginManager(DockerBaseClass):
         :return: None
         '''
 
+        # Newer docker returns the same "Removing login credentials" message
+        # regardless of whether or not we are already logged out.
+        # So to try to determine ourselves, we try reading the config if we can
+        # and looking at the 'auths' section. Then we do it again after, and
+        # compare.
+        path = self.config_path
+        found_config = self.config_file_exists(path)
+        if found_config:
+            has_auth = self.auth_in_config(path)
+            # This is also enough to restore check_mode functionality
+            # If it's in the config, then logging out should remove it.
+            if self.check_mode:
+                self.results['changed'] = has_auth
+                return
+
         cmd = [self.client.module.get_bin_path('docker', True), "logout", self.registry_url]
         # TODO: docker does not support config file in logout, restore this when they do
         # if self.config_path and self.config_file_exists(self.config_path):
@@ -225,7 +240,15 @@ class LoginManager(DockerBaseClass):
         if 'Not logged in to ' in out:
             self.results['changed'] = False
         elif 'Removing login credentials for ' in out:
-            self.results['changed'] = True
+            # See note above about this.
+            if found_config:
+                has_auth_after_logout = self.auth_in_config(path)
+                self.results['changed'] = has_auth != has_auth_after_logout
+            else:
+                # If we didn't find a config, something weird likely happened.
+                # We lose idempotency here, but keep the backwards compatible
+                # behavior instead of erroring.
+                self.results['changed'] = True
         else:
             self.client.module.warn('Unable to determine whether logout was successful.')
 
@@ -238,6 +261,15 @@ class LoginManager(DockerBaseClass):
             return True
         self.log("Configuration file %s not found." % (path))
         return False
+
+    def auth_in_config(self, path):
+        try:
+            with open(path, "r") as file:
+                config = json.load(file)
+                return self.registry_url in config.get('auths', {})
+        except ValueError:
+            self.log("Error reading config from %s" % (path))
+            return False
 
     def create_config_file(self, path):
         '''

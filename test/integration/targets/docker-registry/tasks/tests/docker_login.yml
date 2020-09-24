@@ -68,12 +68,12 @@
       - login_3 is not changed
       - login_4 is not changed
 
-#- name: Log out (check mode)
-#  docker_login:
-#    registry_url: "{{ registry_frontend_address }}"
-#    state: absent
-#  register: logout_1
-#  check_mode: yes
+- name: Log out (check mode)
+  docker_login:
+    registry_url: "{{ registry_frontend_address }}"
+    state: absent
+  register: logout_1
+  check_mode: yes
 
 - name: Log out
   docker_login:
@@ -94,10 +94,10 @@
   register: logout_4
   check_mode: yes
 
-- name: Make sure that login worked
+- name: Make sure that logout worked
   assert:
     that:
-      #- logout_1 is changed
+      - logout_1 is changed
       - logout_2 is changed
       - logout_3 is not changed
       - logout_4 is not changed
