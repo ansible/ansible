@@ -883,7 +883,7 @@ class TestIptables(ModuleTestCase):
             'chain': 'INPUT',
             'jump': 'ACCEPT',
             'action': 'insert',
-            'cstate': ['NEW'],
+            'ctstate': ['NEW'],
             'comment': 'this is a comment',
             '_ansible_check_mode': True,
         })
@@ -907,7 +907,7 @@ class TestIptables(ModuleTestCase):
             'INPUT',
             '-j',
             'ACCEPT',
-            '--cstate',
+            '--ctstate',
             'NEW',
             '-m',
             'comment',
