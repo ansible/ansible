@@ -1495,6 +1495,16 @@ GALAXY_DISPLAY_PROGRESS:
   - {key: display_progress, section: galaxy}
   type: bool
   version_added: "2.10"
+GALAXY_CACHE_PATH:
+  default: ~/.ansible/galaxy.cache
+  description:
+  env:
+  - name: ANSIBLE_GALAXY_CACHE_PATH
+  ini:
+  - section: galaxy
+    key: cache_path
+  type: path
+  version_added: '2.11'
 HOST_KEY_CHECKING:
   name: Check host keys
   default: True
