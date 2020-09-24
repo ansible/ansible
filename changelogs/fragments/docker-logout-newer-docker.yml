@@ -1,0 +1,3 @@
+bugfixes:
+  - docker_login - now correctly reports changed status on logout for Docker versions released after June 2020.
+  - docker_login - now obeys check_mode for logout
