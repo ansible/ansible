@@ -72,9 +72,9 @@ Hosts in multiple groups
 
 You can (and probably will) put each host in more than one group. For example a production webserver in a datacenter in Atlanta might be included in groups called [prod] and [atlanta] and [webservers]. You can create groups that track:
 
-* What - An application, stack or microservice. (For example, database servers, web servers, and so on).
-* Where - A datacenter or region, to talk to local DNS, storage, and so on. (For example, east, west).
-* When - The development stage, to avoid testing on production resources. (For example, prod, test).
+* What - An application, stack or microservice (for example, database servers, web servers, and so on).
+* Where - A datacenter or region, to talk to local DNS, storage, and so on (for example, east, west).
+* When - The development stage, to avoid testing on production resources (for example, prod, test).
 
 Extending the previous YAML inventory to include what, when, and where would look like:
 
@@ -651,23 +651,23 @@ Here is an example of how to instantly deploy to created containers:
 
 .. code-block:: yaml
 
-   - name: create jenkins container
-     docker_container:
+   - name: Create a jenkins container
+     community.general.docker_container:
        docker_host: myserver.net:4243
        name: my_jenkins
        image: jenkins
 
-   - name: add container to inventory
-     add_host:
+   - name: Add the container to inventory
+     ansible.builtin.add_host:
        name: my_jenkins
        ansible_connection: docker
        ansible_docker_extra_args: "--tlsverify --tlscacert=/path/to/ca.pem --tlscert=/path/to/client-cert.pem --tlskey=/path/to/client-key.pem -H=tcp://myserver.net:4243"
        ansible_user: jenkins
      changed_when: false
 
-   - name: create directory for ssh keys
+   - name: Create a directory for ssh keys
      delegate_to: my_jenkins
-     file:
+     ansible.builtin.file:
        path: "/var/jenkins_home/.ssh/jupiter"
        state: directory
 
@@ -743,8 +743,8 @@ without affecting database servers:
 
   - hosts: dbservers
     tasks:
-    - name: allow access from 10.0.0.1
-      iptables:
+    - name: Allow access from 10.0.0.1
+      ansible.builtin.iptables:
         chain: INPUT
         jump: ACCEPT
         source: 10.0.0.1
