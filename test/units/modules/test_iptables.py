@@ -914,4 +914,4 @@ class TestIptables(ModuleTestCase):
             '--comment',
             'this is a comment'
         ])
-        self.assertEqual(run_command.call_args[0][0][10], 'this is a comment')
+        self.assertEqual(run_command.call_args[0][0][12], 'this is a comment')
