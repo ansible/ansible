@@ -18,6 +18,8 @@ __metaclass__ = type
 
 import json
 
+import os
+
 from ansible.module_utils.facts.namespace import PrefixFactNamespace
 
 from ansible.module_utils.facts.collector import BaseFactCollector
@@ -46,8 +48,19 @@ class FacterFactCollector(BaseFactCollector):
     def run_facter(self, module, facter_path):
         # if facter is installed, and we can use --json because
         # ruby-json is ALSO installed, include facter data in the JSON
-        rc, out, err = module.run_command(facter_path + " --puppet --json")
+        facter_options = self.get_command_line_options(module)
+        rc, out, err = module.run_command(facter_path + " --puppet --json %s" % " ".join(facter_options))
         return rc, out, err
+
+    def get_command_line_options(self, module):
+        cmd_opts = []
+
+        # if fact_path is set, return facter with --external-dir
+        fact_path = module.params.get('fact_path', None)
+        if (fact_path is not None) and os.path.exists(fact_path):
+            cmd_opts.append( "--external-dir=%s" % fact_path)
+
+        return cmd_opts
 
     def get_facter_output(self, module):
         facter_path = self.find_facter(module)
