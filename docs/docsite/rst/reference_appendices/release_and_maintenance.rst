@@ -27,7 +27,9 @@ Older, unmaintained versions of Ansible can contain unfixed security
 vulnerabilities (*CVE*).
 
 You can refer to the :ref:`porting guides<porting_guides>` for tips on updating your Ansible
-playbooks to run on newer versions. You can download the Ansible release from `<https://releases.ansible.com/ansible/>`_.
+playbooks to run on newer versions. For Ansible 2.10 and later releases, you can install the Ansible package with ``pip``. See :ref:`intro_installation_guide` for details.  For older releases, You can download the Ansible release from `<https://releases.ansible.com/ansible/>`_.
+
+
 
 
 This table links to the release notes for each major Ansible release. These release notes (changelogs) contain the dates and significant changes in each minor release.
@@ -81,7 +83,7 @@ vulnerabilities (*CVE*).
 You can refer to the :ref:`porting guides<porting_guides>` for tips on updating your Ansible
 playbooks to run on newer versions.
 
-You can download the ``ansible-base`` release from `<https://releases.ansible.com/ansible/>`_.
+You can install ``ansible-base`` with ``pip``. See :ref:`intro_installation_guide` for details.
 
 .. note:: ``ansible-base`` maintenance continues for 3 releases.  Thus the latest release receives
     security and general bug fixes when it is first released, security and critical bug fixes when
@@ -204,8 +206,6 @@ For modules/plugins, we keep the documentation after the removal for users of ol
        Testing strategies
    :ref:`ansible_community_guide`
        Community information and contributing
-   `Ansible release tarballs <https://releases.ansible.com/ansible/>`_
-       Ansible release tarballs
    `Development Mailing List <https://groups.google.com/group/ansible-devel>`_
        Mailing list for development topics
    `irc.freenode.net <http://irc.freenode.net>`_
