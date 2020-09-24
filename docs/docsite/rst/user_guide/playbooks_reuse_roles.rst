@@ -51,22 +51,23 @@ You can add other YAML files in some directories. For example, you can place pla
 .. code-block:: yaml
 
     # roles/example/tasks/main.yml
-    - name: install the correct web server for RHEL
+    - name: Install the correct web server for RHEL
       import_tasks: redhat.yml
       when: ansible_facts['os_family']|lower == 'redhat'
-    - name: install the correct web server for debian
+
+    - name: Install the correct web server for Debian
       import_tasks: debian.yml
       when: ansible_facts['os_family']|lower == 'debian'
 
     # roles/example/tasks/redhat.yml
-    - install web server
-      yum:
+    - name: Install web server
+      ansible.builtin.yum:
         name: "httpd"
         state: present
 
     # roles/example/tasks/debian.yml
-    - install web server
-      apt:
+    - name: Install web server
+      ansible.builtin.apt:
         name: "apache2"
         state: present
 
@@ -174,11 +175,16 @@ To include a role:
     ---
     - hosts: webservers
       tasks:
-        - debug:
+        - name: Print a message
+          ansible.builtin.debug:
             msg: "this task runs before the example role"
-        - include_role:
+
+        - name: Include the example role
+          include_role:
             name: example
-        - debug:
+
+        - name: Print a message
+          ansible.builtin.debug:
             msg: "this task runs after the example role"
 
 You can pass other keywords, including variables and tags, when including roles:
@@ -188,7 +194,8 @@ You can pass other keywords, including variables and tags, when including roles:
     ---
     - hosts: webservers
       tasks:
-        - include_role:
+        - name: Include the foo_app_instance role
+          include_role:
             name: foo_app_instance
           vars:
             dir: '/opt/a'
@@ -205,7 +212,8 @@ You can conditionally include a role:
     ---
     - hosts: webservers
       tasks:
-        - include_role:
+        - name: Include the some_role role
+          include_role:
             name: some_role
           when: "ansible_facts['os_family'] == 'RedHat'"
 
@@ -219,11 +227,16 @@ You can reuse roles statically anywhere in the ``tasks`` section of a play using
     ---
     - hosts: webservers
       tasks:
-        - debug:
+        - name: Print a message
+          ansible.builtin.debug:
             msg: "before we run our role"
-        - import_role:
+
+        - name: Import the example role
+          import_role:
             name: example
-        - debug:
+
+        - name: Print a message
+          ansible.builtin.debug:
             msg: "after we ran our role"
 
 You can pass other keywords, including variables and tags, when importing roles:
@@ -233,7 +246,8 @@ You can pass other keywords, including variables and tags, when importing roles:
     ---
     - hosts: webservers
       tasks:
-        - import_role:
+        - name: Import the foo_app_instance role
+          import_role:
             name: foo_app_instance
           vars:
             dir: '/opt/a'
