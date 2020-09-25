@@ -7,7 +7,7 @@ Inventory Plugins
    :local:
    :depth: 2
 
-Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either via the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources.
+Inventory plugins allow users to point at data sources to compile the inventory of hosts that Ansible uses to target tasks, either using the ``-i /path/to/file`` and/or ``-i 'host1, host2'`` command line parameters or from other configuration sources.
 
 
 .. _enabling_inventory:
@@ -24,7 +24,7 @@ In some circumstances, for example, if the inventory plugin does not use a YAML 
    [inventory]
    enable_plugins = host_list, script, auto, yaml, ini, toml
 
-If the plugin is in a collection you need to use the fully qualified name:
+If the plugin is in a collection, use the fully qualified name:
 
 .. code-block:: ini
 
@@ -37,11 +37,11 @@ If the plugin is in a collection you need to use the fully qualified name:
 Using inventory plugins
 -----------------------
 
-To use an inventory plugin you need to provide an inventory source. Most of the time this is a file containing host information or a YAML configuration file with options for the plugin. You can use the ``-i`` flag to provide inventory sources or configure a default inventory path.
+To use an inventory plugin, you must provide an inventory source. Most of the time this is a file containing host information or a YAML configuration file with options for the plugin. You can use the ``-i`` flag to provide inventory sources or configure a default inventory path.
 
 .. code-block:: bash
 
-   ansible hostname -i inventory_source -m ping
+   ansible hostname -i inventory_source -m ansible.builtin.ping
 
 To start using an inventory plugin with a YAML configuration source, create a file with the accepted filename schema documented for the plugin in question, then add ``plugin: plugin_name``. Use the fully qualified name if the plugin is in a collection.
 
@@ -62,7 +62,7 @@ After providing any required options, you can view the populated inventory with 
       |  |--ec2-98-765-432-10.compute-1.amazonaws.com
       |--@ungrouped:
 
-If you are using an inventory plugin in a playbook-adjacent collection and want to test your setup with ``ansible-inventory``, you will need to use the ``--playbook-dir`` flag.
+If you are using an inventory plugin in a playbook-adjacent collection and want to test your setup with ``ansible-inventory``, use the ``--playbook-dir`` flag.
 
 Your inventory source might be a directory of inventory configuration files. The constructed inventory plugin only operates on those hosts already in inventory, so you may want the constructed inventory configuration parsed at a particular point (such as last). Ansible parses the directory recursively, alphabetically. You cannot configure the parsing approach, so name your files to make it work predictably. Inventory plugins that extend constructed features directly can work around that restriction by adding constructed options in addition to the inventory plugin options. Otherwise, you can use ``-i`` with multiple sources to impose a specific order, for example ``-i demo.aws_ec2.yml -i clouds.yml -i constructed.yml``.
 
@@ -71,7 +71,7 @@ You can create dynamic groups using host variables with the constructed ``keyed_
 .. code-block:: yaml
 
     # demo.aws_ec2.yml
-    plugin: aws_ec2
+    plugin: amazon.aws.aws_ec2
     regions:
       - us-east-1
       - us-east-2
@@ -112,7 +112,7 @@ Inventory plugins that support caching can use the general settings for the fact
 .. code-block:: yaml
 
     # demo.aws_ec2.yml
-    plugin: aws_ec2
+    plugin: amazon.aws.aws_ec2
     cache: yes
     cache_plugin: ansible.builtin.jsonfile
     cache_timeout: 7200
