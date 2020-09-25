@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-    lookup: pipe
+    name: pipe
     author: Daniel Hokka Zakrisson <daniel@hozac.com>
     version_added: "0.9"
     short_description: read output from a command

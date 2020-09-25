@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: nested
+    name: nested
     version_added: "1.1"
     short_description: composes a list with nested elements of other lists
     description:

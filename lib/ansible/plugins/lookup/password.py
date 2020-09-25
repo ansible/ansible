@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: password
+    name: password
     version_added: "1.1"
     author:
       - Daniel Hokka Zakrisson <daniel@hozac.com>

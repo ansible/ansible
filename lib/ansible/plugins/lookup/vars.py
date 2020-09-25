@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: vars
+    name: vars
     author: Ansible Core
     version_added: "2.5"
     short_description: Lookup templated value of variables

@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: items
+    name: items
     author: Michael DeHaan <michael.dehaan@gmail.com>
     version_added: historical
     short_description: list of items

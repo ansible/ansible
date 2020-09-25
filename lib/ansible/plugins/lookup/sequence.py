@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: sequence
+    name: sequence
     author: Jayson Vantuyl <jayson@aggressive.ly>
     version_added: "1.0"
     short_description: generate a list based on a number sequence

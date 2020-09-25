@@ -16,7 +16,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    strategy: debug
+    name: debug
     short_description: Executes tasks in interactive debug session.
     description:
         - Task execution is 'linear' but controlled by an interactive debug session.

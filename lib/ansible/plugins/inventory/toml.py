@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = r'''
-    inventory: toml
+    name: toml
     version_added: "2.8"
     short_description: Uses a specific TOML file as an inventory source.
     description:

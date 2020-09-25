@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: template
+    name: template
     author: Michael DeHaan <michael.dehaan@gmail.com>
     version_added: "0.9"
     short_description: retrieve contents of file after templating with Jinja2

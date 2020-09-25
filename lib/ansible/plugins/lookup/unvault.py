@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: unvault
+    name: unvault
     author: ansible core team
     version_added: "2.10"
     short_description: read vaulted file(s) contents

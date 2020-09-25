@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: config
+    name: config
     author: Ansible Core
     version_added: "2.5"
     short_description: Lookup current Ansible configuration values
