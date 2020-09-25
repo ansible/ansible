@@ -61,6 +61,9 @@ TASK [replace] *****************************************************************
 
 changed: [testhost]
 
+TASK [replace] *****************************************************************
+ok: [testhost]
+
 RUNNING HANDLER [Test handler 1] ***********************************************
 changed: [testhost]
 
@@ -87,5 +90,5 @@ ok: [testhost] => {
 }
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=18   changed=11   unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
+testhost                   : ok=19   changed=11   unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
 
