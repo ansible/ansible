@@ -37,7 +37,7 @@ If the plugin is in a collection, use the fully qualified name:
 Using inventory plugins
 -----------------------
 
-To use an inventory plugin, you have to provide an inventory source. Most of the time this is a file containing host information or a YAML configuration file with options for the plugin. You can use the ``-i`` flag to provide inventory sources or configure a default inventory path.
+To use an inventory plugin, you must provide an inventory source. Most of the time this is a file containing host information or a YAML configuration file with options for the plugin. You can use the ``-i`` flag to provide inventory sources or configure a default inventory path.
 
 .. code-block:: bash
 
