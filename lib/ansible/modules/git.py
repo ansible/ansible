@@ -29,7 +29,7 @@ options:
         description:
             - The path of where the repository should be checked out. This
               is similar to `git clone repo_url target_name`. The repository
-              named in C(repo) is not appended to this path. This 
+              named in C(repo) is not appended to this path. This
               parameter is required, unless C(clone) is set to C(no).
         type: path
         required: true
