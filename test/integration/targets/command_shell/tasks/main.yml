@@ -391,3 +391,13 @@
   file:
     path: "{{ output_dir_test }}/afile.txt"
     state: absent
+
+- name: create counter file
+  copy:
+    dest: "{{ output_dir_test }}/counter"
+    content: 3
+
+- shell: |
+    COUNTER=$(cat "{{ output_dir_test }}/counter"); NEW=$(expr $COUNTER - 1); echo $NEW > "{{ output_dir_test }}/counter"; exit $COUNTER
+  register: counter
+  until: counter.rc == 0
