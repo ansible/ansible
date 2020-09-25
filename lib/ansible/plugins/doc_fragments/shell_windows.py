@@ -44,6 +44,6 @@ options:
     description:
     - Dictionary of environment variables and their values to use when
       executing commands.
-    type: dict
+    type: dict or list
     default: {}
 """
