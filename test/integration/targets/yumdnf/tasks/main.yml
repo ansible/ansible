@@ -1,0 +1,8 @@
+- name: Skip distros where dnf is not default
+  meta: end_host
+  when: ansible_pkg_mgr != 'dnf'
+
+- name: ensure calling yum on hosts using dnf does the right thing
+  yum:
+    name: sos
+    state: present
