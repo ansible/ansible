@@ -126,7 +126,7 @@ class Timezone(object):
                     module.fail_json(msg='Adjusting timezone is not supported in Global Zone')
 
             return super(Timezone, SmartOSTimezone).__new__(SmartOSTimezone)
-        elif re.match('^Darwin', platform.platform()):
+        elif platform.system() == 'Darwin':
             return super(Timezone, DarwinTimezone).__new__(DarwinTimezone)
         elif re.match('^(Free|Net|Open)BSD', platform.platform()):
             return super(Timezone, BSDTimezone).__new__(BSDTimezone)
