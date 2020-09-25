@@ -24,6 +24,7 @@ from ansible.module_utils._text import to_bytes, to_native, to_text
 from ansible.module_utils.urls import open_url, prepare_multipart
 from ansible.utils.display import Display
 from ansible.utils.hashing import secure_hash_s
+from ansible.utils.path import makedirs_safe
 
 try:
     from urllib.parse import urlparse
@@ -103,6 +104,40 @@ def g_connect(versions):
     return decorator
 
 
+def _load_cache(b_cache_path, clear=False):
+    """ Loads the cache file requested if possible. The file must not be world writable. """
+    cache_version = 1
+
+    with _CACHE_LOCK:
+        if not os.path.isfile(b_cache_path):
+            display.vvvv("Creating Galaxy API response cache file at '%s'" % to_text(b_cache_path))
+            with open(b_cache_path, 'w'):
+                os.chmod(b_cache_path, 0o600)
+
+        cache_mode = os.stat(b_cache_path).st_mode
+        if cache_mode & stat.S_IWOTH:
+            display.warning("Galaxy cache has world writable access (%s), ignoring it as a cache source."
+                            % to_text(b_cache_path))
+            return
+
+        with open(b_cache_path, mode='rb') as fd:
+            json_val = to_text(fd.read(), errors='surrogate_or_strict')
+
+        if not json_val:
+            json_val = '{}'
+        cache = json.loads(json_val)
+
+        if cache.get('version', None) != cache_version:
+            display.vvvv("Galaxy cache file at '%s' has an invalid version, clearing" % to_text(b_cache_path))
+            cache = {'version': cache_version}
+
+            # Set the cache after we've cleared the existing entries
+            with open(b_cache_path, mode='wb') as fd:
+                fd.write(to_bytes(json.dumps(cache), errors='surrogate_or_strict'))
+
+        return cache
+
+
 def _urljoin(*args):
     return '/'.join(to_native(a, errors='surrogate_or_strict').strip('/') for a in args + ('',) if a)
 
@@ -173,7 +208,7 @@ class GalaxyAPI:
     """ This class is meant to be used as a API client for an Ansible Galaxy server """
 
     def __init__(self, galaxy, name, url, username=None, password=None, token=None, validate_certs=True,
-                 available_api_versions=None):
+                 available_api_versions=None, clear_response_cache=False, no_cache=True):
         self.galaxy = galaxy
         self.name = name
         self.username = username
@@ -183,26 +218,19 @@ class GalaxyAPI:
         self.validate_certs = validate_certs
         self._available_api_versions = available_api_versions or {}
 
-        self._cache_path = C.config.get_config_value('GALAXY_CACHE_PATH')
-        cache_version = 1
-        with _CACHE_LOCK:
-            if not os.path.isfile(self._cache_path):
-                open(self._cache_path, 'w').close()
-                os.chmod(self._cache_path, stat.S_IRUSR | stat.S_IWUSR)  # owner has +rw
+        b_cache_dir = to_bytes(C.config.get_config_value('GALAXY_CACHE_DIR'), errors='surrogate_or_strict')
+        makedirs_safe(b_cache_dir, mode=0o700)
+        self._b_cache_path = os.path.join(b_cache_dir, b'api.json')
 
-            with open(self._cache_path, mode='rb') as fd:
-                json_val = to_text(fd.read(), errors='surrogate_or_strict')
+        if clear_response_cache:
+            with _CACHE_LOCK:
+                if os.path.exists(self._b_cache_path):
+                    display.vvvv("Clearing cache file (%s)" % to_text(self._b_cache_path))
+                    os.unlink(self._b_cache_path)
 
-            if not json_val:
-                json_val = '{}'
-            self._cache = json.loads(json_val)
-
-            if self._cache.get('version', None) != cache_version:
-                display.vvvv("Galaxy cache file at '%s' has an invalid version, clearing" % to_text(self._cache_path))
-                self._cache = {'version': cache_version}
-
-                with open(self._cache_path, mode='wb') as fd:
-                    fd.write(to_bytes(json.dumps(self._cache), errors='surrogate_or_strict'))
+        self._cache = None
+        if not no_cache:
+            self._cache = _load_cache(self._b_cache_path)
 
         display.debug('Validate TLS certificates for %s: %s' % (self.api_server, self.validate_certs))
 
@@ -215,7 +243,7 @@ class GalaxyAPI:
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False):
         url_info = urlparse(url)
-        if cache:
+        if cache and self._cache:
             server_cache = self._cache.setdefault(url_info.netloc, {})
             iso_datetime_format = '%Y-%m-%dT%H:%M:%SZ'
 
@@ -225,10 +253,10 @@ class GalaxyAPI:
                 valid = datetime.datetime.utcnow() < expires
 
             if valid and not url_info.query:
+                # Got a hit on the cache and we aren't getting a paginated response
                 path_cache = server_cache[url_info.path]
                 if path_cache.get('paginated'):
-                    # When talking to a paginated v3 API the next URL is in a different key
-                    if 'v3' in url_info.path:
+                    if '/v3/' in url_info.path:
                         res = {'links': {'next': None}}
                     else:
                         res = {'next': None}
@@ -245,6 +273,7 @@ class GalaxyAPI:
                 return res
 
             elif not url_info.query:
+                # The cache entry had expired or does not exist, start a new blank entry to be filled later.
                 expires = datetime.datetime.utcnow()
                 expires += datetime.timedelta(days=1)
                 server_cache[url_info.path] = {
@@ -271,12 +300,12 @@ class GalaxyAPI:
             raise AnsibleError("Failed to parse Galaxy response from '%s' as JSON:\n%s"
                                % (resp.url, to_native(resp_data)))
 
-        if cache:
+        if cache and self._cache:
             path_cache = self._cache[url_info.netloc][url_info.path]
 
             # v3 can return data or results for paginated results. Scan the result so we can determine what to cache.
             paginated_key = None
-            for key in ['results', 'data']:
+            for key in ['data', 'resulsts']:
                 if key in data:
                     paginated_key = key
                     break
@@ -307,8 +336,9 @@ class GalaxyAPI:
             headers.update(self.token.headers())
 
     def _set_cache(self):
-        with _CACHE_LOCK, open(self._cache_path, mode='wb') as fd:
-            fd.write(to_bytes(json.dumps(self._cache), errors='surrogate_or_strict'))
+        with _CACHE_LOCK:
+            with open(self._b_cache_path, mode='wb') as fd:
+                fd.write(to_bytes(json.dumps(self._cache), errors='surrogate_or_strict'))
 
     @g_connect(['v1'])
     def authenticate(self, github_token):
@@ -649,26 +679,29 @@ class GalaxyAPI:
             api_path = self.available_api_versions['v2']
             pagination_path = ['next']
 
-        # We should only rely on the cache if the latest version has not changed. This may slow things down but it
-        # ensures we are not waiting a day before finding any new collections that have been published.
         collection_info_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, '/')
         versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/')
         versions_url_info = urlparse(versions_url)
-        server_cache = self._cache.setdefault(versions_url_info.netloc, {})
 
-        error_context_msg = 'Error when getting the latest version info for %s.%s from %s (%s)' \
-                            % (namespace, name, self.name, self.api_server)
-        data = self._call_galaxy(collection_info_url, error_context_msg=error_context_msg)
-        latest_version = data.get('latest_version', {}).get('version')
-        version_cache = self._cache.setdefault(urlparse(self.api_server).netloc, {}).setdefault('latest_versions', {})
-        cached_latest_version = version_cache.get('%s.%s' % (namespace, name), None)
+        # We should only rely on the cache if the latest version has not changed. This may slow things down but it
+        # ensures we are not waiting a day before finding any new collections that have been published.
+        if self._cache:
+            server_cache = self._cache.setdefault(versions_url_info.netloc, {})
+            error_context_msg = 'Error when getting the latest version info for %s.%s from %s (%s)' \
+                                % (namespace, name, self.name, self.api_server)
+            data = self._call_galaxy(collection_info_url, error_context_msg=error_context_msg)
 
-        if cached_latest_version != latest_version:
-            version_cache['%s.%s' % (namespace, name)] = latest_version
-            if versions_url_info.path in server_cache:
-                del server_cache[versions_url_info.path]
+            latest_version = data.get('latest_version', {}).get('version')
+            version_cache = self._cache.setdefault(urlparse(self.api_server).netloc, {}).setdefault('latest_versions',
+                                                                                                    {})
+            cached_latest_version = version_cache.get('%s.%s' % (namespace, name), None)
 
-            self._set_cache()
+            if cached_latest_version != latest_version:
+                version_cache['%s.%s' % (namespace, name)] = latest_version
+                if versions_url_info.path in server_cache:
+                    del server_cache[versions_url_info.path]
+
+                self._set_cache()
 
         error_context_msg = 'Error when getting available collection versions for %s.%s from %s (%s)' \
                             % (namespace, name, self.name, self.api_server)

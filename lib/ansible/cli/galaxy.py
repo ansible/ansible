@@ -169,6 +169,12 @@ class GalaxyCLI(CLI):
                                       "to the default COLLECTIONS_PATHS. Separate multiple paths "
                                       "with '{0}'.".format(os.path.pathsep))
 
+        cache_options = opt_help.argparse.ArgumentParser(add_help=False)
+        cache_options.add_argument('--clear-response-cache', dest='clear_response_cache', action='store_true',
+                                   default=False, help='Clear the existing server response cache.')
+        cache_options.add_argument('--no-cache', dest='no_cache', action='store_true', default=False,
+                                   help='Do not use the server response cache.')
+
         # Add sub parser for the Galaxy role type (role or collection)
         type_parser = self.parser.add_subparsers(metavar='TYPE', dest='type')
         type_parser.required = True
@@ -177,11 +183,11 @@ class GalaxyCLI(CLI):
         collection = type_parser.add_parser('collection', help='Manage an Ansible Galaxy collection.')
         collection_parser = collection.add_subparsers(metavar='COLLECTION_ACTION', dest='action')
         collection_parser.required = True
-        self.add_download_options(collection_parser, parents=[common])
+        self.add_download_options(collection_parser, parents=[common, cache_options])
         self.add_init_options(collection_parser, parents=[common, force])
         self.add_build_options(collection_parser, parents=[common, force])
         self.add_publish_options(collection_parser, parents=[common])
-        self.add_install_options(collection_parser, parents=[common, force])
+        self.add_install_options(collection_parser, parents=[common, force, cache_options])
         self.add_list_options(collection_parser, parents=[common, collections_path])
         self.add_verify_options(collection_parser, parents=[common, collections_path])
 
@@ -473,6 +479,9 @@ class GalaxyCLI(CLI):
                         server_options['token'] = GalaxyToken(token=token_val)
 
             server_options['validate_certs'] = validate_certs
+            for optional_key in ['clear_response_cache', 'no_cache']:
+                if optional_key in context.CLIARGS:
+                    server_options[optional_key] = context.CLIARGS[optional_key]
 
             config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
 
