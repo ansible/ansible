@@ -5,6 +5,18 @@
     - name: Enable extras repo
       command: "{{ repo_command[ansible_facts.distribution ~ ansible_facts.distribution_major_version] | default('echo') }}"
 
+    # In stable-2.8, we have no cleanup handlers for setup_docker.
+    # So here, we just delete the packages, because they conflict with podman.
+    - name: Remove docker packages
+      yum:
+        name:
+          - docker
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: absent
+      when: ansible_facts.pkg_mgr in ['yum', 'dnf']
+
     - name: Install podman
       yum:
         name: "{{ podman_package }}"
