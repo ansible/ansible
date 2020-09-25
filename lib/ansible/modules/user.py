@@ -691,7 +691,10 @@ class User(object):
             if self.create_home:
                 parent = os.path.dirname(self.home)
                 if not os.path.isdir(parent):
-                    self.create_homedir(self.home)
+                    try:
+                        os.makedirs(parent)
+                    except OSError as e:
+                        self.module.exit_json(failed=True, msg="%s" % to_native(e))
             cmd.append('-d')
             cmd.append(self.home)
 

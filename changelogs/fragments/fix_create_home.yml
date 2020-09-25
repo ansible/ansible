@@ -1,0 +1,6 @@
+bugfixes:
+  - >
+     user - The user module created the home directory itself when the parent
+     directory of the home directory was missing. This causes the following
+     execution of luseradd in case that local is set to yes to fail. Only
+     create the parent directory.
