@@ -19,6 +19,10 @@
 # Note: We install the yum package onto Fedora so that this will work on dnf systems
 # We want to test that for people who don't want to upgrade their systems.
 
+- name: Skip distros where dnf is not default
+  meta: end_host
+  when: ansible_pkg_mgr != 'dnf'
+
 - include_tasks: dnf.yml
   when: (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('23', '>=')) or
         (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('8', '>='))
