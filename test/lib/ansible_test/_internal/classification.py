@@ -377,6 +377,16 @@ class PathMapper:
 
         minimal = {}
 
+        if os.path.sep not in path:
+            if filename in (
+                    'azure-pipelines.yml',
+                    'shippable.yml',
+            ):
+                return all_tests(self.args)  # test infrastructure, run all tests
+
+        if is_subdir(path, '.azure-pipelines'):
+            return all_tests(self.args)  # test infrastructure, run all tests
+
         if is_subdir(path, '.github'):
             return minimal
 
@@ -873,7 +883,6 @@ class PathMapper:
 
             if path in (
                     'setup.py',
-                    'shippable.yml',
             ):
                 return all_tests(self.args)  # broad impact, run all tests
 
