@@ -21,6 +21,7 @@ def assemble_files_to_ship(complete_file_list):
     # All files which are in the repository except these:
     ignore_patterns = (
         # Developer-only tools
+        '.azure-pipelines/*',
         '.github/*',
         '.github/*/*',
         'changelogs/fragments/*',

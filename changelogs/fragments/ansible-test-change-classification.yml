@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - Change classification using ``--changed`` now consistently handles common configuration files for supported CI providers.
