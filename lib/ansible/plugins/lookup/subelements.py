@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: subelements
-    author: Serge van Ginderachter <serge@vanginderachter.be>
+    author: Serge van Ginderachter (!UNKNOWN) <serge@vanginderachter.be>
     version_added: "1.4"
     short_description: traverse nested key from a list of dictionaries
     description:

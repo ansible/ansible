@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: indexed_items
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    author: Michael DeHaan
     version_added: "1.3"
     short_description: rewrites lists to return 'indexed items'
     description:

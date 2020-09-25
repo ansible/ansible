@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: fileglob
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    author: Michael DeHaan
     version_added: "1.4"
     short_description: list files matching a pattern
     description:

@@ -8,7 +8,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: list
-    author: Ansible core team
+    author: Ansible Core Team
     version_added: "2.0"
     short_description: simply returns what it is given.
     description:

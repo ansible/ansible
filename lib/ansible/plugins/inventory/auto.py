@@ -7,7 +7,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: auto
     author:
-      - Matt Davis <@nitzmahone>
+      - Matt Davis (@nitzmahone)
     version_added: "2.5"
     short_description: Loads and executes an inventory plugin specified in a YAML config
     description:

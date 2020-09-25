@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r"""
     name: pipe
-    author: Daniel Hokka Zakrisson <daniel@hozac.com>
+    author: Daniel Hokka Zakrisson (!UNKNOWN) <daniel@hozac.com>
     version_added: "0.9"
     short_description: read output from a command
     description:

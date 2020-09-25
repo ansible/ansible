@@ -5,7 +5,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: config
-    author: Ansible Core
+    author: Ansible Core Team
     version_added: "2.5"
     short_description: Lookup current Ansible configuration values
     description:

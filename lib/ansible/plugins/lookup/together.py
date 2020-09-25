@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: together
-    author:  Bradley Young <young.bradley@gmail.com>
+    author:  Bradley Young (!UNKNOWN) <young.bradley@gmail.com>
     version_added: '1.3'
     short_description: merges lists into synchronized list
     description:

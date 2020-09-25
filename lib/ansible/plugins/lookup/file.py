@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: file
-    author: Daniel Hokka Zakrisson <daniel@hozac.com>
+    author: Daniel Hokka Zakrisson (!UNKNOWN) <daniel@hozac.com>
     version_added: "0.9"
     short_description: read file contents
     description:

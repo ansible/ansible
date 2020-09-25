@@ -5,7 +5,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: unvault
-    author: ansible core team
+    author: Ansible Core Team
     version_added: "2.10"
     short_description: read vaulted file(s) contents
     description:

@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: ini
-    author: Yannig Perre <yannig.perre(at)gmail.com>
+    author: Yannig Perre (!UNKNOWN) <yannig.perre(at)gmail.com>
     version_added: "2.0"
     short_description: read data from a ini file
     description:

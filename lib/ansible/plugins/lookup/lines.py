@@ -7,7 +7,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: lines
-    author: Daniel Hokka Zakrisson <daniel@hozac.com>
+    author: Daniel Hokka Zakrisson (!UNKNOWN) <daniel@hozac.com>
     version_added: "0.9"
     short_description: read lines from command
     description:
