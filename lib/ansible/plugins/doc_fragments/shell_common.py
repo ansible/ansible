@@ -56,7 +56,7 @@ options:
     vars:
       - name: ansible_async_dir
   environment:
-    type: dict
+    type: dict or list
     default: {}
     description:
       - dictionary of environment variables and their values to use when executing commands.
