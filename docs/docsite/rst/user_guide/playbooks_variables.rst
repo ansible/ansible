@@ -58,7 +58,9 @@ Referencing simple variables
 
 After you define a variable, use Jinja2 syntax to reference it. Jinja2 variables use double curly braces. For example, the expression ``My amp goes to {{ max_amp_value }}`` demonstrates the most basic form of variable substitution. You can use Jinja2 syntax in playbooks. For example::
 
-    template: src=foo.cfg.j2 dest={{ remote_install_path }}/foo.cfg
+    ansible.builtin.template:
+      src: foo.cfg.j2
+      dest: '{{ remote_install_path }}/foo.cfg'
 
 In this example, the variable defines the location of a file, which can vary from one system to another.
 
@@ -150,11 +152,13 @@ You can create variables from the output of an Ansible task with the task keywor
 
      tasks:
 
-        - shell: /usr/bin/foo
+        - name: Run a shell command and register its output as a variable
+          ansible.builtin.shell: /usr/bin/foo
           register: foo_result
-          ignore_errors: True
+          ignore_errors: true
 
-        - shell: /usr/bin/bar
+        - name: Run a shell command using output of the previous task
+          ansible.builtin.shell: /usr/bin/bar
           when: foo_result.rc == 5
 
 For more examples of using registered variables in conditions on later tasks, see :ref:`playbooks_conditionals`. Registered variables may be simple variables, list variables, dictionary variables, or complex nested data structures. The documentation for each module includes a ``RETURN`` section describing the return values for that module. To see the values for a particular task, run your playbook with ``-v``.
@@ -234,8 +238,8 @@ This example shows how you can include variables defined in an external file::
 
       tasks:
 
-      - name: this is just a placeholder
-        command: /bin/echo foo
+      - name: This is just a placeholder
+        ansible.builtin.command: /bin/echo foo
 
 The contents of each variables file is a simple YAML dictionary. For example::
 
@@ -332,13 +336,13 @@ Ansible merges different variables set in inventory so that more specific settin
 
 .. rubric:: Footnotes
 
-.. [1] Tasks in each role will see their own role's defaults. Tasks defined outside of a role will see the last role's defaults.
+.. [1] Tasks in each role see their own role's defaults. Tasks defined outside of a role see the last role's defaults.
 .. [2] Variables defined in inventory file or provided by dynamic inventory.
 .. [3] Includes vars added by 'vars plugins' as well as host_vars and group_vars which are added by the default vars plugin shipped with Ansible.
-.. [4] When created with set_facts's cacheable option, variables will have the high precedence in the play,
-       but will be the same as a host facts precedence when they come from the cache.
+.. [4] When created with set_facts's cacheable option, variables have the high precedence in the play,
+       but are the same as a host facts precedence when they come from the cache.
 
-.. note:: Within any section, redefining a var will override the previous instance.
+.. note:: Within any section, redefining a var overrides the previous instance.
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's ``vars:`` section, the second one wins.
 .. note:: The previous describes the default config ``hash_behaviour=replace``, switch to ``merge`` to only partially overwrite.
@@ -363,7 +367,7 @@ Tips on where to set variables
 
 You should choose where to define a variable based on the kind of control you might want over values.
 
-Set variables in inventory that deal with geography or behavior. Since groups are frequently the entity that maps roles onto hosts, you can often set variables on the group instead of defining them on a role. Remember:  Child groups override parent groups, and host variables override group variables. See :ref:`define_variables_in_inventory` for details on setting host and group variables.
+Set variables in inventory that deal with geography or behavior. Since groups are frequently the entity that maps roles onto hosts, you can often set variables on the group instead of defining them on a role. Remember: child groups override parent groups, and host variables override group variables. See :ref:`define_variables_in_inventory` for details on setting host and group variables.
 
 Set common defaults in a ``group_vars/all`` file. See :ref:`splitting_out_vars` for details on how to organize host and group variables in your inventory. Group variables are generally placed alongside your inventory file, but they can also be returned by dynamic inventory (see :ref:`intro_dynamic_inventory`) or defined in :ref:`ansible_tower` from the UI or API::
 
