@@ -58,9 +58,9 @@ Referencing simple variables
 
 After you define a variable, use Jinja2 syntax to reference it. Jinja2 variables use double curly braces. For example, the expression ``My amp goes to {{ max_amp_value }}`` demonstrates the most basic form of variable substitution. You can use Jinja2 syntax in playbooks. For example::
 
-   ansible.builtin.template:
-     src: foo.cfg.j2
-     dest: '{{ remote_install_path }}/foo.cfg'
+    ansible.builtin.template:
+      src: foo.cfg.j2
+      dest: '{{ remote_install_path }}/foo.cfg'
 
 In this example, the variable defines the location of a file, which can vary from one system to another.
 
