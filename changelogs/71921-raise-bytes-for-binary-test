@@ -1,2 +1,2 @@
 minor_changes:
-  - "Raise the number of bytes scanned by ansible-test to determine if a file is binary from 2048 to 4096 to accomodate the newest ansible-2.10.inv file (https://github.com/ansible/ansible/pull/71921)." 
+  - ansible-test - Raise the number of bytes scanned by ansible-test to determine if a file is binary to 4096. 
