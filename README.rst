@@ -1,4 +1,4 @@
-|PyPI version| |Docs badge| |Chat badge| |Build Status| |Code Of Conduct| |Mailing Lists| |License|
+|PyPI version| |Docs badge| |Chat badge| |Build Status| |Code Of Conduct| |Mailing Lists| |License| |CII Best Practices|
 
 *******
 Ansible
@@ -112,3 +112,6 @@ See `COPYING <COPYING>`_ to see the full text.
 .. |License| image:: https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg
    :target: COPYING
    :alt: Repository License
+.. |CII Best Practices| image:: https://bestpractices.coreinfrastructure.org/projects/2372/badge
+   :target: https://bestpractices.coreinfrastructure.org/projects/2372
+   :alt: Ansible CII Best Practices certification
