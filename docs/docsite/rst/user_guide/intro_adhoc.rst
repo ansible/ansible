@@ -30,7 +30,7 @@ achieve a form of idempotence by checking the current state before they begin an
 Rebooting servers
 -----------------
 
-The default module for the ``ansible`` command-line utility is the :ref:`command module<command_module>`. You can use an ad-hoc task to call the command module and reboot all web servers in Atlanta, 10 at a time. Before Ansible can do this, you must have all servers in Atlanta listed in a a group called [atlanta] in your inventory, and you must have working SSH credentials for each machine in that group. To reboot all the servers in the [atlanta] group:
+The default module for the ``ansible`` command-line utility is the :ref:`ansible.builtin.command module<command_module>`. You can use an ad-hoc task to call the command module and reboot all web servers in Atlanta, 10 at a time. Before Ansible can do this, you must have all servers in Atlanta listed in a group called [atlanta] in your inventory, and you must have working SSH credentials for each machine in that group. To reboot all the servers in the [atlanta] group:
 
 .. code-block:: bash
 
@@ -62,11 +62,11 @@ If you add ``--ask-become-pass`` or ``-K``, Ansible prompts you for the password
    syntax, use the `shell` module instead. Read more about the differences on the
    :ref:`working_with_modules` page.
 
-So far all our examples have used the default 'command' module. To use a different module, pass ``-m`` for module name. For example, to use the :ref:`shell module <shell_module>`:
+So far all our examples have used the default 'command' module. To use a different module, pass ``-m`` for module name. For example, to use the :ref:`ansible.builtin.shell module <shell_module>`:
 
 .. code-block:: bash
 
-    $ ansible raleigh -m shell -a 'echo $TERM'
+    $ ansible raleigh -m ansible.builtin.shell -a 'echo $TERM'
 
 When running any command with the Ansible *ad hoc* CLI (as opposed to
 :ref:`Playbooks <working_with_playbooks>`), pay particular attention to shell quoting rules, so
@@ -83,29 +83,29 @@ An ad-hoc task can harness the power of Ansible and SCP to transfer many files t
 
 .. code-block:: bash
 
-    $ ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"
+    $ ansible atlanta -m ansible.builtin.copy -a "src=/etc/hosts dest=/tmp/hosts"
 
-If you plan to repeat a task like this, use the :ref:`template<template_module>` module in a playbook.
+If you plan to repeat a task like this, use the :ref:`ansible.builtin.template<template_module>` module in a playbook.
 
-The :ref:`file<file_module>` module allows changing ownership and permissions on files. These
+The :ref:`ansible.builtin.file<file_module>` module allows changing ownership and permissions on files. These
 same options can be passed directly to the ``copy`` module as well:
 
 .. code-block:: bash
 
-    $ ansible webservers -m file -a "dest=/srv/foo/a.txt mode=600"
-    $ ansible webservers -m file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=mdehaan"
+    $ ansible webservers -m ansible.builtin.file -a "dest=/srv/foo/a.txt mode=600"
+    $ ansible webservers -m ansible.builtin.file -a "dest=/srv/foo/b.txt mode=600 owner=mdehaan group=mdehaan"
 
 The ``file`` module can also create directories, similar to ``mkdir -p``:
 
 .. code-block:: bash
 
-    $ ansible webservers -m file -a "dest=/path/to/c mode=755 owner=mdehaan group=mdehaan state=directory"
+    $ ansible webservers -m ansible.builtin.file -a "dest=/path/to/c mode=755 owner=mdehaan group=mdehaan state=directory"
 
 As well as delete directories (recursively) and delete files:
 
 .. code-block:: bash
 
-    $ ansible webservers -m file -a "dest=/path/to/c state=absent"
+    $ ansible webservers -m ansible.builtin.file -a "dest=/path/to/c state=absent"
 
 .. _managing_packages:
 
@@ -116,25 +116,25 @@ You might also use an ad-hoc task to install, update, or remove packages on mana
 
 .. code-block:: bash
 
-    $ ansible webservers -m yum -a "name=acme state=present"
+    $ ansible webservers -m ansible.builtin.yum -a "name=acme state=present"
 
 To ensure a specific version of a package is installed:
 
 .. code-block:: bash
 
-    $ ansible webservers -m yum -a "name=acme-1.5 state=present"
+    $ ansible webservers -m ansible.builtin.yum -a "name=acme-1.5 state=present"
 
 To ensure a package is at the latest version:
 
 .. code-block:: bash
 
-    $ ansible webservers -m yum -a "name=acme state=latest"
+    $ ansible webservers -m ansible.builtin.yum -a "name=acme state=latest"
 
 To ensure a package is not installed:
 
 .. code-block:: bash
 
-    $ ansible webservers -m yum -a "name=acme state=absent"
+    $ ansible webservers -m ansible.builtin.yum -a "name=acme state=absent"
 
 Ansible has modules for managing packages under many platforms. If there is no module for your package manager, you can install packages using the command module or create a module for your package manager.
 
@@ -147,11 +147,11 @@ You can create, manage, and remove user accounts on your managed nodes with ad-h
 
 .. code-block:: bash
 
-    $ ansible all -m user -a "name=foo password=<crypted password here>"
+    $ ansible all -m ansible.builtin.user -a "name=foo password=<crypted password here>"
 
-    $ ansible all -m user -a "name=foo state=absent"
+    $ ansible all -m ansible.builtin.user -a "name=foo state=absent"
 
-See the :ref:`user <user_module>` module documentation for details on all of the available options, including
+See the :ref:`ansible.builtin.user <user_module>` module documentation for details on all of the available options, including
 how to manipulate groups and group membership.
 
 .. _managing_services:
@@ -163,19 +163,19 @@ Ensure a service is started on all webservers:
 
 .. code-block:: bash
 
-    $ ansible webservers -m service -a "name=httpd state=started"
+    $ ansible webservers -m ansible.builtin.service -a "name=httpd state=started"
 
 Alternatively, restart a service on all webservers:
 
 .. code-block:: bash
 
-    $ ansible webservers -m service -a "name=httpd state=restarted"
+    $ ansible webservers -m ansible.builtin.service -a "name=httpd state=restarted"
 
 Ensure a service is stopped:
 
 .. code-block:: bash
 
-    $ ansible webservers -m service -a "name=httpd state=stopped"
+    $ ansible webservers -m ansible.builtin.service -a "name=httpd state=stopped"
 
 .. _gathering_facts:
 
@@ -186,9 +186,9 @@ Facts represent discovered variables about a system. You can use facts to implem
 
 .. code-block:: bash
 
-    $ ansible all -m setup
+    $ ansible all -m ansible.builtin.setup
 
-You can also filter this output to display only certain facts, see the :ref:`setup <setup_module>` module documentation for details.
+You can also filter this output to display only certain facts, see the :ref:`ansible.builtin.setup <setup_module>` module documentation for details.
 
 Now that you understand the basic elements of Ansible execution, you are ready to learn to automate repetitive tasks using :ref:`Ansible Playbooks <playbooks_intro>`.
 
