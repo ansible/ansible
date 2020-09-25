@@ -6,6 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: nested
+    author: Unknown (!UNKNOWN)
     version_added: "1.1"
     short_description: composes a list with nested elements of other lists
     description:

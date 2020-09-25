@@ -6,6 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
     name: host_list
+    author: Unknown (!UNKNOWN)
     version_added: "2.4"
     short_description: Parses a 'host list' string
     description:

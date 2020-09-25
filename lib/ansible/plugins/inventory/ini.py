@@ -5,6 +5,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     name: ini
+    author: Unknown (!UNKNOWN)
     version_added: "2.4"
     short_description: Uses an Ansible INI file as inventory source.
     description:

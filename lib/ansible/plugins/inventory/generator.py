@@ -6,6 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     name: generator
+    author: Unknown (!UNKNOWN)
     version_added: "2.6"
     short_description: Uses Jinja2 to construct hosts and groups from patterns
     description:

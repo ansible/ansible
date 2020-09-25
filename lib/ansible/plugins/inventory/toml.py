@@ -6,6 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = r'''
     name: toml
+    author: Unknown (!UNKNOWN)
     version_added: "2.8"
     short_description: Uses a specific TOML file as an inventory source.
     description:

@@ -6,6 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
 name: powershell
+author: Unknown (!UNKNOWN)
 version_added: historical
 short_description: Windows PowerShell
 description:

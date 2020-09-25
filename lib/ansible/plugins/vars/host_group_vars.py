@@ -20,6 +20,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     name: host_group_vars
+    author: Unknown (!UNKNOWN)
     version_added: "2.4"
     short_description: In charge of loading group_vars and host_vars
     requirements:

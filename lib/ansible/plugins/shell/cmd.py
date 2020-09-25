@@ -5,6 +5,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
 name: cmd
+author: Unknown (!UNKNOWN)
 version_added: '2.8'
 short_description: Windows Command Prompt
 description:

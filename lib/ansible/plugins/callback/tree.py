@@ -8,6 +8,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: tree
     type: notification
+    author: Unknown (!UNKNOWN)
     requirements:
       - invoked in the command line
     short_description: Save host events to files

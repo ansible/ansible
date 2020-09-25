@@ -6,6 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     name: constructed
+    author: Unknown (!UNKNOWN)
     version_added: "2.4"
     short_description: Uses Jinja2 to construct vars and groups based on existing inventory.
     description:

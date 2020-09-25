@@ -9,6 +9,7 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: oneline
     type: stdout
+    author: Unknown (!UNKNOWN)
     short_description: oneline Ansible screen output
     version_added: historical
     description:
