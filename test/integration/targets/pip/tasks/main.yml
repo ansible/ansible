@@ -4,11 +4,17 @@
 - name: find virtualenv command
   command: "which virtualenv virtualenv-{{ ansible_python.version.major }}.{{ ansible_python.version.minor }}"
   register: command
-  failed_when: not command.stdout_lines
+  ignore_errors: true
+
+- name: is virtualenv available to python -m
+  command: '{{ ansible_python_interpreter }} -m virtualenv'
+  register: python_m
+  when: not command.stdout_lines
+  failed_when: python_m.rc != 2
 
 - name: remember selected virtualenv command
   set_fact:
-    virtualenv: "{{ command.stdout_lines[0] }}"
+    virtualenv: "{{ command.stdout_lines[0] if command is successful else ansible_python_interpreter ~ ' -m virtualenv' }}"
 
 - block:
     - name: install git, needed for repo installs
@@ -17,6 +23,10 @@
         state: present
       when: ansible_distribution not in ["MacOSX", "Alpine"]
       register: git_install
+
+    - name: ensure wheel is installed
+      pip:
+        name: wheel
 
     - include_tasks: pip.yml
   always:

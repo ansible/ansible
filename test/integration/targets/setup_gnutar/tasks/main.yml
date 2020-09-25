@@ -1,0 +1,18 @@
+- when: ansible_facts.distribution == 'MacOSX'
+  block:
+    - name: MACOS | Find brew binary
+      command: which brew
+      register: brew_which
+
+    - name: MACOS | Get owner of brew binary
+      stat:
+        path: "{{ brew_which.stdout }}"
+      register: brew_stat
+
+    - command: brew install gnu-tar
+      become: yes
+      become_user: "{{ brew_stat.stat.pw_name }}"
+      environment:
+        HOMEBREW_NO_AUTO_UPDATE: True
+      notify:
+        - uninstall gnu-tar
