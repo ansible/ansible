@@ -31,10 +31,23 @@
     test_echo_module:
     register: echoout
 
+  - when: distro == 'macosx'
+    block:
+      - name: Get the sys.executable for the macos discovered interpreter, as it may be different than the actual path
+        raw: '{{ auto_out.ansible_facts.discovered_interpreter_python }} -c "import sys; print(sys.executable)"'
+        register: discovered_sys_executable
+
+      - set_fact:
+          normalized_discovered_interpreter: '{{ discovered_sys_executable.stdout_lines[0] }}'
+
+  - set_fact:
+      normalized_discovered_interpreter: '{{ auto_out.ansible_facts.discovered_interpreter_python }}'
+    when: distro != 'macosx'
+
   - assert:
       that:
       - auto_out.ansible_facts.discovered_interpreter_python is defined
-      - echoout.running_python_interpreter == auto_out.ansible_facts.discovered_interpreter_python
+      - echoout.running_python_interpreter == normalized_discovered_interpreter
       # verify that discovery didn't run again (if it did, we'd have the fact in the result)
       - echoout.ansible_facts is not defined or echoout.ansible_facts.discovered_interpreter_python is not defined
 

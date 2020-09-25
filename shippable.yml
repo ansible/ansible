@@ -27,7 +27,7 @@ matrix:
     - env: T=windows/2016/1
     - env: T=windows/2019/1
 
-    - env: T=osx/10.11/1
+    - env: T=macos/10.15/1
     - env: T=rhel/7.8/1
     - env: T=rhel/8.2/1
     - env: T=freebsd/11.1/1
@@ -43,7 +43,7 @@ matrix:
     - env: T=linux/ubuntu1604/1
     - env: T=linux/ubuntu1804/1
 
-    - env: T=osx/10.11/2
+    - env: T=macos/10.15/2
     - env: T=rhel/7.8/2
     - env: T=rhel/8.2/2
     - env: T=freebsd/11.1/2
@@ -59,7 +59,7 @@ matrix:
     - env: T=linux/ubuntu1604/2
     - env: T=linux/ubuntu1804/2
 
-    - env: T=osx/10.11/3
+    - env: T=macos/10.15/3
     - env: T=rhel/7.8/3
     - env: T=rhel/8.2/3
     - env: T=freebsd/11.1/3
@@ -75,7 +75,7 @@ matrix:
     - env: T=linux/ubuntu1604/3
     - env: T=linux/ubuntu1804/3
 
-    - env: T=osx/10.11/4
+    - env: T=macos/10.15/4
     - env: T=rhel/7.8/4
     - env: T=rhel/8.2/4
     - env: T=freebsd/11.1/4
@@ -91,7 +91,7 @@ matrix:
     - env: T=linux/ubuntu1604/4
     - env: T=linux/ubuntu1804/4
 
-    - env: T=osx/10.11/5
+    - env: T=macos/10.15/5
     - env: T=rhel/7.8/5
     - env: T=rhel/8.2/5
     - env: T=freebsd/11.1/5
