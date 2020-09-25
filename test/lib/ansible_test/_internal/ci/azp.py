@@ -73,7 +73,7 @@ class AzurePipelines(CIProvider):
         except KeyError as ex:
             raise MissingEnvironmentVariable(name=ex.args[0])
 
-        prefix = re.sub(r'[^a-zA-Z0-9]+', '-', prefix)
+        prefix = re.sub(r'[^a-zA-Z0-9]+', '-', prefix).lower()
 
         return prefix
 
