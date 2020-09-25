@@ -152,7 +152,7 @@ Includes are executed at run-time, so the name of the include exists during play
 
 .. code-block:: yaml
 
-   - trigger an included (dynamic) handler
+   - name: Trigger an included (dynamic) handler
      hosts: localhost
      handlers:
        - name: Restart services
@@ -168,11 +168,11 @@ Imports are processed before the play begins, so the name of the import no longe
 
 .. code-block:: yaml
 
-   - trigger an imported (static) handler
+   - name: Trigger an imported (static) handler
      hosts: localhost
      handlers:
-     - name: Restart services
-       import_tasks: restarts.yml
+       - name: Restart services
+         import_tasks: restarts.yml
      tasks:
        - command: "true"
          notify: Restart apache
