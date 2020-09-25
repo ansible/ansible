@@ -37,7 +37,7 @@ lib/ansible/executor/powershell/async_watchdog.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/async_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/powershell/exec_wrapper.ps1 pslint:PSCustomUseLiteralPath
 lib/ansible/executor/task_queue_manager.py pylint:blacklisted-name
-lib/ansible/galaxy/collection.py compile-2.6!skip # 'ansible-galaxy collection' requires 2.7+
+lib/ansible/galaxy/collection/__init__.py compile-2.6!skip # 'ansible-galaxy collection' requires 2.7+
 lib/ansible/module_utils/compat/_selectors2.py future-import-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py metaclass-boilerplate # ignore bundled
 lib/ansible/module_utils/compat/_selectors2.py pylint:blacklisted-name
