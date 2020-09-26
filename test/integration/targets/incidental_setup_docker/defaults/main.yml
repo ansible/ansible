@@ -7,6 +7,7 @@ docker_packages:
   - docker-ce
 
 docker_pip_extra_packages: []
+docker_pip_never_remove: []
 docker_pip_packages:
   - docker
 
@@ -14,3 +15,4 @@ docker_cleanup_packages:
   - docker
   - docker-ce
   - docker-ce-cli
+  - containerd.io
