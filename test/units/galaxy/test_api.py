@@ -962,7 +962,7 @@ def test_existing_cache(cache_dir):
 @pytest.mark.parametrize('content', [
     '',
     'value',
-    '{"de" "finit" "ely" [''invalid"]}',
+    '{"de" "finit" "ely" [\'invalid"]}',
     '[]',
     '{"version": 2, "test": "json"}',
     '{"version": 2, "key": "ÅÑŚÌβŁÈ"}',
