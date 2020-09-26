@@ -104,7 +104,7 @@ def g_connect(versions):
     return decorator
 
 
-def _load_cache(b_cache_path, clear=False):
+def _load_cache(b_cache_path):
     """ Loads the cache file requested if possible. The file must not be world writable. """
     cache_version = 1
 
@@ -123,11 +123,12 @@ def _load_cache(b_cache_path, clear=False):
         with open(b_cache_path, mode='rb') as fd:
             json_val = to_text(fd.read(), errors='surrogate_or_strict')
 
-        if not json_val:
-            json_val = '{}'
-        cache = json.loads(json_val)
+        try:
+            cache = json.loads(json_val)
+        except ValueError:
+            cache = None
 
-        if cache.get('version', None) != cache_version:
+        if not isinstance(cache, dict) or cache.get('version', None) != cache_version:
             display.vvvv("Galaxy cache file at '%s' has an invalid version, clearing" % to_text(b_cache_path))
             cache = {'version': cache_version}
 
@@ -226,7 +227,7 @@ class GalaxyAPI:
             with _CACHE_LOCK:
                 if os.path.exists(self._b_cache_path):
                     display.vvvv("Clearing cache file (%s)" % to_text(self._b_cache_path))
-                    os.unlink(self._b_cache_path)
+                    os.remove(self._b_cache_path)
 
         self._cache = None
         if not no_cache:
@@ -674,10 +675,12 @@ class GalaxyAPI:
         if 'v3' in self.available_api_versions:
             api_path = self.available_api_versions['v3']
             pagination_path = ['links', 'next']
+            version_key = 'highest_version'
             relative_link = True  # AH pagination results are relative an not an absolute URI.
         else:
             api_path = self.available_api_versions['v2']
             pagination_path = ['next']
+            version_key = 'latest_version'
 
         collection_info_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, '/')
         versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/')
@@ -685,19 +688,20 @@ class GalaxyAPI:
 
         # We should only rely on the cache if the latest version has not changed. This may slow things down but it
         # ensures we are not waiting a day before finding any new collections that have been published.
+        # This does run the risk that an older version was published after a newer version but that will be invalidated
+        # after 24 hours or the cache was cleared.
         if self._cache:
             server_cache = self._cache.setdefault(versions_url_info.netloc, {})
+            version_cache = self._cache.setdefault(versions_url_info.netloc, {}).setdefault('highest_version', {})
+
             error_context_msg = 'Error when getting the latest version info for %s.%s from %s (%s)' \
                                 % (namespace, name, self.name, self.api_server)
             data = self._call_galaxy(collection_info_url, error_context_msg=error_context_msg)
+            highest_version = data.get(version_key, {}).get('version')
+            cached_highest_version = version_cache.get('%s.%s' % (namespace, name), None)
 
-            latest_version = data.get('latest_version', {}).get('version')
-            version_cache = self._cache.setdefault(urlparse(self.api_server).netloc, {}).setdefault('latest_versions',
-                                                                                                    {})
-            cached_latest_version = version_cache.get('%s.%s' % (namespace, name), None)
-
-            if cached_latest_version != latest_version:
-                version_cache['%s.%s' % (namespace, name)] = latest_version
+            if cached_highest_version != highest_version:
+                version_cache['%s.%s' % (namespace, name)] = highest_version
                 if versions_url_info.path in server_cache:
                     del server_cache[versions_url_info.path]
 
