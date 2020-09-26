@@ -278,6 +278,7 @@ def main():
         else:
             res_args['msg'] = 'Pattern for before/after params did not match the given file: %s' % pattern
             res_args['changed'] = False
+            res_args['rc'] = 0
             module.exit_json(**res_args)
     else:
         section = contents
@@ -308,6 +309,7 @@ def main():
         path = os.path.realpath(path)
         write_changes(module, to_bytes(result[0], encoding=encoding), path)
 
+    res_args['rc'] = 0
     res_args['msg'], res_args['changed'] = check_file_attrs(module, changed, msg)
     module.exit_json(**res_args)
 
