@@ -290,7 +290,7 @@ def setInterfaceOption(module, lines, iface, option, raw_value, state, address_f
                     address_family = target_option['address_family']
                     prefix_start = old_line.find(option)
                     optionLen = len(option)
-                    old_value_position = re.search(r"\s+".join(old_value.split()), old_line[prefix_start + optionLen:])
+                    old_value_position = re.search(r"\s+".join(map(re.escape, old_value.split())), old_line[prefix_start + optionLen:])
                     start = old_value_position.start() + prefix_start + optionLen
                     end = old_value_position.end() + prefix_start + optionLen
                     line = old_line[:start] + value + old_line[end:]

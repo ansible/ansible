@@ -1,0 +1,3 @@
+---
+bugfixes:
+- interfaces_file - escape regular expression characters in old value (https://github.com/ansible-collections/community.general/issues/777).
