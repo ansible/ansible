@@ -1,0 +1,2 @@
+minor_changes:
+  - vmware_guest - Support HW version 15 / vSphere 6.7U2 (https://github.com/ansible-collections/vmware/pull/99).
