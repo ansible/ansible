@@ -77,7 +77,7 @@ The following steps use ``localhost`` as the target host, but you can use the sa
           │       └── ping.py
           └── args
 
-    * ``AnsiballZ_ping.py`` is the Python script with the the module code stored in a base64 encoded string. It contains various helper functions for executing the module.
+    * ``AnsiballZ_ping.py`` is the Python script with the module code stored in a base64 encoded string. It contains various helper functions for executing the module.
 
     * ``ping.py`` is the code for the module itself. You can modify this code to see what effect it would have on your module, or for debugging purposes.
 
