@@ -238,7 +238,7 @@ The following table shows:
 
   \*\* Integration tests are required and unit tests are welcomed but not required for the AWS collections.  An exception to this is made in cases where integration tests are logistically not feasible due to external requirements.  An example of this is AWS Direct Connect, as this service can not be functionally tested without the establishment of network peering connections.  Unit tests are therefore required for modules that interact with AWS Direct Connect.  Exceptions to ``amazon.aws`` must be approved by Red Hat, and exceptions to ``community.aws`` must be approved by the AWS community.
 
-  \*\*\* ``ansible.netcommon`` contains all foundational components for enabling many network and security :ref:`platform <platform_options>` collections. It contains all connection and filter plugins required, and installs as a dependency when you install the the platform collection.
+  \*\*\* ``ansible.netcommon`` contains all foundational components for enabling many network and security :ref:`platform <platform_options>` collections. It contains all connection and filter plugins required, and installs as a dependency when you install the platform collection.
 
   \*\*\*\* Unit tests for Windows PowerShell modules are an exception to testing, but unit tests are valid and required for the remainder of the collection, including Ansible-side plugins.
 
