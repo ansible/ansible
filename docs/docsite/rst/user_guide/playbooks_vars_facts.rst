@@ -14,13 +14,15 @@ Ansible facts
 
 Ansible facts are data related to your remote systems, including operating systems, IP addresses, attached filesystems, and more. You can access this data in the ``ansible_facts`` variable. By default, you can also access some Ansible facts as top-level variables with the ``ansible_`` prefix. You can disable this behavior using the :ref:`INJECT_FACTS_AS_VARS` setting. To see all available facts, add this task to a play::
 
-    - debug: var=ansible_facts
+    - name: Print all available facts
+      ansible.builtin.debug:
+        var: ansible_facts
 
 To see the 'raw' information as gathered, run this command at the command line::
 
-    ansible <hostname> -m setup
+    ansible <hostname> -m ansible.builtin.setup
 
-Facts include a large amount of variable data, which may look like this on Ansible 2.7:
+Facts include a large amount of variable data, which may look like this:
 
 .. code-block:: json
 
@@ -518,7 +520,7 @@ Fact caching can improve performance. If you manage thousands of hosts, you can 
 Disabling facts
 ---------------
 
-By default, Ansible gathers facts at the beginning of each play. If you do not need to gather facts (for example, if you know know everything about your systems centrally), you can turn off fact gathering at the play level to improve scalability. Disabling facts may particularly improve performance in push mode with very large numbers of systems, or if you are using Ansible on experimental platforms. To disable fact gathering::
+By default, Ansible gathers facts at the beginning of each play. If you do not need to gather facts (for example, if you know everything about your systems centrally), you can turn off fact gathering at the play level to improve scalability. Disabling facts may particularly improve performance in push mode with very large numbers of systems, or if you are using Ansible on experimental platforms. To disable fact gathering::
 
     - hosts: whatever
       gather_facts: no
@@ -526,7 +528,7 @@ By default, Ansible gathers facts at the beginning of each play. If you do not n
 Adding custom facts
 -------------------
 
-The setup module in Ansible automatically discovers a standard set of facts about each host. If you want to add custom values to your facts, you can write a custom facts module, set temporary facts with a ``set_fact`` task, or provide permanent custom facts using the facts.d directory.
+The setup module in Ansible automatically discovers a standard set of facts about each host. If you want to add custom values to your facts, you can write a custom facts module, set temporary facts with a ``ansible.builtin.set_fact`` task, or provide permanent custom facts using the facts.d directory.
 
 .. _local_facts:
 
@@ -547,7 +549,7 @@ To add static facts, simply add a file with the ``.facts`` extension. For exampl
 
 The next time fact gathering runs, your facts will include a hash variable fact named ``general`` with ``asdf`` and ``bar`` as members. To validate this, run the following::
 
-    ansible <hostname> -m setup -a "filter=ansible_local"
+    ansible <hostname> -m ansible.builtin.setup -a "filter=ansible_local"
 
 And you will see your custom fact added::
 
@@ -582,14 +584,20 @@ By default, fact gathering runs once at the beginning of each play. If you creat
   - hosts: webservers
     tasks:
 
-      - name: create directory for ansible custom facts
-        file: state=directory recurse=yes path=/etc/ansible/facts.d
+      - name: Create directory for ansible custom facts
+        ansible.builtin.file:
+          state: directory
+          recurse: yes
+          path: /etc/ansible/facts.d
 
-      - name: install custom ipmi fact
-        copy: src=ipmi.fact dest=/etc/ansible/facts.d
+      - name: Install custom ipmi fact
+        ansible.builtin.copy:
+          src: ipmi.fact
+          dest: /etc/ansible/facts.d
 
-      - name: re-read facts after adding custom fact
-        setup: filter=ansible_local
+      - name: Re-read facts after adding custom fact
+        ansible.builtin.setup:
+          filter: ansible_local
 
 If you use this pattern frequently, a custom facts module would be more efficient than facts.d.
 
@@ -664,9 +672,9 @@ Ansible version
 To adapt playbook behavior to different versions of Ansible, you can use the variable ``ansible_version``, which has the following structure::
 
     "ansible_version": {
-        "full": "2.0.0.2",
+        "full": "2.10.1",
         "major": 2,
-        "minor": 0,
-        "revision": 0,
-        "string": "2.0.0.2"
+        "minor": 10,
+        "revision": 1,
+        "string": "2.10.1"
     }
