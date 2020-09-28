@@ -344,7 +344,7 @@ class DocCLI(CLI):
         if context.CLIARGS['show_snippet'] and plugin_type == 'module':
             text = DocCLI.get_snippet_text(doc)
         else:
-            text = DocCLI.get_man_text(doc)
+            text = DocCLI.get_man_text(doc, plugin_type=plugin_type)
 
         return text
 
@@ -590,7 +590,7 @@ class DocCLI(CLI):
         return text
 
     @staticmethod
-    def get_man_text(doc):
+    def get_man_text(doc, plugin_type=None):
 
         DocCLI.IGNORE = DocCLI.IGNORE + (context.CLIARGS['type'],)
         opt_indent = "        "
@@ -598,7 +598,8 @@ class DocCLI(CLI):
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
-        text.append("> %s    (%s)\n" % (doc.get(context.CLIARGS['type'], doc.get('plugin_type')).upper(), doc.pop('filename')))
+        plugin_name = doc.get(context.CLIARGS['type'], doc.get('name')) or doc.get('plugin_type') or plugin_type
+        text.append("> %s    (%s)\n" % (plugin_name.upper(), doc.pop('filename')))
 
         if isinstance(doc['description'], list):
             desc = " ".join(doc.pop('description'))
