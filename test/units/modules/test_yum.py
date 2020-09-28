@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function
-
+from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from units.compat import unittest
@@ -121,10 +120,7 @@ Security: kernel-3.10.0-327.22.2.el7.x86_64 is the currently running version
 
 unwrapped_output_extra_space = """
 Loaded plugins: langpacks, product-id, search-disabled-repos, subscription-manager
-
 This system is not registered with an entitlement server. You can use subscription-manager to register.
-
-
 gitlab-ee.x86_64                                                     12.10.14-ee.0.el7                                                           repo_gitlab-ee
 td-agent.x86_64                                                      3.8.0-0.el7                                                                 repo_td-agent
 """
@@ -139,38 +135,19 @@ xxxxxxxxxxxxxxxxxxxxxxxxxx.noarch
 glibc.x86_64            2.17-157.el7_3.1  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"""
 
 
-unwrapped_output_rhel7_obsoletes = (
-    unwrapped_output_rhel7 + wrapped_output_rhel7_obsoletes_postfix
-)
+unwrapped_output_rhel7_obsoletes = unwrapped_output_rhel7 + wrapped_output_rhel7_obsoletes_postfix
 unwrapped_output_rhel7_expected_new_obsoletes_pkgs = [
-    "ddashboard",
-    "python-bugzilla",
-    "python2-futures",
-    "python2-pip",
-    "python2-pyxdg",
-    "python2-simplejson",
+    "ddashboard", "python-bugzilla", "python2-futures", "python2-pip",
+    "python2-pyxdg", "python2-simplejson"
 ]
 unwrapped_output_rhel7_expected_old_obsoletes_pkgs = [
-    "developerdashboard",
-    "python-bugzilla-develdashboardfixes",
-    "python-futures",
-    "python-pip",
-    "pyxdg",
-    "python-simplejson",
+    "developerdashboard", "python-bugzilla-develdashboardfixes",
+    "python-futures", "python-pip", "pyxdg", "python-simplejson"
 ]
 unwrapped_output_rhel7_expected_updated_pkgs = [
-    "NetworkManager-openvpn",
-    "NetworkManager-openvpn-gnome",
-    "cabal-install",
-    "cgit",
-    "python34-libs",
-    "python34-test",
-    "python34-tkinter",
-    "python34-tools",
-    "qgit",
-    "rdiff-backup",
-    "stoken-libs",
-    "xlockmore",
+    "NetworkManager-openvpn", "NetworkManager-openvpn-gnome", "cabal-install",
+    "cgit", "python34-libs", "python34-test", "python34-tkinter",
+    "python34-tools", "qgit", "rdiff-backup", "stoken-libs", "xlockmore"
 ]
 
 
@@ -189,7 +166,7 @@ class TestYumUpdateCheckParse(unittest.TestCase):
 
     def test_longname(self):
         res, obs = YumModule.parse_check_update(longname)
-        expected_pkgs = ["xxxxxxxxxxxxxxxxxxxxxxxxxx", "glibc"]
+        expected_pkgs = ['xxxxxxxxxxxxxxxxxxxxxxxxxx', 'glibc']
         self._assert_expected(expected_pkgs, res)
 
     def test_plugin_load_error(self):
@@ -204,46 +181,24 @@ class TestYumUpdateCheckParse(unittest.TestCase):
 
     def test_wrapped_output_2(self):
         res, obs = YumModule.parse_check_update(wrapped_output_2)
-        expected_pkgs = [
-            "empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty",
-            "libtiff",
-        ]
+        expected_pkgs = ["empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty-empty",
+                         "libtiff"]
 
         self._assert_expected(expected_pkgs, res)
 
     def test_wrapped_output_3(self):
         res, obs = YumModule.parse_check_update(wrapped_output_3)
-        expected_pkgs = [
-            "ceph",
-            "ceph-base",
-            "ceph-common",
-            "ceph-mds",
-            "ceph-mon",
-            "ceph-osd",
-            "ceph-selinux",
-            "libcephfs1",
-            "librados2",
-            "libradosstriper1",
-            "librbd1",
-            "librgw2",
-            "python-cephfs",
-            "python-rados",
-            "python-rbd",
-        ]
+        expected_pkgs = ["ceph", "ceph-base", "ceph-common", "ceph-mds",
+                         "ceph-mon", "ceph-osd", "ceph-selinux", "libcephfs1",
+                         "librados2", "libradosstriper1", "librbd1", "librgw2",
+                         "python-cephfs", "python-rados", "python-rbd"]
         self._assert_expected(expected_pkgs, res)
 
     def test_wrapped_output_4(self):
         res, obs = YumModule.parse_check_update(wrapped_output_4)
 
-        expected_pkgs = [
-            "ipxe-roms-qemu",
-            "quota",
-            "quota-nls",
-            "rdma",
-            "screen",
-            "sos",
-            "sssd-client",
-        ]
+        expected_pkgs = ["ipxe-roms-qemu", "quota", "quota-nls", "rdma", "screen",
+                         "sos", "sssd-client"]
         self._assert_expected(expected_pkgs, res)
 
     def test_wrapped_output_rhel7(self):
@@ -253,9 +208,8 @@ class TestYumUpdateCheckParse(unittest.TestCase):
     def test_wrapped_output_rhel7_obsoletes(self):
         res, obs = YumModule.parse_check_update(unwrapped_output_rhel7_obsoletes)
         self._assert_expected(
-            unwrapped_output_rhel7_expected_updated_pkgs
-            + unwrapped_output_rhel7_expected_new_obsoletes_pkgs,
-            res,
+            unwrapped_output_rhel7_expected_updated_pkgs + unwrapped_output_rhel7_expected_new_obsoletes_pkgs,
+            res
         )
         self._assert_expected(unwrapped_output_rhel7_expected_old_obsoletes_pkgs, obs)
 
