@@ -84,7 +84,7 @@ def test_date_time_epoch(fake_date_facts):
 @pytest.mark.parametrize('fact_name', ('tz', 'tz_dst'))
 def test_date_time_tz(fake_date_facts, fact_name):
     """
-    Test the the returned value for timezone consists of only uppercase
+    Test the returned value for timezone consists of only uppercase
     letters and is the expected length.
     """
 
