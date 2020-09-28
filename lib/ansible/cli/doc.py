@@ -385,7 +385,7 @@ class DocCLI(CLI):
             text = DocCLI.get_snippet_text(doc)
         else:
             try:
-                text = DocCLI.get_man_text(doc, collection_name)
+                text = DocCLI.get_man_text(doc, collection_name, plugin_type)
             except Exception as e:
                 raise AnsibleError("Unable to retrieve documentation from '%s' due to: %s" % (plugin, to_native(e)))
 
@@ -619,7 +619,7 @@ class DocCLI(CLI):
                 text.append('')
 
     @staticmethod
-    def get_man_text(doc, collection_name=''):
+    def get_man_text(doc, collection_name='', plugin_type=''):
         # Create a copy so we don't modify the original
         doc = dict(doc)
 
@@ -629,7 +629,7 @@ class DocCLI(CLI):
         pad = display.columns * 0.20
         limit = max(display.columns - int(pad), 70)
 
-        plugin_name = doc.get(context.CLIARGS['type'], doc.get('plugin_type'))
+        plugin_name = doc.get(context.CLIARGS['type'], doc.get('name')) or doc.get('plugin_type') or plugin_type
         if collection_name:
             plugin_name = '%s.%s' % (collection_name, plugin_name)
 
