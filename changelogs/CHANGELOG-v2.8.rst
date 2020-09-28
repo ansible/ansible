@@ -5,6 +5,42 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
+v2.8.16rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2020-09-28
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Added CI provider support for Azure Pipelines.
+- ansible-test - Added support for Ansible Core CI request signing for Shippable.
+- ansible-test - Allow custom ``--remote-stage`` options for development and testing.
+- ansible-test - Refactored CI related logic into a basic provider abstraction.
+- ansible-test - Remove the discontinued ``us-east-2`` choice from the ``--remote-aws-region`` option.
+- ansible-test - Request remote resources by provider name for all provider types.
+- ansible-test - Show a warning when the obsolete ``--remote-aws-region`` option is used.
+- ansible-test - Support custom remote endpoints with the ``--remote-endpoint`` option.
+- ansible-test - Update built-in service endpoints for the ``--remote`` option.
+- ansible-test - Use new endpoint for Parallels based instances with the ``--remote`` option.
+
+Security Fixes
+--------------
+
+- kubectl - connection plugin now redact kubectl_token and kubectl_password in console log (https://github.com/ansible-collections/community.kubernetes/issues/65) (CVE-2020-1753).
+
+Bugfixes
+--------
+
+- ansible-test - Change classification using ``--changed`` now consistently handles common configuration files for supported CI providers.
+- ansible-test - The ``resource_prefix`` variable provided to tests running on Azure Pipelines is now converted to lowercase to match other CI providers.
+- ansible-test - for local change detection, allow to specify branch to compare to with ``--base-branch`` for all types of tests (https://github.com/ansible/ansible/pull/69508).
+
 v2.8.15
 =======
 

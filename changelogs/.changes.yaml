@@ -1689,6 +1689,20 @@ releases:
     - dnf_gpg.yml
     - v2.8.15_summary.yaml
     release_date: '2020-08-31'
+  2.8.16rc1:
+    codename: How Many More Times
+    fragments:
+    - 159_kubectl.yml
+    - 69508-ansible-test-local-changes-detection.yml
+    - ansible-test-azp-resource-prefix.yml
+    - ansible-test-change-classification.yml
+    - ansible-test-ci-support-azure.yml
+    - ansible-test-ci-support-shippable-auth.yml
+    - ansible-test-ci-support.yml
+    - ansible-test-endpoint-update.yml
+    - ansible-test-parallels-endpoint.yml
+    - v2.8.16rc1_summary.yaml
+    release_date: '2020-09-28'
   2.8.2:
     codename: How Many More Times
     fragments:
