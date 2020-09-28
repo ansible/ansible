@@ -1,0 +1,113 @@
+- name: install a specific collection with a specific (compatible) dependency
+  command: ansible-galaxy collection install namespace1.collection1:1.0.0 namespace1.collection2:1.0.0 --no-deps --force
+  register: result
+  failed_when:
+    - '"namepsace1.collection1 (1.0.0) was installed successfully" not in result.stdout_lines'
+    - '"namespace1.collection2 (1.0.0) was installed successfully" not in result.stdout_lines'
+
+- name: remove any version found
+  command: ansible-galaxy collection remove namespace1.collection1
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.collection1 (1.0.0) was removed successfully" in result.stdout_lines'
+      - '"namespace1.collection2 (1.0.0) was removed successfully" in result.stdout_lines'
+
+- name: install a specific collection with a specific (compatible) dependency
+  command: ansible-galaxy collection install namespace1.collection1:1.0.0 namespace1.collection2:1.0.0 --no-deps
+  register: result
+  failed_when:
+    - '"namespace1.collection1 (1.0.0) was installed successfully" not in result.stdout_lines'
+    - '"namespace1.collection2 (1.0.0) was installed successfully" not in result.stdout_lines'
+
+- name: remove the exact version and any dependencies
+  command: ansible-galaxy collection remove namespace1.collection1:1.0.0
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.collection1 (1.0.0) was removed successfully" in result.stdout_lines'
+      - '"namespace1.collection2 (1.0.0) was removed successfully" in result.stdout_lines'
+
+- name: install a specific collection with a specific (compatible) dependency
+  command: ansible-galaxy collection install namespace1.collection1:1.0.0 namespace1.collection2:1.0.0 --no-deps
+  register: result
+  failed_when:
+    - '"namespace1.collection1 (1.0.0) was installed successfully" not in result.stdout_lines'
+    - '"namespace1.collection2 (1.0.0) was installed successfully" not in result.stdout_lines'
+
+- name: try to remove a version that isn't installed
+  command: ansible-galaxy collection remove namespace1.collection1:1.2.0
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.collection1 (1.0.0) was removed successfully" not in result.stdout_lines'
+      - '"namespace1.collection2 (1.0.0) was removed successfully" not in result.stdout_lines'
+
+- name: try to remove a version contraint that isn't matched by the installed collection
+  command: ansible-galaxy collection remove namespace1.collection1:>1.0.0
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.collection1 (1.0.0) was removed successfully" not in result.stdout_lines'
+      - '"namespace1.collection2 (1.0.0) was removed successfully" not in result.stdout_lines'
+
+- name: remove a matching version constraint
+  command: ansible-galaxy collection remove namespace1.collection1:>=1.0.0
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.collection1 (1.0.0) was removed successfully" in result.stdout_lines'
+      - '"namespace1.collection2 (1.0.0) was removed successfully" in result.stdout_lines'
+
+- name: install a specific collection with a specific (incompatible) dependency
+  command: ansible-galaxy collection install namespace1.collection1:1.0.0 namespace1.collection2:1.1.0 --no-deps
+  register: result
+  failed_when:
+    - '"namespace1.collection1 (1.0.0) was installed successfully" not in result.stdout_lines'
+    - '"namespace1.collection2 (1.1.0) was installed successfully" not in result.stdout_lines'
+
+- name: test deleting a collection without a matching dependency
+  command: ansible-galaxy collection remove namespace1.collection1
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.collection1 (1.0.0) was removed successfully" in result.stdout_lines'
+      - '"namespace1.collection2 (1.1.0) was removed successfully" not in result.stdout_lines'
+
+- name: cleanup last collection
+  command: ansible-galaxy collection remove namespace1.collection2
+  register: result
+
+- assert:
+    that: '"namespace1.collection2 (1.1.0) was removed successfully" in result.stdout_lines'
+
+- name: install a collection and dependency to the first collections path
+  command: ansible-galaxy collection install namespace1.collection1:1.0.0 --force-with-deps
+  register: result
+  failed_when:
+    - '"namespace1.collection1 (1.0.0) was installed successfully" not in result.stdout_lines'
+    - '"namespace1.collection2 (1.0.0) was installed successfully" not in result.stdout_lines'
+
+- name: install another version of the collection with a specific (compatible) dependency to another collections path
+  command: ansible-galaxy collection install namespace1.collection1:2.0.0 --force-with-deps -p {{ galaxy_dir }}/collections_path_2/
+  register: result
+  failed_when:
+    - '"namespace1.collection1 (2.0.0) was installed successfully" not in result.stdout_lines'
+    - '"namespace1.collection2 (2.0.0) was installed successfully" not in result.stdout_lines'
+
+- name: test removing the collections from all paths
+  command: ansible-galaxy collection remove namespace1.collection1
+  register: result
+
+- assert:
+    that:
+      - '"namespace1.collection1 (1.0.0) was removed successfully" in result.stdout_lines'
+      - '"namespace1.collection2 (1.0.0) was removed successfully" in result.stdout_lines'
+      - '"namespace1.collection1 (2.0.0) was removed successfully" in result.stdout_lines'
+      - '"namespace1.collection2 (2.0.0) was removed successfully" in result.stdout_lines'
