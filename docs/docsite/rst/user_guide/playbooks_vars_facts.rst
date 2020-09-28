@@ -20,7 +20,7 @@ Ansible facts are data related to your remote systems, including operating syste
 
 To see the 'raw' information as gathered, run this command at the command line::
 
-    ansible <hostname> -m setup
+    ansible <hostname> -m ansible.builtin.setup
 
 Facts include a large amount of variable data, which may look like this:
 
@@ -549,7 +549,7 @@ To add static facts, simply add a file with the ``.facts`` extension. For exampl
 
 The next time fact gathering runs, your facts will include a hash variable fact named ``general`` with ``asdf`` and ``bar`` as members. To validate this, run the following::
 
-    ansible <hostname> -m setup -a "filter=ansible_local"
+    ansible <hostname> -m ansible.builtin.setup -a "filter=ansible_local"
 
 And you will see your custom fact added::
 
