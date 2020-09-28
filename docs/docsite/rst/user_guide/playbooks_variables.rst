@@ -330,7 +330,7 @@ Ansible does apply variable precedence, and you might have a use for it. Here is
   #. include params
   #. extra vars (for example, ``-e "user=my_user"``)(always win precedence)
 
-In general, Ansible gives precedence to variables that were defined more recently, more actively, and with more explicit scope. Variables in the the defaults folder inside a role are easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in the namespace. Host and/or inventory variables override role defaults, but explicit includes such as the vars directory or an ``include_vars`` task override inventory variables.
+In general, Ansible gives precedence to variables that were defined more recently, more actively, and with more explicit scope. Variables in the defaults folder inside a role are easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in the namespace. Host and/or inventory variables override role defaults, but explicit includes such as the vars directory or an ``include_vars`` task override inventory variables.
 
 Ansible merges different variables set in inventory so that more specific settings override more generic settings. For example, ``ansible_ssh_user`` specified as a group_var is overridden by ``ansible_user`` specified as a host_var. For details about the precedence of variables set in inventory, see :ref:`how_we_merge`.
 
