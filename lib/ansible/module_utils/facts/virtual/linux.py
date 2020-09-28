@@ -104,6 +104,10 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_role'] = 'guest'
                 found_virt = True
 
+        # ensure 'container' guest_tech is appropriately set
+        if guest_tech.intersection(set(['docker', 'lxc', 'podman', 'openvz'])) or systemd_container:
+            guest_tech.add('container')
+
         if os.path.exists("/proc/xen"):
             is_xen_host = False
             try:
