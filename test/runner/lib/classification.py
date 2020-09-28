@@ -365,6 +365,9 @@ class PathMapper(object):
 
         minimal = {}
 
+        if path.startswith('.azure-pipelines/'):
+            return all_tests(self.args)  # test infrastructure, run all tests
+
         if path.startswith('.github/'):
             return minimal
 
@@ -827,6 +830,7 @@ class PathMapper(object):
                 return minimal
 
             if path in (
+                    'azure-pipelines.yml',
                     'shippable.yml',
                     '.coveragerc',
             ):

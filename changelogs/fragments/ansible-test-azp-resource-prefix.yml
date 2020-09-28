@@ -1,0 +1,2 @@
+bugfixes:
+  - ansible-test - The ``resource_prefix`` variable provided to tests running on Azure Pipelines is now converted to lowercase to match other CI providers.
