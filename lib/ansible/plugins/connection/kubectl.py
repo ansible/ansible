@@ -20,7 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-DOCUMENTATION = """
+DOCUMENTATION = r"""
     author:
         - xuxinkun
 
@@ -40,7 +40,8 @@ DOCUMENTATION = """
     options:
       kubectl_pod:
         description:
-          - Pod name. Required when the host name does not match pod name.
+          - Pod name.
+          - Required when the host name does not match pod name.
         default: ''
         vars:
           - name: ansible_kubectl_pod
@@ -48,7 +49,8 @@ DOCUMENTATION = """
           - name: K8S_AUTH_POD
       kubectl_container:
         description:
-          - Container name. Required when a pod contains more than one container.
+          - Container name.
+          - Required when a pod contains more than one container.
         default: ''
         vars:
           - name: ansible_kubectl_container
@@ -230,6 +232,7 @@ class Connection(ConnectionBase):
         """ Build the local kubectl exec command to run cmd on remote_host
         """
         local_cmd = [self.transport_cmd]
+        censored_local_cmd = [self.transport_cmd]
 
         # Build command options based on doc string
         doc_yaml = AnsibleLoader(self.documentation).get_single_data()
@@ -238,26 +241,34 @@ class Connection(ConnectionBase):
                 # Translate verify_ssl to skip_verify_ssl, and output as string
                 skip_verify_ssl = not self.get_option(key)
                 local_cmd.append(u'{0}={1}'.format(self.connection_options[key], str(skip_verify_ssl).lower()))
+                censored_local_cmd.append(u'{0}={1}'.format(self.connection_options[key], str(skip_verify_ssl).lower()))
             elif not key.endswith('container') and self.get_option(key) and self.connection_options.get(key):
                 cmd_arg = self.connection_options[key]
                 local_cmd += [cmd_arg, self.get_option(key)]
+                # Redact password and token from console log
+                if key.endswith(('_token', '_password')):
+                    censored_local_cmd += [cmd_arg, '*' * 8]
 
         extra_args_name = u'{0}_extra_args'.format(self.transport)
         if self.get_option(extra_args_name):
             local_cmd += self.get_option(extra_args_name).split(' ')
+            censored_local_cmd += self.get_option(extra_args_name).split(' ')
 
         pod = self.get_option(u'{0}_pod'.format(self.transport))
         if not pod:
             pod = self._play_context.remote_addr
         # -i is needed to keep stdin open which allows pipelining to work
         local_cmd += ['exec', '-i', pod]
+        censored_local_cmd += ['exec', '-i', pod]
 
         # if the pod has more than one container, then container is required
         container_arg_name = u'{0}_container'.format(self.transport)
         if self.get_option(container_arg_name):
             local_cmd += ['-c', self.get_option(container_arg_name)]
+            censored_local_cmd += ['-c', self.get_option(container_arg_name)]
 
         local_cmd += ['--'] + cmd
+        censored_local_cmd += ['--'] + cmd
 
         return local_cmd
 
@@ -272,9 +283,9 @@ class Connection(ConnectionBase):
         """ Run a command in the container """
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        local_cmd = self._build_exec_cmd([self._play_context.executable, '-c', cmd])
+        local_cmd, censored_local_cmd = self._build_exec_cmd([self._play_context.executable, '-c', cmd])
 
-        display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
+        display.vvv("EXEC %s" % (censored_local_cmd,), host=self._play_context.remote_addr)
         local_cmd = [to_bytes(i, errors='surrogate_or_strict') for i in local_cmd]
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -314,7 +325,7 @@ class Connection(ConnectionBase):
                 count = ' count=0'
             else:
                 count = ''
-            args = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s%s" % (out_path, BUFSIZE, count)])
+            args, dummy = self._build_exec_cmd([self._play_context.executable, "-c", "dd of=%s bs=%s%s" % (out_path, BUFSIZE, count)])
             args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
             try:
                 p = subprocess.Popen(args, stdin=in_file,
@@ -336,7 +347,7 @@ class Connection(ConnectionBase):
 
         # kubectl doesn't have native support for fetching files from
         # running containers, so we use kubectl exec to implement this
-        args = self._build_exec_cmd([self._play_context.executable, "-c", "dd if=%s bs=%s" % (in_path, BUFSIZE)])
+        args, dummy = self._build_exec_cmd([self._play_context.executable, "-c", "dd if=%s bs=%s" % (in_path, BUFSIZE)])
         args = [to_bytes(i, errors='surrogate_or_strict') for i in args]
         actual_out_path = os.path.join(out_dir, os.path.basename(in_path))
         with open(to_bytes(actual_out_path, errors='surrogate_or_strict'), 'wb') as out_file:
