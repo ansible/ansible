@@ -5,6 +5,33 @@ Ansible Base 2.10 "When the Levee Breaks" Release Notes
 .. contents:: Topics
 
 
+v2.10.2rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2020-09-28
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Raise the number of bytes scanned by ansible-test to determine if a file is binary to 4096.
+
+Bugfixes
+--------
+
+- Pass the connection's timeout to connection plugins instead of the task's timeout.
+- Provide more information in AnsibleUndefinedVariable (https://github.com/ansible/ansible/issues/55152)
+- ansible-doc - properly show plugin name when ``name:`` is used instead of ``<plugin_type>:`` (https://github.com/ansible/ansible/pull/71966).
+- ansible-test - Change classification using ``--changed`` now consistently handles common configuration files for supported CI providers.
+- ansible-test - The ``resource_prefix`` variable provided to tests running on Azure Pipelines is now converted to lowercase to match other CI providers.
+- collection loader - fix bogus code coverage entries for synthetic packages
+- psrp - Fix hang when copying an empty file to the remote target
+- runas - create a new token when running as ``SYSTEM`` to ensure it has the full privileges assigned to that account
+
 v2.10.1
 =======
 
