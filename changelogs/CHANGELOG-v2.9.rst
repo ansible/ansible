@@ -5,6 +5,56 @@ Ansible 2.9 "Immigrant Song" Release Notes
 .. contents:: Topics
 
 
+v2.9.14rc1
+==========
+
+Release Summary
+---------------
+
+| Release Date: 2020-09-28
+| `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+
+Minor Changes
+-------------
+
+- ansible-test - Added CI provider support for Azure Pipelines.
+- ansible-test - Added support for Ansible Core CI request signing for Shippable.
+- ansible-test - Allow custom ``--remote-stage`` options for development and testing.
+- ansible-test - Fix ``ansible-test coverage`` reporting sub-commands (``report``, ``html``, ``xml``) on Python 2.6.
+- ansible-test - Refactored CI related logic into a basic provider abstraction.
+- ansible-test - Remove the discontinued ``us-east-2`` choice from the ``--remote-aws-region`` option.
+- ansible-test - Request remote resources by provider name for all provider types.
+- ansible-test - Show a warning when the obsolete ``--remote-aws-region`` option is used.
+- ansible-test - Support custom remote endpoints with the ``--remote-endpoint`` option.
+- ansible-test - Update built-in service endpoints for the ``--remote`` option.
+- ansible-test - Use new endpoint for Parallels based instances with the ``--remote`` option.
+- vmware_guest - Support HW version 15 / vSphere 6.7U2 (https://github.com/ansible-collections/vmware/pull/99).
+
+Security Fixes
+--------------
+
+- kubectl - connection plugin now redact kubectl_token and kubectl_password in console log (https://github.com/ansible-collections/community.kubernetes/issues/65) (CVE-2020-1753).
+
+Bugfixes
+--------
+
+- Handle write_files option in cgroup_perf_recap callback plugin (https://github.com/ansible/ansible/issues/64936).
+- Prevent templating unused variables for {% include %} (https://github.com/ansible/ansible/issues/68699)
+- Provide more information in AnsibleUndefinedVariable (https://github.com/ansible/ansible/issues/55152)
+- ansible-doc - do not crash if plugin name cannot be found (https://github.com/ansible/ansible/pull/71965).
+- ansible-doc - properly show plugin name when ``name:`` is used instead of ``<plugin_type>:`` (https://github.com/ansible/ansible/pull/71965).
+- ansible-test - Change classification using ``--changed`` now consistently handles common configuration files for supported CI providers.
+- ansible-test - The ``resource_prefix`` variable provided to tests running on Azure Pipelines is now converted to lowercase to match other CI providers.
+- ansible-test - for local change detection, allow to specify branch to compare to with ``--base-branch`` for all types of tests (https://github.com/ansible/ansible/pull/69508).
+- docker_login - now correctly reports changed status on logout for Docker versions released after June 2020.
+- docker_login - now obeys check_mode for logout
+- interfaces_file - escape regular expression characters in old value (https://github.com/ansible-collections/community.general/issues/777).
+- ovirt_disk - fix upload when direct upload fails (https://github.com/oVirt/ovirt-ansible-collection/pull/120).
+- postgres_user - remove false positive ``no_log`` warning for ``no_password_changes`` option (https://github.com/ansible/ansible/issues/68106).
+- psrp - Fix hang when copying an empty file to the remote target
+- runas - create a new token when running as ``SYSTEM`` to ensure it has the full privileges assigned to that account
+
 v2.9.13
 =======
 

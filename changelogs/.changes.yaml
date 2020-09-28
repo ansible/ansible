@@ -1584,6 +1584,32 @@ releases:
     - v2.9.13_summary.yaml
     - win_setup-bios.yml
     release_date: '2020-08-31'
+  2.9.14rc1:
+    codename: Immigrant Song
+    fragments:
+    - 159_kubectl.yml
+    - 17-postgres_user-no_password_changes-no_log.yml
+    - 55152-add-more-info-to-AnsibleUndefinedVariable.yml
+    - 68699-prevent-templating-all-vars-when-copying-context.yml
+    - 69508-ansible-test-local-changes-detection.yml
+    - 71563-vmware_guest-support_hw_version_15.yml
+    - 71802-ovirt_disk-fix-upload-when-direct-upload-fails.yml
+    - 71965-ansible-doc-plugin-name.yml
+    - ansible-test-azp-resource-prefix.yml
+    - ansible-test-change-classification.yml
+    - ansible-test-ci-support-azure.yml
+    - ansible-test-ci-support-shippable-auth.yml
+    - ansible-test-ci-support.yml
+    - ansible-test-coverage-py26.yml
+    - ansible-test-endpoint-update.yml
+    - ansible-test-parallels-endpoint.yml
+    - cgroup_fix_write.yml
+    - community.general-777-interfaces_file-re-escape.yml
+    - docker-logout-newer-docker.yml
+    - psrp-copy-empty-file.yml
+    - runas-become-system-privileges.yml
+    - v2.9.14rc1_summary.yaml
+    release_date: '2020-09-28'
   2.9.2:
     codename: Immigrant Song
     fragments:
