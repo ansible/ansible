@@ -61,6 +61,23 @@
       loop:
         - 1
 
+    - copy:
+        dest: '{{ lookup("env", "OUTPUT_DIR") }}/test_diff.txt'
+        content: foo
+
+    - replace:
+        path: '{{ lookup("env", "OUTPUT_DIR") }}/test_diff.txt'
+        regexp: '^foo$'
+        replace: bar
+      diff: true
+
+    - replace:
+        path: '{{ lookup("env", "OUTPUT_DIR") }}/test_diff.txt'
+        regexp: '^bar$'
+        replace: baz
+      diff: true
+      changed_when: false
+
   handlers:
     - name: Test handler 1
       command: echo foo

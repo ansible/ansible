@@ -47,6 +47,23 @@ ok: [testhost] => {
     "item": 1
 }
 
+TASK [copy] ********************************************************************
+changed: [testhost]
+
+TASK [replace] *****************************************************************
+--- before: .../test_diff.txt
++++ after: .../test_diff.txt
+@@ -1 +1 @@
+-foo
+\ No newline at end of file
++bar
+\ No newline at end of file
+
+changed: [testhost]
+
+TASK [replace] *****************************************************************
+ok: [testhost]
+
 RUNNING HANDLER [Test handler 1] ***********************************************
 changed: [testhost]
 
@@ -73,5 +90,5 @@ ok: [testhost] => {
 }
 
 PLAY RECAP *********************************************************************
-testhost                   : ok=16   changed=9    unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
+testhost                   : ok=19   changed=11   unreachable=0    failed=0    skipped=1    rescued=1    ignored=2   
 
