@@ -24,6 +24,8 @@ run_test() {
 	# Scrub deprication warning that shows up in Python 2.6 on CentOS 6
 	sed -i -e '/RandomPool_DeprecationWarning/d' "${OUTFILE}.${testname}.stderr"
     sed -i -e 's/included: .*\/test\/integration/included: ...\/test\/integration/g' "${OUTFILE}.${testname}.stdout"
+    sed -i -e 's/@@ -1,1 +1,1 @@/@@ -1 +1 @@/g' "${OUTFILE}.${testname}.stdout"
+    sed -i -e 's/: .*\/test_diff\.txt/: ...\/test_diff.txt/g' "${OUTFILE}.${testname}.stdout"
 
 	diff -u "${ORIGFILE}.${testname}.stdout" "${OUTFILE}.${testname}.stdout" || diff_failure
 	diff -u "${ORIGFILE}.${testname}.stderr" "${OUTFILE}.${testname}.stderr" || diff_failure
