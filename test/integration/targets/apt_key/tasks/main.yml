@@ -24,8 +24,8 @@
 - name: create our testing sub-directory
   file: path="{{ output_dir_test }}" state=directory
 
-- include: 'apt_key.yml'
+- import_tasks: 'apt_key.yml'
   when: ansible_distribution in ('Ubuntu', 'Debian')
   
-- include: 'file.yml'
+- import_tasks: 'file.yml'
   when: ansible_distribution in ('Ubuntu', 'Debian')

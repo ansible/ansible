@@ -35,7 +35,7 @@
 #
 # TEST: apt_repository: repo=<name>
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
 
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -67,7 +67,7 @@
 #
 # TEST: apt_repository: repo=<name> update_cache=no
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
 
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -98,7 +98,7 @@
 #
 # TEST: apt_repository: repo=<name> update_cache=yes
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
 
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -129,7 +129,7 @@
 #
 # TEST: apt_repository: repo=<spec>
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
 
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -164,7 +164,7 @@
 #
 # TEST: apt_repository: repo=<spec> filename=<filename>
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
 
 - name: 'record apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
@@ -230,4 +230,4 @@
 #
 # TEARDOWN
 #
-- include: 'cleanup.yml'
+- import_tasks: 'cleanup.yml'
