@@ -62,10 +62,8 @@ Codes
   **Error Code**                                                 **Type**             **Level**            **Sample Message**
 ------------------------------------------------------------   ------------------   --------------------   -----------------------------------------------------------------------------------------
   ansible-deprecated-version                                   Documentation        Error                  A feature is deprecated and supposed to be removed in the current or an earlier Ansible version
-  ansible-invalid-version                                      Documentation        Error                  The Ansible version at which a feature is supposed to be removed cannot be parsed
   ansible-module-not-initialized                               Syntax               Error                  Execution of the module did not result in initialization of AnsibleModule
   collection-deprecated-version                                Documentation        Error                  A feature is deprecated and supposed to be removed in the current or an earlier collection version
-  collection-invalid-version                                   Documentation        Error                  The collection version at which a feature is supposed to be removed cannot be parsed (it must be a semantic version, see https://semver.org/)
   deprecated-date                                              Documentation        Error                  A date before today appears as ``removed_at_date`` or in ``deprecated_aliases``
   deprecation-mismatch                                         Documentation        Error                  Module marked as deprecated or removed in at least one of the filename, its metadata, or in DOCUMENTATION (setting DOCUMENTATION.deprecated for deprecation or removing all Documentation for removed) but not in all three places.
   doc-choices-do-not-match-spec                                Documentation        Error                  Value for "choices" from the argument_spec does not match the documentation
@@ -94,8 +92,8 @@ Codes
   invalid-examples                                             Documentation        Error                  ``EXAMPLES`` is not valid YAML
   invalid-extension                                            Naming               Error                  Official Ansible modules must have a ``.py`` extension for python modules or a ``.ps1`` for powershell modules
   invalid-module-schema                                        Documentation        Error                  ``AnsibleModule`` schema validation error
+  invalid-removal-version                                      Documentation        Error                  The version at which a feature is supposed to be removed cannot be parsed (for collections, it must be a semantic version, see https://semver.org/)
   invalid-requires-extension                                   Naming               Error                  Module ``#AnsibleRequires -CSharpUtil`` should not end in .cs, Module ``#Requires`` should not end in .psm1
-  invalid-tagged-version                                       Documentation        Error                  All version numbers specified in code have to be explicitly tagged with the collection name, in other words, ``community.general:1.2.3`` or ``ansible.builtin:2.10``
   last-line-main-call                                          Syntax               Error                  Call to ``main()`` not the last line (or ``removed_module()`` in the case of deprecated & docs only modules)
   missing-doc-fragment                                         Documentation        Error                  ``DOCUMENTATION`` fragment missing
   missing-existing-doc-fragment                                Documentation        Warning                Pre-existing ``DOCUMENTATION`` fragment missing
@@ -131,6 +129,7 @@ Codes
   parameter-list-no-elements                                   Parameters           Error                  argument in argument_spec "type" is specified as ``list`` without defining "elements"
   parameter-state-invalid-choice                               Parameters           Error                  Argument ``state`` includes ``get``, ``list`` or ``info`` as a choice.  Functionality should be in an ``_info`` or (if further conditions apply) ``_facts`` module.
   python-syntax-error                                          Syntax               Error                  Python ``SyntaxError`` while parsing module
+  removal-version-must-be-major                                Documentation        Error                  According to the semantic versioning specification (https://semver.org/), the only versions in which features are allowed to be removed are major versions (x.0.0)
   return-syntax-error                                          Documentation        Error                  ``RETURN`` is not valid YAML, ``RETURN`` fragments missing  or invalid
   return-invalid-version-added                                 Documentation        Error                  ``version_added`` for return value is not a valid version number
   subdirectory-missing-init                                    Naming               Error                  Ansible module subdirectories must contain an ``__init__.py``
@@ -162,4 +161,5 @@ Codes
   required_if-value-type                                       Documentation        Error                  required_if entry's value is not of the type specified for its key
   required_by-collision                                        Documentation        Error                  required_by entry has repeated terms
   required_by-unknown                                          Documentation        Error                  required_by entry contains option which does not appear in argument_spec (potentially an alias of an option?)
+  version-added-must-be-major-or-minor                         Documentation        Error                  According to the semantic versioning specification (https://semver.org/), the only versions in which features are allowed to be added are major and minor versions (x.y.0)
 ============================================================   ==================   ====================   =========================================================================================
