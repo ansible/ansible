@@ -7,13 +7,17 @@ import datetime
 import os
 import re
 import sys
+from distutils.version import StrictVersion
+from functools import partial
+
 import yaml
 
-from voluptuous import Any, MultipleInvalid, PREVENT_EXTRA
+from voluptuous import All, Any, MultipleInvalid, PREVENT_EXTRA
 from voluptuous import Required, Schema, Invalid
 from voluptuous.humanize import humanize_error
 
 from ansible.module_utils.six import string_types
+from ansible.utils.version import SemanticVersion
 
 
 def isodate(value):
@@ -25,6 +29,10 @@ def isodate(value):
     msg = 'Expected ISO 8601 date string (YYYY-MM-DD), or YAML date'
     if not isinstance(value, string_types):
         raise Invalid(msg)
+    # From Python 3.7 in, there is datetime.date.fromisoformat(). For older versions,
+    # we have to do things manually.
+    if not re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$', value):
+        raise Invalid(msg)
     try:
         datetime.datetime.strptime(value, '%Y-%m-%d').date()
     except ValueError:
@@ -32,7 +40,35 @@ def isodate(value):
     return value
 
 
-def validate_metadata_file(path):
+def removal_version(value, is_ansible):
+    """Validate a removal version string."""
+    msg = (
+        'Removal version must be a string' if is_ansible else
+        'Removal version must be a semantic version (https://semver.org/)'
+    )
+    if not isinstance(value, string_types):
+        raise Invalid(msg)
+    try:
+        if is_ansible:
+            version = StrictVersion()
+            version.parse(value)
+        else:
+            version = SemanticVersion()
+            version.parse(value)
+            if version.major != 0 and (version.minor != 0 or version.patch != 0):
+                raise Invalid('removal_version (%r) must be a major release, not a minor or patch release '
+                              '(see specification at https://semver.org/)' % (value, ))
+    except ValueError:
+        raise Invalid(msg)
+    return value
+
+
+def any_value(value):
+    """Accepts anything."""
+    return value
+
+
+def validate_metadata_file(path, is_ansible):
     """Validate explicit runtime metadata file"""
     try:
         with open(path, 'r') as f_path:
@@ -51,19 +87,29 @@ def validate_metadata_file(path):
 
     # plugin_routing schema
 
-    deprecation_tombstoning_schema = Any(Schema(
-        {
-            Required('removal_date'): Any(isodate),
-            'warning_text': Any(*string_types),
-        },
-        extra=PREVENT_EXTRA
-    ), Schema(
-        {
-            Required('removal_version'): Any(*string_types),
-            'warning_text': Any(*string_types),
-        },
-        extra=PREVENT_EXTRA
-    ))
+    deprecation_tombstoning_schema = All(
+        # The first schema validates the input, and the second makes sure no extra keys are specified
+        Schema(
+            {
+                'removal_version': partial(removal_version, is_ansible=is_ansible),
+                'removal_date': Any(isodate),
+                'warning_text': Any(*string_types),
+            }
+        ),
+        Schema(
+            Any(
+                {
+                    Required('removal_version'): any_value,
+                    'warning_text': any_value,
+                },
+                {
+                    Required('removal_date'): any_value,
+                    'warning_text': any_value,
+                }
+            ),
+            extra=PREVENT_EXTRA
+        )
+    )
 
     plugin_routing_schema = Any(
         Schema({
@@ -143,7 +189,7 @@ def main():
             print('%s:%d:%d: %s' % (path, 0, 0, ("Should be called '%s'" % collection_runtime_file)))
             continue
 
-        validate_metadata_file(path)
+        validate_metadata_file(path, is_ansible=path not in (collection_legacy_file, collection_runtime_file))
 
 
 if __name__ == '__main__':
