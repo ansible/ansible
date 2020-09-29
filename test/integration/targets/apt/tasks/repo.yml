@@ -213,7 +213,11 @@
 
 - name: Upgrades
   block:
-    - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type=dist force_apt_get={{ False | bool }}"
+    - import_tasks: "upgrade.yml"
+      vars:
+        aptitude_present: "{{ True | bool }}"
+        upgrade_type: "dist"
+        force_apt_get: "{{ False | bool }}"
 
     - name: Check if aptitude is installed
       command: dpkg-query --show --showformat='${db:Status-Abbrev}' aptitude
@@ -226,7 +230,11 @@
       when:
         - aptitude_status.stdout.find('ii') != -1
 
-    - include: "upgrade.yml aptitude_present={{ False | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
+    - include_tasks: "upgrade.yml"
+      vars:
+        aptitude_present: "{{ False | bool }}"
+        upgrade_type: "{{ item.upgrade_type }}"
+        force_apt_get: "{{ item.force_apt_get }}"
       with_items:
         - { upgrade_type: safe, force_apt_get: False }
         - { upgrade_type: full, force_apt_get: False }
@@ -238,7 +246,11 @@
         pkg: aptitude
         state: present
 
-    - include: "upgrade.yml aptitude_present={{ True | bool }} upgrade_type={{ item.upgrade_type }} force_apt_get={{ item.force_apt_get }}"
+    - include_tasks: "upgrade.yml"
+      vars:
+        aptitude_present: "{{ True | bool }}"
+        upgrade_type: "{{ item.upgrade_type }}"
+        force_apt_get: "{{ item.force_apt_get }}"
       with_items:
         - { upgrade_type: safe, force_apt_get: False }
         - { upgrade_type: full, force_apt_get: False }
