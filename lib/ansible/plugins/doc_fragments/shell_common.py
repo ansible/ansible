@@ -56,10 +56,10 @@ options:
     vars:
       - name: ansible_async_dir
   environment:
-    type: dict
-    default: {}
+    type: list
+    default: [{}]
     description:
-      - dictionary of environment variables and their values to use when executing commands.
+      - List of dictionaries of environment variables and their values to use when executing commands.
   admin_users:
     type: list
     default: ['root', 'toor']

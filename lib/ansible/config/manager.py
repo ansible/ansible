@@ -24,7 +24,7 @@ except ImportError:
 from ansible.config.data import ConfigData
 from ansible.errors import AnsibleOptionsError, AnsibleError
 from ansible.module_utils._text import to_text, to_bytes, to_native
-from ansible.module_utils.common._collections_compat import Sequence
+from ansible.module_utils.common._collections_compat import Mapping, Sequence
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import configparser
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -143,6 +143,10 @@ def ensure_type(value, value_type, origin=None):
                 value = [resolve_path(x, basedir=basedir) for x in value]
             else:
                 errmsg = 'pathlist'
+
+        elif value_type in ('dict', 'dictionary'):
+            if not isinstance(value, Mapping):
+                errmsg = 'dictionary'
 
         elif value_type in ('str', 'string'):
             if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
