@@ -8,6 +8,7 @@ import atexit
 import io
 import os
 import os.path
+import re
 import sys
 import stat
 import tempfile
@@ -38,6 +39,7 @@ Plugin = namedtuple('Plugin', 'name type')
 Setting = namedtuple('Setting', 'name value origin type')
 
 INTERNAL_DEFS = {'lookup': ('_terms',)}
+CONFIG_PATTERN = re.compile(r'{{\s*C\.(\w*)\s*}}')
 
 
 def _get_entry(plugin_type, plugin_name, config):
@@ -416,7 +418,7 @@ class ConfigManager(object):
             raise AnsibleError("Unhandled exception when retrieving %s:\n%s" % (config, to_native(e)), orig_exc=e)
         return value
 
-    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None):
+    def get_config_value_and_origin(self, config, cfile=None, plugin_type=None, plugin_name=None, keys=None, variables=None, direct=None, raw=False):
         ''' Given a config key figure out the actual value and report on the origin of the settings '''
         if cfile is None:
             # use default config
@@ -504,6 +506,19 @@ class ConfigManager(object):
                         # skip typing as this is a templated default that will be resolved later in constants, which has needed vars
                         if plugin_type is None and isinstance(value, string_types) and (value.startswith('{{') and value.endswith('}}')):
                             return value, origin
+
+            if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
+                value = unquote(to_text(value, errors='surrogate_or_strict'))
+                nested_match = CONFIG_PATTERN.search(value)
+                if nested_match:
+                    nested_value, nested_option = self.get_config_value_and_origin(
+                        nested_match.group(1), cfile=cfile, plugin_type=plugin_type, plugin_name=plugin_name,
+                        keys=keys, variables=variables, direct=direct, raw=True)
+
+                    value = CONFIG_PATTERN.sub(to_text(nested_value, errors='surrogate_or_strict'), value)
+
+            if raw:
+                return value, origin
 
             # ensure correct type, can raise exceptions on mismatched types
             try:
