@@ -42,8 +42,8 @@ options:
     - 'no'
   environment:
     description:
-    - Dictionary of environment variables and their values to use when
+    - List of dictionaries of environment variables and their values to use when
       executing commands.
-    type: dict or list
-    default: {}
+    type: list
+    default: [{}]
 """
