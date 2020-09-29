@@ -30,12 +30,6 @@ from ansible.plugins.shell import ShellBase
 
 _common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
 
-# Primarily for testing, allow explicitly specifying PowerShell version via
-# an environment variable.
-_powershell_version = os.environ.get('POWERSHELL_VERSION', None)
-if _powershell_version:
-    _common_args = ['PowerShell', '-Version', _powershell_version] + _common_args[1:]
-
 
 def _parse_clixml(data, stream="Error"):
     """
