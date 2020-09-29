@@ -16,18 +16,18 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - block:
-  - include: 'apt.yml'
+  - import_tasks: 'apt.yml'
 
-  - include: 'url-with-deps.yml'
+  - import_tasks: 'url-with-deps.yml'
 
-  - include: 'apt-multiarch.yml'
+  - import_tasks: 'apt-multiarch.yml'
     when:
       - ansible_userspace_architecture != apt_foreign_arch
 
-  - include: 'apt-builddep.yml'
+  - import_tasks: 'apt-builddep.yml'
 
   - block:
-      - include: 'repo.yml'
+      - import_tasks: 'repo.yml'
     always:
       - file:
           path: /etc/apt/sources.list.d/file_tmp_repo.list

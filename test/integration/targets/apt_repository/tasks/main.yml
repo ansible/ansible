@@ -16,10 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- include: 'apt.yml'
+- import_tasks: 'apt.yml'
   when: ansible_distribution in ('Ubuntu')
 
-- include: mode.yaml
+- import_tasks: mode.yaml
   when: ansible_distribution in ('Ubuntu')
   tags:
     - test_apt_repository_mode
