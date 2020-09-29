@@ -6,7 +6,6 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
 name: sh
-author: Unknown (!UNKNOWN)
 short_description: "POSIX shell (/bin/sh)"
 version_added: historical
 description:

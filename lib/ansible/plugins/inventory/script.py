@@ -7,7 +7,6 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     name: script
-    author: Unknown (!UNKNOWN)
     version_added: "2.4"
     short_description: Executes an inventory script that returns JSON
     options:

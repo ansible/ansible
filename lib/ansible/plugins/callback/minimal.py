@@ -9,7 +9,6 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: minimal
     type: stdout
-    author: Unknown (!UNKNOWN)
     short_description: minimal Ansible screen output
     version_added: historical
     description:

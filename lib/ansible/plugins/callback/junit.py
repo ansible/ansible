@@ -8,7 +8,6 @@ __metaclass__ = type
 DOCUMENTATION = '''
     name: junit
     type: aggregate
-    author: Unknown (!UNKNOWN)
     short_description: write playbook output to a JUnit file.
     version_added: historical
     description:

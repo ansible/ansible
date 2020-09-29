@@ -6,7 +6,6 @@ __metaclass__ = type
 
 DOCUMENTATION = """
     name: dict
-    author: Unknown (!UNKNOWN)
     version_added: "1.5"
     short_description: returns key/value pair items from dictionaries
     description:
