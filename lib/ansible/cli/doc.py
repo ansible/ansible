@@ -9,6 +9,7 @@ import datetime
 import json
 import pkgutil
 import os
+import os.path
 import re
 import textwrap
 import traceback
@@ -26,7 +27,8 @@ from ansible.module_utils._text import to_native, to_text
 from ansible.module_utils.common._collections_compat import Container, Sequence
 from ansible.module_utils.common.json import AnsibleJSONEncoder
 from ansible.module_utils.compat import importlib
-from ansible.module_utils.six import string_types
+from ansible.module_utils.six import iteritems, string_types
+from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.plugin_docs import read_docstub
 from ansible.parsing.utils.yaml import from_yaml
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -44,7 +46,7 @@ from ansible.utils.plugin_docs import (
 display = Display()
 
 
-TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('keyword',)
+TARGET_OPTIONS = C.DOCUMENTABLE_PLUGINS + ('role', 'keyword',)
 PB_OBJECTS = ['Play', 'Role', 'Block', 'Task']
 PB_LOADED = {}
 
@@ -71,7 +73,171 @@ class PluginNotFound(Exception):
     pass
 
 
-class DocCLI(CLI):
+class RoleMixin(object):
+    """A mixin containing all methods relevant to role argument specification functionality.
+
+    Note: The methods for actual display of role data are not present here.
+    """
+
+    ROLE_ARGSPEC_FILE = 'argument_specs.yml'
+
+
+    def _load_argspec(self, role_name, collection_path=None, role_path=None):
+        if collection_path:
+            path = os.path.join(collection_path, 'roles', role_name, 'meta', self.ROLE_ARGSPEC_FILE)
+        elif role_path:
+            path = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_FILE)
+        else:
+            raise AnsibleError("A path is required to load argument specs for role '%s'" % role_name)
+
+        loader = DataLoader()
+        return loader.load_from_file(path, cache=False, unsafe=True)
+
+    def _find_all_normal_roles(self, role_paths):
+        """Find all non-collection roles that have an argument spec file.
+
+        :returns: A set of tuples consisting of: role name, full role path
+        """
+        found = set()
+        for path in role_paths:
+            if not os.path.isdir(path):
+                display.warning("Invalid role path: {0}".format(path))
+            else:
+                # Check each subdir for a meta/argument_specs.yml file
+                for entry in os.listdir(path):
+                    role_path = os.path.join(path, entry)
+                    full_path = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_FILE)
+                    if os.path.exists(full_path):
+                        found.add((entry, role_path))
+        return found
+
+    def _find_all_collection_roles(self):
+        """Find all collection roles with an argument spec.
+
+        :returns: A set of tuples consisting of: role name, collection name, collection path
+        """
+        found = set()
+        b_colldirs = list_collection_dirs()
+        for b_path in b_colldirs:
+            path = to_text(b_path, errors='surrogate_or_strict')
+            collname = _get_collection_name_from_path(b_path)
+            roles_dir = os.path.join(path, 'roles')
+            if os.path.exists(roles_dir):
+                for entry in os.listdir(roles_dir):
+                    full_path = os.path.join(roles_dir, entry, 'meta', self.ROLE_ARGSPEC_FILE)
+                    if os.path.exists(full_path):
+                        found.add((entry, collname, path))
+        return found
+
+    def _find_role(self, role_name, role_paths):
+        """Search for a single role within the supplied search paths and within collections.
+
+        :param role_name: The name of the role.
+        :param role_paths: A set of paths to search. For each path, we will search for
+            a sub-directory with the role name.
+
+        :returns: A string with the found path, or None if not found.
+        """
+        for path in role_paths:
+            if not os.path.isdir(path):
+                display.warning("Invalid role path: {0}".format(path))
+            else:
+                full_path = os.path.join(path, role_name)
+                if os.path.isdir(full_path):
+                    return full_path
+
+        b_colldirs = list_collection_dirs()
+        for b_path in b_colldirs:
+            path = to_text(b_path, errors='surrogate_or_strict')
+            collname = _get_collection_name_from_path(b_path)
+            role_dir = os.path.join(path, 'roles', role_name)
+            if os.path.exists(role_dir):
+                return role_dir
+
+        display.warning("role {0} not found in: {1}".format(role_name, ':'.join(role_paths)))
+        return None
+
+    def _create_role_list(self, roles_path):
+        """Return a dict describing the listing of all roles with arg specs.
+
+        Example return:
+
+            results = {
+               'roleA': {
+                  'collection': '',
+                  'entry_points': {
+                     'main': 'Short description for main'
+                  }
+               },
+               'a.b.c.roleB': {
+                  'collection': 'a.b.c',
+                  'entry_points': {
+                     'main': 'Short description for main',
+                     'alternate': 'Short description for alternate entry point'
+                  }
+               'x.y.z.roleB': {
+                  'collection': 'x.y.z',
+                  'entry_points': {
+                     'main': 'Short description for main',
+                  }
+               },
+            }
+
+        :returns: A dict indexed by role name, with 'collection' and 'entry_points' keys per role.
+        """
+        roles = self._find_all_normal_roles(roles_path)
+        collroles = self._find_all_collection_roles()
+
+        result = {}
+
+        def build_summary(role, collection, argspec):
+            if collection:
+                fqcn = '.'.join([collection, role])
+            else:
+                fqcn = role
+            if fqcn not in result:
+                result[fqcn] = []
+            summary = {}
+            summary['collection'] = collection
+            summary['entry_points'] = {}
+            for entry_point in argspec.keys():
+                entry_spec = argspec[entry_point] or {}
+                summary['entry_points'][entry_point] = entry_spec.get('short_description', '')
+            result[fqcn].append(summary)
+
+        for role, role_path in roles:
+            argspec = self._load_argspec(role, role_path=role_path)
+            build_summary(role, '', argspec)
+
+        for role, collection, collection_path in collroles:
+            argspec = self._load_argspec(role, collection_path=collection_path)
+            build_summary(role, collection, argspec)
+
+        return result
+
+    def _display_role_docs(self, role_name, role_spec_file):
+        """Present the documentation for a single role based on the role arg spec contents.
+
+        :param role_name: The name of the role.
+        :param role_spec_file: Path to the role argument specification file.
+        """
+        print("docs for role %s from %s" % (role_name, role_spec_file))
+
+    def _show_role_documentation(self, roles, role_paths):
+        """Coordinate displaying the role documentation for each given role.
+
+        :param roles: A list of role names.
+        :param role_paths: Iterable of paths to search for the named roles.
+        """
+        for role in roles:
+            role_path = self._find_role(role, role_paths)
+            if role_path:
+                role_spec_file = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_FILE)
+                if os.path.exists(role_spec_file):
+                    self._display_role_docs(role, role_spec_file)
+
+
+class DocCLI(CLI, RoleMixin):
     ''' displays information on modules installed in Ansible libraries.
         It displays a terse listing of plugins and their short descriptions,
         provides a printout of their DOCUMENTATION strings,
@@ -140,6 +306,10 @@ class DocCLI(CLI):
                                  choices=TARGET_OPTIONS)
         self.parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
                                  help='Change output into json format.')
+        self.parser.add_argument("-r", "--roles-path", dest='roles_path', default=C.DEFAULT_ROLES_PATH,
+                                 type=opt_help.unfrack_path(pathsep=True),
+                                 action=opt_help.PrependListAction,
+                                 help='The path to the directory containing your roles.')
 
         exclusive = self.parser.add_mutually_exclusive_group()
         exclusive.add_argument("-F", "--list_files", action="store_true", default=False, dest="list_files",
@@ -188,6 +358,35 @@ class DocCLI(CLI):
                 if len(deprecated) > 0:
                     text.append("\nDEPRECATED:")
                     text.extend(deprecated)
+
+        # display results
+        DocCLI.pager("\n".join(text))
+
+    def _display_available_roles(self, list_json):
+        """Display all roles we can find with a valid argument specification.
+
+        Output is: fqcn role name, entry point, short description
+        """
+        roles = list(list_json.keys())
+        entry_point_names = set()
+        for role in roles:
+            for item in list_json[role]:
+                for entry_point in item['entry_points'].keys():
+                    entry_point_names.add(entry_point)
+
+        max_role_len = max(len(x) for x in roles)
+        max_ep_len = max(len(x) for x in entry_point_names)
+        linelimit = display.columns - max_role_len - max_ep_len - 5
+        text = []
+
+        for role in sorted(roles):
+            for item in list_json[role]:
+                for entry_point, desc in iteritems(item['entry_points']):
+                    if len(desc) > linelimit:
+                        desc = desc[:linelimit] + '...'
+                    text.append("%-*s %-*s %s" % (max_role_len, role,
+                                                  max_ep_len, entry_point,
+                                                  desc))
 
         # display results
         DocCLI.pager("\n".join(text))
@@ -328,6 +527,15 @@ class DocCLI(CLI):
                 docs = DocCLI._list_keywords()
             else:
                 docs = DocCLI._get_keywords_docs(context.CLIARGS['args'])
+        elif plugin_type == 'role':
+            if context.CLIARGS['list_dir']:
+                list_json = self._create_role_list(roles_path)
+                if do_json:
+                    jdump(list_json)
+                else:
+                    self._display_available_roles(list_json)
+            self._show_role_documentation(context.CLIARGS['args'], roles_path)
+            return 0
         else:
             loader = getattr(plugin_loader, '%s_loader' % plugin_type)
 
