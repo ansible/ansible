@@ -208,8 +208,6 @@ test/support/integration/plugins/module_utils/k8s/common.py metaclass-boilerplat
 test/support/integration/plugins/module_utils/k8s/raw.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/mysql.py future-import-boilerplate
 test/support/integration/plugins/module_utils/mysql.py metaclass-boilerplate
-test/support/integration/plugins/module_utils/net_tools/nios/api.py future-import-boilerplate
-test/support/integration/plugins/module_utils/net_tools/nios/api.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py future-import-boilerplate
 test/support/integration/plugins/module_utils/network/common/utils.py metaclass-boilerplate
 test/support/integration/plugins/module_utils/postgres.py future-import-boilerplate
