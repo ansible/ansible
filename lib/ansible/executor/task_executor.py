@@ -421,35 +421,6 @@ class TaskExecutor:
 
         templar = Templar(loader=self._loader, variables=variables)
 
-        context_validation_error = None
-        try:
-            # TODO: remove play_context as this does not take delegation into account, task itself should hold values
-            #  for connection/shell/become/terminal plugin options to finalize.
-            #  Kept for now for backwards compatibility and a few functions that are still exclusive to it.
-
-            # apply the given task's information to the connection info,
-            # which may override some fields already set by the play or
-            # the options specified on the command line
-            self._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=variables, templar=templar)
-
-            # fields set from the play/task may be based on variables, so we have to
-            # do the same kind of post validation step on it here before we use it.
-            self._play_context.post_validate(templar=templar)
-
-            # now that the play context is finalized, if the remote_addr is not set
-            # default to using the host's address field as the remote address
-            if not self._play_context.remote_addr:
-                self._play_context.remote_addr = self._host.address
-
-            # We also add "magic" variables back into the variables dict to make sure
-            # a certain subset of variables exist.
-            self._play_context.update_vars(variables)
-
-        except AnsibleError as e:
-            # save the error, which we'll raise later if we don't end up
-            # skipping this task during the conditional evaluation step
-            context_validation_error = e
-
         # Evaluate the conditional (if any) for this task, which we do before running
         # the final task post-validation. We do this before the post validation due to
         # the fact that the conditional may specify that the task be skipped due to a
@@ -470,10 +441,6 @@ class TaskExecutor:
         # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
         if self._loop_eval_error is not None:
             raise self._loop_eval_error  # pylint: disable=raising-bad-type
-
-        # if we ran into an error while setting up the PlayContext, raise it now
-        if context_validation_error is not None:
-            raise context_validation_error  # pylint: disable=raising-bad-type
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host

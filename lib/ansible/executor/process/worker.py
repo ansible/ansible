@@ -45,7 +45,7 @@ from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
 
-__all__ = ['WorkerProcess']
+__all__ = ['MaybeWorker', 'WorkerProcess']
 
 
 display = Display()
@@ -122,13 +122,43 @@ class MaybeWorker:
             )
             display.debug("done sending task result for task %s" % task._uuid)
         else:
-            # FIXME the worker creation below should be abstracted further to account for additional processing models
-
-            # FIXME play_context validation
-            # FIXME task validation/templating
-
             # create a templar and template things we need later for the queuing process
             templar = Templar(loader=self._loader, variables=task_vars)
+
+            # FIXME the worker creation below should be abstracted further to
+            # account for additional processing models
+
+            # TODO: Is the below TODO still relevant after pre-fork changes?
+            # TODO: remove play_context as this does not take delegation into account, task itself should hold values
+            #  for connection/shell/become/terminal plugin options to finalize.
+            #  Kept for now for backwards compatibility and a few functions that are still exclusive to it.
+            # TODO: Decide if the first TODO about the above TODO is too meta.
+
+            # We might throw AnsibleError here, but we let it propagate up.
+
+            # apply the given task's information to the connection info,
+            # which may override some fields already set by the play or
+            # the options specified on the command line
+            play_context = play_context.set_task_and_variable_override(
+                task=task,
+                variables=task_vars,
+                templar=templar)
+
+            # play_context validation
+            # fields set from the play/task may be based on variables, so we have to
+            # do the same kind of post validation step on it here before we use it.
+            play_context.post_validate(templar=templar)
+
+            # now that the play context is finalized, if the remote_addr is not set
+            # default to using the host's address field as the remote address
+            if not play_context.remote_addr:
+                play_context.remote_addr = host.address
+
+            # We also add "magic" variables back into the variables dict to make sure
+            # a certain subset of variables exist.
+            play_context.update_vars(task_vars)
+
+            # FIXME task validation/templating
 
             try:
                 throttle = int(templar.template(task.throttle))
