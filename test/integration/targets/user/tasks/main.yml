@@ -1148,16 +1148,27 @@
   tags:
     - user_test_local_mode
 
-- name: Set user expiration
-  user:
-    name: local_ansibulluser
-    state: present
-    local: yes
-    expires: 2529881062
-  register: user_test_local_expires1
-  tags:
-    - timezone
-    - user_test_local_mode
+- block:
+    - name: Set user expiration
+      user:
+        name: local_ansibulluser
+        state: present
+        local: yes
+        expires: 2529881062
+      register: user_test_local_expires1
+      tags:
+        - timezone
+        - user_test_local_mode
+  rescue:
+    - name: Remove local_ansibulluser
+      user:
+      name: local_ansibulluser
+      state: absent
+      remove: yes
+      local: yes
+    - name: Fail
+      fail:
+        msg: Failed
 
 - name: Set user expiration again to ensure no change is made
   user:
