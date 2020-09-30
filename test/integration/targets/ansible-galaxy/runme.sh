@@ -324,6 +324,19 @@ pushd "${role_testdir}"
 popd # ${role_testdir}
 rm -rf "${role_testdir}"
 
+f_ansible_galaxy_status \
+    "Test if git hidden directories are skipped while using role skeleton (#71977)"
+
+role_testdir=$(mktemp -d)
+pushd "${role_testdir}"
+
+    ansible-galaxy role init sample-role-skeleton
+    git init ./sample-role-skeleton
+    ansible-galaxy role init --role-skeleton=sample-role-skeleton example
+
+popd # ${role_testdir}
+rm -rf "${role_testdir}"
+
 #################################
 # ansible-galaxy collection tests
 #################################

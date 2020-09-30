@@ -912,7 +912,7 @@ class GalaxyCLI(CLI):
             else:
                 in_templates_dir = rel_root_dir == 'templates'
 
-            dirs = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
+            dirs[:] = [d for d in dirs if not any(r.match(d) for r in skeleton_ignore_re)]
 
             for f in files:
                 filename, ext = os.path.splitext(f)
