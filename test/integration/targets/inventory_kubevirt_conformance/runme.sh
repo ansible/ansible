@@ -19,7 +19,12 @@ source virtualenv.sh
 #
 export SETUPTOOLS_USE_DISTUTILS=stdlib
 
-pip install openshift -c constraints.txt
+NO_PEP=""
+if [[ "$(uname)" == "FreeBSD" ]]; then
+  NO_PEP="--no-use-pep517"
+fi
+
+pip install openshift -c constraints.txt $NO_PEP
 
 ./server.py &
 
