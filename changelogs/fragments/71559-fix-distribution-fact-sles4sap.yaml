@@ -1,0 +1,2 @@
+bugfixes:
+  - facts - fix distribution fact for SLES4SAP (https://github.com/ansible/ansible/pull/71559).
