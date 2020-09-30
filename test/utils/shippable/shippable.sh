@@ -30,6 +30,8 @@ command -v pip
 pip --version
 pip list --disable-pip-version-check
 
+COMPLETE=yes
+
 export PATH="${PWD}/bin:${PATH}"
 export PYTHONIOENCODING='utf-8'
 
