@@ -524,6 +524,14 @@
     - result is not changed
   when: postgres_version_resp.stdout is version('11', '>=')
 
+- name: Drop the procedure for tests
+  postgresql_query:
+    query: "DROP PROCEDURE mock_procedure()"
+    db: "{{ db_name }}"
+    login_user: "{{ db_user3 }}"
+    login_password: password
+  when: postgres_version_resp.stdout is version('11', '>=')
+
 #################################################
 # Test ALL_IN_SCHEMA for 'partioned tables type #
 #################################################
