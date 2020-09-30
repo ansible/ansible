@@ -145,8 +145,8 @@ The following example task uses ``cli_parse`` with the native parser and the exa
    - name: "Run command and parse with native"
      ansible.netcommon.cli_parse:
        command: show interface
-         parser:
-           name: ansible.netcommon.native
+       parser:
+         name: ansible.netcommon.native
        set_fact: interfaces
 
 Taking a deeper dive into this task:
