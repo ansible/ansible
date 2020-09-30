@@ -12,12 +12,14 @@ def main():
     module = AnsibleModule(
         {
             'state': {
-                'default': 'present',
                 'type': 'str',
                 'choices': ['absent', 'present'],
             },
             'path': {},
             'content': {},
+            'mapping': {
+                'type': 'dict',
+            },
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
