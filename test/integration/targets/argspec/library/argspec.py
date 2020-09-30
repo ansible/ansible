@@ -20,6 +20,16 @@ def main():
             'mapping': {
                 'type': 'dict',
             },
+            'required_together': {
+                'required_together': [['thing', 'other']],
+                'type': 'list',
+                'elements': 'dict',
+                'options': {
+                    'thing': {},
+                    'other': {},
+                    'another': {},
+                }
+            }
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),

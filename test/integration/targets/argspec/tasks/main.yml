@@ -54,6 +54,27 @@
   register: argspec_bad_mapping_list
   ignore_errors: true
 
+- argspec:
+    required_together:
+      - thing: foo
+        other: bar
+        another: baz
+
+- argspec:
+    required_together:
+      - another: baz
+
+- argspec:
+    required_together:
+      - thing: foo
+  register: argspec_required_together_fail
+  ignore_errors: true
+
+- argspec:
+    required_together:
+      - thing: foo
+        other: bar
+
 - assert:
     that:
       - argspec_simple_good is successful
@@ -73,3 +94,4 @@
       - argspec_bad_mapping_string is failed
       - argspec_bad_mapping_int is failed
       - argspec_bad_mapping_list is failed
+      - argspec_required_together_fail is failed
