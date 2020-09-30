@@ -1,0 +1,3 @@
+bugfixes:
+  - urls - Close filedescriptor of certificate chain tempfile to prevent stale 
+    filedescriptor leakage (https://github.com/ansible/ansible/pull/71825).

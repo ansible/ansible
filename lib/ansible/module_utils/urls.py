@@ -900,6 +900,8 @@ class SSLValidationHandler(urllib_request.BaseHandler):
         if HAS_SSLCONTEXT:
             default_verify_paths = ssl.get_default_verify_paths()
             paths_checked[:0] = [default_verify_paths.capath]
+        else:
+            os.close(tmp_fd)
 
         return (tmp_path, cadata, paths_checked)
 
