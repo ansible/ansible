@@ -1,6 +1,5 @@
 - argspec:
     state: absent
-  register: argspec_simple_good
 
 - argspec:
     state: present
@@ -10,12 +9,10 @@
 - argspec:
     state: present
     path: foo
-  register: argspec_required_if_good1
 
 - argspec:
     state: present
     content: foo
-  register: argspec_required_if_good2
 
 - argspec:
     state: present
@@ -54,13 +51,48 @@
   register: argspec_bad_mapping_list
   ignore_errors: true
 
+- argspec:
+    required_together:
+      - thing: foo
+        other: bar
+        another: baz
+
+- argspec:
+    required_together:
+      - another: baz
+
+- argspec:
+    required_together:
+      - thing: foo
+  register: argspec_required_together_fail
+  ignore_errors: true
+
+- argspec:
+    required_together:
+      - thing: foo
+        other: bar
+
+- argspec:
+    required_if:
+      - thing: bar
+
+- argspec:
+    required_if:
+      - thing: foo
+        other: bar
+
+- argspec:
+    required_if:
+      - thing: foo
+  register: argpsec_required_if_fail
+  ignore_errors: true
+
 - assert:
     that:
-      - argspec_simple_good is successful
       - argspec_required_if_fail is failed
-      - argspec_required_if_good1 is successful
-      - argspec_required_if_good2 is successful
+
       - argspec_mutually_exclusive_fail is failed
+
       - argspec_good_mapping is successful
       - >-
         argspec_good_mapping.mapping == {'foo': 'bar'}
@@ -73,3 +105,7 @@
       - argspec_bad_mapping_string is failed
       - argspec_bad_mapping_int is failed
       - argspec_bad_mapping_list is failed
+
+      - argspec_required_together_fail is failed
+
+      - argpsec_required_if_fail is failed

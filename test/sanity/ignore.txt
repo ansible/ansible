@@ -261,10 +261,6 @@ test/support/network-integration/collections/ansible_collections/vyos/vyos/plugi
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_config.py metaclass-boilerplate
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_facts.py future-import-boilerplate
 test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_facts.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_logging.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_logging.py metaclass-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_static_route.py future-import-boilerplate
-test/support/network-integration/collections/ansible_collections/vyos/vyos/plugins/modules/vyos_static_route.py metaclass-boilerplate
 test/support/windows-integration/plugins/modules/async_status.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/setup.ps1 pslint!skip
 test/support/windows-integration/plugins/modules/win_copy.ps1 pslint!skip
