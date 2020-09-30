@@ -257,6 +257,7 @@ def _unroll_iterator(func):
             return list(ret)
         return ret
 
+    wrapper.__UNROLLED__ = True
     return _update_wrapper(wrapper, func)
 
 
@@ -1086,7 +1087,8 @@ class Templar:
             # Adds Ansible custom filters and tests
             myenv.filters.update(self._get_filters())
             for k in myenv.filters:
-                myenv.filters[k] = _unroll_iterator(myenv.filters[k])
+                if not getattr(myenv.filters[k], '__UNROLLED__', False):
+                    myenv.filters[k] = _unroll_iterator(myenv.filters[k])
             myenv.tests.update(self._get_tests())
 
             if escape_backslashes:
