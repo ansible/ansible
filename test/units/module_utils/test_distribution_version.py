@@ -393,60 +393,6 @@ TESTSETS = [
         }
     },
     {
-        "name": "SLES4SAP 12 SP2",
-        "input": {
-            "/etc/SuSE-release": (
-                'SUSE Linux Enterprise Server 12 (x86_64)\nVERSION = 12\nPATCHLEVEL = 2\n'
-                '# This file is deprecated and will be removed in a future service pack or release.\n'
-                '# Please check /etc/os-release for details about this release.'),
-            "/etc/os-release": (
-                'NAME="SLES_SAP"\nVERSION="12-SP2"\nVERSION_ID="12.2"\nPRETTY_NAME="SUSE Linux Enterprise Server for SAP Applications 12 SP2"\n'
-                'ID="sles_sap"\nANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:suse:sles_sap:12:sp2"'),
-        },
-        "platform.dist": ['SuSE', '12', 'x86_64'],
-        'distro': {
-            'codename': '',
-            'id': 'sles',
-            'name': 'SUSE Linux Enterprise Server',
-            'version': '12.2',
-            'version_best': '12.2',
-        },
-        "result": {
-            "distribution": "SLES_SAP",
-            "distribution_major_version": "12",
-            "distribution_release": "2",
-            "os_family": "Suse",
-            "distribution_version": "12.2",
-        }
-    },
-    {
-        "name": "SLES4SAP 12 SP3",
-        "input": {
-            "/etc/SuSE-release": (
-                'SUSE Linux Enterprise Server 12 (x86_64)VERSION = 12PATCHLEVEL = 3'
-                '\n# This file is deprecated and will be removed in a future service pack or release.\n'
-                '# Please check /etc/os-release for details about this release.'),
-            "/etc/os-release": (
-                'NAME="SLES"\nVERSION="12-SP3"\nVERSION_ID="12.3"\nPRETTY_NAME="SUSE Linux Enterprise Server 12 SP3"\n'
-                'ID="sles"\nANSI_COLOR="0;32"\nCPE_NAME="cpe:/o:suse:sles_sap:12:sp3"'),
-        },
-        "platform.dist": ['SuSE', '12', 'x86_64'],
-        'distro': {
-            'codename': '',
-            'id': 'sles',
-            'name': 'SUSE Linux Enterprise Server',
-            'version': '12.3',
-            'version_best': '12.3',
-        },
-        "result": {
-            "distribution": "SLES_SAP",
-            "distribution_major_version": "12",
-            "distribution_release": "3",
-            "os_family": "Suse",
-            "distribution_version": "12.3",
-        }
-    },
-    {
         "name": "Debian stretch/sid",
         "input": {
             "/etc/os-release": (
