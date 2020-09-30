@@ -32,6 +32,7 @@ except ImportError:
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
+from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
@@ -219,7 +220,7 @@ class VariableManager:
             # if we have a task in this context, and that task has a role, make
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
-            if task._role is not None and (play or task.action in ('include_role', 'ansible.builtin.include_role')):
+            if task._role is not None and (play or task.action in _add_builtin_fqcn(('include_role', ))):
                 all_vars = _combine_and_track(all_vars, task._role.get_default_vars(dep_chain=task.get_dep_chain()),
                                               "role '%s' defaults" % task._role.name)
 

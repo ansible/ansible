@@ -33,6 +33,7 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible import context
+from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
@@ -675,7 +676,7 @@ class StrategyBase:
 
                             host_list = self.get_task_hosts(iterator, original_host, original_task)
 
-                        if original_task.action in ('include_vars', 'ansible.builtin.include_vars'):
+                        if original_task.action in _add_builtin_fqcn(('include_vars', )):
                             for (var_name, var_value) in iteritems(result_item['ansible_facts']):
                                 # find the host we're actually referring too here, which may
                                 # be a host that is not really in inventory at all
@@ -689,7 +690,7 @@ class StrategyBase:
                                 # we set BOTH fact and nonpersistent_facts (aka hostvar)
                                 # when fact is retrieved from cache in subsequent operations it will have the lower precedence,
                                 # but for playbook setting it the 'higher' precedence is kept
-                                is_set_fact = original_task.action in ('set_fact', 'ansible.builtin.set_fact')
+                                is_set_fact = original_task.action in _add_builtin_fqcn(('set_fact', ))
                                 if not is_set_fact or cacheable:
                                     self._variable_manager.set_host_facts(target_host, result_item['ansible_facts'].copy())
                                 if is_set_fact:

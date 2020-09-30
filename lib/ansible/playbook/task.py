@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
+from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, string_types
@@ -153,7 +154,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
-        if self.get_name() in ('meta', 'ansible.builtin.meta'):
+        if self.get_name() in _add_builtin_fqcn(('meta', )):
             return "TASK: meta (%s)" % self.args['_raw_params']
         else:
             return "TASK: %s" % self.get_name()
@@ -231,8 +232,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         # the command/shell/script modules used to support the `cmd` arg,
         # which corresponds to what we now call _raw_params, so move that
         # value over to _raw_params (assuming it is empty)
-        if action in ('command', 'shell', 'script', 'ansible.builtin.command',
-                      'ansible.builtin.shell', 'ansible.builtin.script'):
+        if action in _add_builtin_fqcn(('command', 'shell', 'script')):
             if 'cmd' in args:
                 if args.get('_raw_params', '') != '':
                     raise AnsibleError("The 'cmd' argument cannot be used when other raw parameters are specified."
@@ -264,7 +264,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                 # pre-2.0 syntax allowed variables for include statements at the top level of the task,
                 # so we move those into the 'vars' dictionary here, and show a deprecation message
                 # as we will remove this at some point in the future.
-                if action in ('include', 'ansible.builtin.include') and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
+                if action in _add_builtin_fqcn(('include', )) and k not in self._valid_attrs and k not in self.DEPRECATED_ATTRIBUTES:
                     display.deprecated("Specifying include variables at the top-level of the task is deprecated."
                                        " Please see:\nhttps://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
                                        " for currently supported syntax regarding included files and variables",
@@ -328,8 +328,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
                     env[k] = templar.template(v, convert_bare=False)
                 except AnsibleUndefinedVariable as e:
                     error = to_native(e)
-                    if self.action in ('setup', 'gather_facts', 'ansible.builtin.setup',
-                                       'ansible.builtin.gather_facts') and 'ansible_facts.env' in error or 'ansible_env' in error:
+                    if self.action in _add_builtin_fqcn(('setup', 'gather_facts')) and 'ansible_facts.env' in error or 'ansible_env' in error:
                         # ignore as fact gathering is required for 'env' facts
                         return
                     raise
@@ -396,8 +395,7 @@ class Task(Base, Conditional, Taggable, CollectionSearch):
         all_vars = dict()
         if self._parent:
             all_vars.update(self._parent.get_include_params())
-        if self.action in ('include', 'include_tasks', 'include_role', 'ansible.builtin.include',
-                           'ansible.builtin.include_tasks', 'ansible.builtin.include_role'):
+        if self.action in _add_builtin_fqcn(('include', 'include_tasks', 'include_role')):
             all_vars.update(self.vars)
         return all_vars
 

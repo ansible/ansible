@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ansible.constants as C
+from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.block import Block
@@ -76,7 +77,7 @@ class TaskInclude(Task):
 
         # validate bad args, otherwise we silently ignore
         bad_opts = my_arg_names.difference(self.VALID_ARGS)
-        if bad_opts and task.action in ('include_tasks', 'import_tasks', 'ansible.builtin.include_tasks', 'ansible.builtin.import_tasks'):
+        if bad_opts and task.action in _add_builtin_fqcn(('include_tasks', 'import_tasks')):
             raise AnsibleParserError('Invalid options for %s: %s' % (task.action, ','.join(list(bad_opts))), obj=data)
 
         if not task.args.get('_raw_params'):
@@ -85,7 +86,7 @@ class TaskInclude(Task):
                 raise AnsibleParserError('No file specified for %s' % task.action)
 
         apply_attrs = task.args.get('apply', {})
-        if apply_attrs and task.action not in ('include_tasks', 'ansible.builtin.include_tasks'):
+        if apply_attrs and task.action not in _add_builtin_fqcn(('include_tasks', )):
             raise AnsibleParserError('Invalid options for %s: apply' % task.action, obj=data)
         elif not isinstance(apply_attrs, dict):
             raise AnsibleParserError('Expected a dict for apply but got %s instead' % type(apply_attrs), obj=data)
@@ -98,7 +99,7 @@ class TaskInclude(Task):
         diff = set(ds.keys()).difference(self.VALID_INCLUDE_KEYWORDS)
         for k in diff:
             # This check doesn't handle ``include`` as we have no idea at this point if it is static or not
-            if ds[k] is not Sentinel and ds['action'] in ('include_tasks', 'include_role', 'ansible.builtin.include_tasks', 'ansible.builtin.include_role'):
+            if ds[k] is not Sentinel and ds['action'] in _add_builtin_fqcn(('include_tasks', 'include_role')):
                 if C.INVALID_TASK_ATTRIBUTE_FAILED:
                     raise AnsibleParserError("'%s' is not a valid attribute for a %s" % (k, self.__class__.__name__), obj=ds)
                 else:
@@ -117,7 +118,7 @@ class TaskInclude(Task):
         we need to include the args of the include into the vars as
         they are params to the included tasks. But ONLY for 'include'
         '''
-        if self.action not in ('include', 'ansible.builtin.include'):
+        if self.action not in _add_builtin_fqcn(('include', )):
             all_vars = super(TaskInclude, self).get_vars()
         else:
             all_vars = dict()

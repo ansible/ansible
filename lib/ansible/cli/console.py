@@ -26,6 +26,7 @@ import sys
 
 from ansible import constants as C
 from ansible import context
+from ansible.constants import _add_builtin_fqcn
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -185,8 +186,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         result = None
         try:
-            check_raw = module in ('command', 'shell', 'script', 'raw', 'ansible.builtin.command',
-                                   'ansible.builtin.shell', 'ansible.builtin.script', 'ansible.builtin.raw')
+            check_raw = module in _add_builtin_fqcn(('command', 'shell', 'script', 'raw'))
             task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.task_timeout)
             play_ds = dict(
                 name="Ansible Shell",

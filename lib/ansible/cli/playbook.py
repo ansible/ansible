@@ -11,6 +11,7 @@ import stat
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
+from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.module_utils._text import to_bytes
@@ -170,7 +171,7 @@ class PlaybookCLI(CLI):
                                 if isinstance(task, Block):
                                     taskmsg += _process_block(task)
                                 else:
-                                    if task.action in ('meta', 'ansible.builtin.meta') and task.implicit:
+                                    if task.action in _add_builtin_fqcn(('meta', )) and task.implicit:
                                         continue
 
                                     all_tags.update(task.tags)

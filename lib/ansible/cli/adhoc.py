@@ -9,6 +9,7 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
+from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_text
@@ -71,7 +72,7 @@ class AdHocCLI(CLI):
                   'timeout': context.CLIARGS['task_timeout']}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
-        include_actions = ('include_role', 'include_tasks', 'ansible.builtin.include_role', 'ansible.builtin.include_tasks')
+        include_actions = _add_builtin_fqcn(('include_role', 'include_tasks'))
         if context.CLIARGS['module_name'] not in include_actions and any(frozenset((async_val, poll))):
             mytask['async_val'] = async_val
             mytask['poll'] = poll
@@ -121,7 +122,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError(err)
 
         # Avoid modules that don't work with ad-hoc
-        if context.CLIARGS['module_name'] in ('import_playbook', 'ansible.builtin.import_playbook'):
+        if context.CLIARGS['module_name'] in _add_builtin_fqcn(('import_playbook', )):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands"
                                       % context.CLIARGS['module_name'])
 

@@ -28,6 +28,7 @@ import warnings
 from copy import deepcopy
 
 from ansible import constants as C
+from ansible.constants import _add_builtin_fqcn
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_text
@@ -248,7 +249,7 @@ class CallbackBase(AnsiblePlugin):
         ''' removes data from results for display '''
 
         # mostly controls that debug only outputs what it was meant to
-        if task_name in ('debug', 'ansible.builtin.debug'):
+        if task_name in _add_builtin_fqcn(('debug', )):
             if 'msg' in result:
                 # msg should be alone
                 for key in list(result.keys()):

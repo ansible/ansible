@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 
+from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleParserError, AnsibleAssertionError
 from ansible.module_utils._text import to_bytes
 from ansible.module_utils.six import iteritems, string_types
@@ -139,7 +140,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             new_ds.ansible_pos = ds.ansible_pos
 
         for (k, v) in iteritems(ds):
-            if k in ('include', 'import_playbook', 'ansible.builtin.include', 'ansible.builtin.import_playbook'):
+            if k in _add_builtin_fqcn(('include', 'import_playbook')):
                 self._preprocess_import(ds, new_ds, k, v)
             else:
                 # some basic error checking, to make sure vars are properly

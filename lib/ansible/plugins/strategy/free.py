@@ -34,6 +34,7 @@ DOCUMENTATION = '''
 import time
 
 from ansible import constants as C
+from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
@@ -189,7 +190,7 @@ class StrategyModule(StrategyBase):
                                 del self._blocked_hosts[host_name]
                                 continue
 
-                        if task.action in ('meta', 'ansible.builtin.meta'):
+                        if task.action in _add_builtin_fqcn(('meta', )):
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:

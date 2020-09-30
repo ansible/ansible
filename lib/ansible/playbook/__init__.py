@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
+from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.play import Play
@@ -91,7 +92,7 @@ class Playbook:
                 self._loader.set_basedir(cur_basedir)
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
-            if any(action in entry for action in ('import_playbook', 'include', 'ansible.builtin.import_playbook', 'ansible.builtin.include')):
+            if any(action in entry for action in _add_builtin_fqcn(('import_playbook', 'include', ))):
                 if 'include' in entry or 'ansible.builtin.include' in entry:
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead",
                                        version="2.12", collection_name='ansible.builtin')
