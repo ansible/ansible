@@ -1162,10 +1162,10 @@
   rescue:
     - name: Remove local_ansibulluser
       user:
-      name: local_ansibulluser
-      state: absent
-      remove: yes
-      local: yes
+        name: local_ansibulluser
+        state: absent
+        remove: yes
+        local: yes
     - name: Fail
       fail:
         msg: Failed
