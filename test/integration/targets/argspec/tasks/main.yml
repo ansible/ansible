@@ -24,6 +24,36 @@
   register: argspec_mutually_exclusive_fail
   ignore_errors: true
 
+- argspec:
+    mapping:
+      foo: bar
+  register: argspec_good_mapping
+
+- argspec:
+    mapping: foo=bar
+  register: argspec_good_mapping_kv
+
+- argspec:
+    mapping: !!str '{"foo": "bar"}'
+  register: argspec_good_mapping_json
+
+- argspec:
+    mapping: foo
+  register: argspec_bad_mapping_string
+  ignore_errors: true
+
+- argspec:
+    mapping: 1
+  register: argspec_bad_mapping_int
+  ignore_errors: true
+
+- argspec:
+    mapping:
+      - foo
+      - bar
+  register: argspec_bad_mapping_list
+  ignore_errors: true
+
 - assert:
     that:
       - argspec_simple_good is successful
@@ -31,3 +61,15 @@
       - argspec_required_if_good1 is successful
       - argspec_required_if_good2 is successful
       - argspec_mutually_exclusive_fail is failed
+      - argspec_good_mapping is successful
+      - >-
+        argspec_good_mapping.mapping == {'foo': 'bar'}
+      - argspec_good_mapping_json is successful
+      - >-
+        argspec_good_mapping_json.mapping == {'foo': 'bar'}
+      - argspec_good_mapping_kv is successful
+      - >-
+        argspec_good_mapping_kv.mapping == {'foo': 'bar'}
+      - argspec_bad_mapping_string is failed
+      - argspec_bad_mapping_int is failed
+      - argspec_bad_mapping_list is failed
