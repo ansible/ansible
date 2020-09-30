@@ -17,6 +17,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import re
+import time
 
 from ansible.module_utils._text import to_text
 
@@ -52,6 +53,7 @@ class OpenBSDHardware(Hardware):
         memory_facts = self.get_memory_facts()
         device_facts = self.get_device_facts()
         dmi_facts = self.get_dmi_facts()
+        uptime_facts = self.get_uptime_facts()
 
         mount_facts = {}
         try:
@@ -64,6 +66,7 @@ class OpenBSDHardware(Hardware):
         hardware_facts.update(dmi_facts)
         hardware_facts.update(device_facts)
         hardware_facts.update(mount_facts)
+        hardware_facts.update(uptime_facts)
 
         return hardware_facts
 
@@ -114,6 +117,15 @@ class OpenBSDHardware(Hardware):
             memory_facts['swaptotal_mb'] = int(data[1].translate(swaptrans)) // 1024
 
         return memory_facts
+
+    def get_uptime_facts(self):
+        uptime_facts = {}
+        uptime_seconds = self.sysctl("kern.boottime")
+
+        # uptime = $current_time - $boot_time
+        uptime_facts['uptime_seconds'] = int(time.time() - int(uptime_seconds))
+
+        return uptime_facts
 
     def get_processor_facts(self):
         cpu_facts = {}
