@@ -271,10 +271,6 @@ class DistributionFiles:
                     else:
                         release = "0"  # no minor number, so it is the first release
                     suse_facts['distribution_release'] = release
-                # Starting with SLES4SAP12 SP3 NAME reports 'SLES' instead of 'SLES_SAP'
-                # According to SuSe Support (SR101182877871) we should use the CPE_NAME to detect SLES4SAP
-                if re.search("^CPE_NAME=.*sles_sap.*$", line):
-                    suse_facts['distribution'] = 'SLES_SAP'
         elif path == '/etc/SuSE-release':
             if 'open' in data.lower():
                 data = data.splitlines()
@@ -296,6 +292,10 @@ class DistributionFiles:
                     if release:
                         suse_facts['distribution_release'] = release.group(1)
                         suse_facts['distribution_version'] = collected_facts['distribution_version'] + '.' + release.group(1)
+
+        # See https://www.suse.com/support/kb/doc/?id=000019341 for SLES for SAP
+        if os.path.islink('/etc/products.d/baseproduct') and os.path.realpath('/etc/products.d/baseproduct').endswith('SLES_SAP.prod'):
+            suse_facts['distribution'] = 'SLES_SAP'
 
         return True, suse_facts
 
