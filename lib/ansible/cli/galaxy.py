@@ -241,26 +241,20 @@ class GalaxyCLI(CLI):
                                           "'apb' and 'network'.")
 
     def add_remove_options(self, parser, parents=None):
-        galaxy_type = 'role'
         if parser.metavar == 'COLLECTION_ACTION':
-            galaxy_type = 'collection'
-
-        remove_parser = parser.add_parser('remove', parents=parents, help='Delete each {0} installed in the {0}s_path.'.format(galaxy_type))
-
-        if galaxy_type == 'collection':
-            remove_parser.add_argument('args', metavar='{0}_name'.format(galaxy_type), nargs='*', help='The collection(s) name or '
+            remove_parser = parser.add_parser('remove', parents=parents, help='Delete collections installed in the collections path')
+            remove_parser.add_argument('args', metavar='collection_name', nargs='*', help='The collection(s) name or '
                                        'path/url to a tar.gz collection artifact. This is mutually exclusive with --requirements-file.')
-            remove_parser.add_argument('-i', '--ignore-errors', dest='ignore_errors', action='store_true', default=False,
-                                       help='Ignore errors during removal and continue with the next specified collection, '
-                                       'skipping the dependencies of the failed collection.')
             remove_parser.add_argument('-r', '--requirements-file', dest='requirements',
                                        help='A file containing a list of collections to be removed.')
             remove_parser.add_argument('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
-                                       help="Don't remove {0}s listed as dependencies.".format(galaxy_type))
+                                       help="Skip dependencies of the collection(s) to remove")
+            remove_parser.add_argument('collection', help='Collection', nargs='?', metavar='collection')
         else:
+            remove_parser = parser.add_parser('remove', parents=parents, help='Delete roles installed in the roles path')
             remove_parser.add_argument('args', help='Role(s)', metavar='role', nargs='+')
+            remove_parser.add_argument('role', help='Role', nargs='?', metavar='role')
 
-        remove_parser.add_argument(galaxy_type, help=galaxy_type.capitalize(), nargs='?', metavar=galaxy_type)
         remove_parser.set_defaults(func=self.execute_remove)
 
     def add_delete_options(self, parser, parents=None):
@@ -1234,13 +1228,12 @@ class GalaxyCLI(CLI):
     def execute_remove_collection(self):
         collections = context.CLIARGS['args']
         search_paths = context.CLIARGS['collections_path']
-        ignore_errors = context.CLIARGS['ignore_errors']
         requirements_file = context.CLIARGS['requirements']
         no_deps = context.CLIARGS['no_deps']
 
         requirements = self._require_one_of_collections_requirements(collections, requirements_file)['collections']
         resolved_paths = [validate_collection_path(GalaxyCLI._resolve_path(path)) for path in search_paths]
-        remove_collections(requirements, resolved_paths, ignore_errors, no_deps)
+        remove_collections(requirements, resolved_paths, no_deps)
 
     def execute_list(self):
         """
