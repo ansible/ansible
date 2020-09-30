@@ -1143,6 +1143,7 @@
   user:
     name: ansibulluser
     state: absent
+    remove: yes
     local: yes
   tags:
     - user_test_local_mode
@@ -1300,6 +1301,7 @@
   user:
     name: ansibulluser
     state: absent
+    remove: yes
     local: yes
   tags:
     - user_test_local_mode
@@ -1357,6 +1359,7 @@
   user:
     name: ansibulluser
     state: absent
+    remove: yes
     local: yes
   tags:
     - user_test_local_mode
