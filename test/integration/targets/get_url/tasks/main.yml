@@ -254,9 +254,9 @@
 # https://github.com/ansible/ansible/issues/29614
 - name: Change mode on an already downloaded file and specify checksum
   get_url:
-    url: 'https://{{ httpbin_host }}/get'
+    url: 'https://{{ httpbin_host }}/base64/cHR1eA=='
     dest: '{{ remote_tmp_dir }}/test'
-    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    checksum: 'sha256:b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.'
     mode: '0775'
   register: result
 
@@ -272,9 +272,9 @@
 
 - name: test checksum match in check mode
   get_url:
-    url: 'https://{{ httpbin_host }}/get'
+    url: 'https://{{ httpbin_host }}/base64/cHR1eA=='
     dest: '{{ remote_tmp_dir }}/test'
-    checksum: 'sha256:7036ede810fad2b5d2e7547ec703cae8da61edbba43c23f9d7203a0239b765c4.'
+    checksum: 'sha256:b1b6ce5073c8fac263a8fc5edfffdbd5dec1980c784e09c5bc69f8fb6056f006.'
   check_mode: True
   register: result
 
