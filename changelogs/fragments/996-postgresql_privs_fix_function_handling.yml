@@ -1,0 +1,2 @@
+bugfixes:
+- postgresql_privs - fix the module mistakes a procedure for a function (https://github.com/ansible-collections/community.general/issues/994)
