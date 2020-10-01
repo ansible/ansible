@@ -31,15 +31,15 @@ If you want certain tasks to run in check mode always, or never, regardless of w
 For example::
 
   tasks:
-    - name: this task will always make changes to the system
-      command: /something/to/run --even-in-check-mode
+    - name: This task will always make changes to the system
+      ansible.builtin.command: /something/to/run --even-in-check-mode
       check_mode: no
 
-    - name: this task will never make changes to the system
-      lineinfile:
-          line: "important config"
-          dest: /path/to/myconfig.conf
-          state: present
+    - name: This task will never make changes to the system
+      ansible.builtin.lineinfile:
+        line: "important config"
+        dest: /path/to/myconfig.conf
+        state: present
       check_mode: yes
       register: changes_to_important_config
 
@@ -56,14 +56,14 @@ If you want to skip a task or ignore errors on a task when you run Ansible in ch
 
   tasks:
 
-    - name: this task will be skipped in check mode
-      git:
+    - name: This task will be skipped in check mode
+      ansible.builtin.git:
         repo: ssh://git@github.com/mylogin/hello.git
         dest: /home/mylogin/hello
       when: not ansible_check_mode
 
-    - name: this task will ignore errors in check mode
-      git:
+    - name: This task will ignore errors in check mode
+      ansible.builtin.git:
         repo: ssh://git@github.com/mylogin/hello.git
         dest: /home/mylogin/hello
       ignore_errors: "{{ ansible_check_mode }}"
@@ -87,8 +87,8 @@ Enforcing or preventing diff mode on tasks
 Because the ``--diff`` option can reveal sensitive information, you can disable it for a task by specifying ``diff: no``. For example::
 
   tasks:
-    - name: this task will not report a diff when the file changes
-      template:
+    - name: This task will not report a diff when the file changes
+      ansible.builtin.template:
         src: secret.conf.j2
         dest: /etc/secret.conf
         owner: root
