@@ -101,16 +101,27 @@ The Bullhorn is our newsletter for the Ansible developer community. If you have 
 Subscribe to The Bullhorn here.
 
 `Issue #11 <https://bit.ly/thebullhorn11>`_
+
 `Issue #10 <https://bit.ly/thebullhorn10>`_
+
 `Issue #9 <https://bit.ly/thebullhorn9>`_
+
 `Issue #8 <https://bit.ly/thebullhorn8>`_
+
 `Issue #7 <https://bit.ly/thebullhorn7>`_
+
 `Issue #6 <https://bit.ly/thebullhorn6>`_
+
 `Issue #5 <https://bit.ly/thebullhorn5>`_
+
 `Issue #4 <https://bit.ly/thebullhorn4>`_
+
 `Issue #3 <https://bit.ly/thebullhorn3>`_
+
 `Issue #2 <https://bit.ly/thebullhorn2>`_
+
 `Issue #1 <https://bit.ly/thebullhorn1>`_
+
 `Archive <https://bit.ly/thebullhorn>`_
 
 Ansible Tower support questions
