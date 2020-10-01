@@ -9,9 +9,11 @@ __metaclass__ = type
 import os
 import os.path
 import pathlib
-
 import yaml
-from jinja2 import Environment, FileSystemLoader
+
+from ast import literal_eval
+from jinja2 import Environment, FileSystemLoader, Template
+from ansible import constants
 from ansible.module_utils._text import to_bytes
 
 # Pylint doesn't understand Python3 namespace modules.
@@ -23,9 +25,8 @@ DEFAULT_TEMPLATE_FILE = 'config.rst.j2'
 DEFAULT_TEMPLATE_DIR = pathlib.Path(__file__).parents[4] / 'docs/templates'
 
 
-def fix_description(config_options):
-    '''some descriptions are strings, some are lists. workaround it...'''
-
+def fix_options(config_options):
+    """Convert descriptions from a list to a string. Also template default values if necessary."""
     for config_key in config_options:
         description = config_options[config_key].get('description', [])
         if isinstance(description, list):
@@ -33,6 +34,22 @@ def fix_description(config_options):
         else:
             desc_list = [description]
         config_options[config_key]['description'] = desc_list
+
+        default = config_options[config_key].get('default', None)
+        if default and isinstance(default, str) and \
+                default.startswith('{{') and default.endswith('}}'):
+            try:
+                t = Template(default)
+                templated_default = t.render(vars(constants))
+                try:
+                    templated_default = literal_eval(templated_default)
+                except ValueError:
+                    pass  # not a python data structure
+
+                config_options[config_key]['default'] = '%s - %s' % (default, templated_default)
+            except Exception:
+                pass  # not templatable
+
     return config_options
 
 
@@ -63,7 +80,7 @@ class DocumentConfig(Command):
         with open(args.config_defs) as f:
             config_options = yaml.safe_load(f)
 
-        config_options = fix_description(config_options)
+        config_options = fix_options(config_options)
 
         env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True,)
         template = env.get_template(template_file)

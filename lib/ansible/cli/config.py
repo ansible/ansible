@@ -9,6 +9,7 @@ import shlex
 import subprocess
 import yaml
 
+from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
@@ -174,11 +175,19 @@ class ConfigCLI(CLI):
 
         for setting in sorted(defaults):
             if isinstance(defaults[setting], Setting):
+                value = defaults[setting].value
+
                 if defaults[setting].origin == 'default':
                     color = 'green'
+
+                    # Check if the value was templated by comparing the raw string with the actual value.
+                    actual_value = getattr(C, setting)
+                    if actual_value != value:
+                        value = "%s - %s" % (value, getattr(C, setting))
                 else:
                     color = 'yellow'
-                msg = "%s(%s) = %s" % (setting, defaults[setting].origin, defaults[setting].value)
+
+                msg = "%s(%s) = %s" % (setting, defaults[setting].origin, value)
             else:
                 color = 'green'
                 msg = "%s(%s) = %s" % (setting, 'default', defaults[setting].get('default'))

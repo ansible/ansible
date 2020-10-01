@@ -1,0 +1,2 @@
+bugfixes:
+- config - Display raw and templated config values in docs and ``ansible-config``
