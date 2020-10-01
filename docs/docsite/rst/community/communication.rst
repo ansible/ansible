@@ -96,7 +96,7 @@ participate. For more information about Ansible meetings, consult the `meeting s
 
 The Bullhorn
 ------------
-The Bullhorn is our newsletter for the Ansible developer community. If you have any questions or content you’d like to share, please reach out to us at the-bullhorn@redhat.com, or directly contribute/suggest content for upcoming issues. The Ansible News Working Group sources, curates, and promotes existing Ansible-related content, and encourages the creation of Ansible-related content across a variety of mediums. Initial curation and promotion goals are an Ansible Weekly Newsletter; future work may include "Ansible Magazine" (online site, Ansible-community created / edited); Ansible Developer Newsletter (less frequent, info that is relevant to contributors).
+The Bullhorn is our newsletter for the Ansible developer community. If you have any questions or content you’d like to share, please reach out to us at the-bullhorn@redhat.com, or directly contribute/suggest content for upcoming issues. The Ansible News Working Group sources, curates, and promotes existing Ansible-related content, and encourages the creation of Ansible-related content across a variety of mediums. Initial curation and promotion goals are an Ansible Weekly Newsletter; future work may include Ansible Magazine (online site, Ansible-community created / edited); Ansible Developer Newsletter (less frequent, info that is relevant to contributors).
 
 Subscribe to The Bullhorn here.
 
