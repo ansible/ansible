@@ -360,6 +360,7 @@ static_setup_params = dict(
         'Documentation': 'https://docs.ansible.com/ansible/',
         'Mailing lists': 'https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information',
         'Source Code': 'https://github.com/ansible/ansible',
+        'Delegated Facts': 'https://docs.ansible.com/ansible/latest/user_guide/playbooks_delegation.html#delegated-facts',
     },
     license='GPLv3+',
     # Ansible will also make use of a system copy of python-six and
