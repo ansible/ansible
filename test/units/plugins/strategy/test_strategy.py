@@ -200,13 +200,13 @@ class TestStrategyBase(unittest.TestCase):
         try:
             strategy_base = StrategyBase(tqm=tqm)
             strategy_base._queue_task(host=mock_host, task=mock_task, task_vars=dict(), play_context=MagicMock())
-            self.assertEqual(strategy_base._cur_worker, 1)
+            self.assertEqual(strategy_base._worker._cur_worker, 1)
             self.assertEqual(strategy_base._pending_results, 1)
             strategy_base._queue_task(host=mock_host, task=mock_task, task_vars=dict(), play_context=MagicMock())
-            self.assertEqual(strategy_base._cur_worker, 2)
+            self.assertEqual(strategy_base._worker._cur_worker, 2)
             self.assertEqual(strategy_base._pending_results, 2)
             strategy_base._queue_task(host=mock_host, task=mock_task, task_vars=dict(), play_context=MagicMock())
-            self.assertEqual(strategy_base._cur_worker, 0)
+            self.assertEqual(strategy_base._worker._cur_worker, 0)
             self.assertEqual(strategy_base._pending_results, 3)
         finally:
             tqm.cleanup()
