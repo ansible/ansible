@@ -44,6 +44,7 @@ from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.multiprocessing import context as multiprocessing_context
+from ansible.utils.unsafe_proxy import wrap_var
 
 __all__ = ['MaybeWorker', 'WorkerProcess']
 
@@ -64,8 +65,6 @@ def skip_worker(host, task, templar, task_vars, play_context):
 
 
 def skip_worker_when(host, task, templar, task_vars, play_context):
-    # Based on the old code, this could throw AnsibleError, but I don't think
-    # there's much to do with it here, so we let it propagate up.
     if not task.evaluate_conditional(templar, task_vars):
         display.debug("when evaluation is False, skipping this task")
         raise WorkerShortCircuit(
@@ -183,6 +182,22 @@ class MaybeWorker:
                 task_fields=task.dump_attrs(),
             )
             display.debug("done sending task result for task %s" % task._uuid)
+        except AnsibleError as e:
+            # This is basically a copy of how TaskExecutor#run handles this.
+            # We could very well throw an AnsibleError in skip_worker() logic.
+            # We want to handle that so that things like ignore_errors=true
+            # still work.
+            res = {
+                'failed': True,
+                'msg': wrap_var(to_text(e, nonstring='simplerepr')),
+                '_ansible_no_log': play_context.no_log,
+            }
+            self._final_q.send_task_result(
+                host.name,
+                task._uuid,
+                res,
+                task_fields=task.dump_attrs())
+        # TODO: TaskExecutor#run handles plain Exception too, should we do that?
         else:
             # FIXME the worker creation below should be abstracted further to
             # account for additional processing models
