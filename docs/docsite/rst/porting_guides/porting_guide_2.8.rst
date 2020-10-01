@@ -52,7 +52,7 @@ In Ansible 2.7 and older::
 
     {{ ((foo | default({})).bar | default({})).baz | default('DEFAULT') }}
 
-    or
+or::
 
     {{ foo.bar.baz if (foo is defined and foo.bar is defined and foo.bar.baz is defined) else 'DEFAULT' }}
 
