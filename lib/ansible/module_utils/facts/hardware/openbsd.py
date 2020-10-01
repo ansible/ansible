@@ -16,6 +16,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import datetime
 import re
 import time
 
@@ -45,28 +46,28 @@ class OpenBSDHardware(Hardware):
     platform = 'OpenBSD'
 
     def populate(self, collected_facts=None):
-        hardware_facts = {}
-        self.sysctl = get_sysctl(self.module, ['hw', 'kern'])
+        #hardware_facts = {}
+        hardware_facts = {'YOLO': 'mom'}
+        try:
+            self.sysctl = get_sysctl(self.module, ['hw', 'kern'])
+        except Exception as e:
+            hardware_facts['boom'] = to_text(e)
 
         # TODO: change name
-        cpu_facts = self.get_processor_facts()
-        memory_facts = self.get_memory_facts()
-        device_facts = self.get_device_facts()
-        dmi_facts = self.get_dmi_facts()
-        uptime_facts = self.get_uptime_facts()
-
-        mount_facts = {}
+        hardware_facts.update(self.get_processor_facts())
+        hardware_facts.update(self.get_memory_facts())
+        hardware_facts.update(self.get_device_facts())
+        hardware_facts.update(self.get_dmi_facts())
         try:
-            mount_facts = self.get_mount_facts()
+            hardware_facts.update(self.get_uptime_facts())
+        except Exception as e:
+            self.module.warn("Fetching uptime failed: %s" % to_text(e))
+
+        # storage devices notorioslly prone to hang/block so they are under a timeout
+        try:
+            hardware_facts.update(self.get_mount_facts())
         except timeout.TimeoutError:
             pass
-
-        hardware_facts.update(cpu_facts)
-        hardware_facts.update(memory_facts)
-        hardware_facts.update(dmi_facts)
-        hardware_facts.update(device_facts)
-        hardware_facts.update(mount_facts)
-        hardware_facts.update(uptime_facts)
 
         return hardware_facts
 
@@ -119,13 +120,13 @@ class OpenBSDHardware(Hardware):
         return memory_facts
 
     def get_uptime_facts(self):
-        uptime_facts = {}
-        uptime_seconds = self.sysctl['kern.boottime']
+        # TODO: hardcoded date format, but should get from localization data
+        booted = datetime.datetime.strptime(self.sysctl['kern.boottime'], '%a %b %d %H:%M:%S %Y')
+        now = datetime.datetime.now()
 
         # uptime = $current_time - $boot_time
-        uptime_facts['uptime_seconds'] = int(time.time() - int(uptime_seconds))
-
-        return uptime_facts
+        # rely on datetime object diff returning timedelta object and use total_seconds to get uptime
+        return {'uptime_seconds': int((now - booted).total_seconds())}
 
     def get_processor_facts(self):
         cpu_facts = {}
