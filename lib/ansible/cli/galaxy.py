@@ -435,6 +435,10 @@ class GalaxyCLI(CLI):
                       ('auth_url', False), ('v3', False)]
 
         validate_certs = not context.CLIARGS['ignore_certs']
+        galaxy_options = {'validate_certs': validate_certs}
+        for optional_key in ['clear_response_cache', 'no_cache']:
+            if optional_key in context.CLIARGS:
+                galaxy_options[optional_key] = context.CLIARGS[optional_key]
 
         config_servers = []
 
@@ -478,11 +482,7 @@ class GalaxyCLI(CLI):
                         # The galaxy v1 / github / django / 'Token'
                         server_options['token'] = GalaxyToken(token=token_val)
 
-            server_options['validate_certs'] = validate_certs
-            for optional_key in ['clear_response_cache', 'no_cache']:
-                if optional_key in context.CLIARGS:
-                    server_options[optional_key] = context.CLIARGS[optional_key]
-
+            server_options.update(galaxy_options)
             config_servers.append(GalaxyAPI(self.galaxy, server_key, **server_options))
 
         cmd_server = context.CLIARGS['api_server']
@@ -495,14 +495,14 @@ class GalaxyCLI(CLI):
                 self.api_servers.append(config_server)
             else:
                 self.api_servers.append(GalaxyAPI(self.galaxy, 'cmd_arg', cmd_server, token=cmd_token,
-                                                  validate_certs=validate_certs))
+                                                  **galaxy_options))
         else:
             self.api_servers = config_servers
 
         # Default to C.GALAXY_SERVER if no servers were defined
         if len(self.api_servers) == 0:
             self.api_servers.append(GalaxyAPI(self.galaxy, 'default', C.GALAXY_SERVER, token=cmd_token,
-                                              validate_certs=validate_certs))
+                                              **galaxy_options))
 
         context.CLIARGS['func']()
 

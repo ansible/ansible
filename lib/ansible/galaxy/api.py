@@ -306,7 +306,7 @@ class GalaxyAPI:
 
             # v3 can return data or results for paginated results. Scan the result so we can determine what to cache.
             paginated_key = None
-            for key in ['data', 'resulsts']:
+            for key in ['data', 'results']:
                 if key in data:
                     paginated_key = key
                     break
@@ -675,33 +675,31 @@ class GalaxyAPI:
         if 'v3' in self.available_api_versions:
             api_path = self.available_api_versions['v3']
             pagination_path = ['links', 'next']
-            version_key = 'highest_version'
+            modified_key = 'updated_at'
             relative_link = True  # AH pagination results are relative an not an absolute URI.
         else:
             api_path = self.available_api_versions['v2']
             pagination_path = ['next']
-            version_key = 'latest_version'
+            modified_key = 'modified'
 
         collection_info_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, '/')
         versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/')
         versions_url_info = urlparse(versions_url)
 
-        # We should only rely on the cache if the latest version has not changed. This may slow things down but it
-        # ensures we are not waiting a day before finding any new collections that have been published.
-        # This does run the risk that an older version was published after a newer version but that will be invalidated
-        # after 24 hours or the cache was cleared.
+        # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
+        # we are not waiting a day before finding any new collections that have been published.
         if self._cache:
             server_cache = self._cache.setdefault(versions_url_info.netloc, {})
-            version_cache = self._cache.setdefault(versions_url_info.netloc, {}).setdefault('highest_version', {})
+            modified_cache = server_cache.setdefault('modified', {})
 
-            error_context_msg = 'Error when getting the latest version info for %s.%s from %s (%s)' \
+            error_context_msg = 'Error when getting the modified date for %s.%s from %s (%s)' \
                                 % (namespace, name, self.name, self.api_server)
             data = self._call_galaxy(collection_info_url, error_context_msg=error_context_msg)
-            highest_version = data.get(version_key, {}).get('version')
-            cached_highest_version = version_cache.get('%s.%s' % (namespace, name), None)
+            modified_date = data.get(modified_key, None)
+            cached_modified_date = modified_cache.get('%s.%s' % (namespace, name), None)
 
-            if cached_highest_version != highest_version:
-                version_cache['%s.%s' % (namespace, name)] = highest_version
+            if cached_modified_date != modified_date:
+                modified_cache['%s.%s' % (namespace, name)] = modified_date
                 if versions_url_info.path in server_cache:
                     del server_cache[versions_url_info.path]
 
