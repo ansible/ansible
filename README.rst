@@ -24,6 +24,7 @@ Design Principles
 *  Allow module development in any dynamic language, not just Python.
 *  Be usable as non-root.
 *  Be the easiest IT automation system to use, ever.
+* It is a agent-less tool so easy to use and configure
 
 Use Ansible
 ===========
