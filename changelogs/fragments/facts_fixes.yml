@@ -1,0 +1,5 @@
+bugfixes:
+  - get_sysctl now handles multiline values and does not die silently anymore.
+  - openbsd hardware facts are now being returned.
+  - switched openbsd uptime facts to use date formating, it incorrectly expected epoch from sysctl.
+
