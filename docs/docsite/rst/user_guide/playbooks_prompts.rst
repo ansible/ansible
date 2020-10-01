@@ -16,15 +16,16 @@ Here is a most basic example::
       vars_prompt:
 
         - name: username
-          prompt: "What is your username?"
+          prompt: What is your username?
           private: no
 
         - name: password
-          prompt: "What is your password?"
+          prompt: What is your password?
 
       tasks:
 
-        - debug:
+        - name: Print a message
+          ansible.builtin.debug:
             msg: 'Logging in as {{ username }}'
 
 The user input is hidden by default but it can be made visible by setting ``private: no``.
@@ -36,8 +37,8 @@ If you have a variable that changes infrequently, you can provide a default valu
 
    vars_prompt:
 
-     - name: "release_version"
-       prompt: "Product release version"
+     - name: release_version
+       prompt: Product release version
        default: "1.0"
 
 Encrypting values supplied by ``vars_prompt``
@@ -47,10 +48,10 @@ You can encrypt the entered value so you can use it, for instance, with the user
 
    vars_prompt:
 
-     - name: "my_password2"
-       prompt: "Enter password2"
+     - name: my_password2
+       prompt: Enter password2
        private: yes
-       encrypt: "sha512_crypt"
+       encrypt: sha512_crypt
        confirm: yes
        salt_size: 7
 
@@ -96,8 +97,8 @@ Allowing special characters in ``vars_prompt`` values
 Some special characters, such as ``{`` and ``%`` can create templating errors. If you need to accept special characters, use the ``unsafe`` option::
 
    vars_prompt:
-     - name: "my_password_with_weird_chars"
-       prompt: "Enter password"
+     - name: my_password_with_weird_chars
+       prompt: Enter password
        unsafe: yes
        private: yes
 
