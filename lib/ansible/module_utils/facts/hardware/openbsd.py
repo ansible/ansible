@@ -46,8 +46,7 @@ class OpenBSDHardware(Hardware):
     platform = 'OpenBSD'
 
     def populate(self, collected_facts=None):
-        #hardware_facts = {}
-        hardware_facts = {'YOLO': 'mom'}
+        hardware_facts = {}
         try:
             self.sysctl = get_sysctl(self.module, ['hw', 'kern'])
         except Exception as e:
