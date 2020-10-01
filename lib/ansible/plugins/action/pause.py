@@ -24,7 +24,11 @@ import termios
 import time
 import tty
 
-from os import isatty
+from os import (
+    getpgrp,
+    isatty,
+    tcgetpgrp,
+)
 from ansible.errors import AnsibleError
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.parsing.convert_bool import boolean
@@ -166,6 +170,7 @@ class ActionModule(ActionBase):
             # that we can restore them later after we set raw mode
             stdin_fd = None
             stdout_fd = None
+            running_in_background = False
             try:
                 if PY3:
                     stdin = self._connection._new_stdin.buffer
@@ -181,7 +186,10 @@ class ActionModule(ActionBase):
                 stdin = None
 
             if stdin_fd is not None:
-                if isatty(stdin_fd):
+                # Compare the current process group to the proccees group accosicated
+                # with stdin to determine if the process is running the background.
+                running_in_background = not getpgrp() == tcgetpgrp(stdin_fd)
+                if isatty(stdin_fd) and not running_in_background:
                     # grab actual Ctrl+C sequence
                     try:
                         intr = termios.tcgetattr(stdin_fd)[6][termios.VINTR]
@@ -214,20 +222,25 @@ class ActionModule(ActionBase):
                     termios.tcflush(stdin, termios.TCIFLUSH)
 
             while True:
+                if stdin_fd is None or running_in_background:
+                    display.warning("Not waiting for response to prompt as stdin is not interactive")
+                    if seconds is not None:
+                        time.sleep(seconds)
+                    break
 
                 try:
                     if stdin_fd is not None:
+                        if not isatty(stdin_fd):
+                            display.warning("Not waiting for response to prompt as stdin is not interactive")
+                            if seconds is not None:
+                                time.sleep(seconds)
+                            break
 
                         key_pressed = stdin.read(1)
 
                         if key_pressed == intr:  # value for Ctrl+C
                             clear_line(stdout)
                             raise KeyboardInterrupt
-
-                    if not seconds:
-                        if stdin_fd is None or not isatty(stdin_fd):
-                            display.warning("Not waiting for response to prompt as stdin is not interactive")
-                            break
 
                         # read key presses and act accordingly
                         if key_pressed in (b'\r', b'\n'):

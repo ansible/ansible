@@ -1,0 +1,2 @@
+bugfixes:
+  - pause - Fix indefinite hang when using a pause task on a bacground process (https://github.com/ansible/ansible/issues/32142)

@@ -17,6 +17,9 @@ ansible-playbook test-pause-no-tty.yml 2>&1 | \
     }
 EOF
 
+
+ansible-playbook test-pause-background.yml &
+
 # Test redirecting stdout
 # Issue #41717
 ansible-playbook pause-3.yml > /dev/null \
