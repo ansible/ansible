@@ -46,7 +46,7 @@ class OpenBSDHardware(Hardware):
 
     def populate(self, collected_facts=None):
         hardware_facts = {}
-        self.sysctl = get_sysctl(self.module, ['hw'])
+        self.sysctl = get_sysctl(self.module, ['hw', 'kern'])
 
         # TODO: change name
         cpu_facts = self.get_processor_facts()
@@ -120,7 +120,7 @@ class OpenBSDHardware(Hardware):
 
     def get_uptime_facts(self):
         uptime_facts = {}
-        uptime_seconds = self.sysctl("kern.boottime")
+        uptime_seconds = self.sysctl['kern.boottime']
 
         # uptime = $current_time - $boot_time
         uptime_facts['uptime_seconds'] = int(time.time() - int(uptime_seconds))
