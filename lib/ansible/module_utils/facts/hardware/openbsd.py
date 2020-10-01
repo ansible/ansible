@@ -18,7 +18,6 @@ __metaclass__ = type
 
 import datetime
 import re
-import time
 
 from ansible.module_utils._text import to_text
 
