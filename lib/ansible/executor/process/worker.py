@@ -56,25 +56,30 @@ class WorkerShortCircuit(StopIteration):
         self.task_result = task_result
 
 
-def skip_worker(host, task):
-    # FIXME skip_worker_when(host, task)
+def skip_worker(host, task, templar, task_vars, play_context):
+    skip_worker_when(host, task, templar, task_vars, play_context)
     # FIXME skip_worker_include_tasks(host, task)
     # FIXME skip_worker_include_role(host, task)
     pass
 
 
+def skip_worker_when(host, task, templar, task_vars, play_context):
+    # Based on the old code, this could throw AnsibleError, but I don't think
+    # there's much to do with it here, so we let it propagate up.
+    if not task.evaluate_conditional(templar, task_vars):
+        display.debug("when evaluation is False, skipping this task")
+        raise WorkerShortCircuit(
+            { 'changed': False,
+              'skipped': True,
+              'skip_reason': 'Conditional result was False',
+              '_ansible_no_log': play_context.no_log,
+            })
+
+
 def skip_worker_include_role(host, task):
     # FIXME this check is still left in TaskExecutor._execute to account for loops
     if task.action == 'include_role':
-        raise WorkerShortCircuit(
-            TaskResult(
-                host=host.name,
-                task=task._uuid,
-                return_data={
-                    'include_args': task.args.copy(),
-                }
-            )
-        )
+        raise WorkerShortCircuit({'include_args': task.args.copy()})
 
 
 class MaybeWorker:
@@ -95,11 +100,15 @@ class MaybeWorker:
         self._cur_worker = 0
 
     def queue_task(self, host, task, task_vars, play_context):
+        # create a templar and template things we need later for the queuing process
+        # We need this in skip_worker branches, so create it early.
+        templar = Templar(loader=self._loader, variables=task_vars)
+
         try:
-            if not task.loop and not task.loop_with:
+            if task.loop is None and task.loop_with is None:
                 # FIXME remove code from TaskExecutor._execute() that is being moved into skip_worker
                 #       but keep/move it into TaskExecutor._run_loop() to account for loops
-                skip_worker(host, task)
+                skip_worker(host, task, templar, task_vars, play_context)
             else:
                 # FIXME move TaskExecutor._get_loop_items here? need to pass item to TE if non-empty
                 # FIXME if the cond is trivial and independent on loop vars, can we short-circuit?
@@ -122,9 +131,6 @@ class MaybeWorker:
             )
             display.debug("done sending task result for task %s" % task._uuid)
         else:
-            # create a templar and template things we need later for the queuing process
-            templar = Templar(loader=self._loader, variables=task_vars)
-
             # FIXME the worker creation below should be abstracted further to
             # account for additional processing models
 

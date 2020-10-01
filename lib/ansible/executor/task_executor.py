@@ -156,7 +156,14 @@ class TaskExecutor:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
                 display.debug("calling self._execute()")
-                res = self._execute()
+                # We could get here and still technically be in a loop context
+                # (think: loop: "{{ nonexistent_var }}"), so handle that case.
+                # In that case, 'items' is set to None above and we call
+                # _execute() instead of _run_loop(), but we still need to
+                # evaluate the task's conditional.
+                from_loop = self._task.loop is not None or \
+                    self._task.loop_with is not None
+                res = self._execute(from_loop=from_loop)
                 display.debug("_execute() done")
 
             # make sure changed is set in the result, if it's not present
@@ -352,7 +359,7 @@ class TaskExecutor:
             # execute, and swap them back so we can do the next iteration cleanly
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
-            res = self._execute(variables=task_vars)
+            res = self._execute(variables=task_vars, from_loop=True)
             task_fields = self._task.dump_attrs()
             (self._task, tmp_task) = (tmp_task, self._task)
             (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
@@ -409,7 +416,7 @@ class TaskExecutor:
 
         return results
 
-    def _execute(self, variables=None):
+    def _execute(self, variables=None, from_loop=False):
         '''
         The primary workhorse of the executor system, this runs the task
         on the specified host (which may be the delegated_to host) and handles
@@ -426,9 +433,28 @@ class TaskExecutor:
         # the fact that the conditional may specify that the task be skipped due to a
         # variable not being present which would otherwise cause validation to fail
         try:
-            if not self._task.evaluate_conditional(templar, variables):
-                display.debug("when evaluation is False, skipping this task")
-                return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
+            # In this implementation, this method accepts a from_loop bool.
+            # This allows us to avoid calling evaluate_conditional() twice
+            # when we get here in a *non* loop setting, when the conditional
+            # evaluates to true.
+            #
+            # There are four cases:
+            #
+            # 1. when=false, no loop: We short-circuit in MaybeWorker and never
+            #    reach here.
+            #
+            # 2. when=true, no loop: We attempt short-circuit, fail, end up here.
+            #    This is when we would evaluate_conditional() again if we didn't
+            #    have a way to know we were in a loop context.
+            #
+            # 3. when=false, with loop: We do NOT currently attempt short-circuit.
+            #    We end up here, and evaluate_conditional() like normal.
+            #
+            # 4. when=true, with loop: Same as 3.
+            if from_loop:
+                if not self._task.evaluate_conditional(templar, variables):
+                    display.debug("when evaluation is False, skipping this task")
+                    return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
         except AnsibleError as e:
             # loop error takes precedence
             if self._loop_eval_error is not None:

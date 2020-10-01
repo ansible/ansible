@@ -184,7 +184,7 @@ class TestTaskExecutor(unittest.TestCase):
             final_q=mock_queue,
         )
 
-        def _execute(variables):
+        def _execute(variables, from_loop=False):
             return dict(item=variables.get('item'))
 
         te._execute = MagicMock(side_effect=_execute)
