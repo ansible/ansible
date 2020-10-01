@@ -24,7 +24,7 @@ From there, follow ansible instructions on docs.ansible.com as normal.
 test-module.py
 --------------
 
-'test-module.py' is a simple program that allows module developers (or testers) to run
+The 'test-module.py' is a simple program that allows module developers (or testers) to run
 a module outside of the ansible program, locally, on the current machine.
 
 Example:
