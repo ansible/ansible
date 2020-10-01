@@ -42,6 +42,14 @@ def main():
                     'another': {},
                 }
             },
+            'json': {
+                'type': 'json',
+            },
+            'fail_on_missing_params': {
+                'type': 'bool',
+                'default': False,
+            },
+            'needed_param': {},
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
@@ -50,6 +58,9 @@ def main():
             ('path', 'content'),
         ),
     )
+
+    if module.params['fail_on_missing_params']:
+        module.fail_on_missing_params(['needed_param'])
 
     module.exit_json(**module.params)
 
