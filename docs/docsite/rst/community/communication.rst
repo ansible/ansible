@@ -96,33 +96,11 @@ participate. For more information about Ansible meetings, consult the `meeting s
 
 The Bullhorn
 ------------
-The Bullhorn is our newsletter for the Ansible developer community. If you have any questions or content you’d like to share, please reach out to us at the-bullhorn@redhat.com, or directly contribute/suggest content for upcoming issues. The Ansible News Working Group sources, curates, and promotes existing Ansible-related content, and encourages the creation of Ansible-related content across a variety of mediums. Initial curation and promotion goals are an Ansible Weekly Newsletter; future work may include Ansible Magazine (online site, Ansible-community created / edited); Ansible Developer Newsletter (less frequent, info that is relevant to contributors).
+The Bullhorn is our newsletter for the Ansible developer community. If you have any questions or content you'd like to share, please reach out to us at the-bullhorn@redhat.com, or directly contribute/suggest content for upcoming issues. The Ansible News Working Group sources, curates, and promotes existing Ansible-related content, and encourages the creation of Ansible-related content across a variety of mediums. Initial curation and promotion goals are an Ansible Weekly Newsletter; future work may include Ansible Magazine (online site, Ansible-community created / edited); Ansible Developer Newsletter (less frequent, info that is relevant to contributors).
 
-Subscribe to The Bullhorn here.
+Subscribe to The Bullhorn `here <https://ansible.us19.list-manage.com/subscribe?u=56d874e027110e35dea0e03c1&id=d6635f5420>`_.
 
-`Issue #11 <https://bit.ly/thebullhorn11>`_
-
-`Issue #10 <https://bit.ly/thebullhorn10>`_
-
-`Issue #9 <https://bit.ly/thebullhorn9>`_
-
-`Issue #8 <https://bit.ly/thebullhorn8>`_
-
-`Issue #7 <https://bit.ly/thebullhorn7>`_
-
-`Issue #6 <https://bit.ly/thebullhorn6>`_
-
-`Issue #5 <https://bit.ly/thebullhorn5>`_
-
-`Issue #4 <https://bit.ly/thebullhorn4>`_
-
-`Issue #3 <https://bit.ly/thebullhorn3>`_
-
-`Issue #2 <https://bit.ly/thebullhorn2>`_
-
-`Issue #1 <https://bit.ly/thebullhorn1>`_
-
-`Archive <https://bit.ly/thebullhorn>`_
+`Issues <https://us19.campaign-archive.com/home/?u=56d874e027110e35dea0e03c1&id=d6635f5420>`_
 
 Ansible Tower support questions
 ===============================
