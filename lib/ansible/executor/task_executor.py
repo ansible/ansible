@@ -428,10 +428,7 @@ class TaskExecutor:
 
         templar = Templar(loader=self._loader, variables=variables)
 
-        # Evaluate the conditional (if any) for this task, which we do before running
-        # the final task post-validation. We do this before the post validation due to
-        # the fact that the conditional may specify that the task be skipped due to a
-        # variable not being present which would otherwise cause validation to fail
+        context_validation_error = None
         try:
             if from_loop:
                 # TODO:
@@ -441,17 +438,20 @@ class TaskExecutor:
                 # play_context to know when we can safely skip it, and with
                 # removing it entirely, a bunch of tests fail due to not having
                 # connection vars when looping.
-                self._play_context = \
-                    self._play_context.set_task_and_variable_override(
-                        task=self._task,
-                        variables=variables,
-                        templar=templar)
+                try:
+                    self._play_context = \
+                        self._play_context.set_task_and_variable_override(
+                            task=self._task,
+                            variables=variables,
+                            templar=templar)
 
-                self._play_context.post_validate(templar=templar)
-                if not self._play_context.remote_addr:
-                    self._play_context.remote_addr = self._host.address
+                    self._play_context.post_validate(templar=templar)
+                    if not self._play_context.remote_addr:
+                        self._play_context.remote_addr = self._host.address
 
-                self._play_context.update_vars(variables)
+                    self._play_context.update_vars(variables)
+                except AnsibleError as e:
+                    context_validation_error = e
 
             # In this implementation, this method accepts a from_loop bool.
             # This allows us to avoid calling evaluate_conditional() twice
@@ -472,6 +472,10 @@ class TaskExecutor:
             #
             # 4. when=true, with loop: Same as 3.
             if from_loop:
+                # Evaluate the conditional (if any) for this task, which we do before running
+                # the final task post-validation. We do this before the post validation due to
+                # the fact that the conditional may specify that the task be skipped due to a
+                # variable not being present which would otherwise cause validation to fail
                 if not self._task.evaluate_conditional(templar, variables):
                     display.debug("when evaluation is False, skipping this task")
                     return dict(changed=False, skipped=True, skip_reason='Conditional result was False', _ansible_no_log=self._play_context.no_log)
@@ -487,6 +491,10 @@ class TaskExecutor:
         # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
         if self._loop_eval_error is not None:
             raise self._loop_eval_error  # pylint: disable=raising-bad-type
+
+        # if we ran into an error while setting up the PlayContext, raise it now
+        if context_validation_error is not None:
+            raise context_validation_error  # pylint: disable=raising-bad-type
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host

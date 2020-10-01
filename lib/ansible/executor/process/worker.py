@@ -110,41 +110,58 @@ class MaybeWorker:
                 # evaluated, so that things like:
                 #   when: ansible_host == 'foo'
                 # still work. So we update it before we apply any prefork checks.
+                #
+                # We need to run the play_context stuff before skip_worker, but
+                # we can't bail out yet if it throws. I'm not particularly a fan
+                # of how this works, but this is how it worked in TaskExecutor
+                # and I don't have enough background yet to be able to refactor
+                # it. Basically we need to run this before we evaluate the
+                # `when` conditional, but we need to ignore errors from it if
+                # the conditional ends up being false. Otherwise, we end up
+                # failing with something like:
+                #   when: false
+                #   become_user: "{{ nonexistent_var }}"
+                # Since we will try to interpolate the var here.
 
-                # TODO: Is the below TODO still relevant after pre-fork changes?
-                # TODO: remove play_context as this does not take delegation into account,
-                #  task itself should hold values for connection/shell/become/terminal plugin
-                #  options to finalize.
-                #  Kept for now for backwards compatibility and a few functions that are still exclusive to it.
-                # TODO: Decide if the first TODO about the above TODO is too meta.
+                context_validation_error = None
+                try:
+                    # TODO: Is the below TODO still relevant after pre-fork changes?
+                    # TODO: remove play_context as this does not take delegation into account,
+                    #  task itself should hold values for connection/shell/become/terminal plugin
+                    #  options to finalize.
+                    #  Kept for now for backwards compatibility and a few functions that are still exclusive to it.
+                    # TODO: Decide if the first TODO about the above TODO is too meta.
 
-                # We might throw AnsibleError here, but we let it propagate up.
+                    # apply the given task's information to the connection info,
+                    # which may override some fields already set by the play or
+                    # the options specified on the command line
+                    play_context = play_context.set_task_and_variable_override(
+                        task=task,
+                        variables=task_vars,
+                        templar=templar)
 
-                # apply the given task's information to the connection info,
-                # which may override some fields already set by the play or
-                # the options specified on the command line
-                play_context = play_context.set_task_and_variable_override(
-                    task=task,
-                    variables=task_vars,
-                    templar=templar)
+                    # play_context validation
+                    # fields set from the play/task may be based on variables, so we have to
+                    # do the same kind of post validation step on it here before we use it.
+                    play_context.post_validate(templar=templar)
 
-                # play_context validation
-                # fields set from the play/task may be based on variables, so we have to
-                # do the same kind of post validation step on it here before we use it.
-                play_context.post_validate(templar=templar)
+                    # now that the play context is finalized, if the remote_addr is not set
+                    # default to using the host's address field as the remote address
+                    if not play_context.remote_addr:
+                        play_context.remote_addr = host.address
 
-                # now that the play context is finalized, if the remote_addr is not set
-                # default to using the host's address field as the remote address
-                if not play_context.remote_addr:
-                    play_context.remote_addr = host.address
-
-                # We also add "magic" variables back into the variables dict to make sure
-                # a certain subset of variables exist.
-                play_context.update_vars(task_vars)
+                    # We also add "magic" variables back into the variables dict to make sure
+                    # a certain subset of variables exist.
+                    play_context.update_vars(task_vars)
+                except AnsibleError as e:
+                    context_validation_error = e
 
                 # FIXME remove code from TaskExecutor._execute() that is being moved into skip_worker
                 #       but keep/move it into TaskExecutor._run_loop() to account for loops
                 skip_worker(host, task, templar, task_vars, play_context)
+
+                if context_validation_error is not None:
+                    raise context_validation_error  # pylint: disable=raising-bad-type
             else:
                 # FIXME move TaskExecutor._get_loop_items here? need to pass item to TE if non-empty
                 # FIXME if the cond is trivial and independent on loop vars, can we short-circuit?
