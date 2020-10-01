@@ -46,7 +46,7 @@ In the above setup, `--check` mode in Ansible can be used as a layer of testing 
 existing system, using the `--check` flag to the `ansible` command will report if Ansible thinks it would have had to have made any changes to
 bring the system into a desired state.
 
-This can let you know up front if there is any need to deploy onto the given system.  Ordinarily scripts and commands don't run in check mode, so if you
+This can let you know up front if there is any need to deploy onto the given system.  Ordinarily, scripts and commands don't run in check mode, so if you
 want certain steps to execute in normal mode even when the `--check` flag is used, such as calls to the script module, disable check mode for those tasks::
 
 
@@ -101,7 +101,7 @@ And the assert module makes it very easy to validate various kinds of truth::
             - "'not ready' not in cmd_result.stderr"
             - "'gizmo enabled' in cmd_result.stdout"
 
-Should you feel the need to test for existence of files that are not declaratively set by your Ansible configuration, the 'stat' module is a great choice::
+Should you feel the need to test for the existence of files that are not declaratively set by your Ansible configuration, the 'stat' module is a great choice::
 
    tasks:
 
@@ -172,7 +172,7 @@ This is the great culmination of embedded tests::
           command: /usr/bin/add_back_to_pool {{ inventory_hostname }}
           delegate_to: 127.0.0.1
 
-Of course in the above, the "take out of the pool" and "add back" steps would be replaced with a call to a Ansible load balancer
+Of course in the above, the "take out of the pool" and "add back" steps would be replaced with a call to an Ansible load balancer
 module or appropriate shell command.  You might also have steps that use a monitoring module to start and end an outage window
 for the machine.
 
@@ -272,4 +272,3 @@ system.
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
