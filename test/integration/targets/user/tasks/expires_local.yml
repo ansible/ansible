@@ -1,0 +1,333 @@
+---
+## local user expires
+# Date is March 3, 2050
+
+- name: Remove local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  tags:
+    - user_test_local_mode
+
+- name: Set user expiration
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    expires: 2529881062
+  register: user_test_local_expires1
+  tags:
+    - timezone
+    - user_test_local_mode
+
+- name: Set user expiration again to ensure no change is made
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    expires: 2529881062
+  register: user_test_local_expires2
+  tags:
+    - timezone
+    - user_test_local_mode
+
+- name: Ensure that account with expiration was created and did not change on subsequent run
+  assert:
+    that:
+      - user_test_local_expires1 is changed
+      - user_test_local_expires2 is not changed
+  tags:
+    - user_test_local_mode
+
+- name: Verify expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for local_ansibulluser
+      getent:
+        database: shadow
+        key: local_ansibulluser
+      tags:
+        - user_test_local_mode
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        that:
+          - getent_shadow['local_ansibulluser'][6] == '29281'
+      tags:
+        - user_test_local_mode
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+- name: Change timezone
+  timezone:
+    name: America/Denver
+  register: original_timezone
+  tags:
+    - timezone
+    - user_test_local_mode
+
+- name: Change system timezone to make sure expiration comparison works properly
+  block:
+    - name: Create user with expiration again to ensure no change is made in a new timezone
+      user:
+        name: local_ansibulluser
+        state: present
+        local: yes
+        expires: 2529881062
+      register: user_test_local_different_tz
+      tags:
+        - timezone
+        - user_test_local_mode
+
+    - name: Ensure that no change was reported
+      assert:
+        that:
+          - user_test_local_different_tz is not changed
+      tags:
+        - timezone
+        - user_test_local_mode
+
+  always:
+    - name: Restore original timezone - {{ original_timezone.diff.before.name }}
+      timezone:
+        name: "{{ original_timezone.diff.before.name }}"
+      when: original_timezone.diff.before.name != "n/a"
+      tags:
+        - timezone
+        - user_test_local_mode
+
+    - name: Restore original timezone when n/a
+      file:
+        path: /etc/sysconfig/clock
+        state: absent
+      when:
+        - original_timezone.diff.before.name == "n/a"
+        - "'/etc/sysconfig/clock' in original_timezone.msg"
+      tags:
+        - timezone
+        - user_test_local_mode
+
+
+- name: Unexpire user
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    expires: -1
+  register: user_test_local_expires3
+  tags:
+    - user_test_local_mode
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for local_ansibulluser
+      getent:
+        database: shadow
+        key: local_ansibulluser
+      tags:
+        - user_test_local_mode
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['local_ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['local_ansibulluser'][6] or getent_shadow['local_ansibulluser'][6] | int < 0
+      tags:
+        - user_test_local_mode
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+- name: Verify un expiration date for Linux/BSD
+  block:
+    - name: Unexpire user again to check for change
+      user:
+        name: local_ansibulluser
+        state: present
+        local: yes
+        expires: -1
+      register: user_test_local_expires4
+      tags:
+        - user_test_local_mode
+
+    - name: Ensure first expiration reported a change and second did not
+      assert:
+        msg: The second run of the expiration removal task reported a change when it should not
+        that:
+          - user_test_local_expires3 is changed
+          - user_test_local_expires4 is not changed
+      tags:
+        - user_test_local_mode
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse', 'FreeBSD']
+
+# Test setting no expiration when creating a new account
+# https://github.com/ansible/ansible/issues/44155
+- name: Remove local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  tags:
+    - user_test_local_mode
+
+- name: Create user account without expiration
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    expires: -1
+  register: user_test_local_create_no_expires_1
+  tags:
+    - user_test_local_mode
+
+- name: Create user account without expiration again
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    expires: -1
+  register: user_test_local_create_no_expires_2
+  tags:
+    - user_test_local_mode
+
+- name: Ensure changes were made appropriately
+  assert:
+    msg: Setting 'expires='-1 resulted in incorrect changes
+    that:
+      - user_test_local_create_no_expires_1 is changed
+      - user_test_local_create_no_expires_2 is not changed
+  tags:
+    - user_test_local_mode
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for local_ansibulluser
+      getent:
+        database: shadow
+        key: local_ansibulluser
+      tags:
+        - user_test_local_mode
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['local_ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['local_ansibulluser'][6] or getent_shadow['local_ansibulluser'][6] | int < 0
+      tags:
+        - user_test_local_mode
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+# Test setting epoch 0 expiration when creating a new account, then removing the expiry
+# https://github.com/ansible/ansible/issues/47114
+- name: Remove local_ansibulluser
+  user:
+    name: local_ansibulluser
+    state: absent
+    remove: yes
+    local: yes
+  tags:
+    - user_test_local_mode
+
+- name: Create user account with epoch 0 expiration
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    expires: 0
+  register: user_test_local_expires_create0_1
+  tags:
+    - user_test_local_mode
+
+- name: Create user account with epoch 0 expiration again
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    expires: 0
+  register: user_test_local_expires_create0_2
+  tags:
+    - user_test_local_mode
+
+- name: Change the user account to remove the expiry time
+  user:
+    name: local_ansibulluser
+    expires: -1
+    local: yes
+  register: user_test_local_remove_expires_1
+  tags:
+    - user_test_local_mode
+
+- name: Change the user account to remove the expiry time again
+  user:
+    name: local_ansibulluser
+    expires: -1
+    local: yes
+  register: user_test_local_remove_expires_2
+  tags:
+    - user_test_local_mode
+
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Ensure changes were made appropriately
+      assert:
+        msg: Creating an account with 'expries=0' then removing that expriation with 'expires=-1' resulted in incorrect changes
+        that:
+          - user_test_local_expires_create0_1 is changed
+          - user_test_local_expires_create0_2 is not changed
+          - user_test_local_remove_expires_1 is changed
+          - user_test_local_remove_expires_2 is not changed
+      tags:
+        - user_test_local_mode
+
+    - name: LINUX | Get expiration date for local_ansibulluser
+      getent:
+        database: shadow
+        key: local_ansibulluser
+      tags:
+        - user_test_local_mode
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['local_ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['local_ansibulluser'][6] or getent_shadow['local_ansibulluser'][6] | int < 0
+      tags:
+        - user_test_local_mode
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']
+
+# Test expiration with a very large negative number. This should have the same
+# result as setting -1.
+- name: Set expiration date using very long negative number
+  user:
+    name: local_ansibulluser
+    state: present
+    local: yes
+    expires: -2529881062
+  register: user_test_local_expires5
+  tags:
+    - user_test_local_mode
+
+- name: Ensure no change was made
+  assert:
+    that:
+      - user_test_local_expires5 is not changed
+  tags:
+    - user_test_local_mode
+
+- name: Verify un expiration date for Linux
+  block:
+    - name: LINUX | Get expiration date for local_ansibulluser
+      getent:
+        database: shadow
+        key: local_ansibulluser
+      tags:
+        - user_test_local_mode
+
+    - name: LINUX | Ensure proper expiration date was set
+      assert:
+        msg: "expiry is supposed to be empty or -1, not {{ getent_shadow['local_ansibulluser'][6] }}"
+        that:
+          - not getent_shadow['local_ansibulluser'][6] or getent_shadow['local_ansibulluser'][6] | int < 0
+      tags:
+        - user_test_local_mode
+  when: ansible_facts.os_family in ['RedHat', 'Debian', 'Suse']

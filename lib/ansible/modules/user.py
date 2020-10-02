@@ -413,6 +413,7 @@ import shutil
 import socket
 import subprocess
 import time
+import math
 
 from ansible.module_utils import distro
 from ansible.module_utils._text import to_bytes, to_native, to_text
@@ -581,6 +582,7 @@ class User(object):
         if self.local:
             command_name = 'luseradd'
             lgroupmod_cmd = self.module.get_bin_path('lgroupmod', True)
+            lchage_cmd = self.module.get_bin_path('lchage', True)
         else:
             command_name = 'useradd'
 
@@ -648,7 +650,7 @@ class User(object):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.expires is not None:
+        if self.expires is not None and not self.local:
             cmd.append('-e')
             if self.expires < time.gmtime(0):
                 cmd.append('')
@@ -674,7 +676,22 @@ class User(object):
 
         cmd.append(self.name)
         (rc, err, out) = self.execute_command(cmd)
-        if not self.local or rc != 0 or self.groups is None or len(self.groups) == 0:
+        if not self.local or rc != 0:
+            return (rc, err, out)
+
+        if self.expires is not None:
+            if self.expires < time.gmtime(0):
+                lexpires = -1
+            else:
+                # Convert seconds since Epoch to days since Epoch
+                lexpires = int(math.floor(self.module.params['expires'])) // 86400
+            (rc, _err, _out) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
+            out += _out
+            err += _err
+            if rc != 0:
+                return (rc, out, err)
+
+        if self.groups is None or len(self.groups) == 0:
             return (rc, err, out)
 
         for add_group in groups:
@@ -719,6 +736,8 @@ class User(object):
             lgroupmod_cmd = self.module.get_bin_path('lgroupmod', True)
             lgroupmod_add = set()
             lgroupmod_del = set()
+            lchage_cmd = self.module.get_bin_path('lchage', True)
+            lexpires = None
         else:
             command_name = 'usermod'
 
@@ -801,16 +820,23 @@ class User(object):
 
             if self.expires < time.gmtime(0):
                 if current_expires >= 0:
-                    cmd.append('-e')
-                    cmd.append('')
+                    if self.local:
+                        lexpires = -1
+                    else:
+                        cmd.append('-e')
+                        cmd.append('')
             else:
                 # Convert days since Epoch to seconds since Epoch as struct_time
                 current_expire_date = time.gmtime(current_expires * 86400)
 
                 # Current expires is negative or we compare year, month, and day only
                 if current_expires < 0 or current_expire_date[:3] != self.expires[:3]:
-                    cmd.append('-e')
-                    cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
+                    if self.local:
+                        # Convert seconds since Epoch to days since Epoch
+                        lexpires = int(math.floor(self.module.params['expires'])) // 86400
+                    else:
+                        cmd.append('-e')
+                        cmd.append(time.strftime(self.DATE_FORMAT, self.expires))
 
         # Lock if no password or unlocked, unlock only if locked
         if self.password_lock and not info[1].startswith('!'):
@@ -830,7 +856,17 @@ class User(object):
             cmd.append(self.name)
             (rc, err, out) = self.execute_command(cmd)
 
-        if not self.local or not (rc is None or rc == 0) or (len(lgroupmod_add) == 0 and len(lgroupmod_del) == 0):
+        if not self.local or not (rc is None or rc == 0):
+            return (rc, err, out)
+
+        if lexpires is not None:
+            (rc, _err, _out) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
+            out += _out
+            err += _err
+            if rc != 0:
+                return (rc, out, err)
+
+        if len(lgroupmod_add) == 0 and len(lgroupmod_del) == 0:
             return (rc, err, out)
 
         for add_group in lgroupmod_add:
