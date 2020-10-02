@@ -613,7 +613,7 @@ class Base(FieldAttributeBase):
 
     # flags and misc. settings
     _environment = FieldAttribute(isa='list', extend=True, prepend=True)
-    _no_log = FieldAttribute(isa='bool')
+    _no_log = FieldAttribute(isa='bool', default=C.DEFAULT_NO_LOG)
     _run_once = FieldAttribute(isa='bool')
     _ignore_errors = FieldAttribute(isa='bool')
     _ignore_unreachable = FieldAttribute(isa='bool')

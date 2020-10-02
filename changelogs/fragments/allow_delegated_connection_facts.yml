@@ -1,0 +1,2 @@
+bugfixes:
+  - Allow connection to depend on facts from delegated host when in delegation (#71591).
