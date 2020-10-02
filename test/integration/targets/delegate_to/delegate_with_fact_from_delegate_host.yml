@@ -1,0 +1,28 @@
+- name: ensure we can use inventory_hostname fact to set delegation
+  hosts: localhost
+  gather_facts: false
+  vars:
+    ansible_connection: local
+  tasks:
+    - name: Setting fact
+      set_fact:
+        delagate_host: "{{ ansible_play_hosts_all[0] }}"
+
+    - name: Testing delegation
+      ping:
+      delegate_to: "{{ delagate_host }}"
+
+
+- name: ensure we can use fact on delegated host for connection info
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - set_fact:
+        delegate_to_connection: local
+      delegate_to: f31
+      delegate_facts: True
+
+    - ping:
+      delegate_to: f31
+      vars:
+        ansible_connection: "{{ delegate_to_connection }}"
