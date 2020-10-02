@@ -206,7 +206,7 @@ The `hacking/aws_config/setup_iam.yml` playbook can be used to setup two groups:
     integration tests not marked as `unsupported` and are designed to mirror those
     used by Ansible's CI.
   - `ansible-integration-unsupported` will have the additional policies applied
-    necessary to run the integraion tests marked as `unsupported` including tests
+    necessary to run the integration tests marked as `unsupported` including tests
     for managing IAM roles, users and groups.
 
 Once the groups have been created, you'll need to create a user and make the user a member of these

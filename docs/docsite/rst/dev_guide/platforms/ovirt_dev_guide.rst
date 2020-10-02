@@ -125,7 +125,7 @@ entity of the SDK.
     )
 
     # Create the Ansible module, please always implement the
-    # feautre called 'check_mode', for 'create', 'update' and
+    # feature called 'check_mode', for 'create', 'update' and
     # 'delete' operations it's implemented by default in BaseModule:
     module = AnsibleModule(
         argument_spec=argument_spec,
