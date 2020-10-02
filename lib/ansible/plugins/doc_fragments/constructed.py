@@ -22,7 +22,10 @@ options:
     type: dict
     default: {}
   groups:
-    description: Add hosts to group based on Jinja2 conditionals.
+    description: >
+      Add hosts to group based on Jinja2 conditionals.
+      A list of filters can be found here
+      U(https://docs.ansible.com/ansible/latest/user_guide/playbooks_filters.html).
     type: dict
     default: {}
   keyed_groups:
