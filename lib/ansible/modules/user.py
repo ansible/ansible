@@ -692,7 +692,7 @@ class User(object):
                 return (rc, out, err)
 
         if self.groups is None or len(self.groups) == 0:
-            return (rc, err, out)
+            return (rc, out, err)
 
         for add_group in groups:
             (rc, _out, _err) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
