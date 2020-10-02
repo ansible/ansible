@@ -779,7 +779,7 @@ If your collection is part of Ansible, use one of the following three options  t
 
 * Use the ``antsibull-changelog`` tool.
 
-* If are not using this tool, include the properly formatted ``changelog.yaml`` file  into your collection. See the `changlog.yaml format <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelog.yaml-format.md>`_ for details.
+* If are not using this tool, include the properly formatted ``changelog.yaml`` file  into your collection. See the `changelog.yaml format <https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelog.yaml-format.md>`_ for details.
 
 * Add a link to own changelogs or release notes in any format by opening an issue at https://github.com/ansible-community/ansible-build-data/ with the HTML link to that information.
 
