@@ -447,7 +447,7 @@ class TaskExecutor:
 
         # ensure we have valid no_log
         try:
-            self._no_log = self._task.get_validated_value('no_log', self._task._no_log, self.task.no_log, templar)
+            self._no_log = self._task.get_validated_value('no_log', self._task._no_log, self._task.no_log, templar)
         except Exception as e:
             pass # ignore templating error, keep default
 
