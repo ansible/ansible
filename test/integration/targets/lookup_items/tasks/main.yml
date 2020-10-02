@@ -4,6 +4,12 @@
     - 'foo'
     - 'bar'
 
+- name: Undefined var, skipped
+  debug:
+  with_items:
+    - '{{ baz }}'
+  when: false
+
 - debug: var=foo
 - debug: var=bar
 
