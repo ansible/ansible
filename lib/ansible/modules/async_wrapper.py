@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+import errno
 import json
 import shlex
 import shutil
@@ -231,14 +232,23 @@ def main():
     jobdir = os.path.expanduser(async_dir)
     job_path = os.path.join(jobdir, jid)
 
-    if not os.path.exists(jobdir):
-        try:
-            os.makedirs(jobdir)
-        except Exception:
-            print(json.dumps({
-                "failed": 1,
-                "msg": "could not create: %s" % jobdir
-            }))
+    err = None
+    try:
+        os.makedirs(jobdir)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            err = (e, traceback.format_exc())
+    except Exception as e:
+        err = (e, traceback.format_exc())
+
+    if err:
+        print(json.dumps({
+            "failed": 1,
+            "msg": "could not create: %s - %s" % (jobdir, to_text(err[0])),
+            "exception": err[1],
+        }))
+        sys.exit(1)
+
     # immediately exit this process, leaving an orphaned process
     # running which immediately forks a supervisory timing process
 
