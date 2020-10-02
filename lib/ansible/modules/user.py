@@ -675,9 +675,9 @@ class User(object):
             cmd.append('-r')
 
         cmd.append(self.name)
-        (rc, err, out) = self.execute_command(cmd)
+        (rc, out, err) = self.execute_command(cmd)
         if not self.local or rc != 0:
-            return (rc, err, out)
+            return (rc, out, err)
 
         if self.expires is not None:
             if self.expires < time.gmtime(0):
@@ -685,7 +685,7 @@ class User(object):
             else:
                 # Convert seconds since Epoch to days since Epoch
                 lexpires = int(math.floor(self.module.params['expires'])) // 86400
-            (rc, _err, _out) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
+            (rc, _out, _err) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
             out += _out
             err += _err
             if rc != 0:
@@ -695,7 +695,7 @@ class User(object):
             return (rc, err, out)
 
         for add_group in groups:
-            (rc, _err, _out) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
+            (rc, _out, _err) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
             out += _out
             err += _err
             if rc != 0:
@@ -849,35 +849,35 @@ class User(object):
             cmd.append('-p')
             cmd.append(self.password)
 
-        (rc, err, out) = (None, '', '')
+        (rc, out, err) = (None, '', '')
 
         # skip if no usermod changes to be made
         if len(cmd) > 1:
             cmd.append(self.name)
-            (rc, err, out) = self.execute_command(cmd)
+            (rc, out, err) = self.execute_command(cmd)
 
         if not self.local or not (rc is None or rc == 0):
-            return (rc, err, out)
+            return (rc, out, err)
 
         if lexpires is not None:
-            (rc, _err, _out) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
+            (rc, _out, _err) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
             out += _out
             err += _err
             if rc != 0:
                 return (rc, out, err)
 
         if len(lgroupmod_add) == 0 and len(lgroupmod_del) == 0:
-            return (rc, err, out)
+            return (rc, out, err)
 
         for add_group in lgroupmod_add:
-            (rc, _err, _out) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
+            (rc, _out, _err) = self.execute_command([lgroupmod_cmd, '-M', self.name, add_group])
             out += _out
             err += _err
             if rc != 0:
                 return (rc, out, err)
 
         for del_group in lgroupmod_del:
-            (rc, _err, _out) = self.execute_command([lgroupmod_cmd, '-m', self.name, del_group])
+            (rc, _out, _err) = self.execute_command([lgroupmod_cmd, '-m', self.name, del_group])
             out += _out
             err += _err
             if rc != 0:
