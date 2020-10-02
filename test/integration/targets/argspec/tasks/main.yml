@@ -102,11 +102,13 @@
   ignore_errors: true
 
 - argspec:
-    fail_on_missing_params: true
+    fail_on_missing_params:
+      - needed_param
     needed_param: whatever
 
 - argspec:
-    fail_on_missing_params: true
+    fail_on_missing_params:
+      - needed_param
   register: argspec_fail_on_missing_params_bad
   ignore_errors: true
 
