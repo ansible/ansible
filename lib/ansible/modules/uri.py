@@ -107,7 +107,7 @@ options:
     description:
       - A list of valid, numeric, HTTP status codes that signifies success of the request.
     type: list
-    elements: str
+    elements: int
     default: [ 200 ]
   timeout:
     description:
@@ -620,7 +620,7 @@ def main():
         follow_redirects=dict(type='str', default='safe', choices=['all', 'no', 'none', 'safe', 'urllib2', 'yes']),
         creates=dict(type='path'),
         removes=dict(type='path'),
-        status_code=dict(type='list', elements='str', default=[200]),
+        status_code=dict(type='list', elements='int', default=[200]),
         timeout=dict(type='int', default=30),
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
