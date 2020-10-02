@@ -28,6 +28,8 @@ options:
     dest:
         description:
             - The path of where the repository should be checked out. This
+              is equivalent to C(git clone [repo_url] [directory]). The repository
+              named in C(repo) is not appended to this path and the destination directory must be empty. This
               parameter is required, unless C(clone) is set to C(no).
         type: path
         required: true
