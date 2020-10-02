@@ -121,13 +121,12 @@ class OpenBSDHardware(Hardware):
         if rc != 0:
             return {}
 
-        uptime_seconds = out.strip()
-        if not uptime_seconds.isdigit():
+        kern_boottime = out.strip()
+        if not kern_boottime.isdigit():
             return {}
 
-        # uptime = $current_time - $boot_time
         return {
-            'uptime_seconds': int(time.time() - int(uptime_seconds)),
+            'uptime_seconds': int(time.time() - int(kern_boottime)),
         }
 
     def get_processor_facts(self):
