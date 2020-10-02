@@ -13,6 +13,12 @@ import sys
 import time
 import yaml
 
+try:
+    import _yaml
+    HAS_LIBYAML = True
+except ImportError:
+    HAS_LIBYAML = False
+
 import ansible
 from ansible import constants as C
 from ansible.module_utils._text import to_native
@@ -141,47 +147,33 @@ def _git_repo_info(repo_path):
 
 
 def _gitinfo():
-    basedir = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+    basedir = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
     repo_path = os.path.join(basedir, '.git')
-    result = _git_repo_info(repo_path)
-    submodules = os.path.join(basedir, '.gitmodules')
-
-    if not os.path.exists(submodules):
-        return result
-
-    with open(submodules) as f:
-        for line in f:
-            tokens = line.strip().split(' ')
-            if tokens[0] == 'path':
-                submodule_path = tokens[2]
-                submodule_info = _git_repo_info(os.path.join(basedir, submodule_path, '.git'))
-                if not submodule_info:
-                    submodule_info = ' not found - use git submodule update --init ' + submodule_path
-                result += "\n  {0}: {1}".format(submodule_path, submodule_info)
-    return result
+    return _git_repo_info(repo_path)
 
 
 def version(prog=None):
     """ return ansible version """
     if prog:
-        result = " ".join((prog, __version__))
+        result = [" ".join((prog, __version__))]
     else:
-        result = __version__
+        result = [__version__]
 
     gitinfo = _gitinfo()
     if gitinfo:
-        result = result + " {0}".format(gitinfo)
-    result += "\n  config file = %s" % C.CONFIG_FILE
+        result[0] = "{0} {1}".format(result[0], gitinfo)
+    result.append("  config file = %s" % C.CONFIG_FILE)
     if C.DEFAULT_MODULE_PATH is None:
         cpath = "Default w/o overrides"
     else:
         cpath = C.DEFAULT_MODULE_PATH
-    result = result + "\n  configured module search path = %s" % cpath
-    result = result + "\n  ansible python module location = %s" % ':'.join(ansible.__path__)
-    result = result + "\n  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS)
-    result = result + "\n  executable location = %s" % sys.argv[0]
-    result = result + "\n  python version = %s" % ''.join(sys.version.splitlines())
-    return result
+    result.append("  configured module search path = %s" % cpath)
+    result.append("  ansible python module location = %s" % ':'.join(ansible.__path__))
+    result.append("  ansible collection location = %s" % ':'.join(C.COLLECTIONS_PATHS))
+    result.append("  executable location = %s" % sys.argv[0])
+    result.append("  python version = %s" % ''.join(sys.version.splitlines()))
+    result.append("  libyaml = %s" % HAS_LIBYAML)
+    return "\n".join(result)
 
 
 #
