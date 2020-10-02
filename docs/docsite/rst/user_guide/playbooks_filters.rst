@@ -318,7 +318,7 @@ List data (before applying the ``zip`` filter)::
       - apple
       - orange
 
-Dictonary data (after applying the ``zip`` filter)::
+Dictionary data (after applying the ``zip`` filter)::
 
     one: apple
     two: orange

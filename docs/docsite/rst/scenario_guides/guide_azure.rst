@@ -132,7 +132,7 @@ Or, pass the following parameters for Active Directory username/password:
 * password
 * subscription_id
 
-Or, pass the following parameters for ADFS username/pasword:
+Or, pass the following parameters for ADFS username/password:
 
 * ad_user
 * password

@@ -126,7 +126,7 @@ Another way is to avoid adding elements to the list in the first place, so you c
  :caption: Using set_fact in a loop to increment a list conditionally
  :emphasize-lines: 3, 4, 6
 
-    - name: build unique list with some items conditionally omittted
+    - name: build unique list with some items conditionally omitted
       set_fact:
          namestuff: ' {{ (namestuff | default([])) | union([item]) }}'
       when: item != omit
@@ -136,7 +136,7 @@ Another way is to avoid adding elements to the list in the first place, so you c
           - "bar"
 
 
-.. _complex_type_transfomations:
+.. _complex_type_transformations:
 
 Complex Type transformations
 =============================

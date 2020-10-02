@@ -347,7 +347,7 @@ A combination of these flags help to make a module util interoperable on both
 The following is a list of module_utils that are packaged with Ansible and a general description of what
 they do:
 
-- ArgvParser: Utiliy used to convert a list of arguments to an escaped string compliant with the Windows argument parsing rules.
+- ArgvParser: Utility used to convert a list of arguments to an escaped string compliant with the Windows argument parsing rules.
 - CamelConversion: Utility used to convert camelCase strings/lists/dicts to snake_case.
 - CommandUtil: Utility used to execute a Windows process and return the stdout/stderr and rc as separate objects.
 - FileUtil: Utility that expands on the ``Get-ChildItem`` and ``Test-Path`` to work with special files like ``C:\pagefile.sys``.
@@ -395,7 +395,7 @@ Exposing shared module options
 
 PowerShell module utils can easily expose common module options that a module can use when building its argument spec.
 This allows common features to be stored and maintained in one location and have those features used by multiple
-modules with minimal effort. Any new features or bugifxes added to one of these utils are then automatically used by
+modules with minimal effort. Any new features or bugfixes added to one of these utils are then automatically used by
 the various modules that call that util.
 
 An example of this would be to have a module util that handles authentication and communication against an API This

@@ -743,7 +743,7 @@ Some cases where tests should be marked as unsupported:
 1) The tests take longer than 10 or 15 minutes to complete
 2) The tests create expensive resources
 3) The tests create inline policies
-4) The tests require the existance of external resources
+4) The tests require the existence of external resources
 5) The tests manage Account level security policies such as the password policy or AWS Organizations.
 
 Where one of these reasons apply you should open a pull request proposing the minimum required policy to the

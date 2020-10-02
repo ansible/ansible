@@ -104,7 +104,7 @@ Simple debugging
 
 The easiest way to run a debugger in a module, either local or remote, is to use `epdb <https://pypi.org/project/epdb/>`_. Add ``import epdb; epdb.serve()`` in the module code on the control node at the desired break point. To connect to the debugger, run ``epdb.connect()``. See the `epdb documentation <https://pypi.org/project/epdb/>`_ for how to specify the ``host`` and ``port``. If connecting to a remote node, make sure to use a port that is allowed by any firewall between the control node and the remote node.
 
-This technique should work with any remote debugger, but we do not guarantee any particual remote debugging tool will work.
+This technique should work with any remote debugger, but we do not guarantee any particular remote debugging tool will work.
 
 The `q <https://pypi.org/project/q/>`_ library is another very useful debugging tool.
 
