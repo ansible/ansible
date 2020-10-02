@@ -1137,4 +1137,4 @@
     - user_test_local_mode
 
 - name: Test expires for local users
-  import_task: expires_local.yml
+  import_tasks: expires_local.yml
