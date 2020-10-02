@@ -43,7 +43,9 @@ def get_sysctl(module, prefixes):
 
             if line.startswith(' '):
                 # handle multiline values, they will not have a starting key
-                value += line
+                # Add the newline back in so people can split on it to parse
+                # lines if they need to.
+                value += '\n' + line
                 continue
 
             if key:

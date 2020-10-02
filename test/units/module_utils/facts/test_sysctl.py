@@ -214,7 +214,7 @@ class TestSysctlParsingInFacts(unittest.TestCase):
         # multiline
         self.assertEqual(
             sysctl['kern.version'],
-            'OpenBSD 6.7 (GENERIC) #179: Thu May  7 11:02:37 MDT 2020    '
+            'OpenBSD 6.7 (GENERIC) #179: Thu May  7 11:02:37 MDT 2020\n    '
             'deraadt@amd64.openbsd.org:/usr/src/sys/arch/amd64/compile/GENERIC')
         # more symbols/spaces in value
         self.assertEqual(
