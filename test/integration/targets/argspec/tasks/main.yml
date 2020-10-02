@@ -87,6 +87,31 @@
   register: argpsec_required_if_fail
   ignore_errors: true
 
+- argspec:
+    json: !!str '{"foo": "bar"}'
+  register: argspec_good_json_string
+
+- argspec:
+    json:
+      foo: bar
+  register: argspec_good_json_dict
+
+- argspec:
+    json: 1
+  register: argspec_bad_json
+  ignore_errors: true
+
+- argspec:
+    fail_on_missing_params:
+      - needed_param
+    needed_param: whatever
+
+- argspec:
+    fail_on_missing_params:
+      - needed_param
+  register: argspec_fail_on_missing_params_bad
+  ignore_errors: true
+
 - assert:
     that:
       - argspec_required_if_fail is failed
@@ -109,3 +134,13 @@
       - argspec_required_together_fail is failed
 
       - argpsec_required_if_fail is failed
+
+      - argspec_good_json_string is successful
+      - >
+        argspec_good_json_string.json == '{"foo": "bar"}'
+      - argspec_good_json_dict is successful
+      - >
+        argspec_good_json_dict.json == '{"foo": "bar"}'
+      - argspec_bad_json is failed
+
+      - argspec_fail_on_missing_params_bad is failed
