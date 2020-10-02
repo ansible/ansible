@@ -860,7 +860,7 @@ class User(object):
             return (rc, err, out)
 
         if lexpires is not None:
-            (rc, _err, _out) = self.execute_command([lchage_cmd, '-E', str(lexpires), self.name])
+            (rc, _err, _out) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
             out += _out
             err += _err
             if rc != 0:
