@@ -19,8 +19,8 @@ This document is part of a collection on porting. The complete list of porting g
 Playbook
 ========
 
-Restructued async to work with action plugins
----------------------------------------------
+Restructured async to work with action plugins
+----------------------------------------------
 
 In Ansible 2.2 (and possibly earlier) the `async:` keyword could not be used in conjunction with the action plugins such as `service`. This limitation has been removed in Ansible 2.3
 
