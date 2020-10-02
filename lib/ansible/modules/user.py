@@ -685,7 +685,7 @@ class User(object):
             else:
                 # Convert seconds since Epoch to days since Epoch
                 lexpires = int(math.floor(float(self.module.params['expires']))) // 86400
-            (rc, _err, _out) = self.execute_command([lchage_cmd, '-E', str(lexpires), self.name])
+            (rc, _err, _out) = self.execute_command([lchage_cmd, '-E', to_native(lexpires), self.name])
             out += _out
             err += _err
             if rc != 0:
