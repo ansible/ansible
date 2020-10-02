@@ -426,15 +426,15 @@ class VariableManager:
         if task:
             all_vars['environment'] = task.environment
 
-        # if we have a task and we're delegating to another host, figure out the
-        # variables for that host now so we don't have to rely on hostvars later
-        if task and task.delegate_to is not None and include_delegate_to:
-            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
-
         # 'vars' magic var
         if task or play:
             # has to be copy, otherwise recursive ref
             all_vars['vars'] = all_vars.copy()
+
+        # if we have a task and we're delegating to another host, figure out the
+        # variables for that host now so we don't have to rely on hostvars later
+        if task and task.delegate_to is not None and include_delegate_to:
+            all_vars['ansible_delegated_vars'], all_vars['_ansible_loop_cache'] = self._get_delegated_vars(play, task, all_vars)
 
         display.debug("done with get_vars()")
         if C.DEFAULT_DEBUG:

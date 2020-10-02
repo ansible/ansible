@@ -1,0 +1,16 @@
+---
+- name: though we test for 'vars' this is only for backwards compatibility and the 'vars' variable will be deprecated and removed in the future
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - add_host:
+        name: host1
+        ansible_connection: local
+
+- hosts: localhost
+  gather_facts: no
+  vars:
+    server_name: host1
+  tasks:
+    - command: echo should delegate to host1 with local connection
+      delegate_to: "{{ vars['server_name'] }}"
