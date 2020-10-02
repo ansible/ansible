@@ -648,7 +648,7 @@ You will find our roadmap, an overview of open ACI issues and pull-requests, and
    `ACI collection on Ansible Galaxy <https://galaxy.ansible.com/cisco/aci>`_
        View the content tab for a complete list of supported ACI modules.
    :ref:`Developing Cisco ACI modules <aci_dev_guide>`
-       A walkthough on how to develop new Cisco ACI modules to contribute back.
+       A walkthrough on how to develop new Cisco ACI modules to contribute back.
    `ACI community <https://github.com/ansible/community/wiki/Network:-ACI>`_
        The Ansible ACI community wiki page, includes roadmap, ideas and development documentation.
    :ref:`network_guide`
