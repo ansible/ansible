@@ -308,6 +308,14 @@ Then install Ansible [1]_::
 
     $ python -m pip install --user ansible
 
+
+.. tip::
+
+    If this is your first time installing packages with pip, you may need to perform some additional configuration before you are able to run
+    Ansible. See the Python documentation on `installing to the user site`_ for more information.
+
+.. _installing to the user site: https://packaging.python.org/tutorials/installing-packages/#installing-to-the-user-site
+
 In order to use the ``paramiko`` connection plugin or modules that require ``paramiko``, install the required module [2]_::
 
     $ python -m pip install --user paramiko
