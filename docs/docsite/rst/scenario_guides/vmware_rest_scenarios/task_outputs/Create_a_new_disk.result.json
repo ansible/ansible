@@ -1,0 +1,17 @@
+{
+    "value": {
+        "backing": {
+            "vmdk_file": "[local] test_vm1_8/test_vm1_1.vmdk",
+            "type": "VMDK_FILE"
+        },
+        "label": "Hard disk 2",
+        "type": "SATA",
+        "sata": {
+            "bus": 0,
+            "unit": 0
+        },
+        "capacity": 320000
+    },
+    "id": "16000",
+    "changed": true
+}

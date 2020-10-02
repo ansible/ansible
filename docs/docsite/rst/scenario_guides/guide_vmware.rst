@@ -1,8 +1,8 @@
 .. _vmware_ansible:
 
-******************
+************
 VMware Guide
-******************
+************
 
 Welcome to the Ansible for VMware Guide!
 
