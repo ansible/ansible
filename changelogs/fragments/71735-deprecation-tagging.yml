@@ -1,0 +1,2 @@
+bugfixes:
+- "ansible-doc - plugin option deprecations now also get ``collection_name`` added (https://github.com/ansible/ansible/pull/71735)."
