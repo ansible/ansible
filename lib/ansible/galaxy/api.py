@@ -5,6 +5,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
 import datetime
 import hashlib
 import json
@@ -104,6 +105,20 @@ def g_connect(versions):
     return decorator
 
 
+def get_cache_id(url):
+    """ Gets the cache ID for the URL specified. """
+    url_info = urlparse(url)
+
+    port = None
+    try:
+        port = url_info.port
+    except ValueError:
+        pass  # While the URL is probably invalid, let the caller figure that out when using it
+
+    # Cannot use netloc because it could contain credentials if the server specified had them in there.
+    return '%s:%s' % (url_info.hostname, port or '')
+
+
 def _load_cache(b_cache_path):
     """ Loads the cache file requested if possible. The file must not be world writable. """
     cache_version = 1
@@ -183,6 +198,11 @@ class GalaxyError(AnsibleError):
         self.message = to_native(full_error_msg)
 
 
+# Keep the raw string results for the date. It's too complex to parse as a datetime object and the various APIs return
+# them in different formats.
+CollectionMetadata = collections.namedtuple('CollectionMetadata', ['namespace', 'name', 'created_str', 'modified_str'])
+
+
 class CollectionVersionMetadata:
 
     def __init__(self, namespace, name, version, download_url, artifact_sha256, dependencies):
@@ -244,8 +264,9 @@ class GalaxyAPI:
     def _call_galaxy(self, url, args=None, headers=None, method=None, auth_required=False, error_context_msg=None,
                      cache=False):
         url_info = urlparse(url)
+        cache_id = get_cache_id(url)
         if cache and self._cache:
-            server_cache = self._cache.setdefault(url_info.netloc, {})
+            server_cache = self._cache.setdefault(cache_id, {})
             iso_datetime_format = '%Y-%m-%dT%H:%M:%SZ'
 
             valid = False
@@ -302,7 +323,7 @@ class GalaxyAPI:
                                % (resp.url, to_native(resp_data)))
 
         if cache and self._cache:
-            path_cache = self._cache[url_info.netloc][url_info.path]
+            path_cache = self._cache[cache_id][url_info.path]
 
             # v3 can return data or results for paginated results. Scan the result so we can determine what to cache.
             paginated_key = None
@@ -641,6 +662,39 @@ class GalaxyAPI:
             raise AnsibleError("Galaxy import process failed: %s (Code: %s)" % (description, code))
 
     @g_connect(['v2', 'v3'])
+    def get_collection_metadata(self, namespace, name):
+        """
+        Gets the collection information from the Galaxy server about a specific Collection.
+
+        :param namespace: The collection namespace.
+        :param name: The collection name.
+        return: CollectionMetadata about the collection.
+        """
+        if 'v3' in self.available_api_versions:
+            api_path = self.available_api_versions['v3']
+            field_map = [
+                ('created_str', 'created_at'),
+                ('modified_str', 'updated_at'),
+            ]
+        else:
+            api_path = self.available_api_versions['v2']
+            field_map = [
+                ('created_str', 'created'),
+                ('modified_str', 'modified'),
+            ]
+
+        info_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, '/')
+        error_context_msg = 'Error when getting the collection info for %s.%s from %s (%s)' \
+                            % (namespace, name, self.name, self.api_server)
+        data = self._call_galaxy(info_url, error_context_msg=error_context_msg)
+
+        metadata = {}
+        for name, api_field in field_map:
+            metadata[name] = data.get(api_field, None)
+
+        return CollectionMetadata(namespace, name, **metadata)
+
+    @g_connect(['v2', 'v3'])
     def get_collection_version_metadata(self, namespace, name, version):
         """
         Gets the collection information from the Galaxy server about a specific Collection version.
@@ -675,27 +729,21 @@ class GalaxyAPI:
         if 'v3' in self.available_api_versions:
             api_path = self.available_api_versions['v3']
             pagination_path = ['links', 'next']
-            modified_key = 'updated_at'
             relative_link = True  # AH pagination results are relative an not an absolute URI.
         else:
             api_path = self.available_api_versions['v2']
             pagination_path = ['next']
-            modified_key = 'modified'
 
-        collection_info_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, '/')
         versions_url = _urljoin(self.api_server, api_path, 'collections', namespace, name, 'versions', '/')
         versions_url_info = urlparse(versions_url)
 
         # We should only rely on the cache if the collection has not changed. This may slow things down but it ensures
         # we are not waiting a day before finding any new collections that have been published.
         if self._cache:
-            server_cache = self._cache.setdefault(versions_url_info.netloc, {})
+            server_cache = self._cache.setdefault(get_cache_id(versions_url), {})
             modified_cache = server_cache.setdefault('modified', {})
 
-            error_context_msg = 'Error when getting the modified date for %s.%s from %s (%s)' \
-                                % (namespace, name, self.name, self.api_server)
-            data = self._call_galaxy(collection_info_url, error_context_msg=error_context_msg)
-            modified_date = data.get(modified_key, None)
+            modified_date = self.get_collection_metadata(namespace, name).modified_str
             cached_modified_date = modified_cache.get('%s.%s' % (namespace, name), None)
 
             if cached_modified_date != modified_date:
