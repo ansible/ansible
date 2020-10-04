@@ -26,6 +26,46 @@
     name: "{{ pip_test_packages }}"
     state: absent
 
+### test site locations begin ###
+
+- name: Test site locations
+  when: "ansible_system == 'Linux'"
+  block:
+    - include_tasks: pip_site.yml
+      loop: "{{ pip_test_site_data }}"
+
+- name: Test site locations with virtualenv
+  block:
+    - include_tasks: pip_site_virtualenv.yml
+      loop: "{{ pip_test_site_data }}"
+
+- name: Test install before check mode
+  pip:
+    site: user
+    name: "{{ pip_test_packages }}"
+    state: present
+  register: pip_test_install_1
+
+- name: Test check mode install
+  pip:
+    site: user
+    name: "{{ pip_test_packages }}"
+    state: present
+  check_mode: yes
+  register: pip_test_install_2
+
+- assert:
+    that:
+        - "pip_test_install_1.changed"
+        - "not pip_test_install_2.changed"
+
+- name: ensure packages are not installed (precondition setup)
+  pip:
+    name: "{{ pip_test_packages }}"
+    state: absent
+
+### test site locations end ###
+
 # verify that a package that is uninstalled being set to absent
 # results in an unchanged state and that the test package is not
 # installed
@@ -260,7 +300,8 @@
   pip:
     name: .
     chdir: "{{ output_dir }}/pip_module"
-    extra_args: --user --upgrade --root {{ output_dir }}/pip_root
+    site: user
+    state: latest
 
 - name: register python_site_lib
   command: '{{ ansible_python.executable }} -c "import site; print(site.USER_SITE)"'
@@ -271,7 +312,7 @@
   register: pip_python_user_base
 
 - name: run test module
-  shell: "PYTHONPATH=$(echo {{ output_dir }}/pip_root{{ pip_python_site_lib.stdout }}) {{ output_dir }}/pip_root{{ pip_python_user_base.stdout }}/bin/ansible_test_pip_chdir"
+  shell: "PYTHONPATH=$(echo {{ pip_python_user_base }}/{{ pip_python_site_lib.stdout }}) {{ pip_python_user_base.stdout }}/bin/ansible_test_pip_chdir"
   register: pip_chdir_command
 
 - name: make sure command ran

@@ -1,0 +1,75 @@
+---
+
+- name: "[{{ item }}] Testing site location variation {{ item }}"
+  debug:
+    msg: "Testing site location variation: {{ item }}"
+
+- name: "[{{ item }}] Set pathable or not"
+  set_fact:
+    pathable: "{{ (item not in ('system', 'user')) | bool }}"
+
+- name: "[{{ item }}] make sure the location does not exist"
+  file:
+    state: absent
+    name: "{{ output_dir }}/pipenv"
+
+- name: "[{{ item }}] Create temp location"
+  when: pathable
+  tempfile:
+    state: directory
+  register: tmp_prefix_loc
+
+- name: "[{{ item }}] set venv location"
+  when: pathable
+  set_fact:
+    tmp_venv: "{{ tmp_prefix_loc.path }}/.venv"
+
+- name: "[{{ item }}] install sample project"
+  pip:
+    name: "{{ pip_test_package }}"
+    site: "{{ item }}"
+    path: "{{ tmp_prefix_loc.path | default(omit) }}"
+    state: present
+    virtualenv: "{{ tmp_venv | default(omit) }}"
+  register: site_test_pkg
+  ignore_errors: "{{ pathable }}"
+
+- name: "[{{ item }}] ensure sample project was installed"
+  when: "not pathable"
+  assert:
+    that:
+      - "site_test_pkg is success"
+
+- name: "[{{ item }}] ensure sample project was NOT installed"
+  when: "pathable"
+  assert:
+    that:
+      - "site_test_pkg is failed"
+
+- name: "[{{ item }}] remove sample project from system"
+  pip:
+    name: "{{ pip_test_package }}"
+    site: "{{ item }}"
+    path: "{{ tmp_prefix_loc.path | default(omit) }}"
+    state: absent
+    virtualenv: "{{ tmp_venv | default(omit) }}"
+  register: site_test_pkg_remove
+  ignore_errors: "{{ pathable }}"
+
+- name: "[{{ item }}] ensure sample project was removed"
+  when: "not pathable"
+  assert:
+    that:
+      - "site_test_pkg_remove is success"
+
+- name: "[{{ item }}] ensure sample project was NOT removed"
+  when: "pathable"
+  assert:
+    that:
+      - "site_test_pkg_remove is failed"
+
+- name: "[{{ item }}] manually remove prefixed location"
+  when: "pathable"
+  file:
+    state: absent
+    name: "{{ tmp_prefix_loc.path }}"
