@@ -131,21 +131,21 @@
       - "stat_result.stat.exists == true"
       - "result.changed == true"
 
-- name: Copy badssl-com-chain.pem to remote
-  copy:
-    src: "{{ role_path }}/files/badssl-com-chain.pem"
-    dest: "{{ remote_tmp_dir }}/badssl-com-chain.pem"
+- name: "get ca certificate {{ self_signed_host }}"
+  get_url:
+    url: "http://{{ httpbin_host }}/ca2cert.pem"
+    dest: "{{ remote_tmp_dir }}/ca2cert.pem"
 
 - name: test https fetch to a site with self signed certificate using ca_path
   uri:
-    url: "https://{{ self_signed_badssl_host }}/"
-    dest: "{{ output_dir }}/self-signed-badssl_using_ca_path.html"
-    ca_path: "{{ remote_tmp_dir }}/badssl-com-chain.pem"
+    url: "https://{{ self_signed_host }}/"
+    dest: "{{ output_dir }}/self-signed_using_ca_path.html"
+    ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
     validate_certs: yes
   register: result
 
 - stat:
-    path: "{{ output_dir }}/self-signed-badssl_using_ca_path.html"
+    path: "{{ output_dir }}/self-signed_using_ca_path.html"
   register: stat_result
 
 - name: Assert that the file was downloaded
@@ -156,14 +156,14 @@
 
 - name: test https fetch to a site with self signed certificate without using ca_path
   uri:
-    url: "https://{{ self_signed_badssl_host }}/"
-    dest: "{{ output_dir }}/self-signed-badssl_without_using_ca_path.html"
+    url: "https://{{ self_signed_host }}/"
+    dest: "{{ output_dir }}/self-signed-without_using_ca_path.html"
     validate_certs: yes
   register: result
   ignore_errors: true
 
 - stat:
-    path: "{{ output_dir }}/self-signed-badssl_without_using_ca_path.html"
+    path: "{{ output_dir }}/self-signed-without_using_ca_path.html"
   register: stat_result
 
 - name: Assure that https access to a host with self-signed certificate without providing ca_path fails
