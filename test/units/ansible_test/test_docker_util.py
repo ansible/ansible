@@ -61,6 +61,19 @@ def docker_images():
     from ansible_test._internal.docker_util import docker_images
     return docker_images
 
+
+@pytest.fixture
+def ansible_test(ansible_test):
+    import ansible_test
+    return ansible_test
+
+
+@pytest.fixture
+def subprocess_error():
+    from ansible_test._internal.util import SubprocessError
+    return SubprocessError
+
+
 @pytest.mark.parametrize(
     'dc',
     [[3, (DOCKER_OUTPUT_MULTIPLE, '')],
@@ -70,20 +83,18 @@ def test_docker_images(docker_images, mocker, dc):
     mocker.patch(
         'ansible_test._internal.docker_util.docker_command',
         return_value=dc[1])
-
     ret = docker_images('', 'quay.io/ansible/centos7-test-container')
     assert len(ret) == dc[0]
 
-def test_podman_fallback(ansible_test, docker_images, mocker):
+
+def test_podman_fallback(ansible_test, docker_images, subprocess_error, mocker):
     '''Test podman >2 && <2.2 fallback'''
-    import ansible_test
-    from ansible_test._internal.util import SubprocessError
 
     cmd = ['docker', 'images', 'quay.io/ansible/centos7-test-container', '--format', '{{json .}}']
     docker_command_results = [
-        SubprocessError(cmd, status=1, stderr='function "json" not defined'),
-            (PODMAN_OUTPUT.lstrip(), ''),
-        ]
+        subprocess_error(cmd, status=1, stderr='function "json" not defined'),
+        (PODMAN_OUTPUT.lstrip(), ''),
+    ]
     mocker.patch(
         'ansible_test._internal.docker_util.docker_command',
         side_effect=docker_command_results)
@@ -104,16 +115,14 @@ def test_podman_fallback(ansible_test, docker_images, mocker):
     ansible_test._internal.docker_util.docker_command.assert_has_calls(calls)
     assert len(ret) == 2
 
-def test_podman_no_such_image(ansible_test, docker_images, mocker):
+
+def test_podman_no_such_image(ansible_test, docker_images, subprocess_error, mocker):
     '''Test podman "no such image" error'''
-    import ansible_test
-    from ansible_test._internal.util import SubprocessError
 
     cmd = ['docker', 'images', 'quay.io/ansible/centos7-test-container', '--format', '{{json .}}']
-    exc = SubprocessError(cmd, status=1, stderr='no such image'),
+    exc = subprocess_error(cmd, status=1, stderr='no such image'),
     mocker.patch(
         'ansible_test._internal.docker_util.docker_command',
         side_effect=exc)
-
     ret = docker_images('', 'quay.io/ansible/centos7-test-container')
     assert ret == []
