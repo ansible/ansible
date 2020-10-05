@@ -81,8 +81,7 @@ def subprocess_error():
         (2, (PODMAN_OUTPUT, '')),
         (0, ('', '')),
     ),
-    ids=('docker JSONL', 'podman JSON sequence', 'empty output'),
-)
+    ids=('docker JSONL', 'podman JSON sequence', 'empty output'))
 def test_docker_images(docker_images, mocker, returned_items_count, patched_dc_stdout):
     mocker.patch(
         'ansible_test._internal.docker_util.docker_command',
