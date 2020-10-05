@@ -194,7 +194,7 @@ def docker_images(args, image):
         stdout, _dummy = docker_command(args, ['images', image, '--format', '{{json .}}'], capture=True, always=True)
     except SubprocessError as ex:
         if 'no such image' in ex.stderr:
-            stdout = ''  # podman does not handle this gracefully, exits 125
+            return []  # podman does not handle this gracefully, exits 125
         elif 'function "json" not defined' in ex.stderr:
             # podman > 2 && < 2.2.0 breaks with --format {{json .}}, and requires --format json
             # So we try this as a fallback. If it fails again, we just raise the exception and bail.
