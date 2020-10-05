@@ -1,0 +1,28 @@
+---
+- name: Create user with 000 umask
+  user:
+    name: umaskuser_test_1
+    umask: "000"
+  register: umaskuser_test_1
+
+- name: Create user with 077 umask
+  user:
+    name: umaskuser_test_2
+    umask: "077"
+  register: umaskuser_test_2
+
+- name: check permissions on created home folder
+  stat:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/umaskuser_test_1"
+  register: umaskuser_test_1_path
+
+- name: check permissions on created home folder
+  stat:
+    path: "{{ user_home_prefix[ansible_facts.system] }}/umaskuser_test_2"
+  register: umaskuser_test_2_path
+
+- name: Ensure correct umask has been set on created users
+  assert:
+    that:
+      - umaskuser_test_1_path.stat.mode == "0777"
+      - umaskuser_test_2_path.stat.mode == "0700"
