@@ -75,16 +75,20 @@ def subprocess_error():
 
 
 @pytest.mark.parametrize(
-    'dc',
-    [[3, (DOCKER_OUTPUT_MULTIPLE, '')],
-     [2, (PODMAN_OUTPUT, '')],
-     [0, ('', '')]])
-def test_docker_images(docker_images, mocker, dc):
+    ('returned_items_count', 'patched_dc_stdout'),
+    (
+        (3, (DOCKER_OUTPUT_MULTIPLE, '')),
+        (2, (PODMAN_OUTPUT, '')),
+        (0, ('', '')),
+    ),
+    ids=('docker JSONL', 'podman JSON sequence', 'empty output'),
+)
+def test_docker_images(docker_images, mocker, returned_items_count, patched_dc_stdout):
     mocker.patch(
         'ansible_test._internal.docker_util.docker_command',
-        return_value=dc[1])
+        return_value=patched_dc_stdout)
     ret = docker_images('', 'quay.io/ansible/centos7-test-container')
-    assert len(ret) == dc[0]
+    assert len(ret) == returned_items_count
 
 
 def test_podman_fallback(ansible_test, docker_images, subprocess_error, mocker):
