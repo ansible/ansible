@@ -50,12 +50,17 @@ def main():
                 'default': [],
             },
             'needed_param': {},
+            'required_together_one': {},
+            'required_together_two': {},
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
         ),
         mutually_exclusive=(
             ('path', 'content'),
+        ),
+        required_together=(
+            ('required_together_one', 'required_together_two'),
         ),
     )
 
