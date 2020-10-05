@@ -112,6 +112,15 @@
   register: argspec_fail_on_missing_params_bad
   ignore_errors: true
 
+- argspec:
+    required_together_one: foo
+    required_together_two: bar
+
+- argspec:
+    required_together_one: foo
+  register: argspec_fail_required_together
+  ignore_errors: true
+
 - assert:
     that:
       - argspec_required_if_fail is failed
@@ -144,3 +153,5 @@
       - argspec_bad_json is failed
 
       - argspec_fail_on_missing_params_bad is failed
+
+      - argspec_fail_required_together is failed
