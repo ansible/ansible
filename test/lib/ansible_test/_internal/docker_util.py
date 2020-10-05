@@ -202,13 +202,12 @@ def docker_images(args, image):
         else:
             raise ex
 
-    lines = stdout.splitlines()
-    if lines and lines[0][0] == '[':
+    if stdout[0] == '[':
         # modern podman outputs a pretty-printed json list. Just load the whole thing.
         return json.loads(stdout)
 
-    # docker outputs one json object per line
-    return [json.loads(line) for line in lines]
+    # docker outputs one json object per line (jsonl)
+    return [json.loads(line) for line in stdout.splitlines()]
 
 
 def docker_rm(args, container_id):
