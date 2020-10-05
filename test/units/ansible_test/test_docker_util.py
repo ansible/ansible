@@ -93,7 +93,7 @@ def test_podman_fallback(ansible_test, docker_images, subprocess_error, mocker):
     cmd = ['docker', 'images', 'quay.io/ansible/centos7-test-container', '--format', '{{json .}}']
     docker_command_results = [
         subprocess_error(cmd, status=1, stderr='function "json" not defined'),
-        (PODMAN_OUTPUT.lstrip(), ''),
+        (PODMAN_OUTPUT, ''),
     ]
     mocker.patch(
         'ansible_test._internal.docker_util.docker_command',
