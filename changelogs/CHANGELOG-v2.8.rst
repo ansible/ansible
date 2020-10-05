@@ -5,13 +5,13 @@ Ansible 2.8 "How Many More Times" Release Notes
 .. contents:: Topics
 
 
-v2.8.16rc1
-==========
+v2.8.16
+=======
 
 Release Summary
 ---------------
 
-| Release Date: 2020-09-28
+| Release Date: 2020-10-05
 | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
 
 
@@ -38,6 +38,7 @@ Bugfixes
 --------
 
 - ansible-test - Change classification using ``--changed`` now consistently handles common configuration files for supported CI providers.
+- ansible-test - Disabled the ``duplicate-code`` and ``cyclic-import`` checks for the ``pylint`` sanity test due to inconsistent results.
 - ansible-test - The ``resource_prefix`` variable provided to tests running on Azure Pipelines is now converted to lowercase to match other CI providers.
 - ansible-test - for local change detection, allow to specify branch to compare to with ``--base-branch`` for all types of tests (https://github.com/ansible/ansible/pull/69508).
 

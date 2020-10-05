@@ -1689,6 +1689,12 @@ releases:
     - dnf_gpg.yml
     - v2.8.15_summary.yaml
     release_date: '2020-08-31'
+  2.8.16:
+    codename: How Many More Times
+    fragments:
+    - ansible-test-sanity-pylint-config-fix.yml
+    - v2.8.16_summary.yaml
+    release_date: '2020-10-05'
   2.8.16rc1:
     codename: How Many More Times
     fragments:
