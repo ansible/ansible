@@ -1981,6 +1981,17 @@ releases:
     - default-test-container160.yml
     - v2.10.1rc3_summary.yaml
     release_date: '2020-09-07'
+  2.10.2:
+    changes:
+      release_summary: '| Release Date: 2020-10-05
+
+        | `Porting Guide <https://docs.ansible.com/ansible/devel/porting_guides.html>`__
+
+        '
+    codename: When the Levee Breaks
+    fragments:
+    - v2.10.2_summary.yaml
+    release_date: '2020-10-05'
   2.10.2rc1:
     changes:
       bugfixes:
