@@ -1,0 +1,15 @@
+- run_once: '{{ setup_run_once | default("no") | bool }}'
+  block:
+  - name: "Find AMI to use"
+    run_once: yes
+    ec2_ami_info:
+      owners: 'amazon'
+      filters:
+        name: '{{ ec2_ami_name }}'
+    register: ec2_amis
+  - name: "Set fact with latest AMI"
+    run_once: yes
+    vars:
+      latest_ami: '{{ ec2_amis.images | sort(attribute="creation_date") | last }}'
+    set_fact:
+      ec2_ami_image: '{{ latest_ami.image_id }}'

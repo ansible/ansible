@@ -1,0 +1,127 @@
+- block:
+  - name: "Create IAM role for test"
+    iam_role:
+      state: present
+      name: "ansible-test-sts-{{ resource_prefix }}-test-policy"
+      assume_role_policy_document: "{{ lookup('file','assume-role-policy.json') }}"
+      create_instance_profile: yes
+      managed_policy:
+      - AmazonEC2ContainerServiceRole
+    register: iam_role
+
+  - name: "Create second IAM role for test"
+    iam_role:
+      state: present
+      name: "ansible-test-sts-{{ resource_prefix }}-test-policy-2"
+      assume_role_policy_document: "{{ lookup('file','assume-role-policy.json') }}"
+      create_instance_profile: yes
+      managed_policy:
+      - AmazonEC2ContainerServiceRole
+    register: iam_role_2
+
+  - name: "wait 10 seconds for roles to become available"
+    wait_for:
+      timeout: 10
+    delegate_to: localhost
+
+  - name: "Make instance with an instance_role"
+    ec2_instance:
+      state: present
+      name: "{{ resource_prefix }}-test-instance-role"
+      image_id: "{{ ec2_ami_image }}"
+      security_groups: "{{ sg.group_id }}"
+      instance_type: "{{ ec2_instance_type }}"
+      instance_role: "ansible-test-sts-{{ resource_prefix }}-test-policy"
+      vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+    register: instance_with_role
+
+  - assert:
+      that:
+        - 'instance_with_role.instances[0].iam_instance_profile.arn == iam_role.arn.replace(":role/", ":instance-profile/")'
+
+  - name: "Make instance with an instance_role(check mode)"
+    ec2_instance:
+      state: present
+      name: "{{ resource_prefix }}-test-instance-role-checkmode"
+      image_id: "{{ ec2_ami_image }}"
+      security_groups: "{{ sg.group_id }}"
+      instance_type: "{{ ec2_instance_type }}"
+      instance_role: "{{ iam_role.arn.replace(':role/', ':instance-profile/') }}"
+      vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+    check_mode: yes
+
+  - name: "fact presented ec2 instance"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-instance-role"
+    register: presented_instance_fact
+
+  - name: "fact checkmode ec2 instance"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-instance-role-checkmode"
+    register: checkmode_instance_fact
+
+  - name: "Confirm whether the check mode is working normally."
+    assert:
+      that:
+        - "{{ presented_instance_fact.instances | length }} > 0"
+        - "{{ checkmode_instance_fact.instances | length }} == 0"
+
+  - name: "Update instance with new instance_role"
+    ec2_instance:
+      state: present
+      name: "{{ resource_prefix }}-test-instance-role"
+      image_id: "{{ ec2_ami_image }}"
+      security_groups: "{{ sg.group_id }}"
+      instance_type: "{{ ec2_instance_type }}"
+      instance_role: "{{ iam_role_2.arn.replace(':role/', ':instance-profile/') }}"
+      vpc_subnet_id: "{{ testing_subnet_a.subnet.id }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+    register: instance_with_updated_role
+
+  - name: "wait 10 seconds for role update to complete"
+    wait_for:
+      timeout: 10
+    delegate_to: localhost
+
+  - name: "fact checkmode ec2 instance"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-instance-role"
+    register: updates_instance_info
+
+  - assert:
+      that:
+        - 'updates_instance_info.instances[0].iam_instance_profile.arn == iam_role_2.arn.replace(":role/", ":instance-profile/")'
+        - 'updates_instance_info.instances[0].instance_id == instance_with_role.instances[0].instance_id'
+
+  always:
+  - name: "Terminate iam_instance_role instances"
+    ec2_instance:
+      state: absent
+      filters:
+        "tag:TestId": "{{ ec2_instance_tag_TestId }}"
+      wait: yes
+    ignore_errors: yes
+
+  - name: "Delete IAM role for test"
+    iam_role:
+      state: absent
+      name: "{{ item }}"
+      assume_role_policy_document: "{{ lookup('file','assume-role-policy.json') }}"
+      create_instance_profile: yes
+      managed_policy:
+      - AmazonEC2ContainerServiceRole
+    loop:
+      - "ansible-test-sts-{{ resource_prefix }}-test-policy"
+      - "ansible-test-sts-{{ resource_prefix }}-test-policy-2"
+    register: removed
+    until: removed is not failed
+    ignore_errors: yes
+    retries: 10

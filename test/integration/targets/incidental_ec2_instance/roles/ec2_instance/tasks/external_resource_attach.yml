@@ -1,0 +1,129 @@
+- block:
+  # Make custom ENIs and attach via the `network` parameter
+  - ec2_eni:
+      state: present
+      delete_on_termination: true
+      subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      security_groups:
+        - "{{ sg.group_id }}"
+    register: eni_a
+
+  - ec2_eni:
+      state: present
+      delete_on_termination: true
+      subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      security_groups:
+        - "{{ sg.group_id }}"
+    register: eni_b
+
+  - ec2_eni:
+      state: present
+      delete_on_termination: true
+      subnet_id: "{{ testing_subnet_b.subnet.id }}"
+      security_groups:
+        - "{{ sg.group_id }}"
+    register: eni_c
+
+  - ec2_key:
+      name: "{{ resource_prefix }}_test_key"
+
+  - name: "Make instance in the testing subnet created in the test VPC"
+    ec2_instance:
+      state: present
+      name: "{{ resource_prefix }}-test-eni-vpc"
+      key_name: "{{ resource_prefix }}_test_key"
+      network:
+        interfaces:
+          - id: "{{ eni_a.interface.id }}"
+      image_id: "{{ ec2_ami_image }}"
+      availability_zone: '{{ subnet_b_az }}'
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+      instance_type: "{{ ec2_instance_type }}"
+      wait: false
+    register: in_test_vpc
+
+  - name: "Gather {{ resource_prefix }}-test-eni-vpc info"
+    ec2_instance_info:
+      filters:
+        "tag:Name": '{{ resource_prefix }}-test-eni-vpc'
+    register: in_test_vpc_instance
+
+  - assert:
+      that:
+        - 'in_test_vpc_instance.instances.0.key_name == "{{ resource_prefix }}_test_key"'
+        - '(in_test_vpc_instance.instances.0.network_interfaces | length) == 1'
+
+  - name: "Add a second interface"
+    ec2_instance:
+      state: present
+      name: "{{ resource_prefix }}-test-eni-vpc"
+      network:
+        interfaces:
+          - id: "{{ eni_a.interface.id }}"
+          - id: "{{ eni_b.interface.id }}"
+      image_id: "{{ ec2_ami_image }}"
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+      instance_type: "{{ ec2_instance_type }}"
+      wait: false
+    register: add_interface
+    until: add_interface is not failed
+    ignore_errors: yes
+    retries: 10
+
+  - name: "Make instance in the testing subnet created in the test VPC(check mode)"
+    ec2_instance:
+      state: present
+      name: "{{ resource_prefix }}-test-eni-vpc-checkmode"
+      key_name: "{{ resource_prefix }}_test_key"
+      network:
+        interfaces:
+          - id: "{{ eni_c.interface.id }}"
+      image_id: "{{ ec2_ami_image }}"
+      availability_zone: '{{ subnet_b_az }}'
+      tags:
+        TestId: "{{ ec2_instance_tag_TestId }}"
+      instance_type: "{{ ec2_instance_type }}"
+    check_mode: yes
+
+  - name: "fact presented ec2 instance"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-eni-vpc"
+    register: presented_instance_fact
+
+  - name: "fact checkmode ec2 instance"
+    ec2_instance_info:
+      filters:
+        "tag:Name": "{{ resource_prefix }}-test-eni-vpc-checkmode"
+    register: checkmode_instance_fact
+
+  - name: "Confirm existence of instance id."
+    assert:
+      that:
+        - "{{ presented_instance_fact.instances | length }} > 0"
+        - "{{ checkmode_instance_fact.instances | length }} == 0"
+
+  always:
+  - name: "Terminate external_resource_attach instances"
+    ec2_instance:
+      state: absent
+      filters:
+        "tag:TestId": "{{ ec2_instance_tag_TestId }}"
+      wait: yes
+    ignore_errors: yes
+
+  - ec2_key:
+      state: absent
+      name: "{{ resource_prefix }}_test_key"
+    ignore_errors: yes
+
+  - ec2_eni:
+      state: absent
+      eni_id: '{{ item.interface.id }}'
+    ignore_errors: yes
+    with_items:
+    - '{{ eni_a }}'
+    - '{{ eni_b }}'
+    - '{{ eni_c }}'
