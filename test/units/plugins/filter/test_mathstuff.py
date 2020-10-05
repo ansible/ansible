@@ -64,16 +64,22 @@ class TestSymmetricDifference:
 
 class TestMin:
     def test_min(self):
-        assert ms.min((1, 2)) == 1
-        assert ms.min((2, 1)) == 1
-        assert ms.min(('p', 'a', 'w', 'b', 'p')) == 'a'
+        assert ms.min(env, (1, 2)) == 1
+        assert ms.min(env, (2, 1)) == 1
+        assert ms.min(env, ('p', 'a', 'w', 'b', 'p')) == 'a'
+        assert ms.min(env, ({'key': 'a'}, {'key': 'b'}, {'key': 'c'}), attribute='key') == {'key': 'a'}
+        assert ms.min(env, ({'key': 1}, {'key': 2}, {'key': 3}), attribute='key') == {'key': 1}
+        assert ms.min(env, ('a', 'A', 'b', 'B'), case_sensitive=True) == 'A'
 
 
 class TestMax:
     def test_max(self):
-        assert ms.max((1, 2)) == 2
-        assert ms.max((2, 1)) == 2
-        assert ms.max(('p', 'a', 'w', 'b', 'p')) == 'w'
+        assert ms.max(env, (1, 2)) == 2
+        assert ms.max(env, (2, 1)) == 2
+        assert ms.max(env, ('p', 'a', 'w', 'b', 'p')) == 'w'
+        assert ms.max(env, ({'key': 'a'}, {'key': 'b'}, {'key': 'c'}), attribute='key') == {'key': 'c'}
+        assert ms.max(env, ({'key': 1}, {'key': 2}, {'key': 3}), attribute='key') == {'key': 3}
+        assert ms.max(env, ('a', 'A', 'b', 'B'), case_sensitive=True) == 'b'
 
 
 class TestLogarithm:
