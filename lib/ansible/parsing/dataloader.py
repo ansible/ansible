@@ -198,20 +198,34 @@ class DataLoader:
         ''' imperfect role detection, roles are still valid w/o tasks|meta/main.yml|yaml|etc '''
 
         b_path = to_bytes(path, errors='surrogate_or_strict')
+        b_path_dirname = os.path.dirname(b_path)
         b_upath = to_bytes(unfrackpath(path, follow=False), errors='surrogate_or_strict')
 
-        for b_finddir in (b'meta', b'tasks'):
-            for b_suffix in (b'.yml', b'.yaml', b''):
-                b_main = b'main%s' % (b_suffix)
-                b_tasked = os.path.join(b_finddir, b_main)
+        untasked_paths = (
+            os.path.join(b_path, b'main.yml'),
+            os.path.join(b_path, b'main.yaml'),
+            os.path.join(b_path, b'main'),
+        )
+        tasked_paths = (
+            os.path.join(b_upath, b'tasks/main.yml'),
+            os.path.join(b_upath, b'tasks/main.yaml'),
+            os.path.join(b_upath, b'tasks/main'),
+            os.path.join(b_upath, b'meta/main.yml'),
+            os.path.join(b_upath, b'meta/main.yaml'),
+            os.path.join(b_upath, b'meta/main'),
+            os.path.join(b_path_dirname, b'tasks/main.yml'),
+            os.path.join(b_path_dirname, b'tasks/main.yaml'),
+            os.path.join(b_path_dirname, b'tasks/main'),
+            os.path.join(b_path_dirname, b'meta/main.yml'),
+            os.path.join(b_path_dirname, b'meta/main.yaml'),
+            os.path.join(b_path_dirname, b'meta/main'),
+        )
 
-                if (
-                    RE_TASKS.search(path) and
-                    os.path.exists(os.path.join(b_path, b_main)) or
-                    os.path.exists(os.path.join(b_upath, b_tasked)) or
-                    os.path.exists(os.path.join(os.path.dirname(b_path), b_tasked))
-                ):
-                    return True
+        exists_untasked = map(os.path.exists, untasked_paths)
+        exists_tasked = map(os.path.exists, tasked_paths)
+        if RE_TASKS.search(path) and any(exists_untasked) or any(exists_tasked):
+            return True
+
         return False
 
     def path_dwim_relative(self, path, dirname, source, is_role=False):
