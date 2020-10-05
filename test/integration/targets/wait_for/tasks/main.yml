@@ -1,14 +1,14 @@
 ---
 - name: test wait_for with delegate_to
   wait_for:
-    timeout: 10
+    timeout: 2
   delegate_to: localhost
   register: waitfor
 
 - assert:
     that:
       - waitfor is successful
-      - waitfor.elapsed >= 10
+      - waitfor.elapsed >= 2
 
 - name: setup create a directory to serve files from
   file:
