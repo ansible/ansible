@@ -202,7 +202,7 @@ def docker_images(args, image):
         else:
             raise ex
 
-    if stdout[0] == '[':
+    if stdout.startswith('['):
         # modern podman outputs a pretty-printed json list. Just load the whole thing.
         return json.loads(stdout)
 
