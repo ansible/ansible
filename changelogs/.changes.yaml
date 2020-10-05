@@ -1584,6 +1584,11 @@ releases:
     - v2.9.13_summary.yaml
     - win_setup-bios.yml
     release_date: '2020-08-31'
+  2.9.14:
+    codename: Immigrant Song
+    fragments:
+    - v2.9.14_summary.yaml
+    release_date: '2020-10-05'
   2.9.14rc1:
     codename: Immigrant Song
     fragments:
