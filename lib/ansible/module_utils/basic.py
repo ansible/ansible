@@ -2712,7 +2712,7 @@ class AnsibleModule(object):
             stderr = b''
             try:
                 selector = selectors.DefaultSelector()
-            except OSError:
+            except (IOError, OSError):
                 # Failed to detect default selector for the given platform
                 # Select PollSelector which is supported by major platforms
                 selector = selectors.PollSelector()
