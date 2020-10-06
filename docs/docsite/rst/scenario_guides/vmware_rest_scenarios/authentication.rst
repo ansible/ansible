@@ -19,7 +19,7 @@ Environment variables
 .. note::
     This solution will only work fine if you call the modules from the local machine.
 
-You need to export some environment variables in your shell before you call
+You need to export some environment variables in your shell before you call the modules.
 
 .. code-block:: shell
 
