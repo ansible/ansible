@@ -1,4 +1,15 @@
 ---
+- name: test wait_for with delegate_to
+  wait_for:
+    timeout: 2
+  delegate_to: localhost
+  register: waitfor
+
+- assert:
+    that:
+      - waitfor is successful
+      - waitfor.elapsed >= 2
+
 - name: setup create a directory to serve files from
   file:
     dest: "{{ files_dir }}"
