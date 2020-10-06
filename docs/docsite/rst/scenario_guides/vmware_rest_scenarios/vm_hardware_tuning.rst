@@ -1,7 +1,7 @@
 .. _vmware_rest_vm_hardware_tuning:
 
 *******************************
-How to modify a Virtual Machine
+How to modify a virtual machine
 *******************************
 
 .. contents:: Topics
