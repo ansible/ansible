@@ -70,8 +70,8 @@ options:
             - Optionally set the user's shell.
             - On macOS, before Ansible 2.5, the default shell for non-system users was C(/usr/bin/false).
               Since Ansible 2.5, the default shell for non-system users on macOS is C(/bin/bash).
-            - On other operating systems, the default shell is determined by the underlying tool being
-              used. See Notes for details.
+            - See notes for details on how other operating systems determine the default shell by
+              the underlying tool.
         type: str
     home:
         description:
