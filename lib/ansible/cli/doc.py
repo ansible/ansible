@@ -129,34 +129,6 @@ class RoleMixin(object):
                         found.add((entry, collname, path))
         return found
 
-    def _find_role(self, role_name, role_paths):
-        """Search for a single role within the supplied search paths and within collections.
-
-        :param role_name: The name of the role.
-        :param role_paths: A set of paths to search. For each path, we will search for
-            a sub-directory with the role name.
-
-        :returns: A string with the found path, or None if not found.
-        """
-        for path in role_paths:
-            if not os.path.isdir(path):
-                display.warning("Invalid role path: {0}".format(path))
-            else:
-                full_path = os.path.join(path, role_name)
-                if os.path.isdir(full_path):
-                    return full_path
-
-        b_colldirs = list_collection_dirs()
-        for b_path in b_colldirs:
-            path = to_text(b_path, errors='surrogate_or_strict')
-            collname = _get_collection_name_from_path(b_path)
-            role_dir = os.path.join(path, 'roles', role_name)
-            if os.path.exists(role_dir):
-                return role_dir
-
-        display.warning("role {0} not found in: {1}".format(role_name, ':'.join(role_paths)))
-        return None
-
     def _create_role_list(self, roles_path):
         """Return a dict describing the listing of all roles with arg specs.
 
