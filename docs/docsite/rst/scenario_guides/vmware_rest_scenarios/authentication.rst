@@ -9,7 +9,7 @@ How to configure the vmware_rest collection
 Introduction
 ============
 
-The vcenter_rest modules need to be authenticated. There is two different
+The vcenter_rest modules need to be authenticated. There are two different
 ways to do this.
 
 Environment variables
