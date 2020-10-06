@@ -401,3 +401,11 @@
     COUNTER=$(cat "{{ output_dir_test }}/counter"); NEW=$(expr $COUNTER - 1); echo $NEW > "{{ output_dir_test }}/counter"; exit $COUNTER
   register: counter
   until: counter.rc == 0
+
+- shell: exit 1
+  register: command_shell_exit_1
+  ignore_errors: true
+
+- assert:
+    that:
+      - command_shell_exit_1 is failed
