@@ -41,7 +41,7 @@ ______
 How to wait until my virtual machine is ready
 =============================================
 
-If you're virtual machine runs VMware Tools, you can build a loop
+If your virtual machine runs VMware Tools, you can build a loop
 around the ``center_vm_tools_info`` module:
 
 .. literalinclude:: task_outputs/Wait_until_my_VM_is_ready.task.yaml
