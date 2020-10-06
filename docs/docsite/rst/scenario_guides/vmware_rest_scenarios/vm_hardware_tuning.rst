@@ -4,7 +4,9 @@
 How to modify a virtual machine
 *******************************
 
-.. contents:: Topics
+.. contents::
+  :local:
+
 
 Introduction
 ============
