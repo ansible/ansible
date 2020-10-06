@@ -40,7 +40,7 @@ All these modules return a ``value`` key. Depending on the context, this ``value
 Datacenter
 ----------
 
-Here we use the ``vcenter_datacenter_info`` module to list all the datacente:
+Here we use the ``vcenter_datacenter_info`` module to list all the datacenters:
 
 .. literalinclude:: task_outputs/collect_a_list_of_the_datacenters.task.yaml
 
