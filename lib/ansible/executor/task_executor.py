@@ -449,7 +449,7 @@ class TaskExecutor:
         try:
             self._no_log = self._task.get_validated_value('no_log', self._task._no_log, self._task.no_log, templar)
         except Exception as e:
-            pass # ignore templating error, keep default
+            pass  # ignore templating error, keep default
 
         # Evaluate the conditional (if any) for this task, which we do before running
         # the final task post-validation. We do this before the post validation due to
@@ -471,7 +471,6 @@ class TaskExecutor:
         # Not skipping, if we had loop error raised earlier we need to raise it now to halt the execution of this task
         if self._loop_eval_error is not None:
             raise self._loop_eval_error  # pylint: disable=raising-bad-type
-
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
