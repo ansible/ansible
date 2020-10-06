@@ -187,6 +187,12 @@ class LinuxVirtual(Virtual):
                 virtual_facts['virtualization_type'] = 'kvm'
                 found_virt = True
 
+        if sys_vendor == 'KubeVirt':
+            guest_tech.add('KubeVirt')
+            if not found_virt:
+                virtual_facts['virtualization_type'] = 'KubeVirt'
+                found_virt = True
+
         # FIXME: This does also match hyperv
         if sys_vendor == 'Microsoft Corporation':
             guest_tech.add('VirtualPC')
