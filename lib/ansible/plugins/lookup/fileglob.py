@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: fileglob
-    author: Michael DeHaan <michael.dehaan@gmail.com>
+    name: fileglob
+    author: Michael DeHaan
     version_added: "1.4"
     short_description: list files matching a pattern
     description:
@@ -41,6 +41,8 @@ RETURN = """
   _list:
     description:
       - list of files
+    type: list
+    elements: path
 """
 
 import os

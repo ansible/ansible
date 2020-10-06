@@ -5,7 +5,6 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
 name: cmd
-plugin_type: shell
 version_added: '2.8'
 short_description: Windows Command Prompt
 description:

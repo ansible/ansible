@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: csvfile
+    name: csvfile
     author: Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
     version_added: "1.5"
     short_description: read data from a TSV or CSV file
@@ -61,6 +61,8 @@ RETURN = """
   _raw:
     description:
       - value(s) stored in file column
+    type: list
+    elements: str
 """
 
 import codecs

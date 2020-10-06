@@ -4,8 +4,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: config
-    author: Ansible Core
+    name: config
+    author: Ansible Core Team
     version_added: "2.5"
     short_description: Lookup current Ansible configuration values
     description:
@@ -53,6 +53,7 @@ RETURN = """
 _raw:
   description:
     - value(s) of the key(s) in the config
+  type: raw
 """
 
 from ansible import constants as C

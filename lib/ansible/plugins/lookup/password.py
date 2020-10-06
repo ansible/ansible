@@ -7,12 +7,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: password
+    name: password
     version_added: "1.1"
     author:
-      - Daniel Hokka Zakrisson <daniel@hozac.com>
-      - Javier Candeira <javier@candeira.com>
-      - Maykel Moya <mmoya@speedyrails.com>
+      - Daniel Hokka Zakrisson (!UNKNOWN) <daniel@hozac.com>
+      - Javier Candeira (!UNKNOWN) <javier@candeira.com>
+      - Maykel Moya (!UNKNOWN) <mmoya@speedyrails.com>
     short_description: retrieve or generate a random password, stored in a file
     description:
       - Generates a random plaintext password and stores it in a file at a given filepath.
@@ -95,6 +95,8 @@ RETURN = """
 _raw:
   description:
     - a password
+  type: list
+  elements: str
 """
 
 import os
