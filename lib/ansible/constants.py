@@ -17,6 +17,7 @@ from ansible.module_utils._text import to_text
 from ansible.module_utils.common.collections import Sequence
 from ansible.module_utils.parsing.convert_bool import boolean, BOOLEANS_TRUE
 from ansible.module_utils.six import string_types
+from ansible.utils.fqcn import add_builtin_fqcn
 
 
 def _warning(msg):
@@ -59,15 +60,6 @@ class _DeprecatedSequenceConstant(Sequence):
         return self._value[y]
 
 
-def _add_builtin_fqcn(names):
-    result = []
-    for name in names:
-        result.append(name)
-        if '.' not in name:
-            result.append('ansible.builtin.%s' % name)
-    return result
-
-
 # CONSTANTS ### yes, actual ones
 REJECT_EXTS = ('.pyc', '.pyo', '.swp', '.bak', '~', '.rpm', '.md', '.txt', '.rst')
 BOOL_TRUE = BOOLEANS_TRUE
@@ -83,9 +75,9 @@ DOCUMENTABLE_PLUGINS = CONFIGURABLE_PLUGINS + ('module', 'strategy')
 IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES")  # ignore during module search
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
 LOCALHOST = ('127.0.0.1', 'localhost', '::1')
-MODULE_REQUIRE_ARGS = tuple(_add_builtin_fqcn(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
+MODULE_REQUIRE_ARGS = tuple(add_builtin_fqcn(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
                                                'ansible.windows.win_shell', 'raw', 'script')))
-MODULE_NO_JSON = tuple(_add_builtin_fqcn(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
+MODULE_NO_JSON = tuple(add_builtin_fqcn(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
                                           'ansible.windows.win_shell', 'raw')))
 RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
 TREE_DIR = None

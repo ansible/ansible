@@ -21,23 +21,23 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import string_types
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
 
 
-_INCLUDE_ACTIONS = _add_builtin_fqcn(('include', ))
-_INCLUDE_INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = _add_builtin_fqcn(('include', 'include_tasks', 'import_tasks'))
-_INCLUDE_ROLE_IMPORT_ROLE_ACTIONS = _add_builtin_fqcn(('include_role', 'import_role'))
-_INCLUDE_TASKS_ACTIONS = _add_builtin_fqcn(('include_tasks', ))
-_INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = _add_builtin_fqcn(('include_tasks', 'import_tasks'))
-_IMPORT_ROLE_ACTIONS = _add_builtin_fqcn(('import_role', ))
-_IMPORT_TASKS_ACTIONS = _add_builtin_fqcn(('import_tasks', ))
+_INCLUDE_ACTIONS = add_builtin_fqcn(('include', ))
+_INCLUDE_INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = add_builtin_fqcn(('include', 'include_tasks', 'import_tasks'))
+_INCLUDE_ROLE_IMPORT_ROLE_ACTIONS = add_builtin_fqcn(('include_role', 'import_role'))
+_INCLUDE_TASKS_ACTIONS = add_builtin_fqcn(('include_tasks', ))
+_INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = add_builtin_fqcn(('include_tasks', 'import_tasks'))
+_IMPORT_ROLE_ACTIONS = add_builtin_fqcn(('import_role', ))
+_IMPORT_TASKS_ACTIONS = add_builtin_fqcn(('import_tasks', ))
 
 
 def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):

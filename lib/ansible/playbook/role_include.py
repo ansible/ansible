@@ -20,7 +20,6 @@ __metaclass__ = type
 
 from os.path import basename
 
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.block import Block
@@ -29,13 +28,14 @@ from ansible.playbook.role import Role
 from ansible.playbook.role.include import RoleInclude
 from ansible.utils.display import Display
 from ansible.module_utils.six import string_types
+from ansible.utils.fqcn import add_builtin_fqcn
 
 __all__ = ['IncludeRole']
 
 display = Display()
 
 
-_INCLUDE_ROLE_ACTIONS = _add_builtin_fqcn(('include_role', ))
+_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include_role', ))
 
 
 class IncludeRole(TaskInclude):

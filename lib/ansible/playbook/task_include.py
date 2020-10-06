@@ -20,12 +20,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ansible.constants as C
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.utils.sentinel import Sentinel
 
 __all__ = ['TaskInclude']
@@ -33,10 +33,10 @@ __all__ = ['TaskInclude']
 display = Display()
 
 
-_INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = _add_builtin_fqcn(('include_tasks', 'import_tasks'))
-_INCLUDE_TASKS_ACTIONS = _add_builtin_fqcn(('include_tasks', ))
-_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS = _add_builtin_fqcn(('include_tasks', 'include_role'))
-_INCLUDE_ACTIONS = _add_builtin_fqcn(('include', ))
+_INCLUDE_TASKS_IMPORT_TASKS_ACTIONS = add_builtin_fqcn(('include_tasks', 'import_tasks'))
+_INCLUDE_TASKS_ACTIONS = add_builtin_fqcn(('include_tasks', ))
+_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include_tasks', 'include_role'))
+_INCLUDE_ACTIONS = add_builtin_fqcn(('include', ))
 
 
 class TaskInclude(Task):

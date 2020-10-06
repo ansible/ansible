@@ -16,7 +16,6 @@ import termios
 import traceback
 
 from ansible import constants as C
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure, AnsibleActionFail, AnsibleActionSkip
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
@@ -34,6 +33,7 @@ from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unsafe_proxy import to_unsafe_text, wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.utils.vars import combine_vars, isidentifier
 
 display = Display()
@@ -44,9 +44,9 @@ RETURN_VARS = [x for x in C.MAGIC_VARIABLE_MAPPING.items() if 'become' not in x 
 __all__ = ['TaskExecutor']
 
 
-_INCLUDE_INCLUDE_TASKS_ACTIONS = _add_builtin_fqcn(('include', 'include_tasks'))
-_INCLUDE_ROLE_ACTIONS = _add_builtin_fqcn(('include_role', ))
-_SET_FACT_INCLUDE_VARS_ACTIONS = _add_builtin_fqcn(('set_fact', 'include_vars'))
+_INCLUDE_INCLUDE_TASKS_ACTIONS = add_builtin_fqcn(('include', 'include_tasks'))
+_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include_role', ))
+_SET_FACT_INCLUDE_VARS_ACTIONS = add_builtin_fqcn(('set_fact', 'include_vars'))
 
 
 class TaskTimeoutError(BaseException):

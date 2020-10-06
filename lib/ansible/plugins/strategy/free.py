@@ -34,7 +34,6 @@ DOCUMENTATION = '''
 import time
 
 from ansible import constants as C
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.loader import action_loader
@@ -42,11 +41,12 @@ from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.module_utils._text import to_text
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
 
 
-_META_ACTIONS = _add_builtin_fqcn(('meta', ))
+_META_ACTIONS = add_builtin_fqcn(('meta', ))
 
 
 class StrategyModule(StrategyBase):

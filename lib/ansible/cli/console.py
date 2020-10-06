@@ -26,7 +26,6 @@ import sys
 
 from ansible import constants as C
 from ansible import context
-from ansible.constants import _add_builtin_fqcn
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -38,11 +37,12 @@ from ansible.plugins.loader import module_loader, fragment_loader
 from ansible.utils import plugin_docs
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
 
 
-_COMMAND_SHELL_SCRIPT_RAW_ACTIONS = _add_builtin_fqcn(('command', 'shell', 'script', 'raw'))
+_COMMAND_SHELL_SCRIPT_RAW_ACTIONS = add_builtin_fqcn(('command', 'shell', 'script', 'raw'))
 
 
 class ConsoleCLI(CLI, cmd.Cmd):

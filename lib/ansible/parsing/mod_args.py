@@ -26,13 +26,14 @@ from ansible.module_utils._text import to_text
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.plugins.loader import module_loader, action_loader
 from ansible.template import Templar
+from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.utils.sentinel import Sentinel
 
 
 # For filtering out modules correctly below
 FREEFORM_ACTIONS = frozenset(C.MODULE_REQUIRE_ARGS)
 
-RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(C._add_builtin_fqcn((
+RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(add_builtin_fqcn((
     'include',
     'include_vars',
     'include_tasks',
@@ -45,7 +46,7 @@ RAW_PARAM_MODULES = FREEFORM_ACTIONS.union(C._add_builtin_fqcn((
     'meta',
 )))
 
-BUILTIN_TASKS = frozenset(C._add_builtin_fqcn((
+BUILTIN_TASKS = frozenset(add_builtin_fqcn((
     'meta',
     'include',
     'include_tasks',

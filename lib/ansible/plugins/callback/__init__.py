@@ -28,7 +28,6 @@ import warnings
 from copy import deepcopy
 
 from ansible import constants as C
-from ansible.constants import _add_builtin_fqcn
 from ansible.module_utils.common._collections_compat import MutableMapping
 from ansible.module_utils.six import PY3
 from ansible.module_utils._text import to_text
@@ -36,6 +35,7 @@ from ansible.parsing.ajson import AnsibleJSONEncoder
 from ansible.plugins import AnsiblePlugin, get_plugin_class
 from ansible.utils.color import stringc
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
 if PY3:
@@ -53,7 +53,7 @@ __all__ = ["CallbackBase"]
 
 _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
 
-_DEBUG_ACTIONS = _add_builtin_fqcn(('debug', ))
+_DEBUG_ACTIONS = add_builtin_fqcn(('debug', ))
 
 
 class CallbackBase(AnsiblePlugin):

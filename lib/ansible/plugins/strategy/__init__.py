@@ -33,7 +33,6 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible import context
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError, AnsibleFileNotFound, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor import action_write_locks
 from ansible.executor.process.worker import WorkerProcess
@@ -51,6 +50,7 @@ from ansible.playbook.task_include import TaskInclude
 from ansible.plugins import loader as plugin_loader
 from ansible.template import Templar
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.utils.vars import combine_vars
 from ansible.vars.clean import strip_internal_keys, module_response_deepcopy
 
@@ -65,8 +65,8 @@ ALWAYS_DELEGATE_FACT_PREFIXES = frozenset((
 ))
 
 
-_INCLUDE_VARS_ACTIONS = _add_builtin_fqcn(('include_vars', ))
-_SET_FACT_ACTIONS = _add_builtin_fqcn(('set_fact', ))
+_INCLUDE_VARS_ACTIONS = add_builtin_fqcn(('include_vars', ))
+_SET_FACT_ACTIONS = add_builtin_fqcn(('set_fact', ))
 
 
 class StrategySentinel:

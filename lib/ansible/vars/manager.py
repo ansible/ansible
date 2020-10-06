@@ -32,7 +32,6 @@ except ImportError:
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound, AnsibleAssertionError, AnsibleTemplateError
 from ansible.inventory.host import Host
 from ansible.inventory.helpers import sort_groups, get_group_vars
@@ -44,6 +43,7 @@ from ansible.vars.fact_cache import FactCache
 from ansible.template import Templar
 from ansible.utils.display import Display
 from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.utils.vars import combine_vars, load_extra_vars, load_options_vars
 from ansible.utils.unsafe_proxy import wrap_var
 from ansible.vars.clean import namespace_facts, clean_facts
@@ -52,7 +52,7 @@ from ansible.vars.plugins import get_vars_from_inventory_sources, get_vars_from_
 display = Display()
 
 
-_INCLUDE_ROLE_ACTIONS = _add_builtin_fqcn(('include_role', ))
+_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include_role', ))
 
 
 def preprocess_vars(a):

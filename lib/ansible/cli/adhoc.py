@@ -9,7 +9,6 @@ from ansible import constants as C
 from ansible import context
 from ansible.cli import CLI
 from ansible.cli.arguments import option_helpers as opt_help
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.module_utils._text import to_text
@@ -17,12 +16,13 @@ from ansible.parsing.splitter import parse_kv
 from ansible.playbook import Playbook
 from ansible.playbook.play import Play
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
 
 
-_INCLUDE_ROLE_TASKS_ACTIONS = _add_builtin_fqcn(('include_role', 'include_tasks'))
-_IMPORT_PLAYBOOK_ACTIONS = _add_builtin_fqcn(('import_playbook', ))
+_INCLUDE_ROLE_TASKS_ACTIONS = add_builtin_fqcn(('include_role', 'include_tasks'))
+_IMPORT_PLAYBOOK_ACTIONS = add_builtin_fqcn(('import_playbook', ))
 
 
 class AdHocCLI(CLI):

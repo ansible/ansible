@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
@@ -28,11 +27,12 @@ from ansible.playbook.collectionsearch import CollectionSearch
 from ansible.playbook.helpers import load_list_of_tasks
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
+from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.utils.sentinel import Sentinel
 
 
-_META_ACTIONS = _add_builtin_fqcn(('meta', ))
-_INCLUDE_ACTIONS = _add_builtin_fqcn(('include', ))
+_META_ACTIONS = add_builtin_fqcn(('meta', ))
+_INCLUDE_ACTIONS = add_builtin_fqcn(('include', ))
 
 
 class Block(Base, Conditional, CollectionSearch, Taggable):

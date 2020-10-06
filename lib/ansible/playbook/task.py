@@ -22,7 +22,6 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleAssertionError
 from ansible.module_utils._text import to_native
 from ansible.module_utils.six import iteritems, string_types
@@ -39,6 +38,7 @@ from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.utils.collection_loader import AnsibleCollectionConfig
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.utils.sentinel import Sentinel
 
 __all__ = ['Task']
@@ -46,11 +46,11 @@ __all__ = ['Task']
 display = Display()
 
 
-_COMMAND_SHELL_SCRIPT_ACTIONS = _add_builtin_fqcn(('command', 'shell', 'script'))
-_INCLUDE_ACTIONS = _add_builtin_fqcn(('include', ))
-_INCLUDE_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS = _add_builtin_fqcn(('include', 'include_tasks', 'include_role'))
-_META_ACTIONS = _add_builtin_fqcn(('meta', ))
-_SETUP_GATHER_FACTS_ACTIONS = _add_builtin_fqcn(('setup', 'gather_facts'))
+_COMMAND_SHELL_SCRIPT_ACTIONS = add_builtin_fqcn(('command', 'shell', 'script'))
+_INCLUDE_ACTIONS = add_builtin_fqcn(('include', ))
+_INCLUDE_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS = add_builtin_fqcn(('include', 'include_tasks', 'include_role'))
+_META_ACTIONS = add_builtin_fqcn(('meta', ))
+_SETUP_GATHER_FACTS_ACTIONS = add_builtin_fqcn(('setup', 'gather_facts'))
 
 
 class Task(Base, Conditional, Taggable, CollectionSearch):

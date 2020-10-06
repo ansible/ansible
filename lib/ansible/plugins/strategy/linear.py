@@ -31,7 +31,6 @@ DOCUMENTATION = '''
     author: Ansible Core Team
 '''
 
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleError, AnsibleAssertionError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.module_utils.six import iteritems
@@ -43,11 +42,12 @@ from ansible.plugins.loader import action_loader
 from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
 
 
-_META_ACTIONS = _add_builtin_fqcn(('meta', ))
+_META_ACTIONS = add_builtin_fqcn(('meta', ))
 
 
 class StrategyModule(StrategyBase):

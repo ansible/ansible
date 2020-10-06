@@ -22,13 +22,13 @@ __metaclass__ = type
 import os
 
 from ansible import constants as C
-from ansible.constants import _add_builtin_fqcn
 from ansible.errors import AnsibleParserError
 from ansible.module_utils._text import to_text, to_native
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins.loader import add_all_plugin_dirs
 from ansible.utils.display import Display
+from ansible.utils.fqcn import add_builtin_fqcn
 
 display = Display()
 
@@ -36,7 +36,7 @@ display = Display()
 __all__ = ['Playbook']
 
 
-_INCLUDE_IMPORT_PLAYBOOK_ACTIONS = _add_builtin_fqcn(('include', 'import_playbook'))
+_INCLUDE_IMPORT_PLAYBOOK_ACTIONS = add_builtin_fqcn(('include', 'import_playbook'))
 
 
 class Playbook:

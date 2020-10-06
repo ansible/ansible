@@ -6,8 +6,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible import constants as C
-from ansible.constants import _add_builtin_fqcn
 from ansible.parsing.dataloader import DataLoader
+from ansible.utils.fqcn import add_builtin_fqcn
 from ansible.vars.clean import module_response_deepcopy, strip_internal_keys
 
 _IGNORE = ('failed', 'skipped')
@@ -22,7 +22,7 @@ CLEAN_EXCEPTIONS = (
     '_ansible_verbose_override',  # controls display of ansible_facts, gathering would be very noise with -v otherwise
 )
 
-_DEBUG_ACTIONS = _add_builtin_fqcn(('debug', ))
+_DEBUG_ACTIONS = add_builtin_fqcn(('debug', ))
 
 
 class TaskResult:
