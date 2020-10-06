@@ -26,3 +26,10 @@
   file:
     path: '{{remote_tmp_dir}}/test-unarchive-tar-gz'
     state: absent
+
+- name: test owner/group perms
+  include_tasks: test_owner_group.yml
+  vars:
+    ext: tar.gz
+    archive: test-unarchive.tar.gz
+    testfile: foo-unarchive.txt

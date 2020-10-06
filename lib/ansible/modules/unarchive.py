@@ -332,8 +332,8 @@ class ZipArchive(object):
                 tpw = pwd.getpwnam(self.file_args['owner'])
             except KeyError:
                 try:
-                    tpw = pwd.getpwuid(self.file_args['owner'])
-                except (TypeError, KeyError):
+                    tpw = pwd.getpwuid(int(self.file_args['owner']))
+                except (TypeError, KeyError, ValueError):
                     tpw = pwd.getpwuid(run_uid)
             fut_owner = tpw.pw_name
             fut_uid = tpw.pw_uid
@@ -351,7 +351,9 @@ class ZipArchive(object):
                 tgr = grp.getgrnam(self.file_args['group'])
             except (ValueError, KeyError):
                 try:
-                    tgr = grp.getgrgid(self.file_args['group'])
+                    # no need to check isdigit() explicitly here, if we fail to
+                    # parse, the ValueError will be caught.
+                    tgr = grp.getgrgid(int(self.file_args['group']))
                 except (KeyError, ValueError, OverflowError):
                     tgr = grp.getgrgid(run_gid)
             fut_group = tgr.gr_name

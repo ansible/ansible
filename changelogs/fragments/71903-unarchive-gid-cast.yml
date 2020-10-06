@@ -1,0 +1,2 @@
+bugfixes:
+  - unarchive - ``zip`` unarchive no longer errors on RHEL/CentOS 6 and old Fedora when attempting to use a numeric gid (https://github.com/ansible/ansible/issues/71903).
