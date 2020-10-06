@@ -7,8 +7,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: list
-    author: Ansible core team
+    name: list
+    author: Ansible Core Team
     version_added: "2.0"
     short_description: simply returns what it is given.
     description:
@@ -27,6 +27,8 @@ EXAMPLES = """
 RETURN = """
   _list:
     description: basically the same as you fed in
+    type: list
+    elements: raw
 """
 
 from ansible.module_utils.common._collections_compat import Sequence

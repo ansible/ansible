@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    inventory: ini
+    name: ini
     version_added: "2.4"
     short_description: Uses an Ansible INI file as inventory source.
     description:

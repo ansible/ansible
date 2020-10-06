@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: sequence
-    author: Jayson Vantuyl <jayson@aggressive.ly>
+    name: sequence
+    author: Jayson Vantuyl (!UNKNOWN) <jayson@aggressive.ly>
     version_added: "1.0"
     short_description: generate a list based on a number sequence
     description:
@@ -21,18 +21,18 @@ DOCUMENTATION = """
       start:
         description: number at which to start the sequence
         default: 0
-        type: number
+        type: integer
       end:
         description: number at which to end the sequence, dont use this with count
-        type: number
+        type: integer
         default: 0
       count:
         description: number of elements in the sequence, this is not to be used with end
-        type: number
+        type: integer
         default: 0
       stride:
         description: increments between sequence numbers, the default is 1 unless the end is less than the start, then it is -1.
-        type: number
+        type: integer
       format:
         description: return a string with the generated number formatted in
 """
@@ -74,6 +74,7 @@ RETURN = """
     description:
       - A list containing generated sequence of items
     type: list
+    elements: str
 """
 
 from re import compile as re_compile, IGNORECASE

@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: subelements
-    author: Serge van Ginderachter <serge@vanginderachter.be>
+    name: subelements
+    author: Serge van Ginderachter (!UNKNOWN) <serge@vanginderachter.be>
     version_added: "1.4"
     short_description: traverse nested key from a list of dictionaries
     description:

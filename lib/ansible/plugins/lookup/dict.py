@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: dict
+    name: dict
     version_added: "1.5"
     short_description: returns key/value pair items from dictionaries
     description:
