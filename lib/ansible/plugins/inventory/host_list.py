@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = r'''
-    inventory: host_list
+    name: host_list
     version_added: "2.4"
     short_description: Parses a 'host list' string
     description:

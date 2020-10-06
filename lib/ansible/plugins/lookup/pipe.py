@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = r"""
-    lookup: pipe
-    author: Daniel Hokka Zakrisson <daniel@hozac.com>
+    name: pipe
+    author: Daniel Hokka Zakrisson (!UNKNOWN) <daniel@hozac.com>
     version_added: "0.9"
     short_description: read output from a command
     description:
@@ -40,6 +40,8 @@ RETURN = r"""
   _string:
     description:
       - stdout from command
+    type: list
+    elements: str
 """
 
 import subprocess

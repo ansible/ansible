@@ -6,8 +6,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: lines
-    author: Daniel Hokka Zakrisson <daniel@hozac.com>
+    name: lines
+    author: Daniel Hokka Zakrisson (!UNKNOWN) <daniel@hozac.com>
     version_added: "0.9"
     short_description: read lines from command
     description:
@@ -37,6 +37,8 @@ RETURN = """
   _list:
     description:
       - lines of stdout from command
+    type: list
+    elements: str
 """
 
 import subprocess

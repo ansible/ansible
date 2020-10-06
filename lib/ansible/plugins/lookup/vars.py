@@ -4,8 +4,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: vars
-    author: Ansible Core
+    name: vars
+    author: Ansible Core Team
     version_added: "2.5"
     short_description: Lookup templated value of variables
     description:
@@ -63,6 +63,8 @@ RETURN = """
 _value:
   description:
     - value of the variables requested.
+  type: list
+  elements: raw
 """
 
 from ansible.errors import AnsibleError, AnsibleUndefinedVariable

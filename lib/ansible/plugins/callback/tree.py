@@ -6,8 +6,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    callback: tree
-    callback_type: notification
+    name: tree
+    type: notification
     requirements:
       - invoked in the command line
     short_description: Save host events to files

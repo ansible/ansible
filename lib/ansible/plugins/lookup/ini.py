@@ -5,8 +5,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    lookup: ini
-    author: Yannig Perre <yannig.perre(at)gmail.com>
+    name: ini
+    author: Yannig Perre (!UNKNOWN) <yannig.perre(at)gmail.com>
     version_added: "2.0"
     short_description: read data from a ini file
     description:
@@ -56,6 +56,8 @@ RETURN = """
 _raw:
   description:
     - value(s) of the key(s) in the ini file
+  type: list
+  elements: str
 """
 import os
 import re

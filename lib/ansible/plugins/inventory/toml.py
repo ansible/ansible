@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = r'''
-    inventory: toml
+    name: toml
     version_added: "2.8"
     short_description: Uses a specific TOML file as an inventory source.
     description:
@@ -153,7 +153,7 @@ class InventoryModule(BaseFileInventoryPlugin):
     NAME = 'toml'
 
     def _parse_group(self, group, group_data):
-        if not isinstance(group_data, (MutableMapping, type(None))):
+        if group_data is not None and not isinstance(group_data, MutableMapping):
             self.display.warning("Skipping '%s' as this is not a valid group definition" % group)
             return
 

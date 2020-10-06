@@ -6,9 +6,9 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     name: auto
-    plugin_type: inventory
     author:
-      - Matt Davis <@nitzmahone>
+      - Matt Davis (@nitzmahone)
+    version_added: "2.5"
     short_description: Loads and executes an inventory plugin specified in a YAML config
     description:
         - By whitelisting C(auto) inventory plugin, any YAML inventory config file with a
