@@ -39,7 +39,7 @@ All the vcenter_rest modules accept the following arguments:
 
 
 Ignore SSL certificate error
-===========================
+============================
 
 It's common to run a test environment without a proper SSL certificate configuration.
 
