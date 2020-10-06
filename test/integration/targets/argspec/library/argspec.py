@@ -28,7 +28,7 @@ def main():
                     'thing': {},
                     'other': {},
                     'another': {},
-                }
+                },
             },
             'required_if': {
                 'required_if': (
@@ -40,7 +40,7 @@ def main():
                     'thing': {},
                     'other': {},
                     'another': {},
-                }
+                },
             },
             'json': {
                 'type': 'json',
@@ -52,6 +52,12 @@ def main():
             'needed_param': {},
             'required_together_one': {},
             'required_together_two': {},
+            'suboptions_list_no_elements': {
+                'type': 'list',
+                'options': {
+                    'thing': {},
+                },
+            },
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
