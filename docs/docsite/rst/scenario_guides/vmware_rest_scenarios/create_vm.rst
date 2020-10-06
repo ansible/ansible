@@ -26,7 +26,7 @@ You've already followed :ref:`vmware_rest_collect_info` and you've got the follo
 How to create a virtual machine
 ===============================
 
-In this examples, we will use the ``vcenter_vm`` module to create a new guest.
+In this example, we will use the ``vcenter_vm`` module to create a new guest.
 
 .. literalinclude:: task_outputs/Create_a_VM.task.yaml
 
