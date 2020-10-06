@@ -21,6 +21,10 @@ from ansible.utils.display import Display
 display = Display()
 
 
+_INCLUDE_ROLE_TASKS_ACTIONS = _add_builtin_fqcn(('include_role', 'include_tasks'))
+_IMPORT_PLAYBOOK_ACTIONS = _add_builtin_fqcn(('import_playbook', ))
+
+
 class AdHocCLI(CLI):
     ''' is an extra-simple tool/framework/API for doing 'remote things'.
         this command allows you to define and run a single task 'playbook' against a set of hosts
@@ -72,7 +76,7 @@ class AdHocCLI(CLI):
                   'timeout': context.CLIARGS['task_timeout']}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
-        include_actions = _add_builtin_fqcn(('include_role', 'include_tasks'))
+        include_actions = _INCLUDE_ROLE_TASKS_ACTIONS
         if context.CLIARGS['module_name'] not in include_actions and any(frozenset((async_val, poll))):
             mytask['async_val'] = async_val
             mytask['poll'] = poll
@@ -122,7 +126,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError(err)
 
         # Avoid modules that don't work with ad-hoc
-        if context.CLIARGS['module_name'] in _add_builtin_fqcn(('import_playbook', )):
+        if context.CLIARGS['module_name'] in _IMPORT_PLAYBOOK_ACTIONS:
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands"
                                       % context.CLIARGS['module_name'])
 

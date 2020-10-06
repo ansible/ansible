@@ -32,6 +32,10 @@ from ansible.utils.display import Display
 display = Display()
 
 
+_INCLUDE_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS = _add_builtin_fqcn(('include', 'include_tasks', 'include_role'))
+_INCLUDE_INCLUDE_TASKS_ACTIONS = _add_builtin_fqcn(('include', 'include_tasks'))
+
+
 class IncludedFile:
 
     def __init__(self, filename, args, vars, task, is_role=False):
@@ -68,7 +72,7 @@ class IncludedFile:
             original_host = res._host
             original_task = res._task
 
-            if original_task.action in _add_builtin_fqcn(('include', 'include_tasks', 'include_role')):
+            if original_task.action in _INCLUDE_INCLUDE_TASKS_INCLUDE_ROLE_ACTIONS:
                 if original_task.loop:
                     if 'results' not in res._result:
                         continue
@@ -112,7 +116,7 @@ class IncludedFile:
 
                     templar = Templar(loader=loader, variables=task_vars)
 
-                    if original_task.action in _add_builtin_fqcn(('include', 'include_tasks')):
+                    if original_task.action in _INCLUDE_INCLUDE_TASKS_ACTIONS:
                         include_file = None
                         if original_task:
                             if original_task.static:

@@ -53,6 +53,8 @@ __all__ = ["CallbackBase"]
 
 _DEBUG_ALLOWED_KEYS = frozenset(('msg', 'exception', 'warnings', 'deprecations'))
 
+_DEBUG_ACTIONS = _add_builtin_fqcn(('debug', ))
+
 
 class CallbackBase(AnsiblePlugin):
 
@@ -249,7 +251,7 @@ class CallbackBase(AnsiblePlugin):
         ''' removes data from results for display '''
 
         # mostly controls that debug only outputs what it was meant to
-        if task_name in _add_builtin_fqcn(('debug', )):
+        if task_name in _DEBUG_ACTIONS:
             if 'msg' in result:
                 # msg should be alone
                 for key in list(result.keys()):

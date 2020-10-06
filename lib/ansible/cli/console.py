@@ -42,6 +42,9 @@ from ansible.utils.display import Display
 display = Display()
 
 
+_COMMAND_SHELL_SCRIPT_RAW_ACTIONS = _add_builtin_fqcn(('command', 'shell', 'script', 'raw'))
+
+
 class ConsoleCLI(CLI, cmd.Cmd):
     ''' a REPL that allows for running ad-hoc tasks against a chosen inventory (based on dominis' ansible-shell).'''
 
@@ -186,7 +189,7 @@ class ConsoleCLI(CLI, cmd.Cmd):
 
         result = None
         try:
-            check_raw = module in _add_builtin_fqcn(('command', 'shell', 'script', 'raw'))
+            check_raw = module in _COMMAND_SHELL_SCRIPT_RAW_ACTIONS
             task = dict(action=dict(module=module, args=parse_kv(module_args, check_raw=check_raw)), timeout=self.task_timeout)
             play_ds = dict(
                 name="Ansible Shell",

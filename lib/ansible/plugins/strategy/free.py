@@ -46,6 +46,9 @@ from ansible.utils.display import Display
 display = Display()
 
 
+_META_ACTIONS = _add_builtin_fqcn(('meta', ))
+
+
 class StrategyModule(StrategyBase):
 
     # This strategy manages throttling on its own, so we don't want it done in queue_task
@@ -190,7 +193,7 @@ class StrategyModule(StrategyBase):
                                 del self._blocked_hosts[host_name]
                                 continue
 
-                        if task.action in _add_builtin_fqcn(('meta', )):
+                        if task.action in _META_ACTIONS:
                             self._execute_meta(task, play_context, iterator, target_host=host)
                             self._blocked_hosts[host_name] = False
                         else:

@@ -25,6 +25,9 @@ from ansible.utils.display import Display
 display = Display()
 
 
+_META_ACTIONS = _add_builtin_fqcn(('meta', ))
+
+
 class PlaybookCLI(CLI):
     ''' the tool to run *Ansible playbooks*, which are a configuration and multinode deployment system.
         See the project home page (https://docs.ansible.com) for more information. '''
@@ -171,7 +174,7 @@ class PlaybookCLI(CLI):
                                 if isinstance(task, Block):
                                     taskmsg += _process_block(task)
                                 else:
-                                    if task.action in _add_builtin_fqcn(('meta', )) and task.implicit:
+                                    if task.action in _META_ACTIONS and task.implicit:
                                         continue
 
                                     all_tags.update(task.tags)

@@ -39,6 +39,9 @@ from ansible.utils.display import Display
 display = Display()
 
 
+_INCLUDE_IMPORT_PLAYBOOK_ACTIONS = _add_builtin_fqcn(('include', 'import_playbook'))
+
+
 class PlaybookInclude(Base, Conditional, Taggable):
 
     _import_playbook = FieldAttribute(isa='string')
@@ -140,7 +143,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
             new_ds.ansible_pos = ds.ansible_pos
 
         for (k, v) in iteritems(ds):
-            if k in _add_builtin_fqcn(('include', 'import_playbook')):
+            if k in _INCLUDE_IMPORT_PLAYBOOK_ACTIONS:
                 self._preprocess_import(ds, new_ds, k, v)
             else:
                 # some basic error checking, to make sure vars are properly

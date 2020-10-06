@@ -36,6 +36,9 @@ display = Display()
 __all__ = ['Playbook']
 
 
+_INCLUDE_IMPORT_PLAYBOOK_ACTIONS = _add_builtin_fqcn(('include', 'import_playbook'))
+
+
 class Playbook:
 
     def __init__(self, loader):
@@ -92,7 +95,7 @@ class Playbook:
                 self._loader.set_basedir(cur_basedir)
                 raise AnsibleParserError("playbook entries must be either a valid play or an include statement", obj=entry)
 
-            if any(action in entry for action in _add_builtin_fqcn(('import_playbook', 'include', ))):
+            if any(action in entry for action in _INCLUDE_IMPORT_PLAYBOOK_ACTIONS):
                 if 'include' in entry or 'ansible.builtin.include' in entry:
                     display.deprecated("'include' for playbook includes. You should use 'import_playbook' instead",
                                        version="2.12", collection_name='ansible.builtin')

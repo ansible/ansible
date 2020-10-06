@@ -47,6 +47,9 @@ from ansible.utils.display import Display
 display = Display()
 
 
+_META_ACTIONS = _add_builtin_fqcn(('meta', ))
+
+
 class StrategyModule(StrategyBase):
 
     noop_task = None
@@ -272,7 +275,7 @@ class StrategyModule(StrategyBase):
                         # corresponding action plugin
                         action = None
 
-                    if task.action in _add_builtin_fqcn(('meta', )):
+                    if task.action in _META_ACTIONS:
                         # for the linear strategy, we run meta tasks just once and for
                         # all hosts currently being iterated over rather than one host
                         results.extend(self._execute_meta(task, play_context, iterator, host))
@@ -410,7 +413,7 @@ class StrategyModule(StrategyBase):
                 for res in results:
                     # execute_meta() does not set 'failed' in the TaskResult
                     # so we skip checking it with the meta tasks and look just at the iterator
-                    if (res.is_failed() or res._task.action in _add_builtin_fqcn(('meta', ))) and iterator.is_failed(res._host):
+                    if (res.is_failed() or res._task.action in _META_ACTIONS) and iterator.is_failed(res._host):
                         failed_hosts.append(res._host.name)
                     elif res.is_unreachable():
                         unreachable_hosts.append(res._host.name)

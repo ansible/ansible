@@ -44,6 +44,11 @@ RETURN_VARS = [x for x in C.MAGIC_VARIABLE_MAPPING.items() if 'become' not in x 
 __all__ = ['TaskExecutor']
 
 
+_INCLUDE_INCLUDE_TASKS_ACTIONS = _add_builtin_fqcn(('include', 'include_tasks'))
+_INCLUDE_ROLE_ACTIONS = _add_builtin_fqcn(('include_role', ))
+_SET_FACT_INCLUDE_VARS_ACTIONS = _add_builtin_fqcn(('set_fact', 'include_vars'))
+
+
 class TaskTimeoutError(BaseException):
     pass
 
@@ -478,7 +483,7 @@ class TaskExecutor:
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
-        if self._task.action in _add_builtin_fqcn(('include', 'include_tasks')):
+        if self._task.action in _INCLUDE_INCLUDE_TASKS_ACTIONS:
             include_args = self._task.args.copy()
             include_file = include_args.pop('_raw_params', None)
             if not include_file:
@@ -488,7 +493,7 @@ class TaskExecutor:
             return dict(include=include_file, include_args=include_args)
 
         # if this task is a IncludeRole, we just return now with a success code so the main thread can expand the task list for the given host
-        elif self._task.action in _add_builtin_fqcn(('include_role', )):
+        elif self._task.action in _INCLUDE_ROLE_ACTIONS:
             include_args = self._task.args.copy()
             return dict(include_args=include_args)
 
@@ -625,7 +630,7 @@ class TaskExecutor:
                 return failed_when_result
 
             if 'ansible_facts' in result:
-                if self._task.action in _add_builtin_fqcn(('set_fact', 'include_vars')):
+                if self._task.action in _SET_FACT_INCLUDE_VARS_ACTIONS:
                     vars_copy.update(result['ansible_facts'])
                 else:
                     # TODO: cleaning of facts should eventually become part of taskresults instead of vars
@@ -689,7 +694,7 @@ class TaskExecutor:
             variables[self._task.register] = result = wrap_var(result)
 
         if 'ansible_facts' in result:
-            if self._task.action in _add_builtin_fqcn(('set_fact', 'include_vars')):
+            if self._task.action in _SET_FACT_INCLUDE_VARS_ACTIONS:
                 variables.update(result['ansible_facts'])
             else:
                 # TODO: cleaning of facts should eventually become part of taskresults instead of vars

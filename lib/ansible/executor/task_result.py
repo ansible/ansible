@@ -22,6 +22,8 @@ CLEAN_EXCEPTIONS = (
     '_ansible_verbose_override',  # controls display of ansible_facts, gathering would be very noise with -v otherwise
 )
 
+_DEBUG_ACTIONS = _add_builtin_fqcn(('debug', ))
+
 
 class TaskResult:
     '''
@@ -114,7 +116,7 @@ class TaskResult:
         result = TaskResult(self._host, self._task, {}, self._task_fields)
 
         # statuses are already reflected on the event type
-        if result._task and result._task.action in _add_builtin_fqcn(('debug', )):
+        if result._task and result._task.action in _DEBUG_ACTIONS:
             # debug is verbose by default to display vars, no need to add invocation
             ignore = _IGNORE + ('invocation',)
         else:
