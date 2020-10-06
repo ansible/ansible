@@ -4,15 +4,17 @@
 How to collect information about your environment
 *************************************************
 
-.. contents:: Topics
+.. contents::
+  :local:
+
 
 Introduction
 ============
 
-This guide will show you how to utilize Ansible to collect information about your
-environment. These information will be useful later for the other tutorials.
+This section shows you how to utilize Ansible to collect information about your environment.
+This information is useful for the other tutorials.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 In this scenario we've got a vCenter with an ESXi host.
@@ -31,8 +33,7 @@ Finally, we use the environment variables to authenticate ourselves as explain i
 How to collect information
 ==========================
 
-In this examples, we will use the ``vcenter_*_info`` module to collect
-information about the associated resources.
+In these examples, we use the ``vcenter_*_info`` module to collect information about the associated resources.
 
 All these modules return a ``value`` key. Depending on the context, this ``value`` key will be either a list or a dictionary.
 
