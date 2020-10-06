@@ -43,3 +43,15 @@
   assert:
     that:
       - "unarchive03b.changed == false"
+
+- name: nuke zip destination
+  file:
+    path: '{{remote_tmp_dir}}/test-unarchive-zip'
+    state: absent
+
+- name: test owner/group perms
+  include_tasks: test_owner_group.yml
+  vars:
+    ext: zip
+    archive: test-unarchive.zip
+    testfile: foo-unarchive.txt
