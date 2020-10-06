@@ -36,8 +36,8 @@ matrix:
     - env: T=linux/centos6/1
     - env: T=linux/centos7/1
     - env: T=linux/centos8/1
-    - env: T=linux/fedora31/1
     - env: T=linux/fedora32/1
+    - env: T=linux/fedora33/1
     - env: T=linux/opensuse15py2/1
     - env: T=linux/opensuse15/1
     - env: T=linux/ubuntu1604/1
@@ -52,8 +52,8 @@ matrix:
     - env: T=linux/centos6/2
     - env: T=linux/centos7/2
     - env: T=linux/centos8/2
-    - env: T=linux/fedora31/2
     - env: T=linux/fedora32/2
+    - env: T=linux/fedora33/2
     - env: T=linux/opensuse15py2/2
     - env: T=linux/opensuse15/2
     - env: T=linux/ubuntu1604/2
@@ -68,8 +68,8 @@ matrix:
     - env: T=linux/centos6/3
     - env: T=linux/centos7/3
     - env: T=linux/centos8/3
-    - env: T=linux/fedora31/3
     - env: T=linux/fedora32/3
+    - env: T=linux/fedora33/3
     - env: T=linux/opensuse15py2/3
     - env: T=linux/opensuse15/3
     - env: T=linux/ubuntu1604/3
@@ -84,8 +84,8 @@ matrix:
     - env: T=linux/centos6/4
     - env: T=linux/centos7/4
     - env: T=linux/centos8/4
-    - env: T=linux/fedora31/4
     - env: T=linux/fedora32/4
+    - env: T=linux/fedora33/4
     - env: T=linux/opensuse15py2/4
     - env: T=linux/opensuse15/4
     - env: T=linux/ubuntu1604/4
@@ -100,8 +100,8 @@ matrix:
     - env: T=linux/centos6/5
     - env: T=linux/centos7/5
     - env: T=linux/centos8/5
-    - env: T=linux/fedora31/5
     - env: T=linux/fedora32/5
+    - env: T=linux/fedora33/5
     - env: T=linux/opensuse15py2/5
     - env: T=linux/opensuse15/5
     - env: T=linux/ubuntu1604/5
@@ -121,8 +121,8 @@ matrix:
     - env: T=i/linux/centos6
     - env: T=i/linux/centos7
     - env: T=i/linux/centos8
-    - env: T=i/linux/fedora31
     - env: T=i/linux/fedora32
+    - env: T=i/linux/fedora33
     - env: T=i/linux/opensuse15py2
     - env: T=i/linux/opensuse15
     - env: T=i/linux/ubuntu1604

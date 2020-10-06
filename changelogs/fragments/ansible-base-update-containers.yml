@@ -1,0 +1,4 @@
+minor_changes:
+  - ansible-test - OpenSuse container now uses Leap 15.2 (https://github.com/ansible/distro-test-containers/pull/48).
+  - ansible-test - Ubuntu containers are now slightly smaller due to apt cleanup (https://github.com/ansible/distro-test-containers/pull/46).
+  - ansible-test - CentOS 8 container is now 8.2.2004 (https://github.com/ansible/distro-test-containers/pull/45).
