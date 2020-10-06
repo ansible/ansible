@@ -4,14 +4,16 @@
 How to create a Virtual Machine
 *******************************
 
-.. contents:: Topics
+.. contents::
+  :local:
+
 
 Introduction
 ============
 
-This guide will show you how to utilize Ansible to create a virtual machine.
+This section shows you how to use Ansible to create a virtual machine.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 You've already followed :ref:`vmware_rest_collect_info` and you've got the following variables defined:
@@ -21,7 +23,7 @@ You've already followed :ref:`vmware_rest_collect_info` and you've got the follo
 - ``my_virtual_machine_folder``
 - ``my_cluster_info``
 
-How to create a Virtual Machine
+How to create a virtual machine
 ===============================
 
 In this examples, we will use the ``vcenter_vm`` module to create a new guest.

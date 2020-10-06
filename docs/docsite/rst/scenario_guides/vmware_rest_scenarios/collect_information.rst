@@ -63,15 +63,14 @@ ______
 
 .. literalinclude:: task_outputs/Build_a_list_of_all_the_clusters.result.json
 
-And we can also fetch the details about a specific cluster, to do so we use
-the ``cluster`` parameter:
+And we can also fetch the details about a specific cluster, with the ``cluster`` parameter:
 
 .. literalinclude:: task_outputs/Retrieve_details_about_the_first_cluster.task.yaml
 
 Result
 ______
 
-And the the ``value`` key of the output is this time a dictionary.
+And the ``value`` key of the output is this time a dictionary.
 
 
 .. literalinclude:: task_outputs/Retrieve_details_about_the_first_cluster.result.json
@@ -100,7 +99,7 @@ ______
 
 .. literalinclude:: task_outputs/Build_a_list_of_all_the_folders.result.json
 
-Most of the time, you will just want one type folders, in this case we can use filters to reduce the amount to collect. Most of the ``_info`` modules comes with similar filters.
+Most of the time, you will just want one type of folder. In this case we can use filters to reduce the amount to collect. Most of the ``_info`` modules come with similar filters.
 
 .. literalinclude:: task_outputs/Build_a_list_of_all_the_folders_with_the_type_VIRTUAL_MACHINE_and_called_vm.task.yaml
 
