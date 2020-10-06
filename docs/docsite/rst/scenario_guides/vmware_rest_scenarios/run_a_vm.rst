@@ -11,7 +11,7 @@ How to run a virtual machine
 Introduction
 ============
 
-This section cover the power management of your virtual machine.
+This section covers the power management of your virtual machine.
 
 Power information
 =================
