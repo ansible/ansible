@@ -56,9 +56,9 @@ How to attach a VM to a network
 Attach a new NIC
 ________________
 
-Here we attach the VM to network (via the portgroup). We specifc a ``pci_slot_number`` for the same reason.
+Here we attach the VM to the network (through the portgroup). We specify a ``pci_slot_number`` for the same reason.
 
-The second task adjust the NIC configuration.
+The second task adjusts the NIC configuration.
 
 .. literalinclude:: task_outputs/Attach_a_VM_to_a_dvswitch.task.yaml
 
