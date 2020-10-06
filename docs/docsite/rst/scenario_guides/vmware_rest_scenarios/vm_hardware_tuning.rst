@@ -11,22 +11,22 @@ How to modify a virtual machine
 Introduction
 ============
 
-This guide will show you how to utilize Ansible to modify an existing virtual machine.
+This section shows you how to use Ansible to modify an existing virtual machine.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
-You've already followed :ref:`vmware_rest_create_vm` and you've already created a VM.
+You've already followed :ref:`vmware_rest_create_vm` and created a VM.
 
-How to add a CDROM drive to Virtual Machine
-===========================================
+How to add a CDROM drive to a virtual machine
+=============================================
 
-In this examples, we will use the ``vcenter_vm_hardware_*`` modules to add a new CDROM to an existing VM.
+In this example, we use the ``vcenter_vm_hardware_*`` modules to add a new CDROM to an existing VM.
 
 Add a new SATA adapter
 ______________________
 
-First we create a new SATA adapter. We specify the ``pci_slot_number``, this way if we run the task again it won't do anything if there is already an adapter there.
+First we create a new SATA adapter. We specify the ``pci_slot_number``. This way if we run the task again it won't do anything if there is already an adapter there.
 
 .. literalinclude:: task_outputs/Create_a_SATA_adapter_at_PCI_slot_34.task.yaml
 
@@ -38,7 +38,7 @@ ______
 Add a CDROM drive
 _________________
 
-Now I can create my CDROM drive:
+Now we can create the CDROM drive:
 
 .. literalinclude:: task_outputs/Attach_an_ISO_image_to_a_guest_VM.task.yaml
 
