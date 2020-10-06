@@ -598,14 +598,15 @@ def download_collections(collections, output_path, apis, validate_certs, no_deps
     :param allow_pre_release: Do not ignore pre-release versions when selecting the latest.
     """
     with _tempdir() as b_temp_path:
-        display.display("Process install dependency map")
-        with _display_progress():
+        with _display_progress("Process download dependency map"):
             dep_map = _build_dependency_map(collections, [], b_temp_path, apis, validate_certs, True, True, no_deps,
                                             allow_pre_release=allow_pre_release)
 
         requirements = []
-        display.display("Starting collection download process to '%s'" % output_path)
-        with _display_progress():
+        with _display_progress(
+                "Starting collection download process to '{path!s}'".
+                format(path=output_path),
+        ):
             for name, requirement in dep_map.items():
                 collection_filename = "%s-%s-%s.tar.gz" % (requirement.namespace, requirement.name,
                                                            requirement.latest_version)
@@ -657,8 +658,10 @@ def publish_collection(collection_path, api, wait, timeout):
         if not task_id:
             raise AnsibleError("Publishing the collection did not return valid task info. Cannot wait for task status. Returned task info: '%s'" % import_uri)
 
-        display.display("Collection has been published to the Galaxy server %s %s" % (api.name, api.api_server))
-        with _display_progress():
+        with _display_progress(
+                "Collection has been published to the Galaxy server "
+                "{api.name!s} {api.api_server!s}".format(api=api),
+        ):
             api.wait_import_task(task_id, timeout)
         display.display("Collection has been successfully published and imported to the Galaxy server %s %s"
                         % (api.name, api.api_server))
@@ -684,14 +687,12 @@ def install_collections(collections, output_path, apis, validate_certs, ignore_e
     existing_collections = find_existing_collections(output_path, fallback_metadata=True)
 
     with _tempdir() as b_temp_path:
-        display.display("Process install dependency map")
-        with _display_progress():
+        with _display_progress("Process install dependency map"):
             dependency_map = _build_dependency_map(collections, existing_collections, b_temp_path, apis,
                                                    validate_certs, force, force_deps, no_deps,
                                                    allow_pre_release=allow_pre_release)
 
-        display.display("Starting collection install process")
-        with _display_progress():
+        with _display_progress("Starting collection install process"):
             for collection in dependency_map.values():
                 try:
                     collection.install(output_path, b_temp_path)
@@ -802,9 +803,13 @@ def _tarfile_extract(tar, member):
 
 
 @contextmanager
-def _display_progress():
+def _display_progress(msg=None):
     config_display = C.GALAXY_DISPLAY_PROGRESS
     display_wheel = sys.stdout.isatty() if config_display is None else config_display
+
+    global display
+    if msg is not None:
+        display.display(msg)
 
     if not display_wheel:
         yield
@@ -845,7 +850,6 @@ def _display_progress():
             return call_display
 
     # Temporary override the global display class with our own which add the calls to a queue for the thread to call.
-    global display
     old_display = display
     try:
         display_queue = queue.Queue()
