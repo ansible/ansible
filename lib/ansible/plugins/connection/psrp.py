@@ -6,7 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = """
 author: Ansible Core Team
-connection: psrp
+name: psrp
 short_description: Run tasks over Microsoft PowerShell Remoting Protocol
 description:
 - Run commands or put/fetch on a target via PSRP (WinRM plugin)

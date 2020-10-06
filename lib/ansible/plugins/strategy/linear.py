@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    strategy: linear
+    name: linear
     short_description: Executes tasks in a linear fashion
     description:
         - Task execution is in lockstep per host batch as defined by C(serial) (default all).

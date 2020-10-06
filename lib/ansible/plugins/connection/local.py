@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    connection: local
+    name: local
     short_description: execute on controller
     description:
         - This connection plugin allows ansible to execute tasks on the Ansible 'controller' instead of on a remote host.

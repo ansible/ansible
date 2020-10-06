@@ -19,7 +19,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    strategy: free
+    name: free
     short_description: Executes tasks without waiting for all hosts
     description:
         - Task execution is as fast as possible per batch as defined by C(serial) (default all).
