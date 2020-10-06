@@ -90,7 +90,7 @@ ______
 Upgrade the hardware version of the VM
 ======================================
 
-Here we use the ``vcenter_vm_hardware`` to upgrade the version of the hardware: 
+Here we use the ``vcenter_vm_hardware`` module to upgrade the version of the hardware: 
 
 .. literalinclude:: task_outputs/Upgrade_the_VM_hardware_version.task.yaml
 
@@ -99,8 +99,8 @@ ______
 
 .. literalinclude:: task_outputs/Upgrade_the_VM_hardware_version.result.json
 
-Adjust the number of CPU of the VM
-==================================
+Adjust the number of CPUs of the VM
+===================================
 
 You can use ``vcenter_vm_hardware_cpu`` for that:
 

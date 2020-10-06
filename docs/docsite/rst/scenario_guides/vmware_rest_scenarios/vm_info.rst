@@ -4,28 +4,29 @@
 Retrieve information from a specific VM
 ***************************************
 
-.. contents:: Topics
+.. contents::
+  :local:
+
 
 Introduction
 ============
 
-This guide will show you how to utilize Ansible to retrieve information about a specific Virtual Machine.
+This section shows you how to use Ansible to retrieve information about a specific virtual machine.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 You've already followed :ref:`vmware_rest_create_vm` and you've got create a new VM called ``test_vm1``.
 
-How to collect Virtual Machine information
+How to collect virtual machine information
 ==========================================
 
 List the VM
 ___________
 
-In this examples, we will use the ``vcenter_vm_info`` module to collect information about
-our new VM.
+In this example, we use the ``vcenter_vm_info`` module to collect information about our new VM.
 
-In this example, we start by asking for a list of VM. We use a filter to limit the results to just the VM called ``test_vm1``. So we are in a list context, with one single entry in the ``value`` key.
+In this example, we start by asking for a list of VMs. We use a filter to limit the results to just the VM called ``test_vm1``. So we are in a list context, with one single entry in the ``value`` key.
 
 .. literalinclude:: task_outputs/Look_up_the_VM_called_test_vm1_in_the_inventory.task.yaml
 
@@ -46,8 +47,7 @@ For the next steps, we pass the ID of the VM through the ``vm`` parameter. This 
 Result
 ______
 
-The result is a structure with all the details about or VM. You will note this is actually
-the same information that we get when we created the VM.
+The result is a structure with all the details about our VM. You will note this is actually the same information that we get when we created the VM.
 
 .. literalinclude:: task_outputs/Collect_information_about_a_specific_VM.result.json
 
@@ -55,7 +55,7 @@ the same information that we get when we created the VM.
 Get the hardware version of a specific VM
 _________________________________________
 
-We can also use all the ``vcenter_vm_foo_info`` modules to retrieve smaller amount
+We can also use all the ``vcenter_vm_*_info`` modules to retrieve a smaller amount
 of information. Here we use ``vcenter_vm_hardware_info`` to know the hardware version of
 the VM.
 

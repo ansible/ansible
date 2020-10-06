@@ -4,14 +4,16 @@
 How to get information from a running virtual machine 
 *****************************************************
 
-.. contents:: Topics
+.. contents::
+  :local:
+
 
 Introduction
 ============
 
-This guide will show you how to collection information from a running virtual machine.
+This section shows you how to collection information from a running virtual machine.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 You've already followed :ref:`vmware_rest_run_a_vm` and your virtual machine runs VMware Tools.
@@ -19,8 +21,7 @@ You've already followed :ref:`vmware_rest_run_a_vm` and your virtual machine run
 How to collect information
 ==========================
 
-In this examples, we will use the ``vcenter_vm_guest_*`` module to collect
-information about the associated resources.
+In this example, we use the ``vcenter_vm_guest_*`` module to collect information about the associated resources.
 
 Filesystem
 ----------
@@ -40,7 +41,7 @@ ______
 Guest identity
 --------------
 
-You can ust ``vcenter_vm_guest_identity_info`` to get details like the OS family or the hostname of the running VM.
+You can use ``vcenter_vm_guest_identity_info`` to get details like the OS family or the hostname of the running VM.
 
 .. literalinclude:: task_outputs/Get_guest_identity_information.task.yaml
 
@@ -64,7 +65,7 @@ ______
 Network interfaces
 ------------------
 
-``vcenter_vm_guest_networking_interfaces_info`` will return a list of NIC configuration.
+``vcenter_vm_guest_networking_interfaces_info`` will return a list of NIC configurations.
 
 See also :ref:`vmware_rest_attach_a_network`.
 
@@ -86,5 +87,4 @@ Result
 ______
 
 .. literalinclude:: task_outputs/Get_guest_network_routes_information.result.json
-
 

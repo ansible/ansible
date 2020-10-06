@@ -4,14 +4,16 @@
 How to configure the VMware tools of a running virtual machine 
 **************************************************************
 
-.. contents:: Topics
+.. contents::
+  :local:
+
 
 Introduction
 ============
 
-This guide will show you how to collection information from a running virtual machine.
+This section show you how to collection information from a running virtual machine.
 
-Scenario Requirements
+Scenario requirements
 =====================
 
 You've already followed :ref:`vmware_rest_run_a_vm` and your virtual machine runs VMware Tools.
@@ -19,7 +21,7 @@ You've already followed :ref:`vmware_rest_run_a_vm` and your virtual machine run
 How to change the upgrade policy
 ================================
 
-Change the upgrade policy to UPGRADE_AT_POWER_CYCLE
+Change the upgrade policy to MANUAL
 ---------------------------------------------------
 
 You can adjust the VMware Tools upgrade policy with the ``vcenter_vm_tools`` module.
@@ -32,8 +34,8 @@ ______
 .. literalinclude:: task_outputs/Change_vm-tools_upgrade_policy_to_MANUAL.result.json
 
 
-Change the upgrade policy to MANUAL 
------------------------------------
+Change the upgrade policy to UPGRADE_AT_POWER_CYCLE 
+------------------------------------------------------------------------------------------
 
 .. literalinclude:: task_outputs/Change_vm-tools_upgrade_policy_to_UPGRADE_AT_POWER_CYCLE.task.yaml
 
