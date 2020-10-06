@@ -76,9 +76,9 @@ IGNORE_FILES = ("COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUID
 INTERNAL_RESULT_KEYS = ('add_host', 'add_group')
 LOCALHOST = ('127.0.0.1', 'localhost', '::1')
 MODULE_REQUIRE_ARGS = tuple(add_builtin_fqcn(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                                               'ansible.windows.win_shell', 'raw', 'script')))
+                                              'ansible.windows.win_shell', 'raw', 'script')))
 MODULE_NO_JSON = tuple(add_builtin_fqcn(('command', 'win_command', 'ansible.windows.win_command', 'shell', 'win_shell',
-                                          'ansible.windows.win_shell', 'raw')))
+                                         'ansible.windows.win_shell', 'raw')))
 RESTRICTED_RESULT_KEYS = ('ansible_rsync_path', 'ansible_playbook_python', 'ansible_facts')
 TREE_DIR = None
 VAULT_VERSION_MIN = 1.0
