@@ -28,7 +28,7 @@ Our environment is pre-initialized with the following elements:
 - two datastores on the ESXi: ``rw_datastore`` and ``ro_datastore``
 - a dvswitch based guest network
 
-Finally, we use the environment variables to authenticate ourselves as explain in :ref:`vmware_rest_authentication`. 
+Finally, we use the environment variables to authenticate ourselves as explained in :ref:`vmware_rest_authentication`. 
 
 How to collect information
 ==========================
