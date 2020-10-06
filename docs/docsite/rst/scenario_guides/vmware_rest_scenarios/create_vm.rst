@@ -36,4 +36,4 @@ ______
 .. literalinclude:: task_outputs/Create_a_VM.result.json
 
 .. note::
-    ``vcenter_vm`` accepts much more parameters, however you may prefer to start with a simple VM and use the ``vcenter_vm_hardware`` modules to tune it up afterwards. It's easier this way to identify a potential problematical step.
+    ``vcenter_vm`` accepts more parameters, however you may prefer to start with a simple VM and use the ``vcenter_vm_hardware`` modules to tune it up afterwards. It's easier this way to identify a potential problematical step.

@@ -4,7 +4,9 @@
 How to run a virtual machine
 ****************************
 
-.. contents:: Topics
+.. contents::
+  :local:
+
 
 Introduction
 ============
