@@ -1,0 +1,2 @@
+bugfixes:
+  - virtual facts - kubevirt is now identified as "KubeVirt" and with a "guest" role instead of "kvm" and "host" role (https://github.com/ansible/ansible/issues/72001).
