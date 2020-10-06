@@ -21,12 +21,12 @@ In this scenario we've got a vCenter with an ESXi host.
 
 Our environment is pre-initialized with the following elements:
 
-- a datacenter called ``my_dc``
-- a cluster called ``my_cluser``
-- a cluster called ``my_cluser``
-- an ESXi host called ``esxi1`` is in the cluster
-- two datastores on the ESXi: ``rw_datastore`` and ``ro_datastore``
-- a dvswitch based guest network
+- A datacenter called ``my_dc``
+- A cluster called ``my_cluser``
+- A cluster called ``my_cluser``
+- An ESXi host called ``esxi1`` is in the cluster
+- Two datastores on the ESXi: ``rw_datastore`` and ``ro_datastore``
+- A dvswitch based guest network
 
 Finally, we use the environment variables to authenticate ourselves as explained in :ref:`vmware_rest_authentication`. 
 
