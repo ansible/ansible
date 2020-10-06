@@ -133,11 +133,11 @@ In a playbook, you can set module defaults for whole groups of modules, such as 
           region: us-west-2
       tasks:
       - name: Get info
-        community.aws.aws_s3_bucket_info:
+        aws_s3_bucket_info:
 
       # now the region is shared between both info modules
 
       - name: Get info
-        amazon.aws.ec2_ami_info:
+        ec2_ami_info:
           filters:
             name: 'RHEL*7.5*'
