@@ -121,6 +121,11 @@
   register: argspec_fail_required_together
   ignore_errors: true
 
+- argspec:
+    suboptions_list_no_elements:
+      - thing: foo
+  register: argspec_suboptions_list_no_elements
+
 - assert:
     that:
       - argspec_required_if_fail is failed
@@ -145,13 +150,16 @@
       - argpsec_required_if_fail is failed
 
       - argspec_good_json_string is successful
-      - >
+      - >-
         argspec_good_json_string.json == '{"foo": "bar"}'
       - argspec_good_json_dict is successful
-      - >
+      - >-
         argspec_good_json_dict.json == '{"foo": "bar"}'
       - argspec_bad_json is failed
 
       - argspec_fail_on_missing_params_bad is failed
 
       - argspec_fail_required_together is failed
+
+      - >-
+        argspec_suboptions_list_no_elements.suboptions_list_no_elements.0 == {'thing': 'foo'}
