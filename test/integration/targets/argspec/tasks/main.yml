@@ -126,6 +126,18 @@
       - thing: foo
   register: argspec_suboptions_list_no_elements
 
+- argspec:
+    choices_with_strings_like_bools: on
+  register: argspec_choices_with_strings_like_bools_true
+
+- argspec:
+    choices_with_strings_like_bools: 'on'
+  register: argspec_choices_with_strings_like_bools_true_bool
+
+- argspec:
+    choices_with_strings_like_bools: off
+  register: argspec_choices_with_strings_like_bools_false
+
 - assert:
     that:
       - argspec_required_if_fail is failed
@@ -163,3 +175,7 @@
 
       - >-
         argspec_suboptions_list_no_elements.suboptions_list_no_elements.0 == {'thing': 'foo'}
+
+      - argspec_choices_with_strings_like_bools_true.choices_with_strings_like_bools == 'on'
+      - argspec_choices_with_strings_like_bools_true_bool.choices_with_strings_like_bools == 'on'
+      - argspec_choices_with_strings_like_bools_false.choices_with_strings_like_bools == 'off'

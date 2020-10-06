@@ -58,6 +58,13 @@ def main():
                     'thing': {},
                 },
             },
+            'choices_with_strings_like_bools': {
+                'type': 'str',
+                'choices': [
+                    'on',
+                    'off',
+                ],
+            },
         },
         required_if=(
             ('state', 'present', ('path', 'content'), True),
