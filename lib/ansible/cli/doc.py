@@ -196,14 +196,14 @@ class RoleMixin(object):
             else:
                 fqcn = role
             if fqcn not in result:
-                result[fqcn] = []
+                result[fqcn] = {}
             summary = {}
             summary['collection'] = collection
             summary['entry_points'] = {}
             for entry_point in argspec.keys():
                 entry_spec = argspec[entry_point] or {}
                 summary['entry_points'][entry_point] = entry_spec.get('short_description', '')
-            result[fqcn].append(summary)
+            result[fqcn] = summary
 
         for role, role_path in roles:
             argspec = self._load_argspec(role, role_path=role_path)
@@ -370,9 +370,8 @@ class DocCLI(CLI, RoleMixin):
         roles = list(list_json.keys())
         entry_point_names = set()
         for role in roles:
-            for item in list_json[role]:
-                for entry_point in item['entry_points'].keys():
-                    entry_point_names.add(entry_point)
+            for entry_point in list_json[role]['entry_points'].keys():
+                entry_point_names.add(entry_point)
 
         max_role_len = max(len(x) for x in roles)
         max_ep_len = max(len(x) for x in entry_point_names)
@@ -380,13 +379,12 @@ class DocCLI(CLI, RoleMixin):
         text = []
 
         for role in sorted(roles):
-            for item in list_json[role]:
-                for entry_point, desc in iteritems(item['entry_points']):
-                    if len(desc) > linelimit:
-                        desc = desc[:linelimit] + '...'
-                    text.append("%-*s %-*s %s" % (max_role_len, role,
-                                                  max_ep_len, entry_point,
-                                                  desc))
+            for entry_point, desc in iteritems(list_json[role]['entry_points']):
+                if len(desc) > linelimit:
+                    desc = desc[:linelimit] + '...'
+                text.append("%-*s %-*s %s" % (max_role_len, role,
+                                              max_ep_len, entry_point,
+                                              desc))
 
         # display results
         DocCLI.pager("\n".join(text))
