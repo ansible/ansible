@@ -215,27 +215,6 @@ class RoleMixin(object):
 
         return result
 
-    def _display_role_docs(self, role_name, role_spec_file):
-        """Present the documentation for a single role based on the role arg spec contents.
-
-        :param role_name: The name of the role.
-        :param role_spec_file: Path to the role argument specification file.
-        """
-        print("docs for role %s from %s" % (role_name, role_spec_file))
-
-    def _show_role_documentation(self, roles, role_paths):
-        """Coordinate displaying the role documentation for each given role.
-
-        :param roles: A list of role names.
-        :param role_paths: Iterable of paths to search for the named roles.
-        """
-        for role in roles:
-            role_path = self._find_role(role, role_paths)
-            if role_path:
-                role_spec_file = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_FILE)
-                if os.path.exists(role_spec_file):
-                    self._display_role_docs(role, role_spec_file)
-
 
 class DocCLI(CLI, RoleMixin):
     ''' displays information on modules installed in Ansible libraries.
@@ -405,6 +384,7 @@ class DocCLI(CLI, RoleMixin):
                 # if no desc, typeerror raised ends this block
                 kdata = {'description': descs[keyword]}
 
+<<<<<<< HEAD
                 # get playbook objects for keyword and use first to get keyword attributes
                 kdata['applies_to'] = []
                 for pobj in PB_OBJECTS:
@@ -412,6 +392,16 @@ class DocCLI(CLI, RoleMixin):
                         obj_class = 'ansible.playbook.%s' % pobj.lower()
                         loaded_class = importlib.import_module(obj_class)
                         PB_LOADED[pobj] = getattr(loaded_class, pobj, None)
+=======
+        if plugin_type == 'role':
+            if context.CLIARGS['list_dir']:
+                list_json = self._create_role_list(roles_path)
+                if do_json:
+                    jdump(list_json)
+                else:
+                    self._display_available_roles(list_json)
+            return 0
+>>>>>>> remove unused code
 
                     if keyword in PB_LOADED[pobj]._valid_attrs:
                         kdata['applies_to'].append(pobj)
