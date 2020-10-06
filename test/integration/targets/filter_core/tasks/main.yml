@@ -292,9 +292,9 @@
 - name: regex_search check
   assert:
     that:
-      - match_case == ''
+      - not match_case
       - ignore_case == 'hello'
-      - single_line == ''
+      - not single_line
       - multi_line == 'world'
       - named_groups == ['bye', 'good']
       - numbered_groups == ['bye', 'good']

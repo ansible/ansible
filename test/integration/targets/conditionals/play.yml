@@ -344,10 +344,12 @@
     # proper booleanification tests (issue #8629)
 
     - name: set fact to string 'false'
-      set_fact: bool_test1=false
+      set_fact:
+        bool_test1: false
 
     - name: set fact to string 'False'
-      set_fact: bool_test2=False
+      set_fact:
+        bool_test2: False
 
     - name: set fact to a proper boolean using complex args
       set_fact:
@@ -413,13 +415,15 @@
         that:
         - result is changed
 
-    - set_fact: skipped_bad_attribute=True
+    - set_fact:
+        skipped_bad_attribute: True
     - block:
       - name: test a with_items loop using a variable with a missing attribute
         debug: var=item
         with_items: "{{cond_bad_attribute.results | default('')}}"
         register: result
-      - set_fact: skipped_bad_attribute=False
+      - set_fact:
+          skipped_bad_attribute: False
       - name: assert the task was skipped
         assert:
           that:

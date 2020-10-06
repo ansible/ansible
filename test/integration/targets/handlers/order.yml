@@ -30,5 +30,5 @@
     - name: handler5
       assert:
         that:
-          - foo == '1234'
-        fail_msg: "{{ foo }}"
+          - foo == 1234
+        fail_msg: "{{ foo|string }}"

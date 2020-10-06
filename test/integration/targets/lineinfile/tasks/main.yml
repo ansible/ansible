@@ -479,7 +479,7 @@
 - name: use with_items to add code-like strings to the quoting txt file
   lineinfile:
     dest: "{{ remote_tmp_dir }}/test_quoting.txt"
-    line: "{{ item }}"
+    line: "{{ item | string }}"
     insertbefore: BOF
   with_items:
     - "'foo'"

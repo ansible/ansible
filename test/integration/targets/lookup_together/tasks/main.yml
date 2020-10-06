@@ -1,5 +1,4 @@
 - name: test with_together
-  #shell: echo {{ item }}
   set_fact: "{{ item.0 }}={{ item.1 }}"
   with_together:
     - [ 'a', 'b', 'c', 'd' ]
@@ -8,10 +7,10 @@
 - name: verify with_together results
   assert:
     that:
-        - "a == '1'"
-        - "b == '2'"
-        - "c == '3'"
-        - "d == '4'"
+        - a|int == 1
+        - b|int == 2
+        - c|int == 3
+        - d|int == 4
 
 - block:
     - name: "EXPECTED FAILURE - test empty list"

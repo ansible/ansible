@@ -746,7 +746,7 @@ DEFAULT_JINJA2_EXTENSIONS:
   - {key: jinja2_extensions, section: defaults}
 DEFAULT_JINJA2_NATIVE:
   name: Use Jinja2's NativeEnvironment for templating
-  default: False
+  default: True
   description: This option preserves variable types during template operations.
   env: [{name: ANSIBLE_JINJA2_NATIVE}]
   ini:

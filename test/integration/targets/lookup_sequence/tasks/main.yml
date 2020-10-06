@@ -9,14 +9,14 @@
 - name: verify with_sequence
   assert:
     that:
-        - "x0 == '0'"
-        - "x1 == '1'"
-        - "x2 == '2'"
-        - "x3 == '3'"
-        - "y3 == '3'"
-        - "y2 == '2'"
-        - "y1 == '1'"
-        - "y0 == '0'"
+        - x0|int == 0
+        - x1|int == 1
+        - x2|int == 2
+        - x3|int == 3
+        - y3|int == 3
+        - y2|int == 2
+        - y1|int == 1
+        - y0|int == 0
 
 - name: test with_sequence not failing on count == 0
   debug: msg='previously failed with backward counting error'
@@ -54,13 +54,13 @@
 - name: verify with_sequence shortcut syntax
   assert:
     that:
-        - "ws_z_1 == '1'"
-        - "ws_z_2 == 'stride_2'"
-        - "ws_z_3 == '3'"
-        - "ws_z_4 == 'stride_4'"
-        - "ws_z_6 == 'stride_6'"
-        - "ws_z_host07 == 'host07'"
-        - "ws_z_host08 == 'host08'"
+        - ws_z_1|int == 1
+        - ws_z_2 == 'stride_2'
+        - ws_z_3|int == 3
+        - ws_z_4 == 'stride_4'
+        - ws_z_6 == 'stride_6'
+        - ws_z_host07 == 'host07'
+        - ws_z_host08 == 'host08'
 
 - block:
     - name: EXPECTED FAILURE - test invalid arg

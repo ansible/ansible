@@ -5,7 +5,7 @@
 
 - name: Setup the modification time for the tests
   set_fact:
-    modification_timestamp: "202202081414.00"
+    modification_timestamp: "{{ 202202081414.00 | string }}"
 
 - name: Get stat info for the file
   stat:

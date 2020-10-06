@@ -798,7 +798,7 @@
       register: sos_arch_command
 
     - set_fact:
-        sos_version: "{{ sos_version_command.stdout | trim }}"
+        sos_version: "{{ sos_version_command.stdout | trim | string }}"
         sos_release: "{{ sos_release_command.stdout | trim }}"
         sos_arch: "{{ sos_arch_command.stdout | trim }}"
 

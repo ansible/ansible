@@ -37,8 +37,8 @@
 
     - name: "read ini value with section and regexp"
       set_fact:
-        value_section:    "{{lookup('ini', 'value[1-2]        section=value_section file=lookup.ini re=true')}}"
-        other_section:    "{{lookup('ini', 'other[1-2]        section=other_section file=lookup.ini re=true')}}"
+        value_section:    "{{lookup('ini', 'value[1-2]        section=value_section file=lookup.ini re=true') | string}}"
+        other_section:    "{{lookup('ini', 'other[1-2]        section=other_section file=lookup.ini re=true') | string}}"
 
     - debug: var={{item}}
       with_items: [ 'value_section', 'other_section' ]

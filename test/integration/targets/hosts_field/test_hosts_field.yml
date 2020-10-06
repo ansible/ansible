@@ -27,14 +27,14 @@
     - command: echo 'Running on {{ inventory_hostname }}'
 
 - name: Hosts taken from kv extra_var on the CLI
-  hosts: "{{ target_kv }}"
+  hosts: "{{ target_kv | string }}"
   gather_facts: False
   tags: hosts_from_kv_string
   tasks:
     - command: echo 'Running on {{ inventory_hostname }}'
 
 - name: Hosts taken from a json string on the CLI
-  hosts: "{{ target_json_cli }}"
+  hosts: "{{ target_json_cli | string }}"
   gather_facts: False
   tags: hosts_from_cli_json_string
   tasks:
@@ -48,7 +48,7 @@
     - command: echo 'Running on {{ inventory_hostname }}'
 
 - name: Hosts is taken from a json string in an extra_vars file
-  hosts: "{{ target_json_file }}"
+  hosts: "{{ target_json_file | string }}"
   gather_facts: False
   tags: hosts_from_json_file_string
   tasks:

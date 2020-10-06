@@ -124,10 +124,11 @@ def ansible_native_concat(nodes):
 
     try:
         evaled = ast.literal_eval(
-            # In Python 3.10+ ast.literal_eval removes leading spaces/tabs
-            # from the given string. For backwards compatibility we need to
-            # parse the string ourselves without removing leading spaces/tabs.
-            ast.parse(out, mode='eval')
+            ast.fix_missing_locations(
+                Json2Python().visit(
+                    ast.parse(out, mode='eval')
+                )
+            )
         )
     except (ValueError, SyntaxError, MemoryError):
         return out

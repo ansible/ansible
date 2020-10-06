@@ -799,12 +799,12 @@
       - data_not_converted | type_debug == 'NativeJinjaUnsafeText'
       - data_converted | type_debug == 'dict'
   vars:
-    data_not_converted: "{{ lookup('template', 'json_macro.j2', convert_data=False) }}"
-    data_converted: "{{ lookup('template', 'json_macro.j2') }}"
+    data_not_converted: "{{ lookup('template', 'json_macro.j2') }}"
+    data_converted: "{{ lookup('template', 'json_macro.j2', jinja2_native=True) }}"
 
 - name: Test convert_data is correctly set to True for nested vars evaluation
   debug:
-    msg: "{{ lookup('template', 'indirect_dict.j2', convert_data=False) }}"
+    msg: "{{ lookup('template', 'indirect_dict.j2') }}"
   vars:
     d:
       foo: bar

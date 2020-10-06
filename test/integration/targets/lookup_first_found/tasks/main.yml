@@ -40,7 +40,7 @@
 - name: verify lookup(first_found) result
   assert:
     that:
-      - "first_found_var == ''"
+      - not first_found_var
 
 # NOTE: skip: True deprecated e17a2b502d6601be53c60d7ba1c627df419460c9, remove 2.12
 - name: test first_found with no matches and skip=True does nothing
