@@ -1,3 +1,0 @@
-dependencies:
-  - incidental_setup_ec2
-  - setup_remote_tmp_dir
