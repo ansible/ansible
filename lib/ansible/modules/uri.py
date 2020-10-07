@@ -641,7 +641,7 @@ def main():
         headers=dict(type='dict', default={}),
         unix_socket=dict(type='path'),
         remote_src=dict(type='bool', default=False),
-        ca_path=dict(type='path', default=None)
+        ca_path=dict(type='path', default=None),
     )
 
     module = AnsibleModule(
