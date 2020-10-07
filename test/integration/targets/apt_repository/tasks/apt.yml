@@ -157,6 +157,10 @@
     that:
       - 'cache_before.stat.mtime != cache_after.stat.mtime'
 
+- name: remove repo by spec
+  apt_repository: repo='{{test_ppa_spec}}' state=absent
+  register: result
+
 # When installing a repo with the spec, the key is *NOT* added
 - name: 'ensure ppa key is absent (expect: pass)'
   apt_key: id='{{test_ppa_key}}' state=absent
