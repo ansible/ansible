@@ -25,6 +25,7 @@ notes:
     C(ansible_facts.services.zuul-gateway). It is instead recommended to
     using the string value of the service name as the key in order to obtain
     the fact data value like C(ansible_facts.services['zuul-gateway'])
+  - AIX SRC was added in version 2.11.
 
 author:
   - Adam Miller (@maxamillion)
