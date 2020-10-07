@@ -1,0 +1,15 @@
+{
+    "value": {
+        "start_connected": false,
+        "backing": {
+            "auto_detect": true,
+            "type": "HOST_DEVICE",
+            "host_device": ""
+        },
+        "allow_guest_control": true,
+        "label": "Floppy drive 1",
+        "state": "NOT_CONNECTED"
+    },
+    "id": "8000",
+    "changed": true
+}
