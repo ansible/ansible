@@ -102,7 +102,6 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
         return bool(isinstance(ds, dict) and 'block' in ds)
 
     def preprocess_data(self, ds, allow_private=False):
-
         # you might get a task or task list instead, which will get implicit block later on
         if Block.is_block(ds):
             ds = super(Block, self).preprocess_data(ds, allow_private=allow_private)
@@ -116,6 +115,8 @@ class Block(Base, Conditional, CollectionSearch, Taggable):
 
     def _validate_attributes(self, ds):
 
+        # sometimes we are 'not a block' but a dict of list of dicts resulting a block
+        # those can be skipped for validation.
         if Block.is_block(ds):
             ds = super(Block, self)._validate_attributes(ds)
 
