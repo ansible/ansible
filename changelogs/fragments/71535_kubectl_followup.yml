@@ -1,0 +1,2 @@
+bugfixes:
+- kubectl - follow up fix in _build_exec_cmd API (https://github.com/ansible/ansible/issues/72171).
