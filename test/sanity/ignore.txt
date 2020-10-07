@@ -1,5 +1,8 @@
 docs/docsite/rst/dev_guide/testing/sanity/no-smart-quotes.rst no-smart-quotes
 examples/play.yml shebang
+examples/scripts/my_test.py shebang # example module but not in a normal module location
+examples/scripts/my_test_facts.py shebang # example module but not in a normal module location
+examples/scripts/my_test_info.py shebang # example module but not in a normal module location
 examples/scripts/ConfigureRemotingForAnsible.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSCustomUseLiteralPath
 examples/scripts/upgrade_to_ps3.ps1 pslint:PSUseApprovedVerbs
