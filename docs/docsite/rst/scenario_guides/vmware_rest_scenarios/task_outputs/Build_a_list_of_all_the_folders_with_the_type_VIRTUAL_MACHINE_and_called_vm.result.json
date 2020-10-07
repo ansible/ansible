@@ -1,0 +1,10 @@
+{
+    "value": [
+        {
+            "folder": "group-v1631",
+            "name": "vm",
+            "type": "VIRTUAL_MACHINE"
+        }
+    ],
+    "changed": false
+}
