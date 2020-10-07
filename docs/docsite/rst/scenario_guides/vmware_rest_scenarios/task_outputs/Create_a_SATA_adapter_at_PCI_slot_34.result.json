@@ -1,0 +1,10 @@
+{
+    "value": {
+        "bus": 0,
+        "pci_slot_number": 34,
+        "label": "SATA controller 0",
+        "type": "AHCI"
+    },
+    "id": "15000",
+    "changed": true
+}
