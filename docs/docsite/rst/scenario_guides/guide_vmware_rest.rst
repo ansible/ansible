@@ -1,7 +1,7 @@
 .. _vmware_rest_scenarios:
 
 ****************************
-vmware.vmware_rest Scenarios
+VMware REST Scenarios
 ****************************
 
 These scenarios teach you how to accomplish common VMware tasks using the REST API and the Ansible ``vmware.vmware_rest`` collection. To get started, please select the task you want to accomplish.
