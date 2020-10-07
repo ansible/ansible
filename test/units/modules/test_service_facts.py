@@ -124,4 +124,3 @@ class TestAIXScanService(unittest.TestCase):
             'source': 'src',
             'state': 'stopped',
         })
-
