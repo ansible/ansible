@@ -488,6 +488,10 @@ class TaskExecutor:
             include_args = self._task.args.copy()
             return dict(include_args=include_args)
 
+        # NOTE: play_context is mostly not used anymore, kept for backwards compat and fallback
+        # TODO: find alternative method to set ansible_host + other MAGIC_VARS currently hardcoded into play_context
+        self.update_play_context(variables, templar)
+
         # Now we do final validation on the task, which sets all fields to their final values.
         try:
             self._task.post_validate(templar=templar)
@@ -514,7 +518,7 @@ class TaskExecutor:
 
         templar.available_variables = cvars
 
-        # NOTE: play_context is mostly not used anymore, kept for backwards compat and fallback
+        # update again to get delegated values
         self.update_play_context(cvars, templar)
 
         # get the connection and the handler for this execution
