@@ -23,6 +23,8 @@ options:
       so Ansible receives a string and can do its own conversion from string into number. Giving Ansible a number without following
       one of these rules will end up with a decimal number which will have unexpected results.
     - As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
+    - As of Ansible 2.9.10, not specifying C(mode) could pose a security issue (permissions
+      less restrictive than expected) in some cases. See CVE-2020-1736 for more information.
     type: raw
   owner:
     description:
