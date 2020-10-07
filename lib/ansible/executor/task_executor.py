@@ -19,7 +19,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.task_result import TaskResult
 from ansible.executor.module_common import get_action_args_with_defaults
 from ansible.module_utils.parsing.convert_bool import boolean
-from ansible.module_utils.six import iteritems, string_types, binary_type
+from ansible.module_utils.six import iteritems, binary_type
 from ansible.module_utils.six.moves import xrange
 from ansible.module_utils._text import to_text, to_native
 from ansible.module_utils.connection import write_to_file_descriptor
@@ -488,9 +488,19 @@ class TaskExecutor:
             include_args = self._task.args.copy()
             return dict(include_args=include_args)
 
+        if self._task.delegate_to:
+            # use vars from delegated host (which already include task vars) instead of original host
+            cvars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
+            orig_vars = templar.available_variables
+        else:
+            # just use normal host vars
+            cvars = orig_vars = variables
+
+        templar.available_variables = cvars
+
         # NOTE: play_context is mostly not used anymore, kept for backwards compat and fallback
         # TODO: find alternative method to set ansible_host + other MAGIC_VARS currently hardcoded into play_context
-        self.update_play_context(variables, templar)
+        self.update_play_context(cvars, templar)
 
         # Now we do final validation on the task, which sets all fields to their final values.
         try:
@@ -507,19 +517,6 @@ class TaskExecutor:
                                     "(see https://docs.ansible.com/ansible/devel/reference_appendices/faq.html#argsplat-unsafe)")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
-
-        if self._task.delegate_to:
-            # use vars from delegated host (which already include task vars) instead of original host
-            cvars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
-            orig_vars = templar.available_variables
-        else:
-            # just use normal host vars
-            cvars = orig_vars = variables
-
-        templar.available_variables = cvars
-
-        # update again to get delegated values
-        self.update_play_context(cvars, templar)
 
         # get the connection and the handler for this execution
         if (not self._connection or
