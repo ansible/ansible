@@ -142,11 +142,17 @@
   apt_repository: repo='{{test_ppa_spec}}' state=present
   register: result
 
+- name: update the cache
+  apt:
+    update_cache: true
+  register: result_cache
+
 - assert:
     that:
       - 'result.changed'
       - 'result.state == "present"'
       - 'result.repo == "{{test_ppa_spec}}"'
+      - result_cache is not changed
 
 - name: 'examine apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'
