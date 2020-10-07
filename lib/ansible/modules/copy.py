@@ -66,7 +66,7 @@ options:
   mode:
     description:
     - The permissions of the destination file or directory.
-    - For those used to C(/usr/bin/chmod) remember that modes are actually octal numbers.
+    - For those used to I(/usr/bin/chmod) remember that modes are actually octal numbers.
       You must either add a leading zero so that Ansible's YAML parser knows it is an octal number
       (like C(0644) or C(01777)) or quote it (like C('644') or C('1777')) so Ansible receives a string
       and can do its own conversion from string into number. Giving Ansible a number without following
