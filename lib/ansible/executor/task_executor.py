@@ -488,6 +488,8 @@ class TaskExecutor:
             include_args = self._task.args.copy()
             return dict(include_args=include_args)
 
+        # handle delegation to ensure we have 'right vars'
+        self._task.delegate_to = self._task.get_validated_value('delegate_to', self._task._delegate_to, self._task.delegate_to, templar)
         if self._task.delegate_to:
             # use vars from delegated host (which already include task vars) instead of original host
             cvars = variables.get('ansible_delegated_vars', {}).get(self._task.delegate_to, {})
