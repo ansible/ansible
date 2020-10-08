@@ -81,7 +81,6 @@ class RoleMixin(object):
 
     ROLE_ARGSPEC_FILE = 'argument_specs.yml'
 
-
     def _load_argspec(self, role_name, collection_path=None, role_path=None):
         if collection_path:
             path = os.path.join(collection_path, 'roles', role_name, 'meta', self.ROLE_ARGSPEC_FILE)
@@ -93,8 +92,11 @@ class RoleMixin(object):
         loader = DataLoader()
         return loader.load_from_file(path, cache=False, unsafe=True)
 
-    def _find_all_normal_roles(self, role_paths):
+    def _find_all_normal_roles(self, role_paths, name_filters=None):
         """Find all non-collection roles that have an argument spec file.
+
+        :param role_paths: A tuple of one or more role paths.
+        :param name_filters: A tuple of one or more role names used to filter the results.
 
         :returns: A set of tuples consisting of: role name, full role path
         """
@@ -108,11 +110,14 @@ class RoleMixin(object):
                     role_path = os.path.join(path, entry)
                     full_path = os.path.join(role_path, 'meta', self.ROLE_ARGSPEC_FILE)
                     if os.path.exists(full_path):
-                        found.add((entry, role_path))
+                        if name_filters is None or entry in name_filters:
+                            found.add((entry, role_path))
         return found
 
-    def _find_all_collection_roles(self):
+    def _find_all_collection_roles(self, name_filters=None):
         """Find all collection roles with an argument spec.
+
+        :param name_filters: A tuple of one or more role names used to filter the results.
 
         :returns: A set of tuples consisting of: role name, collection name, collection path
         """
@@ -126,11 +131,16 @@ class RoleMixin(object):
                 for entry in os.listdir(roles_dir):
                     full_path = os.path.join(roles_dir, entry, 'meta', self.ROLE_ARGSPEC_FILE)
                     if os.path.exists(full_path):
-                        found.add((entry, collname, path))
+                        if name_filters is None or entry in name_filters:
+                            found.add((entry, collname, path))
         return found
 
     def _create_role_list(self, roles_path):
         """Return a dict describing the listing of all roles with arg specs.
+
+        :param role_paths: A tuple of one or more role paths.
+
+        :returns: A dict indexed by role name, with 'collection' and 'entry_points' keys per role.
 
         Example return:
 
@@ -155,7 +165,6 @@ class RoleMixin(object):
                },
             }
 
-        :returns: A dict indexed by role name, with 'collection' and 'entry_points' keys per role.
         """
         roles = self._find_all_normal_roles(roles_path)
         collroles = self._find_all_collection_roles()
@@ -184,6 +193,42 @@ class RoleMixin(object):
         for role, collection, collection_path in collroles:
             argspec = self._load_argspec(role, collection_path=collection_path)
             build_summary(role, collection, argspec)
+
+        return result
+
+    def _create_role_doc(self, role_names, roles_path):
+        """
+        :param role_names: A tuple of one or more role names.
+        :param role_paths: A tuple of one or more role paths.
+        :returns: A dict indexed by role name, with 'collection', 'entry_points', and 'path' keys per role.
+        """
+        roles = self._find_all_normal_roles(roles_path, name_filters=role_names)
+        collroles = self._find_all_collection_roles(name_filters=role_names)
+        result = {}
+
+        def build_doc(role, path, collection, argspec):
+            if collection:
+                fqcn = '.'.join([collection, role])
+            else:
+                fqcn = role
+            if fqcn not in result:
+                result[fqcn] = {}
+            doc = {}
+            doc['path'] = path
+            doc['collection'] = collection
+            doc['entry_points'] = {}
+            for entry_point in argspec.keys():
+                entry_spec = argspec[entry_point] or {}
+                doc['entry_points'][entry_point] = entry_spec
+            result[fqcn] = doc
+
+        for role, role_path in roles:
+            argspec = self._load_argspec(role, role_path=role_path)
+            build_doc(role, role_path, '', argspec)
+
+        for role, collection, collection_path in collroles:
+            argspec = self._load_argspec(role, collection_path=collection_path)
+            build_doc(role, collection_path, collection, argspec)
 
         return result
 
@@ -257,6 +302,8 @@ class DocCLI(CLI, RoleMixin):
                                  choices=TARGET_OPTIONS)
         self.parser.add_argument("-j", "--json", action="store_true", default=False, dest='json_format',
                                  help='Change output into json format.')
+
+        # role-specific options
         self.parser.add_argument("-r", "--roles-path", dest='roles_path', default=C.DEFAULT_ROLES_PATH,
                                  type=opt_help.unfrack_path(pathsep=True),
                                  action=opt_help.PrependListAction,
@@ -340,6 +387,15 @@ class DocCLI(CLI, RoleMixin):
         # display results
         DocCLI.pager("\n".join(text))
 
+    def _display_role_doc(self, role_json):
+        roles = list(role_json.keys())
+        text = []
+        for role in roles:
+            text.append("%s %s" % (role, role_json[role]))
+
+        # display results
+        DocCLI.pager("\n".join(text))
+
     @staticmethod
     def _list_keywords():
         return from_yaml(pkgutil.get_data('ansible', 'keyword_desc.yml'))
@@ -356,7 +412,6 @@ class DocCLI(CLI, RoleMixin):
                 # if no desc, typeerror raised ends this block
                 kdata = {'description': descs[keyword]}
 
-<<<<<<< HEAD
                 # get playbook objects for keyword and use first to get keyword attributes
                 kdata['applies_to'] = []
                 for pobj in PB_OBJECTS:
@@ -364,16 +419,6 @@ class DocCLI(CLI, RoleMixin):
                         obj_class = 'ansible.playbook.%s' % pobj.lower()
                         loaded_class = importlib.import_module(obj_class)
                         PB_LOADED[pobj] = getattr(loaded_class, pobj, None)
-=======
-        if plugin_type == 'role':
-            if context.CLIARGS['list_dir']:
-                list_json = self._create_role_list(roles_path)
-                if do_json:
-                    jdump(list_json)
-                else:
-                    self._display_available_roles(list_json)
-            return 0
->>>>>>> remove unused code
 
                     if keyword in PB_LOADED[pobj]._valid_attrs:
                         kdata['applies_to'].append(pobj)
@@ -494,7 +539,12 @@ class DocCLI(CLI, RoleMixin):
                     jdump(list_json)
                 else:
                     self._display_available_roles(list_json)
-            self._show_role_documentation(context.CLIARGS['args'], roles_path)
+            else:
+                role_json = self._create_role_doc(context.CLIARGS['args'], roles_path)
+                if do_json:
+                    jdump(role_json)
+                else:
+                    self._display_role_doc(role_json)
             return 0
         else:
             loader = getattr(plugin_loader, '%s_loader' % plugin_type)
