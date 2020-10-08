@@ -1,3 +1,3 @@
 - name: Retrieve a list of all the datastores
-  vcenter_datastore_info:
+  vmware.vmware_rest.vcenter_datastore_info:
   register: my_datastores
