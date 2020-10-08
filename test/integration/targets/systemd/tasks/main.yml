@@ -25,6 +25,12 @@
   failed_when: False
   register: systemctl_check
 
+- meta: end_host
+  when: systemctl_check.rc != 0
+
+- set_fact:
+    ssh_service: '{{ "ssh" if ansible_os_family == "Debian" else "sshd" }}'
+
 - block:
     - name: get a list of running services
       shell: systemctl | fgrep 'running' | awk '{print $1}' | sed 's/\.service//g' | fgrep -v '.' | egrep ^[a-z]
@@ -57,7 +63,7 @@
     - assert:
           that:
               - result is failed
-              - result is search("Could not find the requested service {{ fake_service }}")
+              - 'result is search("Could not find the requested service {{ fake_service }}")'
 
     - name: the module must fail in check_mode as well when a service is not found
       systemd:
@@ -70,7 +76,7 @@
     - assert:
           that:
               - result is failed
-              - result is search("Could not find the requested service {{ fake_service }}")
+              - 'result is search("Could not find the requested service {{ fake_service }}")'
 
     - name: check that the module works even when systemd is offline (eg in chroot)
       systemd:
@@ -79,4 +85,32 @@
       environment:
           SYSTEMD_OFFLINE: 1
 
-  when: 'systemctl_check.rc == 0'
+- name: Disable ssh 1
+  systemd:
+    name: '{{ ssh_service }}'
+    enabled: false
+  register: systemd_disable_ssh_1
+
+- name: Disable ssh 2
+  systemd:
+    name: '{{ ssh_service }}'
+    enabled: false
+  register: systemd_disable_ssh_2
+
+- name: Enable ssh 1
+  systemd:
+    name: '{{ ssh_service }}'
+    enabled: true
+  register: systemd_enable_ssh_1
+
+- name: Enable ssh 2
+  systemd:
+    name: '{{ ssh_service }}'
+    enabled: true
+  register: systemd_enable_ssh_2
+
+- assert:
+    that:
+      - systemd_disable_ssh_2 is not changed
+      - systemd_enable_ssh_1 is changed
+      - systemd_enable_ssh_2 is not changed
