@@ -547,6 +547,8 @@ To add static facts, simply add a file with the ``.fact`` extension. For example
     asdf=1
     bar=2
 
+.. note:: Make sure the file is not executable as this will break the ``ansible.builtin.setup`` module.
+
 The next time fact gathering runs, your facts will include a hash variable fact named ``general`` with ``asdf`` and ``bar`` as members. To validate this, run the following::
 
     ansible <hostname> -m ansible.builtin.setup -a "filter=ansible_local"
