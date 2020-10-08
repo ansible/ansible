@@ -1,4 +1,4 @@
 - name: Turn the power of the VM on
-  vcenter_vm_power:
+  vmware.vmware_rest.vcenter_vm_power:
     state: start
     vm: '{{ test_vm1_info.id }}'

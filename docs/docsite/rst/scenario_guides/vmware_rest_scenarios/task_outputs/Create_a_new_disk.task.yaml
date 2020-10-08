@@ -1,5 +1,5 @@
 - name: Create a new disk
-  vcenter_vm_hardware_disk:
+  vmware.vmware_rest.vcenter_vm_hardware_disk:
     vm: '{{ test_vm1_info.id }}'
     type: SATA
     new_vmdk:
