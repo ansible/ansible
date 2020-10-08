@@ -175,15 +175,15 @@ class TaskQueueManager:
         # get all configured loadable callbacks (adjacent, builtin)
         callback_list = list(callback_loader.all(class_only=True))
 
-        # add whitelisted callbacks that refer to collections, which don't appear in normal listing
+        # add whitelisted callbacks that refer to collections, which might not appear in normal listing
         for c in C.DEFAULT_CALLBACK_WHITELIST:
-            if AnsibleCollectionRef.is_valid_fqcr(c):
-                # only deal with collection ones right now, rest should already be loaded
-                plugin = callback_loader.get(c)
-                if plugin:
-                    callback_list.append(plugin)
-                else:
-                    display.warning("Skipping callback plugin '%s', unable to load" % c)
+            # load all, as collection ones might be using short/redirected names and not a fqcn
+            plugin = callback_loader.get(c, class_only=True)
+            # avoids incorrect and dupes possible due to collections
+            if plugin and plugin not in callback_list:
+                callback_list.append(plugin)
+            else:
+                display.warning("Skipping callback plugin '%s', unable to load" % c)
 
         # for each callback in the list see if we should add it to 'active callbacks' used in the play
         for callback_plugin in callback_list:
@@ -194,7 +194,8 @@ class TaskQueueManager:
             # try to get colleciotn world name first
             cnames = getattr(callback_plugin, '_redirected_names', [])
             if cnames:
-                callback_name = cnames[-1]
+                # use 'first name' and not 'real name' as that is what will match config
+                callback_name = cnames[0]
             else:
                 # fallback to 'old loader name'
                 (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
@@ -224,7 +225,7 @@ class TaskQueueManager:
                     else:
                         display.vv("Skipping callback '%s', already loaded as '%s'." % (callback_plugin, callback_name))
             except Exception as e:
-                display.warning("Skipping callback '%s', unable to load due to: %s" % (to_native(e)))
+                display.warning("Skipping callback '%s', unable to load due to: %s" % (callback_name, to_native(e)))
                 continue
 
         self._callbacks_loaded = True
@@ -376,10 +377,7 @@ class TaskQueueManager:
 
             # a plugin can opt in to implicit tasks (such as meta). It does this
             # by declaring self.wants_implicit_tasks = True.
-            wants_implicit_tasks = getattr(
-                callback_plugin,
-                'wants_implicit_tasks',
-                False)
+            wants_implicit_tasks = getattr(callback_plugin, 'wants_implicit_tasks', False)
 
             # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
