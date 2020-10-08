@@ -16,6 +16,9 @@ set -eux
 run_test() {
 	local testname=$1
 
+	# outout was recorded w/o cowsay, ensure we reproduce the same
+	export ANSIBLE_NOCOWS=1
+
 	# The shenanigans with redirection and 'tee' are to capture STDOUT and
 	# STDERR separately while still displaying both to the console
 	{ ansible-playbook -i inventory test.yml \
@@ -35,6 +38,9 @@ run_test_dryrun() {
 	local testname=$1
 	# optional, pass --check to run a dry run
 	local chk=${2:-}
+
+	# outout was recorded w/o cowsay, ensure we reproduce the same
+	export ANSIBLE_NOCOWS=1
 
 	# This needed to satisfy shellcheck that can not accept unquoted variable
 	cmd="ansible-playbook -i inventory ${chk} test_dryrun.yml"

@@ -179,8 +179,9 @@ class TaskQueueManager:
             # load all, as collection ones might be using short/redirected names and not a fqcn
             plugin = callback_loader.get(c, class_only=True)
             # avoids incorrect and dupes possible due to collections
-            if plugin and plugin not in callback_list:
-                callback_list.append(plugin)
+            if plugin:
+                if plugin not in callback_list:
+                    callback_list.append(plugin)
             else:
                 display.warning("Skipping callback plugin '%s', unable to load" % c)
 
