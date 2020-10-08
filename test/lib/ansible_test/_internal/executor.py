@@ -430,6 +430,7 @@ def generate_pip_install(pip, command, packages=None, constraints=None, use_cons
     """
     constraints = constraints or os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', 'constraints.txt')
     requirements = os.path.join(ANSIBLE_TEST_DATA_ROOT, 'requirements', '%s.txt' % ('%s.%s' % (command, context) if context else command))
+    content_constraints = None
 
     options = []
 
@@ -448,6 +449,8 @@ def generate_pip_install(pip, command, packages=None, constraints=None, use_cons
         if os.path.exists(requirements) and os.path.getsize(requirements):
             options += ['-r', requirements]
 
+        content_constraints = os.path.join(data_context().content.unit_path, 'constraints.txt')
+
     if command in ('integration', 'windows-integration', 'network-integration'):
         requirements = os.path.join(data_context().content.integration_path, 'requirements.txt')
 
@@ -459,6 +462,11 @@ def generate_pip_install(pip, command, packages=None, constraints=None, use_cons
         if os.path.exists(requirements) and os.path.getsize(requirements):
             options += ['-r', requirements]
 
+        content_constraints = os.path.join(data_context().content.integration_path, 'constraints.txt')
+
+    if command.startswith('integration.cloud.'):
+        content_constraints = os.path.join(data_context().content.integration_path, 'constraints.txt')
+
     if packages:
         options += packages
 
@@ -466,6 +474,10 @@ def generate_pip_install(pip, command, packages=None, constraints=None, use_cons
         return None
 
     if use_constraints:
+        if content_constraints and os.path.exists(content_constraints) and os.path.getsize(content_constraints):
+            # listing content constraints first gives them priority over constraints provided by ansible-test
+            options.extend(['-c', content_constraints])
+
         options.extend(['-c', constraints])
 
     return pip + ['install', '--disable-pip-version-check'] + options
