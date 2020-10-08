@@ -76,6 +76,45 @@
     - "dpkg_result.rc == 1"
     - "'Auto-installing missing dependency without updating cache: {{ python_apt }}' in apt_result.warnings"
 
+- name: Test installing fnmatch package
+  apt:
+    name:
+      - hel?o
+      - he?lo
+  register: apt_install_fnmatch
+
+- name: Test uninstalling fnmatch package
+  apt:
+    name:
+      - hel?o
+      - he?lo
+    state: absent
+  register: apt_uninstall_fnmatch
+
+- name: verify fnmatch
+  assert:
+    that:
+      - apt_install_fnmatch is changed
+      - apt_uninstall_fnmatch is changed
+
+- name: Test update_cache 1
+  apt:
+    update_cache: true
+    cache_valid_time: 10
+  register: apt_update_cache_1
+
+- name: Test update_cache 2
+  apt:
+    update_cache: true
+    cache_valid_time: 10
+  register: apt_update_cache_2
+
+- name: verify update_cache
+  assert:
+    that:
+      - apt_update_cache_1 is changed
+      - apt_update_cache_2 is not changed
+
 - name: uninstall {{ python_apt }} with apt again
   apt:
     pkg: "{{ python_apt }}"
