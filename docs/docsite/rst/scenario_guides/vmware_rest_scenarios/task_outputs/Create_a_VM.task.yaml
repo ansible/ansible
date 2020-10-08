@@ -1,5 +1,5 @@
 - name: Create a VM
-  vcenter_vm:
+  vmware.vmware_rest.vcenter_vm:
     placement:
       cluster: "{{ my_cluster_info.id }}"
       datastore: "{{ my_datastore.datastore }}"
