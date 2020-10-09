@@ -270,7 +270,7 @@ class Connection(ConnectionBase):
         local_cmd += ['--'] + cmd
         censored_local_cmd += ['--'] + cmd
 
-        return local_cmd
+        return local_cmd, censored_local_cmd
 
     def _connect(self, port=None):
         """ Connect to the container. Nothing to do """
