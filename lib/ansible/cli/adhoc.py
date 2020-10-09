@@ -140,6 +140,9 @@ class AdHocCLI(CLI):
         # Respect custom 'stdout_callback' only with enabled 'bin_ansible_callbacks'
         elif C.DEFAULT_LOAD_CALLBACK_PLUGINS and C.DEFAULT_STDOUT_CALLBACK != 'default':
             cb = C.DEFAULT_STDOUT_CALLBACK
+        elif context.CLIARGS['loop_spec']:
+            " minimal callback cannot deal with loops "
+            cb = None
         else:
             cb = 'minimal'
 
