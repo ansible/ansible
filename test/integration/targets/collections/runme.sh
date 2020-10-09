@@ -22,6 +22,8 @@ ANSIBLE_CALLBACK_WHITELIST=formerly_core_callback ansible localhost -m debug 2>&
 ANSIBLE_CALLBACK_WHITELIST=formerly_core_missing_callback ansible localhost -m debug 2>&1 | grep -- "Skipping callback plugin 'formerly_core_missing_callback'"
 ## validate redirected + removed callback (fatal)
 ANSIBLE_CALLBACK_WHITELIST=formerly_core_removed_callback ansible localhost -m debug 2>&1 | grep -- "testns.testcoll.removedcallback has been removed"
+# validate avoiding duplicate loading of callback, even if using diff names
+[ "$(ANSIBLE_CALLBACK_WHITELIST=testns.testcoll.usercallback,formerly_core_callback ansible localhost -m debug 2>&1 | grep -c 'usercallback says ok')" = "1" ]
 # ensure non existing callback does not crash ansible
 ANSIBLE_CALLBACK_WHITELIST=charlie.gomez.notme ansible localhost -m debug 2>&1 | grep -- "Skipping callback plugin 'charlie.gomez.notme'"
 unset ANSIBLE_LOAD_CALLBACK_PLUGINS
