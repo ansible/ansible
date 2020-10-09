@@ -185,6 +185,17 @@ The following table shows:
       <td><a href="https://docs.ansible.com/ansible/devel/network/dev_guide/index.html">Network guide</a></td>
     </tr>
     <tr>
+      <td><a href="https://galaxy.ansible.com/kubernetes/core">kubernetes.core</a></td>
+      <td><a href="https://galaxy.ansible.com/community/kubernetes">community.kubernetes</a></td>
+      <td><a href="https://github.com/ansible/community/wiki/Kubernetes">Kubernetes</a></td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>✓</td>
+      <td>Zuul</td>
+      <td>✓</td>
+      <td><a href="https://docs.ansible.com/ansible/devel/scenario_guides/guide_kubernetes.html">Kubernetes guide</a></td>
+    </tr>
+    <tr>
       <td><a href="https://galaxy.ansible.com/openvswitch/openvswitch">openvswitch.openvswitch</a></td>
       <td><a href="https://galaxy.ansible.com/community/network">community.network</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
@@ -219,7 +230,7 @@ The following table shows:
     </tr>
     <tr>
       <td><a href="https://galaxy.ansible.com/vmware/vmware_rest">vmware.vmware_rest</a></td>
-      <td></td>
+      <td><a href="https://galaxy.ansible.com/vmware/vmware_rest">vmware.vmware_rest</a></td>
       <td><a href="https://github.com/ansible/community/wiki/Network">Network</a></td>
       <td>✓</td>
       <td>✓</td>
