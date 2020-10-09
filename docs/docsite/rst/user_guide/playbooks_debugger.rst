@@ -55,7 +55,7 @@ Example of setting the ``debugger`` keyword on a task:
 .. code-block:: yaml
 
     - name: Execute a command
-      command: "false"
+      ansible.builtin.command: "false"
       debugger: on_failed
 
 Example of setting the ``debugger`` keyword on a play:
@@ -67,7 +67,7 @@ Example of setting the ``debugger`` keyword on a play:
       debugger: on_skipped
       tasks:
         - name: Execute a command
-          command: "true"
+          ansible.builtin.command: "true"
           when: False
 
 Example of setting the ``debugger`` keyword at multiple levels:
@@ -80,7 +80,7 @@ Example of setting the ``debugger`` keyword at multiple levels:
       debugger: never
       tasks:
         - name: Execute a command
-          command: "false"
+          ansible.builtin.command: "false"
           debugger: on_failed
 
 In this example, the debugger is set to ``never`` at the play level and to ``on_failed`` at the task level. If the task fails, Ansible invokes the debugger, because the definition on the task overrides the definition on its parent play.
@@ -137,8 +137,8 @@ After Ansible invokes the debugger, you can use the seven :ref:`debugger command
       vars:
         var1: value1
       tasks:
-        - name: wrong variable
-          ping: data={{ wrong_var }}
+        - name: Use a wrong variable
+          ansible.builtin.ping: data={{ wrong_var }}
 
 If you run this playbook, Ansible invokes the debugger when the task fails. From the debug prompt, you can change the module arguments or the variables and run the task again.
 
@@ -248,8 +248,8 @@ Update args command
       vars:
         pkg_name: not_exist
       tasks:
-        - name: install package
-          apt: name={{ pkg_name }}
+        - name: Install a package
+          ansible.builtin.apt: name={{ pkg_name }}
 
 When you run the playbook, the invalid package name triggers an error, and Ansible invokes the debugger. You can fix the package name by viewing, then updating the module argument::
 
