@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-name: url
+lookup: url
 author: Brian Coca (@bcoca)
 version_added: "1.9"
 short_description: return contents from URL

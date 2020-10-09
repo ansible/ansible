@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: indexed_items
+    lookup: indexed_items
     author: Michael DeHaan
     version_added: "1.3"
     short_description: rewrites lists to return 'indexed items'

@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: list
+    lookup: list
     author: Ansible Core Team
     version_added: "2.0"
     short_description: simply returns what it is given.

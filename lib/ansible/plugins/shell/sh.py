@@ -6,6 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
 name: sh
+plugin_type: shell
 short_description: "POSIX shell (/bin/sh)"
 version_added: historical
 description:

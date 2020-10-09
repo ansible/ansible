@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: ini
+    lookup: ini
     author: Yannig Perre (!UNKNOWN) <yannig.perre(at)gmail.com>
     version_added: "2.0"
     short_description: read data from a ini file

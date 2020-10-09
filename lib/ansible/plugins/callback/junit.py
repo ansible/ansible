@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = '''
-    name: junit
+    callback: junit
     type: aggregate
     short_description: write playbook output to a JUnit file.
     version_added: historical

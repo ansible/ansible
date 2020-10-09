@@ -7,7 +7,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: inventory_hostnames
+    lookup: inventory_hostnames
     author:
       - Michael DeHaan
       - Steven Dossett (!UNKNOWN) <sdossett@panath.com>

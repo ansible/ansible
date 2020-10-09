@@ -6,6 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
     name: auto
+    plugin_type: inventory
     author:
       - Matt Davis (@nitzmahone)
     version_added: "2.5"

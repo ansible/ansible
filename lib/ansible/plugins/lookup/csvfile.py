@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: csvfile
+    lookup: csvfile
     author: Jan-Piet Mens (@jpmens) <jpmens(at)gmail.com>
     version_added: "1.5"
     short_description: read data from a TSV or CSV file

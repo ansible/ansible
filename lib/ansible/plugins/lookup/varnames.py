@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: varnames
+    lookup: varnames
     author: Ansible Core Team
     version_added: "2.8"
     short_description: Lookup matching variable names

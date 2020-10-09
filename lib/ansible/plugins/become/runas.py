@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: runas
+    become: runas
     short_description: Run As user
     description:
         - This become plugins allows your remote/login user to execute commands as another user via the windows runas facility.

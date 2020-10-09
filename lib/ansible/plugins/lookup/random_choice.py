@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: random_choice
+    lookup: random_choice
     author: Michael DeHaan
     version_added: "1.1"
     short_description: return random element from list

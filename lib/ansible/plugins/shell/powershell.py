@@ -6,6 +6,7 @@ __metaclass__ = type
 
 DOCUMENTATION = '''
 name: powershell
+plugin_type: shell
 version_added: historical
 short_description: Windows PowerShell
 description:

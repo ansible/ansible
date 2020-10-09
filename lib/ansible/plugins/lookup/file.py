@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: file
+    lookup: file
     author: Daniel Hokka Zakrisson (!UNKNOWN) <daniel@hozac.com>
     version_added: "0.9"
     short_description: read file contents

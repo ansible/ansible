@@ -5,7 +5,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 DOCUMENTATION = """
-    name: together
+    lookup: together
     author:  Bradley Young (!UNKNOWN) <young.bradley@gmail.com>
     version_added: '1.3'
     short_description: merges lists into synchronized list
