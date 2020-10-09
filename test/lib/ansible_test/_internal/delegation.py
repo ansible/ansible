@@ -309,7 +309,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
 
             if httptester_id:
-                test_options += ['--env', 'HTTPTESTER=1']
+                test_options += ['--env', 'HTTPTESTER=1', '--env', 'KRB5_PASSWORD=%s' % args.krb5_password]
 
                 for host in HTTPTESTER_HOSTS:
                     test_options += ['--link', '%s:%s' % (httptester_id, host)]

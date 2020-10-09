@@ -166,6 +166,17 @@ options:
       - Header to identify as, generally appears in web server logs.
     type: str
     default: ansible-httpget
+  use_gssapi:
+    description:
+      - Use GSSAPI to perform the authentication, typically this is for Kerberos or Kerberos through Negotiate
+        authentication.
+      - Requires the Python library L(gssapi,https://github.com/pythongssapi/python-gssapi) to be installed.
+      - Credentials for GSSAPI can be specified with I(url_username)/I(url_password) or with the GSSAPI env var
+        C(KRB5CCNAME) that specified a custom Kerberos credential cache.
+      - NTLM authentication is C(not) supported even if the GSSAPI mech for NTLM has been installed.
+    type: bool
+    default: no
+    version_added: '2.11'
 # informational: requirements for nodes
 extends_documentation_fragment:
     - files

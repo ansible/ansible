@@ -9,6 +9,7 @@ from . import types as t
 
 from .util import (
     find_python,
+    generate_password,
     generate_pip_command,
     ApplicationError,
 )
@@ -274,6 +275,7 @@ class IntegrationConfig(TestConfig):
         self.diff = args.diff
         self.no_temp_workdir = args.no_temp_workdir
         self.no_temp_unicode = args.no_temp_unicode
+        self.krb5_password = generate_password()
 
         if self.get_delegated_completion().get('temp-unicode', 'enabled') == 'disabled':
             self.no_temp_unicode = True

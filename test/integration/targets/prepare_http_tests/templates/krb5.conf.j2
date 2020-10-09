@@ -1,0 +1,15 @@
+[libdefaults]
+  default_realm = {{ krb5_realm | upper }}
+  dns_lookup_realm = false
+  dns_lookup_kdc = false
+  rdns = false
+
+[realms]
+  {{ krb5_realm | upper }} = {
+    kdc = {{ httpbin_host }}
+    admin_server = {{ httpbin_host }}
+  }
+
+[domain_realm]
+  .{{ krb5_realm | lower }} = {{ krb5_realm | upper }}
+  {{ krb5_realm | lower }} = {{ krb5_realm | upper }}

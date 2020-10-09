@@ -17,6 +17,7 @@ HTTP Testing endpoint which provides the following capabilities:
 * nginx
 * SSL
 * SNI
+* Negotiate Authentication
 
 
 Source files can be found in the `http-test-container <https://github.com/ansible/http-test-container>`_ repository.

@@ -1287,6 +1287,7 @@ def run_httptester(args, ports=None):
     """
     options = [
         '--detach',
+        '--env', 'KRB5_PASSWORD=%s' % args.krb5_password,
     ]
 
     if ports:
@@ -1331,7 +1332,9 @@ def inject_httptester(args):
 
         rules = '''
 rdr pass inet proto tcp from any to any port 80 -> 127.0.0.1 port 8080
+rdr pass inet proto tcp from any to any port 88 -> 127.0.0.1 port 8088
 rdr pass inet proto tcp from any to any port 443 -> 127.0.0.1 port 8443
+rdr pass inet proto tcp from any to any port 749 -> 127.0.0.1 port 8749
 '''
         cmd = ['pfctl', '-ef', '-']
 
@@ -1343,7 +1346,9 @@ rdr pass inet proto tcp from any to any port 443 -> 127.0.0.1 port 8443
     elif iptables:
         ports = [
             (80, 8080),
+            (88, 8088),
             (443, 8443),
+            (749, 8749),
         ]
 
         for src, dst in ports:
@@ -1406,6 +1411,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     if args.inject_httptester:
         env.update(dict(
             HTTPTESTER='1',
+            KRB5_PASSWORD=args.krb5_password,
         ))
 
     callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])
