@@ -541,11 +541,13 @@ You can add static custom facts by adding static files to facts.d, or add dynami
 
 To use facts.d, create an ``/etc/ansible/facts.d`` directory on the remote host or hosts. If you prefer a different directory, create it and specify it using the ``fact_path`` play keyword. Add files to the directory to supply your custom facts. All file names must end with ``.fact``. The files can be JSON, INI, or executable files returning JSON.
 
-To add static facts, simply add a file with the ``.facts`` extension. For example, create ``/etc/ansible/facts.d/preferences.fact`` with this content::
+To add static facts, simply add a file with the ``.fact`` extension. For example, create ``/etc/ansible/facts.d/preferences.fact`` with this content::
 
     [general]
     asdf=1
     bar=2
+
+.. note:: Make sure the file is not executable as this will break the ``ansible.builtin.setup`` module.
 
 The next time fact gathering runs, your facts will include a hash variable fact named ``general`` with ``asdf`` and ``bar`` as members. To validate this, run the following::
 
