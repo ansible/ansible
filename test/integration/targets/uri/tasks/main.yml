@@ -138,7 +138,7 @@
 
 - name: test https fetch to a site with self signed certificate using ca_path
   uri:
-    url: "https://{{ self_signed_host }}/"
+    url: "https://{{ self_signed_host }}:444/"
     dest: "{{ output_dir }}/self-signed_using_ca_path.html"
     ca_path: "{{ remote_tmp_dir }}/ca2cert.pem"
     validate_certs: yes
@@ -156,7 +156,7 @@
 
 - name: test https fetch to a site with self signed certificate without using ca_path
   uri:
-    url: "https://{{ self_signed_host }}/"
+    url: "https://{{ self_signed_host }}:444/"
     dest: "{{ output_dir }}/self-signed-without_using_ca_path.html"
     validate_certs: yes
   register: result
