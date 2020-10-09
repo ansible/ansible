@@ -143,7 +143,7 @@ options:
     version_added: '2.4'
   ca_path:
     description:
-      - PEM formatted file that contains a CA certificate to be used
+      - PEM formatted file that contains a CA certificate to be used for validation
     type: path
     version_added: '2.11'
   src:
