@@ -539,7 +539,7 @@ The following example walks through the integration tests for the ``vyos.vyos.vy
 
    - name: run test cases (connection=network_cli)
      include: "{{ test_case_to_run }} ansible_connection=network_cli"
-     with_items: "{{ test_items }}"
+     loop: "{{ test_items }}"
      loop_control:
        loop_var: test_case_to_run
 
