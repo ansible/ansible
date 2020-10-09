@@ -52,6 +52,8 @@ class AdHocCLI(CLI):
                                  help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
                                  default=C.DEFAULT_MODULE_NAME)
         self.parser.add_argument('args', metavar='pattern', help='host pattern')
+        self.parser.add_argument('-L', '--loop', dest='loop_spec',
+                                help="loop spec for ad-hoc task. (Plain String, but processed by Jinja)")
 
     def post_process_args(self, options):
         '''Post process and validate options for bin/ansible '''
@@ -63,15 +65,16 @@ class AdHocCLI(CLI):
 
         return options
 
-    def _play_ds(self, pattern, async_val, poll):
+    def _play_ds(self, pattern, async_val, poll, loop):
         check_raw = context.CLIARGS['module_name'] in C.MODULE_REQUIRE_ARGS
 
         mytask = {'action': {'module': context.CLIARGS['module_name'], 'args': parse_kv(context.CLIARGS['module_args'], check_raw=check_raw)}}
 
         # avoid adding to tasks that don't support it, unless set, then give user an error
-        if context.CLIARGS['module_name'] not in ('include_role', 'include_tasks') and any(frozenset((async_val, poll))):
+        if context.CLIARGS['module_name'] not in ('include_role', 'include_tasks') and any(frozenset((async_val, poll, loop))):
             mytask['async_val'] = async_val
             mytask['poll'] = poll
+            mytask['loop'] = loop
 
         return dict(
             name="Ansible Ad-Hoc",
@@ -122,7 +125,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError("'%s' is not a valid action for ad-hoc commands"
                                       % context.CLIARGS['module_name'])
 
-        play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'])
+        play_ds = self._play_ds(pattern, context.CLIARGS['seconds'], context.CLIARGS['poll_interval'], context.CLIARGS['loop_spec'])
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
         # used in start callback
