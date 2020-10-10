@@ -229,10 +229,11 @@ try:
             else:
                 cred = gssapi.Credentials(name=username, usage='initiate')
 
-            # Get the peer certificate for the channel binding token if possible (HTTPS).
+            # Get the peer certificate for the channel binding token if possible (HTTPS). A bug on macOS causes the
+            # authentication to fail when the CBT is present. Just skip that platform.
             cbt = None
             cert = getpeercert(fp, True)
-            if cert:
+            if cert and platform.system() != 'Darwin':
                 cert_hash = get_channel_binding_cert_hash(cert)
                 if cert_hash:
                     cbt = gssapi.raw.ChannelBindings(application_data=b"tls-server-end-point:" + cert_hash)
