@@ -94,7 +94,9 @@ def main():
 
     # Debugging purposes, get the Kerberos version. On platforms like OpenSUSE this may not be on the PATH.
     try:
-        version = to_text(subprocess.check_output(['krb5-config', '--version']))
+        process = subprocess.Popen(['krb5-config', '--version'], stdout=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        version = to_text(stdout)
     except OSError as e:
         if e.errno != errno.ENOENT:
             raise

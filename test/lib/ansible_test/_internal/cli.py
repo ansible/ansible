@@ -1003,7 +1003,7 @@ def add_httptester_options(parser, argparse):
 
     group.add_argument('--httptester',
                        metavar='IMAGE',
-                       default='quay.io/ansible/http-test-container:latest',
+                       default='quay.io/ansible/http-test-container:1.3.0',
                        help='docker image to use for the httptester container')
 
     group.add_argument('--disable-httptester',
