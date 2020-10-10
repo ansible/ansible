@@ -31,13 +31,17 @@ RETURN = r'''
 #
 '''
 
-import configparser
 import contextlib
 import os
 import subprocess
 
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.common.text.converters import to_bytes, to_text
+
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 
 @contextlib.contextmanager
