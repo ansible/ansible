@@ -12,12 +12,13 @@ import json
 import os
 import random
 import re
+import shutil
 import stat
 import tempfile
 import time
 from abc import ABCMeta, abstractmethod
 
-from ansible import constants as C
+from ansible import context, constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleActionSkip, AnsibleActionFail, AnsiblePluginRemovedError
 from ansible.executor.module_common import modify_module
 from ansible.executor.interpreter_discovery import discover_interpreter, InterpreterDiscoveryRequiredError
@@ -34,6 +35,8 @@ from ansible.utils.unsafe_proxy import wrap_var, AnsibleUnsafeText
 from ansible.vars.clean import remove_internal_keys
 
 display = Display()
+
+from . import turbo
 
 
 class ActionBase(with_metaclass(ABCMeta, object)):
@@ -225,6 +228,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             become_kwargs['become_flags'] = self._connection.become.get_option('become_flags',
                                                                                playcontext=self._play_context)
 
+        if self._can_turbo():
+            turbo_proc = turbo.prepare_turbo(module_path, module_args,
+                                             final_environment=final_environment,
+                                             become_kwargs=become_kwargs)
+            if turbo_proc is not None:
+                return ("turbo", "turbo", turbo_proc, module_path)
+
         # modify_module will exit early if interpreter discovery is required; re-run after if necessary
         for dummy in (1, 2):
             try:
@@ -301,6 +311,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         return getattr(self, 'TRANSFERS_FILES', False)
+
+    def _can_turbo(self):
+        return context.CLIARGS.get("turbo") and self._connection.transport == "local"
 
     def _is_pipelining_enabled(self, module_style, wrap_async=False):
         '''
@@ -387,6 +400,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # we need for 'non posix' systems like cloud-init and solaris
             tmpdir = self._remote_expand_user(self.get_shell_option('remote_tmp', default='~/.ansible/tmp'), sudoable=False)
 
+        if self._can_turbo():
+            # No thrills tmp dir in turbo mode...
+            basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
+            self._connection._shell.tmpdir = tempfile.mkdtemp(prefix=basefile, dir=tmpdir)
+            self._cleanup_remote_tmp = True
+            return self._connection._shell.tmpdir
+
         become_unprivileged = self._is_become_unprivileged()
         basefile = self._connection._shell._generate_temp_dir_name()
         cmd = self._connection._shell.mkdtemp(basefile=basefile, system=become_unprivileged, tmpdir=tmpdir)
@@ -446,6 +466,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmp_path = self._connection._shell.tmpdir
 
         if self._should_remove_tmp_path(tmp_path):
+            # If we turbo-ed, rm -rf the tmp_path.
+            if self._can_turbo():
+                shutil.rmtree(tmp_path, ignore_errors=True)
+                self._connection._shell.tmpdir = None
+                return
+
             cmd = self._connection._shell.remove(tmp_path, recurse=True)
             # If we have gotten here we have a working ssh configuration.
             # If ssh breaks we could leave tmp directories out on the remote system.
@@ -981,6 +1007,28 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.vvv("Using module file %s" % module_path)
         if not shebang and module_style != 'binary':
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
+
+        if module_style == "turbo":
+            display.vvv("[TURBO] Starting turbo process")
+            turbo_queue, turbo_proc = module_data
+            start_time = time.time()
+            turbo_proc.start()
+            # XXX: Timeout?
+            result = turbo_queue.get()
+            diff_time = time.time() - start_time
+            data = self._parse_returned_data(result)
+            if "stdout" in data and "stdout_lines" not in data:
+                txt = data.get("stdout", u"")
+                data["stdout_lines"] = txt.splitlines()
+            if "stderr" in data and "stderr_lines" not in data:
+                txt = data.get("stderr", u"")
+                data["stderr_lines"] = txt.splitlines()
+
+            # possibly template one of these values.
+            data = wrap_var(data)
+
+            display.v("[TURBO] %s took %0.4f" % (module_path, diff_time))
+            return data
 
         self._used_interpreter = shebang
         remote_module_path = None

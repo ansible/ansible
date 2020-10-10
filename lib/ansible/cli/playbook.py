@@ -55,6 +55,7 @@ class PlaybookCLI(CLI):
                                  help="one-step-at-a-time: confirm each task before running")
         self.parser.add_argument('--start-at-task', dest='start_at_task',
                                  help="start the playbook at the task matching this name")
+        self.parser.add_argument('--turbo', dest='turbo', default=False, action='store_true')
         self.parser.add_argument('args', help='Playbook(s)', metavar='playbook', nargs='+')
 
     def post_process_args(self, options):
