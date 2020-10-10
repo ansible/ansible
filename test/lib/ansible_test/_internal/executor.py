@@ -1248,8 +1248,16 @@ def start_httptester(args):
             container=80,
         ),
         dict(
+            remote=8088,
+            container=88,
+        ),
+        dict(
             remote=8443,
             container=443,
+        ),
+        dict(
+            remote=8749,
+            container=749,
         ),
     ]
 
@@ -1287,7 +1295,7 @@ def run_httptester(args, ports=None):
     """
     options = [
         '--detach',
-        '--env', 'KRB5_PASSWORD=%s' % args.krb5_password,
+        '--env', 'KRB5_PASSWORD=%s' % args.httptester_krb5_password,
     ]
 
     if ports:
@@ -1411,7 +1419,7 @@ def integration_environment(args, target, test_dir, inventory_path, ansible_conf
     if args.inject_httptester:
         env.update(dict(
             HTTPTESTER='1',
-            KRB5_PASSWORD=args.krb5_password,
+            KRB5_PASSWORD=args.httptester_krb5_password,
         ))
 
     callback_plugins = ['junit'] + (env_config.callback_plugins or [] if env_config else [])

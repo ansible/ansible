@@ -124,6 +124,7 @@ class EnvironmentConfig(CommonConfig):
 
         self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
         self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
+        self.httptester_krb5_password = args.httptester_krb5_password or generate_password()  # type: str
 
         if self.get_delegated_completion().get('httptester', 'enabled') == 'disabled':
             self.httptester = False
@@ -275,7 +276,6 @@ class IntegrationConfig(TestConfig):
         self.diff = args.diff
         self.no_temp_workdir = args.no_temp_workdir
         self.no_temp_unicode = args.no_temp_unicode
-        self.krb5_password = generate_password()
 
         if self.get_delegated_completion().get('temp-unicode', 'enabled') == 'disabled':
             self.no_temp_unicode = True

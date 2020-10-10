@@ -218,6 +218,11 @@ try:
                 username = gssapi.Name(self.username, name_type=gssapi.NameType.user)
 
             if username and self.password:
+                if not hasattr(gssapi.raw, 'acquire_cred_with_password'):
+                    raise NotImplementedError("Platform GSSAPI library does not support "
+                                              "gss_acquire_cred_with_password, cannot acquire GSSAPI credential with "
+                                              "explicit username and password.")
+
                 b_password = to_bytes(self.password, errors='surrogate_or_strict')
                 cred = gssapi.raw.acquire_cred_with_password(username, b_password, usage='initiate').creds
 

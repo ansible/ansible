@@ -1016,6 +1016,9 @@ def add_httptester_options(parser, argparse):
                         action='store_true',
                         help=argparse.SUPPRESS)  # internal use only
 
+    parser.add_argument('--httptester-krb5-password',
+                        help=argparse.SUPPRESS)  # internal use only
+
 
 def add_extra_docker_options(parser, integration=True):
     """

@@ -45,3 +45,16 @@
     # Need this custom path for OpenSUSE as krb5-config is placed there
     PATH: '{{ ansible_facts.env.PATH }}:/usr/lib/mit/bin'
   notify: Remove python gssapi
+
+- name: test the environment to make sure Kerberos is working properly
+  httptester_kinit:
+    username: '{{ krb5_username }}'
+    password: '{{ krb5_password }}'
+  environment:
+    KRB5_CONFIG: '{{ krb5_config }}'
+    KRB5CCNAME: FILE:{{ remote_tmp_dir }}/krb5.cc
+
+- name: remove test credential cache
+  file:
+    path: '{{ remote_tmp_dir }}/krb5.cc'
+    state: absent
