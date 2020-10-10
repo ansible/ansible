@@ -32,6 +32,7 @@ RETURN = r'''
 '''
 
 import contextlib
+import errno
 import os
 import subprocess
 
@@ -91,8 +92,13 @@ def main():
         required_together=[('username', 'password')],
     )
 
-    # Debugging purposes, get the Kerberos version
-    version = to_text(subprocess.check_output(['krb5-config', '--version']))
+    # Debugging purposes, get the Kerberos version. On platforms like OpenSUSE this may not be on the PATH.
+    try:
+        version = to_text(subprocess.check_output(['krb5-config', '--version']))
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
+        version = 'Unknown (no krb5-config)'
 
     # Heimdal has a few quirks that we want to paper over in this module
     #     1. KRB5_TRACE does not work in any released version (<=7.7), we need to use a custom krb5.config to enable it

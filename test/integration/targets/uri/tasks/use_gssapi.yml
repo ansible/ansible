@@ -5,8 +5,8 @@
   register: no_auth_failure
   failed_when: no_auth_failure.www_authenticate != 'Negotiate'
 
-- name: Skip these tests on FreeBSD as Heimdal there does not have gss_acquire_cred_with_password
-  when: ansible_os_family != 'FreeBSD'
+- name: Skip explicit auth tests on FreeBSD as Heimdal there does not have gss_acquire_cred_with_password
+  when: ansible_facts.os_family != 'FreeBSD'
   block:
   - name: test Negotiate auth over HTTP with explicit credentials
     uri:
@@ -41,33 +41,36 @@
     url_username: '{{ krb5_username }}'
     url_password: '{{ krb5_password }}'
   register: explicit_failure
-  when: ansible_os_family == 'FreeBSD'
+  when: ansible_facts.os_family == 'FreeBSD'
   failed_when:
   - '"Platform GSSAPI library does not support gss_acquire_cred_with_password, cannot acquire GSSAPI credential with explicit username and password" not in explicit_failure.msg'
 
-- name: get Kerberos ticket for implicit auth tests
-  httptester_kinit:
-    username: '{{ krb5_username }}'
-    password: '{{ krb5_password }}'
+- name: skip tests on macOS, I cannot seem to get it to read a credential from a custom ccache
+  when: ansible_facts.distribution != 'MacOSX'
+  block:
+  - name: get Kerberos ticket for implicit auth tests
+    httptester_kinit:
+      username: '{{ krb5_username }}'
+      password: '{{ krb5_password }}'
 
-- name: test Negotiate auth over HTTP with implicit credentials
-  uri:
-    url: http://{{ httpbin_host }}/gssapi
-    use_gssapi: yes
-    return_content: yes
-  register: http_implicit
+  - name: test Negotiate auth over HTTP with implicit credentials
+    uri:
+      url: http://{{ httpbin_host }}/gssapi
+      use_gssapi: yes
+      return_content: yes
+    register: http_implicit
 
-- name: test Negotiate auth over HTTPS with implicit credentials
-  uri:
-    url: https://{{ httpbin_host }}/gssapi
-    use_gssapi: yes
-    return_content: yes
-  register: https_implicit
+  - name: test Negotiate auth over HTTPS with implicit credentials
+    uri:
+      url: https://{{ httpbin_host }}/gssapi
+      use_gssapi: yes
+      return_content: yes
+    register: https_implicit
 
-- name: assert test Negotiate auth with implicit credentials
-  assert:
-    that:
-    - http_implicit.status == 200
-    - http_implicit.content | trim == 'Microsoft Rulz'
-    - https_implicit.status == 200
-    - https_implicit.content | trim == 'Microsoft Rulz'
+  - name: assert test Negotiate auth with implicit credentials
+    assert:
+      that:
+      - http_implicit.status == 200
+      - http_implicit.content | trim == 'Microsoft Rulz'
+      - https_implicit.status == 200
+      - https_implicit.content | trim == 'Microsoft Rulz'
