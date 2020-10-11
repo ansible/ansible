@@ -5,7 +5,7 @@ on the Ansible host. This will setup the Windows host file and forward the
 local ports to use this connection. This will continue to run in the background
 until the script is deleted.
 
-Run this with SSH with the -R arguments to forward ports 8080 and 8443 to the
+Run this with SSH with the -R arguments to forward ports 8080, 8443 and 8444 to the
 httptester container.
 
 .PARAMETER Hosts
@@ -85,6 +85,7 @@ if ($changed) {
 $forwarded_ports = @{
     80 = 8080
     443 = 8443
+    444 = 8444
 }
 if ($os_version -ge [Version]"6.2") {
     Write-Verbose -Message "Using netsh to configure forwarded ports"
