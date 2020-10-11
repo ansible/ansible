@@ -342,6 +342,12 @@ options:
         the program from running concurrently.
     type: str
     version_added: "2.10"
+  extra_args:
+    description:
+      - List of additional arguments to be used with the rule.
+    type: list
+    elements: str
+    default: []
 '''
 
 EXAMPLES = r'''
@@ -461,6 +467,15 @@ EXAMPLES = r'''
     limit_burst: 20
     log_prefix: "IPTABLES:INFO: "
     log_level: info
+
+- name: Create rule with arbitrary additional arguments
+  iptables:
+    chain: INPUT
+    jump: NFQUEUE
+    extra_args:
+      - "--queue-num 0"
+      - "--queue-bypass"
+  become: yes
 '''
 
 import re
@@ -530,6 +545,11 @@ def append_wait(rule, param, flag):
         rule.extend([flag, param])
 
 
+def append_extra_args(rule, extra_args):
+    for argument in extra_args:
+        rule.extend(argument.split())
+
+
 def construct_rule(params):
     rule = []
     append_wait(rule, params['wait'], '-w')
@@ -593,6 +613,7 @@ def construct_rule(params):
         params['icmp_type'],
         ICMP_TYPE_OPTIONS[params['ip_version']],
         False)
+    append_extra_args(rule, params['extra_args'])
     return rule
 
 
@@ -709,6 +730,7 @@ def main():
             syn=dict(type='str', default='ignore', choices=['ignore', 'match', 'negate']),
             flush=dict(type='bool', default=False),
             policy=dict(type='str', choices=['ACCEPT', 'DROP', 'QUEUE', 'RETURN']),
+            extra_args=dict(type='list', elements='str', default=[]),
         ),
         mutually_exclusive=(
             ['set_dscp_mark', 'set_dscp_mark_class'],

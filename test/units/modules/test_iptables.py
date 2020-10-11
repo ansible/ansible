@@ -876,3 +876,35 @@ class TestIptables(ModuleTestCase):
             '-j',
             'ACCEPT'
         ])
+
+    def test_extra_args(self):
+        """ Test supplying arbitrary additional arguments """
+        set_module_args({
+            'chain': 'INPUT',
+            'jump': 'NFQUEUE',
+            'extra_args': ['--queue-num 0', '--queue-bypass']
+        })
+
+        commands_results = [
+            (0, '', ''),
+        ]
+
+        with patch.object(basic.AnsibleModule, 'run_command') as run_command:
+            run_command.side_effect = commands_results
+            with self.assertRaises(AnsibleExitJson) as result:
+                iptables.main()
+                self.assertTrue(result.exception.args[0]['changed'])
+
+        self.assertEqual(run_command.call_count, 1)
+        self.assertEqual(run_command.call_args_list[0][0][0], [
+            '/sbin/iptables',
+            '-t',
+            'filter',
+            '-C',
+            'INPUT',
+            '-j',
+            'NFQUEUE',
+            '--queue-num',
+            '0',
+            '--queue-bypass',
+        ])
