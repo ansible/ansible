@@ -4,7 +4,7 @@
 Templating (Jinja2)
 *******************
 
-Ansible uses Jinja2 templating to enable dynamic expressions and access to variables. Ansible includes a lot of specialized filters and tests for templating. You can use all the standard filters and tests included in Jinja2 as well. Ansible also offers a new plugin type: :ref:`lookup_plugins`.
+Ansible uses Jinja2 templating to enable dynamic expressions and access to variables. Ansible includes a lot of specialized filters and tests for templating. You can use all the :ref:`standard filters and tests <jinja2:builtin-filters>` included in Jinja2 as well. Ansible also offers a new plugin type: :ref:`lookup_plugins`.
 
 All templating happens on the Ansible controller **before** the task is sent and executed on the target machine. This approach minimizes the package requirements on the target (jinja2 is only required on the controller). It also limits the amount of data Ansible passes to the target machine. Ansible parses templates on the controller and passes only the information needed for each task to the target machine, instead of passing all the data on the controller and parsing it on the target.
 
