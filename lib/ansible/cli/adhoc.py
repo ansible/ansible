@@ -53,7 +53,7 @@ class AdHocCLI(CLI):
                                  default=C.DEFAULT_MODULE_NAME)
         self.parser.add_argument('args', metavar='pattern', help='host pattern')
         self.parser.add_argument('-L', '--loop', dest='loop_spec',
-                                help="loop spec for ad-hoc task. (Plain String, but processed by Jinja)")
+                                 help="loop spec for ad-hoc task. (Plain String, but processed by Jinja)")
 
     def post_process_args(self, options):
         '''Post process and validate options for bin/ansible '''
