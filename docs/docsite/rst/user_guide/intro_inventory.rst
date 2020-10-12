@@ -730,7 +730,7 @@ To apply a playbook called :file:`site.yml`
 to all the app servers in the test environment, use the
 following command::
 
-  ansible-playbook -i inventory_test site.yml -l appservers
+  ansible-playbook -i inventory_test -l appservers site.yml
 
 .. _inventory_setup-per_function:
 
