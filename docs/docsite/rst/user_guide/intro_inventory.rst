@@ -740,7 +740,7 @@ Example: Group by function
 In the previous section you already saw an example for using groups in
 order to cluster hosts that have the same function. This allows you,
 for instance, to define firewall rules inside a playbook or role
-without affecting database servers:
+affecting only database servers:
 
 .. code-block:: yaml
 
