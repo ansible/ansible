@@ -1,0 +1,8 @@
+- name: Test collection lookup bypass host list
+  hosts: all
+  connection: local
+  gather_facts: false
+  collections:
+    - testns.testcoll
+  tasks:
+    - bypass_host_loop:

@@ -68,6 +68,13 @@ if [[ ${INVENTORY_PATH} != *.winrm ]]; then
 	ansible-playbook -i "${INVENTORY_PATH}" -v invocation_tests.yml "$@"
 fi
 
+echo "--- validating bypass_host_loop with collection search"
+BYPASS=$(ansible-playbook -i host1,host2, -v test_bypass_host_loop.yml "$@" | tee /dev/stderr | grep -c '"bypassed": true')
+if [[ "${BYPASS}" != "1" ]]; then
+    echo "bypass_host_loop action plugin did not bypass host loop"
+    exit 1
+fi
+
 echo "--- validating inventory"
 # test collection inventories
 ansible-playbook inventory_test.yml -i a.statichost.yml -i redirected.statichost.yml "$@"
