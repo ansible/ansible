@@ -69,3 +69,16 @@
   retries: 5
   delay: 0.5
   failed_when: changed_when_attempts.attempts > 6
+
+# Test until on module that doesn't return failed, but does return rc
+- name: create counter file
+  copy:
+    dest: "{{ output_dir }}/until_counter"
+    content: 3
+
+- shell_no_failed:
+    cmd: |
+      COUNTER=$(cat "{{ output_dir }}/until_counter"); NEW=$(expr $COUNTER - 1); echo $NEW > "{{ output_dir }}/until_counter"; exit $COUNTER
+  register: counter
+  delay: 0.5
+  until: counter.rc == 0
