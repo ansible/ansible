@@ -347,6 +347,7 @@ options:
       - List of additional arguments to be used with the rule.
     type: list
     elements: str
+    version_added: "2.11"
     default: []
 '''
 
@@ -475,7 +476,6 @@ EXAMPLES = r'''
     extra_args:
       - "--queue-num 0"
       - "--queue-bypass"
-  become: yes
 '''
 
 import re
