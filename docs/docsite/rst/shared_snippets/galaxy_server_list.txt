@@ -13,7 +13,7 @@ To configure a Galaxy server list in ``ansible.cfg``:
 #. Add the ``server_list``  option under the ``[galaxy]`` section to one or more server names.
 #. Create a new section for each server name.
 #. Set the ``url`` option for each server name.
-#. Optionally, set the API token for each server name. See :ref:`API token <collections_installing>` for details.
+#. Optionally, set the API token for each server name. Go to https://galaxy.ansible.com/me/preferences and click :guilabel:`Show API key`.
 
 .. note::
     The ``url`` option for each server name must end with a forward slash ``/``. If you do not set the API token in your Galaxy server list, use the ``--api-key`` argument to pass in the token to  the ``ansible-galaxy collection publish`` command.
