@@ -177,9 +177,15 @@ try:
     from cryptography.hazmat.backends import default_backend
     from cryptography.hazmat.primitives import hashes
     from cryptography.exceptions import UnsupportedAlgorithm
-
 except ImportError:
     HAS_CRYPTOGRAPHY = False
+
+# Old import for GSSAPI authentication, this is not used in urls.py but kept for backwards compatibility.
+try:
+    import urllib_gssapi
+    HAS_GSSAPI = True
+except ImportError:
+    HAS_GSSAPI = False
 
 GSSAPI_IMP_ERR = None
 try:
