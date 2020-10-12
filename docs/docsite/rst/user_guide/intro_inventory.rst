@@ -220,12 +220,13 @@ In YAML:
 .. code-block:: yaml
 
     atlanta:
-      host1:
-        http_port: 80
-        maxRequestsPerChild: 808
-      host2:
-        http_port: 303
-        maxRequestsPerChild: 909
+      hosts:    
+        host1:
+          http_port: 80
+          maxRequestsPerChild: 808
+        host2:
+          http_port: 303
+          maxRequestsPerChild: 909
 
 Unique values like non-standard SSH ports work well as host variables. You can add them to your Ansible inventory by adding the port number after the hostname with a colon:
 
