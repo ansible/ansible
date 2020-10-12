@@ -1016,7 +1016,7 @@ class StrategyBase:
 
         bypass_host_loop = False
         try:
-            action = plugin_loader.action_loader.get(handler.action, class_only=True)
+            action = plugin_loader.action_loader.get(handler.action, class_only=True, collection_list=handler.collections)
             if getattr(action, 'BYPASS_HOST_LOOP', False):
                 bypass_host_loop = True
         except KeyError:

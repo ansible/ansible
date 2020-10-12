@@ -265,7 +265,7 @@ class StrategyModule(StrategyBase):
                     task.action = templar.template(task.action)
 
                     try:
-                        action = action_loader.get(task.action, class_only=True)
+                        action = action_loader.get(task.action, class_only=True, collection_list=task.collections)
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin
