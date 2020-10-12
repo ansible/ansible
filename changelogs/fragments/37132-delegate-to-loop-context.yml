@@ -1,0 +1,4 @@
+bugfixes:
+- delegate_to - Ensure that calculating ``delegate_to`` vars with a loop
+  uses the correct context to correctly evaluate the loop
+  (https://github.com/ansible/ansible/issues/37132)
