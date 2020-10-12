@@ -447,9 +447,11 @@ You can change this behavior by setting the group variable ``ansible_group_prior
 .. code-block:: yaml
 
     a_group:
+      vars:
         testvar: a
         ansible_group_priority: 10
     b_group:
+      vars:
         testvar: b
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
