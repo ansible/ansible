@@ -114,10 +114,15 @@ class RoleMixin(object):
                             found.add((entry, role_path))
         return found
 
-    def _find_all_collection_roles(self, name_filters=None):
+    def _find_all_collection_roles(self, name_filters=None, collection_filter=None):
         """Find all collection roles with an argument spec.
 
-        :param name_filters: A tuple of one or more role names used to filter the results.
+        :param name_filters: A tuple of one or more role names used to filter the results. These
+            might be fully qualified with the collection name (e.g., community.general.roleA)
+            or not (e.g., roleA).
+
+        :param collection_filter: A string containing the FQCN of a collection which will be
+            used to limit results. This filter will take precedence over the name_filters.
 
         :returns: A set of tuples consisting of: role name, collection name, collection path
         """
@@ -126,16 +131,29 @@ class RoleMixin(object):
         for b_path in b_colldirs:
             path = to_text(b_path, errors='surrogate_or_strict')
             collname = _get_collection_name_from_path(b_path)
+
+            if collection_filter and collname != collection_filter:
+                continue
+
             roles_dir = os.path.join(path, 'roles')
             if os.path.exists(roles_dir):
                 for entry in os.listdir(roles_dir):
                     full_path = os.path.join(roles_dir, entry, 'meta', self.ROLE_ARGSPEC_FILE)
                     if os.path.exists(full_path):
-                        if name_filters is None or entry in name_filters:
+                        if name_filters is None:
                             found.add((entry, collname, path))
+                        else:
+                            # Name filters might contain a collection FQCN or not.
+                            for fqcn in name_filters:
+                                if len(fqcn.split('.')) == 3:
+                                    (ns, col, role) = fqcn.split('.')
+                                    if '.'.join([ns, col]) == collname and entry == role:
+                                        found.add((entry, collname, path))
+                                elif fqcn == entry:
+                                    found.add((entry, collname, path))
         return found
 
-    def _create_role_list(self, roles_path):
+    def _create_role_list(self, roles_path, collection_filter=None):
         """Return a dict describing the listing of all roles with arg specs.
 
         :param role_paths: A tuple of one or more role paths.
@@ -166,8 +184,11 @@ class RoleMixin(object):
             }
 
         """
-        roles = self._find_all_normal_roles(roles_path)
-        collroles = self._find_all_collection_roles()
+        if not collection_filter:
+            roles = self._find_all_normal_roles(roles_path)
+        else:
+            roles = []
+        collroles = self._find_all_collection_roles(collection_filter=collection_filter)
 
         result = {}
 
@@ -371,8 +392,14 @@ class DocCLI(CLI, RoleMixin):
             for entry_point in list_json[role]['entry_points'].keys():
                 entry_point_names.add(entry_point)
 
-        max_role_len = max(len(x) for x in roles)
-        max_ep_len = max(len(x) for x in entry_point_names)
+        max_role_len = 0
+        max_ep_len = 0
+
+        if roles:
+            max_role_len = max(len(x) for x in roles)
+        if entry_point_names:
+            max_ep_len = max(len(x) for x in entry_point_names)
+
         linelimit = display.columns - max_role_len - max_ep_len - 5
         text = []
 
@@ -519,10 +546,14 @@ class DocCLI(CLI, RoleMixin):
 
         super(DocCLI, self).run()
 
+        basedir = context.CLIARGS['basedir']
         plugin_type = context.CLIARGS['type']
         do_json = context.CLIARGS['json_format']
         listing = context.CLIARGS['list_files'] or context.CLIARGS['list_dir'] or context.CLIARGS['dump']
         docs = {}
+
+        if basedir:
+            AnsibleCollectionConfig.playbook_paths = basedir
 
         if plugin_type not in TARGET_OPTIONS:
             raise AnsibleOptionsError("Unknown or undocumentable plugin type: %s" % plugin_type)
@@ -534,7 +565,12 @@ class DocCLI(CLI, RoleMixin):
                 docs = DocCLI._get_keywords_docs(context.CLIARGS['args'])
         elif plugin_type == 'role':
             if context.CLIARGS['list_dir']:
-                list_json = self._create_role_list(roles_path)
+                # If an argument was given with --list, it is a collection filter
+                coll_filter = None
+                if len(context.CLIARGS['args']) == 1:
+                    coll_filter = context.CLIARGS['args'][0]
+
+                list_json = self._create_role_list(roles_path, collection_filter=coll_filter)
                 if do_json:
                     jdump(list_json)
                 else:
