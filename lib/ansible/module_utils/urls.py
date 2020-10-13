@@ -74,17 +74,17 @@ import ansible.module_utils.six.moves.urllib.error as urllib_error
 from ansible.module_utils.common.collections import Mapping
 from ansible.module_utils.six import PY3, string_types
 from ansible.module_utils.six.moves import cStringIO
-from ansible.module_utils.basic import get_distribution
+from ansible.module_utils.basic import get_distribution, missing_required_lib
 from ansible.module_utils._text import to_bytes, to_native, to_text
 
 try:
     # python3
     import urllib.request as urllib_request
-    from urllib.request import AbstractHTTPHandler
+    from urllib.request import AbstractHTTPHandler, BaseHandler
 except ImportError:
     # python2
     import urllib2 as urllib_request
-    from urllib2 import AbstractHTTPHandler
+    from urllib2 import AbstractHTTPHandler, BaseHandler
 
 urllib_request.HTTPRedirectHandler.http_error_308 = urllib_request.HTTPRedirectHandler.http_error_307
 
@@ -171,12 +171,104 @@ except ImportError:
     except ImportError:
         HAS_MATCH_HOSTNAME = False
 
+HAS_CRYPTOGRAPHY = True
+try:
+    from cryptography import x509
+    from cryptography.hazmat.backends import default_backend
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.exceptions import UnsupportedAlgorithm
+except ImportError:
+    HAS_CRYPTOGRAPHY = False
 
+# Old import for GSSAPI authentication, this is not used in urls.py but kept for backwards compatibility.
 try:
     import urllib_gssapi
     HAS_GSSAPI = True
 except ImportError:
     HAS_GSSAPI = False
+
+GSSAPI_IMP_ERR = None
+try:
+    import gssapi
+
+    class HTTPGSSAPIAuthHandler(BaseHandler):
+        """ Handles Negotiate/Kerberos support through the gssapi library. """
+
+        AUTH_HEADER_PATTERN = re.compile(r'(?:.*)\s*(Negotiate|Kerberos)\s*([^,]*),?', re.I)
+        handler_order = 480  # Handle before Digest authentication
+
+        def __init__(self, username=None, password=None):
+            self.username = username
+            self.password = password
+            self._context = None
+
+        def get_auth_value(self, headers):
+            auth_match = self.AUTH_HEADER_PATTERN.search(headers.get('www-authenticate', ''))
+            if auth_match:
+                return auth_match.group(1), base64.b64decode(auth_match.group(2))
+
+        def http_error_401(self, req, fp, code, msg, headers):
+            # If we've already attempted the auth and we've reached this again then there was a failure.
+            if self._context:
+                return
+
+            parsed = generic_urlparse(urlparse(req.get_full_url()))
+
+            auth_header = self.get_auth_value(headers)
+            if not auth_header:
+                return
+            auth_protocol, in_token = auth_header
+
+            username = None
+            if self.username:
+                username = gssapi.Name(self.username, name_type=gssapi.NameType.user)
+
+            if username and self.password:
+                if not hasattr(gssapi.raw, 'acquire_cred_with_password'):
+                    raise NotImplementedError("Platform GSSAPI library does not support "
+                                              "gss_acquire_cred_with_password, cannot acquire GSSAPI credential with "
+                                              "explicit username and password.")
+
+                b_password = to_bytes(self.password, errors='surrogate_or_strict')
+                cred = gssapi.raw.acquire_cred_with_password(username, b_password, usage='initiate').creds
+
+            else:
+                cred = gssapi.Credentials(name=username, usage='initiate')
+
+            # Get the peer certificate for the channel binding token if possible (HTTPS). A bug on macOS causes the
+            # authentication to fail when the CBT is present. Just skip that platform.
+            cbt = None
+            cert = getpeercert(fp, True)
+            if cert and platform.system() != 'Darwin':
+                cert_hash = get_channel_binding_cert_hash(cert)
+                if cert_hash:
+                    cbt = gssapi.raw.ChannelBindings(application_data=b"tls-server-end-point:" + cert_hash)
+
+            # TODO: We could add another option that is set to include the port in the SPN if desired in the future.
+            target = gssapi.Name("HTTP@%s" % parsed['hostname'], gssapi.NameType.hostbased_service)
+            self._context = gssapi.SecurityContext(usage="initiate", name=target, creds=cred, channel_bindings=cbt)
+
+            resp = None
+            while not self._context.complete:
+                out_token = self._context.step(in_token)
+                if not out_token:
+                    break
+
+                auth_header = '%s %s' % (auth_protocol, to_native(base64.b64encode(out_token)))
+                req.add_unredirected_header('Authorization', auth_header)
+                resp = self.parent.open(req)
+
+                # The response could contain a token that the client uses to validate the server
+                auth_header = self.get_auth_value(resp.headers)
+                if not auth_header:
+                    break
+                in_token = auth_header[1]
+
+            return resp
+
+except ImportError:
+    GSSAPI_IMP_ERR = traceback.format_exc()
+    HTTPGSSAPIAuthHandler = None
 
 if not HAS_MATCH_HOSTNAME:
     # The following block of code is under the terms and conditions of the
@@ -406,6 +498,13 @@ class SSLValidationError(ConnectionError):
 class NoSSLError(SSLValidationError):
     """Needed to connect to an HTTPS url but no ssl library available to verify the certificate"""
     pass
+
+
+class MissingModuleError(Exception):
+    """Failed to import 3rd party module required by the caller"""
+    def __init__(self, message, import_traceback):
+        super(MissingModuleError, self).__init__(message)
+        self.import_traceback = import_traceback
 
 
 # Some environments (Google Compute Engine's CoreOS deploys) do not compile
@@ -1032,6 +1131,43 @@ def maybe_add_ssl_handler(url, validate_certs, ca_path=None):
         return SSLValidationHandler(parsed.hostname, parsed.port or 443, ca_path=ca_path)
 
 
+def getpeercert(response, binary_form=False):
+    """ Attempt to get the peer certificate of the response from urlopen. """
+    # The response from urllib2.open() is different across Python 2 and 3
+    if PY3:
+        socket = response.fp.raw._sock
+    else:
+        socket = response.fp._sock.fp._sock
+
+    try:
+        return socket.getpeercert(binary_form)
+    except AttributeError:
+        pass  # Not HTTPS
+
+
+def get_channel_binding_cert_hash(certificate_der):
+    """ Gets the channel binding app data for a TLS connection using the peer cert. """
+    if not HAS_CRYPTOGRAPHY:
+        return
+
+    # Logic documented in RFC 5929 section 4 https://tools.ietf.org/html/rfc5929#section-4
+    cert = x509.load_der_x509_certificate(certificate_der, default_backend())
+
+    hash_algorithm = None
+    try:
+        hash_algorithm = cert.signature_hash_algorithm
+    except UnsupportedAlgorithm:
+        pass
+
+    # If the signature hash algorithm is unknown/unsupported or md5/sha1 we must use SHA256.
+    if not hash_algorithm or hash_algorithm.name in ['md5', 'sha1']:
+        hash_algorithm = hashes.SHA256()
+
+    digest = hashes.Hash(hash_algorithm, default_backend())
+    digest.update(certificate_der)
+    return digest.finalize()
+
+
 def rfc2822_date_string(timetuple, zone='-0000'):
     """Accepts a timetuple and optional zone which defaults to ``-0000``
     and returns a date string as specified by RFC 2822, e.g.:
@@ -1176,15 +1312,13 @@ class Request:
         ssl_handler = maybe_add_ssl_handler(url, validate_certs, ca_path=ca_path)
         if ssl_handler and not HAS_SSLCONTEXT:
             handlers.append(ssl_handler)
-        if HAS_GSSAPI and use_gssapi:
-            handlers.append(urllib_gssapi.HTTPSPNEGOAuthHandler())
 
         parsed = generic_urlparse(urlparse(url))
         if parsed.scheme != 'ftp':
             username = url_username
+            password = url_password
 
             if username:
-                password = url_password
                 netloc = parsed.netloc
             elif '@' in parsed.netloc:
                 credentials, netloc = parsed.netloc.split('@', 1)
@@ -1200,7 +1334,15 @@ class Request:
                 # reconstruct url without credentials
                 url = urlunparse(parsed_list)
 
-            if username and not force_basic_auth:
+            if use_gssapi:
+                if HTTPGSSAPIAuthHandler:
+                    handlers.append(HTTPGSSAPIAuthHandler(username, password))
+                else:
+                    imp_err_msg = missing_required_lib('gssapi', reason='for use_gssapi=True',
+                                                       url='https://pypi.org/project/gssapi/')
+                    raise MissingModuleError(imp_err_msg, import_traceback=GSSAPI_IMP_ERR)
+
+            elif username and not force_basic_auth:
                 passman = urllib_request.HTTPPasswordMgrWithDefaultRealm()
 
                 # this creates a password manager
@@ -1543,6 +1685,7 @@ def url_argument_spec():
         force_basic_auth=dict(type='bool', default=False),
         client_cert=dict(type='path'),
         client_key=dict(type='path'),
+        use_gssapi=dict(type='bool', default=False),
     )
 
 
@@ -1603,6 +1746,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
 
     client_cert = module.params.get('client_cert')
     client_key = module.params.get('client_key')
+    use_gssapi = module.params.get('use_gssapi', use_gssapi)
 
     if not isinstance(cookies, cookiejar.CookieJar):
         cookies = cookiejar.LWPCookieJar()
@@ -1655,6 +1799,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
             module.fail_json(msg='%s' % to_native(e), **info)
     except (ConnectionError, ValueError) as e:
         module.fail_json(msg=to_native(e), **info)
+    except MissingModuleError as e:
+        module.fail_json(msg=to_text(e), exception=e.import_traceback)
     except urllib_error.HTTPError as e:
         try:
             body = e.read()

@@ -309,7 +309,7 @@ def delegate_docker(args, exclude, require, integration_targets):
                 test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
 
             if httptester_id:
-                test_options += ['--env', 'HTTPTESTER=1']
+                test_options += ['--env', 'HTTPTESTER=1', '--env', 'KRB5_PASSWORD=%s' % args.httptester_krb5_password]
 
                 for host in HTTPTESTER_HOSTS:
                     test_options += ['--link', '%s:%s' % (httptester_id, host)]
@@ -462,7 +462,7 @@ def delegate_remote(args, exclude, require, integration_targets):
             cmd = generate_command(args, python_interpreter, os.path.join(ansible_root, 'bin'), content_root, options, exclude, require)
 
             if httptester_id:
-                cmd += ['--inject-httptester']
+                cmd += ['--inject-httptester', '--httptester-krb5-password', args.httptester_krb5_password]
 
             if isinstance(args, TestConfig):
                 if args.coverage and not args.coverage_label:

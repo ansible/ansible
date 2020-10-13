@@ -22,3 +22,13 @@
   - has_httptester|bool
   # skip the setup if running on Windows Server 2008 as httptester is not available
   - ansible_os_family != 'Windows' or (ansible_os_family == 'Windows' and not ansible_distribution_version.startswith("6.0."))
+
+- set_fact:
+    krb5_password: "{{ lookup('env', 'KRB5_PASSWORD') }}"
+
+- name: setup Kerberos client
+  include_tasks: kerberos.yml
+  when:
+  - has_httptester|bool
+  - ansible_os_family != 'Windows'
+  - krb5_password != ''

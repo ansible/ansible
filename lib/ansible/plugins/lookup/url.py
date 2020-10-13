@@ -99,7 +99,9 @@ options:
         - section: url_lookup
           key: follow_redirects
   use_gssapi:
-    description: Use GSSAPI handler of requests
+    description:
+    - Use GSSAPI handler of requests
+    - As of Ansible 2.11, GSSAPI credentials can be specified with I(username) and I(password).
     type: boolean
     version_added: "2.10"
     default: False
