@@ -1,0 +1,2 @@
+bugfixes:
+  - Fix incorrect re-run of roles with tags (https://github.com/ansible/ansible/issues/69848)
