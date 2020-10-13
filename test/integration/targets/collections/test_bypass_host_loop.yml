@@ -6,3 +6,14 @@
     - testns.testcoll
   tasks:
     - bypass_host_loop:
+      register: bypass
+
+    - run_once: true
+      vars:
+        bypass_hosts: '{{ hostvars|dictsort|map(attribute="1.bypass.bypass_inventory_hostname")|select("defined") }}'
+      block:
+        - debug:
+            var: bypass_hosts
+
+        - assert:
+            that: bypass_hosts|length == 1
