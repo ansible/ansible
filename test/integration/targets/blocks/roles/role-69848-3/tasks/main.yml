@@ -1,0 +1,8 @@
+- block:
+    - debug:
+        msg: Tagged task
+  tags:
+    - foo
+
+- debug:
+    msg: Not tagged task
