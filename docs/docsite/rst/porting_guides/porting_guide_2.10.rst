@@ -96,6 +96,27 @@ Porting custom scripts
 
 No notable changes
 
+Porting Guide for v2.10.1
+=========================
+
+Major Changes
+-------------
+
+community.kubernetes
+~~~~~~~~~~~~~~~~~~~~
+
+- k8s - Add support for template parameter (https://github.com/ansible-collections/community.kubernetes/pull/230).
+- k8s_* - Add support for vaulted kubeconfig and src (https://github.com/ansible-collections/community.kubernetes/pull/193).
+
+Deprecated Features
+-------------------
+
+cisco.nxos
+~~~~~~~~~~
+
+- Deprecated `nxos_smu` in favour of `nxos_rpm` module.
+- The `nxos_ospf_vrf` module is deprecated by `nxos_ospfv2` and `nxos_ospfv3` Resource Modules.
+
 Porting Guide for v2.10.0
 =========================
 
@@ -559,9 +580,3 @@ community.zabbix
 ~~~~~~~~~~~~~~~~
 
 - zabbix_proxy (module) - deprecates ``interface`` sub-options ``type`` and ``main`` when proxy type is set to passive via ``status=passive``. Make sure these suboptions are removed from your playbook as they were never supported by Zabbix in the first place.
-
-openstack.cloud
-~~~~~~~~~~~~~~~
-
-- foo - The bar option has been deprecated. Use the username option instead.
-- send_request - The quic option has been deprecated. Use the protocol option instead.
