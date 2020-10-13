@@ -1,0 +1,32 @@
+- name: get peercert for HTTP connection
+  test_peercert:
+    url: http://{{ httpbin_host }}/get
+  register: cert_http
+
+- name: assert get peercert for HTTP connection
+  assert:
+    that:
+    - cert_http.raw_cert == None
+
+- name: get peercert for HTTPS connection
+  test_peercert:
+    url: https://{{ httpbin_host }}/get
+  register: cert_https
+
+# Alpine does not have openssl, just make sure the text was actually set instead
+- name: check if openssl is installed
+  command: which openssl
+  ignore_errors: yes
+  register: openssl
+
+- name: get actual certificate from endpoint
+  shell: echo | openssl s_client -connect {{ httpbin_host }}:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p'
+  register: cert_https_actual
+  changed_when: no
+  when: openssl is successful
+
+- name: assert get peercert for HTTPS connection
+  assert:
+    that:
+    - cert_https.raw_cert != None
+    - openssl is failed or cert_https.raw_cert == cert_https_actual.stdout_lines[1:-1] | join("")
