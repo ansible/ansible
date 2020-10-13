@@ -13,7 +13,7 @@
 
     - run_once: true
       vars:
-        bypass_hosts: '{{ hostvars|dictsort|map(attribute="1.bypass.bypass_inventory_hostname")|select("defined") }}'
+        bypass_hosts: '{{ hostvars|dictsort|map(attribute="1.bypass.bypass_inventory_hostname")|select("defined")|unique }}'
       block:
         - debug:
             var: bypass_hosts
