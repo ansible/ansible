@@ -1,0 +1,4 @@
+- name: Remove python gssapi
+  pip:
+    name: gssapi
+    state: absent

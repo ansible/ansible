@@ -9,6 +9,7 @@ from . import types as t
 
 from .util import (
     find_python,
+    generate_password,
     generate_pip_command,
     ApplicationError,
 )
@@ -123,6 +124,8 @@ class EnvironmentConfig(CommonConfig):
 
         self.inject_httptester = args.inject_httptester if 'inject_httptester' in args else False  # type: bool
         self.httptester = docker_qualify_image(args.httptester if 'httptester' in args else '')  # type: str
+        krb5_password = args.httptester_krb5_password if 'httptester_krb5_password' in args else ''
+        self.httptester_krb5_password = krb5_password or generate_password()  # type: str
 
         if self.get_delegated_completion().get('httptester', 'enabled') == 'disabled':
             self.httptester = False

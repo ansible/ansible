@@ -364,6 +364,7 @@ def common_environment():
 
     optional = (
         'HTTPTESTER',
+        'KRB5_PASSWORD',
         'LD_LIBRARY_PATH',
         'SSH_AUTH_SOCK',
         # MacOS High Sierra Compatibility
