@@ -60,6 +60,18 @@ ensure_test_data = [
     ('a', 'string', string_types),
     ('Café', 'string', string_types),
     ('', 'string', string_types),
+    ('29', 'str', string_types),
+    ('13.37', 'str', string_types),
+    ('123j', 'string', string_types),
+    ('0x123', 'string', string_types),
+    ('true', 'string', string_types),
+    ('True', 'string', string_types),
+    (0, 'str', string_types),
+    (29, 'str', string_types),
+    (13.37, 'str', string_types),
+    (123j, 'string', string_types),
+    (0x123, 'string', string_types),
+    (True, 'string', string_types),
     ('None', 'none', type(None))
 ]
 

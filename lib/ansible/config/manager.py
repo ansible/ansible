@@ -149,7 +149,7 @@ def ensure_type(value, value_type, origin=None):
                 errmsg = 'dictionary'
 
         elif value_type in ('str', 'string'):
-            if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode)):
+            if isinstance(value, (string_types, AnsibleVaultEncryptedUnicode, bool, int, float, complex)):
                 value = unquote(to_text(value, errors='surrogate_or_strict'))
             else:
                 errmsg = 'string'
