@@ -178,8 +178,10 @@ class TaskQueueManager:
         for c in C.DEFAULT_CALLBACK_WHITELIST:
             # load all, as collection ones might be using short/redirected names and not a fqcn
             plugin = callback_loader.get(c, class_only=True)
-            # avoids incorrect and dupes possible due to collections
+
+            #TODO: check if this skip is redundant, loader should handle bad file/plugin cases already
             if plugin:
+                # avoids incorrect and dupes possible due to collections
                 if plugin not in callback_list:
                     callback_list.append(plugin)
             else:
@@ -218,12 +220,18 @@ class TaskQueueManager:
 
             try:
                 callback_obj = callback_plugin()
+                # avoid bad plugin not returning an object, only needed cause we do class_only load and bypass loader checks,
+                # really a bug in the plugin itself which we ignore as callback errors are not supposed to be fatal.
                 if callback_obj:
+                    # skip initializing if we already did the work for the same plugin (even with diff names)
                     if callback_obj not in self._callback_plugins:
                         callback_obj.set_options()
                         self._callback_plugins.append(callback_obj)
                     else:
                         display.vv("Skipping callback '%s', already loaded as '%s'." % (callback_plugin, callback_name))
+                else:
+                    display.warning("Skipping callback '%s', as it does not create a valid plugin instance." % callback_name)
+                    continue
             except Exception as e:
                 display.warning("Skipping callback '%s', unable to load due to: %s" % (callback_name, to_native(e)))
                 continue
