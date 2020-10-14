@@ -194,7 +194,7 @@ class TaskQueueManager:
             # try to get colleciotn world name first
             cnames = getattr(callback_plugin, '_redirected_names', [])
             if cnames:
-                # use 'first name' and not 'real name' as that is what will match config
+                # store the name the plugin was loaded as, as that's what we'll need to compare to the configured callback list later
                 callback_name = cnames[0]
             else:
                 # fallback to 'old loader name'
