@@ -48,7 +48,7 @@ By default, Ansible runs in parallel against all the hosts in the :ref:`pattern 
     ---
     - name: test play
       hosts: webservers
-      serial: 2
+      serial: 3
       gather_facts: False
 
       tasks:
@@ -57,34 +57,40 @@ By default, Ansible runs in parallel against all the hosts in the :ref:`pattern 
         - name: second task
           command: hostname
 
-In the above example, if we had 4 hosts in the group 'webservers', Ansible would execute the play completely (both tasks) on 2 of the hosts before moving on to the next 2 hosts::
+In the above example, if we had 6 hosts in the group 'webservers', Ansible would execute the play completely (both tasks) on 3 of the hosts before moving on to the next 3 hosts::
 
 
     PLAY [webservers] ****************************************
 
     TASK [first task] ****************************************
+    changed: [web3]
     changed: [web2]
     changed: [web1]
 
     TASK [second task] ***************************************
     changed: [web1]
     changed: [web2]
+    changed: [web3]    
 
     PLAY [webservers] ****************************************
 
     TASK [first task] ****************************************
-    changed: [web3]
     changed: [web4]
+    changed: [web5]
+    changed: [web6]
 
     TASK [second task] ***************************************
-    changed: [web3]
     changed: [web4]
+    changed: [web5]
+    changed: [web2]
 
     PLAY RECAP ***********************************************
     web1      : ok=2    changed=2    unreachable=0    failed=0
     web2      : ok=2    changed=2    unreachable=0    failed=0
     web3      : ok=2    changed=2    unreachable=0    failed=0
     web4      : ok=2    changed=2    unreachable=0    failed=0
+    web5      : ok=2    changed=2    unreachable=0    failed=0
+    web6      : ok=2    changed=2    unreachable=0    failed=0
 
 
 You can also specify a percentage with the ``serial`` keyword. Ansible applies the percentage to the total number of hosts in a play to determine the number of hosts per pass::
