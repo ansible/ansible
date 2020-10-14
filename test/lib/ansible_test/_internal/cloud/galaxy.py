@@ -25,6 +25,7 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
+    get_docker_hostname,
 )
 
 
@@ -166,7 +167,7 @@ class GalaxyProvider(CloudProvider):
             pulp_host = self._get_simulator_address('ansible-ci-pulp')
             display.info('Found Galaxy simulator container address: %s' % pulp_host, verbosity=1)
         else:
-            pulp_host = 'localhost'
+            pulp_host = get_docker_hostname()
 
         self._set_cloud_config('PULP_HOST', pulp_host)
         self._set_cloud_config('PULP_PORT', str(pulp_port))

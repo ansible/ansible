@@ -21,6 +21,7 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
+    get_docker_hostname,
 )
 
 
@@ -157,7 +158,7 @@ class NiosProvider(CloudProvider):
                 % nios_host, verbosity=1
             )
         else:
-            nios_host = 'localhost'
+            nios_host = get_docker_hostname()
 
         self._set_cloud_config('NIOS_HOST', nios_host)
 

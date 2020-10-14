@@ -19,6 +19,10 @@ from .util import (
     SubprocessError,
 )
 
+from .http import (
+    urlparse,
+)
+
 from .util_common import (
     run_command,
 )
@@ -35,6 +39,31 @@ def docker_available():
     :rtype: bool
     """
     return find_executable('docker', required=False)
+
+
+def get_docker_hostname():  # type: () -> str
+    """Return the hostname of the Docker service."""
+    try:
+        return get_docker_hostname.hostname
+    except AttributeError:
+        pass
+
+    docker_host = os.environ.get('DOCKER_HOST')
+
+    if docker_host:
+        try:
+            hostname = urlparse(docker_host)[1].split(':')[0]
+            display.info('Detected Docker host: %s' % hostname, verbosity=1)
+        except ValueError:
+            hostname = 'localhost'
+            display.warning('Could not parse DOCKER_HOST environment variable "%s", falling back to localhost.' % docker_host)
+    else:
+        hostname = 'localhost'
+        display.info('Assuming Docker is available on localhost.', verbosity=1)
+
+    get_docker_hostname.hostname = hostname
+
+    return hostname
 
 
 def get_docker_container_id():

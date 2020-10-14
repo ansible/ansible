@@ -28,6 +28,7 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
+    get_docker_hostname,
 )
 
 
@@ -158,7 +159,7 @@ class ACMEProvider(CloudProvider):
             acme_host_ip = acme_host
             display.info('Found ACME test container address: %s' % acme_host, verbosity=1)
         else:
-            acme_host = 'localhost'
+            acme_host = get_docker_hostname()
             acme_host_ip = acme_host
 
         self._set_cloud_config('acme_host', acme_host)

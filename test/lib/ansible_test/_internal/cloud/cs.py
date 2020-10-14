@@ -35,6 +35,7 @@ from ..docker_util import (
     docker_network_inspect,
     docker_exec,
     get_docker_container_id,
+    get_docker_hostname,
 )
 
 
@@ -89,7 +90,7 @@ class CsCloudProvider(CloudProvider):
         :rtype: list[str]
         """
         if self.managed:
-            return ['-R', '8888:localhost:8888']
+            return ['-R', '8888:%s:8888' % get_docker_hostname()]
 
         return []
 
@@ -172,7 +173,7 @@ class CsCloudProvider(CloudProvider):
             self.host = self._get_simulator_address()
             display.info('Found CloudStack simulator container address: %s' % self.host, verbosity=1)
         else:
-            self.host = 'localhost'
+            self.host = get_docker_hostname()
 
         self.port = 8888
         self.endpoint = 'http://%s:%d' % (self.host, self.port)
@@ -189,6 +190,8 @@ class CsCloudProvider(CloudProvider):
 
             if self.args.docker:
                 host = self.DOCKER_SIMULATOR_NAME
+            elif self.args.remote:
+                host = 'localhost'
             else:
                 host = self.host
 

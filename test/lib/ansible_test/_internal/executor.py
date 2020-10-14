@@ -90,6 +90,7 @@ from .docker_util import (
     docker_rm,
     get_docker_container_id,
     get_docker_container_ip,
+    get_docker_hostname,
 )
 
 from .ansible_util import (
@@ -1277,7 +1278,7 @@ def start_httptester(args):
         container_host = get_docker_container_ip(args, httptester_id)
         display.info('Found httptester container address: %s' % container_host, verbosity=1)
     else:
-        container_host = 'localhost'
+        container_host = get_docker_hostname()
 
     ssh_options = []
 

@@ -23,6 +23,7 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
+    get_docker_hostname,
 )
 
 
@@ -150,7 +151,7 @@ class VcenterProvider(CloudProvider):
             vcenter_hostname = self._get_simulator_address()
             display.info('Found vCenter simulator container address: %s' % vcenter_hostname, verbosity=1)
         else:
-            vcenter_hostname = 'localhost'
+            vcenter_hostname = get_docker_hostname()
 
         self._set_cloud_config('vcenter_hostname', vcenter_hostname)
 

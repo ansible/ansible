@@ -21,6 +21,7 @@ from ..docker_util import (
     docker_inspect,
     docker_pull,
     get_docker_container_id,
+    get_docker_hostname,
 )
 
 
@@ -157,7 +158,7 @@ class ForemanProvider(CloudProvider):
                 % foreman_host, verbosity=1
             )
         else:
-            foreman_host = 'localhost'
+            foreman_host = get_docker_hostname()
 
         self._set_cloud_config('FOREMAN_HOST', foreman_host)
         self._set_cloud_config('FOREMAN_PORT', str(foreman_port))

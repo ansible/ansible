@@ -36,6 +36,7 @@ from ..docker_util import (
     docker_pull,
     docker_network_inspect,
     get_docker_container_id,
+    get_docker_hostname,
 )
 
 
@@ -88,7 +89,7 @@ class OpenShiftCloudProvider(CloudProvider):
         :rtype: list[str]
         """
         if self.managed:
-            return ['-R', '8443:localhost:8443']
+            return ['-R', '8443:%s:8443' % get_docker_hostname()]
 
         return []
 
@@ -145,7 +146,7 @@ class OpenShiftCloudProvider(CloudProvider):
             host = self._get_container_address()
             display.info('Found OpenShift container address: %s' % host, verbosity=1)
         else:
-            host = 'localhost'
+            host = get_docker_hostname()
 
         port = 8443
         endpoint = 'https://%s:%s/' % (host, port)
@@ -157,6 +158,8 @@ class OpenShiftCloudProvider(CloudProvider):
         else:
             if self.args.docker:
                 host = self.DOCKER_CONTAINER_NAME
+            elif self.args.remote:
+                host = 'localhost'
 
             server = 'https://%s:%s' % (host, port)
             config = self._get_config(server)
