@@ -41,23 +41,33 @@ def get_docker_container_id():
     """
     :rtype: str | None
     """
-    path = '/proc/self/cgroup'
+    try:
+        return get_docker_container_id.container_id
+    except AttributeError:
+        pass
 
-    if not os.path.exists(path):
-        return None
+    path = '/proc/self/cpuset'
+    container_id = None
 
-    contents = read_text_file(path)
+    if os.path.exists(path):
+        # File content varies based on the environment:
+        #   No Container: /
+        #   Docker: /docker/c86f3732b5ba3d28bb83b6e14af767ab96abbc52de31313dcb1176a62d91a507
+        #   Azure Pipelines (Docker): /azpl_job/0f2edfed602dd6ec9f2e42c867f4d5ee640ebf4c058e6d3196d4393bb8fd0891
+        #   Podman: /../../../../../..
+        contents = read_text_file(path)
 
-    paths = [line.split(':')[2] for line in contents.splitlines()]
-    container_ids = set(path.split('/')[2] for path in paths if path.startswith('/docker/'))
+        cgroup_path, cgroup_name = os.path.split(contents.strip())
 
-    if not container_ids:
-        return None
+        if cgroup_path in ('/docker', '/azpl_job'):
+            container_id = cgroup_name
 
-    if len(container_ids) == 1:
-        return container_ids.pop()
+    get_docker_container_id.container_id = container_id
 
-    raise ApplicationError('Found multiple container_id candidates: %s\n%s' % (sorted(container_ids), contents))
+    if container_id:
+        display.info('Detected execution in Docker container: %s' % container_id, verbosity=1)
+
+    return container_id
 
 
 def get_docker_container_ip(args, container_id):
