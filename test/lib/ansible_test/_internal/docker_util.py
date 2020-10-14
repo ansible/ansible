@@ -81,6 +81,44 @@ def get_docker_container_ip(args, container_id):
     return ipaddress
 
 
+def get_docker_network_name(args, container_id):  # type: (EnvironmentConfig, str) -> str
+    """
+    Return the network name of the specified container.
+    Raises an exception if zero or more than one network is found.
+    """
+    networks = get_docker_networks(args, container_id)
+
+    if not networks:
+        raise ApplicationError('No network found for Docker container: %s.' % container_id)
+
+    if len(networks) > 1:
+        raise ApplicationError('Found multiple networks for Docker container %s instead of only one: %s' % (container_id, ', '.join(networks)))
+
+    return networks[0]
+
+
+def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
+    """
+    Return the preferred network name for use with Docker. The selection logic is:
+    - the network selected by the user with `--docker-network`
+    - the network of the currently running docker container (if any)
+    - the default docker network (returns None)
+    """
+    network = None
+
+    if args.docker_network:
+        network = args.docker_network
+    else:
+        current_container_id = get_docker_container_id()
+
+        if current_container_id:
+            # Make sure any additional containers we launch use the same network as the current container we're running in.
+            # This is needed when ansible-test is running in a container that is not connected to Docker's default network.
+            network = get_docker_network_name(args, current_container_id)
+
+    return network
+
+
 def get_docker_networks(args, container_id):
     """
     :param args: EnvironmentConfig
@@ -164,6 +202,13 @@ def docker_run(args, image, options, cmd=None, create_only=False):
         command = 'create'
     else:
         command = 'run'
+
+    network = get_docker_preferred_network_name(args)
+
+    if network and network != 'bridge':
+        # Only when the network is not the default bridge network.
+        # Using this with the default bridge network results in an error when using --link: links are only supported for user-defined networks
+        options.extend(['--network', network])
 
     for _iteration in range(1, 3):
         try:
