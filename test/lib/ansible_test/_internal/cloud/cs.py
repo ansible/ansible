@@ -35,6 +35,7 @@ from ..docker_util import (
     docker_network_inspect,
     docker_exec,
     get_docker_container_id,
+    get_docker_preferred_network_name,
     get_docker_hostname,
 )
 
@@ -209,11 +210,12 @@ class CsCloudProvider(CloudProvider):
         self._write_config(config)
 
     def _get_simulator_address(self):
-        networks = docker_network_inspect(self.args, 'bridge')
+        current_network = get_docker_preferred_network_name(self.args)
+        networks = docker_network_inspect(self.args, current_network)
 
         try:
-            bridge = [network for network in networks if network['Name'] == 'bridge'][0]
-            containers = bridge['Containers']
+            network = [network for network in networks if network['Name'] == current_network][0]
+            containers = network['Containers']
             container = [containers[container] for container in containers if containers[container]['Name'] == self.DOCKER_SIMULATOR_NAME][0]
             return re.sub(r'/[0-9]+$', '', container['IPv4Address'])
         except Exception:
