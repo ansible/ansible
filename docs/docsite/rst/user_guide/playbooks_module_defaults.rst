@@ -3,7 +3,7 @@
 Module defaults
 ===============
 
-If you frequently call the same module with the same arguments, it can be useful to define default arguments for that particular module using the ``module_defaults`` attribute.
+If you frequently call the same module with the same arguments, it can be useful to define default arguments for that particular module using the ``module_defaults`` keyword.
 
 Here is a basic example::
 
@@ -24,7 +24,7 @@ Here is a basic example::
             state: touch
             path: /tmp/file3
 
-The ``module_defaults`` attribute can be used at the play, block, and task level. Any module arguments explicitly specified in a task will override any established default for that module argument::
+The ``module_defaults`` keyword can be used at the play, block, and task level. Any module arguments explicitly specified in a task will override any established default for that module argument::
 
     - block:
         - debug:
