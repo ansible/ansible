@@ -1,0 +1,2 @@
+minor_changes:
+  - vault now warns on strings from STDIN being passed with a trailing newline
