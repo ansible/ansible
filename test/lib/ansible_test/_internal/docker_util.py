@@ -106,7 +106,19 @@ def get_docker_container_ip(args, container_id):
     :rtype: str
     """
     results = docker_inspect(args, container_id)
-    ipaddress = results[0]['NetworkSettings']['IPAddress']
+    network_settings = results[0]['NetworkSettings']
+    networks = network_settings.get('Networks')
+
+    if networks:
+        network_name = get_docker_preferred_network_name(args)
+        ipaddress = networks[network_name]['IPAddress']
+    else:
+        # podman doesn't provide Networks, fall back to using IPAddress
+        ipaddress = network_settings['IPAddress']
+
+    if not ipaddress:
+        raise ApplicationError('Cannot retrieve IP address for container: %s' % container_id)
+
     return ipaddress
 
 

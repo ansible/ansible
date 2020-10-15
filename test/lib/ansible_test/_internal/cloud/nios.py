@@ -22,6 +22,7 @@ from ..docker_util import (
     docker_pull,
     get_docker_container_id,
     get_docker_hostname,
+    get_docker_container_ip,
 )
 
 
@@ -163,9 +164,7 @@ class NiosProvider(CloudProvider):
         self._set_cloud_config('NIOS_HOST', nios_host)
 
     def _get_simulator_address(self):
-        results = docker_inspect(self.args, self.container_name)
-        ip_address = results[0]['NetworkSettings']['IPAddress']
-        return ip_address
+        return get_docker_container_ip(self.args, self.container_name)
 
     def _setup_static(self):
         raise NotImplementedError

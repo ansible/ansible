@@ -26,6 +26,7 @@ from ..docker_util import (
     docker_pull,
     get_docker_container_id,
     get_docker_hostname,
+    get_docker_container_ip,
 )
 
 
@@ -189,9 +190,7 @@ class GalaxyProvider(CloudProvider):
         super(GalaxyProvider, self).cleanup()
 
     def _get_simulator_address(self, container_name):
-        results = docker_inspect(self.args, container_name)
-        ipaddress = results[0]['NetworkSettings']['IPAddress']
-        return ipaddress
+        return get_docker_container_ip(self.args, container_name)
 
 
 class GalaxyEnvironment(CloudEnvironment):

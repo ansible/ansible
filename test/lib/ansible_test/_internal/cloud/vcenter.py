@@ -24,6 +24,7 @@ from ..docker_util import (
     docker_pull,
     get_docker_container_id,
     get_docker_hostname,
+    get_docker_container_ip,
 )
 
 
@@ -156,9 +157,7 @@ class VcenterProvider(CloudProvider):
         self._set_cloud_config('vcenter_hostname', vcenter_hostname)
 
     def _get_simulator_address(self):
-        results = docker_inspect(self.args, self.container_name)
-        ipaddress = results[0]['NetworkSettings']['IPAddress']
-        return ipaddress
+        return get_docker_container_ip(self.args, self.container_name)
 
     def _setup_static(self):
         if not os.path.exists(self.config_static_path):

@@ -29,6 +29,7 @@ from ..docker_util import (
     docker_pull,
     get_docker_container_id,
     get_docker_hostname,
+    get_docker_container_ip,
 )
 
 
@@ -168,9 +169,7 @@ class ACMEProvider(CloudProvider):
         self._wait_for_service('https', acme_host_ip, 14000, 'dir', 'ACME CA endpoint')
 
     def _get_simulator_address(self):
-        results = docker_inspect(self.args, self.container_name)
-        ipaddress = results[0]['NetworkSettings']['IPAddress']
-        return ipaddress
+        return get_docker_container_ip(self.args, self.container_name)
 
     def _setup_static(self):
         raise NotImplementedError()
