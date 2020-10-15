@@ -305,8 +305,7 @@ def delegate_docker(args, exclude, require, integration_targets):
             if args.docker_seccomp != 'default':
                 test_options += ['--security-opt', 'seccomp=%s' % args.docker_seccomp]
 
-            if os.path.exists(docker_socket):
-                test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
+            test_options += ['--volume', '%s:%s' % (docker_socket, docker_socket)]
 
             if httptester_id:
                 test_options += ['--env', 'HTTPTESTER=1', '--env', 'KRB5_PASSWORD=%s' % args.httptester_krb5_password]
