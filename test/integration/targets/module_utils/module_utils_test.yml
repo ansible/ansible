@@ -109,3 +109,14 @@
       that:
         - datetimetest.date == '2020-10-05'
         - datetimetest.datetime == '2020-10-05T10:05:05'
+
+  - name: Test invalid value for int types
+    wait_for:
+      timeout: invalid duration
+    register: result
+    ignore_errors: true
+
+  - assert:
+      that:
+        - result is failed
+        - 'result.msg is search("argument \w+ is of type <.*> and we were unable to convert to int: <.*> cannot be converted to an int")'
