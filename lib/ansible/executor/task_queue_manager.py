@@ -179,7 +179,7 @@ class TaskQueueManager:
             # load all, as collection ones might be using short/redirected names and not a fqcn
             plugin = callback_loader.get(c, class_only=True)
 
-            #TODO: check if this skip is redundant, loader should handle bad file/plugin cases already
+            # TODO: check if this skip is redundant, loader should handle bad file/plugin cases already
             if plugin:
                 # avoids incorrect and dupes possible due to collections
                 if plugin not in callback_list:
