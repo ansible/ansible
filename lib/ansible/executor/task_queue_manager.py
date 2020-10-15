@@ -171,49 +171,70 @@ class TaskQueueManager:
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
-        loaded_callbacks = set()
+        # get all configured loadable callbacks (adjacent, builtin)
+        callback_list = list(callback_loader.all(class_only=True))
 
-        # first, load callbacks in the core distribution and configured callback paths
-        for callback_plugin in callback_loader.all(class_only=True):
+        # add whitelisted callbacks that refer to collections, which might not appear in normal listing
+        for c in C.DEFAULT_CALLBACK_WHITELIST:
+            # load all, as collection ones might be using short/redirected names and not a fqcn
+            plugin = callback_loader.get(c, class_only=True)
+
+            # TODO: check if this skip is redundant, loader should handle bad file/plugin cases already
+            if plugin:
+                # avoids incorrect and dupes possible due to collections
+                if plugin not in callback_list:
+                    callback_list.append(plugin)
+            else:
+                display.warning("Skipping callback plugin '%s', unable to load" % c)
+
+        # for each callback in the list see if we should add it to 'active callbacks' used in the play
+        for callback_plugin in callback_list:
+
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
-            (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+
+            # try to get colleciotn world name first
+            cnames = getattr(callback_plugin, '_redirected_names', [])
+            if cnames:
+                # store the name the plugin was loaded as, as that's what we'll need to compare to the configured callback list later
+                callback_name = cnames[0]
+            else:
+                # fallback to 'old loader name'
+                (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
+
+            display.vvvvv("Attempting to use '%s' callback." % (callback_name))
             if callback_type == 'stdout':
                 # we only allow one callback of type 'stdout' to be loaded,
                 if callback_name != self._stdout_callback or stdout_callback_loaded:
+                    display.vv("Skipping callback '%s', as we already have a stdout callback." % (callback_name))
                     continue
                 stdout_callback_loaded = True
             elif callback_name == 'tree' and self._run_tree:
-                # special case for ansible cli option
+                # TODO: remove special case for tree, which is an adhoc cli option --tree
                 pass
-            # eg, ad-hoc doesn't allow non-default callbacks
             elif not self._run_additional_callbacks or (callback_needs_whitelist and (
+                # only run if not adhoc, or adhoc was specifically configured to run + check enabled list
                     C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                 # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
                 continue
 
-            callback_obj = callback_plugin()
-            loaded_callbacks.add(callback_name)  # mark as loaded so we skip in second pass
-            callback_obj.set_options()
-            self._callback_plugins.append(callback_obj)
-
-        # eg, ad-hoc doesn't allow non-default callbacks
-        if self._run_additional_callbacks:
-            # Second pass over everything in the whitelist we haven't already loaded, try to explicitly load. This will catch
-            # collection-hosted callbacks, as well as formerly-core callbacks that have been redirected to collections.
-            for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if c not in loaded_callbacks):
-                # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
-                callback_obj, plugin_load_context = callback_loader.get_with_context(callback_plugin_name)
+            try:
+                callback_obj = callback_plugin()
+                # avoid bad plugin not returning an object, only needed cause we do class_only load and bypass loader checks,
+                # really a bug in the plugin itself which we ignore as callback errors are not supposed to be fatal.
                 if callback_obj:
-                    loaded_as_name = callback_obj._redirected_names[-1]
-                    if loaded_as_name in loaded_callbacks:
-                        display.warning("Skipping callback '%s', already loaded as '%s'." % (callback_plugin_name, loaded_as_name))
-                        continue
-                    loaded_callbacks.add(loaded_as_name)
-                    callback_obj.set_options()
-                    self._callback_plugins.append(callback_obj)
+                    # skip initializing if we already did the work for the same plugin (even with diff names)
+                    if callback_obj not in self._callback_plugins:
+                        callback_obj.set_options()
+                        self._callback_plugins.append(callback_obj)
+                    else:
+                        display.vv("Skipping callback '%s', already loaded as '%s'." % (callback_plugin, callback_name))
                 else:
-                    display.warning("Skipping '%s', unable to load or use as a callback" % callback_plugin_name)
+                    display.warning("Skipping callback '%s', as it does not create a valid plugin instance." % callback_name)
+                    continue
+            except Exception as e:
+                display.warning("Skipping callback '%s', unable to load due to: %s" % (callback_name, to_native(e)))
+                continue
 
         self._callbacks_loaded = True
 
@@ -364,10 +385,7 @@ class TaskQueueManager:
 
             # a plugin can opt in to implicit tasks (such as meta). It does this
             # by declaring self.wants_implicit_tasks = True.
-            wants_implicit_tasks = getattr(
-                callback_plugin,
-                'wants_implicit_tasks',
-                False)
+            wants_implicit_tasks = getattr(callback_plugin, 'wants_implicit_tasks', False)
 
             # try to find v2 method, fallback to v1 method, ignore callback if no method found
             methods = []
