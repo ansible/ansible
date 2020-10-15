@@ -320,7 +320,7 @@ class VaultCLI(CLI):
 
             if not sys.stdout.isatty() and stdin_text.endswith("\n"):
                 display.display("Warning: Provided string ends with a newline. It is unlikely this is correct. Did you mean 'echo -n'?", stderr=True)
-                
+
             if sys.stdout.isatty() and not stdin_text.endswith("\n"):
                 display.display("\n")
 
