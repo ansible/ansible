@@ -37,3 +37,9 @@ ANSIBLE_TRANSFORM_INVALID_GROUP_CHARS=never ansible-playbook -i ../../inventory 
 
 # test extra vars
 ansible-inventory -i testhost, -i ./extra_vars_constructed.yml --list -e 'from_extras=hey ' "$@"|grep '"example": "hellohey"'
+
+# test constructed inventory
+ansible-playbook -i ./yaml_inventory.yml -i ./constructed.yml test_constructed_inventory.yml "$@"
+
+# test empty config warns
+ANSIBLE_INVENTORY_ENABLED=constructed ansible-inventory -i ./empty_config.yml --list "$@" 2>&1 | grep 'empty_config.yml is empty'

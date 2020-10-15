@@ -1,0 +1,26 @@
+---
+- hosts: testhost
+  tasks:
+    - name: test that the hostvar is set
+      assert:
+        that:
+          - testvar is defined
+          - "testvar == 'value'"
+
+    - name: find the cache file
+      find:
+        paths: ./jsonfile_cache
+        file_type: file
+        patterns:
+          - 'test_inventory_*'
+      register: result
+
+    - assert:
+        that:
+          result.matched == 1
+
+    - name: replace the value of the variable in the cache to test it is read
+      lineinfile:
+        path: "{{ result.files[0].path }}"
+        regexp: 'testvar'
+        line: '            "testvar": "newvalue"'

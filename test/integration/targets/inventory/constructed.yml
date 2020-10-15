@@ -1,0 +1,12 @@
+plugin: constructed
+strict: true
+keyed_groups:
+  - key: 'security_groups|json_query("[].group_id")'
+    prefix: 'security_groups'
+  - key: 'tags'
+    prefix: 'tag'
+    parent_group: parentgroup
+compose:
+  test_compose_var: tags.tag1 + tags.tag2
+groups:
+  tag_with_name_key: "'Name' in (tags | list)"

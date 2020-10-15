@@ -50,6 +50,25 @@
         - result is failed
         - result['msg'] == "Could not find imported module support code for ansible.modules.test_failure.  Looked for (['ansible.module_utils.zebra.foo', 'ansible.module_utils.zebra'])"
 
+  - name: Test that aliases work
+    test_alias:
+      baz: 'bar'
+    register: result
+
+  - assert:
+      that:
+        - "result.foo == 'bar'"
+
+  - name: Test providing an option and its alias together
+    test_alias:
+      baz: 'bar'
+      foo: 'foobar'
+    register: result
+
+  - assert:
+      that:
+        - "result.warnings == ['Both option foo and its alias baz are set.']"
+
   - name: Test that alias deprecation works
     test_alias_deprecation:
       baz: 'bar'

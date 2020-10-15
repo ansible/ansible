@@ -1,0 +1,10 @@
+all:
+  hosts:
+    host1:
+      security_groups:
+        - group_name: testgroup
+          group_id: sg-12345678
+      tags:
+        Name: name_tag
+        tag1: value1
+        tag2: value2

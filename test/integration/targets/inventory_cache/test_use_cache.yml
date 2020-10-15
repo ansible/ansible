@@ -1,0 +1,30 @@
+- hosts: testhost
+  tasks:
+    - name: test that the hostvar is set
+      assert:
+        that:
+          - testvar is defined
+          - "testvar == 'newvalue'"
+
+    - name: refresh the inventory to force cache update
+      meta: refresh_inventory
+
+- hosts: testhost
+  tasks:
+    - name: test that the hostvar was refreshed
+      assert:
+        that:
+          - testvar is defined
+          - "testvar == 'value'"
+
+    - name: test that there's still a single cache
+      find:
+        paths: ./jsonfile_cache
+        file_type: file
+        patterns:
+          - 'test_inventory_*'
+      register: result
+
+    - assert:
+        that:
+          - result.matched == 1

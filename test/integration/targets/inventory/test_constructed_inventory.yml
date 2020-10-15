@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    expected_groups:
+      - all
+      - parentgroup
+      - security_groups_sg_12345678
+      - tag_Name_name_tag
+      - tag_tag1_value1
+      - tag_tag2_value2
+      - tag_with_name_key
+      - ungrouped
+  tasks:
+
+  - debug: msg="{{ groups }}"
+
+  - assert:
+      that:
+        - groups.keys() | sort == expected_groups
+        - hostvars['host1'].test_compose_var == 'value1value2'
+
+  - assert:
+      that:
+        - "'host1' in groups[item]"
+    loop: "{{ expected_groups }}"
+    when: "item != 'ungrouped'"
