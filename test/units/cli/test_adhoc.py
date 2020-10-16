@@ -74,6 +74,14 @@ def test_play_ds_with_include_role():
     assert ret['name'] == 'Ansible Ad-Hoc'
     assert ret['gather_facts'] == 'no'
 
+def test_play_ds_with_loop():
+    """ Ad-hoc with loop """
+    adhoc_cli = AdHocCLI(args=['/bin/ansible', 'localhost', '-m', 'debug'])
+    adhoc_cli.parse()
+    ret = adhoc_cli._play_ds('include_role', None, None, '{{ [1,2,3] }}')
+    assert ret['name'] == 'Ansible Ad-Hoc'
+    assert ret['tasks'] == [{'action': {'module': 'debug', 'args': {}}, 'loop': '{{ [1,2,3] }}'}]
+
 
 def test_run_import_playbook():
     """ Test import_playbook which is not allowed with ad-hoc command"""
