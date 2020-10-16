@@ -239,7 +239,6 @@ def main():
 
     # setup job output directory
     jobdir = os.path.expanduser(async_dir)
-    jobdir = u"\x00test\x00"
     job_path = os.path.join(jobdir, jid)
 
     try:
