@@ -16,4 +16,4 @@ out = pexpect.run(
 )
 
 for i in [1, 2, 3]:
-    assert(bytes('"msg": %i' % i) in out)
+    assert(('"msg": %i' % i).encode() in out)
