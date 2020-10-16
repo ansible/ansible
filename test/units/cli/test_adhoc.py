@@ -74,6 +74,7 @@ def test_play_ds_with_include_role():
     assert ret['name'] == 'Ansible Ad-Hoc'
     assert ret['gather_facts'] == 'no'
 
+
 def test_play_ds_with_loop():
     """ Ad-hoc with loop """
     adhoc_cli = AdHocCLI(args=['/bin/ansible', 'localhost', '-m', 'debug'])
