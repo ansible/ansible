@@ -137,16 +137,14 @@ class AdHocCLI(CLI):
         playbook._entries.append(play)
         playbook._file_name = '__adhoc_playbook__'
 
-        if self.callback:
+        if self.callback or context.CLIARGS['loop_spec']:
+            " minimal callback cannot deal with loops "
             cb = self.callback
         elif context.CLIARGS['one_line']:
             cb = 'oneline'
         # Respect custom 'stdout_callback' only with enabled 'bin_ansible_callbacks'
         elif C.DEFAULT_LOAD_CALLBACK_PLUGINS and C.DEFAULT_STDOUT_CALLBACK != 'default':
             cb = C.DEFAULT_STDOUT_CALLBACK
-        elif context.CLIARGS['loop_spec']:
-            " minimal callback cannot deal with loops "
-            cb = None
         else:
             cb = 'minimal'
 
