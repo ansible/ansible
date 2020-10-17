@@ -16,6 +16,9 @@ def main():
             },
             'required_one_of_one': {},
             'required_one_of_two': {},
+            'required_by_one': {},
+            'required_by_two': {},
+            'required_by_three': {},
             'state': {
                 'type': 'str',
                 'choices': ['absent', 'present'],
@@ -27,6 +30,15 @@ def main():
             },
             'required_one_of': {
                 'required_one_of': [['thing', 'other']],
+                'type': 'list',
+                'elements': 'dict',
+                'options': {
+                    'thing': {},
+                    'other': {},
+                },
+            },
+            'required_by': {
+                'required_by': {'thing': 'other'},
                 'type': 'list',
                 'elements': 'dict',
                 'options': {
@@ -89,6 +101,9 @@ def main():
         required_one_of=(
             ('required_one_of_one', 'required_one_of_two'),
         ),
+        required_by={
+            'required_by_one': ('required_by_two', 'required_by_three'),
+        },
         required_together=(
             ('required_together_one', 'required_together_two'),
         ),

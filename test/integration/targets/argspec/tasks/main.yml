@@ -17,6 +17,21 @@
   ignore_errors: true
 
 - argspec:
+    required: value
+    required_one_of_two: value
+    required_by_one: value
+    required_by_two: value
+    required_by_three: value
+
+- argspec:
+    required: value
+    required_one_of_two: value
+    required_by_one: value
+    required_by_two: value
+  register: argspec_required_by_fail
+  ignore_errors: true
+
+- argspec:
     state: absent
     required: value
     required_one_of_one: value
@@ -157,6 +172,21 @@
   ignore_errors: true
 
 - argspec:
+    required_by:
+      - thing: foo
+        other: bar
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_by:
+      - thing: foo
+    required: value
+    required_one_of_one: value
+  register: argspec_required_by_fail_2
+  ignore_errors: true
+
+- argspec:
     json: !!str '{"foo": "bar"}'
     required: value
     required_one_of_one: value
@@ -235,6 +265,8 @@
 
       - argspec_required_one_of_fail is failed
 
+      - argspec_required_by_fail is failed
+
       - argspec_required_if_fail is failed
 
       - argspec_mutually_exclusive_fail is failed
@@ -257,6 +289,8 @@
       - argspec_required_if_fail_2 is failed
 
       - argspec_required_one_of_fail_2 is failed
+
+      - argspec_required_by_fail_2 is failed
 
       - argspec_good_json_string is successful
       - >-
