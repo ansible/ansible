@@ -160,7 +160,8 @@ class TaskExecutor:
                 # (think: loop: "{{ nonexistent_var }}"), so handle that case.
                 # In that case, 'items' is set to None above and we call
                 # _execute() instead of _run_loop(), but we still need to
-                # evaluate the task's conditional.
+                # evaluate the task's conditional. This could likely be slightly
+                # cleaner if _get_loop_items() moves out to prefork too.
                 from_loop = self._task.loop is not None or \
                     self._task.loop_with is not None
                 res = self._execute(from_loop=from_loop)

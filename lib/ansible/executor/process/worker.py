@@ -67,12 +67,12 @@ def skip_worker(host, task, templar, task_vars, play_context):
 def skip_worker_when(host, task, templar, task_vars, play_context):
     if not task.evaluate_conditional(templar, task_vars):
         display.debug("when evaluation is False, skipping this task")
-        raise WorkerShortCircuit(
-            { 'changed': False,
-              'skipped': True,
-              'skip_reason': 'Conditional result was False',
-              '_ansible_no_log': play_context.no_log,
-            })
+        res = { 'changed': False,
+                'selfkipped': True,
+                'skip_reason': 'Conditional result was False',
+                '_ansible_no_log': play_context.no_log,
+        }
+        raise WorkerShortCircuit(res)
 
 
 def skip_worker_include_role(host, task):
@@ -216,13 +216,13 @@ class MaybeWorker:
             # that limit down.
             rewind_point = len(self._workers)
             # FIXME re-enable throttling, need to pass ALLOW_BASE_THROTTLING from the strategy
-            #if throttle > 0 and self.ALLOW_BASE_THROTTLING:
-            #    if task.run_once:
-            #        display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
-            #    else:
-            #        if throttle <= rewind_point:
-            #            display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
-            #            rewind_point = throttle
+            # if throttle > 0 and self.ALLOW_BASE_THROTTLING:
+            #     if task.run_once:
+            #         display.debug("Ignoring 'throttle' as 'run_once' is also set for '%s'" % task.get_name())
+            #     else:
+            #         if throttle <= rewind_point:
+            #             display.debug("task: %s, throttle: %d" % (task.get_name(), throttle))
+            #             rewind_point = throttle
 
             queued = False
             starting_worker = self._cur_worker
