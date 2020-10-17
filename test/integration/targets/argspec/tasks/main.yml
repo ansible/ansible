@@ -1,17 +1,30 @@
 - argspec:
     required: value
+    required_one_of_one: value
 
 - argspec:
+    required_one_of_one: value
   register: argspec_required_fail
+  ignore_errors: true
+
+- argspec:
+    required: value
+    required_one_of_two: value
+
+- argspec:
+    required: value
+  register: argspec_required_one_of_fail
   ignore_errors: true
 
 - argspec:
     state: absent
     required: value
+    required_one_of_one: value
 
 - argspec:
     state: present
     required: value
+    required_one_of_one: value
   register: argspec_required_if_fail
   ignore_errors: true
 
@@ -19,17 +32,20 @@
     state: present
     path: foo
     required: value
+    required_one_of_one: value
 
 - argspec:
     state: present
     content: foo
     required: value
+    required_one_of_one: value
 
 - argspec:
     state: present
     content: foo
     path: foo
     required: value
+    required_one_of_one: value
   register: argspec_mutually_exclusive_fail
   ignore_errors: true
 
@@ -37,27 +53,32 @@
     mapping:
       foo: bar
     required: value
+    required_one_of_one: value
   register: argspec_good_mapping
 
 - argspec:
     mapping: foo=bar
     required: value
+    required_one_of_one: value
   register: argspec_good_mapping_kv
 
 - argspec:
     mapping: !!str '{"foo": "bar"}'
     required: value
+    required_one_of_one: value
   register: argspec_good_mapping_json
 
 - argspec:
     mapping: foo
     required: value
+    required_one_of_one: value
   register: argspec_bad_mapping_string
   ignore_errors: true
 
 - argspec:
     mapping: 1
     required: value
+    required_one_of_one: value
   register: argspec_bad_mapping_int
   ignore_errors: true
 
@@ -66,6 +87,7 @@
       - foo
       - bar
     required: value
+    required_one_of_one: value
   register: argspec_bad_mapping_list
   ignore_errors: true
 
@@ -75,16 +97,19 @@
         other: bar
         another: baz
     required: value
+    required_one_of_one: value
 
 - argspec:
     required_together:
       - another: baz
     required: value
+    required_one_of_one: value
 
 - argspec:
     required_together:
       - thing: foo
     required: value
+    required_one_of_one: value
   register: argspec_required_together_fail
   ignore_errors: true
 
@@ -93,39 +118,61 @@
       - thing: foo
         other: bar
     required: value
+    required_one_of_one: value
 
 - argspec:
     required_if:
       - thing: bar
     required: value
+    required_one_of_one: value
 
 - argspec:
     required_if:
       - thing: foo
         other: bar
     required: value
+    required_one_of_one: value
 
 - argspec:
     required_if:
       - thing: foo
     required: value
+    required_one_of_one: value
   register: argspec_required_if_fail_2
+  ignore_errors: true
+
+- argspec:
+    required_one_of:
+      - thing: foo
+        other: bar
+    required: value
+    required_one_of_one: value
+
+- argspec:
+    required_one_of:
+      - {}
+    required: value
+    required_one_of_one: value
+  register: argspec_required_one_of_fail_2
   ignore_errors: true
 
 - argspec:
     json: !!str '{"foo": "bar"}'
     required: value
+    required_one_of_one: value
   register: argspec_good_json_string
 
 - argspec:
     json:
       foo: bar
     required: value
+    required_one_of_one: value
   register: argspec_good_json_dict
 
 - argspec:
     json: 1
     required: value
+    required_one_of_one: value
   register: argspec_bad_json
   ignore_errors: true
 
@@ -134,11 +181,13 @@
       - needed_param
     needed_param: whatever
     required: value
+    required_one_of_one: value
 
 - argspec:
     fail_on_missing_params:
       - needed_param
     required: value
+    required_one_of_one: value
   register: argspec_fail_on_missing_params_bad
   ignore_errors: true
 
@@ -146,10 +195,12 @@
     required_together_one: foo
     required_together_two: bar
     required: value
+    required_one_of_one: value
 
 - argspec:
     required_together_one: foo
     required: value
+    required_one_of_one: value
   register: argspec_fail_required_together_2
   ignore_errors: true
 
@@ -157,26 +208,32 @@
     suboptions_list_no_elements:
       - thing: foo
     required: value
+    required_one_of_one: value
   register: argspec_suboptions_list_no_elements
 
 - argspec:
     choices_with_strings_like_bools: on
     required: value
+    required_one_of_one: value
   register: argspec_choices_with_strings_like_bools_true
 
 - argspec:
     choices_with_strings_like_bools: 'on'
     required: value
+    required_one_of_one: value
   register: argspec_choices_with_strings_like_bools_true_bool
 
 - argspec:
     choices_with_strings_like_bools: off
     required: value
+    required_one_of_one: value
   register: argspec_choices_with_strings_like_bools_false
 
 - assert:
     that:
       - argspec_required_fail is failed
+
+      - argspec_required_one_of_fail is failed
 
       - argspec_required_if_fail is failed
 
@@ -198,6 +255,8 @@
       - argspec_required_together_fail is failed
 
       - argspec_required_if_fail_2 is failed
+
+      - argspec_required_one_of_fail_2 is failed
 
       - argspec_good_json_string is successful
       - >-

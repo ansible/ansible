@@ -14,6 +14,8 @@ def main():
             'required': {
                 'required': True,
             },
+            'required_one_of_one': {},
+            'required_one_of_two': {},
             'state': {
                 'type': 'str',
                 'choices': ['absent', 'present'],
@@ -22,6 +24,15 @@ def main():
             'content': {},
             'mapping': {
                 'type': 'dict',
+            },
+            'required_one_of': {
+                'required_one_of': [['thing', 'other']],
+                'type': 'list',
+                'elements': 'dict',
+                'options': {
+                    'thing': {},
+                    'other': {},
+                },
             },
             'required_together': {
                 'required_together': [['thing', 'other']],
@@ -74,6 +85,9 @@ def main():
         ),
         mutually_exclusive=(
             ('path', 'content'),
+        ),
+        required_one_of=(
+            ('required_one_of_one', 'required_one_of_two'),
         ),
         required_together=(
             ('required_together_one', 'required_together_two'),
