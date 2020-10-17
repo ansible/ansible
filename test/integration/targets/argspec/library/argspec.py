@@ -11,6 +11,9 @@ from ansible.module_utils.basic import AnsibleModule
 def main():
     module = AnsibleModule(
         {
+            'required': {
+                'required': True,
+            },
             'state': {
                 'type': 'str',
                 'choices': ['absent', 'present'],
