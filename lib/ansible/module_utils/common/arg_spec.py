@@ -26,6 +26,7 @@ from ansible.module_utils.common.warnings import deprecate, warn
 from ansible.module_utils.common.validation import (
     check_mutually_exclusive,
     check_required_arguments,
+    check_required_none,
 )
 
 from ansible.module_utils.errors import (
@@ -231,8 +232,9 @@ class ArgumentSpecValidator:
 
         result._no_log_values.update(_set_defaults(self.argument_spec, result._validated_parameters, False))
 
+        required_options = []
         try:
-            check_required_arguments(self.argument_spec, result._validated_parameters)
+            check_required_arguments(self.argument_spec, result._validated_parameters, add_required=required_options)
         except TypeError as e:
             result.errors.append(RequiredError(to_native(e)))
 
@@ -241,9 +243,13 @@ class ArgumentSpecValidator:
 
         for check in _ADDITIONAL_CHECKS:
             try:
-                check['func'](getattr(self, "_{attr}".format(attr=check['attr'])), result._validated_parameters)
+                check['func'](getattr(self, "_{attr}".format(attr=check['attr'])), result._validated_parameters, add_required=required_options)
             except TypeError as te:
                 result.errors.append(check['err'](to_native(te)))
+        try:
+            check_required_none(required_options, self.argument_spec, result._validated_parameters)
+        except TypeError as e:
+            result.errors.append(RequiredError(to_native(e)))
 
         result._no_log_values.update(_set_defaults(self.argument_spec, result._validated_parameters))
 

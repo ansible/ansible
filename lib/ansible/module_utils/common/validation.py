@@ -22,11 +22,12 @@ from ansible.module_utils.six import (
 )
 
 
-def count_terms(terms, parameters):
+def count_terms(terms, parameters, add_terms=None):
     """Count the number of occurrences of a key in a given dictionary
 
     :arg terms: String or iterable of values to check
     :arg parameters: Dictionary of parameters
+    :arg add_terms: None or list to which all terms are added
 
     :returns: An integer that is the number of occurrences of the terms values
         in the provided dictionary.
@@ -34,6 +35,9 @@ def count_terms(terms, parameters):
 
     if not is_iterable(terms):
         terms = [terms]
+
+    if add_terms is not None:
+        add_terms.extend(terms)
 
     return len(set(terms).intersection(parameters))
 
@@ -99,7 +103,7 @@ def check_mutually_exclusive(terms, parameters, options_context=None):
     return results
 
 
-def check_required_one_of(terms, parameters, options_context=None):
+def check_required_one_of(terms, parameters, options_context=None, add_required=None):
     """Check each list of terms to ensure at least one exists in the given module
     parameters
 
@@ -110,6 +114,7 @@ def check_required_one_of(terms, parameters, options_context=None):
     :arg parameters: Dictionary of parameters
     :kwarg options_context: List of strings of parent key names if ``terms`` are
         in a sub spec.
+    :kwarg add_required: None or list to which all required parameters are added
 
     :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
@@ -119,7 +124,7 @@ def check_required_one_of(terms, parameters, options_context=None):
         return results
 
     for term in terms:
-        count = count_terms(term, parameters)
+        count = count_terms(term, parameters, add_terms=add_required)
         if count == 0:
             results.append(term)
 
@@ -133,7 +138,7 @@ def check_required_one_of(terms, parameters, options_context=None):
     return results
 
 
-def check_required_together(terms, parameters, options_context=None):
+def check_required_together(terms, parameters, options_context=None, add_required=None):
     """Check each list of terms to ensure every parameter in each list exists
     in the given parameters.
 
@@ -145,6 +150,7 @@ def check_required_together(terms, parameters, options_context=None):
     :arg parameters: Dictionary of parameters
     :kwarg options_context: List of strings of parent key names if ``terms`` are
         in a sub spec.
+    :kwarg add_required: None or list to which all required parameters are added
 
     :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
@@ -154,7 +160,7 @@ def check_required_together(terms, parameters, options_context=None):
         return results
 
     for term in terms:
-        counts = [count_terms(field, parameters) for field in term]
+        counts = [count_terms(field, parameters, add_terms=add_required) for field in term]
         non_zero = [c for c in counts if c > 0]
         if len(non_zero) > 0:
             if 0 in counts:
@@ -169,7 +175,7 @@ def check_required_together(terms, parameters, options_context=None):
     return results
 
 
-def check_required_by(requirements, parameters, options_context=None):
+def check_required_by(requirements, parameters, options_context=None, add_required=None):
     """For each key in requirements, check the corresponding list to see if they
     exist in parameters.
 
@@ -179,6 +185,7 @@ def check_required_by(requirements, parameters, options_context=None):
     :arg parameters: Dictionary of parameters
     :kwarg options_context: List of strings of parent key names if ``requirements`` are
         in a sub spec.
+    :kwarg add_required: None or list to which all required parameters are added
 
     :returns: Empty dictionary or raises :class:`TypeError` if the
     """
@@ -197,6 +204,8 @@ def check_required_by(requirements, parameters, options_context=None):
         for required in value:
             if required not in parameters or parameters[required] is None:
                 result[key].append(required)
+            if add_required is not None:
+                add_required.append(required)
 
     if result:
         for key, missing in result.items():
@@ -209,7 +218,7 @@ def check_required_by(requirements, parameters, options_context=None):
     return result
 
 
-def check_required_arguments(argument_spec, parameters, options_context=None):
+def check_required_arguments(argument_spec, parameters, options_context=None, add_required=None):
     """Check all parameters in argument_spec and return a list of parameters
     that are required but not present in parameters.
 
@@ -220,6 +229,7 @@ def check_required_arguments(argument_spec, parameters, options_context=None):
     :arg parameters: Dictionary of parameters
     :kwarg options_context: List of strings of parent key names if ``argument_spec`` are
         in a sub spec.
+    :kwarg add_required: None or list to which all required parameters are added
 
     :returns: Empty list or raises :class:`TypeError` if the check fails.
     """
@@ -230,8 +240,11 @@ def check_required_arguments(argument_spec, parameters, options_context=None):
 
     for (k, v) in argument_spec.items():
         required = v.get('required', False)
-        if required and k not in parameters:
-            missing.append(k)
+        if required:
+            if add_required is not None:
+                add_required.append(k)
+            if k not in parameters:
+                missing.append(k)
 
     if missing:
         msg = "missing required arguments: %s" % ", ".join(sorted(missing))
@@ -242,7 +255,7 @@ def check_required_arguments(argument_spec, parameters, options_context=None):
     return missing
 
 
-def check_required_if(requirements, parameters, options_context=None):
+def check_required_if(requirements, parameters, options_context=None, add_required=None):
     """Check parameters that are conditionally required
 
     Raises :class:`TypeError` if the check fails
@@ -289,6 +302,7 @@ def check_required_if(requirements, parameters, options_context=None):
 
     :kwarg options_context: List of strings of parent key names if ``requirements`` are
         in a sub spec.
+    :kwarg add_required: None or list to which all required parameters are added
     """
     results = []
     if requirements is None:
@@ -314,7 +328,7 @@ def check_required_if(requirements, parameters, options_context=None):
 
         if key in parameters and parameters[key] == val:
             for check in requirements:
-                count = count_terms(check, parameters)
+                count = count_terms(check, parameters, add_terms=add_required)
                 if count == 0:
                     missing['missing'].append(check)
         if len(missing['missing']) and len(missing['missing']) >= max_missing_count:
@@ -332,6 +346,29 @@ def check_required_if(requirements, parameters, options_context=None):
             raise TypeError(to_native(msg))
 
     return results
+
+
+def check_required_none(required_options, argument_spec, parameters, options_context=None):
+    """Check whether required options having value None are allowed to do so.
+    :arg required_options: A list of the recorded options.
+    :arg argument_spec: The argument argument spec containing the required options.
+    :arg parameters: Dictionary of parameters.
+    :kwarg options_context: The context for the sub-specs.
+
+    Raises TypeError for parameters set to None.
+    """
+    for required_option in list(required_options):
+        if required_option not in parameters:
+            continue
+        if required_option not in argument_spec or parameters[required_option] is not None:
+            continue
+        if argument_spec[required_option].get('allow_none_value') is True:
+            continue
+
+        msg = "required parameter %s cannot be none (null)" % (required_option, )
+        if options_context:
+            msg += " found in %s" % " -> ".join(options_context)
+        raise TypeError(to_native(msg))
 
 
 def check_missing_parameters(parameters, required_parameters=None):
