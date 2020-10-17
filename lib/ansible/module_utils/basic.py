@@ -537,13 +537,15 @@ class AnsibleModule(object):
         self._CHECK_ARGUMENT_TYPES_DISPATCHER = DEFAULT_TYPE_VALIDATORS
 
         if not bypass_checks:
-            self._check_required_arguments()
+            required_options = []
+            self._check_required_arguments(add_required=required_options)
             self._check_argument_types()
             self._check_argument_values()
-            self._check_required_together(required_together)
-            self._check_required_one_of(required_one_of)
-            self._check_required_if(required_if)
-            self._check_required_by(required_by)
+            self._check_required_together(required_together, add_required=required_options)
+            self._check_required_one_of(required_one_of, add_required=required_options)
+            self._check_required_if(required_if, add_required=required_options)
+            self._check_required_by(required_by, add_required=required_options)
+            self._check_required_none(required_options=required_options)
 
         self._set_defaults(pre=False)
 
@@ -1377,7 +1379,7 @@ class AnsibleModule(object):
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
 
-    def _check_required_one_of(self, spec, param=None):
+    def _check_required_one_of(self, spec, param=None, add_required=None):
         if spec is None:
             return
 
@@ -1385,53 +1387,53 @@ class AnsibleModule(object):
             param = self.params
 
         try:
-            check_required_one_of(spec, param)
+            check_required_one_of(spec, param, add_required=add_required)
         except TypeError as e:
             msg = to_native(e)
             if self._options_context:
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
 
-    def _check_required_together(self, spec, param=None):
+    def _check_required_together(self, spec, param=None, add_required=None):
         if spec is None:
             return
         if param is None:
             param = self.params
 
         try:
-            check_required_together(spec, param)
+            check_required_together(spec, param, add_required=add_required)
         except TypeError as e:
             msg = to_native(e)
             if self._options_context:
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
 
-    def _check_required_by(self, spec, param=None):
+    def _check_required_by(self, spec, param=None, add_required=None):
         if spec is None:
             return
         if param is None:
             param = self.params
 
         try:
-            check_required_by(spec, param)
+            check_required_by(spec, param, add_required=add_required)
         except TypeError as e:
             self.fail_json(msg=to_native(e))
 
-    def _check_required_arguments(self, spec=None, param=None):
+    def _check_required_arguments(self, spec=None, param=None, add_required=None):
         if spec is None:
             spec = self.argument_spec
         if param is None:
             param = self.params
 
         try:
-            check_required_arguments(spec, param)
+            check_required_arguments(spec, param, add_required=add_required)
         except TypeError as e:
             msg = to_native(e)
             if self._options_context:
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
 
-    def _check_required_if(self, spec, param=None):
+    def _check_required_if(self, spec, param=None, add_required=None):
         ''' ensure that parameters which conditionally required are present '''
         if spec is None:
             return
@@ -1439,12 +1441,29 @@ class AnsibleModule(object):
             param = self.params
 
         try:
-            check_required_if(spec, param)
+            check_required_if(spec, param, add_required=add_required)
         except TypeError as e:
             msg = to_native(e)
             if self._options_context:
                 msg += " found in %s" % " -> ".join(self._options_context)
             self.fail_json(msg=msg)
+
+    def _check_required_none(self, spec=None, param=None, required_options=None):
+        ''' ensure that required parameters are none only if explicitly allowed '''
+        if spec is None:
+            spec = self.argument_spec
+        if param is None:
+            param = self.params
+        if required_options is None:
+            return
+        for required_option in required_options:
+            if required_option in spec and required_option in param and param[required_option] is None:
+                # Only accept None if allow_none_value is explicitly set to True for this option
+                if not spec[required_option].get('allow_none_value', False):
+                    msg = "required parameter %s cannot be none (null)" % (required_option, )
+                    if self._options_context:
+                        msg += " found in %s" % " -> ".join(self._options_context)
+                    self.fail_json(msg=msg)
 
     def _check_argument_values(self, spec=None, param=None):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
@@ -1612,14 +1631,16 @@ class AnsibleModule(object):
                     self._set_defaults(pre=True, spec=spec, param=param)
 
                     if not self.bypass_checks:
-                        self._check_required_arguments(spec, param)
+                        required_options = []
+                        self._check_required_arguments(spec, param, add_required=required_options)
                         self._check_argument_types(spec, param, new_prefix)
                         self._check_argument_values(spec, param)
 
-                        self._check_required_together(v.get('required_together', None), param)
-                        self._check_required_one_of(v.get('required_one_of', None), param)
-                        self._check_required_if(v.get('required_if', None), param)
-                        self._check_required_by(v.get('required_by', None), param)
+                        self._check_required_together(v.get('required_together', None), param, add_required=required_options)
+                        self._check_required_one_of(v.get('required_one_of', None), param, add_required=required_options)
+                        self._check_required_if(v.get('required_if', None), param, add_required=required_options)
+                        self._check_required_by(v.get('required_by', None), param, add_required=required_options)
+                        self._check_required_none(spec, param, required_options=required_options)
 
                     self._set_defaults(pre=False, spec=spec, param=param)
 
