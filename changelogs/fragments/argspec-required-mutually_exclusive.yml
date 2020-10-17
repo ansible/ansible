@@ -1,0 +1,3 @@
+bugfixes:
+- For Python modules, a value of ``none`` counts as not specified for ``required``, ``required_if``, ``required_together``, ``required_one_of``, ``mutually_exclusive`` checks.
+  This was already the case for ``required_by`` checks.

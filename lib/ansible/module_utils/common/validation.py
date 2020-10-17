@@ -30,13 +30,13 @@ def count_terms(terms, module_parameters):
     :arg module_parameters: Dictionary of module parameters
 
     :returns: An integer that is the number of occurrences of the terms values
-        in the provided dictionary.
+        in the provided dictionary that are not None.
     """
 
     if not is_iterable(terms):
         terms = [terms]
 
-    return len(set(terms).intersection(module_parameters))
+    return sum(1 for term in terms if module_parameters.get(term) is not None)
 
 
 def check_mutually_exclusive(terms, module_parameters):
@@ -185,7 +185,7 @@ def check_required_arguments(argument_spec, module_parameters):
 
     for (k, v) in argument_spec.items():
         required = v.get('required', False)
-        if required and k not in module_parameters:
+        if required and module_parameters.get(k) is None:
             missing.append(k)
 
     if missing:
