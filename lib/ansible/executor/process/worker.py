@@ -67,10 +67,11 @@ def skip_worker(host, task, templar, task_vars, play_context):
 def skip_worker_when(host, task, templar, task_vars, play_context):
     if not task.evaluate_conditional(templar, task_vars):
         display.debug("when evaluation is False, skipping this task")
-        res = { 'changed': False,
-                'selfkipped': True,
-                'skip_reason': 'Conditional result was False',
-                '_ansible_no_log': play_context.no_log,
+        res = {
+            'changed': False,
+            'selfkipped': True,
+            'skip_reason': 'Conditional result was False',
+            '_ansible_no_log': play_context.no_log,
         }
         raise WorkerShortCircuit(res)
 
