@@ -10,8 +10,8 @@ class ModuleDocFragment(object):
 
     # Standard files documentation fragment
 
-    # Note: mode is overridden by the copy and template modules so if you change the description
-    # here, you should also change it there.
+    # Note: mode is overridden by the copy module so if you change
+    #       the description here, you should also change it there.
     DOCUMENTATION = r'''
 options:
   mode:
