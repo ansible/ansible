@@ -7,8 +7,8 @@ __metaclass__ = type
 class ModuleDocFragment(object):
 
     # Windows shell documentation fragment
-    # FIXME: set_module_language don't belong here but must be set so they don't fail when someone
-    #  get_option('set_module_language') on this plugin
+    # FIXME: set_module_language don't belong here but must be set so they don't
+    #        fail when someone get_option('set_module_language') on this plugin
     DOCUMENTATION = """
 options:
   async_dir:
