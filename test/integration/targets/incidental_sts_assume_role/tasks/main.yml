@@ -79,7 +79,7 @@
       assert:
         that:
            - 'result.failed'
-           - "'Missing required parameter in input:' in result.msg"
+           - "'missing required arguments: role_arn, role_session_name' in result.msg"
       when: result.module_stderr is not defined
 
     - name: assert with empty parameters
