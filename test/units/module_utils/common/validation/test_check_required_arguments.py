@@ -83,6 +83,6 @@ def test_check_required_arguments_missing_none():
 
 
 def test_check_required_arguments_no_params(arguments_terms):
-    with pytest.raises(TypeError) as te:
+    with pytest.raises(AttributeError) as te:
         check_required_arguments(arguments_terms, None)
-    assert "'NoneType' is not iterable" in to_native(te.value)
+    assert "'NoneType' object has no attribute 'get'" in to_native(te.value)

@@ -52,6 +52,6 @@ def test_check_mutually_exclusive_none():
 
 
 def test_check_mutually_exclusive_no_params(mutually_exclusive_terms):
-    with pytest.raises(TypeError) as te:
+    with pytest.raises(AttributeError) as te:
         check_mutually_exclusive(mutually_exclusive_terms, None)
-    assert "'NoneType' object is not iterable" in to_native(te.value)
+    assert "'NoneType' object has no attribute 'get'" in to_native(te.value)

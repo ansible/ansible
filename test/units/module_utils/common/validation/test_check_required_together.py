@@ -51,7 +51,7 @@ def test_check_required_together_missing_none():
 
 
 def test_check_required_together_no_params(together_terms):
-    with pytest.raises(TypeError) as te:
+    with pytest.raises(AttributeError) as te:
         check_required_together(together_terms, None)
 
-    assert "'NoneType' object is not iterable" in to_native(te.value)
+    assert "'NoneType' object has no attribute 'get'" in to_native(te.value)
