@@ -23,6 +23,8 @@ from ..docker_util import (
     get_docker_container_id,
     get_docker_hostname,
     get_docker_container_ip,
+    get_docker_preferred_network_name,
+    is_docker_user_defined_network,
 )
 
 
@@ -98,7 +100,12 @@ class ForemanProvider(CloudProvider):
 
         :rtype: list[str]
         """
-        return ['--link', self.DOCKER_SIMULATOR_NAME] if self.managed else []
+        network = get_docker_preferred_network_name(self.args)
+
+        if self.managed and not is_docker_user_defined_network(network):
+            return ['--link', self.DOCKER_SIMULATOR_NAME]
+
+        return []
 
     def cleanup(self):
         """Clean up the resource and temporary configs files after tests."""

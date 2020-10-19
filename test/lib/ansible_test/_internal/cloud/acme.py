@@ -30,6 +30,8 @@ from ..docker_util import (
     get_docker_container_id,
     get_docker_hostname,
     get_docker_container_ip,
+    get_docker_preferred_network_name,
+    is_docker_user_defined_network,
 )
 
 
@@ -102,7 +104,9 @@ class ACMEProvider(CloudProvider):
         """Get any additional options needed when delegating tests to a docker container.
         :rtype: list[str]
         """
-        if self.managed:
+        network = get_docker_preferred_network_name(self.args)
+
+        if self.managed and not is_docker_user_defined_network(network):
             return ['--link', self.DOCKER_SIMULATOR_NAME]
 
         return []

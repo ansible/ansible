@@ -160,6 +160,11 @@ def get_docker_preferred_network_name(args):  # type: (EnvironmentConfig) -> str
     return network
 
 
+def is_docker_user_defined_network(network):  # type: (str) -> bool
+    """Return True if the network being used is a user-defined network."""
+    return network and network != 'bridge'
+
+
 def get_docker_networks(args, container_id):
     """
     :param args: EnvironmentConfig
@@ -246,7 +251,7 @@ def docker_run(args, image, options, cmd=None, create_only=False):
 
     network = get_docker_preferred_network_name(args)
 
-    if network and network != 'bridge':
+    if is_docker_user_defined_network(network):
         # Only when the network is not the default bridge network.
         # Using this with the default bridge network results in an error when using --link: links are only supported for user-defined networks
         options.extend(['--network', network])

@@ -27,6 +27,8 @@ from ..docker_util import (
     get_docker_container_id,
     get_docker_hostname,
     get_docker_container_ip,
+    get_docker_preferred_network_name,
+    is_docker_user_defined_network,
 )
 
 
@@ -180,7 +182,12 @@ class GalaxyProvider(CloudProvider):
 
         :rtype: list[str]
         """
-        return ['--link', 'ansible-ci-pulp']  # if self.managed else []
+        network = get_docker_preferred_network_name(self.args)
+
+        if not is_docker_user_defined_network(network):
+            return ['--link', 'ansible-ci-pulp']
+
+        return []
 
     def cleanup(self):
         """Clean up the resource and temporary configs files after tests."""
