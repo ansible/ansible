@@ -146,7 +146,6 @@ class OpenShiftCloudProvider(CloudProvider):
         container_id = get_docker_container_id()
 
         if container_id:
-            display.info('Running in docker container: %s' % container_id, verbosity=1)
             host = self._get_container_address()
             display.info('Found OpenShift container address: %s' % host, verbosity=1)
         else:

@@ -107,9 +107,6 @@ class GalaxyProvider(CloudProvider):
 
         container_id = get_docker_container_id()
 
-        if container_id:
-            display.info('Running in docker container: %s' % container_id, verbosity=1)
-
         p_results = docker_inspect(self.args, 'ansible-ci-pulp')
 
         if p_results and not p_results[0].get('State', {}).get('Running'):

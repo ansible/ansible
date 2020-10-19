@@ -119,12 +119,6 @@ class ForemanProvider(CloudProvider):
         foreman_port = 8080
         container_id = get_docker_container_id()
 
-        if container_id:
-            display.info(
-                'Running in docker container: %s' % container_id,
-                verbosity=1,
-            )
-
         self.container_name = self.DOCKER_SIMULATOR_NAME
 
         results = docker_inspect(self.args, self.container_name)

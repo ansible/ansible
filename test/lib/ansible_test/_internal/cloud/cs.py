@@ -173,7 +173,6 @@ class CsCloudProvider(CloudProvider):
         container_id = get_docker_container_id()
 
         if container_id:
-            display.info('Running in docker container: %s' % container_id, verbosity=1)
             self.host = self._get_simulator_address()
             display.info('Found CloudStack simulator container address: %s' % self.host, verbosity=1)
         else:

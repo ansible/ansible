@@ -1266,9 +1266,7 @@ def start_httptester(args):
 
     container_id = get_docker_container_id()
 
-    if container_id:
-        display.info('Running in docker container: %s' % container_id, verbosity=1)
-    else:
+    if not container_id:
         for item in ports:
             item['localhost'] = get_available_port()
 
