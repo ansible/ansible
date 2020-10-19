@@ -3,7 +3,9 @@
 #  Note: https://bugzilla.redhat.com/show_bug.cgi?id=1788212
 - name: Install latest version python3-dnf
   dnf:
-    name: python3-dnf
+    name:
+      - python3-dnf
+      - python3-libdnf  # https://bugzilla.redhat.com/show_bug.cgi?id=1887502
     state: latest
   register: dnf_result
 
