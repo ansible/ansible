@@ -136,7 +136,7 @@ We use:
 Syntax highlighting - Pygments
 ------------------------------
 
-The Ansible documentation supports a range of `Pygments lexers <http://pygments.org/>`_
+The Ansible documentation supports a range of `Pygments lexers <https://pygments.org/>`_
 for `syntax highlighting <https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#code-examples>`_ to make our code examples look good. Each code-block must be correctly indented and surrounded by blank lines.
 
 The Ansible documentation allows the following values:
@@ -238,7 +238,7 @@ Modules require different suffixes from other plugins:
 Adding local TOCs
 ^^^^^^^^^^^^^^^^^
 
-The page you're reading includes a `local TOC <http://docutils.sourceforge.net/docs/ref/rst/directives.html#table-of-contents>`_.
+The page you're reading includes a `local TOC <https://docutils.sourceforge.io/docs/ref/rst/directives.html#table-of-contents>`_.
 If you include a local TOC:
 
 * place it below, not above, the main heading and (optionally) introductory text
