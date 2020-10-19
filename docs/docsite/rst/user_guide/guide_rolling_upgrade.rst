@@ -198,7 +198,7 @@ Here's another example, from the same template:
 This loops over all of the hosts in the group called ``monitoring``, and adds an ACCEPT line for
 each monitoring hosts' default IPv4 address to the current machine's iptables configuration, so that Nagios can monitor those hosts.
 
-You can learn a lot more about Jinja2 and its capabilities `here <http://jinja.pocoo.org/docs/>`_, and you
+You can learn a lot more about Jinja2 and its capabilities `here <https://jinja.palletsprojects.com/>`_, and you
 can read more about Ansible variables in general in the :ref:`playbooks_variables` section.
 
 .. _lamp_rolling_upgrade:

@@ -6,7 +6,7 @@ Contributing to the Ansible Documentation
 
 Ansible has a lot of documentation and a small team of writers. Community support helps us keep up with new features, fixes, and changes.
 
-Improving the documentation is an easy way to make your first contribution to the Ansible project. You do not have to be a programmer, since most of our documentation is written in YAML (module documentation) or `reStructuredText <http://docutils.sourceforge.net/rst.html>`_ (rST). Some collection-level documentation is written in a subset of `Markdown <https://github.com/ansible/ansible/issues/68119#issuecomment-596723053>`_. If you are using Ansible, you already use YAML in your playbooks. rST and Markdown are mostly just text. You do not even need git experience, if you use the ``Edit on GitHub`` option.
+Improving the documentation is an easy way to make your first contribution to the Ansible project. You do not have to be a programmer, since most of our documentation is written in YAML (module documentation) or `reStructuredText <https://docutils.sourceforge.io/rst.html>`_ (rST). Some collection-level documentation is written in a subset of `Markdown <https://github.com/ansible/ansible/issues/68119#issuecomment-596723053>`_. If you are using Ansible, you already use YAML in your playbooks. rST and Markdown are mostly just text. You do not even need git experience, if you use the ``Edit on GitHub`` option.
 
 If you find a typo, a broken example, a missing topic, or any other error or omission on this documentation website, let us know. Here are some ways to support Ansible documentation:
 

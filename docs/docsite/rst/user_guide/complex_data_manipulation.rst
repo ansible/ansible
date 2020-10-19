@@ -239,5 +239,5 @@ https://www.reddit.com/r/ansible/comments/gj5a93/trying_to_get_uptime_from_secon
        Jinja2 filters included with Ansible
    :doc:`playbooks_tests`
        Jinja2 tests included with Ansible
-   `Jinja2 Docs <http://jinja.pocoo.org/docs/>`_
+   `Jinja2 Docs <https://jinja.palletsprojects.com/>`_
       Jinja2 documentation, includes lists for core filters and tests
