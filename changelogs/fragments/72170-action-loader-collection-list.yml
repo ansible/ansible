@@ -1,0 +1,3 @@
+bugfixes:
+- Collections - Ensure ``action_loader.get`` is called with ``collection_list`` to properly find collections
+  when ``collections:`` search is specified (https://github.com/ansible/ansible/issues/72170)
