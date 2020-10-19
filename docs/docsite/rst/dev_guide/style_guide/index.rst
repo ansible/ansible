@@ -238,7 +238,7 @@ Modules require different suffixes from other plugins:
 Adding local TOCs
 ^^^^^^^^^^^^^^^^^
 
-The page you're reading includes a `local TOC <https://docutils.sourceforge.net/docs/ref/rst/directives.html#table-of-contents>`_.
+The page you're reading includes a `local TOC <https://docutils.sourceforge.io/docs/ref/rst/directives.html#table-of-contents>`_.
 If you include a local TOC:
 
 * place it below, not above, the main heading and (optionally) introductory text
