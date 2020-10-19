@@ -1,0 +1,2 @@
+bugfixes:
+  - zfs - fixed ``invalid character '@' in pool name"`` error when working with snapshots on a root zvol (https://github.com/ansible-collections/community.general/issues/932).
