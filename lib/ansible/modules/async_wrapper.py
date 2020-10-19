@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
 
+import errno
 import json
 import shlex
 import shutil
@@ -123,6 +124,15 @@ def _get_interpreter(module_path):
         module_fd.close()
 
 
+def _make_temp_dir(path):
+    # TODO: Add checks for permissions on path.
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+
 def _run_module(wrapped_cmd, jid, job_path):
 
     tmp_job_path = job_path + ".tmp"
@@ -231,14 +241,16 @@ def main():
     jobdir = os.path.expanduser(async_dir)
     job_path = os.path.join(jobdir, jid)
 
-    if not os.path.exists(jobdir):
-        try:
-            os.makedirs(jobdir)
-        except Exception:
-            print(json.dumps({
-                "failed": 1,
-                "msg": "could not create: %s" % jobdir
-            }))
+    try:
+        _make_temp_dir(jobdir)
+    except Exception as e:
+        print(json.dumps({
+            "failed": 1,
+            "msg": "could not create: %s - %s" % (jobdir, to_text(e)),
+            "exception": to_text(traceback.format_exc()),
+        }))
+        sys.exit(1)
+
     # immediately exit this process, leaving an orphaned process
     # running which immediately forks a supervisory timing process
 
