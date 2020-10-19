@@ -299,6 +299,7 @@ def argument_spec_schema(for_collection):
             'choices': Any([object], (object,)),
             'context': dict,
             'required': bool,
+            'allow_none_value': bool,
             'no_log': bool,
             'aliases': Any(list_string_types, tuple(list_string_types)),
             'apply_defaults': bool,
