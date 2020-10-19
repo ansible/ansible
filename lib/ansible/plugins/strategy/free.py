@@ -156,7 +156,7 @@ class StrategyModule(StrategyBase):
                         (state, task) = iterator.get_next_task_for_host(host)
 
                         try:
-                            action = action_loader.get(task.action, class_only=True)
+                            action = action_loader.get(task.action, class_only=True, collection_list=task.collections)
                         except KeyError:
                             # we don't care here, because the action may simply not have a
                             # corresponding action plugin

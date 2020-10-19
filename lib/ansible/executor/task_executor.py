@@ -738,7 +738,7 @@ class TaskExecutor:
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader
         async_handler = self._shared_loader_obj.action_loader.get(
-            'async_status',
+            'ansible.legacy.async_status',
             task=async_task,
             connection=self._connection,
             play_context=self._play_context,
