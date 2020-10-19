@@ -137,9 +137,6 @@ class TaskQueueManager:
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
-<<<<<<< HEAD
-        for callback_plugin in callback_loader.all(class_only=True):
-=======
         # get all configured loadable callbacks (adjacent, builtin)
         callback_list = list(callback_loader.all(class_only=True))
 
@@ -159,7 +156,6 @@ class TaskQueueManager:
         # for each callback in the list see if we should add it to 'active callbacks' used in the play
         for callback_plugin in callback_list:
 
->>>>>>> 5ec53f9db8... make collection callbacks follow normal flow (#59932)
             callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', '')
             callback_needs_whitelist = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
 
@@ -188,20 +184,6 @@ class TaskQueueManager:
                 # 2.x plugins shipped with ansible should require whitelisting, older or non shipped should load automatically
                 continue
 
-<<<<<<< HEAD
-            callback_obj = callback_plugin()
-            callback_obj.set_options()
-            self._callback_plugins.append(callback_obj)
-
-        for callback_plugin_name in (c for c in C.DEFAULT_CALLBACK_WHITELIST if AnsibleCollectionRef.is_valid_fqcr(c)):
-            # TODO: need to extend/duplicate the stdout callback check here (and possible move this ahead of the old way
-            callback_obj = callback_loader.get(callback_plugin_name)
-            if callback_obj:
-                callback_obj.set_options()
-                self._callback_plugins.append(callback_obj)
-            else:
-                display.warning("Skipping '%s', unable to load or use as a callback" % callback_plugin_name)
-=======
             try:
                 callback_obj = callback_plugin()
                 # avoid bad plugin not returning an object, only needed cause we do class_only load and bypass loader checks,
@@ -219,7 +201,6 @@ class TaskQueueManager:
             except Exception as e:
                 display.warning("Skipping callback '%s', unable to load due to: %s" % (callback_name, to_native(e)))
                 continue
->>>>>>> 5ec53f9db8... make collection callbacks follow normal flow (#59932)
 
         self._callbacks_loaded = True
 
