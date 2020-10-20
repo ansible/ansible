@@ -195,7 +195,13 @@ class CallbackModule(CallbackBase):
             return
 
         play = self._play_name
-        name = task.get_name().strip()
+
+        if task._role != None:
+            role_name = task._role.get_name(include_role_fqcn=True)
+        else:
+            role_name = None
+
+        name = task._name
         path = task.get_path()
         action = task.action
 
@@ -204,7 +210,7 @@ class CallbackModule(CallbackBase):
             if args:
                 name += ' ' + args
 
-        self._task_data[uuid] = TaskData(uuid, name, path, play, action)
+        self._task_data[uuid] = TaskData(uuid, name, path, play, action, role_name=role_name)
 
     def _finish_task(self, status, result):
         """ record the results of a task for a single host """
@@ -238,7 +244,10 @@ class CallbackModule(CallbackBase):
     def _build_test_case(self, task_data, host_data):
         """ build a TestCase from the given TaskData and HostData """
 
-        name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
+        if task_data.role_name != None:
+            name = '[%s] %s: %s : %s' % (host_data.name, task_data.play, task_data.role_name, task_data.name)
+        else:
+            name = '[%s] %s: %s' % (host_data.name, task_data.play, task_data.name)
         duration = host_data.finish - task_data.start
 
         if self._task_relative_path:
@@ -348,8 +357,9 @@ class TaskData:
     Data about an individual task.
     """
 
-    def __init__(self, uuid, name, path, play, action):
+    def __init__(self, uuid, name, path, play, action, role_name=None):
         self.uuid = uuid
+        self.role_name = role_name
         self.name = name
         self.path = path
         self.play = play
