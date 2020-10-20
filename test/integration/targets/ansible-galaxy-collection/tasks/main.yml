@@ -34,19 +34,15 @@
   vars:
     test_name: '{{ item.name }}'
     test_server: '{{ item.server }}'
-    is_pulp: '{{ item.pulp|default(false) }}'
     vX: '{{ "v3/" if item.v3|default(false) else "v2/" }}'
   loop:
   - name: pulp_v2
     server: '{{ pulp_v2_server }}'
-    pulp: true
   - name: pulp_v3
     server: '{{ pulp_v3_server }}'
-    pulp: true
     v3: true
   - name: galaxy_ng
     server: '{{ galaxy_ng_server }}'
-    pulp: true
     v3: true
 
 # We use a module for this so we can speed up the test time.

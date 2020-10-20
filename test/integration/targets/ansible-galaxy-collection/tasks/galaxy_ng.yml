@@ -6,7 +6,11 @@
     body:
       name: '{{ namespace }}'
       groups:
-        - system:partner-engineers
+        - name: system:partner-engineers
+          object_permissions:
+            - add_namespace
+            - change_namespace
+            - upload_to_namespace
     status_code:
       - 201
     user: '{{ pulp_user }}'

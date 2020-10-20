@@ -55,6 +55,17 @@ foreground {
 }
 '''
 
+RUN_OVERRIDE = b'''#!/usr/bin/execlineb -S0
+foreground {
+  export DJANGO_SETTINGS_MODULE pulpcore.app.settings
+  export PULP_CONTENT_ORIGIN localhost
+  /usr/local/bin/pulpcore-manager collectstatic --noinput --link
+}
+export DJANGO_SETTINGS_MODULE pulpcore.app.settings
+export PULP_SETTINGS /etc/pulp/settings.py
+/usr/local/bin/gunicorn pulpcore.app.wsgi:application --bind "0.0.0.0:24817" --access-logfile -
+'''
+
 
 class GalaxyProvider(CloudProvider):
     """Galaxy plugin.
@@ -72,7 +83,7 @@ class GalaxyProvider(CloudProvider):
 
         self.pulp = os.environ.get(
             'ANSIBLE_PULP_CONTAINER',
-            'docker.io/pulp/pulp-galaxy-ng@sha256:69b4c4cba4908539b56c5592f40d282f938dd1bdf4de5a81e0a8d04ac3e6e326'
+            'docker.io/pulp/pulp-galaxy-ng@sha256:b79a7be64eff86d8f58db9ca83ed4967bd8b4e45c99addb17a91d11926480cf1'
         )
 
         self.containers = []
@@ -116,7 +127,7 @@ class GalaxyProvider(CloudProvider):
                      % ('Using the existing' if p_results else 'Starting a new'),
                      verbosity=1)
 
-        pulp_port = 80
+        pulp_port = 24817
 
         if not p_results:
             if self.args.docker or container_id:
@@ -152,6 +163,15 @@ class GalaxyProvider(CloudProvider):
                 with tempfile.NamedTemporaryFile(delete=False) as admin_pass:
                     admin_pass.write(SET_ADMIN_PASSWORD)
                 docker_command(self.args, ['cp', admin_pass.name, '%s:/etc/cont-init.d/111-postgres' % pulp_id])
+            finally:
+                os.unlink(admin_pass.name)
+
+            # TODO: Remove this once https://github.com/pulp/pulp-oci-images/pull/31 is in
+            try:
+                # Inject our settings.py file
+                with tempfile.NamedTemporaryFile(delete=False) as admin_pass:
+                    admin_pass.write(RUN_OVERRIDE)
+                docker_command(self.args, ['cp', admin_pass.name, '%s:/etc/services.d/pulpcore-api/run' % pulp_id])
             finally:
                 os.unlink(admin_pass.name)
 
@@ -214,13 +234,13 @@ class GalaxyEnvironment(CloudEnvironment):
                 pulp_v2_server='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
                 pulp_v3_server='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
                 pulp_api='http://%s:%s' % (pulp_host, pulp_port),
-                galaxy_ng_server='http://%s:%s/api/galaxy/' % (pulp_host, pulp_port),
+                galaxy_ng_server='http://%s:80/api/galaxy/' % (pulp_host, pulp_port),
             ),
             env_vars=dict(
                 PULP_USER=pulp_user,
                 PULP_PASSWORD=pulp_password,
                 PULP_V2_SERVER='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
                 PULP_V3_SERVER='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
-                GALAXY_NG_SERVER='http://%s:%s/api/galaxy/' % (pulp_host, pulp_port),
+                GALAXY_NG_SERVER='http://%s:80/api/galaxy/' % (pulp_host, pulp_port),
             ),
         )
