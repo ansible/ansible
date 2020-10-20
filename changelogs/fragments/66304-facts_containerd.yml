@@ -1,0 +1,2 @@
+minor_changes:
+  - virtual facts - containerd cgroup is now recognized as container tech (https://github.com/ansible/ansible/issues/66304).
