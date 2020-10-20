@@ -34,6 +34,7 @@ SETTINGS = b'''
 CONTENT_ORIGIN = 'http://ansible-ci-pulp:80'
 ANSIBLE_API_HOSTNAME = 'http://ansible-ci-pulp:80'
 ANSIBLE_CONTENT_HOSTNAME = 'http://ansible-ci-pulp:80/pulp/content'
+GALAXY_API_DEFAULT_DISTRIBUTION_BASE_PATH = 'automation-hub'
 TOKEN_AUTH_DISABLED = True
 GALAXY_REQUIRE_CONTENT_APPROVAL = False
 GALAXY_AUTHENTICATION_CLASSES = [
@@ -234,13 +235,13 @@ class GalaxyEnvironment(CloudEnvironment):
                 pulp_v2_server='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
                 pulp_v3_server='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
                 pulp_api='http://%s:%s' % (pulp_host, pulp_port),
-                galaxy_ng_server='http://%s:80/api/galaxy/' % (pulp_host, pulp_port),
+                galaxy_ng_server='http://%s:80/api/galaxy/' % (pulp_host,),
             ),
             env_vars=dict(
                 PULP_USER=pulp_user,
                 PULP_PASSWORD=pulp_password,
                 PULP_V2_SERVER='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
                 PULP_V3_SERVER='http://%s:%s/pulp_ansible/galaxy/automation-hub/api/' % (pulp_host, pulp_port),
-                GALAXY_NG_SERVER='http://%s:80/api/galaxy/' % (pulp_host, pulp_port),
+                GALAXY_NG_SERVER='http://%s:80/api/galaxy/' % (pulp_host,),
             ),
         )
