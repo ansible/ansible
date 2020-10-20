@@ -356,7 +356,7 @@ The following is an example RPM spec file that accomplishes this using this exam
   Version: 1.0.0
   Release: 1%{?dist}
   License: GPLv3+
-  Source0: amce-webserver-1.0.0.tar.gz
+  Source0: acme-webserver-1.0.0.tar.gz
 
   Url: https://github.com/acme/webserver-ansible-collection
   BuildArch: noarch
