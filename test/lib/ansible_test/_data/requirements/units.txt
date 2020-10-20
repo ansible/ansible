@@ -5,3 +5,4 @@ pytest
 pytest-mock
 pytest-xdist
 pyyaml
+resolvelib
