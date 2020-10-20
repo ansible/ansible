@@ -220,12 +220,13 @@ In YAML:
 .. code-block:: yaml
 
     atlanta:
-      host1:
-        http_port: 80
-        maxRequestsPerChild: 808
-      host2:
-        http_port: 303
-        maxRequestsPerChild: 909
+      hosts:    
+        host1:
+          http_port: 80
+          maxRequestsPerChild: 808
+        host2:
+          http_port: 303
+          maxRequestsPerChild: 909
 
 Unique values like non-standard SSH ports work well as host variables. You can add them to your Ansible inventory by adding the port number after the hostname with a colon:
 
@@ -446,9 +447,11 @@ You can change this behavior by setting the group variable ``ansible_group_prior
 .. code-block:: yaml
 
     a_group:
+      vars:
         testvar: a
         ansible_group_priority: 10
     b_group:
+      vars:
         testvar: b
 
 In this example, if both groups have the same priority, the result would normally have been ``testvar == b``, but since we are giving the ``a_group`` a higher priority the result will be ``testvar == a``.
@@ -727,7 +730,7 @@ To apply a playbook called :file:`site.yml`
 to all the app servers in the test environment, use the
 following command::
 
-  ansible-playbook -i inventory_test site.yml -l appservers
+  ansible-playbook -i inventory_test -l appservers site.yml
 
 .. _inventory_setup-per_function:
 
@@ -737,7 +740,7 @@ Example: Group by function
 In the previous section you already saw an example for using groups in
 order to cluster hosts that have the same function. This allows you,
 for instance, to define firewall rules inside a playbook or role
-without affecting database servers:
+affecting only database servers:
 
 .. code-block:: yaml
 
