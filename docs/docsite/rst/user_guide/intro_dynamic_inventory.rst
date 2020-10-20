@@ -10,13 +10,13 @@ Working with dynamic inventory
 
 If your Ansible inventory fluctuates over time, with hosts spinning up and shutting down in response to business demands, the static inventory solutions described in :ref:`inventory` will not serve your needs. You may need to track hosts from multiple sources: cloud providers, LDAP, `Cobbler <https://cobbler.github.io>`_, and/or enterprise CMDB systems.
 
-Ansible integrates all of these options via a dynamic external inventory system. Ansible supports two ways to connect with external inventory:  :ref:`inventory_plugins` and `inventory scripts`.
+Ansible integrates all of these options through a dynamic external inventory system. Ansible supports two ways to connect with external inventory:  :ref:`inventory_plugins` and `inventory scripts`.
 
 Inventory plugins take advantage of the most recent updates to the Ansible core code. We recommend plugins over scripts for dynamic inventory. You can :ref:`write your own plugin <developing_inventory>` to connect to additional dynamic inventory sources.
 
-You can still use inventory scripts if you choose. When we implemented inventory plugins, we ensured backwards compatibility via the script inventory plugin. The examples below illustrate how to use inventory scripts.
+You can still use inventory scripts if you choose. When we implemented inventory plugins, we ensured backwards compatibility through the script inventory plugin. The examples below illustrate how to use inventory scripts.
 
-If you would like a GUI for handling dynamic inventory, the :ref:`ansible_tower` inventory database syncs with all your dynamic inventory sources, provides web and REST access to the results, and offers a graphical inventory editor. With a database record of all of your hosts, you can correlate past event history and see which hosts have had failures on their last playbook runs.
+If you prefer a GUI for handling dynamic inventory, the :ref:`ansible_tower` inventory database syncs with all your dynamic inventory sources, provides web and REST access to the results, and offers a graphical inventory editor. With a database record of all of your hosts, you can correlate past event history and see which hosts have had failures on their last playbook runs.
 
 .. _cobbler_example:
 
@@ -53,7 +53,7 @@ Add a ``cobbler.ini`` file in ``/etc/ansible`` so Ansible knows where the Cobble
     cache_max_age = 900
 
 
-First test the script by running ``/etc/ansible/cobbler.py`` directly.   You should see some JSON data output, but it may not have anything in it just yet.
+First test the script by running ``/etc/ansible/cobbler.py`` directly. You should see some JSON data output, but it may not have anything in it just yet.
 
 Let's explore what this does.  In Cobbler, assume a scenario somewhat like the following:
 
@@ -64,9 +64,9 @@ Let's explore what this does.  In Cobbler, assume a scenario somewhat like the f
     cobbler system edit --name=foo --dns-name="foo.example.com" --mgmt-classes="atlanta" --ksmeta="c=4"
     cobbler system edit --name=bar --dns-name="bar.example.com" --mgmt-classes="atlanta" --ksmeta="c=5"
 
-In the example above, the system 'foo.example.com' are addressable by ansible directly, but are also addressable when using the group names 'webserver' or 'atlanta'.  Since Ansible uses SSH, it contacts system foo over 'foo.example.com', only, never just 'foo'.  Similarly, if you try "ansible foo" it wouldn't find the system... but "ansible 'foo*'" would, because the system DNS name starts with 'foo'.
+In the example above, the system 'foo.example.com' is addressable by ansible directly, but is also addressable when using the group names 'webserver' or 'atlanta'. Since Ansible uses SSH, it contacts system foo over 'foo.example.com', only, never just 'foo'. Similarly, if you tried "ansible foo", it would not find the system... but "ansible 'foo*'" would do, because the system DNS name starts with 'foo'.
 
-The script provides more than host and group info.  In addition, as a bonus, when the 'setup' module is run (which happens automatically when using playbooks), the variables 'a', 'b', and 'c' will all be auto-populated in the templates:
+The script provides more than host and group info. In addition, as a bonus, when the 'setup' module is run (which happens automatically when using playbooks), the variables 'a', 'b', and 'c' will all be auto-populated in the templates:
 
 .. code-block:: text
 
@@ -86,7 +86,7 @@ Which could be executed just like this:
    normal in Ansible, but variables from the external inventory script
    will override any that have the same name.
 
-So, with the template above (``motd.j2``), this would result in the following data being written to ``/etc/motd`` for system 'foo':
+So, with the template above (``motd.j2``), this results in the following data being written to ``/etc/motd`` for system 'foo':
 
 .. code-block:: text
 
@@ -98,11 +98,11 @@ And on system 'bar' (bar.example.com):
 
     Welcome, I am templated with a value of a=2, b=3, and c=5
 
-And technically, though there is no major good reason to do it, this also works too:
+And technically, though there is no major good reason to do it, this also works:
 
 .. code-block:: bash
 
-    ansible webserver -m shell -a "echo {{ a }}"
+    ansible webserver -m ansible.builtin.shell -a "echo {{ a }}"
 
 So, in other words, you can use those variables in arguments/actions as well.
 
@@ -138,7 +138,7 @@ Source an OpenStack RC file:
 
     An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password and region name. For more information on how to download, create or source an OpenStack RC file, please refer to `Set environment variables using the OpenStack RC file <https://docs.openstack.org/user-guide/common/cli_set_environment_variables_using_openstack_rc.html>`_.
 
-You can confirm the file has been successfully sourced by running a simple command, such as `nova list` and ensuring it return no errors.
+You can confirm the file has been successfully sourced by running a simple command, such as `nova list` and ensuring it returns no errors.
 
 .. note::
 
@@ -154,7 +154,7 @@ Once you confirm the dynamic inventory script is working as expected, you can te
 
 .. code-block:: bash
 
-    ansible -i openstack_inventory.py all -m ping
+    ansible -i openstack_inventory.py all -m ansible.builtin.ping
 
 Implicit use of OpenStack inventory script
 ------------------------------------------
@@ -208,15 +208,15 @@ If the location given to ``-i`` in Ansible is a directory (or as so configured i
 at the same time.  When doing so, it is possible to mix both dynamic and statically managed inventory sources in the same ansible run. Instant
 hybrid cloud!
 
-In an inventory directory, executable files will be treated as dynamic inventory sources and most other files as static sources. Files which end with any of the following will be ignored:
+In an inventory directory, executable files are treated as dynamic inventory sources and most other files as static sources. Files which end with any of the following are ignored:
 
 .. code-block:: text
 
     ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo
 
-You can replace this list with your own selection by configuring an ``inventory_ignore_extensions`` list in ansible.cfg, or setting the :envvar:`ANSIBLE_INVENTORY_IGNORE` environment variable. The value in either case should be a comma-separated list of patterns, as shown above.
+You can replace this list with your own selection by configuring an ``inventory_ignore_extensions`` list in ``ansible.cfg``, or setting the :envvar:`ANSIBLE_INVENTORY_IGNORE` environment variable. The value in either case must be a comma-separated list of patterns, as shown above.
 
-Any ``group_vars`` and ``host_vars`` subdirectories in an inventory directory will be interpreted as expected, making inventory directories a powerful way to organize different sets of configurations. See :ref:`using_multiple_inventory_sources` for more information.
+Any ``group_vars`` and ``host_vars`` subdirectories in an inventory directory are interpreted as expected, making inventory directories a powerful way to organize different sets of configurations. See :ref:`using_multiple_inventory_sources` for more information.
 
 .. _static_groups_of_dynamic:
 
@@ -224,7 +224,7 @@ Static groups of dynamic groups
 ===============================
 
 When defining groups of groups in the static inventory file, the child groups
-must also be defined in the static inventory file, or ansible will return an
+must also be defined in the static inventory file, otherwise ansible returns an
 error. If you want to define a static group of dynamic child groups, define
 the dynamic groups as empty in the static inventory file. For example:
 
