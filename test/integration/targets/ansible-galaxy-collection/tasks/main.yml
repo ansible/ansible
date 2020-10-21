@@ -17,9 +17,6 @@
 - name: configure pulp
   include_tasks: pulp.yml
 
-- name: configure galaxy_ng
-  include_tasks: galaxy_ng.yml
-
 - name: create test ansible.cfg that contains the Galaxy server list
   template:
     src: ansible.cfg.j2
