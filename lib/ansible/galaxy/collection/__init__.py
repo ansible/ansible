@@ -708,7 +708,7 @@ def filter_multiple_matches(req, collections, force):
 
 
 def get_dependencies(collections, installed_collections):
-    """Finds all dependencies of the collections list in the list of all collections
+    """Find all dependencies of the collections list in the list of all collections.
 
     :param collections: A list of CollectionRequirement instances
     :param installed_collections: A list of installed CollectionRequirement instances
@@ -735,7 +735,7 @@ def get_dependencies(collections, installed_collections):
 
 
 def get_parents(dependencies, skip_parents, installed_collections):
-    """Finds all collections relying on a list of dependencies
+    """Find all collections relying on a list of dependencies.
 
     :param dependencies: A list of CollectionRequirement instances
     :param skip_parents: A list of CollectionRequirement instances that should be ignored as potential parents
