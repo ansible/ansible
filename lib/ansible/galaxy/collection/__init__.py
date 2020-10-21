@@ -696,6 +696,7 @@ def filter_multiple_matches(req, collections, force):
             indices = []
             break
         try:
+            # Use int('invalid') to raise a ValueError when the index is not in the expected range
             indices = [int(r) if int(r) in indices else int('invalid') for r in result.split(',')]
         except ValueError:
             pass
