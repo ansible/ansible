@@ -67,7 +67,11 @@ def list_collection_dirs(search_paths=None, coll_filter=None):
                     namespaces = os.listdir(b_coll_root)
                 else:
                     if '.' in coll_filter:
-                        (nsp, coll) = coll_filter.split('.')
+                        try:
+                            (nsp, coll) = coll_filter.split('.')
+                        except ValueError:
+                            display.warning("Skipping '%s' as it is invalid collection name." % coll_filter)
+                            continue
                     else:
                         nsp = coll_filter
                     namespaces = [nsp]
